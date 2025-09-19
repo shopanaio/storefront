@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "jest", "@types/react"],
+    "jsx": "react-jsx",
+    "baseUrl": "..",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@codegen/*": ["codegen/*"]
+    }
+  },
+  "include": ["../src", "./**/*.ts", "./**/*.tsx"],
+  "exclude": ["../node_modules", "../.next"]
+}

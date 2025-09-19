@@ -1,0 +1,141 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import { useQueryLoader, usePreloadedQuery, useFragment } from "react-relay";
+import { loadCartQuery } from "@src/relay/queries/loadCartQuery.shopify";
+import { loadCartQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartQuery.graphql";
+import cartIdUtils from "@src/utils/cartId";
+import { CartContextProvider } from "../cart-context";
+import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
+import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopify";
+
+interface CartProviderProps {
+  children: React.ReactNode;
+}
+
+// Separate component for handling cart data
+const CartDataHandler: React.FC<{
+  queryReference: NonNullable<
+    ReturnType<typeof useQueryLoader<LoadCartQueryType>>[0]
+  >;
+  onCartData: (cart: useCart_CartFragment$key) => void;
+  onCartNotFound: () => void;
+}> = ({ queryReference, onCartData, onCartNotFound }) => {
+  const cartData = usePreloadedQuery(loadCartQuery, queryReference);
+
+  useEffect(() => {
+    if (cartData && typeof cartData === "object" && "cart" in cartData) {
+      if (cartData.cart) {
+        onCartData(cartData.cart);
+      } else if (cartData.cart === null) {
+        onCartNotFound();
+      }
+    }
+  }, [cartData, onCartData, onCartNotFound]);
+
+  return null;
+};
+
+const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+  const [queryReference, loadQuery, disposeQuery] =
+    useQueryLoader<LoadCartQueryType>(loadCartQuery);
+  const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isCartLoaded, setIsCartLoaded] = useState(false);
+  const isLoadingRef = useRef(false);
+  const loadedRef = useRef(false);
+
+  // This hook ensures that cart data won't be garbage collected by Relay
+  // while CartProvider is mounted.
+  useFragment(useCart_CartFragment, cartKey);
+
+  /* console.log("queryReference", queryReference); */
+
+  useEffect(() => {
+    // Load cart only once when mounting on client
+    if (loadedRef.current || isLoadingRef.current) return;
+
+    const cartId = cartIdUtils.getCartIdFromCookie();
+    /* console.log("[CartProvider Shopify] Checking for cart ID:", cartId); */
+
+    if (!cartId) {
+      /* console.log("[CartProvider Shopify] No cart ID found, creating new cart"); */
+      // Create new cart if ID is missing
+      createNewCart();
+      return;
+    }
+
+    isLoadingRef.current = true;
+    setIsCartLoading(true);
+    /* console.log("[CartProvider Shopify] Loading cart with ID:", cartId); */
+
+    // Load query using useQueryLoader
+    loadQuery({ id: cartId });
+  }, [loadQuery]);
+
+  const handleCartData = (cart: useCart_CartFragment$key) => {
+    /* console.log("[CartProvider Shopify] Cart loaded successfully:", cart); */
+    setCartKey(cart);
+    setIsCartLoaded(true);
+    isLoadingRef.current = false;
+    setIsCartLoading(false);
+    loadedRef.current = true;
+  };
+
+  const handleCartNotFound = () => {
+    /* console.error("[CartProvider Shopify] Cart not found"); */
+    isLoadingRef.current = false;
+    setIsCartLoading(false);
+    // If cart not found, remove cookie
+    cartIdUtils.removeCartIdCookie();
+    setCartKey(null);
+    loadedRef.current = true;
+  };
+
+  useEffect(() => {
+    if (queryReference && !isCartLoaded && !isCartLoading) {
+      setIsCartLoading(true);
+    }
+  }, [queryReference, isCartLoaded, isCartLoading]);
+
+  // Clean up query on unmount
+  useEffect(() => {
+    return () => {
+      if (disposeQuery) {
+        disposeQuery();
+      }
+    };
+  }, [disposeQuery]);
+
+  // Add cart creation function
+  const createNewCart = async () => {
+    try {
+      // Here we need to call cart creation mutation
+      // and save ID in cookies
+      /* console.log("[CartProvider Shopify] Creating new cart..."); */
+      // TODO: Implement cart creation mutation
+    } catch (error) {
+      console.error("[CartProvider Shopify] Failed to create cart:", error);
+    }
+  };
+
+  return (
+    <CartContextProvider
+      cartKey={cartKey}
+      setCartKey={setCartKey}
+      isCartLoading={isCartLoading}
+      isCartLoaded={isCartLoaded}
+    >
+      {queryReference && (
+        <CartDataHandler
+          queryReference={queryReference}
+          onCartData={handleCartData}
+          onCartNotFound={handleCartNotFound}
+        />
+      )}
+      {children}
+    </CartContextProvider>
+  );
+};
+
+export default CartProvider;

@@ -1,0 +1,34 @@
+"use client";
+
+import { Flex, Button } from "antd";
+import { createStyles } from "antd-style";
+import { ApiTagEdge } from "@codegen/schema-client";
+
+interface Props {
+  tags: ApiTagEdge[];
+}
+
+export const ProductTags = ({ tags }: Props) => {
+  const { styles } = useStyles();
+
+  return (
+    <Flex wrap gap={8}>
+      {tags?.map((tag) => (
+        <Button
+          key={tag.node.id}
+          id={tag.node.id}
+          className={styles.categoryLinkBtn}
+          type="link"
+        >
+          {tag.node.title}
+        </Button>
+      ))}
+    </Flex>
+  );
+};
+
+const useStyles = createStyles(({ css }) => ({
+  categoryLinkBtn: css`
+    padding: 0;
+  `,
+}));

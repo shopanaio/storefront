@@ -1,0 +1,26 @@
+"use client";
+
+import { OptionGrid, type OptionGridProps } from "@src/components/UI/OptionGrid";
+
+export type DrawerGridProps = Omit<OptionGridProps, 'gap'> & {
+  gap?: OptionGridProps['gap'];
+};
+
+/**
+ * Wrapper for OptionGrid with drawer-specific defaults
+ */
+export const DrawerGrid = ({
+  columns = 2,
+  gap = "sm",
+  className,
+  ...props
+}: DrawerGridProps) => {
+  return (
+    <OptionGrid
+      columns={columns}
+      gap={gap}
+      className={className}
+      {...props}
+    />
+  );
+};
