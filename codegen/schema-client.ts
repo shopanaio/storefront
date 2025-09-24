@@ -2838,7 +2838,7 @@ export type ApiProductVariantTagsArgs = {
   sort?: InputMaybe<TagSort>;
 };
 
-export type ApiPurchasable = ApiPurchasableSnapshot;
+export type ApiPurchasable = ApiProductVariant | ApiPurchasableSnapshot;
 
 export type ApiPurchasableSnapshot = {
   __typename?: 'PurchasableSnapshot';

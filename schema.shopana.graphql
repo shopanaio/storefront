@@ -3607,7 +3607,7 @@ type ProductVariant implements Node {
   ): ProductReviewConnection!
 }
 
-union Purchasable = PurchasableSnapshot
+union Purchasable = PurchasableSnapshot | ProductVariant
 
 type PurchasableSnapshot {
   snapshot: JSON!
