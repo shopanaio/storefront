@@ -1,10 +1,10 @@
-import { ApiCart, CountryCode, CurrencyCode } from "@codegen/schema-client";
+import { ApiCheckout, CountryCode, CurrencyCode } from "@codegen/schema-client";
 import { mockCartProducts } from "./cartProducts";
 import { newMockCartProducts } from "./newCartProducts";
 
 
-export const newMockCart: ApiCart = {
-  __typename: 'Cart',
+export const newMockCart: ApiCheckout = {
+  __typename: 'Checkout',
   /** List of all discounts applied at the cart level. */
   appliedDiscounts: [{
     __typename: 'AppliedDiscount',
@@ -43,13 +43,7 @@ export const newMockCart: ApiCart = {
 
   /** All cost calculations for the cart. */
   cost: {
-    __typename: 'CartCost',
-    /** Shipping cost including taxes (if selected). */
-    shippingCost: {
-      __typename: 'Money',
-      amount: 3,
-      currencyCode: CurrencyCode.Usd,
-    },
+    __typename: 'CheckoutCost',
     /** Total value of items before any discounts. */
     subtotalAmount: {
       __typename: 'Money',
@@ -72,6 +66,12 @@ export const newMockCart: ApiCart = {
     totalTaxAmount: {
       __typename: 'Money',
       amount: 10,
+      currencyCode: CurrencyCode.Usd,
+    },
+    /** Shipping cost including taxes (if selected). */
+    totalShippingAmount: {
+      __typename: 'Money',
+      amount: 3,
       currencyCode: CurrencyCode.Usd,
     },
   },

@@ -6,10 +6,10 @@ import { CartItem } from "@src/components/Cart/CartItem";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";
-import { CartLineFragment$key } from "@src/relay/queries/__generated__/CartLineFragment.graphql";
+import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
 
 interface CartTableListProps {
-  cartLines: CartLineFragment$key[]; // Now use typed array
+  cartLines: useCartLineFragment_CartLineFragment$key[];
   variant?: "drawer" | "page";
 }
 
@@ -34,8 +34,8 @@ export const CartTable: React.FC<CartTableListProps> = ({
       {(cartLines || [])
         .filter((cartLine) => cartLine) // Remove purchasable check since this is now a fragment
         .map((cartLine, index) => (
-          <React.Fragment key={cartLine.id || index}>
-            <CartItem product={cartLine} variant={variant} />
+          <React.Fragment key={index}>
+            <CartItem cartLineRef={cartLine} variant={variant} />
             {index < cartLines.length - 1 && <Divider style={{ margin: 0 }} />}
           </React.Fragment>
         ))}
@@ -53,7 +53,6 @@ const useStyles = createStyles(({ token, css }) => {
       display: none;
       ${mq.lg} {
         display: grid;
-
         grid-template-columns: 64px 2fr 1fr 1fr 40px;
         padding: ${token.padding}px;
         background-color: ${token.colorBgLayout};

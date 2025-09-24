@@ -6,13 +6,16 @@ import { RemoveFromCartInput } from "./index";
 
 // Define mutation inside hook with correct name
 const useRemoveItemFromCartMutation = graphql`
-  mutation useRemoveItemFromCartMutation($input: RemoveCartLineInput!) {
-    removeCartLine(input: $input) {
-      cart {
-        ...useCart_CartFragment
-      }
-      errors {
-        message
+  mutation useRemoveItemFromCartMutation($input: CheckoutLinesDeleteInput!) {
+    checkoutMutation {
+      checkoutLinesDelete(input: $input) {
+        checkout {
+          ...useCart_CartFragment
+        }
+        errors {
+          field
+          message
+        }
       }
     }
   }
@@ -40,26 +43,26 @@ const useRemoveItemFromCart = () => {
         commitRemoveLine({
           variables: {
             input: {
-              cartId: cart.id,
-              productId: input.productLine.purchasable.id,
+              checkoutId: cart.id,
+              lineIds: [input.checkoutLine.id],
             },
           },
           onCompleted: (response, errors) => {
             if (errors && errors.length > 0) {
               reject(errors);
             } else if (
-              response?.removeCartLine?.errors &&
-              response.removeCartLine.errors.length > 0
+              response?.checkoutMutation?.checkoutLinesDelete?.errors &&
+              response.checkoutMutation.checkoutLinesDelete.errors.length > 0
             ) {
-              reject(response.removeCartLine.errors);
+              reject(response.checkoutMutation.checkoutLinesDelete.errors);
             } else {
-              // If cart became null — remove cookie and clear context
-              if (!response?.removeCartLine?.cart) {
+              // If checkout became null — remove cookie and clear context
+              if (!response?.checkoutMutation?.checkoutLinesDelete?.checkout) {
                 cartIdUtils.removeCartIdCookie();
                 setCartKey(null);
               } else {
                 // Updating context cart fresh data
-                setCartKey(response.removeCartLine.cart);
+                setCartKey(response.checkoutMutation.checkoutLinesDelete.checkout);
               }
               resolve(response);
             }

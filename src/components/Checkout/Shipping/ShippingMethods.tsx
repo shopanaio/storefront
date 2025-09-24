@@ -1,11 +1,11 @@
 import { Flex } from "antd";
-import { ApiShippingMethod } from "@codegen/schema-client";
+import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
 import { shippingMethodComponents } from "./shippingMethodsMap";
 
 interface Props {
-  methods: ApiShippingMethod[];
+  methods: ApiCheckoutDeliveryMethod[];
   activeShippingKey: string;
   setValue: UseFormSetValue<CheckoutFormValues>;
   control: Control<CheckoutFormValues>;
@@ -22,14 +22,14 @@ export const ShippingMethods = ({
   return (
     <Flex vertical gap={10}>
       {methods.map((method) => {
-        const config = shippingMethodComponents[method.handle];
+        const config = shippingMethodComponents[method.code];
         if (!config) return null;
 
         const { Component, icon } = config;
 
         return (
           <Component
-            key={method.id}
+            key={method.code}
             method={method}
             icon={icon}
             activeShippingKey={activeShippingKey}

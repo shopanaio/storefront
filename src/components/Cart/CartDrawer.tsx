@@ -25,15 +25,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   const routes = useRoutes();
   const { cart } = useCart();
 
-  // Now use typed edges from CartFragment
-  const cartLines = (cart?.lines?.edges ?? [])
-    .map(
-      (edge: {
-        cursor: string;
-        node: useCartLineFragment_CartLineFragment$key;
-      }) => edge?.node
-    )
-    .filter(Boolean) as useCartLineFragment_CartLineFragment$key[];
+  const cartLines = (cart?.lines ??
+    []) as useCartLineFragment_CartLineFragment$key[];
 
   const subtotal = cart?.cost?.subtotalAmount;
 
@@ -117,15 +110,11 @@ const useStyles = createStyles(({ css, token }) => ({
       color: ${token.colorPrimary} !important;
     }
   `,
-
   footerWrapper: css`
     position: sticky;
     bottom: 0;
-
     margin-top: auto;
-
     padding: 0 ${token.padding}px ${token.padding}px;
-
     background-color: ${token.colorBgBase};
   `,
 }));

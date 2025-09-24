@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { CurrencyCode, ApiProduct, ApiCart } from 'codegen/schema-client';
+import { ApiCheckout, ApiProduct, CurrencyCode } from '@codegen/schema-client';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 
@@ -29,8 +29,8 @@ export const useCurrencyStore = create<CurrencyState>((set) => ({
 
 // cartStore
 interface CartState {
-  cart: ApiCart | null;
-  setCart: (cart: ApiCart | null) => void;
+  cart: ApiCheckout | null;
+  setCart: (cart: ApiCheckout | null) => void;
   error: Error | null;
   setError: (error: Error | null) => void;
   loading: boolean;

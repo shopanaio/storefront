@@ -6,15 +6,16 @@ import { useUpdateCartLineQuantityMutation as CartLineQuantityMutationType } fro
 import cartIdUtils from "@src/utils/cartId";
 
 export const useUpdateCartLineQuantityMutation = graphql`
-  mutation useUpdateCartLineQuantityMutation($input: UpdateCartLineQuantityInput!) {
-    updateCartLineQuantity(input: $input) {
-      cart {
-        ...useCart_CartFragment
-      }
-      errors {
-        field
-        message
-        code
+  mutation useUpdateCartLineQuantityMutation($input: CheckoutLinesUpdateInput!) {
+    checkoutMutation {
+      checkoutLinesUpdate(input: $input) {
+        checkout {
+          ...useCart_CartFragment
+        }
+        errors {
+          field
+          message
+        }
       }
     }
   }
@@ -35,25 +36,27 @@ const useUpdateCartLineQuantity = () => {
       commit({
         variables: {
           input: {
-            cartId: cart.id,
-            cartItemId,
-            quantity,
+            checkoutId: cart.id,
+            lines: [{
+              lineId: cartItemId,
+              quantity,
+            }],
           },
         },
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
             reject(errors);
-          } else if (response?.updateCartLineQuantity?.errors && response.updateCartLineQuantity.errors.length > 0) {
-            reject(response.updateCartLineQuantity.errors);
+          } else if (response?.checkoutMutation?.checkoutLinesUpdate?.errors && response.checkoutMutation.checkoutLinesUpdate.errors.length > 0) {
+            reject(response.checkoutMutation.checkoutLinesUpdate.errors);
           } else {
-            // If cart became null — reset cookie and context
-            if (!response?.updateCartLineQuantity?.cart) {
+            // If checkout became null — reset cookie and context
+            if (!response?.checkoutMutation?.checkoutLinesUpdate?.checkout) {
               cartIdUtils.removeCartIdCookie();
               setCartKey(null);
             } else {
-              setCartKey(response.updateCartLineQuantity.cart);
+              setCartKey(response.checkoutMutation.checkoutLinesUpdate.checkout);
             }
-            resolve(response?.updateCartLineQuantity?.cart);
+            resolve(response?.checkoutMutation?.checkoutLinesUpdate?.checkout);
           }
         },
         onError: (err) => {

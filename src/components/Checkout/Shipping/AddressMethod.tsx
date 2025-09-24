@@ -2,7 +2,6 @@ import { Flex, Typography, Input } from "antd";
 import { createStyles } from "antd-style";
 import { MethodCollapsePanel } from "../MethodCollapsePanel";
 import { CityModal } from "./CityModal";
-import { ApiShippingMethod } from "@codegen/schema-client";
 import { useTranslations } from "use-intl";
 import { StreetModal } from "./StreetModal";
 import {
@@ -14,11 +13,12 @@ import {
 import { CheckoutFormValues } from "../Checkout";
 
 import { PhoneInputField } from "../PhoneInputField";
+import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
 
 const { Text } = Typography;
 
 interface Props {
-  method: ApiShippingMethod;
+  method: ApiCheckoutDeliveryMethod;
   icon: string;
   activeShippingKey: string;
   setValue: UseFormSetValue<CheckoutFormValues>;
@@ -39,9 +39,10 @@ export const AddressMethod = ({
 
   return (
     <MethodCollapsePanel
-      key={method.id}
-      value={method.handle}
-      title={method.title}
+      key={method.code}
+      value={method.code}
+      title={method.code}
+      // TODO: Prepare i18n title and description for the method
       buttonLabel={
         <div className={styles.methodLogoWrapper}>
           <img className={styles.methodLogo} src={icon} alt="" />

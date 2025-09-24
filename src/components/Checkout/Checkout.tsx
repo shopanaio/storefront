@@ -4,7 +4,7 @@ import { Button, Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiCart } from "@codegen/schema-client";
+import { ApiCheckout } from "@codegen/schema-client";
 import { Summary } from "./Summary";
 import { useForm } from "react-hook-form";
 import { PaymentMethods } from "./Payment/PaymentMethods";
@@ -14,9 +14,8 @@ import { PhoneInputField } from "./PhoneInputField";
 const { Text } = Typography;
 
 interface Prop {
-  cart: ApiCart;
+  cart: ApiCheckout | null;
   onConfirm: () => void;
-  methods: ApiCart;
 }
 export interface City {
   AddressDeliveryAllowed: boolean;
@@ -84,14 +83,13 @@ export interface CheckoutFormValues {
   billingPhone: string;
 }
 
-export const Checkout = ({ cart, onConfirm, methods }: Prop) => {
+export const Checkout = ({ cart, onConfirm }: Prop) => {
   const t = useTranslations("Checkout");
   const { styles } = useStyles();
 
-  const defaultShippingKey =
-    methods?.shippingDetails?.selectedMethod?.handle || "";
-
-  const defaultPayment = methods?.paymentDetails?.selectedMethod?.handle || "";
+  const defaultDeliveryGroup = cart?.deliveryGroups?.[0];
+  const defaultShippingKey = defaultDeliveryGroup?.selectedDeliveryMethod?.code;
+  const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || "";
   /* console.log(cart); */
 
   const { control, handleSubmit, setValue, watch } =
@@ -157,9 +155,9 @@ export const Checkout = ({ cart, onConfirm, methods }: Prop) => {
                 {t("shipping")}
               </Text>
 
-              {methods?.shippingDetails && (
+              {cart?.deliveryGroups?.[0]?.deliveryMethods && (
                 <ShippingMethods
-                  methods={methods?.shippingDetails?.availableMethods || []}
+                  methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
                   activeShippingKey={activeShippingKey}
                   setValue={setValue}
                   control={control}
@@ -173,9 +171,9 @@ export const Checkout = ({ cart, onConfirm, methods }: Prop) => {
                 {t("payment")}
               </Text>
 
-              {methods?.paymentDetails && (
+              {[]?.length > 0 && (
                 <PaymentMethods
-                  methods={methods?.paymentDetails?.availableMethods || []}
+                  methods={[]}
                   activePayment={activePayment}
                   shippingAsBilling={shippingAsBilling}
                   setValue={setValue}

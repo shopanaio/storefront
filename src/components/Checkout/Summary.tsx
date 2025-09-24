@@ -3,7 +3,7 @@ import { createStyles } from "antd-style";
 import { SummaryItem } from "./SummaryItem";
 import { Price } from "../UI/Price/Price";
 import { useTranslations } from "next-intl";
-import { ApiCart } from "@codegen/schema-client";
+import { ApiCheckout } from "@codegen/schema-client";
 import { TbTicket } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useState } from "react";
@@ -17,7 +17,7 @@ const CartDrawer = dynamic(
 const { Text } = Typography;
 
 interface Prop {
-  cart: ApiCart;
+  cart: ApiCheckout;
   onConfirm: () => void;
 }
 
@@ -54,8 +54,8 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
       </Flex>
 
       <Flex vertical gap={8}>
-        {cart.lines.edges.map((product) => (
-          <SummaryItem key={product.cursor} product={product.node} />
+        {(cart?.lines ?? []).map((line) => (
+          <SummaryItem key={line.id} product={line} />
         ))}
       </Flex>
 
@@ -88,8 +88,8 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
             {t("shipping")}
           </Text>
           <Text className={styles.summaryRow} strong>
-            {cart.cost.shippingCost ? (
-              <Price money={cart.cost.shippingCost} />
+            {cart?.cost?.totalShippingAmount ? (
+              <Price money={cart.cost.totalShippingAmount} />
             ) : (
               ""
             )}
@@ -100,7 +100,11 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
             {t("tax")}
           </Text>
           <Text className={styles.summaryRow} strong>
-            <Price money={cart.cost.totalTaxAmount} />
+            {cart?.cost?.totalTaxAmount ? (
+              <Price money={cart.cost.totalTaxAmount} />
+            ) : (
+              ""
+            )}
           </Text>
         </Flex>
       </Flex>
@@ -111,7 +115,7 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
         <Flex justify="space-between">
           <Text className={styles.summaryTotal}>{t("total")}</Text>
           <Text className={styles.summaryTotal}>
-            <Price money={cart.cost.totalAmount} />
+            {cart ? <Price money={cart.cost.totalAmount} /> : null}
           </Text>
         </Flex>
         <Button
@@ -143,11 +147,9 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
 const useStyles = createStyles(({ css, token }) => ({
   sectionTitle: css`
     font-size: ${token.fontSizeLG}px;
-
     ${mq.lg} {
       font-size: ${token.fontSizeLG}px;
     }
-
     ${mq.xl} {
       font-size: ${token.fontSizeXL}px;
     }
@@ -155,21 +157,17 @@ const useStyles = createStyles(({ css, token }) => ({
   divider: css`
     margin: 0;
   `,
-
   couponInput: css`
     padding: ${token.paddingXS}px;
   `,
-
   placeholderIcon: css`
     color: ${token.colorTextPlaceholder};
   `,
-
   summaryRow: css`
     ${mq.md} {
       font-size: ${token.fontSizeLG}px;
     }
   `,
-
   summaryTotal: css`
     font-size: ${token.fontSizeLG}px;
     font-weight: 900;
@@ -177,7 +175,6 @@ const useStyles = createStyles(({ css, token }) => ({
       font-size: ${token.fontSizeXL}px;
     }
   `,
-
   confirmLinkBtn: css`
     padding: 0;
     text-decoration: underline;

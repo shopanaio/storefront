@@ -1,13 +1,16 @@
 import { graphql } from "react-relay";
 
 export const clearCartLinesMutation = graphql`
-  mutation clearCartLinesMutation($input: ClearCartLinesInput!) {
-    clearCartLines(input: $input) {
-      cart {
-        ...useCart_CartFragment
-      }
-      errors {
-        message
+  mutation clearCartLinesMutation($input: CheckoutLinesClearInput!) {
+    checkoutMutation {
+      checkoutLinesClear(input: $input) {
+        checkout {
+          ...useCart_CartFragment
+        }
+        errors {
+          field
+          message
+        }
       }
     }
   }

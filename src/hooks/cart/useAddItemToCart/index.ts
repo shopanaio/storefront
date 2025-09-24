@@ -4,9 +4,8 @@ import useAddItemToCartShopify from "./useAddItemToCart.shopify";
 
 // Universal interface for adding item to cart
 export interface AddToCartInput {
-  product: any; // Pass entire object product
+  productVariantId: string;
   quantity: number;
-  attributes?: Array<{ key: string; value: string }>;
 }
 
 export default cmsPick({

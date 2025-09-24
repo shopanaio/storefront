@@ -39,7 +39,7 @@ const SearchProductsFragment = graphql`
       edges {
         cursor
         node {
-          ... on Product {
+          ... on ProductVariant {
             ...useListingProductCardFragment_product
               @arguments(withOptions: true)
           }

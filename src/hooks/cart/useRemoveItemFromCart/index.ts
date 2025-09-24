@@ -5,7 +5,7 @@ import { useCartLineFragment_CartLineFragment$key } from "../useCartLineFragment
 
 // Universal interface for removing item from cart
 export interface RemoveFromCartInput {
-  productLine: useCartLineFragment_CartLineFragment$key;
+  checkoutLine: useCartLineFragment_CartLineFragment$key;
 }
 
 export default cmsPick({

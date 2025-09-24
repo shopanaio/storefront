@@ -1,38 +1,39 @@
 import { Badge, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiCartLine } from "@codegen/schema-client";
+import { ApiCheckoutLine } from "@codegen/schema-client";
 import { Price } from "../UI/Price/Price";
 import { Thumbnail } from "../UI/Thumbnail/Thumbnail";
 
 const { Text } = Typography;
 
 interface Prop {
-  product: ApiCartLine;
+  line: ApiCheckoutLine;
 }
 
-export const SummaryItem = ({ product }: Prop) => {
+export const SummaryItem = ({ line }: Prop) => {
   const { styles } = useStyles();
 
   return (
     <Flex className={styles.item} align="center" justify="space-between">
       <Flex align="center" gap={16}>
         <div className={styles.imgWrapper}>
-          <Badge count={product.quantity} color="blue" offset={[0, 0]}>
+          <Badge count={line.quantity} color="blue" offset={[0, 0]}>
             <Thumbnail
-              src={product.purchasable.cover?.url}
-              alt={product.purchasable.title}
+              // TODO: Fix
+              src={(line.purchasable as any)?.cover?.url || line.imageSrc || ""}
+              alt={(line.purchasable as any)?.title || line.title}
             />
           </Badge>
         </div>
 
         <Text className={styles.productName} type="secondary">
-          {product.purchasable.title}
+          {line.title}
         </Text>
       </Flex>
 
       <Text strong>
-        <Price money={product.cost.totalAmount} />
+        <Price money={line.cost.totalAmount} />
       </Text>
     </Flex>
   );

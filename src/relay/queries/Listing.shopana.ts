@@ -50,7 +50,7 @@ export const Listing = graphql`
       edges {
         cursor
         node {
-          ... on Product {
+          ... on ProductVariant {
             ...useListingProductCardFragment_product
               @arguments(withOptions: true)
           }

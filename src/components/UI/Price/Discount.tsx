@@ -5,12 +5,7 @@ import { createStyles } from "antd-style";
 import React from "react";
 
 import { SaleBadge } from "@src/components/UI/Badges/Sale";
-import { Price } from "@src/components/UI/Price/Price";
-
-interface Money {
-  amount: number;
-  currencyCode: string;
-}
+import { Money, Price } from "@src/components/UI/Price/Price";
 
 export interface Props {
   isAvailable: boolean;

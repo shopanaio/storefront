@@ -3,9 +3,6 @@ import { graphql } from "relay-runtime";
 const ProductQuery = graphql`
   query ProductQuery(
     $handle: String!
-    $first: Int = 3
-    $after: Cursor
-    $sort: ProductReviewSort = CREATED_AT_DESC
   ) {
     product(handle: $handle) {
       id
@@ -103,17 +100,19 @@ const ProductQuery = graphql`
         isRequired
         isMultiple
         items {
-          product {
-            id
-            title
-            handle
-            price {
-              amount
-              currencyCode
-            }
-            cover {
+          node {
+            ... on ProductVariant {
               id
-              url
+              title
+              handle
+              price {
+                amount
+                currencyCode
+              }
+              cover {
+                id
+                url
+              }
             }
           }
           maxQuantity
@@ -128,8 +127,6 @@ const ProductQuery = graphql`
       }
       seoTitle
       seoDescription
-      productType
-      containerId
       createdAt
       updatedAt
       rating {
@@ -142,7 +139,6 @@ const ProductQuery = graphql`
           percentage
         }
       }
-      ...Reviews @arguments(first: $first, after: $after, sort: $sort)
     }
   }
 `;

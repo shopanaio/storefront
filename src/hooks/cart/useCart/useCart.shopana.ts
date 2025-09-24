@@ -5,17 +5,13 @@ import cartIdUtils from "@src/utils/cartId";
 import React from "react";
 
 export const useCart_CartFragment = graphql`
-  fragment useCart_CartFragment on Cart {
+  fragment useCart_CartFragment on Checkout {
     id
-    iid
+    # iid
     createdAt
     updatedAt
     cost {
       subtotalAmount {
-        currencyCode
-        amount
-      }
-      shippingCost {
         currencyCode
         amount
       }
@@ -28,6 +24,10 @@ export const useCart_CartFragment = graphql`
         amount
       }
       totalAmount {
+        currencyCode
+        amount
+      }
+      totalShippingAmount {
         currencyCode
         amount
       }
@@ -66,20 +66,8 @@ export const useCart_CartFragment = graphql`
     #    }
     #  }
     totalQuantity
-    lines(first: 50) {
-      totalCount
-      edges {
-        cursor
-        node {
-          ...useCartLineFragment_CartLineFragment
-        }
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
+    lines {
+      ...useCartLineFragment_CartLineFragment
     }
   }
 `;
@@ -87,7 +75,10 @@ export const useCart_CartFragment = graphql`
 const useCart = () => {
   const { cartKey, isCartLoading, isCartLoaded } = useCartContext();
 
-  const cart = useFragment<useCart_CartFragment$key>(useCart_CartFragment, cartKey);
+  const cart = useFragment<useCart_CartFragment$key>(
+    useCart_CartFragment,
+    cartKey
+  );
 
   if (cart) {
     cartIdUtils.setCartIdCookie(cart?.id);

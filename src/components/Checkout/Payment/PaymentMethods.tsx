@@ -1,8 +1,12 @@
 import { Flex } from "antd";
-import { ApiPaymentMethod } from "@codegen/schema-client";
 import { Control, UseFormSetValue } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
 import { paymentMethodsMap } from "./paymentMethodsMap";
+
+/** TODO: Use api type when it's available */
+interface ApiPaymentMethod {
+  code: string;
+}
 
 interface Props {
   methods: ApiPaymentMethod[];
@@ -22,7 +26,7 @@ export const PaymentMethods = ({
   return (
     <Flex vertical gap={10}>
       {methods.map((method, index) => {
-        const config = paymentMethodsMap[method.handle];
+        const config = paymentMethodsMap[method.code];
         if (!config) return null;
 
         const { Component, icon } = config;

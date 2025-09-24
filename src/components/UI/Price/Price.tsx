@@ -2,11 +2,10 @@
 
 import React from "react";
 import { useFormatter } from "next-intl";
-//import type { ApiMoney } from "@codegen/schema-client";
 import { Typography } from "antd";
 
 export interface Money {
-  amount: number;
+  amount: string;
   currencyCode: string;
 }
 

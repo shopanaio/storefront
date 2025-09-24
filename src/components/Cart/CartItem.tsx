@@ -5,21 +5,20 @@ import useUpdateCartLineQuantity from "@src/hooks/cart/useUpdateCartLineQuantity
 import useCartLineFragment from "@src/hooks/cart/useCartLineFragment";
 
 interface CartItemProps {
-  product: useCartLineFragment_CartLineFragment$key;
+  cartLineRef: useCartLineFragment_CartLineFragment$key;
   onClick?: () => void;
   variant?: "drawer" | "page";
 }
 
 export const CartItem = ({
-  product,
+  cartLineRef,
   onClick,
   variant = "drawer",
 }: CartItemProps) => {
   const { removeFromCart } = useRemoveItemFromCart();
   const { updateQuantity } = useUpdateCartLineQuantity();
 
-  // Use hook for mapping Shopify CartLine to Shopana structure
-  const { cartLine } = useCartLineFragment(product);
+  const { cartLine } = useCartLineFragment(cartLineRef);
 
   if (!cartLine) {
     return null;
@@ -41,7 +40,7 @@ export const CartItem = ({
 
   const handleRemove = () => {
     removeFromCart({
-      productLine: cartLine,
+      checkoutLine: cartLine,
     });
   };
 

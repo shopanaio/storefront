@@ -1,6 +1,4 @@
-import { ApiProduct } from "@codegen/schema-client";
-
-// Universal interface for checking if item is in cart
+// Universal interface for checking if item is in checkout
 export interface UseIsInCartProps {
-  product: ApiProduct; // Pass the entire product object instead of separate IDs
+  productVariantId: string;
 }

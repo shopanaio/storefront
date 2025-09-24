@@ -1,15 +1,15 @@
 import { Checkbox, Flex } from "antd";
 import { createStyles, cx } from "antd-style";
 import { MethodCollapsePanel } from "../MethodCollapsePanel";
-import { ApiPaymentMethod } from "@codegen/schema-client";
 import { CardPaymentForm } from "./CardPaymentForm";
 import { Control, Controller, UseFormSetValue } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
 import { BillingAddress } from "./BillingAddress";
 import { useTranslations } from "next-intl";
+import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
 
 interface Props {
-  method: ApiPaymentMethod;
+  method: ApiCheckoutDeliveryMethod;
   icon: string;
   activePayment: string;
   shippingAsBilling: boolean;
@@ -31,9 +31,10 @@ export const CardPaymentMethod = ({
 
   return (
     <MethodCollapsePanel
-      key={method.id}
-      value={method.handle}
-      title={method.title}
+      key={method.code}
+      value={method.code}
+      // TODO: Prepare i18n title and description for the method
+      title={method.code}
       buttonLabel={
         <div className={styles.methodLogoWrapper}>
           <img className={styles.methodLogo} src={icon} alt="" />

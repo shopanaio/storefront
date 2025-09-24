@@ -3,7 +3,7 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { fallbackImageBase64 } from "../Listing/fallbackImageBase64";
-import { ApiCartLine } from "@codegen/schema-client";
+import { ApiCheckoutLine } from "@codegen/schema-client";
 import { Price } from "../UI/Price/Price";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { useBoxBuilderStore } from "@src/store/appStore";
@@ -15,7 +15,7 @@ import { ProductType } from "./ProductCard";
 const { Text } = Typography;
 
 interface BoxCartLineProps {
-  product: ApiCartLine;
+  product: ApiCheckoutLine;
 }
 
 export default function BoxCartLine({ product }: BoxCartLineProps) {
@@ -24,18 +24,19 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
 
   const { selectedBoxId, selectedCardIds } = useBoxBuilderStore();
 
-  const isItBox = product.purchasable?.id === selectedBoxId;
-  const isItEnvelope = selectedCardIds.includes(product.purchasable?.id ?? "");
+  const isItBox = product.purchasableId === selectedBoxId;
+  const isItEnvelope = selectedCardIds.includes(product.purchasableId ?? "");
 
-  const purchasable = product.purchasable ?? {};
-  const imageUrl = purchasable.cover?.url ?? fallbackImageBase64;
-  const title = purchasable.title ?? "";
+  const purchasable = (product as any).purchasable ?? {};
+  const imageUrl =
+    purchasable.cover?.url || product.imageSrc || fallbackImageBase64;
+  const title = purchasable.title || product.title || "";
 
   const price = product.cost.unitPrice;
 
   const handleClick = () => {
     push(Activity.Product, {
-      productHandle: product.purchasable.handle,
+      productHandle: purchasable.handle,
       productType: isItBox
         ? ProductType.Box
         : isItEnvelope
@@ -71,7 +72,7 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
   );
 }
 
-const useStyles = createStyles(({ token, css }) => {
+const useStyles = createStyles(({ css }) => {
   return {
     productImage: css`
       width: 64px;

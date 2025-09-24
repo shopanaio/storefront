@@ -14,7 +14,7 @@ const ProductSlideShowFragment = graphql`
     listing(first: 12) {
       edges {
         node {
-          ... on Product {
+          ... on ProductVariant {
             ...useListingProductCardFragment_product
               @arguments(withOptions: false)
           }

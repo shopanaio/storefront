@@ -2,18 +2,16 @@ import { useListingProductCardFragment_product$key } from "@src/components/Listi
 import { graphql, useFragment } from "react-relay";
 
 const UseProductCardFragment = graphql`
-  fragment useListingProductCardFragment_product on Product
+  fragment useListingProductCardFragment_product on ProductVariant
   @argumentDefinitions(withOptions: { type: "Boolean!", defaultValue: false }) {
     id
     title
     handle
     description
-
     rating {
       rating
       count
     }
-
     cover {
       id
       url
