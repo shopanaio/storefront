@@ -1,49 +1,4 @@
-"""
-Directs the executor to defer this fragment when the `if` argument is true or undefined.
-"""
-directive @defer(
-  """Deferred when true or undefined."""
-  if: Boolean = true
-
-  """Unique name"""
-  label: String
-) on FRAGMENT_SPREAD | INLINE_FRAGMENT
-
-directive @goField(forceResolver: Boolean, name: String, omittable: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
-
-directive @goModel(model: String, models: [String!], forceGenerate: Boolean) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
-
-directive @goTag(key: String!, value: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
-
-"""Input data for adding an item to an existing cart."""
-input AddCartLineInput {
-  """ID of the cart."""
-  cartId: ID!
-
-  """
-  ID of the product to add.
-  Error if the product is not found or already exists in the cart.
-  """
-  productId: ID!
-
-  """Quantity to add; must be greater than 0."""
-  quantity: Int!
-
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
-}
-
-"""Payload returned after adding an item to the cart."""
-type AddCartLinePayload {
-  """The updated cart."""
-  cart: Cart
-
-  """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
-}
+directive @defer(label: String, if: Boolean! = true) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
 """
 A postal address.
@@ -151,18 +106,6 @@ input AddressInput {
   metadata: JSON
 }
 
-"""Information about an applied discount or promotion."""
-type AppliedDiscount {
-  """ID of the promotion or coupon in the system (if applicable)."""
-  id: ID
-
-  """Coupon code used (if this is a coupon)."""
-  code: String
-
-  """Amount by which the cost was reduced."""
-  amount: Money!
-}
-
 """A content article."""
 type Article implements Node {
   """Object identifier (Internal)."""
@@ -241,216 +184,7 @@ enum ArticleSort {
   TITLE_DESC
 }
 
-"""A shopping cart with multiple items."""
-type Cart implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """A globally-unique ID."""
-  id: ID!
-
-  """When this cart was first created."""
-  createdAt: DateTime!
-
-  """When this cart was last updated."""
-  updatedAt: DateTime!
-
-  """All cost calculations for the cart."""
-  cost: CartCost!
-
-  """Quantity of the item being purchased."""
-  totalQuantity: Int!
-
-  """List of items in the cart (paginated)."""
-  lines(
-    """Return the first n items after the given cursor."""
-    first: Int = 50
-
-    """Return items after this cursor."""
-    after: Cursor
-
-    """Return the last n items before the given cursor."""
-    last: Int
-
-    """Return items before this cursor."""
-    before: Cursor
-  ): CartLineConnection!
-
-  """List of all discounts applied at the cart level."""
-  appliedDiscounts: [AppliedDiscount!]!
-
-  """Details of all tax components applied at the cart level."""
-  appliedTaxLines: [TaxLine!]!
-
-  """Shipping information including available and selected methods."""
-  shippingDetails: CartShippingDetails!
-
-  """Notifications for the user regarding the cart."""
-  notifications: [CartNotification!]!
-
-  """Shipping address, if provided."""
-  shippingAddress: Address
-
-  """Billing address, if provided."""
-  billingAddress: Address
-}
-
-"""All monetary calculations related to the cart."""
-type CartCost {
-  """Total value of items before any discounts."""
-  subtotalAmount: Money!
-
-  """Shipping cost including taxes (if selected)."""
-  shippingCost: Money
-
-  """Total discount from both item-level and cart-level promotions."""
-  totalDiscountAmount: Money!
-
-  """Total tax amount applied to the cart."""
-  totalTaxAmount: Money!
-
-  """Final amount to be paid, including item cost, shipping, and taxes."""
-  totalAmount: Money!
-}
-
-"""A single item in a shopping cart."""
-type CartLine implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Quantity of the item being purchased."""
-  quantity: Int!
-
-  """Cost calculations for this cart item."""
-  cost: CartLineCost!
-
-  """The purchasable item added to the cart, such as a product or bundle."""
-  purchasable: Purchasable!
-
-  """List of discounts applied specifically to this cart item."""
-  appliedDiscounts: [AppliedDiscount!]!
-
-  """Details of all taxes applied to this cart item."""
-  appliedTaxLines: [TaxLine!]!
-
-  """
-  A list of components that make up this cart line, such as individual products in a bundle.
-  """
-  children: [CartLine]!
-}
-
-"""A paginated list of CartLines."""
-type CartLineConnection {
-  """The total number of items."""
-  totalCount: Int!
-
-  """Pagination information."""
-  pageInfo: PageInfo!
-
-  """List of CartLine edges."""
-  edges: [CartLineEdge!]!
-}
-
-"""Detailed breakdown of costs for a cart line item"""
-type CartLineCost {
-  """The original list price per unit before any discounts."""
-  compareAtUnitPrice: Money!
-
-  """
-  The current price per unit before discounts are applied (may differ from compareAt price if on sale).
-  """
-  unitPrice: Money!
-
-  """Discount amount applied to a single unit."""
-  discountAmount: Money!
-
-  """Total cost of all units before discounts."""
-  subtotalAmount: Money!
-
-  """Total tax amount applied to the cart line."""
-  taxAmount: Money!
-
-  """
-  Final total cost for the cart line, including all discounts, taxes, and any additional fees.
-  """
-  totalAmount: Money!
-}
-
-"""An edge in a paginated list of CartLines."""
-type CartLineEdge {
-  """Cursor for pagination."""
-  cursor: Cursor!
-
-  """The CartLine at this edge."""
-  node: CartLine!
-}
-
-"""Input data for a single item in the cart."""
-input CartLineInput {
-  """Quantity of the product in the cart."""
-  quantity: Int!
-
-  """ID of the product to add or update."""
-  productId: ID!
-}
-
-"""A non-blocking warning generated by cart operations."""
-type CartNotification {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """A globally-unique ID."""
-  id: ID!
-
-  """Code categorizing the warning."""
-  code: CartNotificationCode!
-
-  """Importance level of the warning."""
-  severity: NotificationSeverity!
-
-  """Whether the warning has been acknowledged by the user."""
-  isDismissed: Boolean!
-}
-
-"""
-Codes for warnings that may be returned with Cart mutations,
-indicating non-blocking adjustments or issues in the cart.
-"""
-enum CartNotificationCode {
-  """
-  The requested item is completely out of stock and has been removed from the cart.
-  """
-  OUT_OF_STOCK
-
-  """
-  The requested quantity exceeds available stock;
-  quantity was automatically reduced to the maximum available.
-  """
-  NOT_ENOUGH_STOCK
-
-  """
-  The price of one or more items has changed since they were added to the cart.
-  """
-  PRICE_CHANGED
-
-  """An item in the cart is no longer available for sale."""
-  ITEM_UNAVAILABLE
-}
-
-"""Details about shipping methods at the cart level."""
-type CartShippingDetails {
-  """List of available shipping methods."""
-  availableMethods: [ShippingMethod!]!
-
-  """Currently selected shipping method, if any."""
-  selectedMethod: ShippingMethod
-
-  """Estimated delivery date based on the selected shipping method."""
-  estimatedDeliveryDate: DateTime
-}
+scalar BigInt
 
 type Category implements Node {
   """Object identifier (Internal)."""
@@ -581,64 +315,658 @@ enum CategorySort {
   TITLE_DESC
 }
 
-"""Input data for placing an order (checkout)."""
-input CheckoutInput {
-  """Unique key for idempotency."""
-  idempotencyKey: String!
+"""A checkout with multiple items."""
+type Checkout implements Node {
+  """A globally-unique ID."""
+  id: ID!
 
-  """Cart ID."""
-  cartId: ID!
+  """When this checkout was first created."""
+  createdAt: DateTime!
 
-  """Billing address."""
-  billingAddress: AddressInput!
+  """When this checkout was last updated."""
+  updatedAt: DateTime!
 
-  """Shipping address."""
-  shippingAddress: AddressInput!
+  """All cost calculations for the checkout."""
+  cost: CheckoutCost!
 
-  """Customer contact details."""
-  customerDetails: OrderCustomerDetailsInput!
+  """Customer identity associated with the checkout."""
+  customerIdentity: CheckoutCustomerIdentity!
 
-  """Payment method ID."""
-  paymentMethod: ID!
+  """Customer note or special instructions for the checkout."""
+  customerNote: String
 
-  """Shipping method ID."""
-  shippingMethod: ID!
+  """Quantity of the item being purchased."""
+  totalQuantity: Int!
 
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
+  """List of items in the checkout (paginated)."""
+  lines: [CheckoutLine!]!
+
+  """Notifications for the user regarding the checkout."""
+  notifications: [CheckoutNotification!]!
+
+  """Delivery groups."""
+  deliveryGroups: [CheckoutDeliveryGroup!]!
+
+  """Applied promo codes for the checkout."""
+  appliedPromoCodes: [CheckoutPromoCode!]!
 }
 
-"""Payload returned after performing checkout (placing an order)."""
-type CheckoutPayload {
-  """The newly created order."""
-  order: Order
+"""All monetary calculations related to the checkout."""
+type CheckoutCost {
+  """Total value of items before any discounts."""
+  subtotalAmount: Money!
+
+  """Total discount from both item-level and checkout-level promotions."""
+  totalDiscountAmount: Money!
+
+  """Total tax amount applied to the checkout."""
+  totalTaxAmount: Money!
+
+  """Total shipping cost (only MERCHANT_COLLECTED payments)."""
+  totalShippingAmount: Money!
+
+  """Final amount to be paid, including item cost, shipping, and taxes."""
+  totalAmount: Money!
+}
+
+"""Input data for creating a new checkout."""
+input CheckoutCreateInput {
+  """Unique idempotency key for the checkout."""
+  idempotency: String!
+
+  """Source of sales for the checkout."""
+  externalSource: String
+
+  """ID of the external source for the checkout."""
+  externalId: String
+
+  """Locale code for the checkout. ISO 639-1 (2 letters, e.g., "en", "ru")"""
+  localeCode: String!
+
+  """
+  Display currency code for all items. ISO 4217 (3 letters, e.g., "USD", "EUR")
+  """
+  currencyCode: CurrencyCode!
+
+  """Initial items to add to the new checkout."""
+  items: [CheckoutLineInput!]!
+}
+
+"""Payload returned after creating a checkout."""
+type CheckoutCreatePayload {
+  """The newly created checkout."""
+  checkout: Checkout
 
   """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
+  errors: [CheckoutFieldError!]
 }
 
-"""Input data for clearing all items from a cart."""
-input ClearCartLinesInput {
-  """ID of the cart to clear."""
-  cartId: ID!
+"""Input data for updating the display currency of the checkout."""
+input CheckoutCurrencyCodeUpdateInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
 
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
+  """Currency code according to ISO 4217 (e.g., "USD", "EUR")."""
+  currencyCode: CurrencyCode!
 }
 
-"""Payload returned after clearing all items from the cart."""
-type ClearCartLinesPayload {
-  """The updated (now empty) cart."""
-  cart: Cart
+type CheckoutCustomerIdentity {
+  """Country code of the customer."""
+  countryCode: CountryCode
+
+  """Customer associated with the checkout."""
+  customer: User
+
+  """Customer email address associated with the checkout."""
+  email: Email
+
+  """Phone number of the customer."""
+  phone: String
+}
+
+"""
+Input data for updating customer identification data associated with the checkout.
+"""
+input CheckoutCustomerIdentityUpdateInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """
+  Customer's email address. If specified, will be linked to the checkout.
+  """
+  email: Email
+
+  """Phone number of the customer."""
+  phone: String
+
+  """
+  Country code of the customer.
+  ISO 3166-1 alpha-2.
+  """
+  countryCode: CountryCode
+
+  """
+  Customer identifier in external/internal system.
+  Used to link the checkout with an existing customer.
+  """
+  customerId: ID
+}
+
+"""Input data for updating the customer note attached to the checkout."""
+input CheckoutCustomerNoteUpdateInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """
+  Text of the customer note (delivery instructions, etc.).
+  Empty value clears the note.
+  """
+  note: String
+}
+
+"""Delivery address associated with a checkout."""
+type CheckoutDeliveryAddress {
+  """Unique identifier for the delivery address."""
+  id: ID!
+
+  """Primary address line."""
+  address1: String!
+
+  """Secondary address line."""
+  address2: String
+
+  """City name."""
+  city: String!
+
+  """Country code (ISO 3166-1 alpha-2)."""
+  countryCode: CountryCode!
+
+  """Province code."""
+  provinceCode: String
+
+  """Postal code."""
+  postalCode: String
+
+  """Email address for this delivery address."""
+  email: Email
+
+  """First name for delivery."""
+  firstName: String
+
+  """Last name for delivery."""
+  lastName: String
+
+  """Data associated with the delivery address."""
+  data: JSON
+}
+
+"""
+Input data for adding one or more delivery addresses to the checkout.
+Supports multi-shipping.
+"""
+input CheckoutDeliveryAddressesAddInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """List of delivery addresses to be added."""
+  addresses: [CheckoutDeliveryAddressInput!]!
+}
+
+"""
+Input data for removing one or more delivery addresses from the checkout.
+"""
+input CheckoutDeliveryAddressesRemoveInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """Identifiers of delivery addresses to be removed."""
+  addressIds: [ID!]!
+}
+
+"""Input data for batch updating previously added delivery addresses."""
+input CheckoutDeliveryAddressesUpdateInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """List of updates for delivery addresses."""
+  updates: [CheckoutDeliveryAddressUpdateInput!]!
+}
+
+input CheckoutDeliveryAddressInput {
+  """Primary address line."""
+  address1: String!
+
+  """Secondary address line."""
+  address2: String
+
+  """City name."""
+  city: String!
+
+  """Country code (ISO 3166-1 alpha-2)."""
+  countryCode: CountryCode!
+
+  """Province code."""
+  provinceCode: String
+
+  """Postal code."""
+  postalCode: String
+
+  """Email address for this delivery address."""
+  email: Email
+
+  """First name for delivery."""
+  firstName: String
+
+  """Last name for delivery."""
+  lastName: String
+
+  """Data associated with the delivery address."""
+  data: JSON
+}
+
+"""
+Delivery address update element: which address to update and with what data.
+"""
+input CheckoutDeliveryAddressUpdateInput {
+  """Identifier of the existing delivery address in the checkout."""
+  addressId: ID!
+
+  """New postal address values."""
+  address: CheckoutDeliveryAddressInput!
+}
+
+"""Delivery group for one or more checkout lines."""
+type CheckoutDeliveryGroup {
+  """Unique identifier for the delivery group."""
+  id: ID!
+
+  """Checkout lines associated with the delivery group."""
+  checkoutLines: [CheckoutLine!]!
+
+  """Delivery address associated with the delivery group."""
+  deliveryAddress: CheckoutDeliveryAddress
+
+  """Delivery methods associated with the delivery group."""
+  deliveryMethods: [CheckoutDeliveryMethod!]!
+
+  """Selected delivery method associated with the delivery group."""
+  selectedDeliveryMethod: CheckoutDeliveryMethod
+
+  """Estimated cost of the delivery group."""
+  estimatedCost: DeliveryCost
+}
+
+type CheckoutDeliveryMethod {
+  """Code of the shipping method (e.g., "standard", "express", "courier")."""
+  code: String!
+
+  """Delivery method type associated with the delivery option."""
+  deliveryMethodType: CheckoutDeliveryMethodType!
+
+  """Provider data associated with the delivery method."""
+  provider: CheckoutDeliveryProvider!
+}
+
+enum CheckoutDeliveryMethodType {
+  """Pickup delivery method."""
+  PICKUP
+
+  """Shipping delivery method."""
+  SHIPPING
+}
+
+"""
+Input data for selecting/changing delivery method.
+Can be applied to the entire checkout or to a specific delivery address.
+"""
+input CheckoutDeliveryMethodUpdateInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """Code of the delivery method available for this checkout/address."""
+  shippingMethodCode: String!
+
+  """
+  Identifier of the delivery group for which the delivery method is selected.
+  """
+  deliveryGroupId: ID!
+}
+
+type CheckoutDeliveryProvider {
+  """
+  Code of the provider (e.g., "novaposhta", "ups", "fedex", "dhl", "usps").
+  """
+  code: String!
+
+  """Data associated with the provider."""
+  data: JSON!
+}
+
+type CheckoutFieldError {
+  """The field that caused the error."""
+  field: String!
+
+  """The error message."""
+  message: String!
+}
+
+"""Input data for updating the language/locale code of the checkout."""
+input CheckoutLanguageCodeUpdateInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """
+  Language/locale code (ISO 639-1, BCP 47 if necessary), e.g. "en", "ru", "uk".
+  Affects localization and formatting.
+  """
+  localeCode: String!
+}
+
+"""A single item in a checkout."""
+type CheckoutLine implements Node {
+  """Global unique identifier for the checkout line."""
+  id: ID!
+
+  """Title of the purchasable."""
+  title: String!
+
+  """SKU of the purchasable."""
+  sku: String
+
+  """Image URL of the purchasable."""
+  imageSrc: String
+
+  """Quantity of the item being purchased."""
+  quantity: Int!
+
+  """Cost calculations for this checkout item."""
+  cost: CheckoutLineCost!
+
+  """
+  A list of components that make up this checkout line, such as individual products in a bundle.
+  """
+  children: [CheckoutLine]!
+
+  """ID of the purchasable."""
+  purchasableId: ID!
+
+  """Purchasable unit."""
+  purchasable: Purchasable
+}
+
+"""Detailed breakdown of costs for a checkout line item"""
+type CheckoutLineCost {
+  """The original list price per unit before any discounts."""
+  compareAtUnitPrice: Money!
+
+  """
+  The current price per unit before discounts are applied (may differ from compareAt price if on sale).
+  """
+  unitPrice: Money!
+
+  """Discount amount applied to a line."""
+  discountAmount: Money!
+
+  """Total cost of all units before discounts."""
+  subtotalAmount: Money!
+
+  """Total tax amount applied to the checkout line."""
+  taxAmount: Money!
+
+  """Total cost of this line (all units), after discounts and taxes."""
+  totalAmount: Money!
+}
+
+"""Input data for a single item in the checkout."""
+input CheckoutLineInput {
+  """Quantity of the product in the checkout."""
+  quantity: Int!
+
+  """ID of the product to add or update."""
+  purchasableId: ID!
+
+  """ID of the purchasable snapshot to add or update."""
+  purchasableSnapshot: PurchasableSnapshotInput
+}
+
+"""Input data for adding an item to an existing checkout."""
+input CheckoutLinesAddInput {
+  """ID of the checkout."""
+  checkoutId: ID!
+
+  """List of checkout items to add."""
+  lines: [CheckoutLineInput!]!
+}
+
+"""Payload returned after adding an item to the checkout."""
+type CheckoutLinesAddPayload {
+  """The updated checkout."""
+  checkout: Checkout
 
   """List of field-specific or general errors."""
-  errors: [FieldError!]
+  errors: [CheckoutFieldError!]
+}
 
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
+"""Input data for clearing all items from a checkout."""
+input CheckoutLinesClearInput {
+  """ID of the checkout to clear."""
+  checkoutId: ID!
+}
+
+"""Payload returned after clearing all items from the checkout."""
+type CheckoutLinesClearPayload {
+  """The updated (now empty) checkout."""
+  checkout: Checkout
+
+  """List of field-specific or general errors."""
+  errors: [CheckoutFieldError!]
+}
+
+"""Input data for removing one or more items from the checkout."""
+input CheckoutLinesDeleteInput {
+  """ID of the checkout."""
+  checkoutId: ID!
+
+  """IDs of the lines to remove."""
+  lineIds: [ID!]!
+}
+
+"""Payload returned after removing an item from the checkout."""
+type CheckoutLinesDeletePayload {
+  """The updated checkout."""
+  checkout: Checkout
+
+  """List of field-specific or general errors."""
+  errors: [CheckoutFieldError!]
+}
+
+"""Input data for adding an item to an existing checkout line."""
+input CheckoutLinesLineAddInput {
+  """ID of the purchasable to add."""
+  purchasableId: ID!
+
+  """Quantity to add; must be greater than 0."""
+  quantity: Int!
+}
+
+"""Input data for updating the quantity of a specific checkout item."""
+input CheckoutLinesUpdateInput {
+  """ID of the checkout."""
+  checkoutId: ID!
+
+  """List of checkout items to update."""
+  lines: [CheckoutLineUpdateInput!]!
+}
+
+"""Payload returned after updating a checkout item's quantity."""
+type CheckoutLinesUpdatePayload {
+  """The updated checkout."""
+  checkout: Checkout
+
+  """List of field-specific or general errors."""
+  errors: [CheckoutFieldError!]
+}
+
+"""Input data for updating the quantity of a specific checkout item."""
+input CheckoutLineUpdateInput {
+  """ID of the checkout item to update."""
+  lineId: ID!
+
+  """
+  New quantity for the checkout item.
+  If set to 0, the item will be removed.
+  """
+  quantity: Int!
+}
+
+type CheckoutMutation {
+  """Creates a new checkout."""
+  checkoutCreate(input: CheckoutCreateInput!): Checkout!
+
+  """Adds an item to an existing checkout."""
+  checkoutLinesAdd(input: CheckoutLinesAddInput!): CheckoutLinesAddPayload!
+
+  """Updates the quantity of a specific checkout item."""
+  checkoutLinesUpdate(input: CheckoutLinesUpdateInput!): CheckoutLinesUpdatePayload!
+
+  """Removes a single item from the checkout."""
+  checkoutLinesDelete(input: CheckoutLinesDeleteInput!): CheckoutLinesDeletePayload!
+
+  """Clears all items from a checkout."""
+  checkoutLinesClear(input: CheckoutLinesClearInput!): CheckoutLinesClearPayload!
+
+  """
+  Updates customer identification data associated with the checkout
+  (email, customerId and if necessary country/language for calculations).
+  """
+  checkoutCustomerIdentityUpdate(input: CheckoutCustomerIdentityUpdateInput!): Checkout!
+
+  """
+  Updates the customer note attached to the checkout (delivery instructions, etc.).
+  """
+  checkoutCustomerNoteUpdate(input: CheckoutCustomerNoteUpdateInput!): Checkout!
+
+  """
+  Updates the language/locale of the checkout (affects localization and formatting).
+  """
+  checkoutLanguageCodeUpdate(input: CheckoutLanguageCodeUpdateInput!): Checkout!
+
+  """
+  Updates the display currency of the checkout (ISO 4217, e.g. "USD", "EUR").
+  """
+  checkoutCurrencyCodeUpdate(input: CheckoutCurrencyCodeUpdateInput!): Checkout!
+
+  """
+  Adds one or more delivery addresses to the checkout (supports multi-shipping).
+  """
+  checkoutDeliveryAddressesAdd(input: CheckoutDeliveryAddressesAddInput!): Checkout!
+
+  """
+  Updates previously added delivery addresses (e.g., correcting postal code or city).
+  """
+  checkoutDeliveryAddressesUpdate(input: CheckoutDeliveryAddressesUpdateInput!): Checkout!
+
+  """
+  Removes one or more delivery addresses previously attached to the checkout.
+  """
+  checkoutDeliveryAddressesRemove(input: CheckoutDeliveryAddressesRemoveInput!): Checkout!
+
+  """
+  Selects or changes the delivery method for the entire checkout or specific address.
+  """
+  checkoutDeliveryMethodUpdate(input: CheckoutDeliveryMethodUpdateInput!): Checkout!
+
+  """Applies a promo code/coupon to the checkout."""
+  checkoutPromoCodeAdd(input: CheckoutPromoCodeAddInput!): Checkout!
+
+  """Removes a previously applied promo code/coupon from the checkout."""
+  checkoutPromoCodeRemove(input: CheckoutPromoCodeRemoveInput!): Checkout!
+}
+
+"""A non-blocking warning generated by checkout operations."""
+type CheckoutNotification {
+  """A globally-unique ID."""
+  id: ID!
+
+  """Code categorizing the warning."""
+  code: CheckoutNotificationCode!
+
+  """Importance level of the warning."""
+  severity: NotificationSeverity!
+
+  """Whether the warning has been acknowledged by the user."""
+  isDismissed: Boolean!
+}
+
+"""
+Codes for warnings that may be returned with Checkout mutations,
+indicating non-blocking adjustments or issues in the checkout.
+"""
+enum CheckoutNotificationCode {
+  """
+  The requested item is completely out of stock and has been removed from the checkout.
+  """
+  OUT_OF_STOCK
+
+  """
+  The requested quantity exceeds available stock;
+  quantity was automatically reduced to the maximum available.
+  """
+  NOT_ENOUGH_STOCK
+
+  """
+  The price of one or more items has changed since they were added to the checkout.
+  """
+  PRICE_CHANGED
+
+  """An item in the checkout is no longer available for sale."""
+  ITEM_UNAVAILABLE
+}
+
+"""Applied promo code for a checkout."""
+type CheckoutPromoCode {
+  """Promo code text."""
+  code: String!
+
+  """When this promo code was applied."""
+  appliedAt: DateTime!
+
+  """Discount type (percentage)."""
+  discountType: String!
+
+  """Discount value (percentage as number)."""
+  value: Int!
+
+  """Discount provider."""
+  provider: String!
+
+  """Discount conditions."""
+  conditions: JSON
+}
+
+"""Input data for applying a promo code to the checkout."""
+input CheckoutPromoCodeAddInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """Text code of the coupon/promo code."""
+  code: String!
+}
+
+"""
+Input data for removing a previously applied promo code from the checkout.
+"""
+input CheckoutPromoCodeRemoveInput {
+  """Identifier of the checkout on which the operation is performed."""
+  checkoutId: ID!
+
+  """Text code of the coupon/promo code to be cancelled."""
+  code: String!
+}
+
+type CheckoutQuery {
+  """Get a checkout by its ID."""
+  checkout(id: ID!): Checkout
 }
 
 enum CountryCode {
@@ -1252,28 +1580,9 @@ enum CountryCode {
   VI
 }
 
-"""Input data for creating a new cart."""
-input CreateCartInput {
-  """Currency code for all items (e.g., "USD")."""
-  currencyCode: CurrencyCode!
-
-  """Initial items to add to the new cart."""
-  items: [CartLineInput!]!
-
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
-}
-
-"""Payload returned after creating a cart."""
-type CreateCartPayload {
-  """The newly created cart."""
-  cart: Cart
-
-  """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
+input CreateOrderInput {
+  """ID of the checkout."""
+  checkoutId: ID!
 }
 
 """Input type for submitting a new product review."""
@@ -1818,6 +2127,15 @@ scalar DateTime
 
 scalar Decimal
 
+"""Delivery cost with payment model"""
+type DeliveryCost {
+  """Delivery amount"""
+  amount: Money!
+
+  """Shipping payment model"""
+  paymentModel: ShippingPaymentModel!
+}
+
 scalar Email
 
 """Error information for a failed field."""
@@ -1868,56 +2186,6 @@ input FilterInput {
 
   """The value handles of the Filter. Ranges accept min, max values."""
   values: [String!]!
-}
-
-"""Fulfillment information for the order."""
-type Fulfillment implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Fulfillment status."""
-  status: FulfillmentStatus!
-
-  """Tracking number."""
-  trackingNumber: String
-
-  """Tracking URL."""
-  trackingUrl: String
-
-  """Fulfillment creation date."""
-  createdAt: DateTime!
-
-  """Fulfillment lines."""
-  lines: [FulfillmentLine!]!
-}
-
-"""Fulfillment line within a fulfillment."""
-type FulfillmentLine implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Order item ID."""
-  orderItemId: ID!
-
-  """Quantity shipped."""
-  quantity: Int!
-}
-
-enum FulfillmentStatus {
-  PENDING
-  PROCESSING
-  ON_HOLD
-  SHIPPED
-  DELIVERED
-  RETURNED
-  FULFILLED
-  CANCELLED
 }
 
 """Result of cursor-based pagination for a gallery of files."""
@@ -2009,7 +2277,7 @@ type ListingEdge {
 }
 
 """A node in a listing."""
-union ListingNode = Product
+union ListingNode = ProductVariant
 
 """
 Defines the available sorting orders for Listings.
@@ -2050,27 +2318,6 @@ enum ListingType {
   Aggregates all products from this category and its subcategories recursively.
   """
   CONTAINER
-}
-
-"""Input data for loading a cart by its ID."""
-input LoadCartInput {
-  """ID of the cart to load."""
-  cartId: ID!
-
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
-}
-
-"""Payload returned after clearing all items from the cart."""
-type LoadCartPayload {
-  """The updated (now empty) cart."""
-  cart: Cart
-
-  """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
 }
 
 """Language codes based on ISO 639-1 and BCP 47"""
@@ -2458,7 +2705,7 @@ enum MenuItemSort {
 }
 
 """A menu node: Product, Category, Page, or URL."""
-union MenuNode = Product | Category | Page | URLNode
+union MenuNode = ProductVariant | Category | Page | URLNode
 
 enum MenuSort {
   CREATED_AT_ASC
@@ -2486,32 +2733,7 @@ input MoneyInput {
 }
 
 type Mutation {
-  """Loads a cart by its ID. Has side effects."""
-  loadCart(input: LoadCartInput!): LoadCartPayload
-
-  """Creates a new cart."""
-  createCart(input: CreateCartInput!): CreateCartPayload!
-
-  """Adds an item to an existing cart."""
-  addCartLine(input: AddCartLineInput!): AddCartLinePayload!
-
-  """Updates the quantity of a specific cart item."""
-  updateCartLineQuantity(input: UpdateCartLineQuantityInput!): UpdateCartLineQuantityPayload!
-
-  """Removes a single item from the cart."""
-  removeCartLine(input: RemoveCartLineInput!): RemoveCartLinePayload!
-
-  """Replaces all items in an existing cart."""
-  replaceCartLines(input: ReplaceCartLinesInput!): ReplaceCartLinesPayload!
-
-  """Clears all items from a cart."""
-  clearCartLines(input: ClearCartLinesInput!): ClearCartLinesPayload!
-
-  """Place an order (checkout)."""
-  checkout(
-    """Input for performing checkout."""
-    input: CheckoutInput!
-  ): CheckoutPayload!
+  checkoutMutation: CheckoutMutation!
 
   """Create a review."""
   createReview(input: CreateReviewInput!): ProductReview!
@@ -2575,227 +2797,111 @@ type Mutation {
     """Input for updating user profile."""
     input: UpdateUserProfileInput!
   ): UpdateUserProfilePayload!
+  orderMutation: OrderMutation!
 }
 
 interface Node {
   id: ID!
 }
 
-"""Severity levels for cart warnings."""
+"""Severity levels for checkout warnings."""
 enum NotificationSeverity {
-  """Informational notice; does not indicate any change in cart data."""
+  """Informational notice; does not indicate any change in checkout data."""
   INFO
 
   """Notification about automatic adjustments (e.g., quantity reduced)."""
   WARNING
 }
 
-"""Order."""
-type Order implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
+type Order {
+  """A globally-unique ID."""
   id: ID!
-
-  """The code of the currency used for the payment."""
-  currencyCode: CurrencyCode!
-
-  """Billing address."""
-  billingAddress: Address!
-
-  """Shipping address."""
-  shippingAddress: Address!
-
-  """Customer contact details."""
-  customerDetails: OrderCustomerDetails!
-
-  """Paginated order items."""
-  items(
-    """Return the first n items after the given cursor."""
-    first: Int = 50
-
-    """Return items after this cursor."""
-    after: Cursor
-
-    """Return the last n items before the given cursor."""
-    last: Int
-
-    """Return items before this cursor."""
-    before: Cursor
-  ): OrderItemConnection!
-
-  """Tax lines at the order level."""
-  taxLines: [TaxLine!]!
-
-  """Financial status (payment, refund, etc.)."""
-  financialStatus: OrderFinancialStatus!
 
   """Order status."""
   status: OrderStatus!
 
-  """Fulfillment status."""
-  fulfillmentStatus: FulfillmentStatus!
-
-  """Refund information."""
-  refunds: [Refund!]!
-
-  """Fulfillment information."""
-  fulfillments: [Fulfillment!]!
-
-  """Shipping cost."""
-  totalShippingAmount: Money!
-
-  """Total tax amount for the order."""
-  totalTaxAmount: Money!
-
-  """Total discount amount for the order."""
-  discount: Money!
-
-  """Order subtotal without discounts and taxes."""
-  subtotal: Money!
-
-  """Order total including discounts and taxes."""
-  total: Money!
-
-  """Payment method."""
-  paymentMethod: PaymentMethod!
-
-  """Shipping method."""
-  shippingMethod: ShippingMethod!
-
-  """Public metadata."""
-  metadata: JSON
-
-  """Creation date."""
-  createdAt: DateTime!
-
   """
   A unique numeric identifier for the order for use by shop owner and customer.
   """
-  orderNumber: Int!
+  number: BigInt!
+
+  """Cost breakdown for the order."""
+  cost: OrderCost!
+
+  """Order items."""
+  lines: [OrderLine!]!
+}
+
+type OrderCost {
+  """Total value of items before any discounts."""
+  subtotalAmount: Money!
+
+  """Total discount from both item-level and checkout-level promotions."""
+  totalDiscountAmount: Money!
+
+  """Total tax amount applied to the checkout."""
+  totalTaxAmount: Money!
+
+  """Total shipping cost (only MERCHANT_COLLECTED payments)."""
+  totalShippingAmount: Money!
+
+  """Final amount to be paid, including item cost, shipping, and taxes."""
+  totalAmount: Money!
+}
+
+type OrderLine {
+  """A globally-unique ID."""
+  id: ID!
+
+  """Quantity of the item being purchased."""
+  quantity: Int!
+
+  """Cost breakdown for the order line."""
+  cost: OrderLineCost!
+
+  """ID of the purchasable."""
+  purchasableId: ID!
+
+  """Purchasable unit."""
+  purchasable: Purchasable!
+
+  """Creation date."""
+  createdAt: DateTime!
 
   """Last updated date."""
   updatedAt: DateTime!
 }
 
-"""A paginated list of Orders."""
-type OrderConnection {
-  """The total number of items."""
-  totalCount: Int!
+type OrderLineCost {
+  """The original list price per unit before any discounts."""
+  unitCompareAtPrice: Money!
 
-  """Pagination metadata."""
-  pageInfo: PageInfo!
+  """
+  The current price per unit before discounts are applied (may differ from compareAt price if on sale).
+  """
+  unitPrice: Money!
 
-  """List of edges in this connection."""
-  edges: [OrderEdge!]!
-}
-
-"""Customer's contact details in the order."""
-type OrderCustomerDetails {
-  """Customer's email address."""
-  email: Email!
-
-  """Customer's full name."""
-  name: UserName!
-
-  """Customer's phone number in E.164 format."""
-  phone: Phone!
-
-  """Public metadata (plugins, notes, etc.)."""
-  metadata: JSON
-}
-
-"""Input type for customer's contact details."""
-input OrderCustomerDetailsInput {
-  """Customer's email address."""
-  email: Email!
-
-  """Customer's full name."""
-  name: UserNameInput!
-
-  """Customer's phone number in E.164 format."""
-  phone: Phone!
-
-  """Additional public metadata."""
-  metadata: JSON
-}
-
-"""A single edge in a paginated list of Orders."""
-type OrderEdge {
-  """Cursor for this edge."""
-  cursor: Cursor!
-
-  """The Order at this edge."""
-  node: Order!
-}
-
-enum OrderFinancialStatus {
-  AUTHORIZED
-  PENDING
-  PAID
-  PARTIALLY_PAID
-  PARTIALLY_REFUNDED
-  REFUNDED
-  VOIDED
-}
-
-"""Order item (line) in the order."""
-type OrderItem implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Product title."""
-  title: String!
-
-  """Quantity of units."""
-  quantity: Int!
-
-  """Discount amount for this item."""
+  """Discount amount applied to a line."""
   discountAmount: Money!
 
-  """Subtotal for this item without discounts."""
+  """Total cost of all units before discounts."""
   subtotalAmount: Money!
 
-  """Subtotal for this item after item level discounts."""
-  discountedSubtotalAmount: Money!
+  """Total tax amount applied to the checkout line."""
+  taxAmount: Money!
 
-  """Total amount for this item including taxes and discounts."""
+  """Total cost of this line (all units), after discounts and taxes."""
   totalAmount: Money!
-
-  """The purchasable item such as a product or bundle."""
-  target: Purchasable!
 }
 
-"""Connection for order items (Relay-style pagination)."""
-type OrderItemConnection {
-  """The total number of items."""
-  totalCount: Int!
-
-  """Pagination information."""
-  pageInfo: PageInfo!
-
-  """List of item edges."""
-  edges: [OrderItemEdge!]!
+type OrderMutation {
+  orderCreate(input: CreateOrderInput!): Order!
 }
 
-"""Cursor for Relay-style pagination."""
-type OrderItemEdge {
-  """Cursor for Relay-style pagination."""
-  cursor: Cursor!
-
-  """Node containing the order item data."""
-  node: OrderItem!
-}
-
-"""Overall order status."""
 enum OrderStatus {
-  PENDING
+  DRAFT
   ACTIVE
-  COMPLETED
+  CLOSED
   CANCELLED
 }
 
@@ -2961,20 +3067,6 @@ type PasswordSignUpPayload {
   clientMutationId: String
 }
 
-type PaymentMethod implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Payment method type."""
-  handle: String!
-
-  """Title of the payment method."""
-  title: String!
-}
-
 scalar Phone
 
 """Input type for executing predictive search (autocomplete suggestions)."""
@@ -2997,7 +3089,7 @@ type PredictiveSearchResult {
   pages: [Page!]!
 
   """Top matching products."""
-  products: [Product!]!
+  products: [ProductVariant!]!
 }
 
 """Filter representing a price range filter."""
@@ -3017,7 +3109,6 @@ type PriceRangeFilter implements Filter {
   count: Int!
 }
 
-"""A product in the catalog."""
 type Product implements Node {
   """Object identifier (Internal)."""
   iid: Uuid!
@@ -3037,56 +3128,8 @@ type Product implements Node {
   """Short excerpt or summary of the product."""
   excerpt: String!
 
-  """Primary cover image of the product."""
-  cover: File
-
-  """Gallery of additional images with cursor-based pagination."""
-  gallery(
-    """Return the first n elements after the cursor."""
-    first: Int
-
-    """Return elements after the specified cursor."""
-    after: Cursor
-
-    """Return the last n elements before the cursor."""
-    last: Int
-
-    """Return elements before the specified cursor."""
-    before: Cursor
-  ): GalleryConnection!
-
-  """Current price of the product, including currency."""
-  price: Money!
-
-  """Original or list price when on sale."""
-  compareAtPrice: Money
-
-  """Stock keeping unit identifier."""
-  sku: String
-
-  """Stock availability information."""
-  stockStatus: StockStatus!
-
   """Primary category of the product."""
   category: Category
-
-  """All categories this product [variant] belongs to."""
-  categories(
-    """Return the first n elements after the cursor."""
-    first: Int
-
-    """Return elements after the specified cursor."""
-    after: Cursor
-
-    """Return the last n elements before the cursor."""
-    last: Int
-
-    """Return elements before the specified cursor."""
-    before: Cursor
-
-    """Sorting options for categories."""
-    sort: CategorySort = UPDATED_AT_DESC
-  ): CategoryConnection!
 
   """Feature sections and their values."""
   features: [ProductFeature!]!
@@ -3097,14 +3140,8 @@ type Product implements Node {
   """
   options: [ProductOption!]!
 
-  """
-  The ordered list of value handles currently applied to this product configuration.
-  Each entry is the `handle` of a selected `ProductOptionValue` (for example: ["red", "m", "patterned"]).
-  """
-  selectedOptions: [String!]!
-
   """Variants of the product (different option combinations)."""
-  variants: [Product!]!
+  variants: [ProductVariant!]!
 
   """Tags associated with the product."""
   tags(
@@ -3132,12 +3169,6 @@ type Product implements Node {
 
   """Seo description for the product page."""
   seoDescription: String
-
-  """Type of product"""
-  productType: String
-
-  """Private field won't be in prod. Used for internal purposes."""
-  containerId: Uuid!
 
   """DateTime when the category was created."""
   createdAt: DateTime!
@@ -3228,7 +3259,7 @@ An item within a product group, with optional quantity and custom pricing.
 """
 type ProductGroupItem {
   """The product included in this group."""
-  product: Product!
+  node: ProductGroupNode!
 
   """Optional quantity for this item in the group."""
   maxQuantity: Int
@@ -3236,6 +3267,8 @@ type ProductGroupItem {
   """Pricing strategy and override values for this item."""
   price: ProductGroupPrice!
 }
+
+union ProductGroupNode = ProductVariant
 
 """Defines how to calculate the price for a grouped item."""
 type ProductGroupPrice {
@@ -3325,6 +3358,9 @@ type ProductOptionValue implements Node {
 
   """The swatch object. For swatch display type."""
   swatch: Swatch
+
+  """Variant cover image. For variant cover display type."""
+  image: File
 }
 
 type ProductRating implements Node {
@@ -3422,9 +3458,178 @@ enum ProductReviewSort {
   HELPFUL_YES_DESC
 }
 
-union Purchasable = Product
+type ProductVariant implements Node {
+  """Object identifier (Internal)."""
+  iid: Uuid!
+
+  """Global unique identifier for the address."""
+  id: ID!
+
+  """URL-friendly slug for the product."""
+  handle: String!
+
+  """Name of the product."""
+  title: String!
+
+  """Full description of the product."""
+  description: String!
+
+  """Short excerpt or summary of the product."""
+  excerpt: String!
+
+  """Primary cover image of the product."""
+  cover: File
+
+  """Gallery of additional images with cursor-based pagination."""
+  gallery(
+    """Return the first n elements after the cursor."""
+    first: Int
+
+    """Return elements after the specified cursor."""
+    after: Cursor
+
+    """Return the last n elements before the cursor."""
+    last: Int
+
+    """Return elements before the specified cursor."""
+    before: Cursor
+  ): GalleryConnection!
+
+  """Current price of the product, including currency."""
+  price: Money!
+
+  """Original or list price when on sale."""
+  compareAtPrice: Money
+
+  """Stock keeping unit identifier."""
+  sku: String
+
+  """Stock availability information."""
+  stockStatus: StockStatus!
+
+  """Primary category of the product."""
+  category: Category
+
+  """All categories this product [variant] belongs to."""
+  categories(
+    """Return the first n elements after the cursor."""
+    first: Int
+
+    """Return elements after the specified cursor."""
+    after: Cursor
+
+    """Return the last n elements before the cursor."""
+    last: Int
+
+    """Return elements before the specified cursor."""
+    before: Cursor
+
+    """Sorting options for categories."""
+    sort: CategorySort = UPDATED_AT_DESC
+  ): CategoryConnection!
+
+  """Feature sections and their values."""
+  features: [ProductFeature!]!
+
+  """
+  All option groups defined for this product—each group represents a configurable attribute
+  (for example: color, size, material) and includes the full set of possible values.
+  """
+  options: [ProductOption!]!
+
+  """
+  The ordered list of value handles currently applied to this product configuration.
+  Each entry is the `handle` of a selected `ProductOptionValue` (for example: ["red", "m", "patterned"]).
+  """
+  selectedOptions: [String!]!
+
+  """Variants of the product (different option combinations)."""
+  variants: [ProductVariant!]!
+
+  """Tags associated with the product."""
+  tags(
+    """Return the first n elements after the cursor."""
+    first: Int
+
+    """Return elements after the specified cursor."""
+    after: Cursor
+
+    """Return the last n elements before the cursor."""
+    last: Int
+
+    """Return elements before the specified cursor."""
+    before: Cursor
+
+    """Sorting options for categories."""
+    sort: TagSort = UPDATED_AT_DESC
+  ): TagConnection!
+
+  """Groups of related products (e.g., bundles)."""
+  groups: [ProductGroup!]!
+
+  """Seo title for the product page."""
+  seoTitle: String
+
+  """Seo description for the product page."""
+  seoDescription: String
+
+  """Private field won't be in prod. Used for internal purposes."""
+  productId: Uuid!
+
+  """Product that this variant belongs to."""
+  product: Product!
+
+  """DateTime when the category was created."""
+  createdAt: DateTime!
+
+  """DateTime when the category was last updated."""
+  updatedAt: DateTime!
+
+  """Product rating."""
+  rating: ProductRating!
+
+  """List of reviews with pagination/filters."""
+  reviews(
+    """Return the first n elements after the cursor."""
+    first: Int
+
+    """Return elements after the specified cursor."""
+    after: Cursor
+
+    """Return the last n elements before the cursor."""
+    last: Int
+
+    """Return elements before the specified cursor."""
+    before: Cursor
+
+    """Sort order."""
+    sort: ProductReviewSort
+  ): ProductReviewConnection!
+}
+
+union Purchasable = PurchasableSnapshot
+
+type PurchasableSnapshot {
+  snapshot: JSON!
+}
+
+input PurchasableSnapshotInput {
+  """SKU of the purchasable snapshot."""
+  sku: String
+
+  """Title of the purchasable snapshot."""
+  title: String!
+
+  """Image URL of the purchasable snapshot."""
+  imageUrl: String
+
+  """JSON data of the purchasable snapshot."""
+  data: JSON
+}
 
 type Query {
+  checkoutQuery: CheckoutQuery!
+
   """Retrieve a paginated list of articles (Relay Connection)."""
   articles(
     """Return the first n elements after the cursor."""
@@ -3521,7 +3726,8 @@ type Query {
   predictiveSearch(input: PredictiveSearchInput!): PredictiveSearchResult!
 
   """Fetch a single product by its handle (slug)."""
-  product(handle: String!): Product
+  product(handle: String!): ProductVariant
+  productBySelectedOptions(selectedOptions: [String!]!): ProductVariant
 
   """Retrieves the current authentication session."""
   session: Session
@@ -3553,78 +3759,6 @@ type RatingRangeFilter implements Filter {
 
   """Count of products in the range."""
   count: Int!
-}
-
-"""Refund information for the order."""
-type Refund implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Refund amount."""
-  amount: Money!
-
-  """Reason for the refund."""
-  reason: String
-
-  """Refund creation date."""
-  createdAt: DateTime!
-}
-
-"""Input data for removing a single item from the cart."""
-input RemoveCartLineInput {
-  """ID of the cart."""
-  cartId: ID!
-
-  """
-  ID of the product to remove.
-  Error if the product is not found in the cart.
-  """
-  productId: ID!
-
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
-}
-
-"""Payload returned after removing an item from the cart."""
-type RemoveCartLinePayload {
-  """The updated cart."""
-  cart: Cart
-
-  """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
-}
-
-"""Input data for replacing all items in an existing cart."""
-input ReplaceCartLinesInput {
-  """ID of the cart to update."""
-  cartId: ID!
-
-  """
-  New list of items for the cart.
-  Providing an empty array clears the cart completely.
-  """
-  items: [CartLineInput!]!
-
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
-}
-
-"""Payload returned after replacing all items in the cart."""
-type ReplaceCartLinesPayload {
-  """The updated cart."""
-  cart: Cart
-
-  """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
 }
 
 """Input data for resetting a password using a token."""
@@ -3779,21 +3913,13 @@ type Session {
   accessToken: String
 }
 
-type ShippingMethod implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
+"""Shipping payment model"""
+enum ShippingPaymentModel {
+  """Customer pays merchant, included in grandTotal"""
+  MERCHANT_COLLECTED
 
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Payment method type."""
-  handle: String!
-
-  """Title of the payment method."""
-  title: String!
-
-  """Estimated delivery time as a textual representation."""
-  estimatedDeliveryTime: String
+  """Customer pays carrier directly, NOT included in grandTotal"""
+  CARRIER_DIRECT
 }
 
 """Stock status of the product."""
@@ -3873,60 +3999,6 @@ enum TagSort {
   TITLE_DESC
 }
 
-"""Detailed tax line."""
-type TaxLine implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
-  """Global unique identifier for the address."""
-  id: ID!
-
-  """Tax type name, e.g., VAT."""
-  title: String!
-
-  """Tax rate (decimal value, e.g., 0.20)."""
-  rate: Float!
-
-  """Tax amount."""
-  amountCollected: Money!
-}
-
-"""A node representing an arbitrary URL."""
-type URLNode {
-  """The URL string."""
-  url: String!
-}
-
-"""Input data for updating the quantity of a specific cart item."""
-input UpdateCartLineQuantityInput {
-  """ID of the cart."""
-  cartId: ID!
-
-  """ID of the cart item to update."""
-  cartItemId: ID!
-
-  """
-  New quantity for the cart item.
-  If set to 0, the item will be removed.
-  """
-  quantity: Int!
-
-  """Unique identifier for the client mutation."""
-  clientMutationId: String
-}
-
-"""Payload returned after updating a cart item's quantity."""
-type UpdateCartLineQuantityPayload {
-  """The updated cart."""
-  cart: Cart
-
-  """List of field-specific or general errors."""
-  errors: [FieldError!]
-
-  """Unique identifier echoed from the input."""
-  clientMutationId: String
-}
-
 """Input data for changing the password of an authenticated user."""
 input UpdatePasswordInput {
   """New password."""
@@ -3989,13 +4061,19 @@ type UpdateUserProfilePayload {
   clientMutationId: String
 }
 
+"""A node representing an arbitrary URL."""
+type URLNode {
+  """The URL string."""
+  url: String!
+}
+
 """Represents a user in the system."""
 type User implements Node {
-  """Object identifier (Internal)."""
-  iid: Uuid!
-
   """Global unique identifier for the address."""
   id: ID!
+
+  """Object identifier (Internal)."""
+  iid: Uuid!
 
   """User's email address."""
   email: Email!
@@ -4012,20 +4090,8 @@ type User implements Node {
   """Phone number in E.164 format."""
   phone: Phone
 
-  """Paginated list of the user's orders."""
-  orders(
-    """Return the first n orders after the given cursor."""
-    first: Int = 20
-
-    """Return orders after this cursor."""
-    after: Cursor
-
-    """Return the last n orders before the given cursor."""
-    last: Int
-
-    """Return orders before this cursor."""
-    before: Cursor
-  ): OrderConnection!
+  """List of the user's orders."""
+  orders: [Order!]!
 }
 
 """Customer's first, middle, and last name."""

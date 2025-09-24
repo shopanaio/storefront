@@ -2,6 +2,7 @@ import { CodegenConfig } from '@graphql-codegen/cli';
 
 const scalars = {
   ID: { input: 'string', output: 'string' },
+  BigInt: { input: 'number', output: 'number' },
   String: { input: 'string', output: 'string' },
   Boolean: { input: 'boolean', output: 'boolean' },
   Int: { input: 'number', output: 'number' },
