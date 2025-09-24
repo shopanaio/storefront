@@ -12,10 +12,10 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  BigInt: { input: any; output: any; }
+  BigInt: { input: number; output: number; }
   Cursor: { input: string; output: string; }
   DateTime: { input: string; output: string; }
-  Decimal: { input: number; output: number; }
+  Decimal: { input: string; output: string; }
   Email: { input: string; output: string; }
   JSON: { input: object; output: object; }
   Phone: { input: string; output: string; }

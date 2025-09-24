@@ -10,7 +10,7 @@ const scalars = {
   Any: { input: 'unknown', output: 'unknown' },
   Timestamp: { input: 'string', output: 'string' },
   DateTime: { input: 'string', output: 'string' },
-  Decimal: { input: 'number', output: 'number' },
+  Decimal: { input: 'string', output: 'string' },
   Cursor: { input: 'string', output: 'string' },
   Phone: { input: 'string', output: 'string' },
   Email: { input: 'string', output: 'string' },
@@ -34,7 +34,6 @@ const config: CodegenConfig = {
         scalars,
       },
     },
-
     // Shopify schema
     'codegen/shopify-storefront-api.ts': {
       schema: 'schema.shopify.graphql',

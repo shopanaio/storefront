@@ -14,7 +14,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /**
    * A string containing a hexadecimal representation of a color.
-   *shopifyProduct
+   *
    * For example, "#6A8D48".
    *
    */
@@ -32,7 +32,7 @@ export type Scalars = {
    * Example values: `"29.99"`, `"29.999"`.
    *
    */
-  Decimal: { input: number; output: number; }
+  Decimal: { input: string; output: string; }
   /**
    * A string containing HTML code. Refer to the [HTML spec](https://html.spec.whatwg.org/#elements-3) for a
    * complete list of HTML elements.
