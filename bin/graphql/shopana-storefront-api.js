@@ -6,10 +6,10 @@ import { printSchema, buildClientSchema } from "graphql";
 
 const { readFile, writeFile } = fs.promises;
 
-const { NEXT_PUBLIC_GRAPHQL_URL } = process.env;
+const { SHOPANA_GRAPHQL_URL } = process.env;
 
 const main = async () => {
-  const response = await fetch(NEXT_PUBLIC_GRAPHQL_URL, {
+  const response = await fetch(SHOPANA_GRAPHQL_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
