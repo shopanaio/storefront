@@ -79,7 +79,7 @@
     "relay": "node ./bin/relay/compile.js",
     "relay:shopana": "cross-env CMS=shopana yarn relay",
     "relay:shopify": "cross-env CMS=shopify yarn relay",
-    "dev": "yarn relay && next dev",
+    "dev": "yarn relay && next dev -p 3001",
     "dev:shopana": "cross-env CMS=shopana yarn dev",
     "dev:shopify": "cross-env CMS=shopify yarn dev",
     "build:shopana": "cross-env CMS=shopana yarn relay && next build",

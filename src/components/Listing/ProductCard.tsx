@@ -8,12 +8,14 @@ import {
   ApiProductRating,
   ApiProduct,
   ApiProductOption,
+  ApiProductVariant,
 } from "@codegen/schema-client";
 
 import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";
 import useAddItemToCart from "@src/hooks/cart/useAddItemToCart";
 import { useProductSwatches } from "@src/hooks/useProductSwatches";
 import { useReviewStore } from "@src/store/appStore";
+import { Money } from "@src/components/UI/Price/Price";
 interface CommonProductData {
   id: string;
   title: string;
@@ -35,17 +37,11 @@ interface CommonProductData {
   stockStatus?: {
     isAvailable: boolean;
   };
-  price?: {
-    amount: number;
-    currencyCode: string;
-  };
-  compareAtPrice?: {
-    amount: number;
-    currencyCode: string;
-  } | null;
+  price?: Money;
+  compareAtPrice?: Money | null;
   options?: ApiProductOption[];
   variants?:
-    | ApiProduct[]
+    | ApiProductVariant[]
     | {
         edges: Array<{
           node: ApiProduct;
@@ -65,14 +61,8 @@ export const ListingProductCardRelay = ({
     $productRef
   ) as CommonProductData;
 
-  // Add product existence check
-  if (!product) {
-    console.warn("Product is null or undefined in ListingProductCardRelay");
-    return null;
-  }
-
   const { isInCart } = useIsInTheCart({
-    product: product as ApiProduct,
+    purchasableId: product.id,
   });
 
   const { addToCart } = useAddItemToCart();
@@ -83,7 +73,7 @@ export const ListingProductCardRelay = ({
     Array.isArray(product.options) ? product.options : [],
     // Check that variants exists and is array
     Array.isArray(product.variants) ? product.variants : [],
-    product as ApiProduct
+    product as ApiProductVariant
   );
 
   // Safely extract data with type checking
@@ -99,9 +89,12 @@ export const ListingProductCardRelay = ({
   const productTitle = product.title || "";
   const handle = product.handle || "";
   const isAvailable = product.stockStatus?.isAvailable || false;
-  const price = product.price || { amount: 0, currencyCode: "USD" };
-  const compareAtPrice = product.compareAtPrice || undefined;
+  const price = product.price || {
+    amount: "0.00",
+    currencyCode: "USD",
+  };
 
+  const compareAtPrice = product.compareAtPrice || undefined;
   const setReviewProduct = useReviewStore((state) => state.setReviewProduct);
 
   return (
@@ -122,7 +115,7 @@ export const ListingProductCardRelay = ({
       isInCart={isInCart}
       onAddToCart={() => {
         addToCart({
-          product: product, // Pass entire object product
+          purchasableId: product.id,
           quantity: 1,
         });
       }}

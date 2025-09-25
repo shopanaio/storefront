@@ -540,10 +540,11 @@ export type ApiCheckoutLine = ApiNode & {
   id: Scalars['ID']['output'];
   /** Image URL of the purchasable. */
   imageSrc?: Maybe<Scalars['String']['output']>;
-  /** Purchasable unit. */
-  purchasable?: Maybe<ApiPurchasable>;
+  purchasable: ApiProductVariant;
   /** ID of the purchasable. */
   purchasableId: Scalars['ID']['output'];
+  /** Purchasable snapshot data at the time of adding to checkout. */
+  purchasableSnapshot: Scalars['JSON']['output'];
   /** Quantity of the item being purchased. */
   quantity: Scalars['Int']['output'];
   /** SKU of the purchasable. */
@@ -2248,10 +2249,11 @@ export type ApiOrderLine = {
   createdAt: Scalars['DateTime']['output'];
   /** A globally-unique ID. */
   id: Scalars['ID']['output'];
-  /** Purchasable unit. */
-  purchasable: ApiPurchasable;
+  purchasable: ApiProductVariant;
   /** ID of the purchasable. */
   purchasableId: Scalars['ID']['output'];
+  /** Purchasable snapshot data at the time of adding to checkout. */
+  purchasableSnapshot: Scalars['JSON']['output'];
   /** Quantity of the item being purchased. */
   quantity: Scalars['Int']['output'];
   /** Last updated date. */
@@ -2836,13 +2838,6 @@ export type ApiProductVariantTagsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<TagSort>;
-};
-
-export type ApiPurchasable = ApiProductVariant | ApiPurchasableSnapshot;
-
-export type ApiPurchasableSnapshot = {
-  __typename?: 'PurchasableSnapshot';
-  snapshot: Scalars['JSON']['output'];
 };
 
 export type ApiPurchasableSnapshotInput = {

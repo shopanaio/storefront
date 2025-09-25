@@ -5,7 +5,6 @@ import loadHomeServerQuery from "@src/hooks/home/loadHomeServerQuery";
 
 export default async function HomePage() {
   const preloadedQuery = await loadHomeServerQuery();
-
   return (
     <QueryProvider preloadedQuery={preloadedQuery}>
       <HomeClient />

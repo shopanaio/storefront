@@ -67,6 +67,9 @@ export const useCart_CartFragment = graphql`
     #  }
     totalQuantity
     lines {
+      id
+      quantity
+      purchasableId
       ...useCartLineFragment_CartLineFragment
     }
   }

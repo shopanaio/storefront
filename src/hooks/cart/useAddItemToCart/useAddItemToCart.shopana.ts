@@ -5,7 +5,9 @@ import { useAddItemToCartMutation as AddCartLineMutationType } from "@src/hooks/
 
 import { useCartContext } from "@src/providers/cart-context";
 import useCreateCart from "@src/hooks/cart/useCreateCart";
-import { AddToCartInput } from "./index";
+import { AddToCartInput } from "./interface";
+import { useRouter } from "next/router";
+import { useLocale } from "next-intl";
 
 export const useAddItemToCartMutation = graphql`
   mutation useAddItemToCartMutation($input: CheckoutLinesAddInput!) {
@@ -28,31 +30,26 @@ const useAddItemToCart = () => {
   const { setCartKey } = useCartContext();
   const { createCart } = useCreateCart();
   const currencyCode = useCurrencyStore((state) => state.currencyCode);
+  const [localeCode] = useLocale();
   const [commitAddLine] = useMutation<AddCartLineMutationType>(
     useAddItemToCartMutation
   );
 
   return {
-    addToCart: async (input: AddToCartInput): Promise<any> => {
-      const cartId = cart?.id;
-      const variantId = input.productVariantId;
-
+    addToCart: async (input: AddToCartInput): Promise<unknown> => {
       // If no cart — create new one
-      if (!cartId || !cart?.id) {
-        console.log("Creating new cart with currency:", currencyCode);
+      if (!cart?.id) {
         const newCart = await createCart({
-          // TODO: Fix
-          currencyCode: "USD" as any,
-          idempotency: "123",
-          localeCode: "en",
+          idempotency: "is not required",
+          currencyCode,
+          localeCode,
           items: [
             {
-              purchasableId: variantId,
+              purchasableId: input.purchasableId,
               quantity: input.quantity,
             },
           ],
         });
-        console.log("New cart created:", newCart);
         // Update context with new cart key
         if (newCart) {
           setCartKey(newCart);
@@ -61,15 +58,14 @@ const useAddItemToCart = () => {
       }
 
       // If cart exists — add product through mutation
-      console.log("Adding to existing cart:", cart.id);
-      return new Promise<any>((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         commitAddLine({
           variables: {
             input: {
               checkoutId: cart.id,
               lines: [
                 {
-                  purchasableId: variantId,
+                  purchasableId: input.purchasableId,
                   quantity: input.quantity,
                 },
               ],

@@ -1,9 +1,9 @@
-import { readInlineData } from "react-relay";
+import { useFragment } from "react-relay";
 import { graphql } from "react-relay";
 import { useCartLineFragment_CartLineFragment$key } from "./__generated__/useCartLineFragment_CartLineFragment.graphql";
 
 export const useCartLineFragment_CartLineFragment = graphql`
-  fragment useCartLineFragment_CartLineFragment on CartLine @inline{
+  fragment useCartLineFragment_CartLineFragment on CartLine {
     id
     quantity
     cost {
@@ -74,8 +74,8 @@ export const useCartLineFragment_CartLineFragment = graphql`
 `;
 
 const useCartLineFragment = (cartLineKey: useCartLineFragment_CartLineFragment$key) => {
-  // Use readInlineData instead of useFragment for inline fragments
-  const shopifyCartLine = readInlineData(useCartLineFragment_CartLineFragment, cartLineKey);
+  // Use useFragment for standard fragments
+  const shopifyCartLine = useFragment(useCartLineFragment_CartLineFragment, cartLineKey);
 
   if (!shopifyCartLine) return null
 

@@ -10,7 +10,7 @@ const useIsInTheCart = (input: UseIsInCartProps): { isInCart: boolean; quantity:
 
   // TODO: Fix
   for (const line of cartLines) {
-    if (line.purchasableId === input.productVariantId) {
+    if (line.purchasableId === input.purchasableId) {
       return {
         isInCart: true,
         quantity: line.quantity,

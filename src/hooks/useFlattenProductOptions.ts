@@ -9,11 +9,11 @@ import _ from "lodash";
  * and a reference to the corresponding product variant
  */
 import {
-  ApiProduct,
   ApiProductOption,
   ApiProductOptionValue,
   ProductOptionDisplayType,
   ApiMoney,
+  ApiProductVariant,
 } from "@codegen/schema-client";
 
 /**
@@ -21,7 +21,7 @@ import {
  */
 export type UiOptionValue = ApiProductOptionValue & {
   isActive: boolean;
-  variant?: ApiProduct; // Reference to product variant with this value
+  variant?: ApiProductVariant; // Reference to product variant with this value
   amount?: ApiMoney; // Additional cost if exists
 };
 
@@ -38,8 +38,8 @@ export type UiOption = {
 
 export const useFlattenProductOptions = (
   options: ApiProductOption[], // All product options, grouped in array
-  variants: ApiProduct[], // Variants with selectedOptions: string[]
-  currentVariant: ApiProduct
+  variants: ApiProductVariant[], // Variants with selectedOptions: string[]
+  currentVariant: ApiProductVariant
 ): UiOption[] => {
   return useMemo(() => {
     if (!variants?.length || !options?.length) {
@@ -50,7 +50,7 @@ export const useFlattenProductOptions = (
      * Creates a map of selected values for a specific product variant
      * Returns object like: { [group_handle]: value_handle }
      */
-    const buildVariantMap = (variant: ApiProduct): Record<string, string> => {
+    const buildVariantMap = (variant: ApiProductVariant): Record<string, string> => {
       if (!variant.selectedOptions?.length) return {};
 
       const mapping: Record<string, string> = {};
@@ -85,7 +85,7 @@ export const useFlattenProductOptions = (
         .join("|");
 
     // Create index of all variants by combination key for O(1) lookup
-    const variantIndex = new Map<string, ApiProduct>();
+    const variantIndex = new Map<string, ApiProductVariant>();
     for (const variant of variants) {
       const key = buildKey(buildVariantMap(variant));
       if (key) variantIndex.set(key, variant);

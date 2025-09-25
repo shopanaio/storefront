@@ -690,8 +690,9 @@ type CheckoutLine implements Node {
   """ID of the purchasable."""
   purchasableId: ID!
 
-  """Purchasable unit."""
-  purchasable: Purchasable
+  """Purchasable snapshot data at the time of adding to checkout."""
+  purchasableSnapshot: JSON!
+  purchasable: ProductVariant!
 }
 
 """Detailed breakdown of costs for a checkout line item"""
@@ -2853,17 +2854,18 @@ type OrderLine {
   """A globally-unique ID."""
   id: ID!
 
+  """ID of the purchasable."""
+  purchasableId: ID!
+  purchasable: ProductVariant!
+
   """Quantity of the item being purchased."""
   quantity: Int!
 
   """Cost breakdown for the order line."""
   cost: OrderLineCost!
 
-  """ID of the purchasable."""
-  purchasableId: ID!
-
-  """Purchasable unit."""
-  purchasable: Purchasable!
+  """Purchasable snapshot data at the time of adding to checkout."""
+  purchasableSnapshot: JSON!
 
   """Creation date."""
   createdAt: DateTime!
@@ -3605,12 +3607,6 @@ type ProductVariant implements Node {
     """Sort order."""
     sort: ProductReviewSort
   ): ProductReviewConnection!
-}
-
-union Purchasable = PurchasableSnapshot | ProductVariant
-
-type PurchasableSnapshot {
-  snapshot: JSON!
 }
 
 input PurchasableSnapshotInput {

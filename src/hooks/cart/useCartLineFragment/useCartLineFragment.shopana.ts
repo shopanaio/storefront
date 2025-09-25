@@ -24,6 +24,7 @@ export const useCartLineFragment_CartLineFragment = graphql`
         amount
       }
     }
+    purchasableId
     purchasable {
       ... on ProductVariant {
         id
@@ -53,7 +54,7 @@ export const useCartLineFragment_CartLineFragment = graphql`
 const useCartLineFragment = (
   cartLineKey: useCartLineFragment_CartLineFragment$key
 ) => {
-  // Use useFragment for regular fragments
+  // Use useFragment for standard fragments
   const shopanaCartLine = useFragment(
     useCartLineFragment_CartLineFragment,
     cartLineKey

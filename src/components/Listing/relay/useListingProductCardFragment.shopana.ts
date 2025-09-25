@@ -22,7 +22,7 @@ const UseProductCardFragment = graphql`
         node {
           id
           url
-          source
+          # source
         }
       }
     }

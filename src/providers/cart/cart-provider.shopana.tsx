@@ -1,9 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useFragment, useMutation } from "react-relay";
-import { loadCartMutation } from "@src/relay/queries/loadCartMutation.shopana";
-import { loadCartMutation as LoadCartMutationType } from "@src/relay/queries/__generated__/loadCartMutation.graphql";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  PreloadedQuery,
+  useFragment,
+  usePreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
+import { loadCartQuery } from "@src/relay/queries/loadCartMutation.shopana";
+import { loadCartMutationQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartMutationQuery.graphql";
 import cartIdUtils from "@src/utils/cartId";
 import { CartContextProvider } from "../cart-context";
 import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopana";
@@ -13,8 +18,34 @@ interface CartProviderProps {
   children: React.ReactNode;
 }
 
+type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
+
+const CartDataHandler: React.FC<{
+  queryReference: LoadCartQueryReference;
+  onCartData: (cart: useCart_CartFragment$key) => void;
+  onCartNotFound: () => void;
+}> = ({ queryReference, onCartData, onCartNotFound }) => {
+  const cartData = usePreloadedQuery<LoadCartQueryType>(
+    loadCartQuery,
+    queryReference
+  );
+
+  useEffect(() => {
+    const checkout = cartData?.checkoutQuery?.checkout;
+
+    if (checkout) {
+      onCartData(checkout);
+    } else if (checkout === null || checkout === undefined) {
+      onCartNotFound();
+    }
+  }, [cartData, onCartData, onCartNotFound]);
+
+  return null;
+};
+
 const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [commit] = useMutation<LoadCartMutationType>(loadCartMutation);
+  const [queryReference, loadQuery, disposeQuery] =
+    useQueryLoader<LoadCartQueryType>(loadCartQuery);
   const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
@@ -41,45 +72,38 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setIsCartLoading(true);
     /* console.log("[CartProvider Shopana] Loading cart with ID:", cartId); */
 
-    commit({
-      variables: { input: { cartId } },
-      onCompleted: (response, errors) => {
-        isLoadingRef.current = false;
-        setIsCartLoading(false);
-        loadedRef.current = true;
-        setIsCartLoaded(true);
+    loadQuery({ checkoutId: cartId }, { fetchPolicy: "network-only" });
+  }, [loadQuery]);
 
-        if (errors && errors.length > 0) {
-          /* console.error("[CartProvider Shopana] Error loading cart:", errors); */
-        } else if (
-          response?.loadCart?.errors &&
-          response.loadCart.errors.length > 0
-        ) {
-          /* console.error(
-            "[CartProvider Shopana] Cart loading errors:",
-            response.loadCart.errors
-          ); */
-        } else if (!response?.loadCart?.cart) {
-          // If cart not found, remove cookie
-          /* console.log("[CartProvider Shopana] Cart not found, removing cookie"); */
-          cartIdUtils.removeCartIdCookie();
-          setCartKey(null);
-        } else if (response?.loadCart?.cart) {
-          // Setting cart fragment key
-          /* console.log(
-            "[CartProvider Shopana] Cart loaded successfully:",
-            response.loadCart.cart
-          ); */
-          setCartKey(response.loadCart.cart);
-        }
-      },
-      onError: (err) => {
-        isLoadingRef.current = false;
-        setIsCartLoading(false);
-        /* console.error("[CartProvider Shopana] Failed to load cart:", err); */
-      },
-    });
-  }, [commit]);
+  const handleCartData = useCallback(
+    (cart: useCart_CartFragment$key) => {
+      /* console.log("[CartProvider Shopana] Cart loaded successfully:", cart); */
+      setCartKey(cart);
+      setIsCartLoaded(true);
+      isLoadingRef.current = false;
+      setIsCartLoading(false);
+      loadedRef.current = true;
+    },
+    []
+  );
+
+  const handleCartNotFound = useCallback(() => {
+    /* console.log("[CartProvider Shopana] Cart not found, removing cookie"); */
+    isLoadingRef.current = false;
+    setIsCartLoading(false);
+    cartIdUtils.removeCartIdCookie();
+    setCartKey(null);
+    setIsCartLoaded(true);
+    loadedRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (disposeQuery) {
+        disposeQuery();
+      }
+    };
+  }, [disposeQuery]);
 
   return (
     <CartContextProvider
@@ -88,6 +112,13 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       isCartLoading={isCartLoading}
       isCartLoaded={isCartLoaded}
     >
+      {queryReference ? (
+        <CartDataHandler
+          queryReference={queryReference}
+          onCartData={handleCartData}
+          onCartNotFound={handleCartNotFound}
+        />
+      ) : null}
       {children}
     </CartContextProvider>
   );

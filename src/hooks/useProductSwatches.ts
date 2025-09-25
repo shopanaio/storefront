@@ -1,6 +1,6 @@
 import {
-  ApiProduct,
   ApiProductOption,
+  ApiProductVariant,
   ProductOptionDisplayType,
 } from "@codegen/schema-client";
 import { useMemo } from "react";
@@ -14,8 +14,8 @@ import { useFlattenProductOptions } from "./useFlattenProductOptions";
  */
 export const useProductSwatches = (
   options: ApiProductOption[],
-  variants: ApiProduct[],
-  currentVariant: ApiProduct
+  variants: ApiProductVariant[],
+  currentVariant: ApiProductVariant
 ) => {
   // Get all processed option groups
   const allOptions = useFlattenProductOptions(
