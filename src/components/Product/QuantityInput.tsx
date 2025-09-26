@@ -6,7 +6,7 @@ import { createStyles, cx } from "antd-style";
 import { SizeType } from "antd/es/config-provider/SizeContext";
 import { useRef } from "react";
 
-interface Props {
+export interface QuantityInputProps {
   value: number | string;
   color?: "primary" | "default";
   size?: ButtonProps["size"];
@@ -41,7 +41,7 @@ export const QuantityInput = ({
   disabled = false,
   loading = false,
   style,
-}: Props) => {
+}: QuantityInputProps) => {
   const { styles, theme } = useStyles({ size });
   const prevAction = useRef<"inc" | "dec" | null>(null);
   const buttonSize = getSmallerSize(size);

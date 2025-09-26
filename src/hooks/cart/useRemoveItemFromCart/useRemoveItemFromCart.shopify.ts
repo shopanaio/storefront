@@ -24,7 +24,7 @@ const useRemoveItemFromCart = () => {
   const { cart } = useCart();
   const { setCartKey } = useCartContext();
 
-  const [commitRemoveLine] = useMutation<any>(
+  const [commitRemoveLine, isInFlight] = useMutation<any>(
     useRemoveItemFromCartMutation
   );
 
@@ -42,7 +42,7 @@ const useRemoveItemFromCart = () => {
         commitRemoveLine({
           variables: {
             cartId: cart.id,
-            lineIds: input.productLine.id,
+            lineIds: [(input.checkoutLine as any).id],
           },
           onCompleted: (response: any, errors: any) => {
             if (errors && errors.length > 0) {
@@ -70,6 +70,7 @@ const useRemoveItemFromCart = () => {
         });
       });
     },
+    loading: isInFlight,
   };
 };
 

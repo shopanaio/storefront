@@ -37,7 +37,10 @@ export const CartButton: React.FC<CartButtonProps> = ({
   const icon = <TbShoppingCart size={24} color="currentColor" />;
   const iconWithBadge = totalQuantity ? (
     <Badge
-      style={{ paddingInline: 2, boxShadow: `0 0 0 2px ${token.colorPrimary}` }}
+      style={{
+        paddingInline: 2,
+        boxShadow: `0 0 0 2px ${token.colorPrimary}`,
+      }}
       count={totalQuantity}
       offset={[-2, 3]}
       color="blue"

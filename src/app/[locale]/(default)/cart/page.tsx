@@ -11,6 +11,7 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { CartTable } from "@src/components/Cart/CartTable";
 import { PageLayout } from "@src/components/Layout/PageLayout";
 import { CartPageTitleAndBtn } from "@src/components/Cart/CartPageTitleAndBtn";
+import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
 
 const { Text } = Typography;
 
@@ -19,43 +20,25 @@ export default function CartPage() {
   const t = useTranslations("Cart");
   const { cart } = useCart();
 
-  const products = (cart?.lines?.edges ?? [])
-    .map((edge: any) => edge?.node)
-    .filter(Boolean);
+  const cartLines = (cart?.lines ??
+    []) as unknown as useCartLineFragment_CartLineFragment$key[];
 
   const subtotal = cart?.cost?.subtotalAmount;
 
   return (
     <PageLayout
       breadcrumbs={{
-        items: [
-          {
-            href: "/",
-            title: <TbHome />,
-          },
-          {
-            href: "/",
-            title: (
-              <>
-                <TbHome /> <Text type="secondary">Breadcrumb Link</Text>
-              </>
-            ),
-          },
-          {
-            title: t("cart"),
-          },
-        ],
+        index: true,
+        items: [{ title: t("cart") }],
       }}
     >
       <div className={styles.container}>
         <CartPageTitleAndBtn
           title={t("cart")}
-          productsCount={products.length}
+          productsCount={cartLines.length}
         />
-
         <Flex className={styles.pageBody} vertical>
-          <CartTable cartLines={products} variant="page" />
-
+          <CartTable cartLines={cartLines} variant="page" divider />
           <Flex className={styles.subtotalWrapper}>
             {subtotal && <CartSubtotal subtotal={subtotal as any} />}
           </Flex>

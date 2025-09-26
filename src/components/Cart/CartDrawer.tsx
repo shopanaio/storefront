@@ -14,6 +14,7 @@ const { Text } = Typography;
 import { CartSubtotal } from "./CartSubtotal";
 import { CartTable } from "./CartTable";
 import { useModalStore } from "@src/store/appStore";
+import clsx from "clsx";
 
 export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();
@@ -35,10 +36,11 @@ export const CartDrawer: React.FC = () => {
       onClose={() => setIsOpen(false)}
       open={isOpen}
       closable={false}
+      width={'min(100vw, 500px)'}
       drawerRender={() => (
         <Flex
           vertical
-          className={cx(styles.customDrawer, "ant-drawer-content")}
+          className={clsx(styles.customDrawer, "ant-drawer-content")}
         >
           <Flex className={styles.headerWrapper} vertical>
             <Flex
@@ -94,21 +96,20 @@ export const CartDrawer: React.FC = () => {
 
 const useStyles = createStyles(({ css, token }) => ({
   customDrawer: css`
-    height: 100%;
-    width: 400px;
     background: ${token.colorWhite};
+    height: 100%;
+    width: 100%;
   `,
   headerWrapper: css`
     position: sticky;
     top: 0;
-
     z-index: 1;
   `,
   drawerHeader: css`
     background-color: ${token.colorBgBase};
-    width: 100%;
     margin-bottom: ${token.marginXXS}px;
     padding: ${token.padding}px;
+    width: 100%;
   `,
   drawerTitle: css`
     font-size: ${token.fontSizeXL}px;
@@ -119,23 +120,22 @@ const useStyles = createStyles(({ css, token }) => ({
     margin-bottom: ${token.marginXS}px;
   `,
   itemsHeaderTitle: css`
-    margin: 0 !important;
-    font-size: ${token.fontSizeLG}px !important;
-    margin-top: 0px !important;
-    display: flex;
     align-items: center;
+    display: flex;
+    font-size: ${token.fontSizeLG}px !important;
     justify-content: space-between;
+    margin-top: 0px !important;
+    margin: 0 !important;
     width: 100%;
-
     & > span:not(:first-child) {
-      font-size: ${token.fontSizeLG}px;
       color: ${token.colorPrimary};
+      font-size: ${token.fontSizeLG}px;
       font-weight: 400;
     }
   `,
   cartTable: css`
-    padding: 0 ${token.padding}px;
     gap: ${token.marginXS}px;
+    padding: 0 ${token.padding}px;
   `,
   viewCartBtn: css`
     padding: 0;
@@ -146,10 +146,10 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   footerWrapper: css`
-    position: sticky;
+    background-color: ${token.colorBgBase};
     bottom: 0;
     margin-top: auto;
     padding: 0 ${token.padding}px ${token.padding}px;
-    background-color: ${token.colorBgBase};
+    position: sticky;
   `,
 }));

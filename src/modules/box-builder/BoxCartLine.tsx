@@ -3,7 +3,7 @@
 import { ApiCheckoutLine } from "@codegen/schema-client";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { Activity, useFlow } from "./stackflow/Stack";
-import { BoxBuilderQuantityInput } from "./ActionButton/QuantityInput";
+import { useBoxBuilderQuantityInputProps } from "./hooks/useBoxBuilderQuantityInputProps";
 import { ProductType } from "./ProductCard";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
@@ -27,6 +27,13 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
 
   const price = product.cost.unitPrice;
 
+  const quantityInputProps = useBoxBuilderQuantityInputProps({
+    productId: purchasable?.id ?? "",
+    disabled: !product.cost.unitPrice.amount,
+    useTrashButton: true,
+    appearance: "card",
+  });
+
   const handleClick = () => {
     push(Activity.Product, {
       productHandle: purchasable.handle,
@@ -47,16 +54,12 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
       unitPrice={price as any}
       variant="drawer"
       onClick={handleClick}
-      rightNode={
-        <BoxBuilderQuantityInput
-          productId={purchasable?.id ?? ""}
-          size="small"
-          color="primary"
-          disabled={!product.cost.unitPrice.amount}
-          useTrashButton
-          appearance="card"
-        />
-      }
+      onRemove={quantityInputProps.onRemove}
+      quantityInputProps={{
+        ...quantityInputProps,
+        size: "small",
+        color: "primary",
+      }}
     />
   );
 }

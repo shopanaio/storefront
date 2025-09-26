@@ -15,15 +15,16 @@ export const CartItem = ({
   onClick,
   variant = "drawer",
 }: CartItemProps) => {
-  const { removeFromCart } = useRemoveItemFromCart();
-  const { updateQuantity } = useUpdateCartLineQuantity();
+  const { removeFromCart, loading: isRemoving } = useRemoveItemFromCart();
+  const { updateQuantity, loading: isUpdating } = useUpdateCartLineQuantity();
 
-  const { cartLine } = useCartLineFragment(cartLineRef);
+  const cartLineData = useCartLineFragment(cartLineRef);
 
-  if (!cartLine) {
+  if (!cartLineData?.cartLine) {
     return null;
   }
 
+  const { cartLine } = cartLineData;
   const quantity = cartLine.quantity;
   const cartItemId = cartLine.id;
   const purchasable = cartLine.purchasable ?? {};
@@ -40,7 +41,7 @@ export const CartItem = ({
 
   const handleRemove = () => {
     removeFromCart({
-      checkoutLine: cartLine,
+      checkoutLine: cartLineData.cartLine,
     });
   };
 
@@ -50,13 +51,21 @@ export const CartItem = ({
       title={purchasable.title ?? ""}
       imageUrl={purchasable.cover?.url ?? ""}
       quantity={quantity}
-      unitPrice={cartLine.cost?.unitPrice ?? { amount: 0, currencyCode: "USD" }}
+      unitPrice={cartLine.cost.unitPrice}
+      totalPrice={cartLine.cost.totalAmount}
       compareAtUnitPrice={cartLine.cost?.compareAtUnitPrice ?? undefined}
       variant={variant}
-      onIncrement={increment}
-      onDecrement={decrement}
-      onRemove={handleRemove}
       onClick={onClick}
+      onRemove={handleRemove}
+      quantityInputProps={{
+        value: quantity,
+        onRemove: handleRemove,
+        onIncrement: increment,
+        onDecrement: decrement,
+        size: "small",
+        color: "primary",
+        loading: isUpdating || isRemoving,
+      }}
     />
   );
 };

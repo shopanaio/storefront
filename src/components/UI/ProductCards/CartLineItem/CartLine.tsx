@@ -6,7 +6,10 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { Price } from "@src/components/UI/Price/Price";
 import { SaleBadge } from "@src/components/UI/Badges/Sale";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
-import { QuantityInput } from "@src/components/Product/QuantityInput";
+import {
+  QuantityInput,
+  QuantityInputProps,
+} from "@src/components/Product/QuantityInput";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
 import { Entity } from "@src/entity";
@@ -24,18 +27,23 @@ export interface CartLineProps {
   imageUrl: string;
 
   // Quantity and prices
-  quantity: number;
+  quantity: number | string;
   unitPrice: Entity.Money;
   compareAtUnitPrice?: Entity.Money | null;
+  totalPrice?: Entity.Money; // Total price for the item (unitPrice * quantity), optional if calculated internally
+  totalDiscount?: Entity.Money | null;
 
   // Settings display
   variant?: "drawer" | "page";
 
-  // Handlers events
-  onIncrement: () => void;
-  onDecrement: () => void;
-  onRemove: () => void;
-  onClick: () => void;
+  // Click handler
+  onClick?: () => void;
+
+  // Remove handler for delete button
+  onRemove?: () => void;
+
+  // Optional QuantityInput props - если переданы, то QuantityInput рендерится с этими пропсами
+  quantityInputProps?: QuantityInputProps;
 
   // Optional right-side custom content (e.g., custom QuantityInput)
   rightNode?: React.ReactNode;
@@ -47,15 +55,24 @@ export const CartLine = ({
   imageUrl,
   quantity,
   unitPrice,
-  compareAtUnitPrice,
+  totalPrice,
+  // totalDiscount,
   variant = DEFAULT_VARIANT,
-  onIncrement,
-  onDecrement,
-  onRemove,
   onClick,
+  onRemove,
+  quantityInputProps,
   rightNode,
 }: CartLineProps) => {
   const { styles } = useStyles();
+
+  // Calculate total price if not provided
+  const computedTotalPrice: Entity.Money = totalPrice || {
+    amount: (
+      parseFloat(unitPrice.amount) *
+      (typeof quantity === "number" ? quantity : parseInt(quantity.toString()))
+    ).toString(),
+    currencyCode: unitPrice.currencyCode,
+  };
 
   // Drawer layout: match box-builder's simple line design
   if (variant === "drawer") {
@@ -72,35 +89,24 @@ export const CartLine = ({
               {title}
             </ProductCardTitle>
             <Typography.Text strong>
-              <Money money={unitPrice} />
+              <Money money={computedTotalPrice} />
             </Typography.Text>
           </Flex>
         </Flex>
-        <div className={styles.simpleQuantityInput}>
-          {rightNode ? (
-            rightNode
-          ) : (
-            <QuantityInput
-              value={quantity}
-              color="primary"
-              onIncrement={onIncrement!}
-              onDecrement={onDecrement!}
-              onRemove={onRemove}
-              size="small"
-            />
-          )}
-        </div>
+        {quantityInputProps ? (
+          <div className={styles.simpleQuantityInput}>
+            <QuantityInput {...quantityInputProps} />
+          </div>
+        ) : rightNode ? (
+          rightNode
+        ) : null}
       </Flex>
     );
   }
 
   return (
-    <Flex
-      key={id}
-      className={cx(styles.productCard, { page: variant === "page" })}
-      onClick={onClick}
-    >
-      <div className={cx(styles.imageWrapper, { page: variant === "page" })}>
+    <Flex key={id} className={cx(styles.productCard, "page")} onClick={onClick}>
+      <div className={cx(styles.imageWrapper, "page")}>
         <Image
           src={imageUrl}
           alt={title}
@@ -108,55 +114,40 @@ export const CartLine = ({
           preview={false}
         />
       </div>
-
-      <Flex
-        className={cx(styles.nameAndFeatures, { page: variant === "page" })}
-        vertical
-      >
+      <Flex className={cx(styles.nameAndFeatures, "page")} vertical>
         <Text className={styles.productName}>{title}</Text>
       </Flex>
-
-      <Button
-        className={cx(styles.deleteBtn, { page: variant === "page" })}
-        type="text"
-        size="large"
-        icon={<TbTrash size={18} />}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-      />
-
-      <QuantityInput
-        value={quantity}
-        color="primary"
-        onIncrement={onIncrement}
-        onDecrement={onDecrement}
-        size="large"
-        className={cx(styles.qntWrapper, { page: variant === "page" })}
-      />
+      {onRemove && (
+        <Button
+          className={cx(styles.deleteBtn, "page")}
+          type="text"
+          size="large"
+          icon={<TbTrash size={18} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+        />
+      )}
+      {quantityInputProps && (
+        <QuantityInput
+          {...quantityInputProps}
+          color="default"
+          className={cx(
+            styles.qntWrapper,
+            "page",
+            quantityInputProps.className
+          )}
+        />
+      )}
 
       <Flex
-        className={cx(styles.productPriceBox, { page: variant === "page" })}
+        className={cx(styles.productPriceBox, "page")}
         vertical
         align="flex-end"
       >
-        {compareAtUnitPrice && (
-          <Flex align="center" gap={8}>
-            <Text delete type="secondary" className={styles.productOldPrice}>
-              <Price money={compareAtUnitPrice} />
-            </Text>
-            <SaleBadge
-              compareAtPrice={compareAtUnitPrice.amount}
-              price={unitPrice.amount}
-            />
-          </Flex>
-        )}
-        <Text
-          className={cx(styles.productNewPrice, { page: variant === "page" })}
-          strong
-        >
-          <Price money={unitPrice} />
+        <Text className={cx(styles.productNewPrice, "page")} strong>
+          <Price money={computedTotalPrice} />
         </Text>
       </Flex>
     </Flex>
@@ -164,7 +155,6 @@ export const CartLine = ({
 };
 
 const useStyles = createStyles(({ token, css }) => ({
-  // Simple drawer layout styles
   simpleProductImage: css`
     width: 64px;
     height: 64px;
@@ -175,19 +165,13 @@ const useStyles = createStyles(({ token, css }) => ({
   simpleQuantityInput: css`
     max-width: 100px;
   `,
-
   productCard: css`
+    background: transparent;
     display: grid;
-
+    gap: ${token.margin}px;
     grid-template-columns: 64px 1fr 40px;
     grid-template-rows: auto auto;
-
-    gap: ${token.margin}px;
-
     padding: ${token.margin}px;
-
-    background: transparent;
-
     &.page {
       ${mq.lg} {
         gap: 0;
@@ -198,37 +182,29 @@ const useStyles = createStyles(({ token, css }) => ({
     }
   `,
   imageWrapper: css`
-    grid-row: 1;
-    grid-column: 1;
-
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    overflow: hidden;
     background-color: transparent;
-
-    width: 64px;
-    height: 64px;
+    border-radius: ${token.borderRadius}px;
+    border: 1px solid ${token.colorBorderSecondary};
     flex-shrink: 0;
-  `,
-
-  nameAndFeatures: css`
+    grid-column: 1;
     grid-row: 1;
+    height: 64px;
+    overflow: hidden;
+    width: 64px;
+  `,
+  nameAndFeatures: css`
     grid-column: 2;
-
+    grid-row: 1;
     &.page {
       ${mq.lg} {
         max-width: 340px;
-
         grid-column: 2;
-
         gap: ${token.marginSM}px;
-
         align-self: start;
         padding-left: ${token.paddingLG}px;
       }
     }
   `,
-
   productName: css`
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -240,30 +216,23 @@ const useStyles = createStyles(({ token, css }) => ({
     font-size: ${token.fontSize}px;
     font-weight: 500;
   `,
-
   deleteBtn: css`
     grid-row: 1;
     grid-column: 3;
-
     &.page {
       ${mq.lg} {
         grid-column: 5;
       }
     }
   `,
-
   qntWrapper: css`
     grid-row: 2;
     grid-column: 1 / span 2;
-
-    width: 130px;
-    /* height: 40px; */
-
+    max-width: 100px;
     &.page {
       ${mq.lg} {
         grid-row: 1;
         grid-column: 3;
-
         justify-self: start;
       }
     }
@@ -271,12 +240,10 @@ const useStyles = createStyles(({ token, css }) => ({
   productPriceBox: css`
     grid-row: 2;
     grid-column: 2 / span 2;
-
     &.page {
       ${mq.lg} {
         grid-row: 1;
         grid-column: 4;
-
         align-items: flex-start;
       }
     }
@@ -288,7 +255,6 @@ const useStyles = createStyles(({ token, css }) => ({
   productNewPrice: css`
     font-size: ${token.fontSizeLG}px;
     line-height: 1;
-
     &.page {
       ${mq.lg} {
         font-size: 18px;
