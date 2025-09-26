@@ -59,7 +59,7 @@ export const AnnouncementBar = () => {
     <div className={styles.blackLine}>
       <div className={styles.container}>
         <Flex className={styles.content} justify="space-between" align="center">
-          <div className={styles.navList}>
+          <div className={styles.nav}>
             <Button type="text" className={styles.navItem}>
               <Text className={styles.navText}>{t("marketplace")}</Text>
             </Button>
@@ -97,6 +97,7 @@ export const AnnouncementBar = () => {
 
 const useStyles = createStyles(({ token, css }) => ({
   blackLine: css`
+    height: 32px;
     display: none;
     ${mq.lg} {
       display: block;
@@ -107,9 +108,7 @@ const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
 
     ${mq.xl} {
-      margin-right: auto;
-      margin-left: auto;
-
+      margin: 0 auto;
       max-width: 1280px;
     }
 
@@ -117,15 +116,12 @@ const useStyles = createStyles(({ token, css }) => ({
       max-width: 1400px;
     }
   `,
-  content: css`
-    padding: 0 ${token.paddingSM}px;
-  `,
-  navList: css`
+  content: css``,
+  nav: css`
     display: flex;
     gap: ${token.marginXS}px;
   `,
   navItem: css`
-    height: 40px;
     padding: ${token.paddingXS}px;
   `,
   navText: css`
@@ -137,7 +133,6 @@ const useStyles = createStyles(({ token, css }) => ({
     gap: ${token.marginXS}px;
   `,
   dropdownBtn: css`
-    height: 40px;
     color: ${token.colorTextLightSolid};
     background-color: transparent;
     border: none;

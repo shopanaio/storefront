@@ -36,7 +36,7 @@ const useHomeClientQuery = (): HomePageData => {
     );
   }
 
-  if (homeAndGarden?.children?.edges?.length) {
+  if (0 && homeAndGarden?.children?.edges?.length) {
     const childCategories = homeAndGarden.children.edges.map(
       (edge) => edge.node as ProductSlideShowRelay_category$key
     );

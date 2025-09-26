@@ -9,12 +9,26 @@ interface ModalState {
   setIsAuthModalVisible: (visible: boolean) => void;
   isRateModalVisible: boolean;
   setIsRateModalVisible: (visible: boolean) => void;
+  isCartDrawerOpen: boolean;
+  setIsCartDrawerOpen: (open: boolean) => void;
+  // App main drawer (navigation)
+  isAppDrawerOpen: boolean;
+  setIsAppDrawerOpen: (open: boolean) => void;
+  // Search dialog (mobile search)
+  searchDialogOpen: boolean;
+  setSearchDialogOpen: (open: boolean) => void;
 }
 export const useModalStore = create<ModalState>((set) => ({
   isAuthModalVisible: false,
   setIsAuthModalVisible: (visible) => set({ isAuthModalVisible: visible }),
   isRateModalVisible: false,
   setIsRateModalVisible: (visible) => set({ isRateModalVisible: visible }),
+  isCartDrawerOpen: false,
+  setIsCartDrawerOpen: (open) => set({ isCartDrawerOpen: open }),
+  isAppDrawerOpen: false,
+  setIsAppDrawerOpen: (open) => set({ isAppDrawerOpen: open }),
+  searchDialogOpen: false,
+  setSearchDialogOpen: (open) => set({ searchDialogOpen: open }),
 }));
 
 // currencyStore

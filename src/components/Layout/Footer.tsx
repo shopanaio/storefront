@@ -10,14 +10,15 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { useLocale } from "next-intl";
 import { ApiMenu } from "@codegen/schema-client";
 import { useMenuHref } from "@src/hooks/useMenuHref";
+import { footerMenusArr } from "@src/mocks/footerMenusArr";
 
 const { Text } = Typography;
 
 type Props = {
-  menus: ApiMenu[];
+  menus?: ApiMenu[];
 };
 
-export const Footer = ({ menus }: Props) => {
+export const Footer = ({ menus = footerMenusArr }: Props) => {
   const t = useTranslations("Footer");
   const { styles } = useStyles();
   const pathname = usePathname();

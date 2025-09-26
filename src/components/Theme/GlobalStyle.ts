@@ -45,7 +45,7 @@ export const GlobalStyle = createGlobalStyle`
     --spacing-16: 4rem; /** 64px */
     --spacing-20: 5rem; /** 80px */
 
-    --components-header-control-height: 46px;
+    --components-header-control-height: 42px;
 
     --always-black-bg: #000;
     --always-White-text: #fff;

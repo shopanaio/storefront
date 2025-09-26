@@ -1,23 +1,19 @@
 import { useRef, useEffect, useState } from "react";
-import { Button, Input, Popover, Spin } from "antd";
-import { TbSearch } from "react-icons/tb";
+import { Popover } from "antd";
 import SearchResults from "./SearchResults";
 import { useSearchInput } from "@src/hooks/useSearchInput";
 import { mq } from "@src/components/Theme/breakpoints";
-import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useElementWidth } from "@src/hooks/useElementWidth";
-import { useLocale } from "next-intl";
+import { DesktopSearchInput } from "./DesktopSearchInput";
 
 export const DesktopSearch: React.FC = () => {
-  const locale = useLocale();
   const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput(300);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
   const popoverWidth = useElementWidth(containerRef);
-  const t = useTranslations("Header");
   const { styles } = useStyles();
 
   useEffect(() => {
@@ -27,8 +23,6 @@ export const DesktopSearch: React.FC = () => {
       setIsPopoverOpen(false);
     }
   }, [searchTerm]);
-
-  // popover width is now updated inside useElementWidth
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,22 +67,10 @@ export const DesktopSearch: React.FC = () => {
           </div>
         }
       >
-        <Input
-          allowClear
-          className={styles.searchInput}
-          placeholder={`${t("search")} ...`}
+        <DesktopSearchInput
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          prefix={<TbSearch className={styles.searchIcon} size={18} />}
+          onChange={setSearchTerm}
           onFocus={handleFocus}
-          suffix={
-            <Button
-              href={`${locale}/search?q=${encodeURIComponent(searchTerm)}`}
-              type="primary"
-            >
-              {t("search")}
-            </Button>
-          }
         />
       </Popover>
     </div>
@@ -98,26 +80,16 @@ export const DesktopSearch: React.FC = () => {
 const useStyles = createStyles(({ token, css }) => {
   return {
     inputContainer: css`
-      order: 6;
+      order: 999;
       display: flex;
       flex-grow: 1;
-      width: auto;
+      width: 100%;
       height: var(--components-header-control-height);
 
-      ${mq.max.sm} {
-        display: none;
-      }
       ${mq.lg} {
         order: 3;
+        width: auto;
       }
-    `,
-    searchInput: css`
-      width: 100%;
-      padding: ${token.paddingXXS} ${token.paddingXS};
-      background-color: transparent;
-    `,
-    searchIcon: css`
-      color: ${token.colorTextPlaceholder};
     `,
     popover: css`
       display: flex;

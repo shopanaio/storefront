@@ -8,22 +8,24 @@ import { Button, Badge } from "antd";
 import useToken from "antd/es/theme/useToken";
 import { mq } from "@src/components/Theme/breakpoints";
 import clsx from "clsx";
+import { useModalStore } from "@src/store/appStore";
 
 type CartButtonProps = {
   onClick?: () => void;
-  mobileBlock?: boolean;
   className?: string;
 };
 
 export const CartButton: React.FC<CartButtonProps> = ({
   onClick,
-  mobileBlock = true,
   className,
 }) => {
   const t = useTranslations("Header");
   const { cart } = useCart();
   const { styles } = useStyles();
   const [, token] = useToken();
+  const setIsCartDrawerOpen = useModalStore(
+    (state) => state.setIsCartDrawerOpen
+  );
 
   const totalQuantity = cart?.totalQuantity ?? 0;
   const amountText = cart?.cost?.totalAmount ? (
@@ -47,8 +49,17 @@ export const CartButton: React.FC<CartButtonProps> = ({
     icon
   );
 
+  const handleClick = () => {
+    if (onClick) onClick();
+    setIsCartDrawerOpen(true);
+  };
+
   return (
-    <Button type="text" onClick={onClick} className={clsx(styles.button, className)}>
+    <Button
+      type="text"
+      onClick={handleClick}
+      className={clsx(styles.button, className)}
+    >
       <span className={styles.content}>
         <span className={styles.iconWrapper}>{iconWithBadge}</span>
         <span className={styles.amount}>{amountText}</span>
@@ -60,18 +71,21 @@ export const CartButton: React.FC<CartButtonProps> = ({
 const useStyles = createStyles(({ token, css }) => {
   return {
     button: css`
-      min-width: 80px;
-      max-width: 80px;
-      height: 46px;
-      padding: 0 ${token.paddingXS}px ${token.paddingXS}px;
+      height: var(--components-header-control-height);
+      padding: 0 ${token.paddingXS}px;
       color: ${token.colorText};
+
+      ${mq.md} {
+        min-width: 84px;
+        max-width: 84px;
+        padding-bottom: ${token.paddingXS}px;
+      }
     `,
     content: css`
       display: inline-flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: ${token.marginXXS}px;
 
       ${mq.sm} {
         gap: ${token.marginXS}px;
@@ -83,10 +97,15 @@ const useStyles = createStyles(({ token, css }) => {
       justify-content: center;
     `,
     amount: css`
+      display: none;
       font-weight: 400;
       font-size: 13px;
       line-height: ${token.lineHeight}px;
       color: currentColor;
+
+      ${mq.md} {
+        display: block;
+      }
     `,
   };
 });

@@ -13,17 +13,15 @@ const { Text } = Typography;
 
 import { CartSubtotal } from "./CartSubtotal";
 import { CartTable } from "./CartTable";
+import { useModalStore } from "@src/store/appStore";
 
-interface CartDrawerProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
+export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();
   const t = useTranslations("Cart");
   const routes = useRoutes();
   const { cart } = useCart();
+  const isOpen = useModalStore((state) => state.isCartDrawerOpen);
+  const setIsOpen = useModalStore((state) => state.setIsCartDrawerOpen);
 
   const cartLines = (cart?.lines ??
     []) as useCartLineFragment_CartLineFragment$key[];
@@ -33,8 +31,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   return (
     <Drawer
       placement="right"
-      onClose={onClose}
-      open={open}
+      onClose={() => setIsOpen(false)}
+      open={isOpen}
       closable={false}
       drawerRender={() => (
         <Flex
@@ -63,7 +61,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
                   icon={<RxCross2 size={24} />}
                   type="text"
                   className={styles.closeBtn}
-                  onClick={onClose}
+                  onClick={() => setIsOpen(false)}
                 />
               </Flex>
             </Flex>

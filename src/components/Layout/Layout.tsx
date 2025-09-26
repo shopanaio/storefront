@@ -1,6 +1,16 @@
-import { Layout as AntLayout } from "antd";
+"use client";
+
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { AppDrawer } from "./AppDrawer";
+import { MobileSearch } from "../Search/MobileSearch ";
+import { Footer } from "./Footer";
+import { Header } from "./Header";
+import { StickyHeader } from "./StickyHeader";
+import { createStyles } from "antd-style";
+import { usePathname } from "next/navigation";
+import { AnnouncementBar } from "@src/components/Layout/AnnouncementBar";
+
 const AuthModal = dynamic(
   () => import("../Auth/AuthModal").then((m) => m.AuthModal),
   { ssr: false }
@@ -9,22 +19,10 @@ const RateModal = dynamic(
   () => import("../Product/Rate/RateModal").then((m) => m.RateModal),
   { ssr: false }
 );
-import { DrawerComponent } from "./Drawer";
-import { MobileSearch } from "../Search/MobileSearch ";
 const CartDrawer = dynamic(
   () => import("../Cart/CartDrawer").then((m) => m.CartDrawer),
   { ssr: false }
 );
-import { Footer } from "./Footer";
-import { footerMenusArr } from "@src/mocks/footerMenusArr";
-import { Header } from "./Header";
-import { StickyHeader } from "./StickyHeader";
-import { createStyles } from "antd-style";
-import { usePathname } from "next/navigation";
-import { useSession } from "@src/hooks/useSession";
-import useCart from "@src/hooks/cart/useCart";
-
-const { Content } = AntLayout;
 
 interface ILayoutProps {
   children: React.ReactNode;
@@ -32,27 +30,9 @@ interface ILayoutProps {
 
 export const Layout = ({ children }: ILayoutProps) => {
   const { styles } = useStyles();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+
   const [isVisible, setIsVisible] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
-
-  const user = useSession((state) => state.session?.user);
-  const pathname = usePathname();
-  const isCheckout = pathname?.includes("/checkout");
-  const isBoxBuilder = pathname?.includes("/box-builder");
-  const isShopify = pathname?.includes("/shopify");
-
-  const [mobileSearchDrawerOpen, setMobileSearchDrawerOpen] = useState(false);
-
-  const openDrawer = () => setDrawerOpen(true);
-  const closeDrawer = () => setDrawerOpen(false);
-
-  const openCartDrawer = () => setCartDrawerOpen(true);
-  const closeCartDrawer = () => setCartDrawerOpen(false);
-
-  const openMobileSearchDrawer = () => setMobileSearchDrawerOpen(true);
-  const closeMobileSearchDrawer = () => setMobileSearchDrawerOpen(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -71,38 +51,19 @@ export const Layout = ({ children }: ILayoutProps) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isRendered]);
 
-  return isCheckout || isBoxBuilder || isShopify ? (
-    <Content className={styles.content}>{children}</Content>
-  ) : (
-    <AntLayout>
-      <>
-        <StickyHeader
-          visible={isVisible}
-          onOpenDrawer={openDrawer}
-          onOpenCartDrawer={openCartDrawer}
-          user={user}
-        />
-        <Header
-          onOpenDrawer={openDrawer}
-          onOpenMobileSearchDrawer={openMobileSearchDrawer}
-          onOpenCartDrawer={openCartDrawer}
-          user={user}
-        />
-      </>
-
-      <Content className={styles.content}>{children}</Content>
-      <Footer menus={footerMenusArr} />
-
+  return (
+    <div>
+      <AnnouncementBar />
+      <Header />
+      <StickyHeader visible={isVisible} />
+      <main className={styles.content}>{children}</main>
+      <Footer />
       <AuthModal />
       <RateModal />
-
-      <CartDrawer open={cartDrawerOpen} onClose={closeCartDrawer} />
-      <DrawerComponent open={drawerOpen} onClose={closeDrawer} />
-      <MobileSearch
-        open={mobileSearchDrawerOpen}
-        onClose={closeMobileSearchDrawer}
-      />
-    </AntLayout>
+      <CartDrawer />
+      <AppDrawer />
+      <MobileSearch />
+    </div>
   );
 };
 

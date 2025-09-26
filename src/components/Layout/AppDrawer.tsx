@@ -22,18 +22,12 @@ import { createStyles } from "antd-style";
 
 const { Text } = Typography;
 
-interface DrawerComponentProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export const DrawerComponent: React.FC<DrawerComponentProps> = ({
-  open,
-  onClose,
-}) => {
+export const AppDrawer: React.FC = () => {
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );
+  const isOpen = useModalStore((state) => state.isAppDrawerOpen);
+  const setIsOpen = useModalStore((state) => state.setIsAppDrawerOpen);
   const pathname = usePathname();
   const t = useTranslations("Header");
   const { styles } = useStyles();
@@ -49,8 +43,8 @@ export const DrawerComponent: React.FC<DrawerComponentProps> = ({
   return (
     <Drawer
       placement="left"
-      onClose={onClose}
-      open={open}
+      onClose={() => setIsOpen(false)}
+      open={isOpen}
       closable={false}
       drawerRender={() => (
         <div className={`${styles.customDrawer} ant-drawer-content`}>
@@ -61,15 +55,13 @@ export const DrawerComponent: React.FC<DrawerComponentProps> = ({
                 icon={<RxCross2 size={24} />}
                 type="text"
                 className={styles.closeBtn}
-                onClick={onClose}
+                onClick={() => setIsOpen(false)}
               />
             </Flex>
 
             <Flex>
               <HeaderLinkButton
-                icon={
-                  <TbPhoneFilled size={24} className={styles.supportIcon} />
-                }
+                icon={<TbPhoneFilled size={24} className={styles.supportIcon} />}
                 topText={t("customer-support")}
                 bottomText="+1 (999) 111-11-11"
                 theme="dark"

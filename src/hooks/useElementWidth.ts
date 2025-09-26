@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
  * provides graceful-fallback to window.resize event.
  */
 export function useElementWidth<T extends HTMLElement>(
-  ref: React.RefObject<T>
+  ref: React.RefObject<T | null>
 ): number {
   const [width, setWidth] = useState(0);
 

@@ -22,7 +22,6 @@ export const HeaderLinkButton = ({
   icon,
   topText,
   bottomText,
-  badgeCount,
   onClick,
   theme = "light",
   mobileBlock = false,
@@ -31,23 +30,6 @@ export const HeaderLinkButton = ({
   const { styles } = useStyles({ theme, mobileBlock });
   const [, token] = useToken();
 
-  const iconWithBadge = badgeCount ? (
-    <Badge
-      style={{
-        paddingInline: 2,
-        boxShadow: `0 0 0 2px ${token.colorPrimary}`,
-      }}
-      count={badgeCount}
-      offset={[-4, 3]}
-      color="blue"
-      size="small"
-    >
-      {icon}
-    </Badge>
-  ) : (
-    icon
-  );
-
   return (
     <Button
       className={clsx(styles.headerLinkBtn, className)}
@@ -55,7 +37,7 @@ export const HeaderLinkButton = ({
       color="default"
       onClick={onClick}
     >
-      {iconWithBadge}
+      {icon}
       <Flex className={styles.textWrapper}>
         {topText && <Text className={styles.topText}>{topText}</Text>}
         <Text className={styles.bottomText}>{bottomText}</Text>
@@ -73,7 +55,7 @@ const useStyles = createStyles(
       justify-content: flex-start;
       padding: 0 ${token.paddingXS}px;
       flex-shrink: 0;
-      height: 46px;
+      height: var(--components-header-control-height);
       gap: 0;
 
       ${mq.sm} {
@@ -81,12 +63,12 @@ const useStyles = createStyles(
       }
     `,
     textWrapper: css`
-      display: ${mobileBlock ? "none" : "flex"};
+      display: none;
       flex-direction: column;
       align-items: flex-start;
       margin-left: ${token.marginXS}px;
 
-      ${mq.sm} {
+      ${mq.md} {
         display: flex;
         flex-direction: column;
         margin-left: 0;

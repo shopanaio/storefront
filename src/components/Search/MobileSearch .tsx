@@ -9,37 +9,32 @@ import SearchResults from "./SearchResults";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useSearchInput } from "@src/hooks/useSearchInput";
+import { useModalStore } from "@src/store/appStore";
 
 const { Text } = Typography;
 
-interface MobileSearchProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export const MobileSearch: React.FC<MobileSearchProps> = ({
-  open,
-  onClose,
-}) => {
+export const MobileSearch: React.FC = () => {
   const t = useTranslations("Header");
   const { styles } = useStyles();
   const inputRef = useRef<InputRef>(null);
+  const isOpen = useModalStore((state) => state.searchDialogOpen);
+  const setIsOpen = useModalStore((state) => state.setSearchDialogOpen);
 
   const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput(300);
 
   useEffect(() => {
-    if (open && inputRef.current) {
+    if (isOpen && inputRef.current) {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
     }
-  }, [open]);
+  }, [isOpen]);
 
   return (
     <Drawer
       placement="right"
-      onClose={onClose}
-      open={open}
+      onClose={() => setIsOpen(false)}
+      open={isOpen}
       closable={false}
       width="100vw"
       drawerRender={() => (
@@ -54,7 +49,7 @@ export const MobileSearch: React.FC<MobileSearchProps> = ({
                 className={styles.closeButton}
                 icon={<RxCross2 size={24} />}
                 type="text"
-                onClick={onClose}
+                onClick={() => setIsOpen(false)}
               />
             </Flex>
           </Flex>

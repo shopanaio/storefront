@@ -1,39 +1,25 @@
-import { useModalStore } from "@src/store/appStore";
-import { Layout, Button, Flex, Divider } from "antd";
+import { Button, Flex, Divider } from "antd";
 import Link from "next/link";
-import { TbMenu2, TbHeart, TbUserCircle, TbPhone } from "react-icons/tb";
+import { TbMenu2 } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
 import { FullLogo } from "./Logo";
-import { HeaderLinkButton } from "./HeaderLinkButton";
 import { CartButton } from "./CartButton";
 import { DesktopSearch } from "../Search/DesktopSearch";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { createStyles, cx } from "antd-style";
 import { useEffect, useState } from "react";
-import { User } from "@src/entity/User";
-import { useRouter } from "next/navigation";
-const { Header: AntHeader } = Layout;
+import { SupportButton } from "./SupportButton";
+import { WishlistButton } from "./WishlistButton";
+import { AccountButton } from "./AccountButton";
+import { AppDrawerButton } from "./AppDrawerButton";
 
 interface Props {
-  onOpenDrawer: () => void;
-  onOpenCartDrawer: () => void;
   visible: boolean;
-  user: User | null | undefined;
 }
 
-export const StickyHeader: React.FC<Props> = ({
-  onOpenDrawer,
-  onOpenCartDrawer,
-  visible,
-  user,
-}) => {
-  const setIsAuthModalVisible = useModalStore(
-    (state) => state.setIsAuthModalVisible
-  );
+export const StickyHeader: React.FC<Props> = ({ visible }) => {
   const t = useTranslations("Header");
   const { styles } = useStyles();
-  const router = useRouter();
-  const locale = useLocale();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -44,16 +30,9 @@ export const StickyHeader: React.FC<Props> = ({
   }, []);
 
   return (
-    <AntHeader
-      className={cx(styles.header, mounted && visible && styles.visible)}
-    >
+    <div className={cx(styles.header, mounted && visible && styles.visible)}>
       <div className={styles.container}>
-        <Button
-          className={styles.menuBtn}
-          type="text"
-          icon={<TbMenu2 size={24} />}
-          onClick={onOpenDrawer}
-        />
+        <AppDrawerButton className={styles.menuBtn} size={24} />
         <Flex className={styles.logoWrapper}>
           <Link className={styles.logoLink} href="/">
             <FullLogo theme="light" size={32} />
@@ -61,102 +40,49 @@ export const StickyHeader: React.FC<Props> = ({
         </Flex>
         <DesktopSearch />
         <Flex className={styles.headerLinksList}>
-          <Flex className={styles.supportWrapper}>
-            <HeaderLinkButton
-              icon={<TbPhone size={24} />}
-              topText={t("customer-support")}
-              bottomText="+1 (999) 111-11-11"
-              mobileBlock={true}
-            />
-            <Divider
-              type="vertical"
-              orientation="end"
-              style={{ height: "33px" }}
-            />
-          </Flex>
-          <HeaderLinkButton
-            icon={<TbHeart size={24} />}
-            topText={t("my-items")}
-            bottomText={t("wishlist")}
-            mobileBlock={true}
-          />
-          <HeaderLinkButton
-            icon={<TbUserCircle size={24} />}
-            topText={user ? user.email : t("sign-in")}
-            bottomText={t("account")}
-            onClick={() =>
-              user
-                ? router.push(`/${locale}/profile/general`)
-                : setIsAuthModalVisible(true)
-            }
-            mobileBlock={true}
-          />
-          <CartButton mobileBlock={true} onClick={() => onOpenCartDrawer()} />
+          <SupportButton />
+          <WishlistButton />
+          <AccountButton />
+          <CartButton />
         </Flex>
         <div className={styles.breakRow} />
       </div>
-    </AntHeader>
+    </div>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => {
   return {
+    header: css`
+      width: 100%;
+      background-color: ${token.colorBgBase};
+      box-shadow: ${token.boxShadowTertiary};
+      opacity: 0;
+      padding: ${token.paddingXS}px ${token.paddingSM}px;
+      position: fixed;
+      top: 0;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 20;
+
+      ${mq.lg} {
+        padding: ${token.paddingXS}px ${token.padding}px;
+      }
+    `,
     container: css`
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       width: 100%;
-
-      ${mq.sm} {
-        gap: 0;
-        row-gap: ${token.marginXS}px;
-      }
-
-      ${mq.md} {
-        gap: ${token.margin}px;
-        row-gap: ${token.marginXS}px;
-      }
-
-      ${mq.lg} {
-        gap: ${token.margin}px;
-      }
+      gap: ${token.marginXS}px;
 
       ${mq.xl} {
-        margin-right: auto;
-        margin-left: auto;
-
+        margin: 0 auto;
         max-width: 1280px;
       }
 
       ${mq.xxl} {
         max-width: 1400px;
-      }
-    `,
-    header: css`
-      position: sticky;
-      top: 0;
-      z-index: 20; // make a token
-
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: ${token.padding}px;
-      padding: ${token.paddingSM}px ${token.padding}px;
-      background-color: ${token.colorBgBase};
-      height: 100%;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-      transform: translateY(-100%);
-      opacity: 0;
-      box-shadow: ${token.boxShadowTertiary}; // todo: Use proper token
-
-      margin-top: -78px;
-
-      ${mq.sm} {
-        margin-top: -140px;
-      }
-
-      ${mq.lg} {
-        margin-top: -78px;
       }
     `,
     visible: css`

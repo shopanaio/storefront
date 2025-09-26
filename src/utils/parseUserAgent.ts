@@ -5,9 +5,10 @@ export const parseUserAgent = (userAgent?: string) => {
   const device = parser.getDevice();
   const os = parser.getOS();
 
-  const isMobile = device.type === "mobile" || device.type === "tablet";
-  const isDesktop = !isMobile;
+  const isMobile = device.type === "mobile";
+  const isTablet = device.type === "tablet";
+  const isDesktop = !isMobile && !isTablet;
   const isIOS = os.name === "iOS";
 
-  return { isMobile, isDesktop, isIOS };
+  return { isMobile, isDesktop, isTablet, isIOS };
 };
