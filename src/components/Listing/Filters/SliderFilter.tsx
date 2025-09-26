@@ -22,6 +22,8 @@ export const SliderFilter: React.FC<SliderFilterProps> = ({
 }) => {
   const { styles } = useStyles();
 
+  console.log(min, "MIN");
+
   return (
     <Flex vertical gap={16}>
       <Slider
@@ -37,14 +39,18 @@ export const SliderFilter: React.FC<SliderFilterProps> = ({
           min={min}
           max={value[1]}
           value={value[0]}
-          onChange={(val) => val !== null && onChange([val as number, value[1]])}
+          onChange={(val) =>
+            val !== null && onChange([val as number, value[1]])
+          }
         />
         <InputNumber
           className={styles.priceInput}
           min={value[0]}
           max={max}
           value={value[1]}
-          onChange={(val) => val !== null && onChange([value[0], val as number])}
+          onChange={(val) =>
+            val !== null && onChange([value[0], val as number])
+          }
         />
         <Button className={styles.applyPrice} type="primary" onClick={onApply}>
           {mode === "drawer" ? "Apply" : "OK"}

@@ -50,6 +50,43 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
     Record<string, [number, number]>
   >({});
 
+  /**
+   * Checks if filter values are a valid price range tuple
+   */
+  const isPriceRangeTuple = (values: unknown): values is [number, number] => {
+    return (
+      Array.isArray(values) &&
+      values.length === 2 &&
+      typeof values[0] === "number" &&
+      typeof values[1] === "number"
+    );
+  };
+
+  /**
+   * Gets the current price value for a filter, with fallback chain:
+   * 1. Draft value (user is currently editing)
+   * 2. Selected filter value (if it's a valid price range)
+   * 3. Default min/max from filter definition
+   */
+  const getPriceValue = (
+    filter: ApiPriceRangeFilter,
+    handle: string
+  ): [number, number] => {
+    // Check draft first
+    if (priceDraft[handle]) {
+      return priceDraft[handle];
+    }
+
+    // Check selected filters
+    const selectedFilter = selectedFilters[handle];
+    if (selectedFilter?.values && isPriceRangeTuple(selectedFilter.values)) {
+      return selectedFilter.values;
+    }
+
+    // Fallback to filter defaults
+    return [parseFloat(filter.minPrice.amount), parseFloat(filter.maxPrice.amount)];
+  };
+
   // Function for getting inputs from normalizedFilters
   const getInputsForFilter = (
     filterHandle: string,
@@ -85,15 +122,16 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
         delete rest[handle];
         return rest;
       }
-      if (current && Array.isArray(current.values)) {
-        const newValues = current.values.filter((v) => v !== value);
+      if (current && Array.isArray(current.values) && !isPriceRangeTuple(current.values)) {
+        const stringValues = current.values as string[];
+        const newValues = stringValues.filter((v) => v !== value);
         if (newValues.length === 0) {
           const rest = { ...prev };
           delete rest[handle];
           return rest;
         }
         // Update inputs according to new values
-        const newInputs = getInputsForFilter(handle, newValues as string[]);
+        const newInputs = getInputsForFilter(handle, newValues);
         return {
           ...prev,
           [handle]: {
@@ -220,14 +258,7 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
         };
 
         if (isPriceRangeFilter(filter)) {
-          // Take draft if exists, otherwise from selectedFilters, otherwise default
-          const priceValue =
-            priceDraft[filter.handle] ||
-            (selectedFilters[filter.handle]?.values &&
-            Array.isArray(selectedFilters[filter.handle].values) &&
-            typeof selectedFilters[filter.handle].values[0] === "number"
-              ? (selectedFilters[filter.handle].values as [number, number])
-              : [filter.minPrice.amount, filter.maxPrice.amount]);
+          const priceValue = getPriceValue(filter, filter.handle);
 
           const handleApply = () => {
             setSelectedFilters((prev) => ({
@@ -242,9 +273,9 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
           return (
             <FiltersProvider handle={filter.handle} key={filter.handle}>
               <SliderFilter
-                min={filter.minPrice.amount}
-                max={filter.maxPrice.amount}
-                value={priceValue as [number, number]}
+                min={parseFloat(filter.minPrice.amount)}
+                max={parseFloat(filter.maxPrice.amount)}
+                value={priceValue}
                 onChange={(vals: [number, number]) => {
                   setPriceDraft((prev) => ({ ...prev, [filter.handle]: vals }));
                 }}
