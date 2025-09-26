@@ -1,25 +1,18 @@
 "use client";
 
-import { Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
 import { ApiCheckoutLine } from "@codegen/schema-client";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { Activity, useFlow } from "./stackflow/Stack";
-import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
 import { BoxBuilderQuantityInput } from "./ActionButton/QuantityInput";
 import { ProductType } from "./ProductCard";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
-import { Money } from "@src/components/UI/Price/Money";
-
-const { Text } = Typography;
+import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
 
 interface BoxCartLineProps {
   product: ApiCheckoutLine;
 }
 
 export default function BoxCartLine({ product }: BoxCartLineProps) {
-  const { styles } = useStyles();
   const { push } = useFlow();
 
   const { selectedBoxId, selectedCardIds } = useBoxBuilderStore();
@@ -46,19 +39,15 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
   };
 
   return (
-    <Flex key={product.id} justify="space-between" align="center">
-      <Flex align="center" gap={8} onClick={handleClick}>
-        <Thumbnail src={imageUrl} alt={title} className={styles.productImage} />
-        <Flex vertical className={styles.productInfo}>
-          <ProductCardTitle rows={2} size="large">
-            {title}
-          </ProductCardTitle>
-          <Text strong>
-            <Money money={price} />
-          </Text>
-        </Flex>
-      </Flex>
-      <div className={styles.quantityInput}>
+    <CartLine
+      id={product.id ?? purchasable?.id ?? ""}
+      title={title}
+      imageUrl={imageUrl}
+      quantity={(product as any)?.quantity ?? 0}
+      unitPrice={price as any}
+      variant="drawer"
+      onClick={handleClick}
+      rightNode={
         <BoxBuilderQuantityInput
           productId={purchasable?.id ?? ""}
           size="small"
@@ -67,22 +56,7 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
           useTrashButton
           appearance="card"
         />
-      </div>
-    </Flex>
+      }
+    />
   );
 }
-
-const useStyles = createStyles(({ css }) => {
-  return {
-    productImage: css`
-      width: 64px;
-      height: 64px;
-    `,
-    productInfo: css`
-      max-width: 170px;
-    `,
-    quantityInput: css`
-      max-width: 100px;
-    `,
-  };
-});

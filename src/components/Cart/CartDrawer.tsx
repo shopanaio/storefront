@@ -18,13 +18,14 @@ import { useModalStore } from "@src/store/appStore";
 export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();
   const t = useTranslations("Cart");
+  const tProduct = useTranslations("Product");
   const routes = useRoutes();
   const { cart } = useCart();
   const isOpen = useModalStore((state) => state.isCartDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsCartDrawerOpen);
 
   const cartLines = (cart?.lines ??
-    []) as useCartLineFragment_CartLineFragment$key[];
+    []) as unknown as useCartLineFragment_CartLineFragment$key[];
 
   const subtotal = cart?.cost?.subtotalAmount;
 
@@ -67,10 +68,23 @@ export const CartDrawer: React.FC = () => {
             </Flex>
           </Flex>
 
-          <CartTable cartLines={cartLines} variant="drawer" />
+          <Flex className={styles.itemsHeader}>
+            <Typography.Title className={styles.itemsHeaderTitle} level={5}>
+              <span>{tProduct("in-cart")}</span>{" "}
+              <Text>
+                {t("products-count", { count: cart?.totalQuantity || 0 })}
+              </Text>
+            </Typography.Title>
+          </Flex>
+          <CartTable
+            cartLines={cartLines}
+            variant="drawer"
+            className={styles.cartTable}
+            divider={false}
+          />
 
           <Flex className={styles.footerWrapper}>
-            {subtotal && <CartSubtotal subtotal={subtotal} />}
+            {subtotal && <CartSubtotal subtotal={subtotal as any} />}
           </Flex>
         </Flex>
       )}
@@ -99,6 +113,29 @@ const useStyles = createStyles(({ css, token }) => ({
   drawerTitle: css`
     font-size: ${token.fontSizeXL}px;
     font-weight: 600;
+  `,
+  itemsHeader: css`
+    padding: 0 ${token.padding}px;
+    margin-bottom: ${token.marginXS}px;
+  `,
+  itemsHeaderTitle: css`
+    margin: 0 !important;
+    font-size: ${token.fontSizeLG}px !important;
+    margin-top: 0px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
+    & > span:not(:first-child) {
+      font-size: ${token.fontSizeLG}px;
+      color: ${token.colorPrimary};
+      font-weight: 400;
+    }
+  `,
+  cartTable: css`
+    padding: 0 ${token.padding}px;
+    gap: ${token.marginXS}px;
   `,
   viewCartBtn: css`
     padding: 0;

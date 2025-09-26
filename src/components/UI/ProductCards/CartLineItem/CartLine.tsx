@@ -1,3 +1,4 @@
+import React from "react";
 import { Image, Flex, Typography, Button } from "antd";
 import { createStyles, cx } from "antd-style";
 import { TbTrash } from "react-icons/tb";
@@ -6,7 +7,10 @@ import { Price } from "@src/components/UI/Price/Price";
 import { SaleBadge } from "@src/components/UI/Badges/Sale";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { QuantityInput } from "@src/components/Product/QuantityInput";
-import type { Money } from "@src/components/UI/Price/Price";
+import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
+import { Entity } from "@src/entity";
+import { Money } from "@src/components/UI/Price/Money";
 
 const { Text } = Typography;
 
@@ -21,8 +25,8 @@ export interface CartLineProps {
 
   // Quantity and prices
   quantity: number;
-  unitPrice: Money;
-  compareAtUnitPrice?: Money;
+  unitPrice: Entity.Money;
+  compareAtUnitPrice?: Entity.Money | null;
 
   // Settings display
   variant?: "drawer" | "page";
@@ -31,7 +35,10 @@ export interface CartLineProps {
   onIncrement: () => void;
   onDecrement: () => void;
   onRemove: () => void;
-  onClick?: () => void;
+  onClick: () => void;
+
+  // Optional right-side custom content (e.g., custom QuantityInput)
+  rightNode?: React.ReactNode;
 }
 
 export const CartLine = ({
@@ -46,8 +53,46 @@ export const CartLine = ({
   onDecrement,
   onRemove,
   onClick,
+  rightNode,
 }: CartLineProps) => {
   const { styles } = useStyles();
+
+  // Drawer layout: match box-builder's simple line design
+  if (variant === "drawer") {
+    return (
+      <Flex key={id} justify="space-between" align="center">
+        <Flex align="center" gap={8} onClick={onClick}>
+          <Thumbnail
+            src={imageUrl || fallbackImageBase64}
+            alt={title}
+            className={styles.simpleProductImage}
+          />
+          <Flex vertical className={styles.simpleProductInfo}>
+            <ProductCardTitle rows={2} size="large">
+              {title}
+            </ProductCardTitle>
+            <Typography.Text strong>
+              <Money money={unitPrice} />
+            </Typography.Text>
+          </Flex>
+        </Flex>
+        <div className={styles.simpleQuantityInput}>
+          {rightNode ? (
+            rightNode
+          ) : (
+            <QuantityInput
+              value={quantity}
+              color="primary"
+              onIncrement={onIncrement!}
+              onDecrement={onDecrement!}
+              onRemove={onRemove}
+              size="small"
+            />
+          )}
+        </div>
+      </Flex>
+    );
+  }
 
   return (
     <Flex
@@ -119,6 +164,18 @@ export const CartLine = ({
 };
 
 const useStyles = createStyles(({ token, css }) => ({
+  // Simple drawer layout styles
+  simpleProductImage: css`
+    width: 64px;
+    height: 64px;
+  `,
+  simpleProductInfo: css`
+    max-width: 170px;
+  `,
+  simpleQuantityInput: css`
+    max-width: 100px;
+  `,
+
   productCard: css`
     display: grid;
 

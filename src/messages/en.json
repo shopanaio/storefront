@@ -89,7 +89,8 @@
     "total": "Total",
     "subtotal": "Subtotal",
     "checkout": "Checkout",
-    "tax-note": "Tax included and shipping calculated at checkout"
+    "tax-note": "Tax included and shipping calculated at checkout",
+    "products-count": "{count, plural, one {# product} other {# products}}"
   },
 
   "ui": {

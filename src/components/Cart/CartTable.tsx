@@ -7,21 +7,30 @@ import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";
 import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
+import clsx from "clsx";
 
 interface CartTableListProps {
   cartLines: useCartLineFragment_CartLineFragment$key[];
   variant?: "drawer" | "page";
+  className?: string;
+  divider?: boolean;
 }
 
 export const CartTable: React.FC<CartTableListProps> = ({
   cartLines,
   variant = "drawer",
+  className,
+  divider,
 }) => {
   const t = useTranslations("Cart");
   const { styles } = useStyles();
 
   return (
-    <Flex className={styles.contentContainer} vertical justify="start">
+    <Flex
+      className={clsx(styles.contentContainer, className)}
+      vertical
+      justify="start"
+    >
       {variant === "page" && (
         <div className={styles.cartTableHat}>
           <Typography.Text>{t("product")}</Typography.Text>
@@ -36,7 +45,9 @@ export const CartTable: React.FC<CartTableListProps> = ({
         .map((cartLine, index) => (
           <React.Fragment key={index}>
             <CartItem cartLineRef={cartLine} variant={variant} />
-            {index < cartLines.length - 1 && <Divider style={{ margin: 0 }} />}
+            {divider && index < cartLines.length - 1 && (
+              <Divider style={{ margin: 0 }} />
+            )}
           </React.Fragment>
         ))}
     </Flex>
