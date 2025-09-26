@@ -17,6 +17,9 @@ interface ModalState {
   // Search dialog (mobile search)
   searchDialogOpen: boolean;
   setSearchDialogOpen: (open: boolean) => void;
+  // Global search state
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 }
 export const useModalStore = create<ModalState>((set) => ({
   isAuthModalVisible: false,
@@ -29,6 +32,8 @@ export const useModalStore = create<ModalState>((set) => ({
   setIsAppDrawerOpen: (open) => set({ isAppDrawerOpen: open }),
   searchDialogOpen: false,
   setSearchDialogOpen: (open) => set({ searchDialogOpen: open }),
+  searchTerm: '',
+  setSearchTerm: (term) => set({ searchTerm: term }),
 }));
 
 // currencyStore

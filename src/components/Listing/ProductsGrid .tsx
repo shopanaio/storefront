@@ -5,16 +5,21 @@ import { createStyles } from "antd-style";
 
 import { mq } from "@src/components/Theme/breakpoints";
 import { ListingProductCardRelay } from "@src/components/Listing/ProductCard";
+import clsx from "clsx";
 
 interface ListingProps {
   products: readonly any[];
+  className?: string;
 }
 
-export const ProductsGrid: React.FC<ListingProps> = ({ products }) => {
+export const ProductsGrid: React.FC<ListingProps> = ({
+  products,
+  className,
+}) => {
   const { styles } = useStyles();
 
   return (
-    <div className={styles.productList}>
+    <div className={clsx(styles.productList, className)}>
       {products.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No Data" />
       ) : (
@@ -34,13 +39,10 @@ const useStyles = createStyles(({ token, css }) => {
     productList: css`
       display: grid;
       width: 100%;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       align-items: stretch;
       padding: 0;
-
-      ${mq.lg} {
-        gap: ${token.marginSM}px;
-      }
+      gap: ${token.marginSM}px;
     `,
   };
 });

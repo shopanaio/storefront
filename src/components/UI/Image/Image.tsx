@@ -69,6 +69,7 @@ export const Image: React.FC<UiImageProps> = ({
         className={styles.placeholderImg}
         loading="eager"
         decoding="async"
+        preview={false}
       />
     );
   }, [placeholder, fallbackSrc, alt, styles.placeholderImg]);

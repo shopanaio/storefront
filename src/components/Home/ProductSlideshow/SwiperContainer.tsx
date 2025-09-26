@@ -58,7 +58,7 @@ const useStyles = createStyles(({ css, token }) => {
   return {
     swiperContainer: css`
       overflow: hidden;
-      padding-left: 0;
+      padding-left: ${token.paddingSM}px;
       padding-right: ${token.marginXL}px;
 
       --container-width: 100%;

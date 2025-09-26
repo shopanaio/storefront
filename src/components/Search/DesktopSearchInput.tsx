@@ -3,35 +3,36 @@ import { TbSearch } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
+import { mq } from "@src/components/Theme/breakpoints";
+import { useModalStore } from "@src/store/appStore";
 
 type DesktopSearchInputProps = {
-  value: string;
-  onChange: (value: string) => void;
-  onFocus?: () => void;
+  onClick?: () => void;
 };
 
 export const DesktopSearchInput: React.FC<DesktopSearchInputProps> = ({
-  value,
-  onChange,
-  onFocus,
+  onClick,
 }) => {
   const locale = useLocale();
   const t = useTranslations("Header");
   const { styles } = useStyles();
+  const searchTerm = useModalStore((state) => state.searchTerm);
+  const setSearchTerm = useModalStore((state) => state.setSearchTerm);
 
   return (
     <Input
       allowClear
       className={styles.searchInput}
       placeholder={`${t("search")} ...`}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
       prefix={<TbSearch className={styles.searchIcon} size={18} />}
-      onFocus={onFocus}
+      onClick={onClick}
       suffix={
         <Button
-          href={`${locale}/search?q=${encodeURIComponent(value)}`}
+          href={`${locale}/search?q=${encodeURIComponent(searchTerm)}`}
           type="primary"
+          className={styles.searchButton}
         >
           {t("search")}
         </Button>
@@ -49,6 +50,11 @@ const useStyles = createStyles(({ token, css }) => {
     `,
     searchIcon: css`
       color: ${token.colorTextPlaceholder};
+    `,
+    searchButton: css`
+      ${mq.max.lg} {
+        display: none;
+      }
     `,
   };
 });

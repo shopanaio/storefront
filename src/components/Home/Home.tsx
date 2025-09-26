@@ -18,7 +18,7 @@ export const Home = ({ sections }: { sections: HomeSection[] }) => {
 
   return (
     <Flex vertical gap={95} className={styles.container}>
-      {/* <HomeProductGrid categoryHandle="electronics" /> */}
+      <HomeProductGrid categoryHandle="electronics" />
 
       {sections.map(({ settings, type, id }) => {
         const Component = Sections[type] as React.FC<SectionSettings>;

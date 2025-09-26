@@ -5,10 +5,13 @@ import { createStyles } from "antd-style";
 import { ReactNode } from "react";
 import FallbackAwareImage from "@src/components/UI/Image";
 import clsx from "clsx";
+import { useHover } from "@src/components/UI/hooks/useHover";
 
 export interface ThumbnailProps {
   src?: string;
   alt?: string;
+  /** Gallery of images for hover effect (overrides src) */
+  gallery?: string[];
   /** Highlights the thumbnail as selected */
   selected?: boolean;
   /** Temporarily highlights the thumbnail, e.g., on external hover */
@@ -28,6 +31,7 @@ export interface ThumbnailProps {
 export const Thumbnail = ({
   src,
   alt = "thumbnail",
+  gallery = [],
   selected = false,
   hovered = false,
   disabled,
@@ -37,6 +41,11 @@ export const Thumbnail = ({
   className,
 }: ThumbnailProps) => {
   const { styles } = useStyles();
+  const [isHovering, hoverHandlers] = useHover();
+
+  // Use gallery if provided, otherwise fallback to src
+  const firstImage = gallery.length > 0 ? gallery[0] : src;
+  const secondImage = gallery.length > 1 ? gallery[1] : undefined;
 
   return (
     <Button
@@ -48,16 +57,39 @@ export const Thumbnail = ({
       disabled={disabled}
       variant="outlined"
       onClick={onClick}
+      {...hoverHandlers}
     >
       <div className={styles.imageWrapper} onMouseOver={onMouseOver}>
-        <FallbackAwareImage
-          className={styles.img}
-          src={src}
-          alt={alt}
-          ratio={1}
-          preview={false}
-          loading="lazy"
-        />
+        {/* Second image for hover effect */}
+        {secondImage && (
+          <div
+            className={styles.imageContainer}
+            style={{ opacity: isHovering ? 1 : 0 }}
+          >
+            <FallbackAwareImage
+              className={styles.img}
+              src={secondImage}
+              alt={alt}
+              ratio={1}
+              preview={false}
+              loading="lazy"
+            />
+          </div>
+        )}
+        {/* First image */}
+        <div
+          className={styles.imageContainer}
+          style={{ opacity: secondImage && isHovering ? 0 : 1 }}
+        >
+          <FallbackAwareImage
+            className={styles.img}
+            src={firstImage}
+            alt={alt}
+            ratio={1}
+            preview={false}
+            loading="lazy"
+          />
+        </div>
         {overlay && <div className={styles.overlay}>{overlay}</div>}
       </div>
     </Button>
@@ -87,9 +119,18 @@ const useStyles = createStyles(({ css, token }) => {
     imageWrapper: css`
       position: relative;
       width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: ${token.borderRadius}px;
+    `,
+    imageContainer: css`
+      position: absolute;
+      inset: 0;
+      transition: opacity 0.2s ease;
     `,
     img: css`
       width: 100%;
+      height: 100%;
       object-fit: cover;
       aspect-ratio: 1 / 1;
       border-radius: ${token.borderRadius}px;
@@ -103,6 +144,7 @@ const useStyles = createStyles(({ css, token }) => {
       position: absolute;
       top: 0px;
       right: 2px;
+      z-index: 3;
     `,
   };
 });

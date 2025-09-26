@@ -19,7 +19,6 @@ export const MobileSearch: React.FC = () => {
   const inputRef = useRef<InputRef>(null);
   const isOpen = useModalStore((state) => state.searchDialogOpen);
   const setIsOpen = useModalStore((state) => state.setSearchDialogOpen);
-
   const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput(300);
 
   useEffect(() => {
@@ -27,8 +26,11 @@ export const MobileSearch: React.FC = () => {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
+    } else if (!isOpen) {
+      // Reset search term when drawer is closed
+      setSearchTerm("");
     }
-  }, [isOpen]);
+  }, [isOpen, setSearchTerm]);
 
   return (
     <Drawer

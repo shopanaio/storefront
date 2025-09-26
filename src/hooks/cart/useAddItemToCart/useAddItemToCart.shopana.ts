@@ -30,7 +30,7 @@ const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
   const currencyCode = useCurrencyStore((state) => state.currencyCode);
   const [localeCode] = useLocale();
-  const [commitAddLine] = useMutation<AddCartLineMutationType>(
+  const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
     useAddItemToCartMutation
   );
 
@@ -93,6 +93,7 @@ const useAddItemToCart = () => {
         });
       });
     },
+    isInFlight,
   };
 };
 

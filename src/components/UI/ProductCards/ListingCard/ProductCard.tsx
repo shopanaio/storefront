@@ -1,8 +1,9 @@
 "use client";
 
-import { Card, Flex, Typography } from "antd";
+import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 import { mq } from "@src/components/Theme/breakpoints";
@@ -20,7 +21,8 @@ import {
   ProductCardSwatches,
   type ProductCardSwatchesProps,
 } from "@src/components/UI/ProductCards/Swatch/Swatch";
-import { Price, type Money } from "@src/components/UI/Price/Price";
+import { Price } from "@src/components/UI/Price/Price";
+import { Money } from "@src/entity/Money";
 import { Discount } from "@src/components/UI/Price/Discount";
 import {
   StockStatus,
@@ -32,12 +34,13 @@ import {
   ProductRating,
   type ProductRatingProps,
 } from "@src/components/UI/Rating/Rating";
+import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 
 const { Text } = Typography;
 
 // Constants for default values
 const DEFAULT_TITLE_CONFIG: Pick<ProductCardTitleProps, "rows" | "size"> = {
-  rows: 2,
+  rows: 1,
   size: "default",
 };
 
@@ -68,15 +71,13 @@ export interface ProductCardProps {
   // ProductCardImage
   gallery: ProductCardImageProps["gallery"];
 
-  // Settings display
-  hoverable?: boolean;
-
   // ProductRating
   showRating?: boolean;
   showStockStatus?: boolean;
 
   // Cart state (for ProductCartButton)
   isInCart?: ProductCartButtonProps["isInCart"];
+  isLoading?: ProductCartButtonProps["isLoading"];
 
   // Handlers events
   onAddToCart?: ProductCartButtonProps["onAddToCart"];
@@ -94,26 +95,34 @@ export const ProductCard = ({
   swatches = DEFAULT_SWATCHES,
   title = DEFAULT_TITLE_CONFIG,
   gallery,
-  hoverable = true,
   showRating = true,
   showStockStatus = true,
   isInCart = false,
+  isLoading = false,
   onAddToCart = () => {},
   onReviewClick = () => {},
 }: ProductCardProps) => {
   const { styles } = useStyles();
   const routes = useRoutes();
+  const router = useRouter();
 
   const href = routes.product.path(handle);
+
+  const handleImageClick = () => {
+    router.push(href);
+  };
 
   const renderImage = () => (
     <div className={styles.cover}>
       <div className={styles.wishlist}>
         <ProductWishlistButton productId={id} />
       </div>
-      <Link href={href} className={styles.coverLink}>
-        <ProductCardImage gallery={gallery} />
-      </Link>
+      <Thumbnail
+        className={styles.thumbnail}
+        gallery={gallery}
+        alt={productTitle}
+        onClick={handleImageClick}
+      />
     </div>
   );
 
@@ -154,63 +163,52 @@ export const ProductCard = ({
           <Price money={price} raw />
         </Text>
       </Flex>
-
       <ProductCartButton
         isAvailable={isAvailable}
         isInCart={isInCart}
+        isLoading={isLoading}
         onAddToCart={onAddToCart}
       />
     </Flex>
   );
 
   return (
-    <Card
-      className={styles.container}
-      styles={{ body: { padding: 0, flexGrow: 1 } }}
-      hoverable={hoverable}
-      cover={renderImage()}
-    >
-      <Flex className={styles.productInfo} vertical>
+    <Flex vertical className={styles.container} gap={8}>
+      {renderImage()}
+      <Flex vertical className={styles.productInfo}>
         {renderSwatches()}
-
         <Link href={href} className={styles.titleLink}>
           <ProductCardTitle rows={title.rows} size={title.size}>
             {productTitle}
           </ProductCardTitle>
         </Link>
-
         {renderRating()}
         {renderStockStatus()}
         {renderPriceSection()}
       </Flex>
-    </Card>
+    </Flex>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => ({
   container: css`
-    display: flex;
-    flex-direction: column;
-    max-width: 450px;
-    border-radius: 0;
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorBgContainer};
-
-    ${mq.lg} {
-      border-radius: ${token.borderRadius}px;
-    }
+    max-width: 450px;
   `,
   productInfo: css`
     width: 100%;
     height: 100%;
-    padding: 0 ${token.paddingSM}px ${token.paddingSM}px;
+    padding: 0 0 ${token.paddingXS}px;
   `,
   cover: css`
     position: relative;
+    --thumb-size: 100%;
     aspect-ratio: 1 / 1;
-    padding: ${token.paddingSM}px;
   `,
-  coverLink: css`
-    display: block;
+  thumbnail: css`
+    --thumb-size: 100%;
+    aspect-ratio: 1 / 1;
     width: 100%;
     height: 100%;
   `,
@@ -219,21 +217,21 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   wishlist: css`
     position: absolute;
-    top: ${token.marginSM}px;
-    right: ${token.marginSM}px;
+    top: ${token.marginXXS}px;
+    right: ${token.marginXXS}px;
     z-index: 2;
   `,
   titleLink: css`
     flex-grow: 1;
-    padding-bottom: ${token.paddingXS}px;
-
+    padding-bottom: ${token.paddingXXS}px;
     &:hover {
       text-decoration: underline;
     }
   `,
   priceBox: css`
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
+    min-height: 40px;
   `,
   priceWrapper: css`
     align-items: flex-start;

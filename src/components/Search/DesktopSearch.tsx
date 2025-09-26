@@ -6,10 +6,17 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { createStyles } from "antd-style";
 import { useElementWidth } from "@src/hooks/useElementWidth";
 import { DesktopSearchInput } from "./DesktopSearchInput";
+import { useIsMobile } from "@src/hooks/useIsMobile";
+import { useModalStore } from "@src/store/appStore";
 
 export const DesktopSearch: React.FC = () => {
   const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput(300);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  const isMobile = useIsMobile();
+  const setIsSearchDialogOpen = useModalStore(
+    (state) => state.setSearchDialogOpen
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
@@ -17,12 +24,12 @@ export const DesktopSearch: React.FC = () => {
   const { styles } = useStyles();
 
   useEffect(() => {
-    if (searchTerm.trim()) {
+    if (searchTerm.trim() && !isMobile) {
       setIsPopoverOpen(true);
     } else {
       setIsPopoverOpen(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, isMobile]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,18 +51,21 @@ export const DesktopSearch: React.FC = () => {
     };
   }, [setIsPopoverOpen]);
 
-  const handleFocus = () => {
-    if (searchTerm.trim().length > 0) {
+  const handleClick = () => {
+    if (isMobile) {
+      setIsSearchDialogOpen(true);
+    } else if (searchTerm.trim().length > 0) {
       setIsPopoverOpen(true);
     }
   };
+
 
   return (
     <div className={styles.inputContainer} ref={containerRef}>
       <Popover
         placement="bottom"
         arrow={false}
-        open={isPopoverOpen}
+        open={isPopoverOpen && !isMobile}
         styles={{
           body: {
             width: popoverWidth,
@@ -68,9 +78,7 @@ export const DesktopSearch: React.FC = () => {
         }
       >
         <DesktopSearchInput
-          value={searchTerm}
-          onChange={setSearchTerm}
-          onFocus={handleFocus}
+          onClick={handleClick}
         />
       </Popover>
     </div>

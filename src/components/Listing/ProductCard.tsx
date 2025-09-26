@@ -9,6 +9,7 @@ import {
   ApiProduct,
   ApiProductOption,
   ApiProductVariant,
+  CurrencyCode,
 } from "@codegen/schema-client";
 
 import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";
@@ -65,7 +66,7 @@ export const ListingProductCardRelay = ({
     purchasableId: product.id,
   });
 
-  const { addToCart } = useAddItemToCart();
+  const { addToCart, isInFlight } = useAddItemToCart();
 
   // Safely get swatches with type checking
   const swatches = useProductSwatches(
@@ -91,10 +92,12 @@ export const ListingProductCardRelay = ({
   const isAvailable = product.stockStatus?.isAvailable || false;
   const price = product.price || {
     amount: "0.00",
-    currencyCode: "USD",
+    currencyCode: CurrencyCode.Usd,
   };
 
-  const compareAtPrice = product.compareAtPrice || undefined;
+  const compareAtPrice = product.compareAtPrice
+    ? ({ ...product.compareAtPrice } as any)
+    : undefined;
   const setReviewProduct = useReviewStore((state) => state.setReviewProduct);
 
   return (
@@ -105,19 +108,23 @@ export const ListingProductCardRelay = ({
       rating={{
         rating: rating.rating,
         ratingCount: rating.count,
+        compact: true,
       }}
       gallery={gallery}
       productTitle={productTitle}
       handle={handle}
       isAvailable={isAvailable}
       price={price}
-      compareAtPrice={compareAtPrice}
+      compareAtPrice={compareAtPrice as any}
       isInCart={isInCart}
+      isLoading={isInFlight}
       onAddToCart={() => {
-        addToCart({
-          purchasableId: product.id,
-          quantity: 1,
-        });
+        if (!isInCart) {
+          addToCart({
+            purchasableId: product.id,
+            quantity: 1,
+          });
+        }
       }}
       onReviewClick={() => setReviewProduct(product as ApiProduct)}
     />

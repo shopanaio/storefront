@@ -7,6 +7,7 @@ export interface ProductCartButtonProps {
   showLabel?: boolean;
   className?: string;
   isInCart?: boolean;
+  isLoading?: boolean;
   onAddToCart?: () => void;
 }
 
@@ -15,6 +16,7 @@ export const ProductCartButton = ({
   showLabel,
   className,
   isInCart,
+  isLoading = false,
   onAddToCart,
 }: ProductCartButtonProps) => {
   const t = useTranslations("Product");
@@ -22,20 +24,23 @@ export const ProductCartButton = ({
   return (
     <Button
       className={className}
-      size="large"
-      type={!isAvailable ? "default" : "primary"}
+      // size="large"
+      color="primary"
+      variant="outlined"
       disabled={!isAvailable}
+      loading={isLoading}
       icon={
-        isInCart ? (
+        !isLoading &&
+        (isInCart ? (
           <TbCheck color={!isAvailable ? "secondary" : "default"} size={18} />
         ) : (
           <TbShoppingCart
             color={!isAvailable ? "secondary" : "default"}
             size={18}
           />
-        )
+        ))
       }
-      onClick={onAddToCart}
+      onClick={isInCart ? undefined : onAddToCart}
       children={showLabel && (isInCart ? t("in-cart") : t("add-to-cart"))}
     />
   );

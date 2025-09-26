@@ -1,5 +1,6 @@
 import { useState, useDeferredValue, useEffect, useMemo } from "react";
 import { debounce } from "lodash";
+import { useModalStore } from "@src/store/appStore";
 
 /**
  * useSearchInput
@@ -7,11 +8,13 @@ import { debounce } from "lodash";
  * Manages the value of a search input field while providing:
  * 1. debouncedTerm – throttled version for inexpensive side-effects (e.g. network requests)
  * 2. deferredSearchTerm – React 18 deferred value to prevent expensive renders while typing
+ * Uses global searchTerm from zustand store for synchronization across components
  *
  * @param delay debounce delay in ms (default: 300)
  */
 export const useSearchInput = (delay: number = 300) => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const searchTerm = useModalStore((state) => state.searchTerm);
+  const setSearchTerm = useModalStore((state) => state.setSearchTerm);
   const [debouncedTerm, setDebouncedTerm] = useState("");
 
   // React 18 feature – lets React delay non-urgent updates

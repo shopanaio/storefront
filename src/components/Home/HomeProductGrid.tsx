@@ -46,9 +46,7 @@ export const HomeProductGrid = ({
       <SectionTitle title={category?.title ?? ""}>
         <ViewAllButton href={`${locale}/l/${category?.handle}`} />
       </SectionTitle>
-
-      <ProductsGrid products={products} />
-
+      <ProductsGrid products={products} className={styles.productsGrid} />
       <Flex justify="center">
         <LoadMoreBtn
           hasNext={hasNext}
@@ -66,17 +64,26 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-direction: column;
       width: 100%;
-      row-gap: ${token.margin}px;
+      gap: ${token.margin}px;
+      margin-inline: auto;
 
       ${mq.xl} {
-        margin-right: auto;
-        margin-left: auto;
-
         max-width: 1280px;
       }
 
       ${mq.xxl} {
         max-width: 1400px;
+      }
+    `,
+    productsGrid: css`
+      padding-inline: ${token.paddingSM}px;
+
+      ${mq.lg} {
+        padding-inline: ${token.padding}px;
+      }
+
+      ${mq.xl} {
+        padding-inline: 0;
       }
     `,
   };

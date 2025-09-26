@@ -73,7 +73,7 @@ export const ProductMain = ({
   console.log("product", product);
   console.log("isInCart", isInCart);
 
-  const { addToCart } = useAddItemToCart();
+  const { addToCart, isInFlight } = useAddItemToCart();
   const gallery = useProductGallery(product);
   const { styleBreakpoints, swiperBreakpoints } = useGalleryBreakpoints(
     galleryBreakpoints,
@@ -150,11 +150,14 @@ export const ProductMain = ({
                   showLabel
                   className={styles.cartBtn}
                   isInCart={isInCart}
+                  isLoading={isInFlight}
                   onAddToCart={() => {
-                    addToCart({
-                      product: product,
-                      quantity: 1,
-                    });
+                    if (!isInCart) {
+                      addToCart({
+                        product: product,
+                        quantity: 1,
+                      });
+                    }
                   }}
                 />
               </Flex>

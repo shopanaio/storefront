@@ -26,7 +26,7 @@ export const ProductWishlistButton: React.FC<ProductWishlistButtonProps> = ({
 
   return (
     <Button
-      size="large"
+      // size="large"
       shape={showLabel ? "default" : "circle"}
       onClick={handleClick}
       aria-label={t("add-to-wishlist")}
