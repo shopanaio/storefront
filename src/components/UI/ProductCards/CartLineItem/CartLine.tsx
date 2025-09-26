@@ -85,9 +85,7 @@ export const CartLine = ({
             className={styles.simpleProductImage}
           />
           <Flex vertical className={styles.simpleProductInfo}>
-            <ProductCardTitle rows={2} size="large">
-              {title}
-            </ProductCardTitle>
+            <ProductCardTitle rows={2}>{title}</ProductCardTitle>
             <Typography.Text strong>
               <Money money={computedTotalPrice} />
             </Typography.Text>

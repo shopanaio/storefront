@@ -3,8 +3,8 @@ import { calcSale } from "@src/utils/calcSale";
 import { createStyles } from "antd-style";
 
 type SaleBadgeProps = {
-  compareAtPrice?: number | string;
-  price: number | string;
+  compareAtPrice?: number;
+  price: number;
 };
 
 export const SaleBadge: React.FC<SaleBadgeProps> = ({
@@ -13,16 +13,9 @@ export const SaleBadge: React.FC<SaleBadgeProps> = ({
 }) => {
   const { styles } = useStyles();
 
-  // Convert values to numbers since in Shopify they may come as strings
-  const compareAtPriceNumber =
-    typeof compareAtPrice === "string"
-      ? parseFloat(compareAtPrice)
-      : compareAtPrice;
-  const priceNumber = typeof price === "string" ? parseFloat(price) : price;
+  const sale = calcSale(compareAtPrice, price);
 
-  const sale = calcSale(compareAtPriceNumber, priceNumber);
-
-  if (!compareAtPriceNumber || !sale) {
+  if (!compareAtPrice || !sale) {
     return null;
   }
 
