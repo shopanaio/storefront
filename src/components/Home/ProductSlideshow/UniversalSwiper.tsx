@@ -27,29 +27,40 @@ export interface UniversalSliderProps<T extends DataSource> {
 }
 
 const defaultBreakpoints: NonNullable<SwiperOptions["breakpoints"]> = {
-  0: { slidesPerView: 2, spaceBetween: 12 },
-  520: { slidesPerView: 3, spaceBetween: 12 },
-  768: { slidesPerView: 4, spaceBetween: 12 },
-  1024: { slidesPerView: 6, spaceBetween: 12 },
-  1280: { slidesPerView: 8, spaceBetween: 12 },
+  0: {
+    slidesPerView: 2.5,
+    slidesPerGroup: 2,
+    spaceBetween: 12,
+  },
+  520: {
+    slidesPerView: 3.5,
+    slidesPerGroup: 3,
+    spaceBetween: 12,
+  },
+  768: {
+    slidesPerView: 4.5,
+    slidesPerGroup: 4,
+    spaceBetween: 12,
+  },
+  1024: {
+    slidesPerView: 6.5,
+    slidesPerGroup: 6,
+    spaceBetween: 12,
+  },
+  1280: {
+    slidesPerView: 8,
+    slidesPerGroup: 8,
+    spaceBetween: 12,
+  },
 };
 
 function getEnhancedBreakpoints(
-  breakpoints: NonNullable<SwiperOptions["breakpoints"]>,
-  slidesPerView?: number
+  breakpoints: NonNullable<SwiperOptions["breakpoints"]>
 ): NonNullable<SwiperOptions["breakpoints"]> {
   return Object.fromEntries(
     Object.entries(breakpoints).map(([key, value]) => {
       const v = value as SwiperOptions;
-      const spv =
-        typeof v.slidesPerView === "number" ? v.slidesPerView : slidesPerView;
-      return [
-        Number(key),
-        {
-          ...v,
-          slidesPerGroup: spv,
-        },
-      ];
+      return [Number(key), { ...v }];
     })
   );
 }
@@ -111,10 +122,7 @@ export function UniversalSlider<T extends DataSource>({
     slidesPerView || 1
   );
 
-  const enhancedBreakpoints = getEnhancedBreakpoints(
-    mergedBreakpoints,
-    slidesPerView
-  );
+  const enhancedBreakpoints = getEnhancedBreakpoints(mergedBreakpoints);
 
   const resolvedSlidesPerView = currentSlidesPerView;
 

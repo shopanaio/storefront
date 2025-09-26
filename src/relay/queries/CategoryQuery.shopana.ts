@@ -3,7 +3,7 @@ import { graphql } from "relay-runtime";
 export const CategoryQuery = graphql`
   query CategoryQuery(
     $handle: String!
-    $first: Int = 12
+    $first: Int = 24
     $after: Cursor
     $sort: ListingSort = MOST_RELEVANT
     $filters: [FilterInput!] = []

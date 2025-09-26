@@ -75,7 +75,6 @@ export const ProductSlideShow = ({
               <ListingProductCardRelay
                 $productRef={product}
                 title={{ rows: 1, size: "default" }}
-                hoverable={false}
               />
             );
           }}

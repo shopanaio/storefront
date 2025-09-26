@@ -1,4 +1,5 @@
 import { createGlobalStyle } from "antd-style";
+import { breakpoints } from "./breakpoints";
 
 export const GlobalStyle = createGlobalStyle`
   :root {
@@ -50,5 +51,31 @@ export const GlobalStyle = createGlobalStyle`
     --always-black-bg: #000;
     --always-White-text: #fff;
     --sticky-header-height:70px
+  }
+
+  /* Global container class */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: calc(100vw - 24px);
+  }
+
+  @media (min-width: ${breakpoints.lg}px) {
+    .container {
+      max-width: calc(100vw - 32px);
+    }
+  }
+
+  @media (min-width: ${breakpoints.xl + 32}px) {
+    .container {
+      max-width: 1280px;
+    }
+  }
+
+  @media (min-width: ${breakpoints.xxl}px) {
+    .container {
+      max-width: 1400px;
+    }
   }
 `;

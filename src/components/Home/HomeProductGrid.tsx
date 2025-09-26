@@ -12,6 +12,7 @@ import { Listing } from "@src/relay/queries/Listing.shopana";
 import { ProductsGrid } from "../Listing/ProductsGrid ";
 import { LoadMoreBtn } from "./LoadMoreBtn";
 import { mq } from "../Theme/breakpoints";
+import clsx from "clsx";
 
 interface HomeGridProps {
   categoryHandle: string;
@@ -20,7 +21,7 @@ interface HomeGridProps {
 
 export const HomeProductGrid = ({
   categoryHandle,
-  paginationCount = 12,
+  paginationCount = 24,
 }: HomeGridProps) => {
   const { styles } = useStyles();
   const locale = useLocale();
@@ -42,7 +43,7 @@ export const HomeProductGrid = ({
   };
 
   return (
-    <div className={styles.container}>
+    <div className={clsx(styles.container, "container")}>
       <SectionTitle title={category?.title ?? ""}>
         <ViewAllButton href={`${locale}/l/${category?.handle}`} />
       </SectionTitle>
@@ -66,25 +67,7 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       gap: ${token.margin}px;
       margin-inline: auto;
-
-      ${mq.xl} {
-        max-width: 1280px;
-      }
-
-      ${mq.xxl} {
-        max-width: 1400px;
-      }
     `,
-    productsGrid: css`
-      padding-inline: ${token.paddingSM}px;
-
-      ${mq.lg} {
-        padding-inline: ${token.padding}px;
-      }
-
-      ${mq.xl} {
-        padding-inline: 0;
-      }
-    `,
+    productsGrid: css``,
   };
 });

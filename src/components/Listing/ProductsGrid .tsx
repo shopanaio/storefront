@@ -41,7 +41,6 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       align-items: stretch;
-      padding: 0;
       gap: ${token.marginSM}px;
     `,
   };

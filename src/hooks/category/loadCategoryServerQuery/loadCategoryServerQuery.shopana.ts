@@ -17,7 +17,7 @@ interface LoadCategoryServerQueryParams {
 
 const loadCategoryServerQuery = async ({
   handle,
-  first = 12,
+  first = 24,
   sort = ListingSort.MostRelevant,
   filters = [],
 }: LoadCategoryServerQueryParams): Promise<
