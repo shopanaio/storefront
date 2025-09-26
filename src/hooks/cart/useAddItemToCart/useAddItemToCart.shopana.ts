@@ -6,7 +6,6 @@ import { useAddItemToCartMutation as AddCartLineMutationType } from "@src/hooks/
 import { useCartContext } from "@src/providers/cart-context";
 import useCreateCart from "@src/hooks/cart/useCreateCart";
 import { AddToCartInput } from "./interface";
-import { useRouter } from "next/router";
 import { useLocale } from "next-intl";
 
 export const useAddItemToCartMutation = graphql`

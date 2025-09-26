@@ -96,9 +96,6 @@ const useStyles = createStyles(({ token, css }) => {
     footer: css`
       background-color: ${token.colorBgBase};
       padding: ${token.padding}px;
-      ${mq.xl} {
-        //  padding: ${token.padding}px 0;
-      }
     `,
     container: css`
       ${mq.xl} {
@@ -111,15 +108,12 @@ const useStyles = createStyles(({ token, css }) => {
         width: 1400px;
       }
     `,
-
     footerTitle: css`
       font-size: ${token.fontSizeHeading5}px;
     `,
-
     inputIcon: css`
       color: ${token.colorTextPlaceholder};
     `,
-
     footerMain: css`
       display: flex;
       flex-direction: column;
@@ -136,7 +130,6 @@ const useStyles = createStyles(({ token, css }) => {
         grid-template-columns: 1fr 1fr 1fr 1fr;
       }
     `,
-
     subscribeBlock: css`
       ${mq.md} {
         width: 300px;
@@ -145,13 +138,11 @@ const useStyles = createStyles(({ token, css }) => {
         margin-right: 64px;
       }
     `,
-
     subscribeBtn: css`
       width: max-content;
 
       font-size: ${token.fontSizeLG}px;
     `,
-
     menuItem: css`
       justify-content: flex-start;
 

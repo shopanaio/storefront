@@ -1,6 +1,6 @@
 "use client";
 
-import { createStack } from "@src/components/BoxBuilder/stackflow/Stack";
+import { createStack } from "@src/modules/box-builder/stackflow/Stack";
 
 interface BoxBuilderClientProps {
   isIOS: boolean;

@@ -6,7 +6,7 @@ import { createStyles, cx } from "antd-style";
 import { mq } from "../Theme/breakpoints";
 import { A11y, Pagination, Thumbs } from "swiper/modules";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { useSwiperSync } from "../../hooks/useSwiperSync";
+import { useSwiperSync } from "@src/hooks/useSwiperSync";
 import "swiper/css";
 import "swiper/css/virtual";
 import "swiper/css/pagination";

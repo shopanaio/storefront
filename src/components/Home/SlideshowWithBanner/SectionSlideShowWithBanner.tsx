@@ -6,7 +6,7 @@ import { createStyles } from "antd-style";
 import { ProductCard } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
 import { ApiCategory, ApiProduct } from "@codegen/schema-client";
 import Banner from "./Banner";
-import { mq } from "../../Theme/breakpoints";
+import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider } from "../ProductSlideshow/UniversalSwiper";

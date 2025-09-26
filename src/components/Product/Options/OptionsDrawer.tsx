@@ -1,5 +1,5 @@
 import { Drawer } from "antd";
-import { useIsMobile } from "../../../hooks/useIsMobile";
+import { useIsMobile } from "@src/hooks/useIsMobile";
 
 interface Props {
   open: boolean;

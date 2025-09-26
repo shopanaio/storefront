@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckoutSkeleton } from "@src/components/Checkout/CheckoutSkeleton";
+import { CheckoutSkeleton } from "@src/modules/checkout/CheckoutSkeleton";
 
 export default function LoadingPage() {
   return <CheckoutSkeleton />;

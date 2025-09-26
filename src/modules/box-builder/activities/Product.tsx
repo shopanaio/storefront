@@ -1,0 +1,177 @@
+"use client";
+
+import { Flex, Typography } from "antd";
+import { createStyles } from "antd-style";
+import { ProductMain } from "@src/components/Product/ProductMain";
+import { useIsInTheCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
+import { useBoxBuilderStore } from "@src/store/appStore";
+import { ActivityComponentType } from "@stackflow/react";
+import Layout from "../stackflow/Layout";
+import { useProduct } from "@src/modules/box-builder/hooks/useProduct";
+import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
+import { ApiProduct } from "@codegen/schema-client";
+import React, { Suspense } from "react";
+import { ProductType } from "@src/modules/box-builder/ProductCard";
+import { BoxActionButton } from "../ActionButton/BoxActionButton";
+import { ProductActionButton } from "../ActionButton/ProductActionButton";
+import { CardActionButton } from "../ActionButton/CardActionButton";
+import { ShowMoreBtn } from "@src/components/Product/ShowMoreBtn";
+import { useTranslations } from "next-intl";
+import { SkeletonProduct } from "@src/components/Product/Skeleton";
+
+const { Paragraph } = Typography;
+
+type ProductParams = {
+  productHandle: string;
+  productType: ProductType;
+};
+
+const ProductSection: React.FC<{
+  productHandle: string;
+  productType: ProductType;
+}> = ({ productHandle, productType }) => {
+  const { styles } = useStyles();
+  const { product } = useProduct(productHandle);
+  const { isInCart, quantity: cartQuantity } = useIsInTheCart(
+    product?.id ?? ""
+  );
+  const t = useTranslations("BoxBuilder");
+  const { selectedBoxId, selectedCardIds } = useBoxBuilderStore();
+  const isAvailable = product?.stockStatus?.isAvailable === true;
+  const isFree = (product?.price?.amount ?? 0) === 0;
+
+  // TODO: don't fetch reviews
+  const productWithReviews = product as unknown as ApiProduct & Reviews$key;
+
+  const renderFooter = () => {
+    if (!product?.id) {
+      return null;
+    }
+
+    let button = null;
+    if (productType === ProductType.Box) {
+      button = (
+        <BoxActionButton
+          productId={product.id}
+          isAvailable={Boolean(isAvailable)}
+          isSelected={selectedBoxId === product.id}
+          appearance="activity"
+          buttonProps={{
+            size: "large",
+            className: styles.cartButton,
+            type: "primary",
+          }}
+        />
+      );
+    } else if (productType === ProductType.Card) {
+      button = (
+        <CardActionButton
+          productId={product.id}
+          isAvailable={Boolean(isAvailable)}
+          isSelected={selectedCardIds.includes(product.id)}
+          isFree={Boolean(isFree)}
+          isInCart={Boolean(isInCart)}
+          cartQuantity={cartQuantity}
+          appearance="activity"
+          buttonProps={{
+            size: "large",
+            className: styles.cartButton,
+            type: "primary",
+          }}
+          quantityProps={{
+            size: "large",
+            appearance: "activity",
+          }}
+        />
+      );
+    } else {
+      button = (
+        <ProductActionButton
+          productId={product.id}
+          isAvailable={Boolean(isAvailable)}
+          isFree={Boolean(isFree)}
+          isInCart={Boolean(isInCart)}
+          cartQuantity={cartQuantity}
+          appearance="activity"
+          buttonProps={{
+            size: "large",
+            className: styles.cartButton,
+            type: "primary",
+          }}
+          quantityProps={{
+            size: "large",
+            appearance: "activity",
+          }}
+        />
+      );
+    }
+
+    return <Flex className={styles.productFooter}>{button}</Flex>;
+  };
+
+  return (
+    <>
+      <div className={styles.container}>
+        <ProductMain product={productWithReviews} appearance="box-builder" />
+        <Flex vertical gap={16}>
+          {productWithReviews.description && (
+            <>
+              <Paragraph className={styles.description}>
+                {productWithReviews.description}
+              </Paragraph>
+              <ShowMoreBtn />
+            </>
+          )}
+        </Flex>
+        {renderFooter()}
+      </div>
+    </>
+  );
+};
+
+const Product: ActivityComponentType<ProductParams> = ({
+  params,
+}: {
+  params: ProductParams;
+}) => {
+  return (
+    <Layout showCart={false} paddingTop={false}>
+      <Suspense fallback={<SkeletonProduct />}>
+        <ProductSection
+          productHandle={params.productHandle}
+          productType={params.productType}
+        />
+      </Suspense>
+    </Layout>
+  );
+};
+
+export default Product;
+
+const useStyles = createStyles(({ token, css }) => {
+  return {
+    container: css`
+      position: relative;
+      padding: ${token.padding}px;
+    `,
+    productFooter: css`
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      padding: ${token.padding}px;
+      z-index: 2;
+    `,
+    quantityContainer: css`
+      width: 100%;
+    `,
+    cartButton: css`
+      width: 100%;
+      height: 48px;
+    `,
+    description: css`
+      margin-top: ${token.margin}px;
+      font-size: ${token.fontSizeLG}px;
+    `,
+  };
+});

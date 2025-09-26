@@ -5,7 +5,7 @@ import { useCartContext } from "@src/providers/cart-context";
 import { RemoveFromCartInput } from "./index";
 
 // Define mutation inside hook with correct name
-const useRemoveItemFromCartMutation = graphql`
+export const useRemoveItemFromCartMutation = graphql`
   mutation useRemoveItemFromCartMutation($input: CheckoutLinesDeleteInput!) {
     checkoutMutation {
       checkoutLinesDelete(input: $input) {

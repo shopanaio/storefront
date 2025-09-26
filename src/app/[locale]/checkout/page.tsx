@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkout } from "@src/components/Checkout/Checkout";
+import { Checkout } from "@src/modules/checkout/Checkout";
 
 import useCart from "@src/hooks/cart/useCart";
 import { newMockCart } from "@src/mocks/newCart";

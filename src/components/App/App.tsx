@@ -2,7 +2,6 @@
 
 import { SessionClientProvider } from "@src/providers/session-client-provider";
 import CartProvider from "@src/providers/cart";
-import { Layout } from "@src/components/Layout/Layout";
 import { Theme } from "@src/components/Theme/Theme";
 import { useQuery } from "@src/providers/relay-query-provider";
 
@@ -21,9 +20,7 @@ const App = ({ children }: IAppProps) => {
   return (
     <SessionClientProvider initialState={initialSessionState}>
       <CartProvider>
-        <Theme>
-          <Layout>{children}</Layout>
-        </Theme>
+        <Theme>{children}</Theme>
       </CartProvider>
     </SessionClientProvider>
   );
