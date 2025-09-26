@@ -67,7 +67,7 @@ export const HeaderLinkButton = ({
 const useStyles = createStyles(
   (
     { token, css },
-    { theme, mobileBlock }: { theme: "dark" | "light"; mobileBlock: boolean }
+    { mobileBlock }: { theme: "dark" | "light"; mobileBlock: boolean }
   ) => ({
     headerLinkBtn: css`
       justify-content: flex-start;

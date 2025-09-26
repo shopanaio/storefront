@@ -3,7 +3,6 @@ import { useCartContext } from "@src/providers/cart-context";
 import { useCart_CartFragment$key } from "./__generated__/useCart_CartFragment.graphql";
 import cartIdUtils from "@src/utils/cartId";
 import React, { useEffect, useMemo } from "react";
-import { Entity } from "@src/entity";
 
 export const useCart_CartFragment = graphql`
   fragment useCart_CartFragment on Checkout {
@@ -86,7 +85,7 @@ const useCart = () => {
 
   const cart = useMemo(() => {
     if (!cartFragment) return null;
-    return cartFragment as Entity.Cart;
+    return cartFragment;
   }, [cartFragment]);
 
   const cartId = cart?.id || null;
@@ -104,7 +103,7 @@ const useCart = () => {
   }, []);
 
   return {
-    cart: {},
+    cart,
     loading: isCartLoading,
     loaded: isCartLoaded,
     error: null,

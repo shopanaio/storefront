@@ -76,19 +76,20 @@ export const Header: React.FC<HeaderProps> = ({
           </Flex>
           <DesktopSearch />
           <Flex className={styles.headerLinksList}>
-            <Flex className={styles.supportWrapper}>
-              <HeaderLinkButton
-                icon={<TbPhone size={24} />}
-                topText={t("customer-support")}
-                bottomText="+1 (999) 111-11-11"
-                mobileBlock={true}
-              />
-              <Divider
-                type="vertical"
-                orientation="end"
-                style={{ height: "33px" }}
-              />
-            </Flex>
+            <HeaderLinkButton
+              icon={<TbPhone size={24} />}
+              topText={t("customer-support")}
+              bottomText="+1 (999) 111-11-11"
+              mobileBlock={true}
+            />
+            <Divider
+              type="vertical"
+              orientation="end"
+              style={{
+                height: 32,
+                marginInline: 4,
+              }}
+            />
             <HeaderLinkButton
               icon={<TbHeart size={24} />}
               topText={t("my-items")}
@@ -204,6 +205,7 @@ const useStyles = createStyles(({ token, css }) => {
       order: 3;
       justify-content: flex-end;
       align-items: center;
+      gap: ${token.marginXXS}px;
       ${mq.lg} {
         order: 4;
         min-width: max-content;
