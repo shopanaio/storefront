@@ -1,24 +1,17 @@
 import { useModalStore } from "@src/store/appStore";
 import { Layout, Button, Flex, Divider } from "antd";
 import Link from "next/link";
-import {
-  TbMenu2,
-  TbHeart,
-  TbShoppingCart,
-  TbUserCircle,
-  TbPhone,
-} from "react-icons/tb";
+import { TbMenu2, TbHeart, TbUserCircle, TbPhone } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
 import { FullLogo } from "./Logo";
 import { HeaderLinkButton } from "./HeaderLinkButton";
+import { CartButton } from "./CartButton";
 import { DesktopSearch } from "../Search/DesktopSearch";
 import { useLocale, useTranslations } from "next-intl";
 import { createStyles, cx } from "antd-style";
 import { useEffect, useState } from "react";
-import { User } from "domain/User";
+import { User } from "@src/entity/User";
 import { useRouter } from "next/navigation";
-import { Price } from "@src/components/UI/Price/Price";
-import { ApiMoney } from "@codegen/schema-client";
 const { Header: AntHeader } = Layout;
 
 interface Props {
@@ -26,8 +19,6 @@ interface Props {
   onOpenCartDrawer: () => void;
   visible: boolean;
   user: User | null | undefined;
-  cartAmount: ApiMoney | null;
-  cartLines: number;
 }
 
 export const StickyHeader: React.FC<Props> = ({
@@ -35,8 +26,6 @@ export const StickyHeader: React.FC<Props> = ({
   onOpenCartDrawer,
   visible,
   user,
-  cartAmount,
-  cartLines,
 }) => {
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
@@ -102,16 +91,7 @@ export const StickyHeader: React.FC<Props> = ({
             }
             mobileBlock={true}
           />
-          <HeaderLinkButton
-            icon={<TbShoppingCart size={24} />}
-            topText={t("cart")}
-            bottomText={
-              cartAmount ? <Price money={cartAmount} raw /> : t("cart")
-            }
-            badgeCount={cartLines}
-            mobileBlock={true}
-            onClick={() => onOpenCartDrawer()}
-          />
+          <CartButton mobileBlock={true} onClick={() => onOpenCartDrawer()} />
         </Flex>
         <div className={styles.breakRow} />
       </div>

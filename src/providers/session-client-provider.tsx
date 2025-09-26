@@ -1,7 +1,6 @@
 "use client";
 
-import { type ReactNode, createContext, useRef, useContext } from "react";
-import { useStore } from "zustand";
+import { type ReactNode, createContext, useRef } from "react";
 import {
   type SessionStore,
   createSessionStore,
@@ -16,10 +15,10 @@ export const SessionStoreContext = createContext<SessionStoreApi | undefined>(
 
 export interface SessionStoreProviderProps {
   children: ReactNode;
-  initialState?: SessionStore;
+  initialState?: Partial<SessionStore>;
 }
 
-export const SessionStoreProvider = ({
+export const SessionClientProvider = ({
   children,
   initialState,
 }: SessionStoreProviderProps) => {
@@ -33,14 +32,4 @@ export const SessionStoreProvider = ({
       {children}
     </SessionStoreContext.Provider>
   );
-};
-
-export const useSessionStore = <T,>(
-  selector: (store: SessionStore) => T
-): T => {
-  const sessionStoreContext = useContext(SessionStoreContext);
-  if (!sessionStoreContext) {
-    throw new Error(`useSessionStore must be used within SessionStoreProvider`);
-  }
-  return useStore(sessionStoreContext, selector);
 };

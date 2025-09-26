@@ -4,7 +4,7 @@ import useSignIn from "@src/hooks/auth/useSingnIn";
 import useGetSession from "@src/hooks/session/useGetSession";
 import useSignInHandler from "@src/hooks/auth/useSignInHandler";
 import { useModalStore } from "@src/store/appStore";
-import { useSessionStore } from "@src/providers/session-store-provider";
+import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
 
 import { SignIn } from "../UI/Auth/SignIn";
@@ -47,11 +47,11 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSwitchForm }) => {
     null
   );
   const [commit, isInFlight] = useSignIn();
-  const setSession = useSessionStore((state) => state.setSession);
+  const setSession = useSession((state) => state.setSession);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );
-  const refreshSession = useSessionStore((state) => state.refreshSession);
+  const refreshSession = useSession((state) => state.refreshSession);
 
   // Use new hook for handling sign-in
   const signInHandler = useSignInHandler();

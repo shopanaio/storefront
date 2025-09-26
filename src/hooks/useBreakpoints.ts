@@ -1,22 +1,24 @@
 import { useMediaQuery } from "react-responsive";
 import { breakpoints } from "../components/Theme/breakpoints";
-import { useResponsiveContext } from "@src/providers/responsive-provider";
+import { useUA } from "@src/hooks/useUA";
+import { useServer } from "@src/hooks/useServer";
 
+// TODO: Write correct hook
 export const useBreakpoints = () => {
-  const context = useResponsiveContext();
+  const ua = useUA();
 
-  const isClient = typeof window !== "undefined";
+  const isServer = useServer();
 
   // On client use pure `matchMedia` result. On server — value from context.
   const isLg = useMediaQuery({ minWidth: breakpoints.lg });
 
-  const finalIsLg = isClient
+  const finalIsLg = !isServer
     ? isLg
-    : context?.isDesktop
-      ? true
-      : context?.isMobile
-        ? false
-        : isLg;
+    : ua?.isDesktop
+    ? true
+    : ua?.isMobile
+    ? false
+    : isLg;
 
   const isXs = useMediaQuery({ minWidth: breakpoints.xs });
   const isSm = useMediaQuery({ minWidth: breakpoints.sm });

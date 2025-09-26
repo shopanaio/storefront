@@ -7,7 +7,7 @@ import { useRelayEnvironment } from "react-relay";
 import useSerializablePreloadedQuery from "@src/relay/useSerializablePreloadedQuery";
 import loadSerializableQuery from "@src/relay/loadSerializableQuery";
 import useGetSessionQuery from "@src/hooks/session/__generated__/useGetSessionQuery.graphql";
-import { useSessionStore } from "@src/store/sessionStore";
+import { useSession } from "@src/store/sessionStore";
 
 interface SessionPreloadProviderProps {
   children: React.ReactNode;
@@ -48,8 +48,8 @@ export function SessionPreloadProvider({
 
   console.log("sessionData SessionPreloadProvider", sessionData);
 
-  const setSession = useSessionStore((state) => state.setSession);
-  const setRefreshSession = useSessionStore((state) => state.setRefreshSession);
+  const setSession = useSession((state) => state.setSession);
+  const setRefreshSession = useSession((state) => state.setRefreshSession);
 
   useEffect(() => {
     console.log("sessionData useEffect", sessionData);

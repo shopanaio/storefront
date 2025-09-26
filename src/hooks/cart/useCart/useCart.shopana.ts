@@ -2,7 +2,8 @@ import { graphql, useFragment } from "react-relay";
 import { useCartContext } from "@src/providers/cart-context";
 import { useCart_CartFragment$key } from "./__generated__/useCart_CartFragment.graphql";
 import cartIdUtils from "@src/utils/cartId";
-import React from "react";
+import React, { useEffect, useMemo } from "react";
+import { Entity } from "@src/entity";
 
 export const useCart_CartFragment = graphql`
   fragment useCart_CartFragment on Checkout {
@@ -78,14 +79,24 @@ export const useCart_CartFragment = graphql`
 const useCart = () => {
   const { cartKey, isCartLoading, isCartLoaded } = useCartContext();
 
-  const cart = useFragment<useCart_CartFragment$key>(
+  const cartFragment = useFragment<useCart_CartFragment$key>(
     useCart_CartFragment,
     cartKey
   );
 
-  if (cart) {
-    cartIdUtils.setCartIdCookie(cart?.id);
-  }
+  const cart = useMemo(() => {
+    if (!cartFragment) return null;
+    return cartFragment as Entity.Cart;
+  }, [cartFragment]);
+
+  const cartId = cart?.id || null;
+
+  useEffect(() => {
+    if (!cartId) {
+      return;
+    }
+    cartIdUtils.setCartIdCookie(cartId);
+  }, [cartId]);
 
   // Log cart information, but don't clear
   React.useEffect(() => {
@@ -93,7 +104,7 @@ const useCart = () => {
   }, []);
 
   return {
-    cart,
+    cart: {},
     loading: isCartLoading,
     loaded: isCartLoaded,
     error: null,

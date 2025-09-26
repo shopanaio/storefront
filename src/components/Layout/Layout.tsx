@@ -21,7 +21,7 @@ import { Header } from "./Header";
 import { StickyHeader } from "./StickyHeader";
 import { createStyles } from "antd-style";
 import { usePathname } from "next/navigation";
-import { useSessionStore } from "@src/providers/session-store-provider";
+import { useSession } from "@src/hooks/useSession";
 import useCart from "@src/hooks/cart/useCart";
 
 const { Content } = AntLayout;
@@ -37,9 +37,7 @@ export const Layout = ({ children }: ILayoutProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
 
-  const { cart } = useCart();
-
-  const user = useSessionStore((state) => state.session?.user);
+  const user = useSession((state) => state.session?.user);
   const pathname = usePathname();
   const isCheckout = pathname?.includes("/checkout");
   const isBoxBuilder = pathname?.includes("/box-builder");
@@ -83,16 +81,12 @@ export const Layout = ({ children }: ILayoutProps) => {
           onOpenDrawer={openDrawer}
           onOpenCartDrawer={openCartDrawer}
           user={user}
-          cartAmount={cart?.cost.subtotalAmount}
-          cartLines={cart?.lines?.edges?.length ?? 0}
         />
         <Header
           onOpenDrawer={openDrawer}
           onOpenMobileSearchDrawer={openMobileSearchDrawer}
           onOpenCartDrawer={openCartDrawer}
-          cartAmount={cart?.cost.subtotalAmount || null}
           user={user}
-          cartLines={cart?.lines?.edges?.length ?? 0}
         />
       </>
 

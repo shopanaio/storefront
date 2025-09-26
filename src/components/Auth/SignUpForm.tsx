@@ -5,7 +5,7 @@ import useSignIn from "@src/hooks/auth/useSingnIn";
 import useGetSession from "@src/hooks/session/useGetSession";
 import useSignUpHandler from "@src/hooks/auth/useSignUpHandler";
 import { useModalStore } from "@src/store/appStore";
-import { useSessionStore } from "@src/providers/session-store-provider";
+import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
 
 import { SignUp } from "../UI/Auth/SignUp";
@@ -87,8 +87,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchForm }) => {
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );
-  const setSession = useSessionStore((state) => state.setSession);
-  const refreshSession = useSessionStore((state) => state.refreshSession);
+  const setSession = useSession((state) => state.setSession);
+  const refreshSession = useSession((state) => state.refreshSession);
 
   // Use new hook for handling registration
   const signUpHandler = useSignUpHandler();

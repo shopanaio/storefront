@@ -1,32 +1,28 @@
 import { useModalStore } from "@src/store/appStore";
-import { useSessionStore } from "@src/providers/session-store-provider";
-// import type { MenuProps } from "antd";
+import { useSession } from "@src/hooks/useSession";
 import { Layout, Button, Flex, Divider /* , message */ } from "antd";
 import Link from "next/link";
 import {
   TbMenu2,
   TbLayoutGridFilled,
   TbHeart,
-  TbShoppingCart,
   TbUserCircle,
   TbSearch,
   TbPhone,
   TbUser,
 } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
-import { CatalogBtn } from "./CatalogBtn";
 import { FullLogo } from "./Logo";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { HeaderLinkButton } from "./HeaderLinkButton";
+import { CartButton } from "./CartButton";
 import { DesktopSearch } from "../Search/DesktopSearch";
 import { useLocale, useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useRouter } from "next/navigation";
-import { User } from "@src/store/sessionStore";
 import useSignOut from "@src/hooks/auth/useSignOut";
 import accessTokenUtils from "@src/utils/accessToken";
-import { Price } from "@src/components/UI/Price/Price";
-import { ApiMoney } from "@codegen/schema-client";
+import { User } from "@src/entity/User";
 const { Header: AntHeader } = Layout;
 
 /* const handleLanguageClick: MenuProps["onClick"] = () => {
@@ -43,9 +39,7 @@ interface HeaderProps {
   onOpenDrawer: () => void;
   onOpenMobileSearchDrawer: () => void;
   onOpenCartDrawer: () => void;
-  user: User | null | undefined;
-  cartAmount: ApiMoney | null;
-  cartLines: number;
+  user: User | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -53,8 +47,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMobileSearchDrawer,
   onOpenCartDrawer,
   user,
-  cartAmount,
-  cartLines,
 }) => {
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
@@ -63,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { styles } = useStyles();
   const router = useRouter();
   const locale = useLocale();
-  const setSession = useSessionStore((state) => state.setSession);
+  const setSession = useSession((state) => state.setSession);
   const [commit] = useSignOut();
 
   return (
@@ -116,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
             />
             <HeaderLinkButton
               icon={user ? <TbUserCircle size={24} /> : <TbUser size={24} />}
-              topText={user ? user.email : t("sign-in")}
+              topText={user ? t("my-account") : t("sign-in")}
               bottomText={t("account")}
               onClick={() =>
                 user
@@ -125,70 +117,18 @@ export const Header: React.FC<HeaderProps> = ({
               }
               mobileBlock={true}
             />
-            <HeaderLinkButton
-              icon={<TbShoppingCart size={24} color="currentColor" />}
-              topText={t("cart")}
-              bottomText={
-                cartAmount ? <Price money={cartAmount} raw /> : t("cart")
-              }
-              badgeCount={cartLines}
-              mobileBlock={true}
-              onClick={() => onOpenCartDrawer()}
-            />
+            <CartButton mobileBlock={true} onClick={() => onOpenCartDrawer()} />
           </Flex>
           <div className={styles.breakRow} />
-          <Flex className={styles.catalogWrapper}>
-            <CatalogBtn
-              icon={<TbLayoutGridFilled size={24} />}
-              text={t("catalog")}
-            />
-            <Button
-              className={styles.mobileSearchBtn}
-              size="large"
-              type="default"
-              icon={<TbSearch size={18} />}
-              onClick={onOpenMobileSearchDrawer}
-            >
-              {t("search")}
-            </Button>
-            <Flex className={styles.bottomNavRight} align="center" gap={16}>
-              <Button
-                className={styles.navTextButton}
-                variant="link"
-                color="default"
-              >
-                {t("marketplace")}
-              </Button>
-              <Button
-                className={styles.navTextButton}
-                variant="link"
-                color="default"
-              >
-                {t("electronics")}
-              </Button>
-              <Button
-                className={styles.navTextButton}
-                variant="link"
-                color="default"
-              >
-                {t("accessories")}
-              </Button>
-              <Button
-                className={styles.navTextButton}
-                variant="link"
-                color="default"
-              >
-                {t("blog")}
-              </Button>
-              <Button
-                className={styles.navTextButton}
-                variant="link"
-                color="default"
-              >
-                {t("features")}
-              </Button>
-            </Flex>
-          </Flex>
+          <Button
+            className={styles.mobileSearchBtn}
+            size="large"
+            type="default"
+            icon={<TbSearch size={18} />}
+            onClick={onOpenMobileSearchDrawer}
+          >
+            {t("search")}
+          </Button>
         </div>
       </AntHeader>
     </>
@@ -242,15 +182,15 @@ const useStyles = createStyles(({ token, css }) => {
       z-index: 10; // make a token
     `,
     menuBtn: css`
-      order: 1;
+      order: -1;
       height: var(--components-header-control-height);
 
       ${mq.lg} {
-        min-width: var(--components-header-control-height);
+        display: none;
       }
     `,
     logoWrapper: css`
-      order: 2;
+      /* order: 2; */
       flex-basis: 0;
       ${mq.max.lg} {
         flex-grow: 1;
@@ -288,21 +228,7 @@ const useStyles = createStyles(({ token, css }) => {
         align-items: center;
       }
     `,
-    catalogWrapper: css`
-      order: 5;
-      display: flex;
-      gap: ${token.padding}px;
-      width: 100%;
 
-      ${mq.sm} {
-        width: max-content;
-      }
-      ${mq.md} {
-      }
-      ${mq.lg} {
-        width: 100%;
-      }
-    `,
     mobileSearchBtn: css`
       display: none;
       ${mq.max.sm} {

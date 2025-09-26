@@ -3,6 +3,8 @@ import { ReactNode } from "react";
 import { createStyles } from "antd-style";
 
 import { mq } from "@src/components/Theme/breakpoints";
+import { TbLayoutGridFilled } from "react-icons/tb";
+import { useTranslations } from "next-intl";
 
 type Props = {
   icon?: ReactNode;
@@ -10,18 +12,19 @@ type Props = {
   onClick?: () => void;
 };
 
-export const CatalogBtn = ({ icon, text, onClick }: Props) => {
+export const CatalogBtn = ({ onClick }: Props) => {
   const { styles } = useStyles();
+  const t = useTranslations("Header");
 
   return (
     <Button
       className={styles.catalogBtn}
       type="primary"
-      icon={icon}
+      icon={<TbLayoutGridFilled size={24} />}
       onClick={onClick}
       size="large"
     >
-      {text}
+      {t("catalog")}
     </Button>
   );
 };

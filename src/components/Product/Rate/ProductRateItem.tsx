@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ApiProductReview } from "@codegen/schema-client";
 import { useModalStore } from "@src/store/appStore";
-import { useSessionStore } from "@src/providers/session-store-provider";
+import { useSession } from "@src/hooks/useSession";
 import { useVoteReviewHelpful } from "@src/hooks/useVoteReviewHelpful";
 import { useReportReviewAbuse } from "@src/hooks/useReportReviewAbuse";
 
@@ -22,7 +22,7 @@ export const ProductRateItem = ({ node }: Props) => {
   const { styles } = useStyles() as { styles: Record<string, string> };
   const t = useTranslations("Product");
 
-  const session = useSessionStore((state) => state.session);
+  const session = useSession((state) => state.session);
   const user = session?.user;
 
   const setIsAuthModalVisible = useModalStore(

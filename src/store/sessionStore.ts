@@ -1,12 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import { create } from 'zustand';
-
-export interface User {
-  id: string;
-  iid: string;
-  email: string;
-  phone?: string;
-}
+import { User } from '@src/entity/User';
 
 export interface Session {
   user: User | null;
@@ -30,8 +24,9 @@ export const defaultInitState: SessionState = {
   setRefreshSession: () => { },
 };
 
-export const createSessionStore = (initState: SessionState = defaultInitState) => {
+export const createSessionStore = (initState: Partial<SessionState> = defaultInitState) => {
   return createStore<SessionStore>()((set) => ({
+    ...defaultInitState,
     ...initState,
     setSession: (session) => set({ session }),
     refreshSession: () => { },
@@ -39,7 +34,7 @@ export const createSessionStore = (initState: SessionState = defaultInitState) =
   }));
 };
 
-export const useSessionStore = create<SessionStore>()((set) => ({
+export const useSession = create<SessionStore>()((set) => ({
   ...defaultInitState,
   setSession: (session) => set({ session }),
   refreshSession: () => { },
