@@ -1,6 +1,5 @@
-import { Button, Flex, Divider } from "antd";
+import { Flex } from "antd";
 import Link from "next/link";
-import { TbMenu2 } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
 import { FullLogo } from "./Logo";
 import { CartButton } from "./CartButton";
@@ -17,16 +16,14 @@ export const Header: React.FC = () => {
   const { styles } = useStyles();
 
   return (
-    <div className={styles.header}>
-      <div className={styles.container}>
+    <div className={styles.container}>
+      <div className={styles.inner}>
         <AppDrawerButton />
-        <Flex className={styles.logoWrapper}>
-          <Link className={styles.logoLink} href="/">
-            <FullLogo theme="light" size={34} />
-          </Link>
-        </Flex>
+        <Link className={styles.logo} href="/">
+          <FullLogo theme="light" size={34} />
+        </Link>
         <DesktopSearch />
-        <Flex className={styles.headerActions}>
+        <Flex className={styles.actions}>
           <SupportButton />
           <WishlistButton />
           <AccountButton />
@@ -39,7 +36,7 @@ export const Header: React.FC = () => {
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    header: css`
+    container: css`
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -52,7 +49,7 @@ const useStyles = createStyles(({ token, css }) => {
         padding: ${token.paddingSM}px ${token.padding}px;
       }
     `,
-    container: css`
+    inner: css`
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -72,19 +69,17 @@ const useStyles = createStyles(({ token, css }) => {
         max-width: 1400px;
       }
     `,
-    logoWrapper: css`
+    logo: css`
       flex-grow: 1;
+      display: flex;
+      align-items: center;
 
       ${mq.lg} {
         flex-grow: unset;
         padding-right: ${token.padding}px;
       }
     `,
-    logoLink: css`
-      display: flex;
-      align-items: center;
-    `,
-    headerActions: css`
+    actions: css`
       order: 3;
       justify-content: flex-end;
       align-items: center;
