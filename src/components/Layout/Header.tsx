@@ -19,14 +19,14 @@ export const Header: React.FC = () => {
   return (
     <div className={styles.header}>
       <div className={styles.container}>
-        <AppDrawerButton className={styles.menuBtn} />
+        <AppDrawerButton />
         <Flex className={styles.logoWrapper}>
           <Link className={styles.logoLink} href="/">
             <FullLogo theme="light" size={34} />
           </Link>
         </Flex>
         <DesktopSearch />
-        <Flex className={styles.headerLinksList}>
+        <Flex className={styles.headerActions}>
           <SupportButton />
           <WishlistButton />
           <AccountButton />
@@ -72,26 +72,19 @@ const useStyles = createStyles(({ token, css }) => {
         max-width: 1400px;
       }
     `,
-    menuBtn: css`
-      order: -1;
-      height: var(--components-header-control-height);
+    logoWrapper: css`
+      flex-grow: 1;
 
       ${mq.lg} {
-        display: none;
-      }
-    `,
-    logoWrapper: css`
-      /* order: 2; */
-      flex-basis: 0;
-      ${mq.max.lg} {
-        flex-grow: 1;
+        flex-grow: unset;
+        padding-right: ${token.padding}px;
       }
     `,
     logoLink: css`
       display: flex;
       align-items: center;
     `,
-    headerLinksList: css`
+    headerActions: css`
       order: 3;
       justify-content: flex-end;
       align-items: center;
@@ -100,39 +93,6 @@ const useStyles = createStyles(({ token, css }) => {
         order: 4;
         min-width: max-content;
       }
-    `,
-    breakRow: css`
-      display: none;
-      flex-basis: 100%;
-      height: 0;
-      order: 4;
-      ${mq.sm} {
-        display: block;
-      }
-      ${mq.lg} {
-        display: none;
-      }
-    `,
-    mobileSearchBtn: css`
-      display: none;
-      ${mq.max.sm} {
-        display: flex;
-        font-weight: var(--font-weight-500);
-        font-size: ${token.fontSize}px;
-        width: 100%;
-      }
-    `,
-    bottomNavRight: css`
-      display: none;
-      ${mq.lg} {
-        display: flex;
-      }
-    `,
-    navTextButton: css`
-      font-weight: var(--font-weight-500);
-      font-size: ${token.fontSizeLG}px;
-      color: ${token.colorText};
-      padding: 0 ${token.paddingXS}px;
     `,
   };
 });
