@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button, Badge, Flex, Typography } from "antd";
+import { Button, Badge } from "antd";
 import { TbFilter } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { ListingFilter } from "./ListingFilter";
@@ -13,15 +13,11 @@ import { DrawerBase } from "@src/components/UI/DrawerBase";
 import { useFiltersStore } from "@src/store/appStore";
 import { StickyButton } from "@src/components/UI/StickyButton";
 
-const { Text } = Typography;
-
 interface FilterDrawerProps {
   filters: ApiFilter[];
 }
 
-export const FilterDrawer: React.FC<FilterDrawerProps> = ({
-  filters,
-}) => {
+export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
   const [open, setOpen] = useState(false);
   const { styles } = useStyles();
   const t = useTranslations("Listing");
@@ -32,7 +28,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   const closeDrawer = () => setOpen(false);
 
   const { activeFiltersCount, hasActiveFilters } = useActiveFiltersCount({
-    selectedFilters
+    selectedFilters,
   });
 
   const handleReset = () => {
@@ -42,8 +38,6 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
       closeDrawer();
     }
   };
-
-
 
   const handleApplyFilters = () => {
     if (applyFiltersRef.current) {
@@ -57,10 +51,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   };
 
   const footerContent = (
-    <StickyButton
-      onClick={handleApplyFilters}
-      label={t("apply-filters")}
-    />
+    <StickyButton onClick={handleApplyFilters} label={t("apply-filters")} />
   );
 
   return (
@@ -75,13 +66,14 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
           <Badge color="blue" count={activeFiltersCount} size="small" />
         )}
       </Button>
-
       <DrawerBase
         open={open}
         onClose={closeDrawer}
         footer={footerContent}
         title={t("filters")}
         showCloseButton={true}
+        headerExtra={<Button onClick={handleReset}>{t("reset-all")}</Button>}
+        height="75vh"
       >
         <ListingFilter
           filters={filters}

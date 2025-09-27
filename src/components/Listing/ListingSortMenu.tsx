@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Flex, Radio } from "antd";
+import { Button, Flex } from "antd";
 import { TbArrowsUpDown } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import { ListingSort } from "@codegen/schema-client";
 import { mq } from "@src/components/Theme/breakpoints";
 import { DrawerBase } from "@src/components/UI/DrawerBase";
+import { OptionRadioButton } from "@src/components/Product/Options/OptionRadioButton";
 
 export interface SortOption<T> {
   value: T;
@@ -48,27 +49,20 @@ export const ListingSortMenu = ({ options, value, onChange }: Props) => {
       >
         <Flex vertical gap={8}>
           {options.map((option) => (
-            <Flex
+            <OptionRadioButton
               key={option.value}
-              align="center"
-              gap={16}
+              selected={value === option.value}
+              disabled={option.disabled}
+              showRadio
               onClick={() => {
                 if (!option.disabled) {
                   onChange(option.value as ListingSort);
                   setOpen(false);
                 }
               }}
-              style={{
-                cursor: option.disabled ? "not-allowed" : "pointer",
-                background: value === option.value ? "transparent" : undefined,
-              }}
             >
-              <Radio
-                checked={value === option.value}
-                disabled={option.disabled}
-              />
               {option.label}
-            </Flex>
+            </OptionRadioButton>
           ))}
         </Flex>
       </DrawerBase>

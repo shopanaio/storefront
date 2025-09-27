@@ -32,28 +32,13 @@ const useStyles = createStyles(({ css, token }) => {
     container: css`
       display: flex;
       flex-wrap: wrap;
-
       gap: ${token.margin}px;
-      width: 100%;
-
-      ${mq.xl} {
-        margin-right: auto;
-        margin-left: auto;
-
-        max-width: 1280px;
-      }
-
-      ${mq.xxl} {
-        padding: 0;
-        max-width: 1400px;
-      }
     `,
 
     sectionTitle: css`
-      font-size: 18px;
-
+      font-size: ${token.fontSizeHeading4}px;
       ${mq.lg} {
-        font-size: 24px;
+        font-size: ${token.fontSizeHeading3}px;
       }
     `,
   };

@@ -1,8 +1,11 @@
 "use client";
 
 import React from "react";
-import { Badge, Flex, Typography } from "antd";
+import { Typography } from "antd";
 import { createStyles } from "antd-style";
+import { mq } from "@src/components/Theme/breakpoints";
+
+const { Text } = Typography;
 
 interface ListingHeaderProps {
   title: string;
@@ -12,17 +15,19 @@ export const ListingHeader: React.FC<ListingHeaderProps> = ({ title }) => {
   const { styles } = useStyles();
 
   return (
-    <Flex className={styles.titleWrapper}>
-      <Typography.Text className={styles.pageTitle}>{title}</Typography.Text>
-    </Flex>
+    <Text strong className={styles.pageTitle}>
+      {title}
+    </Text>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => ({
-  titleWrapper: css`
-    width: max-content;
-  `,
   pageTitle: css`
-    font-size: ${token.fontSizeHeading3}px;
+    display: inline-block;
+    width: max-content;
+    font-size: ${token.fontSizeHeading4}px;
+    ${mq.lg} {
+      font-size: ${token.fontSizeHeading3}px;
+    }
   `,
 }));
