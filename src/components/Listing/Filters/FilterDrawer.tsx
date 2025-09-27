@@ -11,6 +11,7 @@ import { ApiFilter } from "@codegen/schema-client";
 import { mq } from "@src/components/Theme/breakpoints";
 import { DrawerBase } from "@src/components/UI/DrawerBase";
 import { useFiltersStore } from "@src/store/appStore";
+import { StickyButton } from "@src/components/UI/StickyButton";
 
 const { Text } = Typography;
 
@@ -56,15 +57,10 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   };
 
   const footerContent = (
-    <Button
-      type="primary"
-      size="large"
-      block
+    <StickyButton
       onClick={handleApplyFilters}
-      style={{ height: 48 }}
-    >
-      {t("apply-filters")}
-    </Button>
+      label={t("apply-filters")}
+    />
   );
 
   return (

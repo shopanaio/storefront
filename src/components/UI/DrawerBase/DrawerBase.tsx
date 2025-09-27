@@ -15,9 +15,11 @@ export interface DrawerBaseProps
   /** Callback when drawer is closed */
   onClose: () => void;
   /** Drawer title */
-  title?: string;
+  title?: ReactNode;
   /** Custom header content (overrides title) */
   header?: ReactNode;
+  /** Extra content to display in header next to close button */
+  headerExtra?: ReactNode;
   /** Footer content */
   footer?: ReactNode;
   /** Main content */
@@ -43,6 +45,7 @@ export const DrawerBase = ({
   onClose,
   title,
   header,
+  headerExtra,
   footer,
   children,
   showCloseButton = true,
@@ -59,12 +62,13 @@ export const DrawerBase = ({
   // Automatically determine placement and sizes for mobile devices
   const finalPlacement = placement || (isMobile ? "bottom" : "right");
   const finalHeight = height || (isMobile ? "60vh" : undefined);
-  const finalWidth = width || (!isMobile ? 450 : undefined);
+  const finalWidth =
+    width || (!isMobile ? "var(--components-drawer-width)" : undefined);
 
   const renderHeader = () => {
     if (header) return header;
 
-    if (!title && !showCloseButton) return null;
+    if (!title && !showCloseButton && !headerExtra) return null;
 
     return (
       <Flex
@@ -73,14 +77,17 @@ export const DrawerBase = ({
         justify="space-between"
       >
         {title && <Text className={styles.title}>{title}</Text>}
-        {showCloseButton && (
-          <Button
-            icon={<RxCross2 size={24} />}
-            type="text"
-            className={styles.closeBtn}
-            onClick={onClose}
-          />
-        )}
+        <Flex align="center" gap={8}>
+          {headerExtra}
+          {showCloseButton && (
+            <Button
+              icon={<RxCross2 size={24} />}
+              type="text"
+              className={styles.closeBtn}
+              onClick={onClose}
+            />
+          )}
+        </Flex>
       </Flex>
     );
   };
