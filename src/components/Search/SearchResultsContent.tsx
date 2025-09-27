@@ -28,32 +28,57 @@ const SearchResultsContent: React.FC<SearchResultsContentProps> = ({
   const { styles } = useStyles();
   const locale = useLocale();
 
-  if (searchTerm.trim() === "") {
-    return null;
-  }
+  // Always show tabs, even if search term is empty
 
   const renderContent = () => {
+    const hasSearchTerm = searchTerm.trim() !== "";
+
     if (activeTab === "products") {
-      return products.length === 0 ? (
-        <Empty
-          className={styles.styledEmpty}
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No Data"
-        />
-      ) : (
-        products.map((product) => (
-          <SearchProductCard key={product.id} item={product} />
-        ))
-      );
+      if (!hasSearchTerm || products.length === 0) {
+        return (
+          <Empty
+            className={styles.styledEmpty}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              hasSearchTerm ? "No Data" : t("start-typing-to-search")
+            }
+          />
+        );
+      }
+      return products.map((product) => (
+        <SearchProductCard key={product.id} item={product} />
+      ));
     }
 
     if (activeTab === "categories") {
+      if (!hasSearchTerm || categories.length === 0) {
+        return (
+          <Empty
+            className={styles.styledEmpty}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              hasSearchTerm ? "No Data" : t("start-typing-to-search")
+            }
+          />
+        );
+      }
       return categories.map((category) => (
         <SearchProductCard key={category.id} item={category} />
       ));
     }
 
     if (activeTab === "articles") {
+      if (!hasSearchTerm || articles.length === 0) {
+        return (
+          <Empty
+            className={styles.styledEmpty}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              hasSearchTerm ? "No Data" : t("start-typing-to-search")
+            }
+          />
+        );
+      }
       return articles.map((article) => (
         <SearchProductCard key={article.id} item={article} />
       ));
@@ -98,11 +123,6 @@ const SearchResultsContent: React.FC<SearchResultsContentProps> = ({
         </Button>
       </Flex>
       <div className={styles.contentWrapper}>{renderContent()}</div>
-      {activeTab === "products" && products.length > 0 && (
-        <Button href={`/${locale}/search?q=${encodeURIComponent(searchTerm)}`}>
-          {t("show-all")} &quot;{searchTerm}&quot;
-        </Button>
-      )}
     </Flex>
   );
 };

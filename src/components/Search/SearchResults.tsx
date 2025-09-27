@@ -5,13 +5,17 @@ import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
 
 interface SearchResultsProps {
   searchTerm: string;
+  initialLoading?: boolean;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ searchTerm }) => {
+const SearchResults: React.FC<SearchResultsProps> = ({
+  searchTerm,
+  initialLoading = false
+}) => {
   const { products, categories, articles, loading } =
     usePredictiveSearch(searchTerm);
 
-  if (loading) {
+  if (initialLoading) {
     return <SearchResultsSkeleton />;
   }
 

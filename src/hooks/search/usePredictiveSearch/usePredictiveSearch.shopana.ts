@@ -122,8 +122,6 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
     };
   }, [searchTerm, environment]);
 
-
-  console.log("state", state);
   return state;
 };
 

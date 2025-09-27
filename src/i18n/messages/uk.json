@@ -9,6 +9,8 @@
     "cart": "Кошик",
     "search": "Пошук",
     "search-result": "Результати пошуку",
+    "search-results-with-term": "Результати пошуку «{searchTerm}»",
+    "start-typing-to-search": "Почніть вводити для пошуку",
     "show-all": "Показати всі результати для",
     "catalog": "Каталог",
     "marketplace": "Маркетплейс",

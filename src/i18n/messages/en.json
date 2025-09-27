@@ -13,6 +13,8 @@
 
     "search": "Search",
     "search-result": "Search results",
+    "search-results-with-term": "Search results for \"{searchTerm}\"",
+    "start-typing-to-search": "Start typing to search",
     "show-all": "Show all results for",
 
     "catalog": "Catalog",

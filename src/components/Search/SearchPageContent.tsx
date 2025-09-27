@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
@@ -10,6 +10,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import useSearchProductsFragment from "@src/hooks/search/useSearchProductsFragment";
 import useFilters from "@src/hooks/category/useFilters";
 import useSearchRefetch from "@src/hooks/search/useSearchRefetch";
+import { useTranslations } from "next-intl";
+import { useFiltersStore } from "@src/store/appStore";
 
 // Extend filter type to support inputs
 interface ExtendedFilterInput {
@@ -21,34 +23,21 @@ interface ExtendedFilterInput {
 export function SearchPageContent({
   searchTitle,
   searchData,
-  onFiltersChange,
-  sort: initialSort,
-  filters: initialFilters,
   refetch,
 }: {
   searchTitle: string;
   searchData: {
     readonly " $fragmentSpreads": any;
   };
-  onFiltersChange: (filters: ExtendedFilterInput[]) => void;
-  sort: ListingSort;
-  filters: ExtendedFilterInput[];
   refetch: (variables: any) => void;
 }) {
-  const { styles } = useStyles();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("Header");
+  const { selectedFilters } = useFiltersStore();
 
-  const currentSort = (searchParams?.get("sort") as ListingSort) || initialSort;
+  const currentSort = (searchParams?.get("sort") as ListingSort) || ListingSort.MostRelevant;
   const [sort, setSort] = useState<ListingSort>(currentSort);
-
-  // Use complex structure for selectedFilters, like in listing
-  const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, { values: string[] | [number, number]; inputs?: string[] }>
-  >({});
-
-  const [apiFilters, setApiFilters] =
-    useState<ExtendedFilterInput[]>(initialFilters);
 
   // Save original filter values
   const [originalFilters, setOriginalFilters] = useState<any[]>([]);
@@ -71,7 +60,19 @@ export function SearchPageContent({
 
   const totalCount = searchProductsData?.totalCount ?? 0;
 
-  console.log("apiFilters in search page content", apiFilters);
+  // Convert zustand filters to API format
+  const apiFilters: ExtendedFilterInput[] = useMemo(() =>
+    Object.entries(selectedFilters).map(
+      ([handle, filterData]) => ({
+        handle,
+        values: filterData.values.map(String),
+        ...(filterData.inputs &&
+          filterData.inputs.length > 0 && {
+            inputs: filterData.inputs,
+          }),
+      })
+    ), [selectedFilters]
+  );
 
   // Use hook for refetch when filters change
   useSearchRefetch(sort, apiFilters, refetch, searchTitle);
@@ -87,94 +88,33 @@ export function SearchPageContent({
     // DON'T call refetch manually - useSearchRefetch will do it automatically
   };
 
-  const handleFiltersChange = (
-    value: React.SetStateAction<
-      Record<string, { values: string[] | [number, number]; inputs?: string[] }>
-    >
-  ) => {
-    setSelectedFilters(value);
-  };
-
   console.log("selectedFilters", selectedFilters);
+  console.log("apiFilters", apiFilters);
 
-  useEffect(() => {
-    const newApiFilters: ExtendedFilterInput[] = Object.entries(
-      selectedFilters
-    ).map(([handle, filterData]) => ({
-      handle,
-      values: filterData.values.map(String),
-      // Add inputs if they exist
-      ...(filterData.inputs &&
-        filterData.inputs.length > 0 && {
-          inputs: filterData.inputs,
-        }),
-    }));
-    setApiFilters(newApiFilters);
-    onFiltersChange(newApiFilters);
-  }, [selectedFilters, onFiltersChange]);
 
   if (!searchData) {
     return null;
   }
 
+  // Create localized title
+  const localizedTitle = searchTitle.trim()
+    ? t("search-results-with-term", { searchTerm: searchTitle })
+    : t("search-result");
+
   return (
-    <div className={styles.container}>
+    <Flex gap={16} vertical className="container">
       <ListingTitleAndBtn
         filters={originalFilters.length > 0 ? originalFilters : filters}
-        title={searchTitle}
+        title={localizedTitle}
         productsCount={totalCount}
         sort={sort}
         setSort={handleSortChange}
-        selectedFilters={selectedFilters}
-        setSelectedFilters={handleFiltersChange}
       />
-
-      <Flex className={styles.contentContainer}>
-        <ListingFilter
-          filters={originalFilters.length > 0 ? originalFilters : filters}
-          mode="sidebar"
-          selectedFilters={selectedFilters}
-          setSelectedFilters={handleFiltersChange}
-        />
-        <SearchListingProducts
-          searchData={searchData}
-          sort={sort}
-          filters={apiFilters}
-        />
-      </Flex>
-    </div>
+      <SearchListingProducts
+        searchData={searchData}
+        sort={sort}
+        filters={apiFilters}
+      />
+    </Flex>
   );
 }
-
-const useStyles = createStyles(({ token, css }) => {
-  return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.margin}px;
-      width: 100%;
-
-      ${mq.lg} {
-        padding-right: ${token.padding}px;
-        padding-left: ${token.padding}px;
-      }
-
-      ${mq.xl} {
-        padding: 0;
-        margin-right: auto;
-        margin-left: auto;
-
-        max-width: 1280px;
-      }
-
-      ${mq.xxl} {
-        max-width: 1400px;
-      }
-    `,
-    contentContainer: css`
-      ${mq.lg} {
-        gap: ${token.margin}px;
-      }
-    `,
-  };
-});

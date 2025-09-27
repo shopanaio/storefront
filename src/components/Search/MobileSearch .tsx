@@ -10,6 +10,10 @@ import { createStyles } from "antd-style";
 import { useSearchInput } from "@src/hooks/useSearchInput";
 import { useModalStore } from "@src/store/appStore";
 import { DrawerBase } from "@src/components/UI/DrawerBase";
+import { useInitialLoading } from "@src/hooks/useInitialLoading";
+import { StickyButton } from "@src/components/UI/StickyButton/StickyButton";
+import usePredictiveSearch from "@src/hooks/search/usePredictiveSearch";
+import { useSearchAllButton } from "@src/hooks/useSearchAllButton";
 
 export const MobileSearch: React.FC = () => {
   const t = useTranslations("Header");
@@ -18,6 +22,13 @@ export const MobileSearch: React.FC = () => {
   const isOpen = useModalStore((state) => state.searchDialogOpen);
   const setIsOpen = useModalStore((state) => state.setSearchDialogOpen);
   const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput(300);
+  const initialLoading = useInitialLoading(isOpen, 300);
+
+  // Get search results for footer button
+  const { products } = usePredictiveSearch(debouncedTerm);
+
+  // Get search all button props
+  const { href, label } = useSearchAllButton(debouncedTerm);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -30,12 +41,25 @@ export const MobileSearch: React.FC = () => {
     }
   }, [isOpen, setSearchTerm]);
 
+  // Create footer with StickyButton when there are search results
+  const shouldShowFooterButton =
+    debouncedTerm.trim() !== "" && products.length > 0;
+  const footer = shouldShowFooterButton ? (
+    <StickyButton
+      variant="outlined"
+      color="default"
+      href={href}
+      label={label}
+    />
+  ) : undefined;
+
   return (
     <DrawerBase
       open={isOpen}
       onClose={() => setIsOpen(false)}
       title={t("search")}
       width="var(--components-drawer-width)"
+      footer={footer}
     >
       <div data-testid="mobile-search-drawer">
         <Input
@@ -47,7 +71,10 @@ export const MobileSearch: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <SearchResults searchTerm={debouncedTerm} />
+        <SearchResults
+          searchTerm={debouncedTerm}
+          initialLoading={initialLoading}
+        />
       </div>
     </DrawerBase>
   );
@@ -60,7 +87,7 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       height: 40px;
       padding: ${token.paddingXS}px ${token.paddingSM}px;
-      margin-bottom: 0;
+      margin-bottom: ${token.marginXS}px;
     `,
     searchIcon: css`
       color: ${token.colorTextPlaceholder};

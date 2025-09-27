@@ -137,7 +137,7 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-shrink: 0;
   `,
   title: css`
-    font-size: ${token.fontSizeLG}px;
+    font-size: ${token.fontSizeXL}px;
     font-weight: 600;
   `,
   closeBtn: css`

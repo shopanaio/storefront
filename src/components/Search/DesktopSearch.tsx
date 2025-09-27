@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Popover } from "antd";
+import { Popover, Button } from "antd";
 import SearchResults from "./SearchResults";
 import { useSearchInput } from "@src/hooks/useSearchInput";
 import { mq } from "@src/components/Theme/breakpoints";
@@ -8,9 +8,12 @@ import { useElementWidth } from "@src/hooks/useElementWidth";
 import { SearchInput } from "./SearchInput";
 import { useIsMobile } from "@src/hooks/useIsMobile";
 import { useModalStore } from "@src/store/appStore";
+import { useInitialLoading } from "@src/hooks/useInitialLoading";
+import usePredictiveSearch from "@src/hooks/search/usePredictiveSearch";
+import { useSearchAllButton } from "@src/hooks/useSearchAllButton";
 
 export const DesktopSearch: React.FC = () => {
-  const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput(300);
+  const { searchTerm, debouncedTerm } = useSearchInput(300);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const isMobile = useIsMobile();
@@ -22,6 +25,13 @@ export const DesktopSearch: React.FC = () => {
   const popoverContentRef = useRef<HTMLDivElement>(null);
   const popoverWidth = useElementWidth(containerRef);
   const { styles } = useStyles();
+  const initialLoading = useInitialLoading(isPopoverOpen, 300);
+
+  // Get search results for button
+  const { products } = usePredictiveSearch(debouncedTerm);
+
+  // Get search all button props
+  const { href, label } = useSearchAllButton(debouncedTerm);
 
   useEffect(() => {
     if (searchTerm.trim() && !isMobile) {
@@ -59,7 +69,6 @@ export const DesktopSearch: React.FC = () => {
     }
   };
 
-
   return (
     <div className={styles.inputContainer} ref={containerRef}>
       <Popover
@@ -73,13 +82,21 @@ export const DesktopSearch: React.FC = () => {
         }}
         content={
           <div className={styles.popover} ref={popoverContentRef}>
-            <SearchResults searchTerm={debouncedTerm} />
+            <SearchResults
+              searchTerm={debouncedTerm}
+              initialLoading={initialLoading}
+            />
+            {debouncedTerm.trim() !== "" && products.length > 0 && (
+              <div className={styles.buttonWrapper}>
+                <Button block href={href}>
+                  {label}
+                </Button>
+              </div>
+            )}
           </div>
         }
       >
-        <SearchInput
-          onClick={handleClick}
-        />
+        <SearchInput onClick={handleClick} />
       </Popover>
     </div>
   );
@@ -104,6 +121,10 @@ const useStyles = createStyles(({ token, css }) => {
       min-height: 300px;
       max-height: 500px;
       overflow-y: auto;
+    `,
+    buttonWrapper: css`
+      padding: ${token.paddingXS}px;
+      margin-top: auto;
     `,
   };
 });

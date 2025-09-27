@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Flex, Typography } from "antd";
 import { ListingTitleAndBtn } from "@src/components/Listing/ListingTitleAndBtn";
 import { ListingSort, ApiFilterInput, ApiFilter } from "@codegen/schema-client";
@@ -13,8 +13,7 @@ const { Text } = Typography;
 
 export function ListingPageContent({ category }: { category: Listing$key }) {
   const [sort, setSort] = useState<ListingSort>(ListingSort.MostRelevant);
-  const { selectedFilters, setSelectedFilters } = useFiltersStore();
-  const [apiFilters, setApiFilters] = useState<ApiFilterInput[]>([]);
+  const { selectedFilters } = useFiltersStore();
 
   // Save original filter values so they don't change after refetch
   const [originalFilters, setOriginalFilters] = useState<ApiFilter[]>([]);
@@ -39,8 +38,9 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
     listingData?.listing?.edges?.length ||
     0;
 
-  useEffect(() => {
-    const newApiFilters: ApiFilterInput[] = Object.entries(selectedFilters).map(
+  // Convert zustand filters to API format when needed
+  const apiFilters: ApiFilterInput[] = useMemo(() =>
+    Object.entries(selectedFilters).map(
       ([handle, filterData]) => ({
         handle,
         values: filterData.values.map(String),
@@ -49,9 +49,8 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
             inputs: filterData.inputs,
           }),
       })
-    );
-    setApiFilters(newApiFilters);
-  }, [selectedFilters]);
+    ), [selectedFilters]
+  );
 
   if (!listingData) {
     return <Text>Category loading error</Text>;
