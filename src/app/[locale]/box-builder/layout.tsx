@@ -4,10 +4,10 @@ import CartProvider from "@src/providers/cart";
 import { useBoxBuilderStore } from "@src/store/appStore";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const boxCartId = useBoxBuilderStore((s) => s.boxCartId);
+
   return (
-    <CartProvider
-      getId={() => useBoxBuilderStore.getState().boxCartId}
-    >
+    <CartProvider getId={() => boxCartId}>
       {children}
     </CartProvider>
   );

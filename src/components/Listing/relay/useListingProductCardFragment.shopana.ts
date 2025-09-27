@@ -15,14 +15,12 @@ const UseProductCardFragment = graphql`
     cover {
       id
       url
-      source
     }
     gallery(first: 2) {
       edges {
         node {
           id
           url
-          # source
         }
       }
     }
@@ -54,7 +52,6 @@ const UseProductCardFragment = graphql`
           image {
             id
             url
-            source
           }
           displayType
         }

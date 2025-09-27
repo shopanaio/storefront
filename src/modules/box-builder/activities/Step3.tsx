@@ -11,6 +11,7 @@ import { ActivityComponentType } from "@stackflow/react";
 import Layout, { LayoutFooterButton } from "../stackflow/Layout";
 import { Activity, useFlow } from "../stackflow/Stack";
 import { useCategory } from "@src/modules/box-builder/hooks/useCategory";
+import { BOX_BUILDER_CONFIG } from "@src/modules/box-builder/config/categories";
 import { CheckoutSkeleton } from "@src/modules/checkout/CheckoutSkeleton";
 import React, { Suspense } from "react";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
@@ -22,7 +23,8 @@ import type { ApiMoney } from "@codegen/schema-client";
 import { ProductCardRelay } from "@src/modules/box-builder/ProductCardRelay";
 
 const ProductsSection: React.FC = () => {
-  const { category } = useCategory("postcards");
+  const handle = BOX_BUILDER_CONFIG.step3.category.handle;
+  const { category } = useCategory(handle);
   const categoryKey = category as unknown as Listing$key;
   const { data } = usePaginationFragment(Listing, categoryKey);
   const products: useListingProductCardFragment_product$key[] = (
@@ -61,7 +63,7 @@ const Step3: ActivityComponentType<Step3Params> = () => {
   const baseMoney = cart?.cost?.totalAmount;
   const envelopesMoney: ApiMoney | undefined = baseMoney
     ? {
-        amount: Math.max(0, envelopesTotalPriceAmount),
+        amount: String(Math.max(0, envelopesTotalPriceAmount)),
         currencyCode: baseMoney.currencyCode as ApiMoney["currencyCode"],
       }
     : undefined;

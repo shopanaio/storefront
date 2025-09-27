@@ -16,7 +16,7 @@ import {
  */
 export const BOX_BUILDER_CONFIG: BoxBuilderConfig = {
   step1: {
-    defaultBoxCategory: "gift-boxes"
+    defaultBoxCategory: "electronics"
   },
 
   step2: {
@@ -41,7 +41,7 @@ export const BOX_BUILDER_CONFIG: BoxBuilderConfig = {
 
   step3: {
     category: {
-      handle: "postcards",
+      handle: "electronics",
       titleKey: "categories.postcards",
       required: false
     }

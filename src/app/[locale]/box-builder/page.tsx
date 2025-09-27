@@ -7,6 +7,7 @@ import CategoryQueryNode, {
 import { BoxBuilderClient } from "@src/app/[locale]/box-builder/client";
 import { QueryProvider } from "@src/providers/relay-query-provider";
 import { parseUserAgent } from "@src/utils/parseUserAgent";
+import { getDefaultBoxCategoryHandle } from "@src/modules/box-builder/config/categories";
 
 export default async function BoxBuilderPage() {
   const cookie = headers().get("cookie") ?? undefined;
@@ -14,13 +15,13 @@ export default async function BoxBuilderPage() {
 
   const { isIOS } = parseUserAgent(userAgent);
 
-  // Preload only category for Step1: boxes
+  // Preload only category for Step1: default box category from config
   const preloadedQuery = await loadSerializableQuery<
     typeof CategoryQueryNode,
     CategoryQuery
   >(
     CategoryQueryNode.params,
-    { handle: "boxes", first: 12 },
+    { handle: getDefaultBoxCategoryHandle(), first: 12 },
     cookie
   );
 

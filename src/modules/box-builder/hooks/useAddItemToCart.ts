@@ -1,15 +1,16 @@
 import { useCart } from "./useCart";
 import { useCreateCart } from "./useCreateCart";
 import { useMutation } from "react-relay";
-import { addCartLineMutation as AddCartLineMutationType } from "@src/relay/queries/__generated__/addCartLineMutation.graphql";
+import type { useAddItemToCartMutation as AddCartLineMutationType } from "@src/hooks/cart/useAddItemToCart/__generated__/useAddItemToCartMutation.graphql";
 import { useBoxBuilderStore, useCurrencyStore } from "@src/store/appStore";
 import { useCartContext } from "@src/providers/cart-context";
 import { toast } from "@src/components/UI/Toast/Toast";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useAddItemToCartMutation } from "@src/hooks/cart/useAddItemToCart/useAddItemToCart.shopana";
 
 export const useAddItemToCart = () => {
   const t = useTranslations("toast");
+  const [localeCode] = useLocale();
   useCart();
   const { setCartKey } = useCartContext();
   const [commitAddLine, isInFlight] =
@@ -35,11 +36,16 @@ export const useAddItemToCart = () => {
       // If no cart — first create cart and immediately add product
       if (!boxCartId) {
         const newCart = await createCart({
+          idempotency: Math.random().toString(36).substring(2, 15),
           currencyCode,
+          localeCode,
           items: [
-            { productId: input.productId, quantity: input.quantity } as any,
+            {
+              purchasableId: input.productId,
+              quantity: input.quantity
+            },
           ],
-        } as any);
+        });
         const nextCart = newCart as any;
         if (!nextCart) {
           toast.error(t("add-failed"));
@@ -58,9 +64,13 @@ export const useAddItemToCart = () => {
         commitAddLine({
           variables: {
             input: {
-              cartId: boxCartId,
-              productId: input.productId,
-              quantity: input.quantity,
+              checkoutId: boxCartId,
+              lines: [
+                {
+                  purchasableId: input.productId,
+                  quantity: input.quantity,
+                },
+              ],
             },
           },
           onCompleted: (response, errors) => {
@@ -70,14 +80,14 @@ export const useAddItemToCart = () => {
               return;
             }
             if (
-              response?.addCartLine?.errors &&
-              response.addCartLine.errors.length > 0
+              response?.checkoutMutation?.checkoutLinesAdd?.errors &&
+              response.checkoutMutation.checkoutLinesAdd.errors.length > 0
             ) {
               toast.error(t("add-failed"));
-              reject(response.addCartLine.errors);
+              reject(response.checkoutMutation.checkoutLinesAdd.errors);
               return;
             }
-            const nextCart = response?.addCartLine?.cart as any;
+            const nextCart = response?.checkoutMutation?.checkoutLinesAdd?.checkout as any;
             if (!nextCart) {
               toast.error(t("cart-unavailable"));
               setCartKey(null);

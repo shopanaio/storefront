@@ -25,7 +25,6 @@ const ProductQuery = graphql`
             displayType
             image {
               url
-              source
               id
             }
           }
@@ -74,7 +73,6 @@ const ProductQuery = graphql`
         cover {
           id
           url
-          source
         }
         price {
           currencyCode

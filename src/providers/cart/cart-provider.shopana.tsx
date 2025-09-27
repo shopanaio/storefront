@@ -9,7 +9,6 @@ import {
 } from "react-relay";
 import { loadCartQuery } from "@src/relay/queries/loadCartMutation.shopana";
 import { loadCartMutationQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartMutationQuery.graphql";
-import cartIdUtils from "@src/utils/cartId";
 import { CartContextProvider } from "../cart-context";
 import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopana";
 import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
@@ -98,7 +97,6 @@ const CartProvider: React.FC<CartProviderProps> = ({
     /* console.log("[CartProvider Shopana] Cart not found, removing cookie"); */
     isLoadingRef.current = false;
     setIsCartLoading(false);
-    cartIdUtils.removeCartIdCookie();
     setCartKey(null);
     setIsCartLoaded(true);
     loadedRef.current = true;

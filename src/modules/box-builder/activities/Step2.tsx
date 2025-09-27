@@ -6,7 +6,7 @@ import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import { StepHeader } from "@src/modules/box-builder/StepHeader";
 
-import SwiperSection from "../CategorySwiper/SwiperSection";
+import CategorySection from "../CategorySwiper/CategorySection";
 import React from "react";
 
 import Progress from "../Progress";
@@ -29,12 +29,8 @@ const CategoriesSections: React.FC = () => {
     <>
       {categories.map((category, idx) => {
         if (!category) return null;
-
         return (
-          <SwiperSection
-            key={category.handle ?? idx}
-            category={category as Listing$key}
-          />
+          <CategorySection key={category.handle ?? idx} handle={category.handle} />
         );
       })}
     </>

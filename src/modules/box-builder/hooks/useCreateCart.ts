@@ -1,7 +1,7 @@
-import { ApiCreateCartInput } from "@codegen/schema-client";
+import { ApiCheckoutCreateInput } from "@codegen/schema-client";
 import { useMutation } from "react-relay";
 import { useCreateCartMutation } from "@src/hooks/cart/useCreateCart/useCreateCart.shopana";
-import { createCartMutation as CreateCartMutationType } from "@src/relay/queries/__generated__/createCartMutation.graphql";
+import { useCreateCartMutation as CreateCartMutationType } from "@src/hooks/cart/useCreateCart/__generated__/useCreateCartMutation.graphql";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { toast } from "@src/components/UI/Toast/Toast";
 import { useTranslations } from "next-intl";
@@ -13,9 +13,9 @@ export const useCreateCart = () => {
     useMutation<CreateCartMutationType>(useCreateCartMutation);
 
   const createCart = (
-    input: ApiCreateCartInput,
+    input: ApiCheckoutCreateInput,
   ): Promise<
-    CreateCartMutationType["response"]["createCart"]["cart"]
+    CreateCartMutationType["response"]["checkoutMutation"]["checkoutCreate"]
   > => {
     return new Promise((resolve, reject) => {
       commit({
@@ -26,23 +26,19 @@ export const useCreateCart = () => {
             reject(errors);
             return;
           }
-          if (
-            response?.createCart?.errors &&
-            response.createCart.errors.length > 0
-          ) {
+
+          const checkout = response?.checkoutMutation?.checkoutCreate;
+          if (!checkout) {
             toast.error(t("create-cart-failed"));
-            reject(response.createCart.errors);
+            reject(new Error("Failed to create checkout"));
             return;
           }
 
-          const cart = response?.createCart?.cart;
-          const createdId = (cart as any)?.id as string | undefined;
+          const createdId = (checkout as any).id;
           if (createdId) {
-            // In Box Builder save cart identifier in zustand,
-            // without affecting global site cookies
             setBoxCartId(createdId);
           }
-          resolve(cart);
+          resolve(checkout);
         },
         onError: (err) => {
           toast.error(t("create-cart-failed"));

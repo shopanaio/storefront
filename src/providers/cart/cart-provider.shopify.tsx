@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useQueryLoader, usePreloadedQuery, useFragment } from "react-relay";
 import { loadCartQuery } from "@src/relay/queries/loadCartQuery.shopify";
 import { loadCartQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartQuery.graphql";
-import cartIdUtils from "@src/utils/cartId";
 import { CartContextProvider } from "../cart-context";
 import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
 import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopify";
@@ -65,12 +64,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
     const cartId = getId();
     /* console.log("[CartProvider Shopify] Checking for cart ID:", cartId); */
 
-    if (!cartId) {
-      /* console.log("[CartProvider Shopify] No cart ID found, creating new cart"); */
-      // Create new cart if ID is missing
-      createNewCart();
-      return;
-    }
+    if (!cartId) return;
 
     isLoadingRef.current = true;
     setIsCartLoading(true);
@@ -93,8 +87,6 @@ const CartProvider: React.FC<CartProviderProps> = ({
     /* console.error("[CartProvider Shopify] Cart not found"); */
     isLoadingRef.current = false;
     setIsCartLoading(false);
-    // If cart not found, remove cookie
-    cartIdUtils.removeCartIdCookie();
     setCartKey(null);
     loadedRef.current = true;
   };
@@ -114,17 +106,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
     };
   }, [disposeQuery]);
 
-  // Add cart creation function
-  const createNewCart = async () => {
-    try {
-      // Here we need to call cart creation mutation
-      // and save ID in cookies
-      /* console.log("[CartProvider Shopify] Creating new cart..."); */
-      // TODO: Implement cart creation mutation
-    } catch (error) {
-      console.error("[CartProvider Shopify] Failed to create cart:", error);
-    }
-  };
+  // No auto-creation here; provider relies strictly on passed ID
 
   return (
     <CartContextProvider
