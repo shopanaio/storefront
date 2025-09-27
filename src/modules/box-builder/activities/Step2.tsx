@@ -21,18 +21,22 @@ import ProductsOnlyFooterButton from "@src/modules/box-builder/ProductsOnlyFoote
 const CategoriesSections: React.FC = () => {
   const { categories } = useBoxBuilderCategories();
 
-  if (!categories) {
+  if (!categories || categories.length === 0) {
     return null;
   }
 
   return (
     <>
-      {Object.values(categories).map((category, idx) => (
-        <SwiperSection
-          key={category?.handle ?? idx}
-          category={category as Listing$key}
-        />
-      ))}
+      {categories.map((category, idx) => {
+        if (!category) return null;
+
+        return (
+          <SwiperSection
+            key={category.handle ?? idx}
+            category={category as Listing$key}
+          />
+        );
+      })}
     </>
   );
 };
