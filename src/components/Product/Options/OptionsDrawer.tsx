@@ -14,7 +14,7 @@ export const OptionsDrawer = ({ open, onClose, children }: Props) => {
     <Drawer
       placement={isMobile ? "bottom" : "right"}
       height={isMobile ? "60vh" : undefined}
-      width={!isMobile ? 450 : undefined}
+      width={!isMobile ? "var(--components-drawer-width)" : undefined}
       open={open}
       onClose={onClose}
       closable={false}

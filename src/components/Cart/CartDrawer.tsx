@@ -36,7 +36,7 @@ export const CartDrawer: React.FC = () => {
       onClose={() => setIsOpen(false)}
       open={isOpen}
       closable={false}
-      width={"min(100vw, 500px)"}
+      width="var(--components-drawer-width)"
       drawerRender={() => (
         <Flex
           vertical

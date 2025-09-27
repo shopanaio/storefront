@@ -5,23 +5,38 @@ import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useModalStore } from "@src/store/appStore";
+import { useIsMobile } from "@src/hooks/useIsMobile";
 
-type DesktopSearchInputProps = {
+type SearchInputProps = {
   onClick?: () => void;
 };
 
-export const DesktopSearchInput: React.FC<DesktopSearchInputProps> = ({
-  onClick,
-}) => {
+export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
   const locale = useLocale();
   const t = useTranslations("Header");
   const { styles } = useStyles();
   const searchTerm = useModalStore((state) => state.searchTerm);
   const setSearchTerm = useModalStore((state) => state.setSearchTerm);
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <Button
+        className={styles.mobileSearch}
+        icon={<TbSearch className={styles.searchIcon} size={18} />}
+        onClick={onClick}
+        block
+      >
+        {t("search")}
+      </Button>
+    );
+  }
 
   return (
     <Input
       allowClear
+      size="middle"
+      readOnly={isMobile}
       className={styles.searchInput}
       placeholder={`${t("search")} ...`}
       value={searchTerm}
@@ -47,6 +62,10 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       background-color: transparent;
       padding-right: ${token.paddingXXS}px;
+
+      ${mq.lg} {
+        height: var(--components-header-control-height);
+      }
     `,
     searchIcon: css`
       color: ${token.colorTextPlaceholder};
@@ -56,7 +75,11 @@ const useStyles = createStyles(({ token, css }) => {
         display: none;
       }
     `,
+    mobileSearch: css`
+      justify-content: flex-start;
+      color: ${token.colorTextPlaceholder};
+    `,
   };
 });
 
-export default DesktopSearchInput;
+export default SearchInput;

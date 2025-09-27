@@ -56,7 +56,7 @@ const useStyles = createStyles(({ token, css }) => {
       flex-wrap: wrap;
       align-items: center;
       width: 100%;
-      gap: ${token.marginXS}px;
+      gap: ${token.marginSM}px;
 
       ${mq.md} {
         column-gap: ${token.margin}px;

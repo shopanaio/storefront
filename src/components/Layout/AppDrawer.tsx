@@ -46,6 +46,7 @@ export const AppDrawer: React.FC = () => {
       onClose={() => setIsOpen(false)}
       open={isOpen}
       closable={false}
+      width="var(--components-drawer-width)"
       drawerRender={() => (
         <div className={`${styles.customDrawer} ant-drawer-content`}>
           <Flex className={styles.drawerHeader} vertical>

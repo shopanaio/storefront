@@ -38,7 +38,7 @@ export const MobileSearch: React.FC = () => {
       onClose={() => setIsOpen(false)}
       open={isOpen}
       closable={false}
-      width="100vw"
+      width="var(--components-drawer-width)"
       drawerRender={() => (
         <div
           data-testid="mobile-search-drawer"
@@ -83,14 +83,14 @@ const useStyles = createStyles(({ token, css }) => {
     `,
     header: css`
       width: 100%;
-      padding: ${token.padding}px;
+      padding: ${token.paddingSM}px;
     `,
     content: css`
       flex-grow: 1;
       display: flex;
       flex-direction: column;
       gap: ${token.margin}px;
-      padding: ${token.padding}px;
+      padding: 0 ${token.paddingSM}px ${token.padding}px;
     `,
     closeButton: css`
       color: ${token.colorText};

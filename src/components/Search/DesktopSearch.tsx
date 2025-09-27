@@ -5,7 +5,7 @@ import { useSearchInput } from "@src/hooks/useSearchInput";
 import { mq } from "@src/components/Theme/breakpoints";
 import { createStyles } from "antd-style";
 import { useElementWidth } from "@src/hooks/useElementWidth";
-import { DesktopSearchInput } from "./DesktopSearchInput";
+import { SearchInput } from "./SearchInput";
 import { useIsMobile } from "@src/hooks/useIsMobile";
 import { useModalStore } from "@src/store/appStore";
 
@@ -77,7 +77,7 @@ export const DesktopSearch: React.FC = () => {
           </div>
         }
       >
-        <DesktopSearchInput
+        <SearchInput
           onClick={handleClick}
         />
       </Popover>
@@ -92,7 +92,6 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-grow: 1;
       width: 100%;
-      height: var(--components-header-control-height);
 
       ${mq.lg} {
         order: 3;

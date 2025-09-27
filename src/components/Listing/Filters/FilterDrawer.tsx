@@ -48,7 +48,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         onClose={closeDrawer}
         open={open}
         closable={false}
-        width={300}
+        width="var(--components-drawer-width)"
       >
         <ListingFilter
           filters={filters}
