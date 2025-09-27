@@ -88,11 +88,9 @@ export const DrawerBase = ({
   const renderContent = () => (
     <div className={cx(styles.layout, contentClassName, "ant-drawer-content")}>
       {renderHeader()}
-
       <div className={cx(styles.content, sectionStyles?.content)}>
         {children}
       </div>
-
       {footer && (
         <div className={cx(styles.footer, sectionStyles?.footer)}>{footer}</div>
       )}
@@ -119,14 +117,16 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-direction: column;
     height: 100%;
     background: ${token.colorBgBase};
-    gap: ${token.margin}px;
+    overflow-y: auto;
+    overflow-x: hidden;
   `,
   header: css`
     position: sticky;
     top: 0;
     z-index: 1;
-    background-color: ${token.colorBgBase};
     padding: ${token.padding}px;
+    background-color: ${token.colorBgBase};
+    /* padding: ${token.padding}px; */
     flex-shrink: 0;
   `,
   title: css`
@@ -140,15 +140,13 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   content: css`
     flex: 1;
-    overflow: auto;
     padding: 0 ${token.padding}px;
   `,
   footer: css`
     position: sticky;
     bottom: 0;
-    background-color: ${token.colorBgBase};
-    padding: ${token.padding}px;
     margin-top: auto;
+    padding: ${token.padding}px;
     flex-shrink: 0;
   `,
 }));

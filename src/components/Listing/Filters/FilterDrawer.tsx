@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button, Badge, Flex } from "antd";
+import { Button, Badge, Flex, Typography } from "antd";
 import { TbFilter } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { ListingFilter } from "./ListingFilter";
@@ -11,6 +11,8 @@ import { ApiFilter } from "@codegen/schema-client";
 import { mq } from "@src/components/Theme/breakpoints";
 import { DrawerBase } from "@src/components/UI/DrawerBase";
 import { useFiltersStore } from "@src/store/appStore";
+
+const { Text } = Typography;
 
 interface FilterDrawerProps {
   filters: ApiFilter[];
@@ -40,16 +42,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
     }
   };
 
-  const customHeader = (
-    <Flex align="center" justify="space-between" style={{ width: "100%" }}>
-      <span style={{ fontSize: "18px", fontWeight: "600" }}>{t("filters")}</span>
-      <Flex align="center" gap={10}>
-        <Button className={styles.resetBtn} onClick={handleReset} type="link">
-          {t("reset")}
-        </Button>
-      </Flex>
-    </Flex>
-  );
+
 
   const handleApplyFilters = () => {
     if (applyFiltersRef.current) {
@@ -90,8 +83,8 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
       <DrawerBase
         open={open}
         onClose={closeDrawer}
-        header={customHeader}
         footer={footerContent}
+        title={t("filters")}
         showCloseButton={true}
       >
         <ListingFilter
@@ -118,5 +111,10 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   resetBtn: css`
     padding: 0;
+  `,
+  title: css`
+    font-size: ${token.fontSizeLG}px;
+    font-weight: 600;
+    margin: 0;
   `,
 }));
