@@ -6,7 +6,6 @@ import { AppDrawer } from "./AppDrawer";
 import { MobileSearch } from "../Search/MobileSearch ";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
-import { StickyHeader } from "./StickyHeader";
 import { AnnouncementBar } from "@src/components/Layout/AnnouncementBar";
 import { createStyles } from "antd-style";
 
@@ -34,7 +33,6 @@ export const Layout = ({ children }: ILayoutProps) => {
     <div>
       <AnnouncementBar />
       <Header />
-      <StickyHeader />
       <main className={styles.main}>{children}</main>
       <Footer />
       <AuthModal />

@@ -43,7 +43,9 @@ const useStyles = createStyles(({ token, css }) => {
       padding: ${token.paddingSM}px;
       background-color: ${token.colorBgBase};
       box-shadow: ${token.boxShadowTertiary};
-      position: relative;
+      position: sticky;
+      top: 0;
+      z-index: 20;
 
       ${mq.lg} {
         padding: ${token.paddingSM}px ${token.padding}px;
