@@ -16,6 +16,10 @@ import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/
 
 interface CartProviderProps {
   children: React.ReactNode;
+  /**
+   * Function to provide cart ID from specific source
+   */
+  getId: () => string | null;
 }
 
 type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
@@ -43,7 +47,10 @@ const CartDataHandler: React.FC<{
   return null;
 };
 
-const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+const CartProvider: React.FC<CartProviderProps> = ({
+  children,
+  getId
+}) => {
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
   const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
@@ -60,11 +67,11 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     // Load cart only once when mounting on client
     if (loadedRef.current || isLoadingRef.current) return;
 
-    const cartId = cartIdUtils.getCartIdFromCookie();
+    const cartId = getId();
     /* console.log("[CartProvider Shopana] Checking for cart ID:", cartId); */
 
     if (!cartId) {
-      /* console.log("[CartProvider Shopana] No cart ID found in cookies"); */
+      /* console.log("[CartProvider Shopana] No cart ID found"); */
       return;
     }
 
@@ -73,7 +80,7 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     /* console.log("[CartProvider Shopana] Loading cart with ID:", cartId); */
 
     loadQuery({ checkoutId: cartId }, { fetchPolicy: "network-only" });
-  }, [loadQuery]);
+  }, [loadQuery, getId]);
 
   const handleCartData = useCallback(
     (cart: useCart_CartFragment$key) => {

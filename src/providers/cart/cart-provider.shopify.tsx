@@ -11,6 +11,10 @@ import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopify";
 
 interface CartProviderProps {
   children: React.ReactNode;
+  /**
+   * Function to provide cart ID from specific source
+   */
+  getId: () => string | null;
 }
 
 // Separate component for handling cart data
@@ -36,7 +40,10 @@ const CartDataHandler: React.FC<{
   return null;
 };
 
-const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+const CartProvider: React.FC<CartProviderProps> = ({
+  children,
+  getId
+}) => {
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
   const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
@@ -55,7 +62,7 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     // Load cart only once when mounting on client
     if (loadedRef.current || isLoadingRef.current) return;
 
-    const cartId = cartIdUtils.getCartIdFromCookie();
+    const cartId = getId();
     /* console.log("[CartProvider Shopify] Checking for cart ID:", cartId); */
 
     if (!cartId) {
@@ -71,7 +78,7 @@ const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
     // Load query using useQueryLoader
     loadQuery({ id: cartId });
-  }, [loadQuery]);
+  }, [loadQuery, getId]);
 
   const handleCartData = (cart: useCart_CartFragment$key) => {
     /* console.log("[CartProvider Shopify] Cart loaded successfully:", cart); */

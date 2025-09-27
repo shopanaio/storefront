@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 
-function getCartIdFromCookie(): string | undefined {
-  return Cookies.get("shopify_cart_id");
+function getCartIdFromCookie(): string | null {
+  return Cookies.get("shopify_cart_id") || null;
 }
 
 function setCartIdCookie(

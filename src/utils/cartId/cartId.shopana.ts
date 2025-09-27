@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 
-const getCartIdFromCookie = (): string | undefined => {
-  return Cookies.get("shopana_cart_id");
+const getCartIdFromCookie = (): string | null => {
+  return Cookies.get("shopana_cart_id") || null;
 };
 
 const setCartIdCookie = (cartId: string, options: { maxAge?: number } = {}): void => {
