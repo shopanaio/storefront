@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Drawer, Flex, Button, Typography, Input, Spin } from "antd";
-import { RxCross2 } from "react-icons/rx";
+import { Input } from "antd";
 import { TbSearch } from "react-icons/tb";
 import type { InputRef } from "antd";
 import SearchResults from "./SearchResults";
@@ -10,8 +9,7 @@ import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useSearchInput } from "@src/hooks/useSearchInput";
 import { useModalStore } from "@src/store/appStore";
-
-const { Text } = Typography;
+import { MobileStyleDrawer } from "@src/components/UI/MobileStyleDrawer";
 
 export const MobileSearch: React.FC = () => {
   const t = useTranslations("Header");
@@ -33,73 +31,30 @@ export const MobileSearch: React.FC = () => {
   }, [isOpen, setSearchTerm]);
 
   return (
-    <Drawer
-      placement="right"
-      onClose={() => setIsOpen(false)}
+    <MobileStyleDrawer
       open={isOpen}
-      closable={false}
+      onClose={() => setIsOpen(false)}
+      title={t("search")}
       width="var(--components-drawer-width)"
-      drawerRender={() => (
-        <div
-          data-testid="mobile-search-drawer"
-          className={`${styles.container} ant-drawer-content`}
-        >
-          <Flex className={styles.header} vertical>
-            <Flex align="center" justify="space-between">
-              <Text className={styles.title}>{t("search")}</Text>
-              <Button
-                className={styles.closeButton}
-                icon={<RxCross2 size={24} />}
-                type="text"
-                onClick={() => setIsOpen(false)}
-              />
-            </Flex>
-          </Flex>
-          <div className={styles.content}>
-            <Input
-              allowClear
-              className={styles.input}
-              ref={inputRef}
-              placeholder={`${t("search")} ...`}
-              prefix={<TbSearch className={styles.searchIcon} size={18} />}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <SearchResults searchTerm={debouncedTerm} />
-          </div>
-        </div>
-      )}
-    />
+    >
+      <div data-testid="mobile-search-drawer">
+        <Input
+          allowClear
+          className={styles.input}
+          ref={inputRef}
+          placeholder={`${t("search")} ...`}
+          prefix={<TbSearch className={styles.searchIcon} size={18} />}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <SearchResults searchTerm={debouncedTerm} />
+      </div>
+    </MobileStyleDrawer>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      max-height: 100vh;
-      padding: 0;
-    `,
-    header: css`
-      width: 100%;
-      padding: ${token.paddingSM}px;
-    `,
-    content: css`
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      gap: ${token.margin}px;
-      padding: 0 ${token.paddingSM}px ${token.padding}px;
-    `,
-    closeButton: css`
-      color: ${token.colorText};
-    `,
-    title: css`
-      font-size: ${token.fontSizeXL}px;
-      font-weight: ${token.fontWeightStrong};
-      margin: 0;
-    `,
     input: css`
       display: flex;
       width: 100%;

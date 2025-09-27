@@ -78,16 +78,13 @@ const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorWhite};
     display: flex;
     flex-direction: column;
-    height: 100%;
+    max-height: 100vh;
     width: 100%;
     padding: 0;
   `,
   header: css`
     width: 100%;
     padding: ${token.paddingSM}px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
     background-color: ${token.colorBgBase};
   `,
   content: css`
@@ -96,7 +93,6 @@ const useStyles = createStyles(({ token, css }) => ({
     flex-direction: column;
     gap: ${token.margin}px;
     padding: 0 ${token.paddingSM}px ${token.padding}px;
-    overflow-y: auto;
   `,
   title: css`
     font-size: ${token.fontSizeXL}px;

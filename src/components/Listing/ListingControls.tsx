@@ -9,18 +9,10 @@ import { SortOption } from "../Product/Rate/SortPopover";
 import { ApiFilter, ListingSort } from "@codegen/schema-client";
 import { useTranslations } from "next-intl";
 import { mq } from "@src/components/Theme/breakpoints";
+import { useFiltersStore } from "@src/store/appStore";
 
 interface ListingControlsProps {
   filters: ApiFilter[];
-  selectedFilters: Record<
-    string,
-    { values: string[] | [number, number]; inputs?: string[] }
-  >;
-  setSelectedFilters: (
-    value: React.SetStateAction<
-      Record<string, { values: string[] | [number, number]; inputs?: string[] }>
-    >
-  ) => void;
   sortOptions: SortOption<ListingSort>[];
   sort: ListingSort;
   onSortChange: (sort: ListingSort) => void;
@@ -29,8 +21,6 @@ interface ListingControlsProps {
 
 export const ListingControls: React.FC<ListingControlsProps> = ({
   filters,
-  selectedFilters,
-  setSelectedFilters,
   sortOptions,
   sort,
   onSortChange,
@@ -38,6 +28,7 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
 }) => {
   const { styles } = useStyles();
   const tListing = useTranslations("Listing");
+  const { selectedFilters, setSelectedFilters } = useFiltersStore();
 
   return (
     <Flex className={styles.container} align="center">
@@ -52,8 +43,6 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
       <Flex className={styles.controls} gap={16} align="center">
         <FilterDrawer
           filters={filters}
-          selectedFilters={selectedFilters}
-          setSelectedFilters={setSelectedFilters}
         />
 
         <ListingSortMenu

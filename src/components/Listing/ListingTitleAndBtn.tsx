@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useFilterActions } from "@src/hooks/useFilterActions";
 import { useActiveFiltersCount } from "@src/hooks/useActiveFiltersCount";
 import { RxCross2 } from "react-icons/rx";
+import { useFiltersStore } from "@src/store/appStore";
 
 interface Props {
   title: string;
@@ -18,15 +19,6 @@ interface Props {
   productsCount: number | undefined;
   sort: ListingSort;
   setSort: (sort: ListingSort) => void;
-  selectedFilters: Record<
-    string,
-    { values: string[] | [number, number]; inputs?: string[] }
-  >;
-  setSelectedFilters: (
-    value: React.SetStateAction<
-      Record<string, { values: string[] | [number, number]; inputs?: string[] }>
-    >
-  ) => void;
 }
 
 export const ListingTitleAndBtn = ({
@@ -35,12 +27,11 @@ export const ListingTitleAndBtn = ({
   filters,
   sort,
   setSort,
-  selectedFilters,
-  setSelectedFilters,
 }: Props) => {
   const { styles } = useStyles();
   const t = useTranslations("Sort");
   const tListing = useTranslations("Listing");
+  const { selectedFilters, setSelectedFilters } = useFiltersStore();
 
   const handleSortChange = (value: ListingSort) => {
     setSort(value);
@@ -71,8 +62,6 @@ export const ListingTitleAndBtn = ({
       </Flex>
       <ListingControls
         filters={filters}
-        selectedFilters={selectedFilters}
-        setSelectedFilters={setSelectedFilters}
         sortOptions={sortOptions}
         sort={sort}
         onSortChange={handleSortChange}

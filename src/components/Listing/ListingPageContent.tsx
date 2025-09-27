@@ -7,14 +7,13 @@ import { useFragment } from "react-relay";
 import { Listing } from "@src/relay/queries/Listing.shopana";
 import { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import useFilters from "@src/hooks/category/useFilters";
+import { useFiltersStore } from "@src/store/appStore";
 
 const { Text } = Typography;
 
 export function ListingPageContent({ category }: { category: Listing$key }) {
   const [sort, setSort] = useState<ListingSort>(ListingSort.MostRelevant);
-  const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, { values: string[] | [number, number]; inputs?: string[] }>
-  >({});
+  const { selectedFilters, setSelectedFilters } = useFiltersStore();
   const [apiFilters, setApiFilters] = useState<ApiFilterInput[]>([]);
 
   // Save original filter values so they don't change after refetch
@@ -25,7 +24,7 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
   console.log("listingData filters", listingData?.listing?.filters);
 
   // Use hook for filter normalization
-  const normalizedFilters = useFilters(listingData?.listing?.filters || []);
+  const normalizedFilters = useFilters((listingData?.listing?.filters || []) as any[]);
 
   // Save original filter values on first load
   useEffect(() => {
@@ -66,8 +65,6 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
         productsCount={totalCount}
         sort={sort}
         setSort={setSort}
-        selectedFilters={selectedFilters}
-        setSelectedFilters={setSelectedFilters}
       />
       <ListingProducts category={category} sort={sort} filters={apiFilters} />
     </Flex>

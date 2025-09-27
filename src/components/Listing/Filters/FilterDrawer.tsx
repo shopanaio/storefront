@@ -10,29 +10,20 @@ import { useActiveFiltersCount } from "@src/hooks/useActiveFiltersCount";
 import { ApiFilter } from "@codegen/schema-client";
 import { mq } from "@src/components/Theme/breakpoints";
 import { MobileStyleDrawer } from "@src/components/UI/MobileStyleDrawer";
+import { useFiltersStore } from "@src/store/appStore";
 
 interface FilterDrawerProps {
   filters: ApiFilter[];
-  selectedFilters: Record<
-    string,
-    { values: string[] | [number, number]; inputs?: string[] }
-  >;
-  setSelectedFilters: (
-    value: React.SetStateAction<
-      Record<string, { values: string[] | [number, number]; inputs?: string[] }>
-    >
-  ) => void;
 }
 
 export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   filters,
-  selectedFilters,
-  setSelectedFilters,
 }) => {
   const [open, setOpen] = useState(false);
   const { styles } = useStyles();
   const t = useTranslations("Listing");
   const applyFiltersRef = useRef<(() => void) | null>(null);
+  const { selectedFilters, setSelectedFilters } = useFiltersStore();
 
   const showDrawer = () => setOpen(true);
   const closeDrawer = () => setOpen(false);
@@ -43,9 +34,17 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
   const handleReset = () => {
     if (hasActiveFilters) {
+      // Reset in drawer should also apply immediately and close
       setSelectedFilters({});
+      closeDrawer();
     }
   };
+
+  const headerActions = (
+    <Button className={styles.resetBtn} onClick={handleReset} type="link">
+      {t("reset")}
+    </Button>
+  );
 
   const handleApplyFilters = () => {
     if (applyFiltersRef.current) {
@@ -57,12 +56,6 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   const onProvideApplyFunction = (applyFn: () => void) => {
     applyFiltersRef.current = applyFn;
   };
-
-  const headerActions = (
-    <Button className={styles.resetBtn} onClick={handleReset} type="link">
-      {t("reset")}
-    </Button>
-  );
 
   const footerContent = (
     <Flex className={styles.footerWrapper}>
@@ -101,8 +94,6 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         <ListingFilter
           filters={filters}
           mode="drawer"
-          selectedFilters={selectedFilters}
-          setSelectedFilters={setSelectedFilters}
           onProvideApplyFunction={onProvideApplyFunction}
         />
       </MobileStyleDrawer>

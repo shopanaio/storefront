@@ -124,3 +124,38 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
     }
   )
 );
+
+// filtersStore
+export type FiltersMap = Record<
+  string,
+  { values: string[] | [number, number]; inputs?: string[] }
+>;
+
+interface FiltersState {
+  selectedFilters: FiltersMap;
+  setSelectedFilters: (filters: FiltersMap | ((prevState: FiltersMap) => FiltersMap)) => void;
+  updateFilter: (handle: string, filterData: { values: string[] | [number, number]; inputs?: string[] }) => void;
+  removeFilter: (handle: string) => void;
+  clearFilters: () => void;
+}
+
+export const useFiltersStore = create<FiltersState>((set, get) => ({
+  selectedFilters: {},
+  setSelectedFilters: (filters) =>
+    set((state) => ({
+      selectedFilters: typeof filters === 'function' ? filters(state.selectedFilters) : filters
+    })),
+  updateFilter: (handle, filterData) =>
+    set((state) => ({
+      selectedFilters: {
+        ...state.selectedFilters,
+        [handle]: filterData,
+      },
+    })),
+  removeFilter: (handle) =>
+    set((state) => {
+      const { [handle]: removed, ...rest } = state.selectedFilters;
+      return { selectedFilters: rest };
+    }),
+  clearFilters: () => set({ selectedFilters: {} }),
+}));
