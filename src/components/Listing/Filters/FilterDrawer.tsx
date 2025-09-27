@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import { useActiveFiltersCount } from "@src/hooks/useActiveFiltersCount";
 import { ApiFilter } from "@codegen/schema-client";
 import { mq } from "@src/components/Theme/breakpoints";
-import { MobileStyleDrawer } from "@src/components/UI/MobileStyleDrawer";
+import { DrawerBase } from "@src/components/UI/DrawerBase";
 import { useFiltersStore } from "@src/store/appStore";
 
 interface FilterDrawerProps {
@@ -40,10 +40,15 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
     }
   };
 
-  const headerActions = (
-    <Button className={styles.resetBtn} onClick={handleReset} type="link">
-      {t("reset")}
-    </Button>
+  const customHeader = (
+    <Flex align="center" justify="space-between" style={{ width: "100%" }}>
+      <span style={{ fontSize: "18px", fontWeight: "600" }}>{t("filters")}</span>
+      <Flex align="center" gap={10}>
+        <Button className={styles.resetBtn} onClick={handleReset} type="link">
+          {t("reset")}
+        </Button>
+      </Flex>
+    </Flex>
   );
 
   const handleApplyFilters = () => {
@@ -58,17 +63,15 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   };
 
   const footerContent = (
-    <Flex className={styles.footerWrapper}>
-      <Button
-        type="primary"
-        size="large"
-        block
-        onClick={handleApplyFilters}
-        style={{ height: 48 }}
-      >
-        {t("apply-filters")}
-      </Button>
-    </Flex>
+    <Button
+      type="primary"
+      size="large"
+      block
+      onClick={handleApplyFilters}
+      style={{ height: 48 }}
+    >
+      {t("apply-filters")}
+    </Button>
   );
 
   return (
@@ -84,19 +87,19 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         )}
       </Button>
 
-      <MobileStyleDrawer
+      <DrawerBase
         open={open}
         onClose={closeDrawer}
-        title={t("filters")}
-        headerActions={headerActions}
+        header={customHeader}
         footer={footerContent}
+        showCloseButton={true}
       >
         <ListingFilter
           filters={filters}
           mode="drawer"
           onProvideApplyFunction={onProvideApplyFunction}
         />
-      </MobileStyleDrawer>
+      </DrawerBase>
     </>
   );
 };
@@ -115,10 +118,5 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   resetBtn: css`
     padding: 0;
-  `,
-  footerWrapper: css`
-    bottom: 0;
-    margin-top: auto;
-    position: sticky;
   `,
 }));

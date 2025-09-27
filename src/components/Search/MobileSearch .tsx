@@ -36,7 +36,6 @@ export const MobileSearch: React.FC = () => {
       onClose={() => setIsOpen(false)}
       title={t("search")}
       width="var(--components-drawer-width)"
-      // placement="right"
     >
       <div data-testid="mobile-search-drawer">
         <Input

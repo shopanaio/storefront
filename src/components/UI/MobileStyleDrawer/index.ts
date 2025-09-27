@@ -1,1 +1,0 @@
-export { MobileStyleDrawer } from "./MobileStyleDrawer";

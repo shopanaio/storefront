@@ -7,7 +7,7 @@ import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import { ListingSort } from "@codegen/schema-client";
 import { mq } from "@src/components/Theme/breakpoints";
-import { MobileStyleDrawer } from "@src/components/UI/MobileStyleDrawer";
+import { DrawerBase } from "@src/components/UI/DrawerBase";
 
 export interface SortOption<T> {
   value: T;
@@ -41,7 +41,7 @@ export const ListingSortMenu = ({ options, value, onChange }: Props) => {
         {options.find((o) => o.value === value)?.label ?? t("sort")}
       </Button>
 
-      <MobileStyleDrawer
+      <DrawerBase
         open={open}
         onClose={closeDrawer}
         title={s("sort-by")}
@@ -71,7 +71,7 @@ export const ListingSortMenu = ({ options, value, onChange }: Props) => {
             </Flex>
           ))}
         </Flex>
-      </MobileStyleDrawer>
+      </DrawerBase>
     </>
   );
 };
