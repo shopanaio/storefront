@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useSearchInput } from "@src/hooks/useSearchInput";
 import { useModalStore } from "@src/store/appStore";
-import { MobileStyleDrawer } from "@src/components/UI/MobileStyleDrawer";
+import { DrawerBase } from "@src/components/UI/DrawerBase";
 
 export const MobileSearch: React.FC = () => {
   const t = useTranslations("Header");
@@ -31,11 +31,12 @@ export const MobileSearch: React.FC = () => {
   }, [isOpen, setSearchTerm]);
 
   return (
-    <MobileStyleDrawer
+    <DrawerBase
       open={isOpen}
       onClose={() => setIsOpen(false)}
       title={t("search")}
       width="var(--components-drawer-width)"
+      // placement="right"
     >
       <div data-testid="mobile-search-drawer">
         <Input
@@ -49,7 +50,7 @@ export const MobileSearch: React.FC = () => {
         />
         <SearchResults searchTerm={debouncedTerm} />
       </div>
-    </MobileStyleDrawer>
+    </DrawerBase>
   );
 };
 
