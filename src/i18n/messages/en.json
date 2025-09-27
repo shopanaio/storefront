@@ -90,7 +90,11 @@
     "total": "Total",
     "subtotal": "Subtotal",
     "checkout": "Checkout",
-    "tax-note": "Tax included and shipping calculated at checkout"
+    "tax-note": "Tax included and shipping calculated at checkout",
+    "remove-confirm-title": "Remove item?",
+    "remove-confirm-content": "Do you want to remove {productTitle} from the cart?",
+    "remove-confirm-ok": "Remove",
+    "remove-confirm-cancel": "Cancel"
   },
 
   "ui": {

@@ -2,8 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
-import { Button, Flex, Input, Typography } from "antd";
-import { TbMail } from "react-icons/tb";
+import { Button, Flex, Typography } from "antd";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { mq } from "@src/components/Theme/breakpoints";
@@ -11,6 +10,7 @@ import { useLocale } from "next-intl";
 import { ApiMenu } from "@codegen/schema-client";
 import { useMenuHref } from "@src/hooks/useMenuHref";
 import { footerMenusArr } from "@src/mocks/footerMenusArr";
+import { NewsletterSubscribe } from "./NewsletterSubscribe";
 
 const { Text } = Typography;
 
@@ -27,30 +27,11 @@ export const Footer = ({ menus = footerMenusArr }: Props) => {
   const getHref = useMenuHref(locale);
 
   return (
-    <div className={styles.footer}>
-      <div className={styles.container}>
+    <div>
+      <div className="container">
         <Flex gap={32} vertical>
           <div className={styles.footerMain}>
-            <Flex className={styles.subscribeBlock} vertical gap={12}>
-              <Text className={styles.footerTitle} strong>
-                {t("newsletter")}
-              </Text>
-              <Text>{t("newsletter-paragraph")}</Text>
-
-              <Input
-                placeholder={t("email")}
-                prefix={<TbMail className={styles.inputIcon} size={16} />}
-                size="large"
-              />
-
-              <Button
-                className={styles.subscribeBtn}
-                type="primary"
-                size="large"
-              >
-                {t("subscribe")}
-              </Button>
-            </Flex>
+            <NewsletterSubscribe />
 
             {menus.map((menu, idx) => (
               <Flex vertical key={`${menu.id}-${idx}`}>
@@ -81,73 +62,44 @@ export const Footer = ({ menus = footerMenusArr }: Props) => {
               </Flex>
             ))}
           </div>
-
-          <Flex justify="center">
-            <Text>© Shopana 2025. All rights reserved.</Text>
-          </Flex>
         </Flex>
       </div>
+      <Flex justify="center" className={styles.footerCopyright}>
+        <Text>© Shopana 2025. All rights reserved.</Text>
+      </Flex>
     </div>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    footer: css`
-      background-color: ${token.colorBgBase};
-      padding: ${token.padding}px;
-    `,
-    container: css`
-      ${mq.xl} {
-        width: 1280px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      ${mq.xxl} {
-        width: 1400px;
-      }
-    `,
-    footerTitle: css`
-      font-size: ${token.fontSizeHeading5}px;
-    `,
-    inputIcon: css`
-      color: ${token.colorTextPlaceholder};
-    `,
     footerMain: css`
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      padding-top: ${token.padding}px;
+      padding-bottom: 100px;
       gap: ${token.marginXL}px;
-
-      ${mq.md} {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        column-gap: 0;
-        row-gap: ${token.marginXL}px;
-      }
+      grid-template-columns: 1fr 1fr;
 
       ${mq.lg} {
-        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1.5fr 1fr 1fr 1fr;
       }
-    `,
-    subscribeBlock: css`
-      ${mq.md} {
-        width: 300px;
-      }
-      ${mq.lg} {
-        margin-right: 64px;
-      }
-    `,
-    subscribeBtn: css`
-      width: max-content;
 
-      font-size: ${token.fontSizeLG}px;
+      & :first-child {
+        grid-column: 1 / 3;
+
+        ${mq.lg} {
+          grid-column: unset;
+        }
+      }
     `,
     menuItem: css`
       justify-content: flex-start;
-
       color: ${token.colorTextBase};
       padding: ${token.paddingXS}px 0;
+    `,
+    footerCopyright: css`
+      /* background-color: ${token.colorBgLayout}; */
+      padding: ${token.padding}px 0;
     `,
   };
 });

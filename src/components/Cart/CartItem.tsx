@@ -3,6 +3,12 @@ import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine"
 import useRemoveItemFromCart from "@src/hooks/cart/useRemoveItemFromCart";
 import useUpdateCartLineQuantity from "@src/hooks/cart/useUpdateCartLineQuantity";
 import useCartLineFragment from "@src/hooks/cart/useCartLineFragment";
+import { App, Flex, Typography } from "antd";
+import { useTranslations } from "next-intl";
+import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { createStyles } from "antd-style";
+
+const { Text } = Typography;
 
 interface CartItemProps {
   cartLineRef: useCartLineFragment_CartLineFragment$key;
@@ -17,6 +23,9 @@ export const CartItem = ({
 }: CartItemProps) => {
   const { removeFromCart, loading: isRemoving } = useRemoveItemFromCart();
   const { updateQuantity, loading: isUpdating } = useUpdateCartLineQuantity();
+  const { modal } = App.useApp();
+  const t = useTranslations("Cart");
+  const { styles } = useStyles();
 
   const cartLineData = useCartLineFragment(cartLineRef);
 
@@ -40,8 +49,31 @@ export const CartItem = ({
   };
 
   const handleRemove = () => {
-    removeFromCart({
-      checkoutLine: cartLineData.cartLine,
+    const productTitle = purchasable.title ?? "";
+    const imageUrl = purchasable.cover?.url ?? "";
+
+    modal.confirm({
+      icon: null,
+      title: t("remove-confirm-title"),
+      content: (
+        <Flex gap={12} align="center">
+          <Thumbnail
+            src={imageUrl}
+            alt={productTitle}
+            className={styles.confirmModalThumbnail}
+          />
+          <Text>
+            {t("remove-confirm-content", { productTitle })}
+          </Text>
+        </Flex>
+      ),
+      okText: t("remove-confirm-ok"),
+      cancelText: t("remove-confirm-cancel"),
+      onOk: () => {
+        removeFromCart({
+          checkoutLine: cartLineData.cartLine,
+        });
+      },
     });
   };
 
@@ -69,3 +101,17 @@ export const CartItem = ({
     />
   );
 };
+
+const useStyles = createStyles(({ css }) => ({
+  confirmModalThumbnail: css`
+    width: 60px !important;
+    height: 60px !important;
+    flex-shrink: 0;
+
+    .ant-btn {
+      width: 60px !important;
+      height: 60px !important;
+      padding: 0 !important;
+    }
+  `,
+}));

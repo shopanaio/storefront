@@ -8,6 +8,7 @@ import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { StickyHeader } from "./StickyHeader";
 import { AnnouncementBar } from "@src/components/Layout/AnnouncementBar";
+import { createStyles } from "antd-style";
 
 const AuthModal = dynamic(
   () => import("../Auth/AuthModal").then((m) => m.AuthModal),
@@ -27,12 +28,14 @@ interface ILayoutProps {
 }
 
 export const Layout = ({ children }: ILayoutProps) => {
+  const { styles } = useStyles();
+
   return (
     <div>
       <AnnouncementBar />
       <Header />
       <StickyHeader />
-      <main>{children}</main>
+      <main className={styles.main}>{children}</main>
       <Footer />
       <AuthModal />
       <RateModal />
@@ -42,3 +45,11 @@ export const Layout = ({ children }: ILayoutProps) => {
     </div>
   );
 };
+
+const useStyles = createStyles(({ token, css }) => {
+  return {
+    main: css`
+      padding-bottom: ${token.paddingXL}px;
+    `,
+  };
+});
