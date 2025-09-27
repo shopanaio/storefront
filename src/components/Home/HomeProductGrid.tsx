@@ -21,7 +21,7 @@ interface HomeGridProps {
 
 export const HomeProductGrid = ({
   categoryHandle,
-  paginationCount = 24,
+  paginationCount = 16,
 }: HomeGridProps) => {
   const { styles } = useStyles();
   const locale = useLocale();
@@ -48,7 +48,7 @@ export const HomeProductGrid = ({
         <ViewAllButton href={`${locale}/l/${category?.handle}`} />
       </SectionTitle>
       <ProductsGrid products={products} className={styles.productsGrid} />
-      <Flex justify="center">
+      <Flex justify="center" style={{ display: 'none' }}>
         <LoadMoreBtn
           hasNext={hasNext}
           handleLoadMore={handleLoadMore}

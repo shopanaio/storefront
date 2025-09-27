@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Slider, InputNumber, Button } from "antd";
+import { Flex, Slider, InputNumber } from "antd";
 import { createStyles } from "antd-style";
 
 interface SliderFilterProps {
@@ -7,9 +7,6 @@ interface SliderFilterProps {
   max: number;
   value: [number, number];
   onChange: (val: [number, number]) => void;
-  onApply: () => void;
-  mode?: "sidebar" | "drawer";
-  styles?: Record<string, string>;
 }
 
 export const SliderFilter: React.FC<SliderFilterProps> = ({
@@ -17,15 +14,13 @@ export const SliderFilter: React.FC<SliderFilterProps> = ({
   max,
   value,
   onChange,
-  onApply,
-  mode = "sidebar",
 }) => {
   const { styles } = useStyles();
 
   console.log(min, "MIN");
 
   return (
-    <Flex vertical gap={16}>
+    <Flex vertical gap={8}>
       <Slider
         range
         value={value}
@@ -52,9 +47,6 @@ export const SliderFilter: React.FC<SliderFilterProps> = ({
             val !== null && onChange([value[0], val as number])
           }
         />
-        <Button className={styles.applyPrice} type="primary" onClick={onApply}>
-          {mode === "drawer" ? "Apply" : "OK"}
-        </Button>
       </Flex>
     </Flex>
   );

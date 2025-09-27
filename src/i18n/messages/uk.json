@@ -57,9 +57,22 @@
     "show-more": "Показати більше",
     "show-less": "Показати менше",
     "apply": "Застосувати",
+    "apply-filters": "Застосувати фільтри",
     "reset": "Cкинути",
+    "showing-of-total": "Показано {current} з {total}",
+    "load-more": "Завантажити більше",
+    "loading": "Завантаження...",
+    "found-products": "Знайдено {count} товарів",
+    "reset-all": "Скинути все",
 
-    "create-review": "Залишити відгук"
+    "create-review": "Залишити відгук",
+    "filter-groups": {
+      "PRICE": "Ціна",
+      "AVAILABILITY": "Наявність",
+      "TAG": "Теги",
+      "CATEGORY": "Категорія",
+      "OPTION": "Опція"
+    }
   },
   "Cart": {
     "cart": "Кошик",

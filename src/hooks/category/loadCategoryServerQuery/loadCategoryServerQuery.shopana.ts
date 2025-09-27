@@ -7,6 +7,7 @@ import CategoryQueryNode, {
   CategoryQuery,
 } from "@src/relay/queries/__generated__/CategoryQuery.graphql";
 import { ListingSort } from "@codegen/schema-client";
+import { PAGINATION_PAGE_SIZE } from "@src/config";
 
 interface LoadCategoryServerQueryParams {
   handle: string;
@@ -17,7 +18,7 @@ interface LoadCategoryServerQueryParams {
 
 const loadCategoryServerQuery = async ({
   handle,
-  first = 24,
+  first = PAGINATION_PAGE_SIZE,
   sort = ListingSort.MostRelevant,
   filters = [],
 }: LoadCategoryServerQueryParams): Promise<

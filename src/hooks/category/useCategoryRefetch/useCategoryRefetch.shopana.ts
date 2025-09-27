@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ListingSort, ApiFilterInput } from "@codegen/schema-client";
+import { PAGINATION_PAGE_SIZE } from "@src/config";
 
 const useCategoryRefetch = (
   sort: ListingSort,
@@ -18,7 +19,7 @@ const useCategoryRefetch = (
       sort,
       filters,
       after: undefined,
-      first: 25
+      first: PAGINATION_PAGE_SIZE
     });
   }, [sort, filters, refetch]);
 };

@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Drawer, Button, Flex, Radio } from "antd";
+import { Button, Flex, Radio } from "antd";
 import { TbArrowsUpDown } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import { ListingSort } from "@codegen/schema-client";
+import { mq } from "@src/components/Theme/breakpoints";
+import { MobileStyleDrawer } from "@src/components/UI/MobileStyleDrawer";
 
 export interface SortOption<T> {
   value: T;
@@ -39,12 +41,9 @@ export const ListingSortMenu = ({ options, value, onChange }: Props) => {
         {options.find((o) => o.value === value)?.label ?? t("sort")}
       </Button>
 
-      <Drawer
-        placement="right"
-        onClose={closeDrawer}
+      <MobileStyleDrawer
         open={open}
-        closable={false}
-        width={300}
+        onClose={closeDrawer}
         title={s("sort-by")}
       >
         <Flex vertical gap={8}>
@@ -72,7 +71,7 @@ export const ListingSortMenu = ({ options, value, onChange }: Props) => {
             </Flex>
           ))}
         </Flex>
-      </Drawer>
+      </MobileStyleDrawer>
     </>
   );
 };
@@ -84,5 +83,9 @@ const useStyles = createStyles(({ css, token }) => ({
     width: 100%;
     border-radius: ${token.borderRadius}px;
     border-color: ${token.colorBorder};
+
+    ${mq.lg} {
+      width: fit-content;
+    }
   `,
 }));

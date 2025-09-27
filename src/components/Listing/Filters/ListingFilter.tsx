@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Flex, Button, Tag, Typography } from "antd";
+import React, { useState, useEffect } from "react";
+import { Flex, Button, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { RxCross2 } from "react-icons/rx";
 import { SliderFilter } from "./SliderFilter";
 import type { ApiPriceRangeFilter } from "@codegen/schema-client";
 
@@ -13,6 +12,7 @@ import { FiltersProvider } from "./FiltersProvider";
 import { FilterWithSearch } from "./FilterWithSearch";
 import { ApiFilter } from "@codegen/schema-client";
 import type { ApiListFilter, ApiListFilterValue } from "@codegen/schema-client";
+import { useFilterActions } from "@src/hooks/useFilterActions";
 
 const { Text } = Typography;
 
@@ -29,6 +29,10 @@ interface ListingFilterProps {
       Record<string, { values: string[] | [number, number]; inputs?: string[] }>
     >
   ) => void;
+  /** Function to apply draft filters to actual filters */
+  onApplyFilters?: () => void;
+  /** Callback to provide apply function to parent */
+  onProvideApplyFunction?: (applyFn: () => void) => void;
 }
 
 export const ListingFilter: React.FC<ListingFilterProps> = ({
@@ -37,6 +41,8 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
   mode = "sidebar",
   selectedFilters,
   setSelectedFilters,
+  onApplyFilters,
+  onProvideApplyFunction,
 }) => {
   const t = useTranslations("Listing");
   const { styles } = useStyles();
@@ -44,10 +50,9 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
   const containerStyle =
     mode === "sidebar" ? styles.sidebarWrapper : styles.drawerWrapper;
 
-  // For price filter: selectedFilters[handle] = { values: [min, max], inputs?: string[] }
-  // For others: selectedFilters[handle] = { values: string[], inputs?: string[] }
-  const [priceDraft, setPriceDraft] = useState<
-    Record<string, [number, number]>
+  // Draft state for all filters (price and regular)
+  const [draftFilters, setDraftFilters] = useState<
+    Record<string, { values: string[] | [number, number]; inputs?: string[] }>
   >({});
 
   /**
@@ -63,191 +68,85 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
   };
 
   /**
-   * Gets the current price value for a filter, with fallback chain:
+   * Gets the current filter value with fallback chain:
    * 1. Draft value (user is currently editing)
-   * 2. Selected filter value (if it's a valid price range)
-   * 3. Default min/max from filter definition
+   * 2. Selected filter value
+   * 3. Default value
+   */
+  const getFilterValue = (filter: ApiFilter) => {
+    const handle = filter.handle;
+
+    // Check draft first
+    if (draftFilters[handle]) {
+      return draftFilters[handle];
+    }
+
+    // Check selected filters
+    const selectedFilter = selectedFilters[handle];
+    if (selectedFilter) {
+      return selectedFilter;
+    }
+
+    // Return empty state
+    return { values: [], inputs: undefined };
+  };
+
+  /**
+   * Gets the current price value specifically for price filters
    */
   const getPriceValue = (
     filter: ApiPriceRangeFilter,
     handle: string
   ): [number, number] => {
-    // Check draft first
-    if (priceDraft[handle]) {
-      return priceDraft[handle];
-    }
+    const filterValue = getFilterValue(filter);
 
-    // Check selected filters
-    const selectedFilter = selectedFilters[handle];
-    if (selectedFilter?.values && isPriceRangeTuple(selectedFilter.values)) {
-      return selectedFilter.values;
+    if (filterValue?.values && isPriceRangeTuple(filterValue.values)) {
+      return filterValue.values;
     }
 
     // Fallback to filter defaults
-    return [parseFloat(filter.minPrice.amount), parseFloat(filter.maxPrice.amount)];
+    return [
+      parseFloat(filter.minPrice.amount),
+      parseFloat(filter.maxPrice.amount),
+    ];
   };
 
-  // Function for getting inputs from normalizedFilters
-  const getInputsForFilter = (
-    filterHandle: string,
-    selectedValues: string[]
-  ): string[] => {
-    const filter = filters.find((f) => f.handle === filterHandle);
-    if (filter && (filter as any).values) {
-      return selectedValues
-        .map((selectedValue) => {
-          const filterValue = (filter as any).values.find(
-            (v: any) => v.handle === selectedValue
-          );
-          return filterValue?.input || "";
-        })
-        .filter((input) => input !== "");
-    }
-    return [];
-  };
+  const { handleCloseTag, handleResetAll } = useFilterActions({
+    filters,
+    selectedFilters,
+    setSelectedFilters,
+  });
 
   const onReset = () => {
-    if (Object.keys(selectedFilters).length > 0) {
-      setSelectedFilters({});
-      setPriceDraft({});
+    setDraftFilters({});
+    if (mode === "sidebar") {
+      // In sidebar mode, apply reset immediately
+      handleResetAll();
     }
   };
 
-  // Remove value from selected filter
-  const handleCloseTag = (handle: string, value?: string) => {
-    setSelectedFilters((prev) => {
-      const current = prev[handle];
-      if (handle === "PRICE" || handle === "Price") {
-        const rest = { ...prev };
-        delete rest[handle];
-        return rest;
-      }
-      if (current && Array.isArray(current.values) && !isPriceRangeTuple(current.values)) {
-        const stringValues = current.values as string[];
-        const newValues = stringValues.filter((v) => v !== value);
-        if (newValues.length === 0) {
-          const rest = { ...prev };
-          delete rest[handle];
-          return rest;
-        }
-        // Update inputs according to new values
-        const newInputs = getInputsForFilter(handle, newValues);
-        return {
-          ...prev,
-          [handle]: {
-            ...current,
-            values: newValues,
-            inputs: newInputs.length > 0 ? newInputs : undefined,
-          },
-        };
-      }
-      return prev;
-    });
+  /**
+   * Applies all draft filters to actual filters
+   */
+  const handleApplyAllFilters = () => {
+    // Apply draft filters to actual filters
+    setSelectedFilters(draftFilters);
+
+    // Call external apply handler if provided
+    if (onApplyFilters) {
+      onApplyFilters();
+    }
   };
 
-  // Render tags for selected values
-  const renderTags = () => {
-    const tags: React.ReactNode[] = [];
-    Object.entries(selectedFilters).forEach(([handle, filterData]) => {
-      if (
-        (handle === "PRICE" || handle === "Price") &&
-        Array.isArray(filterData.values) &&
-        filterData.values.length === 2
-      ) {
-        // Format price range
-        const [min, max] = filterData.values as [number, number];
-        const formatter = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        });
-        tags.push(
-          <Tag
-            key={handle + min + max}
-            closable
-            color="processing"
-            style={{ margin: 0 }}
-            onClose={(e) => {
-              e.preventDefault();
-              handleCloseTag(handle);
-            }}
-          >
-            {`${formatter.format(min)} - ${formatter.format(max)}`}
-          </Tag>
-        );
-      } else if (Array.isArray(filterData.values)) {
-        // Find options for current filter
-        const filter = filters.find((f) => f.handle === handle);
-        const isListFilter =
-          filter && (filter as ApiListFilter).values !== undefined;
-        const options: ApiListFilterValue[] = isListFilter
-          ? (filter as ApiListFilter).values
-          : [];
-        // Sort options alphabetically (title)
-        const sortedOptions = options
-          .slice()
-          .sort((a, b) => a.title.localeCompare(b.title));
-        (filterData.values as string[]).forEach((value) => {
-          // For ListFilter find title by handle, otherwise display handle
-          let display = value;
-          let isInactive = false;
-          if (isListFilter) {
-            const found = sortedOptions.find((opt) => opt.handle === value);
-            if (found) {
-              display = found.title;
-            } else {
-              display = value + "?";
-              isInactive = true;
-            }
-          } else if (!filter) {
-            display = value + "?";
-            isInactive = true;
-          }
-          tags.push(
-            <Tag
-              key={handle + value}
-              closable
-              color={isInactive ? "default" : "processing"}
-              style={{ margin: 0, opacity: isInactive ? 0.5 : 1 }}
-              onClose={(e) => {
-                e.preventDefault();
-                handleCloseTag(handle, value);
-              }}
-            >
-              {display}
-            </Tag>
-          );
-        });
-      }
-    });
-    return tags;
-  };
+  // Provide apply function to parent component
+  useEffect(() => {
+    if (onProvideApplyFunction && mode === "drawer") {
+      onProvideApplyFunction(handleApplyAllFilters);
+    }
+  }, [onProvideApplyFunction, mode, draftFilters]);
 
   return (
     <div className={containerStyle}>
-      <Flex className={styles.filterHeader} vertical>
-        <Flex align="center" justify="space-between">
-          <Text className={styles.filterTitle}>{t("filters")}</Text>
-
-          <Flex align="center" gap={10}>
-            <Button className={styles.resetBtn} onClick={onReset} type="link">
-              {t("reset")}
-            </Button>
-            {mode === "drawer" && (
-              <Button
-                icon={<RxCross2 size={24} />}
-                type="text"
-                className={styles.closeBtn}
-                onClick={onClose}
-              />
-            )}
-          </Flex>
-        </Flex>
-      </Flex>
-      {renderTags().length > 0 && (
-        <Flex wrap gap={8}>
-          {renderTags()}
-        </Flex>
-      )}
       {filters.map((filter) => {
         // type guard for PriceRangeFilter
         const isPriceRangeFilter = (f: ApiFilter): f is ApiPriceRangeFilter => {
@@ -260,14 +159,26 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
         if (isPriceRangeFilter(filter)) {
           const priceValue = getPriceValue(filter, filter.handle);
 
-          const handleApply = () => {
-            setSelectedFilters((prev) => ({
+          const handlePriceChange = (vals: [number, number]) => {
+            setDraftFilters((prev) => ({
               ...prev,
               [filter.handle]: {
-                values: priceValue,
-                // For price filter inputs are not needed
+                values: vals,
               },
             }));
+          };
+
+          const handleApply = () => {
+            if (mode === "sidebar") {
+              // In sidebar mode, apply immediately
+              setSelectedFilters((prev) => ({
+                ...prev,
+                [filter.handle]: {
+                  values: priceValue,
+                },
+              }));
+            }
+            // In drawer mode, just update draft - will be applied by drawer button
           };
 
           return (
@@ -276,9 +187,7 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
                 min={parseFloat(filter.minPrice.amount)}
                 max={parseFloat(filter.maxPrice.amount)}
                 value={priceValue}
-                onChange={(vals: [number, number]) => {
-                  setPriceDraft((prev) => ({ ...prev, [filter.handle]: vals }));
-                }}
+                onChange={handlePriceChange}
                 onApply={handleApply}
                 mode={mode}
               />
@@ -299,27 +208,47 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
           .slice()
           .sort((a, b) => a.title.localeCompare(b.title));
 
+        const filterValue = getFilterValue(filter);
+        const currentValues = Array.isArray(filterValue?.values) &&
+          typeof filterValue?.values[0] === "number"
+            ? []
+            : (filterValue?.values as string[]) || [];
+
         return (
           <FiltersProvider handle={filter.handle} key={filter.handle}>
             <FilterWithSearch
               options={sortedOptions}
-              value={
-                Array.isArray(selectedFilters[filter.handle]?.values) &&
-                typeof selectedFilters[filter.handle]?.values[0] === "number"
-                  ? []
-                  : (selectedFilters[filter.handle]?.values as string[]) || []
-              }
+              value={currentValues}
               onChange={(vals: string[]) => {
                 // Get inputs for all selected values
-                const inputs = getInputsForFilter(filter.handle, vals);
+                const filter_ = filters.find((f) => f.handle === filter.handle);
+                const inputs = filter_ && (filter_ as any).values ? vals
+                  .map((selectedValue) => {
+                    const filterValue = (filter_ as any).values.find(
+                      (v: any) => v.handle === selectedValue
+                    );
+                    return filterValue?.input || "";
+                  })
+                  .filter((input) => input !== "") : [];
 
-                setSelectedFilters((prev) => ({
-                  ...prev,
-                  [filter.handle]: {
-                    values: vals,
-                    inputs: inputs.length > 0 ? inputs : undefined,
-                  },
-                }));
+                const newFilterValue = {
+                  values: vals,
+                  inputs: inputs.length > 0 ? inputs : undefined,
+                };
+
+                if (mode === "sidebar") {
+                  // In sidebar mode, apply immediately
+                  setSelectedFilters((prev) => ({
+                    ...prev,
+                    [filter.handle]: newFilterValue,
+                  }));
+                } else {
+                  // In drawer mode, update draft only
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    [filter.handle]: newFilterValue,
+                  }));
+                }
               }}
             />
           </FiltersProvider>
@@ -337,7 +266,7 @@ const useStyles = createStyles(({ css, token }) => ({
       flex-direction: column;
       min-width: 260px;
       max-width: 260px;
-      padding: ${token.padding}px;
+      padding: 0 ${token.padding}px;
       border: 1px solid ${token.colorBorderSecondary};
       border-radius: ${token.borderRadius}px;
       height: fit-content;
@@ -345,7 +274,6 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   drawerWrapper: css`
     display: block;
-    padding: ${token.paddingMD}px;
   `,
   filterHeader: css`
     width: 100%;

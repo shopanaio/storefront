@@ -1,15 +1,16 @@
 "use client";
 
-import { Badge, Flex, Typography } from "antd";
+import { Flex, Button } from "antd";
 import { createStyles } from "antd-style";
-import { FilterDrawer } from "./Filters/FilterDrawer";
-import { mq } from "@src/components/Theme/breakpoints";
+import { FilterTags } from "./Filters/FilterTags";
+import { ListingHeader } from "./ListingHeader";
+import { ListingControls } from "./ListingControls";
 import { ApiFilter, ListingSort } from "@codegen/schema-client";
-import { SortPopover, SortOption } from "../Product/Rate/SortPopover";
+import { SortOption } from "../Product/Rate/SortPopover";
 import { useTranslations } from "next-intl";
-import { useIsDesktop } from "@src/hooks/useIsDesktop";
-import { ListingSortMenu } from "./ListingSortMenu";
-import { TbArrowsUpDown } from "react-icons/tb";
+import { useFilterActions } from "@src/hooks/useFilterActions";
+import { useActiveFiltersCount } from "@src/hooks/useActiveFiltersCount";
+import { RxCross2 } from "react-icons/rx";
 
 interface Props {
   title: string;
@@ -37,13 +38,21 @@ export const ListingTitleAndBtn = ({
   selectedFilters,
   setSelectedFilters,
 }: Props) => {
-  const { styles, theme } = useStyles();
+  const { styles } = useStyles();
   const t = useTranslations("Sort");
-  const isDesktop = useIsDesktop();
+  const tListing = useTranslations("Listing");
 
   const handleSortChange = (value: ListingSort) => {
     setSort(value);
   };
+
+  const { handleCloseTag, handleResetAll } = useFilterActions({
+    filters,
+    selectedFilters,
+    setSelectedFilters,
+  });
+
+  const { hasActiveFilters } = useActiveFiltersCount({ selectedFilters });
 
   const sortOptions: SortOption<ListingSort>[] = [
     { value: ListingSort.CreatedAtAsc, label: t("newest-first") },
@@ -56,41 +65,39 @@ export const ListingTitleAndBtn = ({
   ];
 
   return (
-    <Flex className={styles.titleSection}>
-      <Flex className={styles.titleWrapper}>
-        <Typography.Text className={styles.pageTitle}>{title}</Typography.Text>
-        {productsCount && (
-          <Badge
-            count={productsCount}
-            color={theme.colorPrimary}
-            offset={[5, 5]}
-          />
-        )}
+    <Flex vertical gap={12}>
+      <Flex className={styles.titleSection}>
+        <ListingHeader title={title} />
       </Flex>
+      <ListingControls
+        filters={filters}
+        selectedFilters={selectedFilters}
+        setSelectedFilters={setSelectedFilters}
+        sortOptions={sortOptions}
+        sort={sort}
+        onSortChange={handleSortChange}
+        productsCount={productsCount || 0}
+      />
 
-      {!isDesktop && (
-        <Flex gap={16} className={styles.actions}>
-          <FilterDrawer
+      {hasActiveFilters && (
+        <div>
+          <FilterTags
             filters={filters}
             selectedFilters={selectedFilters}
-            setSelectedFilters={setSelectedFilters}
+            onCloseTag={handleCloseTag}
+            wrap
+            resetButton={
+              <Button
+                color="primary"
+                variant="outlined"
+                onClick={handleResetAll}
+                icon={<RxCross2 />}
+              >
+                {tListing("reset-all")}
+              </Button>
+            }
           />
-          <ListingSortMenu
-            options={sortOptions}
-            value={sort}
-            onChange={handleSortChange}
-          />
-        </Flex>
-      )}
-      {isDesktop && (
-        <SortPopover
-          options={sortOptions}
-          value={sort}
-          onChange={handleSortChange}
-          buttonClassName={styles.drawerBtn}
-          title={t("sort-by")}
-          icon={<TbArrowsUpDown />}
-        />
+        </div>
       )}
     </Flex>
   );
@@ -99,40 +106,8 @@ export const ListingTitleAndBtn = ({
 const useStyles = createStyles(({ token, css }) => {
   return {
     titleSection: css`
+      flex-direction: column;
       justify-content: space-between;
-      gap: ${token.margin}px;
-      ${mq.max.lg} {
-        flex-direction: column;
-      }
-      ${mq.lg} {
-        padding: 0;
-      }
-    `,
-    titleWrapper: css`
-      width: max-content;
-    `,
-    pageTitle: css`
-      font-size: ${token.fontSizeHeading3}px;
-    `,
-    sortBtn: css`
-      padding: 0;
-      font-size: ${token.fontSize}px;
-      font-weight: 500;
-      color: ${token.colorTextSecondary};
-
-      &:hover {
-        color: ${token.colorPrimary};
-      }
-    `,
-    actions: css`
-      min-width: 200px;
-    `,
-    drawerBtn: css`
-      display: flex;
-      justify-content: start;
-      width: max-content;
-      border-radius: ${token.borderRadius}px;
-      border-color: ${token.colorBorder};
     `,
   };
 });

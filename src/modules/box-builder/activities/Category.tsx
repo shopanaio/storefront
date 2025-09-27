@@ -13,6 +13,7 @@ import { Listing } from "@src/relay/queries/Listing.shopana";
 import { useCategory } from "@src/modules/box-builder/hooks/useCategory";
 import InfiniteScroll from "react-infinite-scroller";
 import React, { Suspense } from "react";
+import { PAGINATION_PAGE_SIZE } from "@src/config";
 import { BoxBuilderCategorySectionSkeleton } from "../skeletons/CategorySectionSkeleton";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import { ProductType } from "@src/modules/box-builder/ProductCard";
@@ -40,7 +41,7 @@ const CategoryProducts: React.FC<{ categoryHandle: string }> = ({
 
   const handleLoadMore = () => {
     if (hasNext && !isLoadingNext) {
-      loadNext(25);
+      loadNext(PAGINATION_PAGE_SIZE);
     }
   };
 

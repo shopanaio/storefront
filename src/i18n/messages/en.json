@@ -76,9 +76,23 @@
     "show-more": "Show more",
     "show-less": "Show less",
     "apply": "Apply",
+    "apply-filters": "Apply filters",
     "reset": "Reset",
+    "showing-of-total": "Showing {current} of {total}",
+    "load-more": "Load More",
+    "loading": "Loading...",
+    "found-products": "Found {count} products",
+    "reset-all": "Reset all",
 
-    "create-review": "Create Review"
+    "create-review": "Create Review",
+
+    "filter-groups": {
+      "PRICE": "Price",
+      "AVAILABILITY": "Availability",
+      "TAG": "Tags",
+      "CATEGORY": "Category",
+      "OPTION": "Option"
+    }
   },
 
   "Cart": {

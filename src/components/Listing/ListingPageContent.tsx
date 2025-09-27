@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
-import { ListingFilter } from "@src/components/Listing/Filters/ListingFilter";
 import { ListingTitleAndBtn } from "@src/components/Listing/ListingTitleAndBtn";
-import { ListingSort, ApiFilterInput } from "@codegen/schema-client";
+import { ListingSort, ApiFilterInput, ApiFilter } from "@codegen/schema-client";
 import { ListingProducts } from "@src/components/Listing/ListingProducts";
 import { useFragment } from "react-relay";
 import { Listing } from "@src/relay/queries/Listing.shopana";
@@ -14,7 +11,6 @@ import useFilters from "@src/hooks/category/useFilters";
 const { Text } = Typography;
 
 export function ListingPageContent({ category }: { category: Listing$key }) {
-  const { styles } = useStyles();
   const [sort, setSort] = useState<ListingSort>(ListingSort.MostRelevant);
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, { values: string[] | [number, number]; inputs?: string[] }>
@@ -49,7 +45,6 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
       ([handle, filterData]) => ({
         handle,
         values: filterData.values.map(String),
-        // Add inputs if they exist
         ...(filterData.inputs &&
           filterData.inputs.length > 0 && {
             inputs: filterData.inputs,
@@ -63,11 +58,8 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
     return <Text>Category loading error</Text>;
   }
 
-  /* console.log("listingData", listingData);
-  console.log("normalizedFilters", normalizedFilters); */
-
   return (
-    <div className={styles.container}>
+    <Flex gap={16} vertical className="container">
       <ListingTitleAndBtn
         filters={normalizedFilters}
         title={listingData.title || "Category"}
@@ -77,51 +69,7 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
         selectedFilters={selectedFilters}
         setSelectedFilters={setSelectedFilters}
       />
-
-      <Flex className={styles.contentContainer}>
-        <ListingFilter
-          filters={
-            originalFilters.length > 0 ? originalFilters : normalizedFilters
-          }
-          mode="sidebar"
-          selectedFilters={selectedFilters}
-          setSelectedFilters={setSelectedFilters}
-        />
-        <ListingProducts category={category} sort={sort} filters={apiFilters} />
-      </Flex>
-    </div>
+      <ListingProducts category={category} sort={sort} filters={apiFilters} />
+    </Flex>
   );
 }
-
-const useStyles = createStyles(({ token, css }) => {
-  return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.margin}px;
-      width: 100%;
-
-      ${mq.lg} {
-        padding-right: ${token.padding}px;
-        padding-left: ${token.padding}px;
-      }
-
-      ${mq.xl} {
-        padding: 0;
-        margin-right: auto;
-        margin-left: auto;
-
-        max-width: 1280px;
-      }
-
-      ${mq.xxl} {
-        max-width: 1400px;
-      }
-    `,
-    contentContainer: css`
-      ${mq.lg} {
-        gap: ${token.margin}px;
-      }
-    `,
-  };
-});
