@@ -117,7 +117,7 @@ export const Summary = ({ cart }: Prop) => {
 
 const useStyles = createStyles(({ css, token }) => ({
   sectionTitle: css`
-    font-size: ${token.fontSizeLG}px;
+    font-size: ${token.fontSizeXL}px;
   `,
   divider: css`
     margin: 0;
