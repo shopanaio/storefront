@@ -11,6 +11,7 @@ export interface BoxBuilderQuantityInputProps {
   loading?: boolean;
   className?: string;
   appearance: "card" | "activity";
+  label?: string;
 }
 
 export const BoxBuilderQuantityInput = ({

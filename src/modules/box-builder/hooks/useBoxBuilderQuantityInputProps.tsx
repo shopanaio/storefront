@@ -6,8 +6,10 @@ import { useRemoveItemFromBoxBuilderCart } from "./useRemoveItemFromCart";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { App } from "antd";
+import { App, Flex, Typography } from "antd";
 import { useFormatPrice } from "@src/components/UI/Price/Price";
+import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { createStyles } from "antd-style";
 
 export interface UseBoxBuilderQuantityInputPropsParams {
   productId: string;
@@ -40,6 +42,7 @@ export const useBoxBuilderQuantityInputProps = ({
     useRemoveItemFromBoxBuilderCart();
   const { modal } = App.useApp();
   const {} = useBoxBuilderStore();
+  const { styles } = useStyles();
 
   const handleIncrement = () => {
     if (!cartLine) {
@@ -67,10 +70,24 @@ export const useBoxBuilderQuantityInputProps = ({
   };
 
   const handleRemove = () => {
+    const productTitle = cartLine?.purchasable?.title ?? "";
+    const imageUrl = cartLine?.purchasable?.cover?.url ?? "";
+
     modal.confirm({
       icon: null,
       title: t("remove-confirm-title"),
-      content: t("remove-confirm-content"),
+      content: (
+        <Flex gap={12} align="center">
+          <Thumbnail
+            src={imageUrl}
+            alt={productTitle}
+            className={styles.confirmModalThumbnail}
+          />
+          <Typography.Text>
+            {t("remove-confirm-content", { productTitle })}
+          </Typography.Text>
+        </Flex>
+      ),
       okText: t("remove-confirm-ok"),
       cancelText: t("remove-confirm-cancel"),
       onOk: () => {
@@ -112,3 +129,17 @@ export const useBoxBuilderQuantityInputProps = ({
     disabled,
   };
 };
+
+const useStyles = createStyles(({ css }) => ({
+  confirmModalThumbnail: css`
+    width: 60px !important;
+    height: 60px !important;
+    flex-shrink: 0;
+
+    .ant-btn {
+      width: 60px !important;
+      height: 60px !important;
+      padding: 0 !important;
+    }
+  `,
+}));

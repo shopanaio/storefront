@@ -46,7 +46,8 @@ export const QuantityInput = ({
   const prevAction = useRef<"inc" | "dec" | null>(null);
   const buttonSize = getSmallerSize(size);
 
-  const numericValue = typeof value === "number" ? value : parseInt(String(value), 10);
+  const numericValue =
+    typeof value === "number" ? value : parseInt(String(value), 10);
   const showTrash = numericValue === 1 && onRemove;
   const DecrementIcon = showTrash ? TbTrash : TbMinus;
 

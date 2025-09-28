@@ -57,6 +57,7 @@ export const BoxActionButton = ({
         disabled={quantityProps?.disabled ?? isFree}
         className={quantityProps?.className}
         appearance={appearance}
+        label={t("footer.boxes-count", { count: quantity })}
       />
     );
   }

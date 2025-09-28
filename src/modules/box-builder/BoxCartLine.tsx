@@ -2,11 +2,11 @@
 
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { Activity, useFlow } from "./stackflow/Stack";
-import { useBoxBuilderQuantityInputProps } from "./hooks/useBoxBuilderQuantityInputProps";
 import { ProductType } from "./ProductCard";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
 import { Entity } from "@src/entity";
+import { useBoxBuilderQuantityInputProps } from "@src/modules/box-builder/hooks/useBoxBuilderQuantityInputProps";
 
 interface BoxCartLineProps {
   cartLine: Entity.CartLine;
