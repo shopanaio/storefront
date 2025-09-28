@@ -3,7 +3,7 @@
 import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { TbChevronRight } from "react-icons/tb";
-import { Activity, useFlow } from "../stackflow/Stack";
+import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 
 const { Text } = Typography;
 

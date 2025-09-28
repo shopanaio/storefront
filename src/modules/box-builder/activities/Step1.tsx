@@ -10,22 +10,22 @@ import {
   useRelayEnvironment,
 } from "react-relay";
 import { Listing } from "@src/relay/queries/Listing.shopana";
-import BoxBuilderGrid from "../BoxBuilderGrid";
-import Layout from "../stackflow/Layout";
-import { LayoutFooterButton } from "../stackflow/Layout";
-import { Activity, useFlow } from "../stackflow/Stack";
+import BoxBuilderGrid from "@src/modules/box-builder/components/BoxBuilderGrid";
+import Layout from "@src/modules/box-builder/stackflow/Layout";
+import { LayoutFooterButton } from "@src/modules/box-builder/stackflow/Layout";
+import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 import React, { Suspense } from "react";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
-import { PersistedModal } from "@src/modules/box-builder/PersistedModal";
+import { PersistedModal } from "@src/modules/box-builder/components/PersistedModal";
 import CategoryQueryNode, {
   CategoryQuery,
 } from "@src/relay/queries/__generated__/CategoryQuery.graphql";
 import useSerializablePreloadedQuery from "@src/relay/useSerializablePreloadedQuery";
 import { useQuery } from "@src/providers/relay-query-provider";
-import { ProductType } from "@src/modules/box-builder/ProductCard";
+import { ProductType } from "@src/modules/box-builder/components/ProductCard";
 import { BoxBuilderSectionSkeleton } from "../skeletons/SectionSkeleton";
-import { StepHeader } from "@src/modules/box-builder/StepHeader";
-import { ProductCardRelay } from "@src/modules/box-builder/ProductCardRelay";
+import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
+import { ProductCardRelay } from "@src/modules/box-builder/components/ProductCardRelay";
 import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
 import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 

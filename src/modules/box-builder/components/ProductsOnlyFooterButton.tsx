@@ -2,9 +2,7 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { LayoutFooterButton } from "./stackflow/Layout";
-import type { ApiMoney } from "@codegen/schema-client";
-import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
+import { LayoutFooterButton } from "@src/modules/box-builder/stackflow/Layout";
 import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 
@@ -17,8 +15,7 @@ const ProductsOnlyFooterButton: React.FC<ProductsOnlyFooterButtonProps> = ({
 }) => {
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
-  const { cart } = useBoxBuilderCart();
-  const { boxes, cards, products } = useBoxBuilderProgress();
+  const {  products } = useBoxBuilderProgress();
 
   if (!products.quantity) {
     return null;

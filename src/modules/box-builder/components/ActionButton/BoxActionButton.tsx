@@ -8,7 +8,7 @@ import { useBoxBuilderStore } from "@src/store/appStore";
 import {
   BoxBuilderQuantityInput,
   BoxBuilderQuantityInputProps,
-} from "@src/modules/box-builder/ActionButton/QuantityInput";
+} from "@src/modules/box-builder/components/ActionButton/QuantityInput";
 
 export interface BoxActionButtonProps {
   productId: string;

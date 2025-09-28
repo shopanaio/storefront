@@ -1,16 +1,63 @@
+import React from "react";
 import { redirect } from "next/navigation";
+import "@src/modules";
+import {
+  moduleRegistry,
+  type DynamicModulePageProps,
+  type ModuleExport,
+  type AsyncModuleLoader,
+} from "@src/modules/registry";
 
+/**
+ * Server page that resolves modules by slug using the global Module Registry.
+ * The first segment of `[...module]` is treated as module slug; the rest are passed to the module.
+ */
 export default async function Page({
   params,
+  searchParams,
 }: {
-  params: Promise<{ module: string }>;
+  params: { locale: string; module?: string[] };
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
-  const { module } = await params;
-  const moduleName = module[0];
+  const segments = params.module ?? [];
+  const slug = segments[0];
 
-  if (!moduleName) {
+  if (!slug) {
     return redirect("/");
   }
 
-  return <div>Module: {JSON.stringify(module)}</div>;
+  const loader = moduleRegistry.resolve(slug);
+  if (!loader) {
+    return redirect("/");
+  }
+
+  const typedLoader = loader as AsyncModuleLoader<ModuleExport<DynamicModulePageProps>>;
+  const mod = await typedLoader();
+
+  /**
+   * Extracts component from a module namespace or returns the component itself.
+   */
+  function getComponentFromModule(
+    input: ModuleExport<DynamicModulePageProps>
+  ): React.ComponentType<DynamicModulePageProps> {
+    if (
+      input &&
+      typeof input === "object" &&
+      "default" in (input as Record<string, unknown>)
+    ) {
+      return (input as { default: React.ComponentType<DynamicModulePageProps> })
+        .default;
+    }
+    return input as React.ComponentType<DynamicModulePageProps>;
+  }
+
+  const Component = getComponentFromModule(
+    mod as ModuleExport<DynamicModulePageProps>
+  );
+
+  return React.createElement(Component, {
+    params,
+    searchParams,
+    segments: segments.slice(1),
+  });
 }

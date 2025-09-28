@@ -3,18 +3,18 @@
 import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { StepHeader } from "@src/modules/box-builder/StepHeader";
+import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
 
-import BoxCartLine from "../BoxCartLine";
 import { EmptyBoxImg } from "../Images/EmptyBoxImg";
 import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
-import Progress from "../Progress";
+import Progress from "@src/modules/box-builder/components/Progress";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout, { LayoutFooterButton } from "../stackflow/Layout";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 import { ApiMoney } from "@codegen/schema-client";
 import { Entity } from "@src/entity";
+import BoxCartLine from "@src/modules/box-builder/components/BoxCartLine";
 
 const { Text, Title } = Typography;
 

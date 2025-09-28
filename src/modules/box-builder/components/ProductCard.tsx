@@ -4,18 +4,15 @@ import { Badge, Checkbox, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ApiProductVariant } from "@codegen/schema-client";
 import React from "react";
-
 import { Price } from "@src/components/UI/Price/Price";
 import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
-
-import { useBoxBuilderStore } from "@src/store/appStore";
 import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { useTranslations } from "next-intl";
-import { Activity, useFlow } from "./stackflow/Stack";
-import { BoxActionButton } from "./ActionButton/BoxActionButton";
-import { ProductActionButton } from "./ActionButton/ProductActionButton";
-import { CardActionButton } from "./ActionButton/CardActionButton";
+import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import { BoxActionButton } from "@src/modules/box-builder/components/ActionButton/BoxActionButton";
+import { ProductActionButton } from "@src/modules/box-builder/components/ActionButton/ProductActionButton";
+import { CardActionButton } from "@src/modules/box-builder/components/ActionButton/CardActionButton";
 import { Discount } from "@src/components/UI/Price/Discount";
 
 const { Text } = Typography;

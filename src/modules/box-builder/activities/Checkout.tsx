@@ -2,22 +2,19 @@
 
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
-import { StepHeader } from "../StepHeader";
+import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
 import { useTranslations } from "next-intl";
 import { Checkout as CheckoutComponent } from "@src/modules/checkout";
 import { ActivityComponentType } from "@stackflow/react";
-import Layout from "../stackflow/Layout";
+import Layout from "@src/modules/box-builder/stackflow/Layout";
 import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 import { Activity, useFlow } from "../stackflow/Stack";
-import { newMockCart } from "@src/mocks/newCart";
 
 const Checkout: ActivityComponentType = () => {
   const { styles } = useStyles();
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
   const { cart } = useBoxBuilderCart();
-
-  const methods = newMockCart;
 
   const handleConfirm = () => {
     push(Activity.Order, {});
@@ -29,11 +26,7 @@ const Checkout: ActivityComponentType = () => {
         <div className={styles.titleWrapper}>
           <StepHeader title={t("step-placing.title")} />
         </div>
-        <CheckoutComponent
-          cart={cart}
-          onConfirm={handleConfirm}
-          methods={methods}
-        />
+        <CheckoutComponent cart={cart} onConfirm={handleConfirm} />
       </Flex>
     </Layout>
   );

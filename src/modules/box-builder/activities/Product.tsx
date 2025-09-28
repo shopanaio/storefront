@@ -4,17 +4,16 @@ import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ProductMain } from "@src/components/Product/ProductMain";
 import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
-import { useBoxBuilderStore } from "@src/store/appStore";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout from "../stackflow/Layout";
 import { useProduct } from "@src/modules/box-builder/hooks/useProduct";
 import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
 import { ApiProduct } from "@codegen/schema-client";
 import React, { Suspense } from "react";
-import { ProductType } from "@src/modules/box-builder/ProductCard";
-import { BoxActionButton } from "../ActionButton/BoxActionButton";
-import { ProductActionButton } from "../ActionButton/ProductActionButton";
-import { CardActionButton } from "../ActionButton/CardActionButton";
+import { ProductType } from "@src/modules/box-builder/components/ProductCard";
+import { BoxActionButton } from "@src/modules/box-builder/components/ActionButton/BoxActionButton";
+import { ProductActionButton } from "@src/modules/box-builder/components/ActionButton/ProductActionButton";
+import { CardActionButton } from "@src/modules/box-builder/components/ActionButton/CardActionButton";
 import { ShowMoreBtn } from "@src/components/Product/ShowMoreBtn";
 import { useTranslations } from "next-intl";
 import { SkeletonProduct } from "@src/components/Product/Skeleton";
@@ -37,7 +36,6 @@ const ProductSection: React.FC<{
   const isInCart = Boolean(cartLine);
   const { quantity = 0 } = cartLine || {};
 
-  const { boxProductIds, cardProductIds } = useBoxBuilderStore();
   const isAvailable = product?.stockStatus?.isAvailable === true;
   const isFree = parseFloat(product?.price?.amount ?? "0") === 0;
 
@@ -55,7 +53,6 @@ const ProductSection: React.FC<{
         <BoxActionButton
           productId={product.id}
           isAvailable={Boolean(isAvailable)}
-          isSelected={boxProductIds.includes(product.id)}
           appearance="activity"
           isFree={Boolean(isFree)}
           isInCart={isInCart}
@@ -72,7 +69,6 @@ const ProductSection: React.FC<{
         <CardActionButton
           productId={product.id}
           isAvailable={Boolean(isAvailable)}
-          isSelected={cardProductIds.includes(product.id)}
           isFree={Boolean(isFree)}
           isInCart={isInCart}
           quantity={quantity}

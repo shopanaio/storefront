@@ -6,7 +6,7 @@ import { useLazyLoadQuery } from "react-relay";
 import { CategoryQuery } from "@src/relay/queries/CategoryQuery.shopana";
 import { CategoryQuery as CategoryQueryType } from "@src/relay/queries/__generated__/CategoryQuery.graphql";
 import SwiperSection from "./SwiperSection";
-import { BoxBuilderSwiperSectionSkeleton } from "../skeletons/SwiperSectionSkeleton";
+import { BoxBuilderSwiperSectionSkeleton } from "@src/modules/box-builder/skeletons/SwiperSectionSkeleton";
 
 interface CategorySectionProps {
   handle: string;

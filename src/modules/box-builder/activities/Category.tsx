@@ -5,8 +5,8 @@ import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout from "../stackflow/Layout";
-import BoxBuilderGrid from "../BoxBuilderGrid";
-import { StepHeader } from "../StepHeader";
+import BoxBuilderGrid from "@src/modules/box-builder/components/BoxBuilderGrid";
+import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
 import { Activity, useFlow } from "../stackflow/Stack";
 import { usePaginationFragment } from "react-relay";
 import { Listing } from "@src/relay/queries/Listing.shopana";
@@ -15,9 +15,9 @@ import React, { Suspense } from "react";
 import { PAGINATION_PAGE_SIZE } from "@src/config";
 import { BoxBuilderCategorySectionSkeleton } from "../skeletons/CategorySectionSkeleton";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
-import { ProductType } from "@src/modules/box-builder/ProductCard";
-import ProductsOnlyFooterButton from "@src/modules/box-builder/ProductsOnlyFooterButton";
-import { ProductCardRelay } from "@src/modules/box-builder/ProductCardRelay";
+import { ProductType } from "@src/modules/box-builder/components/ProductCard";
+import ProductsOnlyFooterButton from "@src/modules/box-builder/components/ProductsOnlyFooterButton";
+import { ProductCardRelay } from "@src/modules/box-builder/components/ProductCardRelay";
 import type { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
 
 const { Text } = Typography;
@@ -38,7 +38,9 @@ const CategoryProducts: React.FC<{ categoryHandle: string }> = ({
   const products: useListingProductCardFragment_product$key[] =
     (
       data as unknown as {
-        listing?: { edges?: { node: useListingProductCardFragment_product$key }[] };
+        listing?: {
+          edges?: { node: useListingProductCardFragment_product$key }[];
+        };
       }
     )?.listing?.edges?.map((edge) => edge.node) ?? [];
 
@@ -49,8 +51,9 @@ const CategoryProducts: React.FC<{ categoryHandle: string }> = ({
   };
 
   const currentCount = products.length;
-  const totalCount = (data as any)?.listing?.totalCount ?? 0;
-  const progressPercent = totalCount > 0 ? (currentCount / totalCount) * 100 : 0;
+  const totalCount = data?.listing?.totalCount ?? 0;
+  const progressPercent =
+    totalCount > 0 ? (currentCount / totalCount) * 100 : 0;
 
   return (
     <Flex vertical className={styles.container} gap={theme.margin}>
@@ -111,8 +114,6 @@ const Category: ActivityComponentType<CategoryParams> = ({
 }) => {
   useStyles();
   const { push } = useFlow();
-  const t = useTranslations("BoxBuilder");
-
   const { categoryHandle } = params;
 
   const handleFooterBtnClick = () => {

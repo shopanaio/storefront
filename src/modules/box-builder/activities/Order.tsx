@@ -3,10 +3,10 @@
 import { Button, Flex, Tag, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { FullBoxImg } from "../Images/FullBoxImg";
+import { FullBoxImg } from "@src/modules/box-builder/Images/FullBoxImg";
 import { ActivityComponentType } from "@stackflow/react";
-import Layout from "../stackflow/Layout";
-import { actions, Activity, useFlow } from "../stackflow/Stack";
+import Layout from "@src/modules/box-builder/stackflow/Layout";
+import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 
 const { Text } = Typography;
 

@@ -2,7 +2,7 @@
 
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
-import { ProductCardRelay } from "@src/modules/box-builder/ProductCardRelay";
+import { ProductCardRelay } from "@src/modules/box-builder/components/ProductCardRelay";
 import BoxBuilderSwiperHeader from "./SwiperHeader";
 import { UniversalSlider } from "@src/components/Home/ProductSlideshow/UniversalSwiper";
 import { usePaginationFragment } from "react-relay";

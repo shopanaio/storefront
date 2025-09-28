@@ -3,22 +3,24 @@
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { StepHeader } from "@src/modules/box-builder/StepHeader";
+import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
 import { usePaginationFragment } from "react-relay";
 import { Listing } from "@src/relay/queries/Listing.shopana";
-import BoxBuilderGrid from "../BoxBuilderGrid";
+import BoxBuilderGrid from "@src/modules/box-builder/components/BoxBuilderGrid";
 import { ActivityComponentType } from "@stackflow/react";
-import Layout, { LayoutFooterButton } from "../stackflow/Layout";
-import { Activity, useFlow } from "../stackflow/Stack";
+import Layout, {
+  LayoutFooterButton,
+} from "@src/modules/box-builder/stackflow/Layout";
+import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 import { useCategory } from "@src/modules/box-builder/hooks/useCategory";
 import { BOX_BUILDER_CONFIG } from "@src/modules/box-builder/config/categories";
 import { CheckoutSkeleton } from "@src/modules/checkout/CheckoutSkeleton";
 import React, { Suspense } from "react";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import type { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
-import { ProductType } from "@src/modules/box-builder/ProductCard";
+import { ProductType } from "@src/modules/box-builder/components/ProductCard";
 import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
-import { ProductCardRelay } from "@src/modules/box-builder/ProductCardRelay";
+import { ProductCardRelay } from "@src/modules/box-builder/components/ProductCardRelay";
 
 const ProductsSection: React.FC = () => {
   const { category } = useCategory(BOX_BUILDER_CONFIG.step3.category.handle);
@@ -41,9 +43,7 @@ const ProductsSection: React.FC = () => {
   );
 };
 
-type Step3Params = {};
-
-const Step3: ActivityComponentType<Step3Params> = () => {
+const Step3: ActivityComponentType = () => {
   const { styles } = useStyles();
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();

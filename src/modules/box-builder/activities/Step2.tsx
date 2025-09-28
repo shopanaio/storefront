@@ -4,18 +4,18 @@ import { ActivityComponentType } from "@stackflow/react";
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { StepHeader } from "@src/modules/box-builder/StepHeader";
+import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
 
-import CategorySection from "../CategorySwiper/CategorySection";
+import CategorySection from "@src/modules/box-builder/components/CategorySwiper/CategorySection";
 import React from "react";
 
-import Progress from "../Progress";
-import Layout from "../stackflow/Layout";
+import Progress from "@src/modules/box-builder/components/Progress";
+import Layout from "@src/modules/box-builder/stackflow/Layout";
 import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 import { useBoxBuilderCategories } from "@src/modules/box-builder/hooks/useBoxBuilderCategories";
 import { Suspense } from "react";
-import { BoxBuilderSwiperSectionSkeleton } from "../skeletons/SwiperSectionSkeleton";
-import ProductsOnlyFooterButton from "@src/modules/box-builder/ProductsOnlyFooterButton";
+import { BoxBuilderSwiperSectionSkeleton } from "@src/modules/box-builder/skeletons/SwiperSectionSkeleton";
+import ProductsOnlyFooterButton from "@src/modules/box-builder/components/ProductsOnlyFooterButton";
 
 const CategoriesSections: React.FC = () => {
   const { categories } = useBoxBuilderCategories();
@@ -39,9 +39,7 @@ const CategoriesSections: React.FC = () => {
   );
 };
 
-type Step2Params = {};
-
-const Step2: ActivityComponentType<Step2Params> = () => {
+const Step2: ActivityComponentType = () => {
   const { styles, theme } = useStyles();
   const t = useTranslations("BoxBuilder");
 

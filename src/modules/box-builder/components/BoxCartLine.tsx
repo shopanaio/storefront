@@ -1,8 +1,8 @@
 "use client";
 
 import { useBoxBuilderStore } from "@src/store/appStore";
-import { Activity, useFlow } from "./stackflow/Stack";
-import { ProductType } from "./ProductCard";
+import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import { ProductType } from "@src/modules/box-builder/components/ProductCard";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
 import { Entity } from "@src/entity";
