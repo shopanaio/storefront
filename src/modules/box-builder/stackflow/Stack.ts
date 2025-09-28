@@ -69,7 +69,7 @@ const config = defineConfig({
   ],
 
   transitionDuration: 350,
-  initialActivity: () => Activity.Into,
+  initialActivity: () => Activity.Intro,
 });
 
 let stackflowOutput: StackflowOutput;
@@ -80,7 +80,7 @@ export const createStack = (isIOS: boolean = false) => {
   stackflowOutput = stackflow({
     config,
     components: {
-      Into,
+      Intro,
       Step1,
       Step2,
       Step3,
@@ -100,7 +100,7 @@ export const createStack = (isIOS: boolean = false) => {
       }),
       historySyncPlugin({
         config,
-        fallbackActivity: () => Activity.Into,
+        fallbackActivity: () => Activity.Intro,
         useHash: true,
       }),
     ],
