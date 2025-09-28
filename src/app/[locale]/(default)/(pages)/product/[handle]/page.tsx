@@ -148,9 +148,9 @@ import ProductQueryNode, {
   ProductQuery as ProductQueryType,
 } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { notFound } from "next/navigation";
-import { PageClient } from "@src/app/[locale]/(default)/product/[handle]/client";
 import { QueryProvider } from "@src/providers/relay-query-provider";
 import { ProductReviewSort } from "@codegen/schema-client";
+import { PageClient } from "./client";
 
 interface ProductPageProps {
   params: {
