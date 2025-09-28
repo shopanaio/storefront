@@ -12,7 +12,7 @@ import {
 } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
 
-import { PhoneInputField } from "../PhoneInputField";
+import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
 import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
 
 const { Text } = Typography;

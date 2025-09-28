@@ -4,7 +4,7 @@ import { Flex } from "antd";
 import { createStyles } from "antd-style";
 import { StepHeader } from "../StepHeader";
 import { useTranslations } from "next-intl";
-import { Checkout as CheckoutComponent } from "@src/modules/checkout/Checkout";
+import { Checkout as CheckoutComponent } from "@src/modules/checkout";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout from "../stackflow/Layout";
 import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";

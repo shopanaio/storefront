@@ -11,17 +11,13 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { CartTable } from "@src/components/Cart/CartTable";
 import { PageLayout } from "@src/components/Layout/PageLayout";
 import { CartPageTitleAndBtn } from "@src/components/Cart/CartPageTitleAndBtn";
-import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
-
-const { Text } = Typography;
 
 export default function CartPage() {
-  const { styles } = useStyles();
   const t = useTranslations("Cart");
+  const { styles } = useStyles();
   const { cart } = useCart();
 
-  const cartLines = (cart?.lines ??
-    []) as unknown as useCartLineFragment_CartLineFragment$key[];
+  const cartLines = cart?.lines ?? [];
 
   const subtotal = cart?.cost?.subtotalAmount;
 

@@ -1,23 +1,22 @@
-import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
 import useRemoveItemFromCart from "@src/hooks/cart/useRemoveItemFromCart";
 import useUpdateCartLineQuantity from "@src/hooks/cart/useUpdateCartLineQuantity";
-import useCartLineFragment from "@src/hooks/cart/useCartLineFragment";
 import { App, Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
+import { Entity } from "@src/entity";
 
 const { Text } = Typography;
 
 interface CartItemProps {
-  cartLineRef: useCartLineFragment_CartLineFragment$key;
+  cartLine: Entity.CartLine;
   onClick?: () => void;
   variant?: "drawer" | "page";
 }
 
 export const CartItem = ({
-  cartLineRef,
+  cartLine,
   onClick,
   variant = "drawer",
 }: CartItemProps) => {
@@ -27,13 +26,10 @@ export const CartItem = ({
   const t = useTranslations("Cart");
   const { styles } = useStyles();
 
-  const cartLineData = useCartLineFragment(cartLineRef);
-
-  if (!cartLineData?.cartLine) {
+  if (!cartLine) {
     return null;
   }
 
-  const { cartLine } = cartLineData;
   const quantity = cartLine.quantity;
   const cartItemId = cartLine.id;
   const purchasable = cartLine.purchasable ?? {};
@@ -62,16 +58,14 @@ export const CartItem = ({
             alt={productTitle}
             className={styles.confirmModalThumbnail}
           />
-          <Text>
-            {t("remove-confirm-content", { productTitle })}
-          </Text>
+          <Text>{t("remove-confirm-content", { productTitle })}</Text>
         </Flex>
       ),
       okText: t("remove-confirm-ok"),
       cancelText: t("remove-confirm-cancel"),
       onOk: () => {
         removeFromCart({
-          checkoutLine: cartLineData.cartLine,
+          lineId: cartLine.id,
         });
       },
     });

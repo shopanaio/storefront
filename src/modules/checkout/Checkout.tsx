@@ -8,7 +8,7 @@ import { Summary } from "@src/modules/checkout/Summary";
 import { useForm } from "react-hook-form";
 import { PaymentMethods } from "@src/modules/checkout/Payment/PaymentMethods";
 import { ShippingMethods } from "@src/modules/checkout/Shipping/ShippingMethods";
-import { PhoneInputField } from "./PhoneInputField";
+import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
 import { Entity } from "@src/entity";
 
 const { Text } = Typography;
@@ -17,6 +17,7 @@ interface Prop {
   cart: Entity.Cart | null;
   onConfirm: () => void;
 }
+
 export interface City {
   AddressDeliveryAllowed: boolean;
   Area: string;
@@ -90,7 +91,6 @@ export const Checkout = ({ cart, onConfirm }: Prop) => {
   const defaultDeliveryGroup = cart?.deliveryGroups?.[0];
   const defaultShippingKey = defaultDeliveryGroup?.selectedDeliveryMethod?.code;
   const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || "";
-  /* console.log(cart); */
 
   const { control, handleSubmit, setValue, watch } =
     useForm<CheckoutFormValues>({
@@ -288,7 +288,6 @@ const useStyles = createStyles(({ token, css }) => {
 
       --width: 1280px;
       --offset: calc((100vw - var(--width)) / 2);
-
       --left-column-width: 737px;
 
       ${mq.xl} {

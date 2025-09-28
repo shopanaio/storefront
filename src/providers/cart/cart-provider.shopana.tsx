@@ -1,28 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  PreloadedQuery,
-  useFragment,
-  usePreloadedQuery,
-  useQueryLoader,
-} from "react-relay";
+import { PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { loadCartQuery } from "@src/relay/queries/loadCartMutation.shopana";
 import { loadCartMutationQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartMutationQuery.graphql";
 import { CartContextProvider } from "../cart-context";
-import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopana";
 import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
+import cartIdUtils from "@src/utils/cartId";
 
 interface CartProviderProps {
   children: React.ReactNode;
-  /**
-   * Function to provide cart ID from specific source
-   */
-  getId: () => string | null;
-  /**
-   * Function to set cart ID
-   */
-  setId: (id: string | null) => void;
+  cookie: string;
 }
 
 type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
@@ -53,8 +41,7 @@ const CartDataHandler: React.FC<{
 
 const CartProvider: React.FC<CartProviderProps> = ({
   children,
-  getId,
-  setId,
+  cookie: cookieKey,
 }) => {
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
@@ -64,19 +51,11 @@ const CartProvider: React.FC<CartProviderProps> = ({
   const isLoadingRef = useRef(false);
   const loadedRef = useRef(false);
 
-  // This hook ensures that cart data won't be garbage collected by Relay
-  // while CartProvider is mounted.
-  useFragment(useCart_CartFragment, cartKey);
-
   useEffect(() => {
-    // Load cart only once when mounting on client
     if (loadedRef.current || isLoadingRef.current) return;
 
-    const cartId = getId();
-    /* console.log("[CartProvider Shopana] Checking for cart ID:", cartId); */
-
+    const cartId = cartIdUtils.getCartIdFromCookie(cookieKey);
     if (!cartId) {
-      /* console.log("[CartProvider Shopana] No cart ID found"); */
       return;
     }
 
@@ -85,10 +64,9 @@ const CartProvider: React.FC<CartProviderProps> = ({
     /* console.log("[CartProvider Shopana] Loading cart with ID:", cartId); */
 
     loadQuery({ checkoutId: cartId }, { fetchPolicy: "network-only" });
-  }, [loadQuery, getId]);
+  }, [loadQuery, cookieKey]);
 
   const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
-    /* console.log("[CartProvider Shopana] Cart loaded successfully:", cart); */
     setCartKey(cart);
     setIsCartLoaded(true);
     isLoadingRef.current = false;
@@ -97,7 +75,6 @@ const CartProvider: React.FC<CartProviderProps> = ({
   }, []);
 
   const handleCartNotFound = useCallback(() => {
-    /* console.log("[CartProvider Shopana] Cart not found, removing cookie"); */
     isLoadingRef.current = false;
     setIsCartLoading(false);
     setCartKey(null);
@@ -119,7 +96,9 @@ const CartProvider: React.FC<CartProviderProps> = ({
       setCartKey={setCartKey}
       isCartLoading={isCartLoading}
       isCartLoaded={isCartLoaded}
-      setId={setId}
+      setId={(id) => {
+        cartIdUtils.setCartIdCookie(id, cookieKey);
+      }}
     >
       {queryReference ? (
         <CartDataHandler

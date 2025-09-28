@@ -1,16 +1,16 @@
 import Cookies from "js-cookie";
 
-const getCartIdFromCookie = (): string | null => {
-  return Cookies.get("shopana_cart_id") || null;
+const getCartIdFromCookie = (key: string): string | null => {
+  return Cookies.get(key) || null;
 };
 
-const setCartIdCookie = (cartId: string | null): void => {
+const setCartIdCookie = (cartId: string | null, key: string): void => {
   if (!cartId) {
-    Cookies.remove("shopana_cart_id");
+    Cookies.remove(key);
     return;
   }
 
-  Cookies.set("shopana_cart_id", cartId);
+  Cookies.set(key, cartId);
 };
 
 const removeCartIdCookie = (): void => {

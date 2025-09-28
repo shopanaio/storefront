@@ -6,11 +6,11 @@ import { CartItem } from "@src/components/Cart/CartItem";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";
-import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
 import clsx from "clsx";
+import { Entity } from "@src/entity";
 
 interface CartTableListProps {
-  cartLines: useCartLineFragment_CartLineFragment$key[];
+  cartLines: Entity.CartLine[];
   variant?: "drawer" | "page";
   className?: string;
   divider?: boolean;
@@ -44,7 +44,7 @@ export const CartTable: React.FC<CartTableListProps> = ({
         .filter((cartLine) => cartLine) // Remove purchasable check since this is now a fragment
         .map((cartLine, index) => (
           <React.Fragment key={index}>
-            <CartItem cartLineRef={cartLine} variant={variant} />
+            <CartItem cartLine={cartLine} variant={variant} />
             {divider && index < cartLines.length - 1 && (
               <Divider style={{ margin: 0 }} />
             )}

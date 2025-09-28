@@ -30,7 +30,7 @@ export const Layout = ({ children }: ILayoutProps) => {
   const { styles } = useStyles();
 
   return (
-    <div>
+    <>
       <AnnouncementBar />
       <Header />
       <main className={styles.main}>{children}</main>
@@ -40,7 +40,7 @@ export const Layout = ({ children }: ILayoutProps) => {
       <CartDrawer />
       <AppDrawer />
       <MobileSearch />
-    </div>
+    </>
   );
 };
 

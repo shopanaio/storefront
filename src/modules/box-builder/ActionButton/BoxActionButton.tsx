@@ -63,7 +63,7 @@ export const BoxActionButton = ({
   }
 
   const handleSelect = async () => {
-    if (isInCart) {
+    if (appearance === "activity") {
       push(Activity.Step2, {});
       return;
     }

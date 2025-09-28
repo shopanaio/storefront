@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import { useRoutes } from "@src/hooks/useRoutes";
 
 import useCart from "@src/hooks/cart/useCart";
-import { useCartLineFragment_CartLineFragment$key } from "@src/hooks/cart/useCartLineFragment/__generated__/useCartLineFragment_CartLineFragment.graphql";
 
 import { CartTable } from "./CartTable";
 import { useModalStore } from "@src/store/appStore";
@@ -23,9 +22,7 @@ export const CartDrawer: React.FC = () => {
   const isOpen = useModalStore((state) => state.isCartDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsCartDrawerOpen);
 
-  const cartLines = (cart?.lines ??
-    []) as unknown as useCartLineFragment_CartLineFragment$key[];
-
+  const cartLines = cart?.lines ?? [];
   const subtotal = cart?.cost?.subtotalAmount;
 
   /**

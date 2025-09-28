@@ -5,8 +5,8 @@ import SearchQueryNode, {
   SearchQuery,
 } from "@src/hooks/search/SearchQuery/__generated__/SearchQuery.graphql";
 import { QueryProvider } from "@src/providers/relay-query-provider";
-import { SearchPageClient } from "@src/app/[locale]/(default)/search/client";
 import { ListingSort } from "@codegen/schema-client";
+import { SearchPageClient } from "./client";
 
 interface SearchPageProps {
   params: {
@@ -18,22 +18,9 @@ interface SearchPageProps {
   };
 }
 
-export default async function SearchPage({
-  params,
-  searchParams,
-}: SearchPageProps) {
+export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q, sort } = searchParams;
   const cookie = headers().get("cookie") ?? undefined;
-
-  // If no search query, show empty page
-  if (!q || !q.trim()) {
-    return (
-      <div>
-        <h1>Search</h1>
-        <p>Enter search query</p>
-      </div>
-    );
-  }
 
   // Load data on server
   const preloadedQuery = await loadSerializableQuery<

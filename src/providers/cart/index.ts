@@ -2,7 +2,9 @@ import { cmsPick } from "@src/cms/pick";
 import CartProviderShopana from "./cart-provider.shopana";
 import CartProviderShopify from "./cart-provider.shopify";
 
-export default cmsPick({
+const CartProvider = cmsPick({
   shopana: CartProviderShopana,
   shopify: CartProviderShopify,
 });
+
+export default CartProvider;

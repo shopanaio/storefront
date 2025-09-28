@@ -12,7 +12,7 @@ import {
 } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
 
-import { PhoneInputField } from "../PhoneInputField";
+import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
 import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
 
 const { Text } = Typography;
@@ -67,14 +67,12 @@ export const WarehouseMethod = ({
             )}
           />
         </Flex>
-
         <PhoneInputField
           control={control}
           name="userPhone"
           label={t("phone-number")}
           placeholder={t("phone")}
         />
-
         <Flex vertical gap={8}>
           <Text>{t("city")}</Text>
           <CityModal
@@ -82,7 +80,6 @@ export const WarehouseMethod = ({
             changeCity={(city) => setValue("userCity", city)}
           />
         </Flex>
-
         <Flex vertical gap={8}>
           <Text>{t("warehouse")}</Text>
           <WarehouseModal
@@ -111,7 +108,6 @@ const useStyles = createStyles(({ css, token }) => {
       border-radius: ${token.borderRadius}px;
       border: 1px solid ${token.colorBorderSecondary};
     `,
-
     methodLogo: css`
       height: 100%;
       border-radius: ${token.borderRadius}px;

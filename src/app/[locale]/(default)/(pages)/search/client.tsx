@@ -5,7 +5,7 @@ import { PageLayout } from "@src/components/Layout/PageLayout";
 import { useLazyLoadQuery } from "react-relay";
 import { SearchPageContent } from "@src/components/Search/SearchPageContent";
 import { ListingSort } from "@codegen/schema-client";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import SearchQuery from "@src/hooks/search/SearchQuery";
 import { SearchQuery as SearchQueryType } from "@src/hooks/search/SearchQuery/__generated__/SearchQuery.graphql";
 
@@ -18,7 +18,6 @@ interface ExtendedFilterInput {
 
 export const SearchPageClient = () => {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const q = searchParams?.get("q") || "";
   const sort =
     (searchParams?.get("sort") as ListingSort) || ListingSort.MostRelevant;

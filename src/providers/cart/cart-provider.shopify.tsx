@@ -7,17 +7,11 @@ import { loadCartQuery as LoadCartQueryType } from "@src/relay/queries/__generat
 import { CartContextProvider } from "../cart-context";
 import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
 import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopify";
+import cartIdUtils from "@src/utils/cartId";
 
 interface CartProviderProps {
   children: React.ReactNode;
-  /**
-   * Function to provide cart ID from specific source
-   */
-  getId: () => string | null;
-  /**
-   * Function to set cart ID
-   */
-  setId: (id: string | null) => void;
+  cookie: string;
 }
 
 // Separate component for handling cart data
@@ -45,8 +39,7 @@ const CartDataHandler: React.FC<{
 
 const CartProvider: React.FC<CartProviderProps> = ({
   children,
-  getId,
-  setId
+  cookie: cookieKey,
 }) => {
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
@@ -66,7 +59,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
     // Load cart only once when mounting on client
     if (loadedRef.current || isLoadingRef.current) return;
 
-    const cartId = getId();
+    const cartId = cartIdUtils.getCartIdFromCookie(cookieKey);
     /* console.log("[CartProvider Shopify] Checking for cart ID:", cartId); */
 
     if (!cartId) return;
@@ -77,7 +70,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
 
     // Load query using useQueryLoader
     loadQuery({ id: cartId });
-  }, [loadQuery, getId]);
+  }, [loadQuery, cookieKey]);
 
   const handleCartData = (cart: useCart_CartFragment$key) => {
     /* console.log("[CartProvider Shopify] Cart loaded successfully:", cart); */
@@ -119,7 +112,9 @@ const CartProvider: React.FC<CartProviderProps> = ({
       setCartKey={setCartKey}
       isCartLoading={isCartLoading}
       isCartLoaded={isCartLoaded}
-      setId={setId}
+      setId={(id) => {
+        cartIdUtils.setCartIdCookie(id, cookieKey);
+      }}
     >
       {queryReference && (
         <CartDataHandler

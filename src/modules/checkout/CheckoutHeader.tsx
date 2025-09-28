@@ -25,7 +25,6 @@ export const CheckoutHeader = () => {
               <FullLogo theme="light" size={32} />
             </Link>
           </Flex>
-
           <Flex className={styles.supportWrapper}>
             <HeaderLinkButton
               icon={<TbPhone size={24} />}
