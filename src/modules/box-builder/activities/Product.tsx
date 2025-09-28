@@ -3,7 +3,7 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ProductMain } from "@src/components/Product/ProductMain";
-import { useIsInTheCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
+import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout from "../stackflow/Layout";
@@ -30,15 +30,16 @@ const ProductSection: React.FC<{
   productHandle: string;
   productType: ProductType;
 }> = ({ productHandle, productType }) => {
+  const t = useTranslations("BoxBuilder");
   const { styles } = useStyles();
   const { product } = useProduct(productHandle);
-  const { isInCart, quantity: cartQuantity } = useIsInTheCart(
-    product?.id ?? ""
-  );
-  const t = useTranslations("BoxBuilder");
-  const { selectedBoxId, selectedCardIds } = useBoxBuilderStore();
+  const cartLine = useIsInTheBoxBuilderCart(product?.id ?? "");
+  const isInCart = Boolean(cartLine);
+  const { quantity = 0 } = cartLine || {};
+
+  const { boxProductIds, cardProductIds } = useBoxBuilderStore();
   const isAvailable = product?.stockStatus?.isAvailable === true;
-  const isFree = (product?.price?.amount ?? 0) === 0;
+  const isFree = parseFloat(product?.price?.amount ?? "0") === 0;
 
   // TODO: don't fetch reviews
   const productWithReviews = product as unknown as ApiProduct & Reviews$key;
@@ -54,8 +55,11 @@ const ProductSection: React.FC<{
         <BoxActionButton
           productId={product.id}
           isAvailable={Boolean(isAvailable)}
-          isSelected={selectedBoxId === product.id}
+          isSelected={boxProductIds.includes(product.id)}
           appearance="activity"
+          isFree={Boolean(isFree)}
+          isInCart={isInCart}
+          quantity={quantity}
           buttonProps={{
             size: "large",
             className: styles.cartButton,
@@ -68,10 +72,10 @@ const ProductSection: React.FC<{
         <CardActionButton
           productId={product.id}
           isAvailable={Boolean(isAvailable)}
-          isSelected={selectedCardIds.includes(product.id)}
+          isSelected={cardProductIds.includes(product.id)}
           isFree={Boolean(isFree)}
-          isInCart={Boolean(isInCart)}
-          cartQuantity={cartQuantity}
+          isInCart={isInCart}
+          quantity={quantity}
           appearance="activity"
           buttonProps={{
             size: "large",
@@ -90,8 +94,8 @@ const ProductSection: React.FC<{
           productId={product.id}
           isAvailable={Boolean(isAvailable)}
           isFree={Boolean(isFree)}
-          isInCart={Boolean(isInCart)}
-          cartQuantity={cartQuantity}
+          isInCart={isInCart}
+          quantity={quantity}
           appearance="activity"
           buttonProps={{
             size: "large",

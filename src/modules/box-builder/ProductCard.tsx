@@ -2,21 +2,21 @@
 
 import { Badge, Checkbox, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { ApiProduct } from "@codegen/schema-client";
+import { ApiProductVariant } from "@codegen/schema-client";
 import React from "react";
 
 import { Price } from "@src/components/UI/Price/Price";
 import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
 
 import { useBoxBuilderStore } from "@src/store/appStore";
-import { useIsInTheCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
+import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { useTranslations } from "next-intl";
 import { Activity, useFlow } from "./stackflow/Stack";
 import { BoxActionButton } from "./ActionButton/BoxActionButton";
 import { ProductActionButton } from "./ActionButton/ProductActionButton";
 import { CardActionButton } from "./ActionButton/CardActionButton";
-import { SaleBadge } from "@src/components/UI/Badges/Sale";
+import { Discount } from "@src/components/UI/Price/Discount";
 
 const { Text } = Typography;
 
@@ -27,7 +27,7 @@ export enum ProductType {
 }
 
 export interface Props {
-  product: ApiProduct;
+  product: ApiProductVariant;
   allowCount: boolean;
   productType: ProductType;
 }
@@ -36,12 +36,13 @@ export const ProductCard = ({ product, productType }: Props) => {
   const { styles } = useStyles();
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
-  const { selectedCardIds, selectedBoxId } = useBoxBuilderStore();
 
-  const { isInCart, quantity: cartQuantity } = useIsInTheCart(product.id);
+  const cartLine = useIsInTheBoxBuilderCart(product.id);
+  const isInCart = Boolean(cartLine);
+  const { quantity = 0 } = cartLine || {};
 
-  const isFree = product.price.amount === 0;
-  const isAvailable = product.stockStatus?.isAvailable === true;
+  const isFree = parseFloat(product.price.amount) === 0;
+  const isAvailable = Boolean(product.stockStatus?.isAvailable);
 
   const handleClick = () => {
     push(Activity.Product, {
@@ -56,7 +57,9 @@ export const ProductCard = ({ product, productType }: Props) => {
         <BoxActionButton
           productId={product.id}
           isAvailable={isAvailable}
-          isSelected={selectedBoxId === product.id}
+          isFree={isFree}
+          isInCart={isInCart}
+          quantity={quantity}
           appearance="card"
         />
       );
@@ -67,10 +70,9 @@ export const ProductCard = ({ product, productType }: Props) => {
         <CardActionButton
           productId={product.id}
           isAvailable={isAvailable}
-          isSelected={selectedCardIds.includes(product.id)}
           isFree={isFree}
           isInCart={isInCart}
-          cartQuantity={cartQuantity}
+          quantity={quantity}
           appearance="card"
         />
       );
@@ -82,7 +84,7 @@ export const ProductCard = ({ product, productType }: Props) => {
         isAvailable={isAvailable}
         isFree={isFree}
         isInCart={isInCart}
-        cartQuantity={cartQuantity}
+        quantity={quantity}
         appearance="card"
       />
     );
@@ -108,15 +110,10 @@ export const ProductCard = ({ product, productType }: Props) => {
             {product.compareAtPrice &&
               product.price.amount < product.compareAtPrice.amount && (
                 <Flex align="center" gap={8}>
-                  <Price
-                    delete
-                    type="secondary"
-                    money={product.compareAtPrice!}
-                    className={styles.compareAtPrice}
-                  />
-                  <SaleBadge
-                    compareAtPrice={product.compareAtPrice?.amount}
-                    price={product.price.amount}
+                  <Discount
+                    isAvailable={product.stockStatus.isAvailable}
+                    price={product.price}
+                    compareAtPrice={product.compareAtPrice}
                   />
                 </Flex>
               )}

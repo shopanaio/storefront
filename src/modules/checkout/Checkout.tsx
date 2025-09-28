@@ -4,17 +4,17 @@ import { Button, Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiCheckout } from "@codegen/schema-client";
 import { Summary } from "@src/modules/checkout/Summary";
 import { useForm } from "react-hook-form";
 import { PaymentMethods } from "@src/modules/checkout/Payment/PaymentMethods";
 import { ShippingMethods } from "@src/modules/checkout/Shipping/ShippingMethods";
 import { PhoneInputField } from "./PhoneInputField";
+import { Entity } from "@src/entity";
 
 const { Text } = Typography;
 
 interface Prop {
-  cart: ApiCheckout | null;
+  cart: Entity.Cart | null;
   onConfirm: () => void;
 }
 export interface City {

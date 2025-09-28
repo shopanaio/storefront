@@ -7,19 +7,19 @@ import { StepHeader } from "@src/modules/box-builder/StepHeader";
 
 import BoxCartLine from "../BoxCartLine";
 import { EmptyBoxImg } from "../Images/EmptyBoxImg";
-import { useCart } from "@src/modules/box-builder/hooks/useCart";
+import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 import Progress from "../Progress";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout, { LayoutFooterButton } from "../stackflow/Layout";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
-import { useCartProgress } from "@src/modules/box-builder/hooks/useCartProgress";
-import { CartFragment$data } from "@src/relay/queries/__generated__/CartFragment.graphql";
+import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 import { ApiMoney } from "@codegen/schema-client";
+import { Entity } from "@src/entity";
 
 const { Text, Title } = Typography;
 
 const Cart: ActivityComponentType<{}> = () => {
-  const { cart } = useCart();
+  const { cart } = useBoxBuilderCart();
 
   if (!cart?.totalQuantity) {
     return <EmptyCart />;
@@ -28,16 +28,12 @@ const Cart: ActivityComponentType<{}> = () => {
   return <CartContent cart={cart} />;
 };
 
-const CartContent: React.FC<{ cart: CartFragment$data }> = ({ cart }) => {
-  const { progressPercent } = useCartProgress();
+const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
+  const { progress } = useBoxBuilderProgress();
   const { push, replace } = useFlow();
 
   const { styles } = useStyles();
   const t = useTranslations("BoxBuilder");
-
-  const products = (cart?.lines?.edges ?? [])
-    .map((edge) => edge?.node)
-    .filter(Boolean);
 
   return (
     <Layout
@@ -59,7 +55,7 @@ const CartContent: React.FC<{ cart: CartFragment$data }> = ({ cart }) => {
           title={t("step-check.title")}
           description={t("step-check.description")}
         />
-        <Progress percent={progressPercent} description={false} />
+        <Progress percent={progress} description={false} />
         <div>
           <Flex>
             <Title className={styles.title} level={5}>
@@ -72,8 +68,8 @@ const CartContent: React.FC<{ cart: CartFragment$data }> = ({ cart }) => {
             </Title>
           </Flex>
           <Flex vertical gap={8}>
-            {products.map((product) => (
-              <BoxCartLine key={product.id} product={product} />
+            {cart.lines.map((cartLine) => (
+              <BoxCartLine key={cartLine.id} cartLine={cartLine} />
             ))}
             <Flex justify="flex-end">
               <Button

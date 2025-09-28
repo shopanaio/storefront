@@ -6,8 +6,9 @@ import { FullBoxImg } from "./Images/FullBoxImg";
 import { useTranslations } from "next-intl";
 import { Activity, useFlow } from "./stackflow/Stack";
 import { useEffect, useState } from "react";
-import { useCart } from "@src/modules/box-builder/hooks/useCart";
-import { useClearCart } from "./hooks/useClearCart";
+import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
+import { useClearBoxBuilderCart } from "./hooks/useClearCart";
+import { useBoxBuilderStore } from "@src/store/appStore";
 
 const { Text } = Typography;
 
@@ -15,10 +16,11 @@ let modalDismissed = false;
 
 export const PersistedModal = () => {
   const { styles } = useStyles();
-  const { cart, loaded } = useCart();
+  const { cart, loaded } = useBoxBuilderCart();
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
-  const { clearCart, isLoading } = useClearCart();
+  const { clearCart, loading } = useClearBoxBuilderCart();
+  const { cartId } = useBoxBuilderStore();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -28,16 +30,23 @@ export const PersistedModal = () => {
   };
 
   useEffect(() => {
-    // Modal should be shown ONLY if cart is loaded and not empty
-    if (!loaded || modalDismissed) return;
+    if (!cartId) {
+      modalDismissed = true;
+      return;
+    }
 
-    if (cart && cart.totalQuantity) {
-      setIsOpen(true);
+    // Modal should be shown ONLY if cart is loaded and not empty
+    if (!loaded || modalDismissed) {
+      return;
+    }
+
+    if (!cart?.totalQuantity) {
+      modalDismissed = true;
       return;
     }
     // If no cart or it's empty — consider modal dismissed
-    modalDismissed = true;
-  }, [cart, loaded]);
+    setIsOpen(true);
+  }, [cart, cartId]);
 
   return (
     <Modal
@@ -74,7 +83,7 @@ export const PersistedModal = () => {
           <Button
             variant="outlined"
             size="large"
-            loading={isLoading}
+            loading={loading}
             onClick={async () => {
               try {
                 await clearCart();

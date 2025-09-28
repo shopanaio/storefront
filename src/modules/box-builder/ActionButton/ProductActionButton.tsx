@@ -4,7 +4,7 @@ import { Button, ButtonProps } from "antd";
 import { useTranslations } from "next-intl";
 import { BoxBuilderQuantityInput } from "./QuantityInput";
 import type { BoxBuilderQuantityInputProps } from "./QuantityInput";
-import { useAddItemToCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
+import { useAddItemToBoxBuilderCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
 import { useState } from "react";
 
 export interface ProductActionButtonProps {
@@ -12,7 +12,7 @@ export interface ProductActionButtonProps {
   isAvailable: boolean;
   isFree: boolean;
   isInCart: boolean;
-  cartQuantity: number;
+  quantity: number;
   loading?: boolean;
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
@@ -24,14 +24,14 @@ export const ProductActionButton = ({
   isAvailable,
   isFree,
   isInCart,
-  cartQuantity,
+  quantity,
   loading,
   buttonProps,
   appearance,
   quantityProps,
 }: ProductActionButtonProps) => {
   const t = useTranslations("BoxBuilder");
-  const { addToCart, loading: isAdding } = useAddItemToCart();
+  const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
 
   if (!isAvailable) {
@@ -42,7 +42,7 @@ export const ProductActionButton = ({
     );
   }
 
-  if (isInCart && cartQuantity > 0) {
+  if (isInCart && quantity > 0) {
     return (
       <BoxBuilderQuantityInput
         productId={productId}
@@ -50,7 +50,6 @@ export const ProductActionButton = ({
         color={quantityProps?.color ?? "primary"}
         disabled={quantityProps?.disabled ?? isFree}
         className={quantityProps?.className}
-        useTrashButton={quantityProps?.useTrashButton}
         appearance={appearance}
       />
     );
@@ -60,7 +59,10 @@ export const ProductActionButton = ({
     if (isInternalLoading) return;
     setIsInternalLoading(true);
     try {
-      await addToCart({ productId, quantity: 1 });
+      await addToCart({
+        purchasableId: productId,
+        quantity: 1,
+      });
     } finally {
       setIsInternalLoading(false);
     }

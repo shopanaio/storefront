@@ -1,30 +1,13 @@
-import { ApiMoney } from "@codegen/schema-client";
-import { useCart } from "./useCart";
+import { useBoxBuilderCart } from "./useCart";
 
-export function useIsInTheCart(productId: string): {
-  isInCart: boolean;
-  quantity: number;
-  cartItemId: string;
-  subtotal: ApiMoney | null;
-} {
-  const { cart } = useCart();
+export function useIsInTheBoxBuilderCart(purchasableId: string) {
+  const { cart } = useBoxBuilderCart();
 
-  if (!cart || !productId)
-    return { isInCart: false, quantity: 0, cartItemId: "", subtotal: null };
-
-  const lines = cart.lines?.edges ?? [];
-
-  for (const edge of lines) {
-    const node = edge.node;
-    if (node?.purchasable?.id === productId) {
-      return {
-        isInCart: true,
-        quantity: node.quantity ?? 0,
-        cartItemId: node.id,
-        subtotal: node.cost.subtotalAmount as ApiMoney,
-      };
+  for (const line of cart?.lines || []) {
+    if (line?.purchasableId === purchasableId) {
+      return line;
     }
   }
 
-  return { isInCart: false, quantity: 0, cartItemId: "", subtotal: null };
+  return null;
 }

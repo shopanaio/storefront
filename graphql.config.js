@@ -3,6 +3,11 @@ const config = {
     client: {
       schema: "schema.shopana.graphql",
       documents: ["src/**/*shopana.ts", "src/**/*shopana.tsx"],
+      directives: {
+        inline: "@inline",
+        include: "@include",
+        skip: "@skip",
+      },
     },
     shopify: {
       schema: "schema.shopify.graphql",

@@ -1,35 +1,31 @@
 import { useEffect } from "react";
 import { useBoxBuilderStore } from "@src/store/appStore";
+import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 
-type UnknownRecord = Record<string, unknown>;
-
-export function useSyncCartState(cart: UnknownRecord | null | undefined, isCartLoaded: boolean) {
-  const selectedCardIds = useBoxBuilderStore((s) => s.selectedCardIds);
-  const removeSelectedCardId = useBoxBuilderStore((s) => s.removeSelectedCardId);
-  const selectedBoxId = useBoxBuilderStore((s) => s.selectedBoxId);
-  const setSelectedBoxId = useBoxBuilderStore((s) => s.setSelectedBoxId);
+export function useSyncCartState() {
+  const { cart, loaded } = useBoxBuilderCart();
+  const { boxProductIds, cardProductIds, setBoxProductIds, setCardProductIds } =
+    useBoxBuilderStore();
 
   useEffect(() => {
-    if (!isCartLoaded) return;
-
-    const edges = (cart as any)?.lines?.edges ?? [];
-    // If cart is empty or missing, edges will be empty array — this is ok,
-    // synchronization below will clear ids that are not in cart
+    if (!loaded || !cart?.lines) {
+      return;
+    }
 
     const idsInCart = new Set<string>();
-    for (const edge of (Array.isArray(edges) ? edges : [])) {
-      const id = edge?.node?.purchasable?.id as string | undefined;
-      if (id) idsInCart.add(id);
-    }
-
-    for (const id of selectedCardIds) {
-      if (!idsInCart.has(id)) {
-        removeSelectedCardId(id);
+    cart.lines.forEach((line) => {
+      if (line?.purchasableId) {
+        idsInCart.add(line?.purchasableId);
       }
-    }
+    });
 
-    if (selectedBoxId && !idsInCart.has(selectedBoxId)) {
-      setSelectedBoxId("");
-    }
-  }, [isCartLoaded, cart, selectedCardIds, selectedBoxId, removeSelectedCardId, setSelectedBoxId]);
+    const remainingBoxProductIds = boxProductIds.filter((id) => {
+      return idsInCart.has(id);
+    });
+    const remainingCardProductIds = cardProductIds.filter((id) => {
+      return idsInCart.has(id);
+    });
+    setBoxProductIds(remainingBoxProductIds);
+    setCardProductIds(remainingCardProductIds);
+  }, [loaded, cart]);
 }

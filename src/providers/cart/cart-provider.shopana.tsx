@@ -19,6 +19,10 @@ interface CartProviderProps {
    * Function to provide cart ID from specific source
    */
   getId: () => string | null;
+  /**
+   * Function to set cart ID
+   */
+  setId: (id: string | null) => void;
 }
 
 type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
@@ -38,7 +42,8 @@ const CartDataHandler: React.FC<{
 
     if (checkout) {
       onCartData(checkout);
-    } else if (checkout === null || checkout === undefined) {
+    } else {
+      console.log("Cart not found");
       onCartNotFound();
     }
   }, [cartData, onCartData, onCartNotFound]);
@@ -48,7 +53,8 @@ const CartDataHandler: React.FC<{
 
 const CartProvider: React.FC<CartProviderProps> = ({
   children,
-  getId
+  getId,
+  setId,
 }) => {
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
@@ -81,17 +87,14 @@ const CartProvider: React.FC<CartProviderProps> = ({
     loadQuery({ checkoutId: cartId }, { fetchPolicy: "network-only" });
   }, [loadQuery, getId]);
 
-  const handleCartData = useCallback(
-    (cart: useCart_CartFragment$key) => {
-      /* console.log("[CartProvider Shopana] Cart loaded successfully:", cart); */
-      setCartKey(cart);
-      setIsCartLoaded(true);
-      isLoadingRef.current = false;
-      setIsCartLoading(false);
-      loadedRef.current = true;
-    },
-    []
-  );
+  const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
+    /* console.log("[CartProvider Shopana] Cart loaded successfully:", cart); */
+    setCartKey(cart);
+    setIsCartLoaded(true);
+    isLoadingRef.current = false;
+    setIsCartLoading(false);
+    loadedRef.current = true;
+  }, []);
 
   const handleCartNotFound = useCallback(() => {
     /* console.log("[CartProvider Shopana] Cart not found, removing cookie"); */
@@ -116,6 +119,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
       setCartKey={setCartKey}
       isCartLoading={isCartLoading}
       isCartLoaded={isCartLoaded}
+      setId={setId}
     >
       {queryReference ? (
         <CartDataHandler

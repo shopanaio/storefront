@@ -1,8 +1,8 @@
 "use client";
 
-import { useIsInTheCart } from "./useIsInTheCart";
-import { useUpdateCartLineQuantity } from "./useUpdateCartLineQuantity";
-import { useRemoveItemFromCart } from "./useRemoveItemFromCart";
+import { useIsInTheBoxBuilderCart } from "./useIsInTheCart";
+import { useUpdateBoxBuilderCartLine } from "./useUpdateCartLine";
+import { useRemoveItemFromBoxBuilderCart } from "./useRemoveItemFromCart";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -13,7 +13,6 @@ export interface UseBoxBuilderQuantityInputPropsParams {
   productId: string;
   disabled?: boolean;
   loading?: boolean;
-  useTrashButton?: boolean;
   appearance?: "card" | "activity";
 }
 
@@ -30,84 +29,77 @@ export const useBoxBuilderQuantityInputProps = ({
   productId,
   disabled,
   loading,
-  useTrashButton = false,
   appearance = "card",
 }: UseBoxBuilderQuantityInputPropsParams): BoxBuilderQuantityInputProps => {
   const t = useTranslations("BoxBuilder");
   const formatPrice = useFormatPrice();
-  const {
-    quantity: cartQuantity,
-    cartItemId,
-    subtotal,
-  } = useIsInTheCart(productId);
-  const { updateQuantity, loading: isUpdating } = useUpdateCartLineQuantity();
-  const { removeFromCart, loading: isRemoving } = useRemoveItemFromCart();
-  const { modal } = App.useApp();
-  const {
-    selectedBoxId,
-    setSelectedBoxId,
-    selectedCardIds,
-    removeSelectedCardId,
-  } = useBoxBuilderStore();
+  const cartLine = useIsInTheBoxBuilderCart(productId);
 
-  const clearSelectionsIfMatched = () => {
-    if (selectedBoxId === productId) setSelectedBoxId("");
-    if (selectedCardIds.includes(productId)) removeSelectedCardId(productId);
-  };
+  const { updateQuantity, loading: isUpdating } = useUpdateBoxBuilderCartLine();
+  const { removeFromCart, loading: isRemoving } =
+    useRemoveItemFromBoxBuilderCart();
+  const { modal } = App.useApp();
+  const {} = useBoxBuilderStore();
 
   const handleIncrement = () => {
-    updateQuantity({ cartItemId, quantity: cartQuantity + 1 });
+    if (!cartLine) {
+      return;
+    }
+    updateQuantity({
+      cartItemId: cartLine.id,
+      quantity: cartLine.quantity + 1,
+    });
   };
 
   const handleDecrement = () => {
-    // If quantity is 1, perform remove instead of setting to 0
-    if (cartQuantity <= 1) {
-      if (useTrashButton) {
-        // In cart: use confirm modal flow
-        handleRemove();
-      } else {
-        // Outside cart: remove immediately
-        removeFromCart({ productId });
-        clearSelectionsIfMatched();
-      }
+    if (!cartLine) {
       return;
     }
 
-    const newQuantity = cartQuantity - 1;
-    updateQuantity({ cartItemId, quantity: newQuantity });
+    if (cartLine.quantity <= 1) {
+      handleRemove();
+      return;
+    }
+    updateQuantity({
+      cartItemId: cartLine.id,
+      quantity: cartLine.quantity - 1,
+    });
   };
 
   const handleRemove = () => {
-    // Show confirm modal only when trash button is used (i.e., in cart)
-    if (useTrashButton) {
-      modal.confirm({
-        icon: null,
-        title: t("remove-confirm-title"),
-        content: t("remove-confirm-content"),
-        okText: t("remove-confirm-ok"),
-        cancelText: t("remove-confirm-cancel"),
-        onOk: async () => {
-          await removeFromCart({ productId });
-          clearSelectionsIfMatched();
-        },
-      });
-      return;
-    }
-
-    // Fallback (should not be used outside cart because trash is hidden)
-    removeFromCart({ productId });
-    clearSelectionsIfMatched();
+    modal.confirm({
+      icon: null,
+      title: t("remove-confirm-title"),
+      content: t("remove-confirm-content"),
+      okText: t("remove-confirm-ok"),
+      cancelText: t("remove-confirm-cancel"),
+      onOk: () => {
+        if (cartLine) {
+          removeFromCart({
+            lineId: cartLine.id,
+          });
+        }
+      },
+    });
   };
 
   const value = useMemo(() => {
-    let value: string | number = cartQuantity;
+    if (!cartLine) {
+      return 0;
+    }
 
-    if (appearance === "activity" && subtotal) {
-      value = `${cartQuantity} ${t("in-the-box")} • ${formatPrice(subtotal)}`;
+    const {
+      quantity,
+      cost: { subtotalAmount },
+    } = cartLine;
+    let value: string | number = quantity || 0;
+
+    if (appearance === "activity" && subtotalAmount) {
+      value = `${quantity} ${t("in-the-box")} • ${formatPrice(subtotalAmount)}`;
     }
 
     return value;
-  }, [cartQuantity, appearance, subtotal, t, formatPrice]);
+  }, [cartLine, appearance, t, formatPrice]);
 
   const computedLoading = Boolean(isUpdating || isRemoving || loading);
 
@@ -115,7 +107,7 @@ export const useBoxBuilderQuantityInputProps = ({
     value,
     onIncrement: handleIncrement,
     onDecrement: handleDecrement,
-    onRemove: useTrashButton ? handleRemove : undefined,
+    onRemove: handleRemove,
     loading: computedLoading,
     disabled,
   };

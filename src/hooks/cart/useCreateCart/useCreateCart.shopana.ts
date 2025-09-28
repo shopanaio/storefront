@@ -1,12 +1,13 @@
 import { ApiCheckoutCreateInput } from "@codegen/schema-client";
 import { graphql, useMutation } from "react-relay";
 import { useCreateCartMutation as CreateCartMutationType } from "@src/hooks/cart/useCreateCart/__generated__/useCreateCartMutation.graphql";
-import cartIdUtils from "@src/utils/cartId";
+import { useCartContext } from "@src/providers/cart-context";
 
 export const useCreateCartMutation = graphql`
   mutation useCreateCartMutation($input: CheckoutCreateInput!) {
     checkoutMutation {
       checkoutCreate(input: $input) {
+        id
         ...useCart_CartFragment
       }
     }
@@ -14,29 +15,43 @@ export const useCreateCartMutation = graphql`
 `;
 
 const useCreateCart = () => {
+  const { setId } = useCartContext();
   const [commit, isInFlight] = useMutation<CreateCartMutationType>(
     useCreateCartMutation
   );
 
   const createCart = (
-    input: ApiCheckoutCreateInput
-  ): Promise<CreateCartMutationType["response"]["checkoutMutation"]["checkoutCreate"]> => {
+    input: ApiCheckoutCreateInput,
+    options?: {
+      onSuccess?: () => void;
+      onError?: () => void;
+    }
+  ): Promise<
+    CreateCartMutationType["response"]["checkoutMutation"]["checkoutCreate"]
+  > => {
     return new Promise((resolve, reject) => {
       commit({
-        variables: { input },
+        variables: {
+          input,
+        },
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
-            reject(errors);
+            options?.onError?.();
+            return reject(errors);
           } else {
             const checkout = response?.checkoutMutation?.checkoutCreate;
-            if (checkout && checkout) {
-              // Save cart ID in cookie
-              cartIdUtils.setCartIdCookie(checkout.id);
+            if (!checkout?.id) {
+              alert("No cart ID found in response");
             }
-            resolve(checkout);
+            if (checkout) {
+              setId(checkout.id);
+            }
+            options?.onSuccess?.();
+            return resolve(checkout);
           }
         },
         onError: (err) => {
+          options?.onError?.();
           reject(err);
         },
       });

@@ -14,8 +14,6 @@ import BoxBuilderGrid from "../BoxBuilderGrid";
 import Layout from "../stackflow/Layout";
 import { LayoutFooterButton } from "../stackflow/Layout";
 import { Activity, useFlow } from "../stackflow/Stack";
-import { useBoxBuilderStore } from "@src/store/appStore";
-import { useFindProductInCart } from "@src/modules/box-builder/hooks/useFindProductInCart";
 import React, { Suspense } from "react";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import { PersistedModal } from "@src/modules/box-builder/PersistedModal";
@@ -29,6 +27,7 @@ import { BoxBuilderSectionSkeleton } from "../skeletons/SectionSkeleton";
 import { StepHeader } from "@src/modules/box-builder/StepHeader";
 import { ProductCardRelay } from "@src/modules/box-builder/ProductCardRelay";
 import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
+import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 
 const ProductsSection: React.FC = () => {
   const environment = useRelayEnvironment();
@@ -74,19 +73,19 @@ const Step1: ActivityComponentType<Step1Params> = () => {
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
 
-  const { selectedBoxId } = useBoxBuilderStore();
-  const selectedBox = useFindProductInCart(selectedBoxId);
+  const { boxes } = useBoxBuilderProgress();
+  console.log("selectedBoxId", boxes.products);
 
   const handleFooterBtnClick = () => {
     push(Activity.Step2, {});
   };
 
   const footerContent =
-    selectedBoxId !== "" && selectedBox?.title !== undefined ? (
+    boxes.quantity > 0 ? (
       <LayoutFooterButton
         onClick={handleFooterBtnClick}
-        label={selectedBox?.title}
-        money={selectedBox?.cost?.totalAmount}
+        label={t("footer.boxes-count", { count: boxes.quantity })}
+        money={boxes.totalAmount}
       />
     ) : null;
 

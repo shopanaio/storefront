@@ -8,6 +8,7 @@ interface CartContextValue {
   setCartKey: (key: useCart_CartFragment$key | null) => void;
   isCartLoading: boolean;
   isCartLoaded: boolean;
+  setId: (id: string | null) => void;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -18,6 +19,7 @@ interface CartContextProviderProps {
   setCartKey: (key: useCart_CartFragment$key | null) => void;
   isCartLoading: boolean;
   isCartLoaded: boolean;
+  setId: (id: string | null) => void;
 }
 
 export const CartContextProvider: React.FC<CartContextProviderProps> = ({
@@ -26,6 +28,7 @@ export const CartContextProvider: React.FC<CartContextProviderProps> = ({
   setCartKey,
   isCartLoading,
   isCartLoaded,
+  setId,
 }) => {
   return (
     <CartContext.Provider
@@ -34,6 +37,7 @@ export const CartContextProvider: React.FC<CartContextProviderProps> = ({
         setCartKey,
         isCartLoading,
         isCartLoaded,
+        setId,
       }}
     >
       {children}

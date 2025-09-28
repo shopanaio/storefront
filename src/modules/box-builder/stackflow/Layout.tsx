@@ -1,6 +1,6 @@
 import { AppScreen } from "@stackflow/plugin-basic-ui";
 
-import { useCart } from "@src/modules/box-builder/hooks/useCart";
+import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 import { Price } from "@src/components/UI/Price/Price";
 import { FullLogo } from "@src/components/Layout/Logo";
 import { TbArrowRight, TbArrowLeft, TbShoppingCart } from "react-icons/tb";
@@ -161,7 +161,7 @@ export const LayoutFooterButton: React.FC<LayoutFooterButtonProps> = ({
 };
 
 const CartButton = () => {
-  const { cart } = useCart();
+  const { cart } = useBoxBuilderCart();
   const { push } = useFlow();
 
   return (

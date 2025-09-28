@@ -1,7 +1,7 @@
 import { ApiCreateCartInput } from "@codegen/schema-client";
 import { useMutation, graphql } from "react-relay";
 import { useCreateCartMutation as CreateCartMutationType } from "@src/hooks/cart/useCreateCart/__generated__/useCreateCartMutation.graphql";
-import cartIdUtils from "@src/utils/cartId";
+import { useCartContext } from "@src/providers/cart-context";
 
 
 const useCreateCartMutation = graphql`
@@ -21,6 +21,7 @@ const useCreateCartMutation = graphql`
 `;
 
 const useCreateCart = () => {
+  const { setId } = useCartContext();
   const [commit, isInFlight] = useMutation<CreateCartMutationType>(useCreateCartMutation);
 
   const createCart = (input: ApiCreateCartInput): Promise<CreateCartMutationType["response"]["cartCreate"]["cart"]> => {
@@ -54,9 +55,9 @@ const useCreateCart = () => {
             console.log("Cart data from response:", cartData);
 
             if (cartData && cartData.id) {
-              // Save cart ID in cookie
-              cartIdUtils.setCartIdCookie(cartData.id);
-              console.log("Cart ID saved to cookie:", cartData.id);
+              // Save cart ID using context setter
+              setId(cartData.id);
+              console.log("Cart ID saved through context:", cartData.id);
               resolve(cartData);
             } else {
               console.error("No cart data found in response");
@@ -68,7 +69,7 @@ const useCreateCart = () => {
                 const cart = responseAny.cartCreate.cart;
                 console.log("Found cart through alternative access:", cart);
                 if (cart.id) {
-                  cartIdUtils.setCartIdCookie(cart.id);
+                  setId(cart.id);
                   resolve(cart);
                   return;
                 }

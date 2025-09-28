@@ -13,6 +13,7 @@ export const useAddItemToCartMutation = graphql`
     checkoutMutation {
       checkoutLinesAdd(input: $input) {
         checkout {
+          id
           ...useCart_CartFragment
         }
         errors {
@@ -35,20 +36,29 @@ const useAddItemToCart = () => {
   );
 
   return {
-    addToCart: async (input: AddToCartInput): Promise<unknown> => {
+    addToCart: async (
+      input: AddToCartInput,
+      options?: {
+        onSuccess?: () => void;
+        onError?: () => void;
+      }
+    ): Promise<unknown> => {
       // If no cart — create new one
       if (!cart?.id) {
-        const newCart = await createCart({
-          idempotency: Math.random().toString(36).substring(2, 15),
-          currencyCode,
-          localeCode,
-          items: [
-            {
-              purchasableId: input.purchasableId,
-              quantity: input.quantity,
-            },
-          ],
-        });
+        const newCart = await createCart(
+          {
+            idempotency: Math.random().toString(36).substring(2, 15),
+            currencyCode,
+            localeCode,
+            items: [
+              {
+                purchasableId: input.purchasableId,
+                quantity: input.quantity,
+              },
+            ],
+          },
+          options
+        );
         // Update context with new cart key
         if (newCart) {
           setCartKey(newCart);
@@ -72,22 +82,28 @@ const useAddItemToCart = () => {
           },
           onCompleted: (response, errors) => {
             if (errors && errors.length > 0) {
-              reject(errors);
+              options?.onError?.();
+              return reject(errors);
             } else if (
               response?.checkoutMutation?.checkoutLinesAdd?.errors &&
               response.checkoutMutation.checkoutLinesAdd.errors.length > 0
             ) {
-              reject(response.checkoutMutation.checkoutLinesAdd.errors);
+              options?.onError?.();
+              return reject(response.checkoutMutation.checkoutLinesAdd.errors);
             } else {
               if (response?.checkoutMutation?.checkoutLinesAdd?.checkout) {
                 // Update context cart with new data
                 setCartKey(response.checkoutMutation.checkoutLinesAdd.checkout);
               }
 
-              resolve(response?.checkoutMutation?.checkoutLinesAdd?.checkout);
+              options?.onSuccess?.();
+              return resolve(
+                response?.checkoutMutation?.checkoutLinesAdd?.checkout
+              );
             }
           },
           onError: (err) => {
+            options?.onError?.();
             reject(err);
           },
         });

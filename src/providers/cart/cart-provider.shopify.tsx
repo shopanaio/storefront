@@ -14,6 +14,10 @@ interface CartProviderProps {
    * Function to provide cart ID from specific source
    */
   getId: () => string | null;
+  /**
+   * Function to set cart ID
+   */
+  setId: (id: string | null) => void;
 }
 
 // Separate component for handling cart data
@@ -41,7 +45,8 @@ const CartDataHandler: React.FC<{
 
 const CartProvider: React.FC<CartProviderProps> = ({
   children,
-  getId
+  getId,
+  setId
 }) => {
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
@@ -114,6 +119,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
       setCartKey={setCartKey}
       isCartLoading={isCartLoading}
       isCartLoaded={isCartLoaded}
+      setId={setId}
     >
       {queryReference && (
         <CartDataHandler

@@ -1,13 +1,13 @@
-import { graphql, useFragment } from "react-relay";
+import { graphql, readInlineData, useFragment } from "react-relay";
 import { useCartContext } from "@src/providers/cart-context";
 import { useCart_CartFragment$key } from "./__generated__/useCart_CartFragment.graphql";
 import cartIdUtils from "@src/utils/cartId";
 import React, { useEffect, useMemo } from "react";
+import { useCartLineFragment_CartLineFragment } from "@src/hooks/cart/useCartLineFragment/useCartLineFragment.shopana";
 
 export const useCart_CartFragment = graphql`
   fragment useCart_CartFragment on Checkout {
     id
-    # iid
     createdAt
     updatedAt
     cost {
@@ -32,44 +32,8 @@ export const useCart_CartFragment = graphql`
         amount
       }
     }
-    #shippingDetails{
-    #    availableMethods{
-    #      id
-    #      iid
-    #      handle
-    #      title
-    #      estimatedDeliveryTime
-    #    }
-    #    selectedMethod{
-    #      id
-    #      iid
-    #      handle
-    #      title
-    #      estimatedDeliveryTime
-    #    }
-    #    estimatedDeliveryDate
-    #  }
-    #paymentDetails{
-    #    availableMethods{
-    #      id
-    #      iid
-    #      handle
-    #      title
-    #      estimatedDeliveryTime
-    #    }
-    #    selectedMethod{
-    #      id
-    #      iid
-    #      handle
-    #      title
-    #      estimatedDeliveryTime
-    #    }
-    #  }
     totalQuantity
     lines {
-      id
-      quantity
-      purchasableId
       ...useCartLineFragment_CartLineFragment
     }
   }
@@ -102,8 +66,20 @@ const useCart = () => {
     console.log("Shopana cart active");
   }, []);
 
+  const cartMemo = useMemo(() => {
+    if (!cart) {
+      return null;
+    }
+    return {
+      ...cart,
+      lines: (cart?.lines || [])?.map((cartLineRef) =>
+        readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
+      ),
+    };
+  }, [cart]);
+
   return {
-    cart,
+    cart: cartMemo,
     loading: isCartLoading,
     loaded: isCartLoaded,
     error: null,

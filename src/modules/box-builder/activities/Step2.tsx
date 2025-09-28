@@ -11,9 +11,8 @@ import React from "react";
 
 import Progress from "../Progress";
 import Layout from "../stackflow/Layout";
-import { useCartProgress } from "@src/modules/box-builder/hooks/useCartProgress";
+import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 import { useBoxBuilderCategories } from "@src/modules/box-builder/hooks/useBoxBuilderCategories";
-import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import { Suspense } from "react";
 import { BoxBuilderSwiperSectionSkeleton } from "../skeletons/SwiperSectionSkeleton";
 import ProductsOnlyFooterButton from "@src/modules/box-builder/ProductsOnlyFooterButton";
@@ -30,7 +29,10 @@ const CategoriesSections: React.FC = () => {
       {categories.map((category, idx) => {
         if (!category) return null;
         return (
-          <CategorySection key={category.handle ?? idx} handle={category.handle} />
+          <CategorySection
+            key={category.handle ?? idx}
+            handle={category.handle}
+          />
         );
       })}
     </>
@@ -43,9 +45,7 @@ const Step2: ActivityComponentType<Step2Params> = () => {
   const { styles, theme } = useStyles();
   const t = useTranslations("BoxBuilder");
 
-  const {
-    progressPercent,
-  } = useCartProgress();
+  const { progress } = useBoxBuilderProgress();
 
   const footerContent = <ProductsOnlyFooterButton />;
 
@@ -57,7 +57,7 @@ const Step2: ActivityComponentType<Step2Params> = () => {
           title={t("step2.title")}
           description={t("step2.description")}
         />
-        <Progress percent={progressPercent} description={true} />
+        <Progress percent={progress} description={true} />
       </Flex>
       <Flex vertical gap={theme.marginLG}>
         <Suspense fallback={<BoxBuilderSwiperSectionSkeleton />}>

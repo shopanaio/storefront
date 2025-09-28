@@ -20,9 +20,7 @@ const App = ({ children }: IAppProps) => {
 
   return (
     <SessionClientProvider initialState={initialSessionState}>
-      <CartProvider getId={cartIdUtils.getCartIdFromCookie}>
-        <Theme>{children}</Theme>
-      </CartProvider>
+      <Theme>{children}</Theme>
     </SessionClientProvider>
   );
 };

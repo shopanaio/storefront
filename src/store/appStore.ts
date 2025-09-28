@@ -1,7 +1,6 @@
-import { create } from 'zustand';
-import { ApiCheckout, ApiProduct, CurrencyCode } from '@codegen/schema-client';
-import { createJSONStorage, persist } from 'zustand/middleware';
-
+import { create } from "zustand";
+import { ApiCheckout, ApiProduct, CurrencyCode } from "@codegen/schema-client";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 // modalStore
 interface ModalState {
@@ -32,7 +31,7 @@ export const useModalStore = create<ModalState>((set) => ({
   setIsAppDrawerOpen: (open) => set({ isAppDrawerOpen: open }),
   searchDialogOpen: false,
   setSearchDialogOpen: (open) => set({ searchDialogOpen: open }),
-  searchTerm: '',
+  searchTerm: "",
   setSearchTerm: (term) => set({ searchTerm: term }),
 }));
 
@@ -88,38 +87,57 @@ export const useReviewStore = create<ReviewState>((set) => ({
 
 // boxBuilderStore
 interface BoxBuilderState {
-  boxCartId: string | null;
-  setBoxCartId: (id: string) => void;
-  selectedBoxId: string | null;
-  setSelectedBoxId: (id: string) => void;
-  selectedCardIds: string[];
-  addSelectedCardId: (id: string) => void;
-  removeSelectedCardId: (id: string) => void;
-  clearSelectedCardIds: () => void;
+  cartId: string | null;
+  setCartId: (id: string | null) => void;
+  boxProductIds: string[];
+  setBoxProductIds: (id: string[]) => void;
+  addBoxProductId: (id: string) => void;
+  removeBoxProductId: (id: string) => void;
+  cardProductIds: string[];
+  addCardProductId: (id: string) => void;
+  setCardProductIds: (ids: string[]) => void;
+  removeCardProductId: (id: string) => void;
+  clearCardProductIds: () => void;
 }
 
 export const useBoxBuilderStore = create<BoxBuilderState>()(
   persist(
     (set) => ({
-      boxCartId: null,
-      setBoxCartId: (id) => set({ boxCartId: id }),
-      selectedBoxId: null,
-      setSelectedBoxId: (id) => set({ selectedBoxId: id }),
-      selectedCardIds: [],
-      addSelectedCardId: (id) =>
-        set((state) =>
-          state.selectedCardIds.includes(id)
-            ? state
-            : { selectedCardIds: [...state.selectedCardIds, id] }
-        ),
-      removeSelectedCardId: (id) =>
+      /** Cart */
+      cartId: null,
+      setCartId: (id) => set({ cartId: id }),
+      /** Box products */
+      boxProductIds: [],
+      setBoxProductIds: (ids) => {
+        set({ boxProductIds: ids });
+      },
+      addBoxProductId: (id) => {
+        set((state) => ({ boxProductIds: [...state.boxProductIds, id] }));
+      },
+      removeBoxProductId: (id) => {
         set((state) => ({
-          selectedCardIds: state.selectedCardIds.filter((x) => x !== id),
-        })),
-      clearSelectedCardIds: () => set({ selectedCardIds: [] }),
+          boxProductIds: state.boxProductIds.filter((x) => x !== id),
+        }));
+      },
+      /** Card products */
+      cardProductIds: [],
+      addCardProductId: (id) => {
+        set((state) => ({ cardProductIds: [...state.cardProductIds, id] }));
+      },
+      setCardProductIds: (ids) => {
+        set({ cardProductIds: ids });
+      },
+      removeCardProductId: (id) => {
+        set((state) => ({
+          cardProductIds: state.cardProductIds.filter((x) => x !== id),
+        }));
+      },
+      clearCardProductIds: () => {
+        set({ cardProductIds: [] });
+      },
     }),
     {
-      name: 'box-builder-store',
+      name: "box-builder-store",
       storage: createJSONStorage(() => localStorage),
     }
   )
@@ -133,8 +151,13 @@ export type FiltersMap = Record<
 
 interface FiltersState {
   selectedFilters: FiltersMap;
-  setSelectedFilters: (filters: FiltersMap | ((prevState: FiltersMap) => FiltersMap)) => void;
-  updateFilter: (handle: string, filterData: { values: string[] | [number, number]; inputs?: string[] }) => void;
+  setSelectedFilters: (
+    filters: FiltersMap | ((prevState: FiltersMap) => FiltersMap)
+  ) => void;
+  updateFilter: (
+    handle: string,
+    filterData: { values: string[] | [number, number]; inputs?: string[] }
+  ) => void;
   removeFilter: (handle: string) => void;
   clearFilters: () => void;
 }
@@ -143,7 +166,10 @@ export const useFiltersStore = create<FiltersState>((set, get) => ({
   selectedFilters: {},
   setSelectedFilters: (filters) =>
     set((state) => ({
-      selectedFilters: typeof filters === 'function' ? filters(state.selectedFilters) : filters
+      selectedFilters:
+        typeof filters === "function"
+          ? filters(state.selectedFilters)
+          : filters,
     })),
   updateFilter: (handle, filterData) =>
     set((state) => ({

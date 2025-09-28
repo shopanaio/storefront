@@ -4,8 +4,8 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { LayoutFooterButton } from "./stackflow/Layout";
 import type { ApiMoney } from "@codegen/schema-client";
-import { useCart } from "@src/modules/box-builder/hooks/useCart";
-import { useCartProgress } from "@src/modules/box-builder/hooks/useCartProgress";
+import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
+import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 
 interface ProductsOnlyFooterButtonProps {
@@ -17,36 +17,20 @@ const ProductsOnlyFooterButton: React.FC<ProductsOnlyFooterButtonProps> = ({
 }) => {
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
-  const { cart } = useCart();
-  const {
-    productsOnlyCount,
-    selectedBoxInCart,
-    boxQuantityInCart,
-    envelopesTotalPriceAmount,
-  } = useCartProgress();
+  const { cart } = useBoxBuilderCart();
+  const { boxes, cards, products } = useBoxBuilderProgress();
 
-  if (productsOnlyCount <= 0) return null;
-
-  const boxPrice = (selectedBoxInCart?.price?.amount ?? 0) * boxQuantityInCart;
-  const envelopePrice = envelopesTotalPriceAmount;
-  const productsOnlyPrice =
-    (cart?.cost.totalAmount.amount ?? 0) - boxPrice - envelopePrice;
-
-  const baseMoney = cart?.cost?.totalAmount;
-  const productsOnlyCost: ApiMoney | undefined = baseMoney
-    ? {
-        amount: Math.max(0, productsOnlyPrice),
-        currencyCode: baseMoney.currencyCode as ApiMoney["currencyCode"],
-      }
-    : undefined;
+  if (!products.quantity) {
+    return null;
+  }
 
   const handleClick = onClickOverride ?? (() => push(Activity.Step3, {}));
 
   return (
     <LayoutFooterButton
       onClick={handleClick}
-      label={t("footer.products-count", { count: productsOnlyCount })}
-      money={productsOnlyCost}
+      label={t("footer.products-count", { count: products.quantity })}
+      money={products.totalAmount}
       size="large"
     />
   );

@@ -1,45 +1,41 @@
 "use client";
 
-import { ApiCheckoutLine } from "@codegen/schema-client";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { Activity, useFlow } from "./stackflow/Stack";
 import { useBoxBuilderQuantityInputProps } from "./hooks/useBoxBuilderQuantityInputProps";
 import { ProductType } from "./ProductCard";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
+import { Entity } from "@src/entity";
 
 interface BoxCartLineProps {
-  product: ApiCheckoutLine;
+  cartLine: Entity.CartLine;
 }
 
-export default function BoxCartLine({ product }: BoxCartLineProps) {
+export default function BoxCartLine({ cartLine }: BoxCartLineProps) {
   const { push } = useFlow();
+  const { boxProductIds, cardProductIds } = useBoxBuilderStore();
 
-  const { selectedBoxId, selectedCardIds } = useBoxBuilderStore();
-
-  const isItBox = product.purchasableId === selectedBoxId;
-  const isItEnvelope = selectedCardIds.includes(product.purchasableId ?? "");
-
-  const purchasable = (product as any).purchasable ?? {};
-  const imageUrl =
-    purchasable.cover?.url || product.imageSrc || fallbackImageBase64;
-  const title = purchasable.title || product.title || "";
-
-  const price = product.cost.unitPrice;
+  const purchasableId = cartLine.purchasable?.id ?? "";
+  const imageUrl = cartLine.purchasable?.cover?.url || fallbackImageBase64;
+  const title = cartLine.purchasable?.title || "";
+  const price = cartLine.cost.unitPrice;
 
   const quantityInputProps = useBoxBuilderQuantityInputProps({
-    productId: purchasable?.id ?? "",
-    disabled: !product.cost.unitPrice.amount,
-    useTrashButton: true,
+    productId: purchasableId,
+    disabled: !cartLine.cost.unitPrice.amount,
     appearance: "card",
   });
 
   const handleClick = () => {
+    const isProductTypeBox = boxProductIds.includes(purchasableId);
+    const isProductTypeEnvelope = cardProductIds.includes(purchasableId);
+
     push(Activity.Product, {
-      productHandle: purchasable.handle,
-      productType: isItBox
+      productHandle: cartLine.purchasable?.handle,
+      productType: isProductTypeBox
         ? ProductType.Box
-        : isItEnvelope
+        : isProductTypeEnvelope
         ? ProductType.Card
         : ProductType.Product,
     });
@@ -47,11 +43,11 @@ export default function BoxCartLine({ product }: BoxCartLineProps) {
 
   return (
     <CartLine
-      id={product.id ?? purchasable?.id ?? ""}
+      id={cartLine.id}
       title={title}
       imageUrl={imageUrl}
-      quantity={(product as any)?.quantity ?? 0}
-      unitPrice={price as any}
+      quantity={cartLine.quantity}
+      unitPrice={price}
       variant="drawer"
       onClick={handleClick}
       onRemove={quantityInputProps.onRemove}

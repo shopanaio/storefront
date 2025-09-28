@@ -1,6 +1,5 @@
 import useCart from "../useCart";
 import { useMutation, graphql } from "react-relay";
-import cartIdUtils from "@src/utils/cartId";
 import { useCartContext } from "@src/providers/cart-context";
 import { RemoveFromCartInput } from "./index";
 
@@ -10,6 +9,7 @@ export const useRemoveItemFromCartMutation = graphql`
     checkoutMutation {
       checkoutLinesDelete(input: $input) {
         checkout {
+          id
           ...useCart_CartFragment
         }
         errors {
@@ -23,14 +23,20 @@ export const useRemoveItemFromCartMutation = graphql`
 
 const useRemoveItemFromCart = () => {
   const { cart } = useCart();
-  const { setCartKey } = useCartContext();
+  const { setCartKey, setId } = useCartContext();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
     useRemoveItemFromCartMutation
   );
 
   return {
-    removeFromCart: async (input: RemoveFromCartInput): Promise<any> => {
+    removeFromCart: async (
+      input: RemoveFromCartInput,
+      options?: {
+        onSuccess?: () => void;
+        onError?: () => void;
+      }
+    ): Promise<any> => {
       const cartId = cart?.id;
 
       // If no cart in cookie or context — just exit
@@ -44,31 +50,34 @@ const useRemoveItemFromCart = () => {
           variables: {
             input: {
               checkoutId: cart.id,
-              lineIds: [(input.checkoutLine as any).id],
+              lineIds: [input.lineId],
             },
           },
           onCompleted: (response, errors) => {
             if (errors && errors.length > 0) {
-              reject(errors);
+              options?.onError?.();
+              return reject(errors);
             } else if (
               response?.checkoutMutation?.checkoutLinesDelete?.errors &&
               response.checkoutMutation.checkoutLinesDelete.errors.length > 0
             ) {
-              reject(response.checkoutMutation.checkoutLinesDelete.errors);
+              options?.onError?.();
+              return reject(
+                response.checkoutMutation.checkoutLinesDelete.errors
+              );
             } else {
               // If checkout became null — remove cookie and clear context
               if (!response?.checkoutMutation?.checkoutLinesDelete?.checkout) {
-                cartIdUtils.removeCartIdCookie();
                 setCartKey(null);
-              } else {
-                // Updating context cart fresh data
-                setCartKey(response.checkoutMutation.checkoutLinesDelete.checkout);
+                setId(null);
               }
-              resolve(response);
+              options?.onSuccess?.();
+              return resolve(response);
             }
           },
           onError: (err) => {
-            reject(err);
+            options?.onError?.();
+            return reject(err);
           },
         });
       });

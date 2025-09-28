@@ -4,15 +4,14 @@ function getCartIdFromCookie(): string | null {
   return Cookies.get("shopify_cart_id") || null;
 }
 
-function setCartIdCookie(
-  cartId: string,
-  options: { maxAge?: number } = {}
-): void {
-  const { maxAge } = options;
+function setCartIdCookie(cartId: string | null): void {
+  if (!cartId) {
+    Cookies.remove("shopify_cart_id");
+    return;
+  }
 
   Cookies.set("shopify_cart_id", cartId, {
     path: "/",
-    ...(maxAge && { expires: maxAge / (3600 * 24) }), // convert seconds → days
   });
 }
 

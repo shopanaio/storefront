@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Checkout as CheckoutComponent } from "@src/modules/checkout/Checkout";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout from "../stackflow/Layout";
-import { useCart } from "@src/modules/box-builder/hooks/useCart";
+import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 import { Activity, useFlow } from "../stackflow/Stack";
 import { newMockCart } from "@src/mocks/newCart";
 
@@ -15,7 +15,7 @@ const Checkout: ActivityComponentType = () => {
   const { styles } = useStyles();
   const t = useTranslations("BoxBuilder");
   const { push } = useFlow();
-  const { cart } = useCart();
+  const { cart } = useBoxBuilderCart();
 
   const methods = newMockCart;
 

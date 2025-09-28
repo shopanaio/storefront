@@ -4,13 +4,13 @@ const getCartIdFromCookie = (): string | null => {
   return Cookies.get("shopana_cart_id") || null;
 };
 
-const setCartIdCookie = (cartId: string, options: { maxAge?: number } = {}): void => {
-  const { maxAge } = options;
+const setCartIdCookie = (cartId: string | null): void => {
+  if (!cartId) {
+    Cookies.remove("shopana_cart_id");
+    return;
+  }
 
-  Cookies.set("shopana_cart_id", cartId, {
-    path: "/",
-    ...(maxAge && { expires: maxAge / (3600 * 24) }), // convert seconds → days
-  });
+  Cookies.set("shopana_cart_id", cartId);
 };
 
 const removeCartIdCookie = (): void => {
