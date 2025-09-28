@@ -3,7 +3,7 @@
 import { Button, Flex, Tag, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { FullBoxImg } from "@src/modules/box-builder/Images/FullBoxImg";
+import { FullBox } from "@src/modules/box-builder/Images/FullBox";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout from "@src/modules/box-builder/stackflow/Layout";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
@@ -34,12 +34,10 @@ const Order: ActivityComponentType = () => {
         </Flex>
         <Text>{t("finish-box.order-number-description")}</Text>
       </Flex>
-
       <Flex gap={12} vertical>
         <Button type="primary" size="large" onClick={handleCreateNewBox}>
           {t("finish-box.create-new-box")}
         </Button>
-
         <Button variant="outlined" size="large" onClick={handleBackToSite}>
           {t("finish-box.back-to-site")}
         </Button>
@@ -57,8 +55,7 @@ const Order: ActivityComponentType = () => {
           justify="center"
           gap={36}
         >
-          <FullBoxImg />
-
+          <FullBox />
           <Flex vertical gap={4} align="center">
             <Text strong className={styles.emptyTitle}>
               {t("finish-box.title")}

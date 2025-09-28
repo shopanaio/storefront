@@ -7,7 +7,7 @@ import { TbGift } from "react-icons/tb";
 import { FaWandMagicSparkles } from "react-icons/fa6";
 import { BsPostcardHeart } from "react-icons/bs";
 import { MdShoppingCartCheckout } from "react-icons/md";
-import { IntroImage } from "@src/modules/box-builder/Images/Intro";
+import { Intro } from "@src/modules/box-builder/Images/Intro";
 
 const { Text } = Typography;
 
@@ -19,7 +19,7 @@ export default function HowItWorks() {
     <>
       <Flex vertical align="center" gap={8}>
         <div className={styles.lottieContainer}>
-          <IntroImage />
+          <Intro />
         </div>
         <Text className={styles.title}>{t("title")}</Text>
         <Text className={styles.description}>{t("description")}</Text>

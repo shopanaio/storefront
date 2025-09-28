@@ -5,7 +5,7 @@ import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
 
-import { EmptyBoxImg } from "../Images/EmptyBoxImg";
+import { EmptyBox } from "../Images/EmptyBox";
 import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 import Progress from "@src/modules/box-builder/components/Progress";
 import { ActivityComponentType } from "@stackflow/react";
@@ -119,7 +119,7 @@ const EmptyCart: React.FC = () => {
           justify="center"
           gap={36}
         >
-          <EmptyBoxImg />
+          <EmptyBox />
           <Flex vertical gap={4} align="center">
             <Text strong className={styles.emptyTitle}>
               {t("step-check.empty.title")}

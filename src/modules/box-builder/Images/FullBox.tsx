@@ -3,7 +3,7 @@ interface Props {
   height?: number;
 }
 
-export function FullBoxImg({ width = 203, height = 174 }: Props) {
+export function FullBox({ width = 203, height = 174 }: Props) {
   return (
     <svg
       width={width}

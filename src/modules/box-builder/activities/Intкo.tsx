@@ -9,7 +9,7 @@ import Layout from "@src/modules/box-builder/stackflow/Layout";
 import { LayoutFooterButton } from "@src/modules/box-builder/stackflow/Layout";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 
-const Into: ActivityComponentType = () => {
+const Intro: ActivityComponentType = () => {
   const { styles } = useStyles();
   const t = useTranslations("BoxBuilder");
   const { replace } = useFlow();
@@ -36,7 +36,7 @@ const Into: ActivityComponentType = () => {
   );
 };
 
-export default Into;
+export default Intro;
 
 const useStyles = createStyles(({ token, css }) => ({
   container: css`

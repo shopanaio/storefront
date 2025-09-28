@@ -6,7 +6,7 @@ import { stackflow, StackflowOutput } from "@stackflow/react/future";
 import { defineConfig } from "@stackflow/config";
 import { historySyncPlugin } from "@stackflow/plugin-history-sync";
 
-import Into from "../activities/Into";
+import Intro from "../activities/Intro";
 import Step1 from "../activities/Step1";
 import Step2 from "../activities/Step2";
 import Step3 from "../activities/Step3";
@@ -17,7 +17,7 @@ import Order from "../activities/Order";
 import Category from "../activities/Category";
 
 export enum Activity {
-  Into = "Into",
+  Intro = "Intro",
   Step1 = "Step1",
   Step2 = "Step2",
   Step3 = "Step3",
@@ -31,7 +31,7 @@ export enum Activity {
 const config = defineConfig({
   activities: [
     {
-      name: Activity.Into,
+      name: Activity.Intro,
       route: "/into",
     },
     {

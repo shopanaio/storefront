@@ -2,7 +2,7 @@
 
 import { Button, Flex, Modal, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { FullBoxImg } from "@src/modules/box-builder/Images/FullBoxImg";
+import { FullBox } from "@src/modules/box-builder/Images/FullBox";
 import { useTranslations } from "next-intl";
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 import { useEffect, useState } from "react";
@@ -63,7 +63,7 @@ export const PersistedModal = () => {
     >
       <Flex vertical gap={20}>
         <Flex vertical align="center" gap={36}>
-          <FullBoxImg />
+          <FullBox />
           <Text strong className={styles.title}>
             {t("modal.title")}
           </Text>

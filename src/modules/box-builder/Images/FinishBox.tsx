@@ -3,7 +3,7 @@ interface Props {
   height?: number;
 }
 
-export function FinishBoxImg({ width = 191, height = 220 }: Props) {
+export function FinishBox({ width = 191, height = 220 }: Props) {
   return (
     <svg
       width={width}

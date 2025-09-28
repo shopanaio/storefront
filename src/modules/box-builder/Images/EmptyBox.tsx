@@ -3,7 +3,7 @@ interface Props {
   height?: number;
 }
 
-export function EmptyBoxImg({ width = 225, height = 175 }: Props) {
+export function EmptyBox({ width = 225, height = 175 }: Props) {
   return (
     <svg
       width={width}
