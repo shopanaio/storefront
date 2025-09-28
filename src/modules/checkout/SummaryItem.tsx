@@ -1,14 +1,14 @@
 import { Badge, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiCheckoutLine } from "@codegen/schema-client";
-import { Price } from "@src/components/UI/Price/Price";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { Entity } from "@src/entity";
+import { Money } from "@src/components/UI/Price/Money";
 
 const { Text } = Typography;
 
 interface Prop {
-  line: ApiCheckoutLine;
+  line: Entity.CartLine;
 }
 
 export const SummaryItem = ({ line }: Prop) => {
@@ -17,24 +17,21 @@ export const SummaryItem = ({ line }: Prop) => {
   return (
     <Flex className={styles.item} align="center" justify="space-between">
       <Flex align="center" gap={16}>
-        <div className={styles.imgWrapper}>
-          <Badge count={line.quantity} color="blue" offset={[0, 0]}>
-            <Thumbnail
-              // TODO: Fix
-              src={(line.purchasable as any)?.cover?.url || line.imageSrc || ""}
-              alt={(line.purchasable as any)?.title || line.title}
-            />
-          </Badge>
-        </div>
-
-        <Text className={styles.productName} type="secondary">
-          {line.title}
-        </Text>
+        <Badge
+          size="default"
+          count={line.quantity}
+          color="blue"
+          offset={[-4, 4]}
+        >
+          <Thumbnail
+            className={styles.thumbnail}
+            src={line.purchasable?.cover?.url}
+            alt={line.purchasable?.title}
+          />
+        </Badge>
+        <Text className={styles.productName}>{line.purchasable?.title}</Text>
       </Flex>
-
-      <Text strong>
-        <Price money={line.cost.totalAmount} />
-      </Text>
+      <Money strong as={Text} money={line.cost.totalAmount} />
     </Flex>
   );
 };
@@ -42,16 +39,13 @@ export const SummaryItem = ({ line }: Prop) => {
 const useStyles = createStyles(({ token, css }) => ({
   item: css`
     border-radius: ${token.borderRadius}px;
-
-    ${mq.lg} {
-      padding: ${token.paddingXS}px;
-      background-color: ${token.colorBgBase};
-    }
+    background-color: ${token.colorBgBase};
+    padding: ${token.paddingXS}px;
+    padding-right: ${token.padding}px;
   `,
-
-  imgWrapper: css`
-    width: 64px;
-    height: 64px;
+  thumbnail: css`
+    width: 50px;
+    height: 50px;
   `,
   productName: css`
     display: -webkit-box;

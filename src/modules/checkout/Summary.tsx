@@ -2,39 +2,25 @@ import { Flex, Input, Typography, Button, Divider } from "antd";
 import { createStyles } from "antd-style";
 import { SummaryItem } from "@src/modules/checkout/SummaryItem";
 import { useTranslations } from "next-intl";
-import { ApiCheckout } from "@codegen/schema-client";
-import { TbTicket } from "react-icons/tb";
+import { TbShoppingCart, TbTicket } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
 import { Money } from "@src/components/UI/Price/Money";
 import { CartDrawer } from "@src/components/Cart/CartDrawerDynamic";
+import { Entity } from "@src/entity";
 
 const { Text } = Typography;
 
 interface Prop {
-  cart: ApiCheckout;
-  onConfirm: () => void;
+  cart: Entity.Cart;
 }
 
-export const Summary = ({ cart, onConfirm }: Prop) => {
+export const Summary = ({ cart }: Prop) => {
   const t = useTranslations("Checkout");
   const { styles } = useStyles();
-  const pathname = usePathname();
-  const isBoxBuilder = pathname?.includes("/box-builder");
 
   const [, setCartDrawerOpen] = useState(false);
   const openCartDrawer = () => setCartDrawerOpen(true);
-
-  const handleConfirmOrder = () => {
-    if (isBoxBuilder) {
-      // If we're in box-builder, go to next step
-      onConfirm();
-    } else {
-      // Normal logic for checkout
-      console.log("clicked");
-    }
-  };
 
   return (
     <>
@@ -42,27 +28,38 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
         <Text className={styles.sectionTitle} strong>
           {t("order-summary")}
         </Text>
-        <Button type="link" onClick={() => openCartDrawer()}>
-          Edit
-        </Button>
+        <Button
+          color="default"
+          variant="text"
+          onClick={() => openCartDrawer()}
+          icon={<TbShoppingCart size={20} />}
+        />
       </Flex>
 
       <Flex vertical gap={8}>
         {(cart?.lines ?? []).map((line) => (
-          <SummaryItem key={line.id} product={line} />
+          <SummaryItem key={line.id} line={line} />
         ))}
       </Flex>
 
       <Divider className={styles.divider} />
 
-      <Flex vertical gap={12}>
+      <Flex vertical gap={8}>
         <Text>{t("coupon-code")}</Text>
-
         <Input
-          className={styles.couponInput}
           placeholder={t("coupon-code")}
-          prefix={<TbTicket className={styles.placeholderIcon} size={18} />}
-          suffix={<Button>{t("apply")}</Button>}
+          prefix={<TbTicket size={20} />}
+          suffix={<Button disabled>{t("apply")}</Button>}
+          styles={{
+            input: {
+              paddingInline: 12,
+            },
+            affixWrapper: {
+              paddingLeft: 12,
+              paddingRight: 6,
+              paddingBlock: 6,
+            },
+          }}
         />
       </Flex>
 
@@ -112,27 +109,7 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
             {cart ? <Money money={cart.cost.totalAmount} /> : null}
           </Text>
         </Flex>
-        <Button
-          type="primary"
-          size="large"
-          htmlType="submit"
-          onClick={handleConfirmOrder}
-        >
-          {t("confirm-order")}
-        </Button>
-        <Text>
-          {t("confirm-note")}{" "}
-          <Button className={styles.confirmLinkBtn} type="link">
-            {t("terms-service")}
-          </Button>{" "}
-          {t("and")}{" "}
-          <Button className={styles.confirmLinkBtn} type="link">
-            {t("privacy-notice")}
-          </Button>
-          .
-        </Text>
       </Flex>
-
       <CartDrawer />
     </>
   );
@@ -141,33 +118,19 @@ export const Summary = ({ cart, onConfirm }: Prop) => {
 const useStyles = createStyles(({ css, token }) => ({
   sectionTitle: css`
     font-size: ${token.fontSizeLG}px;
-    ${mq.lg} {
-      font-size: ${token.fontSizeLG}px;
-    }
-    ${mq.xl} {
-      font-size: ${token.fontSizeXL}px;
-    }
   `,
   divider: css`
     margin: 0;
-  `,
-  couponInput: css`
-    padding: ${token.paddingXS}px;
   `,
   placeholderIcon: css`
     color: ${token.colorTextPlaceholder};
   `,
   summaryRow: css`
-    ${mq.md} {
-      font-size: ${token.fontSizeLG}px;
-    }
+    font-size: ${token.fontSizeLG}px;
   `,
   summaryTotal: css`
-    font-size: ${token.fontSizeLG}px;
     font-weight: 900;
-    ${mq.md} {
-      font-size: ${token.fontSizeXL}px;
-    }
+    font-size: ${token.fontSizeXL}px;
   `,
   confirmLinkBtn: css`
     padding: 0;

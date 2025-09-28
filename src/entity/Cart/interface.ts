@@ -10,9 +10,9 @@ interface CartLine {
   purchasable: CartPurchasable;
   cost: {
     unitPrice: Money;
-    compareAtUnitPrice?: Money | null;
-    subtotalAmount?: Money;
-    totalAmount?: Money;
+    compareAtUnitPrice: Money | null;
+    subtotalAmount: Money;
+    totalAmount: Money;
   };
 }
 

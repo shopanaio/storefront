@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Flex, Typography } from "antd";
+import { Button, Divider, Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
@@ -10,6 +10,8 @@ import { PaymentMethods } from "@src/modules/checkout/Payment/PaymentMethods";
 import { ShippingMethods } from "@src/modules/checkout/Shipping/ShippingMethods";
 import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
 import { Entity } from "@src/entity";
+import { TermsNotice } from "@src/modules/checkout/TermsNotice";
+import { SubmitButton } from "@src/modules/checkout/SubmitButton";
 
 const { Text } = Typography;
 
@@ -84,7 +86,7 @@ export interface CheckoutFormValues {
   billingPhone: string;
 }
 
-export const Checkout = ({ cart, onConfirm }: Prop) => {
+export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
   const t = useTranslations("Checkout");
   const { styles } = useStyles();
 
@@ -127,70 +129,87 @@ export const Checkout = ({ cart, onConfirm }: Prop) => {
   const activePayment = watch("payment");
   const shippingAsBilling = watch("shippingAsBilling");
 
-  const onSubmit = (data: CheckoutFormValues) => {};
+  const onSubmit = (_: CheckoutFormValues) => {};
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <Flex className={styles.contactShippingSection}>
-            <Flex vertical gap={12}>
-              <Flex justify="space-between" align="center">
-                <Text className={styles.sectionTitle} strong>
-                  {t("contact")}
-                </Text>
-                <Button type="link">{t("log-in")}</Button>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className={styles.container}>
+          <div className={styles.main}>
+            <Flex className={styles.left}>
+              {brand}
+              <Flex vertical gap={12}>
+                <Flex justify="space-between" align="center">
+                  <Text className={styles.sectionTitle} strong>
+                    {t("contact")}
+                  </Text>
+                  <Button
+                    className={styles.logInButton}
+                    size="large"
+                    type="link"
+                  >
+                    {t("log-in")}
+                  </Button>
+                </Flex>
+                <PhoneInputField
+                  control={control}
+                  name="userPhone"
+                  label={t("phone-number")}
+                  placeholder={t("phone")}
+                />
               </Flex>
 
-              <PhoneInputField
-                control={control}
-                name="userPhone"
-                label={t("phone-number")}
-                placeholder={t("phone")}
-              />
+              <Flex vertical gap={12}>
+                <Text className={styles.sectionTitle} strong>
+                  {t("shipping")}
+                </Text>
+
+                {cart?.deliveryGroups?.[0]?.deliveryMethods && (
+                  <ShippingMethods
+                    methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
+                    activeShippingKey={activeShippingKey}
+                    setValue={setValue}
+                    control={control}
+                    watch={watch}
+                  />
+                )}
+              </Flex>
+
+              <Flex vertical gap={12}>
+                <Text className={styles.sectionTitle} strong>
+                  {t("payment")}
+                </Text>
+
+                {[]?.length > 0 && (
+                  <PaymentMethods
+                    methods={[]}
+                    activePayment={activePayment}
+                    shippingAsBilling={shippingAsBilling}
+                    setValue={setValue}
+                    control={control}
+                  />
+                )}
+              </Flex>
+              <Divider className={styles.divider} />
+
+              <Flex vertical gap={12} className={styles.actionsLeft}>
+                <SubmitButton />
+                <TermsNotice linkClassName={styles.confirmLinkBtn} />
+              </Flex>
             </Flex>
-
-            <Flex vertical gap={12}>
-              <Text className={styles.sectionTitle} strong>
-                {t("shipping")}
-              </Text>
-
-              {cart?.deliveryGroups?.[0]?.deliveryMethods && (
-                <ShippingMethods
-                  methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
-                  activeShippingKey={activeShippingKey}
-                  setValue={setValue}
-                  control={control}
-                  watch={watch}
-                />
-              )}
+            <Flex className={styles.rightContainer}>
+              <Flex vertical gap={12} className={styles.right}>
+                <Summary cart={cart} onConfirm={onConfirm} />
+                <Flex vertical gap={12} className={styles.actionsRight}>
+                  <SubmitButton />
+                  <TermsNotice linkClassName={styles.confirmLinkBtn} />
+                </Flex>
+              </Flex>
             </Flex>
-
-            <Flex vertical gap={12}>
-              <Text className={styles.sectionTitle} strong>
-                {t("payment")}
-              </Text>
-
-              {[]?.length > 0 && (
-                <PaymentMethods
-                  methods={[]}
-                  activePayment={activePayment}
-                  shippingAsBilling={shippingAsBilling}
-                  setValue={setValue}
-                  control={control}
-                />
-              )}
-            </Flex>
-          </Flex>
-
-          <Flex className={styles.orderSummaryBg}>
-            <Flex vertical gap={12} className={styles.orderSummarySection}>
-              <Summary cart={cart} onConfirm={onConfirm} />
-            </Flex>
-          </Flex>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </>
   );
 };
 
@@ -200,9 +219,7 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-direction: column;
       width: 100%;
-      padding: ${token.padding}px 0;
     `,
-
     main: css`
       display: flex;
       flex-direction: column;
@@ -212,87 +229,58 @@ const useStyles = createStyles(({ token, css }) => {
         display: grid;
         grid-template-columns: 1fr 1fr;
       }
-
-      --width: 1280px;
-      --offset: calc((100vw - var(--width)) / 2);
-
-      --left-column-width: 737px;
-      --right-column-width: calc(
-        var(--width) - var(--left-column-width) + var(--offset)
-      );
-
-      ${mq.xl} {
-        display: grid;
-        justify-content: end;
-        grid-template-columns: var(--left-column-width) var(
-            --right-column-width
-          );
-      }
-
-      ${mq.xxl} {
-        --width: 1400px;
-        --left-column-width: 850px;
-      }
     `,
-
-    contactShippingSection: css`
+    left: css`
+      width: 100%;
       flex-direction: column;
       gap: ${token.marginMD}px;
-
-      padding: ${token.paddingXS}px ${token.padding}px;
-
-      ${mq.lg} {
-        padding: ${token.paddingXS}px ${token.paddingXL}px ${token.paddingXS}px
-          ${token.padding}px;
-      }
-
-      ${mq.xl} {
-        padding: ${token.paddingXS}px ${token.paddingXL}px ${token.paddingXL}px
-          ${token.padding}px;
-      }
-    `,
-
-    sectionTitle: css`
-      font-size: ${token.fontSizeLG}px;
+      border-right: 2px solid ${token.colorBorderSecondary};
+      padding: ${token.padding}px;
 
       ${mq.lg} {
-        font-size: ${token.fontSizeLG}px;
-      }
-
-      ${mq.xl} {
-        font-size: ${token.fontSizeXL}px;
+        margin-left: auto;
+        max-width: calc(1280px / 2);
+        padding: ${token.paddingXL}px;
       }
     `,
-
-    methodTitle: css`
-      ${mq.xxl} {
-        font-size: ${token.fontSizeLG}px;
-      }
-    `,
-
-    orderSummaryBg: css`
+    rightContainer: css`
       background-color: ${token.colorBgLayout};
-      width: 100%;
     `,
-
-    orderSummarySection: css`
-      padding: ${token.paddingXS}px ${token.padding}px;
+    right: css`
       width: 100%;
+      padding: ${token.padding}px;
 
       ${mq.lg} {
+        max-width: calc(1280px / 2);
         position: sticky;
-        height: 100vh;
+        padding: ${token.paddingXL}px;
+        min-height: 100vh;
         top: 0;
-        width: 100%;
       }
-
-      --width: 1280px;
-      --offset: calc((100vw - var(--width)) / 2);
-      --left-column-width: 737px;
-
-      ${mq.xl} {
-        width: calc(var(--width) - var(--left-column-width));
+    `,
+    actionsLeft: css`
+      display: none;
+      ${mq.lg} {
+        display: flex;
       }
+    `,
+    actionsRight: css`
+      ${mq.lg} {
+        display: none;
+      }
+    `,
+    sectionTitle: css`
+      font-size: ${token.fontSizeXL}px;
+    `,
+    divider: css`
+      margin: 0;
+    `,
+    confirmLinkBtn: css`
+      padding: 0;
+      text-decoration: underline;
+    `,
+    logInButton: css`
+      padding: 0;
     `,
   };
 });

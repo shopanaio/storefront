@@ -1,19 +1,12 @@
 "use client";
 
-import { Checkout } from "@src/modules/checkout/Checkout";
-import { CheckoutHeader } from "@src/modules/checkout/CheckoutHeader";
-import useCart from "@src/hooks/cart/useCart";
+import { CheckoutPageClient } from "@src/modules/checkout/page/client";
+import CartProvider from "@src/providers/cart";
 
-/**
- * Client page component for the `checkout` module.
- */
 export default function CheckoutModulePage() {
-  const { cart } = useCart();
-
   return (
-    <>
-      <CheckoutHeader />
-      <Checkout cart={cart} onConfirm={() => {}} />
-    </>
+    <CartProvider cookie="default_cart_id">
+      <CheckoutPageClient />
+    </CartProvider>
   );
 }
