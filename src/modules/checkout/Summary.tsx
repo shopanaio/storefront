@@ -3,7 +3,6 @@ import { createStyles } from "antd-style";
 import { SummaryItem } from "@src/modules/checkout/SummaryItem";
 import { useTranslations } from "next-intl";
 import { TbShoppingCart, TbTicket } from "react-icons/tb";
-import { mq } from "@src/components/Theme/breakpoints";
 import { useState } from "react";
 import { Money } from "@src/components/UI/Price/Money";
 import { CartDrawer } from "@src/components/Cart/CartDrawerDynamic";

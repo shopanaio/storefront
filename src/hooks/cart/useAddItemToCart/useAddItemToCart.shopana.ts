@@ -47,7 +47,6 @@ const useAddItemToCart = () => {
       if (!cart?.id) {
         const newCart = await createCart(
           {
-            idempotency: Math.random().toString(36).substring(2, 15),
             currencyCode,
             localeCode,
             items: [
