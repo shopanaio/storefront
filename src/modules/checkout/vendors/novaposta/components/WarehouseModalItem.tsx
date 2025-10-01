@@ -1,20 +1,23 @@
 import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { WarehouseData } from "../NovaPoshta/NovaPoshta.types";
+import { WarehouseData } from "../api/NovaPoshta.types";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
-import { IMAGES } from "./postsLogos";
+const IMAGES = {
+  NOVA_POSHTA_LOGO:
+    "https://play-lh.googleusercontent.com/mtyOm0Rp0PeG_BWE7M5j9gBWuU1Du34LLj-dLdSE1-006_BkFg32W3Cca00l2BBvNM0",
+  MEEST_LOGO:
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuU_AVAbb-WjL9W7YTIVt4IxDCNxgvs1Xz8Q&s",
+} as const;
 
 interface Prop {
   item: WarehouseData | null;
   changeWarehouse: (warehouse: WarehouseData) => void;
 }
 
-// Function for converting schedule to readable string
 const formatSchedule = (schedule: Record<string, string> | string): string => {
   if (typeof schedule === "string") return schedule;
 
   if (typeof schedule === "object" && schedule !== null) {
-    // Group days by working hours
     const timeGroups: { [time: string]: string[] } = {};
 
     Object.entries(schedule).forEach(([day, time]) => {
@@ -26,7 +29,6 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
       }
     });
 
-    // Form string with grouping
     const formattedGroups = Object.entries(timeGroups).map(([time, days]) => {
       const dayNames: { [key: string]: string } = {
         Monday: "Mon",
@@ -38,7 +40,6 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
         Sunday: "Sun",
       };
 
-      // Group consecutive days
       const sortedDays = days.sort((a, b) => {
         const order = [
           "Monday",
@@ -66,7 +67,6 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
         ) {
           endDay = currentDay;
         } else {
-          // Add day group
           if (startDay === endDay) {
             result += `${dayNames[startDay]}-${dayNames[endDay]}: ${time} `;
           } else {
@@ -77,7 +77,6 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
         }
       }
 
-      // Add last group
       if (startDay === endDay) {
         result += `${dayNames[startDay]}: ${time} `;
       } else {

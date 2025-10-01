@@ -1,4 +1,13 @@
-export { moduleRegistry, registerModule } from "./registry";
+export {
+  moduleRegistry,
+  registerModule,
+  ModuleType,
+  type ModuleSlug,
+  type AsyncModuleLoader,
+  type RegisteredModuleRecord,
+  type DynamicModulePageProps,
+  type ModuleExport,
+} from "./registry";
 
 /**
  * Auto-discovers and imports all `register.ts` files under `src/modules/**`.

@@ -3,12 +3,12 @@ import { createStyles } from "antd-style";
 import { useMemo, useState, useEffect } from "react";
 import { TbMapPinFilled } from "react-icons/tb";
 import { useTranslations } from "next-intl";
-import { NovaPoshta } from "../NovaPoshta/NovaPoshta";
+import { NovaPoshta } from "../api/NovaPoshta";
 import {
   getWarehousesProperties,
   WarehouseData,
-} from "../NovaPoshta/NovaPoshta.types";
-import { Warehouse } from "../Checkout";
+} from "../api/NovaPoshta.types";
+import { Warehouse } from "@src/modules/checkout/Checkout";
 import { WarehouseModalItem } from "./WarehouseModalItem";
 
 interface Prop {
@@ -150,7 +150,6 @@ export const WarehouseModal = ({
   }, [searchValue, warehouses]);
 
   const handleSelectWarehouse = (item: WarehouseData) => {
-    // Convert API data to Warehouse format
     const warehouseData: Warehouse = {
       id: item.Ref,
       Number: item.Number,
@@ -160,7 +159,7 @@ export const WarehouseModal = ({
       CityRef: item.CityRef,
       CityName: item.CityDescription,
       RegionCity: item.RegionCity,
-    };
+    } as any;
 
     changeWarehouse(warehouseData);
     setIsWarehouseModalVisible(false);

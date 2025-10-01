@@ -3,8 +3,8 @@ import { createStyles } from "antd-style";
 import { useMemo, useState, useEffect } from "react";
 import { TbMapPinFilled } from "react-icons/tb";
 import { useTranslations } from "next-intl";
-import { NovaPoshta } from "../NovaPoshta/NovaPoshta";
-import { searchSettlementStreetsProperties } from "../NovaPoshta/NovaPoshta.types";
+import { NovaPoshta } from "../api/NovaPoshta";
+import { searchSettlementStreetsProperties } from "../api/NovaPoshta.types";
 import { StreetModalItem } from "./StreetModalItem";
 
 interface Street {

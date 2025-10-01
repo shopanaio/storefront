@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import "@src/modules";
 import {
   moduleRegistry,
+  ModuleType,
   type DynamicModulePageProps,
   type ModuleExport,
   type AsyncModuleLoader,
@@ -26,7 +27,7 @@ export default async function Page({
     return redirect("/");
   }
 
-  const loader = moduleRegistry.resolve(slug);
+  const loader = moduleRegistry.resolve(ModuleType.Page, slug);
   if (!loader) {
     return redirect("/");
   }

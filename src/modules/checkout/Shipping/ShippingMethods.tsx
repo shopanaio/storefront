@@ -1,8 +1,10 @@
+import React, { useEffect, useMemo, useState } from "react";
 import { Flex } from "antd";
 import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
-import { shippingMethodComponents } from "./shippingMethodsMap";
+import { moduleRegistry, ModuleType, type ShippingProviderModuleApi } from "@src/modules/registry";
+import { useLocale } from "next-intl";
 
 interface Props {
   methods: ApiCheckoutDeliveryMethod[];
@@ -12,33 +14,60 @@ interface Props {
   watch: UseFormWatch<CheckoutFormValues>;
 }
 
-export const ShippingMethods = ({
-  methods,
-  activeShippingKey,
-  setValue,
-  control,
-  watch,
-}: Props) => {
+const ProviderRenderer: React.FC<{
+  provider: string;
+  methods: ApiCheckoutDeliveryMethod[];
+  locale: string;
+}> = ({ provider, methods, locale }) => {
+  const [api, setApi] = useState<ShippingProviderModuleApi | null>(null);
+
+  useEffect(() => {
+    const loader = moduleRegistry.resolve<ShippingProviderModuleApi>(
+      ModuleType.Shipping,
+      provider
+    );
+    if (!loader) {
+      setApi(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const mod = (await loader()) as ShippingProviderModuleApi;
+      if (!cancelled) setApi(mod);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
+
+  const providerMethods = useMemo(() => methods.map((m) => ({ code: m.code })), [methods]);
+  if (!api) return null;
+  const { Component } = api;
+  return <Component provider={provider} methods={providerMethods} locale={locale} />;
+};
+
+export const ShippingMethods = ({ methods }: Props) => {
+  const locale = useLocale();
+  const byProvider = useMemo(
+    () =>
+      methods.reduce<Record<string, ApiCheckoutDeliveryMethod[]>>((acc, m) => {
+        const key = m.provider.code || "unknown";
+        (acc[key] ||= []).push(m);
+        return acc;
+      }, {}),
+    [methods]
+  );
+
   return (
     <Flex vertical gap={10}>
-      {methods.map((method) => {
-        const config = shippingMethodComponents[method.code];
-        if (!config) return null;
-
-        const { Component, icon } = config;
-
-        return (
-          <Component
-            key={method.code}
-            method={method}
-            icon={icon}
-            activeShippingKey={activeShippingKey}
-            setValue={setValue}
-            control={control}
-            watch={watch}
-          />
-        );
-      })}
+      {Object.entries(byProvider).map(([provider, providerMethods]) => (
+        <ProviderRenderer
+          key={provider}
+          provider={provider}
+          methods={providerMethods}
+          locale={locale}
+        />
+      ))}
     </Flex>
   );
 };

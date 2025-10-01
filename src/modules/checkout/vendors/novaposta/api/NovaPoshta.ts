@@ -5,7 +5,7 @@ import type {
   searchSettlementStreetsResponse,
   getWarehousesProperties,
   getWarehousesResponse,
-} from './NovaPoshta.types';
+} from "./NovaPoshta.types";
 
 export class NovaPoshta {
   private apiKey: string;
@@ -14,7 +14,11 @@ export class NovaPoshta {
     this.apiKey = apiKey;
   }
 
-  private async request<T>(modelName: string, calledMethod: string, methodProperties: any): Promise<T> {
+  private async request<T>(
+    modelName: string,
+    calledMethod: string,
+    methodProperties: unknown
+  ): Promise<T> {
     try {
       const response = await fetch("https://api.novaposhta.ua/v2.0/json/", {
         method: 'POST',

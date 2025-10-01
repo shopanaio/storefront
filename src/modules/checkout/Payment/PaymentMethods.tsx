@@ -1,11 +1,13 @@
+import React, { useEffect, useMemo, useState } from "react";
 import { Flex } from "antd";
 import { Control, UseFormSetValue } from "react-hook-form";
 import { CheckoutFormValues } from "../Checkout";
-import { paymentMethodsMap } from "./paymentMethodsMap";
+import { moduleRegistry, ModuleType, type PaymentProviderModuleApi } from "@src/modules/registry";
 
 /** TODO: Use api type when it's available */
 interface ApiPaymentMethod {
   code: string;
+  provider: string;
 }
 
 interface Props {
@@ -16,33 +18,43 @@ interface Props {
   control: Control<CheckoutFormValues>;
 }
 
-export const PaymentMethods = ({
-  methods,
-  activePayment,
-  shippingAsBilling,
-  setValue,
-  control,
-}: Props) => {
+const ProviderRenderer: React.FC<{ provider: string; methods: ApiPaymentMethod[] }> = ({ provider, methods }) => {
+  const [api, setApi] = useState<PaymentProviderModuleApi | null>(null);
+  const providerMethods = useMemo(() => methods.map((m) => ({ code: m.code })), [methods]);
+  useEffect(() => {
+    const loader = moduleRegistry.resolve<PaymentProviderModuleApi>(ModuleType.Payment, provider);
+    if (!loader) {
+      setApi(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const mod = (await loader()) as PaymentProviderModuleApi;
+      if (!cancelled) setApi(mod);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
+  if (!api) return null;
+  const { Component } = api;
+  return <Component provider={provider} methods={providerMethods} locale={"uk"} />;
+};
+
+export const PaymentMethods = ({ methods }: Props) => {
+  const byProvider = useMemo(
+    () =>
+      methods.reduce<Record<string, ApiPaymentMethod[]>>((acc, m) => {
+        (acc[m.provider] ||= []).push(m);
+        return acc;
+      }, {}),
+    [methods]
+  );
   return (
     <Flex vertical gap={10}>
-      {methods.map((method, index) => {
-        const config = paymentMethodsMap[method.code];
-        if (!config) return null;
-
-        const { Component, icon } = config;
-
-        return (
-          <Component
-            key={index}
-            method={method}
-            icon={icon}
-            setValue={setValue}
-            control={control}
-            activePayment={activePayment}
-            shippingAsBilling={shippingAsBilling}
-          />
-        );
-      })}
+      {Object.entries(byProvider).map(([provider, providerMethods]) => (
+        <ProviderRenderer key={provider} provider={provider} methods={providerMethods} />
+      ))}
     </Flex>
   );
 };

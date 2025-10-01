@@ -1,7 +1,4 @@
-import {
-  String36,
-  String50,
-} from "./NovaPoshtaSupporting.types"
+import { String36, String50 } from "./NovaPoshtaSupporting.types";
 import { NovaPoshtaErrorCode } from "./NovaPoshtaErrorCode";
 
 export interface NovaPoshtaResponse<T> {

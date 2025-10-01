@@ -5,19 +5,21 @@ import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { Summary } from "@src/modules/checkout/Summary";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { PaymentMethods } from "@src/modules/checkout/Payment/PaymentMethods";
 import { ShippingMethods } from "@src/modules/checkout/Shipping/ShippingMethods";
 import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
-import { Entity } from "@src/entity";
+// import { Entity } from "@src/entity";
 import { TermsNotice } from "@src/modules/checkout/TermsNotice";
 import { SubmitButton } from "@src/modules/checkout/SubmitButton";
+import { Entity } from "@src/entity";
 
 const { Text } = Typography;
 
 interface Prop {
   cart: Entity.Cart | null;
   onConfirm: () => void;
+  brand?: React.ReactNode;
 }
 
 export interface City {
@@ -94,36 +96,37 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
   const defaultShippingKey = defaultDeliveryGroup?.selectedDeliveryMethod?.code;
   const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || "";
 
-  const { control, handleSubmit, setValue, watch } =
-    useForm<CheckoutFormValues>({
-      defaultValues: {
-        userPhone: "",
-        userName: "",
-        userHouse: "",
-        userApartment: "",
-        activeShippingKey: defaultShippingKey,
-        userCity: null,
-        userStreet: null,
-        userWarehouse: null,
-        payment: defaultPayment,
-        shippingAsBilling: false,
+  const methods = useForm<CheckoutFormValues>({
+    defaultValues: {
+      userPhone: "",
+      userName: "",
+      userHouse: "",
+      userApartment: "",
+      activeShippingKey: defaultShippingKey,
+      userCity: null,
+      userStreet: null,
+      userWarehouse: null,
+      payment: defaultPayment,
+      shippingAsBilling: false,
 
-        cardNumber: "",
-        expirationDate: "",
-        cvv: "",
+      cardNumber: "",
+      expirationDate: "",
+      cvv: "",
 
-        billingCountry: "",
-        billingFirstName: "",
-        billingLastName: "",
-        billingCompany: "",
-        billingAddress: "",
-        billingApartment: "",
-        billingCity: "",
-        billingState: "",
-        billingZip: "",
-        billingPhone: "",
-      },
-    });
+      billingCountry: "",
+      billingFirstName: "",
+      billingLastName: "",
+      billingCompany: "",
+      billingAddress: "",
+      billingApartment: "",
+      billingCity: "",
+      billingState: "",
+      billingZip: "",
+      billingPhone: "",
+    },
+  });
+
+  const { control, handleSubmit, setValue, watch } = methods;
 
   const activeShippingKey = watch("activeShippingKey");
   const activePayment = watch("payment");
@@ -133,82 +136,84 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className={styles.container}>
-          <div className={styles.main}>
-            <Flex className={styles.left}>
-              {brand}
-              <Flex vertical gap={12}>
-                <Flex justify="space-between" align="center">
-                  <Text className={styles.sectionTitle} strong>
-                    {t("contact")}
-                  </Text>
-                  <Button
-                    className={styles.logInButton}
-                    size="large"
-                    type="link"
-                  >
-                    {t("log-in")}
-                  </Button>
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className={styles.container}>
+            <div className={styles.main}>
+              <Flex className={styles.left}>
+                {brand}
+                <Flex vertical gap={12}>
+                  <Flex justify="space-between" align="center">
+                    <Text className={styles.sectionTitle} strong>
+                      {t("contact")}
+                    </Text>
+                    <Button
+                      className={styles.logInButton}
+                      size="large"
+                      type="link"
+                    >
+                      {t("log-in")}
+                    </Button>
+                  </Flex>
+                  <PhoneInputField
+                    control={control}
+                    name="userPhone"
+                    label={t("phone-number")}
+                    placeholder={t("phone")}
+                  />
                 </Flex>
-                <PhoneInputField
-                  control={control}
-                  name="userPhone"
-                  label={t("phone-number")}
-                  placeholder={t("phone")}
-                />
-              </Flex>
 
-              <Flex vertical gap={12}>
-                <Text className={styles.sectionTitle} strong>
-                  {t("shipping")}
-                </Text>
+                <Flex vertical gap={12}>
+                  <Text className={styles.sectionTitle} strong>
+                    {t("shipping")}
+                  </Text>
 
-                {cart?.deliveryGroups?.[0]?.deliveryMethods && (
-                  <ShippingMethods
-                    methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
-                    activeShippingKey={activeShippingKey}
-                    setValue={setValue}
-                    control={control}
-                    watch={watch}
-                  />
-                )}
-              </Flex>
+                  {cart?.deliveryGroups?.[0]?.deliveryMethods && (
+                    <ShippingMethods
+                      methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
+                      activeShippingKey={activeShippingKey}
+                      setValue={setValue}
+                      control={control}
+                      watch={watch}
+                    />
+                  )}
+                </Flex>
 
-              <Flex vertical gap={12}>
-                <Text className={styles.sectionTitle} strong>
-                  {t("payment")}
-                </Text>
+                <Flex vertical gap={12}>
+                  <Text className={styles.sectionTitle} strong>
+                    {t("payment")}
+                  </Text>
 
-                {[]?.length > 0 && (
-                  <PaymentMethods
-                    methods={[]}
-                    activePayment={activePayment}
-                    shippingAsBilling={shippingAsBilling}
-                    setValue={setValue}
-                    control={control}
-                  />
-                )}
-              </Flex>
-              <Divider className={styles.divider} />
+                  {cart?.payment?.paymentMethods && (
+                    <PaymentMethods
+                      methods={(cart as any)?.payment?.paymentMethods || []}
+                      activePayment={activePayment}
+                      shippingAsBilling={shippingAsBilling}
+                      setValue={setValue}
+                      control={control}
+                    />
+                  )}
+                </Flex>
+                <Divider className={styles.divider} />
 
-              <Flex vertical gap={12} className={styles.actionsLeft}>
-                <SubmitButton />
-                <TermsNotice linkClassName={styles.confirmLinkBtn} />
-              </Flex>
-            </Flex>
-            <Flex className={styles.rightContainer}>
-              <Flex vertical gap={12} className={styles.right}>
-                <Summary cart={cart} onConfirm={onConfirm} />
-                <Flex vertical gap={12} className={styles.actionsRight}>
+                <Flex vertical gap={12} className={styles.actionsLeft}>
                   <SubmitButton />
                   <TermsNotice linkClassName={styles.confirmLinkBtn} />
                 </Flex>
               </Flex>
-            </Flex>
+              <Flex className={styles.rightContainer}>
+                <Flex vertical gap={12} className={styles.right}>
+                  <Summary cart={cart} onConfirm={onConfirm} />
+                  <Flex vertical gap={12} className={styles.actionsRight}>
+                    <SubmitButton />
+                    <TermsNotice linkClassName={styles.confirmLinkBtn} />
+                  </Flex>
+                </Flex>
+              </Flex>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </FormProvider>
     </>
   );
 };

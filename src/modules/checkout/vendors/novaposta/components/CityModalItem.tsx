@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { TbMapPin } from "react-icons/tb";
-import { City } from "../Checkout";
+import { City } from "@src/modules/checkout/Checkout";
 
 interface Prop {
   item: City | null;

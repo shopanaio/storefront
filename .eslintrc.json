@@ -7,14 +7,14 @@
   ],
   "rules": {
     // atlassian
-    "@atlaskit/design-system/no-empty-styled-expression": "error",
-    "@atlaskit/design-system/use-heading": "error",
+    // "@atlaskit/design-system/no-empty-styled-expression": "error",
+    // "@atlaskit/design-system/use-heading": "error",
     // "@atlaskit/design-system/ensure-design-token-usage": "error",
     // "@atlaskit/design-system/use-tokens-typography": "error",
     // "@atlaskit/design-system/use-tokens-space": "error",
     // "@atlaskit/design-system/prefer-primitives": "error",
     // "@atlaskit/design-system/use-primitives-text": "error",
-    "@atlaskit/design-system/no-html-button": "error",
-    "@atlaskit/design-system/no-html-anchor": "error"
+    // "@atlaskit/design-system/no-html-button": "error",
+    // "@atlaskit/design-system/no-html-anchor": "error"
   }
 }

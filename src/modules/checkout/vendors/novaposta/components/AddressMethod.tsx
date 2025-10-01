@@ -1,6 +1,6 @@
 import { Flex, Typography, Input } from "antd";
 import { createStyles } from "antd-style";
-import { MethodCollapsePanel } from "../MethodCollapsePanel";
+import { MethodCollapsePanel } from "@src/modules/checkout/MethodCollapsePanel";
 import { CityModal } from "./CityModal";
 import { useTranslations } from "use-intl";
 import { StreetModal } from "./StreetModal";
@@ -10,7 +10,7 @@ import {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
-import { CheckoutFormValues } from "../Checkout";
+import { CheckoutFormValues } from "@src/modules/checkout/Checkout";
 
 import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
 import { ApiCheckoutDeliveryMethod } from "@codegen/schema-client";
@@ -42,7 +42,6 @@ export const AddressMethod = ({
       key={method.code}
       value={method.code}
       title={method.code}
-      // TODO: Prepare i18n title and description for the method
       buttonLabel={
         <div className={styles.methodLogoWrapper}>
           <img className={styles.methodLogo} src={icon} alt="" />
@@ -89,7 +88,7 @@ export const AddressMethod = ({
             <StreetModal
               street={watch("userStreet")}
               changeStreet={(street) => setValue("userStreet", street)}
-              cityRef={watch("userCity")?.Ref} // Pass city Ref
+              cityRef={watch("userCity")?.Ref}
             />
           </Flex>
 
