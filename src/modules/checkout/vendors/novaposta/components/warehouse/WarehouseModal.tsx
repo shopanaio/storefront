@@ -1,4 +1,4 @@
-import { Button, Divider, Flex, Input, Modal, Typography } from 'antd';
+import { Divider, Flex, Input, Modal, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -9,8 +9,7 @@ import {
 } from '../../api/NovaPoshta.types';
 import { Warehouse } from '@src/modules/checkout/components/Checkout';
 import { WarehouseModalItem } from './WarehouseModalItem';
-
-// import { AiOutlineShop } from 'react-icons/ai';
+import { SelectButton } from '../SelectButton';
 
 interface Prop {
   warehouse: Warehouse | null;
@@ -169,26 +168,16 @@ export const WarehouseModal = ({
 
   return (
     <>
-      <Button
-        color={warehouse ? 'primary' : 'default'}
-        variant="outlined"
-        className={styles.warehouseBtn}
+      <SelectButton
+        hasValue={!!warehouse}
+        mainText={
+          warehouse ? `№${warehouse.Number} ${warehouse.ShortAddress}` : undefined
+        }
+        secondaryText={warehouse?.Schedule}
+        placeholder={t('warehouse')}
         onClick={() => setIsWarehouseModalVisible(true)}
         disabled={!cityName}
-      >
-        {warehouse ? (
-          <Flex vertical align="start" gap={4}>
-            <Typography.Text className={styles.warehouseMain}>
-              {`№${warehouse.Number} ${warehouse.ShortAddress}`}
-            </Typography.Text>
-            <Typography.Text className={styles.workTime} type="secondary">
-              {warehouse.Schedule}
-            </Typography.Text>
-          </Flex>
-        ) : (
-          <Typography.Text type="secondary">{t('warehouse')}</Typography.Text>
-        )}
-      </Button>
+      />
 
       <Modal
         open={isWarehouseModalVisible}
@@ -235,15 +224,6 @@ export const WarehouseModal = ({
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    warehouseBtn: css`
-      display: flex;
-      justify-content: start;
-      padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
-        ${token.paddingSM}px;
-      min-height: 64px;
-      height: 100%;
-    `,
-
     modalContainer: css``,
     modalHeader: css``,
 
@@ -263,15 +243,6 @@ const useStyles = createStyles(({ token, css }) => {
     type: css`
       line-height: 1;
       font-size: ${token.fontSizeSM}px;
-    `,
-    warehouseMain: css`
-      max-width: 300px !important;
-      line-height: 1;
-      font-size: ${token.fontSize}px;
-    `,
-    workTime: css`
-      font-size: ${token.fontSizeSM}px;
-      line-height: 1;
     `,
     item: css`
       display: flex;

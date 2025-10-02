@@ -1,4 +1,4 @@
-import { Button, Divider, Flex, Input, Modal, Typography } from 'antd';
+import { Divider, Flex, Input, Modal, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -6,6 +6,7 @@ import { City } from '@src/modules/checkout/components/Checkout';
 import { NovaPoshta } from '../../api/NovaPoshta';
 import { searchSettlementsProperties } from '../../api/NovaPoshta.types';
 import { CityModalItem } from './CityModalItem';
+import { SelectButton } from '../SelectButton';
 import { TbMapPin } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
 
@@ -72,11 +73,13 @@ export const CityModal = ({ city, changeCity }: Prop) => {
 
   return (
     <>
-      <Button
-        // color="default"
-        // variant="outlined"
-        className={styles.cityBtn}
-        size="large"
+      <SelectButton
+        hasValue={!!city}
+        mainText={
+          city ? `${city.SettlementTypeCode} ${city.MainDescription}` : undefined
+        }
+        secondaryText={city ? `${city.Area} ${city.ParentRegionCode}` : undefined}
+        placeholder={t('city')}
         onClick={() => setIsCityModalVisible(true)}
         icon={
           <TbMapPin
@@ -84,21 +87,7 @@ export const CityModal = ({ city, changeCity }: Prop) => {
             color={city ? token.colorPrimary : token.colorIcon}
           />
         }
-      >
-        {city ? (
-          <Flex gap={5}>
-            <Typography.Text>
-              {`${city.SettlementTypeCode} ${city.MainDescription}`},
-            </Typography.Text>
-            <Typography.Text>
-              {' '}
-              {`${city.Area} ${city.ParentRegionCode}`}
-            </Typography.Text>
-          </Flex>
-        ) : (
-          <Typography.Text>{t('city')}</Typography.Text>
-        )}
-      </Button>
+      />
 
       <Modal
         open={isCityModalVisible}
@@ -139,15 +128,8 @@ export const CityModal = ({ city, changeCity }: Prop) => {
   );
 };
 
-const useStyles = createStyles(({ token, css }) => {
+const useStyles = createStyles(({ css }) => {
   return {
-    cityBtn: css`
-      display: flex;
-      justify-content: start;
-
-      font-size: ${token.fontSizeLG}px;
-    `,
-
     divider: css`
       margin: 0;
     `,

@@ -12,7 +12,7 @@ export interface CheckoutMethodPanelProps {
   isActive: boolean;
   onActivate: () => void;
   brand?: ReactNode;
-  children: ReactNode;
+  content: ReactNode;
 }
 
 export const CheckoutMethodPanel = ({
@@ -21,7 +21,7 @@ export const CheckoutMethodPanel = ({
   isActive,
   onActivate,
   brand = null,
-  children,
+  content,
 }: CheckoutMethodPanelProps) => {
   const codeRef = useRef(crypto.randomUUID());
   const { styles } = useStyles();
@@ -36,6 +36,7 @@ export const CheckoutMethodPanel = ({
       <Panel
         showArrow={false}
         key={codeRef.current}
+        className={clsx(!content ? styles.emptyPanel : '')}
         header={
           <Flex justify="space-between" align="center">
             <Flex gap={12}>
@@ -53,7 +54,7 @@ export const CheckoutMethodPanel = ({
           </Flex>
         }
       >
-        {children}
+        {content}
       </Panel>
     </Collapse>
   );
@@ -73,6 +74,11 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   title: css`
     font-size: ${token.fontSize}px;
+  `,
+  emptyPanel: css`
+    & .ant-collapse-content.ant-collapse-content-active {
+      display: none !important;
+    }
   `,
   description: css`
     font-size: ${token.fontSizeSM}px;

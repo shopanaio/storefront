@@ -87,9 +87,8 @@ function Content({
               isActive={activeCode === m.code}
               onActivate={() => onSelect(m.code)}
               brand={<BrandComponent size={24} />}
-            >
-              {typeof FormComponent === 'function' && <FormComponent />}
-            </CheckoutMethodPanel>
+              content={typeof FormComponent === 'function' && <FormComponent />}
+            />
           );
         })
         .filter(Boolean)}

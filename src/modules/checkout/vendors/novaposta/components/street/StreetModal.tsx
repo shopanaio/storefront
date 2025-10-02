@@ -1,10 +1,11 @@
-import { Button, Divider, Flex, Input, Modal, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { useMemo, useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { NovaPoshta } from "../../api/NovaPoshta";
-import { searchSettlementStreetsProperties } from "../../api/NovaPoshta.types";
-import { StreetModalItem } from "./StreetModalItem";
+import { Divider, Flex, Input, Modal, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { useMemo, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { NovaPoshta } from '../../api/NovaPoshta';
+import { searchSettlementStreetsProperties } from '../../api/NovaPoshta.types';
+import { StreetModalItem } from './StreetModalItem';
+import { SelectButton } from '../SelectButton';
 
 interface Street {
   Present: string;
@@ -24,13 +25,13 @@ interface Prop {
 
 export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const { styles } = useStyles();
-  const t = useTranslations("Checkout");
+  const t = useTranslations('Checkout');
 
   const [isStreetModalVisible, setIsStreetModalVisible] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const [streets, setStreets] = useState<Street[]>([]);
 
-  const apiKey = "";
+  const apiKey = '';
   const np = new NovaPoshta(apiKey);
 
   useEffect(() => {
@@ -41,13 +42,13 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
         const methodProperties: searchSettlementStreetsProperties = {
           SettlementRef: cityRef,
           StreetName: searchValue,
-          Limit: "20",
+          Limit: '20',
         };
 
         const result = await np.searchSettlementStreets(methodProperties);
         setStreets(result.data[0].Addresses || []);
       } catch (error) {
-        console.error("Error searching for streets:", error);
+        console.error('Error searching for streets:', error);
         setStreets([]);
       }
     };
@@ -69,22 +70,20 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const handleSelectStreet = (item: Street) => {
     changeStreet(item);
     setIsStreetModalVisible(false);
-    setSearchValue("");
+    setSearchValue('');
   };
 
   return (
     <>
-      <Button
-        className={styles.streetBtn}
+      <SelectButton
+        hasValue={!!street}
+        mainText={street?.Present}
+        secondaryText={t('street')}
+        placeholder={t('street')}
         onClick={() => setIsStreetModalVisible(true)}
-        size="large"
+        invert
         disabled={!cityRef}
-      >
-        <Typography.Text>
-          {street ? street.Present : t("street")}
-        </Typography.Text>
-      </Button>
-
+      />
       <Modal
         open={isStreetModalVisible}
         onCancel={() => setIsStreetModalVisible(false)}
@@ -92,16 +91,14 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
       >
         <Flex vertical gap={16}>
           <Flex>
-            <Typography.Text>{t("select-street")}</Typography.Text>
+            <Typography.Text>{t('select-street')}</Typography.Text>
           </Flex>
-
           <Divider className={styles.divider} />
-
           <Flex vertical gap={12}>
             <Flex vertical gap={8}>
-              <Typography.Text>{t("select")}</Typography.Text>
+              <Typography.Text>{t('select')}</Typography.Text>
               <Input
-                placeholder={t("street")}
+                placeholder={t('street')}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 disabled={!cityRef}
@@ -127,11 +124,6 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
 
 const useStyles = createStyles(({ css }) => {
   return {
-    streetBtn: css`
-      display: flex;
-      justify-content: start;
-    `,
-
     divider: css`
       margin: 0;
     `,
