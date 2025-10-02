@@ -3,9 +3,19 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "@shopana/novaposhta-client",
+      "@shopana/novaposhta-client/**"
+    ]
+  },
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.2",
     "@apollo/client": "^3.13.8",
+    "@shopana/novaposhta-client": "^1.0.0",
     "@stackflow/config": "^1.2.1",
     "@stackflow/core": "^1.2.0",
     "@stackflow/plugin-basic-ui": "^1.14.2",
@@ -34,6 +44,7 @@
     "react-relay": "^20.0.0",
     "react-responsive": "^10.0.1",
     "relay-runtime": "^20.0.0",
+    "shopana-utils": "^0.1.0",
     "swiper": "^11.2.8",
     "ua-parser-js": "^2.0.4",
     "zustand": "^5.0.6"
@@ -68,6 +79,7 @@
     "graphql": "^16.10.0",
     "make-cli": "^5.0.1",
     "minimist": "^1.2.8",
+    "prettier": "^3.6.2",
     "relay-compiler": "^20.0.0",
     "rimraf": "^6.0.1",
     "storybook": "^8.4.7",
@@ -88,6 +100,8 @@
     "start:shopana": "cross-env CMS=shopana next start",
     "start:shopify": "cross-env CMS=shopify next start",
     "lint": "next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "storybook": "cross-env STORYBOOK=true storybook dev -p 6006 -c storybook",
     "build-storybook": "cross-env STORYBOOK=true storybook build -c storybook -o storybook-static"
   }

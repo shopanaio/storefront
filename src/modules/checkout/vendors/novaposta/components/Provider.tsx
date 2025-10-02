@@ -66,13 +66,15 @@ function Content({
   onSelect: (code: string) => void;
   styles: ReturnType<typeof useStyles>["styles"];
 }) {
-  const tVendor = useTranslations("Modules.novaposta");
+  const t = useTranslations("Modules.novaposta");
 
   return (
     <Flex vertical gap={16} className={styles.container}>
       {methods
         .map((m) => {
-          const config = NOVA_POSHTA_CONFIG.shipping.find((s) => s.code === m.code);
+          const config = NOVA_POSHTA_CONFIG.shipping.find(
+            (s) => s.code === m.code
+          );
           if (!config) {
             return null;
           }
@@ -80,15 +82,16 @@ function Content({
           const FormComponent = config.Component;
           const BrandComponent = NOVA_POSHTA_CONFIG.logo;
 
-          const title = config.nameI18n ? tVendor(config.nameI18n) : config.name;
-
           return (
             <CheckoutMethodPanel
               key={m.code}
-              title={title}
+              title={t(config.nameI18n)}
+              description={
+                config.descriptionI18n ? t(config.descriptionI18n) : ""
+              }
               isActive={activeCode === m.code}
               onActivate={() => onSelect(m.code)}
-              brand={<BrandComponent size={32} />}
+              brand={<BrandComponent size={24} />}
             >
               {typeof FormComponent === "function" && <FormComponent />}
             </CheckoutMethodPanel>

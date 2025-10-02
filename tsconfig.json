@@ -3,7 +3,11 @@
     "baseUrl": ".",
     "paths": {
       "@src/*": ["./src/*"],
-      "@codegen/*": ["./codegen/*"]
+      "@codegen/*": ["./codegen/*"],
+      "shopana-utils": ["./packages/shopana-utils/dist/index.js"],
+      "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
+      "@shopana/novaposhta-client": ["./packages/shopana-novaposhta-client/dist/index.js"],
+      "@shopana/novaposhta-client/*": ["./packages/shopana-novaposhta-client/dist/*"]
     },
     "target": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],

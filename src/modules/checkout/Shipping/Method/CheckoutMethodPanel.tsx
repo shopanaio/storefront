@@ -1,15 +1,14 @@
-import { Button, Collapse, Flex, Radio, Typography } from "antd";
-import { ReactNode, useRef } from "react";
-import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
-import clsx from "clsx";
-import Wave from "antd/es/_util/wave";
+import { Collapse, Flex, Radio, Typography } from 'antd';
+import { ReactNode, useRef } from 'react';
+import { createStyles } from 'antd-style';
+import clsx from 'clsx';
 
 const { Panel } = Collapse;
 const { Text } = Typography;
 
 export interface CheckoutMethodPanelProps {
   title: string;
+  description: string;
   isActive: boolean;
   onActivate: () => void;
   brand?: ReactNode;
@@ -18,6 +17,7 @@ export interface CheckoutMethodPanelProps {
 
 export const CheckoutMethodPanel = ({
   title,
+  description,
   isActive,
   onActivate,
   brand = null,
@@ -27,9 +27,11 @@ export const CheckoutMethodPanel = ({
   const { styles } = useStyles();
   return (
     <Collapse
-      className={clsx(styles.collapse, isActive && styles.selected)}
-      activeKey={isActive ? codeRef.current : ""}
+      className={clsx(styles.collapse, isActive && styles.active)}
+      activeKey={isActive ? codeRef.current : ''}
       onChange={onActivate}
+      ghost
+      bordered
     >
       <Panel
         showArrow={false}
@@ -38,9 +40,14 @@ export const CheckoutMethodPanel = ({
           <Flex justify="space-between" align="center">
             <Flex gap={12}>
               <Radio checked={isActive} />
-              <Text className={styles.methodTitle} strong>
-                {title}
-              </Text>
+              <Flex vertical justify="center" className={styles.titleContainer}>
+                <Text className={styles.title}>{title}</Text>
+                {isActive && (
+                  <Text type="secondary" className={styles.description}>
+                    {description}
+                  </Text>
+                )}
+              </Flex>
             </Flex>
             {brand}
           </Flex>
@@ -53,21 +60,26 @@ export const CheckoutMethodPanel = ({
 };
 
 const useStyles = createStyles(({ token, css }) => ({
-  container: css`
-    width: 100%;
-  `,
-  selected: css`
-    outline: 1px solid ${token.colorPrimary};
-    border-color: ${token.colorPrimary};
-  `,
   collapse: css`
     box-sizing: border-box;
-    min-height: 56px;
+    border: 1px solid;
+    border-color: ${token.colorBorder};
+    min-height: 50px;
     overflow: visible;
   `,
-  methodTitle: css`
-    ${mq.xxl} {
-      font-size: ${token.fontSizeLG}px;
-    }
+  active: css`
+    outline: 1px solid ${token.colorPrimary};
+    border-color: ${token.colorPrimary} !important;
+  `,
+  title: css`
+    font-size: ${token.fontSize}px;
+  `,
+  description: css`
+    font-size: ${token.fontSizeSM}px;
+    display: inline-block;
+    margin-top: -4px;
+  `,
+  titleContainer: css`
+    height: 40px;
   `,
 }));

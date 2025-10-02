@@ -1,0 +1,3 @@
+[submodule "packages/shopana-novaposhta-client"]
+  path = packages/shopana-novaposhta-client
+  url = git@github.com:shopana-io/shopana-novaposhta-client.git
