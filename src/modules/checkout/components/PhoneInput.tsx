@@ -1,14 +1,38 @@
-import { Flex } from "antd";
-import { createStyles } from "antd-style";
-import { Controller } from "react-hook-form";
-import PhoneInput from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+import { Flex, Input, InputRef } from 'antd';
+import { createStyles } from 'antd-style';
+import 'react-phone-number-input/style.css';
+import PhoneInput, {
+  Country,
+} from 'react-phone-number-input/react-hook-form-input';
+import {
+  FloatingLabelInput,
+  FloatingLabelInputProps,
+} from '@src/components/UI/FloatingLabelInput';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 
-interface PhoneInputFieldProps {
+const InputWrapper = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
+  ({ placeholder, value, onChange, onFocus, onBlur, label }, ref) => {
+    const antRef = useRef<InputRef>(null);
+
+    useImperativeHandle(ref, () => antRef.current?.input!, []);
+
+    return (
+      <FloatingLabelInput
+        ref={antRef}
+        label={label}
+        placeholder={placeholder}
+        value={value}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onChange={onChange}
+      />
+    );
+  }
+);
+
+interface PhoneInputFieldProps extends FloatingLabelInputProps {
   control: any;
   name: string;
-  label?: string;
-  placeholder?: string;
 }
 
 export const PhoneInputField = ({
@@ -17,28 +41,21 @@ export const PhoneInputField = ({
   label,
   placeholder,
 }: PhoneInputFieldProps) => {
-  const { styles } = useStyles();
+  const [country] = useState<Country>('UA');
 
   return (
-    <Flex vertical gap={8}>
-      {label && <label htmlFor={name}>{label}</label>}
-
-      <Controller
-        name={name}
-        control={control}
-        render={({ field }) => (
-          <PhoneInput
-            {...field}
-            id={name}
-            international
-            defaultCountry="UA"
-            countryCallingCodeEditable={false}
-            placeholder={placeholder}
-            className={styles.phoneInput}
-          />
-        )}
-      />
-    </Flex>
+    <PhoneInput
+      name={name}
+      control={control}
+      label={label}
+      placeholder={placeholder}
+      country={country}
+      // international={false}
+      international
+      withCountryCallingCode
+      inputComponent={InputWrapper}
+      useNationalFormatForDefaultCountryValue={true}
+    />
   );
 };
 
@@ -56,9 +73,10 @@ const useStyles = createStyles(({ css, token }) => ({
       font-size: ${token.fontSize}px;
       border: 1px solid ${token.colorBorder};
       border-radius: ${token.borderRadiusLG}px;
-      transition: border-color 0.3s, box-shadow 0.3s;
+      transition:
+        border-color 0.3s,
+        box-shadow 0.3s;
       height: 40px;
-      
     }
 
     .PhoneInputInput:focus {

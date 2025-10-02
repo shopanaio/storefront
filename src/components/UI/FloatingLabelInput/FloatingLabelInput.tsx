@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useState, useRef, useId, useEffect } from 'react';
+import React, {
+  useState,
+  useRef,
+  useId,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import { Input, InputProps } from 'antd';
 import { createStyles } from 'antd-style';
 import { InputRef } from 'antd/es/input';
 import clsx from 'clsx';
 
-export interface FloatingLabelInputProps
-  extends Omit<InputProps, 'placeholder'> {
+export interface FloatingLabelInputProps extends InputProps {
   /**
    * Label text that will float
    */
@@ -22,140 +28,142 @@ export interface FloatingLabelInputProps
  * Input component with floating label effect.
  * Label moves up and shrinks when input is focused or has value.
  */
-export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
-  label,
-  value,
-  wrapperClassName,
-  onFocus,
-  onBlur,
-  ...inputProps
-}) => {
-  const { styles } = useStyles();
-  const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<InputRef>(null);
-  const reactId = useId();
+export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
+  ({ label, value, wrapperClassName, onFocus, onBlur, ...inputProps }, ref) => {
+    const { styles } = useStyles();
+    const [isFocused, setIsFocused] = useState(false);
+    const inputRef = useRef<InputRef>(null);
+    const reactId = useId();
 
-  // Determine controlled vs uncontrolled and derive hasValue
-  const isControlled = value !== undefined;
-  const [uncontrolledHasValue, setUncontrolledHasValue] = useState(
-    Boolean(
-      inputProps.defaultValue !== undefined &&
-        inputProps.defaultValue !== null &&
-        String(inputProps.defaultValue).length > 0
-    )
-  );
+    useImperativeHandle(ref, () => inputRef.current!, []);
 
-  /**
-   * Synchronize floating label visibility with both controlled and uncontrolled values.
-   * - Controlled: follow `value` prop changes
-   * - Uncontrolled: follow `defaultValue` prop changes
-   */
-  useEffect(() => {
-    const nextHasValue = isControlled
-      ? Boolean(value !== null && value !== undefined && String(value).length > 0)
-      : Boolean(
-          inputProps.defaultValue !== undefined &&
-            inputProps.defaultValue !== null &&
-            String(inputProps.defaultValue).length > 0
-        );
-    setUncontrolledHasValue(nextHasValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isControlled, value, inputProps.defaultValue]);
+    // Determine controlled vs uncontrolled and derive hasValue
+    const isControlled = value !== undefined;
+    const [uncontrolledHasValue, setUncontrolledHasValue] = useState(
+      Boolean(
+        inputProps.defaultValue !== undefined &&
+          inputProps.defaultValue !== null &&
+          String(inputProps.defaultValue).length > 0
+      )
+    );
 
-  const hasValue = isControlled
-    ? Boolean(value !== null && String(value).length > 0)
-    : uncontrolledHasValue;
-  const isLabelFloating = isFocused || hasValue;
+    /**
+     * Synchronize floating label visibility with both controlled and uncontrolled values.
+     * - Controlled: follow `value` prop changes
+     * - Uncontrolled: follow `defaultValue` prop changes
+     */
+    useEffect(() => {
+      const nextHasValue = isControlled
+        ? Boolean(
+            value !== null && value !== undefined && String(value).length > 0
+          )
+        : Boolean(
+            inputProps.defaultValue !== undefined &&
+              inputProps.defaultValue !== null &&
+              String(inputProps.defaultValue).length > 0
+          );
+      setUncontrolledHasValue(nextHasValue);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isControlled, value, inputProps.defaultValue]);
 
-  /**
-   * Whether antd `status` prop is provided. If present, we keep label color as `currentColor`.
-   * When not provided and input is focused, we elevate label color to `colorPrimary`.
-   */
-  const hasStatus = Boolean(inputProps.status);
+    const hasValue = isControlled
+      ? Boolean(value !== null && String(value).length > 0)
+      : uncontrolledHasValue;
+    const isLabelFloating = isFocused || hasValue;
 
-  // Accessible ids for label/input association
-  const inputId = inputProps.id ?? `fli-${reactId}`;
-  const labelId = `${inputId}-label`;
+    /**
+     * Whether antd `status` prop is provided. If present, we keep label color as `currentColor`.
+     * When not provided and input is focused, we elevate label color to `colorPrimary`.
+     */
+    const hasStatus = Boolean(inputProps.status);
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(true);
-    onFocus?.(e);
-  };
+    // Accessible ids for label/input association
+    const inputId = inputProps.id ?? `fli-${reactId}`;
+    const labelId = `${inputId}-label`;
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(false);
-    onBlur?.(e);
-  };
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    };
 
-  const handleLabelClick = () => {
-    inputRef.current?.focus();
-  };
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isControlled) {
-      setUncontrolledHasValue(e.target.value.length > 0);
-    }
-    inputProps.onChange?.(e);
-  };
+    const handleLabelClick = () => {
+      inputRef.current?.focus();
+    };
 
-  return (
-    <div className={clsx(styles.wrapper, wrapperClassName)}>
-      <Input
-        ref={inputRef}
-        {...inputProps}
-        id={inputId}
-        prefix={
-          <span
-            className={clsx(
-              styles.prefixWrapper,
-              inputProps.prefix ? styles.prefixWrapperHasContent : undefined
-            )}
-            onMouseDown={(e) => {
-              // prevent blur/focus flicker
-              e.preventDefault();
-            }}
-          >
-            {inputProps.prefix ? (
-              <span className={styles.prefixContent}>{inputProps.prefix}</span>
-            ) : null}
-            <label
-              id={labelId}
-              htmlFor={inputId}
-              className={clsx(styles.label, {
-                [styles.labelFloating]: isLabelFloating,
-                [styles.labelFocused]: !hasStatus && isFocused,
-                [styles.labelStatus]:
-                  !!inputProps.status || !!inputProps.disabled,
-              })}
-              onClick={handleLabelClick}
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!isControlled) {
+        setUncontrolledHasValue(e.target.value.length > 0);
+      }
+      console.log('e', e);
+      inputProps.onChange?.(e);
+    };
+
+    return (
+      <div className={clsx(styles.wrapper, wrapperClassName)}>
+        <Input
+          ref={inputRef}
+          {...inputProps}
+          id={inputId}
+          prefix={
+            <span
+              className={clsx(
+                styles.prefixWrapper,
+                inputProps.prefix ? styles.prefixWrapperHasContent : undefined
+              )}
+              onMouseDown={(e) => {
+                // prevent blur/focus flicker
+                e.preventDefault();
+              }}
             >
-              {label}
-            </label>
-          </span>
-        }
-        value={value}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onChange={handleChange}
-        aria-labelledby={labelId}
-        styles={{
-          input: {
-            paddingTop: 12,
-            height: 56,
-            lineHeight: 1,
-          },
-          affixWrapper: {
-            paddingTop: 0,
-            paddingBottom: 0,
-            height: 56,
-          },
+              {inputProps.prefix ? (
+                <span className={styles.prefixContent}>
+                  {inputProps.prefix}
+                </span>
+              ) : null}
+              <label
+                id={labelId}
+                htmlFor={inputId}
+                className={clsx(styles.label, {
+                  [styles.labelFloating]: isLabelFloating,
+                  [styles.labelFocused]: !hasStatus && isFocused,
+                  [styles.labelStatus]:
+                    !!inputProps.status || !!inputProps.disabled,
+                })}
+                onClick={handleLabelClick}
+              >
+                {label}
+              </label>
+            </span>
+          }
+          value={value}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={handleChange}
+          aria-labelledby={labelId}
+          styles={{
+            input: {
+              paddingTop: 12,
+              height: 56,
+              lineHeight: 1,
+            },
+            affixWrapper: {
+              paddingTop: 0,
+              paddingBottom: 0,
+              height: 56,
+            },
 
-          ...inputProps.styles,
-        }}
-      />
-    </div>
-  );
-};
+            ...inputProps.styles,
+          }}
+        />
+      </div>
+    );
+  }
+);
 
 const useStyles = createStyles(({ css, token }) => ({
   wrapper: css`
