@@ -1,4 +1,4 @@
-import { Divider, Flex, Input, Modal, Typography } from 'antd';
+import { Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -10,6 +10,8 @@ import {
 import { Warehouse } from '../../types';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { SelectButton } from '../SelectButton';
+import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 
 interface Prop {
   warehouse: Warehouse | null;
@@ -171,53 +173,43 @@ export const WarehouseModal = ({
       <SelectButton
         hasValue={!!warehouse}
         mainText={
-          warehouse ? `№${warehouse.Number} ${warehouse.ShortAddress}` : undefined
+          warehouse
+            ? `№${warehouse.Number} ${warehouse.ShortAddress}`
+            : undefined
         }
         secondaryText={warehouse?.Schedule}
         placeholder={t('warehouse')}
         onClick={() => setIsWarehouseModalVisible(true)}
         disabled={!cityName}
       />
-
-      <Modal
+      <DrawerBase
         open={isWarehouseModalVisible}
-        onCancel={() => setIsWarehouseModalVisible(false)}
-        footer={null}
+        onClose={() => setIsWarehouseModalVisible(false)}
+        title={t('select-warehouse')}
       >
-        <Flex className={styles.modalContainer} vertical gap={16}>
-          <Flex className={styles.modalHeader}>
-            <Typography.Text>{t('select-warehouse')}</Typography.Text>
+        <Flex className={styles.modalContainer} vertical>
+          <Flex className={styles.stickyBar}>
+            <FloatingLabelInput
+              label={t('warehouse')}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              disabled={!cityName}
+            />
           </Flex>
-
-          <Divider className={styles.divider} />
-
-          <Flex vertical gap={12}>
-            <Flex vertical gap={8}>
-              <Typography.Text>{t('search-warehouse')}</Typography.Text>
-              <Input
-                placeholder={t('warehouse')}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                disabled={!cityName}
+          {isLoading && (
+            <Typography.Text type="secondary">{t('loading')}</Typography.Text>
+          )}
+          <Flex vertical gap={4}>
+            {items.map((item) => (
+              <WarehouseModalItem
+                key={item.Ref}
+                item={item}
+                changeWarehouse={handleSelectWarehouse}
               />
-            </Flex>
-
-            {isLoading && (
-              <Typography.Text type="secondary">{t('loading')}</Typography.Text>
-            )}
-
-            <Flex vertical gap={8}>
-              {items.map((item) => (
-                <WarehouseModalItem
-                  key={item.Ref}
-                  item={item}
-                  changeWarehouse={handleSelectWarehouse}
-                />
-              ))}
-            </Flex>
+            ))}
           </Flex>
         </Flex>
-      </Modal>
+      </DrawerBase>
     </>
   );
 };
@@ -226,9 +218,15 @@ const useStyles = createStyles(({ token, css }) => {
   return {
     modalContainer: css``,
     modalHeader: css``,
-
     divider: css`
       margin: 0;
+    `,
+    stickyBar: css`
+      position: sticky;
+      top: var(--components-drawer-header-height, 64px);
+      z-index: 1;
+      background: ${token.colorBgBase};
+      padding-bottom: ${token.paddingSM}px;
     `,
     postLogoWrapper: css`
       height: 46px;

@@ -1,4 +1,4 @@
-import { Divider, Flex, Input, Modal, Typography } from 'antd';
+import { Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -6,6 +6,8 @@ import { NovaPoshta } from '../../api/NovaPoshta';
 import { searchSettlementStreetsProperties } from '../../api/NovaPoshta.types';
 import { StreetModalItem } from './StreetModalItem';
 import { SelectButton } from '../SelectButton';
+import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 
 interface Street {
   Present: string;
@@ -84,48 +86,47 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
         invert
         disabled={!cityRef}
       />
-      <Modal
+      <DrawerBase
         open={isStreetModalVisible}
-        onCancel={() => setIsStreetModalVisible(false)}
-        footer={null}
+        onClose={() => setIsStreetModalVisible(false)}
+        title={t('select-street')}
       >
-        <Flex vertical gap={16}>
-          <Flex>
-            <Typography.Text>{t('select-street')}</Typography.Text>
+        <Flex vertical>
+          <Flex className={styles.stickyBar}>
+            <FloatingLabelInput
+              label={t('street')}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              disabled={!cityRef}
+            />
           </Flex>
-          <Divider className={styles.divider} />
-          <Flex vertical gap={12}>
-            <Flex vertical gap={8}>
-              <Typography.Text>{t('select')}</Typography.Text>
-              <Input
-                placeholder={t('street')}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                disabled={!cityRef}
-              />
-            </Flex>
-
-            <Flex vertical gap={8}>
-              {searchValue &&
-                items.map((item) => (
-                  <StreetModalItem
-                    key={item.SettlementStreetRef}
-                    item={item}
-                    changeStreet={handleSelectStreet}
-                  />
-                ))}
-            </Flex>
+          <Flex vertical gap={8}>
+            {searchValue &&
+              items.map((item) => (
+                <StreetModalItem
+                  key={item.SettlementStreetRef}
+                  item={item}
+                  changeStreet={handleSelectStreet}
+                />
+              ))}
           </Flex>
         </Flex>
-      </Modal>
+      </DrawerBase>
     </>
   );
 };
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, token }) => {
   return {
     divider: css`
       margin: 0;
+    `,
+    stickyBar: css`
+      position: sticky;
+      top: var(--components-drawer-header-height, 64px);
+      z-index: 1;
+      background: ${token.colorBgBase};
+      padding-bottom: ${token.paddingSM}px;
     `,
   };
 });

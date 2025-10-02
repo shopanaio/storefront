@@ -2,8 +2,13 @@
 
 import { Button } from 'antd';
 import { useTranslations } from 'next-intl';
-import { AuthModal } from '@src/components/Auth/AuthModal';
 import { useModalStore } from '@src/store/appStore';
+import dynamic from 'next/dynamic';
+
+const AuthModal = dynamic(
+  () => import('@src/components/Auth/AuthModal').then((m) => m.AuthModal),
+  { ssr: false }
+);
 
 export interface CheckoutAuthProps {
   /** Optional className applied to the login button */
@@ -16,7 +21,9 @@ export interface CheckoutAuthProps {
  */
 export const CheckoutAuth = ({ className }: CheckoutAuthProps) => {
   const t = useTranslations('Checkout');
-  const setIsAuthModalVisible = useModalStore((state) => state.setIsAuthModalVisible);
+  const setIsAuthModalVisible = useModalStore(
+    (state) => state.setIsAuthModalVisible
+  );
 
   return (
     <>
@@ -25,7 +32,7 @@ export const CheckoutAuth = ({ className }: CheckoutAuthProps) => {
         size="large"
         type="link"
         onClick={() => setIsAuthModalVisible(true)}
-     >
+      >
         {t('log-in')}
       </Button>
       <AuthModal />

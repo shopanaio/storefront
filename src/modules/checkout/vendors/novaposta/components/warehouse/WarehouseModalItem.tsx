@@ -93,20 +93,13 @@ export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
   return (
     <Button
       type="text"
-      icon={
-        <div className={styles.postLogoWrapper}>
-          <NPLogo showText={false} />
-        </div>
-      }
+      icon={<NPLogo showText={false} />}
       key={item?.Ref}
-      className={styles.item}
+      className={styles.button}
       onClick={() => changeWarehouse(item)}
     >
-      <Flex vertical align="start" gap={4}>
-        <Typography.Text className={styles.type} type="secondary">
-          {item?.RegionCity}
-        </Typography.Text>
-        <Typography.Text className={styles.warehouseMain} strong>
+      <Flex vertical align="start" gap={4} className={styles.content}>
+        <Typography.Text className={styles.warehouseMain} ellipsis>
           {`№${item?.Number} ${item?.ShortAddress}`}
         </Typography.Text>
         <Typography.Text className={styles.workTime} type="secondary">
@@ -119,39 +112,32 @@ export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
 
 const useStyles = createStyles(({ token, css }) => {
   return {
+    button: css`
+      display: flex;
+      justify-content: flex-start;
+      padding-left: ${token.paddingXS}px;
+      height: 56px;
+      overflow: hidden;
+    `,
     postLogoWrapper: css`
       height: 46px;
       padding: ${token.paddingXXS}px;
       border-radius: ${token.borderRadius}px;
       border: 1px solid ${token.colorBorderSecondary};
     `,
-
     postLogo: css`
       height: 100%;
       border-radius: ${token.borderRadius}px;
     `,
-
-    type: css`
-      line-height: 1;
-      font-size: ${token.fontSizeSM}px;
-    `,
-
     warehouseMain: css`
-      max-width: 300px !important;
       line-height: 1;
-      font-size: ${token.fontSizeLG}px;
     `,
-
     workTime: css`
       font-size: ${token.fontSizeSM}px;
       line-height: 1;
     `,
-
-    item: css`
-      display: flex;
-      justify-content: flex-start;
-      padding-left: 0;
-      height: 60px;
+    content: css`
+      overflow: hidden;
     `,
   };
 });

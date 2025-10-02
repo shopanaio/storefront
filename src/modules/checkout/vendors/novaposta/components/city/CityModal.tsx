@@ -1,4 +1,4 @@
-import { Divider, Flex, Input, Modal, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -9,6 +9,9 @@ import { CityModalItem } from './CityModalItem';
 import { SelectButton } from '../SelectButton';
 import { TbMapPin } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
+import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { popularCities } from '../../api/cities';
 
 interface Prop {
   city: City | null;
@@ -76,9 +79,13 @@ export const CityModal = ({ city, changeCity }: Prop) => {
       <SelectButton
         hasValue={!!city}
         mainText={
-          city ? `${city.SettlementTypeCode} ${city.MainDescription}` : undefined
+          city
+            ? `${city.SettlementTypeCode} ${city.MainDescription}`
+            : undefined
         }
-        secondaryText={city ? `${city.Area} ${city.ParentRegionCode}` : undefined}
+        secondaryText={
+          city ? `${city.Area} ${city.ParentRegionCode}` : undefined
+        }
         placeholder={t('city')}
         onClick={() => setIsCityModalVisible(true)}
         icon={
@@ -88,50 +95,60 @@ export const CityModal = ({ city, changeCity }: Prop) => {
           />
         }
       />
-
-      <Modal
+      <DrawerBase
         open={isCityModalVisible}
-        onCancel={() => setIsCityModalVisible(false)}
-        footer={null}
+        onClose={() => setIsCityModalVisible(false)}
+        title={t('choose-your-city')}
       >
-        <Flex vertical gap={16}>
-          <Flex>
-            <Typography.Text>{t('choose-your-city')}</Typography.Text>
+        <Flex vertical>
+          <Flex className={styles.stickyBar}>
+            <FloatingLabelInput
+              label={t('city')}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
           </Flex>
-
-          <Divider className={styles.divider} />
-
-          <Flex vertical gap={12}>
-            <Flex vertical gap={8}>
-              <Typography.Text>{t('choose-ua-city')}</Typography.Text>
-              <Input
-                placeholder={t('city')}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-              />
-            </Flex>
-
-            <Flex vertical gap={8}>
-              {searchValue &&
-                items.map((item) => (
+          <Flex vertical gap={8}>
+            {!searchValue && (
+              <>
+                <Typography.Text type="secondary">
+                  {t('popular-cities')}
+                </Typography.Text>
+                {popularCities.map((item) => (
                   <CityModalItem
                     key={item.Ref}
                     item={item}
                     changeCity={handleSelectCity}
                   />
                 ))}
-            </Flex>
+              </>
+            )}
+            {searchValue &&
+              items.map((item) => (
+                <CityModalItem
+                  key={item.Ref}
+                  item={item}
+                  changeCity={handleSelectCity}
+                />
+              ))}
           </Flex>
         </Flex>
-      </Modal>
+      </DrawerBase>
     </>
   );
 };
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, token }) => {
   return {
     divider: css`
       margin: 0;
+    `,
+    stickyBar: css`
+      position: sticky;
+      top: var(--components-drawer-header-height, 64px);
+      z-index: 1;
+      background: ${token.colorBgBase};
+      padding-bottom: ${token.paddingSM}px;
     `,
   };
 });

@@ -1,7 +1,6 @@
-import { Button, Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { TbMapPin } from "react-icons/tb";
-import { City } from "../../types";
+import { Button, Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { City } from '../../types';
 
 interface Prop {
   item: City | null;
@@ -14,19 +13,12 @@ export const CityModalItem = ({ item, changeCity }: Prop) => {
   if (!item) return null;
   return (
     <Button
-      type="text"
-      icon={<TbMapPin size={18} />}
       key={item?.Ref}
       className={styles.item}
       onClick={() => changeCity(item)}
     >
       <Flex vertical align="start">
-        <Typography.Text strong>
-          {`${item?.SettlementTypeCode} ${item?.MainDescription}`}
-        </Typography.Text>
-        <Typography.Text type="secondary">
-          {`${item?.Area} ${item?.ParentRegionCode}`}
-        </Typography.Text>
+        <Typography.Text strong>{item?.MainDescription}</Typography.Text>
       </Flex>
     </Button>
   );
@@ -35,10 +27,8 @@ export const CityModalItem = ({ item, changeCity }: Prop) => {
 const useStyles = createStyles(({ css }) => {
   return {
     item: css`
-      display: flex;
       justify-content: flex-start;
-      padding-left: 0;
-      height: 60px;
+      height: 50px;
     `,
   };
 });
