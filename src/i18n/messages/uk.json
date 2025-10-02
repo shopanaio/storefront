@@ -226,7 +226,10 @@
     "state": "Штат",
     "zip-code": "Поштовий індекс",
     "phone-optional": "Номер телефону (необов'язково)",
-    "loading": "Завантаження..."
+    "loading": "Завантаження...",
+    "error-no-shipping-method": "Будь ласка, оберіть метод доставки",
+    "error-no-payment-method": "Будь ласка, оберіть метод оплати",
+    "error-no-shipping-and-payment-method": "Будь ласка, оберіть метод доставки та оплати"
   },
   "Sort": {
     "newest-first": "Спочатку нові",

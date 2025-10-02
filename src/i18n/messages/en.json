@@ -262,7 +262,10 @@
     "zip-code": "Zip code",
     "phone-optional": "Phone (optional)",
 
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "error-no-shipping-method": "Please select a shipping method",
+    "error-no-payment-method": "Please select a payment method",
+    "error-no-shipping-and-payment-method": "Please select a shipping and payment method"
   },
   "Sort": {
     "newest-first": "Newest first",

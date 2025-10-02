@@ -39,15 +39,13 @@ export const CheckoutMethodPanel = ({
         className={clsx(!content ? styles.emptyPanel : '')}
         header={
           <Flex justify="space-between" align="center">
-            <Flex gap={12}>
+            <Flex gap={8}>
               <Radio checked={isActive} />
               <Flex vertical justify="center" className={styles.titleContainer}>
                 <Text className={styles.title}>{title}</Text>
-                {isActive && (
-                  <Text type="secondary" className={styles.description}>
-                    {description}
-                  </Text>
-                )}
+                <Text type="secondary" className={styles.description}>
+                  {description}
+                </Text>
               </Flex>
             </Flex>
             {brand}

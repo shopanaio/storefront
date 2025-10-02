@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Divider, Flex, Typography } from 'antd';
+import { Alert, Button, Divider, Flex, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
@@ -13,6 +13,7 @@ import { TermsNotice } from './TermsNotice';
 import { SubmitButton } from './SubmitButton';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
+import { useState } from 'react';
 
 const { Text } = Typography;
 
@@ -48,6 +49,7 @@ export interface CheckoutFormValues {
 export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const defaultDeliveryGroup = (cart as any)?.deliveryGroups?.[0];
   const defaultSelectedShippingMethod =
@@ -69,7 +71,34 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
 
   const { control, handleSubmit } = methods;
 
-  const onSubmit = (_: CheckoutFormValues) => {};
+  const onSubmit = (data: CheckoutFormValues) => {
+    // Clear previous validation error
+    setValidationError(null);
+
+    const missingShipping = !data.selectedShippingMethod;
+    const missingPayment = !data.selectedPaymentMethod;
+
+    // Check if both methods are missing
+    if (missingShipping && missingPayment) {
+      setValidationError(t('error-no-shipping-and-payment-method'));
+      return;
+    }
+
+    // Check if shipping method is missing
+    if (missingShipping) {
+      setValidationError(t('error-no-shipping-method'));
+      return;
+    }
+
+    // Check if payment method is missing
+    if (missingPayment) {
+      setValidationError(t('error-no-payment-method'));
+      return;
+    }
+
+    // All validations passed, proceed with submission
+    onConfirm();
+  };
 
   return (
     <>
@@ -119,6 +148,15 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                 <Divider className={styles.divider} />
 
                 <Flex vertical gap={12} className={styles.actionsLeft}>
+                  {validationError && (
+                    <Alert
+                      message={validationError}
+                      type="error"
+                      showIcon
+                      closable
+                      onClose={() => setValidationError(null)}
+                    />
+                  )}
                   <SubmitButton />
                   <TermsNotice linkClassName={styles.confirmLinkBtn} />
                 </Flex>
@@ -127,6 +165,15 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                 <Flex vertical gap={12} className={styles.right}>
                   {cart ? <Summary cart={cart} /> : null}
                   <Flex vertical gap={12} className={styles.actionsRight}>
+                    {validationError && (
+                      <Alert
+                        message={validationError}
+                        type="error"
+                        showIcon
+                        closable
+                        onClose={() => setValidationError(null)}
+                      />
+                    )}
                     <SubmitButton />
                     <TermsNotice linkClassName={styles.confirmLinkBtn} />
                   </Flex>

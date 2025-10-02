@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Flex } from 'antd';
 import { ModuleType } from '@src/modules/registry';
 import { ProviderLoader } from './ProviderLoader';
 import { useLocale } from 'next-intl';
@@ -25,7 +24,7 @@ export const PaymentMethods = ({ methods }: Props) => {
     [methods]
   );
   return (
-    <Flex vertical gap={10}>
+    <>
       {Object.entries(byProvider).map(([provider, providerMethods]) => (
         <ProviderLoader
           key={provider}
@@ -35,6 +34,6 @@ export const PaymentMethods = ({ methods }: Props) => {
           locale={locale}
         />
       ))}
-    </Flex>
+    </>
   );
 };

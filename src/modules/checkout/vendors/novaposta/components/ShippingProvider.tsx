@@ -54,7 +54,7 @@ function Content({
   const t = useTranslations('Modules.novaposta');
 
   return (
-    <Flex vertical gap={16} className={styles.container}>
+    <Flex vertical gap={12} className={styles.container}>
       {NOVA_POSHTA_CONFIG.shipping
         .map((config) => {
           const method = methods.find((m) => m.code === config.code);

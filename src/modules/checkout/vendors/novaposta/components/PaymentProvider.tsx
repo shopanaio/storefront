@@ -52,7 +52,7 @@ function Content({
   const t = useTranslations('Modules.novaposta');
 
   return (
-    <Flex vertical gap={16} className={styles.container}>
+    <Flex vertical gap={12} className={styles.container}>
       {methods
         .map((m) => {
           const config = NOVA_POSHTA_CONFIG.payment.find(
