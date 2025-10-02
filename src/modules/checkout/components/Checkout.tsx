@@ -21,77 +21,22 @@ interface Prop {
   brand?: React.ReactNode;
 }
 
-export interface City {
-  AddressDeliveryAllowed: boolean;
-  Area: string;
-  DeliveryCity: string;
-  MainDescription: string;
-  ParentRegionCode: string;
-  ParentRegionTypes: string;
-  Present: string;
-  Ref: string;
-  Region: string;
-  RegionTypes: string;
-  RegionTypesCode: string;
-  SettlementTypeCode: string;
-  StreetsAvailability: boolean;
-  Warehouses: number;
-}
-
-export interface Warehouse {
-  id: string;
-  type: string;
-  Number: string;
-  address: string;
-  schedule: string;
-  cityRef: string;
-  cityName: string;
-  RegionCity: string;
-  ShortAddress: string;
-  Schedule: string;
-  typeOfWarehouse: string;
-}
-
-export interface Street {
-  id: string;
-  name: string;
-}
-
 export interface CheckoutFormValues {
   userPhone: string;
   userName: string;
-  userHouse: string;
-  userApartment: string;
-
-  activeShippingKey: string;
-  userCity: City | null;
-  userStreet: Street | null;
-  userWarehouse: Warehouse | null;
-
-  payment: string;
-  shippingAsBilling: boolean;
-
-  cardNumber: string;
-  expirationDate: string;
-  cvv: string;
-
-  billingCountry: string;
-  billingFirstName: string;
-  billingLastName: string;
-  billingCompany: string;
-  billingAddress: string;
-  billingApartment: string;
-  billingCity: string;
-  billingState: string;
-  billingZip: string;
-  billingPhone: string;
+  /**
+   * The base checkout keeps only generic fields. Vendor-specific
+   * shipping/payment state lives inside vendor modules via useFormContext.
+   */
+  activeShippingKey?: string;
+  payment?: string;
 }
 
 export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
-  const defaultDeliveryGroup = cart?.deliveryGroups?.[0];
+  const defaultDeliveryGroup = (cart as any)?.deliveryGroups?.[0];
   const defaultShippingKey = defaultDeliveryGroup?.selectedDeliveryMethod?.code;
   const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || '';
 
@@ -99,37 +44,12 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
     defaultValues: {
       userPhone: '',
       userName: '',
-      userHouse: '',
-      userApartment: '',
       activeShippingKey: defaultShippingKey,
-      userCity: null,
-      userStreet: null,
-      userWarehouse: null,
       payment: defaultPayment,
-      shippingAsBilling: false,
-
-      cardNumber: '',
-      expirationDate: '',
-      cvv: '',
-
-      billingCountry: '',
-      billingFirstName: '',
-      billingLastName: '',
-      billingCompany: '',
-      billingAddress: '',
-      billingApartment: '',
-      billingCity: '',
-      billingState: '',
-      billingZip: '',
-      billingPhone: '',
     },
   });
 
-  const { control, handleSubmit, setValue, watch } = methods;
-
-  const activeShippingKey = watch('activeShippingKey');
-  const activePayment = watch('payment');
-  const shippingAsBilling = watch('shippingAsBilling');
+  const { control, handleSubmit } = methods;
 
   const onSubmit = (_: CheckoutFormValues) => {};
 
@@ -166,13 +86,9 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
                   <Text className={styles.sectionTitle} strong>
                     {t('shipping')}
                   </Text>
-                  {cart?.deliveryGroups?.[0]?.deliveryMethods && (
+                  {(cart as any)?.deliveryGroups?.[0]?.deliveryMethods && (
                     <ShippingMethods
-                      methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
-                      activeShippingKey={activeShippingKey}
-                      setValue={setValue}
-                      control={control}
-                      watch={watch}
+                      methods={(cart as any)?.deliveryGroups?.[0]?.deliveryMethods || []}
                     />
                   )}
                 </Flex>
@@ -180,13 +96,9 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
                   <Text className={styles.sectionTitle} strong>
                     {t('payment')}
                   </Text>
-                  {cart?.payment?.paymentMethods && (
+                  {(cart as any)?.payment?.paymentMethods && (
                     <PaymentMethods
                       methods={(cart as any)?.payment?.paymentMethods || []}
-                      activePayment={activePayment}
-                      shippingAsBilling={shippingAsBilling}
-                      setValue={setValue}
-                      control={control}
                     />
                   )}
                 </Flex>
@@ -199,7 +111,7 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
               </Flex>
               <Flex className={styles.rightContainer}>
                 <Flex vertical gap={12} className={styles.right}>
-                  <Summary cart={cart} onConfirm={onConfirm} />
+                  {cart ? <Summary cart={cart} /> : null}
                   <Flex vertical gap={12} className={styles.actionsRight}>
                     <SubmitButton />
                     <TermsNotice linkClassName={styles.confirmLinkBtn} />

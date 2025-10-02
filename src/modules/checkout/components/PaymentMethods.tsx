@@ -1,7 +1,5 @@
 import React, { useMemo } from 'react';
 import { Flex } from 'antd';
-import { Control, UseFormSetValue } from 'react-hook-form';
-import { CheckoutFormValues } from './Checkout';
 import { ModuleType } from '@src/modules/registry';
 import { ProviderLoader } from './ProviderLoader';
 import { useLocale } from 'next-intl';
@@ -14,10 +12,6 @@ interface ApiPaymentMethod {
 
 interface Props {
   methods: ApiPaymentMethod[];
-  activePayment: string;
-  shippingAsBilling: boolean;
-  setValue: UseFormSetValue<CheckoutFormValues>;
-  control: Control<CheckoutFormValues>;
 }
 
 export const PaymentMethods = ({ methods }: Props) => {

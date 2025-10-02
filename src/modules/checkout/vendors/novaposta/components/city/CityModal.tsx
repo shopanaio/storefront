@@ -2,7 +2,7 @@ import { Divider, Flex, Input, Modal, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { City } from '@src/modules/checkout/components/Checkout';
+import { City } from '../../types';
 import { NovaPoshta } from '../../api/NovaPoshta';
 import { searchSettlementsProperties } from '../../api/NovaPoshta.types';
 import { CityModalItem } from './CityModalItem';

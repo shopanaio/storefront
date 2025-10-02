@@ -16,10 +16,16 @@ interface Prop {
 
 export const Summary = ({ cart }: Prop) => {
   const t = useTranslations("Checkout");
+  const tListing = useTranslations("Listing");
   const { styles } = useStyles();
 
   const [, setCartDrawerOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const openCartDrawer = () => setCartDrawerOpen(true);
+
+  const lines = cart?.lines ?? [];
+  const visibleLines = isExpanded ? lines : lines.slice(0, 5);
+  const hasHidden = lines.length > 5;
 
   return (
     <>
@@ -36,9 +42,18 @@ export const Summary = ({ cart }: Prop) => {
       </Flex>
 
       <Flex vertical gap={8}>
-        {(cart?.lines ?? []).map((line) => (
+        {visibleLines.map((line) => (
           <SummaryItem key={line.id} line={line} />
         ))}
+        {hasHidden ? (
+          <Button
+            className={styles.confirmLinkBtn}
+            variant="text"
+            onClick={() => setIsExpanded((prev) => !prev)}
+          >
+            {isExpanded ? tListing("show-less") : tListing("show-more")}
+          </Button>
+        ) : null}
       </Flex>
 
       <Divider className={styles.divider} />

@@ -7,7 +7,7 @@ import {
   getWarehousesProperties,
   WarehouseData,
 } from '../../api/NovaPoshta.types';
-import { Warehouse } from '@src/modules/checkout/components/Checkout';
+import { Warehouse } from '../../types';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { SelectButton } from '../SelectButton';
 

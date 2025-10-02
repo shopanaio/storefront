@@ -1,17 +1,11 @@
 import React, { useMemo } from 'react';
 import { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
-import { Control, UseFormSetValue, UseFormWatch } from 'react-hook-form';
-import { CheckoutFormValues } from './Checkout';
 import { ModuleType } from '@src/modules/registry';
 import { useLocale } from 'next-intl';
 import { ProviderLoader } from './ProviderLoader';
 
 interface Props {
   methods: ApiCheckoutDeliveryMethod[];
-  activeShippingKey: string;
-  setValue: UseFormSetValue<CheckoutFormValues>;
-  control: Control<CheckoutFormValues>;
-  watch: UseFormWatch<CheckoutFormValues>;
 }
 
 export const ShippingMethods = ({ methods }: Props) => {
