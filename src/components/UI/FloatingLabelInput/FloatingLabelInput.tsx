@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useId } from 'react';
-import { Input, InputProps, Form } from 'antd';
+import { Input, InputProps } from 'antd';
 import { createStyles } from 'antd-style';
 import { InputRef } from 'antd/es/input';
 import clsx from 'clsx';
@@ -16,11 +16,6 @@ export interface FloatingLabelInputProps
    * Custom className for the wrapper
    */
   wrapperClassName?: string;
-  /**
-   * Optional status to colorize the floating label.
-   * Accepts success | warning | error regardless of AntD Input limitations.
-   */
-  labelStatus?: 'success' | 'warning' | 'error';
 }
 
 /**
@@ -33,10 +28,9 @@ export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
   wrapperClassName,
   onFocus,
   onBlur,
-  status,
   ...inputProps
 }) => {
-  const { styles, cx } = useStyles();
+  const { styles } = useStyles();
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<InputRef>(null);
   const reactId = useId();
@@ -55,6 +49,12 @@ export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
     ? Boolean(value !== null && String(value).length > 0)
     : uncontrolledHasValue;
   const isLabelFloating = isFocused || hasValue;
+
+  /**
+   * Whether antd `status` prop is provided. If present, we keep label color as `currentColor`.
+   * When not provided and input is focused, we elevate label color to `colorPrimary`.
+   */
+  const hasStatus = Boolean(inputProps.status);
 
   // Accessible ids for label/input association
   const inputId = inputProps.id ?? `fli-${reactId}`;
@@ -82,20 +82,14 @@ export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
   };
 
   return (
-    <div
-      className={clsx(
-        styles.wrapper,
-        wrapperClassName,
-        !inputProps.prefix && styles.wrapperDefault
-      )}
-    >
+    <div className={clsx(styles.wrapper, wrapperClassName)}>
       <Input
         ref={inputRef}
         {...inputProps}
         id={inputId}
         prefix={
           <span
-            className={cx(
+            className={clsx(
               styles.prefixWrapper,
               inputProps.prefix ? styles.prefixWrapperHasContent : undefined
             )}
@@ -110,12 +104,12 @@ export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
             <label
               id={labelId}
               htmlFor={inputId}
-              className={cx(
-                styles.label,
-                isLabelFloating && styles.labelFloating,
-                status && styles[`label${status}`],
-                Boolean(inputProps.prefix) && styles.labelWithPrefix
-              )}
+              className={clsx(styles.label, {
+                [styles.labelFloating]: isLabelFloating,
+                [styles.labelFocused]: !hasStatus && isFocused,
+                [styles.labelStatus]:
+                  !!inputProps.status || !!inputProps.disabled,
+              })}
               onClick={handleLabelClick}
             >
               {label}
@@ -159,15 +153,12 @@ const useStyles = createStyles(({ css, token }) => ({
         position: relative;
         z-index: 2;
       }
-    }
-  `,
-  wrapperDefault: css`
-    & {
       .ant-input-affix-wrapper .ant-input-prefix {
         margin-inline-end: 0 !important;
       }
     }
   `,
+
   prefixWrapper: css`
     position: relative;
     display: inline-flex;
@@ -181,10 +172,11 @@ const useStyles = createStyles(({ css, token }) => ({
   prefixContent: css`
     display: inline-flex;
     align-items: center;
+    padding-right: ${token.paddingXS}px;
   `,
   label: css`
     position: absolute;
-    left: 0;
+    left: 100%;
     top: 50%;
     transform: translateY(-50%);
     color: ${token.colorTextPlaceholder};
@@ -196,28 +188,16 @@ const useStyles = createStyles(({ css, token }) => ({
     user-select: none;
     white-space: nowrap; /* keep label in one line */
   `,
-  labelWithPrefix: css`
-    left: 100%; /* start after prefix + small gap */
-  `,
   labelFloating: css`
-    /* move label above the placeholder purely with transform, tuned for new paddings */
     transform: translateY(calc(-50% - 10px));
-    font-size: 12px;
-  `,
-  labelFloatingDefaultColor: css`
+    font-size: ${token.fontSizeSM};
     color: ${token.colorTextSecondary};
   `,
   labelFocused: css`
     color: ${token.colorPrimary};
   `,
-  labelError: css`
-    color: ${token.colorError};
-  `,
-  labelWarning: css`
-    color: ${token.colorWarning};
-  `,
-  labelSuccess: css`
-    color: ${token.colorSuccess};
+  labelStatus: css`
+    color: currentColor;
   `,
 }));
 
