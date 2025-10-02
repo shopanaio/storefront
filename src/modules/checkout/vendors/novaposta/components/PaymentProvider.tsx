@@ -20,16 +20,7 @@ export function NPPaymentProvider({ methods }: ProviderProps) {
 
   const activeCode: string | undefined = form?.watch?.('payment');
 
-  // Ensure there is always a valid active method code selected
-  const allCodes = methods.map((m) => m.code);
-  if (!activeCode || !allCodes.includes(activeCode)) {
-    if (allCodes.length > 0) {
-      form?.setValue?.('payment', allCodes[0], {
-        shouldDirty: false,
-        shouldTouch: false,
-      });
-    }
-  }
+  // Removed auto-initialization to avoid implicit state updates.
 
   const handleSelectMethod = (code: string) => {
     form?.setValue?.('payment', code, {

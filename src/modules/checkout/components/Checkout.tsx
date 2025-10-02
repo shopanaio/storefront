@@ -132,6 +132,15 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-direction: column;
       width: 100%;
+      /* checkout layout variables */
+      --checkout-content-max: 1280px;
+      /* make left column slightly wider than right */
+      --checkout-left-ratio: 0.56;
+      --checkout-right-ratio: calc(1 - var(--checkout-left-ratio));
+      --checkout-left-fr: 1.1fr;
+      --checkout-right-fr: 0.9fr;
+      --checkout-left-max: calc(var(--checkout-content-max) * var(--checkout-left-ratio));
+      --checkout-right-max: calc(var(--checkout-content-max) * var(--checkout-right-ratio));
     `,
     main: css`
       display: flex;
@@ -140,7 +149,7 @@ const useStyles = createStyles(({ token, css }) => {
 
       ${mq.lg} {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: var(--checkout-left-fr) var(--checkout-right-fr);
       }
     `,
     left: css`
@@ -152,7 +161,7 @@ const useStyles = createStyles(({ token, css }) => {
 
       ${mq.lg} {
         margin-left: auto;
-        max-width: calc(1280px / 2);
+        max-width: var(--checkout-left-max);
         padding: ${token.paddingXL}px;
       }
     `,
@@ -164,7 +173,7 @@ const useStyles = createStyles(({ token, css }) => {
       padding: ${token.padding}px;
 
       ${mq.lg} {
-        max-width: calc(1280px / 2);
+        max-width: var(--checkout-right-max);
         position: sticky;
         padding: ${token.paddingXL}px;
         min-height: 100vh;

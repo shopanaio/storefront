@@ -1,186 +1,131 @@
-import { Flex, Skeleton } from "antd";
-import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+'use client';
 
-export const CheckoutSkeleton = () => {
+import { Divider, Flex, Skeleton, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { mq } from '@src/components/Theme/breakpoints';
+import React from 'react';
+
+const { Text } = Typography;
+
+/**
+ * Skeleton for the Checkout page that mirrors the two-column layout.
+ * Accepts an optional brand node to render at the top of the left column.
+ */
+export interface CheckoutSkeletonProps {
+  /** Optional brand component to be displayed in the left column */
+  brand?: React.ReactNode;
+}
+
+export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
+  brand,
+}) => {
   const { styles } = useStyles();
 
   return (
-    <Flex className={styles.container} vertical gap={22}>
+    <div className={styles.container}>
       <div className={styles.main}>
-        <Flex className={styles.contactShippingSection}>
-          <Flex vertical gap={24}>
-            <div className={styles.titleSkeleton}>
-              <div className={styles.size}>
-                <Skeleton.Input block />
-              </div>
-            </div>
+        <Flex className={styles.left} vertical>
+          {brand}
 
-            <Flex vertical gap={16} className={styles.paragraph}>
-              <div className={styles.size}>
-                <Skeleton.Input block />
-              </div>
-              <div className={styles.size}>
-                <Skeleton.Input block />
-              </div>
-              <div className={styles.size}>
-                <Skeleton.Input block />
-              </div>
-
-              <div className={styles.lastRow}>
-                <div className={styles.size}>
-                  <Skeleton.Input block />
-                </div>
-              </div>
-            </Flex>
+          <Flex vertical gap={16}>
+            <Text className={styles.sectionTitle} strong>
+              <Skeleton.Input active size="small" style={{ width: 150 }} />
+            </Text>
+            <Skeleton active paragraph={{ rows: 3 }} title={false} />
+            <Skeleton active paragraph={{ rows: 3 }} title={false} />
           </Flex>
         </Flex>
 
-        <Flex className={styles.orderSummaryBg}>
-          <Flex vertical gap={12} className={styles.orderSummarySection}>
-            <Flex vertical gap={24}>
-              <div className={styles.titleSkeleton}>
-                <div className={styles.size}>
-                  <Skeleton.Input block />
-                </div>
-              </div>
-
-              <Flex vertical gap={16} className={styles.paragraph}>
-                <div className={styles.size}>
-                  <Skeleton.Input block />
-                </div>
-                <div className={styles.size}>
-                  <Skeleton.Input block />
-                </div>
-                <div className={styles.size}>
-                  <Skeleton.Input block />
-                </div>
-
-                <div className={styles.lastRow}>
-                  <div className={styles.size}>
-                    <Skeleton.Input block />
-                  </div>
-                </div>
-              </Flex>
+        <Flex className={styles.rightContainer}>
+          <Flex vertical gap={12} className={styles.right}>
+            <Skeleton active paragraph={{ rows:5 }} />
+            <Flex vertical gap={12} className={styles.actionsRight}>
+              <Skeleton.Button active size="large" style={{ width: 220 }} />
+              <Skeleton.Input active size="small" style={{ width: 180 }} />
             </Flex>
+            <Skeleton active paragraph={{ rows: 3 }} title={false} />
+
           </Flex>
         </Flex>
       </div>
-    </Flex>
+    </div>
   );
 };
 
-const useStyles = createStyles(({ css, token }) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: ${token.padding}px 0;
-  `,
-
-  main: css`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-
-    ${mq.lg} {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-
-    --width: 1280px;
-    --offset: calc((100vw - var(--width)) / 2);
-
-    --left-column-width: 737px;
-    --right-column-width: calc(
-      var(--width) - var(--left-column-width) + var(--offset)
-    );
-
-    ${mq.xl} {
-      display: grid;
-      justify-content: end;
-      grid-template-columns: var(--left-column-width) var(--right-column-width);
-    }
-
-    ${mq.xxl} {
-      --width: 1400px;
-      --left-column-width: 850px;
-    }
-  `,
-
-  contactShippingSection: css`
-    flex-direction: column;
-    gap: ${token.marginMD}px;
-
-    padding: ${token.paddingXS}px ${token.padding}px;
-
-    ${mq.lg} {
-      padding: ${token.paddingXS}px ${token.paddingXL}px ${token.paddingXS}px
-        ${token.padding}px;
-    }
-
-    ${mq.xl} {
-      padding: ${token.paddingXS}px ${token.paddingXL}px ${token.paddingXL}px
-        ${token.padding}px;
-    }
-  `,
-
-  orderSummaryBg: css`
-    display: none;
-
-    ${mq.lg} {
+const useStyles = createStyles(({ token, css }) => {
+  return {
+    container: css`
       display: flex;
+      flex-direction: column;
+      width: 100%;
+      /* checkout layout variables */
+      --checkout-content-max: 1280px;
+      /* make left column slightly wider than right */
+      --checkout-left-ratio: 0.56;
+      --checkout-right-ratio: calc(1 - var(--checkout-left-ratio));
+      --checkout-left-fr: 1.1fr;
+      --checkout-right-fr: 0.9fr;
+      --checkout-left-max: calc(
+        var(--checkout-content-max) * var(--checkout-left-ratio)
+      );
+      --checkout-right-max: calc(
+        var(--checkout-content-max) * var(--checkout-right-ratio)
+      );
+    `,
+    main: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+
+      ${mq.lg} {
+        display: grid;
+        grid-template-columns: var(--checkout-left-fr) var(--checkout-right-fr);
+      }
+    `,
+    left: css`
+      width: 100%;
+      flex-direction: column;
+      gap: ${token.marginMD}px;
+      border-right: 2px solid ${token.colorBorderSecondary};
+      padding: ${token.padding}px;
+
+      ${mq.lg} {
+        margin-left: auto;
+        max-width: var(--checkout-left-max);
+        padding: ${token.paddingXL}px;
+      }
+    `,
+    rightContainer: css`
       background-color: ${token.colorBgLayout};
+    `,
+    right: css`
       width: 100%;
-    }
-  `,
+      padding: ${token.padding}px;
 
-  orderSummarySection: css`
-    padding: ${token.paddingXS}px ${token.padding}px;
-
-    ${mq.lg} {
-      position: sticky;
-      height: 100vh;
-      top: 0;
-      width: 100%;
-    }
-
-    --width: 1280px;
-    --offset: calc((100vw - var(--width)) / 2);
-
-    --left-column-width: 737px;
-
-    ${mq.xl} {
-      width: calc(var(--width) - var(--left-column-width));
-    }
-  `,
-
-  titleSkeleton: css`
-    display: none;
-    ${mq.lg} {
-      display: block;
-      width: 60%;
-    }
-  `,
-
-  paragraph: css`
-    display: none;
-    ${mq.md} {
-      display: flex;
-    }
-  `,
-
-  lastRow: css`
-    max-width: 277px;
-
-    ${mq.md} {
-      max-width: 224px;
-    }
-  `,
-
-  size: css`
-    height: 16px;
-    overflow: hidden;
-    border-radius: 10px;
-  `,
-}));
+      ${mq.lg} {
+        max-width: var(--checkout-right-max);
+        position: sticky;
+        padding: ${token.paddingXL}px;
+        min-height: 100vh;
+        top: 0;
+      }
+    `,
+    actionsLeft: css`
+      display: none;
+      ${mq.lg} {
+        display: flex;
+      }
+    `,
+    actionsRight: css`
+      ${mq.lg} {
+        display: none;
+      }
+    `,
+    sectionTitle: css`
+      font-size: ${token.fontSizeXL}px;
+    `,
+    divider: css`
+      margin: 0;
+    `,
+  };
+});

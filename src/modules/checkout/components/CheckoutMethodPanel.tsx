@@ -76,7 +76,7 @@ const useStyles = createStyles(({ token, css }) => ({
     font-size: ${token.fontSize}px;
   `,
   emptyPanel: css`
-    & .ant-collapse-content.ant-collapse-content-active {
+    & .ant-collapse-content {
       display: none !important;
     }
   `,

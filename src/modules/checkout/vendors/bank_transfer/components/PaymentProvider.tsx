@@ -4,38 +4,31 @@ import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useFormContext } from 'react-hook-form';
 import type { ProviderProps } from '@src/modules/registry';
-import { NOVA_POSHTA_CONFIG } from './config';
 import { CheckoutMethodPanel } from '@src/modules/checkout/components/CheckoutMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
-import { loadNovapostaMessages } from '../i18n';
+import { loadBankTransferMessages } from '../i18n';
+import { BANK_TRANSFER_CONFIG } from './config';
 
 /**
- * Configuration for Nova Poshta provider methods.
- * Contains two shipping methods and one COD payment method.
- */
-
-/**
- * NovaPoshta provider-level component that renders full shipping UI.
+ * Bank Transfer payment provider-level component that renders payment UI.
  * Uses react-hook-form via useFormContext.
  */
-export function NPShippingProvider({ methods }: ProviderProps) {
+export function BTPaymentProvider({ methods }: ProviderProps) {
   const { styles } = useStyles();
   const form = useFormContext();
 
-  const activeCode: string | undefined = form?.watch?.('activeShippingKey');
-
-  // Removed auto-initialization to avoid implicit state updates.
+  const activeCode: string | undefined = form?.watch?.('payment');
 
   const handleSelectMethod = (code: string) => {
-    form?.setValue?.('activeShippingKey', code, {
+    form?.setValue?.('payment', code, {
       shouldDirty: true,
       shouldTouch: true,
     });
   };
 
   return (
-    <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
+    <ScopedIntlProvider scope="bankTransfer" load={loadBankTransferMessages}>
       <Content
         methods={methods}
         activeCode={activeCode}
@@ -57,29 +50,31 @@ function Content({
   onSelect: (code: string) => void;
   styles: ReturnType<typeof useStyles>['styles'];
 }) {
-  const t = useTranslations('Modules.novaposta');
+  const t = useTranslations('Modules.bankTransfer');
 
   return (
     <Flex vertical gap={16} className={styles.container}>
-      {NOVA_POSHTA_CONFIG.shipping
-        .map((config) => {
-          const method = methods.find((m) => m.code === config.code);
-          if (!method) {
+      {methods
+        .map((m) => {
+          const config = BANK_TRANSFER_CONFIG.payment.find(
+            (p) => p.code === m.code
+          );
+          if (!config) {
             return null;
           }
 
           const FormComponent = config.Component;
-          const BrandComponent = NOVA_POSHTA_CONFIG.logo;
+          const BrandComponent = BANK_TRANSFER_CONFIG.logo;
 
           return (
             <CheckoutMethodPanel
-              key={method.code}
+              key={m.code}
               title={t(config.nameI18n)}
               description={
                 config.descriptionI18n ? t(config.descriptionI18n) : ''
               }
-              isActive={activeCode === method.code}
-              onActivate={() => onSelect(method.code)}
+              isActive={activeCode === m.code}
+              onActivate={() => onSelect(m.code)}
               brand={<BrandComponent size={24} />}
               content={typeof FormComponent === 'function' && <FormComponent />}
             />
@@ -90,20 +85,6 @@ function Content({
   );
 }
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css }) => ({
   container: css``,
-  method: css`
-    padding: ${token.paddingXS}px ${token.padding}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorBgContainer};
-    cursor: pointer;
-  `,
-  methodActive: css`
-    padding: ${token.paddingXS}px ${token.padding}px;
-    border: 1px solid ${token.colorPrimary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorPrimaryBg};
-    cursor: pointer;
-  `,
 }));

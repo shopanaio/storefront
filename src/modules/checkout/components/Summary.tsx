@@ -69,7 +69,7 @@ export const Summary = ({ cart }: Prop) => {
           label={t('coupon-code')}
           prefix={<TbTicket size={20} />}
           suffix={
-            <Button disabled size="large">
+            <Button disabled >
               {t('apply')}
             </Button>
           }

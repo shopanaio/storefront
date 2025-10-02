@@ -1,3 +1,5 @@
+"use client";
+
 interface IProps {
   noText?: boolean;
   theme?: "dark" | "light";

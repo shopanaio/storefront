@@ -14,7 +14,7 @@ export const CheckoutPageClient = () => {
       {isClient ? (
         <Checkout cart={cart} onConfirm={() => {}} brand={<CheckoutBrand />} />
       ) : (
-        <CheckoutSkeleton />
+        <CheckoutSkeleton brand={<CheckoutBrand />} />
       )}
     </>
   );
