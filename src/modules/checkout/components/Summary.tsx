@@ -1,4 +1,4 @@
-import { Flex, Input, Typography, Button, Divider } from "antd";
+import { Flex, Input, Typography, Button, Divider, Badge } from "antd";
 import { createStyles } from "antd-style";
 import { SummaryItem } from "./SummaryItem";
 import { useTranslations } from "next-intl";
@@ -30,9 +30,12 @@ export const Summary = ({ cart }: Prop) => {
   return (
     <>
       <Flex align="center" justify="space-between">
-        <Text className={styles.sectionTitle} strong>
-          {t("order-summary")}
-        </Text>
+        <Flex align="center" gap={8}>
+          <Text className={styles.sectionTitle} strong>
+            {t("order-summary")}
+          </Text>
+          <Badge count={cart?.totalQuantity} color="blue" />
+        </Flex>
         <Button
           color="default"
           variant="text"
