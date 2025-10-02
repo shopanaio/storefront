@@ -1,13 +1,7 @@
-import { Button, Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { WarehouseData } from "../api/NovaPoshta.types";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
-const IMAGES = {
-  NOVA_POSHTA_LOGO:
-    "https://play-lh.googleusercontent.com/mtyOm0Rp0PeG_BWE7M5j9gBWuU1Du34LLj-dLdSE1-006_BkFg32W3Cca00l2BBvNM0",
-  MEEST_LOGO:
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuU_AVAbb-WjL9W7YTIVt4IxDCNxgvs1Xz8Q&s",
-} as const;
+import { Button, Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { WarehouseData } from '../../api/NovaPoshta.types';
+import { NPLogo } from '../Logo';
 
 interface Prop {
   item: WarehouseData | null;
@@ -15,13 +9,13 @@ interface Prop {
 }
 
 const formatSchedule = (schedule: Record<string, string> | string): string => {
-  if (typeof schedule === "string") return schedule;
+  if (typeof schedule === 'string') return schedule;
 
-  if (typeof schedule === "object" && schedule !== null) {
+  if (typeof schedule === 'object' && schedule !== null) {
     const timeGroups: { [time: string]: string[] } = {};
 
     Object.entries(schedule).forEach(([day, time]) => {
-      if (time && time !== "0") {
+      if (time && time !== '0') {
         if (!timeGroups[time]) {
           timeGroups[time] = [];
         }
@@ -31,29 +25,29 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
 
     const formattedGroups = Object.entries(timeGroups).map(([time, days]) => {
       const dayNames: { [key: string]: string } = {
-        Monday: "Mon",
-        Tuesday: "Tue",
-        Wednesday: "Wed",
-        Thursday: "Thu",
-        Friday: "Fri",
-        Saturday: "Sat",
-        Sunday: "Sun",
+        Monday: 'Mon',
+        Tuesday: 'Tue',
+        Wednesday: 'Wed',
+        Thursday: 'Thu',
+        Friday: 'Fri',
+        Saturday: 'Sat',
+        Sunday: 'Sun',
       };
 
       const sortedDays = days.sort((a, b) => {
         const order = [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
         ];
         return order.indexOf(a) - order.indexOf(b);
       });
 
-      let result = "";
+      let result = '';
       let startDay = sortedDays[0];
       let endDay = sortedDays[0];
 
@@ -86,10 +80,10 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
       return result.trim();
     });
 
-    return formattedGroups.join(" ") || "Schedule not specified";
+    return formattedGroups.join(' ') || 'Schedule not specified';
   }
 
-  return "Schedule not specified";
+  return 'Schedule not specified';
 };
 
 export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
@@ -101,11 +95,7 @@ export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
       type="text"
       icon={
         <div className={styles.postLogoWrapper}>
-          <img
-            className={styles.postLogo}
-            src={IMAGES.NOVA_POSHTA_LOGO || fallbackImageBase64}
-            alt=""
-          />
+          <NPLogo showText={false} />
         </div>
       }
       key={item?.Ref}
@@ -116,11 +106,7 @@ export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
         <Typography.Text className={styles.type} type="secondary">
           {item?.RegionCity}
         </Typography.Text>
-        <Typography.Text
-          className={styles.warehouseMain}
-          strong
-          ellipsis={{ rows: 1 }}
-        >
+        <Typography.Text className={styles.warehouseMain} strong>
           {`№${item?.Number} ${item?.ShortAddress}`}
         </Typography.Text>
         <Typography.Text className={styles.workTime} type="secondary">

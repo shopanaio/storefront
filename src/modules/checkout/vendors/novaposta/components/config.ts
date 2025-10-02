@@ -1,7 +1,7 @@
-import type { FC } from "react";
-import { NPLogo as LogoComponent } from "@src/modules/checkout/vendors/novaposta/components/common/Logo";
-import { AddressForm } from "./forms/AddressForm";
-import { WarehouseForm } from "./forms/WarehouseForm";
+import type { FC } from 'react';
+import { NPLogo as LogoComponent } from './Logo';
+import { AddressForm } from './forms/AddressForm';
+import { WarehouseForm } from './forms/WarehouseForm';
 
 /**
  * Nova Poshta provider configuration: shipping and payment options
@@ -27,23 +27,23 @@ export const NOVA_POSHTA_CONFIG: NovaPoshtaProviderConfig = {
   logo: LogoComponent,
   shipping: [
     {
-      code: "warehouse_warehouse",
-      nameI18n: "shipping.warehouse",
-      descriptionI18n: "shipping.warehouse_description",
+      code: 'warehouse_warehouse',
+      nameI18n: 'shipping.warehouse',
+      descriptionI18n: 'shipping.warehouse_description',
       Component: WarehouseForm,
     },
     {
-      code: "warehouse_doors",
-      nameI18n: "shipping.courier",
-      descriptionI18n: "shipping.courier_description",
+      code: 'warehouse_doors',
+      nameI18n: 'shipping.courier',
+      descriptionI18n: 'shipping.courier_description',
       Component: AddressForm,
     },
   ],
   payment: [
     {
-      code: "cod",
-      nameI18n: "shipping.cod",
-      descriptionI18n: "shipping.cod_description",
+      code: 'cod_cash',
+      nameI18n: 'payment.cod',
+      descriptionI18n: 'payment.cod_description',
       Component: null,
     },
   ],

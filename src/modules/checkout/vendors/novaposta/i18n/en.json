@@ -3,7 +3,9 @@
     "warehouse": "Branch pickup",
     "warehouse_description": "Branch pickup",
     "courier": "Courier to door",
-    "courier_description": "Courier to door",
+    "courier_description": "Courier to door"
+  },
+  "payment": {
     "cod": "Cash on delivery",
     "cod_description": "Cash on delivery"
   },

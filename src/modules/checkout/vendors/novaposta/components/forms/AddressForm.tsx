@@ -1,13 +1,11 @@
-"use client";
+'use client';
 
-import { Flex } from "antd";
-import { createStyles } from "antd-style";
-import { useFormContext } from "react-hook-form";
-import { CityModal, StreetModal } from "../common";
+import { Flex } from 'antd';
+import { createStyles } from 'antd-style';
+import { useFormContext } from 'react-hook-form';
+import { CityModal } from '../city/CityModal';
+import { StreetModal } from '../street/StreetModal';
 
-/**
- * Form for Nova Poshta "doors" (courier to door) delivery method.
- */
 export function AddressForm() {
   const { styles } = useStyles();
   const form = useFormContext();
@@ -15,13 +13,13 @@ export function AddressForm() {
   return (
     <Flex vertical gap={12} className={styles.container}>
       <CityModal
-        city={form.watch("userCity")}
-        changeCity={(c) => form.setValue("userCity", c)}
+        city={form.watch('userCity')}
+        changeCity={(c) => form.setValue('userCity', c)}
       />
       <StreetModal
-        street={form.watch("userStreet")}
-        changeStreet={(s) => form.setValue("userStreet", s)}
-        cityRef={form.watch("userCity")?.Ref}
+        street={form.watch('userStreet')}
+        changeStreet={(s) => form.setValue('userStreet', s)}
+        cityRef={form.watch('userCity')?.Ref}
       />
     </Flex>
   );

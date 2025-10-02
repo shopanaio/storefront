@@ -1,10 +1,9 @@
 import { Button, Divider, Flex, Input, Modal, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useMemo, useState, useEffect } from "react";
-import { TbMapPinFilled } from "react-icons/tb";
 import { useTranslations } from "next-intl";
-import { NovaPoshta } from "../api/NovaPoshta";
-import { searchSettlementStreetsProperties } from "../api/NovaPoshta.types";
+import { NovaPoshta } from "../../api/NovaPoshta";
+import { searchSettlementStreetsProperties } from "../../api/NovaPoshta.types";
 import { StreetModalItem } from "./StreetModalItem";
 
 interface Street {
@@ -78,7 +77,6 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
       <Button
         className={styles.streetBtn}
         onClick={() => setIsStreetModalVisible(true)}
-        icon={<TbMapPinFilled size={24} />}
         size="large"
         disabled={!cityRef}
       >

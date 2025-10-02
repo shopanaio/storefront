@@ -1,15 +1,16 @@
-import { Button, Divider, Flex, Input, Modal, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { useMemo, useState, useEffect } from "react";
-import { TbMapPinFilled } from "react-icons/tb";
-import { useTranslations } from "next-intl";
-import { NovaPoshta } from "../api/NovaPoshta";
+import { Button, Divider, Flex, Input, Modal, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { useMemo, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { NovaPoshta } from '../../api/NovaPoshta';
 import {
   getWarehousesProperties,
   WarehouseData,
-} from "../api/NovaPoshta.types";
-import { Warehouse } from "@src/modules/checkout/Checkout";
-import { WarehouseModalItem } from "./WarehouseModalItem";
+} from '../../api/NovaPoshta.types';
+import { Warehouse } from '@src/modules/checkout/components/Checkout';
+import { WarehouseModalItem } from './WarehouseModalItem';
+
+// import { AiOutlineShop } from 'react-icons/ai';
 
 interface Prop {
   warehouse: Warehouse | null;
@@ -18,13 +19,13 @@ interface Prop {
 }
 
 const formatSchedule = (schedule: Record<string, string> | string): string => {
-  if (typeof schedule === "string") return schedule;
+  if (typeof schedule === 'string') return schedule;
 
-  if (typeof schedule === "object" && schedule !== null) {
+  if (typeof schedule === 'object' && schedule !== null) {
     const timeGroups: { [time: string]: string[] } = {};
 
     Object.entries(schedule).forEach(([day, time]) => {
-      if (time && time !== "0") {
+      if (time && time !== '0') {
         if (!timeGroups[time]) {
           timeGroups[time] = [];
         }
@@ -34,29 +35,29 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
 
     const formattedGroups = Object.entries(timeGroups).map(([time, days]) => {
       const dayNames: { [key: string]: string } = {
-        Monday: "Mon",
-        Tuesday: "Tue",
-        Wednesday: "Wed",
-        Thursday: "Thu",
-        Friday: "Fri",
-        Saturday: "Sat",
-        Sunday: "Sun",
+        Monday: 'Mon',
+        Tuesday: 'Tue',
+        Wednesday: 'Wed',
+        Thursday: 'Thu',
+        Friday: 'Fri',
+        Saturday: 'Sat',
+        Sunday: 'Sun',
       };
 
       const sortedDays = days.sort((a, b) => {
         const order = [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
         ];
         return order.indexOf(a) - order.indexOf(b);
       });
 
-      let result = "";
+      let result = '';
       let startDay = sortedDays[0];
       let endDay = sortedDays[0];
 
@@ -89,10 +90,10 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
       return result.trim();
     });
 
-    return formattedGroups.join(" ") || "Schedule not specified";
+    return formattedGroups.join(' ') || 'Schedule not specified';
   }
 
-  return "Schedule not specified";
+  return 'Schedule not specified';
 };
 
 export const WarehouseModal = ({
@@ -101,14 +102,14 @@ export const WarehouseModal = ({
   cityName,
 }: Prop) => {
   const { styles } = useStyles();
-  const t = useTranslations("Checkout");
+  const t = useTranslations('Checkout');
 
   const [isWarehouseModalVisible, setIsWarehouseModalVisible] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const [warehouses, setWarehouses] = useState<WarehouseData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const apiKey = "";
+  const apiKey = '';
   const np = new NovaPoshta(apiKey);
 
   useEffect(() => {
@@ -119,8 +120,8 @@ export const WarehouseModal = ({
       try {
         const methodProperties: getWarehousesProperties = {
           CityName: cityName,
-          Limit: "150",
-          Page: "1",
+          Limit: '150',
+          Page: '1',
         };
 
         const result = await np.getWarehouses(methodProperties);
@@ -163,23 +164,21 @@ export const WarehouseModal = ({
 
     changeWarehouse(warehouseData);
     setIsWarehouseModalVisible(false);
-    setSearchValue("");
+    setSearchValue('');
   };
 
   return (
     <>
       <Button
+        color={warehouse ? 'primary' : 'default'}
+        variant="outlined"
         className={styles.warehouseBtn}
         onClick={() => setIsWarehouseModalVisible(true)}
-        icon={<TbMapPinFilled size={24} />}
         disabled={!cityName}
       >
         {warehouse ? (
           <Flex vertical align="start" gap={4}>
-            <Typography.Text className={styles.type} type="secondary">
-              {warehouse.RegionCity}
-            </Typography.Text>
-            <Typography.Text className={styles.warehouseMain} strong>
+            <Typography.Text className={styles.warehouseMain}>
               {`№${warehouse.Number} ${warehouse.ShortAddress}`}
             </Typography.Text>
             <Typography.Text className={styles.workTime} type="secondary">
@@ -187,7 +186,7 @@ export const WarehouseModal = ({
             </Typography.Text>
           </Flex>
         ) : (
-          <Typography.Text type="secondary">{t("warehouse")}</Typography.Text>
+          <Typography.Text type="secondary">{t('warehouse')}</Typography.Text>
         )}
       </Button>
 
@@ -198,16 +197,16 @@ export const WarehouseModal = ({
       >
         <Flex className={styles.modalContainer} vertical gap={16}>
           <Flex className={styles.modalHeader}>
-            <Typography.Text>{t("select-warehouse")}</Typography.Text>
+            <Typography.Text>{t('select-warehouse')}</Typography.Text>
           </Flex>
 
           <Divider className={styles.divider} />
 
           <Flex vertical gap={12}>
             <Flex vertical gap={8}>
-              <Typography.Text>{t("search-warehouse")}</Typography.Text>
+              <Typography.Text>{t('search-warehouse')}</Typography.Text>
               <Input
-                placeholder={t("warehouse")}
+                placeholder={t('warehouse')}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 disabled={!cityName}
@@ -215,7 +214,7 @@ export const WarehouseModal = ({
             </Flex>
 
             {isLoading && (
-              <Typography.Text type="secondary">{t("loading")}</Typography.Text>
+              <Typography.Text type="secondary">{t('loading')}</Typography.Text>
             )}
 
             <Flex vertical gap={8}>
@@ -239,10 +238,9 @@ const useStyles = createStyles(({ token, css }) => {
     warehouseBtn: css`
       display: flex;
       justify-content: start;
-
       padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
         ${token.paddingSM}px;
-      min-height: 68px;
+      min-height: 64px;
       height: 100%;
     `,
 
@@ -252,35 +250,29 @@ const useStyles = createStyles(({ token, css }) => {
     divider: css`
       margin: 0;
     `,
-
     postLogoWrapper: css`
       height: 46px;
       padding: ${token.paddingXXS}px;
       border-radius: ${token.borderRadius}px;
       border: 1px solid ${token.colorBorderSecondary};
     `,
-
     postLogo: css`
       height: 100%;
       border-radius: ${token.borderRadius}px;
     `,
-
     type: css`
       line-height: 1;
       font-size: ${token.fontSizeSM}px;
     `,
-
     warehouseMain: css`
       max-width: 300px !important;
       line-height: 1;
-      font-size: ${token.fontSizeLG}px;
+      font-size: ${token.fontSize}px;
     `,
-
     workTime: css`
       font-size: ${token.fontSizeSM}px;
       line-height: 1;
     `,
-
     item: css`
       display: flex;
       justify-content: flex-start;

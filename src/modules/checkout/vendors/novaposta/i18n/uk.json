@@ -3,7 +3,9 @@
     "warehouse": "Самовивіз з Нової Пошти",
     "warehouse_description": "Самовивіз з Нової Пошти",
     "courier": "Кур'єр Нової Пошти",
-    "courier_description": "Кур'єр Нової Пошти",
+    "courier_description": "Кур'єр Нової Пошти"
+  },
+  "payment": {
     "cod": "Оплата під час отримання товару",
     "cod_description": "Оплата під час отримання товару"
   },

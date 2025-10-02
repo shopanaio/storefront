@@ -1,13 +1,11 @@
-"use client";
+'use client';
 
-import { Flex } from "antd";
-import { createStyles } from "antd-style";
-import { useFormContext } from "react-hook-form";
-import { CityModal, WarehouseModal } from "../common";
+import { Flex } from 'antd';
+import { createStyles } from 'antd-style';
+import { useFormContext } from 'react-hook-form';
+import { CityModal } from '../city/CityModal';
+import { WarehouseModal } from '../warehouse/WarehouseModal';
 
-/**
- * Form for Nova Poshta "warehouse" (branch pickup) delivery method.
- */
 export function WarehouseForm() {
   const { styles } = useStyles();
   const form = useFormContext();
@@ -15,13 +13,13 @@ export function WarehouseForm() {
   return (
     <Flex vertical gap={12} className={styles.container}>
       <CityModal
-        city={form.watch("userCity")}
-        changeCity={(c) => form.setValue("userCity", c)}
+        city={form.watch('userCity')}
+        changeCity={(c) => form.setValue('userCity', c)}
       />
       <WarehouseModal
-        warehouse={form.watch("userWarehouse")}
-        changeWarehouse={(w) => form.setValue("userWarehouse", w)}
-        cityName={form.watch("userCity")?.MainDescription}
+        warehouse={form.watch('userWarehouse')}
+        changeWarehouse={(w) => form.setValue('userWarehouse', w)}
+        cityName={form.watch('userCity')?.MainDescription}
       />
     </Flex>
   );

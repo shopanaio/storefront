@@ -1,6 +1,6 @@
 import { Flex, Input, Typography, Button, Divider } from "antd";
 import { createStyles } from "antd-style";
-import { SummaryItem } from "@src/modules/checkout/SummaryItem";
+import { SummaryItem } from "./SummaryItem";
 import { useTranslations } from "next-intl";
 import { TbShoppingCart, TbTicket } from "react-icons/tb";
 import { useState } from "react";

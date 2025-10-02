@@ -1,11 +1,13 @@
-import { Button, Divider, Flex, Input, Modal, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { useMemo, useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { City } from "@src/modules/checkout/Checkout";
-import { NovaPoshta } from "../api/NovaPoshta";
-import { searchSettlementsProperties } from "../api/NovaPoshta.types";
-import { CityModalItem } from "./CityModalItem";
+import { Button, Divider, Flex, Input, Modal, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { useMemo, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { City } from '@src/modules/checkout/components/Checkout';
+import { NovaPoshta } from '../../api/NovaPoshta';
+import { searchSettlementsProperties } from '../../api/NovaPoshta.types';
+import { CityModalItem } from './CityModalItem';
+import { TbMapPin } from 'react-icons/tb';
+import useToken from 'antd/es/theme/useToken';
 
 interface Prop {
   city: City | null;
@@ -14,13 +16,14 @@ interface Prop {
 
 export const CityModal = ({ city, changeCity }: Prop) => {
   const { styles } = useStyles();
-  const t = useTranslations("Checkout");
+  const t = useTranslations('Checkout');
+  const [, token] = useToken();
 
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const [settlements, setSettlements] = useState<City[]>([]);
 
-  const apiKey = "";
+  const apiKey = '';
   const np = new NovaPoshta(apiKey);
 
   useEffect(() => {
@@ -30,15 +33,15 @@ export const CityModal = ({ city, changeCity }: Prop) => {
       try {
         const methodProperties: searchSettlementsProperties = {
           CityName: searchValue,
-          Limit: "20",
-          Page: "1",
+          Limit: '20',
+          Page: '1',
         };
 
         const result = await np.searchSettlements(methodProperties);
         console.log(result.data[0].Addresses);
         setSettlements(result.data[0].Addresses || []);
       } catch (error) {
-        console.error("Error searching for settlements:", error);
+        console.error('Error searching for settlements:', error);
         setSettlements([]);
       }
     };
@@ -64,15 +67,23 @@ export const CityModal = ({ city, changeCity }: Prop) => {
   const handleSelectCity = (item: City) => {
     changeCity(item);
     setIsCityModalVisible(false);
-    setSearchValue("");
+    setSearchValue('');
   };
 
   return (
     <>
       <Button
+        // color="default"
+        // variant="outlined"
         className={styles.cityBtn}
         size="large"
         onClick={() => setIsCityModalVisible(true)}
+        icon={
+          <TbMapPin
+            size={24}
+            color={city ? token.colorPrimary : token.colorIcon}
+          />
+        }
       >
         {city ? (
           <Flex gap={5}>
@@ -80,12 +91,12 @@ export const CityModal = ({ city, changeCity }: Prop) => {
               {`${city.SettlementTypeCode} ${city.MainDescription}`},
             </Typography.Text>
             <Typography.Text>
-              {" "}
+              {' '}
               {`${city.Area} ${city.ParentRegionCode}`}
             </Typography.Text>
           </Flex>
         ) : (
-          <Typography.Text>{t("city")}</Typography.Text>
+          <Typography.Text>{t('city')}</Typography.Text>
         )}
       </Button>
 
@@ -96,16 +107,16 @@ export const CityModal = ({ city, changeCity }: Prop) => {
       >
         <Flex vertical gap={16}>
           <Flex>
-            <Typography.Text>{t("choose-your-city")}</Typography.Text>
+            <Typography.Text>{t('choose-your-city')}</Typography.Text>
           </Flex>
 
           <Divider className={styles.divider} />
 
           <Flex vertical gap={12}>
             <Flex vertical gap={8}>
-              <Typography.Text>{t("choose-ua-city")}</Typography.Text>
+              <Typography.Text>{t('choose-ua-city')}</Typography.Text>
               <Input
-                placeholder={t("city")}
+                placeholder={t('city')}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
               />

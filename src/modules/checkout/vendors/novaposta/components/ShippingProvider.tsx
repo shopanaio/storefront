@@ -5,7 +5,7 @@ import { createStyles } from "antd-style";
 import { useFormContext } from "react-hook-form";
 import type { ProviderProps } from "@src/modules/registry";
 import { NOVA_POSHTA_CONFIG } from "./config";
-import { CheckoutMethodPanel } from "@src/modules/checkout/Shipping/Method/CheckoutMethodPanel";
+import { CheckoutMethodPanel } from "@src/modules/checkout/components/CheckoutMethodPanel";
 import { ScopedIntlProvider } from "@src/i18n/ScopedIntlProvider";
 import { useTranslations } from "next-intl";
 import { loadNovapostaMessages } from "../i18n";
@@ -19,7 +19,7 @@ import { loadNovapostaMessages } from "../i18n";
  * NovaPoshta provider-level component that renders full shipping UI.
  * Uses react-hook-form via useFormContext.
  */
-export function NovaPoshtaProvider({ methods }: ProviderProps) {
+export function NPShippingProvider({ methods }: ProviderProps) {
   const { styles } = useStyles();
   const form = useFormContext();
 

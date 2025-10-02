@@ -14,7 +14,7 @@ import Layout, {
 import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
 import { useCategory } from "@src/modules/box-builder/hooks/useCategory";
 import { BOX_BUILDER_CONFIG } from "@src/modules/box-builder/config/categories";
-import { CheckoutSkeleton } from "@src/modules/checkout/CheckoutSkeleton";
+import { CheckoutSkeleton } from "@src/modules/checkout/components/CheckoutSkeleton";
 import React, { Suspense } from "react";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import type { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";

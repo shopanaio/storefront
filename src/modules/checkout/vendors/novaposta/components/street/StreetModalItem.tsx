@@ -1,6 +1,6 @@
-import { Button, Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { TbMapPin } from "react-icons/tb";
+import { Button, Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { TbMapPin } from 'react-icons/tb';
 
 interface Street {
   Present: string;
@@ -30,11 +30,7 @@ export const StreetModalItem = ({ item, changeStreet }: Prop) => {
       onClick={() => changeStreet(item)}
     >
       <Flex vertical align="start">
-        <Typography.Text
-          className={styles.streetName}
-          strong
-          ellipsis={{ rows: 1 }}
-        >
+        <Typography.Text className={styles.streetName} strong>
           {item?.Present}
         </Typography.Text>
       </Flex>

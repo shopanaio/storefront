@@ -1,18 +1,17 @@
-"use client";
+'use client';
 
-import { Button, Divider, Flex, Typography } from "antd";
-import { useTranslations } from "next-intl";
-import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
-import { Summary } from "@src/modules/checkout/Summary";
-import { FormProvider, useForm } from "react-hook-form";
-import { PaymentMethods } from "@src/modules/checkout/Payment/PaymentMethods";
-import { ShippingMethods } from "@src/modules/checkout/Shipping/ShippingMethods";
-import { PhoneInputField } from "@src/modules/checkout/PhoneInput";
-// import { Entity } from "@src/entity";
-import { TermsNotice } from "@src/modules/checkout/TermsNotice";
-import { SubmitButton } from "@src/modules/checkout/SubmitButton";
-import { Entity } from "@src/entity";
+import { Button, Divider, Flex, Typography } from 'antd';
+import { useTranslations } from 'next-intl';
+import { createStyles } from 'antd-style';
+import { mq } from '@src/components/Theme/breakpoints';
+import { Summary } from './Summary';
+import { FormProvider, useForm } from 'react-hook-form';
+import { PaymentMethods } from './PaymentMethods';
+import { ShippingMethods } from './ShippingMethods';
+import { PhoneInputField } from './PhoneInput';
+import { TermsNotice } from './TermsNotice';
+import { SubmitButton } from './SubmitButton';
+import { Entity } from '@src/entity';
 
 const { Text } = Typography;
 
@@ -89,19 +88,19 @@ export interface CheckoutFormValues {
 }
 
 export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
-  const t = useTranslations("Checkout");
+  const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
   const defaultDeliveryGroup = cart?.deliveryGroups?.[0];
   const defaultShippingKey = defaultDeliveryGroup?.selectedDeliveryMethod?.code;
-  const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || "";
+  const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || '';
 
   const methods = useForm<CheckoutFormValues>({
     defaultValues: {
-      userPhone: "",
-      userName: "",
-      userHouse: "",
-      userApartment: "",
+      userPhone: '',
+      userName: '',
+      userHouse: '',
+      userApartment: '',
       activeShippingKey: defaultShippingKey,
       userCity: null,
       userStreet: null,
@@ -109,28 +108,28 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
       payment: defaultPayment,
       shippingAsBilling: false,
 
-      cardNumber: "",
-      expirationDate: "",
-      cvv: "",
+      cardNumber: '',
+      expirationDate: '',
+      cvv: '',
 
-      billingCountry: "",
-      billingFirstName: "",
-      billingLastName: "",
-      billingCompany: "",
-      billingAddress: "",
-      billingApartment: "",
-      billingCity: "",
-      billingState: "",
-      billingZip: "",
-      billingPhone: "",
+      billingCountry: '',
+      billingFirstName: '',
+      billingLastName: '',
+      billingCompany: '',
+      billingAddress: '',
+      billingApartment: '',
+      billingCity: '',
+      billingState: '',
+      billingZip: '',
+      billingPhone: '',
     },
   });
 
   const { control, handleSubmit, setValue, watch } = methods;
 
-  const activeShippingKey = watch("activeShippingKey");
-  const activePayment = watch("payment");
-  const shippingAsBilling = watch("shippingAsBilling");
+  const activeShippingKey = watch('activeShippingKey');
+  const activePayment = watch('payment');
+  const shippingAsBilling = watch('shippingAsBilling');
 
   const onSubmit = (_: CheckoutFormValues) => {};
 
@@ -145,29 +144,28 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
                 <Flex vertical gap={12}>
                   <Flex justify="space-between" align="center">
                     <Text className={styles.sectionTitle} strong>
-                      {t("contact")}
+                      {t('contact')}
                     </Text>
                     <Button
                       className={styles.logInButton}
                       size="large"
                       type="link"
                     >
-                      {t("log-in")}
+                      {t('log-in')}
                     </Button>
                   </Flex>
                   <PhoneInputField
                     control={control}
                     name="userPhone"
-                    label={t("phone-number")}
-                    placeholder={t("phone")}
+                    label={t('phone-number')}
+                    placeholder={t('phone')}
                   />
                 </Flex>
 
                 <Flex vertical gap={12}>
                   <Text className={styles.sectionTitle} strong>
-                    {t("shipping")}
+                    {t('shipping')}
                   </Text>
-
                   {cart?.deliveryGroups?.[0]?.deliveryMethods && (
                     <ShippingMethods
                       methods={cart?.deliveryGroups?.[0]?.deliveryMethods || []}
@@ -178,12 +176,10 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
                     />
                   )}
                 </Flex>
-
                 <Flex vertical gap={12}>
                   <Text className={styles.sectionTitle} strong>
-                    {t("payment")}
+                    {t('payment')}
                   </Text>
-
                   {cart?.payment?.paymentMethods && (
                     <PaymentMethods
                       methods={(cart as any)?.payment?.paymentMethods || []}
