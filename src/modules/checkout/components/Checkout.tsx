@@ -12,6 +12,7 @@ import { PhoneInputField } from './PhoneInput';
 import { TermsNotice } from './TermsNotice';
 import { SubmitButton } from './SubmitButton';
 import { Entity } from '@src/entity';
+import { CheckoutAuth } from './CheckoutAuth';
 
 const { Text } = Typography;
 
@@ -84,13 +85,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                       {t('contact')}
                     </Text>
                     {features?.auth ? (
-                      <Button
-                        className={styles.logInButton}
-                        size="large"
-                        type="link"
-                      >
-                        {t('log-in')}
-                      </Button>
+                      <CheckoutAuth className={styles.logInButton} />
                     ) : null}
                   </Flex>
                   <PhoneInputField
