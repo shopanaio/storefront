@@ -12,6 +12,8 @@
   "form": {
     "city": "Select city",
     "warehouse": "Select warehouse",
-    "street": "Street address"
+    "street": "Street address",
+    "building": "Building",
+    "apartment": "Apartment"
   }
 }

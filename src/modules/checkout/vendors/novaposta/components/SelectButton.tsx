@@ -77,7 +77,7 @@ const useStyles = createStyles(({ token, css }) => {
       justify-content: start;
       padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
         ${token.paddingSM}px;
-      min-height: 64px;
+      min-height: 56px;
       height: 100%;
     `,
     flex: css`

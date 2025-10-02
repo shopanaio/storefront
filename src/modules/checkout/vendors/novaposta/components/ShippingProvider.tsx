@@ -70,12 +70,10 @@ function Content({
 
   return (
     <Flex vertical gap={16} className={styles.container}>
-      {methods
-        .map((m) => {
-          const config = NOVA_POSHTA_CONFIG.shipping.find(
-            (s) => s.code === m.code
-          );
-          if (!config) {
+      {NOVA_POSHTA_CONFIG.shipping
+        .map((config) => {
+          const method = methods.find((m) => m.code === config.code);
+          if (!method) {
             return null;
           }
 
@@ -84,13 +82,13 @@ function Content({
 
           return (
             <CheckoutMethodPanel
-              key={m.code}
+              key={method.code}
               title={t(config.nameI18n)}
               description={
                 config.descriptionI18n ? t(config.descriptionI18n) : ''
               }
-              isActive={activeCode === m.code}
-              onActivate={() => onSelect(m.code)}
+              isActive={activeCode === method.code}
+              onActivate={() => onSelect(method.code)}
               brand={<BrandComponent size={24} />}
               content={typeof FormComponent === 'function' && <FormComponent />}
             />
