@@ -1,24 +1,30 @@
-"use client";
+'use client';
 
-import React from "react";
-import dynamic from "next/dynamic";
-import { AppDrawer } from "./AppDrawer";
-import { MobileSearch } from "../Search/MobileSearch ";
-import { Footer } from "./Footer";
-import { Header } from "./Header";
-import { AnnouncementBar } from "@src/components/Layout/AnnouncementBar";
-import { createStyles } from "antd-style";
+import React from 'react';
+import dynamic from 'next/dynamic';
+import { Footer } from './Footer';
+import { Header } from './Header';
+import { AnnouncementBar } from '@src/components/Layout/AnnouncementBar';
+import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
-  () => import("../Auth/AuthModal").then((m) => m.AuthModal),
+  () => import('../Auth/AuthModal').then((m) => m.AuthModal),
   { ssr: false }
 );
 const RateModal = dynamic(
-  () => import("../Product/Rate/RateModal").then((m) => m.RateModal),
+  () => import('../Product/Rate/RateModal').then((m) => m.RateModal),
   { ssr: false }
 );
 const CartDrawer = dynamic(
-  () => import("../Cart/CartDrawer").then((m) => m.CartDrawer),
+  () => import('../Cart/CartDrawer').then((m) => m.CartDrawer),
+  { ssr: false }
+);
+const AppDrawer = dynamic(
+  () => import('./AppDrawer').then((m) => m.AppDrawer),
+  { ssr: false }
+);
+const MobileSearch = dynamic(
+  () => import('../Search/MobileSearch ').then((m) => m.MobileSearch),
   { ssr: false }
 );
 
@@ -34,12 +40,12 @@ export const Layout = ({ children }: ILayoutProps) => {
       <AnnouncementBar />
       <Header />
       <main className={styles.main}>{children}</main>
-      <Footer />
       <AuthModal />
       <RateModal />
       <CartDrawer />
       <AppDrawer />
       <MobileSearch />
+      <Footer />
     </>
   );
 };

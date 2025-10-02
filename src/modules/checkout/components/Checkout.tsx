@@ -19,6 +19,14 @@ interface Prop {
   cart: Entity.Cart | null;
   onConfirm: () => void;
   brand?: React.ReactNode;
+  /**
+   * Optional feature flags controlling Checkout UI behavior.
+   * - auth: when true, renders the Login button near the contact section.
+   */
+  features?: {
+    /** Gate for rendering login button */
+    auth?: boolean;
+  };
 }
 
 export interface CheckoutFormValues {
@@ -28,24 +36,33 @@ export interface CheckoutFormValues {
    * The base checkout keeps only generic fields. Vendor-specific
    * shipping/payment state lives inside vendor modules via useFormContext.
    */
-  activeShippingKey?: string;
-  payment?: string;
+  selectedShippingMethod?: { code: string } | null;
+  selectedPaymentMethod?: { code: string } | null;
 }
 
-export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
+/**
+ * Checkout form component that renders contact, shipping, and payment sections.
+ * Feature flags can adjust visible UI (e.g., `features.auth` shows login button).
+ */
+export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
   const defaultDeliveryGroup = (cart as any)?.deliveryGroups?.[0];
-  const defaultShippingKey = defaultDeliveryGroup?.selectedDeliveryMethod?.code;
-  const defaultPayment = defaultDeliveryGroup?.deliveryMethods?.[0]?.code || '';
+  const defaultSelectedShippingMethod =
+    defaultDeliveryGroup?.selectedDeliveryMethod
+      ? { code: defaultDeliveryGroup?.selectedDeliveryMethod?.code }
+      : null;
+  const defaultSelectedPaymentMethod = (cart as any)?.payment?.selectedPaymentMethod
+    ? { code: (cart as any)?.payment?.selectedPaymentMethod?.code }
+    : null;
 
   const methods = useForm<CheckoutFormValues>({
     defaultValues: {
       userPhone: '',
       userName: '',
-      activeShippingKey: defaultShippingKey,
-      payment: defaultPayment,
+      selectedShippingMethod: defaultSelectedShippingMethod,
+      selectedPaymentMethod: defaultSelectedPaymentMethod,
     },
   });
 
@@ -66,13 +83,15 @@ export const Checkout = ({ cart, onConfirm, brand }: Prop) => {
                     <Text className={styles.sectionTitle} strong>
                       {t('contact')}
                     </Text>
-                    <Button
-                      className={styles.logInButton}
-                      size="large"
-                      type="link"
-                    >
-                      {t('log-in')}
-                    </Button>
+                    {features?.auth ? (
+                      <Button
+                        className={styles.logInButton}
+                        size="large"
+                        type="link"
+                      >
+                        {t('log-in')}
+                      </Button>
+                    ) : null}
                   </Flex>
                   <PhoneInputField
                     control={control}

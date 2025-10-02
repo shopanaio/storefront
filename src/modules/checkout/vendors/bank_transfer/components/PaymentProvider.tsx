@@ -9,6 +9,7 @@ import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadBankTransferMessages } from '../i18n';
 import { BANK_TRANSFER_CONFIG } from './config';
+import { useSelectedPaymentMethod } from '@src/modules/checkout/hooks/useSelectedPaymentMethod';
 
 /**
  * Bank Transfer payment provider-level component that renders payment UI.
@@ -16,15 +17,11 @@ import { BANK_TRANSFER_CONFIG } from './config';
  */
 export function BTPaymentProvider({ methods }: ProviderProps) {
   const { styles } = useStyles();
-  const form = useFormContext();
-
-  const activeCode: string | undefined = form?.watch?.('payment');
+  const { selectedPaymentMethod, setSelectedPaymentMethod } = useSelectedPaymentMethod();
+  const activeCode: string | undefined = selectedPaymentMethod?.code;
 
   const handleSelectMethod = (code: string) => {
-    form?.setValue?.('payment', code, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
+    setSelectedPaymentMethod({ code });
   };
 
   return (

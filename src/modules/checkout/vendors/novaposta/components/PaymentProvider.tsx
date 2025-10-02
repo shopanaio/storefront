@@ -9,6 +9,7 @@ import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';
 import { NOVA_POSHTA_CONFIG } from './config';
+import { useSelectedPaymentMethod } from '@src/modules/checkout/hooks/useSelectedPaymentMethod';
 
 /**
  * NovaPoshta payment provider-level component that renders payment UI.
@@ -16,17 +17,13 @@ import { NOVA_POSHTA_CONFIG } from './config';
  */
 export function NPPaymentProvider({ methods }: ProviderProps) {
   const { styles } = useStyles();
-  const form = useFormContext();
-
-  const activeCode: string | undefined = form?.watch?.('payment');
+  const { selectedPaymentMethod, setSelectedPaymentMethod } = useSelectedPaymentMethod();
+  const activeCode: string | undefined = selectedPaymentMethod?.code;
 
   // Removed auto-initialization to avoid implicit state updates.
 
   const handleSelectMethod = (code: string) => {
-    form?.setValue?.('payment', code, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
+    setSelectedPaymentMethod({ code });
   };
 
   return (

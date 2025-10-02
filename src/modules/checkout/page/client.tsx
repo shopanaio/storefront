@@ -12,7 +12,12 @@ export const CheckoutPageClient = () => {
   return (
     <>
       {isClient ? (
-        <Checkout cart={cart} onConfirm={() => {}} brand={<CheckoutBrand />} />
+        <Checkout
+          cart={cart}
+          onConfirm={() => {}}
+          brand={<CheckoutBrand />}
+          features={{ auth: true }}
+        />
       ) : (
         <CheckoutSkeleton brand={<CheckoutBrand />} />
       )}

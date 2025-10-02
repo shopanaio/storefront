@@ -16,7 +16,11 @@ const Checkout: ActivityComponentType = () => {
 
   return (
     <Layout showCart={false} paddingTop={false}>
-      <CheckoutComponent cart={cart} onConfirm={handleConfirm} />
+      <CheckoutComponent
+        cart={cart}
+        onConfirm={handleConfirm}
+        features={{ auth: false }}
+      />
     </Layout>
   );
 };
