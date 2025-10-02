@@ -1,26 +1,27 @@
 "use client";
 
-import { Flex, Typography } from "antd";
+import { Flex } from "antd";
 import { createStyles } from "antd-style";
 import { useFormContext } from "react-hook-form";
 import type { ProviderProps } from "@src/modules/registry";
-import { CityModal } from "./CityModal";
-import { StreetModal } from "./StreetModal";
-import { WarehouseModal } from "./WarehouseModal";
+import { NOVA_POSHTA_CONFIG } from "./config";
+import { CheckoutMethodPanel } from "@src/modules/checkout/Shipping/Method/CheckoutMethodPanel";
+import { ScopedIntlProvider } from "@src/i18n/ScopedIntlProvider";
+import { useTranslations } from "next-intl";
+import { loadNovapostaMessages } from "../i18n";
 
-const { Text } = Typography;
+/**
+ * Configuration for Nova Poshta provider methods.
+ * Contains two shipping methods and one COD payment method.
+ */
 
 /**
  * NovaPoshta provider-level component that renders full shipping UI.
  * Uses react-hook-form via useFormContext.
  */
-export function NovaPoshtaProvider({
-  provider,
-  methods,
-  locale,
-}: ProviderProps) {
+export function NovaPoshtaProvider({ methods }: ProviderProps) {
   const { styles } = useStyles();
-  const form = useFormContext<any>();
+  const form = useFormContext();
 
   const activeCode: string | undefined = form?.watch?.("activeShippingKey");
 
@@ -42,71 +43,64 @@ export function NovaPoshtaProvider({
     });
   };
 
-  // Normalize provider-specific codes into UI variants
-  const isWarehouseVariant = Boolean(activeCode && activeCode.endsWith("_warehouse"));
-  const isAddressVariant = Boolean(activeCode && activeCode.endsWith("_doors"));
+  return (
+    <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
+      <Content
+        methods={methods}
+        activeCode={activeCode}
+        onSelect={handleSelectMethod}
+        styles={styles}
+      />
+    </ScopedIntlProvider>
+  );
+}
+
+function Content({
+  methods,
+  activeCode,
+  onSelect,
+  styles,
+}: {
+  methods: ProviderProps["methods"];
+  activeCode?: string;
+  onSelect: (code: string) => void;
+  styles: ReturnType<typeof useStyles>["styles"];
+}) {
+  const tVendor = useTranslations("Modules.novaposta");
 
   return (
     <Flex vertical gap={16} className={styles.container}>
-      <Flex gap={8} wrap>
-        {methods.map((m) => (
-          <button
-            key={m.code}
-            className={
-              m.code === activeCode ? styles.methodActive : styles.method
-            }
-            type="button"
-            onClick={() => handleSelectMethod(m.code)}
-          >
-            {m.label ?? m.code}
-          </button>
-        ))}
-      </Flex>
+      {methods
+        .map((m) => {
+          const config = NOVA_POSHTA_CONFIG.shipping.find((s) => s.code === m.code);
+          if (!config) {
+            return null;
+          }
 
-      {/* Render UI for the active method */}
-      {isWarehouseVariant && (
-        <Flex vertical gap={12}>
-          <Text>City</Text>
-          <CityModal
-            city={form.watch("userCity")}
-            changeCity={(c) => form.setValue("userCity", c)}
-          />
-          <Text>Warehouse</Text>
-          <WarehouseModal
-            warehouse={form.watch("userWarehouse")}
-            changeWarehouse={(w) => form.setValue("userWarehouse", w)}
-            cityName={form.watch("userCity")?.MainDescription}
-          />
-        </Flex>
-      )}
+          const FormComponent = config.Component;
+          const BrandComponent = NOVA_POSHTA_CONFIG.logo;
 
-      {isAddressVariant && (
-        <Flex vertical gap={12}>
-          <Text>City</Text>
-          <CityModal
-            city={form.watch("userCity")}
-            changeCity={(c) => form.setValue("userCity", c)}
-          />
-          <Flex gap={12}>
-            <Flex vertical gap={8}>
-              <Text>Street</Text>
-              <StreetModal
-                street={form.watch("userStreet")}
-                changeStreet={(s) => form.setValue("userStreet", s)}
-                cityRef={form.watch("userCity")?.Ref}
-              />
-            </Flex>
-          </Flex>
-        </Flex>
-      )}
+          const title = config.nameI18n ? tVendor(config.nameI18n) : config.name;
+
+          return (
+            <CheckoutMethodPanel
+              key={m.code}
+              title={title}
+              isActive={activeCode === m.code}
+              onActivate={() => onSelect(m.code)}
+              brand={<BrandComponent size={32} />}
+            >
+              {typeof FormComponent === "function" && <FormComponent />}
+            </CheckoutMethodPanel>
+          );
+        })
+        .filter(Boolean)}
     </Flex>
   );
 }
 
 const useStyles = createStyles(({ css, token }) => ({
-  container: css`
-    width: 100%;
-  `,
+  container: css``,
   method: css`
     padding: ${token.paddingXS}px ${token.padding}px;
     border: 1px solid ${token.colorBorderSecondary};

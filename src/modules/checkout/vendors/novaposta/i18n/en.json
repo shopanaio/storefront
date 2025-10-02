@@ -1,0 +1,12 @@
+{
+  "shipping": {
+    "warehouse": "Branch pickup",
+    "courier": "Courier to door",
+    "cod": "Cash on delivery"
+  },
+  "form": {
+    "city": "Select city",
+    "warehouse": "Select warehouse",
+    "street": "Street address"
+  }
+}
