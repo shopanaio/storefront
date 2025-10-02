@@ -1,12 +1,13 @@
-import { Flex, Input, Typography, Button, Divider, Badge } from "antd";
-import { createStyles } from "antd-style";
-import { SummaryItem } from "./SummaryItem";
-import { useTranslations } from "next-intl";
-import { TbShoppingCart, TbTicket } from "react-icons/tb";
-import { useState } from "react";
-import { Money } from "@src/components/UI/Price/Money";
-import { CartDrawer } from "@src/components/Cart/CartDrawerDynamic";
-import { Entity } from "@src/entity";
+import { Flex, Typography, Button, Divider, Badge } from 'antd';
+import { createStyles } from 'antd-style';
+import { SummaryItem } from './SummaryItem';
+import { useTranslations } from 'next-intl';
+import { TbShoppingCart, TbTicket } from 'react-icons/tb';
+import { useState } from 'react';
+import { Money } from '@src/components/UI/Price/Money';
+import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
+import { Entity } from '@src/entity';
+import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 
 const { Text } = Typography;
 
@@ -15,8 +16,8 @@ interface Prop {
 }
 
 export const Summary = ({ cart }: Prop) => {
-  const t = useTranslations("Checkout");
-  const tListing = useTranslations("Listing");
+  const t = useTranslations('Checkout');
+  const tListing = useTranslations('Listing');
   const { styles } = useStyles();
 
   const [, setCartDrawerOpen] = useState(false);
@@ -32,7 +33,7 @@ export const Summary = ({ cart }: Prop) => {
       <Flex align="center" justify="space-between">
         <Flex align="center" gap={8}>
           <Text className={styles.sectionTitle} strong>
-            {t("order-summary")}
+            {t('order-summary')}
           </Text>
           <Badge count={cart?.totalQuantity} color="blue" />
         </Flex>
@@ -49,34 +50,29 @@ export const Summary = ({ cart }: Prop) => {
           <SummaryItem key={line.id} line={line} />
         ))}
         {hasHidden ? (
-          <Button
-            className={styles.confirmLinkBtn}
-            variant="text"
-            onClick={() => setIsExpanded((prev) => !prev)}
-          >
-            {isExpanded ? tListing("show-less") : tListing("show-more")}
-          </Button>
+          <div>
+            <Button
+              className={styles.confirmLinkBtn}
+              type="link"
+              onClick={() => setIsExpanded((prev) => !prev)}
+            >
+              {isExpanded ? tListing('show-less') : tListing('show-more')}
+            </Button>
+          </div>
         ) : null}
       </Flex>
 
       <Divider className={styles.divider} />
 
       <Flex vertical gap={8}>
-        <Text>{t("coupon-code")}</Text>
-        <Input
-          placeholder={t("coupon-code")}
+        <FloatingLabelInput
+          label={t('coupon-code')}
           prefix={<TbTicket size={20} />}
-          suffix={<Button disabled>{t("apply")}</Button>}
-          styles={{
-            input: {
-              paddingInline: 12,
-            },
-            affixWrapper: {
-              paddingLeft: 12,
-              paddingRight: 6,
-              paddingBlock: 6,
-            },
-          }}
+          suffix={
+            <Button disabled size="large">
+              {t('apply')}
+            </Button>
+          }
         />
       </Flex>
 
@@ -85,7 +81,7 @@ export const Summary = ({ cart }: Prop) => {
       <Flex vertical gap={12}>
         <Flex justify="space-between">
           <Text className={styles.summaryRow} strong>
-            {t("subtotal")}
+            {t('subtotal')}
           </Text>
           <Text className={styles.summaryRow} strong>
             <Money money={cart.cost.subtotalAmount} />
@@ -93,25 +89,25 @@ export const Summary = ({ cart }: Prop) => {
         </Flex>
         <Flex justify="space-between">
           <Text className={styles.summaryRow} strong>
-            {t("shipping")}
+            {t('shipping')}
           </Text>
           <Text className={styles.summaryRow} strong>
             {cart?.cost?.totalShippingAmount ? (
               <Money money={cart.cost.totalShippingAmount} />
             ) : (
-              ""
+              ''
             )}
           </Text>
         </Flex>
         <Flex justify="space-between">
           <Text className={styles.summaryRow} strong>
-            {t("tax")}
+            {t('tax')}
           </Text>
           <Text className={styles.summaryRow} strong>
             {cart?.cost?.totalTaxAmount ? (
               <Money money={cart.cost.totalTaxAmount} />
             ) : (
-              ""
+              ''
             )}
           </Text>
         </Flex>
@@ -121,7 +117,7 @@ export const Summary = ({ cart }: Prop) => {
 
       <Flex vertical gap={12}>
         <Flex justify="space-between">
-          <Text className={styles.summaryTotal}>{t("total")}</Text>
+          <Text className={styles.summaryTotal}>{t('total')}</Text>
           <Text className={styles.summaryTotal}>
             {cart ? <Money money={cart.cost.totalAmount} /> : null}
           </Text>
