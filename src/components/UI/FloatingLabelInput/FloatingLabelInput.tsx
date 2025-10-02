@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useId } from 'react';
+import React, { useState, useRef, useId, useEffect } from 'react';
 import { Input, InputProps } from 'antd';
 import { createStyles } from 'antd-style';
 import { InputRef } from 'antd/es/input';
@@ -44,6 +44,23 @@ export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
         String(inputProps.defaultValue).length > 0
     )
   );
+
+  /**
+   * Synchronize floating label visibility with both controlled and uncontrolled values.
+   * - Controlled: follow `value` prop changes
+   * - Uncontrolled: follow `defaultValue` prop changes
+   */
+  useEffect(() => {
+    const nextHasValue = isControlled
+      ? Boolean(value !== null && value !== undefined && String(value).length > 0)
+      : Boolean(
+          inputProps.defaultValue !== undefined &&
+            inputProps.defaultValue !== null &&
+            String(inputProps.defaultValue).length > 0
+        );
+    setUncontrolledHasValue(nextHasValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isControlled, value, inputProps.defaultValue]);
 
   const hasValue = isControlled
     ? Boolean(value !== null && String(value).length > 0)
