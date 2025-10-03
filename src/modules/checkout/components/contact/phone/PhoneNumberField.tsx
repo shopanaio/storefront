@@ -6,12 +6,47 @@ import PhoneInput, {
   Props as PhoneInputProps,
 } from 'react-phone-number-input/react-hook-form-input';
 import {
+  isValidPhoneNumber,
+  isPossiblePhoneNumber,
+} from 'react-phone-number-input';
+import {
   FloatingLabelInput,
   FloatingLabelInputProps,
 } from '@src/components/UI/FloatingLabelInput';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useController } from 'react-hook-form';
 import { PhoneCountrySelect } from './PhoneCountrySelect';
+
+/**
+ * Creates validation rules for phone number field using react-phone-number-input utilities
+ * @param messages - Translation messages for validation errors
+ * @returns Validation rules for react-hook-form
+ */
+export const createPhoneValidationRules = (messages: {
+  required?: string;
+  invalidFormat?: string;
+  invalidLength?: string;
+}) => ({
+  required: messages.required || 'Phone number is required',
+  validate: {
+    possibleNumber: (value: string | undefined) => {
+      if (!value) return true; // Let required rule handle empty values
+      return (
+        isPossiblePhoneNumber(value) ||
+        messages.invalidLength ||
+        'Phone number has invalid length'
+      );
+    },
+    validNumber: (value: string | undefined) => {
+      if (!value) return true; // Let required rule handle empty values
+      return (
+        isValidPhoneNumber(value) ||
+        messages.invalidFormat ||
+        'Phone number format is invalid'
+      );
+    },
+  },
+});
 
 const InputWrapper = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
   ({ placeholder, value, onChange, onFocus, onBlur, label, ...rest }, ref) => {
@@ -44,6 +79,26 @@ interface PhoneInputFieldProps
    * Label for the floating label input
    */
   label?: string;
+  /**
+   * Validation rules for react-hook-form
+   */
+  rules?: any;
+  /**
+   * Validation messages for custom error handling
+   */
+  validationMessages?: {
+    required?: string;
+    invalidFormat?: string;
+    invalidLength?: string;
+  };
+  /**
+   * Status for error display (from react-hook-form)
+   */
+  status?: 'error' | 'warning' | undefined;
+  /**
+   * Error message to display
+   */
+  error?: string;
 }
 
 export const PhoneInputField = ({
@@ -52,6 +107,8 @@ export const PhoneInputField = ({
   label,
   countrySelect,
   country,
+  rules,
+  validationMessages,
   ...restProps
 }: PhoneInputFieldProps) => {
   const countryFieldName = `${name}Country`;
@@ -62,6 +119,11 @@ export const PhoneInputField = ({
     name: countryFieldName,
     control,
   });
+
+  // Merge custom rules with validation utilities
+  const mergedRules = validationMessages
+    ? { ...createPhoneValidationRules(validationMessages), ...rules }
+    : rules;
 
   const addonBefore = countrySelect ? (
     <PhoneCountrySelect
@@ -78,35 +140,8 @@ export const PhoneInputField = ({
       country={country}
       inputComponent={InputWrapper}
       addonBefore={addonBefore}
+      rules={mergedRules}
       {...restProps}
     />
   );
 };
-
-const useStyles = createStyles(({ css, token }) => ({
-  phoneInput: css`
-    .PhoneInput {
-      display: flex;
-      align-items: center;
-      gap: ${token.marginXS}px;
-    }
-
-    .PhoneInputInput {
-      width: 100%;
-      padding: ${token.paddingXS}px ${token.paddingSM}px;
-      font-size: ${token.fontSize}px;
-      border: 1px solid ${token.colorBorder};
-      border-radius: ${token.borderRadiusLG}px;
-      transition:
-        border-color 0.3s,
-        box-shadow 0.3s;
-      height: 40px;
-    }
-
-    .PhoneInputInput:focus {
-      border-color: ${token.colorPrimary};
-      box-shadow: 0 0 0 2px ${token.colorPrimaryHover}33;
-      outline: none;
-    }
-  `,
-}));

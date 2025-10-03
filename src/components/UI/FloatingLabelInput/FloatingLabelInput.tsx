@@ -113,7 +113,7 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
     };
 
     return (
-      <div className={clsx(styles.wrapper, wrapperClassName)}>
+      <div className={clsx(styles.container, wrapperClassName)}>
         <Input
           ref={inputRef}
           {...inputProps}
@@ -169,21 +169,17 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
             ...inputProps.styles,
           }}
         />
-        {error && (
-          <div className={styles.error}>
-            <Typography.Text type="danger">{error}</Typography.Text>
-          </div>
-        )}
+        {error && <Typography.Text type="danger">{error}</Typography.Text>}
       </div>
     );
   }
 );
 
 const useStyles = createStyles(({ css, token }) => ({
-  wrapper: css`
-    position: relative;
-    width: 100%;
-    /* Ensure addons/prefix/suffix are above the floating label so it never overlaps them */
+  container: css`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 
     & {
       .ant-input-group-addon,
@@ -192,12 +188,12 @@ const useStyles = createStyles(({ css, token }) => ({
         position: relative;
         z-index: 2;
       }
+
       .ant-input-affix-wrapper .ant-input-prefix {
         margin-inline-end: 0 !important;
       }
     }
   `,
-
   prefixWrapper: css`
     position: relative;
     display: inline-flex;
@@ -236,9 +232,6 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   labelStatus: css`
     color: currentColor;
-  `,
-  error: css`
-    margin-top: ${token.marginXS}px;
   `,
 }));
 

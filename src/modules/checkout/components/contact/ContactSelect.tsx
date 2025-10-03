@@ -8,11 +8,11 @@ import type { ReactNode } from 'react';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { StickyButton } from '@src/components/UI/StickyButton';
-import { NameFields } from './NameFields';
 import { PhoneInputField } from './phone/PhoneNumberField';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
+import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 
 /**
  * Controlled contact values.
@@ -62,7 +62,7 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
     },
     mode: 'onChange',
   });
-  const { control, setError, getValues, reset } = methods;
+  const { control, setError, getValues, reset, formState: { errors } } = methods;
 
   // Button summary is derived from controlled props
   const firstName = values.userFirstName;
@@ -138,23 +138,13 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
           <StickyButton
             onClick={() => {
               const next = getValues();
-              let hasErrors = false;
-              const requiredKeys: (keyof ContactValues)[] = [
-                'userFirstName',
-                'userLastName',
-                'userMiddleName',
-                'userPhone',
-              ];
-              requiredKeys.forEach((key) => {
-                const v = next[key];
-                if (!v || String(v).trim().length === 0) {
-                  setError(key, { type: 'required' });
-                  hasErrors = true;
+              // Trigger validation for all fields
+              methods.trigger().then((isValid) => {
+                if (isValid) {
+                  onSave(next);
+                  setOpen(false);
                 }
               });
-              if (hasErrors) return;
-              onSave(next);
-              setOpen(false);
             }}
           >
             {t('save')}
@@ -163,10 +153,56 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
       >
         <FormProvider {...methods}>
           <Flex vertical gap={12}>
-            <NameFields
-              firstNameKey="userFirstName"
-              lastNameKey="userLastName"
-              middleNameKey="userMiddleName"
+            <Controller
+              name="userFirstName"
+              control={control}
+              rules={{
+                required: t('required-field'),
+              }}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  label={t('first-name')}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  status={errors.userFirstName ? 'error' : undefined}
+                  error={errors.userFirstName?.message}
+                />
+              )}
+            />
+            <Controller
+              name="userLastName"
+              control={control}
+              rules={{
+                required: t('required-field'),
+              }}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  label={t('last-name')}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  status={errors.userLastName ? 'error' : undefined}
+                  error={errors.userLastName?.message}
+                />
+              )}
+            />
+            <Controller
+              name="userMiddleName"
+              control={control}
+              rules={{
+                required: t('required-field'),
+              }}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  label={t('middle-name')}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  status={errors.userMiddleName ? 'error' : undefined}
+                  error={errors.userMiddleName?.message}
+                />
+              )}
             />
             <PhoneInputField
               control={control}
@@ -175,6 +211,12 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
               country={'UA'}
               international
               withCountryCallingCode
+              validationMessages={{
+                required: t('required-field'),
+                invalidFormat: t('phone-invalid-format'),
+                invalidLength: t('phone-invalid-length'),
+              }}
+              error={errors.userPhone?.message}
             />
           </Flex>
         </FormProvider>
