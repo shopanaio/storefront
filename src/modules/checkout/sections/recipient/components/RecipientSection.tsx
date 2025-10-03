@@ -10,8 +10,8 @@ import type { ContactValues } from '@src/modules/checkout/components/contact/Con
 
 /**
  * Recipient section component.
- * Renders a switch "I am the recipient". When enabled, no extra fields shown.
- * When disabled, renders separate recipient name fields.
+ * Renders a switch "Recipient is another person". When enabled, shows separate recipient fields.
+ * When disabled, current user is the recipient (no extra fields shown).
  */
 export const RecipientSection = () => {
   const { styles } = useStyles();
@@ -20,13 +20,17 @@ export const RecipientSection = () => {
 
   const isSelf = form.watch('isRecipientSelf') ?? true;
 
-  const [recipientFirstName, recipientLastName, recipientMiddleName, recipientPhone] =
-    form.watch([
-      'recipientFirstName',
-      'recipientLastName',
-      'recipientMiddleName',
-      'recipientPhone',
-    ] as const);
+  const [
+    recipientFirstName,
+    recipientLastName,
+    recipientMiddleName,
+    recipientPhone,
+  ] = form.watch([
+    'recipientFirstName',
+    'recipientLastName',
+    'recipientMiddleName',
+    'recipientPhone',
+  ] as const);
 
   const recipientValues: ContactValues = {
     userFirstName: recipientFirstName || '',
@@ -44,16 +48,23 @@ export const RecipientSection = () => {
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <Flex align="center" gap={8}>
+      <Flex className={styles.switchLabel}>
         <Switch
-          checked={isSelf}
-          onChange={(checked) => form.setValue('isRecipientSelf', checked)}
+          id="is-recipient-self-switch"
+          checked={!isSelf}
+          onChange={(checked) => form.setValue('isRecipientSelf', !checked)}
         />
-        <Typography.Text>{t('i-am-recipient')}</Typography.Text>
+        <label htmlFor="is-recipient-self-switch" style={{ cursor: 'pointer' }}>
+          <Typography.Text>{t('i-am-recipient')}</Typography.Text>
+        </label>
       </Flex>
 
       {!isSelf ? (
-        <ContactSelect values={recipientValues} onSave={handleRecipientSave} />
+        <ContactSelect
+          values={recipientValues}
+          onSave={handleRecipientSave}
+          title={t('recipient')}
+        />
       ) : null}
 
       <RecipientComment />
@@ -61,8 +72,13 @@ export const RecipientSection = () => {
   );
 };
 
-const useStyles = createStyles(({ css }) => ({
+const useStyles = createStyles(({ css, token }) => ({
   container: css``,
+  switchLabel: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+  `,
 }));
 
 export default RecipientSection;

@@ -4,6 +4,7 @@ import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { StickyButton } from '@src/components/UI/StickyButton';
@@ -35,6 +36,8 @@ export interface ContactSelectProps {
   values: ContactValues;
   /** Called when user presses Save in the drawer */
   onSave: (values: ContactValues) => void;
+  /** Drawer title (required) */
+  title: ReactNode;
 }
 
 /**
@@ -42,7 +45,7 @@ export interface ContactSelectProps {
  * with contact form inputs (name fields + phone). The button shows a concise
  * summary (full name and masked phone) when data is present.
  */
-export const ContactSelect = ({ values, onSave }: ContactSelectProps) => {
+export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
@@ -130,7 +133,7 @@ export const ContactSelect = ({ values, onSave }: ContactSelectProps) => {
       <DrawerBase
         open={open}
         onClose={() => setOpen(false)}
-        title={t('contact')}
+        title={title}
         footer={
           <StickyButton
             onClick={() => {

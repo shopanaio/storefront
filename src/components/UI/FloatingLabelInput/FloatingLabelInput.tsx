@@ -8,7 +8,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { Input, InputProps } from 'antd';
+import { Input, InputProps, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { InputRef } from 'antd/es/input';
 import clsx from 'clsx';
@@ -22,6 +22,10 @@ export interface FloatingLabelInputProps extends InputProps {
    * Custom className for the wrapper
    */
   wrapperClassName?: string;
+  /**
+   * Error text to display under the input
+   */
+  error?: string;
 }
 
 /**
@@ -29,7 +33,10 @@ export interface FloatingLabelInputProps extends InputProps {
  * Label moves up and shrinks when input is focused or has value.
  */
 export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
-  ({ label, value, wrapperClassName, onFocus, onBlur, ...inputProps }, ref) => {
+  (
+    { label, value, wrapperClassName, error, onFocus, onBlur, ...inputProps },
+    ref
+  ) => {
     const { styles } = useStyles();
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<InputRef>(null);
@@ -74,8 +81,10 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
     /**
      * Whether antd `status` prop is provided. If present, we keep label color as `currentColor`.
      * When not provided and input is focused, we elevate label color to `colorPrimary`.
+     * Automatically set status to 'error' when error is provided.
      */
-    const hasStatus = Boolean(inputProps.status);
+    const finalStatus = error ? 'error' : inputProps.status;
+    const hasStatus = Boolean(finalStatus);
 
     // Accessible ids for label/input association
     const inputId = inputProps.id ?? `fli-${reactId}`;
@@ -108,6 +117,7 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
         <Input
           ref={inputRef}
           {...inputProps}
+          status={finalStatus}
           id={inputId}
           prefix={
             <span
@@ -131,8 +141,7 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
                 className={clsx(styles.label, {
                   [styles.labelFloating]: isLabelFloating,
                   [styles.labelFocused]: !hasStatus && isFocused,
-                  [styles.labelStatus]:
-                    !!inputProps.status || !!inputProps.disabled,
+                  [styles.labelStatus]: !!finalStatus || !!inputProps.disabled,
                 })}
                 onClick={handleLabelClick}
               >
@@ -160,6 +169,11 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
             ...inputProps.styles,
           }}
         />
+        {error && (
+          <div className={styles.error}>
+            <Typography.Text type="danger">{error}</Typography.Text>
+          </div>
+        )}
       </div>
     );
   }
@@ -222,6 +236,9 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   labelStatus: css`
     color: currentColor;
+  `,
+  error: css`
+    margin-top: ${token.marginXS}px;
   `,
 }));
 

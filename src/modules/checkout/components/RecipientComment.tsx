@@ -21,13 +21,15 @@ export const RecipientComment = () => {
     <Flex vertical gap={8} className={styles.container}>
       {isOpen ? (
         <div className={styles.fieldWrap}>
-          <Typography.Text className={styles.label}>
+          <Typography.Text className={styles.label} id="order-comment-label">
             {t('order-comment')}
           </Typography.Text>
           <Input.TextArea
-            autoSize={{ minRows: 5, maxRows: 8 }}
+            id="order-comment"
+            aria-labelledby="order-comment-label"
             placeholder={t('order-comment-placeholder')}
             value={value}
+            rows={6}
             maxLength={255}
             onChange={(e) => form.setValue('orderComment', e.target.value)}
           />
@@ -38,6 +40,8 @@ export const RecipientComment = () => {
           className={styles.toggle}
           onClick={onToggle}
           icon={<TbPencil size={18} />}
+          aria-expanded={false}
+          aria-label={t('add-comment')}
         >
           {t('add-comment')}
         </Button>

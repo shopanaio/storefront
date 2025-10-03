@@ -190,7 +190,7 @@
     "full-name": "Повне ім'я",
     "first-name": "Ім'я",
     "middle-name": "По батькові",
-    "i-am-recipient": "Я отримувач замовлення",
+    "i-am-recipient": "Отримувач інша людина",
     "city": "Місто",
     "warehouse": "Відділення пошти",
     "select-warehouse": "Оберіть відділення",

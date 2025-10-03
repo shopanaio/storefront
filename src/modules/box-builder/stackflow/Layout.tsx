@@ -1,16 +1,16 @@
-import { AppScreen } from "@stackflow/plugin-basic-ui";
+import { AppScreen } from '@stackflow/plugin-basic-ui';
 
-import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
-import { Price } from "@src/components/UI/Price/Price";
-import { FullLogo } from "@src/components/Layout/Logo";
-import { TbArrowRight, TbArrowLeft, TbShoppingCart } from "react-icons/tb";
-import { createStyles, cx } from "antd-style";
-import React from "react";
-import { Badge, Button, ButtonProps, Flex } from "antd";
-import { Activity, useFlow } from "./Stack";
-import { ApiMoney } from "@codegen/schema-client";
-import useToken from "antd/es/theme/useToken";
-import { CloseButton } from "@src/modules/box-builder/components/CloseButton";
+import { useBoxBuilderCart } from '@src/modules/box-builder/hooks/useCart';
+import { Price } from '@src/components/UI/Price/Price';
+import { FullLogo } from '@src/components/Layout/Logo';
+import { TbArrowRight, TbArrowLeft, TbShoppingCart } from 'react-icons/tb';
+import { createStyles, cx } from 'antd-style';
+import React from 'react';
+import { Badge, Button, ButtonProps, Flex } from 'antd';
+import { Activity, useFlow } from './Stack';
+import { ApiMoney } from '@codegen/schema-client';
+import useToken from 'antd/es/theme/useToken';
+import { CloseButton } from '@src/modules/box-builder/components/CloseButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ interface LayoutProps {
   customLeftButton?: React.ReactNode;
   footer?: React.ReactNode;
   paddingTop?: boolean;
+  paddingBottom?: boolean;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -25,10 +26,12 @@ const Layout: React.FC<LayoutProps> = ({
   showCart = true,
   footer = null,
   paddingTop = true,
+  paddingBottom = true,
 }) => {
   const { styles } = useStyles({
     footer: !!footer,
     paddingTop: !!paddingTop,
+    paddingBottom: !!paddingBottom,
   });
 
   const { pop } = useFlow();
@@ -41,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({
             <CloseButton
               onConfirm={() => {
                 // TODO: Navigate to home page or desired location
-                window.location.href = "/";
+                window.location.href = '/';
               }}
             />
           ),
@@ -81,10 +84,14 @@ const Layout: React.FC<LayoutProps> = ({
 const useStyles = createStyles(
   (
     { token, css },
-    { footer, paddingTop }: { footer: boolean; paddingTop: boolean }
+    {
+      footer,
+      paddingTop,
+      paddingBottom,
+    }: { footer: boolean; paddingTop: boolean; paddingBottom: boolean }
   ) => ({
     container: css`
-      padding-bottom: ${footer ? 100 : token.padding}px;
+      padding-bottom: ${footer ? 100 : paddingBottom ? token.padding : 0}px;
       padding-top: ${paddingTop ? token.padding : 0}px;
     `,
     rightSlot: css`
@@ -110,11 +117,11 @@ export interface LayoutFooterButtonProps {
   onClick: () => void;
   label: React.ReactNode;
   money?: ApiMoney;
-  size?: ButtonProps["size"];
+  size?: ButtonProps['size'];
   disabled?: boolean;
   loading?: boolean;
   divider?: string | null;
-  type?: ButtonProps["type"];
+  type?: ButtonProps['type'];
   rightArrow?: boolean;
 }
 
@@ -124,8 +131,8 @@ export const LayoutFooterButton: React.FC<LayoutFooterButtonProps> = ({
   money,
   disabled,
   loading,
-  divider = " • ",
-  type = "primary",
+  divider = ' • ',
+  type = 'primary',
   rightArrow = true,
 }) => {
   const [, token] = useToken();
@@ -141,7 +148,7 @@ export const LayoutFooterButton: React.FC<LayoutFooterButtonProps> = ({
       style={{
         boxShadow: `0 0 1px 1px ${token.colorBgBase}`,
         height: 48,
-        position: "relative",
+        position: 'relative',
       }}
     >
       <Flex align="center" justify="center">
@@ -152,7 +159,7 @@ export const LayoutFooterButton: React.FC<LayoutFooterButtonProps> = ({
           <TbArrowRight
             size={24}
             color="currentColor"
-            style={{ position: "absolute", right: token.paddingSM }}
+            style={{ position: 'absolute', right: token.paddingSM }}
           />
         )}
       </Flex>

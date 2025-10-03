@@ -5,6 +5,7 @@ import type { ContactValues } from '@src/modules/checkout/components/contact/Con
 import type { CheckoutFormValues } from '@src/modules/checkout/components/Checkout';
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
 import { useFormContext } from 'react-hook-form';
 
 /**
@@ -13,6 +14,7 @@ import { useFormContext } from 'react-hook-form';
  */
 export const ContactSection = () => {
   const { styles } = useStyles();
+  const t = useTranslations('Checkout');
   const form = useFormContext<CheckoutFormValues>();
 
   const [userFirstName, userLastName, userMiddleName, userPhone] = form.watch(
@@ -35,7 +37,7 @@ export const ContactSection = () => {
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <ContactSelect values={values} onSave={handleSave} />
+      <ContactSelect values={values} onSave={handleSave} title={t('contact')} />
     </Flex>
   );
 };
