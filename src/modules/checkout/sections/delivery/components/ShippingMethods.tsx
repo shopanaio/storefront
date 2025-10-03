@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
 import { ModuleType } from '@src/modules/registry';
 import { useLocale } from 'next-intl';
-import { ProviderLoader } from './ProviderLoader';
+import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 
 interface Props {
   methods: ApiCheckoutDeliveryMethod[];
@@ -23,7 +23,7 @@ export const ShippingMethods = ({ methods }: Props) => {
   return (
     <>
       {Object.entries(byProvider).map(([provider, providerMethods]) => (
-        <ProviderLoader
+        <ProviderRenderer
           key={provider}
           moduleType={ModuleType.Shipping}
           provider={provider}

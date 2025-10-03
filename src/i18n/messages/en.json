@@ -212,8 +212,11 @@
     "log-in": "Log in",
     "phone-number": "Phone number",
     "phone": "Phone",
+    "recipient": "Recipient",
     "shipping": "Shipping",
     "full-name": "Full name",
+    "first-name": "First name",
+    "middle-name": "Middle name",
 
     "city": "City",
     "warehouse": "Warehouse",

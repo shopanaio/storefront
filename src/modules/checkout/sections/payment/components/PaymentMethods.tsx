@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ModuleType } from '@src/modules/registry';
-import { ProviderLoader } from './ProviderLoader';
+import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 import { useLocale } from 'next-intl';
 
 /** TODO: Use api type when it's available */
@@ -26,7 +26,7 @@ export const PaymentMethods = ({ methods }: Props) => {
   return (
     <>
       {Object.entries(byProvider).map(([provider, providerMethods]) => (
-        <ProviderLoader
+        <ProviderRenderer
           key={provider}
           moduleType={ModuleType.Payment}
           provider={provider}

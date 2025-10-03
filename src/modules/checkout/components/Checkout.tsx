@@ -1,19 +1,22 @@
 'use client';
 
-import { Alert, Button, Divider, Flex, Typography } from 'antd';
+import { Alert, Divider, Flex, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
-import { Summary } from './Summary';
+import { Summary } from './summary/Summary';
 import { FormProvider, useForm } from 'react-hook-form';
-import { PaymentMethods } from './PaymentMethods';
-import { ShippingMethods } from './ShippingMethods';
-import { PhoneInputField } from './PhoneInput';
-import { TermsNotice } from './TermsNotice';
-import { SubmitButton } from './SubmitButton';
+import { TermsNotice } from './notices/TermsNotice';
+import { SubmitButton } from './submit/SubmitButton';
+import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
+import { ShippingMethods } from '@src/modules/checkout/sections/delivery/components/ShippingMethods';
+import { PaymentMethods } from '@src/modules/checkout/sections/payment/components/PaymentMethods';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
 import { useState } from 'react';
+import { getCheckoutCountry } from '../config';
+
+import '@src/modules/checkout/sections/autoload';
 
 const { Text } = Typography;
 
@@ -28,18 +31,29 @@ interface Prop {
   features?: {
     /** Gate for rendering login button */
     auth?: boolean;
+    /** Optional ISO country code to control which blocks are shown */
+    country?: 'UA' | 'INTL';
   };
 }
 
 export interface CheckoutFormValues {
   userPhone: string;
   userName: string;
+  userFirstName?: string;
+  userLastName?: string;
+  userMiddleName?: string;
   /**
    * The base checkout keeps only generic fields. Vendor-specific
    * shipping/payment state lives inside vendor modules via useFormContext.
    */
   selectedShippingMethod?: { code: string } | null;
   selectedPaymentMethod?: { code: string } | null;
+  /** UA/INTL address fields (kept generic here) */
+  userCity?: any;
+  userStreet?: any;
+  userBuilding?: string;
+  userApartment?: string;
+  userWarehouse?: any;
 }
 
 /**
@@ -68,6 +82,8 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
       selectedPaymentMethod: defaultSelectedPaymentMethod,
     },
   });
+
+  const country = features?.country ?? getCheckoutCountry();
 
   const { control, handleSubmit } = methods;
 
@@ -117,13 +133,11 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                       <CheckoutAuth className={styles.logInButton} />
                     ) : null}
                   </Flex>
-                  <PhoneInputField
-                    control={control}
-                    name="userPhone"
-                    label={t('phone-number')}
-                    placeholder={t('phone')}
-                  />
+                  <SectionRenderer slug="contact" country={country} />
                 </Flex>
+
+                <SectionRenderer slug="recipient" country={country} />
+                <SectionRenderer slug="delivery" country={country} />
 
                 <Flex vertical gap={12}>
                   <Text className={styles.sectionTitle} strong>

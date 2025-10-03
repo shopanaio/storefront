@@ -1,0 +1,72 @@
+'use client';
+
+import { Flex } from 'antd';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
+import { useFormContext } from 'react-hook-form';
+import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+
+export type RecipientCountry = 'UA' | 'INTL';
+
+interface Prop {
+  country: RecipientCountry;
+}
+
+/**
+ * Renders recipient form depending on country.
+ * - UA: first name, last name, middle name, phone
+ * - INTL: simple placeholder form (first/last, phone)
+ */
+export const RecipientSection = ({ country }: Prop) => {
+  const { styles } = useStyles();
+  const t = useTranslations('Checkout');
+  const form = useFormContext();
+
+  if (country === 'UA') {
+    return (
+      <Flex vertical gap={12} className={styles.container}>
+        <Flex gap={12}>
+          <FloatingLabelInput
+            label={t('first-name')}
+            value={form.watch('userFirstName')}
+            onChange={(e) => form.setValue('userFirstName', e.target.value)}
+          />
+          <FloatingLabelInput
+            label={t('last-name')}
+            value={form.watch('userLastName')}
+            onChange={(e) => form.setValue('userLastName', e.target.value)}
+          />
+        </Flex>
+        <FloatingLabelInput
+          label={t('middle-name')}
+          value={form.watch('userMiddleName')}
+          onChange={(e) => form.setValue('userMiddleName', e.target.value)}
+        />
+      </Flex>
+    );
+  }
+
+  // INTL fallback
+  return (
+    <Flex vertical gap={12} className={styles.container}>
+      <Flex gap={12}>
+        <FloatingLabelInput
+          label={t('first-name')}
+          value={form.watch('userFirstName')}
+          onChange={(e) => form.setValue('userFirstName', e.target.value)}
+        />
+        <FloatingLabelInput
+          label={t('last-name')}
+          value={form.watch('userLastName')}
+          onChange={(e) => form.setValue('userLastName', e.target.value)}
+        />
+      </Flex>
+    </Flex>
+  );
+};
+
+const useStyles = createStyles(({ css }) => ({
+  container: css``,
+}));
+
+export default RecipientSection;

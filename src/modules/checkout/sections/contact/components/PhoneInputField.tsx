@@ -10,7 +10,7 @@ import {
   FloatingLabelInput,
   FloatingLabelInputProps,
 } from '@src/components/UI/FloatingLabelInput';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useController } from 'react-hook-form';
 
 const InputWrapper = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
@@ -89,7 +89,6 @@ export const PhoneInputField = ({
       placeholder={placeholder}
       country={currentCountry}
       defaultCountry={defaultCountry}
-      // international={false}
       international
       withCountryCallingCode
       inputComponent={InputWrapper}
