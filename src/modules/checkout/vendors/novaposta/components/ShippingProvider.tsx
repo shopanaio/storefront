@@ -8,7 +8,9 @@ import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodP
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';
-import { useSelectedShippingMethod } from '@src/modules/checkout/hooks/useSelectedShippingMethod';
+import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
+import { ProviderControllerProvider } from '@src/modules/checkout/state/context/ProviderControllerContext';
 
 /**
  * Configuration for Nova Poshta provider methods.
@@ -19,13 +21,13 @@ import { useSelectedShippingMethod } from '@src/modules/checkout/hooks/useSelect
  * NovaPoshta provider-level component that renders full shipping UI.
  * Uses react-hook-form via useFormContext.
  */
-export function NPShippingProvider({ methods }: ProviderProps) {
+export function NPShippingProvider({ methods, groupId, provider }: ProviderProps) {
   const { styles } = useStyles();
-  const { setSelectedShippingMethod, selectedShippingMethod } = useSelectedShippingMethod();
-  const activeCode: string | undefined = selectedShippingMethod?.code;
+  const { selected, select } = useMethodSelectionShipping(groupId as string);
+  const activeCode: string | undefined = selected?.code;
 
   const handleSelectMethod = (code: string) => {
-    setSelectedShippingMethod({ code });
+    select({ code, vendor: provider });
   };
 
   return (
@@ -35,6 +37,8 @@ export function NPShippingProvider({ methods }: ProviderProps) {
         activeCode={activeCode}
         onSelect={handleSelectMethod}
         styles={styles}
+        provider={provider}
+        groupId={groupId as string}
       />
     </ScopedIntlProvider>
   );
@@ -45,11 +49,15 @@ function Content({
   activeCode,
   onSelect,
   styles,
+  provider,
+  groupId,
 }: {
   methods: ProviderProps['methods'];
   activeCode?: string;
   onSelect: (code: string) => void;
   styles: ReturnType<typeof useStyles>['styles'];
+  provider: string;
+  groupId?: string;
 }) {
   const t = useTranslations('Modules.novaposta');
 
@@ -75,7 +83,13 @@ function Content({
               isActive={activeCode === method.code}
               onActivate={() => onSelect(method.code)}
               brand={<BrandComponent size={24} />}
-              content={typeof FormComponent === 'function' && <FormComponent />}
+              content={
+                typeof FormComponent === 'function' && activeCode === method.code ? (
+                  <ActiveProviderBoundary providerId={`shipping:${provider}@${(groupId as string)}`}>
+                    <FormComponent />
+                  </ActiveProviderBoundary>
+                ) : null
+              }
             />
           );
         })
@@ -84,20 +98,21 @@ function Content({
   );
 }
 
+function ActiveProviderBoundary({ providerId, children }: { providerId: string; children: React.ReactNode }) {
+  const controller = useProviderController(providerId as any, 'shipping');
+  if (!controller.active) return null;
+  return (
+    <ProviderControllerProvider value={{
+      publishValid: controller.publishValid,
+      publishInvalid: controller.publishInvalid,
+      reset: controller.reset,
+    }}>
+      {children}
+    </ProviderControllerProvider>
+  );
+}
+
 const useStyles = createStyles(({ css, token }) => ({
   container: css``,
-  method: css`
-    padding: ${token.paddingXS}px ${token.padding}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorBgContainer};
-    cursor: pointer;
-  `,
-  methodActive: css`
-    padding: ${token.paddingXS}px ${token.padding}px;
-    border: 1px solid ${token.colorPrimary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorPrimaryBg};
-    cursor: pointer;
-  `,
+  method: css``,
 }));

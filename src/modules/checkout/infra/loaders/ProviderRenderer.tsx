@@ -25,6 +25,8 @@ interface ProviderRendererProps<TMethod extends { code: string }> {
   methods: TMethod[];
   /** Current locale */
   locale: string;
+  /** Optional delivery group id (required for shipping providers) */
+  groupId?: string;
 }
 
 /**
@@ -39,8 +41,10 @@ export const ProviderRenderer = <TMethod extends { code: string }>({
   provider,
   methods,
   locale,
+  groupId,
 }: ProviderRendererProps<TMethod>) => {
   const loader = moduleRegistry.resolve<ProviderModuleApi>(moduleType, provider);
+  const activeOnlyMethods = methods; // placeholder for future filtering if needed
 
   return (
     <DynamicRenderer
@@ -48,8 +52,9 @@ export const ProviderRenderer = <TMethod extends { code: string }>({
       getComponent={(api: ProviderModuleApi) => api.Component}
       componentProps={{
         provider,
-        methods: methods.map((m) => ({ code: m.code } as ProviderMethod)),
+        methods: activeOnlyMethods.map((m) => ({ code: m.code } as ProviderMethod)),
         locale,
+        groupId,
       }}
     />
   );

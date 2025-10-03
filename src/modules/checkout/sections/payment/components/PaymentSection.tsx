@@ -2,9 +2,10 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { useFormContext } from 'react-hook-form';
 import { PaymentMethods } from './PaymentMethods';
-import type { CheckoutFormValues } from '@src/modules/checkout/components/Checkout';
+import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
+import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 
 /**
  * Payment section component.
@@ -12,10 +13,11 @@ import type { CheckoutFormValues } from '@src/modules/checkout/components/Checko
  */
 export const PaymentSection = () => {
   const { styles } = useStyles();
-  const form = useFormContext<CheckoutFormValues>();
+  const { cart } = useCheckoutData();
+  useSectionController('payment', { required: true });
 
   // Access cart data from form's internal state or external context
-  const paymentMethods = (form as any).cart?.payment?.paymentMethods;
+  const paymentMethods = (cart as any)?.payment?.paymentMethods;
 
   return (
     <Flex vertical gap={12} className={styles.container}>

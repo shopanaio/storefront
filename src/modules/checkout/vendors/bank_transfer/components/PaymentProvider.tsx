@@ -8,19 +8,21 @@ import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadBankTransferMessages } from '../i18n';
 import { BANK_TRANSFER_CONFIG } from './config';
-import { useSelectedPaymentMethod } from '@src/modules/checkout/hooks/useSelectedPaymentMethod';
+import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
+import { ProviderControllerProvider } from '@src/modules/checkout/state/context/ProviderControllerContext';
 
 /**
  * Bank Transfer payment provider-level component that renders payment UI.
  * Uses react-hook-form via useFormContext.
  */
-export function BTPaymentProvider({ methods }: ProviderProps) {
+export function BTPaymentProvider({ methods, provider }: ProviderProps) {
   const { styles } = useStyles();
-  const { selectedPaymentMethod, setSelectedPaymentMethod } = useSelectedPaymentMethod();
-  const activeCode: string | undefined = selectedPaymentMethod?.code;
+  const { selected, select } = useMethodSelection('payment');
+  const activeCode: string | undefined = selected?.code;
 
   const handleSelectMethod = (code: string) => {
-    setSelectedPaymentMethod({ code });
+    select({ code, vendor: provider });
   };
 
   return (
@@ -30,6 +32,7 @@ export function BTPaymentProvider({ methods }: ProviderProps) {
         activeCode={activeCode}
         onSelect={handleSelectMethod}
         styles={styles}
+        provider={provider}
       />
     </ScopedIntlProvider>
   );
@@ -40,11 +43,13 @@ function Content({
   activeCode,
   onSelect,
   styles,
+  provider,
 }: {
   methods: ProviderProps['methods'];
   activeCode?: string;
   onSelect: (code: string) => void;
   styles: ReturnType<typeof useStyles>['styles'];
+  provider: string;
 }) {
   const t = useTranslations('Modules.bankTransfer');
 
@@ -72,12 +77,39 @@ function Content({
               isActive={activeCode === m.code}
               onActivate={() => onSelect(m.code)}
               brand={<BrandComponent size={24} />}
-              content={typeof FormComponent === 'function' && <FormComponent />}
+              content={
+                activeCode === m.code ? (
+                  <ActiveProviderBoundary providerId={`payment:${provider}`} autoPublishEmpty>
+                    {typeof FormComponent === 'function' ? <FormComponent /> : null}
+                  </ActiveProviderBoundary>
+                ) : null
+              }
             />
           );
         })
         .filter(Boolean)}
     </Flex>
+  );
+}
+
+function ActiveProviderBoundary({ providerId, autoPublishEmpty, children }: { providerId: string; autoPublishEmpty?: boolean; children: React.ReactNode }) {
+  const controller = useProviderController(providerId as any, 'payment');
+  // Auto-publish valid for methods without forms when active
+  if (controller.active && autoPublishEmpty) {
+    // publishValid with empty data to mark provider as valid
+    controller.publishValid({});
+  }
+  if (!controller.active) return null;
+  return (
+    <ProviderControllerProvider
+      value={{
+        publishValid: controller.publishValid,
+        publishInvalid: controller.publishInvalid,
+        reset: controller.reset,
+      }}
+    >
+      {children}
+    </ProviderControllerProvider>
   );
 }
 

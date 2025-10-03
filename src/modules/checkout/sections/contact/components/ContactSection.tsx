@@ -2,11 +2,14 @@
 
 import { ContactSelect } from '@src/modules/checkout/components/contact/ContactSelect';
 import type { ContactValues } from '@src/modules/checkout/components/contact/ContactSelect';
-import type { CheckoutFormValues } from '@src/modules/checkout/components/Checkout';
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useFormContext } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 /**
  * Contact section component.
@@ -15,9 +18,20 @@ import { useFormContext } from 'react-hook-form';
 export const ContactSection = () => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const form = useFormContext<CheckoutFormValues>();
+  const methods = useForm<ContactValues>({
+    defaultValues: { userFirstName: '', userLastName: '', userMiddleName: '', userPhone: '' },
+    mode: 'onChange',
+  });
+  const { publishValid, publishInvalid } = useSectionController('contact', { required: true });
 
-  const [userFirstName, userLastName, userMiddleName, userPhone] = form.watch(
+  const schema = yup.object({
+    userFirstName: yup.string().optional(),
+    userLastName: yup.string().optional(),
+    userMiddleName: yup.string().optional(),
+    userPhone: yup.string().trim().required('required'),
+  });
+
+  const [userFirstName, userLastName, userMiddleName, userPhone] = methods.watch(
     ['userFirstName', 'userLastName', 'userMiddleName', 'userPhone'] as const
   );
 
@@ -28,17 +42,42 @@ export const ContactSection = () => {
     userPhone: userPhone || '',
   };
 
+  useEffect(() => {
+    (async () => {
+      try {
+        await schema.validate(values, { abortEarly: false });
+        publishValid({ ...values });
+      } catch (e: any) {
+        const errs: Record<string, string> = {};
+        if (e?.inner?.length) {
+          for (const err of e.inner) {
+            if (err.path) errs[err.path] = err.message || 'invalid';
+          }
+        }
+        if (Object.keys(errs).length > 0) publishInvalid(errs);
+      }
+    })();
+    // Do not auto-publish valid here to avoid overriding user intent; handled on save
+  }, [values.userFirstName, values.userLastName, values.userMiddleName, values.userPhone, publishValid, publishInvalid]);
+
   const handleSave = (next: ContactValues) => {
-    form.setValue('userFirstName', next.userFirstName);
-    form.setValue('userLastName', next.userLastName);
-    form.setValue('userMiddleName', next.userMiddleName);
-    form.setValue('userPhone', next.userPhone);
+    methods.setValue('userFirstName', next.userFirstName);
+    methods.setValue('userLastName', next.userLastName);
+    methods.setValue('userMiddleName', next.userMiddleName);
+    methods.setValue('userPhone', next.userPhone);
+    try {
+      publishValid({ ...next });
+    } catch {
+      publishInvalid?.({});
+    }
   };
 
   return (
-    <Flex vertical gap={12} className={styles.container}>
-      <ContactSelect values={values} onSave={handleSave} title={t('contact')} />
-    </Flex>
+    <FormProvider {...methods}>
+      <Flex vertical gap={12} className={styles.container}>
+        <ContactSelect values={values} onSave={handleSave} title={t('contact')} />
+      </Flex>
+    </FormProvider>
   );
 };
 

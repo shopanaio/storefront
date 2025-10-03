@@ -8,21 +8,23 @@ import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';
 import { NOVA_POSHTA_CONFIG } from './config';
-import { useSelectedPaymentMethod } from '@src/modules/checkout/hooks/useSelectedPaymentMethod';
+import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
+import { ProviderControllerProvider } from '@src/modules/checkout/state/context/ProviderControllerContext';
 
 /**
  * NovaPoshta payment provider-level component that renders payment UI.
  * Uses react-hook-form via useFormContext.
  */
-export function NPPaymentProvider({ methods }: ProviderProps) {
+export function NPPaymentProvider({ methods, provider }: ProviderProps) {
   const { styles } = useStyles();
-  const { selectedPaymentMethod, setSelectedPaymentMethod } = useSelectedPaymentMethod();
-  const activeCode: string | undefined = selectedPaymentMethod?.code;
+  const { selected, select } = useMethodSelection('payment');
+  const activeCode: string | undefined = selected?.code;
 
   // Removed auto-initialization to avoid implicit state updates.
 
   const handleSelectMethod = (code: string) => {
-    setSelectedPaymentMethod({ code });
+    select({ code, vendor: provider });
   };
 
   return (
@@ -32,6 +34,7 @@ export function NPPaymentProvider({ methods }: ProviderProps) {
         activeCode={activeCode}
         onSelect={handleSelectMethod}
         styles={styles}
+        provider={provider}
       />
     </ScopedIntlProvider>
   );
@@ -42,11 +45,13 @@ function Content({
   activeCode,
   onSelect,
   styles,
+  provider,
 }: {
   methods: ProviderProps['methods'];
   activeCode?: string;
   onSelect: (code: string) => void;
   styles: ReturnType<typeof useStyles>['styles'];
+  provider: string;
 }) {
   const t = useTranslations('Modules.novaposta');
 
@@ -74,12 +79,32 @@ function Content({
               isActive={activeCode === m.code}
               onActivate={() => onSelect(m.code)}
               brand={<BrandComponent size={24} />}
-              content={typeof FormComponent === 'function' && <FormComponent />}
+              content={
+                typeof FormComponent === 'function' && activeCode === m.code ? (
+                  <ActiveProviderBoundary providerId={`payment:${provider}`}>
+                    <FormComponent />
+                  </ActiveProviderBoundary>
+                ) : null
+              }
             />
           );
         })
         .filter(Boolean)}
     </Flex>
+  );
+}
+
+function ActiveProviderBoundary({ providerId, children }: { providerId: string; children: React.ReactNode }) {
+  const controller = useProviderController(providerId as any, 'payment');
+  if (!controller.active) return null;
+  return (
+    <ProviderControllerProvider value={{
+      publishValid: controller.publishValid,
+      publishInvalid: controller.publishInvalid,
+      reset: controller.reset,
+    }}>
+      {children}
+    </ProviderControllerProvider>
   );
 }
 

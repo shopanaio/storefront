@@ -5,12 +5,14 @@ import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
 import { Summary } from './summary/Summary';
-import { FormProvider, useForm } from 'react-hook-form';
 import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
+import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
+import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutDataContext';
 
 import '@src/modules/checkout/sections/autoload';
 
@@ -67,64 +69,42 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   const { styles } = useStyles();
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const defaultDeliveryGroup = (cart as any)?.deliveryGroups?.[0];
-  const defaultSelectedShippingMethod =
-    defaultDeliveryGroup?.selectedDeliveryMethod
-      ? { code: defaultDeliveryGroup?.selectedDeliveryMethod?.code }
-      : null;
-  const defaultSelectedPaymentMethod = (cart as any)?.payment
-    ?.selectedPaymentMethod
-    ? { code: (cart as any)?.payment?.selectedPaymentMethod?.code }
-    : null;
+  const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
 
-  const methods = useForm<CheckoutFormValues>({
-    defaultValues: {
-      userPhone: '',
-      userName: '',
-      isRecipientSelf: true,
-      selectedShippingMethod: defaultSelectedShippingMethod,
-      selectedPaymentMethod: defaultSelectedPaymentMethod,
-    },
-  });
-
-  // Attach cart to form context for sections to access
-  (methods as any).cart = cart;
-
-  const { handleSubmit } = methods;
-
-  const onSubmit = (data: CheckoutFormValues) => {
-    // Clear previous validation error
-    setValidationError(null);
-
-    const missingShipping = !data.selectedShippingMethod;
-    const missingPayment = !data.selectedPaymentMethod;
-
-    // Check if both methods are missing
-    if (missingShipping && missingPayment) {
-      setValidationError(t('error-no-shipping-and-payment-method'));
-      return;
-    }
-
-    // Check if shipping method is missing
-    if (missingShipping) {
-      setValidationError(t('error-no-shipping-method'));
-      return;
-    }
-
-    // Check if payment method is missing
-    if (missingPayment) {
-      setValidationError(t('error-no-payment-method'));
-      return;
-    }
-
-    // All validations passed, proceed with submission
-    onConfirm();
-  };
+  useEffect(() => {
+    const offReady = onCheckoutEvent('submit/ready', ({ payload }) => {
+      setValidationError(null);
+      onConfirm();
+    });
+    const offBlocked = onCheckoutEvent('submit/blocked', ({ missing }) => {
+      const mapName = (k: string) => {
+        if (k.startsWith('shipping:')) return t('shipping');
+        if (k === 'payment') return t('payment');
+        if (k === 'contact') return t('contact');
+        if (k === 'recipient') return t('recipient');
+        if (k === 'promo') return t('promo');
+        if (k === 'comment') return t('comment');
+        return k;
+      };
+      const names = Array.from(new Set(missing.map(mapName)));
+      const msg = names.length > 0 ? `${t('fill-required')}: ${names.join(', ')}` : t('error-no-shipping-and-payment-method');
+      setValidationError(msg);
+    });
+    return () => {
+      offReady();
+      offBlocked();
+    };
+  }, [onConfirm, t]);
 
   return (
     <>
-      <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+      <CheckoutDataProvider cart={cart}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            requestSubmit();
+          }}
+        >
           <div className={styles.container}>
             <div className={styles.main}>
               <Flex className={styles.left}>
@@ -140,6 +120,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                 <SectionRenderer slug="delivery" />
                 <SectionRenderer slug="recipient" />
                 <SectionRenderer slug="payment" />
+                <SectionRenderer slug="comment" />
 
                 <div className={styles.actionsLeft}>
                   <CheckoutActions
@@ -162,7 +143,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
             </div>
           </div>
         </form>
-      </FormProvider>
+      </CheckoutDataProvider>
     </>
   );
 };

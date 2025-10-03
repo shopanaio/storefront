@@ -2,7 +2,7 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { useFormContext } from 'react-hook-form';
+import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
 import { AddressSection } from './AddressSection';
 import { ShippingMethods } from './ShippingMethods';
 import type { CheckoutFormValues } from '@src/modules/checkout/components/Checkout';
@@ -13,15 +13,15 @@ import type { CheckoutFormValues } from '@src/modules/checkout/components/Checko
  */
 export const DeliverySection = () => {
   const { styles } = useStyles();
-  const form = useFormContext<CheckoutFormValues>();
-
-  // Access cart data from form's internal state or external context
-  const deliveryMethods = (form as any).cart?.deliveryGroups?.[0]?.deliveryMethods;
+  const { cart } = useCheckoutData();
+  const deliveryGroups = (cart as any)?.deliveryGroups ?? [];
 
   return (
     <Flex vertical gap={12} className={styles.container}>
       <AddressSection />
-      {deliveryMethods && <ShippingMethods methods={deliveryMethods} />}
+      {deliveryGroups.map((g: any) => (
+        <ShippingMethods key={g.id} groupId={g.id} methods={g.deliveryMethods || []} />
+      ))}
     </Flex>
   );
 };

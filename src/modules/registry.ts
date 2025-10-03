@@ -69,6 +69,10 @@ export interface ProviderProps {
   provider: string;
   methods: ProviderMethod[];
   locale: string;
+  /**
+   * Optional delivery group id. Present for shipping providers.
+   */
+  groupId?: string;
 }
 
 export interface ShippingProviderModuleApi {
