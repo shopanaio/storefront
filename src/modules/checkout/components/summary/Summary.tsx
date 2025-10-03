@@ -8,6 +8,7 @@ import { Money } from '@src/components/UI/Price/Money';
 import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
 import { Entity } from '@src/entity';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
 
 const { Text } = Typography;
 
@@ -32,9 +33,7 @@ export const Summary = ({ cart }: Prop) => {
     <>
       <Flex align="center" justify="space-between">
         <Flex align="center" gap={8}>
-          <Text className={styles.sectionTitle} strong>
-            {t('order-summary')}
-          </Text>
+          <SectionTitle>{t('order-summary')}</SectionTitle>
           <Badge count={cart?.totalQuantity} color="blue" />
         </Flex>
         <Button
@@ -68,11 +67,7 @@ export const Summary = ({ cart }: Prop) => {
         <FloatingLabelInput
           label={t('coupon-code')}
           prefix={<TbTicket size={20} />}
-          suffix={
-            <Button disabled >
-              {t('apply')}
-            </Button>
-          }
+          suffix={<Button disabled>{t('apply')}</Button>}
         />
       </Flex>
 
@@ -129,9 +124,6 @@ export const Summary = ({ cart }: Prop) => {
 };
 
 const useStyles = createStyles(({ css, token }) => ({
-  sectionTitle: css`
-    font-size: ${token.fontSizeXL}px;
-  `,
   divider: css`
     margin: 0;
   `,

@@ -1,24 +1,18 @@
 'use client';
 
-import { Alert, Divider, Flex, Typography } from 'antd';
+import { Divider, Flex } from 'antd';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
 import { Summary } from './summary/Summary';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TermsNotice } from './notices/TermsNotice';
-import { SubmitButton } from './submit/SubmitButton';
+import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
-import { ShippingMethods } from '@src/modules/checkout/sections/delivery/components/ShippingMethods';
-import { PaymentMethods } from '@src/modules/checkout/sections/payment/components/PaymentMethods';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
 import { useState } from 'react';
-import { getCheckoutCountry } from '../config';
 
 import '@src/modules/checkout/sections/autoload';
-
-const { Text } = Typography;
 
 interface Prop {
   cart: Entity.Cart | null;
@@ -70,7 +64,8 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
     defaultDeliveryGroup?.selectedDeliveryMethod
       ? { code: defaultDeliveryGroup?.selectedDeliveryMethod?.code }
       : null;
-  const defaultSelectedPaymentMethod = (cart as any)?.payment?.selectedPaymentMethod
+  const defaultSelectedPaymentMethod = (cart as any)?.payment
+    ?.selectedPaymentMethod
     ? { code: (cart as any)?.payment?.selectedPaymentMethod?.code }
     : null;
 
@@ -83,9 +78,10 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
     },
   });
 
-  const country = features?.country ?? getCheckoutCountry();
+  // Attach cart to form context for sections to access
+  (methods as any).cart = cart;
 
-  const { control, handleSubmit } = methods;
+  const { handleSubmit } = methods;
 
   const onSubmit = (data: CheckoutFormValues) => {
     // Clear previous validation error
@@ -124,73 +120,36 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
             <div className={styles.main}>
               <Flex className={styles.left}>
                 {brand}
-                <Flex vertical gap={12}>
-                  <Flex justify="space-between" align="center">
-                    <Text className={styles.sectionTitle} strong>
-                      {t('contact')}
-                    </Text>
-                    {features?.auth ? (
+                <SectionRenderer
+                  slug="contact"
+                  headerAction={
+                    features?.auth ? (
                       <CheckoutAuth className={styles.logInButton} />
-                    ) : null}
-                  </Flex>
-                  <SectionRenderer slug="contact" country={country} />
-                </Flex>
+                    ) : undefined
+                  }
+                />
+                <SectionRenderer slug="recipient" />
+                <SectionRenderer slug="delivery" />
+                <SectionRenderer slug="payment" />
 
-                <SectionRenderer slug="recipient" country={country} />
-                <SectionRenderer slug="delivery" country={country} />
-
-                <Flex vertical gap={12}>
-                  <Text className={styles.sectionTitle} strong>
-                    {t('shipping')}
-                  </Text>
-                  {(cart as any)?.deliveryGroups?.[0]?.deliveryMethods && (
-                    <ShippingMethods
-                      methods={(cart as any)?.deliveryGroups?.[0]?.deliveryMethods || []}
-                    />
-                  )}
-                </Flex>
-                <Flex vertical gap={12}>
-                  <Text className={styles.sectionTitle} strong>
-                    {t('payment')}
-                  </Text>
-                  {(cart as any)?.payment?.paymentMethods && (
-                    <PaymentMethods
-                      methods={(cart as any)?.payment?.paymentMethods || []}
-                    />
-                  )}
-                </Flex>
                 <Divider className={styles.divider} />
 
-                <Flex vertical gap={12} className={styles.actionsLeft}>
-                  {validationError && (
-                    <Alert
-                      message={validationError}
-                      type="error"
-                      showIcon
-                      closable
-                      onClose={() => setValidationError(null)}
-                    />
-                  )}
-                  <SubmitButton />
-                  <TermsNotice linkClassName={styles.confirmLinkBtn} />
-                </Flex>
+                <div className={styles.actionsLeft}>
+                  <CheckoutActions
+                    validationError={validationError}
+                    onClearError={() => setValidationError(null)}
+                  />
+                </div>
               </Flex>
               <Flex className={styles.rightContainer}>
                 <Flex vertical gap={12} className={styles.right}>
                   {cart ? <Summary cart={cart} /> : null}
-                  <Flex vertical gap={12} className={styles.actionsRight}>
-                    {validationError && (
-                      <Alert
-                        message={validationError}
-                        type="error"
-                        showIcon
-                        closable
-                        onClose={() => setValidationError(null)}
-                      />
-                    )}
-                    <SubmitButton />
-                    <TermsNotice linkClassName={styles.confirmLinkBtn} />
-                  </Flex>
+                  <div className={styles.actionsRight}>
+                    <CheckoutActions
+                      validationError={validationError}
+                      onClearError={() => setValidationError(null)}
+                    />
+                  </div>
                 </Flex>
               </Flex>
             </div>
@@ -214,8 +173,12 @@ const useStyles = createStyles(({ token, css }) => {
       --checkout-right-ratio: calc(1 - var(--checkout-left-ratio));
       --checkout-left-fr: 1.1fr;
       --checkout-right-fr: 0.9fr;
-      --checkout-left-max: calc(var(--checkout-content-max) * var(--checkout-left-ratio));
-      --checkout-right-max: calc(var(--checkout-content-max) * var(--checkout-right-ratio));
+      --checkout-left-max: calc(
+        var(--checkout-content-max) * var(--checkout-left-ratio)
+      );
+      --checkout-right-max: calc(
+        var(--checkout-content-max) * var(--checkout-right-ratio)
+      );
     `,
     main: css`
       display: flex;
@@ -251,8 +214,8 @@ const useStyles = createStyles(({ token, css }) => {
         max-width: var(--checkout-right-max);
         position: sticky;
         padding: ${token.paddingXL}px;
-        min-height: 100vh;
         top: 0;
+        align-self: flex-start;
       }
     `,
     actionsLeft: css`
@@ -266,15 +229,8 @@ const useStyles = createStyles(({ token, css }) => {
         display: none;
       }
     `,
-    sectionTitle: css`
-      font-size: ${token.fontSizeXL}px;
-    `,
     divider: css`
       margin: 0;
-    `,
-    confirmLinkBtn: css`
-      padding: 0;
-      text-decoration: underline;
     `,
     logInButton: css`
       padding: 0;

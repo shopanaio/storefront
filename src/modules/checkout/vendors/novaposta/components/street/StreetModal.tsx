@@ -2,10 +2,10 @@ import { Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { NovaPoshta } from '../../api/NovaPoshta';
-import { searchSettlementStreetsProperties } from '../../api/NovaPoshta.types';
+import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
+import { searchSettlementStreetsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
 import { StreetModalItem } from './StreetModalItem';
-import { SelectButton } from '../SelectButton';
+import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 

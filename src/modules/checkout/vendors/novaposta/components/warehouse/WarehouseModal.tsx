@@ -2,14 +2,14 @@ import { Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { NovaPoshta } from '../../api/NovaPoshta';
+import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
 import {
   getWarehousesProperties,
   WarehouseData,
-} from '../../api/NovaPoshta.types';
+} from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
 import { Warehouse } from '../../types';
 import { WarehouseModalItem } from './WarehouseModalItem';
-import { SelectButton } from '../SelectButton';
+import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 

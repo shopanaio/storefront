@@ -1,3 +1,10 @@
+import type { ComponentType } from 'react';
+import { ContactSection } from '@checkout/sections/contact/components/ContactSection';
+import { RecipientSection } from '@checkout/sections/recipient/components/RecipientSection';
+import { AddressSection } from '@checkout/sections/delivery/components/AddressSection';
+import { DeliverySection } from '@checkout/sections/delivery/components/DeliverySection';
+import { PaymentSection } from '@checkout/sections/payment/components/PaymentSection';
+
 /**
  * Checkout configuration by country.
  * Extend to support different countries and UI variations.
@@ -22,4 +29,25 @@ export const checkoutConfig: CheckoutConfig = {
  */
 export function getCheckoutCountry(): CheckoutCountry {
   return checkoutConfig.country;
+}
+
+/**
+ * Centralized sections configuration.
+ * All sections are defined here.
+ */
+export const sectionsConfig = {
+  contact: ContactSection,
+  recipient: RecipientSection,
+  address: AddressSection,
+  delivery: DeliverySection,
+  payment: PaymentSection,
+} as const satisfies Record<string, ComponentType<any>>;
+
+/**
+ * Get component for specific section.
+ */
+export function getSectionComponent(
+  section: keyof typeof sectionsConfig
+): ComponentType<any> {
+  return sectionsConfig[section];
 }

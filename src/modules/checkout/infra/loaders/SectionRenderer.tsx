@@ -2,20 +2,28 @@
 
 import { Flex, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
-import { sectionRegistry, SectionSlug, SectionModuleApi } from '../../sections/registry';
+import {
+  sectionRegistry,
+  SectionSlug,
+  SectionModuleApi,
+} from '../../sections/registry';
 import { DynamicRenderer } from './DynamicRenderer';
+import { createStyles } from 'antd-style';
+import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
 
 interface Prop {
   slug: SectionSlug;
-  country: 'UA' | 'INTL';
+  /** Optional action component to render next to the section title */
+  headerAction?: React.ReactNode;
 }
 
 /**
  * Renders a checkout section by slug using the section registry.
  * Wraps DynamicRenderer with section-specific logic.
  */
-export const SectionRenderer = ({ slug, country }: Prop) => {
+export const SectionRenderer = ({ slug, headerAction }: Prop) => {
   const t = useTranslations('Checkout');
+  const { styles } = useStyles();
   const loader = sectionRegistry.resolve(slug);
 
   return (
@@ -23,17 +31,25 @@ export const SectionRenderer = ({ slug, country }: Prop) => {
       loader={loader}
       getComponent={(api: SectionModuleApi) => {
         const { Component, titleKey } = api;
-        // Wrap component with title
         return (props) => (
           <Flex vertical gap={12}>
-            <Typography.Text strong>{t(titleKey)}</Typography.Text>
+            <Flex justify="space-between" align="center">
+              <SectionTitle>{t(titleKey)}</SectionTitle>
+              {headerAction}
+            </Flex>
             <Component {...props} />
           </Flex>
         );
       }}
-      componentProps={{ country }}
+      componentProps={{}}
     />
   );
 };
+
+const useStyles = createStyles(({ css, token }) => ({
+  title: css`
+    font-size: ${token.fontSizeXL}px;
+  `,
+}));
 
 export default SectionRenderer;

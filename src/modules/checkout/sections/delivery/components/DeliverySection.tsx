@@ -2,22 +2,26 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
+import { useFormContext } from 'react-hook-form';
 import { AddressSection } from './AddressSection';
-
-interface Prop {
-  country: 'UA' | 'INTL';
-}
+import { ShippingMethods } from './ShippingMethods';
+import type { CheckoutFormValues } from '@src/modules/checkout/components/Checkout';
 
 /**
- * Delivery section combines address and shipping methods.
- * The shipping methods are injected by parent (Checkout) via ShippingMethods component.
+ * Delivery section component.
+ * Combines address and shipping methods.
  */
-export const DeliverySection = ({ country }: Prop) => {
+export const DeliverySection = () => {
   const { styles } = useStyles();
+  const form = useFormContext<CheckoutFormValues>();
+
+  // Access cart data from form's internal state or external context
+  const deliveryMethods = (form as any).cart?.deliveryGroups?.[0]?.deliveryMethods;
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <AddressSection country={country} />
+      <AddressSection />
+      {deliveryMethods && <ShippingMethods methods={deliveryMethods} />}
     </Flex>
   );
 };

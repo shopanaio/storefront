@@ -3,7 +3,6 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useFormContext } from 'react-hook-form';
-import { CityModal } from '../city/CityModal';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 
 export function WarehouseForm() {
@@ -12,10 +11,6 @@ export function WarehouseForm() {
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <CityModal
-        city={form.watch('userCity')}
-        changeCity={(c) => form.setValue('userCity', c)}
-      />
       <WarehouseModal
         warehouse={form.watch('userWarehouse')}
         changeWarehouse={(w) => form.setValue('userWarehouse', w)}

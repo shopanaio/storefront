@@ -4,6 +4,7 @@
     "paths": {
       "@src/*": ["./src/*"],
       "@codegen/*": ["./codegen/*"],
+      "@checkout/*": ["./src/modules/checkout/*"],
       "shopana-utils": ["./packages/shopana-utils/dist/index.js"],
       "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
       "@shopana/novaposhta-client": ["./packages/shopana-novaposhta-client/dist/index.js"],

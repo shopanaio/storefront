@@ -2,9 +2,8 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { useFormContext } from 'react-hook-form';
 import type { ProviderProps } from '@src/modules/registry';
-import { CheckoutMethodPanel } from '@src/modules/checkout/components/CheckoutMethodPanel';
+import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadBankTransferMessages } from '../i18n';

@@ -5,7 +5,6 @@ import { createStyles } from 'antd-style';
 import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
-import { CityModal } from '../city/CityModal';
 import { StreetModal } from '../street/StreetModal';
 
 export function AddressForm() {
@@ -15,10 +14,6 @@ export function AddressForm() {
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <CityModal
-        city={form.watch('userCity')}
-        changeCity={(c) => form.setValue('userCity', c)}
-      />
       <StreetModal
         street={form.watch('userStreet')}
         changeStreet={(s) => form.setValue('userStreet', s)}

@@ -6,11 +6,11 @@ import { useTranslations } from 'next-intl';
 import { useFormContext } from 'react-hook-form';
 import { PhoneInputField } from './PhoneInputField';
 
-interface Prop {
-  country: 'UA' | 'INTL';
-}
-
-export const ContactSection = ({ country }: Prop) => {
+/**
+ * Contact section component.
+ * Renders phone input field.
+ */
+export const ContactSection = () => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const { control } = useFormContext();

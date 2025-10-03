@@ -4,7 +4,7 @@ import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import type { ProviderProps } from '@src/modules/registry';
 import { NOVA_POSHTA_CONFIG } from './config';
-import { CheckoutMethodPanel } from '@src/modules/checkout/components/CheckoutMethodPanel';
+import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';

@@ -2,15 +2,11 @@ import type { ComponentType } from 'react';
 
 export type SectionSlug = 'contact' | 'recipient' | 'address' | 'delivery' | 'payment';
 
-export interface SectionProps {
-  country: 'UA' | 'INTL';
-}
-
 export interface SectionModuleApi {
   slug: SectionSlug;
   /** i18n key for section title under Checkout namespace */
   titleKey: string;
-  Component: ComponentType<SectionProps>;
+  Component: ComponentType<{}>;
 }
 
 type AsyncLoader<T> = () => Promise<T> | T;

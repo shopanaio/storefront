@@ -1,13 +1,13 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { City } from '../../types';
+import { City } from '@src/modules/checkout/vendors/novaposta/types';
 
 interface Prop {
   item: City | null;
   changeCity: (city: City) => void;
 }
 
-export const CityModalItem = ({ item, changeCity }: Prop) => {
+export const CityOption = ({ item, changeCity }: Prop) => {
   const { styles } = useStyles();
 
   if (!item) return null;
@@ -18,7 +18,7 @@ export const CityModalItem = ({ item, changeCity }: Prop) => {
       onClick={() => changeCity(item)}
     >
       <Flex vertical align="start">
-        <Typography.Text strong>{item?.MainDescription}</Typography.Text>
+        <Typography.Text>{item?.MainDescription}</Typography.Text>
       </Flex>
     </Button>
   );

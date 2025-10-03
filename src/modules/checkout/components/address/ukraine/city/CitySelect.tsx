@@ -1,24 +1,41 @@
-import { Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { City } from '../../types';
-import { NovaPoshta } from '../../api/NovaPoshta';
-import { searchSettlementsProperties } from '../../api/NovaPoshta.types';
-import { CityModalItem } from './CityModalItem';
-import { SelectButton } from '../SelectButton';
+import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
+import { searchSettlementsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
+import { CityOption } from './CityOption';
 import { TbMapPin } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
-import { popularCities } from '../../api/cities';
+import { popularCities } from '@src/utils/novaposhta-temp-api/cities';
+import clsx from 'clsx';
 
-interface Prop {
-  city: City | null;
-  changeCity: (city: City) => void;
+// TODO: get from novaposhta api
+export interface City {
+  AddressDeliveryAllowed: boolean;
+  Area: string;
+  DeliveryCity: string;
+  MainDescription: string;
+  ParentRegionCode: string;
+  ParentRegionTypes: string;
+  Present: string;
+  Ref: string;
+  Region: string;
+  RegionTypes: string;
+  RegionTypesCode: string;
+  SettlementTypeCode: string;
+  StreetsAvailability: boolean;
+  Warehouses: number;
 }
 
-export const CityModal = ({ city, changeCity }: Prop) => {
+interface Prop {
+  value: City | null;
+  onChange: (city: City) => void;
+}
+
+export const CitySelect = ({ value, onChange }: Prop) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
@@ -66,35 +83,41 @@ export const CityModal = ({ city, changeCity }: Prop) => {
         );
   }, [searchValue]);
 
-  console.log(items);
-
   const handleSelectCity = (item: City) => {
-    changeCity(item);
+    onChange(item);
     setIsCityModalVisible(false);
     setSearchValue('');
   };
 
   return (
     <>
-      <SelectButton
-        hasValue={!!city}
-        mainText={
-          city
-            ? `${city.SettlementTypeCode} ${city.MainDescription}`
-            : undefined
-        }
-        secondaryText={
-          city ? `${city.Area} ${city.ParentRegionCode}` : undefined
-        }
-        placeholder={t('city')}
+      <Button
+        color={value ? 'primary' : 'default'}
+        variant={'outlined'}
         onClick={() => setIsCityModalVisible(true)}
         icon={
           <TbMapPin
             size={24}
-            color={city ? token.colorPrimary : token.colorIcon}
+            color={value ? token.colorPrimary : token.colorIcon}
           />
         }
-      />
+        className={clsx(styles.button, {
+          [styles.activeButton]: Boolean(value),
+        })}
+      >
+        {value ? (
+          <Flex className={clsx(styles.flex)}>
+            <Typography.Text className={styles.secondaryText} type="secondary">
+              {t('city')}
+            </Typography.Text>
+            <Typography.Text className={styles.mainText}>
+              {value.MainDescription}
+            </Typography.Text>
+          </Flex>
+        ) : (
+          <Typography.Text type="secondary">{t('city')}</Typography.Text>
+        )}
+      </Button>
       <DrawerBase
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
@@ -115,7 +138,7 @@ export const CityModal = ({ city, changeCity }: Prop) => {
                   {t('popular-cities')}
                 </Typography.Text>
                 {popularCities.map((item) => (
-                  <CityModalItem
+                  <CityOption
                     key={item.Ref}
                     item={item}
                     changeCity={handleSelectCity}
@@ -125,7 +148,7 @@ export const CityModal = ({ city, changeCity }: Prop) => {
             )}
             {searchValue &&
               items.map((item) => (
-                <CityModalItem
+                <CityOption
                   key={item.Ref}
                   item={item}
                   changeCity={handleSelectCity}
@@ -140,8 +163,16 @@ export const CityModal = ({ city, changeCity }: Prop) => {
 
 const useStyles = createStyles(({ css, token }) => {
   return {
-    divider: css`
-      margin: 0;
+    button: css`
+      display: flex;
+      justify-content: start;
+      padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
+        ${token.paddingSM}px;
+      min-height: 64px;
+      height: 100%;
+    `,
+    activeButton: css`
+      outline: 1px solid ${token.colorPrimary};
     `,
     stickyBar: css`
       position: sticky;
@@ -149,6 +180,23 @@ const useStyles = createStyles(({ css, token }) => {
       z-index: 1;
       background: ${token.colorBgBase};
       padding-bottom: ${token.paddingSM}px;
+    `,
+    flex: css`
+      flex-direction: column;
+      align-items: start;
+      gap: ${token.marginXXS}px;
+    `,
+    invert: css`
+      flex-direction: column-reverse;
+    `,
+    mainText: css`
+      max-width: 300px !important;
+      line-height: 1;
+      font-size: ${token.fontSize}px;
+    `,
+    secondaryText: css`
+      font-size: ${token.fontSizeSM}px;
+      line-height: 1;
     `,
   };
 });
