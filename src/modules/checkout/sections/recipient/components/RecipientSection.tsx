@@ -20,6 +20,28 @@ export const RecipientSection = () => {
 
   const isSelf = form.watch('isRecipientSelf') ?? true;
 
+  const [recipientFirstName, recipientLastName, recipientMiddleName, recipientPhone] =
+    form.watch([
+      'recipientFirstName',
+      'recipientLastName',
+      'recipientMiddleName',
+      'recipientPhone',
+    ] as const);
+
+  const recipientValues: ContactValues = {
+    userFirstName: recipientFirstName || '',
+    userLastName: recipientLastName || '',
+    userMiddleName: recipientMiddleName || '',
+    userPhone: (recipientPhone as any) || '',
+  };
+
+  const handleRecipientSave = (next: ContactValues) => {
+    form.setValue('recipientFirstName', next.userFirstName);
+    form.setValue('recipientLastName', next.userLastName);
+    form.setValue('recipientMiddleName', next.userMiddleName);
+    form.setValue('recipientPhone', next.userPhone);
+  };
+
   return (
     <Flex vertical gap={12} className={styles.container}>
       <Flex align="center" gap={8}>
@@ -31,31 +53,7 @@ export const RecipientSection = () => {
       </Flex>
 
       {!isSelf ? (
-        (() => {
-          const [recipientFirstName, recipientLastName, recipientMiddleName, recipientPhone] =
-            form.watch([
-              'recipientFirstName',
-              'recipientLastName',
-              'recipientMiddleName',
-              'recipientPhone',
-            ] as const);
-
-          const values: ContactValues = {
-            userFirstName: recipientFirstName || '',
-            userLastName: recipientLastName || '',
-            userMiddleName: recipientMiddleName || '',
-            userPhone: (recipientPhone as any) || '',
-          };
-
-          const handleSave = (next: ContactValues) => {
-            form.setValue('recipientFirstName', next.userFirstName);
-            form.setValue('recipientLastName', next.userLastName);
-            form.setValue('recipientMiddleName', next.userMiddleName);
-            form.setValue('recipientPhone', next.userPhone);
-          };
-
-          return <ContactSelect values={values} onSave={handleSave} />;
-        })()
+        <ContactSelect values={recipientValues} onSave={handleRecipientSave} />
       ) : null}
 
       <RecipientComment />
