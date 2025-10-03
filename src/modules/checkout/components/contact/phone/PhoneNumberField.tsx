@@ -1,17 +1,17 @@
-import { Button, Dropdown, InputRef } from 'antd';
+import { InputRef } from 'antd';
 import { createStyles } from 'antd-style';
 import 'react-phone-number-input/style.css';
 import PhoneInput, {
   Country,
+  Props as PhoneInputProps,
 } from 'react-phone-number-input/react-hook-form-input';
-import { getCountries, getCountryCallingCode } from 'react-phone-number-input/input';
-import en from 'react-phone-number-input/locale/en';
 import {
   FloatingLabelInput,
   FloatingLabelInputProps,
 } from '@src/components/UI/FloatingLabelInput';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useController } from 'react-hook-form';
+import { PhoneCountrySelect } from './PhoneCountrySelect';
 
 const InputWrapper = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
   ({ placeholder, value, onChange, onFocus, onBlur, label, ...rest }, ref) => {
@@ -34,66 +34,51 @@ const InputWrapper = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
   }
 );
 
-interface PhoneInputFieldProps extends FloatingLabelInputProps {
-  control: any;
-  name: string;
+interface PhoneInputFieldProps
+  extends Omit<PhoneInputProps<any, any>, 'inputComponent' | 'label'> {
+  /**
+   * Show country select dropdown. Default is true.
+   */
+  countrySelect?: boolean;
+  /**
+   * Label for the floating label input
+   */
+  label?: string;
 }
 
 export const PhoneInputField = ({
   control,
   name,
   label,
-  placeholder,
+  countrySelect,
+  country,
+  ...restProps
 }: PhoneInputFieldProps) => {
-  const defaultCountry: Country = 'UA';
   const countryFieldName = `${name}Country`;
 
-  const { field: countryField } = useController<{ [k: string]: Country | undefined }>({
+  const { field: countryField } = useController<{
+    [k: string]: Country | undefined;
+  }>({
     name: countryFieldName,
     control,
   });
 
-  const currentCountry: Country = (countryField.value as Country) || defaultCountry;
-
-  useEffect(() => {
-    if (!countryField.value) {
-      countryField.onChange(defaultCountry);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const countries = getCountries();
-
-  const items = countries.map((code) => ({
-    key: code,
-    label: `${(en as any)[code] ?? code} +${getCountryCallingCode(code)}`,
-  }));
-
-  const addonBefore = (
-    <Dropdown
-      menu={{
-        items,
-        onClick: ({ key }) => countryField.onChange(key as Country),
-      }}
-      trigger={['click']}
-    >
-      <Button type="text">+{getCountryCallingCode(currentCountry)}</Button>
-    </Dropdown>
-  );
+  const addonBefore = countrySelect ? (
+    <PhoneCountrySelect
+      value={country}
+      onChange={(country) => countryField.onChange(country)}
+    />
+  ) : undefined;
 
   return (
     <PhoneInput
       name={name}
       control={control}
-      label={label}
-      placeholder={placeholder}
-      country={currentCountry}
-      defaultCountry={defaultCountry}
-      international
-      withCountryCallingCode
+      label={label || ''}
+      country={country}
       inputComponent={InputWrapper}
       addonBefore={addonBefore}
-      useNationalFormatForDefaultCountryValue={true}
+      {...restProps}
     />
   );
 };

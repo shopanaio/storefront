@@ -1,6 +1,6 @@
 'use client';
 
-import { Flex } from 'antd';
+import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
@@ -12,6 +12,8 @@ export function AddressForm() {
   const form = useFormContext();
   const t = useTranslations('Modules.novaposta.form');
 
+  const citySelected = Boolean(form.watch('userCity'));
+
   return (
     <Flex vertical gap={12} className={styles.container}>
       <StreetModal
@@ -19,6 +21,13 @@ export function AddressForm() {
         changeStreet={(s) => form.setValue('userStreet', s)}
         cityRef={form.watch('userCity')?.Ref}
       />
+      {!citySelected && (
+        <Alert
+          message={t('city_required_warning')}
+          type="warning"
+          showIcon
+        />
+      )}
       <Flex gap={12}>
         <FloatingLabelInput
           label={t('building')}

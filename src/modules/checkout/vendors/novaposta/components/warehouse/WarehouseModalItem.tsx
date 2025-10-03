@@ -1,5 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
 import { WarehouseData } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
 import { NPLogo } from '../Logo';
 
@@ -8,7 +9,16 @@ interface Prop {
   changeWarehouse: (warehouse: WarehouseData) => void;
 }
 
-const formatSchedule = (schedule: Record<string, string> | string): string => {
+/**
+ * Formats warehouse schedule into a readable string format
+ * @param schedule - Schedule object with days and times or a string
+ * @param t - Translation function for day names
+ * @returns Formatted schedule string
+ */
+const formatSchedule = (
+  schedule: Record<string, string> | string,
+  t: (key: string) => string
+): string => {
   if (typeof schedule === 'string') return schedule;
 
   if (typeof schedule === 'object' && schedule !== null) {
@@ -24,16 +34,6 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
     });
 
     const formattedGroups = Object.entries(timeGroups).map(([time, days]) => {
-      const dayNames: { [key: string]: string } = {
-        Monday: 'Mon',
-        Tuesday: 'Tue',
-        Wednesday: 'Wed',
-        Thursday: 'Thu',
-        Friday: 'Fri',
-        Saturday: 'Sat',
-        Sunday: 'Sun',
-      };
-
       const sortedDays = days.sort((a, b) => {
         const order = [
           'Monday',
@@ -62,9 +62,9 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
           endDay = currentDay;
         } else {
           if (startDay === endDay) {
-            result += `${dayNames[startDay]}-${dayNames[endDay]}: ${time} `;
+            result += `${t(`days.${startDay}`)}-${t(`days.${endDay}`)}: ${time} `;
           } else {
-            result += `${dayNames[startDay]}-${dayNames[endDay]}: ${time} `;
+            result += `${t(`days.${startDay}`)}-${t(`days.${endDay}`)}: ${time} `;
           }
           startDay = currentDay;
           endDay = currentDay;
@@ -72,21 +72,22 @@ const formatSchedule = (schedule: Record<string, string> | string): string => {
       }
 
       if (startDay === endDay) {
-        result += `${dayNames[startDay]}: ${time} `;
+        result += `${t(`days.${startDay}`)}: ${time} `;
       } else {
-        result += `${dayNames[startDay]}-${dayNames[endDay]}: ${time} `;
+        result += `${t(`days.${startDay}`)}-${t(`days.${endDay}`)}: ${time} `;
       }
 
       return result.trim();
     });
 
-    return formattedGroups.join(' ') || 'Schedule not specified';
+    return formattedGroups.join(' ') || t('not_specified');
   }
 
-  return 'Schedule not specified';
+  return t('not_specified');
 };
 
 export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
+  const t = useTranslations('Modules.novaposta.schedule');
   const { styles } = useStyles();
 
   if (!item) return null;
@@ -103,7 +104,7 @@ export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
           {`№${item?.Number} ${item?.ShortAddress}`}
         </Typography.Text>
         <Typography.Text className={styles.workTime} type="secondary">
-          {formatSchedule(item?.Schedule)}
+          {formatSchedule(item?.Schedule, t)}
         </Typography.Text>
       </Flex>
     </Button>

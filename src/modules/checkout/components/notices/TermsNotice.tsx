@@ -10,7 +10,7 @@ interface TermsNoticeProps {
 export const TermsNotice = ({ linkClassName }: TermsNoticeProps) => {
   const t = useTranslations('Checkout');
   return (
-    <Flex gap={4} wrap>
+    <div>
       <Text type="secondary">{t('confirm-note')}</Text>
       <Button type="link" className={linkClassName}>
         {t('terms-service')}
@@ -19,6 +19,6 @@ export const TermsNotice = ({ linkClassName }: TermsNoticeProps) => {
       <Button type="link" className={linkClassName}>
         {t('privacy-notice')}
       </Button>
-    </Flex>
+    </div>
   );
 };

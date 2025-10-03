@@ -1,6 +1,6 @@
 'use client';
 
-import { Divider, Flex } from 'antd';
+import { Flex } from 'antd';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
@@ -36,6 +36,14 @@ export interface CheckoutFormValues {
   userFirstName?: string;
   userLastName?: string;
   userMiddleName?: string;
+  /** Whether the purchaser is the same person as the recipient */
+  isRecipientSelf?: boolean;
+  /** Separate recipient fields when isRecipientSelf === false */
+  recipientFirstName?: string;
+  recipientLastName?: string;
+  recipientMiddleName?: string;
+  /** Optional order comment / delivery note */
+  orderComment?: string;
   /**
    * The base checkout keeps only generic fields. Vendor-specific
    * shipping/payment state lives inside vendor modules via useFormContext.
@@ -73,6 +81,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
     defaultValues: {
       userPhone: '',
       userName: '',
+      isRecipientSelf: true,
       selectedShippingMethod: defaultSelectedShippingMethod,
       selectedPaymentMethod: defaultSelectedPaymentMethod,
     },
@@ -128,11 +137,9 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                     ) : undefined
                   }
                 />
-                <SectionRenderer slug="recipient" />
                 <SectionRenderer slug="delivery" />
+                <SectionRenderer slug="recipient" />
                 <SectionRenderer slug="payment" />
-
-                <Divider className={styles.divider} />
 
                 <div className={styles.actionsLeft}>
                   <CheckoutActions
@@ -229,9 +236,7 @@ const useStyles = createStyles(({ token, css }) => {
         display: none;
       }
     `,
-    divider: css`
-      margin: 0;
-    `,
+
     logInButton: css`
       padding: 0;
     `,

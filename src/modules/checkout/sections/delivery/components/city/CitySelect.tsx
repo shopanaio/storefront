@@ -1,4 +1,4 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -131,21 +131,24 @@ export const CitySelect = ({ value, onChange }: Prop) => {
               onChange={(e) => setSearchValue(e.target.value)}
             />
           </Flex>
-          <Flex vertical gap={8}>
-            {!searchValue && (
-              <>
-                <Typography.Text type="secondary">
-                  {t('popular-cities')}
-                </Typography.Text>
+          {!searchValue && (
+            <>
+              <Divider style={{ marginBottom: 12, marginTop: 0 }} />
+              <Flex gap={8} wrap>
                 {popularCities.map((item) => (
-                  <CityOption
+                  <Button
+                    variant="outlined"
+                    color="primary"
                     key={item.Ref}
-                    item={item}
-                    changeCity={handleSelectCity}
-                  />
+                    onClick={() => handleSelectCity(item)}
+                  >
+                    {item?.MainDescription}
+                  </Button>
                 ))}
-              </>
-            )}
+              </Flex>
+            </>
+          )}
+          <Flex vertical gap={8}>
             {searchValue &&
               items.map((item) => (
                 <CityOption

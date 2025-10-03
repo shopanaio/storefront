@@ -217,6 +217,7 @@
     "full-name": "Full name",
     "first-name": "First name",
     "middle-name": "Middle name",
+    "i-am-recipient": "I am the recipient",
 
     "city": "City",
     "warehouse": "Warehouse",
@@ -237,6 +238,7 @@
     "tax": "Tax",
     "total": "Total",
     "confirm-order": "Confirm your order",
+    "save": "Save",
 
     "confirm-note": "By continuing, you are agree to Shopana’s",
     "and": "and",
@@ -268,7 +270,11 @@
     "loading": "Loading...",
     "error-no-shipping-method": "Please select a shipping method",
     "error-no-payment-method": "Please select a payment method",
-    "error-no-shipping-and-payment-method": "Please select a shipping and payment method"
+    "error-no-shipping-and-payment-method": "Please select a shipping and payment method",
+    "add-comment": "Add a comment",
+    "hide-comment": "Hide comment",
+    "order-comment": "Order comment",
+    "order-comment-placeholder": "Delivery instructions or wishes (optional)"
   },
   "Sort": {
     "newest-first": "Newest first",

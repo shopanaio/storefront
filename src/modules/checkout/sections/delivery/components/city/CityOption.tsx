@@ -19,6 +19,7 @@ export const CityOption = ({ item, changeCity }: Prop) => {
     >
       <Flex vertical align="start">
         <Typography.Text>{item?.MainDescription}</Typography.Text>
+        <Typography.Text type="secondary">{item?.Area}</Typography.Text>
       </Flex>
     </Button>
   );

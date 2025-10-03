@@ -14,6 +14,19 @@
     "warehouse": "Оберіть відділення",
     "street": "Адреса вулиці",
     "building": "Будинок",
-    "apartment": "Квартира"
+    "apartment": "Квартира",
+    "city_required_warning": "Будь ласка, спочатку оберіть місто"
+  },
+  "schedule": {
+    "days": {
+      "Monday": "Пн",
+      "Tuesday": "Вт",
+      "Wednesday": "Ср",
+      "Thursday": "Чт",
+      "Friday": "Пт",
+      "Saturday": "Сб",
+      "Sunday": "Нд"
+    },
+    "not_specified": "Розклад не вказано"
   }
 }

@@ -2,6 +2,7 @@
 
 import { Flex, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 import {
   sectionRegistry,
   SectionSlug,
@@ -25,22 +26,28 @@ export const SectionRenderer = ({ slug, headerAction }: Prop) => {
   const t = useTranslations('Checkout');
   const loader = sectionRegistry.resolve(slug);
 
+  // Memoize getComponent to prevent component remounting on every render
+  const getComponent = useMemo(() => {
+    return (api: SectionModuleApi) => {
+      const { Component, titleKey } = api;
+
+      return (props: any) => (
+        <Flex vertical gap={12}>
+          <Flex justify="space-between" align="center">
+            <SectionTitle>{t(titleKey)}</SectionTitle>
+            {headerAction}
+          </Flex>
+          <Component {...props} />
+        </Flex>
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <DynamicRenderer
       loader={loader}
-      getComponent={(api: SectionModuleApi) => {
-        const { Component, titleKey } = api;
-
-        return (props) => (
-          <Flex vertical gap={12}>
-            <Flex justify="space-between" align="center">
-              <SectionTitle>{t(titleKey)}</SectionTitle>
-              {headerAction}
-            </Flex>
-            <Component {...props} />
-          </Flex>
-        );
-      }}
+      getComponent={getComponent}
       componentProps={{}}
     />
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { Alert, Divider, Flex } from 'antd';
 import { SubmitButton } from './SubmitButton';
 import { TermsNotice } from '../notices/TermsNotice';
 import { createStyles } from 'antd-style';
@@ -23,19 +23,21 @@ export const CheckoutActions = ({
   const { styles } = useStyles();
 
   return (
-    <Flex vertical gap={12}>
-      {validationError && (
-        <Alert
-          message={validationError}
-          type="error"
-          showIcon
-          closable
-          onClose={onClearError}
-        />
-      )}
-      <SubmitButton />
-      <TermsNotice linkClassName={styles.confirmLinkBtn} />
-    </Flex>
+    <>
+      <Flex vertical gap={12}>
+        {validationError && (
+          <Alert
+            message={validationError}
+            type="error"
+            showIcon
+            closable
+            onClose={onClearError}
+          />
+        )}
+        <SubmitButton />
+        <TermsNotice linkClassName={styles.confirmLinkBtn} />
+      </Flex>
+    </>
   );
 };
 

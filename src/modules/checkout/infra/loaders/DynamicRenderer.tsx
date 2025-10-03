@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, ComponentType } from 'react';
+import { useEffect, useState, ComponentType, useMemo } from 'react';
 
 interface DynamicRendererProps<TApi, TProps> {
   /** Async loader that returns module API */
@@ -37,8 +37,15 @@ export function DynamicRenderer<TApi, TProps>({
     };
   }, [loader]);
 
-  if (!api) return null;
+  // Memoize component to prevent remounting when api and getComponent are stable
+  const Component = useMemo(() => {
+    if (!api) {
+      return null;
+    }
+    return getComponent(api);
+  }, [api, getComponent]);
 
-  const Component = getComponent(api);
+  if (!Component) return null;
+
   return <Component {...(componentProps as any)} />;
 }

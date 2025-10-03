@@ -1,6 +1,6 @@
 'use client';
 
-import { CitySelect } from '@src/modules/checkout/components/address/ukraine/city/CitySelect';
+import { CitySelect } from './city/CitySelect';
 import { useFormContext } from 'react-hook-form';
 
 /**

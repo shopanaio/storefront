@@ -1,39 +1,64 @@
 'use client';
 
-import { Flex } from 'antd';
+import { Flex, Switch, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useFormContext } from 'react-hook-form';
-import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { RecipientComment } from '@src/modules/checkout/components/RecipientComment';
+import { ContactSelect } from '@src/modules/checkout/components/contact/ContactSelect';
+import type { ContactValues } from '@src/modules/checkout/components/contact/ContactSelect';
 
 /**
  * Recipient section component.
- * Renders first name, last name, and middle name fields.
+ * Renders a switch "I am the recipient". When enabled, no extra fields shown.
+ * When disabled, renders separate recipient name fields.
  */
 export const RecipientSection = () => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const form = useFormContext();
 
+  const isSelf = form.watch('isRecipientSelf') ?? true;
+
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <Flex gap={12}>
-        <FloatingLabelInput
-          label={t('first-name')}
-          value={form.watch('userFirstName')}
-          onChange={(e) => form.setValue('userFirstName', e.target.value)}
+      <Flex align="center" gap={8}>
+        <Switch
+          checked={isSelf}
+          onChange={(checked) => form.setValue('isRecipientSelf', checked)}
         />
-        <FloatingLabelInput
-          label={t('last-name')}
-          value={form.watch('userLastName')}
-          onChange={(e) => form.setValue('userLastName', e.target.value)}
-        />
+        <Typography.Text>{t('i-am-recipient')}</Typography.Text>
       </Flex>
-      <FloatingLabelInput
-        label={t('middle-name')}
-        value={form.watch('userMiddleName')}
-        onChange={(e) => form.setValue('userMiddleName', e.target.value)}
-      />
+
+      {!isSelf ? (
+        (() => {
+          const [recipientFirstName, recipientLastName, recipientMiddleName, recipientPhone] =
+            form.watch([
+              'recipientFirstName',
+              'recipientLastName',
+              'recipientMiddleName',
+              'recipientPhone',
+            ] as const);
+
+          const values: ContactValues = {
+            userFirstName: recipientFirstName || '',
+            userLastName: recipientLastName || '',
+            userMiddleName: recipientMiddleName || '',
+            userPhone: (recipientPhone as any) || '',
+          };
+
+          const handleSave = (next: ContactValues) => {
+            form.setValue('recipientFirstName', next.userFirstName);
+            form.setValue('recipientLastName', next.userLastName);
+            form.setValue('recipientMiddleName', next.userMiddleName);
+            form.setValue('recipientPhone', next.userPhone);
+          };
+
+          return <ContactSelect values={values} onSave={handleSave} />;
+        })()
+      ) : null}
+
+      <RecipientComment />
     </Flex>
   );
 };

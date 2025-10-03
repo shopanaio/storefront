@@ -148,13 +148,13 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
           styles={{
             input: {
               paddingTop: 12,
-              height: 56,
+              height: 50,
               lineHeight: 1,
             },
             affixWrapper: {
               paddingTop: 0,
               paddingBottom: 0,
-              height: 56,
+              height: 50,
             },
 
             ...inputProps.styles,
@@ -204,7 +204,7 @@ const useStyles = createStyles(({ css, token }) => ({
     left: 100%;
     top: 50%;
     transform: translateY(-50%);
-    color: ${token.colorTextPlaceholder};
+    color: ${token.colorTextSecondary};
     font-size: 14px;
     pointer-events: auto;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -215,8 +215,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   labelFloating: css`
     transform: translateY(calc(-50% - 10px));
-    font-size: ${token.fontSizeSM};
-    color: ${token.colorTextSecondary};
+    font-size: ${token.fontSizeSM}px;
   `,
   labelFocused: css`
     color: ${token.colorPrimary};

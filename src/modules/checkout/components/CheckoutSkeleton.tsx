@@ -26,7 +26,6 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
       <div className={styles.main}>
         <Flex className={styles.left} vertical>
           {brand}
-
           <Flex vertical gap={16}>
             <Text className={styles.sectionTitle} strong>
               <Skeleton.Input active size="small" style={{ width: 150 }} />
@@ -96,6 +95,10 @@ const useStyles = createStyles(({ token, css }) => {
       }
     `,
     rightContainer: css`
+      display: none;
+      ${mq.lg} {
+        display: block;
+      }
       background-color: ${token.colorBgLayout};
     `,
     right: css`
