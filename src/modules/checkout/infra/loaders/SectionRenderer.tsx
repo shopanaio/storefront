@@ -23,7 +23,6 @@ interface Prop {
  */
 export const SectionRenderer = ({ slug, headerAction }: Prop) => {
   const t = useTranslations('Checkout');
-  const { styles } = useStyles();
   const loader = sectionRegistry.resolve(slug);
 
   return (
@@ -31,6 +30,7 @@ export const SectionRenderer = ({ slug, headerAction }: Prop) => {
       loader={loader}
       getComponent={(api: SectionModuleApi) => {
         const { Component, titleKey } = api;
+
         return (props) => (
           <Flex vertical gap={12}>
             <Flex justify="space-between" align="center">
