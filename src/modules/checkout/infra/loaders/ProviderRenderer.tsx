@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   moduleRegistry,
   ModuleType,
@@ -43,16 +43,25 @@ export const ProviderRenderer = <TMethod extends { code: string }>({
   locale,
   groupId,
 }: ProviderRendererProps<TMethod>) => {
-  const loader = moduleRegistry.resolve<ProviderModuleApi>(moduleType, provider);
+  const loader = moduleRegistry.resolve<ProviderModuleApi>(
+    moduleType,
+    provider
+  );
   const activeOnlyMethods = methods; // placeholder for future filtering if needed
+
+  const getComponent = useMemo(() => {
+    return (api: ProviderModuleApi) => api.Component;
+  }, []);
 
   return (
     <DynamicRenderer
       loader={loader}
-      getComponent={(api: ProviderModuleApi) => api.Component}
+      getComponent={getComponent}
       componentProps={{
         provider,
-        methods: activeOnlyMethods.map((m) => ({ code: m.code } as ProviderMethod)),
+        methods: activeOnlyMethods.map(
+          (m) => ({ code: m.code }) as ProviderMethod
+        ),
         locale,
         groupId,
       }}

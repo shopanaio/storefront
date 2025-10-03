@@ -81,7 +81,7 @@ export const CitySelect = ({ value, onChange }: Prop) => {
             item.MainDescription.toLowerCase().includes(normalized) ||
             item.Area.toLowerCase().includes(normalized)
         );
-  }, [searchValue]);
+  }, [searchValue, settlements]);
 
   const handleSelectCity = (item: City) => {
     onChange(item);

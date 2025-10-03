@@ -19,7 +19,7 @@ export type DeliveryGroupId = string;
 /**
  * Static section identifiers present regardless of delivery grouping.
  */
-export type SectionId = 'contact' | 'recipient' | 'payment' | 'promo' | 'comment';
+export type SectionId = 'contact' | 'recipient' | 'address' | 'payment' | 'promo' | 'comment';
 
 /**
  * Dynamic shipping section key bound to a specific delivery group.
@@ -391,6 +391,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     const payload = {
       contact: state.sections.contact?.data,
       recipient: state.sections.recipient?.data,
+      address: state.sections.address?.data,
       deliveries: deliveries.length > 0 ? deliveries : undefined,
       payment: state.selectedPaymentMethod
         ? {

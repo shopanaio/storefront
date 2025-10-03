@@ -52,12 +52,6 @@ export interface CheckoutFormValues {
    */
   selectedShippingMethod?: { code: string } | null;
   selectedPaymentMethod?: { code: string } | null;
-  /** UA/INTL address fields (kept generic here) */
-  userCity?: any;
-  userStreet?: any;
-  userBuilding?: string;
-  userApartment?: string;
-  userWarehouse?: any;
 }
 
 /**
@@ -82,6 +76,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
         if (k === 'payment') return t('payment');
         if (k === 'contact') return t('contact');
         if (k === 'recipient') return t('recipient');
+        if (k === 'address') return t('address');
         if (k === 'promo') return t('promo');
         if (k === 'comment') return t('comment');
         return k;

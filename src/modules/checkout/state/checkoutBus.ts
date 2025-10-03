@@ -13,7 +13,7 @@ export type DeliveryGroupId = string;
 /**
  * Static section identifiers present regardless of delivery grouping.
  */
-export type SectionId = 'contact' | 'recipient' | 'payment' | 'promo' | 'comment';
+export type SectionId = 'contact' | 'recipient' | 'address' | 'payment' | 'promo' | 'comment';
 
 /**
  * Dynamic shipping section key bound to a specific delivery group.
@@ -46,6 +46,7 @@ export type CheckoutPayload = {
   contact?: unknown;
   recipient?: unknown;
   deliveries?: Array<{ groupId: DeliveryGroupId; methodCode: string; data: unknown }>;
+  address?: unknown;
   payment?: { methodCode: string; data: unknown };
   promo?: unknown;
   comment?: string;
