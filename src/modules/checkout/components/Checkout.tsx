@@ -129,7 +129,6 @@ export const Checkout = memo(({ cart, onConfirm, brand, features }: Prop) => {
                 }
               />
               <SectionRenderer slug="delivery" title={t('delivery')} />
-              {/* title={t('recipient')} */}
               <SectionRenderer slug="recipient" />
               <SectionRenderer slug="payment" title={t('payment')} />
               <SectionRenderer slug="comment" />
