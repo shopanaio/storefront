@@ -1,5 +1,5 @@
 import { Collapse, Flex, Radio, Typography } from 'antd';
-import { ReactNode, useRef } from 'react';
+import { FC, ReactNode, useRef } from 'react';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
 
@@ -8,11 +8,11 @@ const { Text } = Typography;
 
 export interface CheckoutMethodPanelProps {
   title: string;
-  description: string;
+  description: string | null;
   isActive: boolean;
   onActivate: () => void;
   brand?: ReactNode;
-  content: ReactNode;
+  component: FC | null;
 }
 
 export const CheckoutMethodPanel = ({
@@ -21,7 +21,7 @@ export const CheckoutMethodPanel = ({
   isActive,
   onActivate,
   brand = null,
-  content,
+  component: Component,
 }: CheckoutMethodPanelProps) => {
   const codeRef = useRef(crypto.randomUUID());
   const { styles } = useStyles();
@@ -37,23 +37,25 @@ export const CheckoutMethodPanel = ({
         forceRender
         showArrow={false}
         key={codeRef.current}
-        className={clsx(!content ? styles.emptyPanel : '')}
+        className={clsx(!Component ? styles.emptyPanel : '')}
         header={
           <Flex justify="space-between" align="center">
             <Flex gap={8}>
               <Radio checked={isActive} />
               <Flex vertical justify="center" className={styles.titleContainer}>
                 <Text className={styles.title}>{title}</Text>
-                <Text type="secondary" className={styles.description}>
-                  {description}
-                </Text>
+                {description && (
+                  <Text type="secondary" className={styles.description}>
+                    {description}
+                  </Text>
+                )}
               </Flex>
             </Flex>
             {brand}
           </Flex>
         }
       >
-        {content}
+        {Component && <Component />}
       </Panel>
     </Collapse>
   );

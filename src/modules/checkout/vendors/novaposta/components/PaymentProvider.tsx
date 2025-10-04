@@ -75,7 +75,6 @@ function Content({
               translate={t}
               providerId={`payment:${provider}`}
               type="payment"
-              autoPublish
             />
           );
         })

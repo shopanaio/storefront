@@ -2,7 +2,7 @@
 
 import type { FC, ReactNode } from 'react';
 import { CheckoutMethodPanel } from './CheckoutMethodPanel';
-import { ActiveProviderBoundary } from './ActiveProviderBoundary';
+import { ProviderBoundary } from './ProviderBoundary';
 import type { ProviderId } from '@src/modules/checkout/state/checkoutBus';
 
 /**
@@ -29,7 +29,7 @@ export interface ProviderMethodPanelProps {
   brand: ReactNode;
   /** Translation function */
   translate: (key: string) => string;
-  /** Provider identifier for ActiveProviderBoundary */
+  /** Provider identifier for ProviderBoundary */
   providerId: ProviderId;
   /** Type of provider (payment or shipping) */
   type: 'payment' | 'shipping';
@@ -38,43 +38,31 @@ export interface ProviderMethodPanelProps {
 /**
  * Reusable wrapper component for checkout method panels.
  * Encapsulates the common pattern of rendering a method with CheckoutMethodPanel
- * and ActiveProviderBoundary.
+ * and ProviderBoundary.
  */
 export function ProviderMethodPanel({
   config,
   activeCode,
   onSelect,
   brand,
-  translate,
+  translate: t,
   providerId,
   type,
 }: ProviderMethodPanelProps) {
   const isActive = activeCode === config.code;
-  const FormComponent = config.Component;
-
-  const isHeadless = typeof FormComponent !== 'function';
+  const FormComponent = config.Component ?? null;
 
   return (
-    <CheckoutMethodPanel
-      key={config.code}
-      title={translate(config.nameI18n)}
-      description={
-        config.descriptionI18n ? translate(config.descriptionI18n) : ''
-      }
-      isActive={isActive}
-      onActivate={() => onSelect(config.code)}
-      brand={brand}
-      content={
-        isActive ? (
-          <ActiveProviderBoundary
-            providerId={providerId}
-            type={type}
-            autoPublish={isHeadless}
-          >
-            {!isHeadless && <FormComponent />}
-          </ActiveProviderBoundary>
-        ) : null
-      }
-    />
+    <ProviderBoundary providerId={providerId} type={type}>
+      <CheckoutMethodPanel
+        key={config.code}
+        title={t(config.nameI18n)}
+        description={config.descriptionI18n ? t(config.descriptionI18n) : null}
+        isActive={isActive}
+        onActivate={() => onSelect(config.code)}
+        brand={brand}
+        component={FormComponent}
+      />
+    </ProviderBoundary>
   );
 }
