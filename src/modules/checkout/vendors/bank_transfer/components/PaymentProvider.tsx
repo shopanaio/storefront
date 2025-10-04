@@ -2,12 +2,11 @@
 
 import { Flex } from 'antd';
 import type { ProviderProps } from '@src/modules/registry';
-import { ProviderMethodPanel } from '@checkout/components/common/ProviderMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
-import { useTranslations } from 'next-intl';
 import { loadBankTransferMessages } from '../i18n';
 import { BANK_TRANSFER_CONFIG } from './config';
 import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { ProviderBoundary } from '@checkout/components/common/ProviderBoundary';
 
 /**
  * Bank Transfer payment provider-level component that renders payment UI.
@@ -44,8 +43,7 @@ function Content({
   onSelect: (code: string) => void;
   provider: string;
 }) {
-  const t = useTranslations('Modules.bankTransfer');
-  const BrandComponent = BANK_TRANSFER_CONFIG.logo;
+  const providerId = `payment:${provider}` as const;
 
   return (
     <Flex vertical gap={16}>
@@ -58,17 +56,14 @@ function Content({
             return null;
           }
 
+          const MethodComponent = config.Component;
           return (
-            <ProviderMethodPanel
-              key={m.code}
-              config={config}
-              activeCode={activeCode}
-              onSelect={onSelect}
-              brand={<BrandComponent size={24} />}
-              translate={t}
-              providerId={`payment:${provider}`}
-              type="payment"
-            />
+            <ProviderBoundary key={m.code} providerId={providerId} type="payment">
+              <MethodComponent
+                isActive={activeCode === config.code}
+                onActivate={() => onSelect(config.code)}
+              />
+            </ProviderBoundary>
           );
         })
         .filter(Boolean)}

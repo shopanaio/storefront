@@ -3,11 +3,10 @@
 import { Flex } from 'antd';
 import type { ProviderProps } from '@src/modules/registry';
 import { NOVA_POSHTA_CONFIG } from './config';
-import { ProviderMethodPanel } from '@checkout/components/common/ProviderMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
-import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';
 import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { ProviderBoundary } from '@checkout/components/common/ProviderBoundary';
 
 /**
  * Configuration for Nova Poshta provider methods.
@@ -56,8 +55,7 @@ function Content({
   provider: string;
   groupId?: string;
 }) {
-  const t = useTranslations('Modules.novaposta');
-  const BrandComponent = NOVA_POSHTA_CONFIG.logo;
+  const providerId = `shipping:${provider}@${groupId as string}` as const;
 
   return (
     <Flex vertical gap={12}>
@@ -68,17 +66,18 @@ function Content({
             return null;
           }
 
+          const MethodComponent = config.Component;
           return (
-            <ProviderMethodPanel
+            <ProviderBoundary
               key={method.code}
-              config={config}
-              activeCode={activeCode}
-              onSelect={onSelect}
-              brand={<BrandComponent size={24} />}
-              translate={t}
-              providerId={`shipping:${provider}@${groupId as string}`}
+              providerId={providerId}
               type="shipping"
-            />
+            >
+              <MethodComponent
+                isActive={activeCode === config.code}
+                onActivate={() => onSelect(config.code)}
+              />
+            </ProviderBoundary>
           );
         })
         .filter(Boolean)}

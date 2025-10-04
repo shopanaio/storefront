@@ -1,25 +1,25 @@
 import type { FC } from 'react';
 import { BTLogo as LogoComponent } from './Logo';
+import { BankTransferPaymentMethod } from './methods/BankTransferPaymentMethod';
 
 /**
  * Configuration types and values for Bank Transfer provider.
  */
-export interface ProviderOptionConfig {
+export interface ProviderMethodConfig {
   /** Unique code identifier used internally */
   code: string;
-  /** i18n translation key for name */
-  nameI18n: string;
-  /** i18n translation key for description */
-  descriptionI18n?: string;
-  /** Optional React form component to render inside method panel */
-  Component: FC | null;
+  /** Full method component that includes CheckoutMethodPanel */
+  Component: FC<{
+    isActive: boolean;
+    onActivate: () => void;
+  }>;
 }
 
 export interface BankTransferProviderConfig {
   /** Brand/logo component for the provider */
   logo: FC<{ size?: number }>;
   /** List of payment methods supported by this provider */
-  payment: ProviderOptionConfig[];
+  payment: ProviderMethodConfig[];
 }
 
 export const BANK_TRANSFER_CONFIG: BankTransferProviderConfig = {
@@ -27,9 +27,7 @@ export const BANK_TRANSFER_CONFIG: BankTransferProviderConfig = {
   payment: [
     {
       code: 'bank_transfer',
-      nameI18n: 'payment.name',
-      descriptionI18n: 'payment.description',
-      Component: null,
+      Component: BankTransferPaymentMethod,
     },
   ],
 };
