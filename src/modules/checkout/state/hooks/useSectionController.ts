@@ -27,8 +27,7 @@ export function useSectionController(
     return () => {
       unregisterSection(sectionId);
     };
-  }, []);
-  //  [registerSection, unregisterSection, sectionId, options.required]);
+  }, [registerSection, unregisterSection, sectionId, options.required]);
 
   return useMemo(
     () => ({

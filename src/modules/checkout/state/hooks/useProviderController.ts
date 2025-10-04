@@ -3,11 +3,12 @@
  * Registers provider lifecycle in the store and exposes active flag and publish/reset helpers.
  */
 import { useEffect, useMemo } from 'react';
-import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
+import { useCheckoutStore } from '@checkout/state/checkoutStore';
+import { ProviderId, ProviderType } from '@checkout/state/checkoutBus';
 
 export function useProviderController(
-  providerId: import('../checkoutStore').ProviderId,
-  type: import('../checkoutStore').ProviderType
+  providerId: ProviderId,
+  type: ProviderType
 ) {
   const {
     registerProvider,
