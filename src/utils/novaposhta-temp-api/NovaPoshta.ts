@@ -5,7 +5,7 @@ import type {
   searchSettlementStreetsResponse,
   getWarehousesProperties,
   getWarehousesResponse,
-} from "./NovaPoshta.types";
+} from './NovaPoshta.types';
 
 export class NovaPoshta {
   private apiKey: string;
@@ -20,17 +20,17 @@ export class NovaPoshta {
     methodProperties: unknown
   ): Promise<T> {
     try {
-      const response = await fetch("https://api.novaposhta.ua/v2.0/json/", {
+      const response = await fetch('https://api.novaposhta.ua/v2.0/json/', {
         method: 'POST',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.apiKey,
+          ...(this.apiKey ? { apiKey: this.apiKey } : {}),
           modelName,
           calledMethod,
           methodProperties,
-        })
+        }),
       });
 
       if (!response.ok) {
@@ -44,32 +44,33 @@ export class NovaPoshta {
 
       return result;
     } catch (error) {
-      throw new Error(`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
   /* --- Online Search --- */
   async searchSettlements(props: searchSettlementsProperties) {
     return this.request<searchSettlementsResponse>(
-      "AddressGeneral",
-      "searchSettlements",
-      props  // actually search by city name
-    )
+      'AddressGeneral',
+      'searchSettlements',
+      props // actually search by city name
+    );
   }
-
 
   async searchSettlementStreets(props: searchSettlementStreetsProperties) {
     return this.request<searchSettlementStreetsResponse>(
-      "AddressGeneral",
-      "searchSettlementStreets",
+      'AddressGeneral',
+      'searchSettlementStreets',
       props // first need to get settlement Ref and use in this request
-    )
+    );
   }
 
   async getWarehouses(props: getWarehousesProperties) {
     return this.request<getWarehousesResponse>(
-      "AddressGeneral",
-      "getWarehouses",
+      'AddressGeneral',
+      'getWarehouses',
       props
-    )
+    );
   }
 }

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Button } from "antd";
-import { useTranslations } from "next-intl";
+import { Button } from 'antd';
+import { useTranslations } from 'next-intl';
 
 export interface SubmitButtonProps {
   /**
@@ -16,7 +16,7 @@ export interface SubmitButtonProps {
  * and localized label from Checkout namespace.
  */
 export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
-  const t = useTranslations("Checkout");
+  const t = useTranslations('Checkout');
 
   return (
     <Button
@@ -26,7 +26,7 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       htmlType="submit"
       onClick={onClick}
     >
-      {t("confirm-order")}
+      {t('confirm-order')}
     </Button>
   );
 };
