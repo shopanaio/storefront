@@ -25,6 +25,19 @@ export interface City {
 }
 
 /**
+ * Street type returned by Nova Poshta streets API.
+ */
+export interface Street {
+  Present: string;
+  SettlementRef: string;
+  SettlementStreetDescription: string;
+  SettlementStreetDescriptionRu: string;
+  SettlementStreetRef: string;
+  StreetsType: string;
+  StreetsTypeDescription: string;
+}
+
+/**
  * Minimal Warehouse shape used by Nova Poshta UI components.
  * Includes fields referenced in UI; extra fields are allowed via index signature.
  */

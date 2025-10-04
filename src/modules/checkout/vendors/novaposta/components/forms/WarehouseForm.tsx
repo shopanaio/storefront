@@ -5,23 +5,30 @@ import { createStyles } from 'antd-style';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
-import * as yup from 'yup';
 import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
-import { useProviderControllerApi } from '@src/modules/checkout/state/context/ProviderControllerContext';
-import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
+import { useProviderControllerApi } from '@checkout/state/context/ProviderControllerContext';
+import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City } from '@checkout/sections/delivery/components/city/CitySelect';
+import { warehouseSchema } from '../../schemas';
+import { ValidationError } from 'yup';
+import { Warehouse } from '@checkout/vendors/novaposta/types';
 
 export function WarehouseForm() {
   const { styles } = useStyles();
-  const methods = useForm<{ userCity?: any; userWarehouse?: any }>({
-    defaultValues: { userCity: undefined, userWarehouse: undefined },
+  const methods = useForm<{ warehouse?: Warehouse | null }>({
+    defaultValues: {
+      warehouse: null,
+    },
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
   const { publishValid, publishInvalid } = useProviderControllerApi();
 
-  // Track global city from AddressSection
+  const { watch } = methods;
+  const warehouse = watch('warehouse') || null;
+
+  // Track global city from AddressSection (TODO: add interface)
   const globalCity = useCheckoutStore((state) => {
     const data = state.sections.address?.data as
       | { city?: City | null }
@@ -30,60 +37,47 @@ export function WarehouseForm() {
   });
   const prevCityRef = usePrevious(globalCity?.Ref ?? null);
 
-  const schema = yup.object({
-    userCity: yup.mixed().required('required'),
-    userWarehouse: yup.mixed().required('required'),
-  });
-
-  const citySelected = Boolean(methods.watch('userCity'));
-
   // Reset warehouse when global city changes
   useEffect(() => {
     const currentRef = globalCity?.Ref ?? null;
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
       // City changed, reset warehouse selection
-      methods.setValue('userWarehouse', undefined);
+      methods.setValue('warehouse', undefined);
     }
-    methods.setValue('userCity', globalCity);
   }, [globalCity, prevCityRef, methods]);
 
   useEffect(() => {
-    const data = {
-      userCity: methods.watch('userCity'),
-      userWarehouse: methods.watch('userWarehouse'),
-    };
-    (async () => {
+    const validate = async () => {
+      const data = {
+        warehouse: warehouse,
+      };
       try {
-        await schema.validate(data, { abortEarly: false });
-        publishValid({ warehouse: data });
-      } catch (e: any) {
+        await warehouseSchema.validate(data, { abortEarly: false });
+        publishValid(data);
+      } catch (e) {
         const errs: Record<string, string> = {};
-        if (e?.inner?.length) {
+        if (e instanceof ValidationError) {
           for (const err of e.inner) {
             if (err.path) errs[err.path] = err.message || 'invalid';
           }
         }
         publishInvalid(errs);
       }
-    })();
-  }, [
-    methods.watch('userCity'),
-    methods.watch('userWarehouse'),
-    publishValid,
-    publishInvalid,
-  ]);
+    };
+    validate();
+  }, [warehouse, publishValid, publishInvalid]);
 
   return (
     <Flex vertical gap={12} className={styles.container}>
       <FormProvider {...methods}>
         <WarehouseModal
-          warehouse={methods.watch('userWarehouse')}
-          changeWarehouse={(w) => methods.setValue('userWarehouse', w)}
-          cityName={methods.watch('userCity')?.MainDescription}
+          warehouse={warehouse}
+          changeWarehouse={(w) => methods.setValue('warehouse', w)}
+          cityName={globalCity?.MainDescription || null}
         />
       </FormProvider>
-      {!citySelected && (
+      {!globalCity && (
         <Alert message={t('city_required_warning')} type="warning" showIcon />
       )}
     </Flex>

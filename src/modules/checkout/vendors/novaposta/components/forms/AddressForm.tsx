@@ -6,83 +6,99 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { StreetModal } from '../street/StreetModal';
-import * as yup from 'yup';
 import { useEffect } from 'react';
-import { useProviderControllerApi } from '@src/modules/checkout/state/context/ProviderControllerContext';
+import { usePrevious } from 'react-use';
+import { useProviderControllerApi } from '@checkout/state/context/ProviderControllerContext';
+import { useCheckoutStore } from '@checkout/state/checkoutStore';
+import type { City, Street } from '@checkout/vendors/novaposta/types';
+import { addressSchema } from '../../schemas';
+import { ValidationError } from 'yup';
 
 export function AddressForm() {
   const { styles } = useStyles();
   const methods = useForm<{
-    userCity?: any;
+    userStreet?: Street | null;
+    userBuilding: string;
+    userApartment: string;
   }>({
     defaultValues: {
-      userCity: undefined,
+      userStreet: null,
+      userBuilding: '',
+      userApartment: '',
     },
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
   const { publishValid, publishInvalid } = useProviderControllerApi();
 
-  const schema = yup.object({
-    userCity: yup.mixed().required('required'),
-    userStreet: yup.mixed().required('required'),
-    userBuilding: yup.string().trim().required('required'),
-    userApartment: yup.string().optional(),
-  });
+  const { watch } = methods;
+  const userStreet = watch('userStreet') || null;
+  const userBuilding = watch('userBuilding') || '';
+  const userApartment = watch('userApartment') || '';
 
-  const citySelected = Boolean(methods.watch('userCity'));
+  // Track global city from AddressSection (TODO: add interface)
+  const globalCity = useCheckoutStore((state) => {
+    const data = state.sections.address?.data as
+      | { city?: City | null }
+      | undefined;
+    return data?.city ?? null;
+  });
+  const prevCityRef = usePrevious(globalCity?.Ref ?? null);
+
+  // Reset street when global city changes
+  useEffect(() => {
+    const currentRef = globalCity?.Ref ?? null;
+    if (prevCityRef === currentRef) return;
+    if (prevCityRef !== undefined) {
+      // City changed, reset street selection
+      methods.setValue('userStreet', null);
+    }
+  }, [globalCity, prevCityRef, methods]);
 
   useEffect(() => {
-    const data = {
-      userCity: methods.watch('userCity'),
-      userStreet: methods.watch('userStreet'),
-      userBuilding: methods.watch('userBuilding') || '',
-      userApartment: methods.watch('userApartment') || '',
-    };
-    (async () => {
+    const validate = async () => {
+      const data = {
+        userStreet: userStreet,
+        userBuilding: userBuilding,
+        userApartment: userApartment,
+      };
       try {
-        await schema.validate(data, { abortEarly: false });
+        await addressSchema.validate(data, { abortEarly: false });
         publishValid({ address: data });
-      } catch (e: any) {
+      } catch (e) {
         const errs: Record<string, string> = {};
-        if (e?.inner?.length) {
+        if (e instanceof ValidationError) {
           for (const err of e.inner) {
             if (err.path) errs[err.path] = err.message || 'invalid';
           }
         }
         publishInvalid(errs);
       }
-    })();
-  }, [
-    methods.watch('userCity'),
-    methods.watch('userStreet'),
-    methods.watch('userBuilding'),
-    methods.watch('userApartment'),
-    publishValid,
-    publishInvalid,
-  ]);
+    };
+    validate();
+  }, [userStreet, userBuilding, userApartment, publishValid, publishInvalid]);
 
   return (
     <Flex vertical gap={12} className={styles.container}>
       <FormProvider {...methods}>
         <StreetModal
-          street={methods.watch('userStreet')}
+          street={userStreet}
           changeStreet={(s) => methods.setValue('userStreet', s)}
-          cityRef={methods.watch('userCity')?.Ref}
+          cityRef={globalCity?.Ref}
         />
       </FormProvider>
-      {!citySelected && (
+      {!globalCity && (
         <Alert message={t('city_required_warning')} type="warning" showIcon />
       )}
       <Flex gap={12}>
         <FloatingLabelInput
           label={t('building')}
-          value={methods.watch('userBuilding')}
+          value={userBuilding}
           onChange={(e) => methods.setValue('userBuilding', e.target.value)}
         />
         <FloatingLabelInput
           label={t('apartment')}
-          value={methods.watch('userApartment')}
+          value={userApartment}
           onChange={(e) => methods.setValue('userApartment', e.target.value)}
         />
       </Flex>

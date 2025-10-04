@@ -1,4 +1,4 @@
-import { Divider, Flex, Typography } from 'antd';
+import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -8,22 +8,16 @@ import { StreetModalItem } from './StreetModalItem';
 import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
-
-interface Street {
-  Present: string;
-  SettlementRef: string;
-  SettlementStreetDescription: string;
-  SettlementStreetDescriptionRu: string;
-  SettlementStreetRef: string;
-  StreetsType: string;
-  StreetsTypeDescription: string;
-}
+import type { Street } from '@checkout/vendors/novaposta/types';
 
 interface Prop {
   street: Street | null;
   changeStreet: (street: Street) => void;
   cityRef?: string;
 }
+
+const apiKey = '';
+const np = new NovaPoshta(apiKey);
 
 export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const { styles } = useStyles();
@@ -32,9 +26,6 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const [isStreetModalVisible, setIsStreetModalVisible] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [streets, setStreets] = useState<Street[]>([]);
-
-  const apiKey = '';
-  const np = new NovaPoshta(apiKey);
 
   useEffect(() => {
     const fetchStreets = async () => {

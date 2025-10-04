@@ -13,10 +13,10 @@ import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 
-interface Prop {
+interface Props {
   warehouse: Warehouse | null;
   changeWarehouse: (warehouse: Warehouse) => void;
-  cityName?: string;
+  cityName: string | null;
 }
 
 const formatSchedule = (schedule: Record<string, string> | string): string => {
@@ -101,7 +101,7 @@ export const WarehouseModal = ({
   warehouse,
   changeWarehouse,
   cityName,
-}: Prop) => {
+}: Props) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
 
@@ -128,7 +128,7 @@ export const WarehouseModal = ({
         const result = await np.getWarehouses(methodProperties);
         /* console.log(result.data); */
         setWarehouses(result.data || []);
-      } catch (error) {
+      } catch {
         setWarehouses([]);
       } finally {
         setIsLoading(false);

@@ -1,16 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { TbMapPin } from 'react-icons/tb';
-
-interface Street {
-  Present: string;
-  SettlementRef: string;
-  SettlementStreetDescription: string;
-  SettlementStreetDescriptionRu: string;
-  SettlementStreetRef: string;
-  StreetsType: string;
-  StreetsTypeDescription: string;
-}
+import type { Street } from '@checkout/vendors/novaposta/types';
 
 interface Prop {
   item: Street | null;
