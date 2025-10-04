@@ -4,6 +4,7 @@
  * This module is intended to be used from client-side Checkout code.
  */
 import Emittery from 'emittery';
+import type { SectionDtoMap } from '@src/modules/checkout/core/contracts/dto';
 
 /**
  * Unique identifier of a delivery group.
@@ -30,6 +31,18 @@ export type ShippingSectionId = `shipping:${DeliveryGroupId}`;
  * Union of all section keys used across Checkout.
  */
 export type SectionKey = SectionId | ShippingSectionId;
+
+/**
+ * Inflight operation key used by orchestrator to group async operations.
+ */
+export type InflightKey =
+  | 'identity'
+  | 'recipient'
+  | 'address'
+  | `shipping:${string}`
+  | 'payment'
+  | 'promo'
+  | 'note';
 
 /**
  * Provider type domain: shipping or payment.
@@ -67,9 +80,10 @@ export type CheckoutPayload = {
  */
 export type CheckoutEvents = {
   'section/registered': { sectionId: SectionKey; required: boolean };
-  'section/valid': { sectionId: SectionKey; data: unknown };
-  'section/invalid': { sectionId: SectionKey; errors?: Record<string, string> };
+  'section/valid': { sectionId: SectionKey; dto: SectionDtoMap[Extract<SectionKey, keyof SectionDtoMap>] | unknown };
+  'section/invalid': { sectionId: SectionKey; dto?: SectionDtoMap[Extract<SectionKey, keyof SectionDtoMap>] | unknown; errors?: Record<string, string> };
   'section/reset': { sectionId: SectionKey };
+  'section/unregistered': { sectionId: SectionKey };
 
   'provider/registered': { providerId: ProviderId; providerType: ProviderType };
   'provider/activated': { providerId: ProviderId };
@@ -79,16 +93,23 @@ export type CheckoutEvents = {
     providerId: ProviderId;
     errors?: Record<string, string>;
   };
+  'provider/unregistered': { providerId: ProviderId };
 
   'method/shipping-selected': { groupId: DeliveryGroupId; code: string | null };
   'method/payment-selected': { code: string | null };
 
-  'submit/requested': {};
+  'submit/requested': object;
   'submit/blocked': {
     missing: SectionKey[];
     errors?: Record<SectionKey, string[]>;
   };
   'submit/ready': { payload: CheckoutPayload };
+  'submit/completed': object;
+  /**
+   * Operation lifecycle events for UI busy indicators.
+   */
+  'operation/start': { key: InflightKey; sectionId?: SectionKey };
+  'operation/end': { key: InflightKey; sectionId?: SectionKey };
 };
 
 /**
@@ -126,19 +147,19 @@ export function emitCheckoutEvent<K extends keyof CheckoutEvents>(
  * Intended for development diagnostics only. Returns a function to unsubscribe.
  */
 export function enableCheckoutBusDevLogging(): () => void {
-  const unsubscribe = checkoutBus.onAny((eventName, eventData) => {
+  const unsubscribe = checkoutBus.onAny((eventName: keyof CheckoutEvents | string, eventData: unknown) => {
     const name = String(eventName);
     if (
       typeof console !== 'undefined' &&
-      typeof (console as any).groupCollapsed === 'function'
+      typeof (console as unknown as { groupCollapsed?: (...args: unknown[]) => void }).groupCollapsed === 'function'
     ) {
-      (console as any).groupCollapsed(`[checkoutBus] ${name}`);
+      (console as unknown as { groupCollapsed: (...args: unknown[]) => void; groupEnd?: () => void; log?: (...args: unknown[]) => void; trace?: () => void; }).groupCollapsed(`[checkoutBus] ${name}`);
       // eslint-disable-next-line no-console
       console.log(eventData);
-      if (typeof (console as any).trace === 'function') {
-        (console as any).trace();
+      if (typeof (console as unknown as { trace?: () => void }).trace === 'function') {
+        (console as unknown as { trace: () => void }).trace();
       }
-      (console as any).groupEnd();
+      (console as unknown as { groupEnd?: () => void }).groupEnd?.();
     } else {
       // eslint-disable-next-line no-console
       console.log('[checkoutBus]', name, eventData);

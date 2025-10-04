@@ -3,8 +3,8 @@
  * Registers provider lifecycle in the store and exposes active flag and publish/reset helpers.
  */
 import { useEffect, useMemo } from 'react';
-import { useCheckoutStore } from '@checkout/state/checkoutStore';
-import { ProviderId, ProviderType } from '@checkout/state/checkoutBus';
+import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
+import { ProviderId, ProviderType } from '@src/modules/checkout/state/checkoutBus';
 
 export function useProviderController(
   providerId: ProviderId,
@@ -16,10 +16,15 @@ export function useProviderController(
     providerValid,
     providerInvalid,
     resetProvider,
+    setProviderBusy,
   } = useCheckoutStore.getState();
 
   const isActive = useCheckoutStore(
     (s) => s.providers[providerId]?.active === true
+  );
+
+  const busy = useCheckoutStore(
+    (s) => s.providers[providerId]?.busy ?? false
   );
 
   useEffect(() => {
@@ -33,11 +38,13 @@ export function useProviderController(
   return useMemo(
     () => ({
       active: isActive,
+      busy,
       publishValid: (data: unknown) => providerValid(providerId, data),
       publishInvalid: (errors?: Record<string, string>) =>
         providerInvalid(providerId, errors),
       reset: () => resetProvider(providerId),
+      setBusy: (isBusy: boolean) => setProviderBusy(providerId, isBusy),
     }),
-    [isActive, providerValid, providerInvalid, resetProvider, providerId]
+    [isActive, busy, providerValid, providerInvalid, resetProvider, setProviderBusy, providerId]
   );
 }

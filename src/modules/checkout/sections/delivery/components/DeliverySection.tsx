@@ -2,7 +2,7 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
+import { useCheckoutDeliveryGroups } from '@src/modules/checkout/hooks/useCheckoutDataSources';
 import { AddressSection } from './AddressSection';
 import { ShippingMethods } from './ShippingMethods';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
@@ -14,8 +14,7 @@ import type { City } from './city/CitySelect';
  */
 export const DeliverySection = () => {
   const { styles } = useStyles();
-  const { cart } = useCheckoutData();
-  const deliveryGroups = (cart as any)?.deliveryGroups ?? [];
+  const deliveryGroups = useCheckoutDeliveryGroups();
   const addressCity = useCheckoutStore((state) => {
     const data = state.sections.address?.data as { city?: City | null } | undefined;
     return data?.city ?? null;
@@ -24,7 +23,7 @@ export const DeliverySection = () => {
   return (
     <Flex vertical gap={12} className={styles.container}>
       <AddressSection />
-      {deliveryGroups.map((g: any) => (
+      {deliveryGroups.map((g) => (
         <ShippingMethods
           key={g.id}
           groupId={g.id}

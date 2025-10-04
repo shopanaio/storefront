@@ -2,13 +2,14 @@ import { Flex, Typography, Button, Divider, Badge } from 'antd';
 import { createStyles } from 'antd-style';
 import { SummaryItem } from './SummaryItem';
 import { useTranslations } from 'next-intl';
-import { TbShoppingCart, TbTicket } from 'react-icons/tb';
+import { TbShoppingCart } from 'react-icons/tb';
 import { useState } from 'react';
 import { Money } from '@src/components/UI/Price/Money';
 import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
 import { Entity } from '@src/entity';
-import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+// import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
+import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
 
 const { Text } = Typography;
 
@@ -43,7 +44,6 @@ export const Summary = ({ cart }: Prop) => {
           icon={<TbShoppingCart size={20} />}
         />
       </Flex>
-
       <Flex vertical gap={8}>
         {visibleLines.map((line) => (
           <SummaryItem key={line.id} line={line} />
@@ -60,19 +60,7 @@ export const Summary = ({ cart }: Prop) => {
           </div>
         ) : null}
       </Flex>
-
-      <Divider className={styles.divider} />
-
-      <Flex vertical gap={8}>
-        <FloatingLabelInput
-          label={t('coupon-code')}
-          prefix={<TbTicket size={20} />}
-          suffix={<Button disabled>{t('apply')}</Button>}
-        />
-      </Flex>
-
-      <Divider className={styles.divider} />
-
+      <SectionRenderer slug="promo" />
       <Flex vertical gap={12}>
         <Flex justify="space-between">
           <Text className={styles.summaryRow} strong>
@@ -106,11 +94,6 @@ export const Summary = ({ cart }: Prop) => {
             )}
           </Text>
         </Flex>
-      </Flex>
-
-      <Divider className={styles.divider} />
-
-      <Flex vertical gap={12}>
         <Flex justify="space-between">
           <Text className={styles.summaryTotal}>{t('total')}</Text>
           <Text className={styles.summaryTotal}>

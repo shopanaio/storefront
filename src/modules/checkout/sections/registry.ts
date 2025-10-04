@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-export type SectionSlug = 'contact' | 'recipient' | 'address' | 'delivery' | 'payment' | 'comment';
+export type SectionSlug = 'contact' | 'recipient' | 'address' | 'delivery' | 'payment' | 'promo' | 'comment';
 
 export interface SectionModuleApi {
   slug: SectionSlug;

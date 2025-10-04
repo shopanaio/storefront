@@ -3,8 +3,7 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { PaymentMethods } from './PaymentMethods';
-import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
-import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { useCheckoutPaymentMethods } from '@src/modules/checkout/hooks/useCheckoutDataSources';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 
 /**
@@ -13,11 +12,8 @@ import { useSectionController } from '@src/modules/checkout/state/hooks/useSecti
  */
 export const PaymentSection = () => {
   const { styles } = useStyles();
-  const { cart } = useCheckoutData();
   useSectionController('payment', { required: true });
-
-  // Access cart data from form's internal state or external context
-  const paymentMethods = (cart as any)?.payment?.paymentMethods;
+  const paymentMethods = useCheckoutPaymentMethods();
 
   return (
     <Flex vertical gap={12} className={styles.container}>

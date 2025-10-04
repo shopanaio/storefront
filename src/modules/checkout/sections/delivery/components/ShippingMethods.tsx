@@ -6,6 +6,7 @@ import { usePrevious } from 'react-use';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import type { City } from './city/CitySelect';
+import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 
 interface Props {
   groupId: string;
@@ -18,6 +19,7 @@ export const ShippingMethods = ({ groupId, methods, addressCity }: Props) => {
   const { reset } = useSectionController(`shipping:${groupId}`, {
     required: true,
   });
+  const invalidateByGroup = useCheckoutStore((s) => s.invalidateShippingProvidersByGroup);
   const prevCityRef = usePrevious(addressCity?.Ref ?? null);
 
   useEffect(() => {
@@ -27,8 +29,10 @@ export const ShippingMethods = ({ groupId, methods, addressCity }: Props) => {
       // Reset shipping section validation state to force providers to revalidate
       // but keep the selected method - only internal provider forms should reset
       reset();
+      // Invalidate provider states for this group to ensure re-validation on city change
+      invalidateByGroup(groupId);
     }
-  }, [addressCity?.Ref, prevCityRef, reset]);
+  }, [addressCity?.Ref, prevCityRef, reset, invalidateByGroup, groupId]);
 
   const methodsByProvider = useMemo(
     () =>

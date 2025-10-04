@@ -13,6 +13,8 @@ import { useEffect, useState } from 'react';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
 import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutDataContext';
+import { CheckoutApiProvider } from '@src/modules/checkout/context/CheckoutApiContext';
+import { CheckoutController } from '@src/modules/checkout/controller/CheckoutController';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 
 import '@src/modules/checkout/sections/autoload';
@@ -67,7 +69,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
 
   useEffect(() => {
-    const offReady = onCheckoutEvent('submit/ready', () => {
+    const offCompleted = onCheckoutEvent('submit/completed', () => {
       setValidationError(null);
       onConfirm();
     });
@@ -103,61 +105,64 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
     });
 
     return () => {
-      offReady();
+      offCompleted();
       offBlocked();
     };
   }, [onConfirm, t]);
 
   return (
     <CheckoutDataProvider cart={cart}>
-      <div className={styles.wrapper}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            requestSubmit();
-          }}
-        >
-          <div className={styles.container}>
-            <div className={styles.main}>
-              <Flex className={styles.left}>
-                {brand}
-                <SectionRenderer
-                  slug="contact"
-                  title={t('contact')}
-                  headerAction={
-                    features?.auth ? (
-                      <CheckoutAuth className={styles.logInButton} />
-                    ) : undefined
-                  }
-                />
-                <SectionRenderer slug="delivery" title={t('delivery')} />
-                <SectionRenderer slug="recipient" />
-                <SectionRenderer slug="payment" title={t('payment')} />
-                <SectionRenderer slug="comment" />
-
-                <div className={styles.actionsLeft}>
-                  <CheckoutActions
-                    validationError={validationError}
-                    onClearError={() => setValidationError(null)}
+      <CheckoutApiProvider>
+        <CheckoutController />
+        <div className={styles.wrapper}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              requestSubmit();
+            }}
+          >
+            <div className={styles.container}>
+              <div className={styles.main}>
+                <Flex className={styles.left}>
+                  {brand}
+                  <SectionRenderer
+                    slug="contact"
+                    title={t('contact')}
+                    headerAction={
+                      features?.auth ? (
+                        <CheckoutAuth className={styles.logInButton} />
+                      ) : undefined
+                    }
                   />
-                </div>
-              </Flex>
-              <Flex className={styles.rightContainer}>
-                <Flex vertical gap={12} className={styles.right}>
-                  {cart ? <Summary cart={cart} /> : null}
-                  <div className={styles.actionsRight}>
+                  <SectionRenderer slug="delivery" title={t('delivery')} />
+                  <SectionRenderer slug="recipient" />
+                  <SectionRenderer slug="payment" title={t('payment')} />
+                  <SectionRenderer slug="comment" />
+
+                  <div className={styles.actionsLeft}>
                     <CheckoutActions
                       validationError={validationError}
                       onClearError={() => setValidationError(null)}
                     />
                   </div>
                 </Flex>
-              </Flex>
+                <Flex className={styles.rightContainer}>
+                  <Flex vertical gap={12} className={styles.right}>
+                    {cart ? <Summary cart={cart} /> : null}
+                    <div className={styles.actionsRight}>
+                      <CheckoutActions
+                        validationError={validationError}
+                        onClearError={() => setValidationError(null)}
+                      />
+                    </div>
+                  </Flex>
+                </Flex>
+              </div>
             </div>
-          </div>
-        </form>
-        <CheckoutSkeleton brand={brand} isReady={!!cart} />
-      </div>
+          </form>
+          <CheckoutSkeleton brand={brand} isReady={!!cart} />
+        </div>
+      </CheckoutApiProvider>
     </CheckoutDataProvider>
   );
 };

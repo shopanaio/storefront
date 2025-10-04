@@ -3,6 +3,7 @@
  * Registers section lifecycle in the Checkout store and exposes methods to publish validation.
  */
 import { useEffect, useMemo } from 'react';
+import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 
 /**
@@ -20,22 +21,54 @@ export function useSectionController(
     sectionValid,
     sectionInvalid,
     resetSection,
+    setSectionBusy,
   } = useCheckoutStore.getState();
+
+  const busy = useCheckoutStore(
+    (state) => state.sections[sectionId]?.busy ?? false
+  );
 
   useEffect(() => {
     registerSection(sectionId, options.required);
+    // Subscribe to operation lifecycle to reflect busy state
+    const offStart = onCheckoutEvent(
+      'operation/start',
+      ({ sectionId: sid }) => {
+        if (sid === sectionId) setSectionBusy(sectionId, true);
+      }
+    );
+    const offEnd = onCheckoutEvent('operation/end', ({ sectionId: sid }) => {
+      if (sid === sectionId) setSectionBusy(sectionId, false);
+    });
     return () => {
       unregisterSection(sectionId);
+      offStart();
+      offEnd();
     };
-  }, [registerSection, unregisterSection, sectionId, options.required]);
+  }, [
+    registerSection,
+    unregisterSection,
+    sectionId,
+    options.required,
+    setSectionBusy,
+  ]);
 
   return useMemo(
     () => ({
-      publishValid: (data: unknown) => sectionValid(sectionId, data),
+      busy,
+      publishValid: (dto: unknown) => sectionValid(sectionId, dto),
       publishInvalid: (errors?: Record<string, string>) =>
-        sectionInvalid(sectionId, errors),
+        sectionInvalid(sectionId, undefined, errors),
       reset: () => resetSection(sectionId),
+      setBusy: (isBusy: boolean) => setSectionBusy(sectionId, isBusy),
     }),
-    [sectionValid, sectionInvalid, resetSection, sectionId]
+    [
+      busy,
+      sectionValid,
+      sectionInvalid,
+      resetSection,
+      setSectionBusy,
+      sectionId,
+    ]
   );
 }
