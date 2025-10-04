@@ -1,6 +1,6 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
 import { searchSettlementStreetsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
@@ -29,7 +29,15 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
 
   useEffect(() => {
     const fetchStreets = async () => {
-      if (!cityRef || searchValue.trim().length === 0) return;
+      if (!cityRef) {
+        setStreets([]);
+        return;
+      }
+
+      if (searchValue.trim().length === 0) {
+        setStreets([]);
+        return;
+      }
 
       try {
         const methodProperties: searchSettlementStreetsProperties = {
@@ -39,6 +47,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
         };
 
         const result = await np.searchSettlementStreets(methodProperties);
+        console.log('Nova Poshta streets API response:', result);
         setStreets(result.data[0].Addresses || []);
       } catch (error) {
         console.error('Error searching for streets:', error);
@@ -49,16 +58,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
     fetchStreets();
   }, [searchValue, cityRef]);
 
-  const items = useMemo(() => {
-    const normalized = searchValue.trim().toLowerCase();
-    return normalized.length === 0
-      ? streets
-      : streets.filter((item) =>
-          item.Present.toLowerCase().includes(normalized)
-        );
-  }, [searchValue, streets]);
-
-  console.log(items);
+  console.log('Streets state:', streets);
 
   const handleSelectStreet = (item: Street) => {
     changeStreet(item);
@@ -92,14 +92,13 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
             />
           </Flex>
           <Flex vertical gap={8}>
-            {searchValue &&
-              items.map((item) => (
-                <StreetModalItem
-                  key={item.SettlementStreetRef}
-                  item={item}
-                  changeStreet={handleSelectStreet}
-                />
-              ))}
+            {streets.map((item) => (
+              <StreetModalItem
+                key={item.SettlementStreetRef}
+                item={item}
+                changeStreet={handleSelectStreet}
+              />
+            ))}
           </Flex>
         </Flex>
       </DrawerBase>
