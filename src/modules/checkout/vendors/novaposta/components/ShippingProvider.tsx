@@ -1,16 +1,13 @@
 'use client';
 
 import { Flex } from 'antd';
-import { createStyles } from 'antd-style';
 import type { ProviderProps } from '@src/modules/registry';
 import { NOVA_POSHTA_CONFIG } from './config';
-import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
+import { ProviderMethodPanel } from '@checkout/components/common/ProviderMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';
 import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
-import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
-import { ProviderControllerProvider } from '@src/modules/checkout/state/context/ProviderControllerContext';
 
 /**
  * Configuration for Nova Poshta provider methods.
@@ -21,8 +18,11 @@ import { ProviderControllerProvider } from '@src/modules/checkout/state/context/
  * NovaPoshta provider-level component that renders full shipping UI.
  * Uses react-hook-form via useFormContext.
  */
-export function NPShippingProvider({ methods, groupId, provider }: ProviderProps) {
-  const { styles } = useStyles();
+export function NPShippingProvider({
+  methods,
+  groupId,
+  provider,
+}: ProviderProps) {
   const { selected, select } = useMethodSelectionShipping(groupId as string);
   const activeCode: string | undefined = selected?.code;
 
@@ -36,7 +36,6 @@ export function NPShippingProvider({ methods, groupId, provider }: ProviderProps
         methods={methods}
         activeCode={activeCode}
         onSelect={handleSelectMethod}
-        styles={styles}
         provider={provider}
         groupId={groupId as string}
       />
@@ -48,21 +47,20 @@ function Content({
   methods,
   activeCode,
   onSelect,
-  styles,
   provider,
   groupId,
 }: {
   methods: ProviderProps['methods'];
   activeCode?: string;
   onSelect: (code: string) => void;
-  styles: ReturnType<typeof useStyles>['styles'];
   provider: string;
   groupId?: string;
 }) {
   const t = useTranslations('Modules.novaposta');
+  const BrandComponent = NOVA_POSHTA_CONFIG.logo;
 
   return (
-    <Flex vertical gap={12} className={styles.container}>
+    <Flex vertical gap={12}>
       {NOVA_POSHTA_CONFIG.shipping
         .map((config) => {
           const method = methods.find((m) => m.code === config.code);
@@ -70,26 +68,16 @@ function Content({
             return null;
           }
 
-          const FormComponent = config.Component;
-          const BrandComponent = NOVA_POSHTA_CONFIG.logo;
-
           return (
-            <CheckoutMethodPanel
+            <ProviderMethodPanel
               key={method.code}
-              title={t(config.nameI18n)}
-              description={
-                config.descriptionI18n ? t(config.descriptionI18n) : ''
-              }
-              isActive={activeCode === method.code}
-              onActivate={() => onSelect(method.code)}
+              config={config}
+              activeCode={activeCode}
+              onSelect={onSelect}
               brand={<BrandComponent size={24} />}
-              content={
-                typeof FormComponent === 'function' && activeCode === method.code ? (
-                  <ActiveProviderBoundary providerId={`shipping:${provider}@${(groupId as string)}`}>
-                    <FormComponent />
-                  </ActiveProviderBoundary>
-                ) : null
-              }
+              translate={t}
+              providerId={`shipping:${provider}@${groupId as string}`}
+              type="shipping"
             />
           );
         })
@@ -97,22 +85,3 @@ function Content({
     </Flex>
   );
 }
-
-function ActiveProviderBoundary({ providerId, children }: { providerId: string; children: React.ReactNode }) {
-  const controller = useProviderController(providerId as any, 'shipping');
-  if (!controller.active) return null;
-  return (
-    <ProviderControllerProvider value={{
-      publishValid: controller.publishValid,
-      publishInvalid: controller.publishInvalid,
-      reset: controller.reset,
-    }}>
-      {children}
-    </ProviderControllerProvider>
-  );
-}
-
-const useStyles = createStyles(({ css, token }) => ({
-  container: css``,
-  method: css``,
-}));

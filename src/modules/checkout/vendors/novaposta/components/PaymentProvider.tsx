@@ -3,14 +3,12 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import type { ProviderProps } from '@src/modules/registry';
-import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
+import { ProviderMethodPanel } from '@checkout/components/common/ProviderMethodPanel';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { useTranslations } from 'next-intl';
 import { loadNovapostaMessages } from '../i18n';
 import { NOVA_POSHTA_CONFIG } from './config';
 import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
-import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
-import { ProviderControllerProvider } from '@src/modules/checkout/state/context/ProviderControllerContext';
 
 /**
  * NovaPoshta payment provider-level component that renders payment UI.
@@ -54,6 +52,7 @@ function Content({
   provider: string;
 }) {
   const t = useTranslations('Modules.novaposta');
+  const BrandComponent = NOVA_POSHTA_CONFIG.logo;
 
   return (
     <Flex vertical gap={12} className={styles.container}>
@@ -66,45 +65,22 @@ function Content({
             return null;
           }
 
-          const FormComponent = config.Component;
-          const BrandComponent = NOVA_POSHTA_CONFIG.logo;
-
           return (
-            <CheckoutMethodPanel
+            <ProviderMethodPanel
               key={m.code}
-              title={t(config.nameI18n)}
-              description={
-                config.descriptionI18n ? t(config.descriptionI18n) : ''
-              }
-              isActive={activeCode === m.code}
-              onActivate={() => onSelect(m.code)}
+              config={config}
+              activeCode={activeCode}
+              onSelect={onSelect}
               brand={<BrandComponent size={24} />}
-              content={
-                typeof FormComponent === 'function' && activeCode === m.code ? (
-                  <ActiveProviderBoundary providerId={`payment:${provider}`}>
-                    <FormComponent />
-                  </ActiveProviderBoundary>
-                ) : null
-              }
+              translate={t}
+              providerId={`payment:${provider}`}
+              type="payment"
+              autoPublish
             />
           );
         })
         .filter(Boolean)}
     </Flex>
-  );
-}
-
-function ActiveProviderBoundary({ providerId, children }: { providerId: string; children: React.ReactNode }) {
-  const controller = useProviderController(providerId as any, 'payment');
-  if (!controller.active) return null;
-  return (
-    <ProviderControllerProvider value={{
-      publishValid: controller.publishValid,
-      publishInvalid: controller.publishInvalid,
-      reset: controller.reset,
-    }}>
-      {children}
-    </ProviderControllerProvider>
   );
 }
 

@@ -3,26 +3,46 @@
 import { Divider, Flex, Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
 /**
  * Skeleton for the Checkout page that mirrors the two-column layout.
- * Accepts an optional brand node to render at the top of the left column.
+ * Manages its own visibility logic: shows for at least 1 second, then hides when isReady.
  */
 export interface CheckoutSkeletonProps {
   /** Optional brand component to be displayed in the left column */
   brand?: React.ReactNode;
+  /** When true, indicates that the data (e.g., cart) is loaded and ready */
+  isReady?: boolean;
 }
 
 export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
   brand,
+  isReady = false,
 }) => {
   const { styles } = useStyles();
+  const [minDelayPassed, setMinDelayPassed] = useState(false);
+
+  // Ensure skeleton shows for at least 1 second
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinDelayPassed(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const shouldShow = !isReady || !minDelayPassed;
+
+  if (!shouldShow) {
+    return null;
+  }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.overlay}>
+      <div className={styles.container}>
       <div className={styles.main}>
         <Flex className={styles.left} vertical>
           {brand}
@@ -48,11 +68,21 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
         </Flex>
       </div>
     </div>
+    </div>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => {
   return {
+    overlay: css`
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      background-color: ${token.colorBgContainer};
+    `,
     container: css`
       display: flex;
       flex-direction: column;

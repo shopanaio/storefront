@@ -34,6 +34,7 @@ export const CheckoutMethodPanel = ({
       bordered
     >
       <Panel
+        forceRender
         showArrow={false}
         key={codeRef.current}
         className={clsx(!content ? styles.emptyPanel : '')}

@@ -9,10 +9,11 @@ import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
-import { memo, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
 import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutDataContext';
+import { CheckoutSkeleton } from './CheckoutSkeleton';
 
 import '@src/modules/checkout/sections/autoload';
 
@@ -58,7 +59,7 @@ export interface CheckoutFormValues {
  * Checkout form component that renders contact, shipping, and payment sections.
  * Feature flags can adjust visible UI (e.g., `features.auth` shows login button).
  */
-export const Checkout = memo(({ cart, onConfirm, brand, features }: Prop) => {
+export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -109,57 +110,64 @@ export const Checkout = memo(({ cart, onConfirm, brand, features }: Prop) => {
 
   return (
     <CheckoutDataProvider cart={cart}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          requestSubmit();
-        }}
-      >
-        <div className={styles.container}>
-          <div className={styles.main}>
-            <Flex className={styles.left}>
-              {brand}
-              <SectionRenderer
-                slug="contact"
-                title={t('contact')}
-                headerAction={
-                  features?.auth ? (
-                    <CheckoutAuth className={styles.logInButton} />
-                  ) : undefined
-                }
-              />
-              <SectionRenderer slug="delivery" title={t('delivery')} />
-              <SectionRenderer slug="recipient" />
-              <SectionRenderer slug="payment" title={t('payment')} />
-              <SectionRenderer slug="comment" />
-
-              <div className={styles.actionsLeft}>
-                <CheckoutActions
-                  validationError={validationError}
-                  onClearError={() => setValidationError(null)}
+      <div className={styles.wrapper}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            requestSubmit();
+          }}
+        >
+          <div className={styles.container}>
+            <div className={styles.main}>
+              <Flex className={styles.left}>
+                {brand}
+                <SectionRenderer
+                  slug="contact"
+                  title={t('contact')}
+                  headerAction={
+                    features?.auth ? (
+                      <CheckoutAuth className={styles.logInButton} />
+                    ) : undefined
+                  }
                 />
-              </div>
-            </Flex>
-            <Flex className={styles.rightContainer}>
-              <Flex vertical gap={12} className={styles.right}>
-                {cart ? <Summary cart={cart} /> : null}
-                <div className={styles.actionsRight}>
+                <SectionRenderer slug="delivery" title={t('delivery')} />
+                <SectionRenderer slug="recipient" />
+                <SectionRenderer slug="payment" title={t('payment')} />
+                <SectionRenderer slug="comment" />
+
+                <div className={styles.actionsLeft}>
                   <CheckoutActions
                     validationError={validationError}
                     onClearError={() => setValidationError(null)}
                   />
                 </div>
               </Flex>
-            </Flex>
+              <Flex className={styles.rightContainer}>
+                <Flex vertical gap={12} className={styles.right}>
+                  {cart ? <Summary cart={cart} /> : null}
+                  <div className={styles.actionsRight}>
+                    <CheckoutActions
+                      validationError={validationError}
+                      onClearError={() => setValidationError(null)}
+                    />
+                  </div>
+                </Flex>
+              </Flex>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+        <CheckoutSkeleton brand={brand} isReady={!!cart} />
+      </div>
     </CheckoutDataProvider>
   );
-});
+};
 
 const useStyles = createStyles(({ token, css }) => {
   return {
+    wrapper: css`
+      position: relative;
+      width: 100%;
+    `,
     container: css`
       display: flex;
       flex-direction: column;

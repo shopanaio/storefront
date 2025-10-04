@@ -13,7 +13,13 @@ export type DeliveryGroupId = string;
 /**
  * Static section identifiers present regardless of delivery grouping.
  */
-export type SectionId = 'contact' | 'recipient' | 'address' | 'payment' | 'promo' | 'comment';
+export type SectionId =
+  | 'contact'
+  | 'recipient'
+  | 'address'
+  | 'payment'
+  | 'promo'
+  | 'comment';
 
 /**
  * Dynamic shipping section key bound to a specific delivery group.
@@ -45,7 +51,11 @@ export type ProviderId = ShippingProviderId | PaymentProviderId;
 export type CheckoutPayload = {
   contact?: unknown;
   recipient?: unknown;
-  deliveries?: Array<{ groupId: DeliveryGroupId; methodCode: string; data: unknown }>;
+  deliveries?: Array<{
+    groupId: DeliveryGroupId;
+    methodCode: string;
+    data: unknown;
+  }>;
   address?: unknown;
   payment?: { methodCode: string; data: unknown };
   promo?: unknown;
@@ -65,13 +75,19 @@ export type CheckoutEvents = {
   'provider/activated': { providerId: ProviderId };
   'provider/deactivated': { providerId: ProviderId };
   'provider/valid': { providerId: ProviderId; data: unknown };
-  'provider/invalid': { providerId: ProviderId; errors?: Record<string, string> };
+  'provider/invalid': {
+    providerId: ProviderId;
+    errors?: Record<string, string>;
+  };
 
   'method/shipping-selected': { groupId: DeliveryGroupId; code: string | null };
   'method/payment-selected': { code: string | null };
 
   'submit/requested': {};
-  'submit/blocked': { missing: SectionKey[]; errors?: Record<SectionKey, string[]> };
+  'submit/blocked': {
+    missing: SectionKey[];
+    errors?: Record<SectionKey, string[]>;
+  };
   'submit/ready': { payload: CheckoutPayload };
 };
 
@@ -112,7 +128,10 @@ export function emitCheckoutEvent<K extends keyof CheckoutEvents>(
 export function enableCheckoutBusDevLogging(): () => void {
   const unsubscribe = checkoutBus.onAny((eventName, eventData) => {
     const name = String(eventName);
-    if (typeof console !== 'undefined' && typeof (console as any).groupCollapsed === 'function') {
+    if (
+      typeof console !== 'undefined' &&
+      typeof (console as any).groupCollapsed === 'function'
+    ) {
       (console as any).groupCollapsed(`[checkoutBus] ${name}`);
       // eslint-disable-next-line no-console
       console.log(eventData);
@@ -133,7 +152,8 @@ export function enableCheckoutBusDevLogging(): () => void {
 // Auto-enable logging when explicitly requested via public env flag.
 if (
   typeof process !== 'undefined' &&
-  (process.env.NEXT_PUBLIC_CHECKOUT_LOG_EVENTS === '1' || process.env.NEXT_PUBLIC_CHECKOUT_LOG_EVENTS === 'true')
+  (process.env.NEXT_PUBLIC_CHECKOUT_LOG_EVENTS === '1' ||
+    process.env.NEXT_PUBLIC_CHECKOUT_LOG_EVENTS === 'true')
 ) {
   try {
     enableCheckoutBusDevLogging();

@@ -126,7 +126,7 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
             )}
           </Flex>
         ) : (
-          <Typography.Text type="secondary">{t('contact')}</Typography.Text>
+          <Typography.Text type="secondary">{title}</Typography.Text>
         )}
       </Button>
 

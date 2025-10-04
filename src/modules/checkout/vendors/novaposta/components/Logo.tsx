@@ -5,7 +5,7 @@
  */
 export const NPLogo = ({
   size = 24,
-  showText = true,
+  showText,
 }: {
   size?: number;
   showText?: boolean;
