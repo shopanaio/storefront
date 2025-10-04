@@ -15,14 +15,25 @@ import { yupResolver } from '@hookform/resolvers/yup';
  * Contact section component.
  * Renders phone input field.
  */
+export const ContactSection1 = () => {
+  return <div />;
+};
+
 export const ContactSection = () => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const methods = useForm<ContactValues>({
-    defaultValues: { userFirstName: '', userLastName: '', userMiddleName: '', userPhone: '' },
+    defaultValues: {
+      userFirstName: '',
+      userLastName: '',
+      userMiddleName: '',
+      userPhone: '',
+    },
     mode: 'onChange',
   });
-  const { publishValid, publishInvalid } = useSectionController('contact', { required: true });
+  const { publishValid, publishInvalid } = useSectionController('contact', {
+    required: true,
+  });
 
   const schema = yup.object({
     userFirstName: yup.string().optional(),
@@ -31,9 +42,13 @@ export const ContactSection = () => {
     userPhone: yup.string().trim().required('required'),
   });
 
-  const [userFirstName, userLastName, userMiddleName, userPhone] = methods.watch(
-    ['userFirstName', 'userLastName', 'userMiddleName', 'userPhone'] as const
-  );
+  const [userFirstName, userLastName, userMiddleName, userPhone] =
+    methods.watch([
+      'userFirstName',
+      'userLastName',
+      'userMiddleName',
+      'userPhone',
+    ] as const);
 
   const values: ContactValues = {
     userFirstName: userFirstName || '',
@@ -43,6 +58,9 @@ export const ContactSection = () => {
   };
 
   useEffect(() => {
+    if (1) {
+      return;
+    }
     (async () => {
       try {
         await schema.validate(values, { abortEarly: false });
@@ -58,7 +76,14 @@ export const ContactSection = () => {
       }
     })();
     // Do not auto-publish valid here to avoid overriding user intent; handled on save
-  }, [values.userFirstName, values.userLastName, values.userMiddleName, values.userPhone, publishValid, publishInvalid]);
+  }, [
+    values.userFirstName,
+    values.userLastName,
+    values.userMiddleName,
+    values.userPhone,
+    publishValid,
+    publishInvalid,
+  ]);
 
   const handleSave = (next: ContactValues) => {
     methods.setValue('userFirstName', next.userFirstName);
@@ -75,7 +100,11 @@ export const ContactSection = () => {
   return (
     <FormProvider {...methods}>
       <Flex vertical gap={12} className={styles.container}>
-        <ContactSelect values={values} onSave={handleSave} title={t('contact')} />
+        <ContactSelect
+          values={values}
+          onSave={handleSave}
+          title={t('contact')}
+        />
       </Flex>
     </FormProvider>
   );

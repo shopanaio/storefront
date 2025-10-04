@@ -20,25 +20,21 @@ export function useSectionController(
     sectionValid,
     sectionInvalid,
     resetSection,
-  } = useCheckoutStore((s) => ({
-    registerSection: s.registerSection,
-    unregisterSection: s.unregisterSection,
-    sectionValid: s.sectionValid,
-    sectionInvalid: s.sectionInvalid,
-    resetSection: s.resetSection,
-  }));
+  } = useCheckoutStore.getState();
 
   useEffect(() => {
     registerSection(sectionId, options.required);
     return () => {
       unregisterSection(sectionId);
     };
-  }, [registerSection, unregisterSection, sectionId, options.required]);
+  }, []);
+  //  [registerSection, unregisterSection, sectionId, options.required]);
 
   return useMemo(
     () => ({
       publishValid: (data: unknown) => sectionValid(sectionId, data),
-      publishInvalid: (errors?: Record<string, string>) => sectionInvalid(sectionId, errors),
+      publishInvalid: (errors?: Record<string, string>) =>
+        sectionInvalid(sectionId, errors),
       reset: () => resetSection(sectionId),
     }),
     [sectionValid, sectionInvalid, resetSection, sectionId]

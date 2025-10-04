@@ -177,6 +177,7 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
 
 const useStyles = createStyles(({ css, token }) => ({
   container: css`
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 2px;

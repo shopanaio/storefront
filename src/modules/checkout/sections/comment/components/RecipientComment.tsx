@@ -4,16 +4,18 @@ import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { TbPencil } from 'react-icons/tb';
 
-export const RecipientComment = () => {
+export const RecipientComment = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const form = useFormContext();
-  const [isOpen, setIsOpen] = useState(Boolean(form.watch('orderComment')));
-
-  const value: string = form.watch('orderComment') ?? '';
+  const [isOpen, setIsOpen] = useState(Boolean(value));
 
   const onToggle = () => setIsOpen((prev) => !prev);
 
@@ -29,9 +31,9 @@ export const RecipientComment = () => {
             aria-labelledby="order-comment-label"
             placeholder={t('order-comment-placeholder')}
             value={value}
-            rows={6}
+            rows={4}
             maxLength={255}
-            onChange={(e) => form.setValue('orderComment', e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
           />
         </div>
       ) : (

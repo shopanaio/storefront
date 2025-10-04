@@ -9,7 +9,7 @@ import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
 import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutDataContext';
@@ -58,7 +58,7 @@ export interface CheckoutFormValues {
  * Checkout form component that renders contact, shipping, and payment sections.
  * Feature flags can adjust visible UI (e.g., `features.auth` shows login button).
  */
-export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
+export const Checkout = memo(({ cart, onConfirm, brand, features }: Prop) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -66,25 +66,41 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
 
   useEffect(() => {
-    const offReady = onCheckoutEvent('submit/ready', ({ payload }) => {
+    const offReady = onCheckoutEvent('submit/ready', () => {
       setValidationError(null);
       onConfirm();
     });
+
     const offBlocked = onCheckoutEvent('submit/blocked', ({ missing }) => {
-      const mapName = (k: string) => {
-        if (k.startsWith('shipping:')) return t('shipping');
-        if (k === 'payment') return t('payment');
-        if (k === 'contact') return t('contact');
-        if (k === 'recipient') return t('recipient');
-        if (k === 'address') return t('address');
-        if (k === 'promo') return t('promo');
-        if (k === 'comment') return t('comment');
-        return k;
+      /**
+       * Maps section keys to their translated display names.
+       * Handles both exact matches and prefixed keys (e.g., 'shipping:*').
+       */
+      const sectionNameMap: Record<string, string> = {
+        payment: t('payment'),
+        contact: t('contact'),
+        recipient: t('recipient'),
+        address: t('address'),
+        promo: t('promo'),
+        comment: t('comment'),
       };
-      const names = Array.from(new Set(missing.map(mapName)));
-      const msg = names.length > 0 ? `${t('fill-required')}: ${names.join(', ')}` : t('error-no-shipping-and-payment-method');
-      setValidationError(msg);
+
+      const mapSectionKey = (key: string): string => {
+        if (key.startsWith('shipping:')) {
+          return t('shipping');
+        }
+        return sectionNameMap[key] ?? key;
+      };
+
+      const uniqueNames = Array.from(new Set(missing.map(mapSectionKey)));
+      const message =
+        uniqueNames.length > 0
+          ? `${t('fill-required')}: ${uniqueNames.join(', ')}`
+          : t('error-no-shipping-and-payment-method');
+
+      setValidationError(message);
     });
+
     return () => {
       offReady();
       offBlocked();
@@ -92,56 +108,56 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   }, [onConfirm, t]);
 
   return (
-    <>
-      <CheckoutDataProvider cart={cart}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            requestSubmit();
-          }}
-        >
-          <div className={styles.container}>
-            <div className={styles.main}>
-              <Flex className={styles.left}>
-                {brand}
-                <SectionRenderer
-                  slug="contact"
-                  headerAction={
-                    features?.auth ? (
-                      <CheckoutAuth className={styles.logInButton} />
-                    ) : undefined
-                  }
-                />
-                <SectionRenderer slug="delivery" />
-                <SectionRenderer slug="recipient" />
-                <SectionRenderer slug="payment" />
-                <SectionRenderer slug="comment" />
+    <CheckoutDataProvider cart={cart}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          requestSubmit();
+        }}
+      >
+        <div className={styles.container}>
+          <div className={styles.main}>
+            <Flex className={styles.left}>
+              {brand}
+              <SectionRenderer
+                slug="contact"
+                title={t('contact')}
+                headerAction={
+                  features?.auth ? (
+                    <CheckoutAuth className={styles.logInButton} />
+                  ) : undefined
+                }
+              />
+              <SectionRenderer slug="delivery" title={t('delivery')} />
+              {/* title={t('recipient')} */}
+              <SectionRenderer slug="recipient" />
+              <SectionRenderer slug="payment" title={t('payment')} />
+              <SectionRenderer slug="comment" />
 
-                <div className={styles.actionsLeft}>
+              <div className={styles.actionsLeft}>
+                <CheckoutActions
+                  validationError={validationError}
+                  onClearError={() => setValidationError(null)}
+                />
+              </div>
+            </Flex>
+            <Flex className={styles.rightContainer}>
+              <Flex vertical gap={12} className={styles.right}>
+                {cart ? <Summary cart={cart} /> : null}
+                <div className={styles.actionsRight}>
                   <CheckoutActions
                     validationError={validationError}
                     onClearError={() => setValidationError(null)}
                   />
                 </div>
               </Flex>
-              <Flex className={styles.rightContainer}>
-                <Flex vertical gap={12} className={styles.right}>
-                  {cart ? <Summary cart={cart} /> : null}
-                  <div className={styles.actionsRight}>
-                    <CheckoutActions
-                      validationError={validationError}
-                      onClearError={() => setValidationError(null)}
-                    />
-                  </div>
-                </Flex>
-              </Flex>
-            </div>
+            </Flex>
           </div>
-        </form>
-      </CheckoutDataProvider>
-    </>
+        </div>
+      </form>
+    </CheckoutDataProvider>
   );
-};
+});
 
 const useStyles = createStyles(({ token, css }) => {
   return {
@@ -176,7 +192,7 @@ const useStyles = createStyles(({ token, css }) => {
     left: css`
       width: 100%;
       flex-direction: column;
-      gap: ${token.marginMD}px;
+      gap: ${token.margin}px;
       border-right: 2px solid ${token.colorBorderSecondary};
       padding: ${token.padding}px;
 

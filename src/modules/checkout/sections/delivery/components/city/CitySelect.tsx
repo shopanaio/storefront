@@ -48,6 +48,10 @@ export const CitySelect = ({ value, onChange }: Prop) => {
   const np = new NovaPoshta(apiKey);
 
   useEffect(() => {
+    if (1) {
+      return;
+    }
+
     const fetchSettlements = async () => {
       if (searchValue.trim().length === 0) return;
 

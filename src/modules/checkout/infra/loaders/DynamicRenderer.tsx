@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState, ComponentType, useMemo } from 'react';
+import { useEffect, useState, ComponentType } from 'react';
 
-interface DynamicRendererProps<TApi, TProps> {
-  /** Async loader that returns module API */
-  loader: (() => Promise<TApi> | TApi) | undefined;
-  /** Extract component from resolved API */
-  getComponent: (api: TApi) => ComponentType<TProps>;
+interface ModuleApi<TProps> {
+  Component: ComponentType<TProps>;
+}
+
+interface DynamicRendererProps<TProps> {
+  /** Async loader that returns a module API with Component */
+  loader: (() => Promise<ModuleApi<TProps>> | ModuleApi<TProps>) | undefined;
   /** Props to pass to the resolved component */
   componentProps: TProps;
 }
@@ -15,35 +17,26 @@ interface DynamicRendererProps<TApi, TProps> {
  * Universal dynamic renderer that resolves and renders a component from an async loader.
  * Reusable for sections, providers, and other dynamic modules.
  */
-export function DynamicRenderer<TApi, TProps>({
+export function DynamicRenderer<TProps>({
   loader,
-  getComponent,
   componentProps,
-}: DynamicRendererProps<TApi, TProps>) {
-  const [api, setApi] = useState<TApi | null>(null);
+}: DynamicRendererProps<TProps>) {
+  const [Component, setComponent] = useState<ComponentType<TProps> | null>(null);
 
   useEffect(() => {
     if (!loader) {
-      setApi(null);
+      setComponent(null);
       return;
     }
     let cancelled = false;
     (async () => {
-      const mod = await loader();
-      if (!cancelled) setApi(mod);
+      const api = await loader();
+      if (!cancelled) setComponent(() => api.Component);
     })();
     return () => {
       cancelled = true;
     };
   }, [loader]);
-
-  // Memoize component to prevent remounting when api and getComponent are stable
-  const Component = useMemo(() => {
-    if (!api) {
-      return null;
-    }
-    return getComponent(api);
-  }, [api, getComponent]);
 
   if (!Component) return null;
 

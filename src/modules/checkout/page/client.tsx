@@ -5,6 +5,14 @@ import { Checkout } from '@src/modules/checkout';
 import { CheckoutSkeleton } from '../components/CheckoutSkeleton';
 import { CheckoutBrand } from '@src/modules/checkout/page/brand';
 
+const onConfirm = () => {
+  console.log('onConfirm');
+};
+
+const features = {
+  auth: true,
+};
+
 export const CheckoutPageClient = () => {
   const { cart } = useCart();
   const isClient = useIsClient();
@@ -14,9 +22,9 @@ export const CheckoutPageClient = () => {
       {isClient ? (
         <Checkout
           cart={cart}
-          onConfirm={() => {}}
+          onConfirm={onConfirm}
           brand={<CheckoutBrand />}
-          features={{ auth: true }}
+          features={features}
         />
       ) : (
         <CheckoutSkeleton brand={<CheckoutBrand />} />

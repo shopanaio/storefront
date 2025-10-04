@@ -15,15 +15,11 @@ export function useProviderController(
     providerValid,
     providerInvalid,
     resetProvider,
-  } = useCheckoutStore((s) => ({
-    registerProvider: s.registerProvider,
-    unregisterProvider: s.unregisterProvider,
-    providerValid: s.providerValid,
-    providerInvalid: s.providerInvalid,
-    resetProvider: s.resetProvider,
-  }));
+  } = useCheckoutStore.getState();
 
-  const isActive = useCheckoutStore((s) => s.providers[providerId]?.active === true);
+  const isActive = useCheckoutStore(
+    (s) => s.providers[providerId]?.active === true
+  );
 
   useEffect(() => {
     registerProvider(providerId, type);
@@ -37,7 +33,8 @@ export function useProviderController(
     () => ({
       active: isActive,
       publishValid: (data: unknown) => providerValid(providerId, data),
-      publishInvalid: (errors?: Record<string, string>) => providerInvalid(providerId, errors),
+      publishInvalid: (errors?: Record<string, string>) =>
+        providerInvalid(providerId, errors),
       reset: () => resetProvider(providerId),
     }),
     [isActive, providerValid, providerInvalid, resetProvider, providerId]
