@@ -45,6 +45,7 @@
     "react-player": "^2.16.0",
     "react-relay": "^20.0.0",
     "react-responsive": "^10.0.1",
+    "react-use": "^17.6.0",
     "relay-runtime": "^20.0.0",
     "shopana-utils": "^0.1.0",
     "swiper": "^11.2.8",

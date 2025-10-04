@@ -12,8 +12,12 @@ import { useProviderControllerApi } from '@src/modules/checkout/state/context/Pr
 
 export function AddressForm() {
   const { styles } = useStyles();
-  const methods = useForm<{ userCity?: any; userStreet?: any; userBuilding?: string; userApartment?: string }>({
-    defaultValues: { userCity: undefined, userStreet: undefined, userBuilding: '', userApartment: '' },
+  const methods = useForm<{
+    userCity?: any;
+  }>({
+    defaultValues: {
+      userCity: undefined,
+    },
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
@@ -49,7 +53,14 @@ export function AddressForm() {
         publishInvalid(errs);
       }
     })();
-  }, [methods.watch('userCity'), methods.watch('userStreet'), methods.watch('userBuilding'), methods.watch('userApartment'), publishValid, publishInvalid]);
+  }, [
+    methods.watch('userCity'),
+    methods.watch('userStreet'),
+    methods.watch('userBuilding'),
+    methods.watch('userApartment'),
+    publishValid,
+    publishInvalid,
+  ]);
 
   return (
     <Flex vertical gap={12} className={styles.container}>
@@ -61,11 +72,7 @@ export function AddressForm() {
         />
       </FormProvider>
       {!citySelected && (
-        <Alert
-          message={t('city_required_warning')}
-          type="warning"
-          showIcon
-        />
+        <Alert message={t('city_required_warning')} type="warning" showIcon />
       )}
       <Flex gap={12}>
         <FloatingLabelInput

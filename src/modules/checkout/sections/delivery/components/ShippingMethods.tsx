@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
 import { ModuleType } from '@src/modules/registry';
 import { useLocale } from 'next-intl';
+import { usePrevious } from 'react-use';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
-import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
 import type { City } from './city/CitySelect';
 
 interface Props {
@@ -15,20 +15,22 @@ interface Props {
 
 export const ShippingMethods = ({ groupId, methods, addressCity }: Props) => {
   const locale = useLocale();
-  const { reset } = useSectionController(`shipping:${groupId}` as any, { required: true });
-  const { selected, select } = useMethodSelectionShipping(groupId);
-  const prevCityRef = useRef<string | null>(null);
+  const { reset } = useSectionController(`shipping:${groupId}`, {
+    required: true,
+  });
+  const prevCityRef = usePrevious(addressCity?.Ref ?? null);
 
   useEffect(() => {
     const currentRef = addressCity?.Ref ?? null;
-    if (prevCityRef.current === currentRef) return;
-    prevCityRef.current = currentRef;
-    reset();
-    if (selected?.code) {
-      select(null);
+    if (prevCityRef === currentRef) return;
+    if (prevCityRef !== undefined) {
+      // Reset shipping section validation state to force providers to revalidate
+      // but keep the selected method - only internal provider forms should reset
+      reset();
     }
-  }, [addressCity?.Ref, reset, select, selected?.code]);
-  const byProvider = useMemo(
+  }, [addressCity?.Ref, prevCityRef, reset]);
+
+  const methodsByProvider = useMemo(
     () =>
       methods.reduce<Record<string, ApiCheckoutDeliveryMethod[]>>((acc, m) => {
         const key = m.provider.code || 'unknown';
@@ -40,7 +42,7 @@ export const ShippingMethods = ({ groupId, methods, addressCity }: Props) => {
 
   return (
     <>
-      {Object.entries(byProvider).map(([provider, providerMethods]) => (
+      {Object.entries(methodsByProvider).map(([provider, providerMethods]) => (
         <ProviderRenderer
           key={provider}
           moduleType={ModuleType.Shipping}
