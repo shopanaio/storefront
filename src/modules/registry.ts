@@ -75,6 +75,15 @@ export interface ProviderProps {
    * Optional delivery group id. Present for shipping providers.
    */
   groupId?: string;
+  /**
+   * Section controller for validation and state management
+   */
+  sectionController: {
+    publishValid: (data: unknown) => void;
+    publishInvalid: (errors?: Record<string, string>) => void;
+    reset: () => void;
+    busy: boolean;
+  };
 }
 
 /**

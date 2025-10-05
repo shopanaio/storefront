@@ -11,7 +11,7 @@ import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodS
  * Bank Transfer payment provider-level component that renders payment UI.
  * Receives method controllers through props and passes them down to method components.
  */
-export function BTPaymentProvider({ methods, provider }: ProviderProps) {
+export function BTPaymentProvider({ methods, provider, sectionController }: ProviderProps) {
   const { selected, select } = useMethodSelection('payment');
   const activeCode: string | undefined = selected?.code;
 
@@ -22,23 +22,21 @@ export function BTPaymentProvider({ methods, provider }: ProviderProps) {
   return (
     <ScopedIntlProvider scope="bankTransfer" load={loadBankTransferMessages}>
       <Flex vertical gap={16}>
-        {methods
-          .map((m) => {
-            const config = BANK_TRANSFER_CONFIG.payment.find(
-              (p) => p.code === m.code
-            );
-            if (!config) {
+        {BANK_TRANSFER_CONFIG.payment
+          .map((config) => {
+            const method = methods.find((m) => m.code === config.code);
+            if (!method) {
               return null;
             }
 
             const MethodComponent = config.Component;
             return (
               <MethodComponent
-                key={m.code}
+                key={config.code}
                 isActive={activeCode === config.code}
                 onActivate={() => handleSelectMethod(config.code)}
-                controller={m.controller}
-                initialValues={m.initialValues}
+                sectionController={sectionController}
+                initialValues={config.initialValues}
               />
             );
           })

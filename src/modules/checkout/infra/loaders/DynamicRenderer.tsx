@@ -3,7 +3,7 @@
 import { useEffect, useState, ComponentType } from 'react';
 
 interface ModuleApi<TProps> {
-  Component: ComponentType<TProps>;
+  default: ComponentType<TProps>;
 }
 
 interface DynamicRendererProps<TProps> {
@@ -31,7 +31,11 @@ export function DynamicRenderer<TProps>({
     let cancelled = false;
     (async () => {
       const api = await loader();
-      if (!cancelled) setComponent(() => api.Component);
+      if (!cancelled) {
+        // Support both 'default' export (for providers) and 'Component' field (for sections)
+        const component = (api as any).default || (api as any).Component;
+        setComponent(() => component);
+      }
     })();
     return () => {
       cancelled = true;

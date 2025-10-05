@@ -43,11 +43,11 @@ export function CourierShippingMethod({
       isActive={isActive}
       onActivate={onActivate}
       brand={<NPLogo size={24} />}
-      component={AddressForm}
-      componentProps={{
-        controller: sectionController,
-        initialValues,
-      }}
+        component={AddressForm}
+        componentProps={{
+          sectionController,
+          initialValues,
+        }}
     />
   );
 }

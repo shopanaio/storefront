@@ -43,11 +43,11 @@ export function WarehouseShippingMethod({
       isActive={isActive}
       onActivate={onActivate}
       brand={<NPLogo size={24} />}
-      component={WarehouseForm}
-      componentProps={{
-        controller: sectionController,
-        initialValues,
-      }}
+        component={WarehouseForm}
+        componentProps={{
+          sectionController,
+          initialValues,
+        }}
     />
   );
 }

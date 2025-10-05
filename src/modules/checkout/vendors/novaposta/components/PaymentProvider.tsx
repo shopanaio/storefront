@@ -12,7 +12,7 @@ import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodS
  * NovaPoshta payment provider-level component that renders payment UI.
  * Receives method controllers through props and passes them down to method components.
  */
-export function NPPaymentProvider({ methods, provider }: ProviderProps) {
+export function NPPaymentProvider({ methods, provider, sectionController }: ProviderProps) {
   const { styles } = useStyles();
   const { selected, select } = useMethodSelection('payment');
   const activeCode: string | undefined = selected?.code;
@@ -24,23 +24,21 @@ export function NPPaymentProvider({ methods, provider }: ProviderProps) {
   return (
     <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
       <Flex vertical gap={12} className={styles.container}>
-        {methods
-          .map((m) => {
-            const config = NOVA_POSHTA_CONFIG.payment.find(
-              (p) => p.code === m.code
-            );
-            if (!config) {
+        {NOVA_POSHTA_CONFIG.payment
+          .map((config) => {
+            const method = methods.find((m) => m.code === config.code);
+            if (!method) {
               return null;
             }
 
             const MethodComponent = config.Component;
             return (
               <MethodComponent
-                key={m.code}
+                key={config.code}
                 isActive={activeCode === config.code}
                 onActivate={() => handleSelectMethod(config.code)}
-                controller={m.controller}
-                initialValues={m.initialValues}
+                sectionController={sectionController}
+                initialValues={config.initialValues}
               />
             );
           })

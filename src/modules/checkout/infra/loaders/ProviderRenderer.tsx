@@ -1,10 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   moduleRegistry,
   ModuleType,
   type ShippingProviderModuleApi,
   type PaymentProviderModuleApi,
-  type ProviderMethod,
 } from '@src/modules/registry';
 import { DynamicRenderer } from './DynamicRenderer';
 
@@ -56,18 +55,20 @@ export const ProviderRenderer = ({
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
     provider
-  );
+  ) as any;
+
+  const componentProps = {
+    provider,
+    methods,
+    locale,
+    ...(groupId !== undefined && { groupId }),
+    sectionController,
+  };
 
   return (
     <DynamicRenderer
       loader={loader}
-      componentProps={{
-        provider,
-        methods, // Простой массив без controllers
-        locale,
-        groupId,
-        sectionController,
-      }}
+      componentProps={componentProps as any}
     />
   );
 };
