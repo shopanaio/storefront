@@ -1,4 +1,6 @@
 import React from 'react';
+import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
+import type { ProviderId } from '@src/modules/checkout/state/checkoutBus';
 import {
   moduleRegistry,
   ModuleType,
@@ -16,13 +18,17 @@ type ProviderModuleApi = ShippingProviderModuleApi | PaymentProviderModuleApi;
 /**
  * Props for the ProviderRenderer component
  */
-interface ProviderRendererProps<TMethod extends { code: string }> {
+type InputProviderMethod =
+  | ProviderMethod
+  | { code: string; label?: string; providerId: string };
+
+interface ProviderRendererProps {
   /** Type of module to load (shipping or payment) */
   moduleType: ModuleType;
   /** Provider identifier */
   provider: string;
-  /** Methods provided by this provider */
-  methods: TMethod[];
+  /** Methods: can be raw with providerId or enriched with controller APIs */
+  methods: InputProviderMethod[];
   /** Current locale */
   locale: string;
   /** Optional delivery group id (required for shipping providers) */
@@ -34,29 +40,52 @@ interface ProviderRendererProps<TMethod extends { code: string }> {
  * Handles async module loading and provides a consistent interface
  * for both shipping and payment providers.
  *
- * @template TMethod - Type of method objects (must have a code property)
+ * Expects methods to already include controller APIs.
  */
-export const ProviderRenderer = <TMethod extends { code: string }>({
+export const ProviderRenderer = ({
   moduleType,
   provider,
   methods,
   locale,
   groupId,
-}: ProviderRendererProps<TMethod>) => {
+}: ProviderRendererProps) => {
+  // Normalize methods to include controller APIs. This centralizes hook usage
+  // and keeps callers free from rule-of-hooks concerns.
+  const methodsWithControllers: ProviderMethod[] = methods.map((method) => {
+    if ((method as ProviderMethod).controller) {
+      return method as ProviderMethod;
+    }
+
+    const raw = method as { code: string; label?: string; providerId: string };
+    const controller = useProviderController(
+      raw.providerId as ProviderId,
+      moduleType === ModuleType.Shipping ? 'delivery' : 'payment'
+    );
+
+    return {
+      code: raw.code,
+      label: raw.label,
+      controller: {
+        publishValid: controller.publishValid,
+        publishInvalid: controller.publishInvalid,
+        reset: controller.reset,
+        active: controller.active,
+        busy: controller.busy,
+      },
+    };
+  });
+
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
     provider
   );
-  const activeOnlyMethods = methods; // placeholder for future filtering if needed
 
   return (
     <DynamicRenderer
       loader={loader}
       componentProps={{
         provider,
-        methods: activeOnlyMethods.map(
-          (m) => ({ code: m.code }) as ProviderMethod
-        ),
+        methods: methodsWithControllers,
         locale,
         groupId,
       }}

@@ -57,12 +57,32 @@ export interface PaymentModuleApi {
 }
 
 /**
+ * Provider controller API for method validation
+ */
+export interface ProviderControllerApi {
+  /** Publish valid data for this provider method */
+  publishValid: (data: unknown) => void;
+  /** Publish invalid state with optional errors */
+  publishInvalid: (errors?: Record<string, string>) => void;
+  /** Reset provider state */
+  reset: () => void;
+  /** Whether this provider method is currently active */
+  active: boolean;
+  /** Whether this provider method is busy */
+  busy: boolean;
+}
+
+/**
  * Provider-level contracts: one module per provider rendering full UI and managing its inner methods.
  */
 export interface ProviderMethod {
   code: string;
   label?: string;
   price?: { amount: string; currencyCode: string };
+  /** Controller API for this specific method */
+  controller: ProviderControllerApi;
+  /** Initial values for this method (if any) */
+  initialValues?: unknown;
 }
 
 export interface ProviderProps {

@@ -4,17 +4,27 @@ import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
+import type { ProviderControllerApi } from '@src/modules/registry';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { StreetModal } from '../street/StreetModal';
 import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
-import { useProviderControllerApi } from '@checkout/state/context/ProviderControllerContext';
 import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City, Street } from '@checkout/vendors/novaposta/types';
 import { addressSchema } from '../../schemas';
 import { ValidationError } from 'yup';
 
-export function AddressForm() {
+/**
+ * Props for AddressForm
+ */
+interface AddressFormProps {
+  /** Controller API for validation */
+  controller: ProviderControllerApi;
+  /** Initial form values */
+  initialValues?: unknown;
+}
+
+export function AddressForm({ controller, initialValues }: AddressFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{
     userStreet?: Street | null;
@@ -25,11 +35,12 @@ export function AddressForm() {
       userStreet: null,
       userBuilding: '',
       userApartment: '',
+      ...(initialValues as any),
     },
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
-  const { publishValid, publishInvalid } = useProviderControllerApi();
+  const { publishValid, publishInvalid } = controller;
 
   const { watch } = methods;
   const userStreet = watch('userStreet') || null;

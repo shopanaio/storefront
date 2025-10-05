@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import type { ProviderControllerApi } from '@src/modules/registry';
 import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
-import { useProviderControllerApi } from '@src/modules/checkout/state/context/ProviderControllerContext';
 import { BTLogo } from '../Logo';
 
 /**
@@ -14,6 +14,10 @@ export interface BankTransferPaymentMethodProps {
   isActive: boolean;
   /** Callback when method is selected */
   onActivate: () => void;
+  /** Controller API for validation */
+  controller: ProviderControllerApi;
+  /** Initial form values */
+  initialValues?: unknown;
 }
 
 /**
@@ -24,9 +28,9 @@ export interface BankTransferPaymentMethodProps {
 export function BankTransferPaymentMethod({
   isActive,
   onActivate,
+  controller,
 }: BankTransferPaymentMethodProps) {
   const t = useTranslations('Modules.bankTransfer');
-  const controller = useProviderControllerApi();
 
   useEffect(() => {
     if (isActive) {

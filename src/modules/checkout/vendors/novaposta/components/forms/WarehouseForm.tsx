@@ -4,26 +4,37 @@ import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
+import type { ProviderControllerApi } from '@src/modules/registry';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
-import { useProviderControllerApi } from '@checkout/state/context/ProviderControllerContext';
 import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City } from '@checkout/sections/delivery/components/city/CitySelect';
 import { warehouseSchema } from '../../schemas';
 import { ValidationError } from 'yup';
 import { Warehouse } from '@checkout/vendors/novaposta/types';
 
-export function WarehouseForm() {
+/**
+ * Props for WarehouseForm
+ */
+interface WarehouseFormProps {
+  /** Controller API for validation */
+  controller: ProviderControllerApi;
+  /** Initial form values */
+  initialValues?: unknown;
+}
+
+export function WarehouseForm({ controller, initialValues }: WarehouseFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{ warehouse?: Warehouse | null }>({
     defaultValues: {
       warehouse: null,
+      ...(initialValues as any),
     },
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
-  const { publishValid, publishInvalid } = useProviderControllerApi();
+  const { publishValid, publishInvalid } = controller;
 
   const { watch } = methods;
   const warehouse = watch('warehouse') || null;

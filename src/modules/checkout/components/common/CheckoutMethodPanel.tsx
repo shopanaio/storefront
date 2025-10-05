@@ -12,7 +12,9 @@ export interface CheckoutMethodPanelProps {
   isActive: boolean;
   onActivate: () => void;
   brand?: ReactNode;
-  component: FC | null;
+  component: FC<any> | null;
+  /** Props to pass to the component */
+  componentProps?: Record<string, any>;
 }
 
 export const CheckoutMethodPanel = ({
@@ -22,6 +24,7 @@ export const CheckoutMethodPanel = ({
   onActivate,
   brand = null,
   component: Component,
+  componentProps = {},
 }: CheckoutMethodPanelProps) => {
   const codeRef = useRef(Math.random().toString(36).substring(2, 15));
   const { styles } = useStyles();
@@ -55,7 +58,7 @@ export const CheckoutMethodPanel = ({
           </Flex>
         }
       >
-        {Component && <Component />}
+        {Component && <Component {...componentProps} />}
       </Panel>
     </Collapse>
   );

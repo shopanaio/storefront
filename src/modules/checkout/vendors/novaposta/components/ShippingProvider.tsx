@@ -6,16 +6,10 @@ import { NOVA_POSHTA_CONFIG } from './config';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { loadNovapostaMessages } from '../i18n';
 import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
-import { ProviderBoundary } from '@checkout/components/common/ProviderBoundary';
-
-/**
- * Configuration for Nova Poshta provider methods.
- * Contains two shipping methods and one COD payment method.
- */
 
 /**
  * NovaPoshta provider-level component that renders full shipping UI.
- * Uses react-hook-form via useFormContext.
+ * Receives method controllers through props and passes them down to method components.
  */
 export function NPShippingProvider({
   methods,
@@ -31,56 +25,27 @@ export function NPShippingProvider({
 
   return (
     <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
-      <Content
-        methods={methods}
-        activeCode={activeCode}
-        onSelect={handleSelectMethod}
-        provider={provider}
-        groupId={groupId as string}
-      />
-    </ScopedIntlProvider>
-  );
-}
+      <Flex vertical gap={12}>
+        {NOVA_POSHTA_CONFIG.shipping
+          .map((config) => {
+            const method = methods.find((m) => m.code === config.code);
+            if (!method) {
+              return null;
+            }
 
-function Content({
-  methods,
-  activeCode,
-  onSelect,
-  provider,
-  groupId,
-}: {
-  methods: ProviderProps['methods'];
-  activeCode?: string;
-  onSelect: (code: string) => void;
-  provider: string;
-  groupId?: string;
-}) {
-  const providerId = `delivery:${provider}@${groupId as string}` as const;
-
-  return (
-    <Flex vertical gap={12}>
-      {NOVA_POSHTA_CONFIG.shipping
-        .map((config) => {
-          const method = methods.find((m) => m.code === config.code);
-          if (!method) {
-            return null;
-          }
-
-          const MethodComponent = config.Component;
-          return (
-            <ProviderBoundary
-              key={method.code}
-              providerId={providerId}
-              type="shipping"
-            >
+            const MethodComponent = config.Component;
+            return (
               <MethodComponent
+                key={method.code}
                 isActive={activeCode === config.code}
-                onActivate={() => onSelect(config.code)}
+                onActivate={() => handleSelectMethod(config.code)}
+                controller={method.controller}
+                initialValues={method.initialValues}
               />
-            </ProviderBoundary>
-          );
-        })
-        .filter(Boolean)}
-    </Flex>
+            );
+          })
+          .filter(Boolean)}
+      </Flex>
+    </ScopedIntlProvider>
   );
 }
