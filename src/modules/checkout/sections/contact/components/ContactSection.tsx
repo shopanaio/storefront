@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useCheckoutCustomerIdentity } from '@src/modules/checkout/hooks/useCheckoutCustomerIdentity';
 
 /**
  * Contact section component.
@@ -22,12 +23,13 @@ export const ContactSection1 = () => {
 export const ContactSection = () => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
+  const identity = useCheckoutCustomerIdentity();
   const methods = useForm<ContactValues>({
     defaultValues: {
-      userFirstName: '',
-      userLastName: '',
-      userMiddleName: '',
-      userPhone: '',
+      userFirstName: identity?.firstName ?? '',
+      userLastName: identity?.lastName ?? '',
+      userMiddleName: identity?.middleName ?? '',
+      userPhone: identity?.phone ?? '',
     },
     mode: 'onChange',
   });
@@ -56,6 +58,25 @@ export const ContactSection = () => {
     userMiddleName: userMiddleName || '',
     userPhone: userPhone || '',
   };
+
+  // One-time sync: if identity appears later (cart loads after mount) and fields are still empty, prefill.
+  useEffect(() => {
+    if (!identity) return;
+    const current = methods.getValues();
+    const next: Partial<ContactValues> = {};
+    if (!current.userFirstName && identity.firstName) next.userFirstName = identity.firstName;
+    if (!current.userLastName && identity.lastName) next.userLastName = identity.lastName;
+    if (!current.userMiddleName && identity.middleName) next.userMiddleName = identity.middleName;
+    if (!current.userPhone && identity.phone) next.userPhone = identity.phone;
+    if (Object.keys(next).length > 0) {
+      methods.reset({
+        userFirstName: next.userFirstName ?? current.userFirstName ?? '',
+        userLastName: next.userLastName ?? current.userLastName ?? '',
+        userMiddleName: next.userMiddleName ?? current.userMiddleName ?? '',
+        userPhone: next.userPhone ?? current.userPhone ?? '',
+      }, { keepDirty: true, keepTouched: true });
+    }
+  }, [identity, methods]);
 
   useEffect(() => {
     if (1) {

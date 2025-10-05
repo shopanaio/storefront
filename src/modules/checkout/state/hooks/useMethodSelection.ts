@@ -12,14 +12,25 @@ export function useMethodSelection(scope: 'payment'): {
 } {
   const selected = useCheckoutStore((s) => s.selectedPaymentMethod);
   const selectPaymentMethod = useCheckoutStore((s) => s.selectPaymentMethod);
-  return { selected, select: (selection) => selectPaymentMethod(selection) } as const;
+  return {
+    selected,
+    select: (selection) => selectPaymentMethod(selection),
+  } as const;
 }
 
 export function useMethodSelectionShipping(groupId: string): {
-  selected: CheckoutState['selectedShippingMethodByGroup'][string] | null | undefined;
+  selected:
+    | CheckoutState['selectedDeliveryMethodByGroup'][string]
+    | null
+    | undefined;
   select: (selection: { code: string; vendor: string } | null) => void;
 } {
-  const selected = useCheckoutStore((s) => s.selectedShippingMethodByGroup[groupId]);
+  const selected = useCheckoutStore(
+    (s) => s.selectedDeliveryMethodByGroup[groupId]
+  );
   const selectShippingMethod = useCheckoutStore((s) => s.selectShippingMethod);
-  return { selected, select: (selection) => selectShippingMethod(groupId, selection) } as const;
+  return {
+    selected,
+    select: (selection) => selectShippingMethod(groupId, selection),
+  } as const;
 }
