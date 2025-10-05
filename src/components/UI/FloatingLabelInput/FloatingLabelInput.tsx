@@ -108,7 +108,6 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
       if (!isControlled) {
         setUncontrolledHasValue(e.target.value.length > 0);
       }
-      console.log('e', e);
       inputProps.onChange?.(e);
     };
 

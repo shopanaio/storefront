@@ -54,8 +54,11 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
     []
   );
 
-  console.log('searchValue', searchValue);
   useEffect(() => {
+    if (1) {
+      return;
+    }
+
     if (!cityRef || searchValue.trim().length === 0) {
       setStreets([]);
       debouncedFetchStreets.cancel();

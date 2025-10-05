@@ -20,6 +20,8 @@ interface Prop {
   onChange: (city: City) => void;
 }
 
+const np = new NovaPoshta('');
+
 export const CitySelect = ({ value, onChange }: Prop) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -29,8 +31,7 @@ export const CitySelect = ({ value, onChange }: Prop) => {
   const [searchValue, setSearchValue] = useState('');
   const [settlements, setSettlements] = useState<City[]>([]);
 
-  const np = useMemo(() => new NovaPoshta(''), []);
-
+  console.log('searchValue', searchValue);
   useEffect(() => {
     if (1) {
       return;

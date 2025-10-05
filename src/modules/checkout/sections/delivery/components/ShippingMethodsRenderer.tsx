@@ -8,7 +8,8 @@ import { useSectionController } from '@src/modules/checkout/state/hooks/useSecti
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
 import type { City } from './city/CitySelect';
-import { ProviderMethodsRenderer } from './ProviderMethodsRenderer';
+import { ModuleType } from '@src/modules/registry';
+import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 
 /**
  * Props for ShippingMethodsRenderer
@@ -27,7 +28,7 @@ interface ShippingMethodsRendererProps {
  *
  * Manages section controller registration and handles side effects
  * like resetting state when city changes.
- * Groups methods by provider and delegates rendering to ProviderMethodsRenderer.
+ * Groups methods by provider and delegates rendering to ProviderRenderer.
  */
 export const ShippingMethodsRenderer = ({
   groupId,
@@ -76,12 +77,12 @@ export const ShippingMethodsRenderer = ({
   return (
     <>
       {Object.entries(methodsByProvider).map(([provider, providerMethods]) => (
-        <ProviderMethodsRenderer
+        <ProviderRenderer
           key={provider}
+          moduleType={ModuleType.Shipping}
           provider={provider}
           groupId={groupId}
           methods={providerMethods}
-          selectedMethodCode={selected?.code}
           locale={locale}
         />
       ))}

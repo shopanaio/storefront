@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import type { ProviderControllerApi } from '@src/modules/registry';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { StreetModal } from '../street/StreetModal';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City, Street } from '@checkout/vendors/novaposta/types';
@@ -55,6 +55,7 @@ export function AddressForm({ controller, initialValues }: AddressFormProps) {
     return data?.city ?? null;
   });
   const prevCityRef = usePrevious(globalCity?.Ref ?? null);
+  const cityRef = globalCity?.Ref;
 
   // Reset street when global city changes
   useEffect(() => {
@@ -89,31 +90,38 @@ export function AddressForm({ controller, initialValues }: AddressFormProps) {
     validate();
   }, [userStreet, userBuilding, userApartment, publishValid, publishInvalid]);
 
+  const handleChangeStreet = useCallback(
+    (s: Street) => {
+      methods.setValue('userStreet', s);
+    },
+    [methods]
+  );
+
   return (
-    <Flex vertical gap={12} className={styles.container}>
-      <FormProvider {...methods}>
+    <FormProvider {...methods}>
+      <Flex vertical gap={12} className={styles.container}>
         <StreetModal
           street={userStreet}
-          changeStreet={(s) => methods.setValue('userStreet', s)}
-          cityRef={globalCity?.Ref}
+          changeStreet={handleChangeStreet}
+          cityRef={cityRef}
         />
-      </FormProvider>
-      {!globalCity && (
-        <Alert message={t('city_required_warning')} type="warning" showIcon />
-      )}
-      <Flex gap={12}>
-        <FloatingLabelInput
-          label={t('building')}
-          value={userBuilding}
-          onChange={(e) => methods.setValue('userBuilding', e.target.value)}
-        />
-        <FloatingLabelInput
-          label={t('apartment')}
-          value={userApartment}
-          onChange={(e) => methods.setValue('userApartment', e.target.value)}
-        />
+        {!globalCity && (
+          <Alert message={t('city_required_warning')} type="warning" showIcon />
+        )}
+        <Flex gap={12}>
+          <FloatingLabelInput
+            label={t('building')}
+            value={userBuilding}
+            onChange={(e) => methods.setValue('userBuilding', e.target.value)}
+          />
+          <FloatingLabelInput
+            label={t('apartment')}
+            value={userApartment}
+            onChange={(e) => methods.setValue('userApartment', e.target.value)}
+          />
+        </Flex>
       </Flex>
-    </Flex>
+    </FormProvider>
   );
 }
 
