@@ -3,7 +3,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
@@ -13,9 +13,10 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import type { ContactDto } from '@src/modules/checkout/core/contracts/dto';
 
 /**
- * Controlled contact values.
+ * Internal form values.
  */
 export type ContactValues = {
   /** Purchaser first name */
@@ -32,10 +33,10 @@ export type ContactValues = {
  * Props for ContactSelect.
  */
 export interface ContactSelectProps {
-  /** Current contact values to display and prefill */
-  values: ContactValues;
+  /** Initial contact values to prefill */
+  initialValues: Partial<ContactDto>;
   /** Called when user presses Save in the drawer */
-  onSave: (values: ContactValues) => void;
+  onSave: (dto: ContactDto) => void;
   /** Drawer title (required) */
   title: ReactNode;
 }
@@ -45,30 +46,43 @@ export interface ContactSelectProps {
  * with contact form inputs (name fields + phone). The button shows a concise
  * summary (full name and masked phone) when data is present.
  */
-export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => {
+export const ContactSelect = ({ initialValues, onSave, title }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
 
   const [open, setOpen] = useState(false);
 
-  // Local form inside the drawer to stage changes until Save
+  // Form manages all contact data
   const methods = useForm<ContactValues>({
     defaultValues: {
-      userFirstName: '',
-      userLastName: '',
-      userMiddleName: '',
-      userPhone: '',
+      userFirstName: initialValues.userFirstName ?? '',
+      userLastName: initialValues.userLastName ?? '',
+      userMiddleName: initialValues.userMiddleName ?? '',
+      userPhone: initialValues.userPhone ?? '',
     },
     mode: 'onChange',
   });
-  const { control, setError, getValues, reset, formState: { errors } } = methods;
+  const { control, getValues, reset, watch, formState: { errors } } = methods;
 
-  // Button summary is derived from controlled props
-  const firstName = values.userFirstName;
-  const lastName = values.userLastName;
-  const middleName = values.userMiddleName;
-  const phone = values.userPhone;
+  // Sync form when initialValues change
+  useEffect(() => {
+    reset({
+      userFirstName: initialValues.userFirstName ?? '',
+      userLastName: initialValues.userLastName ?? '',
+      userMiddleName: initialValues.userMiddleName ?? '',
+      userPhone: initialValues.userPhone ?? '',
+    });
+  }, [initialValues, reset]);
+
+  // Watch current form values for display
+  const currentValues = watch();
+
+  // Button summary is derived from current form values
+  const firstName = currentValues.userFirstName;
+  const lastName = currentValues.userLastName;
+  const middleName = currentValues.userMiddleName;
+  const phone = currentValues.userPhone;
 
   const hasValue = useMemo(() => {
     return Boolean(
@@ -96,16 +110,7 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
       <Button
         color={hasValue ? 'primary' : 'default'}
         variant={'outlined'}
-        onClick={() => {
-          // Initialize inner form with current controlled values
-          reset({
-            userFirstName: values.userFirstName || '',
-            userLastName: values.userLastName || '',
-            userMiddleName: values.userMiddleName || '',
-            userPhone: values.userPhone || '',
-          });
-          setOpen(true);
-        }}
+        onClick={() => setOpen(true)}
         icon={
           <TbUser
             size={24}
@@ -137,11 +142,18 @@ export const ContactSelect = ({ values, onSave, title }: ContactSelectProps) => 
         footer={
           <StickyButton
             onClick={() => {
-              const next = getValues();
               // Trigger validation for all fields
               methods.trigger().then((isValid) => {
                 if (isValid) {
-                  onSave(next);
+                  const values = getValues();
+                  // Convert to DTO
+                  const dto: ContactDto = {
+                    userFirstName: values.userFirstName,
+                    userLastName: values.userLastName,
+                    userMiddleName: values.userMiddleName,
+                    userPhone: values.userPhone,
+                  };
+                  onSave(dto);
                   setOpen(false);
                 }
               });

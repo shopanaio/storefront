@@ -4,9 +4,9 @@
 
 // Contact and Recipient
 export interface ContactDto {
-  userFirstName?: string;
-  userLastName?: string;
-  userMiddleName?: string;
+  userFirstName: string;
+  userLastName: string;
+  userMiddleName: string;
   userPhone: string;
 }
 
