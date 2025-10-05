@@ -4,7 +4,6 @@ import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import type { ProviderControllerApi } from '@src/modules/registry';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { StreetModal } from '../street/StreetModal';
 import { useCallback, useEffect } from 'react';
@@ -19,12 +18,17 @@ import { ValidationError } from 'yup';
  */
 interface AddressFormProps {
   /** Controller API for validation */
-  controller: ProviderControllerApi;
+  sectionController: {
+    publishValid: (data: unknown) => void;
+    publishInvalid: (errors?: Record<string, string>) => void;
+    reset: () => void;
+    busy: boolean;
+  };
   /** Initial form values */
   initialValues?: unknown;
 }
 
-export function AddressForm({ controller, initialValues }: AddressFormProps) {
+export function AddressForm({ sectionController, initialValues }: AddressFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{
     userStreet?: Street | null;
@@ -40,7 +44,7 @@ export function AddressForm({ controller, initialValues }: AddressFormProps) {
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
-  const { publishValid, publishInvalid } = controller;
+  const { publishValid, publishInvalid } = sectionController;
 
   const { watch } = methods;
   const userStreet = watch('userStreet') || null;

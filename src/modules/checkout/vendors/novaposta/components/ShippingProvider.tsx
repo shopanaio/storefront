@@ -15,6 +15,7 @@ export function NPShippingProvider({
   methods,
   groupId,
   provider,
+  sectionController,
 }: ProviderProps) {
   const { selected, select } = useMethodSelectionShipping(groupId as string);
   const activeCode: string | undefined = selected?.code;
@@ -36,11 +37,11 @@ export function NPShippingProvider({
             const MethodComponent = config.Component;
             return (
               <MethodComponent
-                key={method.code}
+                key={config.code}
                 isActive={activeCode === config.code}
                 onActivate={() => handleSelectMethod(config.code)}
-                controller={method.controller}
-                initialValues={method.initialValues}
+                sectionController={sectionController}
+                initialValues={config.initialValues}
               />
             );
           })

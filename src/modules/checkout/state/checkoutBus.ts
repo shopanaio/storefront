@@ -62,20 +62,6 @@ export type SectionDtoFor<K extends SectionKey> =
       : never;
 
 /**
- * Provider type domain: shipping or payment.
- */
-export type ProviderType = 'delivery' | 'payment';
-
-/**
- * Provider identifiers:
- * - Delivery provider is coupled with a delivery group: `delivery:${vendor}@${groupId}`
- * - Payment provider is global: `payment:${vendor}`
- */
-export type DeliveryProviderId = `delivery:${string}@${DeliveryGroupId}`;
-export type PaymentProviderId = `payment:${string}`;
-export type ProviderId = DeliveryProviderId | PaymentProviderId;
-
-/**
  * Aggregated payload emitted when Checkout is ready for submission.
  */
 export type CheckoutPayload = {
@@ -106,15 +92,15 @@ export type CheckoutEvents = {
   'section/reset': { sectionId: SectionKey };
   'section/unregistered': { sectionId: SectionKey };
 
-  'provider/registered': { providerId: ProviderId; providerType: ProviderType };
-  'provider/activated': { providerId: ProviderId };
-  'provider/deactivated': { providerId: ProviderId };
-  'provider/valid': { providerId: ProviderId; data: unknown };
+  'provider/registered': { providerId: string; providerType: 'delivery' | 'payment' };
+  'provider/activated': { providerId: string };
+  'provider/deactivated': { providerId: string };
+  'provider/valid': { providerId: string; data: unknown };
   'provider/invalid': {
-    providerId: ProviderId;
+    providerId: string;
     errors?: Record<string, string>;
   };
-  'provider/unregistered': { providerId: ProviderId };
+  'provider/unregistered': { providerId: string };
 
   'method/delivery-selected': { groupId: DeliveryGroupId; code: string | null };
   'method/payment-selected': { code: string | null };

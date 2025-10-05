@@ -4,7 +4,6 @@ import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import type { ProviderControllerApi } from '@src/modules/registry';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
@@ -19,12 +18,17 @@ import { Warehouse } from '@checkout/vendors/novaposta/types';
  */
 interface WarehouseFormProps {
   /** Controller API for validation */
-  controller: ProviderControllerApi;
+  sectionController: {
+    publishValid: (data: unknown) => void;
+    publishInvalid: (errors?: Record<string, string>) => void;
+    reset: () => void;
+    busy: boolean;
+  };
   /** Initial form values */
   initialValues?: unknown;
 }
 
-export function WarehouseForm({ controller, initialValues }: WarehouseFormProps) {
+export function WarehouseForm({ sectionController, initialValues }: WarehouseFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{ warehouse?: Warehouse | null }>({
     defaultValues: {
@@ -34,7 +38,7 @@ export function WarehouseForm({ controller, initialValues }: WarehouseFormProps)
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
-  const { publishValid, publishInvalid } = controller;
+  const { publishValid, publishInvalid } = sectionController;
 
   const { watch } = methods;
   const warehouse = watch('warehouse') || null;

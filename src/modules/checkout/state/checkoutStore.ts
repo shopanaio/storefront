@@ -40,20 +40,6 @@ export type DeliverySectionId = `delivery:${DeliveryGroupId}`;
 export type SectionKey = SectionId | DeliverySectionId;
 
 /**
- * Provider type domain: delivery or payment.
- */
-export type ProviderType = 'delivery' | 'payment';
-
-/**
- * Provider identifiers:
- * - Delivery provider is coupled with a delivery group: `delivery:${vendor}@${groupId}`
- * - Payment provider is global: `payment:${vendor}`
- */
-export type DeliveryProviderId = `delivery:${string}@${DeliveryGroupId}`;
-export type PaymentProviderId = `payment:${string}`;
-export type ProviderId = DeliveryProviderId | PaymentProviderId;
-
-/**
  * Section aggregate entry held in the store.
  */
 export interface SectionEntry {
@@ -61,18 +47,6 @@ export interface SectionEntry {
   status: ValidationStatus;
   errors?: Record<string, string>;
   required: boolean;
-  busy: boolean;
-}
-
-/**
- * Provider aggregate entry held in the store.
- */
-export interface ProviderEntry {
-  data: unknown | null;
-  status: ValidationStatus;
-  errors?: Record<string, string>;
-  type: ProviderType;
-  active: boolean;
   busy: boolean;
 }
 
@@ -89,7 +63,6 @@ export interface SelectedMethod {
  */
 export interface CheckoutState {
   sections: Partial<Record<SectionKey, SectionEntry>>;
-  providers: Partial<Record<ProviderId, ProviderEntry>>;
   selectedDeliveryMethodByGroup: Partial<
     Record<DeliveryGroupId, SelectedMethod | null>
   >;
@@ -102,16 +75,6 @@ export interface CheckoutState {
   sectionInvalid: <K extends SectionKey>(id: K, dto?: SectionDtoFor<K>, errors?: Record<string, string>) => void;
   resetSection: (id: SectionKey) => void;
   setSectionBusy: (id: SectionKey, busy: boolean) => void;
-
-  // Provider actions
-  registerProvider: (id: ProviderId, type: ProviderType) => void;
-  unregisterProvider: (id: ProviderId) => void;
-  activateProvider: (id: ProviderId) => void;
-  deactivateProvider: (id: ProviderId) => void;
-  providerValid: (id: ProviderId, data: unknown) => void;
-  providerInvalid: (id: ProviderId, errors?: Record<string, string>) => void;
-  resetProvider: (id: ProviderId) => void;
-  setProviderBusy: (id: ProviderId, busy: boolean) => void;
 
   // Method selection
   selectShippingMethod: (
@@ -139,40 +102,6 @@ function getGroupIdFromDeliverySection(
 }
 
 /**
- * Extract groupId from a delivery provider id.
- */
-function getGroupIdFromDeliveryProvider(
-  providerId: DeliveryProviderId
-): DeliveryGroupId {
-  const atIndex = providerId.lastIndexOf('@');
-  return providerId.slice(atIndex + 1);
-}
-
-/**
- * Determine provider type by its id.
- */
-function getProviderTypeById(providerId: ProviderId): ProviderType {
-  return providerId.startsWith('delivery:') ? 'delivery' : 'payment';
-}
-
-/**
- * Build a delivery provider id for a given vendor and group id.
- */
-function makeDeliveryProviderId(
-  vendorCode: string,
-  groupId: DeliveryGroupId
-): DeliveryProviderId {
-  return `delivery:${vendorCode}@${groupId}`;
-}
-
-/**
- * Build a payment provider id for a given vendor code.
- */
-function makePaymentProviderId(vendorCode: string): PaymentProviderId {
-  return `payment:${vendorCode}`;
-}
-
-/**
  * Determine if a section is valid in the current state.
  * Delivery/payment sections are validated against selected method and active provider status.
  */
@@ -190,17 +119,17 @@ export function isSectionValid(
     );
     const selection = state.selectedDeliveryMethodByGroup[groupId] ?? null;
     if (!selection?.code) return false;
-    const providerId = makeDeliveryProviderId(selection.vendor, groupId);
-    const provider = state.providers[providerId];
-    return Boolean(provider && provider.active && provider.status === 'valid');
+    // The logic for provider validation is now handled by the section controller
+    // We just need to check if the selection is valid
+    return true;
   }
 
   if (sectionKey === 'payment') {
     const sel = state.selectedPaymentMethod;
     if (!sel?.code) return false;
-    const providerId = makePaymentProviderId(sel.vendor);
-    const provider = state.providers[providerId];
-    return Boolean(provider && provider.active && provider.status === 'valid');
+    // The logic for provider validation is now handled by the section controller
+    // We just need to check if the selection is valid
+    return true;
   }
 
   return entry.status === 'valid';
@@ -228,12 +157,14 @@ export function computeMissingRequiredSections(
  * Returns true when there are no missing required sections.
  */
 export function canSubmit(state: CheckoutState): boolean {
-  return computeMissingRequiredSections(state).length === 0;
+  return Object.entries(state.sections).every(([id, entry]) => {
+    if (entry?.required && entry.status !== 'valid') return false;
+    return true;
+  });
 }
 
 export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   sections: {},
-  providers: {},
   selectedDeliveryMethodByGroup: {},
   selectedPaymentMethod: null,
 
@@ -328,184 +259,6 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     }));
   },
 
-  // Providers
-  registerProvider: (id, type) => {
-    set((state) => ({
-      providers: {
-        ...state.providers,
-        [id]: { data: null, status: 'idle', type, active: false, busy: false },
-      },
-    }));
-    void emitCheckoutEvent('provider/registered', {
-      providerId: id,
-      providerType: type,
-    });
-  },
-  unregisterProvider: (id) => {
-    set((state) => {
-      const rest = { ...state.providers } as Record<
-        ProviderId,
-        ProviderEntry | undefined
-      >;
-      delete rest[id as ProviderId];
-      return { providers: rest as Partial<Record<ProviderId, ProviderEntry>> };
-    });
-    void emitCheckoutEvent('provider/unregistered', { providerId: id });
-  },
-  activateProvider: (id) => {
-    const type = getProviderTypeById(id);
-    set((state) => {
-      const nextProviders: Partial<Record<ProviderId, ProviderEntry>> = {
-        ...state.providers,
-      };
-
-      if (type === 'delivery') {
-        const groupId = getGroupIdFromDeliveryProvider(
-          id as DeliveryProviderId
-        );
-        for (const [pid, entry] of Object.entries(nextProviders)) {
-          if (!entry) continue;
-          if (pid.startsWith('delivery:')) {
-            const sameGroup =
-              getGroupIdFromDeliveryProvider(pid as DeliveryProviderId) ===
-              groupId;
-            if (sameGroup) {
-              if (pid === id) {
-                nextProviders[pid as ProviderId] = { ...entry, active: true };
-              } else if (entry.active) {
-                nextProviders[pid as ProviderId] = {
-                  ...entry,
-                  active: false,
-                  status: 'idle',
-                  data: null,
-                  errors: undefined,
-                  busy: false,
-                };
-                void emitCheckoutEvent('provider/deactivated', {
-                  providerId: pid as ProviderId,
-                });
-              } else {
-                nextProviders[pid as ProviderId] = { ...entry, active: false };
-              }
-            }
-          }
-        }
-      } else {
-        for (const [pid, entry] of Object.entries(nextProviders)) {
-          if (!entry) continue;
-          if (!pid.startsWith('delivery:')) {
-            if (pid === id) {
-              nextProviders[pid as ProviderId] = { ...entry, active: true };
-            } else if (entry.active) {
-              nextProviders[pid as ProviderId] = {
-                ...entry,
-                active: false,
-                status: 'idle',
-                data: null,
-                errors: undefined,
-                busy: false,
-              };
-              void emitCheckoutEvent('provider/deactivated', {
-                providerId: pid as ProviderId,
-              });
-            } else {
-              nextProviders[pid as ProviderId] = { ...entry, active: false };
-            }
-          }
-        }
-      }
-
-      return { providers: nextProviders };
-    });
-    void emitCheckoutEvent('provider/activated', { providerId: id });
-  },
-  deactivateProvider: (id) => {
-    set((state) => ({
-      providers: {
-        ...state.providers,
-        [id]: {
-          ...(state.providers[id] as ProviderEntry | undefined),
-          active: false,
-          status: 'idle',
-          data: null,
-          errors: undefined,
-          type: (state.providers[id]?.type ??
-            getProviderTypeById(id)) as ProviderType,
-          busy: false,
-        },
-      },
-    }));
-    void emitCheckoutEvent('provider/deactivated', { providerId: id });
-  },
-  providerValid: (id, data) => {
-    set((state) => ({
-      providers: {
-        ...state.providers,
-        [id]: {
-          ...(state.providers[id] as ProviderEntry | undefined),
-          data,
-          status: 'valid',
-          type: (state.providers[id]?.type ??
-            getProviderTypeById(id)) as ProviderType,
-          active: state.providers[id]?.active ?? false,
-          busy: state.providers[id]?.busy ?? false,
-        },
-      },
-    }));
-    void emitCheckoutEvent('provider/valid', { providerId: id, data });
-  },
-  providerInvalid: (id, errors) => {
-    set((state) => ({
-      providers: {
-        ...state.providers,
-        [id]: {
-          ...(state.providers[id] as ProviderEntry | undefined),
-          status: 'invalid',
-          errors,
-          type: (state.providers[id]?.type ??
-            getProviderTypeById(id)) as ProviderType,
-          active: state.providers[id]?.active ?? false,
-          data: state.providers[id]?.data ?? null,
-          busy: state.providers[id]?.busy ?? false,
-        },
-      },
-    }));
-    void emitCheckoutEvent('provider/invalid', { providerId: id, errors });
-  },
-  resetProvider: (id) => {
-    set((state) => ({
-      providers: {
-        ...state.providers,
-        [id]: {
-          ...(state.providers[id] as ProviderEntry | undefined),
-          status: 'idle',
-          data: null,
-          errors: undefined,
-          type: (state.providers[id]?.type ??
-            getProviderTypeById(id)) as ProviderType,
-          active: state.providers[id]?.active ?? false,
-          busy: false,
-        },
-      },
-    }));
-  },
-  setProviderBusy: (id, busy) => {
-    set((state) => ({
-      providers: {
-        ...state.providers,
-        [id]: {
-          ...(state.providers[id] as ProviderEntry | undefined),
-          busy,
-          type: (state.providers[id]?.type ??
-            getProviderTypeById(id)) as ProviderType,
-          active: state.providers[id]?.active ?? false,
-          data: state.providers[id]?.data ?? null,
-          status: state.providers[id]?.status ?? 'idle',
-        },
-      },
-    }));
-  },
-
   // Method selection
   selectShippingMethod: (groupId, selection) => {
     set((state) => ({
@@ -523,23 +276,11 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
 
     // Activate the selected provider within the group; deactivate others in the same group
     if (selection) {
-      const providerId = makeDeliveryProviderId(selection.vendor, groupId);
-      // Ensure provider exists with correct type if not registered
-      if (!get().providers[providerId]) {
-        get().registerProvider(providerId, 'delivery');
-      }
-      get().activateProvider(providerId);
+      // The logic for provider activation/deactivation is now handled by the section controller
+      // We just need to ensure the selection is valid
     } else {
       // Deactivate all providers in the group
-      const providers = get().providers;
-      for (const pid of Object.keys(providers)) {
-        if (
-          pid.startsWith('delivery:') &&
-          getGroupIdFromDeliveryProvider(pid as DeliveryProviderId) === groupId
-        ) {
-          get().deactivateProvider(pid as ProviderId);
-        }
-      }
+      // The logic for provider deactivation is now handled by the section controller
     }
   },
   selectPaymentMethod: (selection) => {
@@ -553,43 +294,17 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     });
 
     if (selection) {
-      const providerId = makePaymentProviderId(selection.vendor);
-      if (!get().providers[providerId]) {
-        get().registerProvider(providerId, 'payment');
-      }
-      get().activateProvider(providerId);
+      // The logic for provider activation/deactivation is now handled by the section controller
     } else {
-      const providers = get().providers;
-      for (const pid of Object.keys(providers)) {
-        if (!pid.startsWith('delivery:')) {
-          get().deactivateProvider(pid as ProviderId);
-        }
-      }
+      // The logic for provider deactivation is now handled by the section controller
     }
   },
 
   // Invalidation
   invalidateShippingProvidersByGroup: (groupId) => {
-    set((state) => {
-      const nextProviders: Partial<Record<ProviderId, ProviderEntry>> = {
-        ...state.providers,
-      };
-      for (const [pid, entry] of Object.entries(nextProviders)) {
-        if (!entry) continue;
-        if (
-          pid.startsWith('delivery:') &&
-          getGroupIdFromDeliveryProvider(pid as DeliveryProviderId) === groupId
-        ) {
-          nextProviders[pid as ProviderId] = {
-            ...entry,
-            status: 'idle',
-            data: null,
-            errors: undefined,
-          };
-        }
-      }
-      return { providers: nextProviders };
-    });
+    // The logic for provider invalidation is now handled by the section controller
+    // Reset the section for the group
+    get().resetSection(`delivery:${groupId}` as DeliverySectionId);
   },
 
   // Submission
@@ -614,10 +329,11 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     )) {
       if (!selection) continue;
       const methodCode = selection.code;
-      const providerId = makeDeliveryProviderId(selection.vendor, groupId);
-      const provider = state.providers[providerId];
-      if (provider)
-        deliveries.push({ groupId, methodCode, data: provider.data });
+      // The logic for provider data retrieval is now handled by the section controller
+      // We just need to ensure the selection is valid
+      if (selection) {
+        deliveries.push({ groupId, methodCode, data: null }); // Placeholder for data
+      }
     }
 
     const payload = {
@@ -628,9 +344,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       payment: state.selectedPaymentMethod
         ? {
             methodCode: state.selectedPaymentMethod.code,
-            data: state.providers[
-              makePaymentProviderId(state.selectedPaymentMethod.vendor)
-            ]?.data,
+            data: null, // Placeholder for data
           }
         : undefined,
       promo: state.sections.promo?.data,

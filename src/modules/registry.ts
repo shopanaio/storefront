@@ -57,30 +57,12 @@ export interface PaymentModuleApi {
 }
 
 /**
- * Provider controller API for method validation
- */
-export interface ProviderControllerApi {
-  /** Publish valid data for this provider method */
-  publishValid: (data: unknown) => void;
-  /** Publish invalid state with optional errors */
-  publishInvalid: (errors?: Record<string, string>) => void;
-  /** Reset provider state */
-  reset: () => void;
-  /** Whether this provider method is currently active */
-  active: boolean;
-  /** Whether this provider method is busy */
-  busy: boolean;
-}
-
-/**
- * Provider-level contracts: one module per provider rendering full UI and managing its inner methods.
+ * Provider method with controller API
  */
 export interface ProviderMethod {
   code: string;
   label?: string;
   price?: { amount: string; currencyCode: string };
-  /** Controller API for this specific method */
-  controller: ProviderControllerApi;
   /** Initial values for this method (if any) */
   initialValues?: unknown;
 }
@@ -95,22 +77,48 @@ export interface ProviderProps {
   groupId?: string;
 }
 
+/**
+ * API for shipping provider modules
+ */
 export interface ShippingProviderModuleApi {
-  provider: string;
+  default: ComponentType<{
+    provider: string;
+    methods: Array<{ code: string; label?: string; initialValues?: unknown }>;
+    groupId: string;
+    locale: string;
+    sectionController: {
+      publishValid: (data: unknown) => void;
+      publishInvalid: (errors?: Record<string, string>) => void;
+      reset: () => void;
+      busy: boolean;
+    };
+  }>;
   label?: string;
   icon?: string;
-  Component: ComponentType<ProviderProps>;
   quoteByCode?: (
     code: string,
-    payload: unknown
-  ) => Promise<{ amount: string; currencyCode: string }> | { amount: string; currencyCode: string };
+    groupId: string,
+    locale: string
+  ) => Promise<{ price: { amount: string; currencyCode: string } } | null>;
 }
 
+/**
+ * API for payment provider modules
+ */
 export interface PaymentProviderModuleApi {
-  provider: string;
+  default: ComponentType<{
+    provider: string;
+    methods: Array<{ code: string; label?: string; initialValues?: unknown }>;
+    locale: string;
+    sectionController: {
+      publishValid: (data: unknown) => void;
+      publishInvalid: (errors?: Record<string, string>) => void;
+      reset: () => void;
+      busy: boolean;
+    };
+  }>;
   label?: string;
   icon?: string;
-  Component: ComponentType<ProviderProps>;
   initialize?: (code: string, payload: unknown) => Promise<unknown> | unknown;
 }
 

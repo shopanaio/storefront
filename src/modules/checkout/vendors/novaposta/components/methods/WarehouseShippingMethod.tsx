@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import type { ProviderControllerApi } from '@src/modules/registry';
 import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
 import { WarehouseForm } from '../forms/WarehouseForm';
 import { NPLogo } from '../Logo';
@@ -15,7 +14,12 @@ export interface WarehouseShippingMethodProps {
   /** Callback when method is selected */
   onActivate: () => void;
   /** Controller API for validation */
-  controller: ProviderControllerApi;
+  sectionController: {
+    publishValid: (data: unknown) => void;
+    publishInvalid: (errors?: Record<string, string>) => void;
+    reset: () => void;
+    busy: boolean;
+  };
   /** Initial form values */
   initialValues?: unknown;
 }
@@ -27,7 +31,7 @@ export interface WarehouseShippingMethodProps {
 export function WarehouseShippingMethod({
   isActive,
   onActivate,
-  controller,
+  sectionController,
   initialValues,
 }: WarehouseShippingMethodProps) {
   const t = useTranslations('Modules.novaposta');
@@ -41,7 +45,7 @@ export function WarehouseShippingMethod({
       brand={<NPLogo size={24} />}
       component={WarehouseForm}
       componentProps={{
-        controller,
+        controller: sectionController,
         initialValues,
       }}
     />

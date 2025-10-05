@@ -2,18 +2,26 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { PaymentProviderMethodsRenderer } from './PaymentProviderMethodsRenderer';
+import { ModuleType } from '@src/modules/registry';
+import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 
 /**
  * Props for PaymentSectionView
  */
 export interface PaymentSectionViewProps {
   /** Methods grouped by provider */
-  methodsByProvider: Record<string, Array<{ code: string; providerId: string }>>;
+  methodsByProvider: Record<string, Array<{ code: string; label?: string }>>;
   /** Currently selected method code */
   selectedMethodCode?: string;
   /** Current locale */
   locale: string;
+  /** Section controller */
+  sectionController: {
+    publishValid: (data: unknown) => void;
+    publishInvalid: (errors?: Record<string, string>) => void;
+    reset: () => void;
+    busy: boolean;
+  };
 }
 
 /**
@@ -26,18 +34,20 @@ export const PaymentSectionView = ({
   methodsByProvider,
   selectedMethodCode,
   locale,
+  sectionController,
 }: PaymentSectionViewProps) => {
   const { styles } = useStyles();
 
   return (
     <Flex vertical gap={12} className={styles.container}>
       {Object.entries(methodsByProvider).map(([provider, methods]) => (
-        <PaymentProviderMethodsRenderer
+        <ProviderRenderer
           key={provider}
+          moduleType={ModuleType.Payment}
           provider={provider}
           methods={methods}
-          selectedMethodCode={selectedMethodCode}
           locale={locale}
+          sectionController={sectionController}
         />
       ))}
     </Flex>

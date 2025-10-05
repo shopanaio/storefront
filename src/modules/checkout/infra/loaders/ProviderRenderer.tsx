@@ -1,6 +1,4 @@
-import React from 'react';
-import { useProviderController } from '@src/modules/checkout/state/hooks/useProviderController';
-import type { ProviderId } from '@src/modules/checkout/state/checkoutBus';
+import React, { useMemo } from 'react';
 import {
   moduleRegistry,
   ModuleType,
@@ -18,9 +16,7 @@ type ProviderModuleApi = ShippingProviderModuleApi | PaymentProviderModuleApi;
 /**
  * Props for the ProviderRenderer component
  */
-type InputProviderMethod =
-  | ProviderMethod
-  | { code: string; label?: string; providerId: string };
+type InputProviderMethod = { code: string; label?: string };
 
 interface ProviderRendererProps {
   /** Type of module to load (shipping or payment) */
@@ -33,6 +29,13 @@ interface ProviderRendererProps {
   locale: string;
   /** Optional delivery group id (required for shipping providers) */
   groupId?: string;
+  /** Section controller for validation and state */
+  sectionController: {
+    publishValid: (data: unknown) => void;
+    publishInvalid: (errors?: Record<string, string>) => void;
+    reset: () => void;
+    busy: boolean;
+  };
 }
 
 /**
@@ -48,33 +51,8 @@ export const ProviderRenderer = ({
   methods,
   locale,
   groupId,
+  sectionController,
 }: ProviderRendererProps) => {
-  // Normalize methods to include controller APIs. This centralizes hook usage
-  // and keeps callers free from rule-of-hooks concerns.
-  const methodsWithControllers: ProviderMethod[] = methods.map((method) => {
-    if ((method as ProviderMethod).controller) {
-      return method as ProviderMethod;
-    }
-
-    const raw = method as { code: string; label?: string; providerId: string };
-    const controller = useProviderController(
-      raw.providerId as ProviderId,
-      moduleType === ModuleType.Shipping ? 'delivery' : 'payment'
-    );
-
-    return {
-      code: raw.code,
-      label: raw.label,
-      controller: {
-        publishValid: controller.publishValid,
-        publishInvalid: controller.publishInvalid,
-        reset: controller.reset,
-        active: controller.active,
-        busy: controller.busy,
-      },
-    };
-  });
-
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
     provider
@@ -85,9 +63,10 @@ export const ProviderRenderer = ({
       loader={loader}
       componentProps={{
         provider,
-        methods: methodsWithControllers,
+        methods, // Простой массив без controllers
         locale,
         groupId,
+        sectionController,
       }}
     />
   );

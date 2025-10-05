@@ -18,7 +18,7 @@ export const PaymentSectionContainer = () => {
   const locale = useLocale();
 
   // Register payment section controller
-  useSectionController<'payment'>('payment', { required: true });
+  const sectionController = useSectionController<'payment'>('payment', { required: true });
 
   const paymentMethods = useCheckoutPaymentMethods();
   const { selected } = useMethodSelection('payment');
@@ -28,13 +28,11 @@ export const PaymentSectionContainer = () => {
    */
   const methodsByProvider = useMemo(() => {
     const grouped = paymentMethods.reduce<
-      Record<string, Array<{ code: string; providerId: string }>>
+      Record<string, Array<{ code: string }>>
     >((acc, method) => {
       const provider = method.provider;
-      const providerId = `payment:${provider}` as const;
       (acc[provider] ||= []).push({
         code: method.code,
-        providerId,
       });
       return acc;
     }, {});
@@ -46,6 +44,7 @@ export const PaymentSectionContainer = () => {
       methodsByProvider={methodsByProvider}
       selectedMethodCode={selected?.code}
       locale={locale}
+      sectionController={sectionController}
     />
   );
 };

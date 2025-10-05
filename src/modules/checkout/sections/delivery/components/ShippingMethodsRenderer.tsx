@@ -39,9 +39,13 @@ export const ShippingMethodsRenderer = ({
   const { reset } = useSectionController(`delivery:${groupId}`, {
     required: true,
   });
-  const invalidateByGroup = useCheckoutStore((s) => s.invalidateShippingProvidersByGroup);
+  const invalidateByGroup = useCheckoutStore(
+    (s) => s.invalidateShippingProvidersByGroup
+  );
   const prevCityRef = usePrevious(addressCity?.Ref ?? null);
   const { selected } = useMethodSelectionShipping(groupId);
+
+  const sectionController = useSectionController(`delivery:${groupId}`, { required: true });
 
   /**
    * Reset section and invalidate providers when city changes.
@@ -51,7 +55,7 @@ export const ShippingMethodsRenderer = ({
     const currentRef = addressCity?.Ref ?? null;
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
-      reset();
+      sectionController.reset();
       invalidateByGroup(groupId);
     }
   }, [addressCity?.Ref, prevCityRef, reset, invalidateByGroup, groupId]);
@@ -61,14 +65,14 @@ export const ShippingMethodsRenderer = ({
    */
   const methodsByProvider = useMemo(() => {
     return methods.reduce<
-      Record<string, Array<{ code: string; label?: string; providerId: string }>>
+      Record<
+        string,
+        Array<{ code: string; label?: string }>
+      >
     >((acc, method) => {
       const provider = method.provider.code || 'unknown';
-      const providerId = `delivery:${provider}@${groupId}` as const;
       (acc[provider] ||= []).push({
         code: method.code,
-        label: method.title || undefined,
-        providerId,
       });
       return acc;
     }, {});
@@ -84,6 +88,7 @@ export const ShippingMethodsRenderer = ({
           groupId={groupId}
           methods={providerMethods}
           locale={locale}
+          sectionController={sectionController}
         />
       ))}
     </>
