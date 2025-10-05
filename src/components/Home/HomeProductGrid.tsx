@@ -33,7 +33,7 @@ export const HomeProductGrid = ({
     category
   );
 
-  const products = data.listing.edges?.map((edge) => edge.node) ?? [];
+  const products = data?.listing?.edges?.map((edge) => edge.node) ?? [];
 
   console.log("Products:", products);
   const handleLoadMore = () => {

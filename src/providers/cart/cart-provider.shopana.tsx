@@ -56,6 +56,11 @@ const CartProvider: React.FC<CartProviderProps> = ({
 
     const cartId = cartIdUtils.getCartIdFromCookie(cookieKey);
     if (!cartId) {
+      // No saved cart id: consider cart as loaded with empty state
+      setCartKey(null);
+      setIsCartLoading(false);
+      setIsCartLoaded(true);
+      loadedRef.current = true;
       return;
     }
 

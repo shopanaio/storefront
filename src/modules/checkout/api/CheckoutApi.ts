@@ -127,11 +127,12 @@ export function useCheckoutApi(): CheckoutApi {
           onError: reject,
         });
       }),
-    updatePaymentMethod: ({ checkoutId, methodCode }) =>
-      // Server doesn't accept provider data yet; send code-only
+    updatePaymentMethod: ({ checkoutId, methodCode, data }) =>
       new Promise((resolve, reject) => {
         commitSelectPayment({
-          variables: { input: { checkoutId, paymentMethodCode: methodCode } },
+          variables: {
+            input: { checkoutId, paymentMethodCode: methodCode, data },
+          },
           onCompleted: (res, errs) => {
             if (errs && errs.length) return reject(errs);
             resolve();
@@ -216,11 +217,17 @@ export function useCheckoutApi(): CheckoutApi {
           onError: reject,
         });
       }),
-    updateShippingMethod: ({ checkoutId, deliveryGroupId, methodCode }) =>
-      // Server doesn't accept provider data yet; send code-only
+    updateShippingMethod: ({ checkoutId, deliveryGroupId, methodCode, data }) =>
       new Promise((resolve, reject) => {
         commitSelectDelivery({
-          variables: { input: { checkoutId, deliveryGroupId, shippingMethodCode: methodCode } },
+          variables: {
+            input: {
+              checkoutId,
+              deliveryGroupId,
+              shippingMethodCode: methodCode,
+              data,
+            },
+          },
           onCompleted: (res, errs) => {
             if (errs && errs.length) return reject(errs);
             resolve();

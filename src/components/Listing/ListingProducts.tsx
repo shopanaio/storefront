@@ -42,7 +42,7 @@ export const ListingProducts: React.FC<ListingProductsProps> = ({
     );
   }
 
-  const products = data.listing.edges?.map((edge) => edge.node) ?? [];
+  const products = data?.listing?.edges?.map((edge) => edge.node) ?? [];
 
   const handleLoadMore = () => {
     if (hasNext && !isLoadingNext) {

@@ -335,6 +335,12 @@ export type ApiCheckoutCustomerIdentity = {
   customer?: Maybe<ApiUser>;
   /** Customer email address associated with the checkout. */
   email?: Maybe<Scalars['Email']['output']>;
+  /** First name of the customer. */
+  firstName?: Maybe<Scalars['String']['output']>;
+  /** Last name of the customer. */
+  lastName?: Maybe<Scalars['String']['output']>;
+  /** Middle name of the customer. */
+  middleName?: Maybe<Scalars['String']['output']>;
   /** Phone number of the customer. */
   phone?: Maybe<Scalars['String']['output']>;
 };
@@ -383,14 +389,8 @@ export type ApiCheckoutDeliveryAddress = {
   countryCode: CountryCode;
   /** Data associated with the delivery address. */
   data?: Maybe<Scalars['JSON']['output']>;
-  /** Email address for this delivery address. */
-  email?: Maybe<Scalars['Email']['output']>;
-  /** First name for delivery. */
-  firstName?: Maybe<Scalars['String']['output']>;
   /** Unique identifier for the delivery address. */
   id: Scalars['ID']['output'];
-  /** Last name for delivery. */
-  lastName?: Maybe<Scalars['String']['output']>;
   /** Postal code. */
   postalCode?: Maybe<Scalars['String']['output']>;
   /** Province code. */
@@ -468,6 +468,8 @@ export type ApiCheckoutDeliveryGroup = {
   estimatedCost?: Maybe<ApiDeliveryCost>;
   /** Unique identifier for the delivery group. */
   id: Scalars['ID']['output'];
+  /** Recipient associated with the delivery group. */
+  recipient?: Maybe<ApiCheckoutRecipient>;
   /** Selected delivery method associated with the delivery group. */
   selectedDeliveryMethod?: Maybe<ApiCheckoutDeliveryMethod>;
 };
@@ -496,6 +498,11 @@ export enum CheckoutDeliveryMethodType {
 export type ApiCheckoutDeliveryMethodUpdateInput = {
   /** Identifier of the checkout on which the operation is performed. */
   checkoutId: Scalars['ID']['input'];
+  /**
+   * Arbitrary customer-provided data for the selected delivery method.
+   * Will be stored in checkout_delivery_methods.customer_input.
+   */
+  data?: InputMaybe<Scalars['JSON']['input']>;
   /** Identifier of the delivery group for which the delivery method is selected. */
   deliveryGroupId: Scalars['ID']['input'];
   /** Code of the delivery method available for this checkout/address. */
@@ -858,6 +865,11 @@ export type ApiCheckoutPaymentMethodConstraints = {
 export type ApiCheckoutPaymentMethodUpdateInput = {
   /** Checkout identifier. */
   checkoutId: Scalars['ID']['input'];
+  /**
+   * Arbitrary customer-provided data for the selected payment method.
+   * Will be stored in checkout_payment_methods.customer_input.
+   */
+  data?: InputMaybe<Scalars['JSON']['input']>;
   /** Code of the payment method available for this checkout. */
   paymentMethodCode: Scalars['String']['input'];
 };
@@ -904,6 +916,21 @@ export type ApiCheckoutQuery = {
 
 export type ApiCheckoutQueryCheckoutArgs = {
   id: Scalars['ID']['input'];
+};
+
+/** Recipient details for the delivery group. */
+export type ApiCheckoutRecipient = {
+  __typename?: 'CheckoutRecipient';
+  /** Email of the recipient. */
+  email?: Maybe<Scalars['Email']['output']>;
+  /** First name of the recipient. */
+  firstName?: Maybe<Scalars['String']['output']>;
+  /** Last name of the recipient. */
+  lastName?: Maybe<Scalars['String']['output']>;
+  /** Middle name of the recipient. */
+  middleName?: Maybe<Scalars['String']['output']>;
+  /** Phone of the recipient. */
+  phone?: Maybe<Scalars['String']['output']>;
 };
 
 export enum CountryCode {
