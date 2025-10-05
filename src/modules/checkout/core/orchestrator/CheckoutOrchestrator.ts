@@ -16,11 +16,11 @@ function getSectionKeyFromInflightKey(key: InflightKey): SectionKey | undefined 
   if (key === 'payment') return 'payment';
   if (key === 'promo') return 'promo';
   if (key === 'note') return 'comment';
-  if (key.startsWith('shipping:')) return key as unknown as SectionKey;
+  if (key.startsWith('delivery:')) return key as unknown as SectionKey;
   return undefined;
 }
 
-function makeShippingKey(groupId: string): InflightKey { return `shipping:${groupId}`; }
+function makeDeliveryKey(groupId: string): InflightKey { return `delivery:${groupId}`; }
 
 function extractErrorInfo(error: unknown): { message?: string; code?: string } {
   const anyErr = error as { message?: unknown; code?: unknown } | null | undefined;
@@ -175,10 +175,10 @@ export class CheckoutOrchestrator {
       });
     });
 
-    // shipping selected
-    const offShipping = onCheckoutEvent('method/shipping-selected', ({ groupId, code }) => {
+    // delivery selected
+    const offShipping = onCheckoutEvent('method/delivery-selected', ({ groupId, code }) => {
       if (!groupId || !code) return;
-      const key = makeShippingKey(groupId);
+      const key = makeDeliveryKey(groupId);
       this.inflight.schedule(key, () => {
         void this.inflight.runWithInflight(key, async () => {
           try {

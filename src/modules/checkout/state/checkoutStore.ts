@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import { emitCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
 import type { SectionDtoFor, StaticSectionKey } from '@src/modules/checkout/state/checkoutBus';
-import type { SectionDtoMap, ShippingSectionDto } from '@src/modules/checkout/core/contracts/dto';
+import type { SectionDtoMap, DeliverySectionDto } from '@src/modules/checkout/core/contracts/dto';
 
 /**
  * Validation status for sections and providers.
@@ -30,28 +30,28 @@ export type SectionId =
   | 'comment';
 
 /**
- * Dynamic shipping section key bound to a specific delivery group.
+ * Dynamic delivery section key bound to a specific delivery group.
  */
-export type ShippingSectionId = `shipping:${DeliveryGroupId}`;
+export type DeliverySectionId = `delivery:${DeliveryGroupId}`;
 
 /**
  * Union of all section keys.
  */
-export type SectionKey = SectionId | ShippingSectionId;
+export type SectionKey = SectionId | DeliverySectionId;
 
 /**
- * Provider type domain: shipping or payment.
+ * Provider type domain: delivery or payment.
  */
-export type ProviderType = 'shipping' | 'payment';
+export type ProviderType = 'delivery' | 'payment';
 
 /**
  * Provider identifiers:
- * - Shipping provider is coupled with a delivery group: `shipping:${vendor}@${groupId}`
+ * - Delivery provider is coupled with a delivery group: `delivery:${vendor}@${groupId}`
  * - Payment provider is global: `payment:${vendor}`
  */
-export type ShippingProviderId = `shipping:${string}@${DeliveryGroupId}`;
+export type DeliveryProviderId = `delivery:${string}@${DeliveryGroupId}`;
 export type PaymentProviderId = `payment:${string}`;
-export type ProviderId = ShippingProviderId | PaymentProviderId;
+export type ProviderId = DeliveryProviderId | PaymentProviderId;
 
 /**
  * Section aggregate entry held in the store.
@@ -90,7 +90,7 @@ export interface SelectedMethod {
 export interface CheckoutState {
   sections: Partial<Record<SectionKey, SectionEntry>>;
   providers: Partial<Record<ProviderId, ProviderEntry>>;
-  selectedShippingMethodByGroup: Partial<
+  selectedDeliveryMethodByGroup: Partial<
     Record<DeliveryGroupId, SelectedMethod | null>
   >;
   selectedPaymentMethod: SelectedMethod | null;
@@ -130,19 +130,19 @@ export interface CheckoutState {
 }
 
 /**
- * Extract groupId from a dynamic shipping section key.
+ * Extract groupId from a dynamic delivery section key.
  */
-function getGroupIdFromShippingSection(
-  sectionKey: ShippingSectionId
+function getGroupIdFromDeliverySection(
+  sectionKey: DeliverySectionId
 ): DeliveryGroupId {
-  return sectionKey.slice('shipping:'.length);
+  return sectionKey.slice('delivery:'.length);
 }
 
 /**
- * Extract groupId from a shipping provider id.
+ * Extract groupId from a delivery provider id.
  */
-function getGroupIdFromShippingProvider(
-  providerId: ShippingProviderId
+function getGroupIdFromDeliveryProvider(
+  providerId: DeliveryProviderId
 ): DeliveryGroupId {
   const atIndex = providerId.lastIndexOf('@');
   return providerId.slice(atIndex + 1);
@@ -152,17 +152,17 @@ function getGroupIdFromShippingProvider(
  * Determine provider type by its id.
  */
 function getProviderTypeById(providerId: ProviderId): ProviderType {
-  return providerId.startsWith('shipping:') ? 'shipping' : 'payment';
+  return providerId.startsWith('delivery:') ? 'delivery' : 'payment';
 }
 
 /**
- * Build a shipping provider id for a given vendor and group id.
+ * Build a delivery provider id for a given vendor and group id.
  */
-function makeShippingProviderId(
+function makeDeliveryProviderId(
   vendorCode: string,
   groupId: DeliveryGroupId
-): ShippingProviderId {
-  return `shipping:${vendorCode}@${groupId}`;
+): DeliveryProviderId {
+  return `delivery:${vendorCode}@${groupId}`;
 }
 
 /**
@@ -174,7 +174,7 @@ function makePaymentProviderId(vendorCode: string): PaymentProviderId {
 
 /**
  * Determine if a section is valid in the current state.
- * Shipping/payment sections are validated against selected method and active provider status.
+ * Delivery/payment sections are validated against selected method and active provider status.
  */
 export function isSectionValid(
   state: CheckoutState,
@@ -183,14 +183,14 @@ export function isSectionValid(
   const entry = state.sections[sectionKey];
   if (!entry) return false;
 
-  const isShippingSection = sectionKey.startsWith('shipping:');
-  if (isShippingSection) {
-    const groupId = getGroupIdFromShippingSection(
-      sectionKey as ShippingSectionId
+  const isDeliverySection = sectionKey.startsWith('delivery:');
+  if (isDeliverySection) {
+    const groupId = getGroupIdFromDeliverySection(
+      sectionKey as DeliverySectionId
     );
-    const selection = state.selectedShippingMethodByGroup[groupId] ?? null;
+    const selection = state.selectedDeliveryMethodByGroup[groupId] ?? null;
     if (!selection?.code) return false;
-    const providerId = makeShippingProviderId(selection.vendor, groupId);
+    const providerId = makeDeliveryProviderId(selection.vendor, groupId);
     const provider = state.providers[providerId];
     return Boolean(provider && provider.active && provider.status === 'valid');
   }
@@ -234,7 +234,7 @@ export function canSubmit(state: CheckoutState): boolean {
 export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   sections: {},
   providers: {},
-  selectedShippingMethodByGroup: {},
+  selectedDeliveryMethodByGroup: {},
   selectedPaymentMethod: null,
 
   // Sections
@@ -271,8 +271,8 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
         },
       },
     }));
-    if ((id as string).startsWith('shipping:')) {
-      void emitCheckoutEvent('section/valid', { sectionId: id as ShippingSectionId, dto: dto as ShippingSectionDto });
+    if ((id as string).startsWith('delivery:')) {
+      void emitCheckoutEvent('section/valid', { sectionId: id as DeliverySectionId, dto: dto as DeliverySectionDto });
     } else {
       void emitCheckoutEvent('section/valid', { sectionId: id as StaticSectionKey, dto: dto as SectionDtoMap[StaticSectionKey] });
     }
@@ -291,8 +291,8 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
         },
       },
     }));
-    if ((id as string).startsWith('shipping:')) {
-      void emitCheckoutEvent('section/invalid', { sectionId: id as ShippingSectionId, dto: dto as ShippingSectionDto, errors });
+    if ((id as string).startsWith('delivery:')) {
+      void emitCheckoutEvent('section/invalid', { sectionId: id as DeliverySectionId, dto: dto as DeliverySectionDto, errors });
     } else {
       void emitCheckoutEvent('section/invalid', { sectionId: id as StaticSectionKey, dto: dto as SectionDtoMap[StaticSectionKey], errors });
     }
@@ -359,15 +359,15 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
         ...state.providers,
       };
 
-      if (type === 'shipping') {
-        const groupId = getGroupIdFromShippingProvider(
-          id as ShippingProviderId
+      if (type === 'delivery') {
+        const groupId = getGroupIdFromDeliveryProvider(
+          id as DeliveryProviderId
         );
         for (const [pid, entry] of Object.entries(nextProviders)) {
           if (!entry) continue;
-          if (pid.startsWith('shipping:')) {
+          if (pid.startsWith('delivery:')) {
             const sameGroup =
-              getGroupIdFromShippingProvider(pid as ShippingProviderId) ===
+              getGroupIdFromDeliveryProvider(pid as DeliveryProviderId) ===
               groupId;
             if (sameGroup) {
               if (pid === id) {
@@ -393,7 +393,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       } else {
         for (const [pid, entry] of Object.entries(nextProviders)) {
           if (!entry) continue;
-          if (!pid.startsWith('shipping:')) {
+          if (!pid.startsWith('delivery:')) {
             if (pid === id) {
               nextProviders[pid as ProviderId] = { ...entry, active: true };
             } else if (entry.active) {
@@ -509,24 +509,24 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   // Method selection
   selectShippingMethod: (groupId, selection) => {
     set((state) => ({
-      selectedShippingMethodByGroup: {
-        ...state.selectedShippingMethodByGroup,
+      selectedDeliveryMethodByGroup: {
+        ...state.selectedDeliveryMethodByGroup,
         [groupId]: selection
           ? { code: selection.code, vendor: selection.vendor }
           : null,
       },
     }));
-    void emitCheckoutEvent('method/shipping-selected', {
+    void emitCheckoutEvent('method/delivery-selected', {
       groupId,
       code: selection?.code ?? null,
     });
 
     // Activate the selected provider within the group; deactivate others in the same group
     if (selection) {
-      const providerId = makeShippingProviderId(selection.vendor, groupId);
+      const providerId = makeDeliveryProviderId(selection.vendor, groupId);
       // Ensure provider exists with correct type if not registered
       if (!get().providers[providerId]) {
-        get().registerProvider(providerId, 'shipping');
+        get().registerProvider(providerId, 'delivery');
       }
       get().activateProvider(providerId);
     } else {
@@ -534,8 +534,8 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       const providers = get().providers;
       for (const pid of Object.keys(providers)) {
         if (
-          pid.startsWith('shipping:') &&
-          getGroupIdFromShippingProvider(pid as ShippingProviderId) === groupId
+          pid.startsWith('delivery:') &&
+          getGroupIdFromDeliveryProvider(pid as DeliveryProviderId) === groupId
         ) {
           get().deactivateProvider(pid as ProviderId);
         }
@@ -561,7 +561,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     } else {
       const providers = get().providers;
       for (const pid of Object.keys(providers)) {
-        if (!pid.startsWith('shipping:')) {
+        if (!pid.startsWith('delivery:')) {
           get().deactivateProvider(pid as ProviderId);
         }
       }
@@ -577,8 +577,8 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       for (const [pid, entry] of Object.entries(nextProviders)) {
         if (!entry) continue;
         if (
-          pid.startsWith('shipping:') &&
-          getGroupIdFromShippingProvider(pid as ShippingProviderId) === groupId
+          pid.startsWith('delivery:') &&
+          getGroupIdFromDeliveryProvider(pid as DeliveryProviderId) === groupId
         ) {
           nextProviders[pid as ProviderId] = {
             ...entry,
@@ -610,11 +610,11 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       data: unknown;
     }> = [];
     for (const [groupId, selection] of Object.entries(
-      state.selectedShippingMethodByGroup
+      state.selectedDeliveryMethodByGroup
     )) {
       if (!selection) continue;
       const methodCode = selection.code;
-      const providerId = makeShippingProviderId(selection.vendor, groupId);
+      const providerId = makeDeliveryProviderId(selection.vendor, groupId);
       const provider = state.providers[providerId];
       if (provider)
         deliveries.push({ groupId, methodCode, data: provider.data });

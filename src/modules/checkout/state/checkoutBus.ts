@@ -4,7 +4,7 @@
  * This module is intended to be used from client-side Checkout code.
  */
 import Emittery from 'emittery';
-import type { SectionDtoMap, ShippingSectionDto } from '@src/modules/checkout/core/contracts/dto';
+import type { SectionDtoMap, DeliverySectionDto } from '@src/modules/checkout/core/contracts/dto';
 
 /**
  * Unique identifier of a delivery group.
@@ -23,14 +23,14 @@ export type SectionId =
   | 'comment';
 
 /**
- * Dynamic shipping section key bound to a specific delivery group.
+ * Dynamic delivery section key bound to a specific delivery group.
  */
-export type ShippingSectionId = `shipping:${DeliveryGroupId}`;
+export type DeliverySectionId = `delivery:${DeliveryGroupId}`;
 
 /**
  * Union of all section keys used across Checkout.
  */
-export type SectionKey = SectionId | ShippingSectionId;
+export type SectionKey = SectionId | DeliverySectionId;
 
 /**
  * Inflight operation key used by orchestrator to group async operations.
@@ -39,7 +39,7 @@ export type InflightKey =
   | 'identity'
   | 'recipient'
   | 'address'
-  | `shipping:${string}`
+  | `delivery:${string}`
   | 'payment'
   | 'promo'
   | 'note';
@@ -52,11 +52,11 @@ export type StaticSectionKey = keyof SectionDtoMap;
 /**
  * Resolve section DTO type by section key.
  * - Static keys use SectionDtoMap
- * - Dynamic shipping keys use ShippingSectionDto
+ * - Dynamic delivery keys use DeliverySectionDto
  */
 export type SectionDtoFor<K extends SectionKey> =
-  K extends ShippingSectionId
-    ? ShippingSectionDto
+  K extends DeliverySectionId
+    ? DeliverySectionDto
     : K extends StaticSectionKey
       ? SectionDtoMap[K]
       : never;
@@ -64,16 +64,16 @@ export type SectionDtoFor<K extends SectionKey> =
 /**
  * Provider type domain: shipping or payment.
  */
-export type ProviderType = 'shipping' | 'payment';
+export type ProviderType = 'delivery' | 'payment';
 
 /**
  * Provider identifiers:
- * - Shipping provider is coupled with a delivery group: `shipping:${vendor}@${groupId}`
+ * - Delivery provider is coupled with a delivery group: `delivery:${vendor}@${groupId}`
  * - Payment provider is global: `payment:${vendor}`
  */
-export type ShippingProviderId = `shipping:${string}@${DeliveryGroupId}`;
+export type DeliveryProviderId = `delivery:${string}@${DeliveryGroupId}`;
 export type PaymentProviderId = `payment:${string}`;
-export type ProviderId = ShippingProviderId | PaymentProviderId;
+export type ProviderId = DeliveryProviderId | PaymentProviderId;
 
 /**
  * Aggregated payload emitted when Checkout is ready for submission.
@@ -99,10 +99,10 @@ export type CheckoutEvents = {
   'section/registered': { sectionId: SectionKey; required: boolean };
   'section/valid':
     | { sectionId: StaticSectionKey; dto: SectionDtoMap[StaticSectionKey] }
-    | { sectionId: ShippingSectionId; dto: ShippingSectionDto };
+    | { sectionId: DeliverySectionId; dto: DeliverySectionDto };
   'section/invalid':
     | { sectionId: StaticSectionKey; dto?: SectionDtoMap[StaticSectionKey]; errors?: Record<string, string> }
-    | { sectionId: ShippingSectionId; dto?: ShippingSectionDto; errors?: Record<string, string> };
+    | { sectionId: DeliverySectionId; dto?: DeliverySectionDto; errors?: Record<string, string> };
   'section/reset': { sectionId: SectionKey };
   'section/unregistered': { sectionId: SectionKey };
 
@@ -116,7 +116,7 @@ export type CheckoutEvents = {
   };
   'provider/unregistered': { providerId: ProviderId };
 
-  'method/shipping-selected': { groupId: DeliveryGroupId; code: string | null };
+  'method/delivery-selected': { groupId: DeliveryGroupId; code: string | null };
   'method/payment-selected': { code: string | null };
 
   'submit/requested': object;

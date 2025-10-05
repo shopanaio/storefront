@@ -16,7 +16,7 @@ interface Props {
 
 export const ShippingMethods = ({ groupId, methods, addressCity }: Props) => {
   const locale = useLocale();
-  const { reset } = useSectionController(`shipping:${groupId}`, {
+  const { reset } = useSectionController(`delivery:${groupId}`, {
     required: true,
   });
   const invalidateByGroup = useCheckoutStore((s) => s.invalidateShippingProvidersByGroup);

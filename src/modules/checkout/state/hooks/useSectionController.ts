@@ -9,7 +9,7 @@ import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 
 /**
  * Register a section and control its validation lifecycle.
- * @param sectionId - Section key (static or dynamic shipping:<groupId>)
+ * @param sectionId - Section key (static or dynamic delivery:<groupId>)
  * @param options - Options including whether the section is required
  */
 export function useSectionController<K extends import('../checkoutStore').SectionKey>(

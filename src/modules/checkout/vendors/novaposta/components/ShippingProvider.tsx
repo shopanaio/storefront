@@ -55,7 +55,7 @@ function Content({
   provider: string;
   groupId?: string;
 }) {
-  const providerId = `shipping:${provider}@${groupId as string}` as const;
+  const providerId = `delivery:${provider}@${groupId as string}` as const;
 
   return (
     <Flex vertical gap={12}>

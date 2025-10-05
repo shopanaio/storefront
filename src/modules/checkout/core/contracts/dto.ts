@@ -34,8 +34,8 @@ export interface PaymentSectionDto {
   data: unknown;
 }
 
-export interface ShippingSectionDto {
-  /** Selected shipping method code */
+export interface DeliverySectionDto {
+  /** Selected delivery method code */
   methodCode: string;
   /** Transport-agnostic provider form data */
   data: unknown;
@@ -67,7 +67,7 @@ export interface SubmitCheckoutDto {
   comment?: string;
 }
 
-// Section DTO map by static section ids; dynamic shipping uses ShippingSectionDto
+// Section DTO map by static section ids; dynamic delivery uses DeliverySectionDto
 export interface SectionDtoMap {
   contact: ContactDto;
   recipient: RecipientDto;

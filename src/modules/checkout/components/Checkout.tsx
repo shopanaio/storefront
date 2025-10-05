@@ -55,7 +55,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
     const offBlocked = onCheckoutEvent('submit/blocked', ({ missing }) => {
       /**
        * Maps section keys to their translated display names.
-       * Handles both exact matches and prefixed keys (e.g., 'shipping:*').
+       * Handles both exact matches and prefixed keys (e.g., 'delivery:*').
        */
       const sectionNameMap: Record<string, string> = {
         payment: t('payment'),
@@ -67,8 +67,8 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
       };
 
       const mapSectionKey = (key: string): string => {
-        if (key.startsWith('shipping:')) {
-          return t('shipping');
+        if (key.startsWith('delivery:')) {
+          return t('delivery');
         }
         return sectionNameMap[key] ?? key;
       };

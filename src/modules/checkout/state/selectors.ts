@@ -3,7 +3,7 @@
  */
 import { useCheckoutStore, isSectionValid, computeMissingRequiredSections } from '@src/modules/checkout/state/checkoutStore';
 
-export type { SectionKey, SectionId, ShippingSectionId, DeliveryGroupId } from '@src/modules/checkout/state/checkoutStore';
+export type { SectionKey, SectionId, DeliverySectionId, DeliveryGroupId } from '@src/modules/checkout/state/checkoutStore';
 
 /**
  * Returns true if a specific section is valid according to store rules.
@@ -31,9 +31,9 @@ export function useCanSubmit(): boolean {
  */
 export function useActiveShippingProvider(groupId: string): string | null {
   return useCheckoutStore((s) => {
-    const sel = s.selectedShippingMethodByGroup[groupId];
+    const sel = s.selectedDeliveryMethodByGroup[groupId];
     if (!sel) return null;
-    const providerId = `shipping:${sel.vendor}@${groupId}` as const;
+    const providerId = `delivery:${sel.vendor}@${groupId}` as const;
     return s.providers[providerId]?.active ? providerId : null;
   });
 }
