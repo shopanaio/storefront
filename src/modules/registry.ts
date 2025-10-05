@@ -90,7 +90,8 @@ export interface ProviderProps {
  * API for shipping provider modules
  */
 export interface ShippingProviderModuleApi {
-  default: ComponentType<{
+  provider?: string;
+  Component: ComponentType<{
     provider: string;
     methods: Array<{ code: string; label?: string; initialValues?: unknown }>;
     groupId: string;
@@ -115,7 +116,8 @@ export interface ShippingProviderModuleApi {
  * API for payment provider modules
  */
 export interface PaymentProviderModuleApi {
-  default: ComponentType<{
+  provider?: string;
+  Component: ComponentType<{
     provider: string;
     methods: Array<{ code: string; label?: string; initialValues?: unknown }>;
     locale: string;
