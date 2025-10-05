@@ -1,6 +1,7 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import debounce from 'lodash/debounce';
 import { useTranslations } from 'next-intl';
 import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
 import { searchSettlementStreetsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
@@ -27,38 +28,46 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const [searchValue, setSearchValue] = useState('');
   const [streets, setStreets] = useState<Street[]>([]);
 
+  const debouncedFetchStreets = useMemo(
+    () =>
+      debounce(async (params: { cityRef?: string; search: string }) => {
+        const { cityRef: ref, search } = params;
+        if (!ref || search.trim().length === 0) {
+          setStreets([]);
+          return;
+        }
+
+        try {
+          const methodProperties: searchSettlementStreetsProperties = {
+            SettlementRef: ref,
+            StreetName: search,
+            Limit: '20',
+          };
+
+          const result = await np.searchSettlementStreets(methodProperties);
+          setStreets(result.data?.[0]?.Addresses ?? []);
+        } catch (error) {
+          console.error('Error searching for streets:', error);
+          setStreets([]);
+        }
+      }, 300),
+    []
+  );
+
+  console.log('searchValue', searchValue);
   useEffect(() => {
-    const fetchStreets = async () => {
-      if (!cityRef) {
-        setStreets([]);
-        return;
-      }
+    if (!cityRef || searchValue.trim().length === 0) {
+      setStreets([]);
+      debouncedFetchStreets.cancel();
+      return;
+    }
 
-      if (searchValue.trim().length === 0) {
-        setStreets([]);
-        return;
-      }
+    debouncedFetchStreets({ cityRef, search: searchValue });
 
-      try {
-        const methodProperties: searchSettlementStreetsProperties = {
-          SettlementRef: cityRef,
-          StreetName: searchValue,
-          Limit: '20',
-        };
-
-        const result = await np.searchSettlementStreets(methodProperties);
-        console.log('Nova Poshta streets API response:', result);
-        setStreets(result.data[0].Addresses || []);
-      } catch (error) {
-        console.error('Error searching for streets:', error);
-        setStreets([]);
-      }
+    return () => {
+      debouncedFetchStreets.cancel();
     };
-
-    fetchStreets();
-  }, [searchValue, cityRef]);
-
-  console.log('Streets state:', streets);
+  }, [searchValue, cityRef, debouncedFetchStreets]);
 
   const handleSelectStreet = (item: Street) => {
     changeStreet(item);
