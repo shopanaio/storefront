@@ -20,7 +20,7 @@ function extractStoredCity(): City | null {
  * Keeps selected city in local RHF form and syncs it with checkout store.
  */
 export const AddressSection = () => {
-  const { publishValid, publishInvalid } = useSectionController('address', { required: true });
+  const { publishValid, publishInvalid } = useSectionController<'address'>('address', { required: true });
   const storedCity = useCheckoutStore((state) => {
     const data = state.sections.address?.data as { city?: City | null } | undefined;
     return data?.city ?? null;

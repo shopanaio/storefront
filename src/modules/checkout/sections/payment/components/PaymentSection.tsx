@@ -12,7 +12,7 @@ import { useSectionController } from '@src/modules/checkout/state/hooks/useSecti
  */
 export const PaymentSection = () => {
   const { styles } = useStyles();
-  useSectionController('payment', { required: true });
+  useSectionController<'payment'>('payment', { required: true });
   const paymentMethods = useCheckoutPaymentMethods();
 
   return (

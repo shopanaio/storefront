@@ -36,6 +36,23 @@ export interface CheckoutApi {
   selectPaymentMethod: (
     input: ApiCheckoutPaymentMethodUpdateInput
   ) => Promise<void>;
+  /**
+   * Update payment method with opaque provider data (server currently ignores data).
+   */
+  updatePaymentMethod: (input: {
+    checkoutId: string;
+    methodCode: string;
+    data: unknown;
+  }) => Promise<void>;
+  /**
+   * Update shipping method for a delivery group with opaque provider data (server currently ignores data).
+   */
+  updateShippingMethod: (input: {
+    checkoutId: string;
+    deliveryGroupId: string;
+    methodCode: string;
+    data: unknown;
+  }) => Promise<void>;
   updateCustomerIdentity: (
     input: ApiCheckoutCustomerIdentityUpdateInput
   ) => Promise<void>;
@@ -103,6 +120,18 @@ export function useCheckoutApi(): CheckoutApi {
       new Promise((resolve, reject) => {
         commitSelectPayment({
           variables: { input },
+          onCompleted: (res, errs) => {
+            if (errs && errs.length) return reject(errs);
+            resolve();
+          },
+          onError: reject,
+        });
+      }),
+    updatePaymentMethod: ({ checkoutId, methodCode }) =>
+      // Server doesn't accept provider data yet; send code-only
+      new Promise((resolve, reject) => {
+        commitSelectPayment({
+          variables: { input: { checkoutId, paymentMethodCode: methodCode } },
           onCompleted: (res, errs) => {
             if (errs && errs.length) return reject(errs);
             resolve();
@@ -180,6 +209,18 @@ export function useCheckoutApi(): CheckoutApi {
       new Promise((resolve, reject) => {
         commitRemovePromo({
           variables: { input },
+          onCompleted: (res, errs) => {
+            if (errs && errs.length) return reject(errs);
+            resolve();
+          },
+          onError: reject,
+        });
+      }),
+    updateShippingMethod: ({ checkoutId, deliveryGroupId, methodCode }) =>
+      // Server doesn't accept provider data yet; send code-only
+      new Promise((resolve, reject) => {
+        commitSelectDelivery({
+          variables: { input: { checkoutId, deliveryGroupId, shippingMethodCode: methodCode } },
           onCompleted: (res, errs) => {
             if (errs && errs.length) return reject(errs);
             resolve();

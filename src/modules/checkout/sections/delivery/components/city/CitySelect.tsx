@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
 import { searchSettlementsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
+import type { City } from '@src/modules/checkout/vendors/novaposta/types';
 import { CityOption } from './CityOption';
 import { TbMapPin } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
@@ -12,23 +13,7 @@ import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { popularCities } from '@src/utils/novaposhta-temp-api/cities';
 import clsx from 'clsx';
 
-// TODO: get from novaposhta api
-export interface City {
-  AddressDeliveryAllowed: boolean;
-  Area: string;
-  DeliveryCity: string;
-  MainDescription: string;
-  ParentRegionCode: string;
-  ParentRegionTypes: string;
-  Present: string;
-  Ref: string;
-  Region: string;
-  RegionTypes: string;
-  RegionTypesCode: string;
-  SettlementTypeCode: string;
-  StreetsAvailability: boolean;
-  Warehouses: number;
-}
+export type { City } from '@src/modules/checkout/vendors/novaposta/types';
 
 interface Prop {
   value: City | null;
@@ -44,8 +29,7 @@ export const CitySelect = ({ value, onChange }: Prop) => {
   const [searchValue, setSearchValue] = useState('');
   const [settlements, setSettlements] = useState<City[]>([]);
 
-  const apiKey = '';
-  const np = new NovaPoshta(apiKey);
+  const np = useMemo(() => new NovaPoshta(''), []);
 
   useEffect(() => {
     if (1) {
@@ -74,7 +58,7 @@ export const CitySelect = ({ value, onChange }: Prop) => {
     return () => {
       setSettlements([]);
     };
-  }, [searchValue]);
+  }, [searchValue, np]);
 
   const items = useMemo(() => {
     const normalized = searchValue.trim().toLowerCase();

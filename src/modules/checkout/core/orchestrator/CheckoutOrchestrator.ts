@@ -3,6 +3,7 @@
  * Emits operation lifecycle events for UI to reflect busy state.
  */
 import { onCheckoutEvent, emitCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
+import type { CheckoutEvents } from '@src/modules/checkout/state/checkoutBus';
 import type { SubmitCheckoutDto } from '@src/modules/checkout/core/contracts/dto';
 import type { SectionKey, InflightKey } from '@src/modules/checkout/state/checkoutBus';
 import type { CheckoutRepository } from '@src/modules/checkout/core/contracts/CheckoutRepository';
@@ -20,6 +21,13 @@ function getSectionKeyFromInflightKey(key: InflightKey): SectionKey | undefined 
 }
 
 function makeShippingKey(groupId: string): InflightKey { return `shipping:${groupId}`; }
+
+function extractErrorInfo(error: unknown): { message?: string; code?: string } {
+  const anyErr = error as { message?: unknown; code?: unknown } | null | undefined;
+  const message = typeof anyErr?.message === 'string' ? anyErr?.message : undefined;
+  const code = typeof anyErr?.code === 'string' ? anyErr?.code : undefined;
+  return { message, code };
+}
 
 export class CheckoutOrchestrator {
   private inflight = new InflightManager<InflightKey>();
@@ -39,7 +47,18 @@ export class CheckoutOrchestrator {
           const key: InflightKey = 'identity';
           this.inflight.schedule(key, () => {
             void this.inflight.runWithInflight(key, async () => {
-              await repository.updateCustomerIdentity({ checkoutId, phone: String(payload.userPhone) });
+              try {
+                await repository.updateCustomerIdentity({ checkoutId, phone: String(payload.userPhone) });
+              } catch (error) {
+                const { message, code } = extractErrorInfo(error);
+                await emitCheckoutEvent('operation/error', {
+                  key,
+                  sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+                  message,
+                  code,
+                  error,
+                });
+              }
             }, {
               onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
               onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -53,7 +72,18 @@ export class CheckoutOrchestrator {
           const key: InflightKey = 'recipient';
           this.inflight.schedule(key, () => {
             void this.inflight.runWithInflight(key, async () => {
-              await repository.updateCustomerIdentity({ checkoutId, phone: String(payload.userPhone) });
+              try {
+                await repository.updateCustomerIdentity({ checkoutId, phone: String(payload.userPhone) });
+              } catch (error) {
+                const { message, code } = extractErrorInfo(error);
+                await emitCheckoutEvent('operation/error', {
+                  key,
+                  sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+                  message,
+                  code,
+                  error,
+                });
+              }
             }, {
               onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
               onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -71,7 +101,18 @@ export class CheckoutOrchestrator {
           const key: InflightKey = 'note';
           this.inflight.schedule(key, () => {
             void this.inflight.runWithInflight(key, async () => {
-              await repository.updateCustomerNote({ checkoutId, note: comment });
+              try {
+                await repository.updateCustomerNote({ checkoutId, note: comment });
+              } catch (error) {
+                const { message, code } = extractErrorInfo(error);
+                await emitCheckoutEvent('operation/error', {
+                  key,
+                  sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+                  message,
+                  code,
+                  error,
+                });
+              }
             }, {
               onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
               onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -85,7 +126,18 @@ export class CheckoutOrchestrator {
           const key: InflightKey = 'promo';
           this.inflight.schedule(key, () => {
             void this.inflight.runWithInflight(key, async () => {
-              await repository.addPromoCode({ checkoutId, code });
+              try {
+                await repository.addPromoCode({ checkoutId, code });
+              } catch (error) {
+                const { message, code: errCode } = extractErrorInfo(error);
+                await emitCheckoutEvent('operation/error', {
+                  key,
+                  sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+                  message,
+                  code: errCode,
+                  error,
+                });
+              }
             }, {
               onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
               onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -104,7 +156,18 @@ export class CheckoutOrchestrator {
       const key: InflightKey = 'payment';
       this.inflight.schedule(key, () => {
         void this.inflight.runWithInflight(key, async () => {
-          await repository.selectPaymentMethod({ checkoutId, paymentMethodCode: code });
+          try {
+            await repository.selectPaymentMethod({ checkoutId, method: { code, data: undefined } });
+          } catch (error) {
+            const { message, code: errCode } = extractErrorInfo(error);
+            await emitCheckoutEvent('operation/error', {
+              key,
+              sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+              message,
+              code: errCode,
+              error,
+            });
+          }
         }, {
           onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
           onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -118,7 +181,18 @@ export class CheckoutOrchestrator {
       const key = makeShippingKey(groupId);
       this.inflight.schedule(key, () => {
         void this.inflight.runWithInflight(key, async () => {
-          await repository.selectDeliveryMethod({ checkoutId, deliveryGroupId: groupId, shippingMethodCode: code });
+          try {
+            await repository.selectShippingMethod({ checkoutId, deliveryGroupId: groupId, method: { code, data: undefined } });
+          } catch (error) {
+            const { message, code: errCode } = extractErrorInfo(error);
+            await emitCheckoutEvent('operation/error', {
+              key,
+              sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+              message,
+              code: errCode,
+              error,
+            });
+          }
         }, {
           onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
           onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -134,7 +208,18 @@ export class CheckoutOrchestrator {
       const key: InflightKey = 'promo';
       this.inflight.schedule(key, () => {
         void this.inflight.runWithInflight(key, async () => {
-          await repository.removePromoCode({ checkoutId, code });
+          try {
+            await repository.removePromoCode({ checkoutId, code });
+          } catch (error) {
+            const { message, code: errCode } = extractErrorInfo(error);
+            await emitCheckoutEvent('operation/error', {
+              key,
+              sectionId: getSectionKeyFromInflightKey(key) as SectionKey,
+              message,
+              code: errCode,
+              error,
+            });
+          }
         }, {
           onStart: () => emitCheckoutEvent('operation/start', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
           onEnd: () => emitCheckoutEvent('operation/end', { key, sectionId: getSectionKeyFromInflightKey(key) as SectionKey }),
@@ -148,14 +233,19 @@ export class CheckoutOrchestrator {
       const key: InflightKey = 'note'; // reuse a neutral key or introduce 'submit'
       this.inflight.schedule(key, () => {
         void this.inflight.runWithInflight(key, async () => {
-          await (repository.submitCheckout as (args: { checkoutId: string; payload: SubmitCheckoutDto }) => Promise<void>)({ checkoutId, payload: payload as SubmitCheckoutDto });
+          try {
+            await (repository.submitCheckout as (args: { checkoutId: string; payload: SubmitCheckoutDto }) => Promise<void>)({ checkoutId, payload: payload as SubmitCheckoutDto });
+            // success
+            const completedPayload: CheckoutEvents['submit/completed'] = {};
+            await emitCheckoutEvent('submit/completed', completedPayload);
+          } catch (error) {
+            const { message, code } = extractErrorInfo(error);
+            await emitCheckoutEvent('operation/error', { key, message, code, error });
+          }
         }, {
           onStart: () => emitCheckoutEvent('operation/start', { key }),
           onEnd: () => {
             emitCheckoutEvent('operation/end', { key }).catch(() => {});
-            // emit completion event for UI
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            emitCheckoutEvent('submit/completed' as any, {} as any);
           },
         });
       });

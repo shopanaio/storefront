@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 
 export const PromoSection = () => {
   const t = useTranslations('Checkout');
-  const { publishValid, publishInvalid } = useSectionController('promo', { required: false });
+  const { publishValid, publishInvalid } = useSectionController<'promo'>('promo', { required: false });
   const [code, setCode] = useState('');
 
   useEffect(() => {

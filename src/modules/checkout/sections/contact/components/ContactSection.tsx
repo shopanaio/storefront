@@ -31,7 +31,7 @@ export const ContactSection = () => {
     },
     mode: 'onChange',
   });
-  const { publishValid, publishInvalid } = useSectionController('contact', {
+  const { publishValid, publishInvalid } = useSectionController<'contact'>('contact', {
     required: true,
   });
 

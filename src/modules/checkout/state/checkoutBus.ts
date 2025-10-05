@@ -4,7 +4,7 @@
  * This module is intended to be used from client-side Checkout code.
  */
 import Emittery from 'emittery';
-import type { SectionDtoMap } from '@src/modules/checkout/core/contracts/dto';
+import type { SectionDtoMap, ShippingSectionDto } from '@src/modules/checkout/core/contracts/dto';
 
 /**
  * Unique identifier of a delivery group.
@@ -45,6 +45,23 @@ export type InflightKey =
   | 'note';
 
 /**
+ * Static section keys that have corresponding DTOs in SectionDtoMap.
+ */
+export type StaticSectionKey = keyof SectionDtoMap;
+
+/**
+ * Resolve section DTO type by section key.
+ * - Static keys use SectionDtoMap
+ * - Dynamic shipping keys use ShippingSectionDto
+ */
+export type SectionDtoFor<K extends SectionKey> =
+  K extends ShippingSectionId
+    ? ShippingSectionDto
+    : K extends StaticSectionKey
+      ? SectionDtoMap[K]
+      : never;
+
+/**
  * Provider type domain: shipping or payment.
  */
 export type ProviderType = 'shipping' | 'payment';
@@ -80,8 +97,12 @@ export type CheckoutPayload = {
  */
 export type CheckoutEvents = {
   'section/registered': { sectionId: SectionKey; required: boolean };
-  'section/valid': { sectionId: SectionKey; dto: SectionDtoMap[Extract<SectionKey, keyof SectionDtoMap>] | unknown };
-  'section/invalid': { sectionId: SectionKey; dto?: SectionDtoMap[Extract<SectionKey, keyof SectionDtoMap>] | unknown; errors?: Record<string, string> };
+  'section/valid':
+    | { sectionId: StaticSectionKey; dto: SectionDtoMap[StaticSectionKey] }
+    | { sectionId: ShippingSectionId; dto: ShippingSectionDto };
+  'section/invalid':
+    | { sectionId: StaticSectionKey; dto?: SectionDtoMap[StaticSectionKey]; errors?: Record<string, string> }
+    | { sectionId: ShippingSectionId; dto?: ShippingSectionDto; errors?: Record<string, string> };
   'section/reset': { sectionId: SectionKey };
   'section/unregistered': { sectionId: SectionKey };
 
@@ -110,6 +131,23 @@ export type CheckoutEvents = {
    */
   'operation/start': { key: InflightKey; sectionId?: SectionKey };
   'operation/end': { key: InflightKey; sectionId?: SectionKey };
+  /**
+   * Operation error event for UI error indicators and toasts.
+   * Consumers may map `sectionId` to local error presentation.
+   */
+  'operation/error': {
+    key: InflightKey;
+    sectionId?: SectionKey;
+    /** Optional human-readable message */
+    message?: string;
+    /** Optional machine error code */
+    code?: string;
+    /**
+     * Raw error object as-is for advanced consumers.
+     * Keep it typed as unknown to avoid leaking transport-specific types.
+     */
+    error?: unknown;
+  };
 };
 
 /**

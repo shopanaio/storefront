@@ -4,6 +4,7 @@
  */
 import { useEffect, useMemo } from 'react';
 import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
+import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 
 /**
@@ -11,8 +12,8 @@ import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
  * @param sectionId - Section key (static or dynamic shipping:<groupId>)
  * @param options - Options including whether the section is required
  */
-export function useSectionController(
-  sectionId: import('../checkoutStore').SectionKey,
+export function useSectionController<K extends import('../checkoutStore').SectionKey>(
+  sectionId: K,
   options: { required: boolean }
 ) {
   const {
@@ -56,7 +57,7 @@ export function useSectionController(
   return useMemo(
     () => ({
       busy,
-      publishValid: (dto: unknown) => sectionValid(sectionId, dto),
+      publishValid: (dto: SectionDtoFor<K>) => sectionValid(sectionId, dto as SectionDtoFor<K>),
       publishInvalid: (errors?: Record<string, string>) =>
         sectionInvalid(sectionId, undefined, errors),
       reset: () => resetSection(sectionId),

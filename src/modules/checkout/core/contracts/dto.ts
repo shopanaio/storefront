@@ -28,13 +28,17 @@ export interface AddressDto {
 
 // Payment / Shipping (section-level DTOs)
 export interface PaymentSectionDto {
-  // section-level data for payment if any (most config lives in provider forms)
-  [key: string]: unknown;
+  /** Selected payment method code */
+  methodCode: string;
+  /** Transport-agnostic provider form data */
+  data: unknown;
 }
 
 export interface ShippingSectionDto {
-  // section-level data for shipping if any (most config lives in provider forms)
-  [key: string]: unknown;
+  /** Selected shipping method code */
+  methodCode: string;
+  /** Transport-agnostic provider form data */
+  data: unknown;
 }
 
 // Promo / Comment

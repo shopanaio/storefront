@@ -5,6 +5,8 @@
  */
 import { create } from 'zustand';
 import { emitCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
+import type { SectionDtoFor, StaticSectionKey } from '@src/modules/checkout/state/checkoutBus';
+import type { SectionDtoMap, ShippingSectionDto } from '@src/modules/checkout/core/contracts/dto';
 
 /**
  * Validation status for sections and providers.
@@ -96,8 +98,8 @@ export interface CheckoutState {
   // Section actions
   registerSection: (id: SectionKey, required: boolean) => void;
   unregisterSection: (id: SectionKey) => void;
-  sectionValid: (id: SectionKey, dto: unknown) => void;
-  sectionInvalid: (id: SectionKey, dto?: unknown, errors?: Record<string, string>) => void;
+  sectionValid: <K extends SectionKey>(id: K, dto: SectionDtoFor<K>) => void;
+  sectionInvalid: <K extends SectionKey>(id: K, dto?: SectionDtoFor<K>, errors?: Record<string, string>) => void;
   resetSection: (id: SectionKey) => void;
   setSectionBusy: (id: SectionKey, busy: boolean) => void;
 
@@ -269,7 +271,11 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
         },
       },
     }));
-    void emitCheckoutEvent('section/valid', { sectionId: id, dto });
+    if ((id as string).startsWith('shipping:')) {
+      void emitCheckoutEvent('section/valid', { sectionId: id as ShippingSectionId, dto: dto as ShippingSectionDto });
+    } else {
+      void emitCheckoutEvent('section/valid', { sectionId: id as StaticSectionKey, dto: dto as SectionDtoMap[StaticSectionKey] });
+    }
   },
   sectionInvalid: (id, dto, errors) => {
     set((state) => ({
@@ -285,7 +291,11 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
         },
       },
     }));
-    void emitCheckoutEvent('section/invalid', { sectionId: id, dto, errors });
+    if ((id as string).startsWith('shipping:')) {
+      void emitCheckoutEvent('section/invalid', { sectionId: id as ShippingSectionId, dto: dto as ShippingSectionDto, errors });
+    } else {
+      void emitCheckoutEvent('section/invalid', { sectionId: id as StaticSectionKey, dto: dto as SectionDtoMap[StaticSectionKey], errors });
+    }
   },
   resetSection: (id) => {
     set((state) => ({

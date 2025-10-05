@@ -30,7 +30,7 @@ export const RecipientSection = () => {
     },
     mode: 'onChange',
   });
-  const { publishValid, publishInvalid } = useSectionController('recipient', { required: true });
+  const { publishValid, publishInvalid } = useSectionController<'recipient'>('recipient', { required: true });
 
   const isSelf = methods.watch('isRecipientSelf') ?? true;
 

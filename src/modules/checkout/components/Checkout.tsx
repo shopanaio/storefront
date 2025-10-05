@@ -35,28 +35,6 @@ interface Prop {
   };
 }
 
-export interface CheckoutFormValues {
-  userPhone: string;
-  userName: string;
-  userFirstName?: string;
-  userLastName?: string;
-  userMiddleName?: string;
-  /** Whether the purchaser is the same person as the recipient */
-  isRecipientSelf?: boolean;
-  /** Separate recipient fields when isRecipientSelf === false */
-  recipientFirstName?: string;
-  recipientLastName?: string;
-  recipientMiddleName?: string;
-  /** Optional order comment / delivery note */
-  orderComment?: string;
-  /**
-   * The base checkout keeps only generic fields. Vendor-specific
-   * shipping/payment state lives inside vendor modules via useFormContext.
-   */
-  selectedShippingMethod?: { code: string } | null;
-  selectedPaymentMethod?: { code: string } | null;
-}
-
 /**
  * Checkout form component that renders contact, shipping, and payment sections.
  * Feature flags can adjust visible UI (e.g., `features.auth` shows login button).

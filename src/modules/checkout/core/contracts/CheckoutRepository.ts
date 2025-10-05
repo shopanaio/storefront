@@ -5,11 +5,15 @@
 import type { SubmitCheckoutDto } from './dto';
 
 export interface CheckoutRepository {
-  /** Select payment method for the checkout */
-  selectPaymentMethod(input: { checkoutId: string; paymentMethodCode: string }): Promise<void>;
+  /** Select payment method (user clicked a method). Data may be undefined. */
+  selectPaymentMethod(input: { checkoutId: string; method: { code: string; data: unknown } }): Promise<void>;
+  /** Update payment method when provider form becomes valid and has data. */
+  updatePaymentMethod(input: { checkoutId: string; method: { code: string; data: unknown } }): Promise<void>;
 
-  /** Select delivery method for a specific delivery group */
-  selectDeliveryMethod(input: { checkoutId: string; deliveryGroupId: string; shippingMethodCode: string }): Promise<void>;
+  /** Select shipping method for a delivery group (user clicked a method). Data may be undefined. */
+  selectShippingMethod(input: { checkoutId: string; deliveryGroupId: string; method: { code: string; data: unknown } }): Promise<void>;
+  /** Update shipping method when provider form becomes valid and has data. */
+  updateShippingMethod(input: { checkoutId: string; deliveryGroupId: string; method: { code: string; data: unknown } }): Promise<void>;
 
   /** Update customer identity (phone for now) */
   updateCustomerIdentity(input: { checkoutId: string; phone: string }): Promise<void>;

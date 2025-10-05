@@ -23,7 +23,7 @@ export const CheckoutMethodPanel = ({
   brand = null,
   component: Component,
 }: CheckoutMethodPanelProps) => {
-  const codeRef = useRef(crypto.randomUUID());
+  const codeRef = useRef(Math.random().toString(36).substring(2, 15));
   const { styles } = useStyles();
   return (
     <Collapse
