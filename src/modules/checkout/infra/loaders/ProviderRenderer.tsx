@@ -28,13 +28,10 @@ interface ProviderRendererProps {
   locale: string;
   /** Optional delivery group id (required for shipping providers) */
   groupId?: string;
-  /** Section controller for validation and state */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
+  /** Callback when provider form has valid data */
+  onValid: (data: unknown) => void;
+  /** Callback when provider form has invalid data */
+  onInvalid: (errors?: Record<string, string>) => void;
 }
 
 /**
@@ -42,7 +39,7 @@ interface ProviderRendererProps {
  * Handles async module loading and provides a consistent interface
  * for both shipping and payment providers.
  *
- * Expects methods to already include controller APIs.
+ * Provides explicit validation callback interface following enterprise patterns.
  */
 export const ProviderRenderer = ({
   moduleType,
@@ -50,7 +47,8 @@ export const ProviderRenderer = ({
   methods,
   locale,
   groupId,
-  sectionController,
+  onValid,
+  onInvalid,
 }: ProviderRendererProps) => {
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
@@ -62,7 +60,8 @@ export const ProviderRenderer = ({
     methods,
     locale,
     ...(groupId !== undefined && { groupId }),
-    sectionController,
+    onValid,
+    onInvalid,
   };
 
   return (

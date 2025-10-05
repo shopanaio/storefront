@@ -41,24 +41,30 @@ export const RecipientSectionContainer = () => {
   }, [publishValid]);
 
   /**
-   * Handles save event from view and publishes to section controller
+   * Handles valid recipient data from view
    */
-  const handleSave = useCallback(
+  const handleValid = useCallback(
     (dto: ContactDto) => {
-      try {
-        // Save recipient data to preserve it
-        setRecipientData(dto);
+      // Save recipient data to preserve it
+      setRecipientData(dto);
 
-        if (isRecipientSelf) {
-          publishValid({ self: true });
-        } else {
-          publishValid({ self: false, ...dto });
-        }
-      } catch {
-        publishInvalid?.({});
+      if (isRecipientSelf) {
+        publishValid({ self: true });
+      } else {
+        publishValid({ self: false, ...dto });
       }
     },
-    [isRecipientSelf, publishValid, publishInvalid]
+    [isRecipientSelf, publishValid]
+  );
+
+  /**
+   * Handles invalid recipient data from view
+   */
+  const handleInvalid = useCallback(
+    (errors?: Record<string, string>) => {
+      publishInvalid(errors);
+    },
+    [publishInvalid]
   );
 
   return (
@@ -68,7 +74,8 @@ export const RecipientSectionContainer = () => {
       switchLabel={t('i-am-recipient')}
       recipientTitle={t('recipient')}
       onSwitchChange={handleSwitchChange}
-      onSave={handleSave}
+      onValid={handleValid}
+      onInvalid={handleInvalid}
     />
   );
 };

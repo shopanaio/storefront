@@ -17,18 +17,15 @@ import { Warehouse } from '@checkout/vendors/novaposta/types';
  * Props for WarehouseForm
  */
 interface WarehouseFormProps {
-  /** Controller API for validation */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
+  /** Callback when form has valid data */
+  onValid: (data: unknown) => void;
+  /** Callback when form has invalid data */
+  onInvalid: (errors?: Record<string, string>) => void;
   /** Initial form values */
   initialValues?: unknown;
 }
 
-export function WarehouseForm({ sectionController, initialValues }: WarehouseFormProps) {
+export function WarehouseForm({ onValid, onInvalid, initialValues }: WarehouseFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{ warehouse?: Warehouse | null }>({
     defaultValues: {
@@ -38,7 +35,6 @@ export function WarehouseForm({ sectionController, initialValues }: WarehouseFor
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
-  const { publishValid, publishInvalid } = sectionController;
 
   const { watch } = methods;
   const warehouse = watch('warehouse') || null;
@@ -69,19 +65,20 @@ export function WarehouseForm({ sectionController, initialValues }: WarehouseFor
       };
       try {
         await warehouseSchema.validate(data, { abortEarly: false });
-        publishValid(data);
+        onValid(data);
       } catch (e) {
-        const errs: Record<string, string> = {};
+        // Validation failed - explicitly mark as invalid
+        const errors: Record<string, string> = {};
         if (e instanceof ValidationError) {
-          for (const err of e.inner) {
-            if (err.path) errs[err.path] = err.message || 'invalid';
-          }
+          e.inner.forEach((err) => {
+            if (err.path) errors[err.path] = err.message;
+          });
         }
-        publishInvalid(errs);
+        onInvalid(errors);
       }
     };
     validate();
-  }, [warehouse, publishValid, publishInvalid]);
+  }, [warehouse, onValid, onInvalid]);
 
   return (
     <Flex vertical gap={12} className={styles.container}>

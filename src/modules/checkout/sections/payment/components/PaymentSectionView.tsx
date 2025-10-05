@@ -15,13 +15,10 @@ export interface PaymentSectionViewProps {
   selectedMethodCode?: string;
   /** Current locale */
   locale: string;
-  /** Section controller */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
+  /** Callback when provider form has valid data */
+  onValid: (data: unknown) => void;
+  /** Callback when provider form has invalid data */
+  onInvalid: (errors?: Record<string, string>) => void;
 }
 
 /**
@@ -34,7 +31,8 @@ export const PaymentSectionView = ({
   methodsByProvider,
   selectedMethodCode,
   locale,
-  sectionController,
+  onValid,
+  onInvalid,
 }: PaymentSectionViewProps) => {
   const { styles } = useStyles();
 
@@ -47,7 +45,8 @@ export const PaymentSectionView = ({
           provider={provider}
           methods={methods}
           locale={locale}
-          sectionController={sectionController}
+          onValid={onValid}
+          onInvalid={onInvalid}
         />
       ))}
     </Flex>

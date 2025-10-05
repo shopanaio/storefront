@@ -16,16 +16,18 @@ export interface ContactSectionViewProps {
   initialValues: Partial<ContactDto>;
   /** Section title */
   title: ReactNode;
-  /** Called when user saves contact data */
-  onSave: (dto: ContactDto) => void;
+  /** Called when user saves valid contact data */
+  onValid: (dto: ContactDto) => void;
+  /** Called when contact data is invalid */
+  onInvalid: (errors?: Record<string, string>) => void;
 }
 
-export const ContactSectionView = ({ initialValues, title, onSave }: ContactSectionViewProps) => {
+export const ContactSectionView = ({ initialValues, title, onValid, onInvalid }: ContactSectionViewProps) => {
   const { styles } = useStyles();
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <ContactSelect initialValues={initialValues} onSave={onSave} title={title} />
+      <ContactSelect initialValues={initialValues} onValid={onValid} onInvalid={onInvalid} title={title} />
     </Flex>
   );
 };

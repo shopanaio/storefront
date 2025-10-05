@@ -14,12 +14,10 @@ export interface ProviderMethodConfig {
   Component: FC<{
     isActive: boolean;
     onActivate: () => void;
-    sectionController: {
-      publishValid: (data: unknown) => void;
-      publishInvalid: (errors?: Record<string, string>) => void;
-      reset: () => void;
-      busy: boolean;
-    };
+    /** Callback when form has valid data */
+    onValid: (data: unknown) => void;
+    /** Callback when form has invalid data */
+    onInvalid: (errors?: Record<string, string>) => void;
     initialValues?: unknown;
   }>;
   /** Initial values for this method (if any) */

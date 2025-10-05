@@ -3,7 +3,6 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import type { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
-import { AddressSection } from './AddressSection';
 import { ShippingMethodsRenderer } from './ShippingMethodsRenderer';
 import type { City } from './city/CitySelect';
 
@@ -28,7 +27,7 @@ export interface DeliverySectionViewProps {
 /**
  * View component for the delivery section.
  *
- * Pure UI component that renders address selection and shipping methods.
+ * Pure UI component that renders shipping methods.
  * Receives all data through props.
  */
 export const DeliverySectionView = ({
@@ -39,7 +38,6 @@ export const DeliverySectionView = ({
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <AddressSection />
       {deliveryGroups.map((group) => (
         <ShippingMethodsRenderer
           key={group.id}

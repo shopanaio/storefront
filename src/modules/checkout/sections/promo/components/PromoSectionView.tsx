@@ -20,10 +20,10 @@ export interface PromoSectionViewProps {
   applyText: string;
   /** Text for the remove button */
   removeText: string;
-  /** Called when user applies promo code */
-  onApply: (code: string) => void;
-  /** Called when user removes promo code */
-  onRemove: () => void;
+  /** Called when promo code is valid */
+  onValid: (data: { code: string }) => void;
+  /** Called when promo code is invalid or removed */
+  onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const PromoSectionView = ({
@@ -31,8 +31,8 @@ export const PromoSectionView = ({
   label,
   applyText,
   removeText,
-  onApply,
-  onRemove,
+  onValid,
+  onInvalid,
 }: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const [code, setCode] = useState(initialCode);
@@ -47,15 +47,17 @@ export const PromoSectionView = ({
   const handleApply = () => {
     const trimmedCode = code.trim();
     if (trimmedCode) {
-      onApply(trimmedCode);
+      onValid({ code: trimmedCode });
       setIsApplied(true);
+    } else {
+      onInvalid({ code: 'required' });
     }
   };
 
   const handleRemove = () => {
     setCode('');
     setIsApplied(false);
-    onRemove();
+    onInvalid(undefined);
   };
 
   return (

@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useLocale } from 'next-intl';
 import { usePrevious } from 'react-use';
 import type { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
-import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
 import type { City } from './city/CitySelect';
 import { ModuleType } from '@src/modules/registry';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
@@ -36,16 +35,13 @@ export const ShippingMethodsRenderer = ({
   addressCity,
 }: ShippingMethodsRendererProps) => {
   const locale = useLocale();
-  const { reset } = useSectionController(`delivery:${groupId}`, {
+  const sectionController = useSectionController(`delivery:${groupId}`, {
     required: true,
   });
   const invalidateByGroup = useCheckoutStore(
     (s) => s.invalidateShippingProvidersByGroup
   );
   const prevCityRef = usePrevious(addressCity?.Ref ?? null);
-  const { selected } = useMethodSelectionShipping(groupId);
-
-  const sectionController = useSectionController(`delivery:${groupId}`, { required: true });
 
   /**
    * Reset section and invalidate providers when city changes.
@@ -58,7 +54,7 @@ export const ShippingMethodsRenderer = ({
       sectionController.reset();
       invalidateByGroup(groupId);
     }
-  }, [addressCity?.Ref, prevCityRef, reset, invalidateByGroup, groupId]);
+  }, [addressCity?.Ref, prevCityRef, sectionController, invalidateByGroup, groupId]);
 
   /**
    * Group methods by provider with metadata
@@ -76,7 +72,23 @@ export const ShippingMethodsRenderer = ({
       });
       return acc;
     }, {});
-  }, [methods, groupId]);
+  }, [methods]);
+
+  /**
+   * Callback when provider form has valid data.
+   * Publishes to section controller following enterprise validation pattern.
+   */
+  const handleValid = useCallback((data: unknown) => {
+    sectionController.publishValid(data as any);
+  }, [sectionController]);
+
+  /**
+   * Callback when provider form has invalid data.
+   * Publishes to section controller following enterprise validation pattern.
+   */
+  const handleInvalid = useCallback((errors?: Record<string, string>) => {
+    sectionController.publishInvalid(errors);
+  }, [sectionController]);
 
   return (
     <>
@@ -88,7 +100,8 @@ export const ShippingMethodsRenderer = ({
           groupId={groupId}
           methods={providerMethods}
           locale={locale}
-          sectionController={sectionController}
+          onValid={handleValid}
+          onInvalid={handleInvalid}
         />
       ))}
     </>

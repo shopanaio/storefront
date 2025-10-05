@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { ContactSection } from '@checkout/sections/contact/components/ContactSection';
 import { RecipientSection } from '@checkout/sections/recipient/components/RecipientSection';
-import { AddressSection } from '@checkout/sections/delivery/components/AddressSection';
+import { AddressSection } from '@checkout/sections/address/components/AddressSection';
 import { DeliverySection } from '@checkout/sections/delivery/components/DeliverySection';
 import { PaymentSection } from '@checkout/sections/payment/components/PaymentSection';
 

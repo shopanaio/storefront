@@ -9,13 +9,14 @@ import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/us
 
 /**
  * NovaPoshta provider-level component that renders full shipping UI.
- * Receives method controllers through props and passes them down to method components.
+ * Receives explicit validation callbacks following enterprise patterns.
  */
 export function NPShippingProvider({
   methods,
   groupId,
   provider,
-  sectionController,
+  onValid,
+  onInvalid,
 }: ProviderProps) {
   const { selected, select } = useMethodSelectionShipping(groupId as string);
   const activeCode: string | undefined = selected?.code;
@@ -40,7 +41,8 @@ export function NPShippingProvider({
                 key={config.code}
                 isActive={activeCode === config.code}
                 onActivate={() => handleSelectMethod(config.code)}
-                sectionController={sectionController}
+                onValid={onValid}
+                onInvalid={onInvalid}
                 initialValues={config.initialValues}
               />
             );

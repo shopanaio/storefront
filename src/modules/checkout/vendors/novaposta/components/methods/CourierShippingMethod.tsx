@@ -13,13 +13,10 @@ export interface CourierShippingMethodProps {
   isActive: boolean;
   /** Callback when method is selected */
   onActivate: () => void;
-  /** Controller API for validation */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
+  /** Callback when form has valid data */
+  onValid: (data: unknown) => void;
+  /** Callback when form has invalid data */
+  onInvalid: (errors?: Record<string, string>) => void;
   /** Initial form values */
   initialValues?: unknown;
 }
@@ -31,7 +28,8 @@ export interface CourierShippingMethodProps {
 export function CourierShippingMethod({
   isActive,
   onActivate,
-  sectionController,
+  onValid,
+  onInvalid,
   initialValues,
 }: CourierShippingMethodProps) {
   const t = useTranslations('Modules.novaposta');
@@ -45,7 +43,8 @@ export function CourierShippingMethod({
       brand={<NPLogo size={24} />}
         component={AddressForm}
         componentProps={{
-          sectionController,
+          onValid,
+          onInvalid,
           initialValues,
         }}
     />

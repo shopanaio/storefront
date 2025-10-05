@@ -35,8 +35,10 @@ export type ContactValues = {
 export interface ContactSelectProps {
   /** Initial contact values to prefill */
   initialValues: Partial<ContactDto>;
-  /** Called when user presses Save in the drawer */
-  onSave: (dto: ContactDto) => void;
+  /** Called when user saves valid contact data */
+  onValid: (dto: ContactDto) => void;
+  /** Called when contact data is invalid */
+  onInvalid: (errors?: Record<string, string>) => void;
   /** Drawer title (required) */
   title: ReactNode;
 }
@@ -46,7 +48,7 @@ export interface ContactSelectProps {
  * with contact form inputs (name fields + phone). The button shows a concise
  * summary (full name and masked phone) when data is present.
  */
-export const ContactSelect = ({ initialValues, onSave, title }: ContactSelectProps) => {
+export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
@@ -153,8 +155,17 @@ export const ContactSelect = ({ initialValues, onSave, title }: ContactSelectPro
                     userMiddleName: values.userMiddleName,
                     userPhone: values.userPhone,
                   };
-                  onSave(dto);
+                  onValid(dto);
                   setOpen(false);
+                } else {
+                  // Extract errors from form state
+                  const fieldErrors: Record<string, string> = {};
+                  Object.entries(errors).forEach(([field, error]) => {
+                    if (error?.message) {
+                      fieldErrors[field] = error.message;
+                    }
+                  });
+                  onInvalid(fieldErrors);
                 }
               });
             }}

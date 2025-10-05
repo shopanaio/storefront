@@ -25,25 +25,24 @@ export const PromoSectionContainer = () => {
   });
 
   /**
-   * Handles promo code submission
+   * Handles valid promo code data from view
    */
-  const handleApply = useCallback(
-    (code: string) => {
-      if (code.trim()) {
-        publishValid({ code: code.trim() });
-      } else {
-        publishInvalid({ code: 'required' });
-      }
+  const handleValid = useCallback(
+    (data: { code: string }) => {
+      publishValid(data);
     },
-    [publishValid, publishInvalid]
+    [publishValid]
   );
 
   /**
-   * Handles promo code removal
+   * Handles invalid promo code data from view
    */
-  const handleRemove = useCallback(() => {
-    publishInvalid(undefined);
-  }, [publishInvalid]);
+  const handleInvalid = useCallback(
+    (errors?: Record<string, string>) => {
+      publishInvalid(errors);
+    },
+    [publishInvalid]
+  );
 
   return (
     <PromoSectionView
@@ -51,8 +50,8 @@ export const PromoSectionContainer = () => {
       label={t('coupon-code')}
       applyText={t('apply')}
       removeText={t('remove')}
-      onApply={handleApply}
-      onRemove={handleRemove}
+      onValid={handleValid}
+      onInvalid={handleInvalid}
     />
   );
 };

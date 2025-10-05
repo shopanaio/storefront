@@ -7,6 +7,7 @@ import { mq } from '@src/components/Theme/breakpoints';
 import { Summary } from './summary/Summary';
 import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
+import { CheckoutSection } from '@src/modules/checkout/components/common/CheckoutSection';
 import { Entity } from '@src/entity';
 import { CheckoutAuth } from './CheckoutAuth';
 import { useEffect, useState } from 'react';
@@ -103,19 +104,33 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
               <div className={styles.main}>
                 <Flex className={styles.left}>
                   {brand}
-                  <SectionRenderer
-                    slug="contact"
+                  <CheckoutSection
                     title={t('contact')}
                     headerAction={
                       features?.auth ? (
                         <CheckoutAuth className={styles.logInButton} />
                       ) : undefined
                     }
-                  />
-                  <SectionRenderer slug="delivery" title={t('delivery')} />
-                  <SectionRenderer slug="recipient" />
-                  <SectionRenderer slug="payment" title={t('payment')} />
-                  <SectionRenderer slug="comment" />
+                  >
+                    <SectionRenderer slug="contact" />
+                  </CheckoutSection>
+
+                  <CheckoutSection title={t('delivery')}>
+                    <SectionRenderer slug="address" />
+                    <SectionRenderer slug="delivery" />
+                  </CheckoutSection>
+
+                  <CheckoutSection>
+                    <SectionRenderer slug="recipient" />
+                  </CheckoutSection>
+
+                  <CheckoutSection title={t('payment')}>
+                    <SectionRenderer slug="payment" />
+                  </CheckoutSection>
+
+                  <CheckoutSection>
+                    <SectionRenderer slug="comment" />
+                  </CheckoutSection>
 
                   <div className={styles.actionsLeft}>
                     <CheckoutActions

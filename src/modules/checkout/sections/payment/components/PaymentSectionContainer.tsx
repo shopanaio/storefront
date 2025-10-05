@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useLocale } from 'next-intl';
 import { useCheckoutPaymentMethods } from '@src/modules/checkout/hooks/useCheckoutDataSources';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
@@ -39,12 +39,29 @@ export const PaymentSectionContainer = () => {
     return grouped;
   }, [paymentMethods]);
 
+  /**
+   * Callback when provider form has valid data.
+   * Publishes to section controller following enterprise validation pattern.
+   */
+  const handleValid = useCallback((data: unknown) => {
+    sectionController.publishValid(data as any);
+  }, [sectionController]);
+
+  /**
+   * Callback when provider form has invalid data.
+   * Publishes to section controller following enterprise validation pattern.
+   */
+  const handleInvalid = useCallback((errors?: Record<string, string>) => {
+    sectionController.publishInvalid(errors);
+  }, [sectionController]);
+
   return (
     <PaymentSectionView
       methodsByProvider={methodsByProvider}
       selectedMethodCode={selected?.code}
       locale={locale}
-      sectionController={sectionController}
+      onValid={handleValid}
+      onInvalid={handleInvalid}
     />
   );
 };

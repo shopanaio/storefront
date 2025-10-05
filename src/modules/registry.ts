@@ -67,7 +67,40 @@ export interface ProviderMethod {
   initialValues?: unknown;
 }
 
-export interface ProviderProps {
+/**
+ * Standard validation callbacks interface for all checkout forms.
+ * Follows explicit validation state pattern used in enterprise systems.
+ *
+ * @example
+ * ```tsx
+ * function MyForm({ onValid, onInvalid }: ValidationCallbacks) {
+ *   useEffect(() => {
+ *     if (isFormValid) {
+ *       onValid(formData);
+ *     } else {
+ *       onInvalid({ field: 'error message' });
+ *     }
+ *   }, [formData]);
+ * }
+ * ```
+ */
+export interface ValidationCallbacks {
+  /**
+   * Called when form data passes validation.
+   * Must be called explicitly to mark section as valid.
+   * @param data - Validated form data (DTO)
+   */
+  onValid: (data: unknown) => void;
+
+  /**
+   * Called when form data fails validation.
+   * Must be called explicitly to mark section as invalid.
+   * @param errors - Optional map of field-level errors for debugging
+   */
+  onInvalid: (errors?: Record<string, string>) => void;
+}
+
+export interface ProviderProps extends ValidationCallbacks {
   provider: string;
   methods: ProviderMethod[];
   locale: string;
@@ -75,15 +108,6 @@ export interface ProviderProps {
    * Optional delivery group id. Present for shipping providers.
    */
   groupId?: string;
-  /**
-   * Section controller for validation and state management
-   */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
 }
 
 /**
@@ -96,13 +120,7 @@ export interface ShippingProviderModuleApi {
     methods: Array<{ code: string; label?: string; initialValues?: unknown }>;
     groupId: string;
     locale: string;
-    sectionController: {
-      publishValid: (data: unknown) => void;
-      publishInvalid: (errors?: Record<string, string>) => void;
-      reset: () => void;
-      busy: boolean;
-    };
-  }>;
+  } & ValidationCallbacks>;
   label?: string;
   icon?: string;
   quoteByCode?: (
@@ -121,13 +139,7 @@ export interface PaymentProviderModuleApi {
     provider: string;
     methods: Array<{ code: string; label?: string; initialValues?: unknown }>;
     locale: string;
-    sectionController: {
-      publishValid: (data: unknown) => void;
-      publishInvalid: (errors?: Record<string, string>) => void;
-      reset: () => void;
-      busy: boolean;
-    };
-  }>;
+  } & ValidationCallbacks>;
   label?: string;
   icon?: string;
   initialize?: (code: string, payload: unknown) => Promise<unknown> | unknown;

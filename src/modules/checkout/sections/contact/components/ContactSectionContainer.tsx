@@ -33,24 +33,31 @@ export const ContactSectionContainer = () => {
   );
 
   /**
-   * Handles save event from view and publishes to section controller
+   * Handles valid contact data from view
    */
-  const handleSave = useCallback(
+  const handleValid = useCallback(
     (dto: ContactDto) => {
-      try {
-        publishValid(dto);
-      } catch {
-        publishInvalid?.({});
-      }
+      publishValid(dto);
     },
-    [publishValid, publishInvalid]
+    [publishValid]
+  );
+
+  /**
+   * Handles invalid contact data from view
+   */
+  const handleInvalid = useCallback(
+    (errors?: Record<string, string>) => {
+      publishInvalid(errors);
+    },
+    [publishInvalid]
   );
 
   return (
     <ContactSectionView
       initialValues={initialValues}
       title={t('contact')}
-      onSave={handleSave}
+      onValid={handleValid}
+      onInvalid={handleInvalid}
     />
   );
 };

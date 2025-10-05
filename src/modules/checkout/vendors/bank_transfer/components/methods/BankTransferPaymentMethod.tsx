@@ -13,13 +13,10 @@ export interface BankTransferPaymentMethodProps {
   isActive: boolean;
   /** Callback when method is selected */
   onActivate: () => void;
-  /** Controller API for validation */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
+  /** Callback when form has valid data */
+  onValid: (data: unknown) => void;
+  /** Callback when form has invalid data */
+  onInvalid: (errors?: Record<string, string>) => void;
   /** Initial form values */
   initialValues?: unknown;
 }
@@ -27,20 +24,20 @@ export interface BankTransferPaymentMethodProps {
 /**
  * Bank Transfer payment method component.
  * Includes CheckoutMethodPanel without additional form.
- * Publishes valid status when activated.
+ * Automatically validates as valid when activated (no form required).
  */
 export function BankTransferPaymentMethod({
   isActive,
   onActivate,
-  sectionController,
+  onValid,
 }: BankTransferPaymentMethodProps) {
   const t = useTranslations('Modules.bankTransfer');
 
   useEffect(() => {
     if (isActive) {
-      sectionController.publishValid(null);
+      onValid(null);
     }
-  }, [isActive, sectionController]);
+  }, [isActive, onValid]);
 
   return (
     <CheckoutMethodPanel

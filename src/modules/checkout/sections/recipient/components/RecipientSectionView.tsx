@@ -22,8 +22,10 @@ export interface RecipientSectionViewProps {
   recipientTitle: ReactNode;
   /** Called when switch is toggled */
   onSwitchChange: (checked: boolean) => void;
-  /** Called when recipient data is saved */
-  onSave: (dto: ContactDto) => void;
+  /** Called when recipient data is valid */
+  onValid: (dto: ContactDto) => void;
+  /** Called when recipient data is invalid */
+  onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const RecipientSectionView = ({
@@ -32,7 +34,8 @@ export const RecipientSectionView = ({
   switchLabel,
   recipientTitle,
   onSwitchChange,
-  onSave,
+  onValid,
+  onInvalid,
 }: RecipientSectionViewProps) => {
   const { styles } = useStyles();
 
@@ -52,7 +55,8 @@ export const RecipientSectionView = ({
       {!isRecipientSelf ? (
         <ContactSelect
           initialValues={initialValues}
-          onSave={onSave}
+          onValid={onValid}
+          onInvalid={onInvalid}
           title={recipientTitle}
         />
       ) : null}

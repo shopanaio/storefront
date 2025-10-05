@@ -10,9 +10,9 @@ import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodS
 
 /**
  * NovaPoshta payment provider-level component that renders payment UI.
- * Receives method controllers through props and passes them down to method components.
+ * Receives explicit validation callbacks following enterprise patterns.
  */
-export function NPPaymentProvider({ methods, provider, sectionController }: ProviderProps) {
+export function NPPaymentProvider({ methods, provider, onValid, onInvalid }: ProviderProps) {
   const { styles } = useStyles();
   const { selected, select } = useMethodSelection('payment');
   const activeCode: string | undefined = selected?.code;
@@ -37,7 +37,8 @@ export function NPPaymentProvider({ methods, provider, sectionController }: Prov
                 key={config.code}
                 isActive={activeCode === config.code}
                 onActivate={() => handleSelectMethod(config.code)}
-                sectionController={sectionController}
+                onValid={onValid}
+                onInvalid={onInvalid}
                 initialValues={config.initialValues}
               />
             );

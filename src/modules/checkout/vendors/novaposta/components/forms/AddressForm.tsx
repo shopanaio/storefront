@@ -17,18 +17,15 @@ import { ValidationError } from 'yup';
  * Props for AddressForm
  */
 interface AddressFormProps {
-  /** Controller API for validation */
-  sectionController: {
-    publishValid: (data: unknown) => void;
-    publishInvalid: (errors?: Record<string, string>) => void;
-    reset: () => void;
-    busy: boolean;
-  };
+  /** Callback when form has valid data */
+  onValid: (data: unknown) => void;
+  /** Callback when form has invalid data */
+  onInvalid: (errors?: Record<string, string>) => void;
   /** Initial form values */
   initialValues?: unknown;
 }
 
-export function AddressForm({ sectionController, initialValues }: AddressFormProps) {
+export function AddressForm({ onValid, onInvalid, initialValues }: AddressFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{
     userStreet?: Street | null;
@@ -44,7 +41,6 @@ export function AddressForm({ sectionController, initialValues }: AddressFormPro
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
-  const { publishValid, publishInvalid } = sectionController;
 
   const { watch } = methods;
   const userStreet = watch('userStreet') || null;
@@ -80,19 +76,20 @@ export function AddressForm({ sectionController, initialValues }: AddressFormPro
       };
       try {
         await addressSchema.validate(data, { abortEarly: false });
-        publishValid({ address: data });
+        onValid({ address: data });
       } catch (e) {
-        const errs: Record<string, string> = {};
+        // Validation failed - explicitly mark as invalid
+        const errors: Record<string, string> = {};
         if (e instanceof ValidationError) {
-          for (const err of e.inner) {
-            if (err.path) errs[err.path] = err.message || 'invalid';
-          }
+          e.inner.forEach((err) => {
+            if (err.path) errors[err.path] = err.message;
+          });
         }
-        publishInvalid(errs);
+        onInvalid(errors);
       }
     };
     validate();
-  }, [userStreet, userBuilding, userApartment, publishValid, publishInvalid]);
+  }, [userStreet, userBuilding, userApartment, onValid, onInvalid]);
 
   const handleChangeStreet = useCallback(
     (s: Street) => {
