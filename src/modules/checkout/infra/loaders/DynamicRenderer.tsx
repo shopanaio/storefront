@@ -21,7 +21,9 @@ export function DynamicRenderer<TProps>({
   loader,
   componentProps,
 }: DynamicRendererProps<TProps>) {
-  const [Component, setComponent] = useState<ComponentType<TProps> | null>(null);
+  const [Component, setComponent] = useState<ComponentType<TProps> | null>(
+    null
+  );
 
   useEffect(() => {
     if (!loader) {
@@ -40,5 +42,6 @@ export function DynamicRenderer<TProps>({
 
   if (!Component) return null;
 
-  return <Component {...(componentProps as any)} />;
+  // @ts-expect-error - TODO: Component is not typed
+  return <Component {...componentProps} />;
 }

@@ -64,5 +64,6 @@ export const ProviderRenderer = ({
     onInvalid,
   };
 
+  // @ts-expect-error - TODO: Component is not typed
   return <DynamicRenderer loader={loader} componentProps={componentProps} />;
 };
