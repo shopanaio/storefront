@@ -1,13 +1,13 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { ContactSection } from './contact/components/ContactSection';
-import { AddressSection } from './address/components/AddressSection';
-import { DeliverySection } from './delivery/components/DeliverySection';
-import { PaymentSection } from './payment/components/PaymentSection';
-import { RecipientSection } from './recipient/components/RecipientSection';
-import { CommentSection } from './comment/components/CommentSection';
-import { PromoSection } from './promo/components/PromoSection';
+import { ContactSection } from './contact/components/Container';
+import { AddressSection } from './address/components/Container';
+import { DeliverySection } from './delivery/components/Container';
+import { PaymentSection } from './payment/components/Container';
+import { RecipientSection } from './recipient/components/Container';
+import { CommentSection } from './comment/components/Container';
+import { PromoSection } from './promo/components/Container';
 
 export type SectionSlug = 'contact' | 'recipient' | 'address' | 'delivery' | 'payment' | 'promo' | 'comment';
 

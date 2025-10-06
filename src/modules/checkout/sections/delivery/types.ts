@@ -7,3 +7,10 @@ export interface DeliveryGroup {
   id: string;
   deliveryMethods: ApiCheckoutDeliveryMethod[];
 }
+
+/**
+ * Form data type for the delivery section
+ */
+export interface DeliveryFormData {
+  [key: string]: any;
+}
