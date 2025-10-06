@@ -1,15 +1,5 @@
 import { useMutation } from 'react-relay';
-import {
-  ApiCheckoutDeliveryMethodUpdateInput,
-  ApiCheckoutPaymentMethodUpdateInput,
-  ApiCheckoutCustomerIdentityUpdateInput,
-  ApiCheckoutDeliveryAddressesAddInput,
-  ApiCheckoutDeliveryAddressesUpdateInput,
-  ApiCheckoutDeliveryAddressesRemoveInput,
-  ApiCheckoutCustomerNoteUpdateInput,
-  ApiCheckoutPromoCodeAddInput,
-  ApiCheckoutPromoCodeRemoveInput,
-} from '@codegen/schema-client';
+
 import { selectDeliveryMethodMutation } from '@src/modules/checkout/api/mutations/selectDeliveryMethodMutation.shopana';
 import { selectPaymentMethodMutation } from '@src/modules/checkout/api/mutations/selectPaymentMethodMutation.shopana';
 import { updateCustomerIdentityMutation } from '@src/modules/checkout/api/mutations/updateCustomerIdentityMutation.shopana';
@@ -28,78 +18,43 @@ import type { removeDeliveryAddressesMutation as RemoveDeliveryAddressesMutation
 import type { addPromoCodeMutation as AddPromoCodeMutationType } from '@src/modules/checkout/api/mutations/__generated__/addPromoCodeMutation.graphql';
 import type { removePromoCodeMutation as RemovePromoCodeMutationType } from '@src/modules/checkout/api/mutations/__generated__/removePromoCodeMutation.graphql';
 import type { updateCustomerNoteMutation as UpdateCustomerNoteMutationType } from '@src/modules/checkout/api/mutations/__generated__/updateCustomerNoteMutation.graphql';
-
-export interface CheckoutApi {
-  selectDeliveryMethod: (
-    input: ApiCheckoutDeliveryMethodUpdateInput
-  ) => Promise<void>;
-  selectPaymentMethod: (
-    input: ApiCheckoutPaymentMethodUpdateInput
-  ) => Promise<void>;
-  /**
-   * Update payment method with opaque provider data (server currently ignores data).
-   */
-  updatePaymentMethod: (input: {
-    checkoutId: string;
-    methodCode: string;
-    data: unknown;
-  }) => Promise<void>;
-  /**
-   * Update shipping method for a delivery group with opaque provider data (server currently ignores data).
-   */
-  updateShippingMethod: (input: {
-    checkoutId: string;
-    deliveryGroupId: string;
-    methodCode: string;
-    data: unknown;
-  }) => Promise<void>;
-  updateCustomerIdentity: (
-    input: ApiCheckoutCustomerIdentityUpdateInput
-  ) => Promise<void>;
-  addDeliveryAddresses: (
-    input: ApiCheckoutDeliveryAddressesAddInput
-  ) => Promise<void>;
-  updateDeliveryAddresses: (
-    input: ApiCheckoutDeliveryAddressesUpdateInput
-  ) => Promise<void>;
-  removeDeliveryAddresses: (
-    input: ApiCheckoutDeliveryAddressesRemoveInput
-  ) => Promise<void>;
-  updateCustomerNote: (
-    input: ApiCheckoutCustomerNoteUpdateInput
-  ) => Promise<void>;
-  addPromoCode: (input: ApiCheckoutPromoCodeAddInput) => Promise<void>;
-  removePromoCode: (input: ApiCheckoutPromoCodeRemoveInput) => Promise<void>;
-}
+import { CheckoutApi } from '@src/modules/checkout/api/interface';
 
 export function useCheckoutApi(): CheckoutApi {
   const [commitSelectDelivery] = useMutation<SelectDeliveryMethodMutationType>(
     selectDeliveryMethodMutation
   );
+
   const [commitSelectPayment] = useMutation<SelectPaymentMethodMutationType>(
     selectPaymentMethodMutation
   );
+
   const [commitUpdateIdentity] =
     useMutation<UpdateCustomerIdentityMutationType>(
       updateCustomerIdentityMutation
     );
+
   const [commitAddAddresses] = useMutation<AddDeliveryAddressesMutationType>(
     addDeliveryAddressesMutation
   );
+
   const [commitUpdateAddresses] =
     useMutation<UpdateDeliveryAddressesMutationType>(
       updateDeliveryAddressesMutation
     );
+
   const [commitRemoveAddresses] =
     useMutation<RemoveDeliveryAddressesMutationType>(
       removeDeliveryAddressesMutation
     );
-  const [commitAddPromo] = useMutation<AddPromoCodeMutationType>(
-    addPromoCodeMutation
-  );
+
+  const [commitAddPromo] =
+    useMutation<AddPromoCodeMutationType>(addPromoCodeMutation);
+
   const [commitRemovePromo] = useMutation<RemovePromoCodeMutationType>(
     removePromoCodeMutation
   );
+
   const [commitUpdateNote] = useMutation<UpdateCustomerNoteMutationType>(
     updateCustomerNoteMutation
   );
@@ -127,12 +82,10 @@ export function useCheckoutApi(): CheckoutApi {
           onError: reject,
         });
       }),
-    updatePaymentMethod: ({ checkoutId, methodCode, data }) =>
+    updatePaymentMethod: (input) =>
       new Promise((resolve, reject) => {
         commitSelectPayment({
-          variables: {
-            input: { checkoutId, paymentMethodCode: methodCode, data },
-          },
+          variables: { input },
           onCompleted: (res, errs) => {
             if (errs && errs.length) return reject(errs);
             resolve();
@@ -217,23 +170,20 @@ export function useCheckoutApi(): CheckoutApi {
           onError: reject,
         });
       }),
-    updateShippingMethod: ({ checkoutId, deliveryGroupId, methodCode, data }) =>
+    updateShippingMethod: (input) =>
       new Promise((resolve, reject) => {
         commitSelectDelivery({
-          variables: {
-            input: {
-              checkoutId,
-              deliveryGroupId,
-              shippingMethodCode: methodCode,
-              data,
-            },
-          },
+          variables: { input },
           onCompleted: (res, errs) => {
             if (errs && errs.length) return reject(errs);
             resolve();
           },
           onError: reject,
         });
+      }),
+    submitCheckout: () =>
+      new Promise((_, reject) => {
+        reject(new Error('Not implemented'));
       }),
   };
 }

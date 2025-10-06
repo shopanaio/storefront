@@ -27,7 +27,7 @@ export function useGraphQLCheckoutRepository(): CheckoutRepository {
         data: method.data,
       }),
 
-    selectShippingMethod: ({ checkoutId, deliveryGroupId, method }) =>
+    selectDeliveryMethod: ({ checkoutId, deliveryGroupId, method }) =>
       api.selectDeliveryMethod({
         checkoutId,
         deliveryGroupId,

@@ -27,52 +27,39 @@ export interface AddressDto {
 }
 
 // Payment / Shipping (section-level DTOs)
-export interface PaymentSectionDto {
+export interface PaymentDto {
+  provider: string;
   /** Selected payment method code */
   methodCode: string;
   /** Transport-agnostic provider form data */
   data: unknown;
 }
 
-export interface DeliverySectionDto {
-  /** Selected delivery method code */
+export type DeliveryDto = {
+  /** Group ID */
+  groupId: string;
+  /** Provider */
+  provider: string;
+  /** Method code */
   methodCode: string;
-  /** Transport-agnostic provider form data */
+  /** Data */
   data: unknown;
-}
+};
 
 // Promo / Comment
-export interface PromoDto { code: string }
-export interface CommentDto { comment: string }
-
-// Aggregated submit payload
-export interface SubmitDeliveryDto {
-  groupId: string;
-  methodCode: string;
-  data: unknown;
+export interface PromoDto {
+  code: string;
+}
+export interface CommentDto {
+  comment: string;
 }
 
-export interface SubmitPaymentDto {
-  methodCode: string;
-  data: unknown;
-}
-
-export interface SubmitCheckoutDto {
-  contact?: unknown;
-  recipient?: unknown;
-  deliveries?: SubmitDeliveryDto[];
-  address?: unknown;
-  payment?: SubmitPaymentDto;
-  promo?: unknown;
-  comment?: string;
-}
-
-// Section DTO map by static section ids; dynamic delivery uses DeliverySectionDto
 export interface SectionDtoMap {
   contact: ContactDto;
   recipient: RecipientDto;
   address: AddressDto;
-  payment: PaymentSectionDto;
+  delivery: DeliveryDto;
+  payment: PaymentDto;
   promo: PromoDto;
   comment: CommentDto;
 }

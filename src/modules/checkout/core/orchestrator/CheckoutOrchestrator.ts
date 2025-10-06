@@ -13,14 +13,14 @@ function getSectionKeyFromInflightKey(key: InflightKey): SectionKey | undefined 
   if (key === 'identity') return 'contact';
   if (key === 'recipient') return 'recipient';
   if (key === 'address') return 'address';
+  if (key === 'delivery') return 'delivery';
   if (key === 'payment') return 'payment';
   if (key === 'promo') return 'promo';
   if (key === 'note') return 'comment';
-  if (key.startsWith('delivery:')) return key as unknown as SectionKey;
   return undefined;
 }
 
-function makeDeliveryKey(groupId: string): InflightKey { return `delivery:${groupId}`; }
+function makeDeliveryKey(_groupId: string): InflightKey { return 'delivery'; }
 
 function extractErrorInfo(error: unknown): { message?: string; code?: string } {
   const anyErr = error as { message?: unknown; code?: unknown } | null | undefined;
@@ -182,7 +182,7 @@ export class CheckoutOrchestrator {
       this.inflight.schedule(key, () => {
         void this.inflight.runWithInflight(key, async () => {
           try {
-            await repository.selectShippingMethod({ checkoutId, deliveryGroupId: groupId, method: { code, data: undefined } });
+            await repository.selectDeliveryMethod({ checkoutId, deliveryGroupId: groupId, method: { code, data: undefined } });
           } catch (error) {
             const { message, code: errCode } = extractErrorInfo(error);
             await emitCheckoutEvent('operation/error', {

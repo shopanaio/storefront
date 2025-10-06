@@ -7,6 +7,7 @@ import { useCheckoutDeliveryGroups } from '@src/modules/checkout/hooks/useChecko
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import type { City } from './city/CitySelect';
 import type { DeliveryFormData } from '../types';
+import { DeliveryDto } from '@src/modules/checkout/core/contracts/dto';
 
 /**
  * View component for the delivery section.
@@ -17,11 +18,11 @@ import type { DeliveryFormData } from '../types';
  *
  * @template TFormData - The form data type containing all form fields
  */
-export interface DeliverySectionViewProps<TFormData = DeliveryFormData> {
+export interface DeliverySectionViewProps {
   /** Current form data */
-  value: TFormData | null;
+  value: DeliveryFormData | null;
   /** Called when form data is valid */
-  onValid: (data: TFormData) => void;
+  onValid: (data: DeliveryDto) => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
@@ -30,7 +31,7 @@ export const DeliverySectionView = ({
   value,
   onValid,
   onInvalid,
-}: DeliverySectionViewProps<DeliveryFormData>) => {
+}: DeliverySectionViewProps) => {
   const { styles } = useStyles();
   const deliveryGroups = useCheckoutDeliveryGroups();
 
@@ -38,7 +39,9 @@ export const DeliverySectionView = ({
    * Get currently selected city from address section
    */
   const addressCity = useCheckoutStore((state) => {
-    const data = state.sections.address?.data as { city?: City | null } | undefined;
+    const data = state.sections.address?.data as
+      | { city?: City | null }
+      | undefined;
     return data?.city ?? null;
   });
 
@@ -50,6 +53,8 @@ export const DeliverySectionView = ({
           groupId={group.id}
           methods={group.deliveryMethods || []}
           addressCity={addressCity}
+          onValid={onValid as unknown as (data: unknown) => void}
+          onInvalid={onInvalid}
         />
       ))}
     </Flex>

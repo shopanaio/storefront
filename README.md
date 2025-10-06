@@ -96,5 +96,3 @@ What `yarn dev:<cms>` does:
 ```bash
 yarn storybook
 ```
-
-22 + 23 + 20 + 35 + | (новая капусла) 22 + 29 + 18 + 17 + 22

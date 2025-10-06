@@ -4,7 +4,7 @@ import { useEffect, useMemo, useCallback } from 'react';
 import { useLocale } from 'next-intl';
 import { usePrevious } from 'react-use';
 import type { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
-import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
+// removed duplicate import of useEffect
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import type { City } from './city/CitySelect';
 import { ModuleType } from '@src/modules/registry';
@@ -20,6 +20,10 @@ interface ShippingMethodsRendererProps {
   methods: ApiCheckoutDeliveryMethod[];
   /** Currently selected city from address section */
   addressCity: City | null;
+  /** Bubble section-level valid up */
+  onValid: (data: unknown) => void;
+  /** Bubble section-level invalid up */
+  onInvalid: (errors?: Record<string, string>) => void;
 }
 
 /**
@@ -33,28 +37,33 @@ export const ShippingMethodsRenderer = ({
   groupId,
   methods,
   addressCity,
+  onValid,
+  onInvalid,
 }: ShippingMethodsRendererProps) => {
   const locale = useLocale();
-  const sectionController = useSectionController(`delivery:${groupId}`, {
-    required: true,
-  });
+  const resetSection = useCheckoutStore((s) => s.resetSection);
   const invalidateByGroup = useCheckoutStore(
     (s) => s.invalidateShippingProvidersByGroup
   );
   const prevCityRef = usePrevious(addressCity?.Ref ?? null);
 
   /**
-   * Reset section and invalidate providers when city changes.
+   * Register/unregister delivery group on mount/unmount
+   */
+  // no group registration in store; groups are UI concern
+
+  /**
+   * Reset group and invalidate providers when city changes.
    * This forces providers to revalidate with new city context.
    */
   useEffect(() => {
     const currentRef = addressCity?.Ref ?? null;
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
-      sectionController.reset();
+      resetSection('delivery');
       invalidateByGroup(groupId);
     }
-  }, [addressCity?.Ref, prevCityRef, sectionController, invalidateByGroup, groupId]);
+  }, [addressCity?.Ref, prevCityRef, resetSection, invalidateByGroup, groupId]);
 
   /**
    * Group methods by provider with metadata
@@ -79,16 +88,16 @@ export const ShippingMethodsRenderer = ({
    * Publishes to section controller following enterprise validation pattern.
    */
   const handleValid = useCallback((data: unknown) => {
-    sectionController.publishValid(data as any);
-  }, [sectionController]);
+    onValid(data);
+  }, [onValid]);
 
   /**
    * Callback when provider form has invalid data.
    * Publishes to section controller following enterprise validation pattern.
    */
   const handleInvalid = useCallback((errors?: Record<string, string>) => {
-    sectionController.publishInvalid(errors);
-  }, [sectionController]);
+    onInvalid(errors);
+  }, [onInvalid]);
 
   return (
     <>
