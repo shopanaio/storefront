@@ -5,6 +5,7 @@ import { Button, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { TbTicket } from 'react-icons/tb';
+import type { PromoFormData } from '../types';
 
 /**
  * View component for the checkout promo section.
@@ -21,7 +22,7 @@ export interface PromoSectionViewProps {
   /** Text for the remove button */
   removeText: string;
   /** Called when promo code is valid */
-  onValid: (data: { code: string }) => void;
+  onValid: (data: PromoFormData) => void;
   /** Called when promo code is invalid or removed */
   onInvalid: (errors?: Record<string, string>) => void;
 }

@@ -3,6 +3,7 @@
 import { useCheckoutDeliveryGroups } from '@src/modules/checkout/hooks/useCheckoutDataSources';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import type { City } from './city/CitySelect';
+import type { DeliveryGroup } from '../types';
 import { DeliverySectionView } from './DeliverySectionView';
 
 /**

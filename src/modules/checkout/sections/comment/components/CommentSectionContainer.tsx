@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutComment } from '@src/modules/checkout/hooks/useCheckoutComment';
+import type { CommentFormData } from '../types';
 import { CommentSectionView } from './CommentSectionView';
 
 /**
@@ -27,7 +28,8 @@ export const CommentSectionContainer = () => {
   const handleChange = useCallback(
     (next: string) => {
       // Publish current value on each change; section is optional
-      publishValid({ comment: next });
+      const data: CommentFormData = { comment: next };
+      publishValid(data);
     },
     [publishValid]
   );

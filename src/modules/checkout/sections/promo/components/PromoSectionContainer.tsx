@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutPromoCode } from '@src/modules/checkout/hooks/useCheckoutPromoCodes';
+import type { PromoFormData } from '../types';
 import { PromoSectionView } from './PromoSectionView';
 
 /**
@@ -28,7 +29,7 @@ export const PromoSectionContainer = () => {
    * Handles valid promo code data from view
    */
   const handleValid = useCallback(
-    (data: { code: string }) => {
+    (data: PromoFormData) => {
       publishValid(data);
     },
     [publishValid]

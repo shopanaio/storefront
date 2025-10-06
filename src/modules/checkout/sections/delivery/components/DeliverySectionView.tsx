@@ -2,17 +2,9 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import type { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
 import { ShippingMethodsRenderer } from './ShippingMethodsRenderer';
 import type { City } from './city/CitySelect';
-
-/**
- * Delivery group data
- */
-export interface DeliveryGroup {
-  id: string;
-  deliveryMethods: ApiCheckoutDeliveryMethod[];
-}
+import type { DeliveryGroup } from '../types';
 
 /**
  * Props for DeliverySectionView
