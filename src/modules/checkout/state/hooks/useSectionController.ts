@@ -7,9 +7,8 @@ import {
   CheckoutEvent,
   onCheckoutEvent,
 } from '@src/modules/checkout/state/checkoutBus';
-import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
-import { SectionId } from '@src/modules/checkout/state/types';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 /**
  * Register a section and control its validation lifecycle.
@@ -67,18 +66,13 @@ export function useSectionController(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const publishValid = useCallback(
-    (dto: SectionDtoFor<SectionId>) => {
-      useCheckoutStore
-        .getState()
-        .sectionValid(sectionId, dto as SectionDtoFor<SectionId>);
-    },
-    [sectionId]
-  );
+  const publishValid = useCallback(() => {
+    useCheckoutStore.getState().sectionValid(sectionId);
+  }, [sectionId]);
 
   const publishInvalid = useCallback(
     (errors?: Record<string, string>) => {
-      useCheckoutStore.getState().sectionInvalid(sectionId, undefined, errors);
+      useCheckoutStore.getState().sectionInvalid(sectionId, errors);
     },
     [sectionId]
   );
