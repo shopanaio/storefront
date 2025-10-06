@@ -2,24 +2,24 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import type { ProviderProps } from '@src/modules/registry';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { loadNovapostaMessages } from '../i18n';
 import { NOVA_POSHTA_CONFIG } from './config';
-import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { ProviderComponentProps } from '@src/modules/checkout/vendors/types';
 
 /**
  * NovaPoshta payment provider-level component that renders payment UI.
  * Receives explicit validation callbacks following enterprise patterns.
  */
-export function NPPaymentProvider({ methods, provider, onValid, onInvalid }: ProviderProps) {
+export function NPPaymentProvider({
+  methods,
+  onValid,
+  onInvalid,
+  selectedMethod,
+}: ProviderComponentProps) {
   const { styles } = useStyles();
-  const { selected, select } = useMethodSelection('payment');
-  const activeCode: string | undefined = selected?.code;
 
-  const handleSelectMethod = (code: string) => {
-    select({ code, vendor: provider });
-  };
+  const handleSelectMethod = () => {};
 
   return (
     <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
@@ -35,8 +35,8 @@ export function NPPaymentProvider({ methods, provider, onValid, onInvalid }: Pro
             return (
               <MethodComponent
                 key={config.code}
-                isActive={activeCode === config.code}
-                onActivate={() => handleSelectMethod(config.code)}
+                isActive={selectedMethod?.code === config.code}
+                onActivate={() => handleSelectMethod()}
                 onValid={onValid}
                 onInvalid={onInvalid}
                 initialValues={config.initialValues}

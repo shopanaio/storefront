@@ -1,8 +1,8 @@
-import { registerModule, ModuleType } from '@src/modules/registry';
+import { registerModule } from '@src/modules/registry';
 
 /**
  * Registers `checkout` module.
  */
-registerModule(ModuleType.Page, 'checkout', async () => {
+registerModule('page', 'checkout', async () => {
   return await import('@src/modules/checkout/page/page');
 });

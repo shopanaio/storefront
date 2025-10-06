@@ -7,6 +7,7 @@ import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRe
 import { useLocale } from 'next-intl';
 import { useMemo, useCallback } from 'react';
 import type { PaymentFormData } from '../types';
+import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
 
 /**
  * View component for the payment section.
@@ -43,13 +44,13 @@ export const PaymentSectionView = ({
     }
 
     const grouped = paymentMethods.reduce<
-      Record<string, Array<{ code: string }>>
+      Record<string, Array<{ code: string; data: unknown }>>
     >((acc, method) => {
-      const { provider, code } = method;
+      const { provider, code, data } = method;
       if (!acc[provider]) {
         acc[provider] = [];
       }
-      acc[provider].push({ code });
+      acc[provider].push({ code, data });
       return acc;
     }, {});
 
@@ -74,10 +75,9 @@ export const PaymentSectionView = ({
       {Object.entries(methodsByProvider).map(([provider, methods]) => (
         <ProviderRenderer
           key={provider}
-          moduleType={ModuleType.Payment}
+          moduleType={ProviderModuleType.Payment}
           provider={provider}
           methods={methods}
-          locale={locale}
           onValid={handleValid}
           onInvalid={handleInvalid}
           selectedMethod={selectedPaymentMethod ?? null}

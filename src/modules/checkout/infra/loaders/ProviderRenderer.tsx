@@ -1,42 +1,12 @@
 import React from 'react';
-import {
-  moduleRegistry,
-  ModuleType,
-  type ShippingProviderModuleApi,
-  type PaymentProviderModuleApi,
-} from '@src/modules/registry';
+
 import { DynamicRenderer } from './DynamicRenderer';
-
-/**
- * Union type for all provider module APIs
- */
-type ProviderModuleApi = ShippingProviderModuleApi | PaymentProviderModuleApi;
-
-/**
- * Props for the ProviderRenderer component
- */
-type InputProviderMethod = { code: string; label?: string };
-
-interface ProviderRendererProps {
-  /** Type of module to load (shipping or payment) */
-  moduleType: ModuleType;
-  /** Provider identifier */
-  provider: string;
-  /** Methods: can be raw with providerId or enriched with controller APIs */
-  methods: InputProviderMethod[];
-  /** Current locale */
-  locale: string;
-  /** Callback when provider form has valid data */
-  onValid: (data: unknown) => void;
-  /** Callback when provider form has invalid data */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Selected method */
-  selectedMethod: {
-    code: string;
-    provider: string;
-    data: unknown;
-  } | null;
-}
+import { moduleRegistry } from '@src/modules/registry';
+import {
+  ProviderComponentProps,
+  ProviderModuleApi,
+  ProviderProps,
+} from '@src/modules/checkout/vendors/types';
 
 /**
  * Generic component for loading and rendering provider modules.
@@ -49,20 +19,18 @@ export const ProviderRenderer = ({
   moduleType,
   provider,
   methods,
-  locale,
   onValid,
   onInvalid,
   selectedMethod,
-}: ProviderRendererProps) => {
+}: ProviderProps) => {
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
     provider
   );
 
-  const componentProps = {
+  const componentProps: ProviderComponentProps = {
     provider,
     methods,
-    locale,
     onValid,
     onInvalid,
     selectedMethod,

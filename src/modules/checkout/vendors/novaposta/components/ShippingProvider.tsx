@@ -1,11 +1,10 @@
 'use client';
 
 import { Flex } from 'antd';
-import type { ProviderProps } from '@src/modules/registry';
 import { NOVA_POSHTA_CONFIG } from './config';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { loadNovapostaMessages } from '../i18n';
-import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { ProviderComponentProps } from '@src/modules/checkout/vendors/types';
 
 /**
  * NovaPoshta provider-level component that renders full shipping UI.
@@ -13,17 +12,13 @@ import { useMethodSelectionShipping } from '@src/modules/checkout/state/hooks/us
  */
 export function NPShippingProvider({
   methods,
-  groupId,
-  provider,
   onValid,
   onInvalid,
-}: ProviderProps) {
-  const { selected, select } = useMethodSelectionShipping(groupId as string);
-  const activeCode: string | undefined = selected?.code;
+  selectedMethod,
+}: ProviderComponentProps) {
+  const activeCode: string | undefined = selectedMethod?.code;
 
-  const handleSelectMethod = (code: string) => {
-    select({ code, vendor: provider });
-  };
+  const handleSelectMethod = () => {};
 
   return (
     <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
@@ -40,7 +35,7 @@ export function NPShippingProvider({
               <MethodComponent
                 key={config.code}
                 isActive={activeCode === config.code}
-                onActivate={() => handleSelectMethod(config.code)}
+                onActivate={() => handleSelectMethod()}
                 onValid={onValid}
                 onInvalid={onInvalid}
                 initialValues={config.initialValues}

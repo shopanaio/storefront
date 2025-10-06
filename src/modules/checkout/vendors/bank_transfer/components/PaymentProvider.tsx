@@ -1,23 +1,25 @@
 'use client';
 
 import { Flex } from 'antd';
-import type { ProviderProps } from '@src/modules/registry';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { loadBankTransferMessages } from '../i18n';
 import { BANK_TRANSFER_CONFIG } from './config';
-import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
+import { ProviderProps } from '@src/modules/checkout/vendors/types';
 
 /**
  * Bank Transfer payment provider-level component that renders payment UI.
  * Receives explicit validation callbacks following enterprise patterns.
  */
-export function BTPaymentProvider({ methods, provider, onValid, onInvalid }: ProviderProps) {
-  const { selected, select } = useMethodSelection('payment');
+export function BTPaymentProvider({
+  methods,
+  provider,
+  onValid,
+  onInvalid,
+  selectedMethod,
+}: ProviderProps) {
   const activeCode: string | undefined = selected?.code;
 
-  const handleSelectMethod = (code: string) => {
-    select({ code, vendor: provider });
-  };
+  const handleSelectMethod = (code: string) => {};
 
   return (
     <ScopedIntlProvider scope="bankTransfer" load={loadBankTransferMessages}>

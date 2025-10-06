@@ -11,6 +11,7 @@ import type {
   DeliveryGroupRecord,
   DeliveryProviderMethodsRecord,
 } from '../types';
+import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
 
 /**
  * View component for the payment section.
@@ -95,10 +96,9 @@ export const DeliverySectionView = ({
               ([provider, methods]) => (
                 <ProviderRenderer
                   key={provider}
-                  moduleType={ModuleType.Delivery}
+                  moduleType={ProviderModuleType.Delivery}
                   provider={provider}
                   methods={methods}
-                  locale={locale}
                   onValid={handleValid}
                   onInvalid={handleInvalid}
                   selectedMethod={selectedDeliveryMethod ?? null}

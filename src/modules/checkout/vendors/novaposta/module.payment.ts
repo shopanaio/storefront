@@ -1,9 +1,8 @@
-import type { PaymentProviderModuleApi } from "@src/modules/registry";
-import { NPPaymentProvider } from "./components/PaymentProvider";
+import { ProviderModuleApi } from '@src/modules/checkout/vendors/types';
+import { NPPaymentProvider } from './components/PaymentProvider';
 
-const paymentProviderModule: PaymentProviderModuleApi = {
-  provider: "novaposhta",
-  label: "Nova Poshta (Payment)",
+const paymentProviderModule: ProviderModuleApi = {
+  provider: 'novaposhta',
   Component: NPPaymentProvider,
 };
 

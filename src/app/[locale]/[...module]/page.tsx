@@ -1,13 +1,13 @@
-import React from "react";
-import { redirect } from "next/navigation";
-import "@src/modules";
+import React from 'react';
+import { redirect } from 'next/navigation';
+import '@src/modules';
 import {
   moduleRegistry,
   ModuleType,
   type DynamicModulePageProps,
   type ModuleExport,
   type AsyncModuleLoader,
-} from "@src/modules/registry";
+} from '@src/modules/registry';
 
 /**
  * Server page that resolves modules by slug using the global Module Registry.
@@ -24,15 +24,17 @@ export default async function Page({
   const slug = segments[0];
 
   if (!slug) {
-    return redirect("/");
+    return redirect('/');
   }
 
-  const loader = moduleRegistry.resolve(ModuleType.Page, slug);
+  const loader = moduleRegistry.resolve('page', slug);
   if (!loader) {
-    return redirect("/");
+    return redirect('/');
   }
 
-  const typedLoader = loader as AsyncModuleLoader<ModuleExport<DynamicModulePageProps>>;
+  const typedLoader = loader as AsyncModuleLoader<
+    ModuleExport<DynamicModulePageProps>
+  >;
   const mod = await typedLoader();
 
   /**
@@ -43,8 +45,8 @@ export default async function Page({
   ): React.ComponentType<DynamicModulePageProps> {
     if (
       input &&
-      typeof input === "object" &&
-      "default" in (input as Record<string, unknown>)
+      typeof input === 'object' &&
+      'default' in (input as Record<string, unknown>)
     ) {
       return (input as { default: React.ComponentType<DynamicModulePageProps> })
         .default;

@@ -1,12 +1,11 @@
-import type { ShippingProviderModuleApi } from '@src/modules/registry';
+import { ProviderModuleApi } from '@src/modules/checkout/vendors/types';
 import { NPShippingProvider } from './components/ShippingProvider';
 
 /**
  * Nova Poshta shipping module API that can be consumed by checkout.
  */
-const shippingProviderModule: ShippingProviderModuleApi = {
+const shippingProviderModule: ProviderModuleApi = {
   provider: 'novaposhta',
-  label: 'Nova Poshta',
   Component: NPShippingProvider,
 };
 
