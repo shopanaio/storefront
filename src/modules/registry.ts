@@ -7,7 +7,7 @@ export type ModuleSlug = string;
  */
 export enum ModuleType {
   Page = "page",
-  Shipping = "shipping",
+  Delivery = "delivery",
   Payment = "payment",
 }
 

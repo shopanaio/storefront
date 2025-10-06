@@ -1,6 +1,13 @@
+export interface PaymentMethod {
+  code: string;
+  provider: string;
+  data: unknown;
+}
+
 /**
  * Form data type for the payment section
  */
 export interface PaymentFormData {
-  [key: string]: any;
+  paymentMethods: PaymentMethod[];
+  selectedPaymentMethod: PaymentMethod;
 }

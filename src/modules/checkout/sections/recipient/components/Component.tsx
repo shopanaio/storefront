@@ -3,7 +3,6 @@
 import { Flex, Switch, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { ContactSelect } from '@src/modules/checkout/components/contact/ContactSelect';
-import type { ContactDto } from '@src/modules/checkout/core/contracts/dto';
 import { useTranslations } from 'next-intl';
 import { useState, useCallback } from 'react';
 import type { RecipientFormData } from '../types';
@@ -14,35 +13,25 @@ import type { RecipientFormData } from '../types';
  * Pure controlled UI component that renders the recipient form.
  * Receives generic form data and extracts needed fields.
  * Does not manage its own state - all state is controlled via props.
- *
- * @template TFormData - The form data type containing all form fields
  */
-export interface RecipientSectionViewProps<TFormData = RecipientFormData> {
+export interface RecipientSectionViewProps {
   /** Current form data */
-  value: TFormData | null;
+  data: RecipientFormData | null;
   /** Called when form data is valid */
-  onValid: (data: TFormData) => void;
+  onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const RecipientSectionView = ({
-  value,
+  data,
   onValid,
   onInvalid,
-}: RecipientSectionViewProps<RecipientFormData>) => {
+}: RecipientSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
 
-  const [isRecipientSelf, setIsRecipientSelf] = useState(
-    value?.self ?? true
-  );
-  const [recipientData, setRecipientData] = useState<Partial<ContactDto>>({
-    userFirstName: (value as any)?.userFirstName ?? '',
-    userLastName: (value as any)?.userLastName ?? '',
-    userMiddleName: (value as any)?.userMiddleName ?? '',
-    userPhone: (value as any)?.userPhone ?? '',
-  });
+  const [isRecipientSelf, setIsRecipientSelf] = useState(data?.self ?? true);
 
   /**
    * Handles switch toggle between self and another person
@@ -55,37 +44,10 @@ export const RecipientSectionView = ({
         // Wait for user to fill the form
       } else {
         // When switching to "self", immediately publish
-        onValid({ self: true } as TFormData);
+        onValid();
       }
     },
     [onValid]
-  );
-
-  /**
-   * Handles valid recipient data from view
-   */
-  const handleValid = useCallback(
-    (dto: ContactDto) => {
-      // Save recipient data to preserve it
-      setRecipientData(dto);
-
-      if (isRecipientSelf) {
-        onValid({ self: true } as TFormData);
-      } else {
-        onValid({ self: false, ...dto } as TFormData);
-      }
-    },
-    [isRecipientSelf, onValid]
-  );
-
-  /**
-   * Handles invalid recipient data from view
-   */
-  const handleInvalid = useCallback(
-    (errors?: Record<string, string>) => {
-      onInvalid(errors);
-    },
-    [onInvalid]
   );
 
   return (
@@ -103,9 +65,9 @@ export const RecipientSectionView = ({
 
       {!isRecipientSelf ? (
         <ContactSelect
-          initialValues={recipientData}
-          onValid={handleValid}
-          onInvalid={handleInvalid}
+          initialValues={data}
+          onValid={onValid}
+          onInvalid={onInvalid}
           title={t('recipient')}
         />
       ) : null}

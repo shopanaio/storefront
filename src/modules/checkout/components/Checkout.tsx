@@ -4,10 +4,10 @@ import { useTranslations } from 'next-intl';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutDataContext';
 import { CheckoutApiProvider } from '@src/modules/checkout/context/CheckoutApiContext';
-import { CheckoutController } from '@src/modules/checkout/controller/CheckoutController';
 import { useValidationAlert } from '@src/modules/checkout/hooks/useValidationAlert';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { CheckoutView } from './CheckoutView';
+import { CheckoutController } from '@src/modules/checkout/components/CheckoutController';
 
 interface Prop {
   cartId: string | null;

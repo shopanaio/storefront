@@ -26,12 +26,16 @@ interface ProviderRendererProps {
   methods: InputProviderMethod[];
   /** Current locale */
   locale: string;
-  /** Optional delivery group id (required for shipping providers) */
-  groupId?: string;
   /** Callback when provider form has valid data */
   onValid: (data: unknown) => void;
   /** Callback when provider form has invalid data */
   onInvalid: (errors?: Record<string, string>) => void;
+  /** Selected method */
+  selectedMethod: {
+    code: string;
+    provider: string;
+    data: unknown;
+  } | null;
 }
 
 /**
@@ -46,9 +50,9 @@ export const ProviderRenderer = ({
   provider,
   methods,
   locale,
-  groupId,
   onValid,
   onInvalid,
+  selectedMethod,
 }: ProviderRendererProps) => {
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
@@ -59,11 +63,13 @@ export const ProviderRenderer = ({
     provider,
     methods,
     locale,
-    ...(groupId !== undefined && { groupId }),
     onValid,
     onInvalid,
+    selectedMethod,
   };
 
-  // @ts-expect-error - TODO: Component is not typed
-  return <DynamicRenderer loader={loader} componentProps={componentProps} />;
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <DynamicRenderer loader={loader as any} componentProps={componentProps} />
+  );
 };

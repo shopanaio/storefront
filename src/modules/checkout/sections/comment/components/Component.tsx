@@ -12,36 +12,34 @@ import type { CommentFormData } from '../types';
  * Pure controlled UI component that renders the comment form.
  * Receives generic form data and extracts needed fields (comment).
  * Does not manage its own state - all state is controlled via props.
- *
- * @template TFormData - The form data type containing all form fields
  */
-export interface CommentSectionViewProps<TFormData = CommentFormData> {
+export interface CommentSectionViewProps {
   /** Current form data */
-  value: TFormData | null;
+  data: CommentFormData | null;
   /** Called when form data is valid */
-  onValid: (data: TFormData) => void;
+  onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const CommentSectionView = ({
-  value,
+  data,
   onValid,
-}: CommentSectionViewProps<CommentFormData>) => {
+}: CommentSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
 
-  const [comment, setComment] = useState(value?.comment ?? '');
-  const [isOpen, setIsOpen] = useState(Boolean(value?.comment));
+  const [comment, setComment] = useState(data?.comment ?? '');
+  const [isOpen, setIsOpen] = useState(Boolean(data?.comment));
 
-  // Sync local state when value changes
+  // Sync local state when data changes
   useEffect(() => {
-    const newComment = value?.comment ?? '';
+    const newComment = data?.comment ?? '';
     setComment(newComment);
     if (newComment) {
       setIsOpen(true);
     }
-  }, [value?.comment]);
+  }, [data?.comment]);
 
   const onToggle = () => setIsOpen((prev) => !prev);
 
@@ -49,7 +47,7 @@ export const CommentSectionView = ({
     (newComment: string) => {
       setComment(newComment);
       // Update only the comment field in form data
-      onValid({ comment: newComment });
+      onValid();
     },
     [onValid]
   );

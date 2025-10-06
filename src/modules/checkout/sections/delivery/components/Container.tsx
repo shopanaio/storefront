@@ -2,21 +2,17 @@ import { makeSection } from '@src/modules/checkout/components/section/makeSectio
 import Component from './Component';
 
 import type { DeliveryFormData } from '../types';
-import { CheckoutState } from '@src/modules/checkout/state/interface';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 /**
  * Delivery section component created with makeSection.
  * Handles delivery method selection for checkout.
  */
-export const DeliverySection = makeSection<
-  'delivery',
-  DeliveryDto,
-  DeliveryFormData
->({
-  id: 'delivery',
+export const DeliverySection = makeSection<DeliveryFormData>({
+  id: SectionId.Delivery,
   required: true,
   Component,
-  selector: (state: CheckoutState) =>
+  selector: (state) =>
     (state.sections.delivery?.data ?? null) as DeliveryFormData | null,
   displayName: 'DeliverySection',
 });

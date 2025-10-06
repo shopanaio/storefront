@@ -2,21 +2,17 @@ import { makeSection } from '@src/modules/checkout/components/section/makeSectio
 import Component from './Component';
 
 import type { PromoFormData } from '../types';
-import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 /**
  * Promo section component created with makeSection.
  * Handles promo code for checkout.
  */
-export const PromoSection = makeSection<
-  'promo',
-  PromoFormData,
-  PromoFormData
->({
-  id: 'promo',
+export const PromoSection = makeSection<PromoFormData>({
+  id: SectionId.Promo,
   required: false,
   Component,
-  selector: (state: CheckoutState) =>
+  selector: (state) =>
     (state.sections.promo?.data ?? null) as PromoFormData | null,
   displayName: 'PromoSection',
 });

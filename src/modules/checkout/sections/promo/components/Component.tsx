@@ -14,40 +14,38 @@ import type { PromoFormData } from '../types';
  * Pure controlled UI component that renders the promo form.
  * Receives generic form data and extracts needed fields (code).
  * Does not manage its own state - all state is controlled via props.
- *
- * @template TFormData - The form data type containing all form fields
  */
-export interface PromoSectionViewProps<TFormData = PromoFormData> {
+export interface PromoSectionViewProps {
   /** Current form data */
-  value: TFormData | null;
+  data: PromoFormData | null;
   /** Called when form data is valid */
-  onValid: (data: TFormData) => void;
+  onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const PromoSectionView = ({
-  value,
+  data,
   onValid,
   onInvalid,
-}: PromoSectionViewProps<PromoFormData>) => {
+}: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
 
-  const [code, setCode] = useState(value?.code ?? '');
-  const [isApplied, setIsApplied] = useState(Boolean(value?.code));
+  const [code, setCode] = useState(data?.code ?? '');
+  const [isApplied, setIsApplied] = useState(Boolean(data?.code));
 
-  // Sync local state when value changes
+  // Sync local state when data changes
   useEffect(() => {
-    const newCode = value?.code ?? '';
+    const newCode = data?.code ?? '';
     setCode(newCode);
     setIsApplied(Boolean(newCode));
-  }, [value?.code]);
+  }, [data?.code]);
 
   const handleApply = useCallback(() => {
     const trimmedCode = code.trim();
     if (trimmedCode) {
-      onValid({ code: trimmedCode });
+      onValid();
       setIsApplied(true);
     } else {
       onInvalid({ code: 'required' });
@@ -57,7 +55,7 @@ export const PromoSectionView = ({
   const handleRemove = useCallback(() => {
     setCode('');
     setIsApplied(false);
-    onInvalid(undefined);
+    onInvalid();
   }, [onInvalid]);
 
   return (

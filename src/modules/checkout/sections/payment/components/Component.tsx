@@ -6,8 +6,6 @@ import { ModuleType } from '@src/modules/registry';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 import { useLocale } from 'next-intl';
 import { useMemo, useCallback } from 'react';
-import { useCheckoutPaymentMethods } from '@src/modules/checkout/hooks/useCheckoutDataSources';
-import { useMethodSelection } from '@src/modules/checkout/state/hooks/useMethodSelection';
 import type { PaymentFormData } from '../types';
 
 /**
@@ -16,53 +14,56 @@ import type { PaymentFormData } from '../types';
  * Pure controlled UI component that renders the payment form.
  * Receives generic form data and extracts needed fields.
  * Does not manage its own state - all state is controlled via props.
- *
- * @template TFormData - The form data type containing all form fields
  */
-export interface PaymentSectionViewProps<TFormData = PaymentFormData> {
+export interface PaymentSectionViewProps {
   /** Current form data */
-  value: TFormData | null;
+  data: PaymentFormData | null;
   /** Called when form data is valid */
-  onValid: (data: TFormData) => void;
+  onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const PaymentSectionView = ({
-  value,
+  data,
   onValid,
   onInvalid,
-}: PaymentSectionViewProps<PaymentFormData>) => {
+}: PaymentSectionViewProps) => {
   const { styles } = useStyles();
   const locale = useLocale();
-  const paymentMethods = useCheckoutPaymentMethods();
-  const { selected } = useMethodSelection('payment');
+  const { paymentMethods, selectedPaymentMethod } = data ?? {};
 
   /**
    * Group methods by provider with metadata
    */
   const methodsByProvider = useMemo(() => {
+    /** Return empty object if no payment methods */
+    if (!paymentMethods?.length) {
+      return {};
+    }
+
     const grouped = paymentMethods.reduce<
       Record<string, Array<{ code: string }>>
     >((acc, method) => {
-      const provider = method.provider;
-      (acc[provider] ||= []).push({
-        code: method.code,
-      });
+      const { provider, code } = method;
+      if (!acc[provider]) {
+        acc[provider] = [];
+      }
+      acc[provider].push({ code });
       return acc;
     }, {});
+
     return grouped;
   }, [paymentMethods]);
 
-  const handleValid = useCallback(
-    (data: unknown) => {
-      onValid(data as PaymentFormData);
-    },
-    [onValid]
-  );
+  const handleValid = useCallback(() => {
+    // TODO: Aggregate data for delivery groups and call onValid
+    onValid();
+  }, [onValid]);
 
   const handleInvalid = useCallback(
     (errors?: Record<string, string>) => {
+      // TODO: Aggregate data for delivery groups and call onInvalid
       onInvalid(errors);
     },
     [onInvalid]
@@ -79,6 +80,7 @@ export const PaymentSectionView = ({
           locale={locale}
           onValid={handleValid}
           onInvalid={handleInvalid}
+          selectedMethod={selectedPaymentMethod ?? null}
         />
       ))}
     </Flex>

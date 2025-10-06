@@ -1,5 +1,3 @@
-import type { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
-
 export interface DeliveryMethod {
   code: string;
   provider: string;
@@ -20,3 +18,21 @@ export interface DeliveryGroup {
 export interface DeliveryFormData {
   [key: string]: DeliveryGroup;
 }
+
+type DeliveryProviderCode = string;
+type DeliveryMethodCode = string;
+type DeliveryMethodData = unknown;
+
+export type DeliveryProviderMethodsRecord = Record<
+  DeliveryProviderCode,
+  Array<{
+    code: DeliveryMethodCode;
+    data: DeliveryMethodData;
+  }>
+>;
+
+export type DeliveryGroupRecord = {
+  id: string;
+  selectedDeliveryMethod: DeliveryMethod | null;
+  providerMethodsRecord: DeliveryProviderMethodsRecord;
+};

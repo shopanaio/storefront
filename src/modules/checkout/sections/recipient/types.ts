@@ -1,8 +1,8 @@
-import type { ContactDto } from '@src/modules/checkout/core/contracts/dto';
+import { ContactFormData } from "@src/modules/checkout/sections/contact/types";
 
 /**
  * Form data type for the recipient section
  */
-export interface RecipientFormData extends Partial<ContactDto> {
+export interface RecipientFormData extends Partial<ContactFormData> {
   self: boolean;
 }

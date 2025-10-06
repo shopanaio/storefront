@@ -3,4 +3,5 @@
  */
 export interface PromoFormData {
   code: string;
+  provider: string;
 }

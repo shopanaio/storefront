@@ -2,21 +2,17 @@ import { makeSection } from '@src/modules/checkout/components/section/makeSectio
 import Component from './Component';
 
 import type { RecipientFormData } from '../types';
-import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 /**
  * Recipient section component created with makeSection.
  * Handles recipient information for checkout.
  */
-export const RecipientSection = makeSection<
-  'recipient',
-  RecipientFormData,
-  RecipientFormData
->({
-  id: 'recipient',
+export const RecipientSection = makeSection<RecipientFormData>({
+  id: SectionId.Recipient,
   required: true,
   Component,
-  selector: (state: CheckoutState) =>
+  selector: (state) =>
     (state.sections.recipient?.data ?? null) as RecipientFormData | null,
   displayName: 'RecipientSection',
 });

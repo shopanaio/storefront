@@ -2,62 +2,113 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { ShippingMethodsRenderer } from './ShippingMethodsRenderer';
-import { useCheckoutDeliveryGroups } from '@src/modules/checkout/hooks/useCheckoutDataSources';
-import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
-import type { City } from './city/CitySelect';
-import type { DeliveryFormData } from '../types';
-import { DeliveryDto } from '@src/modules/checkout/core/contracts/dto';
+import { ModuleType } from '@src/modules/registry';
+import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
+import { useLocale } from 'next-intl';
+import { useMemo, useCallback } from 'react';
+import type {
+  DeliveryFormData,
+  DeliveryGroupRecord,
+  DeliveryProviderMethodsRecord,
+} from '../types';
 
 /**
- * View component for the delivery section.
+ * View component for the payment section.
  *
- * Pure controlled UI component that renders the delivery form.
+ * Pure controlled UI component that renders the payment form.
  * Receives generic form data and extracts needed fields.
  * Does not manage its own state - all state is controlled via props.
- *
- * @template TFormData - The form data type containing all form fields
  */
 export interface DeliverySectionViewProps {
   /** Current form data */
-  value: DeliveryFormData | null;
+  data: DeliveryFormData | null;
   /** Called when form data is valid */
-  onValid: (data: DeliveryDto) => void;
+  onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const DeliverySectionView = ({
-  value,
+  data,
   onValid,
   onInvalid,
 }: DeliverySectionViewProps) => {
   const { styles } = useStyles();
-  const deliveryGroups = useCheckoutDeliveryGroups();
+  const locale = useLocale();
 
-  /**
-   * Get currently selected city from address section
-   */
-  const addressCity = useCheckoutStore((state) => {
-    const data = state.sections.address?.data as
-      | { city?: City | null }
-      | undefined;
-    return data?.city ?? null;
-  });
+  const deliveryGroups = useMemo(() => {
+    /** Currently only a single group is supported */
+    const result: DeliveryGroupRecord[] = [];
+    const [, deliveryGroup] = Object.entries(data ?? {}).at(0) || [];
+
+    const {
+      id: deliveryGroupId,
+      deliveryMethods,
+      selectedDeliveryMethod = null,
+    } = deliveryGroup || {};
+
+    /** Return empty object if no payment methods */
+    if (!deliveryGroupId || !deliveryMethods?.length) {
+      return result;
+    }
+
+    const providerMethodsRecord =
+      deliveryMethods.reduce<DeliveryProviderMethodsRecord>((acc, method) => {
+        const { provider, code } = method;
+        if (!acc[provider]) {
+          acc[provider] = [];
+        }
+        acc[provider].push({
+          code,
+          data: method.data,
+        });
+        return acc;
+      }, {});
+
+    result.push({
+      id: deliveryGroupId,
+      selectedDeliveryMethod,
+      providerMethodsRecord,
+    });
+    return result;
+  }, [data]);
+
+  const handleValid = useCallback(() => {
+    // TODO: Aggregate data for delivery groups and call onValid
+    onValid();
+  }, [onValid]);
+
+  const handleInvalid = useCallback(
+    (errors?: Record<string, string>) => {
+      // TODO: Aggregate data for delivery groups and call onInvalid
+      onInvalid(errors);
+    },
+    [onInvalid]
+  );
 
   return (
-    <Flex vertical gap={12} className={styles.container}>
-      {deliveryGroups.map((group) => (
-        <ShippingMethodsRenderer
-          key={group.id}
-          groupId={group.id}
-          methods={group.deliveryMethods || []}
-          addressCity={addressCity}
-          onValid={onValid as unknown as (data: unknown) => void}
-          onInvalid={onInvalid}
-        />
-      ))}
-    </Flex>
+    <>
+      {deliveryGroups.map(
+        ({ id, providerMethodsRecord, selectedDeliveryMethod }) => (
+          <Flex key={id} vertical gap={12} className={styles.container}>
+            {Object.entries(providerMethodsRecord).map(
+              ([provider, methods]) => (
+                <ProviderRenderer
+                  key={provider}
+                  moduleType={ModuleType.Delivery}
+                  provider={provider}
+                  methods={methods}
+                  locale={locale}
+                  onValid={handleValid}
+                  onInvalid={handleInvalid}
+                  selectedMethod={selectedDeliveryMethod ?? null}
+                />
+              )
+            )}
+          </Flex>
+        )
+      )}
+    </>
   );
 };
 
