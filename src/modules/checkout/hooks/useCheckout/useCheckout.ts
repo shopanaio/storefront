@@ -1,9 +1,10 @@
 import { useLazyLoadQuery } from 'react-relay';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
 import type { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
-import { mapApiCheckoutToCheckout } from '@src/modules/checkout/mappers/mapApiCheckoutToCheckout';
+import { mapApiCheckoutToCheckout } from './mapApiCheckoutToCheckout';
 import type { Checkout } from '@src/modules/checkout/types/entity';
+import { ApiCheckout } from '@codegen/schema-client';
 
 /**
  * Hook to load and manage checkout data.
@@ -29,7 +30,7 @@ const useCheckout = (cartId: string | null) => {
   // Map API checkout data to domain Checkout entity
   const checkout = useMemo<Checkout.Checkout | null>(() => {
     if (!apiCheckout) return null;
-    return mapApiCheckoutToCheckout(apiCheckout);
+    return mapApiCheckoutToCheckout(apiCheckout as Readonly<ApiCheckout>);
   }, [apiCheckout]);
 
   // Log checkout information
