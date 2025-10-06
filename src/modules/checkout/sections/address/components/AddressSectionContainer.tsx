@@ -1,26 +1,16 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
-import type { City } from '@src/modules/checkout/sections/delivery/components/city/CitySelect';
+import type { AddressFormData } from '../types';
 import { AddressSectionView } from './AddressSectionView';
-
-/**
- * Extracts stored city from checkout store
- */
-function extractStoredCity(): City | null {
-  const entry = useCheckoutStore.getState().sections.address;
-  if (!entry || !entry.data) return null;
-  const data = entry.data as { city?: City | null };
-  return data?.city ?? null;
-}
 
 /**
  * Container for the checkout address section.
  *
  * Orchestrates integration with the section controller.
- * Delegates all UI rendering to AddressSectionView.
+ * Works with generic form data type and delegates all UI rendering to view.
  */
 export const AddressSectionContainer = () => {
   const { publishValid, publishInvalid } = useSectionController<'address'>(
@@ -28,27 +18,22 @@ export const AddressSectionContainer = () => {
     { required: true }
   );
 
-  const initialCity = useMemo(() => extractStoredCity(), []);
-
-  const storedCity = useCheckoutStore((state) => {
-    const data = state.sections.address?.data as
-      | { city?: City | null }
-      | undefined;
-    return data?.city ?? null;
+  const formData = useCheckoutStore((state) => {
+    return (state.sections.address?.data || null) as AddressFormData | null;
   });
 
   /**
-   * Handles valid city selection from view
+   * Handles valid form data from view
    */
   const handleValid = useCallback(
-    (data: { city: City }) => {
+    (data: AddressFormData) => {
       publishValid(data);
     },
     [publishValid]
   );
 
   /**
-   * Handles invalid city selection from view
+   * Handles invalid form data from view
    */
   const handleInvalid = useCallback(
     (errors?: Record<string, string>) => {
@@ -59,8 +44,7 @@ export const AddressSectionContainer = () => {
 
   return (
     <AddressSectionView
-      initialCity={initialCity}
-      storedCity={storedCity}
+      value={formData}
       onValid={handleValid}
       onInvalid={handleInvalid}
     />
