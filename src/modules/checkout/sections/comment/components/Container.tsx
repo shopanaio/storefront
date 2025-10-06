@@ -3,6 +3,7 @@ import Component from './Component';
 
 import type { CommentFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
+import { mapCheckoutToCommentFormData } from '../mapper';
 
 /**
  * Comment section component created with makeSection.
@@ -12,7 +13,6 @@ export const CommentSection = makeSection<CommentFormData>({
   id: SectionId.Comment,
   required: false,
   Component,
-  selector: (state) =>
-    (state.sections.comment?.data ?? null) as CommentFormData | null,
+  selector: mapCheckoutToCommentFormData,
   displayName: 'CommentSection',
 });

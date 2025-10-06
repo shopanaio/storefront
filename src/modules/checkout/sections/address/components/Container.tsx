@@ -3,6 +3,7 @@ import Component from './Component';
 
 import type { AddressFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
+import { mapCheckoutToAddressFormData } from '../mapper';
 
 /**
  * Address section component created with makeSection.
@@ -12,7 +13,6 @@ export const AddressSection = makeSection<AddressFormData>({
   id: SectionId.Address,
   required: true,
   Component,
-  selector: (state) =>
-    (state.sections.address?.data ?? null) as AddressFormData | null,
+  selector: mapCheckoutToAddressFormData,
   displayName: 'AddressSection',
 });

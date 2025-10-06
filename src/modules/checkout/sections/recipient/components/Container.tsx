@@ -3,6 +3,7 @@ import Component from './Component';
 
 import type { RecipientFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
+import { mapCheckoutToRecipientFormData } from '../mapper';
 
 /**
  * Recipient section component created with makeSection.
@@ -12,7 +13,6 @@ export const RecipientSection = makeSection<RecipientFormData>({
   id: SectionId.Recipient,
   required: true,
   Component,
-  selector: (state) =>
-    (state.sections.recipient?.data ?? null) as RecipientFormData | null,
+  selector: mapCheckoutToRecipientFormData,
   displayName: 'RecipientSection',
 });

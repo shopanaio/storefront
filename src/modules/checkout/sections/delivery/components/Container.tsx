@@ -3,6 +3,7 @@ import Component from './Component';
 
 import type { DeliveryFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
+import { mapCheckoutToDeliveryFormData } from '../mapper';
 
 /**
  * Delivery section component created with makeSection.
@@ -12,7 +13,6 @@ export const DeliverySection = makeSection<DeliveryFormData>({
   id: SectionId.Delivery,
   required: true,
   Component,
-  selector: (state) =>
-    (state.sections.delivery?.data ?? null) as DeliveryFormData | null,
+  selector: mapCheckoutToDeliveryFormData,
   displayName: 'DeliverySection',
 });

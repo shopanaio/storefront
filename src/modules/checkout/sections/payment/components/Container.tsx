@@ -3,6 +3,7 @@ import Component from './Component';
 
 import type { PaymentFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
+import { mapCheckoutToPaymentFormData } from '../mapper';
 
 /**
  * Payment section component created with makeSection.
@@ -12,7 +13,6 @@ export const PaymentSection = makeSection<PaymentFormData>({
   id: SectionId.Payment,
   required: true,
   Component,
-  selector: (state) =>
-    (state.sections.payment?.data ?? null) as PaymentFormData | null,
+  selector: mapCheckoutToPaymentFormData,
   displayName: 'PaymentSection',
 });
