@@ -18,7 +18,7 @@ import type { AddressFormData } from '../types';
  */
 export interface AddressSectionViewProps<TFormData = AddressFormData> {
   /** Current form data */
-  value: TFormData | null;
+  state: TFormData | null;
   /** Called when form data is valid */
   onValid: (data: TFormData) => void;
   /** Called when form data is invalid */
@@ -26,18 +26,18 @@ export interface AddressSectionViewProps<TFormData = AddressFormData> {
 }
 
 export const AddressSectionView = ({
-  value,
+  state,
   onValid,
 }: AddressSectionViewProps<AddressFormData>) => {
   const onChange = useCallback(
     (city: City) => {
       // Update only the city field in form data
-      onValid({ ...value, city });
+      onValid({ ...state, city });
     },
-    [onValid, value]
+    [onValid, state]
   );
 
-  return <CitySelect value={value?.city ?? null} onChange={onChange} />;
+  return <CitySelect value={state?.city ?? null} onChange={onChange} />;
 };
 
 export default AddressSectionView;

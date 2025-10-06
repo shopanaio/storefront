@@ -26,6 +26,10 @@ export enum CheckoutEvent {
   SectionInvalid = 'section/invalid',
   /** Emitted when a section is reset to its initial state */
   SectionReset = 'section/reset',
+  /** Emitted when user selects a payment method */
+  MethodPaymentSelected = 'method/payment-selected',
+  /** Emitted when user selects a delivery method */
+  MethodDeliverySelected = 'method/delivery-selected',
   /** Emitted when user requests checkout submission */
   SubmitRequested = 'submit/requested',
   /** Emitted when submission is blocked due to missing or invalid sections */
@@ -84,6 +88,17 @@ export type CheckoutEvents = {
   };
   [CheckoutEvent.SectionReset]: {
     sectionId: SectionId;
+  };
+
+  /** Method selection events */
+  [CheckoutEvent.MethodPaymentSelected]: {
+    provider: string;
+    code: string;
+  };
+  [CheckoutEvent.MethodDeliverySelected]: {
+    groupId: string;
+    provider: string;
+    code: string;
   };
 
   /** Submit events */

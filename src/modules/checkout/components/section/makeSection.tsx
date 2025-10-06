@@ -4,6 +4,7 @@ import type { ComponentType, FC } from 'react';
 import { SectionContainer } from './SectionContainer';
 import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
 import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
+import { SectionId } from '@src/modules/checkout/state/types';
 
 /**
  * Build a typed section container bound to a specific section id and view.
@@ -13,7 +14,7 @@ import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
  * into the provided View.
  */
 export function makeSection<
-  K extends import('@src/modules/checkout/state/checkoutStore').SectionKey,
+  K extends SectionId,
   TDto extends SectionDtoFor<K>,
   TValue = TDto,
 >(config: {
@@ -23,7 +24,7 @@ export function makeSection<
   required?: boolean;
   /** View component receiving { value, onValid, onInvalid } */
   Component: ComponentType<{
-    value: TValue | null;
+    state: TValue | null;
     onValid: (dto: TDto) => void;
     onInvalid: (errors?: Record<string, string>) => void;
   }>;

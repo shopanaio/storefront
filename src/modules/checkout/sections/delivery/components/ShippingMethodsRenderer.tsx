@@ -4,8 +4,6 @@ import { useEffect, useMemo, useCallback } from 'react';
 import { useLocale } from 'next-intl';
 import { usePrevious } from 'react-use';
 import type { ApiCheckoutDeliveryMethod } from '@codegen/schema-client';
-// removed duplicate import of useEffect
-import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import type { City } from './city/CitySelect';
 import { ModuleType } from '@src/modules/registry';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
@@ -23,7 +21,7 @@ interface ShippingMethodsRendererProps {
   /** Bubble section-level valid up */
   onValid: (data: unknown) => void;
   /** Bubble section-level invalid up */
-  onInvalid: (errors?: Record<string, string>) => void;
+  onInvalid: (groupId: string, errors?: Record<string, string>) => void;
 }
 
 /**
@@ -41,10 +39,7 @@ export const ShippingMethodsRenderer = ({
   onInvalid,
 }: ShippingMethodsRendererProps) => {
   const locale = useLocale();
-  const resetSection = useCheckoutStore((s) => s.resetSection);
-  const invalidateByGroup = useCheckoutStore(
-    (s) => s.invalidateShippingProvidersByGroup
-  );
+
   const prevCityRef = usePrevious(addressCity?.Ref ?? null);
 
   /**
@@ -60,20 +55,16 @@ export const ShippingMethodsRenderer = ({
     const currentRef = addressCity?.Ref ?? null;
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
-      resetSection('delivery');
-      invalidateByGroup(groupId);
+      onInvalid(groupId);
     }
-  }, [addressCity?.Ref, prevCityRef, resetSection, invalidateByGroup, groupId]);
+  }, [addressCity?.Ref, prevCityRef, onInvalid, groupId]);
 
   /**
    * Group methods by provider with metadata
    */
   const methodsByProvider = useMemo(() => {
     return methods.reduce<
-      Record<
-        string,
-        Array<{ code: string; label?: string }>
-      >
+      Record<string, Array<{ code: string; label?: string }>>
     >((acc, method) => {
       const provider = method.provider.code || 'unknown';
       (acc[provider] ||= []).push({
@@ -87,17 +78,23 @@ export const ShippingMethodsRenderer = ({
    * Callback when provider form has valid data.
    * Publishes to section controller following enterprise validation pattern.
    */
-  const handleValid = useCallback((data: unknown) => {
-    onValid(data);
-  }, [onValid]);
+  const handleValid = useCallback(
+    (data: unknown) => {
+      onValid(data);
+    },
+    [onValid]
+  );
 
   /**
    * Callback when provider form has invalid data.
    * Publishes to section controller following enterprise validation pattern.
    */
-  const handleInvalid = useCallback((errors?: Record<string, string>) => {
-    onInvalid(errors);
-  }, [onInvalid]);
+  const handleInvalid = useCallback(
+    (errors?: Record<string, string>) => {
+      onInvalid(errors);
+    },
+    [onInvalid]
+  );
 
   return (
     <>

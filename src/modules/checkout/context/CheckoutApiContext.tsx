@@ -1,17 +1,16 @@
 'use client';
 
 /**
- * CheckoutApiContext: provides checkoutId and a transport-agnostic CheckoutRepository.
- * Initially backed by GraphQL adapter; can be swapped without touching UI/controllers.
+ * CheckoutApiContext: provides checkoutId and CheckoutApi.
  */
 import React, { createContext, useContext, useMemo } from 'react';
 import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
-import type { CheckoutRepository } from '@src/modules/checkout/core/contracts/CheckoutRepository';
-import { useGraphQLCheckoutRepository } from '@src/modules/checkout/api/GraphQLCheckoutRepository';
+import type { CheckoutApi } from '@src/modules/checkout/api/interface';
+import { useCheckoutApi } from '@src/modules/checkout/api/CheckoutApi';
 
 export interface CheckoutApiContextValue {
   checkoutId: string | null;
-  repository: CheckoutRepository;
+  api: CheckoutApi;
 }
 
 const CheckoutApiContext = createContext<CheckoutApiContextValue | null>(null);
@@ -19,12 +18,12 @@ const CheckoutApiContext = createContext<CheckoutApiContextValue | null>(null);
 export function CheckoutApiProvider({ children }: { children: React.ReactNode }) {
   const { checkout } = useCheckoutData();
   const checkoutId = checkout?.id ?? null;
-  const repository = useGraphQLCheckoutRepository();
+  const api = useCheckoutApi();
 
   const value = useMemo<CheckoutApiContextValue>(() => ({
     checkoutId,
-    repository,
-  }), [checkoutId, repository]);
+    api,
+  }), [checkoutId, api]);
 
   return (
     <CheckoutApiContext.Provider value={value}>

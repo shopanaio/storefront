@@ -1,45 +1,27 @@
 import {
-  ApiCheckoutDeliveryMethodUpdateInput,
-  ApiCheckoutPaymentMethodUpdateInput,
-  ApiCheckoutCustomerIdentityUpdateInput,
-  ApiCheckoutDeliveryAddressesAddInput,
-  ApiCheckoutDeliveryAddressesUpdateInput,
-  ApiCheckoutDeliveryAddressesRemoveInput,
-  ApiCheckoutCustomerNoteUpdateInput,
-  ApiCheckoutPromoCodeAddInput,
-  ApiCheckoutPromoCodeRemoveInput,
-  ApiCreateOrderInput,
-} from '@codegen/schema-client';
+  DeliveryMethodUpdateDto,
+  CheckoutSubmitDto,
+  CustomerIdentityUpdateDto,
+  CustomerNoteUpdateDto,
+  DeliveryAddressesAddDto,
+  DeliveryAddressesRemoveDto,
+  DeliveryAddressesUpdateDto,
+  PaymentMethodUpdateDto,
+  PromoCodeAddDto,
+  PromoCodeRemoveDto,
+} from '@src/modules/checkout/api/dto';
 
 export interface CheckoutApi {
-  selectDeliveryMethod: (
-    input: ApiCheckoutDeliveryMethodUpdateInput
-  ) => Promise<void>;
-  selectPaymentMethod: (
-    input: ApiCheckoutPaymentMethodUpdateInput
-  ) => Promise<void>;
-  updatePaymentMethod: (
-    input: ApiCheckoutPaymentMethodUpdateInput
-  ) => Promise<void>;
-  updateShippingMethod: (
-    input: ApiCheckoutDeliveryMethodUpdateInput
-  ) => Promise<void>;
-  updateCustomerIdentity: (
-    input: ApiCheckoutCustomerIdentityUpdateInput
-  ) => Promise<void>;
-  addDeliveryAddresses: (
-    input: ApiCheckoutDeliveryAddressesAddInput
-  ) => Promise<void>;
-  updateDeliveryAddresses: (
-    input: ApiCheckoutDeliveryAddressesUpdateInput
-  ) => Promise<void>;
-  removeDeliveryAddresses: (
-    input: ApiCheckoutDeliveryAddressesRemoveInput
-  ) => Promise<void>;
-  updateCustomerNote: (
-    input: ApiCheckoutCustomerNoteUpdateInput
-  ) => Promise<void>;
-  addPromoCode: (input: ApiCheckoutPromoCodeAddInput) => Promise<void>;
-  removePromoCode: (input: ApiCheckoutPromoCodeRemoveInput) => Promise<void>;
-  submitCheckout: (input: ApiCreateOrderInput) => Promise<void>;
+  selectDeliveryMethod: (input: DeliveryMethodUpdateDto) => Promise<void>;
+  selectPaymentMethod: (input: PaymentMethodUpdateDto) => Promise<void>;
+  updatePaymentMethod: (input: PaymentMethodUpdateDto) => Promise<void>;
+  updateShippingMethod: (input: DeliveryMethodUpdateDto) => Promise<void>;
+  updateCustomerIdentity: (input: CustomerIdentityUpdateDto) => Promise<void>;
+  addDeliveryAddresses: (input: DeliveryAddressesAddDto) => Promise<void>;
+  updateDeliveryAddresses: (input: DeliveryAddressesUpdateDto) => Promise<void>;
+  removeDeliveryAddresses: (input: DeliveryAddressesRemoveDto) => Promise<void>;
+  updateCustomerNote: (input: CustomerNoteUpdateDto) => Promise<void>;
+  addPromoCode: (input: PromoCodeAddDto) => Promise<void>;
+  removePromoCode: (input: PromoCodeRemoveDto) => Promise<void>;
+  submitCheckout: (input: CheckoutSubmitDto) => Promise<void>;
 }
