@@ -1,4 +1,4 @@
-import { Flex, Typography, Button, Divider, Badge } from 'antd';
+import { Flex, Typography, Button, Badge } from 'antd';
 import { createStyles } from 'antd-style';
 import { SummaryItem } from './SummaryItem';
 import { useTranslations } from 'next-intl';
@@ -9,6 +9,7 @@ import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 const { Text } = Typography;
 
@@ -59,7 +60,7 @@ export const Summary = ({ checkout }: Prop) => {
           </div>
         ) : null}
       </Flex>
-      <SectionRenderer slug="promo" />
+      <SectionRenderer slug={SectionId.Promo} />
       <Flex vertical gap={12}>
         <Flex justify="space-between">
           <Text className={styles.summaryRow} strong>

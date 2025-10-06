@@ -8,6 +8,7 @@ import { CheckoutSection } from '@src/modules/checkout/components/common/Checkou
 import { CheckoutAuth } from './CheckoutAuth';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 interface CheckoutViewProps {
   brand?: React.ReactNode;
@@ -50,24 +51,24 @@ export const CheckoutView = ({
                   ) : undefined
                 }
               >
-                <SectionRenderer slug="contact" />
+                <SectionRenderer slug={SectionId.Contact} />
               </CheckoutSection>
 
               <CheckoutSection title={t('delivery')}>
-                <SectionRenderer slug="address" />
-                <SectionRenderer slug="delivery" />
+                <SectionRenderer slug={SectionId.Address} />
+                <SectionRenderer slug={SectionId.Delivery} />
               </CheckoutSection>
 
               <CheckoutSection>
-                <SectionRenderer slug="recipient" />
+                <SectionRenderer slug={SectionId.Recipient} />
               </CheckoutSection>
 
               <CheckoutSection title={t('payment')}>
-                <SectionRenderer slug="payment" />
+                <SectionRenderer slug={SectionId.Payment} />
               </CheckoutSection>
 
               <CheckoutSection>
-                <SectionRenderer slug="comment" />
+                <SectionRenderer slug={SectionId.Comment} />
               </CheckoutSection>
 
               <div className={styles.actionsLeft}>

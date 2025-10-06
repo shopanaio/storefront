@@ -8,53 +8,52 @@ import { PaymentSection } from './payment/components/Container';
 import { RecipientSection } from './recipient/components/Container';
 import { CommentSection } from './comment/components/Container';
 import { PromoSection } from './promo/components/Container';
-
-export type SectionSlug = 'contact' | 'recipient' | 'address' | 'delivery' | 'payment' | 'promo' | 'comment';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 export interface SectionConfig {
-  slug: SectionSlug;
+  slug: SectionId;
   /** i18n key for section title under Checkout namespace */
   titleKey: string;
-  Component: ComponentType<{}>;
+  Component: ComponentType<Record<string, never>>;
 }
 
 /**
  * Map of all checkout sections.
  * Each section is directly imported and mapped to its slug.
  */
-export const sections: Record<SectionSlug, SectionConfig> = {
-  contact: {
-    slug: 'contact',
+export const sections: Record<SectionId, SectionConfig> = {
+  [SectionId.Contact]: {
+    slug: SectionId.Contact,
     titleKey: 'contact',
     Component: ContactSection,
   },
-  address: {
-    slug: 'address',
+  [SectionId.Address]: {
+    slug: SectionId.Address,
     titleKey: 'address',
     Component: AddressSection,
   },
-  delivery: {
-    slug: 'delivery',
+  [SectionId.Delivery]: {
+    slug: SectionId.Delivery,
     titleKey: 'shipping',
     Component: DeliverySection,
   },
-  payment: {
-    slug: 'payment',
+  [SectionId.Payment]: {
+    slug: SectionId.Payment,
     titleKey: 'payment',
     Component: PaymentSection,
   },
-  recipient: {
-    slug: 'recipient',
+  [SectionId.Recipient]: {
+    slug: SectionId.Recipient,
     titleKey: 'recipient',
     Component: RecipientSection,
   },
-  comment: {
-    slug: 'comment',
+  [SectionId.Comment]: {
+    slug: SectionId.Comment,
     titleKey: 'comment',
     Component: CommentSection,
   },
-  promo: {
-    slug: 'promo',
+  [SectionId.Promo]: {
+    slug: SectionId.Promo,
     titleKey: 'promo',
     Component: PromoSection,
   },

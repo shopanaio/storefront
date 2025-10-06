@@ -6,14 +6,15 @@ export type SectionValidationStatus = 'idle' | 'valid' | 'invalid';
 /**
  * Static section identifiers present regardless of delivery grouping.
  */
-export type SectionId =
-  | 'contact'
-  | 'recipient'
-  | 'address'
-  | 'delivery'
-  | 'payment'
-  | 'promo'
-  | 'comment';
+export enum SectionId {
+  Contact = 'contact',
+  Recipient = 'recipient',
+  Address = 'address',
+  Delivery = 'delivery',
+  Payment = 'payment',
+  Promo = 'promo',
+  Comment = 'comment',
+}
 
 /**
  * Section aggregate entry held in the store.

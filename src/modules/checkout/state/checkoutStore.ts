@@ -8,10 +8,8 @@ import {
   emitCheckoutEvent,
   CheckoutEvent,
 } from '@src/modules/checkout/state/checkoutBus';
-import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
-import type { SectionDtoMap } from '@src/modules/checkout/core/contracts/dto';
-import { SectionEntry, SectionId } from '@src/modules/checkout/state/types';
-
+import { SectionEntry, SectionId } from '@src/modules/checkout/state/interface';
+import { CheckoutState } from '@src/modules/checkout/state/interface';
 
 /**
  * Determine if a section is valid in the current state.
@@ -81,13 +79,12 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       sectionId: id,
     });
   },
-  sectionValid: (id, dto) => {
+  sectionValid: (id) => {
     set((state) => ({
       sections: {
         ...state.sections,
         [id]: {
           ...(state.sections[id] as SectionEntry | undefined),
-          data: dto,
           status: 'valid',
           required: state.sections[id]?.required ?? true,
           busy: state.sections[id]?.busy ?? false,
@@ -96,10 +93,9 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     }));
     void emitCheckoutEvent(CheckoutEvent.SectionValid, {
       sectionId: id as SectionId,
-      dto: dto as SectionDtoMap[SectionId],
     });
   },
-  sectionInvalid: (id, dto, errors) => {
+  sectionInvalid: (id, errors) => {
     set((state) => ({
       sections: {
         ...state.sections,
@@ -108,14 +104,12 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
           status: 'invalid',
           errors,
           required: state.sections[id]?.required ?? true,
-          data: dto ?? state.sections[id]?.data ?? null,
           busy: state.sections[id]?.busy ?? false,
         },
       },
     }));
     void emitCheckoutEvent(CheckoutEvent.SectionInvalid, {
       sectionId: id as SectionId,
-      dto: dto as SectionDtoMap[SectionId],
       errors,
     });
   },

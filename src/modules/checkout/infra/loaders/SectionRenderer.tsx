@@ -1,9 +1,10 @@
 'use client';
 
-import { sections, type SectionSlug } from '../../sections/sections';
+import { sections } from '../../sections/sections';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 interface Prop {
-  slug: SectionSlug;
+  slug: SectionId;
 }
 
 /**

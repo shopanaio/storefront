@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { CheckoutApi } from '@src/modules/checkout/api/interface';
 import { useCheckoutOperation } from '@src/modules/checkout/api/useCheckoutOperation';
 import { OperationKey } from '@src/modules/checkout/state/checkoutBus';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 import { selectDeliveryMethodMutation } from '@src/modules/checkout/api/mutations/selectDeliveryMethodMutation.shopana';
 import { selectPaymentMethodMutation } from '@src/modules/checkout/api/mutations/selectPaymentMethodMutation.shopana';
@@ -30,7 +31,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to select delivery method',
         operationKey: OperationKey.SelectDeliveryMethod,
-        sectionId: 'delivery',
+        sectionId: SectionId.Delivery,
       }
     );
 
@@ -40,7 +41,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to select payment method',
         operationKey: OperationKey.SelectPaymentMethod,
-        sectionId: 'payment',
+        sectionId: SectionId.Payment,
       }
     );
 
@@ -50,7 +51,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to update customer identity',
         operationKey: OperationKey.UpdateCustomerIdentity,
-        sectionId: 'contact',
+        sectionId: SectionId.Contact,
       }
     );
 
@@ -60,7 +61,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to add delivery addresses',
         operationKey: OperationKey.AddDeliveryAddresses,
-        sectionId: 'address',
+        sectionId: SectionId.Address,
       }
     );
 
@@ -70,7 +71,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to update delivery addresses',
         operationKey: OperationKey.UpdateDeliveryAddresses,
-        sectionId: 'address',
+        sectionId: SectionId.Address,
       }
     );
 
@@ -80,7 +81,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to remove delivery addresses',
         operationKey: OperationKey.RemoveDeliveryAddresses,
-        sectionId: 'address',
+        sectionId: SectionId.Address,
       }
     );
 
@@ -88,14 +89,14 @@ export function useCreateCheckoutApi(): CheckoutApi {
     useCheckoutOperation<AddPromoCodeMutationType>(addPromoCodeMutation, {
       errorMessage: 'Failed to add promo code',
       operationKey: OperationKey.AddPromoCode,
-      sectionId: 'promo',
+      sectionId: SectionId.Promo,
     });
 
   const { commit: commitRemovePromo } =
     useCheckoutOperation<RemovePromoCodeMutationType>(removePromoCodeMutation, {
       errorMessage: 'Failed to remove promo code',
       operationKey: OperationKey.RemovePromoCode,
-      sectionId: 'promo',
+      sectionId: SectionId.Promo,
     });
 
   const { commit: commitUpdateNote } =
@@ -104,7 +105,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to update customer note',
         operationKey: OperationKey.UpdateCustomerNote,
-        sectionId: 'comment',
+        sectionId: SectionId.Comment,
         debounceMs: 250,
       }
     );
