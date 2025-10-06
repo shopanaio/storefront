@@ -4,7 +4,7 @@ import React, { createContext, useContext } from 'react';
 import type { Entity } from '@src/entity';
 
 export interface CheckoutDataContextValue {
-  cart: Entity.Cart | null;
+  checkout: Entity.Checkout | null;
 }
 
 const CheckoutDataContext = createContext<CheckoutDataContextValue | undefined>(
@@ -12,14 +12,14 @@ const CheckoutDataContext = createContext<CheckoutDataContextValue | undefined>(
 );
 
 export function CheckoutDataProvider({
-  cart,
+  checkout,
   children,
 }: {
-  cart: Entity.Cart | null;
+  checkout: Entity.Checkout | null;
   children: React.ReactNode;
 }) {
   return (
-    <CheckoutDataContext.Provider value={{ cart }}>
+    <CheckoutDataContext.Provider value={{ checkout }}>
       {children}
     </CheckoutDataContext.Provider>
   );

@@ -1,24 +1,23 @@
 'use client';
 
-import { sectionRegistry, SectionSlug } from '../../sections/registry';
-import { DynamicRenderer } from './DynamicRenderer';
+import { sections, type SectionSlug } from '../../sections/sections';
 
 interface Prop {
   slug: SectionSlug;
 }
 
 /**
- * Renders a checkout section by slug using the section registry.
- * Uses DynamicRenderer to load and render the section component.
+ * Renders a checkout section by slug using the sections map.
  */
 export const SectionRenderer = ({ slug }: Prop) => {
-  const loader = sectionRegistry.resolve(slug);
+  const section = sections[slug];
 
-  if (!loader) {
+  if (!section) {
     return null;
   }
 
-  return <DynamicRenderer loader={loader} componentProps={{}} />;
+  const { Component } = section;
+  return <Component />;
 };
 
 export default SectionRenderer;

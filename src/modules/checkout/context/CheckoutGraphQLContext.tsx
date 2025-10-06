@@ -12,8 +12,8 @@ const CheckoutGraphQLContext = createContext<CheckoutGraphQLContextValue | null>
 
 export function CheckoutGraphQLProvider({ children }: { children: React.ReactNode }) {
   const api = useCheckoutApi();
-  const { cart } = useCheckoutData();
-  const checkoutId = cart?.id ?? null;
+  const { checkout } = useCheckoutData();
+  const checkoutId = checkout?.id ?? null;
 
   const value = useMemo<CheckoutGraphQLContextValue>(() => ({
     checkoutId,

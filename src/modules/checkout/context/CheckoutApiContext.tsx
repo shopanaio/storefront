@@ -17,8 +17,8 @@ export interface CheckoutApiContextValue {
 const CheckoutApiContext = createContext<CheckoutApiContextValue | null>(null);
 
 export function CheckoutApiProvider({ children }: { children: React.ReactNode }) {
-  const { cart } = useCheckoutData();
-  const checkoutId = cart?.id ?? null;
+  const { checkout } = useCheckoutData();
+  const checkoutId = checkout?.id ?? null;
   const repository = useGraphQLCheckoutRepository();
 
   const value = useMemo<CheckoutApiContextValue>(() => ({

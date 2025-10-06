@@ -19,10 +19,8 @@ import { CheckoutController } from '@src/modules/checkout/controller/CheckoutCon
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 
-import '@src/modules/checkout/sections/autoload';
-
 interface Prop {
-  cart: Entity.Cart | null;
+  checkout: Entity.Checkout | null;
   onConfirm: () => void;
   brand?: React.ReactNode;
   /**
@@ -41,7 +39,7 @@ interface Prop {
  * Checkout form component that renders contact, shipping, and payment sections.
  * Feature flags can adjust visible UI (e.g., `features.auth` shows login button).
  */
-export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
+export const Checkout = ({ checkout, onConfirm, brand, features }: Prop) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -91,7 +89,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
   }, [onConfirm, t]);
 
   return (
-    <CheckoutDataProvider cart={cart}>
+    <CheckoutDataProvider checkout={checkout}>
       <CheckoutApiProvider>
         <CheckoutController />
         <CheckoutProgressBar />
@@ -143,7 +141,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
                 </Flex>
                 <Flex className={styles.rightContainer}>
                   <Flex vertical gap={12} className={styles.right}>
-                    {cart ? <Summary cart={cart} /> : null}
+                    {checkout ? <Summary cart={checkout.cart} /> : null}
                     <div className={styles.actionsRight}>
                       <CheckoutActions
                         validationError={validationError}
@@ -155,7 +153,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
               </div>
             </div>
           </form>
-          <CheckoutSkeleton brand={brand} isReady={!!cart} />
+          <CheckoutSkeleton brand={brand} isReady={!!checkout} />
         </div>
       </CheckoutApiProvider>
     </CheckoutDataProvider>

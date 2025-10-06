@@ -11,6 +11,7 @@ import {
   CartPurchasableImage,
 } from "@src/entity/Cart/interface";
 import { Media } from "@src/entity/Media";
+import { Checkout } from "@src/entity/Checkout/interface";
 
 export type {
   Product,
@@ -25,3 +26,4 @@ export type {
   CartPurchasable,
   CartPurchasableImage,
 };
+export type { Checkout };
