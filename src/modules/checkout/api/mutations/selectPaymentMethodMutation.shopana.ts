@@ -6,7 +6,7 @@ export const selectPaymentMethodMutation = graphql`
   ) {
     checkoutMutation {
       checkoutPaymentMethodUpdate(input: $input) {
-        ...useCart_CartFragment
+        ...useCheckoutFragment
       }
     }
   }

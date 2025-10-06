@@ -6,7 +6,7 @@ export const selectDeliveryMethodMutation = graphql`
   ) {
     checkoutMutation {
       checkoutDeliveryMethodUpdate(input: $input) {
-        ...useCart_CartFragment
+        ...useCheckoutFragment
       }
     }
   }

@@ -6,7 +6,7 @@ export const updateCustomerIdentityMutation = graphql`
   ) {
     checkoutMutation {
       checkoutCustomerIdentityUpdate(input: $input) {
-        ...useCart_CartFragment
+        ...useCheckoutFragment
       }
     }
   }

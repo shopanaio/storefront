@@ -6,7 +6,7 @@ export const updateDeliveryAddressesMutation = graphql`
   ) {
     checkoutMutation {
       checkoutDeliveryAddressesUpdate(input: $input) {
-        ...useCart_CartFragment
+        ...useCheckoutFragment
       }
     }
   }
