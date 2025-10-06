@@ -1,7 +1,6 @@
 export {
   moduleRegistry,
   registerModule,
-  ModuleType,
   type ModuleSlug,
   type AsyncModuleLoader,
   type RegisteredModuleRecord,

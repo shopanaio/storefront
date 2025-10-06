@@ -2,7 +2,6 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { ModuleType } from '@src/modules/registry';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 import { useLocale } from 'next-intl';
 import { useMemo, useCallback } from 'react';
@@ -35,7 +34,6 @@ export const DeliverySectionView = ({
   onInvalid,
 }: DeliverySectionViewProps) => {
   const { styles } = useStyles();
-  const locale = useLocale();
 
   const deliveryGroups = useMemo(() => {
     /** Currently only a single group is supported */
@@ -87,6 +85,7 @@ export const DeliverySectionView = ({
     [onInvalid]
   );
 
+  console.log('deliveryGroups',data, deliveryGroups);
   return (
     <>
       {deliveryGroups.map(

@@ -2,7 +2,6 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { ModuleType } from '@src/modules/registry';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
 import { useLocale } from 'next-intl';
 import { useMemo, useCallback } from 'react';
