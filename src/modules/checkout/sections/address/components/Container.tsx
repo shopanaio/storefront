@@ -2,21 +2,17 @@ import { makeSection } from '@src/modules/checkout/components/section/makeSectio
 import Component from './Component';
 
 import type { AddressFormData } from '../types';
-import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 /**
  * Address section component created with makeSection.
  * Handles city selection for checkout address.
  */
-export const AddressSection = makeSection<
-  'address',
-  AddressFormData,
-  AddressFormData
->({
-  id: 'address',
+export const AddressSection = makeSection<AddressFormData>({
+  id: SectionId.Address,
   required: true,
   Component,
-  selector: (state: CheckoutState) =>
+  selector: (state) =>
     (state.sections.address?.data ?? null) as AddressFormData | null,
   displayName: 'AddressSection',
 });

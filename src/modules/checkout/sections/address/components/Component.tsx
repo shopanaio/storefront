@@ -7,37 +7,28 @@ import {
 import { useCallback } from 'react';
 import type { AddressFormData } from '../types';
 
-/**
- * View component for the checkout address section.
- *
- * Pure controlled UI component that renders the address form.
- * Receives generic form data and extracts needed fields (city).
- * Does not manage its own state - all state is controlled via props.
- *
- * @template TFormData - The form data type containing all form fields
- */
-export interface AddressSectionViewProps<TFormData = AddressFormData> {
+export interface AddressSectionViewProps {
   /** Current form data */
-  state: TFormData | null;
+  data: AddressFormData | null;
   /** Called when form data is valid */
-  onValid: (data: TFormData) => void;
+  onValid: (data: AddressFormData) => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
 }
 
 export const AddressSectionView = ({
-  state,
+  data,
   onValid,
-}: AddressSectionViewProps<AddressFormData>) => {
+}: AddressSectionViewProps) => {
   const onChange = useCallback(
     (city: City) => {
       // Update only the city field in form data
-      onValid({ ...state, city });
+      onValid({ ...data, city });
     },
-    [onValid, state]
+    [onValid, data]
   );
 
-  return <CitySelect value={state?.city ?? null} onChange={onChange} />;
+  return <CitySelect value={data?.city ?? null} onChange={onChange} />;
 };
 
 export default AddressSectionView;

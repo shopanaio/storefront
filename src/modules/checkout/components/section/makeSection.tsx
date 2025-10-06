@@ -2,9 +2,10 @@
 
 import type { ComponentType, FC } from 'react';
 import { SectionContainer } from './SectionContainer';
-import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
-import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
-import { SectionId } from '@src/modules/checkout/state/types';
+import {
+  CheckoutState,
+  SectionId,
+} from '@src/modules/checkout/state/interface';
 
 /**
  * Build a typed section container bound to a specific section id and view.
@@ -14,9 +15,8 @@ import { SectionId } from '@src/modules/checkout/state/types';
  * into the provided View.
  */
 export function makeSection<
-  K extends SectionId,
-  TDto extends SectionDtoFor<K>,
-  TValue = TDto,
+  TData extends object,
+  K extends SectionId = SectionId,
 >(config: {
   /** Static or dynamic section id */
   id: K;
@@ -24,12 +24,12 @@ export function makeSection<
   required?: boolean;
   /** View component receiving { value, onValid, onInvalid } */
   Component: ComponentType<{
-    state: TValue | null;
-    onValid: (dto: TDto) => void;
+    data: TData | null;
+    onValid: () => void;
     onInvalid: (errors?: Record<string, string>) => void;
   }>;
   /** Selector to read current value for the View from the store */
-  selector?: (state: CheckoutState) => TValue | null;
+  selector?: (data: CheckoutState) => TData | null;
   /** Optional display name for React DevTools */
   displayName: string;
 }): FC {
@@ -37,7 +37,7 @@ export function makeSection<
 
   const Container: FC = () => {
     return (
-      <SectionContainer<K, TDto, TValue>
+      <SectionContainer<K, TData>
         id={id}
         required={required}
         Component={Component}

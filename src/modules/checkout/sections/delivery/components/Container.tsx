@@ -2,8 +2,7 @@ import { makeSection } from '@src/modules/checkout/components/section/makeSectio
 import Component from './Component';
 
 import type { DeliveryFormData } from '../types';
-import type { CheckoutState } from '@src/modules/checkout/state/checkoutStore';
-import { DeliveryDto } from '@src/modules/checkout/core/contracts/dto';
+import { CheckoutState } from '@src/modules/checkout/state/interface';
 
 /**
  * Delivery section component created with makeSection.

@@ -3,11 +3,11 @@
 import type { ComponentType } from 'react';
 import { useCallback } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
-import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
+import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 import {
-  useCheckoutStore,
-  type CheckoutState,
-} from '@src/modules/checkout/state/checkoutStore';
+  CheckoutState,
+  SectionId,
+} from '@src/modules/checkout/state/interface';
 
 /**
  * Polymorphic container for Checkout sections.
@@ -20,11 +20,7 @@ import {
  * Mapping responsibility stays in the View: it must call `onValid` with the
  * section-specific DTO type.
  */
-export interface SectionContainerProp<
-  K extends import('@src/modules/checkout/state/checkoutStore').SectionKey,
-  TDto extends SectionDtoFor<K>,
-  TValue = TDto,
-> {
+export interface SectionContainerProp<K extends SectionId, TData = unknown> {
   /** Static or dynamic section id */
   id: K;
   /** Whether the section is required; defaults to true */
@@ -34,41 +30,35 @@ export interface SectionContainerProp<
    * The View is responsible for producing a valid section DTO when calling `onValid`.
    */
   Component: ComponentType<{
-    value: TValue | null;
-    onValid: (dto: TDto) => void;
+    data: TData | null;
+    onValid: () => void;
     onInvalid: (errors?: Record<string, string>) => void;
   }>;
   /**
    * Selector to read current value for the View from the store (e.g., form data).
    * If omitted, `value` will be null.
    */
-  selector?: (state: CheckoutState) => TValue | null;
+  selector?: (state: CheckoutState) => TData | null;
 }
 
-export function SectionContainer<
-  K extends import('@src/modules/checkout/state/checkoutStore').SectionKey,
-  TDto extends SectionDtoFor<K>,
-  TValue = TDto,
->({
+export function SectionContainer<K extends SectionId, TData extends object>({
   id,
   required = true,
   Component,
   selector,
-}: SectionContainerProp<K, TDto, TValue>) {
-  const { publishValid, publishInvalid } = useSectionController<K>(id, {
+}: SectionContainerProp<K, TData>) {
+  const { publishValid, publishInvalid } = useSectionController(id, {
     required,
   });
-  const valueSelector: (state: CheckoutState) => TValue | null = selector
+  const valueSelector: (state: CheckoutState) => TData | null = selector
     ? (s: CheckoutState) => selector(s)
-    : (_: CheckoutState) => null as TValue | null;
-  const value = useCheckoutStore(valueSelector) as TValue | null;
+    : () => null as TData | null;
 
-  const onValid = useCallback(
-    (dto: TDto) => {
-      publishValid(dto);
-    },
-    [publishValid]
-  );
+  const data = useCheckoutStore(valueSelector) as TData | null;
+
+  const onValid = useCallback(() => {
+    publishValid();
+  }, [publishValid]);
 
   const onInvalid = useCallback(
     (errors?: Record<string, string>) => {
@@ -77,5 +67,5 @@ export function SectionContainer<
     [publishInvalid]
   );
 
-  return <Component value={value} onValid={onValid} onInvalid={onInvalid} />;
+  return <Component data={data} onValid={onValid} onInvalid={onInvalid} />;
 }
