@@ -3,11 +3,11 @@
 import type { ComponentType } from 'react';
 import { useCallback } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
-import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
+import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
 import {
-  CheckoutState,
   SectionId,
 } from '@src/modules/checkout/state/interface';
+import type { Checkout } from '@src/modules/checkout/types/entity';
 
 /**
  * Polymorphic container for Checkout sections.
@@ -35,10 +35,10 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
     onInvalid: (errors?: Record<string, string>) => void;
   }>;
   /**
-   * Selector to read current value for the View from the store (e.g., form data).
+   * Selector to read current value for the View from the checkout data (e.g., form data).
    * If omitted, `value` will be null.
    */
-  selector?: (state: CheckoutState) => TData | null;
+  selector?: (checkout: Checkout.Checkout | null) => TData | null;
 }
 
 export function SectionContainer<K extends SectionId, TData extends object>({
@@ -50,11 +50,9 @@ export function SectionContainer<K extends SectionId, TData extends object>({
   const { publishValid, publishInvalid } = useSectionController(id, {
     required,
   });
-  const valueSelector: (state: CheckoutState) => TData | null = selector
-    ? (s: CheckoutState) => selector(s)
-    : () => null as TData | null;
+  const { checkout } = useCheckoutData();
 
-  const data = useCheckoutStore(valueSelector) as TData | null;
+  const data = selector ? selector(checkout) : null;
 
   const onValid = useCallback(() => {
     publishValid();
