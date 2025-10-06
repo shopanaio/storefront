@@ -1,51 +1,171 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  PreloadedQuery,
+  useFragment,
+  usePreloadedQuery,
+  useQueryLoader,
+} from 'react-relay';
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import { useCheckoutQuery } from '@src/modules/checkout/hooks/useCheckout/useCheckoutQuery';
+import { useCheckoutFragment } from '@src/modules/checkout/hooks/useCheckout/useCheckoutFragment';
+import { mapApiCheckoutToCheckout } from '@src/modules/checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
+import { useCheckoutFragment$key } from '@src/modules/checkout/hooks/useCheckout/__generated__/useCheckoutFragment.graphql';
+import { ApiCheckout } from '@codegen/schema-client';
+import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
+import { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
 
 export interface CheckoutDataContextValue {
   checkout: Checkout.Checkout | null;
+  /** @deprecated Use `checkout` instead */
+  cart: Checkout.Checkout | null;
   loading: boolean;
   loaded: boolean;
+  error: Error | null;
 }
 
-const CheckoutDataContext = createContext<CheckoutDataContextValue | undefined>(
-  undefined
-);
+interface CheckoutDataInternalContextValue {
+  checkoutKey: useCheckoutFragment$key | null;
+  loading: boolean;
+  loaded: boolean;
+  error: Error | null;
+  queryReference: PreloadedQuery<LoadCheckoutQueryType> | null | undefined;
+}
 
-/**
- * Provider component that manages checkout data using useCheckout hook.
- * Provides checkout data to child components via context.
- *
- * @param cartId - The ID of the cart/checkout to load
- * @param children - Child components that will have access to checkout data
- */
-export function CheckoutDataProvider({
-  cartId,
-  children,
-}: {
-  cartId: string | null;
+const CheckoutDataContext = createContext<
+  CheckoutDataInternalContextValue | undefined
+>(undefined);
+
+type LoadCheckoutQueryReference = PreloadedQuery<LoadCheckoutQueryType>;
+
+const CheckoutDataHandler: React.FC<{
+  queryReference: LoadCheckoutQueryReference;
+  onCheckoutData: (checkout: useCheckoutFragment$key) => void;
+  onCheckoutNotFound: () => void;
+}> = ({ queryReference, onCheckoutData, onCheckoutNotFound }) => {
+  const data = usePreloadedQuery<LoadCheckoutQueryType>(
+    loadCheckoutQuery,
+    queryReference
+  );
+
+  useEffect(() => {
+    const apiCheckout = data?.checkoutQuery?.checkout;
+
+    if (apiCheckout) {
+      onCheckoutData(apiCheckout);
+    } else {
+      console.log('Checkout not found');
+      onCheckoutNotFound();
+    }
+  }, [data, onCheckoutData, onCheckoutNotFound]);
+
+  return null;
+};
+
+export const CheckoutDataContextProvider: React.FC<{
   children: React.ReactNode;
-}) {
-  // Use the useCheckout hook to load and manage checkout data
-  const { checkout, loading, loaded } = useCheckoutQuery(cartId);
+  checkoutId: string | null;
+}> = ({ children, checkoutId }) => {
+  const [queryReference, loadQuery, disposeQuery] =
+    useQueryLoader<LoadCheckoutQueryType>(loadCheckoutQuery);
+  const [checkoutKey, setCheckoutKey] =
+    useState<useCheckoutFragment$key | null>(null);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [isCheckoutLoaded, setIsCheckoutLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!checkoutId) {
+      setIsCheckoutLoading(false);
+      setIsCheckoutLoaded(true);
+      setCheckoutKey(null);
+      return;
+    }
+
+    setIsCheckoutLoading(true);
+    setIsCheckoutLoaded(false);
+
+    loadQuery(
+      { checkoutId: checkoutId },
+      {
+        fetchPolicy: 'network-only',
+        networkCacheConfig: { force: true },
+      }
+    );
+
+    return () => {
+      disposeQuery();
+    };
+  }, [loadQuery, disposeQuery, checkoutId]);
+
+  const handleCheckoutData = useCallback(
+    (checkoutData: useCheckoutFragment$key) => {
+      setCheckoutKey(checkoutData);
+      setIsCheckoutLoaded(true);
+      setIsCheckoutLoading(false);
+    },
+    []
+  );
+
+  const handleCheckoutNotFound = useCallback(() => {
+    setIsCheckoutLoading(false);
+    setCheckoutKey(null);
+    setIsCheckoutLoaded(true);
+  }, []);
 
   return (
-    <CheckoutDataContext.Provider value={{ checkout, loading, loaded }}>
+    <CheckoutDataContext.Provider
+      value={{
+        checkoutKey,
+        loading: isCheckoutLoading,
+        loaded: isCheckoutLoaded,
+        error: null,
+        queryReference: queryReference || null,
+      }}
+    >
+      {queryReference ? (
+        <CheckoutDataHandler
+          queryReference={queryReference}
+          onCheckoutData={handleCheckoutData}
+          onCheckoutNotFound={handleCheckoutNotFound}
+        />
+      ) : null}
       {children}
     </CheckoutDataContext.Provider>
   );
-}
+};
 
-/**
- * Hook to access checkout data from CheckoutDataContext
- *
- * @returns Checkout data, loading state, and loaded state
- */
-export function useCheckoutData() {
-  const ctx = useContext(CheckoutDataContext);
-  if (!ctx)
+export function useCheckoutData(): CheckoutDataContextValue {
+  const context = useContext(CheckoutDataContext);
+  if (!context) {
     throw new Error('useCheckoutData must be used within CheckoutDataProvider');
-  return ctx;
+  }
+
+  const checkoutFragment = useFragment(
+    useCheckoutFragment,
+    context.checkoutKey
+  );
+
+  const checkout = useMemo(() => {
+    if (!checkoutFragment) {
+      return null;
+    }
+    return mapApiCheckoutToCheckout(
+      checkoutFragment as unknown as Readonly<ApiCheckout>
+    );
+  }, [checkoutFragment]);
+
+  return {
+    checkout,
+    cart: checkout,
+    loading: context.loading,
+    loaded: context.loaded,
+    error: context.error,
+  };
 }

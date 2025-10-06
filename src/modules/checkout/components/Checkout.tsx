@@ -2,12 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
-import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutDataContext';
 import { CheckoutApiProvider } from '@src/modules/checkout/context/CheckoutApiContext';
 import { useValidationAlert } from '@src/modules/checkout/hooks/useValidationAlert';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { CheckoutView } from './CheckoutView';
 import { CheckoutController } from '@src/modules/checkout/components/CheckoutController';
+import { CheckoutDataContextProvider } from '@src/modules/checkout/context/CheckoutDataContext';
 
 interface Prop {
   cartId: string | null;
@@ -40,7 +40,7 @@ export const Checkout = ({ cartId, onConfirm, brand, features }: Prop) => {
   };
 
   return (
-    <CheckoutDataProvider cartId={cartId}>
+    <CheckoutDataContextProvider checkoutId={cartId}>
       <CheckoutApiProvider>
         <CheckoutController />
         <CheckoutProgressBar />
@@ -53,6 +53,6 @@ export const Checkout = ({ cartId, onConfirm, brand, features }: Prop) => {
           t={t}
         />
       </CheckoutApiProvider>
-    </CheckoutDataProvider>
+    </CheckoutDataContextProvider>
   );
 };

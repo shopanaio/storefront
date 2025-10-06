@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import '@src/modules';
 import {
   moduleRegistry,
-  ModuleType,
   type DynamicModulePageProps,
   type ModuleExport,
   type AsyncModuleLoader,

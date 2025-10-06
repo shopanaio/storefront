@@ -10,6 +10,7 @@ export const useCart_CartFragment = graphql`
     id
     createdAt
     updatedAt
+    totalQuantity
     cost {
       subtotalAmount {
         currencyCode
@@ -52,69 +53,6 @@ export const useCart_CartFragment = graphql`
       email
       phone
     }
-    deliveryGroups {
-      id
-      checkoutLines {
-        id
-      }
-      deliveryAddress {
-        id
-        data
-        address1
-        address2
-        city
-        countryCode
-        provinceCode
-        postalCode
-      }
-      recipient {
-        firstName
-        middleName
-        lastName
-        email
-        phone
-      }
-      deliveryMethods {
-        code
-        deliveryMethodType
-        provider {
-          code
-          data
-        }
-      }
-      selectedDeliveryMethod {
-        code
-        deliveryMethodType
-        provider {
-          code
-          data
-        }
-      }
-      estimatedCost {
-        amount {
-          amount
-          currencyCode
-        }
-        paymentModel
-      }
-    }
-    payment {
-      paymentMethods {
-        code
-        provider
-        flow
-        metadata
-      }
-      selectedPaymentMethod {
-        code
-        provider
-      }
-      payableAmount {
-        amount
-        currencyCode
-      }
-    }
-    totalQuantity
     lines {
       ...useCartLineFragment_CartLineFragment
     }
@@ -135,8 +73,7 @@ const useCart = () => {
     }
     return {
       ...cart,
-      // @ts-expect-error
-      lines: (cart?.lines || [])?.map((cartLineRef: any) =>
+      lines: (cart?.lines || [])?.map((cartLineRef) =>
         readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
       ),
     };
