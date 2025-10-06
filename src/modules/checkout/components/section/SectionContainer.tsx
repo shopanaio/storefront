@@ -4,10 +4,9 @@ import type { ComponentType } from 'react';
 import { useCallback } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
-import {
-  SectionId,
-} from '@src/modules/checkout/state/interface';
+import { SectionId } from '@src/modules/checkout/state/interface';
 import type { Checkout } from '@src/modules/checkout/types/entity';
+import type { AnySchema } from 'yup';
 
 /**
  * Polymorphic container for Checkout sections.
@@ -15,10 +14,8 @@ import type { Checkout } from '@src/modules/checkout/types/entity';
  * Responsibilities:
  * - Registers the section lifecycle via `useSectionController`.
  * - Exposes strictly typed `onValid`/`onInvalid` to the View.
+ * - Validates data using the provided schema.
  * - Accepts View props directly (no internal prop computation).
- *
- * Mapping responsibility stays in the View: it must call `onValid` with the
- * section-specific DTO type.
  */
 export interface SectionContainerProp<K extends SectionId, TData = unknown> {
   /** Static or dynamic section id */
@@ -33,12 +30,18 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
     data: TData | null;
     onValid: () => void;
     onInvalid: (errors?: Record<string, string>) => void;
+    schema: AnySchema;
   }>;
   /**
    * Selector to read current value for the View from the checkout data (e.g., form data).
    * If omitted, `value` will be null.
    */
   selector?: (checkout: Checkout.Checkout | null) => TData | null;
+  /**
+   * Yup validation schema for the section data.
+   * Data will be validated automatically on mount and when data changes.
+   */
+  schema: AnySchema;
 }
 
 export function SectionContainer<K extends SectionId, TData extends object>({
@@ -46,6 +49,7 @@ export function SectionContainer<K extends SectionId, TData extends object>({
   required = true,
   Component,
   selector,
+  schema,
 }: SectionContainerProp<K, TData>) {
   const { publishValid, publishInvalid } = useSectionController(id, {
     required,
@@ -65,5 +69,12 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     [publishInvalid]
   );
 
-  return <Component data={data} onValid={onValid} onInvalid={onInvalid} />;
+  return (
+    <Component
+      data={data}
+      onValid={onValid}
+      onInvalid={onInvalid}
+      schema={schema}
+    />
+  );
 }

@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useCheckoutCustomerIdentity } from '@src/modules/checkout/hooks/useCheckoutCustomerIdentity';
 import { useMemo } from 'react';
 import { ContactFormData } from '../types';
+import type { AnySchema } from 'yup';
 
 /**
  * View component for the checkout contact section.
@@ -22,6 +23,8 @@ export interface ContactSectionViewProps {
   onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
+  /** Validation schema */
+  schema: AnySchema;
 }
 
 export const ContactSectionView = ({

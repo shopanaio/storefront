@@ -5,6 +5,8 @@ import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import type { CommentFormData } from '../types';
+import type { AnySchema } from 'yup';
+import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 
 /**
  * View component for the checkout comment section.
@@ -20,11 +22,15 @@ export interface CommentSectionViewProps {
   onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
+  /** Validation schema */
+  schema: AnySchema;
 }
 
 export const CommentSectionView = ({
   data,
   onValid,
+  onInvalid,
+  schema,
 }: CommentSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -44,12 +50,19 @@ export const CommentSectionView = ({
   const onToggle = () => setIsOpen((prev) => !prev);
 
   const handleChange = useCallback(
-    (newComment: string) => {
+    async (newComment: string) => {
       setComment(newComment);
-      // Update only the comment field in form data
-      onValid();
+      const formData: CommentFormData = { comment: newComment };
+
+      try {
+        await schema.validate(formData, { abortEarly: false });
+        onValid();
+      } catch (error: unknown) {
+        const errors = extractYupErrors(error);
+        onInvalid(errors);
+      }
     },
-    [onValid]
+    [onValid, onInvalid, schema]
   );
 
   return (

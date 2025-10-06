@@ -4,6 +4,7 @@ import Component from './Component';
 import type { ContactFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
 import { mapCheckoutToContactFormData } from '../mapper';
+import { contactFormSchema } from '../schema';
 
 /**
  * Contact section component created with makeSection.
@@ -14,5 +15,6 @@ export const ContactSection = makeSection<ContactFormData>({
   required: true,
   Component,
   selector: mapCheckoutToContactFormData,
+  schema: contactFormSchema,
   displayName: 'ContactSection',
 });

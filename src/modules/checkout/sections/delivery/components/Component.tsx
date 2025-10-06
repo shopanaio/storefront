@@ -3,7 +3,6 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
-import { useLocale } from 'next-intl';
 import { useMemo, useCallback } from 'react';
 import type {
   DeliveryFormData,
@@ -11,6 +10,7 @@ import type {
   DeliveryProviderMethodsRecord,
 } from '../types';
 import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
+import type { AnySchema } from 'yup';
 
 /**
  * View component for the payment section.
@@ -26,6 +26,8 @@ export interface DeliverySectionViewProps {
   onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
+  /** Validation schema */
+  schema: AnySchema;
 }
 
 export const DeliverySectionView = ({
@@ -73,13 +75,11 @@ export const DeliverySectionView = ({
   }, [data]);
 
   const handleValid = useCallback(() => {
-    // TODO: Aggregate data for delivery groups and call onValid
     onValid();
   }, [onValid]);
 
   const handleInvalid = useCallback(
     (errors?: Record<string, string>) => {
-      // TODO: Aggregate data for delivery groups and call onInvalid
       onInvalid(errors);
     },
     [onInvalid]

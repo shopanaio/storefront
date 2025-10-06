@@ -4,6 +4,7 @@ import Component from './Component';
 import type { RecipientFormData } from '../types';
 import { SectionId } from '@src/modules/checkout/state/interface';
 import { mapCheckoutToRecipientFormData } from '../mapper';
+import { recipientFormSchema } from '../schema';
 
 /**
  * Recipient section component created with makeSection.
@@ -14,5 +15,6 @@ export const RecipientSection = makeSection<RecipientFormData>({
   required: true,
   Component,
   selector: mapCheckoutToRecipientFormData,
+  schema: recipientFormSchema,
   displayName: 'RecipientSection',
 });

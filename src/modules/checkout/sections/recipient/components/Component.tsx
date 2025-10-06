@@ -6,6 +6,8 @@ import { ContactSelect } from '@src/modules/checkout/components/contact/ContactS
 import { useTranslations } from 'next-intl';
 import { useState, useCallback } from 'react';
 import type { RecipientFormData } from '../types';
+import type { AnySchema } from 'yup';
+import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 
 /**
  * View component for the checkout recipient section.
@@ -21,12 +23,15 @@ export interface RecipientSectionViewProps {
   onValid: () => void;
   /** Called when form data is invalid */
   onInvalid: (errors?: Record<string, string>) => void;
+  /** Validation schema */
+  schema: AnySchema;
 }
 
 export const RecipientSectionView = ({
   data,
   onValid,
   onInvalid,
+  schema,
 }: RecipientSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -37,17 +42,25 @@ export const RecipientSectionView = ({
    * Handles switch toggle between self and another person
    */
   const handleSwitchChange = useCallback(
-    (checked: boolean) => {
+    async (checked: boolean) => {
       setIsRecipientSelf(!checked);
       if (checked) {
         // When switching to "another person", don't publish yet
         // Wait for user to fill the form
+        onInvalid({ recipient: 'Recipient information is required' });
       } else {
-        // When switching to "self", immediately publish
-        onValid();
+        // When switching to "self", immediately validate and publish
+        const formData: RecipientFormData = { self: true };
+        try {
+          await schema.validate(formData, { abortEarly: false });
+          onValid();
+        } catch (error: unknown) {
+          const errors = extractYupErrors(error);
+          onInvalid(errors);
+        }
       }
     },
-    [onValid]
+    [onValid, onInvalid, schema]
   );
 
   return (
