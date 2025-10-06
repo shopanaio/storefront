@@ -27,25 +27,8 @@ export function useCanSubmit(): boolean {
 }
 
 /**
- * Returns the active shipping provider id for a given group, if any.
+ * Returns true if there are any active operations (mutations in-flight).
  */
-export function useActiveShippingProvider(groupId: string): string | null {
-  return useCheckoutStore((s) => {
-    const sel = s.selectedDeliveryMethodByGroup[groupId];
-    if (!sel) return null;
-    const providerId = `delivery:${sel.vendor}@${groupId}` as const;
-    return s.providers[providerId]?.active ? providerId : null;
-  });
-}
-
-/**
- * Returns the active payment provider id, if any.
- */
-export function useActivePaymentProvider(): string | null {
-  return useCheckoutStore((s) => {
-    const sel = s.selectedPaymentMethod;
-    if (!sel) return null;
-    const providerId = `payment:${sel.vendor}` as const;
-    return s.providers[providerId]?.active ? providerId : null;
-  });
+export function useHasActiveOperations(): boolean {
+  return useCheckoutStore((state) => state.activeOperationsCount > 0);
 }

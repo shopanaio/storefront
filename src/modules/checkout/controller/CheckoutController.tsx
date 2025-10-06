@@ -7,9 +7,13 @@
 import { useEffect } from 'react';
 import { useCheckoutApiContext } from '@src/modules/checkout/context/CheckoutApiContext';
 import { CheckoutOrchestrator } from '@src/modules/checkout/core/orchestrator/CheckoutOrchestrator';
+import { useOperationTracker } from '@src/modules/checkout/state/hooks/useOperationTracker';
 
 export function CheckoutController() {
   const { checkoutId, repository } = useCheckoutApiContext();
+
+  // Track active operations for UI indicators
+  useOperationTracker();
 
   useEffect(() => {
     if (!checkoutId) return;

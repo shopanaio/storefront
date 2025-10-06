@@ -17,6 +17,7 @@ import { CheckoutDataProvider } from '@src/modules/checkout/context/CheckoutData
 import { CheckoutApiProvider } from '@src/modules/checkout/context/CheckoutApiContext';
 import { CheckoutController } from '@src/modules/checkout/controller/CheckoutController';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
+import { CheckoutProgressBar } from './CheckoutProgressBar';
 
 import '@src/modules/checkout/sections/autoload';
 
@@ -93,6 +94,7 @@ export const Checkout = ({ cart, onConfirm, brand, features }: Prop) => {
     <CheckoutDataProvider cart={cart}>
       <CheckoutApiProvider>
         <CheckoutController />
+        <CheckoutProgressBar />
         <div className={styles.wrapper}>
           <form
             onSubmit={(e) => {

@@ -67,6 +67,7 @@ export interface CheckoutState {
     Record<DeliveryGroupId, SelectedMethod | null>
   >;
   selectedPaymentMethod: SelectedMethod | null;
+  activeOperationsCount: number;
 
   // Section actions
   registerSection: (id: SectionKey, required: boolean) => void;
@@ -87,6 +88,10 @@ export interface CheckoutState {
 
   // Invalidation
   invalidateShippingProvidersByGroup: (groupId: DeliveryGroupId) => void;
+
+  // Active operations tracking
+  incrementActiveOperations: () => void;
+  decrementActiveOperations: () => void;
 
   // Submission
   requestSubmit: () => void;
@@ -119,17 +124,15 @@ export function isSectionValid(
     );
     const selection = state.selectedDeliveryMethodByGroup[groupId] ?? null;
     if (!selection?.code) return false;
-    // The logic for provider validation is now handled by the section controller
-    // We just need to check if the selection is valid
-    return true;
+    // Check that the provider form is also valid
+    return entry.status === 'valid';
   }
 
   if (sectionKey === 'payment') {
     const sel = state.selectedPaymentMethod;
     if (!sel?.code) return false;
-    // The logic for provider validation is now handled by the section controller
-    // We just need to check if the selection is valid
-    return true;
+    // Check that the provider form is also valid
+    return entry.status === 'valid';
   }
 
   return entry.status === 'valid';
@@ -167,6 +170,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   sections: {},
   selectedDeliveryMethodByGroup: {},
   selectedPaymentMethod: null,
+  activeOperationsCount: 0,
 
   // Sections
   registerSection: (id, required) => {
@@ -305,6 +309,18 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     // The logic for provider invalidation is now handled by the section controller
     // Reset the section for the group
     get().resetSection(`delivery:${groupId}` as DeliverySectionId);
+  },
+
+  // Active operations tracking
+  incrementActiveOperations: () => {
+    set((state) => ({
+      activeOperationsCount: state.activeOperationsCount + 1,
+    }));
+  },
+  decrementActiveOperations: () => {
+    set((state) => ({
+      activeOperationsCount: Math.max(0, state.activeOperationsCount - 1),
+    }));
   },
 
   // Submission
