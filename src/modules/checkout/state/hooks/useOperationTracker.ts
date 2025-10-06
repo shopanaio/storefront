@@ -3,7 +3,10 @@
  * Should be mounted once in the CheckoutController.
  */
 import { useEffect } from 'react';
-import { onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
+import {
+  CheckoutEvent,
+  onCheckoutEvent,
+} from '@src/modules/checkout/state/checkoutBus';
 import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 
 /**
@@ -12,11 +15,11 @@ import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
  */
 export function useOperationTracker() {
   useEffect(() => {
-    const offStart = onCheckoutEvent('operation/start', () => {
+    const offStart = onCheckoutEvent(CheckoutEvent.OperationStart, () => {
       useCheckoutStore.getState().incrementActiveOperations();
     });
 
-    const offEnd = onCheckoutEvent('operation/end', () => {
+    const offEnd = onCheckoutEvent(CheckoutEvent.OperationEnd, () => {
       useCheckoutStore.getState().decrementActiveOperations();
     });
 
