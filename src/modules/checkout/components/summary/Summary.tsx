@@ -6,18 +6,17 @@ import { TbShoppingCart } from 'react-icons/tb';
 import { useState } from 'react';
 import { Money } from '@src/components/UI/Price/Money';
 import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
-import { Entity } from '@src/entity';
-// import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import type { Checkout } from '@src/modules/checkout/types/entity';
 import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
 import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
 
 const { Text } = Typography;
 
 interface Prop {
-  cart: Entity.Cart;
+  checkout: Checkout.Checkout;
 }
 
-export const Summary = ({ cart }: Prop) => {
+export const Summary = ({ checkout }: Prop) => {
   const t = useTranslations('Checkout');
   const tListing = useTranslations('Listing');
   const { styles } = useStyles();
@@ -26,7 +25,7 @@ export const Summary = ({ cart }: Prop) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const openCartDrawer = () => setCartDrawerOpen(true);
 
-  const lines = cart?.lines ?? [];
+  const lines = checkout?.lines ?? [];
   const visibleLines = isExpanded ? lines : lines.slice(0, 5);
   const hasHidden = lines.length > 5;
 
@@ -35,7 +34,7 @@ export const Summary = ({ cart }: Prop) => {
       <Flex align="center" justify="space-between">
         <Flex align="center" gap={8}>
           <SectionTitle>{t('order-summary')}</SectionTitle>
-          <Badge count={cart?.totalQuantity} color="blue" />
+          <Badge count={checkout?.totalQuantity} color="blue" />
         </Flex>
         <Button
           color="default"
@@ -67,7 +66,7 @@ export const Summary = ({ cart }: Prop) => {
             {t('subtotal')}
           </Text>
           <Text className={styles.summaryRow} strong>
-            <Money money={cart.cost.subtotalAmount} />
+            <Money money={checkout.cost.subtotalAmount} />
           </Text>
         </Flex>
         <Flex justify="space-between">
@@ -75,8 +74,8 @@ export const Summary = ({ cart }: Prop) => {
             {t('shipping')}
           </Text>
           <Text className={styles.summaryRow} strong>
-            {cart?.cost?.totalShippingAmount ? (
-              <Money money={cart.cost.totalShippingAmount} />
+            {checkout?.cost?.totalShippingAmount ? (
+              <Money money={checkout.cost.totalShippingAmount} />
             ) : (
               ''
             )}
@@ -87,8 +86,8 @@ export const Summary = ({ cart }: Prop) => {
             {t('tax')}
           </Text>
           <Text className={styles.summaryRow} strong>
-            {cart?.cost?.totalTaxAmount ? (
-              <Money money={cart.cost.totalTaxAmount} />
+            {checkout?.cost?.totalTaxAmount ? (
+              <Money money={checkout.cost.totalTaxAmount} />
             ) : (
               ''
             )}
@@ -97,7 +96,7 @@ export const Summary = ({ cart }: Prop) => {
         <Flex justify="space-between">
           <Text className={styles.summaryTotal}>{t('total')}</Text>
           <Text className={styles.summaryTotal}>
-            {cart ? <Money money={cart.cost.totalAmount} /> : null}
+            {checkout ? <Money money={checkout.cost.totalAmount} /> : null}
           </Text>
         </Flex>
       </Flex>

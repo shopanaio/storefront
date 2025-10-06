@@ -1,12 +1,12 @@
 import { graphql, readInlineData, useFragment } from 'react-relay';
 import { useCartContext } from '@src/providers/cart-context';
-import { useCart_CartFragment$key } from './__generated__/useCart_CartFragment.graphql';
+import { useCheckout_CheckoutFragment$key } from './__generated__/useCheckout_CheckoutFragment.graphql';
 import cartIdUtils from '@src/utils/cartId';
 import React, { useEffect, useMemo } from 'react';
 import { useCartLineFragment_CartLineFragment } from '@src/hooks/cart/useCartLineFragment/useCartLineFragment.shopana';
 
-export const useCart_CartFragment = graphql`
-  fragment useCart_CartFragment on Checkout {
+export const useCheckout_CheckoutFragment = graphql`
+  fragment useCheckout_CheckoutFragment on Checkout {
     id
     createdAt
     updatedAt
@@ -121,33 +121,51 @@ export const useCart_CartFragment = graphql`
   }
 `;
 
-const useCart = () => {
+const useCheckout = () => {
   const { cartKey, isCartLoading, isCartLoaded } = useCartContext();
 
-  const cart = useFragment<useCart_CartFragment$key>(
-    useCart_CartFragment,
+  const checkoutFragment = useFragment<useCheckout_CheckoutFragment$key>(
+    useCheckout_CheckoutFragment,
     cartKey
   );
 
-  const cartMemo = useMemo(() => {
-    if (!cart) {
+  const checkout = useMemo(() => {
+    if (!checkoutFragment) return null;
+    return checkoutFragment;
+  }, [checkoutFragment]);
+
+  const checkoutId = checkout?.id || null;
+
+  useEffect(() => {
+    if (!checkoutId) {
+      return;
+    }
+    cartIdUtils.setCartIdCookie(checkoutId);
+  }, [checkoutId]);
+
+  // Log checkout information
+  React.useEffect(() => {
+    console.log('Shopana checkout active');
+  }, []);
+
+  const checkoutMemo = useMemo(() => {
+    if (!checkout) {
       return null;
     }
     return {
-      ...cart,
-      // @ts-expect-error
-      lines: (cart?.lines || [])?.map((cartLineRef: any) =>
+      ...checkout,
+      lines: (checkout?.lines || [])?.map((cartLineRef) =>
         readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
       ),
     };
-  }, [cart]);
+  }, [checkout]);
 
   return {
-    cart: cartMemo,
+    checkout: checkoutMemo,
     loading: isCartLoading,
     loaded: isCartLoaded,
     error: null,
   };
 };
 
-export default useCart;
+export default useCheckout;

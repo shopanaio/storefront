@@ -1,14 +1,13 @@
 import { Badge, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import { Entity } from "@src/entity";
+import type { Checkout } from "@src/modules/checkout/types/entity";
 import { Money } from "@src/components/UI/Price/Money";
 
 const { Text } = Typography;
 
 interface Prop {
-  line: Entity.CartLine;
+  line: Checkout.Line;
 }
 
 export const SummaryItem = ({ line }: Prop) => {

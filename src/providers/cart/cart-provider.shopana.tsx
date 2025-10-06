@@ -46,6 +46,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
   const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
+  const [cartId, setCartId] = useState<string | null>(null);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
   const isLoadingRef = useRef(false);
@@ -54,21 +55,23 @@ const CartProvider: React.FC<CartProviderProps> = ({
   useEffect(() => {
     if (loadedRef.current || isLoadingRef.current) return;
 
-    const cartId = cartIdUtils.getCartIdFromCookie(cookieKey);
-    if (!cartId) {
+    const savedCartId = cartIdUtils.getCartIdFromCookie(cookieKey);
+    if (!savedCartId) {
       // No saved cart id: consider cart as loaded with empty state
       setCartKey(null);
+      setCartId(null);
       setIsCartLoading(false);
       setIsCartLoaded(true);
       loadedRef.current = true;
       return;
     }
 
+    setCartId(savedCartId);
     isLoadingRef.current = true;
     setIsCartLoading(true);
-    /* console.log("[CartProvider Shopana] Loading cart with ID:", cartId); */
+    /* console.log("[CartProvider Shopana] Loading cart with ID:", savedCartId); */
 
-    loadQuery({ checkoutId: cartId }, { fetchPolicy: "network-only" });
+    loadQuery({ checkoutId: savedCartId }, { fetchPolicy: "network-only" });
   }, [loadQuery, cookieKey]);
 
   const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
@@ -83,6 +86,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
     isLoadingRef.current = false;
     setIsCartLoading(false);
     setCartKey(null);
+    setCartId(null);
     setIsCartLoaded(true);
     loadedRef.current = true;
   }, []);
@@ -102,8 +106,10 @@ const CartProvider: React.FC<CartProviderProps> = ({
       isCartLoading={isCartLoading}
       isCartLoaded={isCartLoaded}
       setId={(id) => {
+        setCartId(id);
         cartIdUtils.setCartIdCookie(id, cookieKey);
       }}
+      cartId={cartId}
     >
       {queryReference ? (
         <CartDataHandler

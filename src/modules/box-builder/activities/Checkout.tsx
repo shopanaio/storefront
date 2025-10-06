@@ -3,12 +3,12 @@
 import { Checkout as CheckoutComponent } from '@src/modules/checkout';
 import { ActivityComponentType } from '@stackflow/react';
 import Layout from '@src/modules/box-builder/stackflow/Layout';
-import { useBoxBuilderCart } from '@src/modules/box-builder/hooks/useCart';
 import { Activity, useFlow } from '../stackflow/Stack';
+import useCartId from '@src/hooks/cart/useCartId';
 
 const Checkout: ActivityComponentType = () => {
   const { push } = useFlow();
-  const { cart } = useBoxBuilderCart();
+  const { cartId } = useCartId();
 
   const handleConfirm = () => {
     push(Activity.Order, {});
@@ -17,7 +17,7 @@ const Checkout: ActivityComponentType = () => {
   return (
     <Layout showCart={false} paddingTop={false} paddingBottom={false}>
       <CheckoutComponent
-        cart={cart}
+        cartId={cartId}
         onConfirm={handleConfirm}
         features={{ auth: false }}
       />

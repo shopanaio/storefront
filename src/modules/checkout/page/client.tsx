@@ -1,10 +1,10 @@
-import useCart from '@src/hooks/cart/useCart';
 import '@src/modules/checkout/vendors/autoload';
 import { Checkout } from '@src/modules/checkout';
 import { CheckoutBrand } from '@src/modules/checkout/page/brand';
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
+import useCartId from '@src/hooks/cart/useCartId';
 
 const onConfirm = () => {
   console.log('onConfirm');
@@ -16,22 +16,22 @@ const features = {
 
 /**
  * Client page for the Checkout module. Redirects to the localized home page
- * if the cart is not found once cart loading is completed.
+ * if the checkout is not found once checkout loading is completed.
  */
 export const CheckoutPageClient = () => {
-  const { cart, loaded } = useCart();
+  const { cartId, loaded } = useCartId();
   const router = useRouter();
   const routes = useRoutes();
 
   useEffect(() => {
-    if (loaded && !cart) {
+    if (loaded && !cartId) {
       router.replace(routes.home.path());
     }
-  }, [loaded, cart, router, routes]);
+  }, [loaded, cartId, router, routes]);
 
   return (
     <Checkout
-      cart={cart}
+      cartId={cartId}
       onConfirm={onConfirm}
       brand={<CheckoutBrand />}
       features={features}
