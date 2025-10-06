@@ -12,35 +12,6 @@ import type { SectionDtoFor } from '@src/modules/checkout/state/checkoutBus';
 import type { SectionDtoMap } from '@src/modules/checkout/core/contracts/dto';
 import { SectionEntry, SectionId } from '@src/modules/checkout/state/types';
 
-/**
- * Public store interface with state and actions.
- */
-export interface CheckoutState {
-  /** Sections data */
-  sections: Partial<Record<SectionId, SectionEntry>>;
-
-  /** Running mutations count */
-  activeOperationsCount: number;
-
-  // Section actions
-  registerSection: (id: SectionId, required: boolean) => void;
-  unregisterSection: (id: SectionId) => void;
-  sectionValid: <K extends SectionId>(id: K, dto: SectionDtoFor<K>) => void;
-  sectionInvalid: <K extends SectionId>(
-    id: K,
-    dto?: SectionDtoFor<K>,
-    errors?: Record<string, string>
-  ) => void;
-  resetSection: (id: SectionId) => void;
-  setSectionBusy: (id: SectionId, busy: boolean) => void;
-
-  // Active operations tracking
-  incrementActiveOperations: () => void;
-  decrementActiveOperations: () => void;
-
-  // Submission
-  requestSubmit: () => void;
-}
 
 /**
  * Determine if a section is valid in the current state.

@@ -1,26 +1,13 @@
 'use client';
 
 /**
- * CheckoutController: React bridge that instantiates CheckoutOrchestrator
- * with current checkoutId and repository from CheckoutApiContext.
+ * CheckoutController: Tracks checkout operations for UI indicators
  */
-import { useEffect } from 'react';
-import { useCheckoutApiContext } from '@src/modules/checkout/context/CheckoutApiContext';
-import { CheckoutOrchestrator } from '@src/modules/checkout/core/orchestrator/CheckoutOrchestrator';
 import { useOperationTracker } from '@src/modules/checkout/state/hooks/useOperationTracker';
 
 export function CheckoutController() {
-  const { checkoutId, repository } = useCheckoutApiContext();
-
   // Track active operations for UI indicators
   useOperationTracker();
-
-  useEffect(() => {
-    if (!checkoutId) return;
-    const orchestrator = new CheckoutOrchestrator({ checkoutId, repository });
-    orchestrator.start();
-    return () => orchestrator.stop();
-  }, [checkoutId, repository]);
 
   return null;
 }

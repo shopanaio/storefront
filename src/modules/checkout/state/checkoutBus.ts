@@ -4,13 +4,29 @@
  * This module is intended to be used from client-side Checkout code.
  */
 import Emittery from 'emittery';
-import type { SectionDtoMap } from '@src/modules/checkout/core/contracts/dto';
-import { SectionEntry, SectionId } from '@src/modules/checkout/state/types';
+import { SectionEntry, SectionId } from '@src/modules/checkout/state/interface';
 
 /**
- * Inflight operation key used by orchestrator to group async operations.
+ * Operation keys for tracking inflight operations.
+ * Each key represents a unique checkout API operation.
  */
-export type InflightKey = SectionId;
+export enum OperationKey {
+  SelectDeliveryMethod = 'selectDeliveryMethod',
+  SelectPaymentMethod = 'selectPaymentMethod',
+  UpdateCustomerIdentity = 'updateCustomerIdentity',
+  AddDeliveryAddresses = 'addDeliveryAddresses',
+  UpdateDeliveryAddresses = 'updateDeliveryAddresses',
+  RemoveDeliveryAddresses = 'removeDeliveryAddresses',
+  AddPromoCode = 'addPromoCode',
+  RemovePromoCode = 'removePromoCode',
+  UpdateCustomerNote = 'updateCustomerNote',
+}
+
+/**
+ * @deprecated Use OperationKey instead
+ */
+export type InflightKey = OperationKey;
+
 
 /**
  * Checkout event names enum for type-safe event handling.
@@ -47,20 +63,6 @@ export enum CheckoutEvent {
 }
 
 /**
- * Static section keys that have corresponding DTOs in SectionDtoMap.
- */
-export type StaticSectionId = keyof SectionDtoMap;
-
-/**
- * Resolve section DTO type by section key.
- * - Static keys use SectionDtoMap
- * - Dynamic delivery keys use DeliverySectionDto
- */
-export type SectionDtoFor<K extends SectionId> = K extends StaticSectionId
-  ? SectionDtoMap[K]
-  : never;
-
-/**
  * Aggregated payload emitted when Checkout is ready for submission.
  */
 export type CheckoutPayload = Partial<Record<SectionId, SectionEntry>>;
@@ -78,12 +80,10 @@ export type CheckoutEvents = {
     sectionId: SectionId;
   };
   [CheckoutEvent.SectionValid]: {
-    sectionId: StaticSectionId;
-    dto: SectionDtoMap[StaticSectionId];
+    sectionId: SectionId;
   };
   [CheckoutEvent.SectionInvalid]: {
-    sectionId: StaticSectionId;
-    dto?: SectionDtoMap[StaticSectionId];
+    sectionId: SectionId;
     errors?: Record<string, string>;
   };
   [CheckoutEvent.SectionReset]: {
@@ -114,11 +114,11 @@ export type CheckoutEvents = {
 
   /** Operation lifecycle events for UI busy indicators. */
   [CheckoutEvent.OperationStart]: {
-    key: InflightKey;
+    key: OperationKey;
     sectionId?: SectionId;
   };
   [CheckoutEvent.OperationEnd]: {
-    key: InflightKey;
+    key: OperationKey;
     sectionId?: SectionId;
   };
   /**
@@ -126,7 +126,7 @@ export type CheckoutEvents = {
    * Consumers may map `sectionId` to local error presentation.
    */
   [CheckoutEvent.OperationError]: {
-    key: InflightKey;
+    key: OperationKey;
     sectionId?: SectionId;
     /** Optional human-readable message */
     message?: string;
