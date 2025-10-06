@@ -4,126 +4,115 @@
  * This module is intended to be used from client-side Checkout code.
  */
 import Emittery from 'emittery';
-import type { SectionDtoMap, DeliverySectionDto } from '@src/modules/checkout/core/contracts/dto';
-
-/**
- * Unique identifier of a delivery group.
- */
-export type DeliveryGroupId = string;
-
-/**
- * Static section identifiers present regardless of delivery grouping.
- */
-export type SectionId =
-  | 'contact'
-  | 'recipient'
-  | 'address'
-  | 'payment'
-  | 'promo'
-  | 'comment';
-
-/**
- * Dynamic delivery section key bound to a specific delivery group.
- */
-export type DeliverySectionId = `delivery:${DeliveryGroupId}`;
-
-/**
- * Union of all section keys used across Checkout.
- */
-export type SectionKey = SectionId | DeliverySectionId;
+import type { SectionDtoMap } from '@src/modules/checkout/core/contracts/dto';
+import { SectionEntry, SectionId } from '@src/modules/checkout/state/types';
 
 /**
  * Inflight operation key used by orchestrator to group async operations.
  */
-export type InflightKey =
-  | 'identity'
-  | 'recipient'
-  | 'address'
-  | `delivery:${string}`
-  | 'payment'
-  | 'promo'
-  | 'note';
+export type InflightKey = SectionId;
+
+/**
+ * Checkout event names enum for type-safe event handling.
+ */
+export enum CheckoutEvent {
+  /** Emitted when a section registers itself with the checkout orchestrator */
+  SectionRegistered = 'section/registered',
+  /** Emitted when a section unregisters itself from the checkout orchestrator */
+  SectionUnregistered = 'section/unregistered',
+  /** Emitted when a section passes validation and provides valid DTO */
+  SectionValid = 'section/valid',
+  /** Emitted when a section fails validation with optional errors */
+  SectionInvalid = 'section/invalid',
+  /** Emitted when a section is reset to its initial state */
+  SectionReset = 'section/reset',
+  /** Emitted when user requests checkout submission */
+  SubmitRequested = 'submit/requested',
+  /** Emitted when submission is blocked due to missing or invalid sections */
+  SubmitBlocked = 'submit/blocked',
+  /** Emitted when all sections are valid and checkout is ready to submit */
+  SubmitReady = 'submit/ready',
+  /** Emitted when checkout submission has completed successfully */
+  SubmitCompleted = 'submit/completed',
+  /** Emitted when an async operation starts (for UI busy indicators) */
+  OperationStart = 'operation/start',
+  /** Emitted when an async operation completes successfully */
+  OperationEnd = 'operation/end',
+  /** Emitted when an async operation fails with error details */
+  OperationError = 'operation/error',
+}
 
 /**
  * Static section keys that have corresponding DTOs in SectionDtoMap.
  */
-export type StaticSectionKey = keyof SectionDtoMap;
+export type StaticSectionId = keyof SectionDtoMap;
 
 /**
  * Resolve section DTO type by section key.
  * - Static keys use SectionDtoMap
  * - Dynamic delivery keys use DeliverySectionDto
  */
-export type SectionDtoFor<K extends SectionKey> =
-  K extends DeliverySectionId
-    ? DeliverySectionDto
-    : K extends StaticSectionKey
-      ? SectionDtoMap[K]
-      : never;
+export type SectionDtoFor<K extends SectionId> = K extends StaticSectionId
+  ? SectionDtoMap[K]
+  : never;
 
 /**
  * Aggregated payload emitted when Checkout is ready for submission.
  */
-export type CheckoutPayload = {
-  contact?: unknown;
-  recipient?: unknown;
-  deliveries?: Array<{
-    groupId: DeliveryGroupId;
-    methodCode: string;
-    data: unknown;
-  }>;
-  address?: unknown;
-  payment?: { methodCode: string; data: unknown };
-  promo?: unknown;
-  comment?: string;
-};
+export type CheckoutPayload = Partial<Record<SectionId, SectionEntry>>;
 
 /**
  * Typed map of all Checkout events and their payloads.
  */
 export type CheckoutEvents = {
-  'section/registered': { sectionId: SectionKey; required: boolean };
-  'section/valid':
-    | { sectionId: StaticSectionKey; dto: SectionDtoMap[StaticSectionKey] }
-    | { sectionId: DeliverySectionId; dto: DeliverySectionDto };
-  'section/invalid':
-    | { sectionId: StaticSectionKey; dto?: SectionDtoMap[StaticSectionKey]; errors?: Record<string, string> }
-    | { sectionId: DeliverySectionId; dto?: DeliverySectionDto; errors?: Record<string, string> };
-  'section/reset': { sectionId: SectionKey };
-  'section/unregistered': { sectionId: SectionKey };
-
-  'provider/registered': { providerId: string; providerType: 'delivery' | 'payment' };
-  'provider/activated': { providerId: string };
-  'provider/deactivated': { providerId: string };
-  'provider/valid': { providerId: string; data: unknown };
-  'provider/invalid': {
-    providerId: string;
+  /** Section events */
+  [CheckoutEvent.SectionRegistered]: {
+    sectionId: SectionId;
+    required: boolean;
+  };
+  [CheckoutEvent.SectionUnregistered]: {
+    sectionId: SectionId;
+  };
+  [CheckoutEvent.SectionValid]: {
+    sectionId: StaticSectionId;
+    dto: SectionDtoMap[StaticSectionId];
+  };
+  [CheckoutEvent.SectionInvalid]: {
+    sectionId: StaticSectionId;
+    dto?: SectionDtoMap[StaticSectionId];
     errors?: Record<string, string>;
   };
-  'provider/unregistered': { providerId: string };
-
-  'method/delivery-selected': { groupId: DeliveryGroupId; code: string | null };
-  'method/payment-selected': { code: string | null };
-
-  'submit/requested': object;
-  'submit/blocked': {
-    missing: SectionKey[];
-    errors?: Record<SectionKey, string[]>;
+  [CheckoutEvent.SectionReset]: {
+    sectionId: SectionId;
   };
-  'submit/ready': { payload: CheckoutPayload };
-  'submit/completed': object;
-  /**
-   * Operation lifecycle events for UI busy indicators.
-   */
-  'operation/start': { key: InflightKey; sectionId?: SectionKey };
-  'operation/end': { key: InflightKey; sectionId?: SectionKey };
+
+  /** Submit events */
+  [CheckoutEvent.SubmitRequested]: object;
+  [CheckoutEvent.SubmitBlocked]: {
+    missing: SectionId[];
+    errors?: Record<SectionId, string[]>;
+  };
+  [CheckoutEvent.SubmitReady]: {
+    payload: CheckoutPayload;
+  };
+  [CheckoutEvent.SubmitCompleted]: object;
+
+  /** Operation lifecycle events for UI busy indicators. */
+  [CheckoutEvent.OperationStart]: {
+    key: InflightKey;
+    sectionId?: SectionId;
+  };
+  [CheckoutEvent.OperationEnd]: {
+    key: InflightKey;
+    sectionId?: SectionId;
+  };
   /**
    * Operation error event for UI error indicators and toasts.
    * Consumers may map `sectionId` to local error presentation.
    */
-  'operation/error': {
+  [CheckoutEvent.OperationError]: {
     key: InflightKey;
-    sectionId?: SectionKey;
+    sectionId?: SectionId;
     /** Optional human-readable message */
     message?: string;
     /** Optional machine error code */
@@ -164,45 +153,4 @@ export function emitCheckoutEvent<K extends keyof CheckoutEvents>(
   eventData: CheckoutEvents[K]
 ): Promise<void> {
   return checkoutBus.emit(eventName, eventData);
-}
-
-/**
- * Enable verbose console logging for all checkout events.
- * Intended for development diagnostics only. Returns a function to unsubscribe.
- */
-export function enableCheckoutBusDevLogging(): () => void {
-  const unsubscribe = checkoutBus.onAny((eventName: keyof CheckoutEvents | string, eventData: unknown) => {
-    const name = String(eventName);
-    if (
-      typeof console !== 'undefined' &&
-      typeof (console as unknown as { groupCollapsed?: (...args: unknown[]) => void }).groupCollapsed === 'function'
-    ) {
-      (console as unknown as { groupCollapsed: (...args: unknown[]) => void; groupEnd?: () => void; log?: (...args: unknown[]) => void; trace?: () => void; }).groupCollapsed(`[checkoutBus] ${name}`);
-      // eslint-disable-next-line no-console
-      console.log(eventData);
-      if (typeof (console as unknown as { trace?: () => void }).trace === 'function') {
-        (console as unknown as { trace: () => void }).trace();
-      }
-      (console as unknown as { groupEnd?: () => void }).groupEnd?.();
-    } else {
-      // eslint-disable-next-line no-console
-      console.log('[checkoutBus]', name, eventData);
-    }
-  });
-  return () => {
-    unsubscribe();
-  };
-}
-
-// Auto-enable logging when explicitly requested via public env flag.
-if (
-  typeof process !== 'undefined' &&
-  (process.env.NEXT_PUBLIC_CHECKOUT_LOG_EVENTS === '1' ||
-    process.env.NEXT_PUBLIC_CHECKOUT_LOG_EVENTS === 'true')
-) {
-  try {
-    enableCheckoutBusDevLogging();
-  } catch {
-    // no-op: logging is best-effort
-  }
 }
