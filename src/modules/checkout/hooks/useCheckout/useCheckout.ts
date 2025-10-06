@@ -1,169 +1,46 @@
-import { graphql, readInlineData, useFragment } from 'react-relay';
-import { useCartContext } from '@src/providers/cart-context';
-import { useCheckout_CheckoutFragment$key } from './__generated__/useCheckout_CheckoutFragment.graphql';
-import cartIdUtils from '@src/utils/cartId';
+import { useLazyLoadQuery } from 'react-relay';
 import React, { useEffect, useMemo } from 'react';
-import { useCartLineFragment_CartLineFragment } from '@src/hooks/cart/useCartLineFragment/useCartLineFragment.shopana';
+import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
+import type { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
+import { mapApiCheckoutToCheckout } from '@src/modules/checkout/mappers/mapApiCheckoutToCheckout';
+import type { Checkout } from '@src/modules/checkout/types/entity';
 
-export const useCheckout_CheckoutFragment = graphql`
-  fragment useCheckout_CheckoutFragment on Checkout {
-    id
-    createdAt
-    updatedAt
-    cost {
-      subtotalAmount {
-        currencyCode
-        amount
-      }
-      totalDiscountAmount {
-        currencyCode
-        amount
-      }
-      totalTaxAmount {
-        currencyCode
-        amount
-      }
-      totalAmount {
-        currencyCode
-        amount
-      }
-      totalShippingAmount {
-        currencyCode
-        amount
-      }
+/**
+ * Hook to load and manage checkout data.
+ * Fetches checkout data from the API and maps it to domain Checkout entity.
+ *
+ * @param cartId - The ID of the cart/checkout to load
+ * @returns Checkout data, loading state, and error state
+ */
+const useCheckout = (cartId: string | null) => {
+  // Client-side lazy query load
+  const data = useLazyLoadQuery<LoadCheckoutQueryType>(
+    loadCheckoutQuery,
+    { checkoutId: cartId! },
+    {
+      fetchPolicy: 'network-only',
+      networkCacheConfig: { force: true },
     }
-    appliedPromoCodes {
-      code
-      appliedAt
-      discountType
-      value
-      provider
-    }
-    customerNote
-    notifications {
-      code
-      severity
-      isDismissed
-    }
-    customerIdentity {
-      lastName
-      firstName
-      middleName
-      email
-      phone
-    }
-    deliveryGroups {
-      id
-      checkoutLines {
-        id
-      }
-      deliveryAddress {
-        id
-        data
-        address1
-        address2
-        city
-        countryCode
-        provinceCode
-        postalCode
-      }
-      recipient {
-        firstName
-        middleName
-        lastName
-        email
-        phone
-      }
-      deliveryMethods {
-        code
-        deliveryMethodType
-        provider {
-          code
-          data
-        }
-      }
-      selectedDeliveryMethod {
-        code
-        deliveryMethodType
-        provider {
-          code
-          data
-        }
-      }
-      estimatedCost {
-        amount {
-          amount
-          currencyCode
-        }
-        paymentModel
-      }
-    }
-    payment {
-      paymentMethods {
-        code
-        provider
-        flow
-        metadata
-      }
-      selectedPaymentMethod {
-        code
-        provider
-      }
-      payableAmount {
-        amount
-        currencyCode
-      }
-    }
-    totalQuantity
-    lines {
-      ...useCartLineFragment_CartLineFragment
-    }
-  }
-`;
-
-const useCheckout = () => {
-  const { cartKey, isCartLoading, isCartLoaded } = useCartContext();
-
-  const checkoutFragment = useFragment<useCheckout_CheckoutFragment$key>(
-    useCheckout_CheckoutFragment,
-    cartKey
   );
 
-  const checkout = useMemo(() => {
-    if (!checkoutFragment) return null;
-    return checkoutFragment;
-  }, [checkoutFragment]);
+  // Extract checkout data from query result
+  const apiCheckout = data.checkoutQuery?.checkout;
 
-  const checkoutId = checkout?.id || null;
-
-  useEffect(() => {
-    if (!checkoutId) {
-      return;
-    }
-    cartIdUtils.setCartIdCookie(checkoutId);
-  }, [checkoutId]);
+  // Map API checkout data to domain Checkout entity
+  const checkout = useMemo<Checkout.Checkout | null>(() => {
+    if (!apiCheckout) return null;
+    return mapApiCheckoutToCheckout(apiCheckout);
+  }, [apiCheckout]);
 
   // Log checkout information
   React.useEffect(() => {
     console.log('Shopana checkout active');
   }, []);
 
-  const checkoutMemo = useMemo(() => {
-    if (!checkout) {
-      return null;
-    }
-    return {
-      ...checkout,
-      lines: (checkout?.lines || [])?.map((cartLineRef) =>
-        readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
-      ),
-    };
-  }, [checkout]);
-
   return {
-    checkout: checkoutMemo,
-    loading: isCartLoading,
-    loaded: isCartLoaded,
+    checkout,
+    loading: !data,
+    loaded: !!data,
     error: null,
   };
 };

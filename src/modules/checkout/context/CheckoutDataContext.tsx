@@ -1,12 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
-import { usePreloadedQuery, readInlineData } from 'react-relay';
+import React, { createContext, useContext } from 'react';
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import { useLoadCheckout } from '@src/modules/checkout/hooks/useLoadCheckout';
-import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
-import type { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
-import { useCartLineFragment_CartLineFragment } from '@src/hooks/cart/useCartLineFragment/useCartLineFragment.shopana';
+import useCheckout from '@src/modules/checkout/hooks/useCheckout/useCheckout';
 
 export interface CheckoutDataContextValue {
   checkout: Checkout.Checkout | null;
@@ -19,8 +15,8 @@ const CheckoutDataContext = createContext<CheckoutDataContextValue | undefined>(
 );
 
 /**
- * Provider component that loads and manages checkout data.
- * Uses loadCheckoutQuery to fetch checkout data by cartId.
+ * Provider component that manages checkout data using useCheckout hook.
+ * Provides checkout data to child components via context.
  *
  * @param cartId - The ID of the cart/checkout to load
  * @param children - Child components that will have access to checkout data
@@ -32,44 +28,26 @@ export function CheckoutDataProvider({
   cartId: string | null;
   children: React.ReactNode;
 }) {
-  // Load checkout query reference
-  const { queryReference } = useLoadCheckout({ checkoutId: cartId });
+  // Use the useCheckout hook to load and manage checkout data
+  const { checkout, loading, loaded } = useCheckout(cartId);
 
-  // Load checkout data using the query reference
-  const data = usePreloadedQuery<LoadCheckoutQueryType>(loadCheckoutQuery, queryReference!);
-
-  // Extract checkout data from query result
-  // For Shopana: checkoutQuery.checkout
-  // For Shopify: cart
-  const checkoutData = (data as any).checkoutQuery?.checkout || (data as any).cart;
-
-  // Map checkout data to Checkout format
-  const checkout = useMemo<Checkout.Checkout | null>(() => {
-    if (!checkoutData) return null;
-
-    return {
-      ...checkoutData,
-      lines: (checkoutData?.lines || [])?.map((cartLineRef: any) =>
-        readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
-      ),
-    } as Checkout.Checkout;
-  }, [checkoutData]);
-
-  const value = useMemo<CheckoutDataContextValue>(() => ({
-    checkout,
-    loading: !data,
-    loaded: !!data,
-  }), [checkout, data]);
+  console.log('checkout', { checkout, loading, loaded });
 
   return (
-    <CheckoutDataContext.Provider value={value}>
+    <CheckoutDataContext.Provider value={{ checkout, loading, loaded }}>
       {children}
     </CheckoutDataContext.Provider>
   );
 }
 
+/**
+ * Hook to access checkout data from CheckoutDataContext
+ *
+ * @returns Checkout data, loading state, and loaded state
+ */
 export function useCheckoutData() {
   const ctx = useContext(CheckoutDataContext);
-  if (!ctx) throw new Error('useCheckoutData must be used within CheckoutDataProvider');
+  if (!ctx)
+    throw new Error('useCheckoutData must be used within CheckoutDataProvider');
   return ctx;
 }
