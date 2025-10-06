@@ -53,7 +53,7 @@ export const ProviderRenderer = ({
   const loader = moduleRegistry.resolve<ProviderModuleApi>(
     moduleType,
     provider
-  ) as any;
+  );
 
   const componentProps = {
     provider,
@@ -64,10 +64,5 @@ export const ProviderRenderer = ({
     onInvalid,
   };
 
-  return (
-    <DynamicRenderer
-      loader={loader}
-      componentProps={componentProps as any}
-    />
-  );
+  return <DynamicRenderer loader={loader} componentProps={componentProps} />;
 };

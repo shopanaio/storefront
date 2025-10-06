@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import useCheckout from '@src/modules/checkout/hooks/useCheckout/useCheckout';
+import { useCheckoutQuery } from '@src/modules/checkout/hooks/useCheckout/useCheckoutQuery';
 
 export interface CheckoutDataContextValue {
   checkout: Checkout.Checkout | null;
@@ -29,9 +29,7 @@ export function CheckoutDataProvider({
   children: React.ReactNode;
 }) {
   // Use the useCheckout hook to load and manage checkout data
-  const { checkout, loading, loaded } = useCheckout(cartId);
-
-  console.log('checkout', { checkout, loading, loaded });
+  const { checkout, loading, loaded } = useCheckoutQuery(cartId);
 
   return (
     <CheckoutDataContext.Provider value={{ checkout, loading, loaded }}>

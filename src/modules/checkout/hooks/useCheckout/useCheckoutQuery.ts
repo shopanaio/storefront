@@ -13,7 +13,7 @@ import { ApiCheckout } from '@codegen/schema-client';
  * @param cartId - The ID of the cart/checkout to load
  * @returns Checkout data, loading state, and error state
  */
-const useCheckout = (cartId: string | null) => {
+export const useCheckoutQuery = (cartId: string | null) => {
   // Client-side lazy query load
   const data = useLazyLoadQuery<LoadCheckoutQueryType>(
     loadCheckoutQuery,
@@ -45,5 +45,3 @@ const useCheckout = (cartId: string | null) => {
     error: null,
   };
 };
-
-export default useCheckout;
