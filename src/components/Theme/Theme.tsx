@@ -1,6 +1,7 @@
 "use client";
 
 import "modern-normalize/modern-normalize.css";
+import "nprogress/nprogress.css";
 import { GlobalStyle } from "@src/components/Theme/GlobalStyle";
 import { App, notification } from "antd";
 import { ThemeProvider } from "antd-style";

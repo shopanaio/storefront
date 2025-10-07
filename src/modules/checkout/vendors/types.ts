@@ -42,6 +42,7 @@ export interface ProviderConfig {
 export interface ProviderMethod {
   code: string;
   data: unknown;
+  provider: string;
 }
 
 export interface ProviderProps {
@@ -49,6 +50,10 @@ export interface ProviderProps {
   provider: string;
   availableMethods: ProviderMethod[];
   selectedMethod: ProviderMethod | null;
+  /** Callback for when a method is selected (optional for backward compatibility) */
+  onSelectMethod?: (method: ProviderMethod) => void;
+  /** Callback for when selected method data is updated (optional, mainly for delivery) */
+  onUpdateMethodData?: (data: unknown) => void;
 }
 
 export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'> & {

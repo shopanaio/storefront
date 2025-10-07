@@ -12,14 +12,26 @@ import { ProviderComponentProps } from '@src/modules/checkout/vendors/types';
  */
 export function NPProvider({
   availableMethods,
-  onValid,
-  onInvalid,
   selectedMethod,
   config,
+  onSelectMethod,
+  onUpdateMethodData,
+  provider,
 }: ProviderComponentProps) {
   const { styles } = useStyles();
 
-  const handleSelectMethod = () => {};
+  const handleSelectMethod = (code: string) => {
+    const method = availableMethods.find((m) => m.code === code);
+    if (method && onSelectMethod) {
+      onSelectMethod({ ...method, provider });
+    }
+  };
+
+  const handleUpdateMethodData = (data: unknown) => {
+    if (onUpdateMethodData) {
+      onUpdateMethodData(data);
+    }
+  };
 
   return (
     <ScopedIntlProvider scope="novaposta" load={loadNovapostaMessages}>
@@ -36,10 +48,9 @@ export function NPProvider({
               <MethodComponent
                 key={config.code}
                 isActive={selectedMethod?.code === config.code}
-                onActivate={() => handleSelectMethod()}
-                onValid={onValid}
-                onInvalid={onInvalid}
-                initialValues={config.initialValues}
+                onActive={() => handleSelectMethod(config.code)}
+                data={method.data}
+                onSubmit={handleUpdateMethodData}
               />
             );
           })

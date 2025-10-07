@@ -1,19 +1,19 @@
-import { useRef, useEffect, useState } from "react";
-import { Popover, Button } from "antd";
-import SearchResults from "./SearchResults";
-import { useSearchInput } from "@src/hooks/useSearchInput";
-import { mq } from "@src/components/Theme/breakpoints";
-import { createStyles } from "antd-style";
-import { useElementWidth } from "@src/hooks/useElementWidth";
-import { SearchInput } from "./SearchInput";
-import { useIsMobile } from "@src/hooks/useIsMobile";
-import { useModalStore } from "@src/store/appStore";
-import { useInitialLoading } from "@src/hooks/useInitialLoading";
-import usePredictiveSearch from "@src/hooks/search/usePredictiveSearch";
-import { useSearchAllButton } from "@src/hooks/useSearchAllButton";
+import { useRef, useEffect, useState } from 'react';
+import { Popover, Button } from 'antd';
+import SearchResults from './SearchResults';
+import { useSearchInput } from '@src/hooks/useSearchInput';
+import { mq } from '@src/components/Theme/breakpoints';
+import { createStyles } from 'antd-style';
+import { useElementWidth } from '@src/hooks/useElementWidth';
+import { SearchInput } from './SearchInput';
+import { useIsMobile } from '@src/hooks/useIsMobile';
+import { useModalStore } from '@src/store/appStore';
+import { useInitialLoading } from '@src/hooks/useInitialLoading';
+import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
+import { useSearchAllButton } from '@src/hooks/useSearchAllButton';
 
 export const DesktopSearch: React.FC = () => {
-  const { searchTerm, debouncedTerm } = useSearchInput(300);
+  const { searchTerm, debouncedTerm } = useSearchInput('', 300);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const isMobile = useIsMobile();
@@ -55,9 +55,9 @@ export const DesktopSearch: React.FC = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [setIsPopoverOpen]);
 
@@ -86,7 +86,7 @@ export const DesktopSearch: React.FC = () => {
               searchTerm={debouncedTerm}
               initialLoading={initialLoading}
             />
-            {debouncedTerm.trim() !== "" && products.length > 0 && (
+            {debouncedTerm.trim() !== '' && products.length > 0 && (
               <div className={styles.buttonWrapper}>
                 <Button block href={href}>
                   {label}

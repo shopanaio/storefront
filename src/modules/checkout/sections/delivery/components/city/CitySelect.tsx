@@ -16,13 +16,13 @@ import clsx from 'clsx';
 export type { City } from '@src/modules/checkout/vendors/novaposta/types';
 
 interface Prop {
-  value: City | null;
-  onChange: (city: City) => void;
+  city: City | null;
+  onSubmit: (city: City) => void;
 }
 
 const np = new NovaPoshta('');
 
-export const CitySelect = ({ value, onChange }: Prop) => {
+export const CitySelect = ({ city, onSubmit }: Prop) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
@@ -31,12 +31,7 @@ export const CitySelect = ({ value, onChange }: Prop) => {
   const [searchValue, setSearchValue] = useState('');
   const [settlements, setSettlements] = useState<City[]>([]);
 
-  console.log('searchValue', searchValue);
   useEffect(() => {
-    if (1) {
-      return;
-    }
-
     const fetchSettlements = async () => {
       if (searchValue.trim().length === 0) return;
 
@@ -73,7 +68,7 @@ export const CitySelect = ({ value, onChange }: Prop) => {
   }, [searchValue, settlements]);
 
   const handleSelectCity = (item: City) => {
-    onChange(item);
+    onSubmit(item);
     setIsCityModalVisible(false);
     setSearchValue('');
   };
@@ -81,26 +76,26 @@ export const CitySelect = ({ value, onChange }: Prop) => {
   return (
     <>
       <Button
-        color={value ? 'primary' : 'default'}
+        color={city ? 'primary' : 'default'}
         variant={'outlined'}
         onClick={() => setIsCityModalVisible(true)}
         icon={
           <TbMapPin
             size={24}
-            color={value ? token.colorPrimary : token.colorIcon}
+            color={city ? token.colorPrimary : token.colorIcon}
           />
         }
         className={clsx(styles.button, {
-          [styles.activeButton]: Boolean(value),
+          [styles.activeButton]: Boolean(city),
         })}
       >
-        {value ? (
+        {city ? (
           <Flex className={clsx(styles.flex)}>
             <Typography.Text className={styles.secondaryText} type="secondary">
               {t('city')}
             </Typography.Text>
             <Typography.Text className={styles.mainText}>
-              {value.MainDescription}
+              {city.MainDescription}
             </Typography.Text>
           </Flex>
         ) : (

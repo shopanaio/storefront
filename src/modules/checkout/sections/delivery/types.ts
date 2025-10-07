@@ -28,6 +28,7 @@ export type DeliveryProviderMethodsRecord = Record<
   Array<{
     code: DeliveryMethodCode;
     data: DeliveryMethodData;
+    provider: string;
   }>
 >;
 

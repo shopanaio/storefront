@@ -16,6 +16,8 @@ import {
 export const ProviderRenderer = ({
   moduleType,
   provider,
+  onSelectMethod,
+  onUpdateMethodData,
   ...componentProps
 }: ProviderProps) => {
   const [api, setApi] = useState<ProviderModuleApi | null>(null);
@@ -51,5 +53,13 @@ export const ProviderRenderer = ({
     return null;
   }
 
-  return <Component {...componentProps} provider={provider} config={config} />;
+  return (
+    <Component
+      {...componentProps}
+      provider={provider}
+      config={config}
+      onSelectMethod={onSelectMethod}
+      onUpdateMethodData={onUpdateMethodData}
+    />
+  );
 };

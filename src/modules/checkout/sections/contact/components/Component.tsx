@@ -4,7 +4,6 @@ import { ContactSelect } from '@src/modules/checkout/components/contact/ContactS
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useCheckoutCustomerIdentity } from '@src/modules/checkout/hooks/useCheckoutCustomerIdentity';
 import { useCallback, useMemo } from 'react';
 import { ContactFormData } from '../types';
 import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';

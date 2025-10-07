@@ -11,15 +11,25 @@ import { ProviderComponentProps } from '@src/modules/checkout/vendors/types';
  */
 export function BTProvider({
   availableMethods,
-  onValid,
-  onInvalid,
   selectedMethod,
   config,
+  onSelectMethod,
+  onUpdateMethodData,
+  provider,
 }: ProviderComponentProps) {
   const activeCode: string | undefined = selectedMethod?.code;
 
   const handleSelectMethod = (code: string) => {
-    console.log('handleSelectMethod', code);
+    const method = availableMethods.find((m) => m.code === code);
+    if (method && onSelectMethod) {
+      onSelectMethod({ ...method, provider });
+    }
+  };
+
+  const handleUpdateMethodData = (data: unknown) => {
+    if (onUpdateMethodData) {
+      onUpdateMethodData(data);
+    }
   };
 
   return (
@@ -37,10 +47,9 @@ export function BTProvider({
               <MethodComponent
                 key={config.code}
                 isActive={activeCode === config.code}
-                onActivate={() => handleSelectMethod(config.code)}
-                onValid={onValid}
-                onInvalid={onInvalid}
-                initialValues={config.initialValues}
+                onActive={() => handleSelectMethod(config.code)}
+                data={method.data}
+                onSubmit={handleUpdateMethodData}
               />
             );
           })

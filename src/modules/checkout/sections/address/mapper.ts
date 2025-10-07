@@ -15,17 +15,22 @@ export function mapCheckoutToAddressFormData(
 
   const firstDeliveryGroup = checkout.deliveryGroups[0];
   if (!firstDeliveryGroup?.deliveryAddress) {
-    return null;
+    return {
+      addressId: null,
+      city: null,
+    };
   }
 
   const { deliveryAddress } = firstDeliveryGroup;
 
   // Parse city data from deliveryAddress.data
   const city: City | null = deliveryAddress.data
-    ? (deliveryAddress.data as City)
+    ? // @ts-expect-error TODO: fix type
+      (deliveryAddress?.data?.city as City)
     : null;
 
   return {
+    addressId: deliveryAddress.id,
     city,
   };
 }
