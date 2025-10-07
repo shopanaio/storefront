@@ -8,6 +8,8 @@ import { useState, useCallback, useEffect } from 'react';
 import type { RecipientFormData } from '../types';
 import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
 import type { ContactForm } from '@src/modules/checkout/components/contact/ContactSelect';
+import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
+import { SectionId } from '@src/modules/checkout/state/interface';
 
 /**
  * View component for the checkout recipient section.
@@ -36,6 +38,26 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
 
   useEffect(() => {
     setIsRecipientSelf(data?.self ?? true);
+  }, [data?.self]);
+
+  /**
+   * Update section 'required' flag based on 'self' value.
+   * - self=true (I am recipient): required=false (uses customerIdentity)
+   * - self=false (another person): required=true (must fill recipient form)
+   *
+   * If data is null, section is not required (initial state before any data).
+   */
+  useEffect(() => {
+    if (!data) {
+      // No data yet, section not required
+      useCheckoutStore.getState().setSectionRequired(SectionId.Recipient, false);
+      return;
+    }
+
+    // self=false means another person is recipient, so validation is required
+    const required = data.self === false;
+    console.log('[RecipientSection] Setting required:', required, 'self:', data.self);
+    useCheckoutStore.getState().setSectionRequired(SectionId.Recipient, required);
   }, [data?.self]);
 
   /**

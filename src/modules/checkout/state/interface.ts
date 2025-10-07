@@ -47,6 +47,7 @@ export interface CheckoutState {
   ) => void;
   resetSection: (id: SectionId) => void;
   setSectionBusy: (id: SectionId, busy: boolean) => void;
+  setSectionRequired: (id: SectionId, required: boolean) => void;
 
   // Active operations tracking
   incrementActiveOperations: () => void;

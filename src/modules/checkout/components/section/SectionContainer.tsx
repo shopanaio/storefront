@@ -8,6 +8,7 @@ import { SectionId } from '@src/modules/checkout/state/interface';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import type { AnySchema } from 'yup';
 import { extractYupErrors } from '@src/modules/checkout/utils/validation';
+import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
 
 /**
  * Polymorphic container for Checkout sections.
@@ -22,7 +23,7 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
   /** Static or dynamic section id */
   id: K;
   /** Whether the section is required; defaults to true */
-  required?: boolean;
+  required: boolean;
   /**
    * View component that receives data and invalidate function.
    * The View is responsible for rendering UI.
@@ -45,7 +46,7 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
 
 export function SectionContainer<K extends SectionId, TData extends object>({
   id,
-  required = true,
+  required,
   Component,
   selector,
   schema,
@@ -55,6 +56,11 @@ export function SectionContainer<K extends SectionId, TData extends object>({
   });
   const { checkout } = useCheckoutData();
 
+  // Read 'required' flag from store (can be updated dynamically)
+  const requiredFromStore = useCheckoutStore(
+    (state) => state.sections[id]?.required ?? required
+  );
+
   const data = selector ? selector(checkout) : null;
 
   // Automatically validate data from selector
@@ -62,8 +68,11 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     /**
      * If the section is not required or has no schema or data,
      * we consider the section as valid.
+     *
+     * Use requiredFromStore instead of prop 'required' to support
+     * dynamic required changes (e.g., recipient section).
      */
-    if (!required || !schema || !data) {
+    if (!requiredFromStore || !schema || !data) {
       publishValid();
       return;
     }
@@ -74,7 +83,7 @@ export function SectionContainer<K extends SectionId, TData extends object>({
       .catch((error) => {
         publishInvalid(extractYupErrors(error));
       });
-  }, [data, schema, publishValid, publishInvalid, required]);
+  }, [data, schema, publishValid, publishInvalid, requiredFromStore]);
 
   const invalidate = useCallback(() => {
     publishInvalid({});

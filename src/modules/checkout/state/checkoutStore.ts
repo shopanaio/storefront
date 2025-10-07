@@ -13,7 +13,14 @@ import { CheckoutState } from '@src/modules/checkout/state/interface';
 
 /**
  * Determine if a section is valid in the current state.
- * Delivery/payment sections are validated against selected method and active provider status.
+ *
+ * A section is considered valid for submission when:
+ * - It exists
+ * - It is marked as required
+ * - Its status is 'valid'
+ *
+ * Note: The 'required' flag can be dynamically updated via setSectionRequired.
+ * For example, the recipient section changes 'required' based on user's choice.
  */
 export function isSectionValid(sectionEntry: SectionEntry): boolean {
   return (
@@ -139,6 +146,20 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
           required: state.sections[id]?.required ?? true,
           data: state.sections[id]?.data ?? null,
           status: state.sections[id]?.status ?? 'idle',
+        },
+      },
+    }));
+  },
+  setSectionRequired: (id, required) => {
+    set((state) => ({
+      sections: {
+        ...state.sections,
+        [id]: {
+          ...(state.sections[id] as SectionEntry | undefined),
+          required,
+          data: state.sections[id]?.data ?? null,
+          status: state.sections[id]?.status ?? 'idle',
+          busy: state.sections[id]?.busy ?? false,
         },
       },
     }));
