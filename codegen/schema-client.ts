@@ -361,6 +361,12 @@ export type ApiCheckoutCustomerIdentityUpdateInput = {
   customerId?: InputMaybe<Scalars['ID']['input']>;
   /** Customer's email address. If specified, will be linked to the checkout. */
   email?: InputMaybe<Scalars['Email']['input']>;
+  /** First name of the customer. */
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  /** Last name of the customer. */
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  /** Middle name of the customer. */
+  middleName?: InputMaybe<Scalars['String']['input']>;
   /** Phone number of the customer. */
   phone?: InputMaybe<Scalars['String']['input']>;
 };
@@ -399,13 +405,13 @@ export type ApiCheckoutDeliveryAddress = {
 
 export type ApiCheckoutDeliveryAddressInput = {
   /** Primary address line. */
-  address1: Scalars['String']['input'];
+  address1?: InputMaybe<Scalars['String']['input']>;
   /** Secondary address line. */
   address2?: InputMaybe<Scalars['String']['input']>;
   /** City name. */
-  city: Scalars['String']['input'];
+  city?: InputMaybe<Scalars['String']['input']>;
   /** Country code (ISO 3166-1 alpha-2). */
-  countryCode: CountryCode;
+  countryCode?: InputMaybe<CountryCode>;
   /** Data associated with the delivery address. */
   data?: InputMaybe<Scalars['JSON']['input']>;
   /** Email address for this delivery address. */
@@ -478,6 +484,11 @@ export type ApiCheckoutDeliveryMethod = {
   __typename?: 'CheckoutDeliveryMethod';
   /** Code of the shipping method (e.g., "standard", "express", "courier"). */
   code: Scalars['String']['output'];
+  /**
+   * Arbitrary customer-provided data for the selected delivery method.
+   * Will be stored in checkout_delivery_methods.customer_input.
+   */
+  data: Scalars['JSON']['output'];
   /** Delivery method type associated with the delivery option. */
   deliveryMethodType: CheckoutDeliveryMethodType;
   /** Provider data associated with the delivery method. */
@@ -513,8 +524,38 @@ export type ApiCheckoutDeliveryProvider = {
   __typename?: 'CheckoutDeliveryProvider';
   /** Code of the provider (e.g., "novaposhta", "ups", "fedex", "dhl", "usps"). */
   code: Scalars['String']['output'];
-  /** Data associated with the provider. */
-  data: Scalars['JSON']['output'];
+};
+
+/** Recipient update element: which delivery group's recipient to update and with what data. */
+export type ApiCheckoutDeliveryRecipientUpdateInput = {
+  /** Identifier of the delivery group in the checkout. */
+  deliveryGroupId: Scalars['ID']['input'];
+  /** New recipient values. */
+  recipient: ApiCheckoutRecipientInput;
+};
+
+/** Input data for adding recipients for delivery groups. */
+export type ApiCheckoutDeliveryRecipientsAddInput = {
+  /** Identifier of the checkout on which the operation is performed. */
+  checkoutId: Scalars['ID']['input'];
+  /** List of recipients to be added for delivery groups. */
+  recipients: Array<ApiCheckoutDeliveryRecipientUpdateInput>;
+};
+
+/** Input data for removing recipients associated with delivery groups. */
+export type ApiCheckoutDeliveryRecipientsRemoveInput = {
+  /** Identifier of the checkout on which the operation is performed. */
+  checkoutId: Scalars['ID']['input'];
+  /** Identifiers of delivery groups whose recipients should be removed. */
+  deliveryGroupIds: Array<Scalars['ID']['input']>;
+};
+
+/** Input data for batch updating recipients for delivery groups. */
+export type ApiCheckoutDeliveryRecipientsUpdateInput = {
+  /** Identifier of the checkout on which the operation is performed. */
+  checkoutId: Scalars['ID']['input'];
+  /** List of updates for recipients. */
+  updates: Array<ApiCheckoutDeliveryRecipientUpdateInput>;
 };
 
 export type ApiCheckoutFieldError = {
@@ -693,6 +734,12 @@ export type ApiCheckoutMutation = {
   checkoutDeliveryAddressesUpdate: ApiCheckout;
   /** Selects or changes the delivery method for the entire checkout or specific address. */
   checkoutDeliveryMethodUpdate: ApiCheckout;
+  /** Adds recipients to delivery groups. */
+  checkoutDeliveryRecipientsAdd: ApiCheckout;
+  /** Removes recipients from delivery groups. */
+  checkoutDeliveryRecipientsRemove: ApiCheckout;
+  /** Updates recipients for delivery groups. */
+  checkoutDeliveryRecipientsUpdate: ApiCheckout;
   /** Updates the language/locale of the checkout (affects localization and formatting). */
   checkoutLanguageCodeUpdate: ApiCheckout;
   /** Adds an item to an existing checkout. */
@@ -749,6 +796,21 @@ export type ApiCheckoutMutationCheckoutDeliveryAddressesUpdateArgs = {
 
 export type ApiCheckoutMutationCheckoutDeliveryMethodUpdateArgs = {
   input: ApiCheckoutDeliveryMethodUpdateInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutDeliveryRecipientsAddArgs = {
+  input: ApiCheckoutDeliveryRecipientsAddInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutDeliveryRecipientsRemoveArgs = {
+  input: ApiCheckoutDeliveryRecipientsRemoveInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutDeliveryRecipientsUpdateArgs = {
+  input: ApiCheckoutDeliveryRecipientsUpdateInput;
 };
 
 
@@ -841,14 +903,15 @@ export type ApiCheckoutPaymentMethod = {
   __typename?: 'CheckoutPaymentMethod';
   /** Method code (e.g., "card", "apple_pay", "bank_transfer", "cod"). */
   code: Scalars['String']['output'];
-  /** Optional constraints for availability binding to shipping. */
-  constraints?: Maybe<ApiCheckoutPaymentMethodConstraints>;
+  /**
+   * Arbitrary customer-provided data for the selected payment method.
+   * Will be stored in checkout_payment_methods.customer_input.
+   */
+  data: Scalars['JSON']['output'];
   /** Payment flow (ONLINE vs ON_DELIVERY). */
   flow: PaymentFlow;
-  /** Optional method metadata (icons, labels, extra config). */
-  metadata?: Maybe<Scalars['JSON']['output']>;
-  /** Provider code (e.g., "stripe", "liqpay", "monobank", "paypal"). */
-  provider: Scalars['String']['output'];
+  /** Provider data associated with the payment method. */
+  provider: ApiCheckoutPaymentProvider;
 };
 
 /** Constraints for payment method availability (from payment-plugin-sdk). */
@@ -872,6 +935,14 @@ export type ApiCheckoutPaymentMethodUpdateInput = {
   data?: InputMaybe<Scalars['JSON']['input']>;
   /** Code of the payment method available for this checkout. */
   paymentMethodCode: Scalars['String']['input'];
+  /** Provider code (e.g., "stripe", "liqpay", "monobank", "paypal"). */
+  provider: Scalars['String']['input'];
+};
+
+export type ApiCheckoutPaymentProvider = {
+  __typename?: 'CheckoutPaymentProvider';
+  /** Code of the provider (e.g., "stripe", "liqpay", "monobank", "paypal"). */
+  code: Scalars['String']['output'];
 };
 
 /** Applied promo code for a checkout. */
@@ -931,6 +1002,20 @@ export type ApiCheckoutRecipient = {
   middleName?: Maybe<Scalars['String']['output']>;
   /** Phone of the recipient. */
   phone?: Maybe<Scalars['String']['output']>;
+};
+
+/** Input fields for recipient details. */
+export type ApiCheckoutRecipientInput = {
+  /** Email of the recipient. */
+  email?: InputMaybe<Scalars['Email']['input']>;
+  /** First name of the recipient. */
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  /** Last name of the recipient. */
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  /** Middle name of the recipient. */
+  middleName?: InputMaybe<Scalars['String']['input']>;
+  /** Phone of the recipient. */
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum CountryCode {

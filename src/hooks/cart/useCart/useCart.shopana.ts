@@ -1,8 +1,7 @@
 import { graphql, readInlineData, useFragment } from 'react-relay';
 import { useCartContext } from '@src/providers/cart-context';
 import { useCart_CartFragment$key } from './__generated__/useCart_CartFragment.graphql';
-import cartIdUtils from '@src/utils/cartId';
-import React, { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCartLineFragment_CartLineFragment } from '@src/hooks/cart/useCartLineFragment/useCartLineFragment.shopana';
 
 export const useCart_CartFragment = graphql`
