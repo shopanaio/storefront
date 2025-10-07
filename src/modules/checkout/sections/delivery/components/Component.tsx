@@ -29,7 +29,7 @@ export interface DeliverySectionViewProps {
 export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
   const { styles } = useStyles();
   const { selectDeliveryMethod, updateShippingMethod } = useCheckoutApi();
-
+  console.log('data', data);
   // Extract current selected method from data
   const [, deliveryGroup] = Object.entries(data ?? {}).at(0) || [];
   const {
@@ -43,9 +43,8 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
    * Local state for optimistic UI updates
    * This allows the UI to respond immediately while the API request is processing
    */
-  const [localSelectedMethod, setLocalSelectedMethod] = useState<
-    DeliveryMethod | null
-  >(serverSelectedMethod ?? null);
+  const [localSelectedMethod, setLocalSelectedMethod] =
+    useState<DeliveryMethod | null>(serverSelectedMethod ?? null);
 
   /**
    * Sync local state when data changes from API
@@ -78,6 +77,7 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
           shippingMethodCode: fullMethod.code,
           deliveryGroupId,
           data: fullMethod.data as object | undefined,
+          provider: fullMethod.provider,
         });
       } catch (error) {
         // On error, revert to previous state
@@ -85,7 +85,12 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
         setLocalSelectedMethod(serverSelectedMethod ?? null);
       }
     },
-    [selectDeliveryMethod, serverSelectedMethod, deliveryMethods, deliveryGroupId]
+    [
+      selectDeliveryMethod,
+      serverSelectedMethod,
+      deliveryMethods,
+      deliveryGroupId,
+    ]
   );
 
   /**
@@ -115,6 +120,7 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
         // Call API to persist the updated data
         await updateShippingMethod({
           shippingMethodCode: localSelectedMethod.code,
+          provider: localSelectedMethod.provider,
           deliveryGroupId,
           data: updatedData as object | undefined,
         });

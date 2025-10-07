@@ -32,16 +32,18 @@ const deliveryGroupSchema = yup.object<DeliveryGroup>().shape({
     .test(
       'by-provider-method',
       'Invalid delivery method data',
-      function (value) {
-        if (!value) return true;
-        const { code, provider, data } = value as DeliveryMethod;
-        const config = resolveProviderConfig(
+      async function (selectedMethod) {
+        if (!selectedMethod) {
+          return false;
+        }
+
+        const { code, provider, data } = selectedMethod as DeliveryMethod;
+        const config = await resolveProviderConfig(
           ProviderModuleType.Delivery,
           provider
         );
 
         const methodConfig = config?.methods.find((m) => m.code === code);
-
         // If there's no schema for this method, consider it valid
         if (!methodConfig?.schema) {
           return true;

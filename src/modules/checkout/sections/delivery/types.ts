@@ -18,7 +18,7 @@ export interface DeliveryAddress {
 export interface DeliveryGroup {
   id: string;
   deliveryMethods: DeliveryMethod[];
-  selectedDeliveryMethod: DeliveryMethod;
+  selectedDeliveryMethod: DeliveryMethod | null;
   address: DeliveryAddress;
 }
 

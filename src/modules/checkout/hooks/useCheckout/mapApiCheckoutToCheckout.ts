@@ -224,8 +224,8 @@ function mapApiDeliveryMethod(
       apiMethod.deliveryMethodType as Checkout.DeliveryMethodType,
     provider: {
       code: apiMethod.provider.code,
-      data: apiMethod.provider.data,
     },
+    data: apiMethod.data,
   };
 }
 
@@ -277,7 +277,7 @@ function mapApiPaymentMethod(
     code: apiMethod.code,
     provider: apiMethod.provider,
     flow: apiMethod.flow as Checkout.PaymentFlow,
-    metadata: apiMethod.metadata,
+    data: apiMethod.data,
   };
 }
 

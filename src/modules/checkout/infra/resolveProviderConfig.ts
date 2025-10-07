@@ -8,10 +8,10 @@ import {
  * Resolve provider method-level schema from the module registry.
  * Returns null if provider/module not found or no schema is provided.
  */
-export function resolveProviderConfig(
+export async function resolveProviderConfig(
   moduleType: ProviderModuleType,
   provider: string
-): ProviderConfig | null {
+): Promise<ProviderConfig | null> {
   const loader = moduleRegistry.resolve<{
     Component: unknown;
     config?: ProviderConfig;
@@ -20,7 +20,8 @@ export function resolveProviderConfig(
     return null;
   }
 
-  const api = loader();
+  const api = await loader();
+  console.log('api ---->', api);
   // If loader is async, skip schema resolution (no await in sync yup context)
   if (api instanceof Promise) {
     return null;
