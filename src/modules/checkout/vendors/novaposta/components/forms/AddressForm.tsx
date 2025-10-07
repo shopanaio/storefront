@@ -12,9 +12,6 @@ import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City, Street } from '@checkout/vendors/novaposta/types';
 import { addressSchema } from '../../schemas';
 
-/**
- * Props for AddressForm
- */
 interface AddressFormProps {
   data: unknown;
   onSubmit: (data: unknown) => void;

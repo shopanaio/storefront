@@ -31,7 +31,7 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
   const onSubmit = useCallback(
     async (data: ContactFormData) => {
       await updateCustomerIdentity({
-        phone: data.userPhone,
+        phone: data.phone,
       });
     },
     [updateCustomerIdentity]
@@ -39,11 +39,7 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <ContactSelect
-        initialValues={data}
-        title={t('contact')}
-        onSubmit={onSubmit}
-      />
+      <ContactSelect data={data} title={t('contact')} onSubmit={onSubmit} />
     </Flex>
   );
 };

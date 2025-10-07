@@ -12,9 +12,6 @@ import type { City } from '@checkout/sections/delivery/components/city/CitySelec
 import { warehouseSchema } from '../../schemas';
 import { Warehouse } from '@checkout/vendors/novaposta/types';
 
-/**
- * Props for WarehouseForm
- */
 interface WarehouseFormProps {
   data: unknown;
   onSubmit: (data: unknown) => void;

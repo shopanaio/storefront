@@ -1,6 +1,6 @@
 export interface ContactFormData {
-  userFirstName: string;
-  userLastName: string;
-  userMiddleName: string;
-  userPhone: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  phone: string;
 }

@@ -15,9 +15,9 @@ export function mapCheckoutToContactFormData(
   const { customerIdentity } = checkout;
 
   return {
-    userFirstName: customerIdentity.firstName ?? '',
-    userLastName: customerIdentity.lastName ?? '',
-    userMiddleName: customerIdentity.middleName ?? '',
-    userPhone: customerIdentity.phone ?? '',
+    firstName: customerIdentity.firstName ?? '',
+    lastName: customerIdentity.lastName ?? '',
+    middleName: customerIdentity.middleName ?? '',
+    phone: customerIdentity.phone ?? '',
   };
 }

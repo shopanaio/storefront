@@ -1,6 +1,6 @@
-import { useState, useDeferredValue, useEffect, useMemo } from "react";
-import { debounce } from "lodash";
-import { useModalStore } from "@src/store/appStore";
+import { useState, useEffect, useMemo } from 'react';
+import { debounce } from 'lodash';
+import { useModalStore } from '@src/store/appStore';
 
 /**
  * useSearchInput
@@ -12,13 +12,13 @@ import { useModalStore } from "@src/store/appStore";
  *
  * @param delay debounce delay in ms (default: 300)
  */
-export const useSearchInput = (delay: number = 300) => {
+export const useSearchInput = (
+  initialValue: string = '',
+  delay: number = 300
+) => {
   const searchTerm = useModalStore((state) => state.searchTerm);
   const setSearchTerm = useModalStore((state) => state.setSearchTerm);
-  const [debouncedTerm, setDebouncedTerm] = useState("");
-
-  // React 18 feature – lets React delay non-urgent updates
-  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const [debouncedTerm, setDebouncedTerm] = useState(initialValue);
 
   // Create a debounced setter that survives re-renders
   const debouncedUpdate = useMemo(
@@ -41,11 +41,9 @@ export const useSearchInput = (delay: number = 300) => {
     };
   }, [searchTerm, debouncedUpdate]);
 
-
   return {
     searchTerm,
     setSearchTerm,
     debouncedTerm,
-    deferredSearchTerm,
   };
 };

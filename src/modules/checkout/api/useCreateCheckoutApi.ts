@@ -29,6 +29,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { checkout = null } = useCheckoutData() || {};
   const checkoutId = checkout?.id as string;
 
+  console.log('checkoutId ->', checkoutId);
+
   const { commit: commitSelectDelivery } =
     useCheckoutOperation<SelectDeliveryMethodMutationType>(
       selectDeliveryMethodMutation,
@@ -115,8 +117,9 @@ export function useCreateCheckoutApi(): CheckoutApi {
       }
     );
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    console.log('Create Checkout API', checkoutId);
+    return {
       selectDeliveryMethod: async (input) => {
         await commitSelectDelivery({
           input: { ...input, checkoutId },
@@ -153,6 +156,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
         });
       },
       updateCustomerNote: async (input) => {
+        console.log('updateCustomerNote', input, checkoutId);
         await commitUpdateNote({
           input: { ...input, checkoutId },
         });
@@ -175,8 +179,6 @@ export function useCreateCheckoutApi(): CheckoutApi {
       submitCheckout: async () => {
         throw new Error('Not implemented');
       },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+    };
+  }, [checkoutId]);
 }

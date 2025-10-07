@@ -1,68 +1,75 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import type { CommentFormData } from '../types';
+import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
+import { useSearchInput } from '@src/hooks/useSearchInput';
+import { debounce } from 'lodash';
 
 /**
- * View component for the checkout comment section.
+ * View component for the checkout note section.
  *
- * Pure controlled UI component that renders the comment form.
- * Receives generic form data and extracts needed fields (comment).
+ * Pure controlled UI component that renders the note form.
+ * Receives generic form data and extracts needed fields (note).
  * Does not manage its own state - all state is controlled via props.
  */
 export interface CommentSectionViewProps {
   /** Current form data */
   data: CommentFormData | null;
-  /** Called to invalidate the section */
-  invalidate: () => void;
 }
 
-export const CommentSectionView = ({
-  data,
-  invalidate,
-}: CommentSectionViewProps) => {
+export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
 
-  const [comment, setComment] = useState(data?.comment ?? '');
-  const [isOpen, setIsOpen] = useState(Boolean(data?.comment));
+  const { updateCustomerNote } = useCheckoutApi();
+  const debouncedUpdate = useMemo(() => {
+    return debounce((nextNote: string) => {
+      updateCustomerNote({ note: nextNote });
+    }, 500);
+  }, [updateCustomerNote]);
+
+  const [note, setNote] = useState(data?.note ?? '');
+  const [isOpen, setIsOpen] = useState(Boolean(data?.note));
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const nextNote = e.target.value;
+      setNote(nextNote);
+      debouncedUpdate(nextNote);
+    },
+    [debouncedUpdate]
+  );
 
   // Sync local state when data changes
   useEffect(() => {
-    const newComment = data?.comment ?? '';
-    setComment(newComment);
+    const newComment = data?.note ?? '';
+    setNote(newComment);
     if (newComment) {
       setIsOpen(true);
     }
-  }, [data?.comment]);
+  }, [data?.note]);
 
   const onToggle = () => setIsOpen((prev) => !prev);
-
-  const handleChange = useCallback(
-    (newComment: string) => {
-      setComment(newComment);
-    },
-    []
-  );
 
   return (
     <Flex vertical gap={8} className={styles.container}>
       {isOpen ? (
         <div className={styles.fieldWrap}>
-          <Typography.Text className={styles.label} id="order-comment-label">
-            {t('order-comment')}
+          <Typography.Text className={styles.label} id="order-note-label">
+            {t('order-note')}
           </Typography.Text>
           <Input.TextArea
-            id="order-comment"
-            aria-labelledby="order-comment-label"
-            placeholder={t('order-comment-placeholder')}
-            value={comment}
+            id="order-note"
+            aria-labelledby="order-note-label"
+            placeholder={t('order-note-placeholder')}
+            value={note}
             rows={4}
             maxLength={255}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={handleChange}
           />
         </div>
       ) : (
@@ -71,9 +78,9 @@ export const CommentSectionView = ({
           className={styles.toggle}
           onClick={onToggle}
           aria-expanded={false}
-          aria-label={t('add-comment')}
+          aria-label={t('add-note')}
         >
-          {t('add-comment')}
+          {t('add-note')}
         </Button>
       )}
     </Flex>

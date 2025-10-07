@@ -13,6 +13,6 @@ export function mapCheckoutToCommentFormData(
   }
 
   return {
-    comment: checkout.customerNote ?? '',
+    note: checkout.customerNote ?? '',
   };
 }

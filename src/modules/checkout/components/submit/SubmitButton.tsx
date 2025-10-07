@@ -29,7 +29,6 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       htmlType="submit"
       onClick={onClick}
       loading={hasActiveOperations}
-      disabled={hasActiveOperations}
     >
       {t('confirm-order')}
     </Button>

@@ -22,11 +22,17 @@ export type ContactForm = {
 };
 
 export interface ContactSelectProps {
-  value: ContactForm;
+  data: ContactForm | null;
   onSubmit: (dto: ContactForm) => void;
-  onChange: (fieldName: string, fieldValue: unknown) => void;
   title: ReactNode;
 }
+
+const defaultValues: ContactForm = {
+  firstName: '',
+  lastName: '',
+  middleName: '',
+  phone: '',
+};
 
 /**
  * ContactSelect renders a CitySelect-like button. On click, a drawer opens
@@ -35,9 +41,8 @@ export interface ContactSelectProps {
  */
 export const ContactSelect = ({
   title,
-  value,
+  data,
   onSubmit,
-  onChange,
 }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -47,30 +52,15 @@ export const ContactSelect = ({
 
   const methods = useForm<ContactForm>({
     mode: 'onChange',
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      middleName: '',
-      phone: '',
-    },
+    defaultValues,
   });
 
   const { control, reset, watch, formState } = methods;
   const { errors } = formState;
 
   useEffect(() => {
-    reset(value);
-  }, [value, reset]);
-
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      onChange(name!, value);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [watch, onChange]);
+    reset(data ?? defaultValues);
+  }, [data, reset]);
 
   const { firstName, lastName, middleName, phone } = watch();
 
