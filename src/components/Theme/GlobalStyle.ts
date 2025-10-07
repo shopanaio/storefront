@@ -1,5 +1,5 @@
-import { createGlobalStyle } from "antd-style";
-import { breakpoints } from "./breakpoints";
+import { createGlobalStyle } from 'antd-style';
+import { breakpoints } from './breakpoints';
 
 export const GlobalStyle = createGlobalStyle`
   :root {

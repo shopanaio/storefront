@@ -1,7 +1,7 @@
-import { graphql, useFragment } from "react-relay";
-import { useCartContext } from "@src/providers/cart-context";
-import { useCart_CartFragment$key } from "./__generated__/useCart_CartFragment.graphql";
-import cartIdUtils from "@src/utils/cartId";
+import { graphql, useFragment } from 'react-relay';
+import { useCartContext } from '@src/providers/cart-context';
+import { useCart_CartFragment$key } from './__generated__/useCart_CartFragment.graphql';
+import cartIdUtils from '@src/utils/cartId';
 
 export const useCart_CartFragment = graphql`
   fragment useCart_CartFragment on Cart {
@@ -40,29 +40,6 @@ export const useCart_CartFragment = graphql`
         endCursor
       }
     }
-    buyerIdentity {
-      countryCode
-      customer {
-        id
-        email
-        firstName
-        lastName
-      }
-    }
-    delivery {
-      addresses {
-        id
-      }
-    }
-    discountCodes {
-      code
-      applicable
-    }
-    note
-    attributes {
-      key
-      value
-    }
   }
 `;
 
@@ -81,16 +58,18 @@ const mapShopifyCartToApiCart = (shopifyCart: any) => {
         amount: shopifyCart.cost.subtotalAmount.amount,
       },
       shippingCost: {
-        currencyCode: shopifyCart.cost.checkoutChargeAmount?.currencyCode || shopifyCart.cost.totalAmount.currencyCode,
-        amount: shopifyCart.cost.checkoutChargeAmount?.amount || "0",
+        currencyCode:
+          shopifyCart.cost.checkoutChargeAmount?.currencyCode ||
+          shopifyCart.cost.totalAmount.currencyCode,
+        amount: shopifyCart.cost.checkoutChargeAmount?.amount || '0',
       },
       totalDiscountAmount: {
         currencyCode: shopifyCart.cost.totalAmount.currencyCode,
-        amount: "0",
+        amount: '0',
       },
       totalTaxAmount: {
         currencyCode: shopifyCart.cost.totalAmount.currencyCode,
-        amount: "0", // In Shopify no separate field for taxes
+        amount: '0', // In Shopify no separate field for taxes
       },
       totalAmount: {
         currencyCode: shopifyCart.cost.totalAmount.currencyCode,

@@ -33,25 +33,11 @@ export const useCart_CartFragment = graphql`
         amount
       }
     }
-    appliedPromoCodes {
-      code
-      appliedAt
-      discountType
-      value
-      provider
-    }
     customerNote
     notifications {
       code
       severity
       isDismissed
-    }
-    customerIdentity {
-      lastName
-      firstName
-      middleName
-      email
-      phone
     }
     lines {
       ...useCartLineFragment_CartLineFragment

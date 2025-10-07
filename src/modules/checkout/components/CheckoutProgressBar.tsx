@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import NProgress from 'nprogress';
 import { useHasActiveOperations } from '@src/modules/checkout/state/selectors';
+import { createGlobalStyle } from 'antd-style';
+import { useToken } from 'antd/es/theme/internal';
 
 // Configure nprogress
 NProgress.configure({
   showSpinner: false,
-  trickle: false,
-  trickleSpeed: 100,
-  minimum: 0.2,
+  trickle: true,
+  trickleSpeed: 200,
+  minimum: 0.25,
 });
 
 /**
@@ -19,6 +21,16 @@ NProgress.configure({
  */
 export const CheckoutProgressBar = () => {
   const hasActiveOperations = useHasActiveOperations();
+  const [, token] = useToken();
+
+  const { current: Style } = useRef(createGlobalStyle`
+    #nprogress .bar {
+      background: ${token.colorPrimary} !important;
+    }
+    #nprogress .peg {
+      box-shadow: 0 0 10px ${token.colorPrimary}, 0 0 5px ${token.colorPrimary} !important;
+    }
+  `);
 
   useEffect(() => {
     if (hasActiveOperations) {
@@ -33,7 +45,7 @@ export const CheckoutProgressBar = () => {
     };
   }, [hasActiveOperations]);
 
-  return null;
+  return <Style />;
 };
 
 export default CheckoutProgressBar;
