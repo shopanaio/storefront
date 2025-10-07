@@ -97,18 +97,11 @@ export const ContactSelect = ({
   return (
     <>
       <Button
-        color={hasValue ? 'primary' : 'default'}
+        color="default"
         variant={'outlined'}
         onClick={() => setOpen(true)}
-        icon={
-          <TbUser
-            size={24}
-            color={hasValue ? token.colorPrimary : token.colorIcon}
-          />
-        }
-        className={clsx(styles.button, {
-          [styles.activeButton]: hasValue,
-        })}
+        icon={<TbUser size={24} color={token.colorIcon} />}
+        className={clsx(styles.button)}
       >
         {hasValue ? (
           <Flex className={clsx(styles.flex)}>
@@ -215,9 +208,6 @@ const useStyles = createStyles(({ css, token }) => {
         ${token.paddingSM}px;
       min-height: 64px;
       height: 100%;
-    `,
-    activeButton: css`
-      outline: 1px solid ${token.colorPrimary};
     `,
     flex: css`
       flex-direction: column;

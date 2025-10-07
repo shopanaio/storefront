@@ -1,12 +1,9 @@
 'use client';
 
-import {
-  City,
-  CitySelect,
-} from '@src/modules/checkout/sections/delivery/components/city/CitySelect';
 import type { AddressFormData } from '../types';
 import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
 import { useCallback, useEffect, useState } from 'react';
+import { City, CitySelect } from './city/CitySelect';
 
 export interface AddressSectionViewProps {
   /** Current form data */

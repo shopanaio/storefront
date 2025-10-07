@@ -76,18 +76,11 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
   return (
     <>
       <Button
-        color={city ? 'primary' : 'default'}
+        color="default"
         variant={'outlined'}
         onClick={() => setIsCityModalVisible(true)}
-        icon={
-          <TbMapPin
-            size={24}
-            color={city ? token.colorPrimary : token.colorIcon}
-          />
-        }
-        className={clsx(styles.button, {
-          [styles.activeButton]: Boolean(city),
-        })}
+        icon={<TbMapPin size={24} color={token.colorIcon} />}
+        className={clsx(styles.button)}
       >
         {city ? (
           <Flex className={clsx(styles.flex)}>
@@ -157,9 +150,6 @@ const useStyles = createStyles(({ css, token }) => {
         ${token.paddingSM}px;
       min-height: 64px;
       height: 100%;
-    `,
-    activeButton: css`
-      outline: 1px solid ${token.colorPrimary};
     `,
     stickyBar: css`
       position: sticky;
