@@ -20,7 +20,7 @@ export function mapCheckoutToDeliveryFormData(
       (method) => ({
         code: method.code,
         provider: method.provider.code,
-        data: method.provider.data,
+        data: method.data,
       })
     );
 
@@ -29,7 +29,7 @@ export function mapCheckoutToDeliveryFormData(
         ? {
             code: group.selectedDeliveryMethod.code,
             provider: group.selectedDeliveryMethod.provider.code,
-            data: group.selectedDeliveryMethod.provider.data,
+            data: group.selectedDeliveryMethod.data,
           }
         : deliveryMethods[0] ?? null;
 

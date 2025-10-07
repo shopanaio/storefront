@@ -5,4 +5,5 @@ import { ContactFormData } from "@src/modules/checkout/sections/contact/types";
  */
 export interface RecipientFormData extends Partial<ContactFormData> {
   self: boolean;
+  deliveryGroupId: string;
 }

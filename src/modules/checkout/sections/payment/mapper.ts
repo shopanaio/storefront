@@ -21,8 +21,8 @@ export function mapCheckoutToPaymentFormData(
   const paymentMethods: PaymentMethod[] = payment.paymentMethods.map(
     (method) => ({
       code: method.code,
-      provider: method.provider,
-      data: method.metadata,
+      provider: method.provider.code,
+      data: method.data,
     })
   );
 
@@ -30,8 +30,8 @@ export function mapCheckoutToPaymentFormData(
     payment.selectedPaymentMethod
       ? {
           code: payment.selectedPaymentMethod.code,
-          provider: payment.selectedPaymentMethod.provider,
-          data: payment.selectedPaymentMethod.metadata,
+          provider: payment.selectedPaymentMethod.provider.code,
+          data: payment.selectedPaymentMethod.data,
         }
       : paymentMethods[0];
 

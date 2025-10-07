@@ -19,14 +19,16 @@ export function mapCheckoutToRecipientFormData(
   if (!recipient) {
     return {
       self: true,
+      deliveryGroupId: firstDeliveryGroup.id,
     };
   }
 
   return {
     self: false,
-    userFirstName: recipient.firstName ?? undefined,
-    userLastName: recipient.lastName ?? undefined,
-    userMiddleName: recipient.middleName ?? undefined,
-    userPhone: recipient.phone ?? undefined,
+    deliveryGroupId: firstDeliveryGroup.id,
+    firstName: recipient.firstName ?? '',
+    lastName: recipient.lastName ?? '',
+    middleName: recipient.middleName ?? '',
+    phone: recipient.phone ?? '',
   };
 }

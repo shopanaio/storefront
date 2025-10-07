@@ -137,6 +137,8 @@ export namespace Checkout {
     code: string;
     deliveryMethodType: DeliveryMethodType;
     provider: DeliveryProvider;
+    /** User-provided data for this delivery method */
+    data?: unknown;
   }
 
   export type DeliveryMethodType = 'PICKUP' | 'SHIPPING';
@@ -144,7 +146,6 @@ export namespace Checkout {
   /** Provider data associated with the delivery method. */
   export interface DeliveryProvider {
     code: string;
-    data: unknown;
   }
 
   /** Delivery cost with payment model */
@@ -170,8 +171,14 @@ export namespace Checkout {
     code: string;
     constraints?: PaymentMethodConstraints | null;
     flow: PaymentFlow;
-    metadata?: unknown;
-    provider: string;
+    /** User-provided data for this payment method */
+    data?: unknown;
+    provider: PaymentProvider;
+  }
+
+  /** Provider data associated with the payment method. */
+  export interface PaymentProvider {
+    code: string;
   }
 
   /** Constraints for payment method availability. */

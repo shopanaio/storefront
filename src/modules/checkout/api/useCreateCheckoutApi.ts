@@ -125,7 +125,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     {
       errorMessage: 'Failed to add delivery recipients',
       operationKey: OperationKey.AddDeliveryRecipients,
-      sectionId: SectionId.Delivery,
+      sectionId: SectionId.Recipient,
     }
   );
 
@@ -134,7 +134,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     {
       errorMessage: 'Failed to update delivery recipients',
       operationKey: OperationKey.UpdateDeliveryRecipients,
-      sectionId: SectionId.Delivery,
+      sectionId: SectionId.Recipient,
     }
   );
 
@@ -143,7 +143,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     {
       errorMessage: 'Failed to remove delivery recipients',
       operationKey: OperationKey.RemoveDeliveryRecipients,
-      sectionId: SectionId.Delivery,
+      sectionId: SectionId.Recipient,
     }
   );
 
