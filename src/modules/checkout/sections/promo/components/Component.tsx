@@ -7,8 +7,6 @@ import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { TbTicket } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
-import type { AnySchema } from 'yup';
-import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 
 /**
  * View component for the checkout promo section.
@@ -20,19 +18,13 @@ import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 export interface PromoSectionViewProps {
   /** Current form data */
   data: PromoFormData | null;
-  /** Called when form data is valid */
-  onValid: () => void;
-  /** Called when form data is invalid */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Validation schema */
-  schema: AnySchema;
+  /** Called to invalidate the section */
+  invalidate: () => void;
 }
 
 export const PromoSectionView = ({
   data,
-  onValid,
-  onInvalid,
-  schema,
+  invalidate,
 }: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -47,26 +39,14 @@ export const PromoSectionView = ({
     setIsApplied(Boolean(newCode));
   }, [data?.code]);
 
-  const handleApply = useCallback(async () => {
-    const trimmedCode = code.trim();
-    const formData: PromoFormData = { code: trimmedCode, provider: '' };
-
-    try {
-      await schema.validate(formData, { abortEarly: false });
-      onValid();
-      setIsApplied(true);
-    } catch (error: unknown) {
-      const errors = extractYupErrors(error);
-      onInvalid(errors || { code: 'Promo code is required' });
-    }
-  }, [code, onValid, onInvalid, schema]);
+  const handleApply = useCallback(() => {
+    setIsApplied(true);
+  }, []);
 
   const handleRemove = useCallback(() => {
     setCode('');
     setIsApplied(false);
-    // Promo is optional, so call onValid when removed
-    onValid();
-  }, [onValid]);
+  }, []);
 
   return (
     <Flex vertical gap={8} className={styles.container}>

@@ -14,19 +14,22 @@ import {
 } from '@codegen/schema-client';
 
 export interface DeliveryMethodUpdateDto
-  extends ApiCheckoutDeliveryMethodUpdateInput {}
+  extends Omit<ApiCheckoutDeliveryMethodUpdateInput, 'checkoutId'> {}
 export interface PaymentMethodUpdateDto
-  extends ApiCheckoutPaymentMethodUpdateInput {}
+  extends Omit<ApiCheckoutPaymentMethodUpdateInput, 'checkoutId'> {}
 export interface CustomerIdentityUpdateDto
-  extends ApiCheckoutCustomerIdentityUpdateInput {}
+  extends Omit<ApiCheckoutCustomerIdentityUpdateInput, 'checkoutId'> {}
 export interface DeliveryAddressesAddDto
-  extends ApiCheckoutDeliveryAddressesAddInput {}
+  extends Omit<ApiCheckoutDeliveryAddressesAddInput, 'checkoutId'> {}
 export interface DeliveryAddressesUpdateDto
-  extends ApiCheckoutDeliveryAddressesUpdateInput {}
+  extends Omit<ApiCheckoutDeliveryAddressesUpdateInput, 'checkoutId'> {}
 export interface DeliveryAddressesRemoveDto
-  extends ApiCheckoutDeliveryAddressesRemoveInput {}
+  extends Omit<ApiCheckoutDeliveryAddressesRemoveInput, 'checkoutId'> {}
 export interface CustomerNoteUpdateDto
-  extends ApiCheckoutCustomerNoteUpdateInput {}
-export interface PromoCodeAddDto extends ApiCheckoutPromoCodeAddInput {}
-export interface PromoCodeRemoveDto extends ApiCheckoutPromoCodeRemoveInput {}
-export interface CheckoutSubmitDto extends ApiCreateOrderInput {}
+  extends Omit<ApiCheckoutCustomerNoteUpdateInput, 'checkoutId'> {}
+export interface PromoCodeAddDto
+  extends Omit<ApiCheckoutPromoCodeAddInput, 'checkoutId'> {}
+export interface PromoCodeRemoveDto
+  extends Omit<ApiCheckoutPromoCodeRemoveInput, 'checkoutId'> {}
+export interface CheckoutSubmitDto
+  extends Omit<ApiCreateOrderInput, 'checkoutId'> {}

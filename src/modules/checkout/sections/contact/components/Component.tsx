@@ -5,9 +5,9 @@ import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCheckoutCustomerIdentity } from '@src/modules/checkout/hooks/useCheckoutCustomerIdentity';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ContactFormData } from '../types';
-import type { AnySchema } from 'yup';
+import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
 
 /**
  * View component for the checkout contact section.
@@ -19,40 +19,34 @@ import type { AnySchema } from 'yup';
 export interface ContactSectionViewProps {
   /** Current form data */
   data: ContactFormData | null;
-  /** Called when form data is valid */
-  onValid: () => void;
-  /** Called when form data is invalid */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Validation schema */
-  schema: AnySchema;
+  /** Called to invalidate the section */
+  invalidate: () => void;
 }
 
 export const ContactSectionView = ({
   data,
-  onValid,
-  onInvalid,
+  invalidate,
 }: ContactSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const identity = useCheckoutCustomerIdentity();
+  const { updateCustomerIdentity } = useCheckoutApi();
 
-  const initialValues = useMemo<Partial<ContactFormData>>(
-    () => ({
-      userFirstName: data?.userFirstName || identity?.firstName,
-      userLastName: data?.userLastName || identity?.lastName,
-      userMiddleName: data?.userMiddleName || identity?.middleName,
-      userPhone: data?.userPhone || identity?.phone,
-    }),
-    [data, identity]
+  const onSubmit = useCallback(
+    async (data: ContactFormData) => {
+      invalidate();
+      await updateCustomerIdentity({
+        phone: data.userPhone,
+      });
+    },
+    [updateCustomerIdentity]
   );
 
   return (
     <Flex vertical gap={12} className={styles.container}>
       <ContactSelect
-        initialValues={initialValues}
-        onValid={onValid}
-        onInvalid={onInvalid}
+        initialValues={data}
         title={t('contact')}
+        onSubmit={onSubmit}
       />
     </Flex>
   );

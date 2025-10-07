@@ -1,12 +1,32 @@
-import { ProviderModuleApi } from '@src/modules/checkout/vendors/types';
-import { NPShippingProvider } from './components/ShippingProvider';
+import {
+  ProviderModuleApi,
+  ProviderModuleType,
+} from '@src/modules/checkout/vendors/types';
+import { NPProvider } from './components/Provider';
+import { NPLogo as LogoComponent } from './components/Logo';
+import { WarehouseShippingMethod } from './components/methods/WarehouseShippingMethod';
+import { CourierShippingMethod } from './components/methods/CourierShippingMethod';
+import { addressSchema, warehouseSchema } from './schemas';
 
-/**
- * Nova Poshta shipping module API that can be consumed by checkout.
- */
 const shippingProviderModule: ProviderModuleApi = {
   provider: 'novaposhta',
-  Component: NPShippingProvider,
+  moduleType: ProviderModuleType.Delivery,
+  Component: NPProvider,
+  config: {
+    logo: LogoComponent,
+    methods: [
+      {
+        code: 'warehouse_warehouse',
+        schema: warehouseSchema,
+        Component: WarehouseShippingMethod,
+      },
+      {
+        code: 'warehouse_doors',
+        schema: addressSchema,
+        Component: CourierShippingMethod,
+      },
+    ],
+  },
 };
 
 export default shippingProviderModule;

@@ -1,6 +1,7 @@
 import * as yup from 'yup';
 import type { PaymentFormData, PaymentMethod } from './types';
-
+import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
+import { resolveProviderConfig } from '@src/modules/checkout/infra/resolveProviderConfig';
 /**
  * Yup validation schema for PaymentMethod
  */
@@ -26,5 +27,29 @@ export const paymentFormSchema = yup.object<PaymentFormData>().shape({
       'is-selected',
       'A payment method must be selected',
       (value) => value !== null && value !== undefined
+    )
+    .test(
+      'by-provider-method',
+      'Invalid payment method data',
+      function (value) {
+        if (!value) return true;
+        const { code, provider, data } = value as PaymentMethod;
+        const config = resolveProviderConfig(
+          ProviderModuleType.Payment,
+          provider
+        );
+
+        const methodConfig = config?.methods.find((m) => m.code === code);
+        if (!methodConfig?.schema) {
+          return true;
+        }
+
+        try {
+          methodConfig.schema?.validateSync(data, { abortEarly: false });
+          return true;
+        } catch (e) {
+          return this.createError({ message: (e as Error).message });
+        }
+      }
     ),
 });

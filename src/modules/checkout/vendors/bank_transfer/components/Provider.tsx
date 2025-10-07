@@ -3,30 +3,31 @@
 import { Flex } from 'antd';
 import { ScopedIntlProvider } from '@src/i18n/ScopedIntlProvider';
 import { loadBankTransferMessages } from '../i18n';
-import { BANK_TRANSFER_CONFIG } from './config';
-import { ProviderProps } from '@src/modules/checkout/vendors/types';
+import { ProviderComponentProps } from '@src/modules/checkout/vendors/types';
 
 /**
  * Bank Transfer payment provider-level component that renders payment UI.
  * Receives explicit validation callbacks following enterprise patterns.
  */
-export function BTPaymentProvider({
-  methods,
-  provider,
+export function BTProvider({
+  availableMethods,
   onValid,
   onInvalid,
   selectedMethod,
-}: ProviderProps) {
-  const activeCode: string | undefined = selected?.code;
+  config,
+}: ProviderComponentProps) {
+  const activeCode: string | undefined = selectedMethod?.code;
 
-  const handleSelectMethod = (code: string) => {};
+  const handleSelectMethod = (code: string) => {
+    console.log('handleSelectMethod', code);
+  };
 
   return (
     <ScopedIntlProvider scope="bankTransfer" load={loadBankTransferMessages}>
       <Flex vertical gap={16}>
-        {BANK_TRANSFER_CONFIG.payment
+        {config.methods
           .map((config) => {
-            const method = methods.find((m) => m.code === config.code);
+            const method = availableMethods.find((m) => m.code === config.code);
             if (!method) {
               return null;
             }

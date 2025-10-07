@@ -3,10 +3,9 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import type { PaymentFormData } from '../types';
 import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
-import type { AnySchema } from 'yup';
 
 /**
  * View component for the payment section.
@@ -18,18 +17,13 @@ import type { AnySchema } from 'yup';
 export interface PaymentSectionViewProps {
   /** Current form data */
   data: PaymentFormData | null;
-  /** Called when form data is valid */
-  onValid: () => void;
-  /** Called when form data is invalid */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Validation schema */
-  schema: AnySchema;
+  /** Called to invalidate the section */
+  invalidate: () => void;
 }
 
 export const PaymentSectionView = ({
   data,
-  onValid,
-  onInvalid,
+  invalidate,
 }: PaymentSectionViewProps) => {
   const { styles } = useStyles();
   const { paymentMethods, selectedPaymentMethod } = data ?? {};
@@ -57,17 +51,6 @@ export const PaymentSectionView = ({
     return grouped;
   }, [paymentMethods]);
 
-  const handleValid = useCallback(() => {
-    onValid();
-  }, [onValid]);
-
-  const handleInvalid = useCallback(
-    (errors?: Record<string, string>) => {
-      onInvalid(errors);
-    },
-    [onInvalid]
-  );
-
   return (
     <Flex vertical gap={12} className={styles.container}>
       {Object.entries(methodsByProvider).map(([provider, methods]) => (
@@ -76,8 +59,6 @@ export const PaymentSectionView = ({
           moduleType={ProviderModuleType.Payment}
           provider={provider}
           methods={methods}
-          onValid={handleValid}
-          onInvalid={handleInvalid}
           selectedMethod={selectedPaymentMethod ?? null}
         />
       ))}

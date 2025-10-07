@@ -1,5 +1,6 @@
 import { ValidationCallbacks } from '@src/modules/checkout/types/utils';
-import { ComponentType } from 'react';
+import { ComponentType, FC } from 'react';
+import type { AnySchema } from 'yup';
 
 /**
  * Supported module types for the plugin system.
@@ -7,6 +8,39 @@ import { ComponentType } from 'react';
 export enum ProviderModuleType {
   Payment = 'payment',
   Delivery = 'delivery',
+}
+
+/**
+ * Configuration for a single provider method (shipping or payment).
+ */
+export interface ProviderMethodConfig {
+  /** Unique code identifier used internally */
+  code: string;
+  /** Optional yup schema for this method's data validation */
+  schema?: AnySchema;
+  /** Full method component that includes CheckoutMethodPanel */
+  Component: FC<{
+    isActive: boolean;
+    onActivate: () => void;
+    /** Callback when form has valid data */
+    onValid: (data: unknown) => void;
+    /** Callback when form has invalid data */
+    onInvalid: (errors?: Record<string, string>) => void;
+    initialValues?: unknown;
+  }>;
+  /** Initial values for this method (if any) */
+  initialValues?: unknown;
+}
+
+/**
+ * Base configuration interface for all provider configs.
+ * Each provider can support shipping and/or payment methods.
+ */
+export interface ProviderConfig {
+  /** Brand/logo component for the provider */
+  logo: FC<{ size?: number }>;
+  /** List of methods supported by this provider */
+  methods: ProviderMethodConfig[];
 }
 
 export interface ProviderMethod {
@@ -17,14 +51,16 @@ export interface ProviderMethod {
 export interface ProviderProps extends ValidationCallbacks {
   moduleType: ProviderModuleType;
   provider: string;
-  methods: ProviderMethod[];
+  availableMethods: ProviderMethod[];
   selectedMethod: ProviderMethod | null;
+  config: ProviderConfig;
 }
 
 export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'>;
 
 export interface ProviderModuleApi {
+  provider: string;
   moduleType: ProviderModuleType;
-  provider?: string;
+  config: ProviderConfig;
   Component: ComponentType<ProviderComponentProps>;
 }

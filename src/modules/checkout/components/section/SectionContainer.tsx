@@ -1,21 +1,22 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
 import { SectionId } from '@src/modules/checkout/state/interface';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import type { AnySchema } from 'yup';
+import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 
 /**
  * Polymorphic container for Checkout sections.
  *
  * Responsibilities:
  * - Registers the section lifecycle via `useSectionController`.
- * - Exposes strictly typed `onValid`/`onInvalid` to the View.
- * - Validates data using the provided schema.
- * - Accepts View props directly (no internal prop computation).
+ * - Automatically validates data from selector against the schema.
+ * - Publishes validation state changes (valid/invalid).
+ * - Exposes `onChange` handler to the View for field updates.
  */
 export interface SectionContainerProp<K extends SectionId, TData = unknown> {
   /** Static or dynamic section id */
@@ -23,14 +24,12 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
   /** Whether the section is required; defaults to true */
   required?: boolean;
   /**
-   * View component that receives strictly-typed handlers and external props.
-   * The View is responsible for producing a valid section DTO when calling `onValid`.
+   * View component that receives data and invalidate function.
+   * The View is responsible for rendering UI.
    */
   Component: ComponentType<{
     data: TData | null;
-    onValid: () => void;
-    onInvalid: (errors?: Record<string, string>) => void;
-    schema: AnySchema;
+    invalidate: () => void;
   }>;
   /**
    * Selector to read current value for the View from the checkout data (e.g., form data).
@@ -58,23 +57,28 @@ export function SectionContainer<K extends SectionId, TData extends object>({
 
   const data = selector ? selector(checkout) : null;
 
-  const onValid = useCallback(() => {
-    publishValid();
-  }, [publishValid]);
+  // Automatically validate data from selector
+  useEffect(() => {
+    /**
+     * If the section is not required or has no schema or data,
+     * we consider the section as valid.
+     */
+    if (!required || !schema || !data) {
+      publishValid();
+      return;
+    }
 
-  const onInvalid = useCallback(
-    (errors?: Record<string, string>) => {
-      publishInvalid(errors);
-    },
-    [publishInvalid]
-  );
+    schema
+      .validate(data, { abortEarly: false })
+      .then(publishValid)
+      .catch((error) => {
+        publishInvalid(extractYupErrors(error));
+      });
+  }, [data, schema, publishValid, publishInvalid, required]);
 
-  return (
-    <Component
-      data={data}
-      onValid={onValid}
-      onInvalid={onInvalid}
-      schema={schema}
-    />
-  );
+  const invalidate = useCallback(() => {
+    publishInvalid({});
+  }, [publishInvalid]);
+
+  return <Component data={data} invalidate={invalidate} />;
 }

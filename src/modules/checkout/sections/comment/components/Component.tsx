@@ -5,8 +5,6 @@ import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import type { CommentFormData } from '../types';
-import type { AnySchema } from 'yup';
-import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 
 /**
  * View component for the checkout comment section.
@@ -18,19 +16,13 @@ import { extractYupErrors } from '@src/modules/checkout/utils/validation';
 export interface CommentSectionViewProps {
   /** Current form data */
   data: CommentFormData | null;
-  /** Called when form data is valid */
-  onValid: () => void;
-  /** Called when form data is invalid */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Validation schema */
-  schema: AnySchema;
+  /** Called to invalidate the section */
+  invalidate: () => void;
 }
 
 export const CommentSectionView = ({
   data,
-  onValid,
-  onInvalid,
-  schema,
+  invalidate,
 }: CommentSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -50,19 +42,10 @@ export const CommentSectionView = ({
   const onToggle = () => setIsOpen((prev) => !prev);
 
   const handleChange = useCallback(
-    async (newComment: string) => {
+    (newComment: string) => {
       setComment(newComment);
-      const formData: CommentFormData = { comment: newComment };
-
-      try {
-        await schema.validate(formData, { abortEarly: false });
-        onValid();
-      } catch (error: unknown) {
-        const errors = extractYupErrors(error);
-        onInvalid(errors);
-      }
     },
-    [onValid, onInvalid, schema]
+    []
   );
 
   return (

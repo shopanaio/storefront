@@ -1,6 +1,6 @@
 'use client';
 
-import { sections } from '../../sections/sections';
+import { sections } from '@src/modules/checkout/sections/sections';
 import { SectionId } from '@src/modules/checkout/state/interface';
 
 interface Prop {

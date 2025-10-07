@@ -1,5 +1,7 @@
 import * as yup from 'yup';
 import type { DeliveryFormData, DeliveryGroup, DeliveryMethod } from './types';
+import { resolveProviderConfig } from '@src/modules/checkout/infra/resolveProviderConfig';
+import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
 
 /**
  * Yup validation schema for DeliveryMethod
@@ -26,6 +28,30 @@ const deliveryGroupSchema = yup.object<DeliveryGroup>().shape({
       'is-selected',
       'A delivery method must be selected',
       (value) => value !== null && value !== undefined
+    )
+    .test(
+      'by-provider-method',
+      'Invalid delivery method data',
+      function (value) {
+        if (!value) return true;
+        const { code, provider, data } = value as DeliveryMethod;
+        const config = resolveProviderConfig(
+          ProviderModuleType.Delivery,
+          provider
+        );
+
+        const methodConfig = config?.methods.find((m) => m.code === code);
+        if (!methodConfig?.schema) {
+          return true;
+        }
+
+        try {
+          methodConfig.schema?.validateSync(data, { abortEarly: false });
+          return true;
+        } catch (e) {
+          return this.createError({ message: (e as Error).message });
+        }
+      }
     ),
 });
 

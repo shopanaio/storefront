@@ -3,37 +3,31 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import type {
   DeliveryFormData,
   DeliveryGroupRecord,
   DeliveryProviderMethodsRecord,
 } from '../types';
 import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
-import type { AnySchema } from 'yup';
 
 /**
- * View component for the payment section.
+ * View component for the delivery section.
  *
- * Pure controlled UI component that renders the payment form.
+ * Pure controlled UI component that renders the delivery form.
  * Receives generic form data and extracts needed fields.
  * Does not manage its own state - all state is controlled via props.
  */
 export interface DeliverySectionViewProps {
   /** Current form data */
   data: DeliveryFormData | null;
-  /** Called when form data is valid */
-  onValid: () => void;
-  /** Called when form data is invalid */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Validation schema */
-  schema: AnySchema;
+  /** Called to invalidate the section */
+  invalidate: () => void;
 }
 
 export const DeliverySectionView = ({
   data,
-  onValid,
-  onInvalid,
+  invalidate,
 }: DeliverySectionViewProps) => {
   const { styles } = useStyles();
 
@@ -74,17 +68,6 @@ export const DeliverySectionView = ({
     return result;
   }, [data]);
 
-  const handleValid = useCallback(() => {
-    onValid();
-  }, [onValid]);
-
-  const handleInvalid = useCallback(
-    (errors?: Record<string, string>) => {
-      onInvalid(errors);
-    },
-    [onInvalid]
-  );
-
   console.log('deliveryGroups',data, deliveryGroups);
   return (
     <>
@@ -98,8 +81,6 @@ export const DeliverySectionView = ({
                   moduleType={ProviderModuleType.Delivery}
                   provider={provider}
                   methods={methods}
-                  onValid={handleValid}
-                  onInvalid={handleInvalid}
                   selectedMethod={selectedDeliveryMethod ?? null}
                 />
               )

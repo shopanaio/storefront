@@ -13,33 +13,18 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
-import type { ContactDto } from '@src/modules/checkout/core/contracts/dto';
 
-/**
- * Internal form values.
- */
-export type ContactValues = {
-  /** Purchaser first name */
-  userFirstName: string;
-  /** Purchaser last name */
-  userLastName: string;
-  /** Purchaser middle name */
-  userMiddleName: string;
-  /** Purchaser phone in E.164 or raw */
-  userPhone: string;
+export type ContactForm = {
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  phone: string;
 };
 
-/**
- * Props for ContactSelect.
- */
 export interface ContactSelectProps {
-  /** Initial contact values to prefill */
-  initialValues: Partial<ContactDto>;
-  /** Called when user saves valid contact data */
-  onValid: (dto: ContactDto) => void;
-  /** Called when contact data is invalid */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Drawer title (required) */
+  value: ContactForm;
+  onSubmit: (dto: ContactForm) => void;
+  onChange: (fieldName: string, fieldValue: unknown) => void;
   title: ReactNode;
 }
 
@@ -48,55 +33,62 @@ export interface ContactSelectProps {
  * with contact form inputs (name fields + phone). The button shows a concise
  * summary (full name and masked phone) when data is present.
  */
-export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: ContactSelectProps) => {
+export const ContactSelect = ({
+  title,
+  value,
+  onSubmit,
+  onChange,
+}: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
 
   const [open, setOpen] = useState(false);
 
-  // Form manages all contact data
-  const methods = useForm<ContactValues>({
-    defaultValues: {
-      userFirstName: initialValues.userFirstName ?? '',
-      userLastName: initialValues.userLastName ?? '',
-      userMiddleName: initialValues.userMiddleName ?? '',
-      userPhone: initialValues.userPhone ?? '',
-    },
+  const methods = useForm<ContactForm>({
     mode: 'onChange',
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      middleName: '',
+      phone: '',
+    },
   });
-  const { control, getValues, reset, watch, formState: { errors } } = methods;
 
-  // Sync form when initialValues change
+  const { control, reset, watch, formState } = methods;
+  const { errors } = formState;
+
   useEffect(() => {
-    reset({
-      userFirstName: initialValues.userFirstName ?? '',
-      userLastName: initialValues.userLastName ?? '',
-      userMiddleName: initialValues.userMiddleName ?? '',
-      userPhone: initialValues.userPhone ?? '',
+    reset(value);
+  }, [value, reset]);
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      onChange(name!, value);
     });
-  }, [initialValues, reset]);
 
-  // Watch current form values for display
-  const currentValues = watch();
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [watch, onChange]);
 
-  // Button summary is derived from current form values
-  const firstName = currentValues.userFirstName;
-  const lastName = currentValues.userLastName;
-  const middleName = currentValues.userMiddleName;
-  const phone = currentValues.userPhone;
+  const { firstName, lastName, middleName, phone } = watch();
 
   const hasValue = useMemo(() => {
-    return Boolean(
-      (firstName && firstName.length > 0) ||
-        (lastName && lastName.length > 0) ||
-        (middleName && middleName.length > 0) ||
-        (phone && phone.length > 0)
+    return (
+      Math.max(
+        firstName.trim().length,
+        lastName.trim().length,
+        middleName.trim().length,
+        phone.trim().length
+      ) > 0
     );
   }, [firstName, lastName, middleName, phone]);
 
   const fullName = useMemo(() => {
-    return [firstName, lastName, middleName].filter(Boolean).join(' ');
+    return [firstName, lastName, middleName]
+      .filter((it) => Boolean(it.trim()))
+      .join(' ');
   }, [firstName, lastName, middleName]);
 
   /** Masks phone showing last 4 digits */
@@ -106,6 +98,11 @@ export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: Cont
     if (digits.length <= 4) return phone;
     return `***${digits.slice(-4)}`;
   }, [phone]);
+
+  const onDrawerSubmit = methods.handleSubmit((data) => {
+    onSubmit(data);
+    setOpen(false);
+  });
 
   return (
     <>
@@ -142,42 +139,13 @@ export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: Cont
         onClose={() => setOpen(false)}
         title={title}
         footer={
-          <StickyButton
-            onClick={() => {
-              // Trigger validation for all fields
-              methods.trigger().then((isValid) => {
-                if (isValid) {
-                  const values = getValues();
-                  // Convert to DTO
-                  const dto: ContactDto = {
-                    userFirstName: values.userFirstName,
-                    userLastName: values.userLastName,
-                    userMiddleName: values.userMiddleName,
-                    userPhone: values.userPhone,
-                  };
-                  onValid(dto);
-                  setOpen(false);
-                } else {
-                  // Extract errors from form state
-                  const fieldErrors: Record<string, string> = {};
-                  Object.entries(errors).forEach(([field, error]) => {
-                    if (error?.message) {
-                      fieldErrors[field] = error.message;
-                    }
-                  });
-                  onInvalid(fieldErrors);
-                }
-              });
-            }}
-          >
-            {t('save')}
-          </StickyButton>
+          <StickyButton onClick={onDrawerSubmit}>{t('save')}</StickyButton>
         }
       >
         <FormProvider {...methods}>
           <Flex vertical gap={12}>
             <Controller
-              name="userFirstName"
+              name="firstName"
               control={control}
               rules={{
                 required: t('required-field'),
@@ -188,13 +156,13 @@ export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: Cont
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  status={errors.userFirstName ? 'error' : undefined}
-                  error={errors.userFirstName?.message}
+                  status={errors.firstName ? 'error' : undefined}
+                  error={errors.firstName?.message}
                 />
               )}
             />
             <Controller
-              name="userLastName"
+              name="lastName"
               control={control}
               rules={{
                 required: t('required-field'),
@@ -205,13 +173,13 @@ export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: Cont
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  status={errors.userLastName ? 'error' : undefined}
-                  error={errors.userLastName?.message}
+                  status={errors.lastName ? 'error' : undefined}
+                  error={errors.lastName?.message}
                 />
               )}
             />
             <Controller
-              name="userMiddleName"
+              name="middleName"
               control={control}
               rules={{
                 required: t('required-field'),
@@ -222,14 +190,14 @@ export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: Cont
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  status={errors.userMiddleName ? 'error' : undefined}
-                  error={errors.userMiddleName?.message}
+                  status={errors.middleName ? 'error' : undefined}
+                  error={errors.middleName?.message}
                 />
               )}
             />
             <PhoneInputField
               control={control}
-              name="userPhone"
+              name="phone"
               label={t('phone-number')}
               country={'UA'}
               international
@@ -239,7 +207,7 @@ export const ContactSelect = ({ initialValues, onValid, onInvalid, title }: Cont
                 invalidFormat: t('phone-invalid-format'),
                 invalidLength: t('phone-invalid-length'),
               }}
-              error={errors.userPhone?.message}
+              error={errors.phone?.message}
             />
           </Flex>
         </FormProvider>

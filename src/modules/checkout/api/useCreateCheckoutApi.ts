@@ -23,8 +23,12 @@ import type { removeDeliveryAddressesMutation as RemoveDeliveryAddressesMutation
 import type { addPromoCodeMutation as AddPromoCodeMutationType } from '@src/modules/checkout/api/mutations/__generated__/addPromoCodeMutation.graphql';
 import type { removePromoCodeMutation as RemovePromoCodeMutationType } from '@src/modules/checkout/api/mutations/__generated__/removePromoCodeMutation.graphql';
 import type { updateCustomerNoteMutation as UpdateCustomerNoteMutationType } from '@src/modules/checkout/api/mutations/__generated__/updateCustomerNoteMutation.graphql';
+import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
 
 export function useCreateCheckoutApi(): CheckoutApi {
+  const { checkout = null } = useCheckoutData() || {};
+  const checkoutId = checkout?.id as string;
+
   const { commit: commitSelectDelivery } =
     useCheckoutOperation<SelectDeliveryMethodMutationType>(
       selectDeliveryMethodMutation,
@@ -105,45 +109,68 @@ export function useCreateCheckoutApi(): CheckoutApi {
       {
         errorMessage: 'Failed to update customer note',
         operationKey: OperationKey.UpdateCustomerNote,
-        sectionId: SectionId.Comment,
+
         debounceMs: 250,
+        sectionId: SectionId.Comment,
       }
     );
 
   return useMemo(
     () => ({
       selectDeliveryMethod: async (input) => {
-        await commitSelectDelivery({ input });
+        await commitSelectDelivery({
+          input: { ...input, checkoutId },
+        });
       },
       selectPaymentMethod: async (input) => {
-        await commitSelectPayment({ input });
+        await commitSelectPayment({
+          input: { ...input, checkoutId },
+        });
       },
       updatePaymentMethod: async (input) => {
-        await commitSelectPayment({ input });
+        await commitSelectPayment({
+          input: { ...input, checkoutId },
+        });
       },
       updateCustomerIdentity: async (input) => {
-        await commitUpdateIdentity({ input });
+        await commitUpdateIdentity({
+          input: { ...input, checkoutId },
+        });
       },
       addDeliveryAddresses: async (input) => {
-        await commitAddAddresses({ input });
+        await commitAddAddresses({
+          input: { ...input, checkoutId },
+        });
       },
       updateDeliveryAddresses: async (input) => {
-        await commitUpdateAddresses({ input });
+        await commitUpdateAddresses({
+          input: { ...input, checkoutId },
+        });
       },
       removeDeliveryAddresses: async (input) => {
-        await commitRemoveAddresses({ input });
+        await commitRemoveAddresses({
+          input: { ...input, checkoutId },
+        });
       },
       updateCustomerNote: async (input) => {
-        await commitUpdateNote({ input });
+        await commitUpdateNote({
+          input: { ...input, checkoutId },
+        });
       },
       addPromoCode: async (input) => {
-        await commitAddPromo({ input });
+        await commitAddPromo({
+          input: { ...input, checkoutId },
+        });
       },
       removePromoCode: async (input) => {
-        await commitRemovePromo({ input });
+        await commitRemovePromo({
+          input: { ...input, checkoutId },
+        });
       },
       updateShippingMethod: async (input) => {
-        await commitSelectDelivery({ input });
+        await commitSelectDelivery({
+          input: { ...input, checkoutId },
+        });
       },
       submitCheckout: async () => {
         throw new Error('Not implemented');
