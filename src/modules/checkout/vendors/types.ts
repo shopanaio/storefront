@@ -23,6 +23,8 @@ export interface ProviderMethodConfig {
     onActive: () => void;
     data?: unknown;
     onSubmit?: (data: unknown) => void;
+    /** Delivery address for delivery methods (only for delivery providers) */
+    deliveryAddress?: unknown;
   }>;
   /** Initial values for this method (if any) */
   initialValues?: unknown;
@@ -54,6 +56,8 @@ export interface ProviderProps {
   onSelectMethod?: (method: ProviderMethod) => void;
   /** Callback for when selected method data is updated (optional, mainly for delivery) */
   onUpdateMethodData?: (data: unknown) => void;
+  /** Delivery address for delivery providers (only for delivery module type) */
+  deliveryAddress?: unknown;
 }
 
 export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'> & {
@@ -65,6 +69,8 @@ export interface ProviderMethodComponentProps {
   onSubmit: (data: unknown) => void;
   isActive: boolean;
   onActive: () => void;
+  /** Delivery address for delivery methods (only for delivery providers) */
+  deliveryAddress?: unknown;
 }
 
 export interface ProviderModuleApi {

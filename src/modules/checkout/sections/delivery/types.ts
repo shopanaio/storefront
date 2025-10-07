@@ -3,6 +3,15 @@ export interface DeliveryMethod {
   provider: string;
   data: unknown;
 }
+
+/**
+ * Delivery address data
+ */
+export interface DeliveryAddress {
+  addressId: string | null;
+  city: unknown;
+}
+
 /**
  * Delivery group data
  */
@@ -10,6 +19,7 @@ export interface DeliveryGroup {
   id: string;
   deliveryMethods: DeliveryMethod[];
   selectedDeliveryMethod: DeliveryMethod;
+  address: DeliveryAddress;
 }
 
 /**

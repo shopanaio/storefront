@@ -9,5 +9,5 @@ export interface PaymentMethod {
  */
 export interface PaymentFormData {
   paymentMethods: PaymentMethod[];
-  selectedPaymentMethod: PaymentMethod;
+  selectedPaymentMethod: PaymentMethod | null;
 }

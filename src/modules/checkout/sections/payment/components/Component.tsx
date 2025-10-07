@@ -38,6 +38,8 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
     setLocalSelectedMethod(selectedPaymentMethod ?? null);
   }, [selectedPaymentMethod]);
 
+  console.log('localSelectedMethod', localSelectedMethod);
+
   /**
    * Handle payment method selection with optimistic update
    */

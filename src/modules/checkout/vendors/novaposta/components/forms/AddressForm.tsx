@@ -8,16 +8,16 @@ import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { StreetModal } from '../street/StreetModal';
 import { useCallback, useEffect } from 'react';
 import { usePrevious } from 'react-use';
-import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City, Street } from '@checkout/vendors/novaposta/types';
 import { addressSchema } from '../../schemas';
 
 interface AddressFormProps {
   data: unknown;
   onSubmit: (data: unknown) => void;
+  deliveryAddress?: { city?: City | null } | unknown;
 }
 
-export function AddressForm({ data, onSubmit }: AddressFormProps) {
+export function AddressForm({ data, onSubmit, deliveryAddress }: AddressFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{
     street?: Street | null;
@@ -39,13 +39,8 @@ export function AddressForm({ data, onSubmit }: AddressFormProps) {
   const building = watch('building') || '';
   const apartment = watch('apartment') || '';
 
-  // Track global city from AddressSection (TODO: add interface)
-  const globalCity = useCheckoutStore((state) => {
-    const data = state.sections.address?.data as
-      | { city?: City | null }
-      | undefined;
-    return data?.city ?? null;
-  });
+  // Get city from deliveryAddress prop (passed from delivery group)
+  const globalCity = (deliveryAddress as { city?: City | null })?.city ?? null;
   const prevCityRef = usePrevious(globalCity?.Ref ?? null);
   const cityRef = globalCity?.Ref;
 

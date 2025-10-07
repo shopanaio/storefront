@@ -26,14 +26,14 @@ export function mapCheckoutToPaymentFormData(
     })
   );
 
-  const selectedPaymentMethod: PaymentMethod =
+  const selectedPaymentMethod: PaymentMethod | null =
     payment.selectedPaymentMethod
       ? {
           code: payment.selectedPaymentMethod.code,
           provider: payment.selectedPaymentMethod.provider.code,
           data: payment.selectedPaymentMethod.data,
         }
-      : paymentMethods[0];
+      : null;
 
   return {
     paymentMethods,

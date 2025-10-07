@@ -60,6 +60,7 @@ export const ProviderRenderer = ({
       config={config}
       onSelectMethod={onSelectMethod}
       onUpdateMethodData={onUpdateMethodData}
+      deliveryAddress={componentProps.deliveryAddress}
     />
   );
 };

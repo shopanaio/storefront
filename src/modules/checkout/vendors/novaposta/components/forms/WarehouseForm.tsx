@@ -7,17 +7,17 @@ import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
-import { useCheckoutStore } from '@checkout/state/checkoutStore';
-import type { City } from '@checkout/sections/delivery/components/city/CitySelect';
+import type { City } from '@checkout/vendors/novaposta/types';
 import { warehouseSchema } from '../../schemas';
 import { Warehouse } from '@checkout/vendors/novaposta/types';
 
 interface WarehouseFormProps {
   data: unknown;
   onSubmit: (data: unknown) => void;
+  deliveryAddress?: { city?: City | null } | unknown;
 }
 
-export function WarehouseForm({ data, onSubmit }: WarehouseFormProps) {
+export function WarehouseForm({ data, onSubmit, deliveryAddress }: WarehouseFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{ warehouse?: Warehouse | null }>({
     defaultValues: {
@@ -31,13 +31,8 @@ export function WarehouseForm({ data, onSubmit }: WarehouseFormProps) {
   const { watch } = methods;
   const warehouse = watch('warehouse') || null;
 
-  // Track global city from AddressSection (TODO: add interface)
-  const globalCity = useCheckoutStore((state) => {
-    const data = state.sections.address?.data as
-      | { city?: City | null }
-      | undefined;
-    return data?.city ?? null;
-  });
+  // Get city from deliveryAddress prop (passed from delivery group)
+  const globalCity = (deliveryAddress as { city?: City | null })?.city ?? null;
   const prevCityRef = usePrevious(globalCity?.Ref ?? null);
 
   // Reset warehouse when global city changes

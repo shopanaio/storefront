@@ -17,6 +17,7 @@ export function NPProvider({
   onSelectMethod,
   onUpdateMethodData,
   provider,
+  deliveryAddress,
 }: ProviderComponentProps) {
   const { styles } = useStyles();
 
@@ -51,6 +52,7 @@ export function NPProvider({
                 onActive={() => handleSelectMethod(config.code)}
                 data={method.data}
                 onSubmit={handleUpdateMethodData}
+                deliveryAddress={deliveryAddress}
               />
             );
           })

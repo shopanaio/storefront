@@ -180,6 +180,7 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
                   selectedMethod={selectedDeliveryMethod ?? null}
                   onSelectMethod={handleSelectMethod}
                   onUpdateMethodData={handleUpdateMethodData}
+                  deliveryAddress={address}
                 />
               )
             )}
