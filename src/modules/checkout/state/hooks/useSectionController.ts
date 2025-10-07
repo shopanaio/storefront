@@ -44,6 +44,7 @@ export function useSectionController(
       CheckoutEvent.OperationStart,
       ({ sectionId: sid }) => {
         if (sid === id) {
+          useCheckoutStore.getState().sectionInvalid(sid)
           useCheckoutStore.getState().setSectionBusy(id, true);
         }
       }

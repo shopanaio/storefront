@@ -2,7 +2,7 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
+import { ProviderRenderer } from '@src/modules/checkout/infra/ProviderRenderer';
 import { useMemo } from 'react';
 import type {
   DeliveryFormData,
@@ -25,10 +25,7 @@ export interface DeliverySectionViewProps {
   invalidate: () => void;
 }
 
-export const DeliverySectionView = ({
-  data,
-  invalidate,
-}: DeliverySectionViewProps) => {
+export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
   const { styles } = useStyles();
 
   const deliveryGroups = useMemo(() => {
@@ -68,7 +65,6 @@ export const DeliverySectionView = ({
     return result;
   }, [data]);
 
-  console.log('deliveryGroups',data, deliveryGroups);
   return (
     <>
       {deliveryGroups.map(
@@ -80,7 +76,7 @@ export const DeliverySectionView = ({
                   key={provider}
                   moduleType={ProviderModuleType.Delivery}
                   provider={provider}
-                  methods={methods}
+                  availableMethods={methods}
                   selectedMethod={selectedDeliveryMethod ?? null}
                 />
               )

@@ -4,22 +4,7 @@ import { useTranslations } from 'next-intl';
 import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
 import { AddressForm } from '../forms/AddressForm';
 import { NPLogo } from '../Logo';
-
-/**
- * Props for the CourierShippingMethod component
- */
-export interface CourierShippingMethodProps {
-  /** Whether this method is currently active */
-  isActive: boolean;
-  /** Callback when method is selected */
-  onActivate: () => void;
-  /** Callback when form has valid data */
-  onValid: (data: unknown) => void;
-  /** Callback when form has invalid data */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Initial form values */
-  initialValues?: unknown;
-}
+import { ProviderMethodComponentProps } from '@src/modules/checkout/vendors/types';
 
 /**
  * NovaPoshta courier (warehouse-to-doors) shipping method component.
@@ -27,11 +12,9 @@ export interface CourierShippingMethodProps {
  */
 export function CourierShippingMethod({
   isActive,
-  onActivate,
-  onValid,
-  onInvalid,
-  initialValues,
-}: CourierShippingMethodProps) {
+  onActive,
+  ...componentProps
+}: ProviderMethodComponentProps) {
   const t = useTranslations('Modules.novaposta');
 
   return (
@@ -39,14 +22,10 @@ export function CourierShippingMethod({
       title={t('shipping.courier')}
       description={t('shipping.courier_description')}
       isActive={isActive}
-      onActivate={onActivate}
+      onActive={onActive}
       brand={<NPLogo size={24} />}
-        component={AddressForm}
-        componentProps={{
-          onValid,
-          onInvalid,
-          initialValues,
-        }}
+      component={AddressForm}
+      componentProps={componentProps}
     />
   );
 }

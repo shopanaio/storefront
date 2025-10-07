@@ -11,41 +11,37 @@ import { usePrevious } from 'react-use';
 import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City, Street } from '@checkout/vendors/novaposta/types';
 import { addressSchema } from '../../schemas';
-import { ValidationError } from 'yup';
 
 /**
  * Props for AddressForm
  */
 interface AddressFormProps {
-  /** Callback when form has valid data */
-  onValid: (data: unknown) => void;
-  /** Callback when form has invalid data */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Initial form values */
-  initialValues?: unknown;
+  data: unknown;
+  onSubmit: (data: unknown) => void;
 }
 
-export function AddressForm({ onValid, onInvalid, initialValues }: AddressFormProps) {
+export function AddressForm({ data, onSubmit }: AddressFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{
-    userStreet?: Street | null;
-    userBuilding: string;
-    userApartment: string;
+    street?: Street | null;
+    building: string;
+    apartment: string;
   }>({
     defaultValues: {
-      userStreet: null,
-      userBuilding: '',
-      userApartment: '',
-      ...(initialValues as any),
+      street: null,
+      building: '',
+      apartment: '',
+
+      ...(data as any),
     },
     mode: 'onChange',
   });
   const t = useTranslations('Modules.novaposta.form');
 
   const { watch } = methods;
-  const userStreet = watch('userStreet') || null;
-  const userBuilding = watch('userBuilding') || '';
-  const userApartment = watch('userApartment') || '';
+  const street = watch('street') || null;
+  const building = watch('building') || '';
+  const apartment = watch('apartment') || '';
 
   // Track global city from AddressSection (TODO: add interface)
   const globalCity = useCheckoutStore((state) => {
@@ -63,37 +59,25 @@ export function AddressForm({ onValid, onInvalid, initialValues }: AddressFormPr
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
       // City changed, reset street selection
-      methods.setValue('userStreet', null);
+      methods.setValue('street', null);
     }
   }, [globalCity, prevCityRef, methods]);
 
   useEffect(() => {
-    const validate = async () => {
-      const data = {
-        userStreet: userStreet,
-        userBuilding: userBuilding,
-        userApartment: userApartment,
-      };
-      try {
-        await addressSchema.validate(data, { abortEarly: false });
-        onValid({ address: data });
-      } catch (e) {
-        // Validation failed - explicitly mark as invalid
-        const errors: Record<string, string> = {};
-        if (e instanceof ValidationError) {
-          e.inner.forEach((err) => {
-            if (err.path) errors[err.path] = err.message;
-          });
-        }
-        onInvalid(errors);
-      }
+    const data = {
+      street: street,
+      building: building,
+      apartment: apartment,
     };
-    validate();
-  }, [userStreet, userBuilding, userApartment, onValid, onInvalid]);
+
+    addressSchema
+      .validate(data, { abortEarly: false })
+      .then(() => onSubmit(data));
+  }, [street, building, apartment, onSubmit]);
 
   const handleChangeStreet = useCallback(
     (s: Street) => {
-      methods.setValue('userStreet', s);
+      methods.setValue('street', s);
     },
     [methods]
   );
@@ -102,7 +86,7 @@ export function AddressForm({ onValid, onInvalid, initialValues }: AddressFormPr
     <FormProvider {...methods}>
       <Flex vertical gap={12} className={styles.container}>
         <StreetModal
-          street={userStreet}
+          street={street}
           changeStreet={handleChangeStreet}
           cityRef={cityRef}
         />
@@ -112,13 +96,13 @@ export function AddressForm({ onValid, onInvalid, initialValues }: AddressFormPr
         <Flex gap={12}>
           <FloatingLabelInput
             label={t('building')}
-            value={userBuilding}
-            onChange={(e) => methods.setValue('userBuilding', e.target.value)}
+            value={building}
+            onChange={(e) => methods.setValue('building', e.target.value)}
           />
           <FloatingLabelInput
             label={t('apartment')}
-            value={userApartment}
-            onChange={(e) => methods.setValue('userApartment', e.target.value)}
+            value={apartment}
+            onChange={(e) => methods.setValue('apartment', e.target.value)}
           />
         </Flex>
       </Flex>

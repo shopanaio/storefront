@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { DynamicRenderer } from './DynamicRenderer';
 import { moduleRegistry } from '@src/modules/registry';
 import {
   ProviderModuleApi,
@@ -19,15 +18,38 @@ export const ProviderRenderer = ({
   provider,
   ...componentProps
 }: ProviderProps) => {
-  const loader = moduleRegistry.resolve<ProviderModuleApi>(
-    moduleType,
-    provider
-  );
+  const [api, setApi] = useState<ProviderModuleApi | null>(null);
 
-  return (
-    <DynamicRenderer
-      loader={loader}
-      componentProps={{ ...componentProps, provider }}
-    />
-  );
+  useEffect(() => {
+    const loader = moduleRegistry.resolve<ProviderModuleApi>(
+      moduleType,
+      provider
+    );
+
+    if (!loader) {
+      setApi(null);
+      return;
+    }
+
+    let cancelled = false;
+    const load = async () => {
+      if (!cancelled) {
+        const api = await loader();
+        setApi(api);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [provider, moduleType]);
+
+  const { Component, config } = api || {};
+
+  if (!Component || !config) {
+    return null;
+  }
+
+  return <Component {...componentProps} provider={provider} config={config} />;
 };

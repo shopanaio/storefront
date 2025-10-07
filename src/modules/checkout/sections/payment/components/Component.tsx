@@ -2,7 +2,7 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { ProviderRenderer } from '@src/modules/checkout/infra/loaders/ProviderRenderer';
+import { ProviderRenderer } from '@src/modules/checkout/infra/ProviderRenderer';
 import { useMemo } from 'react';
 import type { PaymentFormData } from '../types';
 import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
@@ -17,14 +17,9 @@ import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
 export interface PaymentSectionViewProps {
   /** Current form data */
   data: PaymentFormData | null;
-  /** Called to invalidate the section */
-  invalidate: () => void;
 }
 
-export const PaymentSectionView = ({
-  data,
-  invalidate,
-}: PaymentSectionViewProps) => {
+export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
   const { styles } = useStyles();
   const { paymentMethods, selectedPaymentMethod } = data ?? {};
 
@@ -58,7 +53,7 @@ export const PaymentSectionView = ({
           key={provider}
           moduleType={ProviderModuleType.Payment}
           provider={provider}
-          methods={methods}
+          availableMethods={methods}
           selectedMethod={selectedPaymentMethod ?? null}
         />
       ))}

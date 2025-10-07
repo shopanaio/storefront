@@ -10,27 +10,22 @@ import { usePrevious } from 'react-use';
 import { useCheckoutStore } from '@checkout/state/checkoutStore';
 import type { City } from '@checkout/sections/delivery/components/city/CitySelect';
 import { warehouseSchema } from '../../schemas';
-import { ValidationError } from 'yup';
 import { Warehouse } from '@checkout/vendors/novaposta/types';
 
 /**
  * Props for WarehouseForm
  */
 interface WarehouseFormProps {
-  /** Callback when form has valid data */
-  onValid: (data: unknown) => void;
-  /** Callback when form has invalid data */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Initial form values */
-  initialValues?: unknown;
+  data: unknown;
+  onSubmit: (data: unknown) => void;
 }
 
-export function WarehouseForm({ onValid, onInvalid, initialValues }: WarehouseFormProps) {
+export function WarehouseForm({ data, onSubmit }: WarehouseFormProps) {
   const { styles } = useStyles();
   const methods = useForm<{ warehouse?: Warehouse | null }>({
     defaultValues: {
       warehouse: null,
-      ...(initialValues as any),
+      ...(data as any),
     },
     mode: 'onChange',
   });
@@ -59,26 +54,10 @@ export function WarehouseForm({ onValid, onInvalid, initialValues }: WarehouseFo
   }, [globalCity, prevCityRef, methods]);
 
   useEffect(() => {
-    const validate = async () => {
-      const data = {
-        warehouse: warehouse,
-      };
-      try {
-        await warehouseSchema.validate(data, { abortEarly: false });
-        onValid(data);
-      } catch (e) {
-        // Validation failed - explicitly mark as invalid
-        const errors: Record<string, string> = {};
-        if (e instanceof ValidationError) {
-          e.inner.forEach((err) => {
-            if (err.path) errors[err.path] = err.message;
-          });
-        }
-        onInvalid(errors);
-      }
-    };
-    validate();
-  }, [warehouse, onValid, onInvalid]);
+    warehouseSchema
+      .validate({ warehouse }, { abortEarly: false })
+      .then(() => onSubmit({ warehouse }));
+  }, [warehouse, onSubmit]);
 
   return (
     <Flex vertical gap={12} className={styles.container}>

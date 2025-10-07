@@ -23,17 +23,13 @@ export interface ContactSectionViewProps {
   invalidate: () => void;
 }
 
-export const ContactSectionView = ({
-  data,
-  invalidate,
-}: ContactSectionViewProps) => {
+export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const { updateCustomerIdentity } = useCheckoutApi();
 
   const onSubmit = useCallback(
     async (data: ContactFormData) => {
-      invalidate();
       await updateCustomerIdentity({
         phone: data.userPhone,
       });

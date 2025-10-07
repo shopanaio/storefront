@@ -48,7 +48,7 @@ type CheckoutPayload = {
 - `src/modules/checkout/components/Checkout.tsx` — верхний компонент (убрать RHF, перейти на Zustand + события).
 - `src/modules/checkout/sections/**` — секции используют локально RHF и контроллер секции.
 - `src/modules/checkout/vendors/*/**` — провайдеры используют локально RHF и контроллер провайдера.
-- `src/modules/checkout/infra/loaders/ProviderRenderer.tsx` — активация/деактивация провайдеров по выбранному методу.
+- `src/modules/checkout/infra/ProviderRenderer.tsx` — активация/деактивация провайдеров по выбранному методу.
 
 ### Состояние (Zustand) на верхнем уровне
 Стор хранит только агрегаты:
@@ -132,7 +132,7 @@ type CheckoutPayload = {
   - Убрать RHF-враппер уровня Checkout.
   - Использовать селекторы стора для отображения статусов.
   - Кнопка сабмита вызывает `requestSubmit()` и подписывается на `submit/ready|submit/blocked` через bus.
-- `src/modules/checkout/infra/loaders/ProviderRenderer.tsx`
+- `src/modules/checkout/infra/ProviderRenderer.tsx`
   - Обеспечить активацию/деактивацию провайдеров согласно `useMethodSelection`.
 - `sections/*` и `vendors/*` компоненты
   - Оставить RHF локально, использовать соответствующий контроллер (`useSectionController`/`useProviderController`).

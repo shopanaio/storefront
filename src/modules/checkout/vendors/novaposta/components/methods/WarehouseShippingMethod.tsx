@@ -4,22 +4,7 @@ import { useTranslations } from 'next-intl';
 import { CheckoutMethodPanel } from '@checkout/components/common/CheckoutMethodPanel';
 import { WarehouseForm } from '../forms/WarehouseForm';
 import { NPLogo } from '../Logo';
-
-/**
- * Props for the WarehouseShippingMethod component
- */
-export interface WarehouseShippingMethodProps {
-  /** Whether this method is currently active */
-  isActive: boolean;
-  /** Callback when method is selected */
-  onActivate: () => void;
-  /** Callback when form has valid data */
-  onValid: (data: unknown) => void;
-  /** Callback when form has invalid data */
-  onInvalid: (errors?: Record<string, string>) => void;
-  /** Initial form values */
-  initialValues?: unknown;
-}
+import { ProviderMethodComponentProps } from '@src/modules/checkout/vendors/types';
 
 /**
  * NovaPoshta warehouse-to-warehouse shipping method component.
@@ -27,11 +12,9 @@ export interface WarehouseShippingMethodProps {
  */
 export function WarehouseShippingMethod({
   isActive,
-  onActivate,
-  onValid,
-  onInvalid,
-  initialValues,
-}: WarehouseShippingMethodProps) {
+  onActive,
+  ...componentProps
+}: ProviderMethodComponentProps) {
   const t = useTranslations('Modules.novaposta');
 
   return (
@@ -39,14 +22,10 @@ export function WarehouseShippingMethod({
       title={t('shipping.warehouse')}
       description={t('shipping.warehouse_description')}
       isActive={isActive}
-      onActivate={onActivate}
+      onActive={onActive}
       brand={<NPLogo size={24} />}
-        component={WarehouseForm}
-        componentProps={{
-          onValid,
-          onInvalid,
-          initialValues,
-        }}
+      component={WarehouseForm}
+      componentProps={componentProps}
     />
   );
 }

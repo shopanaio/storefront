@@ -10,7 +10,7 @@ export interface CheckoutMethodPanelProps {
   title: string;
   description: string | null;
   isActive: boolean;
-  onActivate: () => void;
+  onActive: () => void;
   brand?: ReactNode;
   component: FC<any> | null;
   /** Props to pass to the component */
@@ -21,7 +21,7 @@ export const CheckoutMethodPanel = ({
   title,
   description,
   isActive,
-  onActivate,
+  onActive,
   brand = null,
   component: Component,
   componentProps = {},
@@ -32,7 +32,7 @@ export const CheckoutMethodPanel = ({
     <Collapse
       className={clsx(styles.collapse, isActive && styles.active)}
       activeKey={isActive ? codeRef.current : ''}
-      onChange={onActivate}
+      onChange={onActive}
       ghost
       bordered
     >

@@ -3,7 +3,7 @@ import { createStyles } from 'antd-style';
 import { mq } from '@src/components/Theme/breakpoints';
 import { Summary } from './summary/Summary';
 import { CheckoutActions } from './submit/CheckoutActions';
-import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
+import { SectionRenderer } from '@src/modules/checkout/infra/SectionRenderer';
 import { CheckoutSection } from '@src/modules/checkout/components/common/CheckoutSection';
 import { CheckoutAuth } from './CheckoutAuth';
 import { CheckoutSkeleton } from './CheckoutSkeleton';

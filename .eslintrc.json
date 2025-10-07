@@ -6,6 +6,7 @@
     "plugin:jsx-a11y/recommended"
   ],
   "rules": {
+    "@typescript-eslint/no-explicit-any": "off"
     // atlassian
     // "@atlaskit/design-system/no-empty-styled-expression": "error",
     // "@atlaskit/design-system/use-heading": "error",

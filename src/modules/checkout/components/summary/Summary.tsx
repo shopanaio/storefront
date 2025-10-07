@@ -8,7 +8,7 @@ import { Money } from '@src/components/UI/Price/Money';
 import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
-import { SectionRenderer } from '@src/modules/checkout/infra/loaders/SectionRenderer';
+import { SectionRenderer } from '@src/modules/checkout/infra/SectionRenderer';
 import { SectionId } from '@src/modules/checkout/state/interface';
 
 const { Text } = Typography;

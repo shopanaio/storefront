@@ -14,20 +14,22 @@ import { useCheckoutStore } from '@src/modules/checkout/state/checkoutStore';
  * Updates the activeOperationsCount in the checkout store.
  */
 export function useOperationTracker() {
+  const { setState, getState } = useCheckoutStore;
+  const { incrementActiveOperations, decrementActiveOperations } = getState();
+
   useEffect(() => {
     const offStart = onCheckoutEvent(CheckoutEvent.OperationStart, () => {
-      useCheckoutStore.getState().incrementActiveOperations();
+      incrementActiveOperations();
     });
 
     const offEnd = onCheckoutEvent(CheckoutEvent.OperationEnd, () => {
-      useCheckoutStore.getState().decrementActiveOperations();
+      decrementActiveOperations();
     });
 
     return () => {
       offStart();
       offEnd();
-      // Reset count on unmount to avoid stale state
-      useCheckoutStore.setState({ activeOperationsCount: 0 });
+      setState({ activeOperationsCount: 0 });
     };
-  }, []);
+  }, [incrementActiveOperations, decrementActiveOperations, setState]);
 }

@@ -1,4 +1,3 @@
-import { ValidationCallbacks } from '@src/modules/checkout/types/utils';
 import { ComponentType, FC } from 'react';
 import type { AnySchema } from 'yup';
 
@@ -21,12 +20,9 @@ export interface ProviderMethodConfig {
   /** Full method component that includes CheckoutMethodPanel */
   Component: FC<{
     isActive: boolean;
-    onActivate: () => void;
-    /** Callback when form has valid data */
-    onValid: (data: unknown) => void;
-    /** Callback when form has invalid data */
-    onInvalid: (errors?: Record<string, string>) => void;
-    initialValues?: unknown;
+    onActive: () => void;
+    data?: unknown;
+    onSubmit?: (data: unknown) => void;
   }>;
   /** Initial values for this method (if any) */
   initialValues?: unknown;
@@ -48,15 +44,23 @@ export interface ProviderMethod {
   data: unknown;
 }
 
-export interface ProviderProps extends ValidationCallbacks {
+export interface ProviderProps {
   moduleType: ProviderModuleType;
   provider: string;
   availableMethods: ProviderMethod[];
   selectedMethod: ProviderMethod | null;
-  config: ProviderConfig;
 }
 
-export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'>;
+export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'> & {
+  config: ProviderConfig;
+};
+
+export interface ProviderMethodComponentProps {
+  data: unknown;
+  onSubmit: (data: unknown) => void;
+  isActive: boolean;
+  onActive: () => void;
+}
 
 export interface ProviderModuleApi {
   provider: string;
