@@ -7,6 +7,9 @@ import {
   ApiCheckoutDeliveryAddressesAddInput,
   ApiCheckoutDeliveryAddressesUpdateInput,
   ApiCheckoutDeliveryAddressesRemoveInput,
+  ApiCheckoutDeliveryRecipientsAddInput,
+  ApiCheckoutDeliveryRecipientsUpdateInput,
+  ApiCheckoutDeliveryRecipientsRemoveInput,
   ApiCheckoutCustomerNoteUpdateInput,
   ApiCheckoutPromoCodeAddInput,
   ApiCheckoutPromoCodeRemoveInput,
@@ -31,5 +34,11 @@ export interface PromoCodeAddDto
   extends Omit<ApiCheckoutPromoCodeAddInput, 'checkoutId'> {}
 export interface PromoCodeRemoveDto
   extends Omit<ApiCheckoutPromoCodeRemoveInput, 'checkoutId'> {}
+export interface DeliveryRecipientsAddDto
+  extends Omit<ApiCheckoutDeliveryRecipientsAddInput, 'checkoutId'> {}
+export interface DeliveryRecipientsUpdateDto
+  extends Omit<ApiCheckoutDeliveryRecipientsUpdateInput, 'checkoutId'> {}
+export interface DeliveryRecipientsRemoveDto
+  extends Omit<ApiCheckoutDeliveryRecipientsRemoveInput, 'checkoutId'> {}
 export interface CheckoutSubmitDto
   extends Omit<ApiCreateOrderInput, 'checkoutId'> {}

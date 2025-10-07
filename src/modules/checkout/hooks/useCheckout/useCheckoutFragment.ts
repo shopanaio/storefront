@@ -85,6 +85,16 @@ export const useCheckoutFragment = graphql`
       provider
     }
     customerIdentity {
+      countryCode
+      customer {
+        id
+        email
+        name {
+          first
+          middle
+          last
+        }
+      }
       email
       firstName
       lastName
@@ -112,8 +122,8 @@ export const useCheckoutFragment = graphql`
         deliveryMethodType
         provider {
           code
-          data
         }
+        data
       }
       estimatedCost {
         amount {
@@ -134,8 +144,8 @@ export const useCheckoutFragment = graphql`
         deliveryMethodType
         provider {
           code
-          data
         }
+        data
       }
     }
     payment {
@@ -145,15 +155,19 @@ export const useCheckoutFragment = graphql`
       }
       paymentMethods {
         code
-        provider
+        provider {
+          code
+        }
         flow
-        metadata
+        data
       }
       selectedPaymentMethod {
         code
-        provider
+        provider {
+          code
+        }
         flow
-        metadata
+        data
       }
     }
     notifications {

@@ -6,6 +6,9 @@ import {
   DeliveryAddressesAddDto,
   DeliveryAddressesRemoveDto,
   DeliveryAddressesUpdateDto,
+  DeliveryRecipientsAddDto,
+  DeliveryRecipientsUpdateDto,
+  DeliveryRecipientsRemoveDto,
   PaymentMethodUpdateDto,
   PromoCodeAddDto,
   PromoCodeRemoveDto,
@@ -20,6 +23,9 @@ export interface CheckoutApi {
   addDeliveryAddresses: (input: DeliveryAddressesAddDto) => Promise<void>;
   updateDeliveryAddresses: (input: DeliveryAddressesUpdateDto) => Promise<void>;
   removeDeliveryAddresses: (input: DeliveryAddressesRemoveDto) => Promise<void>;
+  addDeliveryRecipients: (input: DeliveryRecipientsAddDto) => Promise<void>;
+  updateDeliveryRecipients: (input: DeliveryRecipientsUpdateDto) => Promise<void>;
+  removeDeliveryRecipients: (input: DeliveryRecipientsRemoveDto) => Promise<void>;
   updateCustomerNote: (input: CustomerNoteUpdateDto) => Promise<void>;
   addPromoCode: (input: PromoCodeAddDto) => Promise<void>;
   removePromoCode: (input: PromoCodeRemoveDto) => Promise<void>;

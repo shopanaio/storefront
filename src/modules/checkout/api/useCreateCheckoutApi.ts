@@ -10,6 +10,9 @@ import { updateCustomerIdentityMutation } from '@src/modules/checkout/api/mutati
 import { addDeliveryAddressesMutation } from '@src/modules/checkout/api/mutations/addDeliveryAddressesMutation.shopana';
 import { updateDeliveryAddressesMutation } from '@src/modules/checkout/api/mutations/updateDeliveryAddressesMutation.shopana';
 import { removeDeliveryAddressesMutation } from '@src/modules/checkout/api/mutations/removeDeliveryAddressesMutation.shopana';
+import { addDeliveryRecipientsMutation } from '@src/modules/checkout/api/mutations/addDeliveryRecipientsMutation.shopana';
+import { updateDeliveryRecipientsMutation } from '@src/modules/checkout/api/mutations/updateDeliveryRecipientsMutation.shopana';
+import { removeDeliveryRecipientsMutation } from '@src/modules/checkout/api/mutations/removeDeliveryRecipientsMutation.shopana';
 import { addPromoCodeMutation } from '@src/modules/checkout/api/mutations/addPromoCodeMutation.shopana';
 import { removePromoCodeMutation } from '@src/modules/checkout/api/mutations/removePromoCodeMutation.shopana';
 import { updateCustomerNoteMutation } from '@src/modules/checkout/api/mutations/updateCustomerNoteMutation.shopana';
@@ -117,6 +120,33 @@ export function useCreateCheckoutApi(): CheckoutApi {
       }
     );
 
+  const { commit: commitAddRecipients } = useCheckoutOperation(
+    addDeliveryRecipientsMutation,
+    {
+      errorMessage: 'Failed to add delivery recipients',
+      operationKey: OperationKey.AddDeliveryRecipients,
+      sectionId: SectionId.Delivery,
+    }
+  );
+
+  const { commit: commitUpdateRecipients } = useCheckoutOperation(
+    updateDeliveryRecipientsMutation,
+    {
+      errorMessage: 'Failed to update delivery recipients',
+      operationKey: OperationKey.UpdateDeliveryRecipients,
+      sectionId: SectionId.Delivery,
+    }
+  );
+
+  const { commit: commitRemoveRecipients } = useCheckoutOperation(
+    removeDeliveryRecipientsMutation,
+    {
+      errorMessage: 'Failed to remove delivery recipients',
+      operationKey: OperationKey.RemoveDeliveryRecipients,
+      sectionId: SectionId.Delivery,
+    }
+  );
+
   return useMemo(() => {
     console.log('Create Checkout API', checkoutId);
     return {
@@ -152,6 +182,21 @@ export function useCreateCheckoutApi(): CheckoutApi {
       },
       removeDeliveryAddresses: async (input) => {
         await commitRemoveAddresses({
+          input: { ...input, checkoutId },
+        });
+      },
+      addDeliveryRecipients: async (input) => {
+        await commitAddRecipients({
+          input: { ...input, checkoutId },
+        });
+      },
+      updateDeliveryRecipients: async (input) => {
+        await commitUpdateRecipients({
+          input: { ...input, checkoutId },
+        });
+      },
+      removeDeliveryRecipients: async (input) => {
+        await commitRemoveRecipients({
           input: { ...input, checkoutId },
         });
       },
