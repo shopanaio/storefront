@@ -56,7 +56,6 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
 
     // self=false means another person is recipient, so validation is required
     const required = data.self === false;
-    console.log('[RecipientSection] Setting required:', required, 'self:', data.self);
     useCheckoutStore.getState().setSectionRequired(SectionId.Recipient, required);
   }, [data?.self]);
 

@@ -31,13 +31,22 @@ export function isSectionValid(sectionEntry: SectionEntry): boolean {
 }
 
 /**
- * Compute list of missing required sections considering delivery groups and providers state.
+ * Compute list of missing required sections.
+ *
+ * A section is missing when:
+ * - It is marked as required
+ * - AND its status is not 'valid'
+ *
+ * Sections with required=false are NOT included in missing list.
  */
 export function computeMissingRequiredSections(
   state: CheckoutState
 ): SectionId[] {
   return Object.entries(state.sections)
-    .filter(([, entry]) => !isSectionValid(entry))
+    .filter(([, entry]) => {
+      // Only include sections that are required AND not valid
+      return entry?.required === true && entry.status !== 'valid';
+    })
     .map(([key]) => key as SectionId);
 }
 

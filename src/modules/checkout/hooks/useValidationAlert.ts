@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CheckoutEvent, onCheckoutEvent } from '@src/modules/checkout/state/checkoutBus';
+import {
+  CheckoutEvent,
+  onCheckoutEvent,
+} from '@src/modules/checkout/state/checkoutBus';
 
 /**
  * Hook that manages validation alert state for the checkout form.
@@ -16,35 +19,36 @@ export const useValidationAlert = (onConfirm: () => void) => {
       onConfirm();
     });
 
-    const offBlocked = onCheckoutEvent(CheckoutEvent.SubmitBlocked, ({ missing }) => {
-      /**
-       * Maps section keys to their translated display names.
-       * Handles both exact matches and prefixed keys (e.g., 'delivery:*').
-       */
-      const sectionNameMap: Record<string, string> = {
-        payment: t('payment'),
-        contact: t('contact'),
-        recipient: t('recipient'),
-        address: t('address'),
-        promo: t('promo'),
-        comment: t('comment'),
-      };
+    const offBlocked = onCheckoutEvent(
+      CheckoutEvent.SubmitBlocked,
+      ({ missing }) => {
+        /**
+         * Maps section keys to their translated display names.
+         * Handles both exact matches and prefixed keys (e.g., 'delivery:*').
+         */
+        const sectionNameMap: Record<string, string> = {
+          payment: t('payment'),
+          contact: t('contact'),
+          recipient: t('recipient'),
+          address: t('address'),
+          promo: t('promo'),
+          comment: t('comment'),
+          delivery: t('delivery'),
+        };
 
-      const mapSectionKey = (key: string): string => {
-        if (key.startsWith('delivery:')) {
-          return t('delivery');
-        }
-        return sectionNameMap[key] ?? key;
-      };
+        const mapSectionKey = (key: string): string => {
+          return sectionNameMap[key] ?? key;
+        };
 
-      const uniqueNames = Array.from(new Set(missing.map(mapSectionKey)));
-      const message =
-        uniqueNames.length > 0
-          ? `${t('fill-required')}: ${uniqueNames.join(', ')}`
-          : t('error-no-shipping-and-payment-method');
+        const uniqueNames = Array.from(new Set(missing.map(mapSectionKey)));
+        const message =
+          uniqueNames.length > 0
+            ? `${t('fill-required')}: ${uniqueNames.join(', ')}`
+            : t('error-no-shipping-and-payment-method');
 
-      setValidationError(message);
-    });
+        setValidationError(message);
+      }
+    );
 
     return () => {
       offCompleted();
