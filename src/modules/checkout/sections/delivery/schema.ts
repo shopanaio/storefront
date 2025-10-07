@@ -41,12 +41,15 @@ const deliveryGroupSchema = yup.object<DeliveryGroup>().shape({
         );
 
         const methodConfig = config?.methods.find((m) => m.code === code);
+
+        // If there's no schema for this method, consider it valid
         if (!methodConfig?.schema) {
           return true;
         }
 
+        // Method has a schema, so we must validate data
         try {
-          methodConfig.schema?.validateSync(data, { abortEarly: false });
+          methodConfig.schema.validateSync(data, { abortEarly: false });
           return true;
         } catch (e) {
           return this.createError({ message: (e as Error).message });
