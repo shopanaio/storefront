@@ -30,6 +30,9 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
   const onSubmit = useCallback(
     async (data: ContactFormData) => {
       await updateCustomerIdentity({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
         phone: data.phone,
       });
     },

@@ -12,25 +12,25 @@ import type { ContactForm } from '@src/modules/checkout/components/contact/Conta
 /**
  * View component for the checkout recipient section.
  *
- * Pure controlled UI component that renders the recipient form.
- * Receives generic form data and extracts needed fields.
- * Does not manage its own state - all state is controlled via props.
+ * Logic:
+ * - When self=true: recipient data removed from DB, uses customerIdentity
+ * - When self=false: recipient data saved to DB, shows ContactSelect form
+ *
+ * The 'self' field is derived from presence of recipient in DB (see mapper).
  */
 export interface RecipientSectionViewProps {
   /** Current form data */
   data: RecipientFormData | null;
-  /** Called to invalidate the section */
-  invalidate: () => void;
 }
 
-export const RecipientSectionView = ({
-  data,
-  invalidate,
-}: RecipientSectionViewProps) => {
+export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const { addDeliveryRecipients, updateDeliveryRecipients, removeDeliveryRecipients } =
-    useCheckoutApi();
+  const {
+    addDeliveryRecipients,
+    updateDeliveryRecipients,
+    removeDeliveryRecipients,
+  } = useCheckoutApi();
 
   const [isRecipientSelf, setIsRecipientSelf] = useState(data?.self ?? true);
 
@@ -39,26 +39,54 @@ export const RecipientSectionView = ({
   }, [data?.self]);
 
   /**
-   * Handles switch toggle between self and another person
+   * Handles switch toggle between self and another person.
+   *
+   * When switching to self=true:
+   * - Removes recipient from DB -> recipient becomes NULL
+   * - Customer identity will be used as recipient
+   *
+   * When switching to self=false:
+   * - Creates empty recipient in DB -> form becomes invalid
+   * - User must fill the form to make section valid
    */
   const handleSwitchChange = useCallback(
     async (checked: boolean) => {
       const newSelf = !checked;
       setIsRecipientSelf(newSelf);
 
-      // If switching to self (recipient = customer), remove recipient data
-      if (newSelf && data?.deliveryGroupId) {
+      if (!data?.deliveryGroupId) return;
+
+      if (newSelf) {
+        // Switching to self (recipient = customer) -> remove recipient from DB
         await removeDeliveryRecipients({
           deliveryGroupIds: [data.deliveryGroupId],
         });
+      } else {
+        // Switching to another person -> create empty recipient in DB
+        // This will invalidate the section until user fills the form
+        await addDeliveryRecipients({
+          recipients: [
+            {
+              deliveryGroupId: data.deliveryGroupId,
+              recipient: {
+                firstName: '',
+                lastName: '',
+                middleName: '',
+                phone: '',
+              },
+            },
+          ],
+        });
       }
     },
-    [data?.deliveryGroupId, removeDeliveryRecipients]
+    [data?.deliveryGroupId, removeDeliveryRecipients, addDeliveryRecipients]
   );
 
   /**
-   * Handles contact form submission
-   * Determines whether to add or update recipient based on existing data
+   * Handles contact form submission for recipient.
+   *
+   * Always updates the recipient since it was already created empty
+   * when user switched to self=false.
    */
   const handleContactSubmit = useCallback(
     async (contactData: ContactForm) => {
@@ -67,10 +95,6 @@ export const RecipientSectionView = ({
         return;
       }
 
-      const hasExistingRecipient = Boolean(
-        data?.firstName || data?.lastName || data?.phone
-      );
-
       const recipientData = {
         firstName: contactData.firstName,
         lastName: contactData.lastName,
@@ -78,29 +102,17 @@ export const RecipientSectionView = ({
         phone: contactData.phone,
       };
 
-      if (hasExistingRecipient) {
-        // Update existing recipient
-        await updateDeliveryRecipients({
-          updates: [
-            {
-              deliveryGroupId: data.deliveryGroupId,
-              recipient: recipientData,
-            },
-          ],
-        });
-      } else {
-        // Add new recipient
-        await addDeliveryRecipients({
-          recipients: [
-            {
-              deliveryGroupId: data.deliveryGroupId,
-              recipient: recipientData,
-            },
-          ],
-        });
-      }
+      // Update recipient in DB (it was created empty on switch)
+      await updateDeliveryRecipients({
+        updates: [
+          {
+            deliveryGroupId: data.deliveryGroupId,
+            recipient: recipientData,
+          },
+        ],
+      });
     },
-    [data, addDeliveryRecipients, updateDeliveryRecipients]
+    [data?.deliveryGroupId, updateDeliveryRecipients]
   );
 
   return (

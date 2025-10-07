@@ -221,7 +221,7 @@
     "first-name": "First name",
     "middle-name": "Middle name",
     "required-field": "This field is required",
-    "i-am-recipient": "I am the recipient",
+    "i-am-recipient": "Recipient is another person",
 
     "city": "City",
     "warehouse": "Warehouse",
