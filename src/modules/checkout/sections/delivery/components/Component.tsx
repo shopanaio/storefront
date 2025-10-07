@@ -36,6 +36,7 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
     id: deliveryGroupId,
     selectedDeliveryMethod: serverSelectedMethod,
     deliveryMethods,
+    address,
   } = deliveryGroup || {};
 
   /**

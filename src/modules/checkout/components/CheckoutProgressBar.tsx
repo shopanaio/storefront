@@ -7,7 +7,7 @@ import { useHasActiveOperations } from '@src/modules/checkout/state/selectors';
 // Configure nprogress
 NProgress.configure({
   showSpinner: false,
-  trickle: true,
+  trickle: false,
   trickleSpeed: 100,
   minimum: 0.2,
 });

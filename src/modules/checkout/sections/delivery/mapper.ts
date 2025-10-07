@@ -1,9 +1,10 @@
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import type { DeliveryFormData, DeliveryGroup, DeliveryMethod } from './types';
+import type { DeliveryFormData, DeliveryGroup, DeliveryMethod, DeliveryAddress } from './types';
+import type { City } from './components/city/CitySelect';
 
 /**
  * Maps Checkout.Checkout entity to DeliveryFormData
- * Extracts delivery groups and their selected delivery methods
+ * Extracts delivery groups, their selected delivery methods, and address data
  */
 export function mapCheckoutToDeliveryFormData(
   checkout: Checkout.Checkout | null
@@ -32,11 +33,26 @@ export function mapCheckoutToDeliveryFormData(
           }
         : deliveryMethods[0] ?? null;
 
+    // Extract address data from delivery group
+    const address: DeliveryAddress = group.deliveryAddress
+      ? {
+          addressId: group.deliveryAddress.id,
+          city: group.deliveryAddress.data
+            ? // @ts-expect-error TODO: fix type
+              (group.deliveryAddress.data.city as City)
+            : null,
+        }
+      : {
+          addressId: null,
+          city: null,
+        };
+
     if (selectedDeliveryMethod) {
       const deliveryGroup: DeliveryGroup = {
         id: group.id,
         deliveryMethods,
         selectedDeliveryMethod,
+        address,
       };
 
       formData[group.id] = deliveryGroup;
