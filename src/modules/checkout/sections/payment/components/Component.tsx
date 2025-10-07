@@ -28,9 +28,8 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
    * Local state for optimistic UI updates
    * This allows the UI to respond immediately while the API request is processing
    */
-  const [localSelectedMethod, setLocalSelectedMethod] = useState<
-    PaymentMethod | null
-  >(selectedPaymentMethod ?? null);
+  const [localSelectedMethod, setLocalSelectedMethod] =
+    useState<PaymentMethod | null>(selectedPaymentMethod ?? null);
 
   /**
    * Sync local state when data changes from API
@@ -45,23 +44,16 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
   const handleSelectMethod = useCallback(
     async (method: { code: string; data: unknown; provider: string }) => {
       // Find full method object from paymentMethods
-      const fullMethod = paymentMethods?.find(
-        (m) => m.code === method.code && m.provider === method.provider
-      );
-
-      if (!fullMethod) {
-        console.error('Payment method not found:', method);
-        return;
-      }
 
       // Optimistically update local state for immediate UI feedback
-      setLocalSelectedMethod(fullMethod);
+      setLocalSelectedMethod(method);
 
       try {
         // Call API to persist the selection
         await selectPaymentMethod({
-          paymentMethodCode: fullMethod.code,
-          data: fullMethod.data as object | undefined,
+          paymentMethodCode: method.code,
+          provider: method.provider,
+          data: method.data as object,
         });
       } catch (error) {
         // On error, revert to previous state

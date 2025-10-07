@@ -28,7 +28,6 @@ export function AddressForm({ data, onSubmit }: AddressFormProps) {
       street: null,
       building: '',
       apartment: '',
-
       ...(data as any),
     },
     mode: 'onChange',
@@ -95,11 +94,13 @@ export function AddressForm({ data, onSubmit }: AddressFormProps) {
             label={t('building')}
             value={building}
             onChange={(e) => methods.setValue('building', e.target.value)}
+            disabled={!globalCity}
           />
           <FloatingLabelInput
             label={t('apartment')}
             value={apartment}
             onChange={(e) => methods.setValue('apartment', e.target.value)}
+            disabled={!globalCity}
           />
         </Flex>
       </Flex>

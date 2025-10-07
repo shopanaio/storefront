@@ -32,8 +32,7 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
           addresses: [
             {
               city: city.MainDescription,
-              // @ts-expect-error TODO: make partial address type and add metadata
-              metadata: city,
+              data: { city },
             },
           ],
         });
@@ -46,8 +45,7 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
             addressId,
             address: {
               city: city.MainDescription,
-              // @ts-expect-error TODO: make partial address type and add metadata
-              metadata: city,
+              data: { city },
             },
           },
         ],
