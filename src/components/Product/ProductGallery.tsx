@@ -19,13 +19,13 @@ import {
   TbChevronUp,
 } from "react-icons/tb";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import { ApiFile } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useMemo } from "react";
 import { IsomorphicSwiper } from "../MySwiper/IsomorphicSwiper";
 import type { SwiperOptions } from "swiper/types";
 
 interface Prop {
-  gallery: ApiFile[];
+  gallery: Entity.Media[];
   /** Method for switching slides by thumbnails: click or hover */
   thumbnailTrigger?: "click" | "hover";
   breakpoints?: Record<number, SwiperOptions>;

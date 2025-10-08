@@ -4,7 +4,7 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ProductCard } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
-import { ApiCategory, ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import Banner from "./Banner";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";
@@ -17,10 +17,10 @@ import React from "react";
 
 export interface HomeSliderWithBannerProps {
   title: string;
-  sources: ApiCategory[];
+  sources: Entity.Category[];
   banner: {
     placement: "before" | "after";
-    entry: ApiProduct | ApiCategory;
+    entry: Entity.Product | Entity.Category;
   };
   pagination: boolean;
 }

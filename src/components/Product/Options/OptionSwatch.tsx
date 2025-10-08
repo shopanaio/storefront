@@ -7,7 +7,7 @@ import { OptionDrawerLayout } from "./DrawerLayout";
 import { useState } from "react";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./Header";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { OptionRadioButton } from "@src/components/Product/Options/OptionRadioButton";
 import { OptionGrid } from "@src/components/UI/OptionGrid";
 
@@ -15,7 +15,7 @@ interface Props {
   title: string;
   values: UiOptionValue[];
   onSelect: (value: UiOptionValue) => void;
-  product: ApiProduct;
+  product: Entity.Product;
 }
 
 export const SwatchOption = ({ title, values, onSelect, product }: Props) => {

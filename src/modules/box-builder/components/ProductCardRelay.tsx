@@ -1,7 +1,7 @@
 import React from "react";
 import { useFragment } from "react-relay";
 import { ProductCard, ProductType } from "./ProductCard";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { UseProductCardFragment } from "@src/components/Listing/relay/useListingProductCardFragment.shopify";
 import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
 
@@ -16,7 +16,7 @@ export const ProductCardRelay: React.FC<ProductCardRelayProps> = (props) => {
 
   return (
     <ProductCard
-      product={productData as unknown as ApiProduct}
+      product={productData as unknown as Entity.Product}
       allowCount={!!props.allowCount}
       productType={props.productType}
     />

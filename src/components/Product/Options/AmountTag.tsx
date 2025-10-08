@@ -1,8 +1,8 @@
-import { ApiMoney } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { Price } from "@src/components/UI/Price/Price";
 import { Tag } from "antd";
 
-export const AmountTag = ({ money }: { money: ApiMoney }) => {
+export const AmountTag = ({ money }: { money: Entity.Money }) => {
   return (
     <Tag
       color="blue"

@@ -3,7 +3,7 @@
 import { Card, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiCategory } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 
@@ -34,7 +34,7 @@ export default function CategoryCard({ categoryRef }: Props) {
 } */
 
 interface Prop {
-  category: ApiCategory;
+  category: Entity.Category;
 }
 export default function CategoryCard({ category }: Prop) {
   const { styles } = useStyles();

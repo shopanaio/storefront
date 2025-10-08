@@ -3,11 +3,11 @@
 import { Tag } from "antd";
 import { TbCircleCheck, TbCross } from "react-icons/tb";
 import { createStyles } from "antd-style";
-import { ApiProduct, ApiStockStatus } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
 export interface Props {
-  product?: ApiProduct;
-  stockStatus?: ApiStockStatus;
+  product?: Entity.Product;
+  stockStatus?: Entity.StockStatus;
 }
 
 export const StockStatus = ({ product, stockStatus }: Props) => {

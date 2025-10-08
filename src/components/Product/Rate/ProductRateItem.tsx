@@ -6,7 +6,7 @@ import { ShowMoreBtn } from "../ShowMoreBtn";
 import { TbInfoCircle, TbThumbUp, TbThumbDown } from "react-icons/tb";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { ApiProductReview } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useModalStore } from "@src/store/appStore";
 import { useSession } from "@src/hooks/useSession";
 import { useVoteReviewHelpful } from "@src/hooks/useVoteReviewHelpful";
@@ -15,7 +15,7 @@ import { useReportReviewAbuse } from "@src/hooks/useReportReviewAbuse";
 const { Text, Paragraph } = Typography;
 
 interface Props {
-  node: ApiProductReview;
+  node: Entity.Review;
 }
 
 export const ProductRateItem = ({ node }: Props) => {

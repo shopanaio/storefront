@@ -1,13 +1,13 @@
 import { useMemo } from "react";
-import { ApiFile, ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
-export const useProductGallery = (product: ApiProduct): ApiFile[] => {
+export const useProductGallery = (product: Entity.Product): Entity.Media[] => {
   return useMemo(() => {
     return [
       ...product?.gallery?.edges.map((it) => it.node),
       ...(product?.groups
-        .flatMap((g) => g.items.map((item) => item?.product?.cover))
-        .filter(Boolean) as ApiFile[]),
+        .flatMap((g) => g.items.map((item) => item?.node?.cover))
+        .filter(Boolean) as Entity.Media[]),
     ];
   }, [product.gallery, product.groups]);
 };

@@ -3,14 +3,15 @@ import { Flex, Button, Typography, Empty } from "antd";
 import { SearchProductCard } from "./SearchProductCard";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
-import { ApiArticle, ApiCategory, ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
+import { ApiArticle } from "@codegen/schema-client";
 import { useLocale } from "next-intl";
 
 const { Text } = Typography;
 
 interface SearchResultsContentProps {
-  products: ApiProduct[];
-  categories?: ApiCategory[];
+  products: Entity.Product[];
+  categories?: Entity.Category[];
   articles?: ApiArticle[];
   searchTerm: string;
 }

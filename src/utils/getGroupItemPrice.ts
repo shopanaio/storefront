@@ -1,4 +1,4 @@
-import type { ApiMoney, ApiProductGroupItem } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
 /**
  * Returns the final price for the component (ProductGroupItem).
@@ -6,7 +6,7 @@ import type { ApiMoney, ApiProductGroupItem } from "@codegen/schema-client";
  * so it's enough to take the child product price.
  */
 export const getGroupItemPrice = (
-  item?: ApiProductGroupItem | null
-): ApiMoney | undefined => {
-  return item?.product?.price;
+  item?: Entity.ProductGroupItem | null
+): Entity.Money | undefined => {
+  return item?.node?.price;
 };

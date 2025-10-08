@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import _ from "lodash";
+import type * as Entity from "@src/entity/namespace";
 
 /**
  * Hook for processing and structuring product options
@@ -8,21 +9,14 @@ import _ from "lodash";
  * where each option contains metadata about state (active/inactive/unavailable)
  * and a reference to the corresponding product variant
  */
-import {
-  ApiProductOption,
-  ApiProductOptionValue,
-  ProductOptionDisplayType,
-  ApiMoney,
-  ApiProductVariant,
-} from "@codegen/schema-client";
 
 /**
  * Extended option value with metadata for UI
  */
-export type UiOptionValue = ApiProductOptionValue & {
+export type UiOptionValue = Entity.ProductOptionValue & {
   isActive: boolean;
-  variant?: ApiProductVariant; // Reference to product variant with this value
-  amount?: ApiMoney; // Additional cost if exists
+  variant?: Entity.ProductVariant; // Reference to product variant with this value
+  amount?: Entity.Money; // Additional cost if exists
 };
 
 /**
@@ -33,13 +27,13 @@ export type UiOption = {
   handle: string;
   title: string;
   values: UiOptionValue[];
-  displayType?: ProductOptionDisplayType;
+  displayType?: Entity.ProductOptionDisplayType;
 };
 
 export const useFlattenProductOptions = (
-  options: ApiProductOption[], // All product options, grouped in array
-  variants: ApiProductVariant[], // Variants with selectedOptions: string[]
-  currentVariant: ApiProductVariant
+  options: Entity.ProductOption[], // All product options, grouped in array
+  variants: Entity.ProductVariant[], // Variants with selectedOptions: string[]
+  currentVariant: Entity.ProductVariant
 ): UiOption[] => {
   return useMemo(() => {
     if (!variants?.length || !options?.length) {
@@ -50,7 +44,7 @@ export const useFlattenProductOptions = (
      * Creates a map of selected values for a specific product variant
      * Returns object like: { [group_handle]: value_handle }
      */
-    const buildVariantMap = (variant: ApiProductVariant): Record<string, string> => {
+    const buildVariantMap = (variant: Entity.ProductVariant): Record<string, string> => {
       if (!variant.selectedOptions?.length) return {};
 
       const mapping: Record<string, string> = {};
@@ -62,7 +56,7 @@ export const useFlattenProductOptions = (
         if (!groupHandle || !values?.length) continue;
 
         // Find the value from this group that is selected in the variant
-        const selectedValue = values.find((val: ApiProductOptionValue) =>
+        const selectedValue = values.find((val: Entity.ProductOptionValue) =>
           variant.selectedOptions?.includes(val.handle)
         );
 
@@ -85,7 +79,7 @@ export const useFlattenProductOptions = (
         .join("|");
 
     // Create index of all variants by combination key for O(1) lookup
-    const variantIndex = new Map<string, ApiProductVariant>();
+    const variantIndex = new Map<string, Entity.ProductVariant>();
     for (const variant of variants) {
       const key = buildKey(buildVariantMap(variant));
       if (key) variantIndex.set(key, variant);

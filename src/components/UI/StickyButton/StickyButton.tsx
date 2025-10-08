@@ -5,7 +5,7 @@ import { Button, ButtonProps, Flex } from "antd";
 import useToken from "antd/es/theme/useToken";
 import { TbArrowRight } from "react-icons/tb";
 import { Price } from "@src/components/UI/Price/Price";
-import { ApiMoney } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
 /**
  * Sticky button component with white box-shadow border
@@ -15,7 +15,7 @@ export interface StickyButtonProps extends Omit<ButtonProps, 'style'> {
   /** Main label content */
   label?: React.ReactNode;
   /** Optional money amount to display */
-  money?: ApiMoney;
+  money?: Entity.Money;
   /** Divider between label and money */
   divider?: string | null;
   /** Show right arrow icon */

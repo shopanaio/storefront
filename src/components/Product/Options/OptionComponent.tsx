@@ -6,10 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { OptionsDrawer } from "./OptionsDrawer";
 import { OptionDrawerLayout } from "./DrawerLayout";
 import { DrawerGrid } from "./DrawerGrid";
-import {
-  ApiProductGroupItem,
-  ProductOptionDisplayType,
-} from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { OptionHeader } from "./Header";
 import { getGroupItemPrice } from "@src/utils/getGroupItemPrice";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
@@ -20,10 +17,10 @@ import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 interface ComponentOptionProps {
   multiple: boolean;
   pageTitle: string;
-  options: ApiProductGroupItem[];
+  options: Entity.ProductGroupItem[];
   selectedIds?: string[];
   onChange: (id: string) => void;
-  displayType: ProductOptionDisplayType;
+  displayType: Entity.ProductOptionDisplayType;
 }
 
 export const ComponentOption = ({

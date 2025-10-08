@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { CreateReview } from "./CreateReview";
 import { ReviewSended } from "./ReviewSended";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
 type ModalType = "create" | "success";
 
 interface Prop {
-  product: ApiProduct;
+  product: Entity.Product;
   onClose: () => void;
 }
 

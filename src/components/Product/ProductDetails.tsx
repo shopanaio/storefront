@@ -8,7 +8,7 @@ import { ProductCollapse } from "./ProductCollapse";
 import { mq } from "@src/components/Theme/breakpoints";
 import { ProductSpecification } from "./ProductSpecification";
 import { ShowMoreBtn } from "./ShowMoreBtn";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "./Rate/Reviews";
 import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
@@ -17,7 +17,7 @@ import { ShippingReturnsInfo } from "./ShippingReturnsInfo";
 const { Paragraph } = Typography;
 
 interface ProductDetailsProps {
-  product: ApiProduct & Reviews$key;
+  product: Entity.Product & Reviews$key;
 }
 
 export const ProductDetails = ({ product }: ProductDetailsProps) => {

@@ -4,7 +4,7 @@ import { Flex, Image, Typography } from "antd";
 import { createStyles, cx } from "antd-style";
 import { useState } from "react";
 import { OptionsDrawer } from "./OptionsDrawer";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { mq } from "@src/components/Theme/breakpoints";
 import { OptionCard } from "@src/components/UI/OptionCard";
@@ -16,7 +16,7 @@ import { OptionDrawerLayout } from "@src/components/Product/Options/DrawerLayout
 const { Text } = Typography;
 
 interface Props {
-  option: ApiProduct;
+  option: Entity.Product;
 }
 
 export const IncludedComponent = ({ option }: Props) => {

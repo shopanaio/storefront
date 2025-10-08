@@ -1,42 +1,42 @@
 import { useMemo } from 'react';
-import { ApiProduct, ApiProductVariant } from '@codegen/schema-client';
+import type * as Entity from '@src/entity/namespace';
 
 interface UseProductDisplayProps {
   /** Base product entity with all data */
-  product: ApiProduct;
+  product: Entity.Product;
   /** Selected variant handle from URL */
   selectedVariantHandle?: string;
 }
 
 interface ProductDisplayData {
   /** Current variant or first variant if none selected */
-  currentVariant: ApiProductVariant;
+  currentVariant: Entity.ProductVariant;
   /** Title to display (from variant) */
   title: string;
   /** Price to display (from variant) */
-  price: ApiProductVariant['price'];
+  price: Entity.ProductVariant['price'];
   /** Compare at price to display (from variant) */
-  compareAtPrice: ApiProductVariant['compareAtPrice'];
+  compareAtPrice: Entity.ProductVariant['compareAtPrice'];
   /** Cover image to display (from variant) */
-  cover: ApiProductVariant['cover'] | null;
+  cover: Entity.ProductVariant['cover'] | null;
   /** Gallery to display (from variant) */
   gallery: any; // TODO: Define proper gallery type
   /** Stock status (from variant) */
-  stockStatus: ApiProductVariant['stockStatus'];
+  stockStatus: Entity.ProductVariant['stockStatus'];
   /** SKU (from variant) */
-  sku: ApiProductVariant['sku'];
+  sku: Entity.ProductVariant['sku'];
   /** Product-level data that doesn't change with variant */
   productData: {
     id: string;
     handle: string;
     description: string;
     excerpt: string;
-    rating: ApiProduct['rating'];
-    category: ApiProduct['category'];
-    options: ApiProduct['options'];
-    groups: ApiProduct['groups'];
-    features: ApiProduct['features'];
-    tags: ApiProduct['tags'];
+    rating: Entity.Product['rating'];
+    category: Entity.Product['category'];
+    options: Entity.Product['options'];
+    groups: Entity.Product['groups'];
+    features: Entity.Product['features'];
+    tags: Entity.Product['tags'];
   };
 }
 

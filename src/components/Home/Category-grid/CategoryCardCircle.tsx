@@ -2,14 +2,14 @@
 
 import { Card, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { ApiCategory } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 
 const { Text } = Typography;
 
 interface Props {
-  category: ApiCategory;
+  category: Entity.Category;
 }
 
 export default function CategoryCardCircle({ category }: Props) {

@@ -3,7 +3,7 @@
 import { Flex, Typography } from "antd";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import { ApiFile } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { OptionImage } from "@src/components/UI/OptionImage";
 import { OptionCard } from "@src/components/UI/OptionCard";
 
@@ -12,7 +12,7 @@ const { Text } = Typography;
 interface OptionSelectCardProps {
   title: string;
   selectedValues: UiOptionValue | UiOptionValue[] | null;
-  cover?: ApiFile | null;
+  cover?: Entity.Media | null;
   onClick: () => void;
 }
 

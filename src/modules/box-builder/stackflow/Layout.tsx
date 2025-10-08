@@ -8,7 +8,7 @@ import { createStyles, cx } from 'antd-style';
 import React from 'react';
 import { Badge, Button, ButtonProps, Flex } from 'antd';
 import { Activity, useFlow } from './Stack';
-import { ApiMoney } from '@codegen/schema-client';
+import type * as Entity from "@src/entity/namespace";
 import useToken from 'antd/es/theme/useToken';
 import { CloseButton } from '@src/modules/box-builder/components/CloseButton';
 

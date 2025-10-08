@@ -3,7 +3,7 @@
 import { Flex, Image, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiCategory, ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { Price } from "@src/components/UI/Price/Price";
 import { calcSale } from "@src/utils/calcSale";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
@@ -11,7 +11,7 @@ import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64
 const { Text } = Typography;
 
 interface Prop {
-  banner: ApiProduct | ApiCategory;
+  banner: Entity.Product | Entity.Category;
 }
 
 export default function Banner({ banner }: Prop) {

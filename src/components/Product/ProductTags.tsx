@@ -2,10 +2,10 @@
 
 import { Flex, Button } from "antd";
 import { createStyles } from "antd-style";
-import { ApiTagEdge } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
 interface Props {
-  tags: ApiTagEdge[];
+  tags: Entity.Edge<Entity.Tag>[];
 }
 
 export const ProductTags = ({ tags }: Props) => {

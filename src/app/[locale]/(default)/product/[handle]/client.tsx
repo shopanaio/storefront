@@ -6,7 +6,7 @@ import { Product } from '@src/components/Product/Product';
 import { useRelayEnvironment } from 'react-relay';
 import useSerializablePreloadedQuery from '@src/relay/useSerializablePreloadedQuery';
 import { useQuery } from '@src/providers/relay-query-provider';
-import { ApiProduct } from '@codegen/schema-client';
+import type * as Entity from "@src/entity/namespace";
 import { Reviews$key } from '@src/relay/queries/__generated__/Reviews.graphql';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useSearchParams } from 'next/navigation';
@@ -87,7 +87,7 @@ export const PageClient = () => {
       }}
     >
       <Product
-        product={product as ApiProduct & Reviews$key}
+        product={product as Entity.Product & Reviews$key}
         selectedVariantHandle={selectedVariantHandle}
         onChangeVariant={handleChangeVariant}
       />

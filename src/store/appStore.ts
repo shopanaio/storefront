@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { ApiCheckout, ApiProduct, CurrencyCode } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
+import { CurrencyCode } from "@codegen/schema-client";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 // modalStore
@@ -47,8 +48,8 @@ export const useCurrencyStore = create<CurrencyState>((set) => ({
 
 // cartStore
 interface CartState {
-  cart: ApiCheckout | null;
-  setCart: (cart: ApiCheckout | null) => void;
+  cart: Entity.Cart | null;
+  setCart: (cart: Entity.Cart | null) => void;
   error: Error | null;
   setError: (error: Error | null) => void;
   loading: boolean;
@@ -70,8 +71,8 @@ interface ReviewState {
   reviewProductId: string | null;
   setReviewProductId: (id: string) => void;
   clearReviewProductId: () => void;
-  reviewProduct: ApiProduct | null;
-  setReviewProduct: (product: ApiProduct) => void;
+  reviewProduct: Entity.Product | null;
+  setReviewProduct: (product: Entity.Product) => void;
   clearReviewProduct: () => void;
 }
 export const useReviewStore = create<ReviewState>((set) => ({

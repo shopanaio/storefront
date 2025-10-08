@@ -12,8 +12,7 @@ import { ActivityComponentType } from '@stackflow/react';
 import Layout, { LayoutFooterButton } from '../stackflow/Layout';
 import { Activity, useFlow } from '@src/modules/box-builder/stackflow/Stack';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
-import { ApiMoney } from '@codegen/schema-client';
-import { Entity } from '@src/entity';
+import type * as Entity from "@src/entity/namespace";
 import BoxCartLine from '@src/modules/box-builder/components/BoxCartLine';
 
 const { Text, Title } = Typography;

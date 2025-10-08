@@ -18,7 +18,7 @@ import type { Checkout } from '@src/modules/checkout/types/entity';
 import { useCheckoutFragment } from '@src/modules/checkout/hooks/useCheckout/useCheckoutFragment';
 import { mapApiCheckoutToCheckout } from '@src/modules/checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
 import { useCheckoutFragment$key } from '@src/modules/checkout/hooks/useCheckout/__generated__/useCheckoutFragment.graphql';
-import { ApiCheckout } from '@codegen/schema-client';
+import type * as Entity from '@src/entity/namespace';
 import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
 import { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
 

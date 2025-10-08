@@ -2,14 +2,14 @@ import { Button, Flex, Progress, Rate, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { TbStarFilled } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useTranslations } from "next-intl";
 import { useReviewStore } from "@src/store/appStore";
 
 const { Text } = Typography;
 
 interface Props {
-  product: ApiProduct;
+  product: Entity.Product;
 }
 
 export const ProductRateSummary = ({ product }: Props) => {

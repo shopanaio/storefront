@@ -2,13 +2,13 @@
 
 import { createStyles } from "antd-style";
 import React from "react";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
 import { ProductMain } from "./ProductMain";
 import { ProductDetails } from "./ProductDetails";
 
 interface Prop {
-  product: ApiProduct & Reviews$key;
+  product: Entity.Product & Reviews$key;
   selectedVariantHandle?: string;
   onChangeVariant?: (handle: string | null) => void;
 }

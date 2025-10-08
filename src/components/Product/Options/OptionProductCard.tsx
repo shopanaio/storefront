@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex, Typography } from "antd";
-import { ApiMoney } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { OptionCard } from "@src/components/UI/OptionCard";
 import { OptionImage } from "@src/components/UI/OptionImage";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";
@@ -12,8 +12,8 @@ export interface OptionProductCardProps {
   src?: string;
   alt?: string;
   title: string;
-  /** ApiMoney | number | string (amount) */
-  price?: ApiMoney;
+  /** Entity.Money | number | string (amount) */
+  price?: Entity.Money;
   /** Highlights the card as selected */
   selected?: boolean;
   /** Temporarily highlights the card, e.g., on external hover */

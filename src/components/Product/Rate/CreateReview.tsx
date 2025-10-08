@@ -13,13 +13,13 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { TbInfoCircle } from "react-icons/tb";
 import TextArea from "antd/es/input/TextArea";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useCreateReview } from "@src/hooks/useCreateReview";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 const { Text, Paragraph } = Typography;
 
 interface Prop {
-  product: ApiProduct;
+  product: Entity.Product;
   onSwitchContent: (content: "success") => void;
 }
 

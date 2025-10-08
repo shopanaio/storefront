@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex } from "antd";
-import { ApiCategory } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import ViewAllButton from "../ViewAllButton";
 import SectionTitle from "../SectionTitle";
 import { useLocale } from "next-intl";
@@ -13,7 +13,7 @@ import CategoryCard from "./CategoryCard";
 
 export interface CategoryGridSectionProps {
   title: string;
-  sources: ApiCategory[];
+  sources: Entity.Category[];
   pagination: boolean;
   renderItem: "CategoryCardCircle" | "CategoryCard";
 }

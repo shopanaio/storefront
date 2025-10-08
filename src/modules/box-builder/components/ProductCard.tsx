@@ -2,7 +2,7 @@
 
 import { Badge, Checkbox, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { ApiProductVariant } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import React from "react";
 import { Price } from "@src/components/UI/Price/Price";
 import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
@@ -24,7 +24,7 @@ export enum ProductType {
 }
 
 export interface Props {
-  product: ApiProductVariant;
+  product: Entity.ProductVariant;
   allowCount: boolean;
   productType: ProductType;
 }

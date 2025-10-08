@@ -1,6 +1,6 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { ApiMoney, ApiStockStatus } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { Price } from "../UI/Price/Price";
 import { SaleBadge } from "../UI/Badges/Sale";
 import { ProductWishlistButton } from "../Listing/ProductWishlistButton";
@@ -8,9 +8,9 @@ import { calcSaleMoney } from "@src/utils/calcSaleMoney";
 import { useTranslations } from "next-intl";
 
 interface Props {
-  compareAtPrice?: ApiMoney | null;
-  price: ApiMoney;
-  stockStatus: ApiStockStatus;
+  compareAtPrice?: Entity.Money | null;
+  price: Entity.Money;
+  stockStatus: Entity.StockStatus;
 }
 
 export const PriceAndSale = ({ compareAtPrice, price, stockStatus }: Props) => {

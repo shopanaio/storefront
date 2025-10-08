@@ -1,14 +1,14 @@
 import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { ApiProduct, ApiCategory, ApiMoney, ApiFile, ApiStockStatus, ApiTagConnection, ApiGalleryConnection } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 
 // Function for converting Shopify product to Shopana format
-const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']): ApiProduct | null => {
+const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']): Entity.Product | null => {
   if (!shopifyProduct) return null;
 
   // Convert category
-  const category: ApiCategory | null = shopifyProduct.category ? {
+  const category: Entity.Category | null = shopifyProduct.category ? {
     id: shopifyProduct.category.id,
     iid: shopifyProduct.category.id as any, // Shopify doesn't have iid, use id
     title: shopifyProduct.category.name,

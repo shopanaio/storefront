@@ -14,14 +14,14 @@ import {
   UiOptionValue,
   useFlattenProductOptions,
 } from "@src/hooks/useFlattenProductOptions";
-import { ApiProduct, ApiProductVariant, ProductOptionDisplayType } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { VariantCoverOption } from "@src/components/Product/Options/OptionVariantCover";
 
 // Note: Typography.Text is not used here currently
 
 interface ProductOptionsProps {
-  product: ApiProduct;
-  currentVariant?: ApiProductVariant | ApiProduct;
+  product: Entity.Product;
+  currentVariant?: Entity.ProductVariant | Entity.Product;
   onOptionSelect?: (optionId: string, value: UiOptionValue) => void;
 }
 
@@ -36,7 +36,7 @@ export const ProductOptions = ({
   const optionGroups = useFlattenProductOptions(
     product.options,
     product.variants,
-    (currentVariant ?? product) as unknown as ApiProductVariant
+    (currentVariant ?? product) as unknown as Entity.ProductVariant
   );
 
   const handleOptionSelect = (optionId: string) => (value: UiOptionValue) => {
@@ -46,7 +46,7 @@ export const ProductOptions = ({
 
   const renderOption = (option: UiOption) => {
     switch (option.displayType) {
-      case ProductOptionDisplayType.Swatch:
+      case 'SWATCH':
         return (
           <SwatchOption
             title={option.title}
@@ -55,7 +55,7 @@ export const ProductOptions = ({
             product={product}
           />
         );
-      case ProductOptionDisplayType.VariantCover:
+      case 'VARIANT_COVER':
         return (
           <VariantCoverOption
             title={option.title}
@@ -63,7 +63,7 @@ export const ProductOptions = ({
             onSelect={handleOptionSelect(option.id)}
           />
         );
-      case ProductOptionDisplayType.Radio:
+      case 'RADIO':
         return (
           <RadioOption
             title={option.title}
@@ -71,8 +71,8 @@ export const ProductOptions = ({
             onSelect={handleOptionSelect(option.id)}
           />
         );
-      case ProductOptionDisplayType.Dropdown:
-      case ProductOptionDisplayType.ApparelSize:
+      case 'DROPDOWN':
+      case 'APPAREL_SIZE':
         return (
           <>
             <SelectOption
@@ -80,7 +80,7 @@ export const ProductOptions = ({
               values={option.values}
               onSelect={handleOptionSelect(option.id)}
             />
-            {option.displayType === ProductOptionDisplayType.ApparelSize && (
+            {option.displayType === 'APPAREL_SIZE' && (
               <Button
                 className={styles.optionAdditionInfo}
                 icon={<TbInfoCircle />}

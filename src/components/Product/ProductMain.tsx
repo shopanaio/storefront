@@ -6,7 +6,7 @@ import React from "react";
 import { AdditionalInfoSection } from "./AdditionalInfoSection";
 import { StockStatus } from "./StockStatus";
 import { AdditionalInfo } from "./AdditionalInfo";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { PriceAndSale } from "./PriceAndSale";
 import { useTranslations } from "next-intl";
 import { useRoutes } from "@src/hooks/useRoutes";
@@ -58,7 +58,7 @@ const defaultBreakpoints: Record<number, GalleryBreakpointSettings> = {
 
 interface ProductMainProps {
   /** Product entity loaded on server */
-  product: ApiProduct;
+  product: Entity.Product;
   galleryBreakpoints?: Record<number, GalleryBreakpointSettings>;
   appearance?: "page" | "box-builder";
   /**
@@ -104,7 +104,7 @@ export const ProductMain = ({
     ...product,
     cover,
     gallery: variantGallery,
-  } as ApiProduct);
+  } as Entity.Product);
   const { styleBreakpoints, swiperBreakpoints } = useGalleryBreakpoints(
     galleryBreakpoints,
     gallery.length

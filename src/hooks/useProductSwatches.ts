@@ -1,8 +1,4 @@
-import {
-  ApiProductOption,
-  ApiProductVariant,
-  ProductOptionDisplayType,
-} from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import { useMemo } from "react";
 import { useFlattenProductOptions } from "./useFlattenProductOptions";
 
@@ -13,9 +9,9 @@ import { useFlattenProductOptions } from "./useFlattenProductOptions";
  * the first option group with display type "Swatch" (color swatches)
  */
 export const useProductSwatches = (
-  options: ApiProductOption[],
-  variants: ApiProductVariant[],
-  currentVariant: ApiProductVariant
+  options: Entity.ProductOption[],
+  variants: Entity.ProductVariant[],
+  currentVariant: Entity.ProductVariant
 ) => {
   // Get all processed option groups
   const allOptions = useFlattenProductOptions(
@@ -27,7 +23,7 @@ export const useProductSwatches = (
   return useMemo(() => {
     // Find first group with display type Swatch (color swatches)
     const colorGroup = allOptions.find(
-      (group) => group.displayType === ProductOptionDisplayType.Swatch
+      (group) => group.displayType === 'SWATCH'
     );
 
     // If group not found, return empty array

@@ -8,7 +8,7 @@ import { ActivityComponentType } from "@stackflow/react";
 import Layout from "../stackflow/Layout";
 import { useProduct } from "@src/modules/box-builder/hooks/useProduct";
 import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
-import { ApiProduct } from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
 import React, { Suspense } from "react";
 import { ProductType } from "@src/modules/box-builder/components/ProductCard";
 import { BoxActionButton } from "@src/modules/box-builder/components/ActionButton/BoxActionButton";

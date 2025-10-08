@@ -4,13 +4,8 @@ import {
   ProductCardProps,
   ProductCard,
 } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
-import {
-  ApiProductRating,
-  ApiProduct,
-  ApiProductOption,
-  ApiProductVariant,
-  CurrencyCode,
-} from "@codegen/schema-client";
+import type * as Entity from "@src/entity/namespace";
+import { CurrencyCode } from "@codegen/schema-client";
 
 import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";
 import useAddItemToCart from "@src/hooks/cart/useAddItemToCart";
@@ -74,11 +69,11 @@ export const ListingProductCardRelay = ({
     Array.isArray(product.options) ? product.options : [],
     // Check that variants exists and is array
     Array.isArray(product.variants) ? product.variants : [],
-    product as ApiProductVariant
+    product as Entity.ProductVariant
   );
 
   // Safely extract data with type checking
-  const rating: ApiProductRating = {
+  const rating: Entity.ProductRating = {
     id: product.id,
     iid: product.id,
     rating: product.rating?.rating || 0,
