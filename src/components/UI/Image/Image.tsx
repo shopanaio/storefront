@@ -38,11 +38,11 @@ export const Image: React.FC<UiImageProps> = ({
   const { styles, cx } = useStyles({ ratio });
 
   const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(true);
 
   useEffect(() => {
     setResolvedSrc(src || fallbackSrc);
-    setIsLoaded(false);
+    setIsLoaded(true);
   }, [src, fallbackSrc]);
 
   const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {

@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { Button, Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { useTranslations } from "next-intl";
-import { StepHeader } from "@src/modules/box-builder/components/StepHeader";
+import { Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
+import { StepHeader } from '@src/modules/box-builder/components/StepHeader';
 
-import { EmptyBox } from "../Images/EmptyBox";
-import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
-import Progress from "@src/modules/box-builder/components/Progress";
-import { ActivityComponentType } from "@stackflow/react";
-import Layout, { LayoutFooterButton } from "../stackflow/Layout";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
-import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
-import { ApiMoney } from "@codegen/schema-client";
-import { Entity } from "@src/entity";
-import BoxCartLine from "@src/modules/box-builder/components/BoxCartLine";
+import { EmptyBox } from '../Images/EmptyBox';
+import { useBoxBuilderCart } from '@src/modules/box-builder/hooks/useCart';
+import Progress from '@src/modules/box-builder/components/Progress';
+import { ActivityComponentType } from '@stackflow/react';
+import Layout, { LayoutFooterButton } from '../stackflow/Layout';
+import { Activity, useFlow } from '@src/modules/box-builder/stackflow/Stack';
+import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
+import { ApiMoney } from '@codegen/schema-client';
+import { Entity } from '@src/entity';
+import BoxCartLine from '@src/modules/box-builder/components/BoxCartLine';
 
 const { Text, Title } = Typography;
 
@@ -30,10 +30,10 @@ const Cart: ActivityComponentType<{}> = () => {
 
 const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
   const { progress } = useBoxBuilderProgress();
-  const { push, replace } = useFlow();
+  const { push } = useFlow();
 
   const { styles } = useStyles();
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
 
   return (
     <Layout
@@ -43,7 +43,7 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
           onClick={() => {
             push(Activity.Checkout, {});
           }}
-          label={t("checkout")}
+          label={t('checkout')}
           money={cart?.cost?.totalAmount as ApiMoney}
           size="large"
         />
@@ -51,17 +51,17 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
     >
       <Flex vertical className={styles.container} gap={20}>
         <StepHeader
-          subtitle={t("step-check.subtitle")}
-          title={t("step-check.title")}
-          description={t("step-check.description")}
+          subtitle={t('step-check.subtitle')}
+          title={t('step-check.title')}
+          description={t('step-check.description')}
         />
         <Progress percent={progress} description={false} />
         <div>
           <Flex>
             <Title className={styles.title} level={5}>
-              <span>{t("step-check.custom-box")}</span>
+              <span>{t('step-check.custom-box')}</span>
               <Text>
-                {t("footer.products-count", {
+                {t('footer.products-count', {
                   count: cart?.totalQuantity || 0,
                 })}
               </Text>
@@ -71,16 +71,6 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
             {cart.lines.map((cartLine) => (
               <BoxCartLine key={cartLine.id} cartLine={cartLine} />
             ))}
-            <Flex justify="flex-end">
-              <Button
-                size="large"
-                onClick={() => {
-                  replace(Activity.Step2, {});
-                }}
-              >
-                {t("add-items")}
-              </Button>
-            </Flex>
           </Flex>
         </div>
       </Flex>
@@ -90,7 +80,7 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
 
 const EmptyCart: React.FC = () => {
   const { styles } = useStyles();
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
   const { pop } = useFlow();
 
   return (
@@ -99,7 +89,7 @@ const EmptyCart: React.FC = () => {
       footer={
         <LayoutFooterButton
           onClick={() => pop(3)}
-          label={t("choose-box")}
+          label={t('choose-box')}
           size="large"
           divider={null}
           rightArrow={false}
@@ -108,9 +98,9 @@ const EmptyCart: React.FC = () => {
     >
       <Flex vertical className={styles.container} gap={20}>
         <StepHeader
-          subtitle={t("step-check.subtitle")}
-          title={t("step-check.title")}
-          description={t("step-check.description")}
+          subtitle={t('step-check.subtitle')}
+          title={t('step-check.title')}
+          description={t('step-check.description')}
         />
         <Flex
           className={styles.emptyContainer}
@@ -122,10 +112,10 @@ const EmptyCart: React.FC = () => {
           <EmptyBox />
           <Flex vertical gap={4} align="center">
             <Text strong className={styles.emptyTitle}>
-              {t("step-check.empty.title")}
+              {t('step-check.empty.title')}
             </Text>
             <Text className={styles.emptyDescription}>
-              {t("step-check.empty.description")}
+              {t('step-check.empty.description')}
             </Text>
           </Flex>
         </Flex>

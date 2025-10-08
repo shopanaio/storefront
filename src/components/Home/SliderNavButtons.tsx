@@ -1,10 +1,10 @@
-import { Button, Flex } from "antd";
-import { TbArrowLeft, TbArrowRight } from "react-icons/tb";
-import type { Swiper as SwiperType } from "swiper";
-import { useBreakpoints } from "@src/hooks/useBreakpoints";
-import { useEffect, useState } from "react";
-import { createStyles, cx } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { Button, Flex } from 'antd';
+import { TbArrowLeft, TbArrowRight } from 'react-icons/tb';
+import type { Swiper as SwiperType } from 'swiper';
+import { useBreakpoints } from '@src/hooks/useBreakpoints';
+import { useEffect, useState } from 'react';
+import { createStyles, cx } from 'antd-style';
+import { mq } from '@src/components/Theme/breakpoints';
 
 interface SliderNavButtonsProps {
   swiperRef: React.MutableRefObject<SwiperType | null>;
@@ -52,11 +52,11 @@ export function SliderNavButtons({
     if (!swiper) return;
 
     const handle = () => setActiveIndex(swiper.activeIndex);
-    swiper.on("slideChange", handle);
+    swiper.on('slideChange', handle);
     setActiveIndex(swiper.activeIndex);
 
     return () => {
-      swiper.off("slideChange", handle);
+      swiper.off('slideChange', handle);
     };
   }, [swiperRef]);
 
@@ -71,13 +71,11 @@ export function SliderNavButtons({
   return (
     <Flex gap={10} className={cx(className, styles.navButtons)}>
       <Button
-        size="large"
         icon={<TbArrowLeft />}
         onClick={() => swiperRef.current?.slidePrev()}
         disabled={isFirst}
       />
       <Button
-        size="large"
         icon={<TbArrowRight />}
         onClick={() => swiperRef.current?.slideNext()}
         disabled={isLast}
