@@ -31,7 +31,13 @@ import {
   ReviewComment,
   ReviewStatus,
 } from "@src/entity/Review";
-import { Category, CategoryBreadcrumb } from "@src/entity/Category";
+import {
+  Category,
+  CategoryBreadcrumb,
+  CategoryConnection,
+  CategoryEdge,
+  ListingType,
+} from "@src/entity/Category";
 import { User } from "@src/entity/User";
 import { Money } from "@src/entity/Money";
 import {
@@ -49,8 +55,11 @@ export type {
   CartPurchasable,
   Category,
   CategoryBreadcrumb,
+  CategoryConnection,
+  CategoryEdge,
   Connection,
   Edge,
+  ListingType,
   Media,
   Money,
   PageInfo,

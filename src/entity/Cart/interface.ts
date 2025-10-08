@@ -1,7 +1,7 @@
 import { Money } from "@src/entity/Money";
 import type * as Entity from "@src/entity/namespace";
 
-type CartPurchasable = Entity.ListingProduct;
+type CartPurchasable = Entity.ProductVariant;
 
 interface CartLine {
   id: string;
