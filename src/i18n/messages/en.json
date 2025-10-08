@@ -238,6 +238,14 @@
     "order-summary": "Order summary",
     "coupon-code": "Coupon code",
     "apply": "Apply",
+    "promo-applied": "Applied",
+    "remove": "Remove",
+    "have-coupon-question": "Have a coupon? Enter here",
+
+    "remove-promo-confirm-title": "Remove promo code?",
+    "remove-promo-confirm-content": "Do you want to remove promo code <strong>{promoCode}</strong>?",
+    "remove-promo-confirm-ok": "Remove",
+    "remove-promo-confirm-cancel": "Cancel",
 
     "subtotal": "Subtotal",
     "tax": "Tax",
@@ -268,7 +276,6 @@
     "first-name-optional": "First name (optional)",
     "last-name": "Last name",
     "company-optional": "Company (optional)",
-    "address": "Address",
     "apartment-suite-etc-optional": "Apartment, suite, etc. (optional)",
 
     "state": "State",
@@ -279,10 +286,10 @@
     "error-no-shipping-method": "Please select a shipping method",
     "error-no-payment-method": "Please select a payment method",
     "error-no-shipping-and-payment-method": "Please select a shipping and payment method",
-    "add-comment": "Add a comment",
-    "hide-comment": "Hide comment",
-    "order-comment": "Order comment",
-    "order-comment-placeholder": "Delivery instructions or wishes (optional)"
+    "add-note": "Add a comment",
+    "hide-note": "Hide comment",
+    "order-note": "Order comment",
+    "order-note-placeholder": "Delivery instructions or wishes (optional)"
   },
   "Sort": {
     "newest-first": "Newest first",

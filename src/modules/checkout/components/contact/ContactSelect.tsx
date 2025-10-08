@@ -13,6 +13,7 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { formatPhoneNumberIntl } from 'react-phone-number-input';
 
 export type ContactForm = {
   firstName: string;
@@ -66,12 +67,10 @@ export const ContactSelect = ({
 
   const hasValue = useMemo(() => {
     return (
-      Math.max(
-        firstName.trim().length,
-        lastName.trim().length,
-        middleName.trim().length,
-        phone.trim().length
-      ) > 0
+      firstName?.trim().length ||
+      lastName?.trim().length ||
+      middleName?.trim().length ||
+      phone?.trim().length
     );
   }, [firstName, lastName, middleName, phone]);
 
@@ -81,12 +80,10 @@ export const ContactSelect = ({
       .join(' ');
   }, [firstName, lastName, middleName]);
 
-  /** Masks phone showing last 4 digits */
-  const maskedPhone = useMemo(() => {
+  /** Formats phone in international format */
+  const formattedPhone = useMemo(() => {
     if (!phone) return '';
-    const digits = String(phone).replace(/\D/g, '');
-    if (digits.length <= 4) return phone;
-    return `***${digits.slice(-4)}`;
+    return formatPhoneNumberIntl(phone) || phone;
   }, [phone]);
 
   const onDrawerSubmit = methods.handleSubmit((data) => {
@@ -108,8 +105,8 @@ export const ContactSelect = ({
             <Typography.Text className={styles.mainText}>
               {fullName || t('full-name')}
             </Typography.Text>
-            {maskedPhone && (
-              <Typography.Text type="secondary">{maskedPhone}</Typography.Text>
+            {formattedPhone && (
+              <Typography.Text type="secondary">{formattedPhone}</Typography.Text>
             )}
           </Flex>
         ) : (

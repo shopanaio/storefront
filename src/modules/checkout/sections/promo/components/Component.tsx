@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Flex } from 'antd';
+import { App, Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
-import { TbTicket } from 'react-icons/tb';
+import { TbTicket, TbX, TbDiscount, TbCircleCheckFilled } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
+import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
 
 /**
  * View component for the checkout promo section.
@@ -28,6 +29,8 @@ export const PromoSectionView = ({
 }: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
+  const { addPromoCode, removePromoCode } = useCheckoutApi();
+  const { modal } = App.useApp();
 
   const [code, setCode] = useState(data?.code ?? '');
   const [isApplied, setIsApplied] = useState(Boolean(data?.code));
@@ -40,47 +43,142 @@ export const PromoSectionView = ({
   }, [data?.code]);
 
   const handleApply = useCallback(() => {
-    setIsApplied(true);
-  }, []);
+    if (code.trim()) {
+      addPromoCode({ code: code.trim() });
+    }
+  }, [code, addPromoCode]);
 
   const handleRemove = useCallback(() => {
-    setCode('');
-    setIsApplied(false);
-  }, []);
+    if (data?.code) {
+      const promoCode = data.code;
+
+      modal.confirm({
+        icon: null,
+        title: t('remove-promo-confirm-title'),
+        content: (
+          <Flex gap={8} align="center">
+            <Typography.Text>
+              {t.rich('remove-promo-confirm-content', {
+                promoCode,
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
+            </Typography.Text>
+          </Flex>
+        ),
+        okText: t('remove-promo-confirm-ok'),
+        cancelText: t('remove-promo-confirm-cancel'),
+        onOk: () => {
+          removePromoCode({ code: promoCode });
+        },
+      });
+    }
+  }, [data?.code, removePromoCode, modal, t]);
 
   return (
     <Flex vertical gap={8} className={styles.container}>
-      <FloatingLabelInput
-        label={t('coupon-code')}
-        value={code}
-        prefix={<TbTicket size={20} />}
-        onChange={(e) => setCode((e.target as HTMLInputElement).value)}
-        disabled={isApplied}
-        suffix={
-          <Button
-            disabled={!code.trim() || isApplied}
-            onClick={(e) => {
-              e.preventDefault();
+      <Typography.Text strong type="secondary" className={styles.label}>
+        {t('have-coupon-question')}
+      </Typography.Text>
+      {!isApplied ? (
+        <FloatingLabelInput
+          label={t('coupon-code')}
+          value={code}
+          prefix={<TbTicket size={20} />}
+          onChange={(e) => setCode((e.target as HTMLInputElement).value)}
+          onPressEnter={(e) => {
+            e.preventDefault();
+            if (code.trim()) {
               handleApply();
-            }}
-          >
-            {t('apply')}
-          </Button>
-        }
-      />
+            }
+          }}
+          suffix={
+            <Button
+              disabled={!code.trim()}
+              onClick={(e) => {
+                e.preventDefault();
+                handleApply();
+              }}
+            >
+              {t('apply')}
+            </Button>
+          }
+        />
+      ) : null}
+
       {isApplied && code ? (
-        <div>
-          <Button type="link" onClick={handleRemove}>
-            {t('remove')}
-          </Button>
+        <div className={styles.appliedPromoCard}>
+          <Flex
+            align="center"
+            justify="space-between"
+            gap={12}
+            className={styles.promoContent}
+          >
+            <Typography.Text strong className={styles.promoCode}>
+              {code}
+            </Typography.Text>
+            <Button
+              variant="text"
+              color="green"
+              size="small"
+              icon={<TbCircleCheckFilled size={18} />}
+              onClick={handleRemove}
+              className={styles.removeButton}
+              aria-label={t('remove')}
+            >
+              {t('promo-applied')}
+            </Button>
+          </Flex>
         </div>
       ) : null}
     </Flex>
   );
 };
 
-const useStyles = createStyles(({ css }) => ({
+const useStyles = createStyles(({ token, css }) => ({
   container: css``,
+  label: css`
+    font-size: ${token.fontSize}px;
+  `,
+  appliedPromoCard: css`
+    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorder};
+    border-radius: ${token.borderRadiusLG}px;
+    padding: ${token.paddingSM}px ${token.padding}px;
+    transition: all 0.3s ease;
+    min-height: 48px;
+  `,
+  promoContent: css`
+    width: 100%;
+  `,
+  promoIcon: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: ${token.colorSuccess};
+    color: ${token.colorWhite};
+    border-radius: ${token.borderRadius}px;
+    flex-shrink: 0;
+  `,
+  promoCode: css`
+    font-size: ${token.fontSizeLG}px;
+    color: ${token.colorText};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  `,
+  promoLabel: css`
+    font-size: ${token.fontSizeSM}px;
+  `,
+  removeButton: css`
+    color: ${token.colorTextSecondary};
+    flex-shrink: 0;
+
+    &:hover {
+      color: ${token.colorError};
+      background: ${token.colorErrorBg};
+    }
+  `,
 }));
 
 export default PromoSectionView;

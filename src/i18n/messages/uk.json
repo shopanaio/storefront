@@ -209,6 +209,15 @@
     "order-summary": "Підсумок замовлення",
     "apply": "Використати",
     "coupon-code": "Код купона",
+    "promo-applied": "Застосовано",
+    "remove": "Видалити",
+    "have-coupon-question": "Маєте купон? Введіть тут",
+
+    "remove-promo-confirm-title": "Видалити промокод?",
+    "remove-promo-confirm-content": "Ви хочете видалити промокод <strong>{promoCode}</strong>?",
+    "remove-promo-confirm-ok": "Видалити",
+    "remove-promo-confirm-cancel": "Скасувати",
+
     "subtotal": "Проміжний підсумок",
     "tax": "Податок",
     "total": "Всього",
@@ -234,7 +243,6 @@
     "country-region": "Країна/Регіон",
     "first-name-optional": "Ім'я (необов'язково)",
     "company-optional": "Компанія (необов'язково)",
-    "address": "Адреса",
     "apartment-suite-etc-optional": "Квартира, люкс тощо. (необов'язково)",
     "state": "Штат",
     "zip-code": "Поштовий індекс",
@@ -243,10 +251,10 @@
     "error-no-shipping-method": "Будь ласка, оберіть метод доставки",
     "error-no-payment-method": "Будь ласка, оберіть метод оплати",
     "error-no-shipping-and-payment-method": "Будь ласка, оберіть метод доставки та оплати",
-    "add-comment": "Додати коментар",
-    "hide-comment": "Сховати коментар",
-    "order-comment": "Коментар до замовлення",
-    "order-comment-placeholder": "Напишіть коментар до замовлення"
+    "add-note": "Додати коментар",
+    "hide-note": "Сховати коментар",
+    "order-note": "Коментар до замовлення",
+    "order-note-placeholder": "Напишіть коментар до замовлення"
   },
   "Sort": {
     "newest-first": "Спочатку нові",
