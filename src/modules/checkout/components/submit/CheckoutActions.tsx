@@ -1,9 +1,9 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { Alert, Button, Flex } from 'antd';
 import { SubmitButton } from './SubmitButton';
 import { TermsNotice } from '../notices/TermsNotice';
-import { createStyles } from 'antd-style';
+import { TbX } from 'react-icons/tb';
 
 interface CheckoutActionsProps {
   /** Validation error message to display */
@@ -20,8 +20,6 @@ export const CheckoutActions = ({
   validationError,
   onClearError,
 }: CheckoutActionsProps) => {
-  const { styles } = useStyles();
-
   return (
     <Flex
       vertical
@@ -36,18 +34,14 @@ export const CheckoutActions = ({
           type="error"
           showIcon
           closable
+          style={{
+            minHeight: 50,
+          }}
           onClose={onClearError}
         />
       )}
       <SubmitButton />
-      <TermsNotice linkClassName={styles.confirmLinkBtn} />
+      <TermsNotice />
     </Flex>
   );
 };
-
-const useStyles = createStyles(({ css }) => ({
-  confirmLinkBtn: css`
-    padding: 0;
-    text-decoration: underline;
-  `,
-}));

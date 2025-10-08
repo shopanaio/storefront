@@ -48,14 +48,9 @@ export const ContactSelect = ({
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
-
   const [open, setOpen] = useState(false);
 
-  const methods = useForm<ContactForm>({
-    mode: 'onChange',
-    defaultValues,
-  });
-
+  const methods = useForm<ContactForm>({ defaultValues });
   const { control, reset, watch, formState } = methods;
   const { errors } = formState;
 
