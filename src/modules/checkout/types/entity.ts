@@ -5,7 +5,7 @@ import type { Entity } from '@src/entity';
  * Checkout domain types namespace
  */
 export namespace Checkout {
-  export type Purchasable = Entity.Product;
+  export type Purchasable = Entity.ListingProduct;
 
   /**
    * Checkout domain entity shaped like API Checkout.
