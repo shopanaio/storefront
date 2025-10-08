@@ -1,6 +1,6 @@
-import { Button } from "antd";
-import { TbShoppingCart, TbCheck } from "react-icons/tb";
-import { useTranslations } from "next-intl";
+import { Button } from 'antd';
+import { TbShoppingCart, TbCheck } from 'react-icons/tb';
+import { useTranslations } from 'next-intl';
 
 export interface ProductCartButtonProps {
   isAvailable: boolean;
@@ -19,29 +19,29 @@ export const ProductCartButton = ({
   isLoading = false,
   onAddToCart,
 }: ProductCartButtonProps) => {
-  const t = useTranslations("Product");
+  const t = useTranslations('Product');
 
   return (
     <Button
       className={className}
       // size="large"
       color="primary"
-      variant="outlined"
+      variant={isInCart ? 'outlined' : 'solid'}
       disabled={!isAvailable}
       loading={isLoading}
       icon={
         !isLoading &&
         (isInCart ? (
-          <TbCheck color={!isAvailable ? "secondary" : "default"} size={18} />
+          <TbCheck color={!isAvailable ? 'secondary' : 'default'} size={18} />
         ) : (
           <TbShoppingCart
-            color={!isAvailable ? "secondary" : "default"}
+            color={!isAvailable ? 'secondary' : 'default'}
             size={18}
           />
         ))
       }
       onClick={isInCart ? undefined : onAddToCart}
-      children={showLabel && (isInCart ? t("in-cart") : t("add-to-cart"))}
+      children={showLabel && (isInCart ? t('in-cart') : t('add-to-cart'))}
     />
   );
 };
