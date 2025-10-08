@@ -25,6 +25,7 @@ import { ProductCartButton } from "@src/components/UI/ProductCards/ListingCard/C
 import { ProductGallery } from "@src/components/Product/ProductGallery";
 import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";
 import useAddItemToCart from "@src/hooks/cart/useAddItemToCart";
+import { useProductDisplay } from "@src/hooks/useProductDisplay";
 
 const { Text, Title } = Typography;
 
@@ -56,25 +57,54 @@ const defaultBreakpoints: Record<number, GalleryBreakpointSettings> = {
 };
 
 interface ProductMainProps {
+  /** Product entity loaded on server */
   product: ApiProduct;
   galleryBreakpoints?: Record<number, GalleryBreakpointSettings>;
   appearance?: "page" | "box-builder";
+  /**
+   * Variant handle selected in the URL. When present, we render variant-specific
+   * data (price, compareAtPrice, cover) while keeping product-level data intact.
+   */
+  selectedVariantHandle?: string;
+  /**
+   * Callback to notify about variant change. Should be provided by the page-level component
+   * to update the URL query without navigation.
+   */
+  onChangeVariant?: (handle: string | null) => void;
 }
 
 export const ProductMain = ({
   product,
   galleryBreakpoints = defaultBreakpoints,
   appearance = "page",
+  selectedVariantHandle,
+  onChangeVariant,
 }: ProductMainProps) => {
   const t = useTranslations("Product");
   const routes = useRoutes();
-  const { isInCart } = useIsInTheCart({ product });
-
-  console.log("product", product);
-  console.log("isInCart", isInCart);
-
   const { addToCart, isInFlight } = useAddItemToCart();
-  const gallery = useProductGallery(product);
+
+  // Use the new hook to prepare display data
+  const {
+    currentVariant,
+    title,
+    price,
+    compareAtPrice,
+    cover,
+    gallery: variantGallery,
+    stockStatus,
+    sku,
+    productData,
+  } = useProductDisplay({ product, selectedVariantHandle });
+
+  // Check if variant is in cart
+  const { isInCart } = useIsInTheCart({ purchasableId: currentVariant.id });
+
+  const gallery = useProductGallery({
+    ...product,
+    cover,
+    gallery: variantGallery,
+  } as ApiProduct);
   const { styleBreakpoints, swiperBreakpoints } = useGalleryBreakpoints(
     galleryBreakpoints,
     gallery.length
@@ -84,8 +114,8 @@ export const ProductMain = ({
     galleryBreakpoints: styleBreakpoints,
   });
 
-  const groupsLength = product.groups?.length ?? 0;
-  const optionsLength = product.options?.length ?? 0;
+  const groupsLength = productData.groups?.length ?? 0;
+  const optionsLength = productData.options?.length ?? 0;
 
   return (
     <div className={styles.container}>
@@ -99,54 +129,68 @@ export const ProductMain = ({
       <Flex vertical className={styles.productInfo}>
         <Flex vertical gap={16}>
           <Flex vertical>
-            {product.category && (
+            {productData.category && (
               <Button
                 type="link"
-                href={routes.category.path(product.category.handle)}
+                href={routes.category.path(productData.category.handle)}
                 className={styles.categoryButton}
               >
-                {product.category.title}
+                {productData.category.title}
               </Button>
             )}
             <Title level={3} className={styles.title}>
-              {product.title}
+              {title}
             </Title>
             <Flex justify="space-between" gap={20}>
               <Flex wrap gap={20}>
-                <StockStatus product={product} />
-                <ProductRating product={product} size="large" compact={false} />
+                <StockStatus stockStatus={stockStatus} />
+                <ProductRating
+                  rating={productData.rating.rating}
+                  ratingCount={productData.rating.count}
+                  size="large"
+                  compact={false}
+                />
               </Flex>
-              {product.sku && (
+              {sku && (
                 <Text
                   type="secondary"
                   /* className={styles.productSku} */ ellipsis
                 >
                   {t("sku")}
-                  {product.sku}
+                  {sku}
                 </Text>
               )}
             </Flex>
           </Flex>
           {(appearance === "box-builder" || groupsLength > 3) && (
             <PriceAndSale
-              compareAtPrice={product.compareAtPrice}
-              price={product.price}
-              stockStatus={product.stockStatus}
+              compareAtPrice={compareAtPrice}
+              price={price}
+              stockStatus={stockStatus}
             />
           )}
-          {optionsLength > 0 && <ProductOptions product={product} />}
+          {optionsLength > 0 && (
+            <ProductOptions
+              product={product}
+              currentVariant={currentVariant}
+              onOptionSelect={(optionId, value) => {
+                const nextHandle = value.variant?.handle ?? null;
+                onChangeVariant?.(nextHandle);
+              }}
+            />
+          )}
           {groupsLength > 0 && <ProductComponents product={product} />}
           {appearance === "page" && (
             <Flex className={styles.buySection} vertical gap={16}>
               <PriceAndSale
-                compareAtPrice={product.compareAtPrice}
-                price={product.price}
-                stockStatus={product.stockStatus}
+                compareAtPrice={compareAtPrice}
+                price={price}
+                stockStatus={stockStatus}
               />
 
               <Flex wrap gap={16}>
                 <ProductCartButton
-                  isAvailable={product.stockStatus.isAvailable}
+                  isAvailable={stockStatus.isAvailable}
                   showLabel
                   className={styles.cartBtn}
                   isInCart={isInCart}
@@ -154,14 +198,14 @@ export const ProductMain = ({
                   onAddToCart={() => {
                     if (!isInCart) {
                       addToCart({
-                        product: product,
+                        purchasableId: currentVariant.id,
                         quantity: 1,
                       });
                     }
                   }}
                 />
               </Flex>
-              <ProductWishlistButton productId={product.id} showLabel />
+              <ProductWishlistButton productId={productData.id} showLabel />
               <AdditionalInfo />
             </Flex>
           )}

@@ -1,11 +1,10 @@
 "use client";
 
 import React from "react";
-import { Button, Divider, Typography } from "antd";
+import { Button, Divider } from "antd";
 import { TbInfoCircle } from "react-icons/tb";
-import { createStyles, css } from "antd-style";
+import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { SelectOption } from "@src/components/Product/Options/OptionSelect";
 import { SwatchOption } from "@src/components/Product/Options/OptionSwatch";
 import { RadioOption } from "@src/components/Product/Options/OptionRadio";
@@ -15,42 +14,33 @@ import {
   UiOptionValue,
   useFlattenProductOptions,
 } from "@src/hooks/useFlattenProductOptions";
-import { ApiProduct, ProductOptionDisplayType } from "@codegen/schema-client";
-import { useRoutes } from "@src/hooks/useRoutes";
+import { ApiProduct, ApiProductVariant, ProductOptionDisplayType } from "@codegen/schema-client";
 import { VariantCoverOption } from "@src/components/Product/Options/OptionVariantCover";
 
-const { Text } = Typography;
+// Note: Typography.Text is not used here currently
 
 interface ProductOptionsProps {
   product: ApiProduct;
+  currentVariant?: ApiProductVariant | ApiProduct;
   onOptionSelect?: (optionId: string, value: UiOptionValue) => void;
 }
 
 export const ProductOptions = ({
   product,
+  currentVariant,
   onOptionSelect,
 }: ProductOptionsProps) => {
   const t = useTranslations("Product");
   const { styles } = useStyles();
-  const router = useRouter();
-  const routes = useRoutes();
 
   const optionGroups = useFlattenProductOptions(
     product.options,
     product.variants,
-    product
+    (currentVariant ?? product) as unknown as ApiProductVariant
   );
 
   const handleOptionSelect = (optionId: string) => (value: UiOptionValue) => {
-    // If variant exists for selected value, redirect to product page with variant query
-    if (value.variant?.handle) {
-      const variantPath = routes.product.path(product.handle, {
-        variant: value.variant.handle,
-      });
-      router.push(variantPath);
-    }
-
-    // Call user callback if provided
+    // Emit selection upwards; parent decides how to handle URL update
     onOptionSelect?.(optionId, value);
   };
 

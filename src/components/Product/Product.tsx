@@ -9,14 +9,20 @@ import { ProductDetails } from "./ProductDetails";
 
 interface Prop {
   product: ApiProduct & Reviews$key;
+  selectedVariantHandle?: string;
+  onChangeVariant?: (handle: string | null) => void;
 }
 
-export const Product = ({ product }: Prop) => {
+export const Product = ({ product, selectedVariantHandle, onChangeVariant }: Prop) => {
   const { styles } = useStyles();
 
   return (
     <div className={styles.container} data-testid="product-page">
-      <ProductMain product={product} />
+      <ProductMain
+        product={product}
+        selectedVariantHandle={selectedVariantHandle}
+        onChangeVariant={onChangeVariant}
+      />
       <ProductDetails product={product} />
     </div>
   );

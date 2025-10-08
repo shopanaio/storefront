@@ -30,31 +30,6 @@ const ProductQuery = graphql`
           }
         }
       }
-      selectedOptions
-      cover {
-        id
-        url
-      }
-      gallery(first: 20) {
-        edges {
-          node {
-            id
-            url
-          }
-        }
-      }
-      price {
-        currencyCode
-        amount
-      }
-      compareAtPrice {
-        currencyCode
-        amount
-      }
-      sku
-      stockStatus {
-        isAvailable
-      }
       category {
         id
         title
@@ -74,6 +49,14 @@ const ProductQuery = graphql`
           id
           url
         }
+        gallery(first: 20) {
+          edges {
+            node {
+              id
+              url
+            }
+          }
+        }
         price {
           currencyCode
           amount
@@ -81,6 +64,10 @@ const ProductQuery = graphql`
         compareAtPrice {
           currencyCode
           amount
+        }
+        sku
+        stockStatus {
+          isAvailable
         }
       }
       tags(first: 10) {

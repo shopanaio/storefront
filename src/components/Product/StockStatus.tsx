@@ -3,22 +3,24 @@
 import { Tag } from "antd";
 import { TbCircleCheck, TbCross } from "react-icons/tb";
 import { createStyles } from "antd-style";
-import { ApiProduct } from "@codegen/schema-client";
+import { ApiProduct, ApiStockStatus } from "@codegen/schema-client";
 
-interface Props {
-  product: ApiProduct;
+export interface Props {
+  product?: ApiProduct;
+  stockStatus?: ApiStockStatus;
 }
 
-export const StockStatus = ({ product }: Props) => {
+export const StockStatus = ({ product, stockStatus }: Props) => {
   const { styles } = useStyles();
+  const status = stockStatus || product?.stockStatus;
 
   return (
     <Tag
       className={styles.statusTag}
-      icon={product.stockStatus.isAvailable ? <TbCircleCheck /> : <TbCross />}
-      color={product.stockStatus.isAvailable ? "success" : "error"}
+      icon={status?.isAvailable ? <TbCircleCheck /> : <TbCross />}
+      color={status?.isAvailable ? "success" : "error"}
     >
-      {product.stockStatus.isAvailable ? "In stock" : "Out of stock"}
+      {status?.isAvailable ? "In stock" : "Out of stock"}
     </Tag>
   );
 };

@@ -36,8 +36,10 @@ const ProductSection: React.FC<{
   const isInCart = Boolean(cartLine);
   const { quantity = 0 } = cartLine || {};
 
-  const isAvailable = product?.stockStatus?.isAvailable === true;
-  const isFree = parseFloat(product?.price?.amount ?? "0") === 0;
+  // Get first variant for price and stock status
+  const firstVariant = product?.variants?.[0];
+  const isAvailable = firstVariant?.stockStatus?.isAvailable === true;
+  const isFree = parseFloat(firstVariant?.price?.amount ?? "0") === 0;
 
   // TODO: don't fetch reviews
   const productWithReviews = product as unknown as ApiProduct & Reviews$key;
