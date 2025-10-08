@@ -82,6 +82,17 @@ export const Summary = ({ checkout }: Prop) => {
             )}
           </Text>
         </Flex>
+        {checkout?.cost?.totalDiscountAmount &&
+        checkout.cost.totalDiscountAmount.amount > 0 ? (
+          <Flex justify="space-between">
+            <Text className={styles.summaryRow} strong>
+              {t('discount')}
+            </Text>
+            <Text className={styles.summaryRow} strong>
+              -<Money money={checkout.cost.totalDiscountAmount} />
+            </Text>
+          </Flex>
+        ) : null}
         <Flex justify="space-between">
           <Text className={styles.summaryRow} strong>
             {t('tax')}
