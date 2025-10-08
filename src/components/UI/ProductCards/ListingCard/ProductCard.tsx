@@ -40,7 +40,7 @@ const { Text } = Typography;
 
 // Constants for default values
 const DEFAULT_TITLE_CONFIG: Pick<ProductCardTitleProps, "rows" | "size"> = {
-  rows: 1,
+  rows: 2,
   size: "default",
 };
 

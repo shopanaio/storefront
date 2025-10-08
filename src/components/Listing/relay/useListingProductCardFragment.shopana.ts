@@ -1,5 +1,5 @@
-import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
-import { graphql, useFragment } from "react-relay";
+import { useListingProductCardFragment_product$key } from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
+import { graphql, useFragment } from 'react-relay';
 
 const UseProductCardFragment = graphql`
   fragment useListingProductCardFragment_product on ProductVariant
@@ -8,6 +8,9 @@ const UseProductCardFragment = graphql`
     title
     handle
     description
+    product {
+      title
+    }
     rating {
       rating
       count
@@ -66,7 +69,18 @@ const useListingProductCardFragment = (
 ) => {
   const productData = useFragment(UseProductCardFragment, ref);
 
-  return productData;
+  // Parent product title may not exist in old generated types until relay recompiled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parentTitle: string | undefined = (productData as any)?.product?.title;
+  const concatenatedTitle = [parentTitle, productData.title]
+    .filter(Boolean)
+    .join(' ');
+
+  // Preserve original shape and override title only
+  return {
+    ...(productData as any),
+    title: concatenatedTitle,
+  } as typeof productData;
 };
 
 export default useListingProductCardFragment;

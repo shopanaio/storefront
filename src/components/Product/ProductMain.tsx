@@ -183,7 +183,6 @@ const useStyles = createStyles(
   ) => ({
     container: css`
       width: 100%;
-      padding-top: ${token.padding}px;
       ${getGalleryStyles(galleryBreakpoints, token)}
     `,
     gallery: css`
