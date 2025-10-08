@@ -15,6 +15,7 @@ import { CloseButton } from '@src/modules/box-builder/components/CloseButton';
 interface LayoutProps {
   children: React.ReactNode;
   showCart?: boolean;
+  showBackButton?: boolean;
   customLeftButton?: React.ReactNode;
   footer?: React.ReactNode;
   paddingTop?: boolean;
@@ -24,6 +25,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({
   children,
   showCart = true,
+  showBackButton = true,
   footer = null,
   paddingTop = true,
   paddingBottom = true,
@@ -50,18 +52,20 @@ const Layout: React.FC<LayoutProps> = ({
           ),
         },
         backButton: {
-          render: () => (
-            <Button
-              variant="text"
-              color="default"
-              size="large"
-              icon={<TbArrowLeft size={24} />}
-              onClick={() => {
-                pop();
-              }}
-            />
-          ),
+          render: () =>
+            showBackButton ? (
+              <Button
+                variant="text"
+                color="default"
+                size="large"
+                icon={<TbArrowLeft size={24} />}
+                onClick={() => {
+                  pop();
+                }}
+              />
+            ) : null,
         },
+
         title: (
           <Flex align="center" justify="center">
             <FullLogo size={26} />
