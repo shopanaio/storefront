@@ -13,7 +13,7 @@ import {
  * Hook that manages validation alert state for the checkout form.
  * Listens to checkout events and returns props for rendering the validation alert.
  */
-export const useValidationAlert = (onConfirm: () => void) => {
+export const useValidationAlert = () => {
   const t = useTranslations('Checkout');
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -37,7 +37,6 @@ export const useValidationAlert = (onConfirm: () => void) => {
   useEffect(() => {
     const offCompleted = onCheckoutEvent(CheckoutEvent.SubmitCompleted, () => {
       setValidationError(null);
-      onConfirm();
     });
 
     const offBlocked = onCheckoutEvent(
@@ -52,7 +51,7 @@ export const useValidationAlert = (onConfirm: () => void) => {
       offCompleted();
       offBlocked();
     };
-  }, [onConfirm, t]);
+  }, [t]);
 
   // Adapt or hide validation alert as data changes and sections become valid/invalid
   useEffect(() => {
@@ -63,13 +62,11 @@ export const useValidationAlert = (onConfirm: () => void) => {
       const nextMessage = buildMessage(missing as unknown as string[]);
 
       if (nextMessage === null) {
-        if (validationError !== null) setValidationError(null);
+        setValidationError(null);
         return;
       }
 
-      if (nextMessage !== validationError) {
-        setValidationError(nextMessage);
-      }
+      setValidationError(nextMessage);
     });
 
     return unsubscribe;

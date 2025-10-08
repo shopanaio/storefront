@@ -32,7 +32,7 @@ interface Prop {
 export const Checkout = ({ cartId, onConfirm, brand, features }: Prop) => {
   const t = useTranslations('Checkout');
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
-  const { validationError, onClearError } = useValidationAlert(onConfirm);
+  const { validationError, onClearError } = useValidationAlert();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +42,7 @@ export const Checkout = ({ cartId, onConfirm, brand, features }: Prop) => {
   return (
     <CheckoutDataContextProvider checkoutId={cartId}>
       <CheckoutApiProvider>
-        <CheckoutController />
+        <CheckoutController onConfirm={onConfirm} />
         <CheckoutProgressBar />
         <CheckoutView
           brand={brand}
