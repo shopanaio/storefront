@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import debounce from 'lodash/debounce';
 import { useTranslations } from 'next-intl';
 import {
   CheckoutEvent,
@@ -16,6 +17,13 @@ import {
 export const useValidationAlert = () => {
   const t = useTranslations('Checkout');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce((nextMessage: string | null) => {
+        setValidationError(nextMessage);
+      }, 300),
+    []
+  );
 
   const buildMessage = (missing: Array<string>): string | null => {
     const sectionNameMap: Record<string, string> = {
@@ -43,7 +51,9 @@ export const useValidationAlert = () => {
       CheckoutEvent.SubmitBlocked,
       ({ missing }) => {
         const message = buildMessage(missing as unknown as string[]);
-        setValidationError(message ?? t('error-no-shipping-and-payment-method'));
+        setValidationError(
+          message ?? t('error-no-shipping-and-payment-method')
+        );
       }
     );
 
@@ -60,17 +70,14 @@ export const useValidationAlert = () => {
     const unsubscribe = useCheckoutStore.subscribe((state) => {
       const missing = computeMissingRequiredSections(state);
       const nextMessage = buildMessage(missing as unknown as string[]);
-
-      if (nextMessage === null) {
-        setValidationError(null);
-        return;
-      }
-
-      setValidationError(nextMessage);
+      debouncedUpdate(nextMessage);
     });
 
-    return unsubscribe;
-  }, [validationError, t]);
+    return () => {
+      unsubscribe();
+      debouncedUpdate.cancel();
+    };
+  }, [validationError, debouncedUpdate, t]);
 
   return {
     validationError,
