@@ -98,6 +98,7 @@ interface BoxBuilderState {
   setCardProductIds: (ids: string[]) => void;
   removeCardProductId: (id: string) => void;
   clearCardProductIds: () => void;
+  clearAll: () => void;
 }
 
 export const useBoxBuilderStore = create<BoxBuilderState>()(
@@ -134,6 +135,13 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
       },
       clearCardProductIds: () => {
         set({ cardProductIds: [] });
+      },
+      clearAll: () => {
+        set({
+          cartId: null,
+          boxProductIds: [],
+          cardProductIds: [],
+        });
       },
     }),
     {

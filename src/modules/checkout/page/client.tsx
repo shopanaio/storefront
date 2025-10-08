@@ -1,14 +1,11 @@
 import '@src/modules/checkout/vendors/autoload';
 import { Checkout } from '@src/modules/checkout';
 import { CheckoutBrand } from '@src/modules/checkout/page/brand';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
 import useCartId from '@src/hooks/cart/useCartId';
-
-const onConfirm = () => {
-  console.log('onConfirm');
-};
+import { useDefaultCartCleanup } from '@src/modules/checkout/hooks/useDefaultCartCleanup';
 
 const features = {
   auth: true,
@@ -22,6 +19,7 @@ export const CheckoutPageClient = () => {
   const { cartId, loaded } = useCartId();
   const router = useRouter();
   const routes = useRoutes();
+  const cleanup = useDefaultCartCleanup();
 
   useEffect(() => {
     if (loaded && !cartId) {
@@ -29,10 +27,15 @@ export const CheckoutPageClient = () => {
     }
   }, [loaded, cartId, router, routes]);
 
+  const handleConfirm = useCallback(() => {
+    cleanup(cartId);
+    console.log('Order completed and data cleaned up');
+  }, [cleanup, cartId]);
+
   return (
     <Checkout
       cartId={cartId}
-      onConfirm={onConfirm}
+      onConfirm={handleConfirm}
       brand={<CheckoutBrand />}
       features={features}
     />

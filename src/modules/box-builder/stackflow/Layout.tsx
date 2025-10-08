@@ -137,7 +137,7 @@ export const LayoutFooterButton: React.FC<LayoutFooterButtonProps> = ({
   loading,
   divider = ' • ',
   type = 'primary',
-  rightArrow = true,
+  rightArrow,
 }) => {
   const [, token] = useToken();
 
