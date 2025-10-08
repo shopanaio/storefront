@@ -83,7 +83,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         className={clsx(styles.button)}
       >
         {city ? (
-          <Flex className={clsx(styles.flex)}>
+          <Flex vertical align="start" gap={4}>
             <Typography.Text className={styles.secondaryText} type="secondary">
               {t('city')}
             </Typography.Text>
@@ -157,11 +157,6 @@ const useStyles = createStyles(({ css, token }) => {
       z-index: 1;
       background: ${token.colorBgBase};
       padding-bottom: ${token.paddingSM}px;
-    `,
-    flex: css`
-      flex-direction: column;
-      align-items: start;
-      gap: ${token.marginXXS}px;
     `,
     invert: css`
       flex-direction: column-reverse;

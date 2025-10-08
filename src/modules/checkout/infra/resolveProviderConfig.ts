@@ -21,7 +21,6 @@ export async function resolveProviderConfig(
   }
 
   const api = await loader();
-  console.log('api ---->', api);
   // If loader is async, skip schema resolution (no await in sync yup context)
   if (api instanceof Promise) {
     return null;

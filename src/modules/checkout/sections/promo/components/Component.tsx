@@ -104,7 +104,6 @@ export const PromoSectionView = ({
           }
         />
       ) : null}
-
       {isApplied && code ? (
         <div className={styles.appliedPromoCard}>
           <Flex
@@ -145,35 +144,20 @@ const useStyles = createStyles(({ token, css }) => ({
     border-radius: ${token.borderRadiusLG}px;
     padding: ${token.paddingSM}px ${token.padding}px;
     transition: all 0.3s ease;
-    min-height: 48px;
+    min-height: 50px;
   `,
   promoContent: css`
     width: 100%;
   `,
-  promoIcon: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: ${token.colorSuccess};
-    color: ${token.colorWhite};
-    border-radius: ${token.borderRadius}px;
-    flex-shrink: 0;
-  `,
   promoCode: css`
-    font-size: ${token.fontSizeLG}px;
+    font-size: ${token.fontSize}px;
     color: ${token.colorText};
     text-transform: uppercase;
     letter-spacing: 0.5px;
   `,
-  promoLabel: css`
-    font-size: ${token.fontSizeSM}px;
-  `,
   removeButton: css`
     color: ${token.colorTextSecondary};
     flex-shrink: 0;
-
     &:hover {
       color: ${token.colorError};
       background: ${token.colorErrorBg};

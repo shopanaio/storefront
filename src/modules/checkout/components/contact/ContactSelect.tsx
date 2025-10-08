@@ -101,12 +101,14 @@ export const ContactSelect = ({
         className={clsx(styles.button)}
       >
         {hasValue ? (
-          <Flex className={clsx(styles.flex)}>
+          <Flex vertical align="start">
             <Typography.Text className={styles.mainText}>
               {fullName || t('full-name')}
             </Typography.Text>
             {formattedPhone && (
-              <Typography.Text type="secondary">{formattedPhone}</Typography.Text>
+              <Typography.Text type="secondary">
+                {formattedPhone}
+              </Typography.Text>
             )}
           </Flex>
         ) : (
@@ -205,11 +207,6 @@ const useStyles = createStyles(({ css, token }) => {
         ${token.paddingSM}px;
       min-height: 64px;
       height: 100%;
-    `,
-    flex: css`
-      flex-direction: column;
-      align-items: start;
-      gap: ${token.marginXXS}px;
     `,
     mainText: css`
       max-width: 300px !important;

@@ -1,17 +1,15 @@
-import { Flex, Typography, Button, Badge } from 'antd';
+import { Flex, Button, Badge } from 'antd';
 import { createStyles } from 'antd-style';
 import { SummaryItem } from './SummaryItem';
+import { SummaryTotals } from './SummaryTotals';
 import { useTranslations } from 'next-intl';
 import { TbShoppingCart } from 'react-icons/tb';
 import { useState } from 'react';
-import { Money } from '@src/components/UI/Price/Money';
 import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
 import { SectionRenderer } from '@src/modules/checkout/infra/SectionRenderer';
 import { SectionId } from '@src/modules/checkout/state/interface';
-
-const { Text } = Typography;
 
 interface Prop {
   checkout: Checkout.Checkout;
@@ -61,57 +59,7 @@ export const Summary = ({ checkout }: Prop) => {
         ) : null}
       </Flex>
       <SectionRenderer slug={SectionId.Promo} />
-      <Flex vertical gap={12}>
-        <Flex justify="space-between">
-          <Text className={styles.summaryRow} strong>
-            {t('subtotal')}
-          </Text>
-          <Text className={styles.summaryRow} strong>
-            <Money money={checkout.cost.subtotalAmount} />
-          </Text>
-        </Flex>
-        <Flex justify="space-between">
-          <Text className={styles.summaryRow} strong>
-            {t('shipping')}
-          </Text>
-          <Text className={styles.summaryRow} strong>
-            {checkout?.cost?.totalShippingAmount ? (
-              <Money money={checkout.cost.totalShippingAmount} />
-            ) : (
-              ''
-            )}
-          </Text>
-        </Flex>
-        {checkout?.cost?.totalDiscountAmount &&
-        checkout.cost.totalDiscountAmount.amount > 0 ? (
-          <Flex justify="space-between">
-            <Text className={styles.summaryRow} strong>
-              {t('discount')}
-            </Text>
-            <Text className={styles.summaryRow} strong>
-              -<Money money={checkout.cost.totalDiscountAmount} />
-            </Text>
-          </Flex>
-        ) : null}
-        <Flex justify="space-between">
-          <Text className={styles.summaryRow} strong>
-            {t('tax')}
-          </Text>
-          <Text className={styles.summaryRow} strong>
-            {checkout?.cost?.totalTaxAmount ? (
-              <Money money={checkout.cost.totalTaxAmount} />
-            ) : (
-              ''
-            )}
-          </Text>
-        </Flex>
-        <Flex justify="space-between">
-          <Text className={styles.summaryTotal}>{t('total')}</Text>
-          <Text className={styles.summaryTotal}>
-            {checkout ? <Money money={checkout.cost.totalAmount} /> : null}
-          </Text>
-        </Flex>
-      </Flex>
+      <SummaryTotals checkout={checkout} />
       <CartDrawer />
     </>
   );
@@ -123,13 +71,6 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   placeholderIcon: css`
     color: ${token.colorTextPlaceholder};
-  `,
-  summaryRow: css`
-    font-size: ${token.fontSizeLG}px;
-  `,
-  summaryTotal: css`
-    font-weight: 900;
-    font-size: ${token.fontSizeXL}px;
   `,
   confirmLinkBtn: css`
     padding: 0;
