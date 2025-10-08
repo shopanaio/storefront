@@ -1,7 +1,7 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSectionController } from '@src/modules/checkout/state/hooks/useSectionController';
 import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
 import { SectionId } from '@src/modules/checkout/state/interface';
@@ -61,7 +61,13 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     (state) => state.sections[id]?.required ?? required
   );
 
-  const data = selector ? selector(checkout) : null;
+  const data = useMemo(() => {
+    if (!selector) {
+      return null;
+    }
+
+    return selector(checkout);
+  }, [selector, checkout]);
 
   // Automatically validate data from selector
   useEffect(() => {

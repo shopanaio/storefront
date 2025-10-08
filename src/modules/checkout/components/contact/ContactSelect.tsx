@@ -55,7 +55,8 @@ export const ContactSelect = ({
   const { errors } = formState;
 
   useEffect(() => {
-    reset(data ?? defaultValues);
+    console.log('data', data);
+    // reset(data ?? defaultValues);
   }, [data, reset]);
 
   const { firstName, lastName, middleName, phone } = watch();

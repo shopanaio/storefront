@@ -4,6 +4,10 @@ import {
   CheckoutEvent,
   onCheckoutEvent,
 } from '@src/modules/checkout/state/checkoutBus';
+import {
+  computeMissingRequiredSections,
+  useCheckoutStore,
+} from '@src/modules/checkout/state/checkoutStore';
 
 /**
  * Hook that manages validation alert state for the checkout form.
@@ -12,6 +16,23 @@ import {
 export const useValidationAlert = (onConfirm: () => void) => {
   const t = useTranslations('Checkout');
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const buildMessage = (missing: Array<string>): string | null => {
+    const sectionNameMap: Record<string, string> = {
+      payment: t('payment'),
+      contact: t('contact'),
+      recipient: t('recipient'),
+      address: t('address'),
+      promo: t('promo'),
+      comment: t('comment'),
+      delivery: t('delivery'),
+    };
+
+    const mapSectionKey = (key: string): string => sectionNameMap[key] ?? key;
+    const uniqueNames = Array.from(new Set(missing.map(mapSectionKey)));
+    if (uniqueNames.length === 0) return null;
+    return `${t('fill-required')}: ${uniqueNames.join(', ')}`;
+  };
 
   useEffect(() => {
     const offCompleted = onCheckoutEvent(CheckoutEvent.SubmitCompleted, () => {
@@ -22,31 +43,8 @@ export const useValidationAlert = (onConfirm: () => void) => {
     const offBlocked = onCheckoutEvent(
       CheckoutEvent.SubmitBlocked,
       ({ missing }) => {
-        /**
-         * Maps section keys to their translated display names.
-         * Handles both exact matches and prefixed keys (e.g., 'delivery:*').
-         */
-        const sectionNameMap: Record<string, string> = {
-          payment: t('payment'),
-          contact: t('contact'),
-          recipient: t('recipient'),
-          address: t('address'),
-          promo: t('promo'),
-          comment: t('comment'),
-          delivery: t('delivery'),
-        };
-
-        const mapSectionKey = (key: string): string => {
-          return sectionNameMap[key] ?? key;
-        };
-
-        const uniqueNames = Array.from(new Set(missing.map(mapSectionKey)));
-        const message =
-          uniqueNames.length > 0
-            ? `${t('fill-required')}: ${uniqueNames.join(', ')}`
-            : t('error-no-shipping-and-payment-method');
-
-        setValidationError(message);
+        const message = buildMessage(missing as unknown as string[]);
+        setValidationError(message ?? t('error-no-shipping-and-payment-method'));
       }
     );
 
@@ -55,6 +53,27 @@ export const useValidationAlert = (onConfirm: () => void) => {
       offBlocked();
     };
   }, [onConfirm, t]);
+
+  // Adapt or hide validation alert as data changes and sections become valid/invalid
+  useEffect(() => {
+    if (validationError === null) return; // only adapt when alert is visible
+
+    const unsubscribe = useCheckoutStore.subscribe((state) => {
+      const missing = computeMissingRequiredSections(state);
+      const nextMessage = buildMessage(missing as unknown as string[]);
+
+      if (nextMessage === null) {
+        if (validationError !== null) setValidationError(null);
+        return;
+      }
+
+      if (nextMessage !== validationError) {
+        setValidationError(nextMessage);
+      }
+    });
+
+    return unsubscribe;
+  }, [validationError, t]);
 
   return {
     validationError,
