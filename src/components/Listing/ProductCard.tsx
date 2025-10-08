@@ -88,7 +88,8 @@ export const ListingProductCardRelay = ({
 
   const gallery = product.gallery?.edges?.map((edge) => edge.node.url) || [];
   const productTitle = product.title || "";
-  const handle = product.handle || "";
+  const handle = (product as any)?.product?.handle || product.handle || "";
+  const variantHandle = (product as any)?.variantHandle || product.handle || undefined;
   const isAvailable = product.stockStatus?.isAvailable || false;
   const price = product.price || {
     amount: "0.00",
@@ -113,6 +114,7 @@ export const ListingProductCardRelay = ({
       gallery={gallery}
       productTitle={productTitle}
       handle={handle}
+      variantHandle={variantHandle}
       isAvailable={isAvailable}
       price={price}
       compareAtPrice={compareAtPrice as any}

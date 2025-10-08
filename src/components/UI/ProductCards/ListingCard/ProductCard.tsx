@@ -6,17 +6,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { mq } from "@src/components/Theme/breakpoints";
+// import { mq } from "@src/components/Theme/breakpoints";
 import { useRoutes } from "@src/hooks/useRoutes";
 import {
   ProductCardTitle,
   type ProductCardTitleProps,
 } from "@src/components/UI/ProductCards/Title/Title";
 import { ProductWishlistButton } from "@src/components/Listing/ProductWishlistButton";
-import {
-  ProductCardImage,
-  type ProductCardImageProps,
-} from "@src/components/UI/ProductCards/Image/Image";
+import { type ProductCardImageProps } from "@src/components/UI/ProductCards/Image/Image";
 import {
   ProductCardSwatches,
   type ProductCardSwatchesProps,
@@ -101,12 +98,14 @@ export const ProductCard = ({
   isLoading = false,
   onAddToCart = () => {},
   onReviewClick = () => {},
-}: ProductCardProps) => {
+  variantHandle,
+}: ProductCardProps & { variantHandle?: string }) => {
   const { styles } = useStyles();
   const routes = useRoutes();
   const router = useRouter();
 
-  const href = routes.product.path(handle);
+  // handle is product handle now; if variant handle provided, pass via query
+  const href = routes.product.path(handle, { variant: variantHandle });
 
   const handleImageClick = () => {
     router.push(href);

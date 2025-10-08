@@ -42,9 +42,11 @@ export const ProductOptions = ({
   );
 
   const handleOptionSelect = (optionId: string) => (value: UiOptionValue) => {
-    // If variant exists for selected value, redirect to its page
+    // If variant exists for selected value, redirect to product page with variant query
     if (value.variant?.handle) {
-      const variantPath = routes.product.path(value.variant.handle);
+      const variantPath = routes.product.path(product.handle, {
+        variant: value.variant.handle,
+      });
       router.push(variantPath);
     }
 

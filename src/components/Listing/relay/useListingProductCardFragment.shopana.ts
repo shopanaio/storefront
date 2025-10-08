@@ -9,6 +9,7 @@ const UseProductCardFragment = graphql`
     handle
     description
     product {
+      handle
       title
     }
     rating {
@@ -76,10 +77,13 @@ const useListingProductCardFragment = (
     .filter(Boolean)
     .join(' ');
 
-  // Preserve original shape and override title only
+  // Preserve original shape and override title and handle (use product handle in URLs)
   return {
     ...(productData as any),
     title: concatenatedTitle,
+    // prefer product handle for URL building, keep variant handle separately
+    handle: (productData as any)?.product?.handle ?? productData.handle,
+    variantHandle: productData.handle,
   } as typeof productData;
 };
 

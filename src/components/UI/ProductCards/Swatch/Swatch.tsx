@@ -31,7 +31,11 @@ export const ProductCardSwatches = ({
           className={styles.colorBtn}
           href={
             option.variant
-              ? routes.product.path(option.variant?.handle)
+              ? routes.product.path(
+                  // product handle should be available on parent product in context; fallback to variant handle if missing
+                  (option as any)?.product?.handle || option.variant?.handle,
+                  { variant: option.variant?.handle }
+                )
               : undefined
           }
           variant="outlined"

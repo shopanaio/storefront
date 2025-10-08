@@ -5,8 +5,13 @@ export const routes = {
     },
   },
   product: {
-    path(handle: string) {
-      return `/product/${handle}`;
+    path(handle: string, opts?: { variant?: string | null }) {
+      const base = `/product/${handle}`;
+      if (opts?.variant) {
+        const search = new URLSearchParams({ variant: opts.variant }).toString();
+        return `${base}?${search}`;
+      }
+      return base;
     },
   },
   category: {
