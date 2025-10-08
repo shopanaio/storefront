@@ -23,6 +23,7 @@ export enum OperationKey {
   AddPromoCode = 'addPromoCode',
   RemovePromoCode = 'removePromoCode',
   UpdateCustomerNote = 'updateCustomerNote',
+  SubmitCheckout = 'submitCheckout',
 }
 
 /**

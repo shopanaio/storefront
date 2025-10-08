@@ -1,7 +1,7 @@
 import * as yup from 'yup';
 import type { DeliveryFormData, DeliveryGroup, DeliveryMethod } from './types';
-import { resolveProviderConfig } from '@src/modules/checkout/infra/resolveProviderConfig';
 import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
+import { buildSelectedProviderMethodSchema } from '@src/modules/checkout/utils/validation';
 
 /**
  * Yup validation schema for DeliveryMethod
@@ -22,42 +22,15 @@ const deliveryGroupSchema = yup.object<DeliveryGroup>().shape({
     .of(deliveryMethodSchema)
     .min(1, 'At least one delivery method is required')
     .required('Delivery methods are required'),
-  selectedDeliveryMethod: deliveryMethodSchema
-    .required('A delivery method must be selected')
-    .test(
-      'is-selected',
-      'A delivery method must be selected',
-      (value) => value !== null && value !== undefined
-    )
-    .test(
-      'by-provider-method',
-      'Invalid delivery method data',
-      async function (selectedMethod) {
-        if (!selectedMethod) {
-          return false;
-        }
-
-        const { code, provider, data } = selectedMethod as DeliveryMethod;
-        const config = await resolveProviderConfig(
-          ProviderModuleType.Delivery,
-          provider
-        );
-
-        const methodConfig = config?.methods.find((m) => m.code === code);
-        // If there's no schema for this method, consider it valid
-        if (!methodConfig?.schema) {
-          return true;
-        }
-
-        // Method has a schema, so we must validate data
-        try {
-          methodConfig.schema.validateSync(data, { abortEarly: false });
-          return true;
-        } catch (e) {
-          return this.createError({ message: (e as Error).message });
-        }
-      }
-    ),
+  selectedDeliveryMethod: buildSelectedProviderMethodSchema({
+    moduleType: ProviderModuleType.Delivery,
+    baseSchema: deliveryMethodSchema,
+    messages: {
+      required: 'A delivery method must be selected',
+      notSelected: 'A delivery method must be selected',
+      invalid: 'Invalid delivery method data',
+    },
+  }),
 });
 
 /**

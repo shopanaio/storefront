@@ -16,6 +16,7 @@ import { removeDeliveryRecipientsMutation } from '@src/modules/checkout/api/muta
 import { addPromoCodeMutation } from '@src/modules/checkout/api/mutations/addPromoCodeMutation.shopana';
 import { removePromoCodeMutation } from '@src/modules/checkout/api/mutations/removePromoCodeMutation.shopana';
 import { updateCustomerNoteMutation } from '@src/modules/checkout/api/mutations/updateCustomerNoteMutation.shopana';
+import { submitCheckoutMutation } from '@src/modules/checkout/api/mutations/submitCheckoutMutation.shopana';
 
 import type { selectDeliveryMethodMutation as SelectDeliveryMethodMutationType } from '@src/modules/checkout/api/mutations/__generated__/selectDeliveryMethodMutation.graphql';
 import type { selectPaymentMethodMutation as SelectPaymentMethodMutationType } from '@src/modules/checkout/api/mutations/__generated__/selectPaymentMethodMutation.graphql';
@@ -120,6 +121,14 @@ export function useCreateCheckoutApi(): CheckoutApi {
       }
     );
 
+  const { commit: commitSubmitCheckout } = useCheckoutOperation(
+    submitCheckoutMutation,
+    {
+      errorMessage: 'Failed to submit checkout',
+      operationKey: OperationKey.SubmitCheckout,
+    }
+  );
+
   const { commit: commitAddRecipients } = useCheckoutOperation(
     addDeliveryRecipientsMutation,
     {
@@ -221,8 +230,10 @@ export function useCreateCheckoutApi(): CheckoutApi {
           input: { ...input, checkoutId },
         });
       },
-      submitCheckout: async () => {
-        throw new Error('Not implemented');
+      submitCheckout: async (input) => {
+        await commitSubmitCheckout({
+          input: { ...input, checkoutId },
+        });
       },
     };
   }, [checkoutId]);
