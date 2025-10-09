@@ -1,23 +1,14 @@
-import React from "react";
-import usePredictiveSearch from "@src/hooks/search/usePredictiveSearch";
-import SearchResultsContent from "./SearchResultsContent";
-import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
+import React from 'react';
+import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
+import SearchResultsContent from './SearchResultsContent';
 
 interface SearchResultsProps {
   searchTerm: string;
-  initialLoading?: boolean;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({
-  searchTerm,
-  initialLoading = false
-}) => {
+const SearchResults: React.FC<SearchResultsProps> = ({ searchTerm }) => {
   const { products, categories, articles, loading } =
     usePredictiveSearch(searchTerm);
-
-  if (initialLoading) {
-    return <SearchResultsSkeleton />;
-  }
 
   return (
     <SearchResultsContent

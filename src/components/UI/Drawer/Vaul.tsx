@@ -1,105 +1,89 @@
-"use client";
+'use client';
 
-import { Drawer as VaulDrawer } from "vaul";
-import { ReactNode } from "react";
-import { useIsMobile } from "@src/hooks/useIsMobile";
-import { createStyles, cx } from "antd-style";
+import React, { useEffect, useMemo, useState } from 'react';
+import { Portal, Root, Content, Overlay } from 'vaul';
+import { useStyles, DRAWER_CONTENT_OFFSET_TOP } from './styles';
 
 export interface VaulProps {
+  /** Container element for portal */
+  container?: HTMLElement | null;
   /** Whether the drawer is open */
   open: boolean;
   /** Callback when drawer is closed */
   onClose: () => void;
-  /** Drawer title */
-  title?: ReactNode;
+  /** Whether the drawer can be dismissed by dragging */
+  dismissible: boolean;
+  /** Minimum height for the drawer content */
+  minHeight?: string | number;
   /** Drawer content */
-  children: ReactNode;
-  /** Optional footer */
-  footer?: ReactNode;
-  /** Optional class for content */
-  contentClassName?: string;
-  /** Height for mobile sheets; defaults to 60vh */
-  height?: string | number;
+  children: React.ReactNode;
+  /** Whether the background should scale with the drawer */
+  scaleBackground?: boolean;
+  /** Direction of the drawer */
+  direction?: 'top' | 'bottom' | 'left' | 'right';
 }
 
 /**
- * Configured Vaul Drawer (Radix-based bottom sheet).
- * Optimized defaults for mobile; behaves as bottom sheet on mobile, modal-like on desktop.
+ * Vaul Drawer component with dynamic height calculation and custom styles.
  */
-export const Vaul = ({ open, onClose, title, children, footer, contentClassName, height }: VaulProps) => {
-  const isMobile = useIsMobile();
-  const sheetHeight = height || (isMobile ? "60vh" : "auto");
+export const Vaul = ({
+  container,
+  open,
+  onClose,
+  dismissible,
+  minHeight,
+  children,
+  scaleBackground,
+  direction,
+}: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
+  const [height, setHeight] = useState(0);
   const { styles } = useStyles();
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const updateHeight: ResizeObserverCallback = ([{ contentRect }]) => {
+      setHeight(contentRect.height);
+    };
+
+    const observer = new ResizeObserver(updateHeight);
+    if (containerEl) {
+      observer.observe(containerEl);
+    }
+
+    return () => observer.disconnect();
+  }, [containerEl]);
+
+  const style = useMemo(
+    () => ({
+      height: `${height + DRAWER_CONTENT_OFFSET_TOP}px`,
+      minHeight: minHeight,
+      maxHeight: `calc(90vh - ${DRAWER_CONTENT_OFFSET_TOP}px)`,
+    }),
+    [height, minHeight]
+  );
 
   return (
-    <VaulDrawer.Root open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <VaulDrawer.Overlay className={styles.overlay} />
-      <VaulDrawer.Content
-        className={cx(
-          styles.contentBase,
-          isMobile ? styles.contentMobile : styles.contentDesktop
-        )}
-        style={{ height: sheetHeight }}
-      >
-        {title && <div className={styles.header}>{title}</div>}
-        <div className={cx(styles.body, contentClassName)}>{children}</div>
-        {footer && <div className={styles.footer}>{footer}</div>}
-      </VaulDrawer.Content>
-    </VaulDrawer.Root>
+    <Root
+      autoFocus
+      container={container}
+      open={open}
+      onClose={onClose}
+      dismissible={dismissible}
+      repositionInputs
+      shouldScaleBackground={scaleBackground}
+      direction={direction}
+    >
+      <Portal>
+        <Content className={styles.content}>
+          <div className={styles.handle} />
+          <div className={styles.container} style={style}>
+            <div ref={setContainerEl}>{children}</div>
+          </div>
+        </Content>
+        <Overlay className={styles.overlay} />
+      </Portal>
+    </Root>
   );
 };
 
 export default Vaul;
-
-const useStyles = createStyles(({ css, token }) => ({
-  overlay: css`
-    position: fixed;
-    inset: 0;
-    background: ${token.colorBgMask};
-  `,
-  contentBase: css`
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 640px;
-    background: ${token.colorBgElevated};
-    color: ${token.colorText};
-    box-shadow: ${token.boxShadowSecondary};
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  `,
-  contentMobile: css`
-    bottom: 0;
-    border-top-left-radius: ${token.borderRadiusLG}px;
-    border-top-right-radius: ${token.borderRadiusLG}px;
-  `,
-  contentDesktop: css`
-    top: 10vh;
-    bottom: auto;
-    max-height: 80vh;
-    border-radius: ${token.borderRadiusLG}px;
-  `,
-  header: css`
-    padding: ${token.padding}px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-size: ${token.fontSizeLG}px;
-    font-weight: 600;
-    text-align: center;
-    flex-shrink: 0;
-    background: ${token.colorBgElevated};
-  `,
-  body: css`
-    padding: 0 ${token.padding}px;
-    flex: 1;
-    overflow: auto;
-    background: ${token.colorBgBase};
-  `,
-  footer: css`
-    padding: ${token.padding}px;
-    border-top: 1px solid ${token.colorSplit};
-    background: ${token.colorBgElevated};
-    flex-shrink: 0;
-  `,
-}));

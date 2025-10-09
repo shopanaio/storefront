@@ -72,7 +72,6 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
         onClose={closeDrawer}
         footer={footerContent}
         title={t("filters")}
-        showCloseButton={true}
         headerExtra={<Button onClick={handleReset}>{t("reset-all")}</Button>}
         height="75vh"
       >

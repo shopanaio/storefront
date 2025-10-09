@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { getCurrentEnvironment } from "@src/relay/Environment";
-import Script from "next/script";
-import { RelayEnvironmentProvider } from "react-relay";
+import { getCurrentEnvironment } from '@src/relay/Environment';
+import Script from 'next/script';
+import { RelayEnvironmentProvider } from 'react-relay';
 
 export default function RootLayout({
   children,
@@ -38,9 +38,11 @@ export default function RootLayout({
         </Script>
       </head>
       <body>
-        <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
-          {children}
-        </RelayEnvironmentProvider>
+        <div data-vaul-drawer-wrapper>
+          <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
+            {children}
+          </RelayEnvironmentProvider>
+        </div>
       </body>
     </html>
   );

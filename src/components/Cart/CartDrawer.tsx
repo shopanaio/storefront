@@ -22,7 +22,6 @@ export const CartDrawer: React.FC = () => {
 
   const routes = useRoutes();
   const { cart } = useCart();
-  const [, token] = useToken();
   const isOpen = useModalStore((state) => state.isCartDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsCartDrawerOpen);
 
@@ -45,15 +44,19 @@ export const CartDrawer: React.FC = () => {
   return (
     <DrawerBase
       open={isOpen}
-      height="75vh"
+      minHeight="50vh"
       onClose={() => setIsOpen(false)}
       title={
         <>
-          {t('cart')} <Badge count={cart?.totalQuantity} variant="primary" />
+          {t('cart')}{' '}
+          <Badge
+            count={cart?.totalQuantity}
+            variant="primary"
+            showZero={false}
+          />
         </>
       }
       footer={renderFooter()}
-      showCloseButton={true}
       contentClassName={styles.drawerContent}
     >
       {cartLines.length === 0 ? (
@@ -62,7 +65,7 @@ export const CartDrawer: React.FC = () => {
           align="center"
           style={{
             width: '100%',
-            marginTop: 100,
+            height: '400px',
           }}
         >
           <Empty
