@@ -40,7 +40,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     border-radius: ${token.borderRadiusXS}px;
     background-color: ${token.colorBorder};
   `,
-  content: css`
+  contentVertical: css`
     background-color: ${token.colorBgContainer};
     border-top-left-radius: ${token.borderRadiusLG}px;
     border-top-right-radius: ${token.borderRadiusLG}px;
@@ -55,7 +55,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     will-change: transform;
     transform: translate3d(0px, 0px, 0px);
   `,
-  contentRight: css`
+  contentHorizontal: css`
     background-color: ${token.colorBgContainer};
     border-radius: ${token.borderRadiusLG}px;
     overflow: hidden;
