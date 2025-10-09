@@ -1,10 +1,11 @@
 "use client";
 
-import { Drawer, DrawerProps, Button, Flex, Typography } from "antd";
+import { DrawerProps, Button, Flex, Typography } from "antd";
 import { createStyles, cx } from "antd-style";
 import { ReactNode } from "react";
 import { RxCross2 } from "react-icons/rx";
 import { useIsMobile } from "@src/hooks/useIsMobile";
+import RootDrawer from "@src/components/UI/Drawer/RootDrawer";
 
 const { Text } = Typography;
 
@@ -92,7 +93,7 @@ export const DrawerBase = ({
     );
   };
 
-  const renderContent = () => (
+  const content = (
     <div className={cx(styles.layout, contentClassName, "ant-drawer-content")}>
       {renderHeader()}
       <div className={cx(styles.content, sectionStyles?.content)}>
@@ -105,16 +106,15 @@ export const DrawerBase = ({
   );
 
   return (
-    <Drawer
+    <RootDrawer
+      open={open}
+      onClose={onClose}
       placement={finalPlacement}
       height={finalHeight}
       width={finalWidth}
-      open={open}
-      onClose={onClose}
-      closable={false}
-      drawerRender={renderContent}
-      {...drawerProps}
-    />
+    >
+      {content}
+    </RootDrawer>
   );
 };
 

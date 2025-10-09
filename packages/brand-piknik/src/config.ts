@@ -21,6 +21,10 @@ export interface BrandConfig {
   theme: {
     colorPrimary?: string;
   };
+  ui?: {
+    /** Drawer engine to use across UI */
+    drawerEngine?: 'antd' | 'vaul';
+  };
 }
 
 /**
@@ -32,5 +36,8 @@ export const brandConfig: BrandConfig = {
   },
   theme: {
     colorPrimary: '#00b576',
+  },
+  ui: {
+    drawerEngine: 'antd',
   },
 };
