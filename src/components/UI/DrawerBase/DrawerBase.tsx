@@ -58,14 +58,12 @@ export const DrawerBase = ({
   height,
   width,
   minHeight,
-  ...drawerProps
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
   const isMobile = useIsMobile();
 
   // Automatically determine placement and sizes for mobile devices
   const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
-  const finalHeight = height || (isMobile ? '60vh' : undefined);
   const finalWidth =
     width || (!isMobile ? 'var(--components-drawer-width)' : undefined);
 
@@ -112,8 +110,8 @@ export const DrawerBase = ({
     <RootDrawer
       open={open}
       onClose={onClose}
-      placement={finalPlacement}
-      height={finalHeight}
+      direction={finalPlacement}
+      // height={finalHeight}
       width={finalWidth}
       minHeight={minHeight}
     >
@@ -133,6 +131,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   header: css`
     position: sticky;
+    background: ${token.colorBgBase};
     top: 0;
     z-index: 1;
     padding: ${token.paddingXS}px ${token.padding}px;
@@ -149,7 +148,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   content: css`
     flex: 1;
-    padding: 0 ${token.padding}px;
+    padding: ${token.paddingXS}px ${token.padding}px 0;
   `,
   footer: css`
     position: sticky;

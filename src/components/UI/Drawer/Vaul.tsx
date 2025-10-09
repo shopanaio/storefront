@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Portal, Root, Content, Overlay } from 'vaul';
 import { useStyles, DRAWER_CONTENT_OFFSET_TOP } from './styles';
 
@@ -21,6 +21,8 @@ export interface VaulProps {
   scaleBackground?: boolean;
   /** Direction of the drawer */
   direction?: 'top' | 'bottom' | 'left' | 'right';
+  /** Width of the drawer (valid CSS string, used for right direction) */
+  width?: string;
 }
 
 /**
@@ -35,12 +37,16 @@ export const Vaul = ({
   children,
   scaleBackground,
   direction,
+  width,
 }: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
   const [height, setHeight] = useState(0);
   const { styles } = useStyles();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  const isRightDirection = direction === 'right';
 
   useEffect(() => {
+    if (isRightDirection) return;
+
     const updateHeight: ResizeObserverCallback = ([{ contentRect }]) => {
       setHeight(contentRect.height);
     };
@@ -51,16 +57,27 @@ export const Vaul = ({
     }
 
     return () => observer.disconnect();
-  }, [containerEl]);
+  }, [containerEl, isRightDirection]);
 
-  const style = useMemo(
-    () => ({
-      height: `${height + DRAWER_CONTENT_OFFSET_TOP}px`,
+  const style = useMemo(() => {
+    if (isRightDirection) {
+      return {
+        width: width || '400px',
+      };
+    }
+
+    return {
+      height: `${height}px`,
       minHeight: minHeight,
-      maxHeight: `calc(90vh - ${DRAWER_CONTENT_OFFSET_TOP}px)`,
-    }),
-    [height, minHeight]
-  );
+      maxHeight: `calc(80vh - ${DRAWER_CONTENT_OFFSET_TOP}px)`,
+    };
+  }, [height, minHeight, isRightDirection, width]);
+
+  useLayoutEffect(() => {
+    if (open) {
+      document.body.style.height = `${window.innerHeight}px`;
+    }
+  }, [open]);
 
   return (
     <Root
@@ -70,13 +87,19 @@ export const Vaul = ({
       onClose={onClose}
       dismissible={dismissible}
       repositionInputs
-      shouldScaleBackground={scaleBackground}
       direction={direction}
+      noBodyStyles
+      disablePreventScroll
+      onAnimationEnd={() => {
+        if (!open) {
+          document.body.style.height = '';
+        }
+      }}
     >
-      <Portal>
-        <Content className={styles.content}>
-          <div className={styles.handle} />
-          <div className={styles.container} style={style}>
+      <Portal container={document.querySelector('[data-vaul-drawer-wrapper]')}>
+        <Content className={isRightDirection ? styles.contentRight : styles.content} style={isRightDirection ? { width: width || '400px' } : undefined}>
+          {!isRightDirection && <div className={styles.handle} />}
+          <div className={isRightDirection ? styles.containerRight : styles.container} style={!isRightDirection ? style : undefined}>
             <div ref={setContainerEl}>{children}</div>
           </div>
         </Content>

@@ -3,7 +3,6 @@
 import { Flex, Image, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useState } from 'react';
-import { OptionsDrawer } from './OptionsDrawer';
 import type { Entity } from '@shopana/entity';
 import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
 import { mq } from '@src/components/Theme/breakpoints';
@@ -39,24 +38,23 @@ export const IncludedComponent = ({ option }: Props) => {
           </Flex>
         </Flex>
       </OptionCard>
-      <OptionsDrawer open={open} onClose={closeDrawer}>
-        <OptionDrawerLayout
-          onClose={closeDrawer}
-          title={<IncludedInSetBadge size="large" />}
-        >
-          <Image
-            className={styles.cover}
-            src={option.cover?.url}
-            alt={option.title}
-            loading="lazy"
-            preview={false}
-            fallback={fallbackImageBase64}
-          />
+      <OptionDrawerLayout
+        open={open}
+        onClose={closeDrawer}
+        title={<IncludedInSetBadge size="large" />}
+      >
+        <Image
+          className={styles.cover}
+          src={option.cover?.url}
+          alt={option.title}
+          loading="lazy"
+          preview={false}
+          fallback={fallbackImageBase64}
+        />
 
-          <Text strong>{option.title}</Text>
-          <Text>TODO: description</Text>
-        </OptionDrawerLayout>
-      </OptionsDrawer>
+        <Text strong>{option.title}</Text>
+        <Text>TODO: description</Text>
+      </OptionDrawerLayout>
     </>
   );
 };

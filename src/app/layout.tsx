@@ -38,11 +38,10 @@ export default function RootLayout({
         </Script>
       </head>
       <body>
-        <div data-vaul-drawer-wrapper>
-          <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
-            {children}
-          </RelayEnvironmentProvider>
-        </div>
+        <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
+          {children}
+        </RelayEnvironmentProvider>
+        <div data-vaul-drawer-wrapper></div>
       </body>
     </html>
   );

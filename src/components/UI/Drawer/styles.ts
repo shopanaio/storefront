@@ -3,6 +3,7 @@ import { createStyles } from 'antd-style';
 export const HANDLE_HEIGHT = 4;
 export const HANDLE_OFFSET_TOP = 8;
 export const DRAWER_CONTENT_OFFSET_TOP = HANDLE_HEIGHT + HANDLE_OFFSET_TOP;
+export const RIGHT_DRAWER_OFFSET = 12;
 
 export const useStyles = createStyles(({ css, token }) => ({
   container: css`
@@ -10,8 +11,13 @@ export const useStyles = createStyles(({ css, token }) => ({
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
     will-change: auto;
-    /* overflow-y: auto;
-    overflow-x: hidden; */
+    display: flex;
+    flex-direction: column;
+  `,
+  containerRight: css`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   `,
   overlay: css`
     position: fixed;
@@ -36,6 +42,19 @@ export const useStyles = createStyles(({ css, token }) => ({
     bottom: 0;
     left: 0;
     right: 0;
+    outline: none;
+    z-index: 99999;
+    will-change: transform;
+    transform: translate3d(0px, 0px, 0px);
+  `,
+  contentRight: css`
+    background-color: ${token.colorBgContainer};
+    border-radius: ${token.borderRadiusLG}px;
+    overflow: hidden;
+    position: fixed;
+    top: ${RIGHT_DRAWER_OFFSET}px;
+    bottom: ${RIGHT_DRAWER_OFFSET}px;
+    right: ${RIGHT_DRAWER_OFFSET}px;
     outline: none;
     z-index: 99999;
     will-change: transform;

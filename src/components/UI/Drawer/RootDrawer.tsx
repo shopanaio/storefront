@@ -22,6 +22,8 @@ export interface RootDrawerProps {
   direction?: 'top' | 'bottom' | 'left' | 'right';
   /** Children as a fallback content when component is not provided */
   children: ReactNode;
+  /** Width of the drawer (valid CSS string, used for right direction) */
+  width?: string;
 }
 
 /**
@@ -36,10 +38,9 @@ export const RootDrawer = ({
   dismissible = true,
   scaleBackground,
   direction,
+  width,
   children,
 }: RootDrawerProps) => {
-  const isMobile = useIsMobile();
-
   return (
     <VaulDrawer
       open={open}
@@ -47,7 +48,8 @@ export const RootDrawer = ({
       minHeight={minHeight}
       dismissible={!!dismissible}
       scaleBackground={scaleBackground}
-      direction={direction || isMobile ? 'bottom' : 'right'}
+      direction={direction}
+      width={width}
     >
       {children}
     </VaulDrawer>

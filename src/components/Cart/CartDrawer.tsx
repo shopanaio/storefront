@@ -14,7 +14,6 @@ import { useModalStore } from '@src/store/appStore';
 import { DrawerBase } from '@src/components/UI/DrawerBase/DrawerBase';
 import { StickyButton } from '@src/components/UI/StickyButton';
 import { EmptyCart } from '@src/components/Cart/EmptyCartIcon';
-import useToken from 'antd/es/theme/useToken';
 
 export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();
@@ -44,7 +43,6 @@ export const CartDrawer: React.FC = () => {
   return (
     <DrawerBase
       open={isOpen}
-      minHeight="50vh"
       onClose={() => setIsOpen(false)}
       title={
         <>
