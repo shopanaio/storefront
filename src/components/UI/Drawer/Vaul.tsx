@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Portal, Root, Content, Overlay } from 'vaul';
 import { useStyles, DRAWER_CONTENT_OFFSET_TOP } from './styles';
 
@@ -21,8 +21,6 @@ export interface VaulProps {
   scaleBackground?: boolean;
   /** Direction of the drawer */
   direction?: 'top' | 'bottom' | 'left' | 'right';
-  /** Width of the drawer (valid CSS string, used for right direction) */
-  width?: string;
 }
 
 /**
@@ -35,49 +33,42 @@ export const Vaul = ({
   dismissible,
   minHeight,
   children,
-  scaleBackground,
   direction,
-  width,
 }: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
-  const [height, setHeight] = useState(0);
   const { styles } = useStyles();
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const isRightDirection = direction === 'right';
-
-  useEffect(() => {
-    if (isRightDirection) return;
-
-    const updateHeight: ResizeObserverCallback = ([{ contentRect }]) => {
-      setHeight(contentRect.height);
-    };
-
-    const observer = new ResizeObserver(updateHeight);
-    if (containerEl) {
-      observer.observe(containerEl);
-    }
-
-    return () => observer.disconnect();
-  }, [containerEl, isRightDirection]);
-
-  const style = useMemo(() => {
-    if (isRightDirection) {
-      return {
-        width: width || '400px',
-      };
-    }
-
-    return {
-      height: `${height}px`,
-      minHeight: minHeight,
-      maxHeight: `calc(80vh - ${DRAWER_CONTENT_OFFSET_TOP}px)`,
-    };
-  }, [height, minHeight, isRightDirection, width]);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [contentHeight, setContentHeight] = useState<number>(0);
+  const [viewportHeight, setViewportHeight] = useState<number>(0);
 
   useLayoutEffect(() => {
     if (open) {
       document.body.style.height = `${window.innerHeight}px`;
     }
   }, [open]);
+
+  useEffect(() => {
+    setViewportHeight(window.innerHeight);
+    const onResize = () => setViewportHeight(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!contentRef.current) return;
+    const el = contentRef.current;
+    const observer = new ResizeObserver(([entry]) => {
+      setContentHeight(entry.contentRect.height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [contentRef]);
+
+  const maxAvailable = Math.max(
+    0,
+    viewportHeight * 0.8 - DRAWER_CONTENT_OFFSET_TOP,
+  );
+  const targetHeight = Math.min(contentHeight, maxAvailable);
 
   return (
     <Root
@@ -97,11 +88,33 @@ export const Vaul = ({
       }}
     >
       <Portal container={document.querySelector('[data-vaul-drawer-wrapper]')}>
-        <Content className={isRightDirection ? styles.contentRight : styles.content} style={isRightDirection ? { width: width || '400px' } : undefined}>
+        <Content
+          className={isRightDirection ? styles.contentRight : styles.content}
+          style={
+            isRightDirection
+              ? { width: 'var(--components-drawer-width)' }
+              : undefined
+          }
+        >
           {!isRightDirection && <div className={styles.handle} />}
-          <div className={isRightDirection ? styles.containerRight : styles.container} style={!isRightDirection ? style : undefined}>
-            <div ref={setContainerEl}>{children}</div>
-          </div>
+          {isRightDirection ? (
+            <div className={styles.containerRight}>
+              <div className={styles.containerContent}>{children}</div>
+            </div>
+          ) : (
+            <div
+              className={styles.container}
+              style={{ height: targetHeight ? `${targetHeight}px` : undefined }}
+            >
+              <div
+                ref={contentRef}
+                className={styles.containerContent}
+                style={{ minHeight: minHeight }}
+              >
+                {children}
+              </div>
+            </div>
+          )}
         </Content>
         <Overlay className={styles.overlay} />
       </Portal>

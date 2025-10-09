@@ -1,11 +1,12 @@
 'use client';
 
 import { DrawerProps, Button, Flex, Typography } from 'antd';
-import { createStyles, cx } from 'antd-style';
+import { createStyles } from 'antd-style';
 import { ReactNode } from 'react';
 import { RxCross2 } from 'react-icons/rx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import RootDrawer from '@src/components/UI/Drawer/RootDrawer';
+import clsx from 'clsx';
 
 const { Text } = Typography;
 
@@ -55,8 +56,6 @@ export const DrawerBase = ({
   contentClassName,
   sectionStyles,
   placement,
-  height,
-  width,
   minHeight,
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
@@ -64,8 +63,6 @@ export const DrawerBase = ({
 
   // Automatically determine placement and sizes for mobile devices
   const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
-  const finalWidth =
-    width || (!isMobile ? 'var(--components-drawer-width)' : undefined);
 
   const renderHeader = () => {
     if (header) return header;
@@ -74,7 +71,7 @@ export const DrawerBase = ({
 
     return (
       <Flex
-        className={cx(styles.header, sectionStyles?.header)}
+        className={clsx(styles.header, sectionStyles?.header)}
         align="center"
         justify="space-between"
       >
@@ -95,13 +92,17 @@ export const DrawerBase = ({
   };
 
   const content = (
-    <div className={cx(styles.layout, contentClassName, 'ant-drawer-content')}>
+    <div
+      className={clsx(styles.layout, contentClassName, 'ant-drawer-content')}
+    >
       {renderHeader()}
-      <div className={cx(styles.content, sectionStyles?.content)}>
+      <div className={clsx(styles.content, sectionStyles?.content)}>
         {children}
       </div>
       {footer && (
-        <div className={cx(styles.footer, sectionStyles?.footer)}>{footer}</div>
+        <div className={clsx(styles.footer, sectionStyles?.footer)}>
+          {footer}
+        </div>
       )}
     </div>
   );
@@ -111,8 +112,6 @@ export const DrawerBase = ({
       open={open}
       onClose={onClose}
       direction={finalPlacement}
-      // height={finalHeight}
-      width={finalWidth}
       minHeight={minHeight}
     >
       {content}
@@ -148,13 +147,13 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   content: css`
     flex: 1;
-    padding: ${token.paddingXS}px ${token.padding}px 0;
+    padding: ${token.paddingXS}px ${token.padding}px 84px;
+    height: 100%;
   `,
   footer: css`
-    position: sticky;
+    position: absolute;
     bottom: 0;
-    margin-top: auto;
+    width: 100%;
     padding: ${token.padding}px;
-    flex-shrink: 0;
   `,
 }));

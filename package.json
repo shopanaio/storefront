@@ -48,6 +48,7 @@
     "react-relay": "^20.0.0",
     "react-responsive": "^10.0.1",
     "react-use": "^17.6.0",
+    "react-virtualized-auto-sizer": "^1.0.26",
     "relay-runtime": "^20.0.0",
     "shopana-utils": "^0.1.0",
     "swiper": "^11.2.8",

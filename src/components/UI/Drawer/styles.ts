@@ -7,17 +7,25 @@ export const RIGHT_DRAWER_OFFSET = 12;
 
 export const useStyles = createStyles(({ css, token }) => ({
   container: css`
-    transition-property: height;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
+    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1);
     will-change: auto;
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
   `,
   containerRight: css`
     display: flex;
     flex-direction: column;
     height: 100%;
+  `,
+  containerContent: css`
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    max-height: calc(80vh - ${DRAWER_CONTENT_OFFSET_TOP}px);
+    overflow-y: auto;
+    transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
   `,
   overlay: css`
     position: fixed;
