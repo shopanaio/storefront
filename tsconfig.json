@@ -10,8 +10,6 @@
       "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
       "@shopana/novaposhta-client": ["./packages/shopana-novaposhta-client/dist/index.js"],
       "@shopana/novaposhta-client/*": ["./packages/shopana-novaposhta-client/dist/*"],
-      "@shopana/brand-default": ["./packages/brand-default/src/index.ts"],
-      "@shopana/brand-piknik": ["./packages/brand-piknik/src/index.ts"],
       "@shopana/brand": ["./packages/brand-default/src"],
       "@shopana/brand/*": ["./packages/brand-default/src/*"]
     },
