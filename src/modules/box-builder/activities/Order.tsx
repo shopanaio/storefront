@@ -5,8 +5,8 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { FinishBox } from '@src/modules/box-builder/Images/FinishBox';
 import { ActivityComponentType } from '@stackflow/react';
-import Layout from '@src/modules/box-builder/stackflow/Layout';
-import { Activity, useFlow } from '@src/modules/box-builder/stackflow/Stack';
+import Layout from '@src/modules/box-builder/components/Layout';
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 import dynamic from 'next/dynamic';
 
 const ConfettiEffect = dynamic(

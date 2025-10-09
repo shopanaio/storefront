@@ -3,7 +3,7 @@ import { useInitialSessionStateShopify } from "@src/hooks/session/useInitialSess
 import { useInitialSessionStateShopana } from "@src/hooks/session/useInitialSessionState/useInitialSessionState.shopana";
 import { SerializablePreloadedQuery } from "@src/relay/loadSerializableQuery";
 import { ConcreteRequest, OperationType } from "relay-runtime";
-import { Session } from "@src/entity/Session";
+import type { Entity } from "@shopana/entity";
 
 // Interface for input props
 export interface UseInitialSessionStateProps {
@@ -16,4 +16,4 @@ export interface UseInitialSessionStateProps {
 export default cmsPick({
   shopana: useInitialSessionStateShopana,
   shopify: useInitialSessionStateShopify,
-}) as (props: UseInitialSessionStateProps) => Session | undefined;
+}) as (props: UseInitialSessionStateProps) => Entity.Session | undefined;

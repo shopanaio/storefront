@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { CurrencyCode } from "@codegen/schema-client";
 import { createJSONStorage, persist } from "zustand/middleware";
 

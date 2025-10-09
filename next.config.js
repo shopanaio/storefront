@@ -1,10 +1,10 @@
-import "dotenv/config";
-import createNextIntlPlugin from "next-intl/plugin";
-import path from "path";
+import 'dotenv/config';
+import createNextIntlPlugin from 'next-intl/plugin';
+import path from 'path';
 const withNextIntl = createNextIntlPlugin();
 
-import { createRequire } from "module";
-import getEnv from "./bin/webpack/env.js";
+import { createRequire } from 'module';
+import getEnv from './bin/webpack/env.js';
 const require = createRequire(import.meta.url);
 
 /** @type {import('next').NextConfig} */
@@ -29,20 +29,27 @@ const nextConfig = {
     if (!dev) {
       config.module.rules.unshift({
         test: /\.[jt]sx?$/,
-        enforce: "pre",
-        include: [path.resolve("src")],
+        enforce: 'pre',
+        include: [path.resolve('src')],
         exclude: /node_modules/,
         use: [
           {
-            loader: path.resolve("bin/webpack/resolve-provider.js"),
+            loader: path.resolve('bin/webpack/resolve-provider.js'),
             options: {
               provider: process.env.NEXT_PUBLIC_CMS_PROVIDER,
-              providers: ["shopify", "shopana"],
+              providers: ['shopify', 'shopana'],
+            },
+          },
+          {
+            loader: path.resolve('bin/webpack/resolve-brand.js'),
+            options: {
+              brand: process.env.NEXT_PUBLIC_BRAND || 'default',
             },
           },
         ],
       });
     }
+
     return config;
   },
 };

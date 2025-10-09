@@ -1,26 +1,27 @@
-"use client";
+'use client';
 
-import { Badge, Checkbox, Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import type * as Entity from "@src/entity/namespace";
-import React from "react";
-import { Price } from "@src/components/UI/Price/Price";
-import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
-import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import { useTranslations } from "next-intl";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
-import { BoxActionButton } from "@src/modules/box-builder/components/ActionButton/BoxActionButton";
-import { ProductActionButton } from "@src/modules/box-builder/components/ActionButton/ProductActionButton";
-import { CardActionButton } from "@src/modules/box-builder/components/ActionButton/CardActionButton";
-import { Discount } from "@src/components/UI/Price/Discount";
+import { Checkbox, Flex, Typography } from 'antd';
+import { Badge } from '@src/components/UI/Badge';
+import { createStyles } from 'antd-style';
+import type { Entity } from '@shopana/entity';
+import React from 'react';
+import { Price } from '@src/components/UI/Price/Price';
+import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
+import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
+import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { useTranslations } from 'next-intl';
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
+import { BoxActionButton } from '@src/modules/box-builder/components/ActionButton/BoxActionButton';
+import { ProductActionButton } from '@src/modules/box-builder/components/ActionButton/ProductActionButton';
+import { CardActionButton } from '@src/modules/box-builder/components/ActionButton/CardActionButton';
+import { Discount } from '@src/components/UI/Price/Discount';
 
 const { Text } = Typography;
 
 export enum ProductType {
-  Box = "box",
-  Product = "product",
-  Card = "card",
+  Box = 'box',
+  Product = 'product',
+  Card = 'card',
 }
 
 export interface Props {
@@ -29,21 +30,22 @@ export interface Props {
   productType: ProductType;
 }
 
-export const ProductCard = ({ product, productType }: Props) => {
+export const ProductCard = ({ product: variant, productType }: Props) => {
   const { styles } = useStyles();
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
   const { push } = useFlow();
 
-  const cartLine = useIsInTheBoxBuilderCart(product.id);
+  const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
   const { quantity = 0 } = cartLine || {};
 
-  const isFree = parseFloat(product.price.amount) === 0;
-  const isAvailable = Boolean(product.stockStatus?.isAvailable);
+  const isFree = parseFloat(variant.price.amount) === 0;
+  const isAvailable = Boolean(variant.stockStatus?.isAvailable);
 
   const handleClick = () => {
     push(Activity.Product, {
-      productHandle: product.handle,
+      productHandle: variant.product?.handle,
+      variantHandle: variant.handle,
       productType,
     });
   };
@@ -52,7 +54,7 @@ export const ProductCard = ({ product, productType }: Props) => {
     if (productType === ProductType.Box) {
       return (
         <BoxActionButton
-          productId={product.id}
+          productId={variant.id}
           isAvailable={isAvailable}
           isFree={isFree}
           isInCart={isInCart}
@@ -65,7 +67,7 @@ export const ProductCard = ({ product, productType }: Props) => {
     if (productType === ProductType.Card) {
       return (
         <CardActionButton
-          productId={product.id}
+          productId={variant.id}
           isAvailable={isAvailable}
           isFree={isFree}
           isInCart={isInCart}
@@ -77,7 +79,7 @@ export const ProductCard = ({ product, productType }: Props) => {
 
     return (
       <ProductActionButton
-        productId={product.id}
+        productId={variant.id}
         isAvailable={isAvailable}
         isFree={isFree}
         isInCart={isInCart}
@@ -92,42 +94,42 @@ export const ProductCard = ({ product, productType }: Props) => {
       <Thumbnail
         selected={isInCart}
         className={styles.cover}
-        src={product.cover?.url}
-        alt={product.title}
+        src={variant.cover?.url}
+        alt={variant.title}
         onClick={handleClick}
         overlay={isInCart ? <Checkbox checked={isInCart} /> : undefined}
       />
       <Flex vertical className={styles.productInfo} gap={8}>
         {renderActionButton()}
         <ProductCardTitle rows={2} onClick={handleClick}>
-          {product.title}
+          {variant.title}
         </ProductCardTitle>
         <Flex className={styles.priceBox}>
           <Flex className={styles.priceWrapper} vertical>
-            {product.compareAtPrice &&
-              product.price.amount < product.compareAtPrice.amount && (
+            {variant.compareAtPrice &&
+              variant.price.amount < variant.compareAtPrice.amount && (
                 <Flex align="center" gap={8}>
                   <Discount
-                    isAvailable={product.stockStatus.isAvailable}
-                    price={product.price}
-                    compareAtPrice={product.compareAtPrice}
+                    isAvailable={variant.stockStatus.isAvailable}
+                    price={variant.price}
+                    compareAtPrice={variant.compareAtPrice}
                   />
                 </Flex>
               )}
             <Text
               className={styles.price}
-              type={product.stockStatus.isAvailable ? undefined : "secondary"}
+              type={variant.stockStatus.isAvailable ? undefined : 'secondary'}
             >
               <Flex align="center" gap={8} wrap="wrap">
                 {isFree ? (
-                  <Badge color="pink" count={t("free")} />
+                  <Badge color="pink" variant="default" count={t('free')} />
                 ) : (
                   <Text
                     type={
-                      !product.stockStatus.isAvailable ? "secondary" : undefined
+                      !variant.stockStatus.isAvailable ? 'secondary' : undefined
                     }
                   >
-                    <Price money={product.price} raw />
+                    <Price money={variant.price} raw />
                   </Text>
                 )}
               </Flex>

@@ -19,7 +19,7 @@ import {
   type ProductCardSwatchesProps,
 } from "@src/components/UI/ProductCards/Swatch/Swatch";
 import { Price } from "@src/components/UI/Price/Price";
-import { Money } from "@src/entity/Money";
+import type { Entity } from "@shopana/entity";
 import { Discount } from "@src/components/UI/Price/Discount";
 import {
   StockStatus,
@@ -56,8 +56,8 @@ export interface ProductCardProps {
   isAvailable: StockStatusProps["stockStatus"];
 
   // Price, Discount
-  price: Money;
-  compareAtPrice?: Money;
+  price: Entity.Money;
+  compareAtPrice?: Entity.Money;
 
   // ProductCardSwatches
   swatches?: ProductCardSwatchesProps["swatches"];

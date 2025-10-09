@@ -1,11 +1,11 @@
 "use client";
 
 import { useBoxBuilderStore } from "@src/store/appStore";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 import { ProductType } from "@src/modules/box-builder/components/ProductCard";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 import { useBoxBuilderQuantityInputProps } from "@src/modules/box-builder/hooks/useBoxBuilderQuantityInputProps";
 
 interface BoxCartLineProps {
@@ -25,6 +25,7 @@ export default function BoxCartLine({ cartLine }: BoxCartLineProps) {
     productId: purchasableId,
     disabled: !cartLine.cost.unitPrice.amount,
     appearance: "card",
+    confirmRemove: true,
   });
 
   const handleClick = () => {
@@ -33,6 +34,7 @@ export default function BoxCartLine({ cartLine }: BoxCartLineProps) {
 
     push(Activity.Product, {
       productHandle: cartLine.purchasable?.handle,
+      variantHandle: cartLine.purchasable?.product?.handle,
       productType: isProductTypeBox
         ? ProductType.Box
         : isProductTypeEnvelope

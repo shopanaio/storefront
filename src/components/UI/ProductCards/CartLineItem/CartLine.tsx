@@ -12,7 +12,7 @@ import {
 } from "@src/components/Product/QuantityInput";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 import { Money } from "@src/components/UI/Price/Money";
 
 const { Text } = Typography;

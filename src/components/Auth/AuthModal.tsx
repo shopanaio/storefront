@@ -1,10 +1,11 @@
 import { Flex, Modal } from "antd";
 import { useModalStore } from "@src/store/appStore";
 import { Auth } from "./Auth";
-import { FullLogo } from "../Layout/Logo";
+import { useLogo } from "@src/hooks/useLogo";
 import { createStyles } from "antd-style";
 
 export const AuthModal = () => {
+  const Logo = useLogo();
   const isAuthModalVisible = useModalStore((state) => state.isAuthModalVisible);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
@@ -20,7 +21,7 @@ export const AuthModal = () => {
     >
       <Flex className={styles.modalContainer} vertical>
         <Flex className={styles.modalHeader}>
-          <FullLogo size={20} />
+          <Logo size={20} />
         </Flex>
         <Auth />
       </Flex>

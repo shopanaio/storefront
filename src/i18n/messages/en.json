@@ -110,7 +110,9 @@
     "remove-confirm-title": "Remove item?",
     "remove-confirm-content": "Do you want to remove {productTitle} from the cart?",
     "remove-confirm-ok": "Remove",
-    "remove-confirm-cancel": "Cancel"
+    "remove-confirm-cancel": "Cancel",
+    "emptyCart": "Your cart is empty",
+    "emptyCartDescription": "Add products you like to start shopping"
   },
 
   "ui": {
@@ -418,5 +420,10 @@
   "Home": {
     "view-all": "View all",
     "go-to-collections": "Go to collections"
+  },
+  "NotFound": {
+    "title": "Oops! Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved. Let's get you back on track!",
+    "goHome": "Go to homepage"
   }
 }

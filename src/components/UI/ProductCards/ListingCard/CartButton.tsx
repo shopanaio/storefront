@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, ButtonProps } from 'antd';
 import { TbShoppingCart, TbCheck } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 
@@ -9,6 +9,7 @@ export interface ProductCartButtonProps {
   isInCart?: boolean;
   isLoading?: boolean;
   onAddToCart?: () => void;
+  size?: ButtonProps['size'];
 }
 
 export const ProductCartButton = ({
@@ -18,13 +19,14 @@ export const ProductCartButton = ({
   isInCart,
   isLoading = false,
   onAddToCart,
+  size,
 }: ProductCartButtonProps) => {
   const t = useTranslations('Product');
 
   return (
     <Button
       className={className}
-      // size="large"
+      size={size}
       color="primary"
       variant={isInCart ? 'outlined' : 'solid'}
       disabled={!isAvailable}
@@ -41,6 +43,7 @@ export const ProductCartButton = ({
         ))
       }
       onClick={isInCart ? undefined : onAddToCart}
+      // eslint-disable-next-line react/no-children-prop
       children={showLabel && (isInCart ? t('in-cart') : t('add-to-cart'))}
     />
   );

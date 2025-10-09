@@ -7,7 +7,7 @@ import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";
 import clsx from "clsx";
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 
 interface CartTableListProps {
   cartLines: Entity.CartLine[];

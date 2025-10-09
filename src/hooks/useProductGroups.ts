@@ -1,13 +1,13 @@
 import { useMemo } from "react";
-import { ApiProductGroup } from "@codegen/schema-client";
+import { Entity } from "@shopana/entity";
 import _ from "lodash";
 
 type PartitionedGroups = {
-  multiple: ApiProductGroup[];
-  single: ApiProductGroup[];
+  multiple: Entity.ProductGroup[];
+  single: Entity.ProductGroup[];
 };
 
-export const useProductGroups = (groups: ApiProductGroup[]): PartitionedGroups => {
+export const useProductGroups = (groups: Entity.ProductGroup[]): PartitionedGroups => {
   return useMemo(() => {
     const [multiple, single] = _.partition(groups, (group) => (group.items?.length ?? 0) > 1);
     return { multiple, single };

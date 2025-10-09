@@ -1,4 +1,5 @@
-import { Flex, Button, Badge } from 'antd';
+import { Flex, Button } from 'antd';
+import { Badge } from '@src/components/UI/Badge';
 import { createStyles } from 'antd-style';
 import { SummaryItem } from './SummaryItem';
 import { SummaryTotals } from './SummaryTotals';
@@ -33,7 +34,7 @@ export const Summary = ({ checkout }: Prop) => {
       <Flex align="center" justify="space-between">
         <Flex align="center" gap={8}>
           <SectionTitle>{t('order-summary')}</SectionTitle>
-          <Badge count={checkout?.totalQuantity} color="blue" />
+          <Badge count={checkout?.totalQuantity} variant="primary" />
         </Flex>
         <Button
           color="default"

@@ -8,6 +8,8 @@ import { ThemeProvider } from "antd-style";
 import { AntdRegistry } from "@src/components/Theme/AntdRegistry";
 import { useEffect } from "react";
 import { setNotificationApi } from "@src/components/UI/Toast/Toast";
+import { BrandProvider } from "@src/providers/brand-context";
+import { brandConfig } from "@src/brand.config";
 
 export const Theme = ({ children }: { children: React.ReactNode }) => {
   const [api, contextHolder] = notification.useNotification({
@@ -33,13 +35,18 @@ export const Theme = ({ children }: { children: React.ReactNode }) => {
           token: {
             // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif;",
+            ...(brandConfig.theme.colorPrimary && {
+              colorPrimary: brandConfig.theme.colorPrimary,
+            }),
           },
         }}
       >
         <App>
-          <GlobalStyle />
-          {contextHolder}
-          {children}
+          <BrandProvider>
+            <GlobalStyle />
+            {contextHolder}
+            {children}
+          </BrandProvider>
         </App>
       </ThemeProvider>
     </AntdRegistry>

@@ -5,7 +5,7 @@ import { createStyles } from "antd-style";
 import React from "react";
 
 import { SaleBadge } from "@src/components/UI/Badges/Sale";
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 import { Money } from "@src/components/UI/Price/Money";
 
 export interface Props {

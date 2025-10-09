@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { createStyles } from 'antd-style';
 
 import {
   Breadcrumbs,
   BreadcrumbsProps,
-} from "@src/components/Layout/Breadcrumbs";
+} from '@src/components/Layout/Breadcrumbs';
+import { Flex } from 'antd';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -18,10 +18,12 @@ export const PageLayout = ({ children, breadcrumbs }: PageLayoutProps) => {
 
   return (
     <div className={styles.mainBg} data-testid="page-layout">
-      <div className={styles.container}>
-        {breadcrumbs && <Breadcrumbs {...breadcrumbs} />}
+      <Flex vertical className="container">
+        <div className={styles.breadcrumbs}>
+          {breadcrumbs && <Breadcrumbs {...breadcrumbs} />}
+        </div>
         {children}
-      </div>
+      </Flex>
     </div>
   );
 };
@@ -31,22 +33,9 @@ const useStyles = createStyles(({ token, css }) => {
     mainBg: css`
       background: ${token.colorBgContainer};
     `,
-    container: css`
-      display: flex;
-      flex-direction: column;
-      padding: ${token.padding}px;
-
-      width: 100%;
-      ${mq.xl} {
-        padding: ${token.padding}px 0;
-        margin-right: auto;
-        margin-left: auto;
-        max-width: 1280px;
-      }
-
-      ${mq.xxl} {
-        max-width: 1400px;
-      }
+    breadcrumbs: css`
+      padding-block: ${token.paddingSM}px;
     `,
+    container: css``,
   };
 });

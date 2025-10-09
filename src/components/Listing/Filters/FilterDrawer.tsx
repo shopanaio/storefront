@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button, Badge } from "antd";
+import { Button } from "antd";
+import { Badge } from "@src/components/UI/Badge";
 import { TbFilter } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { ListingFilter } from "./ListingFilter";
@@ -63,7 +64,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
       >
         {t("filters")}
         {hasActiveFilters && (
-          <Badge color="blue" count={activeFiltersCount} size="small" />
+          <Badge variant="primary" count={activeFiltersCount} size="small" />
         )}
       </Button>
       <DrawerBase

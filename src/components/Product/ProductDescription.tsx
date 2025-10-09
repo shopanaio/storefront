@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Flex, Typography } from "antd";
+import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 
 interface Props {

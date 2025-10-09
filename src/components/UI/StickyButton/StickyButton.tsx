@@ -5,7 +5,7 @@ import { Button, ButtonProps, Flex } from "antd";
 import useToken from "antd/es/theme/useToken";
 import { TbArrowRight } from "react-icons/tb";
 import { Price } from "@src/components/UI/Price/Price";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 /**
  * Sticky button component with white box-shadow border

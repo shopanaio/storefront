@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 export const useProductGallery = (product: Entity.Product): Entity.Media[] => {
   return useMemo(() => {

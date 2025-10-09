@@ -14,7 +14,7 @@ import {
   UiOptionValue,
   useFlattenProductOptions,
 } from "@src/hooks/useFlattenProductOptions";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { VariantCoverOption } from "@src/components/Product/Options/OptionVariantCover";
 
 // Note: Typography.Text is not used here currently

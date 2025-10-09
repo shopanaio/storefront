@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex, Typography } from "antd";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { OptionCard } from "@src/components/UI/OptionCard";
 import { OptionImage } from "@src/components/UI/OptionImage";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";

@@ -1,4 +1,4 @@
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 import { useBoxBuilderCart } from "./useCart";
 import { useBoxBuilderProducts } from "@src/modules/box-builder/hooks/useBoxProducts";
 

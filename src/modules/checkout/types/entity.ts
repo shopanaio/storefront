@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import type { Entity } from '@src/entity';
+import type { Entity } from '@shopana/entity';
 
 /**
  * Checkout domain types namespace
  */
 export namespace Checkout {
-  export type Purchasable = Entity.ListingProduct;
+  export type Purchasable = Entity.ProductVariant;
 
   /**
    * Checkout domain entity shaped like API Checkout.

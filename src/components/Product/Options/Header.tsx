@@ -4,7 +4,7 @@ import { Button, Flex, Tag, Typography } from "antd";
 import { createStyles, css } from "antd-style";
 import { TbChevronRight } from "react-icons/tb";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { useHover } from "@src/components/UI/hooks/useHover";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";

@@ -1,6 +1,7 @@
 import type { Money } from '../Money';
 import type { Media } from '../Media';
 import type { Connection } from '../Connection';
+import { Product } from 'packages/entity/src/Product/product';
 
 /**
  * StockStatus - product availability information
@@ -69,4 +70,7 @@ export interface ProductVariant {
 
   /** Date and time of last variant update */
   updatedAt: string;
+
+  /** Product associated with the variant */
+  product?: Product | null;
 }

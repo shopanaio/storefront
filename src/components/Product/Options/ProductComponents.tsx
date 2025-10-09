@@ -1,36 +1,33 @@
-"use client";
+'use client';
 
-import React, { useCallback, useMemo, useState } from "react";
-import { Flex, Divider, Typography } from "antd";
-import { ComponentOption } from "@src/components/Product/Options/OptionComponent";
-import { ProductCollapse } from "@src/components/Product/ProductCollapse";
-import {
-  ApiProduct,
-  ApiProductGroup,
-  ProductOptionDisplayType,
-} from "@codegen/schema-client";
-import { useProductGroups } from "@src/hooks/useProductGroups";
-import { useTranslations } from "next-intl";
-import { createStyles } from "antd-style";
-import { IncludedComponent } from "@src/components/Product/Options/IncludedComponent";
+import React, { useCallback, useMemo, useState } from 'react';
+import { Flex, Divider, Typography } from 'antd';
+import { ComponentOption } from '@src/components/Product/Options/OptionComponent';
+import { ProductCollapse } from '@src/components/Product/ProductCollapse';
+import { ProductOptionDisplayType } from '@codegen/schema-client';
+import { useProductGroups } from '@src/hooks/useProductGroups';
+import { useTranslations } from 'next-intl';
+import { createStyles } from 'antd-style';
+import { IncludedComponent } from '@src/components/Product/Options/IncludedComponent';
+import { Entity } from '@shopana/entity';
 
 const { Text } = Typography;
 
 interface ProductGroupsProps {
-  product: ApiProduct;
+  product: Entity.Product;
 }
 
 export const ProductComponents = ({ product }: ProductGroupsProps) => {
-  const t = useTranslations("Product");
+  const t = useTranslations('Product');
   const { styles } = useStyles();
 
   const { multiple: multiItemGroups, single: singleItemGroups } =
     useProductGroups(product.groups);
 
   const [selectedGroupItems, setSelectedGroupItems] = useState(() =>
-    multiItemGroups.map((group: ApiProductGroup) => ({
+    multiItemGroups.map((group: Entity.ProductGroup) => ({
       id: group.id,
-      items: group.isMultiple ? [] : [group.items[0]?.product.id],
+      items: group.isMultiple ? [] : [group.items[0]?.node?.id],
     }))
   );
 
@@ -41,7 +38,7 @@ export const ProductComponents = ({ product }: ProductGroupsProps) => {
   }, [selectedGroupItems]);
 
   const handleChange = useCallback(
-    (group: ApiProductGroup, newProductId: string) => {
+    (group: Entity.ProductGroup, newProductId: string) => {
       setSelectedGroupItems((prev) =>
         prev.map((g) => {
           if (g.id !== group.id) return g;
@@ -72,7 +69,7 @@ export const ProductComponents = ({ product }: ProductGroupsProps) => {
 
   return (
     <>
-      <Text className={styles.title}>{t("select-accessories")}</Text>
+      <Text className={styles.title}>{t('select-accessories')}</Text>
       {multiItemGroups.map((group, index, { length }) => {
         const selectedGroup = selectedGroupMap.get(group.id);
         const selectedIds = selectedGroup?.items ?? [];
@@ -97,13 +94,13 @@ export const ProductComponents = ({ product }: ProductGroupsProps) => {
       })}
       {singleItemGroups.length !== 0 && (
         <ProductCollapse
-          title={<Text className={styles.title}>{t("what-included")}</Text>}
-          panelKey={t("what-included-box-key")}
+          title={<Text className={styles.title}>{t('what-included')}</Text>}
+          panelKey={t('what-included-box-key')}
           dense
         >
           <Flex vertical gap={8} style={{ padding: 0, margin: 0 }}>
             {singleItemGroups.map((group, index) => (
-              <IncludedComponent key={index} option={group.items[0].product} />
+              <IncludedComponent key={index} option={group.items[0].node} />
             ))}
           </Flex>
         </ProductCollapse>

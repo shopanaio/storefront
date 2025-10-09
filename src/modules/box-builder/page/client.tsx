@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { createStack } from "@src/modules/box-builder/stackflow/Stack";
-import { useSyncCartState } from "@src/modules/box-builder/hooks/useSyncCartState";
+import { useMemo } from 'react';
+import { createStack } from '@src/modules/box-builder/Stack';
+import { useSyncCartState } from '@src/modules/box-builder/hooks/useSyncCartState';
 
 interface BoxBuilderClientProps {
   isIOS: boolean;

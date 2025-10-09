@@ -28,6 +28,10 @@ export const useCartLineFragment_CartLineFragment = graphql`
         id
         title
         handle
+        product {
+          title
+          handle
+        }
         cover {
           id
           url

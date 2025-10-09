@@ -1,5 +1,5 @@
 "use client";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 import { Button, ButtonProps } from "antd";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

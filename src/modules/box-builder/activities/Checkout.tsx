@@ -3,8 +3,8 @@
 import { useCallback } from 'react';
 import { Checkout as CheckoutComponent } from '@src/modules/checkout';
 import { ActivityComponentType } from '@stackflow/react';
-import Layout from '@src/modules/box-builder/stackflow/Layout';
-import { Activity, useFlow } from '../stackflow/Stack';
+import Layout from '@src/modules/box-builder/components/Layout';
+import { Activity, useFlow } from '../Stack';
 import useCartId from '@src/hooks/cart/useCartId';
 import { useBoxBuilderCartCleanup } from '@src/modules/box-builder/hooks/useBoxBuilderCartCleanup';
 

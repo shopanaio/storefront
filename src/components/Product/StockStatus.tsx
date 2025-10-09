@@ -3,7 +3,7 @@
 import { Tag } from "antd";
 import { TbCircleCheck, TbCross } from "react-icons/tb";
 import { createStyles } from "antd-style";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 export interface Props {
   product?: Entity.Product;

@@ -1,7 +1,7 @@
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
 import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
-import { mapApiProductToProduct } from "@src/entity/Product/mapApiProductToProduct";
+import { mapApiProductToProduct } from "@src/hooks/product/mapApiProductToProduct";
 
 const usePreloadedProduct = (queryReference: PreloadedQuery<ProductQueryType>) => {
   const data = usePreloadedQuery<ProductQueryType>(

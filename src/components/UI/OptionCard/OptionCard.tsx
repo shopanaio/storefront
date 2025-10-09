@@ -79,7 +79,7 @@ const useStyles = createStyles(({ css, token }) => ({
     transition: all 0.2s ease;
     width: 100%;
     height: unset;
-    min-height: 48px;
+    /* min-height: 48px; */
     gap: ${token.marginSM}px;
 
     /* Blue outline when selected */

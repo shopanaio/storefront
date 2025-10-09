@@ -8,7 +8,7 @@ import { ProductCollapse } from "./ProductCollapse";
 import { mq } from "@src/components/Theme/breakpoints";
 import { ProductSpecification } from "./ProductSpecification";
 import { ShowMoreBtn } from "./ShowMoreBtn";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "./Rate/Reviews";
 import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";

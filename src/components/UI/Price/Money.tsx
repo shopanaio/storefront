@@ -1,4 +1,4 @@
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 import { useMoney } from "@src/hooks/useMoney";
 import type { ComponentPropsWithoutRef, ElementType, ReactElement } from "react";
 import { createElement } from "react";

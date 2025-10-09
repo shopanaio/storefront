@@ -1,48 +1,53 @@
-"use client";
+'use client';
 
-import { Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { ProductMain } from "@src/components/Product/ProductMain";
-import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
-import { ActivityComponentType } from "@stackflow/react";
-import Layout from "../stackflow/Layout";
-import { useProduct } from "@src/modules/box-builder/hooks/useProduct";
-import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
-import type * as Entity from "@src/entity/namespace";
-import React, { Suspense } from "react";
-import { ProductType } from "@src/modules/box-builder/components/ProductCard";
-import { BoxActionButton } from "@src/modules/box-builder/components/ActionButton/BoxActionButton";
-import { ProductActionButton } from "@src/modules/box-builder/components/ActionButton/ProductActionButton";
-import { CardActionButton } from "@src/modules/box-builder/components/ActionButton/CardActionButton";
-import { ShowMoreBtn } from "@src/components/Product/ShowMoreBtn";
-import { useTranslations } from "next-intl";
-import { SkeletonProduct } from "@src/components/Product/Skeleton";
+import { Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { ProductMain } from '@src/components/Product/ProductMain';
+import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
+import { ActivityComponentType } from '@stackflow/react';
+import Layout from '@src/modules/box-builder/components/Layout';
+import { useProduct } from '@src/modules/box-builder/hooks/useProduct';
+import React, { Suspense, useState } from 'react';
+import { ProductType } from '@src/modules/box-builder/components/ProductCard';
+import { BoxActionButton } from '@src/modules/box-builder/components/ActionButton/BoxActionButton';
+import { ProductActionButton } from '@src/modules/box-builder/components/ActionButton/ProductActionButton';
+import { CardActionButton } from '@src/modules/box-builder/components/ActionButton/CardActionButton';
+import { ShowMoreBtn } from '@src/components/Product/ShowMoreBtn';
+import { SkeletonProduct } from '@src/components/Product/Skeleton';
+import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
 
 const { Paragraph } = Typography;
 
 type ProductParams = {
   productHandle: string;
+  variantHandle?: string;
   productType: ProductType;
 };
 
 const ProductSection: React.FC<{
   productHandle: string;
+  variantHandle?: string;
   productType: ProductType;
-}> = ({ productHandle, productType }) => {
-  const t = useTranslations("BoxBuilder");
+}> = ({ productHandle, variantHandle, productType }) => {
   const { styles } = useStyles();
   const { product } = useProduct(productHandle);
-  const cartLine = useIsInTheBoxBuilderCart(product?.id ?? "");
-  const isInCart = Boolean(cartLine);
-  const { quantity = 0 } = cartLine || {};
+
+  const [selectedVariantHandle, setSelectedVariantHandle] = useState<string>(
+    variantHandle ?? '' // Populate first variant handle if not provided
+  );
+
+  const { title, currentVariant } = useCurrentVariant({
+    product,
+    variantHandle: selectedVariantHandle,
+  });
 
   // Get first variant for price and stock status
-  const firstVariant = product?.variants?.[0];
-  const isAvailable = firstVariant?.stockStatus?.isAvailable === true;
-  const isFree = parseFloat(firstVariant?.price?.amount ?? "0") === 0;
+  const isAvailable = currentVariant?.stockStatus?.isAvailable === true;
+  const isFree = parseFloat(currentVariant?.price?.amount ?? '0') === 0;
 
-  // TODO: don't fetch reviews
-  const productWithReviews = product as unknown as ApiProduct & Reviews$key;
+  const cartLine = useIsInTheBoxBuilderCart(product?.id ?? '');
+  const isInCart = Boolean(cartLine);
+  const { quantity = 0 } = cartLine || {};
 
   const renderFooter = () => {
     if (!product?.id) {
@@ -60,9 +65,9 @@ const ProductSection: React.FC<{
           isInCart={isInCart}
           quantity={quantity}
           buttonProps={{
-            size: "large",
+            size: 'large',
             className: styles.cartButton,
-            type: "primary",
+            type: 'primary',
           }}
         />
       );
@@ -76,13 +81,13 @@ const ProductSection: React.FC<{
           quantity={quantity}
           appearance="activity"
           buttonProps={{
-            size: "large",
+            size: 'large',
             className: styles.cartButton,
-            type: "primary",
+            type: 'primary',
           }}
           quantityProps={{
-            size: "large",
-            appearance: "activity",
+            size: 'large',
+            appearance: 'activity',
           }}
         />
       );
@@ -96,13 +101,13 @@ const ProductSection: React.FC<{
           quantity={quantity}
           appearance="activity"
           buttonProps={{
-            size: "large",
+            size: 'large',
             className: styles.cartButton,
-            type: "primary",
+            type: 'primary',
           }}
           quantityProps={{
-            size: "large",
-            appearance: "activity",
+            size: 'large',
+            appearance: 'activity',
           }}
         />
       );
@@ -114,17 +119,27 @@ const ProductSection: React.FC<{
   return (
     <>
       <div className={styles.container}>
-        <ProductMain product={productWithReviews} appearance="box-builder" />
-        <Flex vertical gap={16}>
-          {productWithReviews.description && (
-            <>
-              <Paragraph className={styles.description}>
-                {productWithReviews.description}
-              </Paragraph>
-              <ShowMoreBtn />
-            </>
-          )}
-        </Flex>
+        <ProductMain
+          title={title}
+          currentVariant={currentVariant}
+          appearance="box-builder"
+          onChangeVariant={(handle) => {
+            setSelectedVariantHandle(handle);
+          }}
+          // @ts-expect-error fix type
+          product={product}
+        />
+        {/* <ShowMoreBtn /> */}
+        {product && (
+          <Flex vertical gap={16}>
+            {product.description && (
+              <div
+                className={styles.description}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            )}
+          </Flex>
+        )}
         {renderFooter()}
       </div>
     </>
@@ -137,10 +152,11 @@ const Product: ActivityComponentType<ProductParams> = ({
   params: ProductParams;
 }) => {
   return (
-    <Layout showCart={false} paddingTop={false}>
+    <Layout showCart={false} paddingTop={false} paddingBottom={100}>
       <Suspense fallback={<SkeletonProduct />}>
         <ProductSection
           productHandle={params.productHandle}
+          variantHandle={params.variantHandle}
           productType={params.productType}
         />
       </Suspense>
@@ -172,8 +188,13 @@ const useStyles = createStyles(({ token, css }) => {
       height: 48px;
     `,
     description: css`
-      margin-top: ${token.margin}px;
+      margin-top: ${token.marginXS}px;
       font-size: ${token.fontSizeLG}px;
+
+      & p {
+        margin: 0;
+        padding: 0;
+      }
     `,
   };
 });

@@ -89,7 +89,9 @@
     "remove-confirm-title": "Видалити товар?",
     "remove-confirm-content": "Ви хочете видалити {productTitle} з кошика?",
     "remove-confirm-ok": "Видалити",
-    "remove-confirm-cancel": "Скасувати"
+    "remove-confirm-cancel": "Скасувати",
+    "emptyCart": "Ваш кошик порожній",
+    "emptyCartDescription": "Додайте товари, які вам сподобались, щоб почати покупки"
   },
   "ui": {
     "stock": {
@@ -379,5 +381,10 @@
   "Home": {
     "view-all": "Показати всі",
     "go-to-collections": "Перейти до колекцій"
+  },
+  "NotFound": {
+    "title": "Ой! Сторінку не знайдено",
+    "description": "Сторінка, яку ви шукаєте, не існує або була переміщена. Давайте повернемося на правильний шлях!",
+    "goHome": "Повернутися на головну"
   }
 }

@@ -3,7 +3,7 @@
 
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { ProductSlideShowRelay_category$key } from "@src/components/Home/ProductSlideshow/relay/__generated__/ProductSlideShowRelay_category.graphql";
 
 const ProductSlideShowFragment = graphql`

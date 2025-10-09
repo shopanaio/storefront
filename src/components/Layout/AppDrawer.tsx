@@ -1,24 +1,26 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useModalStore } from "@src/store/appStore";
-import { Drawer, Divider, Flex, Button, Typography, Badge } from "antd";
-import { FullLogo } from "./Logo";
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useModalStore } from '@src/store/appStore';
+import { Drawer, Divider, Flex, Button, Typography } from 'antd';
+import { Badge } from '@src/components/UI/Badge';
+import { useLogo } from '@src/hooks/useLogo';
 import {
   TbHeart,
   TbLayoutGridFilled,
   TbPhoneFilled,
   TbShoppingCart,
   TbUserCircle,
-} from "react-icons/tb";
-import { RxCross2 } from "react-icons/rx";
-import { LanguageDropdown } from "./LanguageDropdown";
-import { CurrencyDropdown } from "./CurrencyDropdown";
-import { HeaderLinkButton } from "./HeaderLinkButton";
-import { useTranslations } from "next-intl";
-import { createStyles } from "antd-style";
+} from 'react-icons/tb';
+import { RxCross2 } from 'react-icons/rx';
+import { LanguageDropdown } from './LanguageDropdown';
+import { CurrencyDropdown } from './CurrencyDropdown';
+import { HeaderLinkButton } from './HeaderLinkButton';
+import { useTranslations } from 'next-intl';
+import { createStyles } from 'antd-style';
+import useToken from 'antd/es/theme/useToken';
 
 const { Text } = Typography;
 
@@ -29,15 +31,17 @@ export const AppDrawer: React.FC = () => {
   const isOpen = useModalStore((state) => state.isAppDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsAppDrawerOpen);
   const pathname = usePathname();
-  const t = useTranslations("Header");
+  const t = useTranslations('Header');
   const { styles } = useStyles();
+  const [, token] = useToken();
+  const Logo = useLogo();
 
   const menuLinks = [
-    { label: "Link item 1", path: "/item1" },
-    { label: "Link item 2", path: "/item2" },
-    { label: "Link item 3", path: "/item3" },
-    { label: "Link item 4", path: "/item4" },
-    { label: "Link item 5", path: "/item5" },
+    { label: 'Link item 1', path: '/item1' },
+    { label: 'Link item 2', path: '/item2' },
+    { label: 'Link item 3', path: '/item3' },
+    { label: 'Link item 4', path: '/item4' },
+    { label: 'Link item 5', path: '/item5' },
   ];
 
   return (
@@ -51,7 +55,7 @@ export const AppDrawer: React.FC = () => {
         <div className={`${styles.customDrawer} ant-drawer-content`}>
           <Flex className={styles.drawerHeader} vertical>
             <Flex align="center" justify="space-between">
-              <FullLogo theme="dark" size={32} />
+              <Logo theme="dark" size={32} />
               <Button
                 icon={<RxCross2 size={24} />}
                 type="text"
@@ -62,8 +66,10 @@ export const AppDrawer: React.FC = () => {
 
             <Flex>
               <HeaderLinkButton
-                icon={<TbPhoneFilled size={24} className={styles.supportIcon} />}
-                topText={t("customer-support")}
+                icon={
+                  <TbPhoneFilled size={24} className={styles.supportIcon} />
+                }
+                topText={t('customer-support')}
                 bottomText="+1 (999) 111-11-11"
                 theme="dark"
                 mobileBlock={false}
@@ -77,7 +83,7 @@ export const AppDrawer: React.FC = () => {
               icon={<TbLayoutGridFilled size={24} />}
               className={styles.catalogBtn}
             >
-              {t("catalog")}
+              {t('catalog')}
             </Button>
 
             <Flex className={styles.linksBtnsList} vertical>
@@ -86,8 +92,12 @@ export const AppDrawer: React.FC = () => {
                 icon={<TbShoppingCart size={20} />}
                 className={styles.linkBtn}
               >
-                {t("cart")}
-                <Badge count={4} color="blue" className={styles.badge} />
+                {t('cart')}
+                <Badge
+                  count={4}
+                  variant="primary"
+                  className={styles.badge}
+                />
               </Button>
 
               <Button
@@ -95,8 +105,8 @@ export const AppDrawer: React.FC = () => {
                 icon={<TbHeart size={20} />}
                 className={styles.linkBtn}
               >
-                {t("wishlist")}
-                <Badge count={100} color="default" className={styles.badge} />
+                {t('wishlist')}
+                <Badge count={100} variant="default" className={styles.badge} />
               </Button>
 
               <Button
@@ -105,7 +115,7 @@ export const AppDrawer: React.FC = () => {
                 className={styles.linkBtn}
                 onClick={() => setIsAuthModalVisible(true)}
               >
-                {t("account")}
+                {t('account')}
               </Button>
             </Flex>
 
@@ -113,7 +123,7 @@ export const AppDrawer: React.FC = () => {
 
             <Flex className={styles.menuSection} vertical>
               <Text type="secondary" className={styles.menuListTitle}>
-                {t("menu-title")}
+                {t('menu-title')}
               </Text>
 
               {menuLinks.map((link) => {
@@ -125,8 +135,8 @@ export const AppDrawer: React.FC = () => {
                       className={styles.menuItem}
                       style={{
                         color: isActive
-                          ? "var(--ant-color-primary)"
-                          : "var(--ant-color-text)",
+                          ? 'var(--ant-color-primary)'
+                          : 'var(--ant-color-text)',
                       }}
                     >
                       {link.label}

@@ -1,5 +1,5 @@
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import type { Entity } from '@src/entity';
+import type { Entity } from '@shopana/entity';
 import {
   type ApiCheckout,
   type ApiMoney,

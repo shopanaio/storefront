@@ -1,7 +1,7 @@
 import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 // Function for converting Shopify product to Shopana format
 const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']): Entity.Product | null => {

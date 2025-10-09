@@ -189,7 +189,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   if (!hasProduct) {
-    // notFound();
+    notFound();
   }
 
   return (

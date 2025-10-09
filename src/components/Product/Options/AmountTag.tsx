@@ -1,4 +1,4 @@
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { Price } from "@src/components/UI/Price/Price";
 import { Tag } from "antd";
 

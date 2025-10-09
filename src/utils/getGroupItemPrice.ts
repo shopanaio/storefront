@@ -1,4 +1,4 @@
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 /**
  * Returns the final price for the component (ProductGroupItem).

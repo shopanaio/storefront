@@ -1,4 +1,5 @@
-import { Badge, Flex, Typography } from "antd";
+import { Flex, Typography } from "antd";
+import { Badge } from "@src/components/UI/Badge";
 import { createStyles } from "antd-style";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import type { Checkout } from "@src/modules/checkout/types/entity";
@@ -19,7 +20,7 @@ export const SummaryItem = ({ line }: Prop) => {
         <Badge
           size="default"
           count={line.quantity}
-          color="blue"
+          variant="primary"
           offset={[-4, 4]}
         >
           <Thumbnail

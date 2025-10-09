@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import _ from "lodash";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 /**
  * Hook for processing and structuring product options

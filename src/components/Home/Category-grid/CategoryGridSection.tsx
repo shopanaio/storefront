@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex } from "antd";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import ViewAllButton from "../ViewAllButton";
 import SectionTitle from "../SectionTitle";
 import { useLocale } from "next-intl";

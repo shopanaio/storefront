@@ -16,6 +16,8 @@ export interface UseBoxBuilderQuantityInputPropsParams {
   disabled?: boolean;
   loading?: boolean;
   appearance?: "card" | "activity";
+  /** Whether to show confirmation modal before removing item. Defaults to true. */
+  confirmRemove?: boolean;
 }
 
 export interface BoxBuilderQuantityInputProps {
@@ -32,6 +34,7 @@ export const useBoxBuilderQuantityInputProps = ({
   disabled,
   loading,
   appearance = "card",
+  confirmRemove = true,
 }: UseBoxBuilderQuantityInputPropsParams): BoxBuilderQuantityInputProps => {
   const t = useTranslations("BoxBuilder");
   const formatPrice = useFormatPrice();
@@ -70,6 +73,15 @@ export const useBoxBuilderQuantityInputProps = ({
   };
 
   const handleRemove = () => {
+    if (!confirmRemove) {
+      if (cartLine) {
+        removeFromCart({
+          lineId: cartLine.id,
+        });
+      }
+      return;
+    }
+
     const productTitle = cartLine?.purchasable?.title ?? "";
     const imageUrl = cartLine?.purchasable?.cover?.url ?? "";
 

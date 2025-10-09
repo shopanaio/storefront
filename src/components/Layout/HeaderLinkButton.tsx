@@ -1,4 +1,4 @@
-import { Badge, Button, Flex, Typography } from "antd";
+import { Button, Flex, Typography } from "antd";
 import { ReactNode } from "react";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";

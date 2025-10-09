@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import { Checkbox, Flex, Radio } from "antd";
-import { createStyles } from "antd-style";
-import { useCallback, useMemo, useState } from "react";
-import { OptionsDrawer } from "./OptionsDrawer";
-import { OptionDrawerLayout } from "./DrawerLayout";
-import { DrawerGrid } from "./DrawerGrid";
-import type * as Entity from "@src/entity/namespace";
-import { OptionHeader } from "./Header";
-import { getGroupItemPrice } from "@src/utils/getGroupItemPrice";
-import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import { OptionProductCard } from "@src/components/Product/Options/OptionProductCard";
-import { OptionSelectCard } from "@src/components/Product/Options/OptionSelectCard";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { Checkbox, Flex, Radio } from 'antd';
+import { createStyles } from 'antd-style';
+import { useCallback, useMemo, useState } from 'react';
+import { OptionsDrawer } from './OptionsDrawer';
+import { OptionDrawerLayout } from './DrawerLayout';
+import { DrawerGrid } from './DrawerGrid';
+import type { Entity } from '@shopana/entity';
+import { OptionHeader } from './Header';
+import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
+import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
+import { OptionProductCard } from '@src/components/Product/Options/OptionProductCard';
+import { OptionSelectCard } from '@src/components/Product/Options/OptionSelectCard';
+import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { ProductOptionDisplayType } from '@codegen/schema-client';
 
 interface ComponentOptionProps {
   multiple: boolean;
@@ -70,99 +71,100 @@ export const ComponentOption = ({
 
   /* Selected values to display on the page (uses props) */
   const selectedValues = useMemo<UiOptionValue | UiOptionValue[] | null>(() => {
-    const mapToUiOptionValue = (item: ApiProductGroupItem): UiOptionValue => ({
-      id: item.product.id,
-      handle: item.product.handle || item.product.id,
-      iid: item.product.id,
-      title: item.product.title,
+    const mapToUiOptionValue = (
+      item: Entity.ProductGroupItem
+    ): UiOptionValue => ({
+      id: item.node.id,
+      handle: item.node.handle || item.node.id,
+      title: item.node.title,
       // No swatch and variant for group products
       swatch: undefined,
-      isActive: selectedIds?.includes(item.product.id) ?? false,
+      isActive: selectedIds?.includes(item.node.id) ?? false,
       variant: undefined,
       amount: getGroupItemPrice(item),
     });
 
     if (multiple) {
       const list = options
-        .filter((opt) => selectedIds?.includes(opt.product.id))
+        .filter((opt) => selectedIds?.includes(opt.node.id))
         .map(mapToUiOptionValue);
       return list;
     }
 
-    const found = options.find((opt) => opt.product.id === selectedIds?.[0]);
+    const found = options.find((opt) => opt.node.id === selectedIds?.[0]);
     return found ? mapToUiOptionValue(found) : null;
   }, [multiple, options, selectedIds]);
 
   /* Selected cover to display (from selected product) */
   const selectedCover = useMemo(() => {
     if (!selectedIds || selectedIds.length === 0) {
-      return options[0]?.product.cover;
+      return options[0]?.node.cover;
     }
 
     if (multiple) {
       // For multiple selection take cover of first selected
       const firstSelectedId = selectedIds[0];
-      const found = options.find((opt) => opt.product.id === firstSelectedId);
-      return found?.product.cover || options[0]?.product.cover;
+      const found = options.find((opt) => opt.node.id === firstSelectedId);
+      return found?.node.cover || options[0]?.node.cover;
     }
 
     // For single selection
-    const found = options.find((opt) => opt.product.id === selectedIds[0]);
-    return found?.product.cover || options[0]?.product.cover;
+    const found = options.find((opt) => opt.node.id === selectedIds[0]);
+    return found?.node.cover || options[0]?.node.cover;
   }, [multiple, options, selectedIds]);
 
   /* Selected titles for drawer footer (uses internal draft state) */
   const selectedTitlesForDrawer = useMemo(() => {
     if (multiple) {
       return options
-        .filter((opt) => draftSelectedIds.includes(opt.product.id))
-        .map((opt) => opt.product.title);
+        .filter((opt) => draftSelectedIds.includes(opt.node.id))
+        .map((opt) => opt.node.title);
     }
-    const found = options.find((opt) => opt.product.id === draftSelectedIds[0]);
-    return found ? found.product.title : "";
+    const found = options.find((opt) => opt.node.id === draftSelectedIds[0]);
+    return found ? found.node.title : '';
   }, [multiple, draftSelectedIds, options]);
 
-  const renderOption = (item: ApiProductGroupItem, inDrawer: boolean) => {
+  const renderOption = (item: Entity.ProductGroupItem, inDrawer: boolean) => {
     const isSelected = inDrawer
-      ? draftSelectedIds.includes(item.product.id)
-      : selectedIds?.includes(item.product.id) ?? false;
+      ? draftSelectedIds.includes(item.node.id)
+      : (selectedIds?.includes(item.node.id) ?? false);
 
     const handleClick = () => {
       if (inDrawer) {
         if (multiple) {
           setDraftSelectedIds((prev) =>
-            prev.includes(item.product.id)
-              ? prev.filter((id) => id !== item.product.id)
-              : [...prev, item.product.id]
+            prev.includes(item.node.id)
+              ? prev.filter((id) => id !== item.node.id)
+              : [...prev, item.node.id]
           );
         } else {
-          setDraftSelectedIds([item.product.id]);
+          setDraftSelectedIds([item.node.id]);
         }
       } else {
-        onChange(item.product.id);
+        onChange(item.node.id);
       }
     };
 
     if (inDrawer) {
       return (
         <OptionProductCard
-          key={item.product.id}
-          src={item.product?.cover?.url}
-          alt={item.product?.title || ""}
-          title={item.product.title}
+          key={item.node.id}
+          src={item.node?.cover?.url}
+          alt={item.node?.title || ''}
+          title={item.node.title}
           price={getGroupItemPrice(item)}
           selected={isSelected}
           onClick={handleClick}
-          control={multiple ? "checkbox" : "radio"}
+          control={multiple ? 'checkbox' : 'radio'}
         />
       );
     }
 
     return (
       <Thumbnail
-        key={item.product.id}
-        src={item.product?.cover?.url}
-        alt={item.product?.title ?? "Untitled"}
+        key={item.node.id}
+        src={item.node?.cover?.url}
+        alt={item.node?.title ?? 'Untitled'}
         selected={isSelected}
         onClick={handleClick}
         overlay={

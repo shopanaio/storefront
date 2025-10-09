@@ -19,7 +19,7 @@ import {
   TbChevronUp,
 } from "react-icons/tb";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { useMemo } from "react";
 import { IsomorphicSwiper } from "../MySwiper/IsomorphicSwiper";
 import type { SwiperOptions } from "swiper/types";

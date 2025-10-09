@@ -1,24 +1,28 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Badge } from "antd";
-import { createStyles } from "antd-style";
-import { useTranslations } from "next-intl";
-import { useRoutes } from "@src/hooks/useRoutes";
+import React from 'react';
+import { Empty, Flex, Typography } from 'antd';
+import { Badge } from '@src/components/UI/Badge';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
+import { useRoutes } from '@src/hooks/useRoutes';
 
-import useCart from "@src/hooks/cart/useCart";
+import useCart from '@src/hooks/cart/useCart';
 
-import { CartTable } from "./CartTable";
-import { useModalStore } from "@src/store/appStore";
-import { DrawerBase } from "@src/components/UI/DrawerBase/DrawerBase";
-import { StickyButton } from "@src/components/UI/StickyButton";
+import { CartTable } from './CartTable';
+import { useModalStore } from '@src/store/appStore';
+import { DrawerBase } from '@src/components/UI/DrawerBase/DrawerBase';
+import { StickyButton } from '@src/components/UI/StickyButton';
+import { EmptyCart } from '@src/components/Cart/EmptyCartIcon';
+import useToken from 'antd/es/theme/useToken';
 
 export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();
-  const t = useTranslations("Cart");
+  const t = useTranslations('Cart');
 
   const routes = useRoutes();
   const { cart } = useCart();
+  const [, token] = useToken();
   const isOpen = useModalStore((state) => state.isCartDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsCartDrawerOpen);
 
@@ -32,7 +36,7 @@ export const CartDrawer: React.FC = () => {
     subtotal && (
       <StickyButton
         href={routes.checkout.path()}
-        label={t("checkout")}
+        label={t('checkout')}
         money={subtotal as any}
         className={styles.checkoutButton}
       />
@@ -45,19 +49,58 @@ export const CartDrawer: React.FC = () => {
       onClose={() => setIsOpen(false)}
       title={
         <>
-          {t("cart")} <Badge count={cart?.totalQuantity} color="blue" />
+          {t('cart')} <Badge count={cart?.totalQuantity} variant="primary" />
         </>
       }
       footer={renderFooter()}
       showCloseButton={true}
       contentClassName={styles.drawerContent}
     >
-      <CartTable
-        cartLines={cartLines}
-        variant="drawer"
-        className={styles.cartTable}
-        divider={false}
-      />
+      {cartLines.length === 0 ? (
+        <Flex
+          justify="center"
+          align="center"
+          style={{
+            width: '100%',
+            marginTop: 100,
+          }}
+        >
+          <Empty
+            image={<EmptyCart />}
+            styles={{
+              image: {
+                height: 150,
+              },
+            }}
+            description={
+              <Flex
+                gap={8}
+                vertical
+                align="center"
+                style={{ textAlign: 'center' }}
+              >
+                <Typography.Text
+                  type="secondary"
+                  strong
+                  style={{ fontSize: 16 }}
+                >
+                  {t('emptyCart')}
+                </Typography.Text>
+                <Typography.Text type="secondary">
+                  {t('emptyCartDescription')}
+                </Typography.Text>
+              </Flex>
+            }
+          />
+        </Flex>
+      ) : (
+        <CartTable
+          cartLines={cartLines}
+          variant="drawer"
+          className={styles.cartTable}
+          divider={false}
+        />
+      )}
     </DrawerBase>
   );
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "antd";
+import { Button, ButtonProps } from "antd";
 import { TbHeart } from "react-icons/tb";
 import { useTranslations } from "next-intl";
 import { useAddItemToWishlist } from "@src/hooks/useAddItemToWishlist";
@@ -7,11 +7,13 @@ import { useAddItemToWishlist } from "@src/hooks/useAddItemToWishlist";
 type ProductWishlistButtonProps = {
   productId: string;
   showLabel?: boolean;
+  size?: ButtonProps['size'];
 };
 
 export const ProductWishlistButton: React.FC<ProductWishlistButtonProps> = ({
   productId,
   showLabel,
+  size,
 }) => {
   const { addItem } = useAddItemToWishlist();
   const t = useTranslations("Product");
@@ -26,7 +28,7 @@ export const ProductWishlistButton: React.FC<ProductWishlistButtonProps> = ({
 
   return (
     <Button
-      // size="large"
+      size={size}
       shape={showLabel ? "default" : "circle"}
       onClick={handleClick}
       aria-label={t("add-to-wishlist")}

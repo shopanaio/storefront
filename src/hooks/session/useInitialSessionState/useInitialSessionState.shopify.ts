@@ -1,10 +1,9 @@
 import { UseInitialSessionStateProps } from "./index";
-import { Session } from "@src/entity/Session";
-import { User } from "@src/entity/User";
+import type { Entity } from "@shopana/entity";
 
 export const useInitialSessionStateShopify = (
   props: UseInitialSessionStateProps
-): Session | undefined => {
+): Entity.Session | undefined => {
   const { preloadedSessionQuery } = props;
 
   if (!preloadedSessionQuery?.response) {
@@ -21,7 +20,7 @@ export const useInitialSessionStateShopify = (
   const rawCustomer = response?.data?.customer;
 
   // Map raw customer data to User interface
-  const user: User | null = rawCustomer
+  const user: Entity.User | null = rawCustomer
     ? {
         id: rawCustomer.id,
         email: rawCustomer.email,

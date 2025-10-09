@@ -4,7 +4,7 @@ import { Button, Flex, Modal, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { FullBox } from "@src/modules/box-builder/Images/FullBox";
 import { useTranslations } from "next-intl";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 import { useEffect, useState } from "react";
 import { useBoxBuilderCart } from "@src/modules/box-builder/hooks/useCart";
 import { useClearBoxBuilderCart } from "@src/modules/box-builder/hooks/useClearCart";

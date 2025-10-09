@@ -1,5 +1,5 @@
 import type { ProductVariant } from './variant';
-import type { Tag, TagConnection } from '../Tag';
+import type { TagConnection } from '../Tag';
 import type { ProductGroup } from './ProductGroup';
 import type { Category } from '../Category';
 import type { ProductOption } from './ProductOption';
@@ -11,14 +11,11 @@ import type { ReviewConnection } from '../Review';
  * ProductFull interface - represents a complete product with all data
  * Product-level data (category, rating, options, groups, etc) + variants
  */
-export interface Product  {
+export interface Product {
   __typename?: 'Product';
 
   /** Global unique identifier */
   id: string;
-
-  /** Internal object identifier */
-  iid: string;
 
   /** URL-friendly slug for product */
   handle: string;

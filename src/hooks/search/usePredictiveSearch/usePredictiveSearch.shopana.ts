@@ -5,6 +5,7 @@ import {
 } from "react-relay";
 import { ApiArticle, ApiCategory, ApiProduct } from "codegen/schema-client";
 import { graphql } from "relay-runtime";
+import type { usePredictiveSearchQuery as UsePredictiveSearchQueryType } from "./__generated__/usePredictiveSearchQuery.graphql";
 
 export const usePredictiveSearchQuery = graphql`
   query usePredictiveSearchQuery($query: String!) {
@@ -13,6 +14,10 @@ export const usePredictiveSearchQuery = graphql`
         id
         title
         handle
+        product {
+          title
+          handle
+        }
         cover {
           url
         }
@@ -85,14 +90,31 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
     // run query
     setState((prev) => ({ ...prev, loading: true }));
 
-    const subscription = fetchQuery(
+    const subscription = fetchQuery<UsePredictiveSearchQueryType>(
       environment,
       usePredictiveSearchQuery,
       { query: searchTerm }
     ).subscribe({
       next: (data) => {
         const maxLength = 5;
-        const products = (data?.predictiveSearch?.products?.slice(0, maxLength) ?? []) as unknown as ApiProduct[];
+        const rawProducts = data?.predictiveSearch?.products?.slice(0, maxLength) ?? [];
+
+        // Transform products to use product.handle and concatenated title
+        const products = rawProducts.map((variant: any) => {
+          const parentTitle = variant?.product?.title;
+          const concatenatedTitle = [parentTitle, variant.title]
+            .filter(Boolean)
+            .join(' ');
+
+          return {
+            ...variant,
+            title: concatenatedTitle,
+            // Use product handle for URL building, keep variant handle separately
+            handle: variant?.product?.handle ?? variant.handle,
+            variantHandle: variant.handle,
+          };
+        }) as unknown as ApiProduct[];
+
         const categories = (data?.predictiveSearch?.categories ?? []) as unknown as ApiCategory[];
         const articles = (data?.predictiveSearch?.articles ?? []) as unknown as ApiArticle[];
 

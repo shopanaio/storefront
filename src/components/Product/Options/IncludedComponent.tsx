@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { Flex, Image, Typography } from "antd";
-import { createStyles, cx } from "antd-style";
-import { useState } from "react";
-import { OptionsDrawer } from "./OptionsDrawer";
-import type * as Entity from "@src/entity/namespace";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
-import { mq } from "@src/components/Theme/breakpoints";
-import { OptionCard } from "@src/components/UI/OptionCard";
-import { OptionImage } from "@src/components/UI/OptionImage";
-import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
-import { IncludedInSetBadge } from "./IncludedInSetBadge";
-import { OptionDrawerLayout } from "@src/components/Product/Options/DrawerLayout";
+import { Flex, Image, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { useState } from 'react';
+import { OptionsDrawer } from './OptionsDrawer';
+import type { Entity } from '@shopana/entity';
+import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
+import { mq } from '@src/components/Theme/breakpoints';
+import { OptionCard } from '@src/components/UI/OptionCard';
+import { OptionImage } from '@src/components/UI/OptionImage';
+import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
+import { IncludedInSetBadge } from './IncludedInSetBadge';
+import { OptionDrawerLayout } from '@src/components/Product/Options/DrawerLayout';
 
 const { Text } = Typography;
 
 interface Props {
-  option: Entity.Product;
+  option: Entity.ProductGroupItem['node'];
 }
 
 export const IncludedComponent = ({ option }: Props) => {
@@ -54,7 +54,7 @@ export const IncludedComponent = ({ option }: Props) => {
           />
 
           <Text strong>{option.title}</Text>
-          <Text>{option.description}</Text>
+          <Text>TODO: description</Text>
         </OptionDrawerLayout>
       </OptionsDrawer>
     </>

@@ -3,7 +3,7 @@ import { Flex, Button, Typography, Empty } from "antd";
 import { SearchProductCard } from "./SearchProductCard";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { ApiArticle } from "@codegen/schema-client";
 import { useLocale } from "next-intl";
 

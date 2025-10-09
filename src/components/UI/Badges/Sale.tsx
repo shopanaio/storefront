@@ -1,4 +1,4 @@
-import { Badge } from "antd";
+import { Badge } from "@src/components/UI/Badge";
 import { calcSale } from "@src/utils/calcSale";
 import { createStyles } from "antd-style";
 

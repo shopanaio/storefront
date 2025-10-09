@@ -10,8 +10,8 @@ import BoxBuilderGrid from "@src/modules/box-builder/components/BoxBuilderGrid";
 import { ActivityComponentType } from "@stackflow/react";
 import Layout, {
   LayoutFooterButton,
-} from "@src/modules/box-builder/stackflow/Layout";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+} from "@src/modules/box-builder/components/Layout";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 import { useCategory } from "@src/modules/box-builder/hooks/useCategory";
 import { BOX_BUILDER_CONFIG } from "@src/modules/box-builder/config/categories";
 import { CheckoutSkeleton } from "@src/modules/checkout/components/CheckoutSkeleton";

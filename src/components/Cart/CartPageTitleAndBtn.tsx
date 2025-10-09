@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge, Button, Flex, Typography } from "antd";
+import { Button, Flex, Typography } from "antd";
+import { Badge } from "@src/components/UI/Badge";
 import { createStyles } from "antd-style";
 import { TbArrowLeft } from "react-icons/tb";
 import { useTranslations, useLocale } from "next-intl";
@@ -19,7 +20,7 @@ export const CartPageTitleAndBtn = ({ title, productsCount }: Props) => {
     <Flex className={styles.titleSection}>
       <Flex>
         <Typography.Text className={styles.pageTitle}>{title}</Typography.Text>
-        <Badge count={productsCount} color="blue" offset={[5, 5]} />
+        <Badge count={productsCount} variant="primary" offset={[5, 5]} />
       </Flex>
 
       <Flex align="end">

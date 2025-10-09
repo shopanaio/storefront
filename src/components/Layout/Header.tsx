@@ -1,7 +1,9 @@
+'use client';
+
 import { Flex } from "antd";
 import Link from "next/link";
 import { mq } from "@src/components/Theme/breakpoints";
-import { FullLogo } from "./Logo";
+import { useLogo } from "@src/hooks/useLogo";
 import { CartButton } from "./CartButton";
 import { DesktopSearch } from "../Search/DesktopSearch";
 import { useTranslations } from "next-intl";
@@ -14,13 +16,14 @@ import { AppDrawerButton } from "./AppDrawerButton";
 export const Header: React.FC = () => {
   const t = useTranslations("Header");
   const { styles } = useStyles();
+  const Logo = useLogo();
 
   return (
     <div className={styles.container}>
       <div className={styles.inner}>
         <AppDrawerButton />
         <Link className={styles.logo} href="/">
-          <FullLogo theme="light" size={34} />
+          <Logo theme="light" size={34} />
         </Link>
         <DesktopSearch />
         <Flex className={styles.actions}>

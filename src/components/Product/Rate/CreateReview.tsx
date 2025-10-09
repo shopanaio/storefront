@@ -13,7 +13,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { TbInfoCircle } from "react-icons/tb";
 import TextArea from "antd/es/input/TextArea";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { useCreateReview } from "@src/hooks/useCreateReview";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 const { Text, Paragraph } = Typography;

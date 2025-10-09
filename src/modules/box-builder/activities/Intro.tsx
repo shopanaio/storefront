@@ -5,9 +5,9 @@ import { Flex } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import HowItWorks from "@src/modules/box-builder/components/HowItWorks";
-import Layout from "@src/modules/box-builder/stackflow/Layout";
-import { LayoutFooterButton } from "@src/modules/box-builder/stackflow/Layout";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import Layout from "@src/modules/box-builder/components/Layout";
+import { LayoutFooterButton } from "@src/modules/box-builder/components/Layout";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 
 const Intro: ActivityComponentType = () => {
   const { styles } = useStyles();

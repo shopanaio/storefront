@@ -4,7 +4,7 @@ import {
   ProductCardProps,
   ProductCard,
 } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { CurrencyCode } from "@codegen/schema-client";
 
 import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";

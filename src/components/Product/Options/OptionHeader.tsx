@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Button, Flex, Tag, Typography } from "antd";
-import { createStyles, css } from "antd-style";
-import { TbChevronRight } from "react-icons/tb";
-import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import type * as Entity from "@src/entity/namespace";
-import { useHover } from "@src/components/UI/hooks/useHover";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import { AmountTag } from "@src/components/Product/Options/AmountTag";
+import { Button, Flex, Tag, Typography } from 'antd';
+import { createStyles, css } from 'antd-style';
+import { TbChevronRight } from 'react-icons/tb';
+import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
+import type { Entity } from '@shopana/entity';
+import { useHover } from '@src/components/UI/hooks/useHover';
+import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { AmountTag } from '@src/components/Product/Options/AmountTag';
 
 const { Text } = Typography;
 
@@ -36,8 +36,8 @@ export const OptionHeader = ({
   const selectedValues: UiOptionValue[] = Array.isArray(value)
     ? value
     : value
-    ? [value]
-    : [];
+      ? [value]
+      : [];
 
   return (
     <Flex
@@ -52,18 +52,18 @@ export const OptionHeader = ({
           <Thumbnail
             hovered={isHovered}
             src={cover.url}
-            alt={selectedValues.map((v) => v.title).join(", ")}
+            alt={selectedValues.map((v) => v.title).join(', ')}
             className={styles.cover}
           />
         )}
         <Flex vertical>
-          <Text style={{ display: "flex", gap: 8 }}>{title}</Text>
+          <Text style={{ display: 'flex', gap: 8 }}>{title}</Text>
           {selectedValues.length ? (
             <Flex vertical={selectedValues.length > 1}>
               {selectedValues.map((v, idx) => (
                 <Text key={idx} className={styles.selectedTitle}>
                   {v.title}
-                  {v.amount && <AmountTag money={v.amount} borderless />}
+                  {v.amount && <AmountTag money={v.amount} />}
                 </Text>
               ))}
             </Flex>
@@ -74,9 +74,9 @@ export const OptionHeader = ({
         className={styles.chevronButton}
         icon={<TbChevronRight />}
         onClick={onClick}
-        size="large"
+        size="small"
         variant="outlined"
-        color={isHovered ? "primary" : "default"}
+        color={isHovered ? 'primary' : 'default'}
       />
     </Flex>
   );

@@ -1,55 +1,53 @@
-"use client";
+'use client';
 
-import { Flex, Typography, Button } from "antd";
-import { createStyles } from "antd-style";
-import React from "react";
-import { AdditionalInfoSection } from "./AdditionalInfoSection";
-import { StockStatus } from "./StockStatus";
-import { AdditionalInfo } from "./AdditionalInfo";
-import type * as Entity from "@src/entity/namespace";
-import { PriceAndSale } from "./PriceAndSale";
-import { useTranslations } from "next-intl";
-import { useRoutes } from "@src/hooks/useRoutes";
-import { ProductComponents } from "@src/components/Product/Options/ProductComponents";
-import { ProductRating } from "../UI/Rating/Rating";
-import { ProductWishlistButton } from "@src/components/Listing/ProductWishlistButton";
-import { ProductOptions } from "@src/components/Product/Options/ProductOptions";
+import { Flex, Typography, Button } from 'antd';
+import { createStyles } from 'antd-style';
+import React from 'react';
+import { AdditionalInfoSection } from './AdditionalInfoSection';
+import { StockStatus } from './StockStatus';
+import type { Entity } from '@shopana/entity';
+import { PriceAndSale } from './PriceAndSale';
+import { useTranslations } from 'next-intl';
+import { useRoutes } from '@src/hooks/useRoutes';
+import { ProductComponents } from '@src/components/Product/Options/ProductComponents';
+import { ProductRating } from '../UI/Rating/Rating';
+import { ProductWishlistButton } from '@src/components/Listing/ProductWishlistButton';
+import { ProductOptions } from '@src/components/Product/Options/ProductOptions';
 import {
   getGalleryStyles,
   GalleryBreakpointSettings,
-} from "@src/utils/galleryStyles";
-import { breakpoints, mq } from "@src/components/Theme/breakpoints";
-import { useProductGallery } from "@src/hooks/useProductGallery";
-import { useGalleryBreakpoints } from "@src/hooks/useGalleryBreakpoints";
-import { ProductCartButton } from "@src/components/UI/ProductCards/ListingCard/CartButton";
-import { ProductGallery } from "@src/components/Product/ProductGallery";
-import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";
-import useAddItemToCart from "@src/hooks/cart/useAddItemToCart";
-import { useProductDisplay } from "@src/hooks/useProductDisplay";
+} from '@src/utils/galleryStyles';
+import { breakpoints, mq } from '@src/components/Theme/breakpoints';
+import { useProductGallery } from '@src/hooks/useProductGallery';
+import { useGalleryBreakpoints } from '@src/hooks/useGalleryBreakpoints';
+import { ProductCartButton } from '@src/components/UI/ProductCards/ListingCard/CartButton';
+import { ProductGallery } from '@src/components/Product/ProductGallery';
+import useIsInTheCart from '@src/hooks/cart/useIsInTheCart';
+import useAddItemToCart from '@src/hooks/cart/useAddItemToCart';
 
 const { Text, Title } = Typography;
 
 const defaultBreakpoints: Record<number, GalleryBreakpointSettings> = {
   0: {
-    thumbnailDirection: "horizontal",
+    thumbnailDirection: 'horizontal',
     thumbnailsPerView: 5,
     aspectRatio: 1,
     thumbnailSize: 70,
   },
   [breakpoints.lg]: {
-    thumbnailDirection: "horizontal",
+    thumbnailDirection: 'horizontal',
     thumbnailsPerView: 6,
     aspectRatio: 1,
     thumbnailSize: 90,
   },
   [breakpoints.xl]: {
-    thumbnailDirection: "vertical",
+    thumbnailDirection: 'vertical',
     thumbnailsPerView: 7,
     aspectRatio: 1,
     thumbnailSize: 90,
   },
   [breakpoints.xxl]: {
-    thumbnailDirection: "vertical",
+    thumbnailDirection: 'vertical',
     thumbnailsPerView: 8,
     aspectRatio: 1,
     thumbnailSize: 90,
@@ -57,47 +55,53 @@ const defaultBreakpoints: Record<number, GalleryBreakpointSettings> = {
 };
 
 interface ProductMainProps {
-  /** Product entity loaded on server */
-  product: Entity.Product;
-  galleryBreakpoints?: Record<number, GalleryBreakpointSettings>;
-  appearance?: "page" | "box-builder";
   /**
-   * Variant handle selected in the URL. When present, we render variant-specific
-   * data (price, compareAtPrice, cover) while keeping product-level data intact.
+   * Product entity loaded on server
    */
-  selectedVariantHandle?: string;
+  product: Entity.Product;
+  /**
+   * Gallery breakpoints for the product gallery
+   */
+  galleryBreakpoints?: Record<number, GalleryBreakpointSettings>;
+  /**
+   * Appearance of the product main component
+   */
+  appearance?: 'page' | 'box-builder';
   /**
    * Callback to notify about variant change. Should be provided by the page-level component
    * to update the URL query without navigation.
    */
-  onChangeVariant?: (handle: string | null) => void;
+  onChangeVariant: (handle: string) => void;
+  /**
+   * Title of the product and variant
+   */
+  title: string;
+  /**
+   * Current variant of the product
+   */
+  currentVariant: Entity.ProductVariant;
 }
 
 export const ProductMain = ({
   product,
   galleryBreakpoints = defaultBreakpoints,
-  appearance = "page",
-  selectedVariantHandle,
+  appearance = 'page',
   onChangeVariant,
+  title,
+  currentVariant,
 }: ProductMainProps) => {
-  const t = useTranslations("Product");
+  const t = useTranslations('Product');
   const routes = useRoutes();
   const { addToCart, isInFlight } = useAddItemToCart();
 
-  // Use the new hook to prepare display data
   const {
-    currentVariant,
-    title,
-    price,
-    compareAtPrice,
     cover,
     gallery: variantGallery,
     stockStatus,
     sku,
-    productData,
-  } = useProductDisplay({ product, selectedVariantHandle });
-
-  // Check if variant is in cart
+    compareAtPrice,
+    price,
+  } = currentVariant;
   const { isInCart } = useIsInTheCart({ purchasableId: currentVariant.id });
 
   const gallery = useProductGallery({
@@ -114,8 +118,8 @@ export const ProductMain = ({
     galleryBreakpoints: styleBreakpoints,
   });
 
-  const groupsLength = productData.groups?.length ?? 0;
-  const optionsLength = productData.options?.length ?? 0;
+  const groupsLength = product.groups?.length ?? 0;
+  const optionsLength = product.options?.length ?? 0;
 
   return (
     <div className={styles.container}>
@@ -129,13 +133,13 @@ export const ProductMain = ({
       <Flex vertical className={styles.productInfo}>
         <Flex vertical gap={16}>
           <Flex vertical>
-            {productData.category && (
+            {product.category && (
               <Button
                 type="link"
-                href={routes.category.path(productData.category.handle)}
+                href={routes.category.path(product.category.handle)}
                 className={styles.categoryButton}
               >
-                {productData.category.title}
+                {product.category.title}
               </Button>
             )}
             <Title level={3} className={styles.title}>
@@ -145,8 +149,8 @@ export const ProductMain = ({
               <Flex wrap gap={20}>
                 <StockStatus stockStatus={stockStatus} />
                 <ProductRating
-                  rating={productData.rating.rating}
-                  ratingCount={productData.rating.count}
+                  rating={product.rating.rating}
+                  ratingCount={product.rating.count}
                   size="large"
                   compact={false}
                 />
@@ -156,13 +160,13 @@ export const ProductMain = ({
                   type="secondary"
                   /* className={styles.productSku} */ ellipsis
                 >
-                  {t("sku")}
+                  {t('sku')}
                   {sku}
                 </Text>
               )}
             </Flex>
           </Flex>
-          {(appearance === "box-builder" || groupsLength > 3) && (
+          {(appearance === 'box-builder' || groupsLength > 3) && (
             <PriceAndSale
               compareAtPrice={compareAtPrice}
               price={price}
@@ -173,14 +177,16 @@ export const ProductMain = ({
             <ProductOptions
               product={product}
               currentVariant={currentVariant}
-              onOptionSelect={(optionId, value) => {
+              onOptionSelect={(_, value) => {
                 const nextHandle = value.variant?.handle ?? null;
-                onChangeVariant?.(nextHandle);
+                if (nextHandle) {
+                  onChangeVariant?.(nextHandle);
+                }
               }}
             />
           )}
           {groupsLength > 0 && <ProductComponents product={product} />}
-          {appearance === "page" && (
+          {appearance === 'page' && (
             <Flex className={styles.buySection} vertical gap={16}>
               <PriceAndSale
                 compareAtPrice={compareAtPrice}
@@ -192,6 +198,7 @@ export const ProductMain = ({
                 <ProductCartButton
                   isAvailable={stockStatus.isAvailable}
                   showLabel
+                  size="large"
                   className={styles.cartBtn}
                   isInCart={isInCart}
                   isLoading={isInFlight}
@@ -205,11 +212,14 @@ export const ProductMain = ({
                   }}
                 />
               </Flex>
-              <ProductWishlistButton productId={productData.id} showLabel />
-              <AdditionalInfo />
+              <ProductWishlistButton
+                productId={product.id}
+                showLabel
+                size="large"
+              />
             </Flex>
           )}
-          {appearance === "page" && <AdditionalInfoSection />}
+          {appearance === 'page' && <AdditionalInfoSection />}
         </Flex>
       </Flex>
     </div>

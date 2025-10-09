@@ -1,7 +1,7 @@
 import { cmsPick } from "@src/cms/pick";
 import useCartShopana from "./useCart.shopana";
 import useCartShopify from "./useCart.shopify";
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 
 type UseCart = () => {
   cart: Entity.Cart | null;

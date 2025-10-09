@@ -9,10 +9,12 @@ import { EmptyBox } from '../Images/EmptyBox';
 import { useBoxBuilderCart } from '@src/modules/box-builder/hooks/useCart';
 import Progress from '@src/modules/box-builder/components/Progress';
 import { ActivityComponentType } from '@stackflow/react';
-import Layout, { LayoutFooterButton } from '../stackflow/Layout';
-import { Activity, useFlow } from '@src/modules/box-builder/stackflow/Stack';
+import Layout, {
+  LayoutFooterButton,
+} from '@src/modules/box-builder/components/Layout';
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from '@shopana/entity';
 import BoxCartLine from '@src/modules/box-builder/components/BoxCartLine';
 
 const { Text, Title } = Typography;
@@ -43,7 +45,7 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
             push(Activity.Checkout, {});
           }}
           label={t('checkout')}
-          money={cart?.cost?.totalAmount as ApiMoney}
+          money={cart?.cost?.subtotalAmount}
           size="large"
         />
       }

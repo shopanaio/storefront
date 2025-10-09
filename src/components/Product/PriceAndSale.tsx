@@ -1,6 +1,6 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { Price } from "../UI/Price/Price";
 import { SaleBadge } from "../UI/Badges/Sale";
 import { ProductWishlistButton } from "../Listing/ProductWishlistButton";

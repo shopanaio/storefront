@@ -1,7 +1,7 @@
 import React from "react";
 import { useFragment } from "react-relay";
 import { ProductCard, ProductType } from "./ProductCard";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { UseProductCardFragment } from "@src/components/Listing/relay/useListingProductCardFragment.shopify";
 import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
 

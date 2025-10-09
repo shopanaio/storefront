@@ -11,9 +11,9 @@ import {
 } from "react-relay";
 import { Listing } from "@src/relay/queries/Listing.shopana";
 import BoxBuilderGrid from "@src/modules/box-builder/components/BoxBuilderGrid";
-import Layout from "@src/modules/box-builder/stackflow/Layout";
-import { LayoutFooterButton } from "@src/modules/box-builder/stackflow/Layout";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import Layout from "@src/modules/box-builder/components/Layout";
+import { LayoutFooterButton } from "@src/modules/box-builder/components/Layout";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 import React, { Suspense } from "react";
 import type { Listing$key } from "@src/relay/queries/__generated__/Listing.graphql";
 import { PersistedModal } from "@src/modules/box-builder/components/PersistedModal";

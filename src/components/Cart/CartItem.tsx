@@ -5,7 +5,7 @@ import { App, Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
-import { Entity } from "@src/entity";
+import type { Entity } from "@shopana/entity";
 
 const { Text } = Typography;
 
@@ -13,12 +13,15 @@ interface CartItemProps {
   cartLine: Entity.CartLine;
   onClick?: () => void;
   variant?: "drawer" | "page";
+  /** Whether to show confirmation modal before removing item. Defaults to false. */
+  confirmRemove?: boolean;
 }
 
 export const CartItem = ({
   cartLine,
   onClick,
   variant = "drawer",
+  confirmRemove = false,
 }: CartItemProps) => {
   const { removeFromCart, loading: isRemoving } = useRemoveItemFromCart();
   const { updateQuantity, loading: isUpdating } = useUpdateCartLineQuantity();
@@ -34,6 +37,13 @@ export const CartItem = ({
   const cartItemId = cartLine.id;
   const purchasable = cartLine.purchasable ?? {};
 
+  // Concatenate parent product title with variant title
+  const parentTitle = (purchasable as any)?.product?.title;
+  const variantTitle = purchasable.title;
+  const productTitle = [parentTitle, variantTitle]
+    .filter(Boolean)
+    .join(' ') || "";
+
   const increment = () => {
     updateQuantity({ cartItemId, quantity: quantity + 1 });
   };
@@ -45,7 +55,13 @@ export const CartItem = ({
   };
 
   const handleRemove = () => {
-    const productTitle = purchasable.title ?? "";
+    if (!confirmRemove) {
+      removeFromCart({
+        lineId: cartLine.id,
+      });
+      return;
+    }
+
     const imageUrl = purchasable.cover?.url ?? "";
 
     modal.confirm({
@@ -74,7 +90,7 @@ export const CartItem = ({
   return (
     <CartLine
       id={cartLine.id}
-      title={purchasable.title ?? ""}
+      title={productTitle}
       imageUrl={purchasable.cover?.url ?? ""}
       quantity={quantity}
       unitPrice={cartLine.cost.unitPrice}

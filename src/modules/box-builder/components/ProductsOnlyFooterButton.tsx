@@ -2,9 +2,9 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { LayoutFooterButton } from "@src/modules/box-builder/stackflow/Layout";
+import { LayoutFooterButton } from "@src/modules/box-builder/components/Layout";
 import { useBoxBuilderProgress } from "@src/modules/box-builder/hooks/useCartProgress";
-import { Activity, useFlow } from "@src/modules/box-builder/stackflow/Stack";
+import { Activity, useFlow } from "@src/modules/box-builder/Stack";
 
 interface ProductsOnlyFooterButtonProps {
   onClickOverride?: () => void;

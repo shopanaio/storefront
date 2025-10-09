@@ -2,7 +2,7 @@
 
 import { Flex, Button } from "antd";
 import { createStyles } from "antd-style";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 interface Props {
   tags: Entity.Edge<Entity.Tag>[];

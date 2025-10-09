@@ -6,11 +6,12 @@ import { Product } from '@src/components/Product/Product';
 import { useRelayEnvironment } from 'react-relay';
 import useSerializablePreloadedQuery from '@src/relay/useSerializablePreloadedQuery';
 import { useQuery } from '@src/providers/relay-query-provider';
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from '@shopana/entity';
 import { Reviews$key } from '@src/relay/queries/__generated__/Reviews.graphql';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useSearchParams } from 'next/navigation';
 import usePreloadedProduct from '@src/hooks/product/usePreloadedProduct';
+import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
 
 export const PageClient = () => {
   const environment = useRelayEnvironment();
@@ -22,9 +23,8 @@ export const PageClient = () => {
    * Selected variant handle synchronized with the URL query (?variant=...)
    * URL is updated using history.replaceState to avoid full route navigation.
    */
-  const [selectedVariantHandle, setSelectedVariantHandle] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedVariantHandle, setSelectedVariantHandle] =
+    useState<string>('');
 
   // Convert serializable query to Relay PreloadedQuery
   const queryReference = useSerializablePreloadedQuery(
@@ -37,16 +37,15 @@ export const PageClient = () => {
 
   // Initialize selected variant from URL on first render and when URL changes externally
   useEffect(() => {
-    const v = searchParams?.get('variant') || undefined;
-    setSelectedVariantHandle(v || undefined);
+    setSelectedVariantHandle(searchParams?.get('variant') || '');
   }, [searchParams]);
 
   /**
    * Update the URL's `variant` query param without triggering Next navigation,
    * and keep the product data as-is (SPA-like behavior).
    */
-  const handleChangeVariant = useCallback((handle: string | null) => {
-    setSelectedVariantHandle(handle ?? undefined);
+  const handleChangeVariant = useCallback((handle: string) => {
+    setSelectedVariantHandle(handle);
 
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -59,15 +58,15 @@ export const PageClient = () => {
     }
   }, []);
 
+  // Find current variant for breadcrumb title
+  const { currentVariant, title } = useCurrentVariant({
+    product,
+    variantHandle: selectedVariantHandle,
+  });
+
   if (!product) {
     return null;
   }
-
-  // Find current variant for breadcrumb title
-  const currentVariant = product.variants?.find(
-    (v) => v.handle === selectedVariantHandle
-  ) || product.variants?.[0];
-  const breadcrumbTitle = currentVariant?.title || product.title;
 
   return (
     <PageLayout
@@ -80,15 +79,14 @@ export const PageClient = () => {
             href: routes.category.path(breadcrumb.handle),
             title: breadcrumb.title,
           })),
-          {
-            title: breadcrumbTitle,
-          },
+          { title },
         ],
       }}
     >
       <Product
         product={product as Entity.Product & Reviews$key}
-        selectedVariantHandle={selectedVariantHandle}
+        currentVariant={currentVariant}
+        title={title}
         onChangeVariant={handleChangeVariant}
       />
     </PageLayout>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CreateReview } from "./CreateReview";
 import { ReviewSended } from "./ReviewSended";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 
 type ModalType = "create" | "success";
 

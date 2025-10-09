@@ -3,7 +3,7 @@
 import { Flex, Image, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { Price } from "@src/components/UI/Price/Price";
 import { calcSale } from "@src/utils/calcSale";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";

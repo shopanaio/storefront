@@ -112,7 +112,7 @@ const useStyles = createStyles(({ token, css }) => {
       background: linear-gradient(
         to right,
         ${token.colorPrimary},
-        ${token.pink}
+        ${token["cyan-6"]}
       );
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;

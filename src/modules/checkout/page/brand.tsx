@@ -1,11 +1,15 @@
+'use client';
+
 import { Flex } from "antd";
-import { FullLogo } from "@src/components/Layout/Logo";
+import { useLogo } from "@src/hooks/useLogo";
 
 export const CheckoutBrand = () => {
+  const Logo = useLogo();
+
   return (
     <>
       <Flex className="container" justify="center">
-        <FullLogo theme="light" size={32} />
+        <Logo theme="light" size={32} />
       </Flex>
     </>
   );

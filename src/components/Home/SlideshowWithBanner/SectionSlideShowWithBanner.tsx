@@ -4,7 +4,7 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ProductCard } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import Banner from "./Banner";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";

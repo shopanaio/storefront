@@ -2,7 +2,7 @@ import { Button, Flex, Progress, Rate, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { TbStarFilled } from "react-icons/tb";
 import { mq } from "@src/components/Theme/breakpoints";
-import type * as Entity from "@src/entity/namespace";
+import type { Entity } from "@shopana/entity";
 import { useTranslations } from "next-intl";
 import { useReviewStore } from "@src/store/appStore";
 

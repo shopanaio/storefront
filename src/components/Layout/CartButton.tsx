@@ -4,7 +4,8 @@ import { useTranslations } from "next-intl";
 import useCart from "@src/hooks/cart/useCart";
 import { Money } from "@src/components/UI/Price/Money";
 import { createStyles } from "antd-style";
-import { Button, Badge } from "antd";
+import { Button } from "antd";
+import { Badge } from "@src/components/UI/Badge";
 import useToken from "antd/es/theme/useToken";
 import { mq } from "@src/components/Theme/breakpoints";
 import clsx from "clsx";
@@ -43,7 +44,7 @@ export const CartButton: React.FC<CartButtonProps> = ({
       }}
       count={totalQuantity}
       offset={[-2, 3]}
-      color="blue"
+      variant="primary"
       size="small"
     >
       {icon}
