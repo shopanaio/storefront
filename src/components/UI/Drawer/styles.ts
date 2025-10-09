@@ -10,6 +10,8 @@ export const useStyles = createStyles(({ css, token }) => ({
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
     will-change: auto;
+    /* overflow-y: auto;
+    overflow-x: hidden; */
   `,
   overlay: css`
     position: fixed;
