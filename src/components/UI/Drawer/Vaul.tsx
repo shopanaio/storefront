@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Portal, Root, Content, Overlay } from 'vaul';
-import { useStyles, DRAWER_CONTENT_OFFSET_TOP } from './styles';
+import { useStyles } from './styles';
+import AnimateHeight, { Height } from 'react-animate-height';
 
 export interface VaulProps {
   /** Container element for portal */
@@ -37,9 +38,9 @@ export const Vaul = ({
 }: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
   const { styles } = useStyles();
   const isRightDirection = direction === 'right';
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const [contentHeight, setContentHeight] = useState<number>(0);
-  const [viewportHeight, setViewportHeight] = useState<number>(0);
+
+  const [height, setHeight] = useState<Height>('auto');
+  const [contentDiv, setContentDiv] = useState<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     if (open) {
@@ -48,28 +49,17 @@ export const Vaul = ({
   }, [open]);
 
   useEffect(() => {
-    setViewportHeight(window.innerHeight);
-    const onResize = () => setViewportHeight(window.innerHeight);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  useEffect(() => {
-    if (!contentRef.current) return;
-    const el = contentRef.current;
-    const observer = new ResizeObserver(([entry]) => {
-      setContentHeight(entry.contentRect.height);
+    if (!contentDiv) return;
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      setHeight(entry.contentRect.height);
     });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [contentRef]);
+    resizeObserver.observe(contentDiv);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [contentDiv]);
 
-  const maxAvailable = Math.max(
-    0,
-    viewportHeight * 0.8 - DRAWER_CONTENT_OFFSET_TOP,
-  );
-  const targetHeight = Math.min(contentHeight, maxAvailable);
-
+  console.log(height, 'height');
   return (
     <Root
       autoFocus
@@ -96,25 +86,23 @@ export const Vaul = ({
               : undefined
           }
         >
-          {!isRightDirection && <div className={styles.handle} />}
-          {isRightDirection ? (
-            <div className={styles.containerRight}>
-              <div className={styles.containerContent}>{children}</div>
+          <AnimateHeight
+            duration={500}
+            height={height}
+            contentClassName="auto-content"
+            disableDisplayNone
+          >
+            <div ref={setContentDiv}>
+              {!isRightDirection && <div className={styles.handle} />}
+              {isRightDirection ? (
+                <div className={styles.containerRight}>
+                  <div className={styles.containerContent}>{children}</div>
+                </div>
+              ) : (
+                <div className={styles.container}>{children}</div>
+              )}
             </div>
-          ) : (
-            <div
-              className={styles.container}
-              style={{ height: targetHeight ? `${targetHeight}px` : undefined }}
-            >
-              <div
-                ref={contentRef}
-                className={styles.containerContent}
-                style={{ minHeight: minHeight }}
-              >
-                {children}
-              </div>
-            </div>
-          )}
+          </AnimateHeight>
         </Content>
         <Overlay className={styles.overlay} />
       </Portal>
