@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useModalStore } from '@src/store/appStore';
-import { Drawer, Divider, Flex, Button, Typography } from 'antd';
+import { Divider, Flex, Button, Typography } from 'antd';
 import { Badge } from '@src/components/UI/Badge';
 import { useLogo } from '@src/hooks/useLogo';
 import {
@@ -21,6 +21,7 @@ import { HeaderLinkButton } from './HeaderLinkButton';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
+import { DrawerBase } from '@src/components/UI/DrawerBase';
 
 const { Text } = Typography;
 
@@ -45,117 +46,114 @@ export const AppDrawer: React.FC = () => {
   ];
 
   return (
-    <Drawer
+    <DrawerBase
       placement="left"
       onClose={() => setIsOpen(false)}
       open={isOpen}
-      closable={false}
       width="var(--components-drawer-width)"
-      drawerRender={() => (
-        <div className={`${styles.customDrawer} ant-drawer-content`}>
-          <Flex className={styles.drawerHeader} vertical>
-            <Flex align="center" justify="space-between">
-              <Logo theme="dark" size={32} />
-              <Button
-                icon={<RxCross2 size={24} />}
-                type="text"
-                className={styles.closeBtn}
-                onClick={() => setIsOpen(false)}
-              />
-            </Flex>
-
-            <Flex>
-              <HeaderLinkButton
-                icon={
-                  <TbPhoneFilled size={24} className={styles.supportIcon} />
-                }
-                topText={t('customer-support')}
-                bottomText="+1 (999) 111-11-11"
-                theme="dark"
-                mobileBlock={false}
-              />
-            </Flex>
+      contentClassName={styles.customDrawer}
+      showCloseButton={false}
+      header={
+        <Flex className={styles.drawerHeader} vertical>
+          <Flex align="center" justify="space-between">
+            <Logo theme="dark" size={32} />
+            <Button
+              icon={<RxCross2 size={24} />}
+              type="text"
+              className={styles.closeBtn}
+              onClick={() => setIsOpen(false)}
+            />
           </Flex>
 
-          <div>
-            <Button
-              type="primary"
-              icon={<TbLayoutGridFilled size={24} />}
-              className={styles.catalogBtn}
-            >
-              {t('catalog')}
-            </Button>
+          <Flex>
+            <HeaderLinkButton
+              icon={
+                <TbPhoneFilled size={24} className={styles.supportIcon} />
+              }
+              topText={t('customer-support')}
+              bottomText="+1 (999) 111-11-11"
+              theme="dark"
+              mobileBlock={false}
+            />
+          </Flex>
+        </Flex>
+      }
+    >
+      <Button
+        type="primary"
+        icon={<TbLayoutGridFilled size={24} />}
+        className={styles.catalogBtn}
+      >
+        {t('catalog')}
+      </Button>
 
-            <Flex className={styles.linksBtnsList} vertical>
+      <Flex className={styles.linksBtnsList} vertical>
+        <Button
+          type="text"
+          icon={<TbShoppingCart size={20} />}
+          className={styles.linkBtn}
+        >
+          {t('cart')}
+          <Badge
+            count={4}
+            variant="primary"
+            className={styles.badge}
+          />
+        </Button>
+
+        <Button
+          type="text"
+          icon={<TbHeart size={20} />}
+          className={styles.linkBtn}
+        >
+          {t('wishlist')}
+          <Badge count={100} variant="default" className={styles.badge} />
+        </Button>
+
+        <Button
+          type="text"
+          icon={<TbUserCircle size={20} />}
+          className={styles.linkBtn}
+          onClick={() => setIsAuthModalVisible(true)}
+        >
+          {t('account')}
+        </Button>
+      </Flex>
+
+      <Divider className={styles.divider} />
+
+      <Flex className={styles.menuSection} vertical>
+        <Text type="secondary" className={styles.menuListTitle}>
+          {t('menu-title')}
+        </Text>
+
+        {menuLinks.map((link) => {
+          const isActive = pathname === link.path;
+          return (
+            <Link key={link.path} href={link.path}>
               <Button
                 type="text"
-                icon={<TbShoppingCart size={20} />}
-                className={styles.linkBtn}
+                className={styles.menuItem}
+                style={{
+                  color: isActive
+                    ? 'var(--ant-color-primary)'
+                    : 'var(--ant-color-text)',
+                }}
               >
-                {t('cart')}
-                <Badge
-                  count={4}
-                  variant="primary"
-                  className={styles.badge}
-                />
+                {link.label}
               </Button>
+            </Link>
+          );
+        })}
+      </Flex>
 
-              <Button
-                type="text"
-                icon={<TbHeart size={20} />}
-                className={styles.linkBtn}
-              >
-                {t('wishlist')}
-                <Badge count={100} variant="default" className={styles.badge} />
-              </Button>
+      <Divider className={styles.divider} />
 
-              <Button
-                type="text"
-                icon={<TbUserCircle size={20} />}
-                className={styles.linkBtn}
-                onClick={() => setIsAuthModalVisible(true)}
-              >
-                {t('account')}
-              </Button>
-            </Flex>
-
-            <Divider className={styles.divider} />
-
-            <Flex className={styles.menuSection} vertical>
-              <Text type="secondary" className={styles.menuListTitle}>
-                {t('menu-title')}
-              </Text>
-
-              {menuLinks.map((link) => {
-                const isActive = pathname === link.path;
-                return (
-                  <Link key={link.path} href={link.path}>
-                    <Button
-                      type="text"
-                      className={styles.menuItem}
-                      style={{
-                        color: isActive
-                          ? 'var(--ant-color-primary)'
-                          : 'var(--ant-color-text)',
-                      }}
-                    >
-                      {link.label}
-                    </Button>
-                  </Link>
-                );
-              })}
-            </Flex>
-
-            <Divider className={styles.divider} />
-
-            <Flex className={styles.dropdownList} vertical align="start">
-              <LanguageDropdown />
-              <CurrencyDropdown />
-            </Flex>
-          </div>
-        </div>
-      )}
-    />
+      <Flex className={styles.dropdownList} vertical align="start">
+        <LanguageDropdown />
+        <CurrencyDropdown />
+      </Flex>
+    </DrawerBase>
   );
 };
 
