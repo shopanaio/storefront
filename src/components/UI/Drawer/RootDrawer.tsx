@@ -2,8 +2,6 @@
 
 import { ReactNode } from 'react';
 import VaulDrawer from '@src/components/UI/Drawer/Vaul';
-import { useIsMobile } from '@src/hooks/useIsMobile';
-import clsx from 'clsx';
 
 export type DrawerEngine = 'antd' | 'vaul';
 

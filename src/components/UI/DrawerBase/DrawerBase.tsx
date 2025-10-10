@@ -7,6 +7,7 @@ import { RxCross2 } from 'react-icons/rx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import RootDrawer from '@src/components/UI/Drawer/RootDrawer';
 import clsx from 'clsx';
+import useToken from 'antd/es/theme/useToken';
 
 const { Text } = Typography;
 
@@ -52,14 +53,16 @@ export const DrawerBase = ({
   headerExtra,
   footer,
   children,
-  showCloseButton,
+  showCloseButton: showCloseButtonProp,
   contentClassName,
   sectionStyles,
   placement,
   minHeight,
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
+  const [, token] = useToken();
   const isMobile = useIsMobile();
+  const showCloseButton = showCloseButtonProp || !isMobile;
 
   // Automatically determine placement and sizes for mobile devices
   const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
@@ -80,7 +83,7 @@ export const DrawerBase = ({
           {headerExtra}
           {showCloseButton && (
             <Button
-              icon={<RxCross2 size={24} />}
+              icon={<RxCross2 size={24} color={token.colorIcon} />}
               type="text"
               className={styles.closeBtn}
               onClick={onClose}

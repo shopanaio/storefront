@@ -21,7 +21,7 @@ export const AuthModal = () => {
     >
       <Flex className={styles.modalContainer} vertical>
         <Flex className={styles.modalHeader}>
-          <Logo size={20} />
+          <Logo size={32} noText />
         </Flex>
         <Auth />
       </Flex>

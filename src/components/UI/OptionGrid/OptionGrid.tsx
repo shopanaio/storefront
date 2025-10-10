@@ -51,8 +51,8 @@ export const OptionGrid = ({
 const gapMap = {
   xs: 4,
   sm: 8,
-  md: 16,
-  lg: 24,
+  md: 12,
+  lg: 26,
 };
 
 const useStyles = createStyles(({ css }) => ({

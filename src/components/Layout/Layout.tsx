@@ -20,7 +20,7 @@ const CartDrawer = dynamic(
   { ssr: false }
 );
 const AppDrawer = dynamic(
-  () => import('./AppDrawer').then((m) => m.AppDrawer),
+  () => import('./AppDrawer/AppDrawer').then((m) => m.AppDrawer),
   { ssr: false }
 );
 const MobileSearch = dynamic(

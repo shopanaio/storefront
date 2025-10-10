@@ -9,6 +9,7 @@ import React, {
 import { Portal, Root, Content, Overlay } from 'vaul';
 import { useStyles } from './styles';
 import AnimateHeight, { Height } from 'react-animate-height';
+import clsx from 'clsx';
 
 export interface VaulProps {
   /** Whether the drawer is open */
@@ -68,17 +69,15 @@ export const Vaul = ({
 
   const renderContent = () => {
     if (isHorizontal) {
-      return (
-        <div className={styles.containerRight}>
-          <div className={styles.containerContent}>{children}</div>
-        </div>
-      );
+      return <div className={styles.container}>{children}</div>;
     }
 
     return (
       <>
         <div className={styles.handle} />
-        <div className={styles.container}>{children}</div>
+        <div className={clsx(styles.container, styles.containerVertical)}>
+          {children}
+        </div>
       </>
     );
   };
@@ -92,12 +91,17 @@ export const Vaul = ({
       repositionInputs
       direction={direction}
       onAnimationEnd={handleTeardown}
+      disablePreventScroll={false}
     >
       <Portal container={document.querySelector('[data-vaul-drawer-wrapper]')}>
         <Content
-          className={
-            isHorizontal ? styles.contentHorizontal : styles.contentVertical
-          }
+          className={clsx({
+            [styles.content]: true,
+            [styles.contentHorizontal]: isHorizontal,
+            [styles.contentVertical]: isVertical,
+            [styles.contentLeft]: direction === 'left',
+            [styles.contentRight]: direction === 'right',
+          })}
           style={
             isHorizontal
               ? { width: 'var(--components-drawer-width)' }

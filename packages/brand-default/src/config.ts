@@ -9,6 +9,7 @@ export interface LogoProps {
   theme?: 'dark' | 'light';
   size: number;
   color?: string;
+  textColor?: string;
 }
 
 /**

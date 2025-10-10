@@ -11,7 +11,7 @@ export type DrawerGridProps = Omit<OptionGridProps, 'gap'> & {
  */
 export const DrawerGrid = ({
   columns = 2,
-  gap = "sm",
+  gap = "md",
   className,
   ...props
 }: DrawerGridProps) => {
