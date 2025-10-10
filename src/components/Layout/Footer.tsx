@@ -98,7 +98,7 @@ const useStyles = createStyles(({ token, css }) => {
       padding: ${token.paddingXS}px 0;
     `,
     footerCopyright: css`
-      /* background-color: ${token.colorBgLayout}; */
+      background-color: ${token.colorBgLayout};
       padding: ${token.padding}px 0;
     `,
   };

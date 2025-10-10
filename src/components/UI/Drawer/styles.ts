@@ -24,7 +24,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     background-color: ${token.colorBorder};
   `,
   content: css`
-    background-color: ${token.colorBgContainer};
+    background-color: ${token.colorBgElevated};
     overflow: hidden;
     position: fixed;
     outline: none;
@@ -33,7 +33,6 @@ export const useStyles = createStyles(({ css, token }) => ({
     transform: translate3d(0px, 0px, 0px);
   `,
   contentVertical: css`
-    background-color: ${token.colorBgContainer};
     border-top-left-radius: ${token.borderRadiusLG}px;
     border-top-right-radius: ${token.borderRadiusLG}px;
     padding-top: ${HANDLE_OFFSET_TOP}px;
@@ -42,7 +41,6 @@ export const useStyles = createStyles(({ css, token }) => ({
     right: 0;
   `,
   contentHorizontal: css`
-    background-color: ${token.colorBgContainer};
     border-radius: ${token.borderRadiusLG}px;
     top: ${RIGHT_DRAWER_OFFSET}px;
     bottom: ${RIGHT_DRAWER_OFFSET}px;

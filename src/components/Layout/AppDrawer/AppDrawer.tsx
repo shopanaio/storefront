@@ -44,7 +44,11 @@ export const AppDrawer: React.FC = () => {
       width="var(--components-drawer-width)"
       contentClassName={styles.customDrawer}
       showCloseButton={false}
-      title={<Logo size={32} />}
+      title={
+        <div style={{ paddingTop: token.paddingXS }}>
+          <Logo size={28} />
+        </div>
+      }
     >
       <Flex vertical>
         <AppDrawerCartButton />
@@ -97,13 +101,6 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-direction: column;
     height: 100%;
     background: ${token.colorBgBase};
-  `,
-  header: css`
-    background-color: var(--always-black-bg);
-    gap: ${token.margin}px;
-    padding: ${token.padding}px;
-
-    border-radius: ${token.borderRadiusLG}px;
   `,
 
   closeBtn: css`

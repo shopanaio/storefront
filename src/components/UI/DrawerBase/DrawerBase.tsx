@@ -66,7 +66,7 @@ export const DrawerBase = ({
   const showCloseButton = showCloseButtonProp || !isMobile;
 
   // Automatically determine placement and sizes for mobile devices
-  const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
+  const finalPlacement = isMobile ? 'bottom' : placement || 'right';
 
   const renderHeader = () => {
     if (header) return header;
@@ -126,13 +126,13 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: ${token.colorBgBase};
+    background-color: ${token.colorBgElevated};
     overflow-y: auto;
     overflow-x: hidden;
   `,
   header: css`
     position: sticky;
-    background: ${token.colorBgBase};
+    background: ${token.colorBgElevated};
     top: 0;
     z-index: 1;
     padding: ${token.paddingXS}px ${token.padding}px;
@@ -151,7 +151,6 @@ const useStyles = createStyles(({ css, token }) => ({
     flex: 1;
     padding: ${token.paddingXS}px ${token.padding}px 84px;
     height: 100%;
-
     max-height: 80vh;
 
     ${mq.lg} {

@@ -46,12 +46,15 @@ export const CartDrawer: React.FC = () => {
       onClose={() => setIsOpen(false)}
       title={
         <>
-          {t('cart')}{' '}
-          <Badge
-            count={cart?.totalQuantity}
-            variant="primary"
-            showZero={false}
-          />
+          {t('cart')}
+          {!!cart?.totalQuantity && (
+            <Badge
+              count={cart.totalQuantity}
+              variant="primary"
+              showZero={false}
+              offset={[4, -4]}
+            />
+          )}
         </>
       }
       footer={renderFooter()}
