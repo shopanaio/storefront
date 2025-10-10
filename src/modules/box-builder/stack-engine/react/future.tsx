@@ -76,10 +76,21 @@ export const useScreenMeta = () => React.useContext(ScreenContext);
 
 /**
  * @public
- * Context to let top screen provide AppBar content to a static host rendered by Stack.
+ * AppBar configuration that screens provide to the static AppBar host.
+ */
+export interface AppBarConfig {
+  isRoot: boolean;
+  left?: React.ReactNode;
+  center?: React.ReactNode;
+  right?: React.ReactNode;
+}
+
+/**
+ * @public
+ * Context to let top screen provide AppBar config to a static host rendered by Stack.
  */
 export const AppBarHostContext = React.createContext<{
-  setAppBar: (node: React.ReactNode) => void;
+  setAppBar: (config: AppBarConfig | null) => void;
 } | null>(null);
 
 /**
@@ -93,6 +104,31 @@ export const useAppBarHost = () => {
   }
   return ctx;
 };
+
+/**
+ * Static AppBar component that stays mounted and only updates its content.
+ * Renders with SSR support (works without JS).
+ */
+const StaticAppBar: React.FC<{ config: AppBarConfig | null }> = React.memo(({ config }) => {
+  return (
+    <div
+      style={{
+        height: 'var(--appbar-height)',
+        display: 'flex',
+        alignItems: 'center',
+        paddingInline: 8,
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+        background: 'var(--appbar-bg, #fff)',
+      }}
+    >
+      <div style={{ width: 40 }}>{config?.left}</div>
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>{config?.center}</div>
+      <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end' }}>{config?.right}</div>
+    </div>
+  );
+});
+
+StaticAppBar.displayName = 'StaticAppBar';
 
 /**
  * Internal controller used by actions to mutate the mounted stack component.
@@ -195,7 +231,7 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
       { key: generateKey(), name: config.initialActivity(), params: {} },
     ]);
     const [direction, setDirection] = useState<Direction>('forward');
-    const [appBarNode, setAppBarNode] = useState<React.ReactNode>(null);
+    const [appBarConfig, setAppBarConfig] = useState<AppBarConfig | null>(null);
 
     // Keep the controllerRef in sync with the mounted stack
     useEffect(() => {
@@ -214,12 +250,12 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
     // Render the entire stack; top-most is last
     return (
       <div style={{ position: 'relative', overflow: 'hidden', background: '#fff', height: '100vh' }}>
-        {/* Static AppBar host above animated screens */}
+        {/* Static AppBar host above animated screens - always rendered, works without JS */}
         <div style={{ position: 'fixed', insetInline: 0, top: 0, zIndex: 1000 }}>
-          {appBarNode}
+          <StaticAppBar config={appBarConfig} />
         </div>
 
-        <AppBarHostContext.Provider value={{ setAppBar: setAppBarNode }}>
+        <AppBarHostContext.Provider value={{ setAppBar: setAppBarConfig }}>
           <AnimatePresence initial={false} mode="popLayout">
           {stack.map((entry, index) => {
             const Component = components[entry.name];

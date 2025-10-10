@@ -2,7 +2,7 @@
 
 import './index.css';
 import React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useScreenMeta, useAppBarHost } from '../react/future';
 
 export interface AppScreenProps {
@@ -25,28 +25,24 @@ export const AppScreen: React.FC<AppScreenProps> = ({ appBar, children }) => {
   const { isTop, isRoot } = useScreenMeta();
   const { setAppBar } = useAppBarHost();
 
+  // Keep latest appBar in ref to avoid recreating effect on every render
+  const appBarRef = useRef(appBar);
+  appBarRef.current = appBar;
+
   useEffect(() => {
-    if (!isTop) return;
-    setAppBar(
-      <div
-        style={{
-          height: 'var(--appbar-height)',
-          display: 'flex',
-          alignItems: 'center',
-          paddingInline: 8,
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-          background: 'var(--appbar-bg, #fff)',
-        }}
-      >
-        <div style={{ width: 40 }}>
-          {isRoot ? appBar?.closeButton?.render?.() : appBar?.backButton?.render?.()}
-        </div>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>{appBar?.title}</div>
-        <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end' }}>
-          {appBar?.renderRight?.()}
-        </div>
-      </div>
-    );
+    if (!isTop) {
+      setAppBar(null);
+      return;
+    }
+
+    // We are the top screen - render AppBar content
+    const currentAppBar = appBarRef.current;
+    setAppBar({
+      isRoot,
+      left: isRoot ? currentAppBar?.closeButton?.render?.() : currentAppBar?.backButton?.render?.(),
+      center: currentAppBar?.title,
+      right: currentAppBar?.renderRight?.(),
+    });
   }, [isTop, isRoot, setAppBar]);
 
   return (
