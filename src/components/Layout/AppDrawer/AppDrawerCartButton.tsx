@@ -21,9 +21,7 @@ export const AppDrawerCartButton: React.FC = () => {
   const setIsCartDrawerOpen = useModalStore(
     (state) => state.setIsCartDrawerOpen
   );
-  const setIsAppDrawerOpen = useModalStore(
-    (state) => state.setIsAppDrawerOpen
-  );
+  const setIsAppDrawerOpen = useModalStore((state) => state.setIsAppDrawerOpen);
 
   const totalQuantity = cart?.totalQuantity ?? 0;
 
@@ -34,21 +32,15 @@ export const AppDrawerCartButton: React.FC = () => {
 
   return (
     <AppDrawerButton
-      variant="solid"
-      color="primary"
-      icon={<TbShoppingCart size={20} />}
+      variant="text"
+      color="default"
+      icon={<TbShoppingCart size={20} color={token.colorPrimary}/>}
       onClick={handleClick}
     >
       {t('cart')}
       {totalQuantity > 0 && (
         <Badge
-          styles={{
-            indicator: {
-              backgroundColor: token.colorBgBase,
-              color: token.colorPrimary,
-            },
-          }}
-          color="primary"
+          variant="primary"
           count={totalQuantity}
           className={styles.badge}
         />
