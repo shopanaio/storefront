@@ -14,6 +14,9 @@ interface Prop {
 export const SummaryItem = ({ line }: Prop) => {
   const { styles } = useStyles();
 
+  const title = line.purchasable?.title ?? line.title;
+  const imageUrl = line.imageSrc ?? line.purchasable?.cover?.url;
+
   return (
     <Flex className={styles.item} align="center" justify="space-between">
       <Flex align="center" gap={16}>
@@ -25,11 +28,11 @@ export const SummaryItem = ({ line }: Prop) => {
         >
           <Thumbnail
             className={styles.thumbnail}
-            src={line.purchasable?.cover?.url}
-            alt={line.purchasable?.title}
+            src={imageUrl}
+            alt={title}
           />
         </Badge>
-        <Text className={styles.productName}>{line.purchasable?.title}</Text>
+        <Text className={styles.productName}>{title}</Text>
       </Flex>
       <Money strong as={Text} money={line.cost.totalAmount} />
     </Flex>
