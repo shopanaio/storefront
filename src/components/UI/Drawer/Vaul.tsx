@@ -75,9 +75,7 @@ export const Vaul = ({
     return (
       <>
         <div className={styles.handle} />
-        <div className={clsx(styles.container, styles.containerVertical)}>
-          {children}
-        </div>
+        <div className={clsx(styles.container)}>{children}</div>
       </>
     );
   };

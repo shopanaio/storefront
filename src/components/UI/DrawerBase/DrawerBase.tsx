@@ -8,6 +8,7 @@ import { useIsMobile } from '@src/hooks/useIsMobile';
 import RootDrawer from '@src/components/UI/Drawer/RootDrawer';
 import clsx from 'clsx';
 import useToken from 'antd/es/theme/useToken';
+import { mq } from '@src/components/Theme/breakpoints';
 
 const { Text } = Typography;
 
@@ -95,9 +96,7 @@ export const DrawerBase = ({
   };
 
   const content = (
-    <div
-      className={clsx(styles.layout, contentClassName, 'ant-drawer-content')}
-    >
+    <div className={clsx(styles.layout, contentClassName)}>
       {renderHeader()}
       <div className={clsx(styles.content, sectionStyles?.content)}>
         {children}
@@ -152,6 +151,12 @@ const useStyles = createStyles(({ css, token }) => ({
     flex: 1;
     padding: ${token.paddingXS}px ${token.padding}px 84px;
     height: 100%;
+
+    max-height: 80vh;
+
+    ${mq.lg} {
+      max-height: unset;
+    }
   `,
   footer: css`
     position: absolute;

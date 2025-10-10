@@ -9,10 +9,6 @@ export const LEFT_DRAWER_OFFSET = 12;
 export const useStyles = createStyles(({ css, token }) => ({
   container: css`
     height: 100%;
-    overflow-y: auto;
-  `,
-  containerVertical: css`
-    max-height: 80vh;
   `,
   overlay: css`
     position: fixed;
