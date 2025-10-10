@@ -17,25 +17,25 @@
       "@shopana/brand": ["./packages/brand-default/src"],
       "@shopana/brand/*": ["./packages/brand-default/src/*"],
       "@stackflow/react/future": [
-        "./src/modules/box-builder/stack-engine/react/future.tsx"
+        "./src/modules/box-builder/stack-engine/index.tsx"
       ],
       "@stackflow/react": [
-        "./src/modules/box-builder/stack-engine/react"
+        "./src/modules/box-builder/stack-engine/index.tsx"
       ],
       "@stackflow/config": [
-        "./src/modules/box-builder/stack-engine/config/index.ts"
+        "./src/modules/box-builder/stack-engine/index.tsx"
       ],
       "@stackflow/plugin-basic-ui": [
-        "./src/modules/box-builder/stack-engine/plugin-basic-ui/index.tsx"
+        "./src/modules/box-builder/stack-engine/index.tsx"
       ],
       "@stackflow/plugin-basic-ui/*": [
-        "./src/modules/box-builder/stack-engine/plugin-basic-ui/*"
+        "./src/modules/box-builder/stack-engine/*"
       ],
       "@stackflow/plugin-history-sync": [
-        "./src/modules/box-builder/stack-engine/plugin-history-sync/index.ts"
+        "./src/modules/box-builder/stack-engine/index.tsx"
       ],
       "@stackflow/plugin-renderer-basic": [
-        "./src/modules/box-builder/stack-engine/plugin-renderer-basic/index.ts"
+        "./src/modules/box-builder/stack-engine/index.tsx"
       ]
     },
     "target": "esnext",

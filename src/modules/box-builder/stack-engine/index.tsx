@@ -1,7 +1,18 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+
+/* ============================================================================
+ * Types & Interfaces
+ * ========================================================================== */
+
+/**
+ * @public
+ * Activity component type facade. Matches usage in codebase: a component that
+ * receives a single `params` prop.
+ */
+export type ActivityComponentType<P = unknown> = React.ComponentType<{ params: P }>;
 
 /**
  * @public
@@ -65,15 +76,6 @@ export interface StackflowOutput {
   actions: StackflowActions;
 }
 
-type Direction = 'forward' | 'backward' | 'replace';
-
-/**
- * Context with per-screen meta (e.g., isTop) so plugins (AppScreen) can render
- * elements outside animated area (like a static AppBar).
- */
-export const ScreenContext = React.createContext<{ isTop: boolean; isRoot: boolean }>({ isTop: true, isRoot: true });
-export const useScreenMeta = () => React.useContext(ScreenContext);
-
 /**
  * @public
  * AppBar configuration that screens provide to the static AppBar host.
@@ -84,6 +86,38 @@ export interface AppBarConfig {
   center?: React.ReactNode;
   right?: React.ReactNode;
 }
+
+/**
+ * @public
+ * AppScreen component props
+ */
+export interface AppScreenProps {
+  appBar?: {
+    closeButton?: { render?: () => React.ReactNode };
+    backButton?: { render?: () => React.ReactNode };
+    title?: React.ReactNode;
+    renderRight?: () => React.ReactNode;
+  };
+  ANDROID_ONLY_activityEnterStyle?: 'slideInLeft' | 'slideInRight' | string;
+  children?: React.ReactNode;
+}
+
+type Direction = 'forward' | 'backward' | 'replace';
+
+/* ============================================================================
+ * Contexts
+ * ========================================================================== */
+
+/**
+ * Context with per-screen meta (e.g., isTop) so plugins (AppScreen) can render
+ * elements outside animated area (like a static AppBar).
+ */
+export const ScreenContext = React.createContext<{ isTop: boolean; isRoot: boolean }>({
+  isTop: true,
+  isRoot: true
+});
+
+export const useScreenMeta = () => React.useContext(ScreenContext);
 
 /**
  * @public
@@ -105,30 +139,9 @@ export const useAppBarHost = () => {
   return ctx;
 };
 
-/**
- * Static AppBar component that stays mounted and only updates its content.
- * Renders with SSR support (works without JS).
- */
-const StaticAppBar: React.FC<{ config: AppBarConfig | null }> = React.memo(({ config }) => {
-  return (
-    <div
-      style={{
-        height: 'var(--appbar-height)',
-        display: 'flex',
-        alignItems: 'center',
-        paddingInline: 8,
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
-        background: 'var(--appbar-bg, #fff)',
-      }}
-    >
-      <div style={{ width: 40 }}>{config?.left}</div>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>{config?.center}</div>
-      <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end' }}>{config?.right}</div>
-    </div>
-  );
-});
-
-StaticAppBar.displayName = 'StaticAppBar';
+/* ============================================================================
+ * Internal Controller
+ * ========================================================================== */
 
 /**
  * Internal controller used by actions to mutate the mounted stack component.
@@ -157,6 +170,76 @@ const schedule = (fn: () => void) => {
     setTimeout(fn, 0);
   }
 };
+
+/* ============================================================================
+ * Components
+ * ========================================================================== */
+
+/**
+ * Static AppBar component that stays mounted and only updates its content.
+ * Renders with SSR support (works without JS).
+ */
+const StaticAppBar: React.FC<{ config: AppBarConfig | null }> = React.memo(({ config }) => {
+  const appBarHeight = 56; // px
+  return (
+    <div
+      style={{
+        height: appBarHeight,
+        display: 'flex',
+        alignItems: 'center',
+        paddingInline: 8,
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+        background: '#fff',
+      }}
+    >
+      <div style={{ width: 40 }}>{config?.left}</div>
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>{config?.center}</div>
+      <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end' }}>{config?.right}</div>
+    </div>
+  );
+});
+
+StaticAppBar.displayName = 'StaticAppBar';
+
+/**
+ * @public
+ * Minimal AppScreen compatible facade used by Layout.tsx
+ */
+export const AppScreen: React.FC<AppScreenProps> = ({ appBar, children }) => {
+  const appBarHeight = 56; // px
+  const { isTop, isRoot } = useScreenMeta();
+  const { setAppBar } = useAppBarHost();
+
+  // Keep latest appBar in ref to avoid recreating effect on every render
+  const appBarRef = useRef(appBar);
+  appBarRef.current = appBar;
+
+  useEffect(() => {
+    if (!isTop) {
+      setAppBar(null);
+      return;
+    }
+
+    // We are the top screen - render AppBar content
+    const currentAppBar = appBarRef.current;
+    setAppBar({
+      isRoot,
+      left: isRoot ? currentAppBar?.closeButton?.render?.() : currentAppBar?.backButton?.render?.(),
+      center: currentAppBar?.title,
+      right: currentAppBar?.renderRight?.(),
+    });
+  }, [isTop, isRoot, setAppBar]);
+
+  return (
+    <div style={{ display: 'block' }}>
+      <div style={{ paddingTop: appBarHeight }}>{children}</div>
+    </div>
+  );
+};
+
+/* ============================================================================
+ * Main Stackflow Factory
+ * ========================================================================== */
 
 /**
  * Create motion variants based on navigation direction.
@@ -304,3 +387,32 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
 
   return { Stack, actions };
 }
+
+/* ============================================================================
+ * Plugin Facades (API Compatibility)
+ * ========================================================================== */
+
+/**
+ * @public
+ * Renderer plugin facade for API compatibility. No-op.
+ */
+export const basicRendererPlugin = (_opts?: unknown) => ({ name: 'renderer-basic' });
+
+/**
+ * @public
+ * UI plugin facade for API compatibility. Currently a no-op.
+ */
+export const basicUIPlugin = (_opts?: unknown) => ({ name: 'basic-ui' });
+
+/**
+ * @public
+ * History sync plugin facade for API compatibility. No-op.
+ */
+export const historySyncPlugin = (_opts?: unknown) => ({ name: 'history-sync' });
+
+/**
+ * @public
+ * A no-op helper that returns the provided config unchanged.
+ * Kept for API compatibility with @stackflow/config defineConfig.
+ */
+export const defineConfig = <T extends unknown>(config: T): T => config;

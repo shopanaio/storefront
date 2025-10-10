@@ -1,5 +1,3 @@
-import '@stackflow/plugin-basic-ui/index.css';
-
 import { basicUIPlugin } from '@stackflow/plugin-basic-ui';
 import { basicRendererPlugin } from '@stackflow/plugin-renderer-basic';
 import { stackflow, StackflowOutput } from '@stackflow/react/future';
