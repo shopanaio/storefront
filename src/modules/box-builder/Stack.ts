@@ -68,7 +68,7 @@ const config = defineConfig({
     },
   ],
 
-  transitionDuration: 0,
+  transitionDuration: 250,
   initialActivity: () => Activity.Intro,
 });
 

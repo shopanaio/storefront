@@ -164,7 +164,9 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
     },
     replace(name, params) {
       if (!controllerRef) return;
-      controllerRef.setDirection('replace');
+      const currentLength = controllerRef.getState().length;
+      // If replacing the very first (root) screen, animate like a forward push
+      controllerRef.setDirection(currentLength <= 1 ? 'forward' : 'replace');
       schedule(() => {
         controllerRef?.setState((prev) => {
           if (prev.length === 0) {
