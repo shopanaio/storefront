@@ -2,27 +2,10 @@
 
 import { createGlobalStyle } from 'antd-style';
 import { breakpoints } from './breakpoints';
-import { memo, useMemo } from 'react';
-import { GlobalToken } from 'antd';
 
-/**
- * Injects application-wide CSS variables and layout primitives.
- * The background color is synchronized with the current Ant Design theme token.
- */
-export interface GlobalStyleProps {
-  /** Theme tokens provided by Ant Design ThemeProvider */
-  token: GlobalToken;
-}
-
-export const GlobalStyle = memo(({ token }: GlobalStyleProps) => {
-  const { colorBgBase } = token;
-
-  const GlobalStyleComponent = useMemo(
-    () =>
-      createGlobalStyle`
-  /* Global reset based on theme token */
-  html, body {
-    background-color: ${colorBgBase};
+export const GlobalStyle = createGlobalStyle`
+  html {
+    background-color: var(--ant-color-bg-base);
   }
 
   :root {
@@ -58,9 +41,4 @@ export const GlobalStyle = memo(({ token }: GlobalStyleProps) => {
       max-width: 1400px;
     }
   }
-  `,
-    [colorBgBase]
-  );
-
-  return <GlobalStyleComponent />;
-});
+`;

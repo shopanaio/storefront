@@ -10,7 +10,6 @@ import { useEffect } from 'react';
 import { setNotificationApi } from '@src/components/UI/Toast/Toast';
 import { BrandProvider } from '@src/providers/brand-context';
 import { brandConfig } from '@src/brand.config';
-import useToken from 'antd/es/theme/useToken';
 
 export const Theme = ({ children }: { children: React.ReactNode }) => {
   const [api, contextHolder] = notification.useNotification({
@@ -21,8 +20,6 @@ export const Theme = ({ children }: { children: React.ReactNode }) => {
     duration: 2,
   });
 
-  const [, token] = useToken();
-
   useEffect(() => {
     setNotificationApi(api);
   }, [api]);
@@ -30,7 +27,7 @@ export const Theme = ({ children }: { children: React.ReactNode }) => {
   return (
     <AntdRegistry>
       <ThemeProvider
-        themeMode="dark"
+        themeMode="light"
         prefixCls="ant"
         theme={{
           cssVar: { prefix: 'ant' },
@@ -46,7 +43,7 @@ export const Theme = ({ children }: { children: React.ReactNode }) => {
       >
         <App>
           <BrandProvider>
-            <GlobalStyle token={token} />
+            <GlobalStyle />
             {contextHolder}
             {children}
           </BrandProvider>
