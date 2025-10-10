@@ -42,12 +42,12 @@ const ProductSection: React.FC<{
   const isAvailable = currentVariant?.stockStatus?.isAvailable === true;
   const isFree = parseFloat(currentVariant?.price?.amount ?? '0') === 0;
 
-  const cartLine = useIsInTheBoxBuilderCart(product?.id ?? '');
+  const cartLine = useIsInTheBoxBuilderCart(currentVariant?.id ?? '');
   const isInCart = Boolean(cartLine);
   const { quantity = 0 } = cartLine || {};
 
   const renderFooter = () => {
-    if (!product?.id) {
+    if (!currentVariant?.id) {
       return null;
     }
 
