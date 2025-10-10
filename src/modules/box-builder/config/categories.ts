@@ -5,10 +5,7 @@
  * You can modify these handles to change which categories appear in each step.
  */
 
-import {
-  BoxBuilderConfig,
-  validateBoxBuilderConfig
-} from './types';
+import { BoxBuilderConfig, validateBoxBuilderConfig } from './types';
 
 /**
  * Default box builder configuration
@@ -16,43 +13,64 @@ import {
  */
 export const BOX_BUILDER_CONFIG: BoxBuilderConfig = {
   step1: {
-    defaultBoxCategory: "electronics"
+    defaultBoxCategory: 'boxes',
   },
 
   step2: {
     categories: [
       {
-        handle: "electronics",
-        titleKey: "categories.electronics",
-        required: true
+        handle: 'beauty-health',
+        required: true,
       },
       {
-        handle: "sport-i-otdyh",
-        titleKey: "categories.sport",
-        required: true
+        handle: 'arts-crafts',
+        required: true,
       },
       {
-        handle: "toys-kids",
-        titleKey: "categories.toys",
-        required: true
-      }
-    ]
+        handle: 'clothing',
+        required: true,
+      },
+      {
+        handle: 'food-drinks',
+        required: true,
+      },
+      {
+        handle: 'home-garden',
+        required: true,
+      },
+      {
+        handle: 'sports-leisure',
+        required: true,
+      },
+      {
+        handle: 'toys-kids',
+        required: true,
+      },
+      {
+        handle: 'electronics',
+        required: true,
+      },
+      {
+        handle: 'beauty-health', // 3
+        required: true,
+      },
+    ],
   },
 
   step3: {
     category: {
-      handle: "electronics",
-      titleKey: "categories.postcards",
-      required: false
-    }
-  }
+      handle: 'cards',
+      titleKey: 'categories.postcards',
+      required: false,
+    },
+  },
 };
 
 /**
  * Get all category handles used in step 2
  */
 export const getStep2CategoryHandles = (): string[] => {
-  return BOX_BUILDER_CONFIG.step2.categories.map(cat => cat.handle);
+  return BOX_BUILDER_CONFIG.step2.categories.map((cat) => cat.handle);
 };
 
 /**
@@ -87,7 +105,9 @@ export const validateConfig = (): void => {
   const errors = validateBoxBuilderConfig(BOX_BUILDER_CONFIG);
 
   if (errors.length > 0) {
-    throw new Error(`Box Builder configuration is invalid:\n${errors.join('\n')}`);
+    throw new Error(
+      `Box Builder configuration is invalid:\n${errors.join('\n')}`
+    );
   }
 };
 

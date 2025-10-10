@@ -12,11 +12,8 @@ import { ProductType } from '@src/modules/box-builder/components/ProductCard';
 import { BoxActionButton } from '@src/modules/box-builder/components/ActionButton/BoxActionButton';
 import { ProductActionButton } from '@src/modules/box-builder/components/ActionButton/ProductActionButton';
 import { CardActionButton } from '@src/modules/box-builder/components/ActionButton/CardActionButton';
-import { ShowMoreBtn } from '@src/components/Product/ShowMoreBtn';
 import { SkeletonProduct } from '@src/components/Product/Skeleton';
 import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
-
-const { Paragraph } = Typography;
 
 type ProductParams = {
   productHandle: string;
@@ -58,7 +55,7 @@ const ProductSection: React.FC<{
     if (productType === ProductType.Box) {
       button = (
         <BoxActionButton
-          productId={product.id}
+          productId={currentVariant.id}
           isAvailable={Boolean(isAvailable)}
           appearance="activity"
           isFree={Boolean(isFree)}
@@ -74,7 +71,7 @@ const ProductSection: React.FC<{
     } else if (productType === ProductType.Card) {
       button = (
         <CardActionButton
-          productId={product.id}
+          productId={currentVariant.id}
           isAvailable={Boolean(isAvailable)}
           isFree={Boolean(isFree)}
           isInCart={isInCart}
@@ -94,7 +91,7 @@ const ProductSection: React.FC<{
     } else {
       button = (
         <ProductActionButton
-          productId={product.id}
+          productId={currentVariant.id}
           isAvailable={Boolean(isAvailable)}
           isFree={Boolean(isFree)}
           isInCart={isInCart}

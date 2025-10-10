@@ -41,9 +41,11 @@ export const Vaul = ({
   const [contentDiv, setContentDiv] = useState<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
-    if (open && isVertical) {
-      setHeight('auto');
+    if (open) {
       document.body.style.height = `${window.innerHeight}px`;
+      if (isVertical) {
+        setHeight('auto');
+      }
     }
   }, [open, isVertical]);
 
@@ -61,9 +63,11 @@ export const Vaul = ({
   }, [contentDiv, isVertical]);
 
   const handleTeardown = useCallback(() => {
-    if (!open && isVertical) {
+    if (!open) {
       document.body.style.height = '';
-      setHeight(0);
+      if (isVertical) {
+        setHeight(0);
+      }
     }
   }, [open, isVertical]);
 
