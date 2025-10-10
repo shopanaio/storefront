@@ -1,6 +1,6 @@
 "use client";
 
-import { Image as AntImage } from "antd";
+import { Image as AntImage, Skeleton } from "antd";
 import type { ImageProps as AntImageProps } from "antd";
 import { createStyles } from "antd-style";
 import React, { ReactNode, useEffect, useMemo, useState } from "react";
@@ -39,11 +39,20 @@ export const Image: React.FC<UiImageProps> = ({
 
   const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
   const [isLoaded, setIsLoaded] = useState<boolean>(true);
+  const [showSkeleton, setShowSkeleton] = useState<boolean>(true);
 
   useEffect(() => {
     setResolvedSrc(src || fallbackSrc);
     setIsLoaded(true);
   }, [src, fallbackSrc]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSkeleton(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setIsLoaded(true);
@@ -62,32 +71,29 @@ export const Image: React.FC<UiImageProps> = ({
 
   const placeholderNode = useMemo(() => {
     if (placeholder) return placeholder;
-    return (
-      <AntImage
-        src={fallbackSrc}
-        alt={alt ?? "placeholder"}
-        className={styles.placeholderImg}
-        loading="lazy"
-        decoding="async"
-        preview={false}
-      />
-    );
-  }, [placeholder, fallbackSrc, alt, styles.placeholderImg]);
+    return <Skeleton.Image active className={styles.skeleton} />;
+  }, [placeholder, styles.skeleton]);
 
   return (
     <div className={cx(styles.wrapper)} style={style}>
-      {!isLoaded && placeholderNode}
-      <AntImage
-        {...rest}
-        className={className}
-        src={resolvedSrc}
-        alt={alt}
-        preview={preview}
-        loading="lazy"
-        onLoad={handleLoad}
-        onError={handleError}
-        style={{ display: isLoaded ? "block" : "none" }}
-      />
+      {showSkeleton ? (
+        <Skeleton.Image active className={styles.skeleton} />
+      ) : (
+        <>
+          {!isLoaded && placeholderNode}
+          <AntImage
+            {...rest}
+            className={className}
+            src={resolvedSrc}
+            alt={alt}
+            preview={preview}
+            loading="lazy"
+            onLoad={handleLoad}
+            onError={handleError}
+            style={{ display: isLoaded ? "block" : "none" }}
+          />
+        </>
+      )}
     </div>
   );
 };
@@ -108,6 +114,16 @@ const useStyles = createStyles(
         object-fit: cover;
         display: block;
         background-color: ${token.colorFillSecondary};
+      `,
+      skeleton: css`
+        width: 100% !important;
+        height: 100% !important;
+        aspect-ratio: ${aspectRatio};
+
+        .ant-skeleton-image {
+          width: 100%;
+          height: 100%;
+        }
       `,
     };
   }

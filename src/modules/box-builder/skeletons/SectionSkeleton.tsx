@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { createStyles } from "antd-style";
-import { Flex, Skeleton } from "antd";
-import { BoxBuilderGridSkeleton } from "./GridSkeleton";
+import React from 'react';
+import { createStyles } from 'antd-style';
+import { Flex, Skeleton } from 'antd';
+import { BoxBuilderGridSkeleton } from './GridSkeleton';
 
 export const BoxBuilderSectionSkeleton: React.FC<{
   titleRows?: number;
@@ -20,7 +20,11 @@ export const BoxBuilderSectionSkeleton: React.FC<{
             active
             block
             size="small"
-            style={{ height: 22, borderRadius: 6, width: idx === 0 ? "55%" : "35%" }}
+            style={{
+              height: 22,
+              borderRadius: 6,
+              width: idx === 0 ? '55%' : '35%',
+            }}
           />
         ))}
       </div>
@@ -31,10 +35,11 @@ export const BoxBuilderSectionSkeleton: React.FC<{
 
 const useStyles = createStyles(({ token, css }) => ({
   container: css`
-    padding: 0 ${token.padding}px;
+    padding: 0;
   `,
   header: css`
     display: grid;
     gap: ${token.paddingXS}px;
+    margin-left: ${token.margin}px;
   `,
 }));

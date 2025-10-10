@@ -1,20 +1,34 @@
-"use client";
+'use client';
 
-import React from "react";
-import { createStyles } from "antd-style";
-import { Flex, Skeleton } from "antd";
+import React from 'react';
+import { createStyles } from 'antd-style';
+import { Flex, Skeleton } from 'antd';
+import { BoxBuilderTileSkeleton } from '@src/modules/box-builder/skeletons/TileSkeleton';
 
 export const BoxBuilderSwiperSectionSkeleton: React.FC = () => {
   const { styles } = useStyles();
 
   return (
     <Flex vertical gap={12} className={styles.container}>
-      <Skeleton.Input active size="small" style={{ width: 180, height: 22, borderRadius: 6 }} />
+      <Flex
+        align="center"
+        justify="space-between"
+        style={{ paddingInline: 16 }}
+      >
+        <Skeleton.Input
+          active
+          size="small"
+          style={{
+            width: 180,
+            height: 22,
+            borderRadius: 6,
+          }}
+        />
+        <Skeleton.Button active size="default" shape="circle" />
+      </Flex>
       <div className={styles.row}>
         {Array.from({ length: 6 }).map((_, idx) => (
-          <div key={idx} className={styles.tile}>
-            <Skeleton.Node active style={{ width: "100%", height: "100%" }} />
-          </div>
+          <BoxBuilderTileSkeleton key={idx} />
         ))}
       </div>
     </Flex>
@@ -23,7 +37,7 @@ export const BoxBuilderSwiperSectionSkeleton: React.FC = () => {
 
 const useStyles = createStyles(({ token, css }) => ({
   container: css`
-    padding: 0 ${token.padding}px;
+    padding: 0;
   `,
   row: css`
     display: grid;

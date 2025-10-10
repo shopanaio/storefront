@@ -54,6 +54,80 @@ export const BOX_BUILDER_CONFIG: BoxBuilderConfig = {
         handle: 'beauty-health', // 3
         required: true,
       },
+      //
+      {
+        handle: 'beauty-health',
+        required: true,
+      },
+      {
+        handle: 'arts-crafts',
+        required: true,
+      },
+      {
+        handle: 'clothing',
+        required: true,
+      },
+      {
+        handle: 'food-drinks',
+        required: true,
+      },
+      {
+        handle: 'home-garden',
+        required: true,
+      },
+      {
+        handle: 'sports-leisure',
+        required: true,
+      },
+      {
+        handle: 'toys-kids',
+        required: true,
+      },
+      {
+        handle: 'electronics',
+        required: true,
+      },
+      {
+        handle: 'beauty-health', // 3
+        required: true,
+      },
+      //
+      {
+        handle: 'beauty-health',
+        required: true,
+      },
+      {
+        handle: 'arts-crafts',
+        required: true,
+      },
+      {
+        handle: 'clothing',
+        required: true,
+      },
+      {
+        handle: 'food-drinks',
+        required: true,
+      },
+      {
+        handle: 'home-garden',
+        required: true,
+      },
+      {
+        handle: 'sports-leisure',
+        required: true,
+      },
+      {
+        handle: 'toys-kids',
+        required: true,
+      },
+      {
+        handle: 'electronics',
+        required: true,
+      },
+      {
+        handle: 'beauty-health', // 3
+        required: true,
+      },
     ],
   },
 

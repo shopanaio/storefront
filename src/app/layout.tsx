@@ -18,16 +18,13 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        {/* <link
-          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-        /> */}
-        {/* <Script id="reset-hash" strategy="beforeInteractive">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" />
+        <Script id="reset-hash" strategy="beforeInteractive">
           {`(function () {
             try {
               if (location.hash) {
@@ -35,7 +32,7 @@ export default function RootLayout({
               }
             } catch (e) {}
           })();`}
-        </Script> */}
+        </Script>
       </head>
       <body>
         <RelayEnvironmentProvider environment={getCurrentEnvironment()}>

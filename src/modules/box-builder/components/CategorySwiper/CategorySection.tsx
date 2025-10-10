@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Suspense } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { CategoryQuery } from "@src/relay/queries/CategoryQuery.shopana";
@@ -26,9 +26,42 @@ function CategorySectionInner({ handle }: CategorySectionProps) {
 }
 
 export default function CategorySection(props: CategorySectionProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          // Отключаем наблюдение после первого появления
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: "100px", // Начинаем загрузку немного раньше
+        threshold: 0,
+      }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <Suspense fallback={<BoxBuilderSwiperSectionSkeleton />}>
-      <CategorySectionInner {...props} />
-    </Suspense>
+    <div ref={ref}>
+      {isVisible ? (
+        <Suspense fallback={<BoxBuilderSwiperSectionSkeleton />}>
+          <CategorySectionInner {...props} />
+        </Suspense>
+      ) : (
+        <BoxBuilderSwiperSectionSkeleton />
+      )}
+    </div>
   );
 }
