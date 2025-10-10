@@ -105,6 +105,9 @@ const ProductSection: React.FC<{
           quantityProps={{
             size: 'large',
             appearance: 'activity',
+            style: {
+              height: 48,
+            },
           }}
         />
       );

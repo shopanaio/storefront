@@ -71,8 +71,28 @@ type Direction = 'forward' | 'backward' | 'replace';
  * Context with per-screen meta (e.g., isTop) so plugins (AppScreen) can render
  * elements outside animated area (like a static AppBar).
  */
-export const ScreenContext = React.createContext<{ isTop: boolean }>({ isTop: true });
+export const ScreenContext = React.createContext<{ isTop: boolean; isRoot: boolean }>({ isTop: true, isRoot: true });
 export const useScreenMeta = () => React.useContext(ScreenContext);
+
+/**
+ * @public
+ * Context to let top screen provide AppBar content to a static host rendered by Stack.
+ */
+export const AppBarHostContext = React.createContext<{
+  setAppBar: (node: React.ReactNode) => void;
+} | null>(null);
+
+/**
+ * @public
+ * Hook to access AppBar host controller from within screens.
+ */
+export const useAppBarHost = () => {
+  const ctx = React.useContext(AppBarHostContext);
+  if (!ctx) {
+    throw new Error('useAppBarHost must be used within a Stack component');
+  }
+  return ctx;
+};
 
 /**
  * Internal controller used by actions to mutate the mounted stack component.
@@ -173,6 +193,7 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
       { key: generateKey(), name: config.initialActivity(), params: {} },
     ]);
     const [direction, setDirection] = useState<Direction>('forward');
+    const [appBarNode, setAppBarNode] = useState<React.ReactNode>(null);
 
     // Keep the controllerRef in sync with the mounted stack
     useEffect(() => {
@@ -191,7 +212,13 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
     // Render the entire stack; top-most is last
     return (
       <div style={{ position: 'relative', overflow: 'hidden', background: '#fff', height: '100vh' }}>
-        <AnimatePresence initial={false} mode="popLayout">
+        {/* Static AppBar host above animated screens */}
+        <div style={{ position: 'fixed', insetInline: 0, top: 0, zIndex: 1000 }}>
+          {appBarNode}
+        </div>
+
+        <AppBarHostContext.Provider value={{ setAppBar: setAppBarNode }}>
+          <AnimatePresence initial={false} mode="popLayout">
           {stack.map((entry, index) => {
             const Component = components[entry.name];
             if (!Component) return null;
@@ -225,13 +252,14 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
                 animate={motionSet.animate}
                 exit={motionSet.exit}
               >
-                <ScreenContext.Provider value={{ isTop }}>
+                <ScreenContext.Provider value={{ isTop, isRoot: index === 0 }}>
                   <Component params={entry.params} />
                 </ScreenContext.Provider>
               </motion.div>
             );
           })}
-        </AnimatePresence>
+          </AnimatePresence>
+        </AppBarHostContext.Provider>
       </div>
     );
   };

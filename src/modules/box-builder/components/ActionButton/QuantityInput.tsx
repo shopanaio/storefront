@@ -12,6 +12,7 @@ export interface BoxBuilderQuantityInputProps {
   className?: string;
   appearance: "card" | "activity";
   label?: string;
+  style?: React.CSSProperties;
 }
 
 export const BoxBuilderQuantityInput = ({
@@ -22,6 +23,7 @@ export const BoxBuilderQuantityInput = ({
   loading: loadingProps,
   className,
   appearance,
+  style,
 }: BoxBuilderQuantityInputProps) => {
   const { loading, onDecrement, onIncrement, value, onRemove } =
     useBoxBuilderQuantityInputProps({
@@ -42,6 +44,7 @@ export const BoxBuilderQuantityInput = ({
       disabled={disabled}
       loading={loading}
       className={className}
+      style={style}
       {...(appearance === "activity" ? { style: { height: 48 } } : {})}
     />
   );

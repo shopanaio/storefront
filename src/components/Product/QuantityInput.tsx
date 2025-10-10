@@ -63,7 +63,7 @@ export const QuantityInput = ({
 
   return (
     <Input
-      // style={style}
+      style={style}
       styles={{
         affixWrapper:
           color === 'primary'

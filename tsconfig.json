@@ -15,28 +15,28 @@
         "./packages/shopana-novaposhta-client/dist/*"
       ],
       "@shopana/brand": ["./packages/brand-default/src"],
-      "@shopana/brand/*": ["./packages/brand-default/src/*"]
-      // "@stackflow/react/future": [
-      //   "./src/modules/box-builder/stack-engine/react/future.tsx"
-      // ],
-      // "@stackflow/react": [
-      //   "./src/modules/box-builder/stack-engine/react"
-      // ],
-      // "@stackflow/config": [
-      //   "./src/modules/box-builder/stack-engine/config/index.ts"
-      // ],
-      // "@stackflow/plugin-basic-ui": [
-      //   "./src/modules/box-builder/stack-engine/plugin-basic-ui/index.tsx"
-      // ],
-      // "@stackflow/plugin-basic-ui/*": [
-      //   "./src/modules/box-builder/stack-engine/plugin-basic-ui/*"
-      // ],
-      // "@stackflow/plugin-history-sync": [
-      //   "./src/modules/box-builder/stack-engine/plugin-history-sync/index.ts"
-      // ],
-      // "@stackflow/plugin-renderer-basic": [
-      //   "./src/modules/box-builder/stack-engine/plugin-renderer-basic/index.ts"
-      // ]
+      "@shopana/brand/*": ["./packages/brand-default/src/*"],
+      "@stackflow/react/future": [
+        "./src/modules/box-builder/stack-engine/react/future.tsx"
+      ],
+      "@stackflow/react": [
+        "./src/modules/box-builder/stack-engine/react"
+      ],
+      "@stackflow/config": [
+        "./src/modules/box-builder/stack-engine/config/index.ts"
+      ],
+      "@stackflow/plugin-basic-ui": [
+        "./src/modules/box-builder/stack-engine/plugin-basic-ui/index.tsx"
+      ],
+      "@stackflow/plugin-basic-ui/*": [
+        "./src/modules/box-builder/stack-engine/plugin-basic-ui/*"
+      ],
+      "@stackflow/plugin-history-sync": [
+        "./src/modules/box-builder/stack-engine/plugin-history-sync/index.ts"
+      ],
+      "@stackflow/plugin-renderer-basic": [
+        "./src/modules/box-builder/stack-engine/plugin-renderer-basic/index.ts"
+      ]
     },
     "target": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],
