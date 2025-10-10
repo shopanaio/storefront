@@ -6,10 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useModalStore } from '@src/store/appStore';
 import { Divider, Flex, Button, Typography } from 'antd';
 import { useLogo } from '@src/hooks/useLogo';
-import { TbPhone, TbPhoneFilled } from 'react-icons/tb';
 import { LanguageDropdown } from '../LanguageDropdown';
 import { CurrencyDropdown } from '../CurrencyDropdown';
-import { HeaderLinkButton } from '../HeaderLinkButton';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
@@ -17,6 +15,7 @@ import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { AppDrawerCartButton } from './AppDrawerCartButton';
 import { AppDrawerWishlistButton } from './AppDrawerWishlistButton';
 import { AppDrawerAccountButton } from './AppDrawerAccountButton';
+import { AppDrawerSupportButton } from './AppDrawerSupportButton';
 
 const { Text } = Typography;
 
@@ -47,17 +46,11 @@ export const AppDrawer: React.FC = () => {
       showCloseButton={false}
       title={<Logo size={32} />}
     >
-      <Flex gap={4} vertical>
-        <HeaderLinkButton
-          icon={<TbPhone size={24} color={token.colorPrimary} />}
-          topText={t('customer-support')}
-          bottomText="+1 (999) 111-11-11"
-          theme="dark"
-          mobileBlock={false}
-        />
+      <Flex vertical>
         <AppDrawerCartButton />
         <AppDrawerWishlistButton />
         <AppDrawerAccountButton />
+        <AppDrawerSupportButton />
       </Flex>
 
       <Divider className={styles.divider} />

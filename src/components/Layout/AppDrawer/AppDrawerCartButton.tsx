@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Button } from 'antd';
 import { TbShoppingCart } from 'react-icons/tb';
 import { Badge } from '@src/components/UI/Badge';
 import { useTranslations } from 'next-intl';
@@ -9,6 +8,7 @@ import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
 import useCart from '@src/hooks/cart/useCart';
 import { useModalStore } from '@src/store/appStore';
+import { AppDrawerButton } from './AppDrawerButton';
 
 /**
  * Cart button for the app drawer
@@ -29,11 +29,10 @@ export const AppDrawerCartButton: React.FC = () => {
   };
 
   return (
-    <Button
+    <AppDrawerButton
       variant="solid"
       color="primary"
       icon={<TbShoppingCart size={20} />}
-      className={styles.cartButton}
       onClick={handleClick}
     >
       {t('cart')}
@@ -50,16 +49,11 @@ export const AppDrawerCartButton: React.FC = () => {
           className={styles.badge}
         />
       )}
-    </Button>
+    </AppDrawerButton>
   );
 };
 
 const useStyles = createStyles(({ css }) => ({
-  cartButton: css`
-    height: 46px;
-    display: flex;
-    justify-content: flex-start;
-  `,
   badge: css`
     margin-left: auto;
   `,
