@@ -67,7 +67,7 @@ export const Image: React.FC<UiImageProps> = ({
         src={fallbackSrc}
         alt={alt ?? "placeholder"}
         className={styles.placeholderImg}
-        loading="eager"
+        loading="lazy"
         decoding="async"
         preview={false}
       />
@@ -83,7 +83,7 @@ export const Image: React.FC<UiImageProps> = ({
         src={resolvedSrc}
         alt={alt}
         preview={preview}
-        loading={loading}
+        loading="lazy"
         onLoad={handleLoad}
         onError={handleError}
         style={{ display: isLoaded ? "block" : "none" }}

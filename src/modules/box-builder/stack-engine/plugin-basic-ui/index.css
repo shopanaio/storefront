@@ -1,0 +1,8 @@
+/* Minimal styles placeholder for API compatibility */
+:root {
+  --appbar-height: 56px;
+}
+
+.stack-engine-appscreen {
+  display: block;
+}

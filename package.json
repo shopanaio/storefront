@@ -29,6 +29,7 @@
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "emittery": "^1.2.0",
+    "framer-motion": "11",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "lottie-react": "^2.4.1",
