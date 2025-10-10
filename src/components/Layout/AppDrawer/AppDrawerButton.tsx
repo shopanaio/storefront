@@ -33,7 +33,7 @@ export const AppDrawerButton: React.FC<AppDrawerButtonProps> = ({
 
 const useStyles = createStyles(({ css }) => ({
   button: css`
-    height: 46px;
+    height: 48px;
     display: flex;
     justify-content: flex-start;
     align-items: center;

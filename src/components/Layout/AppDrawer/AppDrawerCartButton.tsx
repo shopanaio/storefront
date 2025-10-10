@@ -21,10 +21,14 @@ export const AppDrawerCartButton: React.FC = () => {
   const setIsCartDrawerOpen = useModalStore(
     (state) => state.setIsCartDrawerOpen
   );
+  const setIsAppDrawerOpen = useModalStore(
+    (state) => state.setIsAppDrawerOpen
+  );
 
   const totalQuantity = cart?.totalQuantity ?? 0;
 
   const handleClick = () => {
+    setIsAppDrawerOpen(false);
     setIsCartDrawerOpen(true);
   };
 
