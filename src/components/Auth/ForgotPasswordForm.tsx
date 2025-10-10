@@ -95,11 +95,11 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
       <Text className={styles.privacyText}>
         {t("privacy-paragraph")}{" "}
-        <Button className={styles.privacyLink} size="small" type="link">
+        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
           {t("terms-link")}
         </Button>{" "}
         {t("and")}{" "}
-        <Button className={styles.privacyLink} size="small" type="link">
+        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
           {t("privacy-link")}
         </Button>
         .
@@ -110,7 +110,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         <Button
           className={styles.ModalFooterBtn}
           onClick={() => onSwitchForm("signIn")}
-          type="link"
+          variant="link"
+          color="primary"
         >
           {t("sign-in")}
         </Button>

@@ -51,7 +51,8 @@ export const Summary = ({ checkout }: Prop) => {
           <div>
             <Button
               className={styles.confirmLinkBtn}
-              type="link"
+              variant="link"
+              color="primary"
               onClick={() => setIsExpanded((prev) => !prev)}
             >
               {isExpanded ? tListing('show-less') : tListing('show-more')}

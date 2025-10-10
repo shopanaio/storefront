@@ -44,7 +44,8 @@ export const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
       {options.length > maxVisibleOptions && (
         <Button
           className={styles.showMoreLessBtn}
-          type="link"
+          variant="link"
+          color="primary"
           onClick={() => setShowAll(!showAll)}
         >
           {showAll ? t("show-less") : t("show-more")}

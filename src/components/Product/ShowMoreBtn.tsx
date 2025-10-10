@@ -15,7 +15,7 @@ export const ShowMoreBtn = ({ full, onClick }: Prop) => {
   const t = useTranslations("Listing");
 
   return (
-    <Button className={styles.showMoreLessBtn} type="link" onClick={onClick}>
+    <Button className={styles.showMoreLessBtn} variant="link" color="primary" onClick={onClick}>
       {full ? t("show-less") : t("show-more")}
     </Button>
   );

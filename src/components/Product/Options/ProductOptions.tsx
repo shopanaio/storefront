@@ -84,7 +84,8 @@ export const ProductOptions = ({
               <Button
                 className={styles.optionAdditionInfo}
                 icon={<TbInfoCircle />}
-                type="link"
+                variant="link"
+                color="primary"
               >
                 {t("size-chart")}
               </Button>

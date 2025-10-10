@@ -170,7 +170,7 @@ export const ReviewsSection = ({ product }: Props) => {
           {t("verified-only")}
         </Button>
         {hasFilters && (
-          <Button type="link" onClick={clearReviewsFilters}>
+          <Button variant="link" color="primary" onClick={clearReviewsFilters}>
             {t("clear-all")}
           </Button>
         )}

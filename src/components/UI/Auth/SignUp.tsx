@@ -112,11 +112,11 @@ export const SignUp: React.FC<SignUpProps> = ({
 
       <Text className={styles.privacyText}>
         {t("privacy-paragraph")}{" "}
-        <Button className={styles.privacyLink} size="small" type="link">
+        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
           {t("terms-link")}
         </Button>{" "}
         {t("and")}{" "}
-        <Button className={styles.privacyLink} size="small" type="link">
+        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
           {t("privacy-link")}
         </Button>
         .
@@ -126,7 +126,8 @@ export const SignUp: React.FC<SignUpProps> = ({
         <Text>{t("have-account")}</Text>
         <Button
           className={styles.modalFooterBtn}
-          type="link"
+          variant="link"
+          color="primary"
           onClick={() => onSwitchForm("signIn")}
         >
           {t("sign-in")}
