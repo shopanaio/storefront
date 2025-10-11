@@ -12,7 +12,9 @@ import { AnimatePresence, motion } from 'framer-motion';
  * Activity component type facade. Matches usage in codebase: a component that
  * receives a single `params` prop.
  */
-export type ActivityComponentType<P = unknown> = React.ComponentType<{ params: P }>;
+export type ActivityComponentType<P = unknown> = React.ComponentType<{
+  params: P;
+}>;
 
 /**
  * @public
@@ -41,7 +43,10 @@ export interface StackflowConfig {
  * @public
  * Components map keyed by activity name.
  */
-export type ActivityComponentsMap = Record<string, React.ComponentType<{ params: any }>>;
+export type ActivityComponentsMap = Record<
+  string,
+  React.ComponentType<{ params: any }>
+>;
 
 /**
  * @public
@@ -109,7 +114,7 @@ export const ScreenContext = React.createContext<{
   };
 }>({
   isTop: true,
-  isRoot: true
+  isRoot: true,
 });
 
 export const useScreenMeta = () => React.useContext(ScreenContext);
@@ -132,7 +137,8 @@ let controllerRef: StackController | null = null;
 /**
  * Generate unique keys for stack entries.
  */
-const generateKey = () => `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+const generateKey = () =>
+  `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 /**
  * Schedule a state update to the next frame to ensure direction is applied
@@ -154,26 +160,34 @@ const schedule = (fn: () => void) => {
  * @public
  * Minimal AppScreen compatible facade used by Layout.tsx
  */
-export const AppScreen: React.FC<AppScreenProps> = ({ appBar, children }) => {
+export const AppScreen: React.FC<AppScreenProps> = ({
+  appBar,
+
+  children,
+}) => {
   const appBarHeight = 56; // px
-  const { isRoot, motionProps } = useScreenMeta();
+  const { isRoot, motionProps, isTop, zIndex } = useScreenMeta();
 
   const leftContent = isRoot
     ? appBar?.closeButton?.render?.()
     : appBar?.backButton?.render?.();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <>
       {/* AppBar rendered inside the screen */}
       <div
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
           height: appBarHeight,
           display: 'flex',
           alignItems: 'center',
           paddingInline: 8,
           borderBottom: '1px solid rgba(0,0,0,0.06)',
           background: '#fff',
-          flexShrink: 0,
+          zIndex: zIndex + 1000,
         }}
       >
         <div style={{ width: 40 }}>{leftContent}</div>
@@ -186,12 +200,23 @@ export const AppScreen: React.FC<AppScreenProps> = ({ appBar, children }) => {
       </div>
       {/* Content wrapped in motion.div */}
       <motion.div
-        style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}
+        style={{
+          position: 'absolute',
+          top: appBarHeight,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          background: '#fff',
+          zIndex,
+          overflow: 'auto',
+          pointerEvents: isTop ? 'auto' : 'none',
+        }}
         {...motionProps}
       >
         {children}
       </motion.div>
-    </div>
+    </>
   );
 };
 
@@ -230,13 +255,19 @@ const useVariants = (durationMs: number) => {
  * Factory that returns a React Stack component and imperative actions.
  * This is a lightweight reimplementation compatible with the minimal API used in the codebase.
  */
-export function stackflow({ config, components }: StackflowOptions): StackflowOutput {
+export function stackflow({
+  config,
+  components,
+}: StackflowOptions): StackflowOutput {
   const actions: StackflowActions = {
     push(name, params) {
       if (!controllerRef) return;
       controllerRef.setDirection('forward');
       schedule(() => {
-        controllerRef?.setState((prev) => [...prev, { key: generateKey(), name, params }]);
+        controllerRef?.setState((prev) => [
+          ...prev,
+          { key: generateKey(), name, params },
+        ]);
       });
     },
     replace(name, params) {
@@ -259,7 +290,9 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
       if (!controllerRef) return;
       controllerRef.setDirection('backward');
       schedule(() => {
-        controllerRef?.setState((prev) => (prev.length > 1 ? prev.slice(0, prev.length - 1) : prev));
+        controllerRef?.setState((prev) =>
+          prev.length > 1 ? prev.slice(0, prev.length - 1) : prev
+        );
       });
     },
   };
@@ -289,7 +322,14 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
 
     // Render the entire stack; top-most is last
     return (
-      <div style={{ position: 'relative', overflow: 'hidden', background: '#fff', height: '100vh' }}>
+      <div
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: '#fff',
+          height: '100vh',
+        }}
+      >
         <AnimatePresence initial={false} mode="popLayout">
           {stack.map((entry, index) => {
             const Component = components[entry.name];
@@ -302,37 +342,25 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
               direction === 'forward'
                 ? variants.enterFromRight
                 : direction === 'backward'
-                ? variants.enterFromLeft
-                : variants.fadeSwap;
+                  ? variants.enterFromLeft
+                  : variants.fadeSwap;
 
             return (
-              <div
+              <ScreenContext.Provider
                 key={key}
-                style={{
-                  position: isTop ? 'relative' : 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: '#fff',
+                value={{
+                  isTop,
+                  isRoot: index === 0,
+                  motionProps: {
+                    initial: motionSet.initial,
+                    animate: motionSet.animate,
+                    exit: motionSet.exit,
+                  },
                   zIndex,
-                  isolation: 'isolate',
-                  pointerEvents: isTop ? 'auto' : 'none',
                 }}
               >
-                <ScreenContext.Provider
-                  value={{
-                    isTop,
-                    isRoot: index === 0,
-                    motionProps: {
-                      initial: motionSet.initial,
-                      animate: motionSet.animate,
-                      exit: motionSet.exit,
-                    }
-                  }}
-                >
-                  <Component params={entry.params} />
-                </ScreenContext.Provider>
-              </div>
+                <Component params={entry.params} />
+              </ScreenContext.Provider>
             );
           })}
         </AnimatePresence>
