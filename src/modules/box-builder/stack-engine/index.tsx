@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 /* ============================================================================
@@ -76,17 +76,6 @@ export interface StackflowOutput {
 
 /**
  * @public
- * AppBar configuration that screens provide to the static AppBar host.
- */
-export interface AppBarConfig {
-  isRoot: boolean;
-  left?: React.ReactNode;
-  center?: React.ReactNode;
-  right?: React.ReactNode;
-}
-
-/**
- * @public
  * AppScreen component props
  */
 export interface AppScreenProps {
@@ -110,32 +99,20 @@ type Direction = 'forward' | 'backward' | 'replace';
  * Context with per-screen meta (e.g., isTop) so plugins (AppScreen) can render
  * elements outside animated area (like a static AppBar).
  */
-export const ScreenContext = React.createContext<{ isTop: boolean; isRoot: boolean }>({
+export const ScreenContext = React.createContext<{
+  isTop: boolean;
+  isRoot: boolean;
+  motionProps?: {
+    initial: any;
+    animate: any;
+    exit: any;
+  };
+}>({
   isTop: true,
   isRoot: true
 });
 
 export const useScreenMeta = () => React.useContext(ScreenContext);
-
-/**
- * @public
- * Context to let top screen provide AppBar config to a static host rendered by Stack.
- */
-export const AppBarHostContext = React.createContext<{
-  setAppBar: (config: AppBarConfig | null) => void;
-} | null>(null);
-
-/**
- * @public
- * Hook to access AppBar host controller from within screens.
- */
-export const useAppBarHost = () => {
-  const ctx = React.useContext(AppBarHostContext);
-  if (!ctx) {
-    throw new Error('useAppBarHost must be used within a Stack component');
-  }
-  return ctx;
-};
 
 /* ============================================================================
  * Internal Controller
@@ -174,63 +151,46 @@ const schedule = (fn: () => void) => {
  * ========================================================================== */
 
 /**
- * Static AppBar component that stays mounted and only updates its content.
- * Renders with SSR support (works without JS).
- */
-const StaticAppBar: React.FC<{ config: AppBarConfig | null }> = React.memo(({ config }) => {
-  const appBarHeight = 56; // px
-  return (
-    <div
-      style={{
-        height: appBarHeight,
-        display: 'flex',
-        alignItems: 'center',
-        paddingInline: 8,
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
-        background: '#fff',
-      }}
-    >
-      <div style={{ width: 40 }}>{config?.left}</div>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>{config?.center}</div>
-      <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end' }}>{config?.right}</div>
-    </div>
-  );
-});
-
-StaticAppBar.displayName = 'StaticAppBar';
-
-/**
  * @public
  * Minimal AppScreen compatible facade used by Layout.tsx
  */
 export const AppScreen: React.FC<AppScreenProps> = ({ appBar, children }) => {
   const appBarHeight = 56; // px
-  const { isTop, isRoot } = useScreenMeta();
-  const { setAppBar } = useAppBarHost();
+  const { isRoot, motionProps } = useScreenMeta();
 
-  // Keep latest appBar in ref to avoid recreating effect on every render
-  const appBarRef = useRef(appBar);
-  appBarRef.current = appBar;
-
-  useEffect(() => {
-    if (!isTop) {
-      setAppBar(null);
-      return;
-    }
-
-    // We are the top screen - render AppBar content
-    const currentAppBar = appBarRef.current;
-    setAppBar({
-      isRoot,
-      left: isRoot ? currentAppBar?.closeButton?.render?.() : currentAppBar?.backButton?.render?.(),
-      center: currentAppBar?.title,
-      right: currentAppBar?.renderRight?.(),
-    });
-  }, [isTop, isRoot, setAppBar]);
+  const leftContent = isRoot
+    ? appBar?.closeButton?.render?.()
+    : appBar?.backButton?.render?.();
 
   return (
-    <div style={{ display: 'block' }}>
-      <div style={{ paddingTop: appBarHeight }}>{children}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* AppBar rendered inside the screen */}
+      <div
+        style={{
+          height: appBarHeight,
+          display: 'flex',
+          alignItems: 'center',
+          paddingInline: 8,
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          background: '#fff',
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ width: 40 }}>{leftContent}</div>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          {appBar?.title}
+        </div>
+        <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end' }}>
+          {appBar?.renderRight?.()}
+        </div>
+      </div>
+      {/* Content wrapped in motion.div */}
+      <motion.div
+        style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}
+        {...motionProps}
+      >
+        {children}
+      </motion.div>
     </div>
   );
 };
@@ -312,7 +272,6 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
       { key: generateKey(), name: config.initialActivity(), params: {} },
     ]);
     const [direction, setDirection] = useState<Direction>('forward');
-    const [appBarConfig, setAppBarConfig] = useState<AppBarConfig | null>(null);
 
     // Keep the controllerRef in sync with the mounted stack
     useEffect(() => {
@@ -331,13 +290,7 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
     // Render the entire stack; top-most is last
     return (
       <div style={{ position: 'relative', overflow: 'hidden', background: '#fff', height: '100vh' }}>
-        {/* Static AppBar host above animated screens - always rendered, works without JS */}
-        <div style={{ position: 'fixed', insetInline: 0, top: 0, zIndex: 1000 }}>
-          <StaticAppBar config={appBarConfig} />
-        </div>
-
-        <AppBarHostContext.Provider value={{ setAppBar: setAppBarConfig }}>
-          <AnimatePresence initial={false} mode="popLayout">
+        <AnimatePresence initial={false} mode="popLayout">
           {stack.map((entry, index) => {
             const Component = components[entry.name];
             if (!Component) return null;
@@ -353,7 +306,7 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
                 : variants.fadeSwap;
 
             return (
-              <motion.div
+              <div
                 key={key}
                 style={{
                   position: isTop ? 'relative' : 'absolute',
@@ -364,21 +317,25 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
                   zIndex,
                   isolation: 'isolate',
                   pointerEvents: isTop ? 'auto' : 'none',
-                  overflowY: isTop ? 'auto' : 'hidden',
-                  WebkitOverflowScrolling: isTop ? 'touch' : undefined,
                 }}
-                initial={motionSet.initial}
-                animate={motionSet.animate}
-                exit={motionSet.exit}
               >
-                <ScreenContext.Provider value={{ isTop, isRoot: index === 0 }}>
+                <ScreenContext.Provider
+                  value={{
+                    isTop,
+                    isRoot: index === 0,
+                    motionProps: {
+                      initial: motionSet.initial,
+                      animate: motionSet.animate,
+                      exit: motionSet.exit,
+                    }
+                  }}
+                >
                   <Component params={entry.params} />
                 </ScreenContext.Provider>
-              </motion.div>
+              </div>
             );
           })}
-          </AnimatePresence>
-        </AppBarHostContext.Provider>
+        </AnimatePresence>
       </div>
     );
   };
