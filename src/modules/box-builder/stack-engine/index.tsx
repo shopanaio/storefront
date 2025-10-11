@@ -29,7 +29,7 @@ export interface StackEntry<Params = unknown> {
 
 /**
  * @public
- * Configuration shape compatible with defineConfig in the original API.
+ * Configuration for stackflow.
  */
 export interface StackflowConfig {
   activities: Array<{ name: string; route?: string }>;
@@ -50,8 +50,6 @@ export type ActivityComponentsMap = Record<string, React.ComponentType<{ params:
 export interface StackflowOptions {
   config: StackflowConfig;
   components: ActivityComponentsMap;
-  // Plugins are accepted for API compatibility, but ignored in this lightweight engine
-  plugins?: unknown[];
 }
 
 /**
@@ -387,32 +385,3 @@ export function stackflow({ config, components }: StackflowOptions): StackflowOu
 
   return { Stack, actions };
 }
-
-/* ============================================================================
- * Plugin Facades (API Compatibility)
- * ========================================================================== */
-
-/**
- * @public
- * Renderer plugin facade for API compatibility. No-op.
- */
-export const basicRendererPlugin = (_opts?: unknown) => ({ name: 'renderer-basic' });
-
-/**
- * @public
- * UI plugin facade for API compatibility. Currently a no-op.
- */
-export const basicUIPlugin = (_opts?: unknown) => ({ name: 'basic-ui' });
-
-/**
- * @public
- * History sync plugin facade for API compatibility. No-op.
- */
-export const historySyncPlugin = (_opts?: unknown) => ({ name: 'history-sync' });
-
-/**
- * @public
- * A no-op helper that returns the provided config unchanged.
- * Kept for API compatibility with @stackflow/config defineConfig.
- */
-export const defineConfig = <T extends unknown>(config: T): T => config;

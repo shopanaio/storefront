@@ -6,15 +6,11 @@ import CategoryQueryNode, {
 } from "@src/relay/queries/__generated__/CategoryQuery.graphql";
 import { BoxBuilderClient } from "./client";
 import { QueryProvider } from "@src/providers/relay-query-provider";
-import { parseUserAgent } from "@src/utils/parseUserAgent";
 import { getDefaultBoxCategoryHandle } from "@src/modules/box-builder/config/categories";
 import CartProvider from "@src/providers/cart";
 
 export default async function BoxBuilderPage() {
   const cookie = headers().get("cookie") ?? undefined;
-  const userAgent = headers().get("user-agent") ?? "";
-
-  const { isIOS } = parseUserAgent(userAgent);
 
   // Preload only category for Step1: default box category from config
   const preloadedQuery = await loadSerializableQuery<
@@ -43,7 +39,7 @@ export default async function BoxBuilderPage() {
   return (
     <CartProvider cookie="box-builder_cart_id">
       <QueryProvider preloadedQuery={preloadedQuery}>
-        <BoxBuilderClient isIOS={isIOS} />
+        <BoxBuilderClient />
       </QueryProvider>
     </CartProvider>
   );

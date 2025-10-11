@@ -1,8 +1,4 @@
-import { basicUIPlugin } from '@stackflow/plugin-basic-ui';
-import { basicRendererPlugin } from '@stackflow/plugin-renderer-basic';
 import { stackflow, StackflowOutput } from '@stackflow/react/future';
-import { defineConfig } from '@stackflow/config';
-import { historySyncPlugin } from '@stackflow/plugin-history-sync';
 
 import Intro from './activities/Intro';
 import Step1 from './activities/Step1';
@@ -26,7 +22,7 @@ export enum Activity {
   Order = 'Order',
 }
 
-const config = defineConfig({
+const config = {
   activities: [
     {
       name: Activity.Intro,
@@ -68,13 +64,11 @@ const config = defineConfig({
 
   transitionDuration: 250,
   initialActivity: () => Activity.Intro,
-});
+};
 
 let stackflowOutput: StackflowOutput;
 
-export const createStack = (isIOS: boolean = false) => {
-  const theme = isIOS ? 'cupertino' : 'android';
-
+export const createStack = () => {
   stackflowOutput = stackflow({
     config,
     components: {
@@ -88,21 +82,6 @@ export const createStack = (isIOS: boolean = false) => {
       Order,
       Category,
     },
-    plugins: [
-      basicRendererPlugin(),
-      basicUIPlugin({
-        theme,
-        appBar: {
-          height: '56px',
-          borderSize: '2px',
-        },
-      }),
-      historySyncPlugin({
-        config,
-        fallbackActivity: () => Activity.Intro,
-        useHash: true,
-      }),
-    ],
   });
 
   return stackflowOutput;
