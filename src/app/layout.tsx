@@ -24,15 +24,6 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" />
-        <Script id="reset-hash" strategy="beforeInteractive">
-          {`(function () {
-            try {
-              if (location.hash) {
-                history.replaceState(null, "", location.pathname + location.search);
-              }
-            } catch (e) {}
-          })();`}
-        </Script>
       </head>
       <body>
         <RelayEnvironmentProvider environment={getCurrentEnvironment()}>

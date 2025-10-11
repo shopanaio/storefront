@@ -107,6 +107,7 @@ type Direction = 'forward' | 'backward' | 'replace';
 export const ScreenContext = React.createContext<{
   isTop: boolean;
   isRoot: boolean;
+  zIndex: number;
   motionProps?: {
     initial: any;
     animate: any;
@@ -115,6 +116,7 @@ export const ScreenContext = React.createContext<{
 }>({
   isTop: true,
   isRoot: true,
+  zIndex: 1,
 });
 
 export const useScreenMeta = () => React.useContext(ScreenContext);
@@ -160,36 +162,58 @@ const schedule = (fn: () => void) => {
  * @public
  * Minimal AppScreen compatible facade used by Layout.tsx
  */
-export const AppScreen: React.FC<AppScreenProps> = ({
+export const AppScreen = React.memo(function AppScreen({
   appBar,
-
   children,
-}) => {
-  const appBarHeight = 56; // px
+}: AppScreenProps) {
+  const APP_BAR_HEIGHT = 56; // px
   const { isRoot, motionProps, isTop, zIndex } = useScreenMeta();
 
-  const leftContent = isRoot
-    ? appBar?.closeButton?.render?.()
-    : appBar?.backButton?.render?.();
+  const leftContent = useMemo(
+    () => (isRoot ? appBar?.closeButton?.render?.() : appBar?.backButton?.render?.()),
+    [isRoot, appBar]
+  );
+
+  const appBarStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      height: APP_BAR_HEIGHT,
+      display: 'flex',
+      alignItems: 'center',
+      paddingInline: 8,
+      borderBottom: '1px solid rgba(0,0,0,0.06)',
+      background: '#fff',
+      zIndex: zIndex + 1000,
+    }),
+    [zIndex]
+  );
+
+  const contentStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      top: APP_BAR_HEIGHT,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100%',
+      background: '#fff',
+      zIndex,
+      overflow: 'auto',
+      pointerEvents: (isTop ? 'auto' : 'none') as 'auto' | 'none',
+      WebkitOverflowScrolling: 'touch' as const,
+      // contain: 'layout paint' as const,
+      // willChange: 'transform, opacity' as const,
+    }),
+    [zIndex, isTop]
+  );
 
   return (
     <>
       {/* AppBar rendered inside the screen */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: appBarHeight,
-          display: 'flex',
-          alignItems: 'center',
-          paddingInline: 8,
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-          background: '#fff',
-          zIndex: zIndex + 1000,
-        }}
-      >
+      <div style={appBarStyle}>
         <div style={{ width: 40 }}>{leftContent}</div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
           {appBar?.title}
@@ -199,26 +223,12 @@ export const AppScreen: React.FC<AppScreenProps> = ({
         </div>
       </div>
       {/* Content wrapped in motion.div */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: appBarHeight,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100%',
-          background: '#fff',
-          zIndex,
-          overflow: 'auto',
-          pointerEvents: isTop ? 'auto' : 'none',
-        }}
-        {...motionProps}
-      >
+      <motion.div style={contentStyle} {...motionProps}>
         {children}
       </motion.div>
     </>
   );
-};
+});
 
 /* ============================================================================
  * Main Stackflow Factory
@@ -320,24 +330,27 @@ export function stackflow({
 
     const variants = useVariants(config.transitionDuration ?? 350);
 
-    // Render the entire stack; top-most is last
+    // Render only the top-most screen; AnimatePresence will keep the previous
+    // one mounted just for its exit animation when it gets removed.
     return (
       <div
         style={{
           position: 'relative',
           overflow: 'hidden',
           background: '#fff',
-          height: '100vh',
+          height: '100dvh',
+          contain: 'layout paint',
         }}
       >
         <AnimatePresence initial={false} mode="popLayout">
-          {stack.map((entry, index) => {
+          {(() => {
+            const topIndex = stack.length - 1;
+            const entry = stack[topIndex];
+            if (!entry) return null;
+
             const Component = components[entry.name];
             if (!Component) return null;
 
-            const isTop = index === stack.length - 1;
-            const key = entry.key;
-            const zIndex = index + 1;
             const motionSet =
               direction === 'forward'
                 ? variants.enterFromRight
@@ -347,22 +360,22 @@ export function stackflow({
 
             return (
               <ScreenContext.Provider
-                key={key}
+                key={entry.key}
                 value={{
-                  isTop,
-                  isRoot: index === 0,
+                  isTop: true,
+                  isRoot: topIndex === 0,
                   motionProps: {
                     initial: motionSet.initial,
                     animate: motionSet.animate,
                     exit: motionSet.exit,
                   },
-                  zIndex,
+                  zIndex: topIndex + 1,
                 }}
               >
                 <Component params={entry.params} />
               </ScreenContext.Provider>
             );
-          })}
+          })()}
         </AnimatePresence>
       </div>
     );

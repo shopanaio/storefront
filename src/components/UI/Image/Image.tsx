@@ -5,6 +5,7 @@ import type { ImageProps as AntImageProps } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
+import clsx from 'clsx';
 
 export interface UiImageProps
   extends Omit<AntImageProps, 'placeholder' | 'fallback'> {
@@ -38,19 +39,18 @@ export const Image: React.FC<UiImageProps> = ({
   const { styles, cx } = useStyles({ ratio });
 
   const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
-  const [isLoaded, setIsLoaded] = useState<boolean>(true);
-  const [showSkeleton, setShowSkeleton] = useState<boolean>(true);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [minDelayElapsed, setMinDelayElapsed] = useState<boolean>(false);
 
   useEffect(() => {
     setResolvedSrc(src || fallbackSrc);
-    setIsLoaded(true);
+    setIsLoaded(false);
   }, [src, fallbackSrc]);
 
+  // Ensure skeleton is shown for at least 500ms for the current image src
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSkeleton(false);
-    }, 1000);
-
+    setMinDelayElapsed(false);
+    const timer = setTimeout(() => setMinDelayElapsed(true), 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -74,26 +74,26 @@ export const Image: React.FC<UiImageProps> = ({
     return <Skeleton.Image active={false} className={styles.skeleton} />;
   }, [placeholder, styles.skeleton]);
 
+  const showSkeleton = !isLoaded || !minDelayElapsed;
+
   return (
-    <div className={cx(styles.wrapper)} style={style}>
-      {showSkeleton ? (
-        <Skeleton.Image active={false} className={styles.skeleton} />
-      ) : (
-        <>
-          {!isLoaded && placeholderNode}
-          <AntImage
-            {...rest}
-            className={className}
-            src={resolvedSrc}
-            alt={alt}
-            preview={preview}
-            loading="lazy"
-            onLoad={handleLoad}
-            onError={handleError}
-            style={{ display: isLoaded ? 'block' : 'none' }}
-          />
-        </>
-      )}
+    <div className={styles.wrapper} style={style}>
+      {showSkeleton && placeholderNode}
+      <AntImage
+        {...rest}
+        className={styles.image}
+        src={resolvedSrc}
+        alt={alt}
+        preview={preview}
+        loading={loading}
+        width="100%"
+        height="100%"
+        onLoad={handleLoad}
+        onError={handleError}
+        style={{
+          visibility: showSkeleton ? 'hidden' : 'visible',
+        }}
+      />
     </div>
   );
 };
@@ -105,10 +105,19 @@ const useStyles = createStyles(
     return {
       wrapper: css`
         width: 100%;
+        position: relative;
         aspect-ratio: ${aspectRatio};
+      `,
+      image: css`
+        width: 100%;
+        height: 100%;
+        aspect-ratio: ${aspectRatio};
+        object-fit: cover;
+        display: block;
       `,
       placeholderImg: css`
         width: 100%;
+        height: 100%;
         aspect-ratio: ${aspectRatio};
         border-radius: ${token.borderRadius}px;
         object-fit: cover;
@@ -119,6 +128,8 @@ const useStyles = createStyles(
         width: 100% !important;
         height: 100% !important;
         aspect-ratio: ${aspectRatio};
+        position: absolute;
+        inset: 0;
 
         .ant-skeleton-image {
           width: 100%;

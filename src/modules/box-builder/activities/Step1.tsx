@@ -14,7 +14,7 @@ import BoxBuilderGrid from '@src/modules/box-builder/components/BoxBuilderGrid';
 import Layout from '@src/modules/box-builder/components/Layout';
 import { LayoutFooterButton } from '@src/modules/box-builder/components/Layout';
 import { Activity, useFlow } from '@src/modules/box-builder/Stack';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import type { Listing$key } from '@src/relay/queries/__generated__/Listing.graphql';
 import { PersistedModal } from '@src/modules/box-builder/components/PersistedModal';
 import CategoryQueryNode, {
@@ -32,7 +32,7 @@ import { BoxBuilderGridSkeleton } from '@src/modules/box-builder/skeletons/GridS
 
 const ProductsSection: React.FC = () => {
   const environment = useRelayEnvironment();
-  const step1Preloaded = useQuery();
+  const step1Preloaded = useQuery<CategoryQuery>();
   const queryReference = useSerializablePreloadedQuery(
     environment,
     step1Preloaded
@@ -74,6 +74,12 @@ const Step1: ActivityComponentType<Step1Params> = () => {
   const t = useTranslations('BoxBuilder');
   const { push } = useFlow();
 
+  const [forceSkeleton, setForceSkeleton] = useState(true);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setForceSkeleton(false), 500);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const { boxes } = useBoxBuilderProgress();
   console.log('selectedBoxId', boxes.products);
 
@@ -98,9 +104,13 @@ const Step1: ActivityComponentType<Step1Params> = () => {
           title={t('step1.title')}
           description={t('step1.description')}
         />
-        <Suspense fallback={<BoxBuilderGridSkeleton count={5} />}>
-          <ProductsSection />
-        </Suspense>
+        {forceSkeleton ? (
+          <BoxBuilderGridSkeleton count={5} />
+        ) : (
+          <Suspense fallback={<BoxBuilderGridSkeleton count={5} />}>
+            <ProductsSection />
+          </Suspense>
+        )}
       </Flex>
       <PersistedModal />
     </Layout>

@@ -62,7 +62,7 @@ const config = {
     },
   ],
 
-  transitionDuration: 250,
+  transitionDuration: 300,
   initialActivity: () => Activity.Intro,
 };
 

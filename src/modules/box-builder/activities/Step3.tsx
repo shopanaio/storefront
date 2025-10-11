@@ -14,7 +14,7 @@ import Layout, {
 import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 import { useCategory } from '@src/modules/box-builder/hooks/useCategory';
 import { BOX_BUILDER_CONFIG } from '@src/modules/box-builder/config/categories';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import type { Listing$key } from '@src/relay/queries/__generated__/Listing.graphql';
 import type { useListingProductCardFragment_product$key } from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
 import { ProductType } from '@src/modules/box-builder/components/ProductCard';
@@ -50,6 +50,12 @@ const Step3: ActivityComponentType = () => {
   const { push } = useFlow();
   const { cards } = useBoxBuilderProgress();
 
+  const [forceSkeleton, setForceSkeleton] = useState(true);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setForceSkeleton(false), 500);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const handleFooterBtnClick = () => {
     push(Activity.Cart, {});
   };
@@ -82,9 +88,13 @@ const Step3: ActivityComponentType = () => {
           title={t('step3.title')}
           description={t('step3.description')}
         />
-        <Suspense fallback={<BoxBuilderGridSkeleton count={5} />}>
-          <ProductsSection />
-        </Suspense>
+        {forceSkeleton ? (
+          <BoxBuilderGridSkeleton count={5} />
+        ) : (
+          <Suspense fallback={<BoxBuilderGridSkeleton count={5} />}>
+            <ProductsSection />
+          </Suspense>
+        )}
       </Flex>
     </Layout>
   );

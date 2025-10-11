@@ -13,7 +13,7 @@ import Progress from '@src/modules/box-builder/components/Progress';
 import Layout from '@src/modules/box-builder/components/Layout';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
 import { useBoxBuilderCategories } from '@src/modules/box-builder/hooks/useBoxBuilderCategories';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { BoxBuilderSwiperSectionSkeleton } from '@src/modules/box-builder/skeletons/SwiperSectionSkeleton';
 import ProductsOnlyFooterButton from '@src/modules/box-builder/components/ProductsOnlyFooterButton';
 
@@ -45,6 +45,12 @@ const Step2: ActivityComponentType = () => {
 
   const { progress } = useBoxBuilderProgress();
 
+  const [forceSkeleton, setForceSkeleton] = useState(true);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setForceSkeleton(false), 500);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const footerContent = <ProductsOnlyFooterButton />;
 
   return (
@@ -57,11 +63,15 @@ const Step2: ActivityComponentType = () => {
         />
         <Progress percent={progress} description={true} />
       </Flex>
-      <Suspense fallback={<BoxBuilderSwiperSectionSkeleton />}>
-        <Flex vertical gap={theme.marginLG}>
-          <CategoriesSections />
-        </Flex>
-      </Suspense>
+      {forceSkeleton ? (
+        <BoxBuilderSwiperSectionSkeleton />
+      ) : (
+        <Suspense fallback={<BoxBuilderSwiperSectionSkeleton />}>
+          <Flex vertical gap={theme.marginLG}>
+            <CategoriesSections />
+          </Flex>
+        </Suspense>
+      )}
     </Layout>
   );
 };

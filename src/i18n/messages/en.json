@@ -339,7 +339,8 @@
         "medium": "Medium",
         "large": "Large"
       },
-      "progress-description": "Our system will automatically select the box size for you!"
+      "progress-description": "Our system will automatically select the box size for you!",
+      "all-products": "View all"
     },
 
     "step3": {

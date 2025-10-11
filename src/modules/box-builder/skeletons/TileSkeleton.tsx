@@ -1,6 +1,6 @@
 'use client';
 
-import { Flex, Image, Skeleton } from 'antd';
+import { Flex, Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
 
 export const BoxBuilderTileSkeleton: React.FC = () => {
@@ -8,20 +8,16 @@ export const BoxBuilderTileSkeleton: React.FC = () => {
 
   return (
     <Flex vertical className={styles.container} gap={8}>
-      <Skeleton.Image
-        active={false}
-        className={styles.cover}
-        style={{ width: '100%', height: '100%' }}
-      />
+      <div className={styles.thumbnailFrame}>
+        <div className={styles.imageWrapper}>
+          <Skeleton.Image className={styles.img} />
+        </div>
+      </div>
       <Flex vertical gap={4}>
-        <Skeleton.Button
-          active={false}
-          block
-          style={{ height: 32, borderRadius: 6 }}
-        />
-        <Skeleton.Node active={false} style={{ height: 14, width: '60%' }} />
-        <Skeleton.Node active={false} style={{ height: 14, width: '90%' }} />
-        <Skeleton.Node active={false} style={{ height: 14, width: '40%' }} />
+        <Skeleton.Button block style={{ height: 32, borderRadius: 6 }} />
+        <Skeleton.Node style={{ height: 14, width: '60%' }} />
+        <Skeleton.Node style={{ height: 14, width: '90%' }} />
+        <Skeleton.Node style={{ height: 14, width: '40%' }} />
       </Flex>
     </Flex>
   );
@@ -32,11 +28,25 @@ const useStyles = createStyles(({ token, css }) => ({
     border-radius: ${token.borderRadius}px;
     background: ${token.colorBgContainer};
   `,
-  cover: css`
+  thumbnailFrame: css`
     width: 100%;
     aspect-ratio: 1 / 1;
+    padding: ${token.paddingXXS}px;
+    border-radius: ${token.borderRadius}px;
+    box-sizing: border-box;
+    border: 1px solid ${token.colorBorder};
+  `,
+  imageWrapper: css`
+    position: relative;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    border-top-left-radius: ${token.borderRadius}px;
-    border-top-right-radius: ${token.borderRadius}px;
+    border-radius: ${token.borderRadius}px;
+  `,
+  img: css`
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    border-radius: ${token.borderRadius}px;
   `,
 }));
