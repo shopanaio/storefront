@@ -17,8 +17,8 @@ export const BoxBuilderSectionSkeleton: React.FC<{
         {Array.from({ length: titleRows }).map((_, idx) => (
           <Skeleton.Input
             key={idx}
-            active
             block
+            active={false}
             size="small"
             style={{
               height: 22,

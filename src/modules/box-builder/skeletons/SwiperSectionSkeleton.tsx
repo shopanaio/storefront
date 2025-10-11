@@ -16,15 +16,15 @@ export const BoxBuilderSwiperSectionSkeleton: React.FC = () => {
         style={{ paddingInline: 16 }}
       >
         <Skeleton.Input
-          active
           size="small"
+          active={false}
           style={{
             width: 180,
             height: 22,
             borderRadius: 6,
           }}
         />
-        <Skeleton.Button active size="default" shape="circle" />
+        <Skeleton.Button size="default" shape="circle" />
       </Flex>
       <div className={styles.row}>
         {Array.from({ length: 6 }).map((_, idx) => (

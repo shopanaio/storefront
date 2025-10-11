@@ -9,14 +9,19 @@ export const BoxBuilderTileSkeleton: React.FC = () => {
   return (
     <Flex vertical className={styles.container} gap={8}>
       <Skeleton.Image
+        active={false}
         className={styles.cover}
         style={{ width: '100%', height: '100%' }}
       />
       <Flex vertical gap={4}>
-        <Skeleton.Button active block style={{ height: 32, borderRadius: 6 }} />
-        <Skeleton.Node active style={{ height: 14, width: '60%' }} />
-        <Skeleton.Node active style={{ height: 14, width: '90%' }} />
-        <Skeleton.Node active style={{ height: 14, width: '40%' }} />
+        <Skeleton.Button
+          active={false}
+          block
+          style={{ height: 32, borderRadius: 6 }}
+        />
+        <Skeleton.Node active={false} style={{ height: 14, width: '60%' }} />
+        <Skeleton.Node active={false} style={{ height: 14, width: '90%' }} />
+        <Skeleton.Node active={false} style={{ height: 14, width: '40%' }} />
       </Flex>
     </Flex>
   );

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Image as AntImage, Skeleton } from "antd";
-import type { ImageProps as AntImageProps } from "antd";
-import { createStyles } from "antd-style";
-import React, { ReactNode, useEffect, useMemo, useState } from "react";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import { Image as AntImage, Skeleton } from 'antd';
+import type { ImageProps as AntImageProps } from 'antd';
+import { createStyles } from 'antd-style';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
 
 export interface UiImageProps
-  extends Omit<AntImageProps, "placeholder" | "fallback"> {
+  extends Omit<AntImageProps, 'placeholder' | 'fallback'> {
   /** Custom placeholder while image is loading */
   placeholder?: ReactNode;
   /** Fallback image when `src` fails */
@@ -27,7 +27,7 @@ export const Image: React.FC<UiImageProps> = ({
   className,
   style,
   preview = false,
-  loading = "lazy",
+  loading = 'lazy',
   placeholder,
   fallbackSrc = fallbackImageBase64,
   ratio = 1,
@@ -59,7 +59,7 @@ export const Image: React.FC<UiImageProps> = ({
     onLoad?.(e);
   };
 
-  const handleError: NonNullable<AntImageProps["onError"]> = (e) => {
+  const handleError: NonNullable<AntImageProps['onError']> = (e) => {
     if (resolvedSrc !== fallbackSrc) {
       setResolvedSrc(fallbackSrc);
       setIsLoaded(false);
@@ -71,13 +71,13 @@ export const Image: React.FC<UiImageProps> = ({
 
   const placeholderNode = useMemo(() => {
     if (placeholder) return placeholder;
-    return <Skeleton.Image active className={styles.skeleton} />;
+    return <Skeleton.Image active={false} className={styles.skeleton} />;
   }, [placeholder, styles.skeleton]);
 
   return (
     <div className={cx(styles.wrapper)} style={style}>
       {showSkeleton ? (
-        <Skeleton.Image active className={styles.skeleton} />
+        <Skeleton.Image active={false} className={styles.skeleton} />
       ) : (
         <>
           {!isLoaded && placeholderNode}
@@ -90,7 +90,7 @@ export const Image: React.FC<UiImageProps> = ({
             loading="lazy"
             onLoad={handleLoad}
             onError={handleError}
-            style={{ display: isLoaded ? "block" : "none" }}
+            style={{ display: isLoaded ? 'block' : 'none' }}
           />
         </>
       )}
@@ -101,7 +101,7 @@ export const Image: React.FC<UiImageProps> = ({
 const useStyles = createStyles(
   ({ css, token }, params: { ratio: number | string }) => {
     const aspectRatio =
-      typeof params.ratio === "number" ? `${params.ratio} / 1` : params.ratio;
+      typeof params.ratio === 'number' ? `${params.ratio} / 1` : params.ratio;
     return {
       wrapper: css`
         width: 100%;
