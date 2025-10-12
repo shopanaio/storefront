@@ -10,6 +10,8 @@ export interface RootDrawerProps {
   open: boolean;
   /** Callback when drawer is closed */
   onClose: () => void;
+  /** Called after exit transition finished and content is fully hidden */
+  onExited?: () => void;
   /** Minimum height for the drawer content (used by Vaul) */
   minHeight?: string | number;
   /** Whether the drawer can be dismissed by dragging */
@@ -30,6 +32,7 @@ export interface RootDrawerProps {
 export const RootDrawer = ({
   open,
   onClose,
+  onExited,
   minHeight,
   dismissible = true,
   scaleBackground,
@@ -40,6 +43,7 @@ export const RootDrawer = ({
     <VaulDrawer
       open={open}
       onClose={onClose}
+      onExited={onExited}
       minHeight={minHeight}
       dismissible={!!dismissible}
       scaleBackground={scaleBackground}

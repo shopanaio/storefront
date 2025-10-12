@@ -34,23 +34,28 @@ export const MobileConfirmDrawer = () => {
   };
 
   const handleOk = async () => {
-    try {
-      resolve?.(true);
-    } finally {
-      mobileConfirmApi.clear();
-    }
+    // Trigger resolve and close; portal will be cleared after exit animation
+    resolve?.(true);
+    mobileConfirmApi.close();
   };
 
   const handleCancel = () => {
-    try {
-      resolve?.(false);
-    } finally {
-      mobileConfirmApi.clear();
-    }
+    // Trigger close; clearing will happen on exit transition end
+    resolve?.(false);
+    mobileConfirmApi.close();
   };
 
   return (
-    <RootDrawer open={open} onClose={handleCancel} direction="bottom" minHeight="40vh">
+    <RootDrawer
+      open={open}
+      onClose={handleCancel}
+      onExited={() => {
+        // After exit animation — remove from store (unmounts portal)
+        mobileConfirmApi.clear();
+      }}
+      direction="bottom"
+      minHeight="40vh"
+    >
       <Flex vertical gap={16} className={styles.container}>
         {icon ? <div className={styles.icon}>{icon}</div> : null}
         <div className={styles.block}>

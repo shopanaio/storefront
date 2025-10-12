@@ -16,6 +16,8 @@ export interface VaulProps {
   open: boolean;
   /** Callback when drawer is closed */
   onClose: () => void;
+  /** Called after exit transition finished and content is fully hidden */
+  onExited?: () => void;
   /** Whether the drawer can be dismissed by dragging */
   dismissible: boolean;
   /** Drawer content */
@@ -29,6 +31,7 @@ export interface VaulProps {
 export const Vaul = ({
   open,
   onClose,
+  onExited,
   dismissible,
   children,
   direction = 'bottom',
@@ -64,6 +67,7 @@ export const Vaul = ({
 
   const handleTeardown = useCallback(() => {
     if (!open) {
+      onExited?.();
       document.body.style.height = '';
       if (isVertical) {
         setHeight(0);
