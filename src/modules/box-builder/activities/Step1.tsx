@@ -86,7 +86,10 @@ const Step1: ActivityComponentType<Step1Params> = () => {
     boxes.quantity > 0 ? (
       <LayoutFooterButton
         onClick={handleFooterBtnClick}
-        label={boxes.products?.[0]?.purchasable?.title ?? ''}
+        label={
+          boxes.products?.[0]?.purchasable?.title ??
+          t('footer.boxes-count', { count: boxes.quantity })
+        }
         money={boxes.totalAmount}
       />
     ) : null;
