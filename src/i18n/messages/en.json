@@ -334,6 +334,7 @@
       "title": "Choose products",
       "subtitle": "CHOOSE PRODUCTS",
       "description": "We've selected the best products in one place. Choose products below and fill your box!",
+        "size-label": "Box size",
       "size": {
         "small": "Small",
         "medium": "Medium",
@@ -351,6 +352,9 @@
     "step-check": {
       "subtitle": "READY!",
       "title": "Review your box",
+        "selected-design": "Selected design",
+        "cards": "Cards",
+        "products-in-box": "Products in the box",
       "custom-box": "Custom box",
       "description": "Check if everything is perfect before sending.",
       "empty": {
@@ -367,9 +371,13 @@
       "total-price": "Total price",
       "products-amount": "products on the amount of",
       "products-count": "{count, plural, one {# product in the box} other {# products in the box}}",
+      "products-short-count": "{count} products",
       "cards-count": "{count, plural, one {# card} other {# cards}}",
       "boxes-count": "{count, plural, one {# box} other {# boxes}}"
     },
+    "not-selected-design": "You haven't selected a design",
+    "not-selected-card": "You haven't selected a card",
+    "change": "Change",
     "finish-box": {
       "title": "Your box is ready",
       "description": "Review it and send your gift!",

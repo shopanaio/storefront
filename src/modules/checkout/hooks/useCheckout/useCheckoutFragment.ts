@@ -64,6 +64,7 @@ export const useCheckoutFragment = graphql`
           sku
           title
           product {
+            title
             handle
           }
         }

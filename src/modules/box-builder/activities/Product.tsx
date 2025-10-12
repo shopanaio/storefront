@@ -13,6 +13,7 @@ import { ProductActionButton } from '@src/modules/box-builder/components/ActionB
 import { CardActionButton } from '@src/modules/box-builder/components/ActionButton/CardActionButton';
 import { SkeletonProduct } from '@src/components/Product/Skeleton';
 import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
+import type { Entity } from '@shopana/entity';
 
 type ProductParams = {
   productHandle: string;
@@ -32,8 +33,12 @@ const ProductSection: React.FC<{
     variantHandle ?? '' // Populate first variant handle if not provided
   );
 
+  if (!product) {
+    return null;
+  }
+
   const { title, currentVariant } = useCurrentVariant({
-    product,
+    product: product as unknown as Entity.Product,
     variantHandle: selectedVariantHandle,
   });
 
@@ -64,10 +69,6 @@ const ProductSection: React.FC<{
             size: 'large',
             className: styles.cartButton,
             type: 'primary',
-          }}
-          quantityProps={{
-            size: 'large',
-            appearance: 'activity',
           }}
         />
       );

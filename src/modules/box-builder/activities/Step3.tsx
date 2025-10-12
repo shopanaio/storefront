@@ -36,7 +36,7 @@ const ProductsSection: React.FC = () => {
         <ProductCardRelay
           key={idx}
           product={product}
-          allowCount={true}
+          allowCount={false}
           productType={ProductType.Card}
         />
       ))}

@@ -298,6 +298,7 @@
       "title": "Оберіть товари",
       "subtitle": "ОБЕРІТЬ ТОВАРИ",
       "description": "Ми відібрали найкращі товари в одному місці. Оберіть продукти нижче та заповніть свою коробку!",
+      "size-label": "Розмір боксу",
       "size": {
         "small": "Маленький",
         "medium": "Середній",
@@ -313,6 +314,9 @@
     "step-check": {
       "subtitle": "ГОТОВО!",
       "title": "Огляд вашого боксу",
+      "selected-design": "Обраний дизайн",
+      "cards": "Листівки",
+      "products-in-box": "Товари у боксі",
       "custom-box": "Індивідуальний бокс",
       "description": "Перевір, чи все ідеально, перш ніж надіслати.",
       "empty": {
@@ -329,9 +333,13 @@
       "total-price": "Загальна вартість",
       "products-amount": "товарів на сумму",
       "products-count": "{count, plural, one {# товар у боксі} few {# товари у боксі} many {# товарів у боксі} other {# товарів у боксі}}",
+      "products-short-count": "{count} товари",
       "cards-count": "{count, plural, one {# листівка} few {# листівки} many {# листівок} other {# листівок}}",
       "boxes-count": "{count, plural, one {# бокс} few {# бокси} many {# боксів} other {# боксів}}"
     },
+    "not-selected-design": "Ви не обрали дизайн",
+    "not-selected-card": "Ви не обрали листівку",
+    "change": "Змінити",
     "finish-box": {
       "title": "Дякуємо за ваше замовлення! ",
       "description": "Ми вже пакуємо ваш бокс, щоб передати всі емоції, які ви вклали.",

@@ -90,6 +90,10 @@ const ProductQuery = graphql`
               id
               title
               handle
+              product {
+                title
+                handle
+              }
               price {
                 amount
                 currencyCode

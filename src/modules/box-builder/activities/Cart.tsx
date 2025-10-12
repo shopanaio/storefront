@@ -16,7 +16,9 @@ import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
 import type { Entity } from '@shopana/entity';
 import BoxCartLine from '@src/modules/box-builder/components/BoxCartLine';
+import SpecialBoxCartLine from '@src/modules/box-builder/components/SpecialBoxCartLine';
 import { useBoxBuilderProducts } from '@src/modules/box-builder/hooks/useBoxProducts';
+import { ProductType } from '@src/modules/box-builder/components/ProductCard';
 
 const { Text, Title } = Typography;
 
@@ -31,7 +33,11 @@ const Cart: ActivityComponentType<{}> = () => {
 };
 
 const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
-  const { progress } = useBoxBuilderProgress();
+  const {
+    progress,
+    cards: cardsInfo,
+    products: productsInfo,
+  } = useBoxBuilderProgress();
   const { push } = useFlow();
   const { boxes, cards, products } = useBoxBuilderProducts();
 
@@ -58,20 +64,61 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
           title={t('step-check.title')}
           description={t('step-check.description')}
         />
-        <Progress percent={progress} description={false} />
+        <Progress percent={progress} description={true} />
+
+        {/* Selected design (boxes) */}
         <div>
           <Flex>
             <Title className={styles.title} level={5}>
-              <span>{t('step-check.custom-box')}</span>
+              <span>{t('step-check.selected-design')}</span>
+            </Title>
+          </Flex>
+          {boxes.length ? (
+            <Flex vertical gap={8}>
+              {boxes.map((cartLine) => (
+                <SpecialBoxCartLine
+                  key={cartLine.id}
+                  cartLine={cartLine}
+                  productType={ProductType.Box}
+                />
+              ))}
+            </Flex>
+          ) : (
+            <Text type="secondary">{t('not-selected-design')}</Text>
+          )}
+
+          {/* Cards go right under selected design, without header */}
+          {cards.length ? (
+            <Flex vertical gap={8} style={{ marginTop: 8 }}>
+              {cards.map((cartLine) => (
+                <SpecialBoxCartLine
+                  key={cartLine.id}
+                  cartLine={cartLine}
+                  productType={ProductType.Card}
+                />
+              ))}
+            </Flex>
+          ) : (
+            <Text type="secondary">{t('not-selected-card')}</Text>
+          )}
+        </div>
+
+        {/* Cards section removed as standalone */}
+
+        {/* Products in the box */}
+        <div>
+          <Flex>
+            <Title className={styles.title} level={5}>
+              <span>{t('step-check.products-in-box')}</span>
               <Text>
-                {t('footer.products-count', {
-                  count: cart?.totalQuantity || 0,
+                {t('footer.products-short-count', {
+                  count: productsInfo.quantity || 0,
                 })}
               </Text>
             </Title>
           </Flex>
           <Flex vertical gap={8}>
-            {[...boxes, ...cards, ...products].map((cartLine) => (
+            {products.map((cartLine) => (
               <BoxCartLine key={cartLine.id} cartLine={cartLine} />
             ))}
           </Flex>

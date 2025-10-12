@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Flex, Progress as AntProgress, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { useTranslations } from "next-intl";
-import React from "react";
+import { Flex, Progress as AntProgress, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
+import React from 'react';
 
 const { Text } = Typography;
 
@@ -14,26 +14,27 @@ interface Props {
 
 export default function Progress({ percent, description }: Props) {
   const { styles, theme } = useStyles();
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
 
   return (
     <Flex vertical gap={4}>
+      <Text strong>{t('step2.size-label')}</Text>
       <div className={styles.progressContainer}>
         <AntProgress
           className={styles.progress}
           percent={percent}
           style={
             {
-              "--ant-progress-remaining-color": theme.colorFillTertiary,
-              "--ant-progress-line-border-radius": "4px",
+              '--ant-progress-remaining-color': theme.colorFillTertiary,
+              '--ant-progress-line-border-radius': '4px',
             } as React.CSSProperties
           }
-          percentPosition={{ type: "outer", align: "center" }}
-          size={["100%", 28]}
+          percentPosition={{ type: 'outer', align: 'center' }}
+          size={['100%', 28]}
           strokeColor={{
-            direction: "to right",
-            from: "#EAC9FF",
-            to: "#BAE7FF",
+            direction: 'to right',
+            from: '#EAC9FF',
+            to: '#BAE7FF',
           }}
           showInfo={false}
         />
@@ -43,18 +44,18 @@ export default function Progress({ percent, description }: Props) {
           className={styles.progressText}
         >
           <Text className={styles.progressTextItem}>
-            {t("step2.size.small")}
+            {t('step2.size.small')}
           </Text>
           <Text className={styles.progressTextItem}>
-            {t("step2.size.medium")}
+            {t('step2.size.medium')}
           </Text>
           <Text className={styles.progressTextItem}>
-            {t("step2.size.large")}
+            {t('step2.size.large')}
           </Text>
         </Flex>
       </div>
       {description && (
-        <Text type="secondary">{t("step2.progress-description")}</Text>
+        <Text type="secondary">{t('step2.progress-description')}</Text>
       )}
     </Flex>
   );
