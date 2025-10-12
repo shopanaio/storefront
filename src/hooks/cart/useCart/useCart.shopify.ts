@@ -55,25 +55,31 @@ const mapShopifyCartToApiCart = (shopifyCart: any) => {
     cost: {
       subtotalAmount: {
         currencyCode: shopifyCart.cost.subtotalAmount.currencyCode,
-        amount: shopifyCart.cost.subtotalAmount.amount,
+        amount: typeof shopifyCart.cost.subtotalAmount.amount === 'string'
+          ? parseFloat(shopifyCart.cost.subtotalAmount.amount)
+          : shopifyCart.cost.subtotalAmount.amount,
       },
       shippingCost: {
         currencyCode:
           shopifyCart.cost.checkoutChargeAmount?.currencyCode ||
           shopifyCart.cost.totalAmount.currencyCode,
-        amount: shopifyCart.cost.checkoutChargeAmount?.amount || '0',
+        amount: typeof shopifyCart.cost.checkoutChargeAmount?.amount === 'string'
+          ? parseFloat(shopifyCart.cost.checkoutChargeAmount.amount || '0')
+          : (shopifyCart.cost.checkoutChargeAmount?.amount || 0),
       },
       totalDiscountAmount: {
         currencyCode: shopifyCart.cost.totalAmount.currencyCode,
-        amount: '0',
+        amount: 0,
       },
       totalTaxAmount: {
         currencyCode: shopifyCart.cost.totalAmount.currencyCode,
-        amount: '0', // In Shopify no separate field for taxes
+        amount: 0, // In Shopify no separate field for taxes
       },
       totalAmount: {
         currencyCode: shopifyCart.cost.totalAmount.currencyCode,
-        amount: shopifyCart.cost.totalAmount.amount,
+        amount: typeof shopifyCart.cost.totalAmount.amount === 'string'
+          ? parseFloat(shopifyCart.cost.totalAmount.amount)
+          : shopifyCart.cost.totalAmount.amount,
       },
     },
     totalQuantity: shopifyCart.totalQuantity,

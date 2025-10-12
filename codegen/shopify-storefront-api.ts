@@ -40,7 +40,7 @@ export type Scalars = {
    * Example value: `"<p>Grey cotton knit sweater.</p>"`
    *
    */
-  HTML: { input: string; output: string; }
+  HTML: { input: any; output: any; }
   /** An ISO 8601-encoded datetime */
   ISO8601DateTime: { input: any; output: any; }
   /**
@@ -68,7 +68,7 @@ export type Scalars = {
    * (`example.myshopify.com`).
    *
    */
-  URL: { input: string; output: string; }
+  URL: { input: any; output: any; }
   /**
    * An unsigned 64-bit integer. Represents whole numeric values between 0 and 2^64 - 1 encoded as a string of base-10 digits.
    *

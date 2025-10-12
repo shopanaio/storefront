@@ -33,7 +33,7 @@ export const ProductActionButton = ({
   const { quantity = 0 } = cartLine || {};
 
   const isAvailable = variant.stockStatus?.isAvailable === true;
-  const isFree = parseFloat(variant.price?.amount ?? '0') === 0;
+  const isFree = (variant.price?.amount ?? 0) === 0;
 
   if (!isAvailable) {
     return (

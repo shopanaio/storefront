@@ -5,7 +5,7 @@ import { useFormatter } from "next-intl";
 import { Typography } from "antd";
 
 export interface Money {
-  amount: string;
+  amount: number;
   currencyCode: string;
 }
 
@@ -18,11 +18,7 @@ export const useFormatPrice = () => {
   const format = useFormatter();
 
   return (money: Money) => {
-    // Convert amount to number since in Shopify it may come as string
-    const amount =
-      typeof money?.amount === "string"
-        ? parseFloat(money.amount)
-        : money?.amount;
+    const amount = money?.amount;
 
     if (typeof amount !== "number" || isNaN(amount)) {
       return null;

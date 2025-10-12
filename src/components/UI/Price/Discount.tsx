@@ -29,8 +29,8 @@ export const Discount = ({ isAvailable, price, compareAtPrice }: Props) => {
 
   const hasDiscount =
     compareAtPrice &&
-    parseFloat(compareAtPrice.amount) > parseFloat(price.amount) &&
-    parseFloat(compareAtPrice.amount) !== parseFloat(price.amount);
+    compareAtPrice.amount > price.amount &&
+    compareAtPrice.amount !== price.amount;
 
   return (
     hasDiscount &&
@@ -44,8 +44,8 @@ export const Discount = ({ isAvailable, price, compareAtPrice }: Props) => {
           as={Typography.Text}
         />
         <SaleBadge
-          compareAtPrice={parseFloat(compareAtPrice.amount)}
-          price={parseFloat(price.amount)}
+          compareAtPrice={compareAtPrice.amount}
+          price={price.amount}
         />
       </Flex>
     )

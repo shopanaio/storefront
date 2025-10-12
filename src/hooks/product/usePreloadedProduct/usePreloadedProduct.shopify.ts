@@ -63,13 +63,17 @@ const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']):
 
   // Convert price
   const price: ApiMoney = {
-    amount: shopifyProduct.priceRange.minVariantPrice.amount,
+    amount: typeof shopifyProduct.priceRange.minVariantPrice.amount === 'string'
+      ? parseFloat(shopifyProduct.priceRange.minVariantPrice.amount)
+      : shopifyProduct.priceRange.minVariantPrice.amount,
     currencyCode: shopifyProduct.priceRange.minVariantPrice.currencyCode as any
   };
 
   // Convert compareAtPrice
   const compareAtPrice: ApiMoney | null = shopifyProduct.compareAtPriceRange ? {
-    amount: shopifyProduct.compareAtPriceRange.minVariantPrice.amount,
+    amount: typeof shopifyProduct.compareAtPriceRange.minVariantPrice.amount === 'string'
+      ? parseFloat(shopifyProduct.compareAtPriceRange.minVariantPrice.amount)
+      : shopifyProduct.compareAtPriceRange.minVariantPrice.amount,
     currencyCode: shopifyProduct.compareAtPriceRange.minVariantPrice.currencyCode as any
   } : null;
 
@@ -160,11 +164,15 @@ const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']):
       source: 'URL' as any
     } : null,
     price: {
-      amount: edge.node.price.amount,
+      amount: typeof edge.node.price.amount === 'string'
+        ? parseFloat(edge.node.price.amount)
+        : edge.node.price.amount,
       currencyCode: edge.node.price.currencyCode as any
     },
     compareAtPrice: edge.node.compareAtPrice ? {
-      amount: edge.node.compareAtPrice.amount,
+      amount: typeof edge.node.compareAtPrice.amount === 'string'
+        ? parseFloat(edge.node.compareAtPrice.amount)
+        : edge.node.compareAtPrice.amount,
       currencyCode: edge.node.compareAtPrice.currencyCode as any
     } : null,
     selectedOptions: edge.node.selectedOptions.map(opt => opt.value),

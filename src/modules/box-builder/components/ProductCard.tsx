@@ -38,7 +38,7 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
 
   const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
-  const isFree = parseFloat(variant.price.amount) === 0;
+  const isFree = variant.price.amount === 0;
 
   const handleClick = () => {
     push(Activity.Product, {

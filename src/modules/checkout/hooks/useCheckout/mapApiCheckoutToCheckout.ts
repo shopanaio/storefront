@@ -50,7 +50,7 @@ function mapApiMoney(
   apiMoney: Readonly<ApiMoney> | null | undefined
 ): Entity.Money {
   if (!apiMoney) {
-    return { amount: '0', currencyCode: CurrencyCode.Uah };
+    return { amount: 0, currencyCode: CurrencyCode.Uah };
   }
   return {
     amount: apiMoney.amount,
@@ -105,10 +105,10 @@ function mapApiLineChild(apiChild: Readonly<ApiCheckoutLine>): Checkout.Line {
     id: apiChild.id,
     quantity: apiChild.quantity,
     cost: {
-      compareAtUnitPrice: { amount: '0', currencyCode: CurrencyCode.Uah },
-      subtotalAmount: { amount: '0', currencyCode: CurrencyCode.Uah },
-      totalAmount: { amount: '0', currencyCode: CurrencyCode.Uah },
-      unitPrice: { amount: '0', currencyCode: CurrencyCode.Uah },
+      compareAtUnitPrice: { amount: 0, currencyCode: CurrencyCode.Uah },
+      subtotalAmount: { amount: 0, currencyCode: CurrencyCode.Uah },
+      totalAmount: { amount: 0, currencyCode: CurrencyCode.Uah },
+      unitPrice: { amount: 0, currencyCode: CurrencyCode.Uah },
     },
     purchasableId: '',
     title: '',

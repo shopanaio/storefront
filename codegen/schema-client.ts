@@ -15,7 +15,7 @@ export type Scalars = {
   BigInt: { input: number; output: number; }
   Cursor: { input: string; output: string; }
   DateTime: { input: string; output: string; }
-  Decimal: { input: string; output: string; }
+  Decimal: { input: number; output: number; }
   Email: { input: string; output: string; }
   JSON: { input: object; output: object; }
   Phone: { input: string; output: string; }

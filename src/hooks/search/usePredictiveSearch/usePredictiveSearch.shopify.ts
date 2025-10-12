@@ -185,11 +185,15 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
             url: shopifyProduct.images.edges[0].node.url || shopifyProduct.images.edges[0].node.originalSrc || shopifyProduct.images.edges[0].node.src || "",
           } : null,
           price: {
-            amount: parseFloat(shopifyProduct.priceRange?.minVariantPrice?.amount || "0"),
+            amount: typeof shopifyProduct.priceRange?.minVariantPrice?.amount === 'string'
+              ? parseFloat(shopifyProduct.priceRange.minVariantPrice.amount || "0")
+              : (shopifyProduct.priceRange?.minVariantPrice?.amount || 0),
             currencyCode: (shopifyProduct.priceRange?.minVariantPrice?.currencyCode || "USD") as "USD" | "EUR" | "GBP" | "UAH",
           },
           compareAtPrice: shopifyProduct.compareAtPriceRange?.minVariantPrice ? {
-            amount: parseFloat(shopifyProduct.compareAtPriceRange.minVariantPrice.amount || "0"),
+            amount: typeof shopifyProduct.compareAtPriceRange.minVariantPrice.amount === 'string'
+              ? parseFloat(shopifyProduct.compareAtPriceRange.minVariantPrice.amount || "0")
+              : (shopifyProduct.compareAtPriceRange.minVariantPrice.amount || 0),
             currencyCode: (shopifyProduct.compareAtPriceRange.minVariantPrice.currencyCode || "USD") as "USD" | "EUR" | "GBP" | "UAH",
           } : null,
           stockStatus: {

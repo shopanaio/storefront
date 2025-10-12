@@ -36,14 +36,14 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   const hasDiscount = () => {
     return (
       checkout?.cost?.totalDiscountAmount &&
-      parseFloat(checkout.cost.totalDiscountAmount.amount) > 0
+      checkout.cost.totalDiscountAmount.amount > 0
     );
   };
 
   const hasTax = () => {
     return (
       checkout?.cost?.totalTaxAmount &&
-      parseFloat(checkout.cost.totalTaxAmount.amount) > 0
+      checkout.cost.totalTaxAmount.amount > 0
     );
   };
 

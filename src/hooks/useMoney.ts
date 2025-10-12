@@ -60,7 +60,7 @@ export type UseMoneyValue = {
  * @example initialize the money object
  * ```ts
  * const money = useMoney({
- *   amount: '100.00',
+ *   amount: 100.00,
  *   currencyCode: 'USD'
  * })
  * ```
@@ -109,7 +109,7 @@ export function useMoney(money: Entity.Money): UseMoneyValue {
     throw new Error(`useMoney(): Unable to get 'locale'`);
   }
 
-  const amount = parseFloat(money.amount);
+  const amount = money.amount;
 
   // Check if the currency code is supported by Intl.NumberFormat
   let isCurrencySupported = true;

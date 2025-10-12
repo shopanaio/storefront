@@ -67,10 +67,9 @@ export const CartLine = ({
 
   // Calculate total price if not provided
   const computedTotalPrice: Entity.Money = totalPrice || {
-    amount: (
-      parseFloat(unitPrice.amount) *
-      (typeof quantity === 'number' ? quantity : parseInt(quantity.toString()))
-    ).toString(),
+    amount:
+      unitPrice.amount *
+      (typeof quantity === 'number' ? quantity : parseInt(quantity.toString())),
     currencyCode: unitPrice.currencyCode,
   };
 

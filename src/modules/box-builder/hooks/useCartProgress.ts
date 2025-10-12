@@ -1,6 +1,6 @@
-import type { Entity } from "@shopana/entity";
-import { useBoxBuilderCart } from "./useCart";
-import { useBoxBuilderProducts } from "@src/modules/box-builder/hooks/useBoxProducts";
+import type { Entity } from '@shopana/entity';
+import { useBoxBuilderCart } from './useCart';
+import { useBoxBuilderProducts } from '@src/modules/box-builder/hooks/useBoxProducts';
 
 export function useBoxBuilderProgress() {
   const { cart } = useBoxBuilderCart();
@@ -18,13 +18,10 @@ export function useBoxBuilderProgress() {
       quantity: boxes.reduce((acc, box) => acc + box.quantity, 0),
       totalAmount: {
         currencyCode: cart?.cost?.totalAmount?.currencyCode,
-        amount: boxes
-          .reduce(
-            (acc, cartLine) =>
-              acc + parseFloat(cartLine?.cost.totalAmount?.amount ?? "0"),
-            0
-          )
-          .toFixed(2),
+        amount: boxes.reduce(
+          (acc, cartLine) => acc + (cartLine?.cost.totalAmount?.amount ?? 0),
+          0
+        ),
       } as Entity.Money,
     },
     products: {
@@ -32,13 +29,10 @@ export function useBoxBuilderProgress() {
       quantity: products.reduce((acc, product) => acc + product.quantity, 0),
       totalAmount: {
         currencyCode: cart?.cost?.totalAmount?.currencyCode,
-        amount: products
-          .reduce(
-            (acc, cartLine) =>
-              acc + parseFloat(cartLine?.cost.totalAmount?.amount ?? "0"),
-            0
-          )
-          .toFixed(2),
+        amount: products.reduce(
+          (acc, cartLine) => acc + (cartLine?.cost.totalAmount?.amount ?? 0),
+          0
+        ),
       } as Entity.Money,
     },
     cards: {
@@ -46,13 +40,10 @@ export function useBoxBuilderProgress() {
       quantity: cards.reduce((acc, card) => acc + card.quantity, 0),
       totalAmount: {
         currencyCode: cart?.cost?.totalAmount?.currencyCode,
-        amount: cards
-          .reduce(
-            (acc, cartLine) =>
-              acc + parseFloat(cartLine?.cost?.totalAmount?.amount ?? "0"),
-            0
-          )
-          .toFixed(2),
+        amount: cards.reduce(
+          (acc, cartLine) => acc + (cartLine?.cost?.totalAmount?.amount ?? 0),
+          0
+        ),
       } as Entity.Money,
     },
   };

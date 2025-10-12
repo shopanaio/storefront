@@ -94,7 +94,7 @@ export const ListingProductCardRelay = ({
     (product as any)?.variantHandle || product.handle || undefined;
   const isAvailable = product.stockStatus?.isAvailable || false;
   const price = product.price || {
-    amount: '0.00',
+    amount: 0,
     currencyCode: CurrencyCode.Usd,
   };
 

@@ -19,7 +19,7 @@ function mapApiVariantToVariant(apiVariant: ApiVariant): Entity.ProductVariant {
     excerpt: '', // Variants don't have excerpt in current schema
     selectedOptions: [...(apiVariant.selectedOptions || [])],
     price: {
-      amount: apiVariant.price?.amount || '0',
+      amount: apiVariant.price?.amount || 0,
       currencyCode: (apiVariant.price?.currencyCode || 'USD') as CurrencyCode,
     },
     compareAtPrice: apiVariant.compareAtPrice
@@ -125,7 +125,7 @@ export function mapApiProductToProduct(apiProduct: ApiProduct | null): Entity.Pr
           title: item.node.title || '',
           handle: item.node.handle || '',
           price: {
-            amount: item.node.price?.amount || '0',
+            amount: item.node.price?.amount || 0,
             currencyCode: (item.node.price?.currencyCode || 'USD') as CurrencyCode,
           },
           cover: item.node.cover

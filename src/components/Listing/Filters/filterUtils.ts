@@ -42,8 +42,8 @@ export const getPriceValue = (
 
   // Fallback to filter defaults
   return [
-    parseFloat(filter.minPrice.amount),
-    parseFloat(filter.maxPrice.amount),
+    filter.minPrice.amount,
+    filter.maxPrice.amount,
   ];
 };
 

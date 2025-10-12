@@ -90,14 +90,16 @@ const useListingProductCardFragment = (
       }
       : null,
     price: {
-      amount: parseFloat(productData.priceRange.minVariantPrice.amount),
+      amount: typeof productData.priceRange.minVariantPrice.amount === 'string'
+        ? parseFloat(productData.priceRange.minVariantPrice.amount)
+        : productData.priceRange.minVariantPrice.amount,
       currencyCode: productData.priceRange.minVariantPrice.currencyCode as "USD" | "EUR" | "GBP" | "UAH",
     },
     compareAtPrice: productData.compareAtPriceRange?.minVariantPrice
       ? {
-        amount: parseFloat(
-          productData.compareAtPriceRange.minVariantPrice.amount
-        ),
+        amount: typeof productData.compareAtPriceRange.minVariantPrice.amount === 'string'
+          ? parseFloat(productData.compareAtPriceRange.minVariantPrice.amount)
+          : productData.compareAtPriceRange.minVariantPrice.amount,
         currencyCode: productData.compareAtPriceRange.minVariantPrice
           .currencyCode as "USD" | "EUR" | "GBP" | "UAH",
       }
@@ -120,12 +122,16 @@ const useListingProductCardFragment = (
       title: edge.node.title,
       handle: edge.node.id, // Add required handle field
       price: {
-        amount: parseFloat(edge.node.price.amount),
+        amount: typeof edge.node.price.amount === 'string'
+          ? parseFloat(edge.node.price.amount)
+          : edge.node.price.amount,
         currencyCode: edge.node.price.currencyCode as "USD" | "EUR" | "GBP" | "UAH",
       },
       compareAtPrice: edge.node.compareAtPrice
         ? {
-          amount: parseFloat(edge.node.compareAtPrice.amount),
+          amount: typeof edge.node.compareAtPrice.amount === 'string'
+            ? parseFloat(edge.node.compareAtPrice.amount)
+            : edge.node.compareAtPrice.amount,
           currencyCode: edge.node.compareAtPrice.currencyCode as "USD" | "EUR" | "GBP" | "UAH",
         }
         : null,

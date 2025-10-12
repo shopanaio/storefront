@@ -2,6 +2,6 @@
  * Money entity
  */
 export interface Money {
-  amount: string;
+  amount: number;
   currencyCode: string;
 }

@@ -10,7 +10,6 @@ const scalars = {
   Any: { input: 'unknown', output: 'unknown' },
   Timestamp: { input: 'string', output: 'string' },
   DateTime: { input: 'string', output: 'string' },
-  Decimal: { input: 'string', output: 'string' },
   Cursor: { input: 'string', output: 'string' },
   Phone: { input: 'string', output: 'string' },
   Email: { input: 'string', output: 'string' },
@@ -31,7 +30,10 @@ const config: CodegenConfig = {
       config: {
         typesPrefix: 'Api',
         enumPrefix: false,
-        scalars,
+        scalars: {
+          ...scalars,
+          Decimal: { input: 'number', output: 'number' },
+        },
       },
     },
     // Shopify schema
@@ -43,9 +45,7 @@ const config: CodegenConfig = {
         enumPrefix: false,
         scalars: {
           ...scalars,
-          Money: { input: 'string', output: 'string' },
-          URL: { input: 'string', output: 'string' },
-          HTML: { input: 'string', output: 'string' },
+          Decimal: { input: 'string', output: 'string' },
         },
       },
     },

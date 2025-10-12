@@ -24,8 +24,8 @@ export const PriceRangeFilterItem: React.FC<PriceRangeFilterItemProps> = ({
   return (
     <FiltersProvider handle={filter.handle}>
       <SliderFilter
-        min={parseFloat(filter.minPrice.amount)}
-        max={parseFloat(filter.maxPrice.amount)}
+        min={filter.minPrice.amount}
+        max={filter.maxPrice.amount}
         value={value}
         onChange={handleChange}
       />
