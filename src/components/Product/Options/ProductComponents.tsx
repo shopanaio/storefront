@@ -5,7 +5,8 @@ import { Flex, Divider, Typography } from 'antd';
 import { ComponentOption } from '@src/components/Product/Options/OptionComponent';
 import { ProductCollapse } from '@src/components/Product/ProductCollapse';
 import { ProductOptionDisplayType } from '@codegen/schema-client';
-import { useProductGroups } from '@src/hooks/useProductGroups';
+import { useProductGroups as usePartitionGroups } from '@src/hooks/useProductGroups';
+import { useProductGroups as useGroupsLogic } from '@src/hooks/product/useProductGroups';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { IncludedComponent } from '@src/components/Product/Options/IncludedComponent';
@@ -22,49 +23,23 @@ export const ProductComponents = ({ product }: ProductGroupsProps) => {
   const { styles } = useStyles();
 
   const { multiple: multiItemGroups, single: singleItemGroups } =
-    useProductGroups(product.groups);
+    usePartitionGroups(product.groups);
 
-  const [selectedGroupItems, setSelectedGroupItems] = useState(() =>
-    multiItemGroups.map((group: Entity.ProductGroup) => ({
-      id: group.id,
-      items: group.isMultiple ? [] : [group.items[0]?.node?.id],
-    }))
-  );
+  const groups = useGroupsLogic(product, product.variants[0]);
 
   const selectedGroupMap = useMemo(() => {
     const map = new Map<string, { id: string; items: string[] }>();
-    selectedGroupItems.forEach((g) => map.set(g.id, g));
+    for (const [groupId, items] of Object.entries(groups.selectionsByGroupId)) {
+      map.set(groupId, { id: groupId, items: items.map((x) => x.purchasableId) });
+    }
     return map;
-  }, [selectedGroupItems]);
+  }, [groups.selectionsByGroupId]);
 
   const handleChange = useCallback(
     (group: Entity.ProductGroup, newProductId: string) => {
-      setSelectedGroupItems((prev) =>
-        prev.map((g) => {
-          if (g.id !== group.id) return g;
-
-          const isMultiple = group.isMultiple;
-          const alreadySelected = g.items.includes(newProductId);
-          let newItems: string[];
-
-          if (isMultiple) {
-            if (alreadySelected) {
-              newItems = g.items.filter((id) => id !== newProductId);
-            } else {
-              newItems = [...g.items, newProductId];
-            }
-          } else {
-            newItems = [newProductId];
-          }
-
-          return {
-            ...g,
-            items: newItems,
-          };
-        })
-      );
+      groups.toggleItem(group.id, newProductId, group.isMultiple);
     },
-    [setSelectedGroupItems]
+    [groups]
   );
 
   return (

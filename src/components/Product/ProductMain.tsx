@@ -24,6 +24,7 @@ import { ProductCartButton } from '@src/components/UI/ProductCards/ListingCard/C
 import { ProductGallery } from '@src/components/Product/ProductGallery';
 import useIsInTheCart from '@src/hooks/cart/useIsInTheCart';
 import useAddItemToCart from '@src/hooks/cart/useAddItemToCart';
+import { useProductGroups } from '@src/hooks/product/useProductGroups';
 
 const { Text, Title } = Typography;
 
@@ -104,6 +105,8 @@ export const ProductMain = ({
   } = currentVariant;
   const { isInCart } = useIsInTheCart({ purchasableId: currentVariant.id });
 
+  const groups = useProductGroups(product, currentVariant);
+
   const gallery = useProductGallery({
     ...product,
     cover,
@@ -170,7 +173,7 @@ export const ProductMain = ({
           {(appearance === 'box-builder' || groupsLength > 3) && (
             <PriceAndSale
               compareAtPrice={compareAtPrice}
-              price={price}
+              price={groups.computedPrice}
               stockStatus={stockStatus}
             />
           )}
@@ -191,7 +194,7 @@ export const ProductMain = ({
             <Flex className={styles.buySection} vertical gap={16}>
               <PriceAndSale
                 compareAtPrice={compareAtPrice}
-                price={price}
+                price={groups.computedPrice}
                 stockStatus={stockStatus}
               />
 
@@ -205,9 +208,11 @@ export const ProductMain = ({
                   isLoading={isInFlight}
                   onAddToCart={() => {
                     if (!isInCart) {
+                      const children = groups.buildChildren();
                       addToCart({
                         purchasableId: currentVariant.id,
                         quantity: 1,
+                        children,
                       });
                     }
                   }}
