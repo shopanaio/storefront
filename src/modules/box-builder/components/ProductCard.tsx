@@ -38,7 +38,6 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
 
   const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
-
   const isFree = parseFloat(variant.price.amount) === 0;
 
   const handleClick = () => {
@@ -51,30 +50,25 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
 
   const renderActionButton = () => {
     if (productType === ProductType.Box) {
-      return (
-        <BoxActionButton
-          variant={variant}
-          appearance="card"
-        />
-      );
+      return <BoxActionButton variant={variant} appearance="card" />;
     }
 
     if (productType === ProductType.Card) {
-      return (
-        <CardActionButton
-          variant={variant}
-          appearance="card"
-        />
-      );
+      return <CardActionButton variant={variant} appearance="card" />;
     }
 
-    return (
-      <ProductActionButton
-        variant={variant}
-        appearance="card"
-      />
-    );
+    return <ProductActionButton variant={variant} appearance="card" />;
   };
+
+  let title = composeProductTitle({
+    productTitle: variant.product?.title,
+    variantTitle: variant.title,
+    fallback: variant.title,
+  });
+
+  if (productType === ProductType.Box || productType === ProductType.Card) {
+    title = variant.title;
+  }
 
   return (
     <Flex vertical className={styles.container} gap={8}>
@@ -93,11 +87,7 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
       <Flex vertical className={styles.productInfo} gap={8}>
         {renderActionButton()}
         <ProductCardTitle rows={2} onClick={handleClick}>
-          {composeProductTitle({
-            productTitle: variant.product?.title,
-            variantTitle: variant.title,
-            fallback: variant.title,
-          })}
+          {title}
         </ProductCardTitle>
         <Flex className={styles.priceBox}>
           <Flex className={styles.priceWrapper} vertical>
