@@ -29,8 +29,6 @@ export interface ProductGroupSelectionState {
 interface GroupsStoreState {
   /** productId -> state */
   products: Record<string, ProductGroupSelectionState>;
-  /** Set or update variant for the given product. */
-  setVariant: (productId: string, variantId: string) => void;
   /** Toggle a purchasable in a group (add/remove, respect single vs multiple outside). */
   toggleItem: (
     productId: string,
@@ -68,17 +66,6 @@ export const useProductGroupsStore = create<GroupsStoreState>()(
   persist(
     (set, get) => ({
       products: {},
-      setVariant: (productId, variantId) => {
-        set((state) => {
-          const current = ensureProductState(state.products, productId);
-          return {
-            products: {
-              ...state.products,
-              [productId]: { ...current, variantId },
-            },
-          };
-        });
-      },
       toggleItem: (productId, groupId, purchasableId, isMultiple) => {
         set((state) => {
           const current = ensureProductState(state.products, productId);
@@ -181,15 +168,11 @@ export function useProductGroupsState(productId: string) {
     (s) => s.products[productId] ?? EMPTY_PRODUCT_STATE
   );
 
-  const setVariant = useProductGroupsStore((s) => s.setVariant);
-  const toggleItem = useProductGroupsStore((s) => s.toggleItem);
-  const setItemQty = useProductGroupsStore((s) => s.setItemQty);
-  const setGroupSelection = useProductGroupsStore((s) => s.setGroupSelection);
-  const clearProduct = useProductGroupsStore((s) => s.clearProduct);
+  const { toggleItem, setItemQty, setGroupSelection, clearProduct } =
+    useProductGroupsStore.getState();
 
   return {
     state,
-    setVariant: (variantId: string) => setVariant(productId, variantId),
     toggleItem: (groupId: string, purchasableId: string, isMultiple: boolean) =>
       toggleItem(productId, groupId, purchasableId, isMultiple),
     setItemQty: (groupId: string, purchasableId: string, quantity: number) =>

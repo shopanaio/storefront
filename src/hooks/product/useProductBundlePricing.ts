@@ -8,7 +8,10 @@ import type { Entity } from '@shopana/entity';
 export function computeBundlePrice(
   basePrice: Entity.Money,
   groups: Entity.ProductGroup[] | undefined,
-  selectionsByGroupId: Record<string, { purchasableId: string; quantity: number }[]>
+  selectionsByGroupId: Record<
+    string,
+    { purchasableId: string; quantity: number }[]
+  >
 ): Entity.Money {
   let total = basePrice.amount;
   const currencyCode = basePrice.currencyCode;
@@ -51,7 +54,7 @@ export function computeBundlePrice(
         }
         case 'PERCENT': {
           const percent = (priceCfg as any)?.percentage ?? 0;
-          total += (basePrice.amount * (percent / 100)) * qty;
+          total += basePrice.amount * (percent / 100) * qty;
           break;
         }
         case 'BASE':
