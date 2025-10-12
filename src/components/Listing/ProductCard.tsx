@@ -1,17 +1,18 @@
-import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
-import useListingProductCardFragment from "@src/components/Listing/relay";
+import { useListingProductCardFragment_product$key } from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
+import useListingProductCardFragment from '@src/components/Listing/relay';
 import {
   ProductCardProps,
   ProductCard,
-} from "@src/components/UI/ProductCards/ListingCard/ProductCard";
-import type { Entity } from "@shopana/entity";
-import { CurrencyCode } from "@codegen/schema-client";
+} from '@src/components/UI/ProductCards/ListingCard/ProductCard';
+import type { Entity } from '@shopana/entity';
+import { CurrencyCode } from '@codegen/schema-client';
 
-import useIsInTheCart from "@src/hooks/cart/useIsInTheCart";
-import useAddItemToCart from "@src/hooks/cart/useAddItemToCart";
-import { useProductSwatches } from "@src/hooks/useProductSwatches";
-import { useReviewStore } from "@src/store/appStore";
-import { Money } from "@src/components/UI/Price/Price";
+import useIsInTheCart from '@src/hooks/cart/useIsInTheCart';
+import useAddItemToCart from '@src/hooks/cart/useAddItemToCart';
+import { useProductSwatches } from '@src/hooks/useProductSwatches';
+import { useReviewStore } from '@src/store/appStore';
+import { Money } from '@src/components/UI/Price/Price';
+
 interface CommonProductData {
   id: string;
   title: string;
@@ -35,17 +36,17 @@ interface CommonProductData {
   };
   price?: Money;
   compareAtPrice?: Money | null;
-  options?: ApiProductOption[];
+  options?: Entity.ProductOption[];
   variants?:
-    | ApiProductVariant[]
+    | Entity.ProductVariant[]
     | {
         edges: Array<{
-          node: ApiProduct;
+          node: Entity.Product;
         }>;
       };
 }
 
-type ProductCardRelayProps = Omit<ProductCardProps, "product"> & {
+type ProductCardRelayProps = Omit<ProductCardProps, 'product'> & {
   $productRef: useListingProductCardFragment_product$key;
 };
 
@@ -53,6 +54,7 @@ export const ListingProductCardRelay = ({
   $productRef,
   ...props
 }: ProductCardRelayProps) => {
+  // @ts-expect-error don't fix this
   const product = useListingProductCardFragment(
     $productRef
   ) as CommonProductData;
@@ -75,19 +77,19 @@ export const ListingProductCardRelay = ({
   // Safely extract data with type checking
   const rating: Entity.ProductRating = {
     id: product.id,
-    iid: product.id,
     rating: product.rating?.rating || 0,
     count: product.rating?.count || 0,
     breakdown: [],
   };
 
   const gallery = product.gallery?.edges?.map((edge) => edge.node.url) || [];
-  const productTitle = product.title || "";
-  const handle = (product as any)?.product?.handle || product.handle || "";
-  const variantHandle = (product as any)?.variantHandle || product.handle || undefined;
+  const productTitle = product.title || '';
+  const handle = (product as any)?.product?.handle || product.handle || '';
+  const variantHandle =
+    (product as any)?.variantHandle || product.handle || undefined;
   const isAvailable = product.stockStatus?.isAvailable || false;
   const price = product.price || {
-    amount: "0.00",
+    amount: '0.00',
     currencyCode: CurrencyCode.Usd,
   };
 
@@ -123,7 +125,7 @@ export const ListingProductCardRelay = ({
           });
         }
       }}
-      onReviewClick={() => setReviewProduct(product as ApiProduct)}
+      onReviewClick={() => setReviewProduct(product as Entity.Product)}
     />
   );
 };

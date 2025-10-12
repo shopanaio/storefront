@@ -366,7 +366,7 @@
     "footer": {
       "total-price": "Total price",
       "products-amount": "products on the amount of",
-      "products-count": "{count, plural, one {# product} other {# products}}",
+      "products-count": "{count, plural, one {# product in the box} other {# products in the box}}",
       "cards-count": "{count, plural, one {# card} other {# cards}}",
       "boxes-count": "{count, plural, one {# box} other {# boxes}}"
     },

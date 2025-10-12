@@ -328,7 +328,7 @@
     "footer": {
       "total-price": "Загальна вартість",
       "products-amount": "товарів на сумму",
-      "products-count": "{count, plural, one {# товар} few {# товари} many {# товарів} other {# товарів}}",
+      "products-count": "{count, plural, one {# товар у боксі} few {# товари у боксі} many {# товарів у боксі} other {# товарів у боксі}}",
       "cards-count": "{count, plural, one {# листівка} few {# листівки} many {# листівок} other {# листівок}}",
       "boxes-count": "{count, plural, one {# бокс} few {# бокси} many {# боксів} other {# боксів}}"
     },

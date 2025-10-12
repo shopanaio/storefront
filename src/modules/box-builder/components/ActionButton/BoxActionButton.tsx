@@ -36,8 +36,11 @@ export const BoxActionButton = ({
   const [isInternalLoading, setIsInternalLoading] = useState(false);
 
   const { boxes } = useBoxBuilderProducts();
-  const existingBox = boxes[0]; // Get the first selected box if exists
-  const isCurrentVariantSelected = existingBox?.purchasableId === variant.id;
+  const firstSelectedBox = boxes[0]; // Get the first selected box if exists
+
+  console.log('firstSelectedBox', firstSelectedBox, variant);
+
+  console.table([boxes?.[0]?.id]);
 
   const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
@@ -63,14 +66,19 @@ export const BoxActionButton = ({
 
     try {
       // If there's an existing selected box and it's not the current variant
-      if (existingBox && !isCurrentVariantSelected) {
+      if (firstSelectedBox) {
+        if (firstSelectedBox.purchasableId === variant.id) {
+          console.log('firstSelectedBox.purchasableId === variant.id');
+          return;
+        }
+
         // Replace the existing box with the new one
         await replaceCartItem({
           quantity: 1,
-          lineId: existingBox.id,
+          lineId: firstSelectedBox.id,
           purchasableId: variant.id,
         });
-      } else if (!existingBox) {
+      } else {
         // No box selected yet, add new one
         await addToCart({
           purchasableId: variant.id,
