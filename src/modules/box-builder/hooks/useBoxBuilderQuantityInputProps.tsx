@@ -17,7 +17,7 @@ export interface UseBoxBuilderQuantityInputPropsParams {
   disabled?: boolean;
   loading?: boolean;
   appearance?: "card" | "activity";
-  /** Whether to show confirmation modal before removing item. Defaults to true. */
+  /** Whether to show confirmation modal before removing item. Defaults to false. */
   confirmRemove?: boolean;
 }
 
@@ -35,7 +35,7 @@ export const useBoxBuilderQuantityInputProps = ({
   disabled,
   loading,
   appearance = "card",
-  confirmRemove = true,
+  confirmRemove = false,
 }: UseBoxBuilderQuantityInputPropsParams): BoxBuilderQuantityInputProps => {
   const t = useTranslations("BoxBuilder");
   const formatPrice = useFormatPrice();

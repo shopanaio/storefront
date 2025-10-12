@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Button, Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { RootDrawer } from "@src/components/UI/Drawer/RootDrawer";
-import { useMobileConfirmStore, mobileConfirmApi } from "./mobileConfirmStore";
+import { Button, Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { RootDrawer } from '@src/components/UI/Drawer/RootDrawer';
+import { useMobileConfirmStore, mobileConfirmApi } from './mobileConfirmStore';
 
 const { Text } = Typography;
 
@@ -66,12 +66,25 @@ export const MobileConfirmDrawer = () => {
           ) : null}
           {content ? <div className={styles.content}>{content}</div> : null}
         </div>
-        <Button type="primary" size="large" {...okButtonProps} onClick={handleOk}>
-          {okText}
-        </Button>
-        <Button size="large" {...cancelButtonProps} onClick={handleCancel}>
-          {cancelText}
-        </Button>
+        <Flex vertical gap={12}>
+          <Button
+            type="primary"
+            size="large"
+            block
+            {...okButtonProps}
+            onClick={handleOk}
+          >
+            {okText}
+          </Button>
+          <Button
+            size="large"
+            block
+            {...cancelButtonProps}
+            onClick={handleCancel}
+          >
+            {cancelText}
+          </Button>
+        </Flex>
       </Flex>
     </RootDrawer>
   );

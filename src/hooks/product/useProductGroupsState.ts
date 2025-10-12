@@ -83,7 +83,9 @@ export const useProductGroupsStore = create<GroupsStoreState>()(
         set((state) => {
           const current = ensureProductState(state.products, productId);
           const currentItems = current.selectionsByGroupId[groupId] ?? [];
-          const exists = currentItems.some((x) => x.purchasableId === purchasableId);
+          const exists = currentItems.some(
+            (x) => x.purchasableId === purchasableId
+          );
 
           let nextItems: GroupSelectionItem[];
           if (isMultiple) {
@@ -163,13 +165,22 @@ export const useProductGroupsStore = create<GroupsStoreState>()(
 );
 
 /**
+ * Default empty state for products not yet in the store.
+ * Using a constant to avoid creating new object references.
+ */
+const EMPTY_PRODUCT_STATE: ProductGroupSelectionState = {
+  variantId: null,
+  selectionsByGroupId: {},
+};
+
+/**
  * Hook to access selection state for a single product.
  */
 export function useProductGroupsState(productId: string) {
-  const state = useProductGroupsStore((s) => s.products[productId] ?? {
-    variantId: null,
-    selectionsByGroupId: {},
-  });
+  const state = useProductGroupsStore(
+    (s) => s.products[productId] ?? EMPTY_PRODUCT_STATE
+  );
+
   const setVariant = useProductGroupsStore((s) => s.setVariant);
   const toggleItem = useProductGroupsStore((s) => s.toggleItem);
   const setItemQty = useProductGroupsStore((s) => s.setItemQty);
