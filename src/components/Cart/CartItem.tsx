@@ -1,11 +1,12 @@
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
 import useRemoveItemFromCart from "@src/hooks/cart/useRemoveItemFromCart";
 import useUpdateCartLineQuantity from "@src/hooks/cart/useUpdateCartLineQuantity";
-import { App, Flex, Typography } from "antd";
+import { Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
 import type { Entity } from "@shopana/entity";
+import { useConfirm } from "@src/components/UI/Confirm/useConfirm";
 
 const { Text } = Typography;
 
@@ -25,9 +26,9 @@ export const CartItem = ({
 }: CartItemProps) => {
   const { removeFromCart, loading: isRemoving } = useRemoveItemFromCart();
   const { updateQuantity, loading: isUpdating } = useUpdateCartLineQuantity();
-  const { modal } = App.useApp();
   const t = useTranslations("Cart");
   const { styles } = useStyles();
+  const confirm = useConfirm();
 
   if (!cartLine) {
     return null;
@@ -54,7 +55,7 @@ export const CartItem = ({
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     if (!confirmRemove) {
       removeFromCart({
         lineId: cartLine.id,
@@ -64,7 +65,7 @@ export const CartItem = ({
 
     const imageUrl = purchasable.cover?.url ?? "";
 
-    modal.confirm({
+    const ok = await confirm({
       icon: null,
       title: t("remove-confirm-title"),
       content: (
@@ -79,12 +80,12 @@ export const CartItem = ({
       ),
       okText: t("remove-confirm-ok"),
       cancelText: t("remove-confirm-cancel"),
-      onOk: () => {
-        removeFromCart({
-          lineId: cartLine.id,
-        });
-      },
     });
+    if (ok) {
+      removeFromCart({
+        lineId: cartLine.id,
+      });
+    }
   };
 
   return (

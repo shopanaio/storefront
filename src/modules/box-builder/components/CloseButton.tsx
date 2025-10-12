@@ -1,28 +1,27 @@
 "use client";
 
-import { App, Button } from "antd";
+import { Button } from "antd";
 import { TbX } from "react-icons/tb";
 import { useTranslations } from "next-intl";
+import { useConfirm } from "@src/components/UI/Confirm/useConfirm";
 
 interface CloseButtonProps {
   onConfirm?: () => void;
 }
 
 export const CloseButton: React.FC<CloseButtonProps> = ({ onConfirm }) => {
-  const { modal } = App.useApp();
   const t = useTranslations("BoxBuilder");
+  const confirm = useConfirm();
 
-  const handleClick = () => {
-    modal.confirm({
+  const handleClick = async () => {
+    const ok = await confirm({
       icon: null,
       title: t("exit-confirm.title"),
       content: t("exit-confirm.content"),
       okText: t("exit-confirm.leave"),
       cancelText: t("exit-confirm.stay"),
-      onOk: () => {
-        onConfirm?.();
-      },
     });
+    if (ok) onConfirm?.();
   };
 
   return (

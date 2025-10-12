@@ -6,10 +6,11 @@ import { useRemoveItemFromBoxBuilderCart } from "./useRemoveItemFromCart";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { App, Flex, Typography } from "antd";
+import { Flex, Typography } from "antd";
 import { useFormatPrice } from "@src/components/UI/Price/Price";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
+import { useConfirm } from "@src/components/UI/Confirm/useConfirm";
 
 export interface UseBoxBuilderQuantityInputPropsParams {
   productId: string;
@@ -43,9 +44,9 @@ export const useBoxBuilderQuantityInputProps = ({
   const { updateQuantity, loading: isUpdating } = useUpdateBoxBuilderCartLine();
   const { removeFromCart, loading: isRemoving } =
     useRemoveItemFromBoxBuilderCart();
-  const { modal } = App.useApp();
   const {} = useBoxBuilderStore();
   const { styles } = useStyles();
+  const confirm = useConfirm();
 
   const handleIncrement = () => {
     if (!cartLine) {
@@ -72,7 +73,7 @@ export const useBoxBuilderQuantityInputProps = ({
     });
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     if (!confirmRemove) {
       if (cartLine) {
         removeFromCart({
@@ -85,7 +86,7 @@ export const useBoxBuilderQuantityInputProps = ({
     const productTitle = cartLine?.purchasable?.title ?? "";
     const imageUrl = cartLine?.purchasable?.cover?.url ?? "";
 
-    modal.confirm({
+    const ok = await confirm({
       icon: null,
       title: t("remove-confirm-title"),
       content: (
@@ -102,14 +103,12 @@ export const useBoxBuilderQuantityInputProps = ({
       ),
       okText: t("remove-confirm-ok"),
       cancelText: t("remove-confirm-cancel"),
-      onOk: () => {
-        if (cartLine) {
-          removeFromCart({
-            lineId: cartLine.id,
-          });
-        }
-      },
     });
+    if (ok && cartLine) {
+      removeFromCart({
+        lineId: cartLine.id,
+      });
+    }
   };
 
   const value = useMemo(() => {

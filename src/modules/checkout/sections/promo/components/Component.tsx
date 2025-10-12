@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { App, Button, Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { TbTicket, TbX, TbDiscount, TbCircleCheckFilled } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
 import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
+import { useConfirm } from '@src/components/UI/Confirm/useConfirm';
 
 /**
  * View component for the checkout promo section.
@@ -30,7 +31,7 @@ export const PromoSectionView = ({
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const { addPromoCode, removePromoCode } = useCheckoutApi();
-  const { modal } = App.useApp();
+  const confirm = useConfirm();
 
   const [code, setCode] = useState(data?.code ?? '');
   const [isApplied, setIsApplied] = useState(Boolean(data?.code));
@@ -48,11 +49,11 @@ export const PromoSectionView = ({
     }
   }, [code, addPromoCode]);
 
-  const handleRemove = useCallback(() => {
+  const handleRemove = useCallback(async () => {
     if (data?.code) {
       const promoCode = data.code;
 
-      modal.confirm({
+      const ok = await confirm({
         icon: null,
         title: t('remove-promo-confirm-title'),
         content: (
@@ -67,12 +68,12 @@ export const PromoSectionView = ({
         ),
         okText: t('remove-promo-confirm-ok'),
         cancelText: t('remove-promo-confirm-cancel'),
-        onOk: () => {
-          removePromoCode({ code: promoCode });
-        },
       });
+      if (ok) {
+        removePromoCode({ code: promoCode });
+      }
     }
-  }, [data?.code, removePromoCode, modal, t]);
+  }, [data?.code, removePromoCode, t, confirm]);
 
   return (
     <Flex vertical gap={8} className={styles.container}>
