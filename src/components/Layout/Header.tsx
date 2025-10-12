@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
       <div className={styles.inner}>
         <AppDrawerButton />
         <Link className={styles.logo} href="/">
-          <Logo theme="light" size={34} />
+          <Logo theme="light" size={36} />
         </Link>
         <DesktopSearch />
         <Flex className={styles.actions}>

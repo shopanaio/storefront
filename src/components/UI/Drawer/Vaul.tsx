@@ -1,105 +1,127 @@
-"use client";
+'use client';
 
-import { Drawer as VaulDrawer } from "vaul";
-import { ReactNode } from "react";
-import { useIsMobile } from "@src/hooks/useIsMobile";
-import { createStyles, cx } from "antd-style";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
+import { Portal, Root, Content, Overlay } from 'vaul';
+import { useStyles } from './styles';
+import AnimateHeight, { Height } from 'react-animate-height';
+import clsx from 'clsx';
 
 export interface VaulProps {
   /** Whether the drawer is open */
   open: boolean;
   /** Callback when drawer is closed */
   onClose: () => void;
-  /** Drawer title */
-  title?: ReactNode;
+  /** Whether the drawer can be dismissed by dragging */
+  dismissible: boolean;
   /** Drawer content */
-  children: ReactNode;
-  /** Optional footer */
-  footer?: ReactNode;
-  /** Optional class for content */
-  contentClassName?: string;
-  /** Height for mobile sheets; defaults to 60vh */
-  height?: string | number;
+  children: React.ReactNode;
+  /** Whether the background should scale with the drawer */
+  scaleBackground?: boolean;
+  /** Direction of the drawer */
+  direction?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-/**
- * Configured Vaul Drawer (Radix-based bottom sheet).
- * Optimized defaults for mobile; behaves as bottom sheet on mobile, modal-like on desktop.
- */
-export const Vaul = ({ open, onClose, title, children, footer, contentClassName, height }: VaulProps) => {
-  const isMobile = useIsMobile();
-  const sheetHeight = height || (isMobile ? "60vh" : "auto");
+export const Vaul = ({
+  open,
+  onClose,
+  dismissible,
+  children,
+  direction = 'bottom',
+}: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
   const { styles } = useStyles();
+  const isHorizontal = direction === 'right' || direction === 'left';
+  const isVertical = !isHorizontal;
+
+  const [height, setHeight] = useState<Height>(0);
+  const [contentDiv, setContentDiv] = useState<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (open) {
+      document.body.style.height = `${window.innerHeight}px`;
+      if (isVertical) {
+        setHeight('auto');
+      }
+    }
+  }, [open, isVertical]);
+
+  useEffect(() => {
+    if (!isVertical || !contentDiv) return;
+
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      setHeight(entry.contentRect.height);
+    });
+    resizeObserver.observe(contentDiv);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [contentDiv, isVertical]);
+
+  const handleTeardown = useCallback(() => {
+    if (!open) {
+      document.body.style.height = '';
+      if (isVertical) {
+        setHeight(0);
+      }
+    }
+  }, [open, isVertical]);
+
+  const renderContent = () => {
+    if (isHorizontal) {
+      return <div className={styles.container}>{children}</div>;
+    }
+
+    return (
+      <>
+        <div className={styles.handle} />
+        <div className={clsx(styles.container)}>{children}</div>
+      </>
+    );
+  };
 
   return (
-    <VaulDrawer.Root open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <VaulDrawer.Overlay className={styles.overlay} />
-      <VaulDrawer.Content
-        className={cx(
-          styles.contentBase,
-          isMobile ? styles.contentMobile : styles.contentDesktop
-        )}
-        style={{ height: sheetHeight }}
-      >
-        {title && <div className={styles.header}>{title}</div>}
-        <div className={cx(styles.body, contentClassName)}>{children}</div>
-        {footer && <div className={styles.footer}>{footer}</div>}
-      </VaulDrawer.Content>
-    </VaulDrawer.Root>
+    <Root
+      autoFocus
+      open={open}
+      onClose={onClose}
+      dismissible={dismissible}
+      repositionInputs
+      direction={direction}
+      onAnimationEnd={handleTeardown}
+      disablePreventScroll={false}
+    >
+      <Portal container={document.querySelector('[data-vaul-drawer-wrapper]')}>
+        <Content
+          className={clsx({
+            [styles.content]: true,
+            [styles.contentHorizontal]: isHorizontal,
+            [styles.contentVertical]: isVertical,
+            [styles.contentLeft]: direction === 'left',
+            [styles.contentRight]: direction === 'right',
+          })}
+          style={
+            isHorizontal
+              ? { width: 'var(--components-drawer-width)' }
+              : undefined
+          }
+        >
+          {isVertical ? (
+            <AnimateHeight duration={300} height={height} disableDisplayNone>
+              <div ref={setContentDiv}>{renderContent()}</div>
+            </AnimateHeight>
+          ) : (
+            renderContent()
+          )}
+        </Content>
+        <Overlay className={styles.overlay} />
+      </Portal>
+    </Root>
   );
 };
 
 export default Vaul;
-
-const useStyles = createStyles(({ css, token }) => ({
-  overlay: css`
-    position: fixed;
-    inset: 0;
-    background: ${token.colorBgMask};
-  `,
-  contentBase: css`
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 640px;
-    background: ${token.colorBgElevated};
-    color: ${token.colorText};
-    box-shadow: ${token.boxShadowSecondary};
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  `,
-  contentMobile: css`
-    bottom: 0;
-    border-top-left-radius: ${token.borderRadiusLG}px;
-    border-top-right-radius: ${token.borderRadiusLG}px;
-  `,
-  contentDesktop: css`
-    top: 10vh;
-    bottom: auto;
-    max-height: 80vh;
-    border-radius: ${token.borderRadiusLG}px;
-  `,
-  header: css`
-    padding: ${token.padding}px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-size: ${token.fontSizeLG}px;
-    font-weight: 600;
-    text-align: center;
-    flex-shrink: 0;
-    background: ${token.colorBgElevated};
-  `,
-  body: css`
-    padding: 0 ${token.padding}px;
-    flex: 1;
-    overflow: auto;
-    background: ${token.colorBgBase};
-  `,
-  footer: css`
-    padding: ${token.padding}px;
-    border-top: 1px solid ${token.colorSplit};
-    background: ${token.colorBgElevated};
-    flex-shrink: 0;
-  `,
-}));

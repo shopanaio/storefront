@@ -16,6 +16,7 @@ import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
 import type { Entity } from '@shopana/entity';
 import BoxCartLine from '@src/modules/box-builder/components/BoxCartLine';
+import { useBoxBuilderProducts } from '@src/modules/box-builder/hooks/useBoxProducts';
 
 const { Text, Title } = Typography;
 
@@ -32,6 +33,7 @@ const Cart: ActivityComponentType<{}> = () => {
 const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
   const { progress } = useBoxBuilderProgress();
   const { push } = useFlow();
+  const { boxes, cards, products } = useBoxBuilderProducts();
 
   const { styles } = useStyles();
   const t = useTranslations('BoxBuilder');
@@ -69,7 +71,7 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
             </Title>
           </Flex>
           <Flex vertical gap={8}>
-            {cart.lines.map((cartLine) => (
+            {[...boxes, ...cards, ...products].map((cartLine) => (
               <BoxCartLine key={cartLine.id} cartLine={cartLine} />
             ))}
           </Flex>
@@ -89,7 +91,7 @@ const EmptyCart: React.FC = () => {
       showCart={false}
       footer={
         <LayoutFooterButton
-          onClick={() => pop(3)}
+          onClick={() => pop()}
           label={t('choose-box')}
           size="large"
           divider={null}

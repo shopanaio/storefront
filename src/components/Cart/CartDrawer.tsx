@@ -14,7 +14,6 @@ import { useModalStore } from '@src/store/appStore';
 import { DrawerBase } from '@src/components/UI/DrawerBase/DrawerBase';
 import { StickyButton } from '@src/components/UI/StickyButton';
 import { EmptyCart } from '@src/components/Cart/EmptyCartIcon';
-import useToken from 'antd/es/theme/useToken';
 
 export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();
@@ -22,7 +21,6 @@ export const CartDrawer: React.FC = () => {
 
   const routes = useRoutes();
   const { cart } = useCart();
-  const [, token] = useToken();
   const isOpen = useModalStore((state) => state.isCartDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsCartDrawerOpen);
 
@@ -45,15 +43,21 @@ export const CartDrawer: React.FC = () => {
   return (
     <DrawerBase
       open={isOpen}
-      height="75vh"
       onClose={() => setIsOpen(false)}
       title={
         <>
-          {t('cart')} <Badge count={cart?.totalQuantity} variant="primary" />
+          {t('cart')}
+          {!!cart?.totalQuantity && (
+            <Badge
+              count={cart.totalQuantity}
+              variant="primary"
+              showZero={false}
+              offset={[4, -4]}
+            />
+          )}
         </>
       }
       footer={renderFooter()}
-      showCloseButton={true}
       contentClassName={styles.drawerContent}
     >
       {cartLines.length === 0 ? (
@@ -62,7 +66,7 @@ export const CartDrawer: React.FC = () => {
           align="center"
           style={{
             width: '100%',
-            marginTop: 100,
+            height: '400px',
           }}
         >
           <Empty

@@ -1,11 +1,11 @@
-import { Button, Input } from "antd";
-import { TbSearch } from "react-icons/tb";
-import { createStyles } from "antd-style";
-import { useLocale, useTranslations } from "next-intl";
-import React from "react";
-import { mq } from "@src/components/Theme/breakpoints";
-import { useModalStore } from "@src/store/appStore";
-import { useIsMobile } from "@src/hooks/useIsMobile";
+import { Button, Input } from 'antd';
+import { TbSearch } from 'react-icons/tb';
+import { createStyles } from 'antd-style';
+import { useLocale, useTranslations } from 'next-intl';
+import React from 'react';
+import { mq } from '@src/components/Theme/breakpoints';
+import { useModalStore } from '@src/store/appStore';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 type SearchInputProps = {
   onClick?: () => void;
@@ -13,7 +13,7 @@ type SearchInputProps = {
 
 export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
   const locale = useLocale();
-  const t = useTranslations("Header");
+  const t = useTranslations('Header');
   const { styles } = useStyles();
   const searchTerm = useModalStore((state) => state.searchTerm);
   const setSearchTerm = useModalStore((state) => state.setSearchTerm);
@@ -27,7 +27,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
         onClick={onClick}
         block
       >
-        {t("search")}
+        {t('search')}
       </Button>
     );
   }
@@ -38,18 +38,22 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
       size="middle"
       readOnly={isMobile}
       className={styles.searchInput}
-      placeholder={`${t("search")} ...`}
+      placeholder={`${t('search')} ...`}
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
       prefix={<TbSearch className={styles.searchIcon} size={18} />}
       onClick={onClick}
       suffix={
         <Button
-          href={`${locale}/search?q=${encodeURIComponent(searchTerm)}`}
+          href={
+            searchTerm.trim()
+              ? `${locale}/search?q=${encodeURIComponent(searchTerm)}`
+              : undefined
+          }
           type="primary"
           className={styles.searchButton}
         >
-          {t("search")}
+          {t('search')}
         </Button>
       }
     />

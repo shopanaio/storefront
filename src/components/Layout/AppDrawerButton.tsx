@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button } from "antd";
-import { TbMenu2 } from "react-icons/tb";
-import { useModalStore } from "@src/store/appStore";
-import { createStyles } from "antd-style";
-import clsx from "clsx";
-import { mq } from "@src/components/Theme/breakpoints";
+import React from 'react';
+import { Button } from 'antd';
+import { TbMenu2 } from 'react-icons/tb';
+import { useModalStore } from '@src/store/appStore';
+import { createStyles } from 'antd-style';
+import clsx from 'clsx';
+import { mq } from '@src/components/Theme/breakpoints';
 
 type AppDrawerButtonProps = {
   size?: number;
@@ -38,10 +38,6 @@ const useStyles = createStyles(({ token, css }) => {
       aspect-ratio: 1/1;
       flex-shrink: 0;
       width: var(--components-header-control-height) !important;
-
-      ${mq.lg} {
-        display: none;
-      }
     `,
   };
 });

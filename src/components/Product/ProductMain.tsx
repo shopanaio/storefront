@@ -135,7 +135,8 @@ export const ProductMain = ({
           <Flex vertical>
             {product.category && (
               <Button
-                type="link"
+                variant="link"
+                color="primary"
                 href={routes.category.path(product.category.handle)}
                 className={styles.categoryButton}
               >

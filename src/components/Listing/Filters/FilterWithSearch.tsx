@@ -70,7 +70,8 @@ export const FilterWithSearch: React.FC<FilterWithSearchProps> = ({
       {filteredOptions.length > maxVisibleOptions && (
         <Button
           className={styles.showMoreLessBtn}
-          type="link"
+          variant="link"
+          color="primary"
           onClick={() => setShowAll(!showAll)}
         >
           {showAll ? t("show-less") : t("show-more")}

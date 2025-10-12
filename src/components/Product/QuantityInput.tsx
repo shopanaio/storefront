@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { Button, ButtonProps, Input } from "antd";
-import { TbMinus, TbPlus, TbTrash } from "react-icons/tb";
-import { createStyles, cx } from "antd-style";
-import { SizeType } from "antd/es/config-provider/SizeContext";
-import { useRef } from "react";
+import { Button, ButtonProps, Input } from 'antd';
+import { TbMinus, TbPlus, TbTrash } from 'react-icons/tb';
+import { createStyles, cx } from 'antd-style';
+import { SizeType } from 'antd/es/config-provider/SizeContext';
+import { useRef } from 'react';
 
 export interface QuantityInputProps {
   value: number | string;
-  color?: "primary" | "default";
-  size?: ButtonProps["size"];
+  color?: 'primary' | 'default';
+  size?: ButtonProps['size'];
   onIncrement: () => void;
   onDecrement: () => void;
   onRemove?: () => void;
@@ -19,10 +19,10 @@ export interface QuantityInputProps {
   loading?: boolean;
 }
 
-const sizes = ["small", "middle", "large"] as SizeType[];
-const getSmallerSize = (size: ButtonProps["size"]) => {
+const sizes = ['small', 'middle', 'large'] as SizeType[];
+const getSmallerSize = (size: ButtonProps['size']) => {
   const index = sizes.indexOf(size);
-  return sizes[index - 1] || "small";
+  return sizes[index - 1] || 'small';
 };
 const iconSize = {
   small: 16,
@@ -32,8 +32,8 @@ const iconSize = {
 
 export const QuantityInput = ({
   value,
-  size = "middle",
-  color = "default",
+  size = 'middle',
+  color = 'default',
   onIncrement,
   onDecrement,
   onRemove,
@@ -43,21 +43,21 @@ export const QuantityInput = ({
   style,
 }: QuantityInputProps) => {
   const { styles, theme } = useStyles({ size });
-  const prevAction = useRef<"inc" | "dec" | null>(null);
+  const prevAction = useRef<'inc' | 'dec' | null>(null);
   const buttonSize = getSmallerSize(size);
 
   const numericValue =
-    typeof value === "number" ? value : parseInt(String(value), 10);
+    typeof value === 'number' ? value : parseInt(String(value), 10);
   const showTrash = numericValue === 1 && onRemove;
   const DecrementIcon = showTrash ? TbTrash : TbMinus;
 
   const handleIncrement = () => {
-    prevAction.current = "inc";
+    prevAction.current = 'inc';
     onIncrement();
   };
 
   const handleDecrement = () => {
-    prevAction.current = "dec";
+    prevAction.current = 'dec';
     showTrash ? onRemove() : onDecrement();
   };
 
@@ -66,14 +66,15 @@ export const QuantityInput = ({
       style={style}
       styles={{
         affixWrapper:
-          color === "primary"
+          color === 'primary'
             ? {
                 backgroundColor: theme.colorPrimary,
                 color: theme.colorPrimaryBg,
               }
             : {},
         input: {
-          textAlign: "center",
+          textAlign: 'center',
+          color: color === 'primary' ? theme.colorWhite : theme.colorTextBase,
         },
       }}
       className={cx(className, styles.container)}
@@ -82,24 +83,24 @@ export const QuantityInput = ({
       readOnly
       prefix={
         <Button
-          variant={color === "default" ? "text" : "solid"}
+          variant={color === 'default' ? 'text' : 'solid'}
           color={color}
           size={buttonSize}
           icon={<DecrementIcon size={iconSize[buttonSize]} />}
           onClick={handleDecrement}
           disabled={disabled}
-          loading={loading && prevAction.current === "dec"}
+          loading={loading && prevAction.current === 'dec'}
         />
       }
       suffix={
         <Button
           size={buttonSize}
           icon={<TbPlus size={iconSize[buttonSize]} />}
-          variant={color === "default" ? "text" : "solid"}
+          variant={color === 'default' ? 'text' : 'solid'}
           color={color}
           onClick={handleIncrement}
           disabled={disabled}
-          loading={loading && prevAction.current === "inc"}
+          loading={loading && prevAction.current === 'inc'}
         />
       }
     />
@@ -107,9 +108,9 @@ export const QuantityInput = ({
 };
 
 const useStyles = createStyles(
-  ({ css, token }, { size }: { size: ButtonProps["size"] }) => {
+  ({ css, token }, { size }: { size: ButtonProps['size'] }) => {
     const borderRadius =
-      size === "large" ? token.borderRadiusLG : token.borderRadius;
+      size === 'large' ? token.borderRadiusLG : token.borderRadius;
 
     return {
       container: css`

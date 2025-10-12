@@ -6,13 +6,11 @@ import { BoxBuilderQuantityInput } from "./QuantityInput";
 import type { BoxBuilderQuantityInputProps } from "./QuantityInput";
 import { useAddItemToBoxBuilderCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
 import { useState } from "react";
+import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
+import { Entity } from "@shopana/entity";
 
 export interface ProductActionButtonProps {
-  productId: string;
-  isAvailable: boolean;
-  isFree: boolean;
-  isInCart: boolean;
-  quantity: number;
+  variant: Entity.ProductVariant;
   loading?: boolean;
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
@@ -20,11 +18,7 @@ export interface ProductActionButtonProps {
 }
 
 export const ProductActionButton = ({
-  productId,
-  isAvailable,
-  isFree,
-  isInCart,
-  quantity,
+  variant,
   loading,
   buttonProps,
   appearance,
@@ -33,6 +27,13 @@ export const ProductActionButton = ({
   const t = useTranslations("BoxBuilder");
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
+
+  const cartLine = useIsInTheBoxBuilderCart(variant.id);
+  const isInCart = Boolean(cartLine);
+  const { quantity = 0 } = cartLine || {};
+
+  const isAvailable = variant.stockStatus?.isAvailable === true;
+  const isFree = parseFloat(variant.price?.amount ?? '0') === 0;
 
   if (!isAvailable) {
     return (
@@ -45,7 +46,7 @@ export const ProductActionButton = ({
   if (isInCart && quantity > 0) {
     return (
       <BoxBuilderQuantityInput
-        productId={productId}
+        productId={variant.id}
         size={quantityProps?.size ?? "middle"}
         color={quantityProps?.color ?? "primary"}
         disabled={quantityProps?.disabled ?? isFree}
@@ -60,7 +61,7 @@ export const ProductActionButton = ({
     setIsInternalLoading(true);
     try {
       await addToCart({
-        purchasableId: productId,
+        purchasableId: variant.id,
         quantity: 1,
       });
     } finally {

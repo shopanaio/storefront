@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Flex } from "antd";
-import React from "react";
-import { HomeSectionType, Sections, SectionSettings } from "./sections";
-import { createStyles } from "antd-style";
-import { HomeProductGrid } from "./HomeProductGrid";
+import { Flex } from 'antd';
+import React from 'react';
+import { HomeSectionType, Sections, SectionSettings } from './sections';
+import { createStyles } from 'antd-style';
+import { HomeProductGrid } from './HomeProductGrid';
 export interface HomeSection {
   id: string;
   type: HomeSectionType;
@@ -13,8 +13,6 @@ export interface HomeSection {
 
 export const Home = ({ sections }: { sections: HomeSection[] }) => {
   const { styles } = useStyles();
-
-  /* console.log(sections); */
 
   return (
     <Flex vertical gap={95} className={styles.container}>

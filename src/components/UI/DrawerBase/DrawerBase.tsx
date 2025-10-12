@@ -1,16 +1,19 @@
-"use client";
+'use client';
 
-import { DrawerProps, Button, Flex, Typography } from "antd";
-import { createStyles, cx } from "antd-style";
-import { ReactNode } from "react";
-import { RxCross2 } from "react-icons/rx";
-import { useIsMobile } from "@src/hooks/useIsMobile";
-import RootDrawer from "@src/components/UI/Drawer/RootDrawer";
+import { DrawerProps, Button, Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { ReactNode } from 'react';
+import { RxCross2 } from 'react-icons/rx';
+import { useIsMobile } from '@src/hooks/useIsMobile';
+import RootDrawer from '@src/components/UI/Drawer/RootDrawer';
+import clsx from 'clsx';
+import useToken from 'antd/es/theme/useToken';
+import { mq } from '@src/components/Theme/breakpoints';
 
 const { Text } = Typography;
 
 export interface DrawerBaseProps
-  extends Omit<DrawerProps, "children" | "onClose" | "open"> {
+  extends Omit<DrawerProps, 'children' | 'onClose' | 'open'> {
   /** Whether the drawer is open */
   open: boolean;
   /** Callback when drawer is closed */
@@ -35,6 +38,8 @@ export interface DrawerBaseProps
     content?: string;
     footer?: string;
   };
+  /** Minimum height for the drawer content */
+  minHeight?: string | number;
 }
 
 /**
@@ -49,22 +54,19 @@ export const DrawerBase = ({
   headerExtra,
   footer,
   children,
-  showCloseButton = true,
+  showCloseButton: showCloseButtonProp,
   contentClassName,
   sectionStyles,
   placement,
-  height,
-  width,
-  ...drawerProps
+  minHeight,
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
+  const [, token] = useToken();
   const isMobile = useIsMobile();
+  const showCloseButton = showCloseButtonProp || !isMobile;
 
   // Automatically determine placement and sizes for mobile devices
-  const finalPlacement = placement || (isMobile ? "bottom" : "right");
-  const finalHeight = height || (isMobile ? "60vh" : undefined);
-  const finalWidth =
-    width || (!isMobile ? "var(--components-drawer-width)" : undefined);
+  const finalPlacement = isMobile ? 'bottom' : placement || 'right';
 
   const renderHeader = () => {
     if (header) return header;
@@ -73,7 +75,7 @@ export const DrawerBase = ({
 
     return (
       <Flex
-        className={cx(styles.header, sectionStyles?.header)}
+        className={clsx(styles.header, sectionStyles?.header)}
         align="center"
         justify="space-between"
       >
@@ -82,7 +84,7 @@ export const DrawerBase = ({
           {headerExtra}
           {showCloseButton && (
             <Button
-              icon={<RxCross2 size={24} />}
+              icon={<RxCross2 size={24} color={token.colorIcon} />}
               type="text"
               className={styles.closeBtn}
               onClick={onClose}
@@ -94,13 +96,15 @@ export const DrawerBase = ({
   };
 
   const content = (
-    <div className={cx(styles.layout, contentClassName, "ant-drawer-content")}>
+    <div className={clsx(styles.layout, contentClassName)}>
       {renderHeader()}
-      <div className={cx(styles.content, sectionStyles?.content)}>
+      <div className={clsx(styles.content, sectionStyles?.content)}>
         {children}
       </div>
       {footer && (
-        <div className={cx(styles.footer, sectionStyles?.footer)}>{footer}</div>
+        <div className={clsx(styles.footer, sectionStyles?.footer)}>
+          {footer}
+        </div>
       )}
     </div>
   );
@@ -109,9 +113,8 @@ export const DrawerBase = ({
     <RootDrawer
       open={open}
       onClose={onClose}
-      placement={finalPlacement}
-      height={finalHeight}
-      width={finalWidth}
+      direction={finalPlacement}
+      minHeight={minHeight}
     >
       {content}
     </RootDrawer>
@@ -123,17 +126,16 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: ${token.colorBgBase};
+    background-color: ${token.colorBgElevated};
     overflow-y: auto;
     overflow-x: hidden;
   `,
   header: css`
     position: sticky;
+    background: ${token.colorBgElevated};
     top: 0;
     z-index: 1;
-    padding: ${token.padding}px;
-    background-color: ${token.colorBgBase};
-    /* padding: ${token.padding}px; */
+    padding: ${token.paddingXS}px ${token.padding}px;
     flex-shrink: 0;
   `,
   title: css`
@@ -147,13 +149,18 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   content: css`
     flex: 1;
-    padding: 0 ${token.padding}px;
+    padding: ${token.paddingXS}px ${token.padding}px 84px;
+    height: 100%;
+    max-height: 80vh;
+
+    ${mq.lg} {
+      max-height: unset;
+    }
   `,
   footer: css`
-    position: sticky;
+    position: absolute;
     bottom: 0;
-    margin-top: auto;
+    width: 100%;
     padding: ${token.padding}px;
-    flex-shrink: 0;
   `,
 }));

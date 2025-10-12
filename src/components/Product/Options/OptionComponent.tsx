@@ -3,7 +3,6 @@
 import { Checkbox, Flex, Radio } from 'antd';
 import { createStyles } from 'antd-style';
 import { useCallback, useMemo, useState } from 'react';
-import { OptionsDrawer } from './OptionsDrawer';
 import { OptionDrawerLayout } from './DrawerLayout';
 import { DrawerGrid } from './DrawerGrid';
 import type { Entity } from '@shopana/entity';
@@ -205,20 +204,19 @@ export const ComponentOption = ({
           </>
         )}
       </Flex>
-      <OptionsDrawer open={open} onClose={handleCancel}>
-        <OptionDrawerLayout
-          title={pageTitle}
-          onClose={handleCancel}
-          footer={{
-            selectedLabel: selectedTitlesForDrawer,
-            onConfirm: handleConfirm,
-          }}
-        >
-          <DrawerGrid columns={1}>
-            {options.map((item) => renderOption(item, true))}
-          </DrawerGrid>
-        </OptionDrawerLayout>
-      </OptionsDrawer>
+      <OptionDrawerLayout
+        open={open}
+        title={pageTitle}
+        onClose={handleCancel}
+        footer={{
+          selectedLabel: selectedTitlesForDrawer,
+          onConfirm: handleConfirm,
+        }}
+      >
+        <DrawerGrid columns={1}>
+          {options.map((item) => renderOption(item, true))}
+        </DrawerGrid>
+      </OptionDrawerLayout>
     </>
   );
 };

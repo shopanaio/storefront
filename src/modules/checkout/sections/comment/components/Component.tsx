@@ -74,7 +74,8 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
         </div>
       ) : (
         <Button
-          type="link"
+          variant="link"
+          color="primary"
           className={styles.toggle}
           onClick={onToggle}
           aria-expanded={false}

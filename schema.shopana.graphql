@@ -389,7 +389,7 @@ input CheckoutCreateInput {
   currencyCode: CurrencyCode!
 
   """Initial items to add to the new checkout."""
-  items: [CheckoutLineInput!]!
+  items: [CheckoutLineAddInput!]!
 }
 
 """Payload returned after creating a checkout."""
@@ -757,6 +757,18 @@ type CheckoutLine implements Node {
   purchasable: ProductVariant!
 }
 
+"""Input data for a single item in the checkout."""
+input CheckoutLineAddInput {
+  """Quantity of the product in the checkout."""
+  quantity: Int!
+
+  """ID of the product to add or update."""
+  purchasableId: ID!
+
+  """ID of the purchasable snapshot to add or update."""
+  purchasableSnapshot: PurchasableSnapshotInput
+}
+
 """Detailed breakdown of costs for a checkout line item"""
 type CheckoutLineCost {
   """The original list price per unit before any discounts."""
@@ -780,16 +792,19 @@ type CheckoutLineCost {
   totalAmount: Money!
 }
 
-"""Input data for a single item in the checkout."""
-input CheckoutLineInput {
-  """Quantity of the product in the checkout."""
-  quantity: Int!
+"""Single replacement operation."""
+input CheckoutLineReplaceInput {
+  """Source line ID to replace (quantity will be moved from this line)."""
+  lineId: ID!
 
-  """ID of the product to add or update."""
+  """Target purchasable ID to receive the quantity."""
   purchasableId: ID!
 
-  """ID of the purchasable snapshot to add or update."""
-  purchasableSnapshot: PurchasableSnapshotInput
+  """
+  Quantity to move; if not set, moves full quantity from source line.
+  Must be greater than 0 if provided.
+  """
+  quantity: Int
 }
 
 """Input data for adding an item to an existing checkout."""
@@ -798,7 +813,7 @@ input CheckoutLinesAddInput {
   checkoutId: ID!
 
   """List of checkout items to add."""
-  lines: [CheckoutLineInput!]!
+  lines: [CheckoutLineAddInput!]!
 }
 
 """Payload returned after adding an item to the checkout."""
@@ -843,13 +858,26 @@ type CheckoutLinesDeletePayload {
   errors: [CheckoutFieldError!]
 }
 
-"""Input data for adding an item to an existing checkout line."""
-input CheckoutLinesLineAddInput {
-  """ID of the purchasable to add."""
-  purchasableId: ID!
+"""
+Input data for replacing one or more checkout lines.
+Each replacement moves quantity from source line to target line.
+If quantity is not provided, full quantity from the source line will be moved.
+"""
+input CheckoutLinesReplaceInput {
+  """ID of the checkout."""
+  checkoutId: ID!
 
-  """Quantity to add; must be greater than 0."""
-  quantity: Int!
+  """List of replacement operations to apply."""
+  lines: [CheckoutLineReplaceInput!]!
+}
+
+"""Payload returned after replacing one checkout line with another."""
+type CheckoutLinesReplacePayload {
+  """The updated checkout."""
+  checkout: Checkout
+
+  """List of field-specific or general errors."""
+  errors: [CheckoutFieldError!]
 }
 
 """Input data for updating the quantity of a specific checkout item."""
@@ -891,6 +919,11 @@ type CheckoutMutation {
 
   """Updates the quantity of a specific checkout item."""
   checkoutLinesUpdate(input: CheckoutLinesUpdateInput!): CheckoutLinesUpdatePayload!
+
+  """
+  Replaces one checkout line with another by merging quantities and removing the source line.
+  """
+  checkoutLinesReplace(input: CheckoutLinesReplaceInput!): CheckoutLinesReplacePayload!
 
   """Removes a single item from the checkout."""
   checkoutLinesDelete(input: CheckoutLinesDeleteInput!): CheckoutLinesDeletePayload!
@@ -3529,6 +3562,9 @@ enum ProductOptionDisplayType {
   """Display options in a dropdown select."""
   DROPDOWN
 
+  """Display dropdown with variant cover image per value."""
+  DROPDOWN_VARIANT_COVER
+
   """Apparel size control (e.g., S, M, L, XL)."""
   APPAREL_SIZE
 }
@@ -3911,8 +3947,9 @@ type Query {
   predictiveSearch(input: PredictiveSearchInput!): PredictiveSearchResult!
 
   """Fetch a single product by its handle (slug)."""
-  product(handle: String!): ProductVariant
-  productBySelectedOptions(selectedOptions: [String!]!): ProductVariant
+  product(handle: String!): Product
+  variant(handle: String!): ProductVariant
+  variantBySelectedOptions(selectedOptions: [String!]!): ProductVariant
 
   """Retrieves the current authentication session."""
   session: Session

@@ -30,7 +30,8 @@ export const CheckoutAuth = ({ className }: CheckoutAuthProps) => {
       <Button
         className={className}
         size="large"
-        type="link"
+        variant="link"
+        color="primary"
         onClick={() => setIsAuthModalVisible(true)}
       >
         {t('log-in')}

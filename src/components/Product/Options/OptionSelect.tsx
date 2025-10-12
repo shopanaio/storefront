@@ -4,7 +4,6 @@ import { Flex, Typography } from "antd";
 import { createStyles, cx } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { TbChevronRight } from "react-icons/tb";
-import { OptionsDrawer } from "./OptionsDrawer";
 import { OptionDrawerLayout } from "./DrawerLayout";
 import { useMemo, useState } from "react";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
@@ -82,32 +81,31 @@ export const SelectOption = ({ title, values, onSelect }: Props) => {
         </Flex>
       </Wave>
 
-      <OptionsDrawer open={open} onClose={handleCancel}>
-        <OptionDrawerLayout
-          title={title}
-          onClose={handleCancel}
-          footer={{
-            selectedLabel: draftValue?.title || "",
-            onConfirm: handleConfirm,
-          }}
-        >
-          <DrawerGrid columns={1}>
-            {values.map((value, index) => (
-              <OptionRadioButton
-                key={index}
-                selected={draftValue?.id === value.id}
-                disabled={!value.variant}
-                showRadio
-                onClick={() => {
-                  setDraftValue(value);
-                }}
-              >
-                {value.title}
-              </OptionRadioButton>
-            ))}
-          </DrawerGrid>
-        </OptionDrawerLayout>
-      </OptionsDrawer>
+      <OptionDrawerLayout
+        open={open}
+        title={title}
+        onClose={handleCancel}
+        footer={{
+          selectedLabel: draftValue?.title || "",
+          onConfirm: handleConfirm,
+        }}
+      >
+        <DrawerGrid columns={1}>
+          {values.map((value, index) => (
+            <OptionRadioButton
+              key={index}
+              selected={draftValue?.id === value.id}
+              disabled={!value.variant}
+              showRadio
+              onClick={() => {
+                setDraftValue(value);
+              }}
+            >
+              {value.title}
+            </OptionRadioButton>
+          ))}
+        </DrawerGrid>
+      </OptionDrawerLayout>
     </>
   );
 };

@@ -38,7 +38,8 @@ export const RecipientComment = ({
         </div>
       ) : (
         <Button
-          type="link"
+          variant="link"
+          color="primary"
           className={styles.toggle}
           onClick={onToggle}
           icon={<TbPencil size={18} />}

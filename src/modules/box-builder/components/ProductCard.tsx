@@ -37,10 +37,8 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
 
   const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
-  const { quantity = 0 } = cartLine || {};
 
   const isFree = parseFloat(variant.price.amount) === 0;
-  const isAvailable = Boolean(variant.stockStatus?.isAvailable);
 
   const handleClick = () => {
     push(Activity.Product, {
@@ -54,11 +52,7 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
     if (productType === ProductType.Box) {
       return (
         <BoxActionButton
-          productId={variant.id}
-          isAvailable={isAvailable}
-          isFree={isFree}
-          isInCart={isInCart}
-          quantity={quantity}
+          variant={variant}
           appearance="card"
         />
       );
@@ -67,11 +61,7 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
     if (productType === ProductType.Card) {
       return (
         <CardActionButton
-          productId={variant.id}
-          isAvailable={isAvailable}
-          isFree={isFree}
-          isInCart={isInCart}
-          quantity={quantity}
+          variant={variant}
           appearance="card"
         />
       );
@@ -79,11 +69,7 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
 
     return (
       <ProductActionButton
-        productId={variant.id}
-        isAvailable={isAvailable}
-        isFree={isFree}
-        isInCart={isInCart}
-        quantity={quantity}
+        variant={variant}
         appearance="card"
       />
     );

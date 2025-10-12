@@ -18,7 +18,8 @@ export const ProductTags = ({ tags }: Props) => {
           key={tag.node.id}
           id={tag.node.id}
           className={styles.categoryLinkBtn}
-          type="link"
+          variant="link"
+          color="primary"
         >
           {tag.node.title}
         </Button>

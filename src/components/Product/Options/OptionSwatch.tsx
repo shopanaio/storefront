@@ -2,7 +2,6 @@
 
 import { Flex, Image } from "antd";
 import { createStyles } from "antd-style";
-import { OptionsDrawer } from "./OptionsDrawer";
 import { OptionDrawerLayout } from "./DrawerLayout";
 import { useState } from "react";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
@@ -50,7 +49,6 @@ export const SwatchOption = ({ title, values, onSelect, product }: Props) => {
           title={title}
           value={values.find((v) => v.isActive) || null}
           onClick={showDrawer}
-          cover={product.cover}
         />
         <OptionGrid gap="sm" columns="auto-fit">
           {values.map((option, index) => (
@@ -72,44 +70,43 @@ export const SwatchOption = ({ title, values, onSelect, product }: Props) => {
           ))}
         </OptionGrid>
       </Flex>
-      <OptionsDrawer open={open} onClose={handleCancel}>
-        <OptionDrawerLayout
-          title={title}
-          onClose={handleCancel}
-          footer={{
-            selectedLabel: draftValue?.title || product.title,
-            onConfirm: handleConfirm,
-          }}
-        >
-          <Flex vertical gap={16}>
-            <Image
-              className={styles.image}
-              src={draftValue?.variant?.cover?.url || product.cover?.url}
-              alt={draftValue?.variant?.title || product.title}
-            />
-            <OptionGrid columns={4} gap="sm">
-              {values.map((option, index) => (
-                <OptionRadioButton
-                  key={index}
-                  selected={draftValue?.id === option.id}
-                  onClick={() => setDraftValue(option)}
-                  disabled={!option.variant}
-                  showRadio={false}
-                >
-                  <div className={styles.colorCircleOuter}>
-                    <div
-                      className={styles.colorCircleInner}
-                      style={{
-                        backgroundColor: option.swatch?.color || "#fff",
-                      }}
-                    />
-                  </div>
-                </OptionRadioButton>
-              ))}
-            </OptionGrid>
-          </Flex>
-        </OptionDrawerLayout>
-      </OptionsDrawer>
+      <OptionDrawerLayout
+        open={open}
+        title={title}
+        onClose={handleCancel}
+        footer={{
+          selectedLabel: draftValue?.title || product.title,
+          onConfirm: handleConfirm,
+        }}
+      >
+        <Flex vertical gap={16}>
+          <Image
+            className={styles.image}
+            src={draftValue?.variant?.cover?.url}
+            alt={draftValue?.variant?.title || draftValue?.title || product.title}
+          />
+          <OptionGrid columns={4} gap="sm">
+            {values.map((option, index) => (
+              <OptionRadioButton
+                key={index}
+                selected={draftValue?.id === option.id}
+                onClick={() => setDraftValue(option)}
+                disabled={!option.variant}
+                showRadio={false}
+              >
+                <div className={styles.colorCircleOuter}>
+                  <div
+                    className={styles.colorCircleInner}
+                    style={{
+                      backgroundColor: option.swatch?.color || "#fff",
+                    }}
+                  />
+                </div>
+              </OptionRadioButton>
+            ))}
+          </OptionGrid>
+        </Flex>
+      </OptionDrawerLayout>
     </>
   );
 };

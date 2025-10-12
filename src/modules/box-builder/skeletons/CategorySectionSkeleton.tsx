@@ -1,19 +1,22 @@
-"use client";
+'use client';
 
-import React from "react";
-import { createStyles } from "antd-style";
-import { Flex, Skeleton } from "antd";
-import { BoxBuilderGridSkeleton } from "./GridSkeleton";
+import React from 'react';
+import { createStyles } from 'antd-style';
+import { Flex, Skeleton } from 'antd';
+import { BoxBuilderGridSkeleton } from './GridSkeleton';
 
-export const BoxBuilderCategorySectionSkeleton: React.FC<{ items?: number }> = ({
-  items = 8,
-}) => {
+export const BoxBuilderCategorySectionSkeleton: React.FC<{
+  items?: number;
+}> = ({ items = 8 }) => {
   const { styles } = useStyles();
 
   return (
     <Flex vertical className={styles.container} gap={16}>
       <div className={styles.header}>
-        <Skeleton.Input active style={{ width: 160, height: 24, borderRadius: 6 }} />
+        <Skeleton.Input
+          active={false}
+          style={{ width: 160, height: 24, borderRadius: 6 }}
+        />
       </div>
       <BoxBuilderGridSkeleton count={items} />
     </Flex>

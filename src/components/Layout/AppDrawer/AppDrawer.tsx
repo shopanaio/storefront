@@ -5,30 +5,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useModalStore } from '@src/store/appStore';
 import { Divider, Flex, Button, Typography } from 'antd';
-import { Badge } from '@src/components/UI/Badge';
 import { useLogo } from '@src/hooks/useLogo';
-import {
-  TbHeart,
-  TbLayoutGridFilled,
-  TbPhoneFilled,
-  TbShoppingCart,
-  TbUserCircle,
-} from 'react-icons/tb';
-import { RxCross2 } from 'react-icons/rx';
-import { LanguageDropdown } from './LanguageDropdown';
-import { CurrencyDropdown } from './CurrencyDropdown';
-import { HeaderLinkButton } from './HeaderLinkButton';
+import { LanguageDropdown } from '../LanguageDropdown';
+import { CurrencyDropdown } from '../CurrencyDropdown';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { AppDrawerCartButton } from './AppDrawerCartButton';
+import { AppDrawerWishlistButton } from './AppDrawerWishlistButton';
+import { AppDrawerAccountButton } from './AppDrawerAccountButton';
+import { AppDrawerSupportButton } from './AppDrawerSupportButton';
 
 const { Text } = Typography;
 
 export const AppDrawer: React.FC = () => {
-  const setIsAuthModalVisible = useModalStore(
-    (state) => state.setIsAuthModalVisible
-  );
   const isOpen = useModalStore((state) => state.isAppDrawerOpen);
   const setIsOpen = useModalStore((state) => state.setIsAppDrawerOpen);
   const pathname = usePathname();
@@ -53,71 +44,17 @@ export const AppDrawer: React.FC = () => {
       width="var(--components-drawer-width)"
       contentClassName={styles.customDrawer}
       showCloseButton={false}
-      header={
-        <Flex className={styles.drawerHeader} vertical>
-          <Flex align="center" justify="space-between">
-            <Logo theme="dark" size={32} />
-            <Button
-              icon={<RxCross2 size={24} />}
-              type="text"
-              className={styles.closeBtn}
-              onClick={() => setIsOpen(false)}
-            />
-          </Flex>
-
-          <Flex>
-            <HeaderLinkButton
-              icon={
-                <TbPhoneFilled size={24} className={styles.supportIcon} />
-              }
-              topText={t('customer-support')}
-              bottomText="+1 (999) 111-11-11"
-              theme="dark"
-              mobileBlock={false}
-            />
-          </Flex>
-        </Flex>
+      title={
+        <div style={{ paddingTop: token.paddingXS }}>
+          <Logo size={28} />
+        </div>
       }
     >
-      <Button
-        type="primary"
-        icon={<TbLayoutGridFilled size={24} />}
-        className={styles.catalogBtn}
-      >
-        {t('catalog')}
-      </Button>
-
-      <Flex className={styles.linksBtnsList} vertical>
-        <Button
-          type="text"
-          icon={<TbShoppingCart size={20} />}
-          className={styles.linkBtn}
-        >
-          {t('cart')}
-          <Badge
-            count={4}
-            variant="primary"
-            className={styles.badge}
-          />
-        </Button>
-
-        <Button
-          type="text"
-          icon={<TbHeart size={20} />}
-          className={styles.linkBtn}
-        >
-          {t('wishlist')}
-          <Badge count={100} variant="default" className={styles.badge} />
-        </Button>
-
-        <Button
-          type="text"
-          icon={<TbUserCircle size={20} />}
-          className={styles.linkBtn}
-          onClick={() => setIsAuthModalVisible(true)}
-        >
-          {t('account')}
-        </Button>
+      <Flex vertical>
+        <AppDrawerCartButton />
+        <AppDrawerWishlistButton />
+        <AppDrawerAccountButton />
+        <AppDrawerSupportButton />
       </Flex>
 
       <Divider className={styles.divider} />
@@ -165,12 +102,6 @@ const useStyles = createStyles(({ css, token }) => ({
     height: 100%;
     background: ${token.colorBgBase};
   `,
-  drawerHeader: css`
-    width: 100%;
-    padding: ${token.paddingMD}px;
-    background-color: var(--always-black-bg);
-    gap: ${token.marginMD}px;
-  `,
 
   closeBtn: css`
     color: ${token.colorTextLightSolid};
@@ -178,35 +109,11 @@ const useStyles = createStyles(({ css, token }) => ({
       color: ${token.colorPrimary} !important;
     }
   `,
-  supportIcon: css`
-    color: ${token.colorPrimary};
-  `,
-  catalogBtn: css`
-    justify-content: flex-start;
-    width: 100%;
+
+  linkButton: css`
     height: 46px;
-    padding: ${token.paddingSM}px ${token.paddingMD}px;
-    border-radius: 0;
-    margin-bottom: ${token.marginXS}px;
-  `,
-  linksBtnsList: css`
-    width: 100%;
-    padding-bottom: ${token.paddingLG}px;
-  `,
-  linkBtn: css`
     display: flex;
     justify-content: flex-start;
-    width: 100%;
-    font-size: ${token.fontSizeLG}px;
-    color: ${token.colorTextBase};
-    padding: ${token.marginXS}px ${token.paddingMD}px;
-
-    &:hover {
-      color: ${token.colorPrimary} !important;
-    }
-  `,
-  badge: css`
-    margin-left: auto;
   `,
 
   menuSection: css`
@@ -240,6 +147,6 @@ const useStyles = createStyles(({ css, token }) => ({
 
   divider: css`
     background-color: ${token.colorFillSecondary} !important;
-    margin: 0;
+    margin: ${token.marginSM}px 0;
   `,
 }));

@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import { Image as AntImage } from "antd";
-import type { ImageProps as AntImageProps } from "antd";
-import { createStyles } from "antd-style";
-import React, { ReactNode, useEffect, useMemo, useState } from "react";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import { Image as AntImage, Skeleton } from 'antd';
+import type { ImageProps as AntImageProps } from 'antd';
+import { createStyles } from 'antd-style';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
+import clsx from 'clsx';
 
 export interface UiImageProps
-  extends Omit<AntImageProps, "placeholder" | "fallback"> {
+  extends Omit<AntImageProps, 'placeholder' | 'fallback'> {
   /** Custom placeholder while image is loading */
   placeholder?: ReactNode;
   /** Fallback image when `src` fails */
@@ -27,7 +28,7 @@ export const Image: React.FC<UiImageProps> = ({
   className,
   style,
   preview = false,
-  loading = "lazy",
+  loading = 'lazy',
   placeholder,
   fallbackSrc = fallbackImageBase64,
   ratio = 1,
@@ -38,19 +39,27 @@ export const Image: React.FC<UiImageProps> = ({
   const { styles, cx } = useStyles({ ratio });
 
   const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
-  const [isLoaded, setIsLoaded] = useState<boolean>(true);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [minDelayElapsed, setMinDelayElapsed] = useState<boolean>(false);
 
   useEffect(() => {
     setResolvedSrc(src || fallbackSrc);
-    setIsLoaded(true);
+    setIsLoaded(false);
   }, [src, fallbackSrc]);
+
+  // Ensure skeleton is shown for at least 500ms for the current image src
+  useEffect(() => {
+    setMinDelayElapsed(false);
+    const timer = setTimeout(() => setMinDelayElapsed(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setIsLoaded(true);
     onLoad?.(e);
   };
 
-  const handleError: NonNullable<AntImageProps["onError"]> = (e) => {
+  const handleError: NonNullable<AntImageProps['onError']> = (e) => {
     if (resolvedSrc !== fallbackSrc) {
       setResolvedSrc(fallbackSrc);
       setIsLoaded(false);
@@ -62,31 +71,28 @@ export const Image: React.FC<UiImageProps> = ({
 
   const placeholderNode = useMemo(() => {
     if (placeholder) return placeholder;
-    return (
-      <AntImage
-        src={fallbackSrc}
-        alt={alt ?? "placeholder"}
-        className={styles.placeholderImg}
-        loading="eager"
-        decoding="async"
-        preview={false}
-      />
-    );
-  }, [placeholder, fallbackSrc, alt, styles.placeholderImg]);
+    return <Skeleton.Image active={false} className={styles.skeleton} />;
+  }, [placeholder, styles.skeleton]);
+
+  const showSkeleton = !isLoaded || !minDelayElapsed;
 
   return (
-    <div className={cx(styles.wrapper)} style={style}>
-      {!isLoaded && placeholderNode}
+    <div className={styles.wrapper} style={style}>
+      {showSkeleton && placeholderNode}
       <AntImage
         {...rest}
-        className={className}
+        className={styles.image}
         src={resolvedSrc}
         alt={alt}
         preview={preview}
         loading={loading}
+        width="100%"
+        height="100%"
         onLoad={handleLoad}
         onError={handleError}
-        style={{ display: isLoaded ? "block" : "none" }}
+        style={{
+          visibility: showSkeleton ? 'hidden' : 'visible',
+        }}
       />
     </div>
   );
@@ -95,19 +101,40 @@ export const Image: React.FC<UiImageProps> = ({
 const useStyles = createStyles(
   ({ css, token }, params: { ratio: number | string }) => {
     const aspectRatio =
-      typeof params.ratio === "number" ? `${params.ratio} / 1` : params.ratio;
+      typeof params.ratio === 'number' ? `${params.ratio} / 1` : params.ratio;
     return {
       wrapper: css`
         width: 100%;
+        position: relative;
         aspect-ratio: ${aspectRatio};
+      `,
+      image: css`
+        width: 100%;
+        height: 100%;
+        aspect-ratio: ${aspectRatio};
+        object-fit: cover;
+        display: block;
       `,
       placeholderImg: css`
         width: 100%;
+        height: 100%;
         aspect-ratio: ${aspectRatio};
         border-radius: ${token.borderRadius}px;
         object-fit: cover;
         display: block;
         background-color: ${token.colorFillSecondary};
+      `,
+      skeleton: css`
+        width: 100% !important;
+        height: 100% !important;
+        aspect-ratio: ${aspectRatio};
+        position: absolute;
+        inset: 0;
+
+        .ant-skeleton-image {
+          width: 100%;
+          height: 100%;
+        }
       `,
     };
   }

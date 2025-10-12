@@ -1,95 +1,150 @@
-"use client";
-import { Activity, useFlow } from "@src/modules/box-builder/Stack";
-import { Button, ButtonProps } from "antd";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { useAddItemToBoxBuilderCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
-import { useBoxBuilderStore } from "@src/store/appStore";
-import {
-  BoxBuilderQuantityInput,
-  BoxBuilderQuantityInputProps,
-} from "@src/modules/box-builder/components/ActionButton/QuantityInput";
+'use client';
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
+import { Button, ButtonProps } from 'antd';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { useAddItemToBoxBuilderCart } from '@src/modules/box-builder/hooks/useAddItemToCart';
+import { useBoxBuilderStore } from '@src/store/appStore';
+import { BoxBuilderQuantityInputProps } from '@src/modules/box-builder/components/ActionButton/QuantityInput';
+import { LayoutFooterButton } from '@src/modules/box-builder/components/Layout';
+import { Entity } from '@shopana/entity';
+import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
+import { useReplaceBoxBuilderCartItem } from '@src/modules/box-builder/hooks/useReplaceCartItem';
+import { useBoxBuilderProducts } from '@src/modules/box-builder/hooks/useBoxProducts';
 
 export interface BoxActionButtonProps {
-  productId: string;
-  isAvailable: boolean;
-  isFree: boolean;
-  isInCart: boolean;
-  quantity: number;
+  variant: Entity.ProductVariant;
   loading?: boolean;
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
-  appearance: "card" | "activity";
+  appearance: 'card' | 'activity';
 }
 
 export const BoxActionButton = ({
-  productId,
-  isAvailable,
-  isFree,
-  isInCart,
-  quantity,
-  loading,
+  variant,
+  loading: loadingProp,
   buttonProps,
-  quantityProps,
   appearance,
 }: BoxActionButtonProps) => {
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
   const { push } = useFlow();
 
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
+  const { replaceCartItem, loading: isReplacing } =
+    useReplaceBoxBuilderCartItem();
   const { addBoxProductId } = useBoxBuilderStore();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
+
+  const { boxes } = useBoxBuilderProducts();
+  const firstSelectedBox = boxes[0]; // Get the first selected box if exists
+
+  console.log('firstSelectedBox', firstSelectedBox, variant);
+
+  console.table([boxes?.[0]?.id]);
+
+  const cartLine = useIsInTheBoxBuilderCart(variant.id);
+  const isInCart = Boolean(cartLine);
+
+  const isAvailable = variant.stockStatus?.isAvailable === true;
+  const loading = loadingProp || isInternalLoading || isAdding || isReplacing;
 
   if (!isAvailable) {
     return (
       <Button disabled block {...buttonProps}>
-        {t("sold-out")}
+        {t('sold-out')}
       </Button>
     );
   }
 
-  if (isInCart && quantity > 0) {
-    return (
-      <BoxBuilderQuantityInput
-        productId={productId}
-        size={quantityProps?.size ?? "middle"}
-        color={quantityProps?.color ?? "primary"}
-        disabled={quantityProps?.disabled ?? isFree}
-        className={quantityProps?.className}
-        appearance={appearance}
-        label={t("footer.boxes-count", { count: quantity })}
-      />
-    );
-  }
+  const handleNext = () => {
+    push(Activity.Step2, {});
+  };
 
   const handleSelect = async () => {
-    if (appearance === "activity") {
-      push(Activity.Step2, {});
-      return;
-    }
-
     if (isInternalLoading) return;
     setIsInternalLoading(true);
+
     try {
-      await addToCart({
-        purchasableId: productId,
-        quantity: 1,
-      });
-      addBoxProductId(productId);
+      // If there's an existing selected box and it's not the current variant
+      if (firstSelectedBox) {
+        if (firstSelectedBox.purchasableId === variant.id) {
+          console.log('firstSelectedBox.purchasableId === variant.id');
+          return;
+        }
+
+        // Replace the existing box with the new one
+        await replaceCartItem({
+          quantity: 1,
+          lineId: firstSelectedBox.id,
+          purchasableId: variant.id,
+        });
+      } else {
+        // No box selected yet, add new one
+        await addToCart({
+          purchasableId: variant.id,
+          quantity: 1,
+        });
+      }
+
+      if (appearance === 'activity') {
+        push(Activity.Step2, {});
+      }
+      addBoxProductId(variant.id);
+      // If current variant is already selected, do nothing (will proceed to next step)
     } finally {
       setIsInternalLoading(false);
     }
   };
 
+  if (appearance === 'activity') {
+    if (isInCart) {
+      return (
+        <LayoutFooterButton
+          label={variant.title}
+          money={variant.price}
+          onClick={handleNext}
+          loading={loading}
+        />
+      );
+    }
+
+    return (
+      <Button
+        block
+        {...buttonProps}
+        color="primary"
+        variant="solid"
+        onClick={handleSelect}
+        loading={loading}
+      >
+        {t('select-design')}
+      </Button>
+    );
+  }
+
+  if (isInCart) {
+    return (
+      <Button
+        block
+        onClick={handleNext}
+        type="primary"
+        loading={loading}
+        {...buttonProps}
+      >
+        {t('next')}
+      </Button>
+    );
+  }
+
   return (
     <Button
       block
       onClick={handleSelect}
-      type={isInCart ? "primary" : "default"}
-      loading={loading || isInternalLoading || isAdding}
+      type="default"
+      loading={loading}
       {...buttonProps}
     >
-      {appearance === "activity" ? t("select-design") : t("select")}
+      {t('select')}
     </Button>
   );
 };

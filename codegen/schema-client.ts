@@ -305,7 +305,7 @@ export type ApiCheckoutCreateInput = {
   /** Source of sales for the checkout. */
   externalSource?: InputMaybe<Scalars['String']['input']>;
   /** Initial items to add to the new checkout. */
-  items: Array<ApiCheckoutLineInput>;
+  items: Array<ApiCheckoutLineAddInput>;
   /** Locale code for the checkout. ISO 639-1 (2 letters, e.g., "en", "ru") */
   localeCode: Scalars['String']['input'];
 };
@@ -603,6 +603,16 @@ export type ApiCheckoutLine = ApiNode & {
   title: Scalars['String']['output'];
 };
 
+/** Input data for a single item in the checkout. */
+export type ApiCheckoutLineAddInput = {
+  /** ID of the product to add or update. */
+  purchasableId: Scalars['ID']['input'];
+  /** ID of the purchasable snapshot to add or update. */
+  purchasableSnapshot?: InputMaybe<ApiPurchasableSnapshotInput>;
+  /** Quantity of the product in the checkout. */
+  quantity: Scalars['Int']['input'];
+};
+
 /** Detailed breakdown of costs for a checkout line item */
 export type ApiCheckoutLineCost = {
   __typename?: 'CheckoutLineCost';
@@ -620,14 +630,17 @@ export type ApiCheckoutLineCost = {
   unitPrice: ApiMoney;
 };
 
-/** Input data for a single item in the checkout. */
-export type ApiCheckoutLineInput = {
-  /** ID of the product to add or update. */
+/** Single replacement operation. */
+export type ApiCheckoutLineReplaceInput = {
+  /** Source line ID to replace (quantity will be moved from this line). */
+  lineId: Scalars['ID']['input'];
+  /** Target purchasable ID to receive the quantity. */
   purchasableId: Scalars['ID']['input'];
-  /** ID of the purchasable snapshot to add or update. */
-  purchasableSnapshot?: InputMaybe<ApiPurchasableSnapshotInput>;
-  /** Quantity of the product in the checkout. */
-  quantity: Scalars['Int']['input'];
+  /**
+   * Quantity to move; if not set, moves full quantity from source line.
+   * Must be greater than 0 if provided.
+   */
+  quantity?: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** Input data for updating the quantity of a specific checkout item. */
@@ -646,7 +659,7 @@ export type ApiCheckoutLinesAddInput = {
   /** ID of the checkout. */
   checkoutId: Scalars['ID']['input'];
   /** List of checkout items to add. */
-  lines: Array<ApiCheckoutLineInput>;
+  lines: Array<ApiCheckoutLineAddInput>;
 };
 
 /** Payload returned after adding an item to the checkout. */
@@ -690,12 +703,25 @@ export type ApiCheckoutLinesDeletePayload = {
   errors?: Maybe<Array<ApiCheckoutFieldError>>;
 };
 
-/** Input data for adding an item to an existing checkout line. */
-export type ApiCheckoutLinesLineAddInput = {
-  /** ID of the purchasable to add. */
-  purchasableId: Scalars['ID']['input'];
-  /** Quantity to add; must be greater than 0. */
-  quantity: Scalars['Int']['input'];
+/**
+ * Input data for replacing one or more checkout lines.
+ * Each replacement moves quantity from source line to target line.
+ * If quantity is not provided, full quantity from the source line will be moved.
+ */
+export type ApiCheckoutLinesReplaceInput = {
+  /** ID of the checkout. */
+  checkoutId: Scalars['ID']['input'];
+  /** List of replacement operations to apply. */
+  lines: Array<ApiCheckoutLineReplaceInput>;
+};
+
+/** Payload returned after replacing one checkout line with another. */
+export type ApiCheckoutLinesReplacePayload = {
+  __typename?: 'CheckoutLinesReplacePayload';
+  /** The updated checkout. */
+  checkout?: Maybe<ApiCheckout>;
+  /** List of field-specific or general errors. */
+  errors?: Maybe<Array<ApiCheckoutFieldError>>;
 };
 
 /** Input data for updating the quantity of a specific checkout item. */
@@ -750,6 +776,8 @@ export type ApiCheckoutMutation = {
   checkoutLinesClear: ApiCheckoutLinesClearPayload;
   /** Removes a single item from the checkout. */
   checkoutLinesDelete: ApiCheckoutLinesDeletePayload;
+  /** Replaces one checkout line with another by merging quantities and removing the source line. */
+  checkoutLinesReplace: ApiCheckoutLinesReplacePayload;
   /** Updates the quantity of a specific checkout item. */
   checkoutLinesUpdate: ApiCheckoutLinesUpdatePayload;
   /** Selects or changes the payment method for the checkout. */
@@ -833,6 +861,11 @@ export type ApiCheckoutMutationCheckoutLinesClearArgs = {
 
 export type ApiCheckoutMutationCheckoutLinesDeleteArgs = {
   input: ApiCheckoutLinesDeleteInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutLinesReplaceArgs = {
+  input: ApiCheckoutLinesReplaceInput;
 };
 
 
@@ -2815,6 +2848,8 @@ export enum ProductOptionDisplayType {
   ApparelSize = 'APPAREL_SIZE',
   /** Display options in a dropdown select. */
   Dropdown = 'DROPDOWN',
+  /** Display dropdown with variant cover image per value. */
+  DropdownVariantCover = 'DROPDOWN_VARIANT_COVER',
   /** Display options as radio buttons with text. */
   Radio = 'RADIO',
   /** Display a swatch (color or image). */
@@ -3052,12 +3087,13 @@ export type ApiQuery = {
   /** Performs a predictive (autocomplete) search and returns a limited list of entities. */
   predictiveSearch: ApiPredictiveSearchResult;
   /** Fetch a single product by its handle (slug). */
-  product?: Maybe<ApiProductVariant>;
-  productBySelectedOptions?: Maybe<ApiProductVariant>;
+  product?: Maybe<ApiProduct>;
   /** Performs a full search and returns Relay‐style connections for each entity. */
   search: ApiSearchResult;
   /** Retrieves the current authentication session. */
   session?: Maybe<ApiSession>;
+  variant?: Maybe<ApiProductVariant>;
+  variantBySelectedOptions?: Maybe<ApiProductVariant>;
 };
 
 
@@ -3132,13 +3168,18 @@ export type ApiQueryProductArgs = {
 };
 
 
-export type ApiQueryProductBySelectedOptionsArgs = {
-  selectedOptions: Array<Scalars['String']['input']>;
+export type ApiQuerySearchArgs = {
+  input: ApiSearchInput;
 };
 
 
-export type ApiQuerySearchArgs = {
-  input: ApiSearchInput;
+export type ApiQueryVariantArgs = {
+  handle: Scalars['String']['input'];
+};
+
+
+export type ApiQueryVariantBySelectedOptionsArgs = {
+  selectedOptions: Array<Scalars['String']['input']>;
 };
 
 export type ApiRatingBreakdown = {

@@ -7,7 +7,7 @@ export const useCategory = (handle: string, first: number = PAGINATION_PAGE_SIZE
   const data = useLazyLoadQuery<CategoryQueryType>(
     CategoryQuery,
     { handle, first },
-    { fetchPolicy: "store-or-network" }
+    { fetchPolicy: "store-and-network" }
   );
 
   const category = data?.category ?? null;

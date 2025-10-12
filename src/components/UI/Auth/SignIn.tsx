@@ -98,7 +98,8 @@ export const SignIn: React.FC<SignInProps> = ({
           <Checkbox>{t("remember-me")}</Checkbox>
           <Button
             className={styles.forgotPasswordBtn}
-            type="link"
+            variant="link"
+            color="primary"
             onClick={() => onSwitchForm("forgotPassword")}
           >
             {t("forgot-link")}
@@ -130,7 +131,8 @@ export const SignIn: React.FC<SignInProps> = ({
         <Text>{t("don't-account")}</Text>
         <Button
           className={styles.modalFooterBtn}
-          type="link"
+          variant="link"
+          color="primary"
           onClick={() => onSwitchForm("signUp")}
         >
           {t("sign-up")}

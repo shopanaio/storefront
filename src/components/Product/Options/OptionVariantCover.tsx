@@ -2,7 +2,6 @@
 
 import { Flex, Radio } from "antd";
 import { useState } from "react";
-import { OptionsDrawer } from "@src/components/Product/Options/OptionsDrawer";
 import { OptionDrawerLayout } from "./DrawerLayout";
 import { DrawerGrid } from "./DrawerGrid";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
@@ -66,38 +65,37 @@ export const VariantCoverOption = ({ title, values, onSelect }: Props) => {
         </OptionGrid>
       </Flex>
 
-      <OptionsDrawer open={open} onClose={handleCancel}>
-        <OptionDrawerLayout
-          title={title}
-          onClose={handleCancel}
-          footer={{
-            selectedLabel: draftValue?.title || "",
-            onConfirm: handleConfirm,
-          }}
-        >
-          <DrawerGrid>
-            {values.map((item) => (
-              <Thumbnail
-                key={item.id}
-                src={item.variant?.cover?.url || ""}
-                alt={item.title}
-                selected={
-                  draftValue ? draftValue.id === item.id : item.isActive
-                }
-                disabled={!item.variant}
-                onClick={() => setDraftValue(item)}
-                overlay={
-                  <Radio
-                    checked={
-                      draftValue ? draftValue.id === item.id : item.isActive
-                    }
-                  />
-                }
-              />
-            ))}
-          </DrawerGrid>
-        </OptionDrawerLayout>
-      </OptionsDrawer>
+      <OptionDrawerLayout
+        open={open}
+        title={title}
+        onClose={handleCancel}
+        footer={{
+          selectedLabel: draftValue?.title || "",
+          onConfirm: handleConfirm,
+        }}
+      >
+        <DrawerGrid>
+          {values.map((item) => (
+            <Thumbnail
+              key={item.id}
+              src={item.variant?.cover?.url || ""}
+              alt={item.title}
+              selected={
+                draftValue ? draftValue.id === item.id : item.isActive
+              }
+              disabled={!item.variant}
+              onClick={() => setDraftValue(item)}
+              overlay={
+                <Radio
+                  checked={
+                    draftValue ? draftValue.id === item.id : item.isActive
+                  }
+                />
+              }
+            />
+          ))}
+        </DrawerGrid>
+      </OptionDrawerLayout>
     </>
   );
 };

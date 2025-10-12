@@ -339,7 +339,8 @@
         "medium": "Medium",
         "large": "Large"
       },
-      "progress-description": "Our system will automatically select the box size for you!"
+      "progress-description": "Our system will automatically select the box size for you!",
+      "all-products": "View all"
     },
 
     "step3": {
@@ -365,7 +366,7 @@
     "footer": {
       "total-price": "Total price",
       "products-amount": "products on the amount of",
-      "products-count": "{count, plural, one {# product} other {# products}}",
+      "products-count": "{count, plural, one {# product in the box} other {# products in the box}}",
       "cards-count": "{count, plural, one {# card} other {# cards}}",
       "boxes-count": "{count, plural, one {# box} other {# boxes}}"
     },
@@ -415,7 +416,8 @@
     "cart-not-found": "Cart not found",
     "remove-failed": "Couldn't remove item",
     "update-qty-failed": "Couldn't update quantity",
-    "clear-failed": "Couldn't clear the cart"
+    "clear-failed": "Couldn't clear the cart",
+    "replace-failed": "Couldn't replace item"
   },
   "Home": {
     "view-all": "View all",

@@ -22,8 +22,7 @@ export default function BoxBuilderSwiperHeader({ title, handle }: Props) {
         {title}
       </Text>
       <Button
-        size="large"
-        icon={<TbChevronRight size={24} />}
+        icon={<TbChevronRight size={18} />}
         shape="circle"
         onClick={() => {
           push(Activity.Category, {

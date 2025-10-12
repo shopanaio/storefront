@@ -303,7 +303,8 @@
         "medium": "Середній",
         "large": "Великий"
       },
-      "progress-description": "Наша система автоматично підбере розмір боксу!"
+      "progress-description": "Наша система автоматично підбере розмір боксу!",
+      "all-products": "Дивитись всі"
     },
     "step3": {
       "title": "Оберіть листівку",
@@ -327,7 +328,7 @@
     "footer": {
       "total-price": "Загальна вартість",
       "products-amount": "товарів на сумму",
-      "products-count": "{count, plural, one {# товар} few {# товари} many {# товарів} other {# товарів}}",
+      "products-count": "{count, plural, one {# товар у боксі} few {# товари у боксі} many {# товарів у боксі} other {# товарів у боксі}}",
       "cards-count": "{count, plural, one {# листівка} few {# листівки} many {# листівок} other {# листівок}}",
       "boxes-count": "{count, plural, one {# бокс} few {# бокси} many {# боксів} other {# боксів}}"
     },
@@ -376,7 +377,8 @@
     "cart-not-found": "Кошик не знайдено",
     "remove-failed": "Не вдалося видалити",
     "update-qty-failed": "Не вдалося оновити кількість",
-    "clear-failed": "Не вдалося очистити кошик"
+    "clear-failed": "Не вдалося очистити кошик",
+    "replace-failed": "Не вдалося замінити товар"
   },
   "Home": {
     "view-all": "Показати всі",

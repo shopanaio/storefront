@@ -6,7 +6,6 @@ import { useState } from "react";
 import { OptionDrawerLayout } from "./DrawerLayout";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./Header";
-import { OptionsDrawer } from "@src/components/Product/Options/OptionsDrawer";
 import { OptionRadioButton } from "./OptionRadioButton";
 import { DrawerGrid } from "@src/components/Product/Options/DrawerGrid";
 import { OptionFlex, OptionGrid } from "@src/components/UI/OptionGrid";
@@ -68,32 +67,31 @@ export const RadioOption = ({ title, values, onSelect }: Props) => {
         ))}
       </OptionFlex>
 
-      <OptionsDrawer open={open} onClose={handleCancel}>
-        <OptionDrawerLayout
-          title={title}
-          onClose={handleCancel}
-          footer={{
-            selectedLabel: draftValue?.title || "",
-            onConfirm: handleConfirm,
-          }}
-        >
-          <DrawerGrid columns={1}>
-            {values.map((value, index) => (
-              <OptionRadioButton
-                key={index}
-                selected={draftValue?.id === value.id}
-                disabled={!value.variant}
-                showRadio
-                onClick={() => {
-                  setDraftValue(value);
-                }}
-              >
-                {value.title}
-              </OptionRadioButton>
-            ))}
-          </DrawerGrid>
-        </OptionDrawerLayout>
-      </OptionsDrawer>
+      <OptionDrawerLayout
+        open={open}
+        title={title}
+        onClose={handleCancel}
+        footer={{
+          selectedLabel: draftValue?.title || "",
+          onConfirm: handleConfirm,
+        }}
+      >
+        <DrawerGrid columns={1}>
+          {values.map((value, index) => (
+            <OptionRadioButton
+              key={index}
+              selected={draftValue?.id === value.id}
+              disabled={!value.variant}
+              showRadio
+              onClick={() => {
+                setDraftValue(value);
+              }}
+            >
+              {value.title}
+            </OptionRadioButton>
+          ))}
+        </DrawerGrid>
+      </OptionDrawerLayout>
     </>
   );
 };

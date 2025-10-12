@@ -23,6 +23,7 @@ import type { Entity } from "@shopana/entity";
 import { useMemo } from "react";
 import { IsomorphicSwiper } from "../MySwiper/IsomorphicSwiper";
 import type { SwiperOptions } from "swiper/types";
+import FallbackAwareImage from "@src/components/UI/Image";
 
 interface Prop {
   gallery: Entity.Media[];
@@ -80,10 +81,13 @@ export const ProductGallery = ({
             >
               {gallery.map((it, idx) => (
                 <SwiperSlide key={idx} className={styles.swiperSlide}>
-                  <img
+                  <FallbackAwareImage
                     src={it.url || ""}
                     className={styles.swiperImage}
                     alt=""
+                    ratio={"var(--gallery-aspect-ratio)"}
+                    preview={false}
+                    loading="lazy"
                   />
                 </SwiperSlide>
               ))}

@@ -74,11 +74,7 @@ const Layout: React.FC<LayoutProps> = ({
         },
 
         title: (
-          <Flex
-            align="center"
-            justify="center"
-            style={{ marginTop: -2, marginLeft: -4 }}
-          >
+          <Flex align="center" justify="center" style={{ marginTop: -2 }}>
             <Logo size={32} />
           </Flex>
         ),

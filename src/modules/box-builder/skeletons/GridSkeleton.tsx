@@ -1,9 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { createStyles } from "antd-style";
-import { Flex } from "antd";
-import { BoxBuilderTileSkeleton } from "./TileSkeleton";
+import React from 'react';
+import { createStyles } from 'antd-style';
+import { BoxBuilderTileSkeleton } from './TileSkeleton';
 
 export const BoxBuilderGridSkeleton: React.FC<{ count?: number }> = ({
   count = 8,
@@ -23,8 +22,9 @@ const useStyles = createStyles(({ token, css }) => ({
   grid: css`
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
     align-items: stretch;
-    gap: ${token.marginSM}px;
+    column-gap: ${token.marginSM}px;
+    row-gap: ${token.margin}px;
   `,
 }));

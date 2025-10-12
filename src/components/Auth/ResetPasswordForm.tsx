@@ -21,7 +21,7 @@ export const ResetPasswordForm: React.FC = () => {
   } = useForm<{ password: string; confirmPassword: string }>({
     defaultValues: { password: "", confirmPassword: "" },
   });
-  
+
 
   const onSubmit = (data: { password: string; confirmPassword: string }) => {
     if (data.password !== data.confirmPassword) {
@@ -108,11 +108,11 @@ export const ResetPasswordForm: React.FC = () => {
 
       <Text className={styles.privacyText}>
         {t("privacy-paragraph")}{" "}
-        <Button className={styles.privacyLink} size="small" type="link">
+        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
           {t("terms-link")}
         </Button>{" "}
         {t("and")}{" "}
-        <Button className={styles.privacyLink} size="small" type="link">
+        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
           {t("privacy-link")}
         </Button>
         .
