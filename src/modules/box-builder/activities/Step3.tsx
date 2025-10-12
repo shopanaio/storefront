@@ -14,14 +14,14 @@ import Layout, {
 import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 import { useCategory } from '@src/modules/box-builder/hooks/useCategory';
 import { BOX_BUILDER_CONFIG } from '@src/modules/box-builder/config/categories';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import type { Listing$key } from '@src/relay/queries/__generated__/Listing.graphql';
 import type { useListingProductCardFragment_product$key } from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
 import { ProductType } from '@src/modules/box-builder/components/ProductCard';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
 import { ProductCardRelay } from '@src/modules/box-builder/components/ProductCardRelay';
-import { BoxBuilderSectionSkeleton } from '@src/modules/box-builder/skeletons/SectionSkeleton';
 import { BoxBuilderGridSkeleton } from '@src/modules/box-builder/skeletons/GridSkeleton';
+import { useForceSkeleton } from '@src/modules/box-builder/hooks/useForceSkeleton';
 
 const ProductsSection: React.FC = () => {
   const { category } = useCategory(BOX_BUILDER_CONFIG.step3.category.handle);
@@ -50,11 +50,7 @@ const Step3: ActivityComponentType = () => {
   const { push } = useFlow();
   const { cards } = useBoxBuilderProgress();
 
-  const [forceSkeleton, setForceSkeleton] = useState(true);
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setForceSkeleton(false), 500);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  const forceSkeleton = useForceSkeleton();
 
   const handleFooterBtnClick = () => {
     push(Activity.Cart, {});

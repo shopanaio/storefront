@@ -7,15 +7,15 @@ import { useTranslations } from 'next-intl';
 import { StepHeader } from '@src/modules/box-builder/components/StepHeader';
 
 import CategorySection from '@src/modules/box-builder/components/CategorySwiper/CategorySection';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import Progress from '@src/modules/box-builder/components/Progress';
 import Layout from '@src/modules/box-builder/components/Layout';
 import { useBoxBuilderProgress } from '@src/modules/box-builder/hooks/useCartProgress';
 import { useBoxBuilderCategories } from '@src/modules/box-builder/hooks/useBoxBuilderCategories';
-import { Suspense, useEffect, useState } from 'react';
 import { BoxBuilderSwiperSectionSkeleton } from '@src/modules/box-builder/skeletons/SwiperSectionSkeleton';
 import ProductsOnlyFooterButton from '@src/modules/box-builder/components/ProductsOnlyFooterButton';
+import { useForceSkeleton } from '@src/modules/box-builder/hooks/useForceSkeleton';
 
 const CategoriesSections: React.FC = () => {
   const { categories } = useBoxBuilderCategories();
@@ -45,11 +45,7 @@ const Step2: ActivityComponentType = () => {
 
   const { progress } = useBoxBuilderProgress();
 
-  const [forceSkeleton, setForceSkeleton] = useState(true);
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setForceSkeleton(false), 500);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  const forceSkeleton = useForceSkeleton();
 
   const footerContent = <ProductsOnlyFooterButton />;
 

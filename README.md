@@ -96,3 +96,20 @@ What `yarn dev:<cms>` does:
 ```bash
 yarn storybook
 ```
+
+##
+
+TODO:
+
+- * Cart replacing item (replace box / show color on the button)
+
+- Show box in the cart as a separate item
+- product activity no app bar
+- image skeleton with pretty svg and size
+- Mobile Search only on the home plage
+- np api
+
+- * Cover Dropdown option
+
+- make decimal number - calculate sale and groups on fe
+- pg search

@@ -7,13 +7,11 @@ import type { BoxBuilderQuantityInputProps } from "./QuantityInput";
 import { useAddItemToBoxBuilderCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
 import { useBoxBuilderStore } from "@src/store/appStore";
 import { useState } from "react";
+import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
+import { Entity } from "@shopana/entity";
 
 export interface CardActionButtonProps {
-  productId: string;
-  isAvailable: boolean;
-  isFree: boolean;
-  isInCart: boolean;
-  quantity: number;
+  variant: Entity.ProductVariant;
   loading?: boolean;
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
@@ -21,11 +19,7 @@ export interface CardActionButtonProps {
 }
 
 export const CardActionButton = ({
-  productId,
-  isAvailable,
-  isFree,
-  isInCart,
-  quantity,
+  variant,
   loading,
   buttonProps,
   quantityProps,
@@ -35,6 +29,13 @@ export const CardActionButton = ({
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
   const { addCardProductId } = useBoxBuilderStore();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
+
+  const cartLine = useIsInTheBoxBuilderCart(variant.id);
+  const isInCart = Boolean(cartLine);
+  const { quantity = 0 } = cartLine || {};
+
+  const isAvailable = variant.stockStatus?.isAvailable === true;
+  const isFree = parseFloat(variant.price?.amount ?? '0') === 0;
 
   if (!isAvailable) {
     return (
@@ -47,7 +48,7 @@ export const CardActionButton = ({
   if (isInCart && quantity > 0) {
     return (
       <BoxBuilderQuantityInput
-        productId={productId}
+        productId={variant.id}
         size={quantityProps?.size ?? "middle"}
         color={quantityProps?.color ?? "primary"}
         disabled={quantityProps?.disabled ?? isFree}
@@ -62,10 +63,10 @@ export const CardActionButton = ({
     setIsInternalLoading(true);
     try {
       await addToCart({
-        purchasableId: productId,
+        purchasableId: variant.id,
         quantity: 1,
       });
-      addCardProductId(productId);
+      addCardProductId(variant.id);
     } finally {
       setIsInternalLoading(false);
     }

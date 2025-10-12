@@ -16,7 +16,7 @@ function CategorySectionInner({ handle }: CategorySectionProps) {
   const data = useLazyLoadQuery<CategoryQueryType>(
     CategoryQuery,
     { handle },
-    { fetchPolicy: "store-or-network" }
+    { fetchPolicy: "store-and-network" }
   );
 
   const category = data?.category ?? null;

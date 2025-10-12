@@ -3,7 +3,6 @@
 import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { ProductMain } from '@src/components/Product/ProductMain';
-import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
 import { ActivityComponentType } from '@stackflow/react';
 import Layout from '@src/modules/box-builder/components/Layout';
 import { useProduct } from '@src/modules/box-builder/hooks/useProduct';
@@ -38,16 +37,8 @@ const ProductSection: React.FC<{
     variantHandle: selectedVariantHandle,
   });
 
-  // Get first variant for price and stock status
-  const isAvailable = currentVariant?.stockStatus?.isAvailable === true;
-  const isFree = parseFloat(currentVariant?.price?.amount ?? '0') === 0;
-
-  const cartLine = useIsInTheBoxBuilderCart(currentVariant?.id ?? '');
-  const isInCart = Boolean(cartLine);
-  const { quantity = 0 } = cartLine || {};
-
   const renderFooter = () => {
-    if (!currentVariant?.id) {
+    if (!currentVariant) {
       return null;
     }
 
@@ -55,12 +46,8 @@ const ProductSection: React.FC<{
     if (productType === ProductType.Box) {
       button = (
         <BoxActionButton
-          productId={currentVariant.id}
-          isAvailable={Boolean(isAvailable)}
+          variant={currentVariant}
           appearance="activity"
-          isFree={Boolean(isFree)}
-          isInCart={isInCart}
-          quantity={quantity}
           buttonProps={{
             size: 'large',
             className: styles.cartButton,
@@ -71,11 +58,7 @@ const ProductSection: React.FC<{
     } else if (productType === ProductType.Card) {
       button = (
         <CardActionButton
-          productId={currentVariant.id}
-          isAvailable={Boolean(isAvailable)}
-          isFree={Boolean(isFree)}
-          isInCart={isInCart}
-          quantity={quantity}
+          variant={currentVariant}
           appearance="activity"
           buttonProps={{
             size: 'large',
@@ -91,11 +74,7 @@ const ProductSection: React.FC<{
     } else {
       button = (
         <ProductActionButton
-          productId={currentVariant.id}
-          isAvailable={Boolean(isAvailable)}
-          isFree={Boolean(isFree)}
-          isInCart={isInCart}
-          quantity={quantity}
+          variant={currentVariant}
           appearance="activity"
           buttonProps={{
             size: 'large',

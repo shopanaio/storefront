@@ -1,95 +1,116 @@
-"use client";
-import { Activity, useFlow } from "@src/modules/box-builder/Stack";
-import { Button, ButtonProps } from "antd";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { useAddItemToBoxBuilderCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
-import { useBoxBuilderStore } from "@src/store/appStore";
-import {
-  BoxBuilderQuantityInput,
-  BoxBuilderQuantityInputProps,
-} from "@src/modules/box-builder/components/ActionButton/QuantityInput";
+'use client';
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
+import { Button, ButtonProps } from 'antd';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { useAddItemToBoxBuilderCart } from '@src/modules/box-builder/hooks/useAddItemToCart';
+import { useBoxBuilderStore } from '@src/store/appStore';
+import { BoxBuilderQuantityInputProps } from '@src/modules/box-builder/components/ActionButton/QuantityInput';
+import { LayoutFooterButton } from '@src/modules/box-builder/components/Layout';
+import { Entity } from '@shopana/entity';
+import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
 
 export interface BoxActionButtonProps {
-  productId: string;
-  isAvailable: boolean;
-  isFree: boolean;
-  isInCart: boolean;
-  quantity: number;
+  variant: Entity.ProductVariant;
   loading?: boolean;
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
-  appearance: "card" | "activity";
+  appearance: 'card' | 'activity';
 }
 
 export const BoxActionButton = ({
-  productId,
-  isAvailable,
-  isFree,
-  isInCart,
-  quantity,
+  variant,
   loading,
   buttonProps,
-  quantityProps,
   appearance,
 }: BoxActionButtonProps) => {
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
   const { push } = useFlow();
 
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
   const { addBoxProductId } = useBoxBuilderStore();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
 
+  const cartLine = useIsInTheBoxBuilderCart(variant.id);
+  const isInCart = Boolean(cartLine);
+  const { quantity = 0 } = cartLine || {};
+
+  const isAvailable = variant.stockStatus?.isAvailable === true;
+
   if (!isAvailable) {
     return (
       <Button disabled block {...buttonProps}>
-        {t("sold-out")}
+        {t('sold-out')}
+      </Button>
+    );
+  }
+
+  const handleNext = () => {
+    push(Activity.Step2, {});
+  };
+
+  const handleSelect = async () => {
+    if (isInternalLoading) return;
+    setIsInternalLoading(true);
+    try {
+      await addToCart({
+        purchasableId: variant.id,
+        quantity: 1,
+      });
+      addBoxProductId(variant.id);
+    } finally {
+      setIsInternalLoading(false);
+    }
+  };
+
+  if (appearance === 'activity') {
+    if (isInCart && quantity > 0) {
+      return (
+        <LayoutFooterButton
+          label={variant.title}
+          money={variant.price}
+          onClick={handleNext}
+          loading={loading || isInternalLoading || isAdding}
+        />
+      );
+    }
+
+    return (
+      <Button
+        block
+        {...buttonProps}
+        color="primary"
+        variant="solid"
+        onClick={handleSelect}
+      >
+        {t('select-design')}
       </Button>
     );
   }
 
   if (isInCart && quantity > 0) {
     return (
-      <BoxBuilderQuantityInput
-        productId={productId}
-        size={quantityProps?.size ?? "middle"}
-        color={quantityProps?.color ?? "primary"}
-        disabled={quantityProps?.disabled ?? isFree}
-        className={quantityProps?.className}
-        appearance={appearance}
-        label={t("footer.boxes-count", { count: quantity })}
-      />
+      <Button
+        block
+        onClick={handleNext}
+        type="primary"
+        loading={loading || isInternalLoading || isAdding}
+        {...buttonProps}
+      >
+        {t('next')}
+      </Button>
     );
   }
-
-  const handleSelect = async () => {
-    if (appearance === "activity") {
-      push(Activity.Step2, {});
-      return;
-    }
-
-    if (isInternalLoading) return;
-    setIsInternalLoading(true);
-    try {
-      await addToCart({
-        purchasableId: productId,
-        quantity: 1,
-      });
-      addBoxProductId(productId);
-    } finally {
-      setIsInternalLoading(false);
-    }
-  };
 
   return (
     <Button
       block
       onClick={handleSelect}
-      type={isInCart ? "primary" : "default"}
+      type="default"
       loading={loading || isInternalLoading || isAdding}
       {...buttonProps}
     >
-      {appearance === "activity" ? t("select-design") : t("select")}
+      {t('select')}
     </Button>
   );
 };
