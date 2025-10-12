@@ -20,6 +20,7 @@ import ProductsOnlyFooterButton from '@src/modules/box-builder/components/Produc
 import { ProductCardRelay } from '@src/modules/box-builder/components/ProductCardRelay';
 import type { useListingProductCardFragment_product$key } from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
 import useToken from 'antd/es/theme/useToken';
+import { useForceSkeleton } from '../hooks/useForceSkeleton';
 
 const { Text } = Typography;
 
@@ -117,6 +118,7 @@ const Category: ActivityComponentType<CategoryParams> = ({
   useStyles();
   const { push } = useFlow();
   const { categoryHandle } = params;
+  const forceSkeleton = useForceSkeleton();
 
   const handleFooterBtnClick = () => {
     push(Activity.Step3, {});
@@ -128,9 +130,13 @@ const Category: ActivityComponentType<CategoryParams> = ({
         <ProductsOnlyFooterButton onClickOverride={handleFooterBtnClick} />
       }
     >
-      <Suspense fallback={<BoxBuilderCategorySectionSkeleton items={5} />}>
-        <CategoryProducts categoryHandle={categoryHandle} />
-      </Suspense>
+      {forceSkeleton ? (
+        <BoxBuilderCategorySectionSkeleton items={5} />
+      ) : (
+        <Suspense fallback={<BoxBuilderCategorySectionSkeleton items={5} />}>
+          <CategoryProducts categoryHandle={categoryHandle} />
+        </Suspense>
+      )}
     </Layout>
   );
 };

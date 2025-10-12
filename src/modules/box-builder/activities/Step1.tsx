@@ -77,7 +77,6 @@ const Step1: ActivityComponentType<Step1Params> = () => {
   const forceSkeleton = useForceSkeleton();
 
   const { boxes } = useBoxBuilderProgress();
-  console.log('selectedBoxId', boxes.products);
 
   const handleFooterBtnClick = () => {
     push(Activity.Step2, {});
@@ -87,7 +86,7 @@ const Step1: ActivityComponentType<Step1Params> = () => {
     boxes.quantity > 0 ? (
       <LayoutFooterButton
         onClick={handleFooterBtnClick}
-        label={t('footer.boxes-count', { count: boxes.quantity })}
+        label={boxes.products?.[0]?.purchasable?.title ?? ''}
         money={boxes.totalAmount}
       />
     ) : null;

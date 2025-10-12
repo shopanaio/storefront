@@ -633,9 +633,9 @@ export type ApiCheckoutLineCost = {
 /** Single replacement operation. */
 export type ApiCheckoutLineReplaceInput = {
   /** Source line ID to replace (quantity will be moved from this line). */
-  lineIdFrom: Scalars['ID']['input'];
-  /** Target line ID to receive the quantity. */
-  lineIdTo: Scalars['ID']['input'];
+  lineId: Scalars['ID']['input'];
+  /** Target purchasable ID to receive the quantity. */
+  purchasableId: Scalars['ID']['input'];
   /**
    * Quantity to move; if not set, moves full quantity from source line.
    * Must be greater than 0 if provided.

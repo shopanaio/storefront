@@ -795,10 +795,10 @@ type CheckoutLineCost {
 """Single replacement operation."""
 input CheckoutLineReplaceInput {
   """Source line ID to replace (quantity will be moved from this line)."""
-  lineIdFrom: ID!
+  lineId: ID!
 
-  """Target line ID to receive the quantity."""
-  lineIdTo: ID!
+  """Target purchasable ID to receive the quantity."""
+  purchasableId: ID!
 
   """
   Quantity to move; if not set, moves full quantity from source line.

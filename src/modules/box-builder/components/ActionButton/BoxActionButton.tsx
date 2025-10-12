@@ -9,6 +9,8 @@ import { BoxBuilderQuantityInputProps } from '@src/modules/box-builder/component
 import { LayoutFooterButton } from '@src/modules/box-builder/components/Layout';
 import { Entity } from '@shopana/entity';
 import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
+import { useReplaceBoxBuilderCartItem } from '@src/modules/box-builder/hooks/useReplaceCartItem';
+import { useBoxBuilderProducts } from '@src/modules/box-builder/hooks/useBoxProducts';
 
 export interface BoxActionButtonProps {
   variant: Entity.ProductVariant;
@@ -20,7 +22,7 @@ export interface BoxActionButtonProps {
 
 export const BoxActionButton = ({
   variant,
-  loading,
+  loading: loadingProp,
   buttonProps,
   appearance,
 }: BoxActionButtonProps) => {
@@ -28,14 +30,20 @@ export const BoxActionButton = ({
   const { push } = useFlow();
 
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
+  const { replaceCartItem, loading: isReplacing } =
+    useReplaceBoxBuilderCartItem();
   const { addBoxProductId } = useBoxBuilderStore();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
 
+  const { boxes } = useBoxBuilderProducts();
+  const existingBox = boxes[0]; // Get the first selected box if exists
+  const isCurrentVariantSelected = existingBox?.purchasableId === variant.id;
+
   const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
-  const { quantity = 0 } = cartLine || {};
 
   const isAvailable = variant.stockStatus?.isAvailable === true;
+  const loading = loadingProp || isInternalLoading || isAdding || isReplacing;
 
   if (!isAvailable) {
     return (
@@ -52,25 +60,42 @@ export const BoxActionButton = ({
   const handleSelect = async () => {
     if (isInternalLoading) return;
     setIsInternalLoading(true);
+
     try {
-      await addToCart({
-        purchasableId: variant.id,
-        quantity: 1,
-      });
+      // If there's an existing selected box and it's not the current variant
+      if (existingBox && !isCurrentVariantSelected) {
+        // Replace the existing box with the new one
+        await replaceCartItem({
+          quantity: 1,
+          lineId: existingBox.id,
+          purchasableId: variant.id,
+        });
+      } else if (!existingBox) {
+        // No box selected yet, add new one
+        await addToCart({
+          purchasableId: variant.id,
+          quantity: 1,
+        });
+      }
+
+      if (appearance === 'activity') {
+        push(Activity.Step2, {});
+      }
       addBoxProductId(variant.id);
+      // If current variant is already selected, do nothing (will proceed to next step)
     } finally {
       setIsInternalLoading(false);
     }
   };
 
   if (appearance === 'activity') {
-    if (isInCart && quantity > 0) {
+    if (isInCart) {
       return (
         <LayoutFooterButton
           label={variant.title}
           money={variant.price}
           onClick={handleNext}
-          loading={loading || isInternalLoading || isAdding}
+          loading={loading}
         />
       );
     }
@@ -82,19 +107,20 @@ export const BoxActionButton = ({
         color="primary"
         variant="solid"
         onClick={handleSelect}
+        loading={loading}
       >
         {t('select-design')}
       </Button>
     );
   }
 
-  if (isInCart && quantity > 0) {
+  if (isInCart) {
     return (
       <Button
         block
         onClick={handleNext}
         type="primary"
-        loading={loading || isInternalLoading || isAdding}
+        loading={loading}
         {...buttonProps}
       >
         {t('next')}
@@ -107,7 +133,7 @@ export const BoxActionButton = ({
       block
       onClick={handleSelect}
       type="default"
-      loading={loading || isInternalLoading || isAdding}
+      loading={loading}
       {...buttonProps}
     >
       {t('select')}

@@ -416,7 +416,8 @@
     "cart-not-found": "Cart not found",
     "remove-failed": "Couldn't remove item",
     "update-qty-failed": "Couldn't update quantity",
-    "clear-failed": "Couldn't clear the cart"
+    "clear-failed": "Couldn't clear the cart",
+    "replace-failed": "Couldn't replace item"
   },
   "Home": {
     "view-all": "View all",
