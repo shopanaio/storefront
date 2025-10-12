@@ -56,17 +56,17 @@ const Step3: ActivityComponentType = () => {
     push(Activity.Cart, {});
   };
 
-  let footerContent: React.ReactNode = null;
-  if (cards.quantity > 0) {
-    footerContent = (
+  const footerContent =
+    cards.quantity > 0 ? (
       <LayoutFooterButton
         onClick={handleFooterBtnClick}
-        label={t('footer.cards-count', { count: cards.quantity })}
+        label={
+          cards.products?.[0]?.purchasable?.title ??
+          t('footer.cards-count', { count: cards.quantity })
+        }
         money={cards.totalAmount}
       />
-    );
-  } else {
-    footerContent = (
+    ) : (
       <LayoutFooterButton
         onClick={handleFooterBtnClick}
         label={t('skip')}
@@ -74,7 +74,6 @@ const Step3: ActivityComponentType = () => {
         type="default"
       />
     );
-  }
 
   return (
     <Layout footer={footerContent}>

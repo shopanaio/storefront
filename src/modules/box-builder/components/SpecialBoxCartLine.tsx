@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import { Activity, useFlow } from "@src/modules/box-builder/Stack";
-import { ProductType } from "@src/modules/box-builder/components/ProductCard";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
-import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
-import type { Entity } from "@shopana/entity";
-import { Button } from "antd";
-import { useTranslations } from "next-intl";
-import { composeProductTitle } from "@src/utils/composeProductTitle";
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
+import { ProductType } from '@src/modules/box-builder/components/ProductCard';
+import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
+import { CartLine } from '@src/components/UI/ProductCards/CartLineItem/CartLine';
+import type { Entity } from '@shopana/entity';
+import { Button } from 'antd';
+import { useTranslations } from 'next-intl';
+import { composeProductTitle } from '@src/utils/composeProductTitle';
+import { TbChevronRight, TbEdit } from 'react-icons/tb';
 
 interface SpecialBoxCartLineProps {
   cartLine: Entity.CartLine;
@@ -22,20 +23,20 @@ export default function SpecialBoxCartLine({
   productType,
 }: SpecialBoxCartLineProps) {
   const { push } = useFlow();
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
 
   const imageUrl = cartLine.purchasable?.cover?.url || fallbackImageBase64;
   const title = composeProductTitle({
     productTitle: cartLine.purchasable?.product?.title,
     variantTitle: cartLine.purchasable?.title,
-    fallback: cartLine.purchasable?.title || "",
+    fallback: cartLine.purchasable?.title || '',
   });
   const price = cartLine.cost.unitPrice;
 
   const handleClick = () => {
     push(Activity.Product, {
-      productHandle: cartLine.purchasable?.handle,
-      variantHandle: cartLine.purchasable?.product?.handle,
+      productHandle: cartLine.purchasable?.product?.handle,
+      variantHandle: cartLine.purchasable?.handle,
       productType,
     });
   };
@@ -50,9 +51,12 @@ export default function SpecialBoxCartLine({
       variant="drawer"
       onClick={handleClick}
       rightNode={
-        <Button type="link" onClick={handleClick}>
-          {t("change")}
-        </Button>
+        <Button
+          color="primary"
+          variant="outlined"
+          icon={<TbChevronRight />}
+          onClick={handleClick}
+        />
       }
     />
   );
