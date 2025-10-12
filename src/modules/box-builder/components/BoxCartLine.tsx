@@ -6,6 +6,7 @@ import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
 import type { Entity } from "@shopana/entity";
 import { useBoxBuilderQuantityInputProps } from "@src/modules/box-builder/hooks/useBoxBuilderQuantityInputProps";
+import { composeProductTitle } from "@src/utils/composeProductTitle";
 
 interface BoxCartLineProps {
   cartLine: Entity.CartLine;
@@ -19,7 +20,11 @@ export default function BoxCartLine({ cartLine }: BoxCartLineProps) {
 
   const purchasableId = cartLine.purchasable?.id ?? "";
   const imageUrl = cartLine.purchasable?.cover?.url || fallbackImageBase64;
-  const title = cartLine.purchasable?.title || "";
+  const title = composeProductTitle({
+    productTitle: cartLine.purchasable?.product?.title,
+    variantTitle: cartLine.purchasable?.title,
+    fallback: cartLine.purchasable?.title || "",
+  });
   const price = cartLine.cost.unitPrice;
 
   const quantityInputProps = useBoxBuilderQuantityInputProps({

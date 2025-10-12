@@ -7,6 +7,7 @@ import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine"
 import type { Entity } from "@shopana/entity";
 import { Button } from "antd";
 import { useTranslations } from "next-intl";
+import { composeProductTitle } from "@src/utils/composeProductTitle";
 
 interface SpecialBoxCartLineProps {
   cartLine: Entity.CartLine;
@@ -24,7 +25,11 @@ export default function SpecialBoxCartLine({
   const t = useTranslations("BoxBuilder");
 
   const imageUrl = cartLine.purchasable?.cover?.url || fallbackImageBase64;
-  const title = cartLine.purchasable?.title || "";
+  const title = composeProductTitle({
+    productTitle: cartLine.purchasable?.product?.title,
+    variantTitle: cartLine.purchasable?.title,
+    fallback: cartLine.purchasable?.title || "",
+  });
   const price = cartLine.cost.unitPrice;
 
   const handleClick = () => {

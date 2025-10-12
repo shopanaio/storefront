@@ -2,7 +2,7 @@ import React from 'react';
 import { useFragment } from 'react-relay';
 import { ProductCard, ProductType } from './ProductCard';
 import type { Entity } from '@shopana/entity';
-import UseProductCardFragment from '@src/components/Listing/relay';
+import UseProductCardFragment from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
 import { useListingProductCardFragment_product$key } from '@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql';
 
 interface ProductCardRelayProps {
@@ -12,7 +12,6 @@ interface ProductCardRelayProps {
 }
 
 export const ProductCardRelay: React.FC<ProductCardRelayProps> = (props) => {
-  // @ts-expect-error don't fix this
   const productData = useFragment(UseProductCardFragment, props.product);
 
   return (

@@ -4,6 +4,7 @@ import {
   ProductCardProps,
   ProductCard,
 } from '@src/components/UI/ProductCards/ListingCard/ProductCard';
+import { composeProductTitle } from '@src/utils/composeProductTitle';
 import type { Entity } from '@shopana/entity';
 import { CurrencyCode } from '@codegen/schema-client';
 
@@ -83,7 +84,11 @@ export const ListingProductCardRelay = ({
   };
 
   const gallery = product.gallery?.edges?.map((edge) => edge.node.url) || [];
-  const productTitle = product.title || '';
+  const productTitle = composeProductTitle({
+    productTitle: (product as any)?.product?.title,
+    variantTitle: product.title,
+    fallback: product.title || '',
+  });
   const handle = (product as any)?.product?.handle || product.handle || '';
   const variantHandle =
     (product as any)?.variantHandle || product.handle || undefined;

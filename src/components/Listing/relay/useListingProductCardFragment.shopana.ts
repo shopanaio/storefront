@@ -68,23 +68,8 @@ const UseProductCardFragment = graphql`
 const useListingProductCardFragment = (
   ref: useListingProductCardFragment_product$key
 ) => {
-  const productData = useFragment(UseProductCardFragment, ref);
-
-  // Parent product title may not exist in old generated types until relay recompiled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const parentTitle: string | undefined = (productData as any)?.product?.title;
-  const concatenatedTitle = [parentTitle, productData.title]
-    .filter(Boolean)
-    .join(' ');
-
-  // Preserve original shape and override title and handle (use product handle in URLs)
-  return {
-    ...(productData as any),
-    title: concatenatedTitle,
-    // prefer product handle for URL building, keep variant handle separately
-    handle: (productData as any)?.product?.handle ?? productData.handle,
-    variantHandle: productData.handle,
-  } as typeof productData;
+  console.log('useListingProductCardFragment', ref);
+  return useFragment(UseProductCardFragment, ref);
 };
 
 export default useListingProductCardFragment;

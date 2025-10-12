@@ -4,6 +4,7 @@ import { createStyles } from "antd-style";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import type { Checkout } from "@src/modules/checkout/types/entity";
 import { Money } from "@src/components/UI/Price/Money";
+import { composeProductTitle } from "@src/utils/composeProductTitle";
 
 const { Text } = Typography;
 
@@ -14,7 +15,11 @@ interface Prop {
 export const SummaryItem = ({ line }: Prop) => {
   const { styles } = useStyles();
 
-  const title = line.purchasable?.title ?? line.title;
+  const title = composeProductTitle({
+    productTitle: line.purchasable?.product?.title,
+    variantTitle: line.purchasable?.title ?? line.title,
+    fallback: line.title,
+  });
   const imageUrl = line.imageSrc ?? line.purchasable?.cover?.url;
 
   return (

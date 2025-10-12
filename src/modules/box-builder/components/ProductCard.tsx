@@ -7,6 +7,7 @@ import type { Entity } from '@shopana/entity';
 import React from 'react';
 import { Price } from '@src/components/UI/Price/Price';
 import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
+import { composeProductTitle } from '@src/utils/composeProductTitle';
 import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
 import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
 import { useTranslations } from 'next-intl';
@@ -81,14 +82,22 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
         selected={isInCart}
         className={styles.cover}
         src={variant.cover?.url}
-        alt={variant.title}
+        alt={composeProductTitle({
+          productTitle: variant.product?.title,
+          variantTitle: variant.title,
+          fallback: variant.title,
+        })}
         onClick={handleClick}
         overlay={isInCart ? <Checkbox checked={isInCart} /> : undefined}
       />
       <Flex vertical className={styles.productInfo} gap={8}>
         {renderActionButton()}
         <ProductCardTitle rows={2} onClick={handleClick}>
-          {variant.title}
+          {composeProductTitle({
+            productTitle: variant.product?.title,
+            variantTitle: variant.title,
+            fallback: variant.title,
+          })}
         </ProductCardTitle>
         <Flex className={styles.priceBox}>
           <Flex className={styles.priceWrapper} vertical>

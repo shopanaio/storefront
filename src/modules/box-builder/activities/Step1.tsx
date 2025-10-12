@@ -49,6 +49,8 @@ const ProductsSection: React.FC = () => {
       ({ node }) => node as useListingProductCardFragment_product$key
     ) ?? [];
 
+  console.log(products, 'products');
+
   return (
     <BoxBuilderGrid>
       {products.map(
