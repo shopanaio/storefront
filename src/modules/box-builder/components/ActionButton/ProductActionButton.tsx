@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { Button, ButtonProps } from "antd";
-import { useTranslations } from "next-intl";
-import { BoxBuilderQuantityInput } from "./QuantityInput";
-import type { BoxBuilderQuantityInputProps } from "./QuantityInput";
-import { useAddItemToBoxBuilderCart } from "@src/modules/box-builder/hooks/useAddItemToCart";
-import { useState } from "react";
-import { useIsInTheBoxBuilderCart } from "@src/modules/box-builder/hooks/useIsInTheCart";
-import { Entity } from "@shopana/entity";
+import { Button, ButtonProps } from 'antd';
+import { useTranslations } from 'next-intl';
+import { BoxBuilderQuantityInput } from './QuantityInput';
+import type { BoxBuilderQuantityInputProps } from './QuantityInput';
+import { useAddItemToBoxBuilderCart } from '@src/modules/box-builder/hooks/useAddItemToCart';
+import { useState } from 'react';
+import { useIsInTheBoxBuilderCart } from '@src/modules/box-builder/hooks/useIsInTheCart';
+import { Entity } from '@shopana/entity';
 
 export interface ProductActionButtonProps {
   variant: Entity.ProductVariant;
   loading?: boolean;
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
-  appearance: "card" | "activity";
+  appearance: 'card' | 'activity';
 }
 
 export const ProductActionButton = ({
@@ -24,7 +24,7 @@ export const ProductActionButton = ({
   appearance,
   quantityProps,
 }: ProductActionButtonProps) => {
-  const t = useTranslations("BoxBuilder");
+  const t = useTranslations('BoxBuilder');
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
   const [isInternalLoading, setIsInternalLoading] = useState(false);
 
@@ -38,7 +38,7 @@ export const ProductActionButton = ({
   if (!isAvailable) {
     return (
       <Button disabled block {...buttonProps}>
-        {t("sold-out")}
+        {t('sold-out')}
       </Button>
     );
   }
@@ -47,8 +47,8 @@ export const ProductActionButton = ({
     return (
       <BoxBuilderQuantityInput
         productId={variant.id}
-        size={quantityProps?.size ?? "middle"}
-        color={quantityProps?.color ?? "primary"}
+        size={quantityProps?.size ?? 'middle'}
+        color={quantityProps?.color ?? 'primary'}
         disabled={quantityProps?.disabled ?? isFree}
         className={quantityProps?.className}
         appearance={appearance}
@@ -76,7 +76,7 @@ export const ProductActionButton = ({
       loading={loading || isInternalLoading || isAdding}
       {...buttonProps}
     >
-      {appearance === "activity" ? t("add-to-box") : t("add")}
+      {appearance === 'activity' ? t('add-to-box') : t('add')}
     </Button>
   );
 };

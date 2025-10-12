@@ -18,6 +18,7 @@ export interface BoxActionButtonProps {
   buttonProps?: ButtonProps;
   quantityProps?: Partial<BoxBuilderQuantityInputProps>;
   appearance: 'card' | 'activity';
+  onNavigate: () => void;
 }
 
 export const BoxActionButton = ({
@@ -25,9 +26,9 @@ export const BoxActionButton = ({
   loading: loadingProp,
   buttonProps,
   appearance,
+  onNavigate,
 }: BoxActionButtonProps) => {
   const t = useTranslations('BoxBuilder');
-  const { push } = useFlow();
 
   const { addToCart, loading: isAdding } = useAddItemToBoxBuilderCart();
   const { replaceCartItem, loading: isReplacing } =
@@ -37,10 +38,6 @@ export const BoxActionButton = ({
 
   const { boxes } = useBoxBuilderProducts();
   const firstSelectedBox = boxes[0]; // Get the first selected box if exists
-
-  console.log('firstSelectedBox', firstSelectedBox, variant);
-
-  console.table([boxes?.[0]?.id]);
 
   const cartLine = useIsInTheBoxBuilderCart(variant.id);
   const isInCart = Boolean(cartLine);
@@ -55,10 +52,6 @@ export const BoxActionButton = ({
       </Button>
     );
   }
-
-  const handleNext = () => {
-    push(Activity.Step2, {});
-  };
 
   const handleSelect = async () => {
     if (isInternalLoading) return;
@@ -87,7 +80,7 @@ export const BoxActionButton = ({
       }
 
       if (appearance === 'activity') {
-        push(Activity.Step2, {});
+        onNavigate();
       }
       addBoxProductId(variant.id);
       // If current variant is already selected, do nothing (will proceed to next step)
@@ -102,7 +95,7 @@ export const BoxActionButton = ({
         <LayoutFooterButton
           label={variant.title}
           money={variant.price}
-          onClick={handleNext}
+          onClick={onNavigate}
           loading={loading}
         />
       );
@@ -126,7 +119,7 @@ export const BoxActionButton = ({
     return (
       <Button
         block
-        onClick={handleNext}
+        onClick={onNavigate}
         type="primary"
         loading={loading}
         {...buttonProps}

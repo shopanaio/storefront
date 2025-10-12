@@ -1,6 +1,6 @@
 'use client';
 
-import { Flex, Typography } from 'antd';
+import { Flex, Typography, Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { StepHeader } from '@src/modules/box-builder/components/StepHeader';
@@ -19,6 +19,7 @@ import BoxCartLine from '@src/modules/box-builder/components/BoxCartLine';
 import SpecialBoxCartLine from '@src/modules/box-builder/components/SpecialBoxCartLine';
 import { useBoxBuilderProducts } from '@src/modules/box-builder/hooks/useBoxProducts';
 import { ProductType } from '@src/modules/box-builder/components/ProductCard';
+import { Badge } from '@src/components/UI/Badge';
 
 const { Text, Title } = Typography;
 
@@ -33,29 +34,38 @@ const Cart: ActivityComponentType<{}> = () => {
 };
 
 const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
-  const {
-    progress,
-    cards: cardsInfo,
-    products: productsInfo,
-  } = useBoxBuilderProgress();
-  const { push } = useFlow();
+  const { progress, products: productsInfo } = useBoxBuilderProgress();
+  const { push, replace } = useFlow();
   const { boxes, cards, products } = useBoxBuilderProducts();
 
   const { styles } = useStyles();
   const t = useTranslations('BoxBuilder');
 
+  const hasNoProducts = products.length === 0;
+
   return (
     <Layout
       showCart={false}
       footer={
-        <LayoutFooterButton
-          onClick={() => {
-            push(Activity.Checkout, {});
-          }}
-          label={t('checkout')}
-          money={cart?.cost?.subtotalAmount}
-          size="large"
-        />
+        hasNoProducts ? (
+          <LayoutFooterButton
+            onClick={() => {
+              replace(Activity.Step2, {}, [Activity.Step1]);
+            }}
+            label={t('choose-products-empty')}
+            size="large"
+            divider={null}
+          />
+        ) : (
+          <LayoutFooterButton
+            onClick={() => {
+              push(Activity.Checkout, {});
+            }}
+            label={t('checkout')}
+            money={cart?.cost?.subtotalAmount}
+            size="large"
+          />
+        )
       }
     >
       <Flex vertical className={styles.container} gap={20}>
@@ -65,8 +75,6 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
           description={t('step-check.description')}
         />
         <Progress percent={progress} description={true} />
-
-        {/* Selected design (boxes) */}
         <div>
           <Flex>
             <Title className={styles.title} level={5}>
@@ -84,10 +92,15 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
               ))}
             </Flex>
           ) : (
-            <Text type="secondary">{t('not-selected-design')}</Text>
+            <Button
+              variant="link"
+              color="primary"
+              onClick={() => push(Activity.Step1, {})}
+              style={{ padding: 0, marginTop: 12 }}
+            >
+              {t('select-design')}
+            </Button>
           )}
-
-          {/* Cards go right under selected design, without header */}
           {cards.length ? (
             <Flex vertical gap={8} style={{ marginTop: 8 }}>
               {cards.map((cartLine) => (
@@ -99,30 +112,57 @@ const CartContent: React.FC<{ cart: Entity.Cart }> = ({ cart }) => {
               ))}
             </Flex>
           ) : (
-            <Text type="secondary">{t('not-selected-card')}</Text>
+            <Button
+              variant="link"
+              color="primary"
+              onClick={() =>
+                push(Activity.Product, {
+                  productHandle: 'greeting-card',
+                  productType: ProductType.Card,
+                  opener: Activity.Cart,
+                })
+              }
+              style={{ padding: 0, marginTop: 12 }}
+            >
+              {t('select-card')}
+            </Button>
           )}
         </div>
-
-        {/* Cards section removed as standalone */}
-
-        {/* Products in the box */}
-        <div>
-          <Flex>
+        {!hasNoProducts && (
+          <div>
             <Title className={styles.title} level={5}>
-              <span>{t('step-check.products-in-box')}</span>
-              <Text>
-                {t('footer.products-short-count', {
-                  count: productsInfo.quantity || 0,
-                })}
-              </Text>
+              <span>
+                {t('step-check.products-in-box')}
+                <Badge
+                  count={productsInfo.quantity || 0}
+                  offset={[4, -4]}
+                  variant="primary"
+                />
+              </span>
             </Title>
+            <Flex vertical gap={8}>
+              {products.map((cartLine) => (
+                <BoxCartLine key={cartLine.id} cartLine={cartLine} />
+              ))}
+            </Flex>
+          </div>
+        )}
+        {hasNoProducts && (
+          <Flex
+            className={styles.emptyProductsContainer}
+            vertical
+            align="center"
+            justify="center"
+            gap={4}
+          >
+            <Text strong className={styles.emptyTitle}>
+              {t('step-check.empty.title')}
+            </Text>
+            <Text className={styles.emptyDescription}>
+              {t('step-check.no-products')}
+            </Text>
           </Flex>
-          <Flex vertical gap={8}>
-            {products.map((cartLine) => (
-              <BoxCartLine key={cartLine.id} cartLine={cartLine} />
-            ))}
-          </Flex>
-        </div>
+        )}
       </Flex>
     </Layout>
   );
@@ -185,7 +225,6 @@ const useStyles = createStyles(({ token, css }) => {
       min-height: max-content;
       height: 100%;
     `,
-
     productImageWrapper: css`
       width: 64px;
       height: 64px;
@@ -212,6 +251,14 @@ const useStyles = createStyles(({ token, css }) => {
       left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
+    `,
+    emptyProductsContainer: css`
+      flex: 1;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100px;
     `,
     title: css`
       font-size: ${token.fontSizeLG}px;

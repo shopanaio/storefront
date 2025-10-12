@@ -357,6 +357,7 @@
         "products-in-box": "Products in the box",
       "custom-box": "Custom box",
       "description": "Check if everything is perfect before sending.",
+      "no-products": "You haven't selected any products yet",
       "empty": {
         "title": "Your box is empty",
         "description": "Choose a box and fill it with care"

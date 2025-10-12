@@ -6,9 +6,8 @@ import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64
 import { CartLine } from '@src/components/UI/ProductCards/CartLineItem/CartLine';
 import type { Entity } from '@shopana/entity';
 import { Button } from 'antd';
-import { useTranslations } from 'next-intl';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
-import { TbChevronRight, TbEdit } from 'react-icons/tb';
+import { TbChevronRight } from 'react-icons/tb';
 
 interface SpecialBoxCartLineProps {
   cartLine: Entity.CartLine;
@@ -23,7 +22,6 @@ export default function SpecialBoxCartLine({
   productType,
 }: SpecialBoxCartLineProps) {
   const { push } = useFlow();
-  const t = useTranslations('BoxBuilder');
 
   const imageUrl = cartLine.purchasable?.cover?.url || fallbackImageBase64;
   const title = composeProductTitle({
@@ -38,6 +36,7 @@ export default function SpecialBoxCartLine({
       productHandle: cartLine.purchasable?.product?.handle,
       variantHandle: cartLine.purchasable?.handle,
       productType,
+      opener: Activity.Cart,
     });
   };
 
@@ -52,8 +51,9 @@ export default function SpecialBoxCartLine({
       onClick={handleClick}
       rightNode={
         <Button
+          shape="circle"
           color="primary"
-          variant="outlined"
+          variant="solid"
           icon={<TbChevronRight />}
           onClick={handleClick}
         />

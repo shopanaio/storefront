@@ -277,6 +277,7 @@
     "choose-box": "Обери коробку",
     "choose-box-description": "Виберить колір упаковки та стрічки.",
     "choose-products": "Обери товари",
+    "choose-products-empty": "Обрати товари",
     "choose-products-description": "Додайте до кошика все що сподобалося.",
     "choose-card": "Обери листівку",
     "choose-card-description": "Обери дизайн листівки.",
@@ -319,8 +320,9 @@
       "products-in-box": "Товари у боксі",
       "custom-box": "Індивідуальний бокс",
       "description": "Перевір, чи все ідеально, перш ніж надіслати.",
+      "no-products": "Ви ще не обрали жодного товару",
       "empty": {
-        "title": "Ваш бокс порожній",
+        "title": "Ваш бокс ще порожній",
         "description": "Оберіть коробку та наповніть її турботою"
       }
     },

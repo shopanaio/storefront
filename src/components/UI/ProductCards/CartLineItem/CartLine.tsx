@@ -1,24 +1,24 @@
-import React from "react";
-import { Image, Flex, Typography, Button } from "antd";
-import { createStyles, cx } from "antd-style";
-import { TbTrash } from "react-icons/tb";
-import { mq } from "@src/components/Theme/breakpoints";
-import { Price } from "@src/components/UI/Price/Price";
-import { SaleBadge } from "@src/components/UI/Badges/Sale";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import React from 'react';
+import { Image, Flex, Typography, Button } from 'antd';
+import { createStyles, cx } from 'antd-style';
+import { TbTrash } from 'react-icons/tb';
+import { mq } from '@src/components/Theme/breakpoints';
+import { Price } from '@src/components/UI/Price/Price';
+import { SaleBadge } from '@src/components/UI/Badges/Sale';
+import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
 import {
   QuantityInput,
   QuantityInputProps,
-} from "@src/components/Product/QuantityInput";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import { ProductCardTitle } from "@src/components/UI/ProductCards/Title/Title";
-import type { Entity } from "@shopana/entity";
-import { Money } from "@src/components/UI/Price/Money";
+} from '@src/components/Product/QuantityInput';
+import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
+import type { Entity } from '@shopana/entity';
+import { Money } from '@src/components/UI/Price/Money';
 
 const { Text } = Typography;
 
 // Constants for default values
-const DEFAULT_VARIANT = "drawer" as const;
+const DEFAULT_VARIANT = 'drawer' as const;
 
 export interface CartLineProps {
   // Main product data
@@ -34,7 +34,7 @@ export interface CartLineProps {
   totalDiscount?: Entity.Money | null;
 
   // Settings display
-  variant?: "drawer" | "page";
+  variant?: 'drawer' | 'page';
 
   // Click handler
   onClick?: () => void;
@@ -69,13 +69,13 @@ export const CartLine = ({
   const computedTotalPrice: Entity.Money = totalPrice || {
     amount: (
       parseFloat(unitPrice.amount) *
-      (typeof quantity === "number" ? quantity : parseInt(quantity.toString()))
+      (typeof quantity === 'number' ? quantity : parseInt(quantity.toString()))
     ).toString(),
     currencyCode: unitPrice.currencyCode,
   };
 
   // Drawer layout: match box-builder's simple line design
-  if (variant === "drawer") {
+  if (variant === 'drawer') {
     return (
       <Flex key={id} justify="space-between" align="center">
         <Flex align="center" gap={8} onClick={onClick}>
@@ -103,8 +103,8 @@ export const CartLine = ({
   }
 
   return (
-    <Flex key={id} className={cx(styles.productCard, "page")} onClick={onClick}>
-      <div className={cx(styles.imageWrapper, "page")}>
+    <Flex key={id} className={cx(styles.productCard, 'page')} onClick={onClick}>
+      <div className={cx(styles.imageWrapper, 'page')}>
         <Image
           src={imageUrl}
           alt={title}
@@ -112,12 +112,12 @@ export const CartLine = ({
           preview={false}
         />
       </div>
-      <Flex className={cx(styles.nameAndFeatures, "page")} vertical>
+      <Flex className={cx(styles.nameAndFeatures, 'page')} vertical>
         <Text className={styles.productName}>{title}</Text>
       </Flex>
       {onRemove && (
         <Button
-          className={cx(styles.deleteBtn, "page")}
+          className={cx(styles.deleteBtn, 'page')}
           type="text"
           size="large"
           icon={<TbTrash size={18} />}
@@ -133,18 +133,18 @@ export const CartLine = ({
           color="default"
           className={cx(
             styles.qntWrapper,
-            "page",
+            'page',
             quantityInputProps.className
           )}
         />
       )}
 
       <Flex
-        className={cx(styles.productPriceBox, "page")}
+        className={cx(styles.productPriceBox, 'page')}
         vertical
         align="flex-end"
       >
-        <Text className={cx(styles.productNewPrice, "page")} strong>
+        <Text className={cx(styles.productNewPrice, 'page')} strong>
           <Price money={computedTotalPrice} />
         </Text>
       </Flex>
@@ -158,7 +158,7 @@ const useStyles = createStyles(({ token, css }) => ({
     height: 64px;
   `,
   simpleProductInfo: css`
-    max-width: 170px;
+    max-width: 200px;
   `,
   simpleQuantityInput: css`
     max-width: 100px;

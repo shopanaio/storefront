@@ -50,11 +50,27 @@ export const ProductCard = ({ product: variant, productType }: Props) => {
 
   const renderActionButton = () => {
     if (productType === ProductType.Box) {
-      return <BoxActionButton variant={variant} appearance="card" />;
+      return (
+        <BoxActionButton
+          variant={variant}
+          appearance="card"
+          onNavigate={() => {
+            push(Activity.Step2, {});
+          }}
+        />
+      );
     }
 
     if (productType === ProductType.Card) {
-      return <CardActionButton variant={variant} appearance="card" />;
+      return (
+        <CardActionButton
+          variant={variant}
+          appearance="card"
+          onNavigate={() => {
+            push(Activity.Cart, {});
+          }}
+        />
+      );
     }
 
     return <ProductActionButton variant={variant} appearance="card" />;

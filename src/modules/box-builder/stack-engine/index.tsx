@@ -64,8 +64,13 @@ export interface StackflowOptions {
 export interface StackflowActions {
   /** Push a new activity on top of the stack */
   push: (name: string, params: any) => void;
-  /** Replace the top activity with another one */
-  replace: (name: string, params: any) => void;
+  /**
+   * Replace the top activity with another one.
+   * @param name - Activity name to push
+   * @param params - Activity params
+   * @param keepActivityKeys - Optional array of activity names to keep in the stack below the new activity
+   */
+  replace: (name: string, params: any, keepActivityKeys?: string[]) => void;
   /** Pop the top activity from the stack */
   pop: () => void;
 }
@@ -280,7 +285,7 @@ export function stackflow({
         ]);
       });
     },
-    replace(name, params) {
+    replace(name, params, keepActivityKeys) {
       if (!controllerRef) return;
       const currentLength = controllerRef.getState().length;
       // If replacing the very first (root) screen, animate like a forward push
@@ -290,9 +295,17 @@ export function stackflow({
           if (prev.length === 0) {
             return [{ key: generateKey(), name, params }];
           }
-          const next = prev.slice(0, prev.length - 1);
-          next.push({ key: generateKey(), name, params });
-          return next;
+
+          let base: StackEntry[];
+          if (keepActivityKeys && keepActivityKeys.length > 0) {
+            // Keep only activities with names in the keepActivityKeys array
+            base = prev.filter((entry) => keepActivityKeys.includes(entry.name));
+          } else {
+            // Default behavior: keep all activities except the top one
+            base = prev.slice(0, prev.length - 1);
+          }
+
+          return [...base, { key: generateKey(), name, params }];
         });
       });
     },

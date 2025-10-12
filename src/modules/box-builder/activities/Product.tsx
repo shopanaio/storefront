@@ -1,6 +1,6 @@
 'use client';
 
-import { Flex, Typography } from 'antd';
+import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { ProductMain } from '@src/components/Product/ProductMain';
 import { ActivityComponentType } from '@stackflow/react';
@@ -14,20 +14,24 @@ import { CardActionButton } from '@src/modules/box-builder/components/ActionButt
 import { SkeletonProduct } from '@src/components/Product/Skeleton';
 import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
 import type { Entity } from '@shopana/entity';
+import { Activity, useFlow } from '@src/modules/box-builder/Stack';
 
 type ProductParams = {
   productHandle: string;
   variantHandle?: string;
   productType: ProductType;
+  opener?: Activity;
 };
 
-const ProductSection: React.FC<{
-  productHandle: string;
-  variantHandle?: string;
-  productType: ProductType;
-}> = ({ productHandle, variantHandle, productType }) => {
+const ProductSection: React.FC<ProductParams> = ({
+  productHandle,
+  variantHandle,
+  productType,
+  opener,
+}) => {
   const { styles } = useStyles();
   const { product } = useProduct(productHandle);
+  const { pop, push } = useFlow();
 
   const [selectedVariantHandle, setSelectedVariantHandle] = useState<string>(
     variantHandle ?? '' // Populate first variant handle if not provided
@@ -53,6 +57,13 @@ const ProductSection: React.FC<{
         <BoxActionButton
           variant={currentVariant}
           appearance="activity"
+          onNavigate={() => {
+            if (opener === Activity.Cart) {
+              pop();
+              return;
+            }
+            push(Activity.Step2, {});
+          }}
           buttonProps={{
             size: 'large',
             className: styles.cartButton,
@@ -63,6 +74,13 @@ const ProductSection: React.FC<{
     } else if (productType === ProductType.Card) {
       button = (
         <CardActionButton
+          onNavigate={() => {
+            if (opener === Activity.Cart) {
+              pop();
+              return;
+            }
+            push(Activity.Cart, {});
+          }}
           variant={currentVariant}
           appearance="activity"
           buttonProps={{
@@ -138,6 +156,7 @@ const Product: ActivityComponentType<ProductParams> = ({
           productHandle={params.productHandle}
           variantHandle={params.variantHandle}
           productType={params.productType}
+          opener={params.opener}
         />
       </Suspense>
     </Layout>
