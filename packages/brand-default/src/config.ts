@@ -36,7 +36,7 @@ export const brandConfig: BrandConfig = {
     logo: DefaultLogo,
   },
   theme: {
-    // Uses default Ant Design primary color
+    colorPrimary: '#00b576',
   },
   ui: {
     drawerEngine: 'antd',
