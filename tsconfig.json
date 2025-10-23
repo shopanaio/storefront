@@ -17,25 +17,25 @@
       "@shopana/brand": ["./packages/brand-default/src"],
       "@shopana/brand/*": ["./packages/brand-default/src/*"],
       "@stackflow/react/future": [
-        "./src/modules/box-builder/stack-engine/index.tsx"
+        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
       "@stackflow/react": [
-        "./src/modules/box-builder/stack-engine/index.tsx"
+        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
       "@stackflow/config": [
-        "./src/modules/box-builder/stack-engine/index.tsx"
+        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
       "@stackflow/plugin-basic-ui": [
-        "./src/modules/box-builder/stack-engine/index.tsx"
+        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
       "@stackflow/plugin-basic-ui/*": [
-        "./src/modules/box-builder/stack-engine/*"
+        "./src/modules/storefront-box-builder-module/stack-engine/*"
       ],
       "@stackflow/plugin-history-sync": [
-        "./src/modules/box-builder/stack-engine/index.tsx"
+        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
       "@stackflow/plugin-renderer-basic": [
-        "./src/modules/box-builder/stack-engine/index.tsx"
+        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ]
     },
     "target": "esnext",
