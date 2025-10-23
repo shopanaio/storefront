@@ -52,4 +52,8 @@ export const useStyles = createStyles(({ css, token }) => ({
   contentLeft: css`
     left: ${LEFT_DRAWER_OFFSET}px;
   `,
+  contentFullscreen: css`
+    inset: 0 !important;
+    border-radius: 0 !important;
+  `,
 }));

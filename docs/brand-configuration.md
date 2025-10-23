@@ -9,19 +9,12 @@ The storefront supports multiple brand configurations through a package-based ap
 ## Available Brands
 
 - **default** - Shopana default branding (default)
-- **piknik** - Piknik (Box Builder) branding with green color scheme
 
 ## Switching Brands
 
 Set the `BRAND` environment variable when building or running the application:
 
 ```bash
-# Build with Piknik branding
-BRAND=piknik yarn build
-
-# Run development server with Piknik branding
-BRAND=piknik yarn dev
-
 # Build with default branding (or omit BRAND variable)
 BRAND=default yarn build
 yarn build
@@ -43,14 +36,6 @@ packages/
 │   │   └── index.ts
 │   ├── package.json
 │   └── tsconfig.json
-└── brand-piknik/
-    ├── src/
-    │   ├── components/
-    │   │   └── Logo.tsx
-    │   ├── config.ts
-    │   └── index.ts
-    ├── package.json
-    └── tsconfig.json
 ```
 
 ### 2. Dynamic Aliasing
@@ -217,7 +202,7 @@ yarn tsc --watch
 Restart the development server after changing the `BRAND` environment variable:
 
 ```bash
-BRAND=piknik yarn dev
+BRAND=default yarn dev
 ```
 
 ### Logo not displaying

@@ -69,6 +69,7 @@ export const DrawerBase = ({
 
   // Automatically determine placement and sizes for mobile devices
   const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
+  const isHorizontal = ['left', 'right'].includes(finalPlacement);
 
   const renderHeader = () => {
     if (header) return header;
@@ -118,6 +119,7 @@ export const DrawerBase = ({
       direction={finalPlacement}
       minHeight={minHeight}
       engine={engine}
+      isFullscreen={isMobile && isHorizontal}
     >
       {content}
     </RootDrawer>

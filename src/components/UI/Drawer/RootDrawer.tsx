@@ -26,6 +26,8 @@ export interface RootDrawerProps {
   children: ReactNode;
   /** Drawer engine */
   engine?: DrawerEngine;
+  /** Whether the drawer should be fullscreen on mobile */
+  isFullscreen?: boolean;
 }
 
 /**
@@ -42,7 +44,8 @@ export const RootDrawer = ({
   scaleBackground,
   direction,
   children,
-  engine = 'antd',
+  engine = 'vaul',
+  isFullscreen,
   ...drawerProps
 }: RootDrawerProps) => {
   if (engine === 'overlay') {
@@ -58,23 +61,13 @@ export const RootDrawer = ({
       <Drawer
         open={open}
         onClose={onClose}
-        //
         placement={direction}
-        // height={finalHeight}
         closable={false}
         styles={{ wrapper: { overscrollBehavior: 'none' } }}
         drawerRender={(node) =>
           React.cloneElement(node as ReactElement, {}, children)
         }
         {...drawerProps}
-
-
-        // onExited={onExited}
-        // // minHeight={minHeight}
-        // dismissible={!!dismissible}
-        // scaleBackground={scaleBackground}
-        // direction={direction}
-        // fullscreen={fullscreen}
       >
         {children}
       </Drawer>
@@ -90,6 +83,8 @@ export const RootDrawer = ({
       dismissible={!!dismissible}
       scaleBackground={scaleBackground}
       direction={direction}
+      isFullscreen={isFullscreen}
+      {...drawerProps}
     >
       {children}
     </VaulDrawer>
