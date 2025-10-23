@@ -25,7 +25,7 @@ export const DefaultLogo = ({
   theme = 'light',
   size,
 }: DefaultLogoProps) => {
-  const noTextWidth = size * 1.15;
+  const noTextWidth = size;
   const width = noText ? noTextWidth : getLogoWidth(size);
   const height = size;
 
@@ -72,7 +72,7 @@ export const DefaultLogo = ({
       data-testid={noText ? 'short-logo' : 'full-logo'}
       width={width}
       height={height}
-      viewBox={`0 0 ${noText ? Y * 1.15 : X} ${Y}`}
+      viewBox={`0 0 ${noText ? Y : X} ${Y}`}
       fill="none"
     >
       <path
