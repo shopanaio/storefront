@@ -40,6 +40,7 @@ export interface DrawerBaseProps
   };
   /** Minimum height for the drawer content */
   minHeight?: string | number;
+  fullscreen?: boolean;
 }
 
 /**
@@ -59,6 +60,7 @@ export const DrawerBase = ({
   sectionStyles,
   placement,
   minHeight,
+  fullscreen,
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
   const [, token] = useToken();
@@ -66,7 +68,7 @@ export const DrawerBase = ({
   const showCloseButton = showCloseButtonProp || !isMobile;
 
   // Automatically determine placement and sizes for mobile devices
-  const finalPlacement = isMobile ? 'bottom' : placement || 'right';
+  const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
 
   const renderHeader = () => {
     if (header) return header;
@@ -115,6 +117,7 @@ export const DrawerBase = ({
       onClose={onClose}
       direction={finalPlacement}
       minHeight={minHeight}
+      fullscreen={fullscreen}
     >
       {content}
     </RootDrawer>
@@ -151,7 +154,7 @@ const useStyles = createStyles(({ css, token }) => ({
     flex: 1;
     padding: ${token.paddingXS}px ${token.padding}px 84px;
     height: 100%;
-    max-height: 80vh;
+    max-height: 80dvh;
 
     ${mq.lg} {
       max-height: unset;

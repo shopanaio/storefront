@@ -22,6 +22,8 @@ export interface RootDrawerProps {
   direction?: 'top' | 'bottom' | 'left' | 'right';
   /** Children as a fallback content when component is not provided */
   children: ReactNode;
+  /** Whether the drawer should be fullscreen without margins and border radius */
+  fullscreen?: boolean;
 }
 
 /**
@@ -33,21 +35,23 @@ export const RootDrawer = ({
   open,
   onClose,
   onExited,
-  minHeight,
+  // minHeight,
   dismissible = true,
   scaleBackground,
   direction,
   children,
+  fullscreen,
 }: RootDrawerProps) => {
   return (
     <VaulDrawer
       open={open}
       onClose={onClose}
       onExited={onExited}
-      minHeight={minHeight}
+      // minHeight={minHeight}
       dismissible={!!dismissible}
       scaleBackground={scaleBackground}
       direction={direction}
+      fullscreen={fullscreen}
     >
       {children}
     </VaulDrawer>

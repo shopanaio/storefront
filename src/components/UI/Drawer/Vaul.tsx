@@ -10,6 +10,7 @@ import { Portal, Root, Content, Overlay } from 'vaul';
 import { useStyles } from './styles';
 import AnimateHeight, { Height } from 'react-animate-height';
 import clsx from 'clsx';
+import useViewportMetrics from '@src/components/UI/hooks/useViewportMetrics';
 
 export interface VaulProps {
   /** Whether the drawer is open */
@@ -26,6 +27,8 @@ export interface VaulProps {
   scaleBackground?: boolean;
   /** Direction of the drawer */
   direction?: 'top' | 'bottom' | 'left' | 'right';
+  /** Whether the drawer should be fullscreen without margins and border radius */
+  fullscreen?: boolean;
 }
 
 export const Vaul = ({
@@ -35,10 +38,20 @@ export const Vaul = ({
   dismissible,
   children,
   direction = 'bottom',
+  fullscreen,
 }: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
   const { styles } = useStyles();
-  const isHorizontal = direction === 'right' || direction === 'left';
-  const isVertical = !isHorizontal;
+  const isHorizontal =
+    !fullscreen && (direction === 'right' || direction === 'left');
+  const isVertical = !isHorizontal && !fullscreen;
+
+  const {
+    baseline,
+    viewport,
+    delta,
+    screen: { height: sh },
+    window: { innerHeight: wh },
+  } = useViewportMetrics({ thresholdPx: 1 });
 
   const [height, setHeight] = useState<Height>(0);
   const [contentDiv, setContentDiv] = useState<HTMLDivElement | null>(null);
@@ -73,7 +86,7 @@ export const Vaul = ({
         setHeight(0);
       }
     }
-  }, [open, isVertical]);
+  }, [open, isVertical, onExited]);
 
   const renderContent = () => {
     if (isHorizontal) {
@@ -82,7 +95,9 @@ export const Vaul = ({
 
     return (
       <>
-        <div className={styles.handle} />
+        {!fullscreen && <div className={styles.handle} />}
+        eff: {baseline.effectiveHeight} | sh: {sh} | wh: {wh} | vh: | vh{' '}
+        {viewport.height} | delta: {delta}
         <div className={clsx(styles.container)}>{children}</div>
       </>
     );
@@ -90,8 +105,8 @@ export const Vaul = ({
 
   return (
     <Root
-      autoFocus
       open={open}
+      autoFocus
       onClose={onClose}
       dismissible={dismissible}
       repositionInputs
@@ -105,8 +120,9 @@ export const Vaul = ({
             [styles.content]: true,
             [styles.contentHorizontal]: isHorizontal,
             [styles.contentVertical]: isVertical,
-            [styles.contentLeft]: direction === 'left',
-            [styles.contentRight]: direction === 'right',
+            [styles.contentLeft]: isHorizontal && direction === 'left',
+            [styles.contentRight]: isHorizontal && direction === 'right',
+            [styles.contentFullscreen]: fullscreen,
           })}
           style={
             isHorizontal

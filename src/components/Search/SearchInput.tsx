@@ -25,6 +25,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
         className={styles.mobileSearch}
         icon={<TbSearch className={styles.searchIcon} size={18} />}
         onClick={onClick}
+        size="large"
         block
       >
         {t('search')}

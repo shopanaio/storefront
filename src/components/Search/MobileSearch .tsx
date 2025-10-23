@@ -60,6 +60,8 @@ export const MobileSearch: React.FC = () => {
       title={t('search')}
       width="var(--components-drawer-width)"
       footer={footer}
+      placement="left"
+      fullscreen
     >
       <div data-testid="mobile-search-drawer">
         <Input
@@ -71,10 +73,7 @@ export const MobileSearch: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <SearchResults
-          searchTerm={debouncedTerm}
-          initialLoading={initialLoading}
-        />
+        <SearchResults searchTerm={debouncedTerm} />
       </div>
     </DrawerBase>
   );
