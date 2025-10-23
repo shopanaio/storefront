@@ -1,7 +1,6 @@
 'use client';
 
 import { getCurrentEnvironment } from '@src/relay/Environment';
-import Script from 'next/script';
 import { RelayEnvironmentProvider } from 'react-relay';
 
 export default function RootLayout({
@@ -25,12 +24,12 @@ export default function RootLayout({
         />
         {/* <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" /> */}
       </head>
-      <body>
-        <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
-          {children}
-        </RelayEnvironmentProvider>
-        <div data-vaul-drawer-wrapper></div>
-      </body>
+      <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
+        <body>
+          <div id="app">{children}</div>
+          <div id="sheet-wrapper"></div>
+        </body>
+      </RelayEnvironmentProvider>
     </html>
   );
 }

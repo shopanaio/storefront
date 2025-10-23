@@ -26,8 +26,6 @@ export interface VaulProps {
   scaleBackground?: boolean;
   /** Direction of the drawer */
   direction?: 'top' | 'bottom' | 'left' | 'right';
-  /** Whether the drawer should be fullscreen without margins and border radius */
-  fullscreen?: boolean;
 }
 
 export const Vaul = ({
@@ -37,12 +35,10 @@ export const Vaul = ({
   dismissible,
   children,
   direction = 'bottom',
-  fullscreen,
 }: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
   const { styles } = useStyles();
-  const isHorizontal =
-    !fullscreen && (direction === 'right' || direction === 'left');
-  const isVertical = !isHorizontal && !fullscreen;
+  const isHorizontal = direction === 'right' || direction === 'left';
+  const isVertical = !isHorizontal;
 
   const [height, setHeight] = useState<Height>(0);
   const [contentDiv, setContentDiv] = useState<HTMLDivElement | null>(null);
@@ -86,7 +82,7 @@ export const Vaul = ({
 
     return (
       <>
-        {!fullscreen && <div className={styles.handle} />}
+        <div className={styles.handle} />
         <div className={clsx(styles.container)}>{children}</div>
       </>
     );
@@ -97,7 +93,6 @@ export const Vaul = ({
       open={open}
       onClose={onClose}
       dismissible={dismissible}
-      repositionInputs
       direction={direction}
       onAnimationEnd={handleTeardown}
       disablePreventScroll={false}
@@ -110,7 +105,6 @@ export const Vaul = ({
             [styles.contentVertical]: isVertical,
             [styles.contentLeft]: isHorizontal && direction === 'left',
             [styles.contentRight]: isHorizontal && direction === 'right',
-            [styles.contentFullscreen]: fullscreen,
           })}
           style={
             isHorizontal

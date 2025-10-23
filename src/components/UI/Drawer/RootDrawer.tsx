@@ -1,9 +1,11 @@
 'use client';
 
-import { ReactNode } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import VaulDrawer from '@src/components/UI/Drawer/Vaul';
+import { Drawer } from 'antd';
+import { Overlay } from '@src/components/UI/Overlay/Overlay';
 
-export type DrawerEngine = 'antd' | 'vaul';
+export type DrawerEngine = 'antd' | 'vaul' | 'overlay';
 
 export interface RootDrawerProps {
   /** Whether the drawer is open */
@@ -22,8 +24,8 @@ export interface RootDrawerProps {
   direction?: 'top' | 'bottom' | 'left' | 'right';
   /** Children as a fallback content when component is not provided */
   children: ReactNode;
-  /** Whether the drawer should be fullscreen without margins and border radius */
-  fullscreen?: boolean;
+  /** Drawer engine */
+  engine?: DrawerEngine;
 }
 
 /**
@@ -40,8 +42,45 @@ export const RootDrawer = ({
   scaleBackground,
   direction,
   children,
-  fullscreen,
+  engine = 'antd',
+  ...drawerProps
 }: RootDrawerProps) => {
+  if (engine === 'overlay') {
+    return (
+      <Overlay open={open} onClose={onClose}>
+        {children}
+      </Overlay>
+    );
+  }
+
+  if (engine === 'antd') {
+    return (
+      <Drawer
+        open={open}
+        onClose={onClose}
+        //
+        placement={direction}
+        // height={finalHeight}
+        closable={false}
+        styles={{ wrapper: { overscrollBehavior: 'none' } }}
+        drawerRender={(node) =>
+          React.cloneElement(node as ReactElement, {}, children)
+        }
+        {...drawerProps}
+
+
+        // onExited={onExited}
+        // // minHeight={minHeight}
+        // dismissible={!!dismissible}
+        // scaleBackground={scaleBackground}
+        // direction={direction}
+        // fullscreen={fullscreen}
+      >
+        {children}
+      </Drawer>
+    );
+  }
+
   return (
     <VaulDrawer
       open={open}
@@ -51,7 +90,6 @@ export const RootDrawer = ({
       dismissible={!!dismissible}
       scaleBackground={scaleBackground}
       direction={direction}
-      fullscreen={fullscreen}
     >
       {children}
     </VaulDrawer>

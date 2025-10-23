@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { ReactNode } from 'react';
 import { RxCross2 } from 'react-icons/rx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
-import RootDrawer from '@src/components/UI/Drawer/RootDrawer';
+import RootDrawer, { DrawerEngine } from '@src/components/UI/Drawer/RootDrawer';
 import clsx from 'clsx';
 import useToken from 'antd/es/theme/useToken';
 import { mq } from '@src/components/Theme/breakpoints';
@@ -40,7 +40,7 @@ export interface DrawerBaseProps
   };
   /** Minimum height for the drawer content */
   minHeight?: string | number;
-  fullscreen?: boolean;
+  engine?: DrawerEngine;
 }
 
 /**
@@ -60,7 +60,7 @@ export const DrawerBase = ({
   sectionStyles,
   placement,
   minHeight,
-  fullscreen,
+  engine,
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
   const [, token] = useToken();
@@ -117,7 +117,7 @@ export const DrawerBase = ({
       onClose={onClose}
       direction={finalPlacement}
       minHeight={minHeight}
-      fullscreen={fullscreen}
+      engine={engine}
     >
       {content}
     </RootDrawer>
