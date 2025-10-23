@@ -10,7 +10,6 @@ import { Portal, Root, Content, Overlay } from 'vaul';
 import { useStyles } from './styles';
 import AnimateHeight, { Height } from 'react-animate-height';
 import clsx from 'clsx';
-import useViewportMetrics from '@src/components/UI/hooks/useViewportMetrics';
 
 export interface VaulProps {
   /** Whether the drawer is open */
@@ -44,14 +43,6 @@ export const Vaul = ({
   const isHorizontal =
     !fullscreen && (direction === 'right' || direction === 'left');
   const isVertical = !isHorizontal && !fullscreen;
-
-  const {
-    baseline,
-    viewport,
-    delta,
-    screen: { height: sh },
-    window: { innerHeight: wh },
-  } = useViewportMetrics({ thresholdPx: 1 });
 
   const [height, setHeight] = useState<Height>(0);
   const [contentDiv, setContentDiv] = useState<HTMLDivElement | null>(null);
@@ -96,8 +87,6 @@ export const Vaul = ({
     return (
       <>
         {!fullscreen && <div className={styles.handle} />}
-        eff: {baseline.effectiveHeight} | sh: {sh} | wh: {wh} | vh: | vh{' '}
-        {viewport.height} | delta: {delta}
         <div className={clsx(styles.container)}>{children}</div>
       </>
     );
@@ -106,7 +95,6 @@ export const Vaul = ({
   return (
     <Root
       open={open}
-      autoFocus
       onClose={onClose}
       dismissible={dismissible}
       repositionInputs
