@@ -1,11 +1,14 @@
 export {
   moduleRegistry,
   registerModule,
+  registerWidget,
   type ModuleSlug,
   type AsyncModuleLoader,
   type RegisteredModuleRecord,
   type DynamicModulePageProps,
   type ModuleExport,
+  type WidgetSourceLoader,
+  type WidgetSourceLoaderContext,
 } from "./registry";
 
 /**

@@ -115,21 +115,18 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       >
         <Flex vertical>
           {!searchValue && (
-            <>
-              <Divider style={{ marginBottom: 12, marginTop: 0 }} />
-              <Flex gap={8} wrap>
-                {popularCities.map((item) => (
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    key={item.Ref}
-                    onClick={() => handleSelectCity(item)}
-                  >
-                    {item?.MainDescription}
-                  </Button>
-                ))}
-              </Flex>
-            </>
+            <Flex gap={8} wrap>
+              {popularCities.map((item) => (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  key={item.Ref}
+                  onClick={() => handleSelectCity(item)}
+                >
+                  {item?.MainDescription}
+                </Button>
+              ))}
+            </Flex>
           )}
           <Flex vertical gap={8}>
             {searchValue &&
