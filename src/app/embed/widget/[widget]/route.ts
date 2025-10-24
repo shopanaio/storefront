@@ -29,6 +29,7 @@ export async function GET(
 ) {
   try {
     const url = new URL(request.url);
+
     const slug = context.params.widget;
     if (!/^[a-z0-9][a-z0-9-_]{0,63}$/i.test(slug)) {
       return withHeaders(
