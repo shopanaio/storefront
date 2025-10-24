@@ -3,9 +3,18 @@
 import React from "react";
 import { Home } from "@src/components/Home/Home";
 import useHomeClientQuery from "@src/hooks/home/useHomeClientQuery";
+import Script from "next/script";
 
 export const HomeClient = () => {
   const sections = useHomeClientQuery();
 
-  return <Home sections={sections} />;
+  return (
+    <>
+      <Script src="/embed/widgets/box-builder.js" strategy="afterInteractive" />
+      <div style={{ padding: "12px", border: "1px dashed #999", marginBottom: "16px" }}>
+        <button className="shopana-open-box-builder">Open Box Builder Widget</button>
+      </div>
+      <Home sections={sections} />
+    </>
+  );
 };

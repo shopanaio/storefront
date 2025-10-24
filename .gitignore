@@ -58,3 +58,5 @@ src/relay/queries/__generated__
 
 .env
 tsconfig.tsbuildinfo
+
+public/embed/
