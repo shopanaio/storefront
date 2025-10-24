@@ -67,7 +67,6 @@ export const ListingTitleAndBtn = ({
         onSortChange={handleSortChange}
         productsCount={productsCount || 0}
       />
-
       {hasActiveFilters && (
         <div>
           <FilterTags

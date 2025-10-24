@@ -14,6 +14,7 @@ import { TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { formatPhoneNumberIntl } from 'react-phone-number-input';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 export type ContactForm = {
   firstName: string;
@@ -46,6 +47,7 @@ export const ContactSelect = ({
   onSubmit,
 }: ContactSelectProps) => {
   const { styles } = useStyles();
+  const isMobile = useIsMobile();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
   const [open, setOpen] = useState(false);
@@ -112,11 +114,14 @@ export const ContactSelect = ({
       </Button>
 
       <DrawerBase
+        engine={isMobile ? 'overlay' : 'vaul'}
         open={open}
         onClose={() => setOpen(false)}
-        title={title}
-        footer={
-          <StickyButton onClick={onDrawerSubmit}>{t('save')}</StickyButton>
+        header={
+          <DrawerBase.Header gap={8} justify="space-between" align="center">
+            <DrawerBase.Title>{title}</DrawerBase.Title>
+            <DrawerBase.CloseButton />
+          </DrawerBase.Header>
         }
       >
         <FormProvider {...methods}>
@@ -186,6 +191,7 @@ export const ContactSelect = ({
               }}
               error={errors.phone?.message}
             />
+            <StickyButton onClick={onDrawerSubmit}>{t('save')}</StickyButton>
           </Flex>
         </FormProvider>
       </DrawerBase>

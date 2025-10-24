@@ -10,6 +10,7 @@ import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import type { Street } from '@checkout/vendors/novaposta/types';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 interface Prop {
   street: Street | null;
@@ -22,6 +23,7 @@ const np = new NovaPoshta(apiKey);
 
 export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const { styles } = useStyles();
+  const isMobile = useIsMobile();
   const t = useTranslations('Checkout');
 
   const [isStreetModalVisible, setIsStreetModalVisible] = useState(false);
@@ -92,17 +94,20 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
       <DrawerBase
         open={isStreetModalVisible}
         onClose={() => setIsStreetModalVisible(false)}
-        title={t('select-street')}
-      >
-        <Flex vertical>
-          <Flex className={styles.stickyBar}>
+        engine={isMobile ? 'overlay' : 'vaul'}
+        header={
+          <DrawerBase.Header gap={8} justify="space-between" align="center">
             <FloatingLabelInput
-              label={t('street')}
+              label={t('select-street')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               disabled={!cityRef}
             />
-          </Flex>
+            <DrawerBase.CloseButton />
+          </DrawerBase.Header>
+        }
+      >
+        <Flex vertical>
           <Flex vertical gap={8}>
             {streets.map((item) => (
               <StreetModalItem
@@ -118,17 +123,10 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   );
 };
 
-const useStyles = createStyles(({ css, token }) => {
+const useStyles = createStyles(({ css }) => {
   return {
     divider: css`
       margin: 0;
-    `,
-    stickyBar: css`
-      position: sticky;
-      top: var(--components-drawer-header-height, 64px);
-      z-index: 1;
-      background: ${token.colorBgBase};
-      padding-bottom: ${token.paddingSM}px;
     `,
   };
 });

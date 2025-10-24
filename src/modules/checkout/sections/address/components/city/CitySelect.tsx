@@ -12,6 +12,7 @@ import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
 import { popularCities } from '@src/utils/novaposhta-temp-api/cities';
 import clsx from 'clsx';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 export type { City } from '@src/modules/checkout/vendors/novaposta/types';
 
@@ -24,6 +25,7 @@ const np = new NovaPoshta('');
 
 export const CitySelect = ({ city, onSubmit }: Prop) => {
   const { styles } = useStyles();
+  const isMobile = useIsMobile();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
 
@@ -99,15 +101,19 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
         title={t('choose-your-city')}
-      >
-        <Flex vertical>
-          <Flex className={styles.stickyBar}>
+        engine={isMobile ? 'overlay' : 'vaul'}
+        header={
+          <DrawerBase.Header gap={8} justify="space-between" align="center">
             <FloatingLabelInput
               label={t('city')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
             />
-          </Flex>
+            <DrawerBase.CloseButton />
+          </DrawerBase.Header>
+        }
+      >
+        <Flex vertical>
           {!searchValue && (
             <>
               <Divider style={{ marginBottom: 12, marginTop: 0 }} />
@@ -150,13 +156,6 @@ const useStyles = createStyles(({ css, token }) => {
         ${token.paddingSM}px;
       min-height: 64px;
       height: 100%;
-    `,
-    stickyBar: css`
-      position: sticky;
-      top: var(--components-drawer-header-height, 64px);
-      z-index: 1;
-      background: ${token.colorBgBase};
-      padding-bottom: ${token.paddingSM}px;
     `,
     invert: css`
       flex-direction: column-reverse;

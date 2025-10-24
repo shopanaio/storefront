@@ -68,7 +68,6 @@ const UseProductCardFragment = graphql`
 const useListingProductCardFragment = (
   ref: useListingProductCardFragment_product$key
 ) => {
-  console.log('useListingProductCardFragment', ref);
   return useFragment(UseProductCardFragment, ref);
 };
 

@@ -1,15 +1,14 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { FilterDrawer } from "./Filters/FilterDrawer";
-import { ListingSortMenu } from "./ListingSortMenu";
-import { SortOption } from "../Product/Rate/SortPopover";
-import { ApiFilter, ListingSort } from "@codegen/schema-client";
-import { useTranslations } from "next-intl";
-import { mq } from "@src/components/Theme/breakpoints";
-import { useFiltersStore } from "@src/store/appStore";
+import React from 'react';
+import { Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { FilterDrawer } from './Filters/FilterDrawer';
+import { ListingSortMenu } from './ListingSortMenu';
+import { SortOption } from '../Product/Rate/SortPopover';
+import { ApiFilter, ListingSort } from '@codegen/schema-client';
+import { useTranslations } from 'next-intl';
+import { mq } from '@src/components/Theme/breakpoints';
 
 interface ListingControlsProps {
   filters: ApiFilter[];
@@ -27,24 +26,17 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
   productsCount,
 }) => {
   const { styles } = useStyles();
-  const tListing = useTranslations("Listing");
-  const { selectedFilters, setSelectedFilters } = useFiltersStore();
+  const tListing = useTranslations('Listing');
 
   return (
     <Flex className={styles.container} align="center">
-      {/* Products count - только на десктопе */}
       {productsCount !== undefined && (
         <Typography.Text className={styles.productsCount}>
-          {tListing("found-products", { count: productsCount })}
+          {tListing('found-products', { count: productsCount })}
         </Typography.Text>
       )}
-
-      {/* Controls container */}
       <Flex className={styles.controls} gap={16} align="center">
-        <FilterDrawer
-          filters={filters}
-        />
-
+        <FilterDrawer filters={filters} />
         <ListingSortMenu
           options={sortOptions}
           value={sort}

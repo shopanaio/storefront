@@ -303,7 +303,8 @@
     "title-ascending": "Title ascending",
     "title-descending": "Title descending",
     "recommended": "Recommended",
-    "sort-by": "Sort by"
+    "sort-by": "Sort by",
+    "apply-sort": "Apply sort"
   },
 
   "BoxBuilder": {

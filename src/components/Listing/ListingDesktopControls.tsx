@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Flex, Typography, Button } from "antd";
-import { createStyles } from "antd-style";
-import { FilterDrawer } from "./Filters/FilterDrawer";
-import { SortPopover, SortOption } from "../Product/Rate/SortPopover";
-import { TbArrowsUpDown } from "react-icons/tb";
-import { ApiFilter, ListingSort } from "@codegen/schema-client";
-import { useTranslations } from "next-intl";
+import React from 'react';
+import { Flex, Typography, Button } from 'antd';
+import { createStyles } from 'antd-style';
+import { FilterDrawer } from './Filters/FilterDrawer';
+import { SortPopover, SortOption } from '../Product/Rate/SortPopover';
+import { TbArrowsUpDown } from 'react-icons/tb';
+import { ApiFilter, ListingSort } from '@codegen/schema-client';
+import { useTranslations } from 'next-intl';
 
 interface ListingDesktopControlsProps {
   productsCount: number;
@@ -29,33 +29,27 @@ interface ListingDesktopControlsProps {
 export const ListingDesktopControls: React.FC<ListingDesktopControlsProps> = ({
   productsCount,
   filters,
-  selectedFilters,
-  setSelectedFilters,
   sortOptions,
   sort,
   onSortChange,
 }) => {
   const { styles } = useStyles();
-  const t = useTranslations("Sort");
-  const tListing = useTranslations("Listing");
+  const t = useTranslations('Sort');
+  const tListing = useTranslations('Listing');
 
   return (
     <Flex className={styles.desktopFiltersBar} align="center">
       <Typography.Text className={styles.productsCount}>
-        {tListing("found-products", { count: productsCount })}
+        {tListing('found-products', { count: productsCount })}
       </Typography.Text>
       <Flex flex={1} justify="flex-end" gap={16} align="center">
-        <FilterDrawer
-          filters={filters}
-          selectedFilters={selectedFilters}
-          setSelectedFilters={setSelectedFilters}
-        />
+        <FilterDrawer filters={filters} />
         <SortPopover
           options={sortOptions}
           value={sort}
           onChange={onSortChange}
           buttonClassName={styles.drawerBtn}
-          title={t("sort-by")}
+          title={t('sort-by')}
           icon={<TbArrowsUpDown />}
         />
       </Flex>

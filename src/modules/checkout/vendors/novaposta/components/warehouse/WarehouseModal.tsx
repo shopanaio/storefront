@@ -12,6 +12,7 @@ import { WarehouseModalItem } from './WarehouseModalItem';
 import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 interface Props {
   warehouse: Warehouse | null;
@@ -103,6 +104,7 @@ export const WarehouseModal = ({
   cityName,
 }: Props) => {
   const { styles } = useStyles();
+  const isMobile = useIsMobile();
   const t = useTranslations('Checkout');
 
   const [isWarehouseModalVisible, setIsWarehouseModalVisible] = useState(false);
@@ -185,17 +187,20 @@ export const WarehouseModal = ({
       <DrawerBase
         open={isWarehouseModalVisible}
         onClose={() => setIsWarehouseModalVisible(false)}
-        title={t('select-warehouse')}
-      >
-        <Flex className={styles.modalContainer} vertical>
-          <Flex className={styles.stickyBar}>
+        engine={isMobile ? 'overlay' : 'vaul'}
+        header={
+          <DrawerBase.Header gap={8} justify="space-between" align="center">
             <FloatingLabelInput
-              label={t('warehouse')}
+              label={t('select-warehouse')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               disabled={!cityName}
             />
-          </Flex>
+            <DrawerBase.CloseButton />
+          </DrawerBase.Header>
+        }
+      >
+        <Flex className={styles.modalContainer} vertical>
           {isLoading && (
             <Typography.Text type="secondary">{t('loading')}</Typography.Text>
           )}
@@ -220,13 +225,6 @@ const useStyles = createStyles(({ token, css }) => {
     modalHeader: css``,
     divider: css`
       margin: 0;
-    `,
-    stickyBar: css`
-      position: sticky;
-      top: var(--components-drawer-header-height, 64px);
-      z-index: 1;
-      background: ${token.colorBgBase};
-      padding-bottom: ${token.paddingSM}px;
     `,
     postLogoWrapper: css`
       height: 46px;

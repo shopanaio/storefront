@@ -1,29 +1,31 @@
-"use client";
+'use client';
 
-import { useState, useRef } from "react";
-import { Button } from "antd";
-import { Badge } from "@src/components/UI/Badge";
-import { TbFilter } from "react-icons/tb";
-import { createStyles } from "antd-style";
-import { ListingFilter } from "./ListingFilter";
-import { useTranslations } from "next-intl";
-import { useActiveFiltersCount } from "@src/hooks/useActiveFiltersCount";
-import { ApiFilter } from "@codegen/schema-client";
-import { mq } from "@src/components/Theme/breakpoints";
-import { DrawerBase } from "@src/components/UI/DrawerBase";
-import { useFiltersStore } from "@src/store/appStore";
-import { StickyButton } from "@src/components/UI/StickyButton";
+import { useState, useRef } from 'react';
+import { Button, Flex } from 'antd';
+import { Badge } from '@src/components/UI/Badge';
+import { TbFilter } from 'react-icons/tb';
+import { createStyles } from 'antd-style';
+import { ListingFilter } from './ListingFilter';
+import { useTranslations } from 'next-intl';
+import { useActiveFiltersCount } from '@src/hooks/useActiveFiltersCount';
+import { ApiFilter } from '@codegen/schema-client';
+import { mq } from '@src/components/Theme/breakpoints';
+import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { useFiltersStore } from '@src/store/appStore';
+import { StickyButton } from '@src/components/UI/StickyButton';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 interface FilterDrawerProps {
   filters: ApiFilter[];
 }
 
 export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
-  const [open, setOpen] = useState(false);
+  const t = useTranslations('Listing');
   const { styles } = useStyles();
-  const t = useTranslations("Listing");
+  const isMobile = useIsMobile();
   const applyFiltersRef = useRef<(() => void) | null>(null);
   const { selectedFilters, setSelectedFilters } = useFiltersStore();
+  const [open, setOpen] = useState(false);
 
   const showDrawer = () => setOpen(true);
   const closeDrawer = () => setOpen(false);
@@ -52,7 +54,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
   };
 
   const footerContent = (
-    <StickyButton onClick={handleApplyFilters} label={t("apply-filters")} />
+    <StickyButton onClick={handleApplyFilters} label={t('apply-filters')} />
   );
 
   return (
@@ -62,7 +64,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
         icon={<TbFilter />}
         onClick={showDrawer}
       >
-        {t("filters")}
+        {t('filters')}
         {hasActiveFilters && (
           <Badge variant="primary" count={activeFiltersCount} size="small" />
         )}
@@ -71,9 +73,16 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({ filters }) => {
         open={open}
         onClose={closeDrawer}
         footer={footerContent}
-        title={t("filters")}
-        headerExtra={<Button onClick={handleReset}>{t("reset-all")}</Button>}
-        height="75vh"
+        engine={isMobile ? 'overlay' : 'vaul'}
+        header={
+          <DrawerBase.Header>
+            <DrawerBase.Title>{t('filters')}</DrawerBase.Title>
+            <Flex gap={8}>
+              <Button onClick={handleReset}>{t('reset-all')}</Button>
+              <DrawerBase.CloseButton />
+            </Flex>
+          </DrawerBase.Header>
+        }
       >
         <ListingFilter
           filters={filters}
