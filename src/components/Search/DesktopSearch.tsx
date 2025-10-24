@@ -8,9 +8,9 @@ import { useElementWidth } from '@src/hooks/useElementWidth';
 import { SearchInput } from './SearchInput';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import { useModalStore } from '@src/store/appStore';
-import { useInitialLoading } from '@src/hooks/useInitialLoading';
 import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
 import { useSearchAllButton } from '@src/hooks/useSearchAllButton';
+import useBodyScrollLock from '@src/components/UI/hooks/useBodyScrollLock';
 
 export const DesktopSearch: React.FC = () => {
   const { searchTerm, debouncedTerm } = useSearchInput('', 300);
@@ -22,10 +22,11 @@ export const DesktopSearch: React.FC = () => {
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const popoverContentRef = useRef<HTMLDivElement>(null);
+  const popoverContentRef = useBodyScrollLock<HTMLDivElement>(
+    isPopoverOpen && !isMobile
+  );
   const popoverWidth = useElementWidth(containerRef);
   const { styles } = useStyles();
-  const initialLoading = useInitialLoading(isPopoverOpen, 300);
 
   // Get search results for button
   const { products } = usePredictiveSearch(debouncedTerm);
