@@ -209,7 +209,7 @@ const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorBgElevated};
     top: 0;
     z-index: 1;
-    padding: ${token.paddingXS}px ${token.paddingSM}px;
+    padding: ${token.paddingSM}px;
     flex-shrink: 0;
   `,
   title: css`

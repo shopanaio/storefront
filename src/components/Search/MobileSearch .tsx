@@ -63,19 +63,24 @@ export const MobileSearch: React.FC = () => {
       showCloseButton
       header={
         <DrawerBase.Header vertical gap={8} align="flex-start">
-          <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-            <DrawerBase.Title>{t('search')}</DrawerBase.Title>
+          <Flex
+            justify="space-between"
+            align="center"
+            style={{ width: '100%' }}
+            gap={8}
+          >
+            <Input
+              allowClear
+              className={styles.input}
+              ref={inputRef}
+              placeholder={`${t('search')} ...`}
+              prefix={<TbSearch className={styles.searchIcon} size={18} />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="middle"
+            />
             <DrawerBase.CloseButton onClick={() => setIsOpen(false)} />
           </Flex>
-          <Input
-            allowClear
-            className={styles.input}
-            ref={inputRef}
-            placeholder={`${t('search')} ...`}
-            prefix={<TbSearch className={styles.searchIcon} size={18} />}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </DrawerBase.Header>
       }
     >
@@ -91,8 +96,6 @@ const useStyles = createStyles(({ token, css }) => {
     input: css`
       display: flex;
       width: 100%;
-      height: 40px;
-      padding: ${token.paddingXS}px ${token.paddingSM}px;
     `,
     searchIcon: css`
       color: ${token.colorTextPlaceholder};
