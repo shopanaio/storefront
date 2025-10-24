@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Input } from 'antd';
+import { Flex, Input, Typography } from 'antd';
 import { TbSearch } from 'react-icons/tb';
 import type { InputRef } from 'antd';
 import SearchResults from './SearchResults';
@@ -55,24 +55,31 @@ export const MobileSearch: React.FC = () => {
     <DrawerBase
       open={isOpen}
       onClose={() => setIsOpen(false)}
-      title={t('search')}
       width="var(--components-drawer-width)"
       // @ts-expect-error Todo: change button UI
       footer={null && footer}
       placement="left"
       engine="overlay"
       showCloseButton
+      header={
+        <DrawerBase.Header vertical gap={8} align="flex-start">
+          <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+            <DrawerBase.Title>{t('search')}</DrawerBase.Title>
+            <DrawerBase.CloseButton onClick={() => setIsOpen(false)} />
+          </Flex>
+          <Input
+            allowClear
+            className={styles.input}
+            ref={inputRef}
+            placeholder={`${t('search')} ...`}
+            prefix={<TbSearch className={styles.searchIcon} size={18} />}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </DrawerBase.Header>
+      }
     >
       <div data-testid="mobile-search-drawer">
-        <Input
-          allowClear
-          className={styles.input}
-          ref={inputRef}
-          placeholder={`${t('search')} ...`}
-          prefix={<TbSearch className={styles.searchIcon} size={18} />}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
         <SearchResults searchTerm={debouncedTerm} />
       </div>
     </DrawerBase>
@@ -86,7 +93,6 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       height: 40px;
       padding: ${token.paddingXS}px ${token.paddingSM}px;
-      margin-bottom: ${token.marginXS}px;
     `,
     searchIcon: css`
       color: ${token.colorTextPlaceholder};

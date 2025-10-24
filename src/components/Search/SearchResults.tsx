@@ -7,17 +7,9 @@ interface SearchResultsProps {
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({ searchTerm }) => {
-  const { products, categories, articles, loading } =
-    usePredictiveSearch(searchTerm);
+  const { products } = usePredictiveSearch(searchTerm);
 
-  return (
-    <SearchResultsContent
-      products={products}
-      categories={categories}
-      articles={articles}
-      searchTerm={searchTerm}
-    />
-  );
+  return <SearchResultsContent products={products} searchTerm={searchTerm} />;
 };
 
 export default SearchResults;

@@ -3,8 +3,7 @@ import { createStyles } from 'antd-style';
 export const HANDLE_HEIGHT = 4;
 export const HANDLE_OFFSET_TOP = 8;
 export const DRAWER_CONTENT_OFFSET_TOP = HANDLE_HEIGHT + HANDLE_OFFSET_TOP;
-export const RIGHT_DRAWER_OFFSET = 12;
-export const LEFT_DRAWER_OFFSET = 12;
+export const DRAWER_OFFSET_X = 12;
 
 export const useStyles = createStyles(({ css, token }) => ({
   container: css`
@@ -43,14 +42,23 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
   contentHorizontal: css`
     border-radius: ${token.borderRadiusLG}px;
-    top: ${RIGHT_DRAWER_OFFSET}px;
-    bottom: ${RIGHT_DRAWER_OFFSET}px;
+    top: ${DRAWER_OFFSET_X}px;
+    bottom: ${DRAWER_OFFSET_X}px;
+    width: var(--components-drawer-width);
   `,
   contentRight: css`
-    right: ${RIGHT_DRAWER_OFFSET}px;
+    right: ${DRAWER_OFFSET_X}px;
+
+    &[data-state='closed'] {
+      right: 0px;
+    }
   `,
   contentLeft: css`
-    left: ${LEFT_DRAWER_OFFSET}px;
+    left: ${DRAWER_OFFSET_X}px;
+
+    &[data-state='closed'] {
+      left: 0px;
+    }
   `,
   contentFullscreen: css`
     inset: 0 !important;

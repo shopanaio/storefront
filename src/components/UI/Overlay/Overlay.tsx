@@ -1,18 +1,14 @@
-import useViewportMetrics from '@src/components/UI/hooks/useViewportMetrics';
 import { Drawer } from 'antd';
 import {
   cloneElement,
   ReactElement,
   ReactNode,
-  useLayoutEffect,
-  useRef,
 } from 'react';
 import {
-  disableBodyScroll,
-  enableBodyScroll,
-  clearAllBodyScrollLocks,
-} from 'body-scroll-lock';
-import { createStyles } from 'antd-style';
+  createStyles,
+} from 'antd-style';
+import useBodyScrollLock from '@src/components/UI/hooks/useBodyScrollLock';
+import useViewportMetrics from '@src/components/UI/hooks/useViewportMetrics';
 
 export interface OverlayProps {
   open: boolean;
@@ -28,27 +24,11 @@ export const Overlay = ({
 }: OverlayProps) => {
   const { styles } = useStyles();
 
-  const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useBodyScrollLock<HTMLDivElement>(open);
 
   const {
     viewport: { height },
   } = useViewportMetrics();
-
-  useLayoutEffect(() => {
-    if (!drawerRef.current) {
-      return;
-    }
-
-    if (open) {
-      disableBodyScroll(drawerRef.current);
-    } else {
-      enableBodyScroll(drawerRef.current);
-    }
-
-    return () => {
-      clearAllBodyScrollLocks();
-    };
-  }, [open]);
 
   return (
     <Drawer

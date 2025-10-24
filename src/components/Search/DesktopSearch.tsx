@@ -82,10 +82,7 @@ export const DesktopSearch: React.FC = () => {
         }}
         content={
           <div className={styles.popover} ref={popoverContentRef}>
-            <SearchResults
-              searchTerm={debouncedTerm}
-              initialLoading={initialLoading}
-            />
+            <SearchResults searchTerm={debouncedTerm} />
             {debouncedTerm.trim() !== '' && products.length > 0 && (
               <div className={styles.buttonWrapper}>
                 <Button block href={href}>
@@ -123,7 +120,6 @@ const useStyles = createStyles(({ token, css }) => {
       overflow-y: auto;
     `,
     buttonWrapper: css`
-      padding: ${token.paddingXS}px;
       margin-top: auto;
     `,
   };

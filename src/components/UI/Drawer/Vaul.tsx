@@ -40,6 +40,15 @@ export const Vaul = ({
   isFullscreen,
 }: VaulProps & React.HTMLAttributes<HTMLDivElement>) => {
   const { styles } = useStyles();
+  const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
+    null
+  );
+
+  useEffect(() => {
+    setContainerNode(
+      document.querySelector<HTMLDivElement>('[data-vaul-drawer-wrapper]')
+    );
+  }, []);
 
   const isLeft = direction === 'left';
   const isRight = direction === 'right';
@@ -103,7 +112,7 @@ export const Vaul = ({
       onAnimationEnd={handleTeardown}
       disablePreventScroll={false}
     >
-      <Portal container={document.querySelector('[data-vaul-drawer-wrapper]')}>
+      <Portal container={containerNode}>
         <Content
           className={clsx({
             [styles.content]: true,
@@ -113,11 +122,6 @@ export const Vaul = ({
             [styles.contentRight]: isHorizontal && isRight,
             [styles.contentFullscreen]: isFullscreen,
           })}
-          style={
-            isHorizontal
-              ? { width: 'var(--components-drawer-width)' }
-              : undefined
-          }
         >
           {isVertical ? (
             <AnimateHeight duration={300} height={height} disableDisplayNone>

@@ -1,8 +1,14 @@
 'use client';
 
-import { DrawerProps, Button, Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
+import type { ButtonProps, DrawerProps, FlexProps } from 'antd';
 import { createStyles } from 'antd-style';
-import { ReactNode } from 'react';
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useMemo,
+} from 'react';
 import { RxCross2 } from 'react-icons/rx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import RootDrawer, { DrawerEngine } from '@src/components/UI/Drawer/RootDrawer';
@@ -43,6 +49,22 @@ export interface DrawerBaseProps
   engine?: DrawerEngine;
 }
 
+type DrawerBaseContextValue = {
+  onClose: () => void;
+};
+
+const DrawerBaseContext = createContext<DrawerBaseContextValue | null>(null);
+
+const useDrawerBaseContext = () => {
+  const context = useContext(DrawerBaseContext);
+
+  if (!context) {
+    throw new Error('DrawerBase components must be used within DrawerBase');
+  }
+
+  return context;
+};
+
 /**
  * Base Drawer component with common structure and styles.
  * Automatically adapts to mobile devices.
@@ -63,7 +85,6 @@ export const DrawerBase = ({
   engine,
 }: DrawerBaseProps) => {
   const { styles } = useStyles();
-  const [, token] = useToken();
   const isMobile = useIsMobile();
   const showCloseButton = showCloseButtonProp || !isMobile;
 
@@ -77,30 +98,20 @@ export const DrawerBase = ({
     if (!title && !showCloseButton && !headerExtra) return null;
 
     return (
-      <Flex
-        className={clsx(styles.header, sectionStyles?.header)}
-        align="center"
-        justify="space-between"
-      >
+      <DrawerBaseHeader>
         {title && <Text className={styles.title}>{title}</Text>}
         <Flex align="center" gap={8}>
           {headerExtra}
-          {showCloseButton && (
-            <Button
-              icon={<RxCross2 size={24} color={token.colorIcon} />}
-              type="text"
-              className={styles.closeBtn}
-              onClick={onClose}
-            />
-          )}
+          {showCloseButton && <DrawerBaseCloseButton />}
         </Flex>
-      </Flex>
+      </DrawerBaseHeader>
     );
   };
 
   const content = (
     <div className={clsx(styles.layout, contentClassName)}>
       {renderHeader()}
+
       <div className={clsx(styles.content, sectionStyles?.content)}>
         {children}
       </div>
@@ -113,18 +124,76 @@ export const DrawerBase = ({
   );
 
   return (
-    <RootDrawer
-      open={open}
-      onClose={onClose}
-      direction={finalPlacement}
-      minHeight={minHeight}
-      engine={engine}
-      isFullscreen={isMobile && isHorizontal}
+    <DrawerBaseContext.Provider
+      value={useMemo(() => ({ onClose }), [onClose])}
     >
-      {content}
-    </RootDrawer>
+      <RootDrawer
+        open={open}
+        onClose={onClose}
+        direction={finalPlacement}
+        minHeight={minHeight}
+        engine={engine}
+        isFullscreen={isMobile && isHorizontal}
+      >
+        {content}
+      </RootDrawer>
+    </DrawerBaseContext.Provider>
   );
 };
+
+const DrawerBaseTitle = ({ children }: { children: ReactNode }) => {
+  const { styles } = useStyles();
+
+  return <Text className={styles.title}>{children}</Text>;
+};
+
+const DrawerBaseHeader = ({
+  children,
+  ...props
+}: { children: ReactNode } & FlexProps) => {
+  const { styles } = useStyles();
+
+  return (
+    <Flex
+      align="center"
+      justify="space-between"
+      {...props}
+      className={clsx(styles.header, props.className)}
+    >
+      {children}
+    </Flex>
+  );
+};
+
+const DrawerBaseCloseButton = ({
+  onClick,
+  ...buttonProps
+}: ButtonProps) => {
+  const { styles } = useStyles();
+  const [, token] = useToken();
+  const { onClose } = useDrawerBaseContext();
+
+  const handleClick = (
+    event: Parameters<NonNullable<ButtonProps['onClick']>>[0]
+  ) => {
+    onClick?.(event);
+    onClose();
+  };
+
+  return (
+    <Button
+      icon={<RxCross2 size={24} color={token.colorIcon} />}
+      type="text"
+      className={styles.closeBtn}
+      onClick={handleClick}
+      {...buttonProps}
+    />
+  );
+};
+
+DrawerBase.Title = DrawerBaseTitle;
+DrawerBase.Header = DrawerBaseHeader;
+DrawerBase.CloseButton = DrawerBaseCloseButton;
 
 const useStyles = createStyles(({ css, token }) => ({
   layout: css`
@@ -140,7 +209,7 @@ const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorBgElevated};
     top: 0;
     z-index: 1;
-    padding: ${token.paddingXS}px ${token.padding}px;
+    padding: ${token.paddingXS}px ${token.paddingSM}px;
     flex-shrink: 0;
   `,
   title: css`
@@ -151,10 +220,11 @@ const useStyles = createStyles(({ css, token }) => ({
     &:hover {
       color: ${token.colorPrimary} !important;
     }
+    margin-right: -${token.marginXXS}px;
   `,
   content: css`
     flex: 1;
-    padding: ${token.paddingXS}px ${token.padding}px 84px;
+    padding: ${token.paddingXS}px ${token.paddingSM}px 84px;
     height: 100%;
     max-height: 80dvh;
 

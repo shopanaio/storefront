@@ -1,21 +1,21 @@
 'use client';
 
-import { Flex } from "antd";
-import Link from "next/link";
-import { mq } from "@src/components/Theme/breakpoints";
-import { useLogo } from "@src/hooks/useLogo";
-import { CartButton } from "./CartButton";
-import { DesktopSearch } from "../Search/DesktopSearch";
-import { useTranslations } from "next-intl";
-import { createStyles } from "antd-style";
-import { SupportButton } from "./SupportButton";
-import { WishlistButton } from "./WishlistButton";
-import { AccountButton } from "./AccountButton";
-import { AppDrawerButton } from "./AppDrawerButton";
+import { Flex } from 'antd';
+import Link from 'next/link';
+import { mq } from '@src/components/Theme/breakpoints';
+import { useLogo } from '@src/hooks/useLogo';
+import { CartButton } from './CartButton';
+import { DesktopSearch } from '../Search/DesktopSearch';
+import { createStyles } from 'antd-style';
+import { SupportButton } from './SupportButton';
+import { WishlistButton } from './WishlistButton';
+import { AccountButton } from './AccountButton';
+import { AppDrawerButton } from './AppDrawerButton';
+import { useIsMobile } from '@src/hooks/useIsMobile';
 
 export const Header: React.FC = () => {
-  const t = useTranslations("Header");
   const { styles } = useStyles();
+  const isMobile = useIsMobile();
   const Logo = useLogo();
 
   return (
@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
       <div className={styles.inner}>
         <AppDrawerButton />
         <Link className={styles.logo} href="/">
-          <Logo theme="light" size={36} />
+          <Logo theme="light" size={isMobile ? 30 : 40} />
         </Link>
         <DesktopSearch />
         <Flex className={styles.actions}>

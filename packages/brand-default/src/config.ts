@@ -36,7 +36,7 @@ export const brandConfig: BrandConfig = {
     logo: DefaultLogo,
   },
   theme: {
-    colorPrimary: '#00b576',
+    colorPrimary: '#14CC80',
   },
   ui: {
     drawerEngine: 'antd',
