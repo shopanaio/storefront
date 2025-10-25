@@ -60,3 +60,5 @@ src/relay/queries/__generated__
 tsconfig.tsbuildinfo
 
 public/embed/
+
+external/
