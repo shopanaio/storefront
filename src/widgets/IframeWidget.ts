@@ -40,6 +40,7 @@
 import { create, CONTEXT, EVENT } from 'zoid';
 import { disableBodyScroll, enableBodyScroll } from 'body-scroll-lock';
 import type { StringMatcher, ZoidComponent, ZoidProps } from 'zoid';
+import { initNanoInDoc } from './nanoHelpers';
 
 type StyleMap = Partial<CSSStyleDeclaration> & {
   [key: string]: string | number | undefined;
@@ -70,15 +71,7 @@ export type IframeWidgetOptions = {
   closeButtonColor?: string;
 };
 
-function applyStyles(el: HTMLElement, styles?: StyleMap) {
-  if (!styles) return;
-  Object.keys(styles).forEach((key) => {
-    const val = styles[key];
-    if (val !== undefined && el.style) {
-      (el.style as any)[key] = String(val);
-    }
-  });
-}
+// Styling helpers moved to nanoHelpers to keep this widget lean
 
 export class IframeWidget {
   public factory: ZoidComponent<any, any, any, any>;
@@ -152,36 +145,27 @@ export class IframeWidget {
       }) => {
         const root = doc.createElement('div');
         root.setAttribute('id', uid);
-        applyStyles(root, containerStyles);
 
-        // Apply styles directly to iframe elements
-        if (frame) {
-          applyStyles(frame, iframeStyles);
-        }
-        if (prerenderFrame) {
-          applyStyles(prerenderFrame, iframeStyles);
+        // Init nano-css once for this widget instance in parent document
+        const nonce = (props as ZoidProps<any>)?.cspNonce;
+        const { rule, add, remove } = initNanoInDoc(doc, nonce, `iw-${uid}-`);
+
+        // Build classes using nano-css
+        if (containerStyles) {
+          const containerClass = rule(containerStyles as any, 'container');
+          add(root, containerClass);
         }
 
-        // Inject minimal CSS for smooth visibility toggle
-        try {
-          const styleEl = doc.createElement('style');
-          const nonce = (props as ZoidProps<any>)?.cspNonce;
-          if (nonce) {
-            styleEl.setAttribute('nonce', String(nonce));
-          }
-          styleEl.appendChild(
-            doc.createTextNode(`
-              #${uid} > iframe { transition: opacity .2s ease-in-out; }
-              #${uid} > iframe.invisible { opacity: 0; }
-              #${uid} > iframe.visible { opacity: 1; }
-              #${uid} > .__zoid_close_btn { position: fixed; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: #fff; color: ${closeButtonColor}; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2147483647; font-size: 24px; }
-              #${uid} > .__zoid_close_btn:focus { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.4); }
-            `)
-          );
-          root.appendChild(styleEl);
-        } catch (e) {
-          /* noop: style injection best-effort */
+        // Iframe base styles + ensure smooth opacity transition unless already specified
+        const iframeCss: StyleMap = { ...(iframeStyles || {}) };
+        if (!('transition' in iframeCss)) {
+          iframeCss.transition = 'opacity .2s ease-in-out';
         }
+        const iframeClass = rule(iframeCss as any, 'iframe');
+
+        // Visibility helpers
+        const clsVisible = rule({ opacity: 1 } as any, 'visible');
+        const clsInvisible = rule({ opacity: 0 } as any, 'invisible');
 
         // Prevent parent document from scrolling while overlay is displayed
         try {
@@ -209,7 +193,29 @@ export class IframeWidget {
           try {
             closeBtn = doc.createElement('button');
             closeBtn.type = 'button';
-            closeBtn.className = '__zoid_close_btn';
+            // Style the button via nano-css
+            const closeBtnClass = rule({
+              position: 'fixed',
+              top: '12px',
+              right: '12px',
+              width: '32px',
+              height: '32px',
+              border: 'none',
+              background: '#fff',
+              color: String(closeButtonColor),
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: '2147483647',
+              fontSize: '24px',
+              ':focus': {
+                outline: 'none',
+                boxShadow: '0 0 0 2px rgba(59,130,246,0.4)'
+              }
+            } as any, 'close-btn');
+            closeBtn.className = closeBtnClass;
             closeBtn.setAttribute('aria-label', 'Close');
             closeBtn.textContent = '×';
             closeBtn.addEventListener('click', () => {
@@ -221,15 +227,19 @@ export class IframeWidget {
           } catch {}
         }
 
-        // Small smooth switch between prerender and the main frame
+        // Apply iframe classes and small smooth switch between prerender and the main frame
+        if (frame) {
+          add(frame as any, iframeClass);
+        }
         if (prerenderFrame) {
-          prerenderFrame.classList.add('visible');
-          (frame as any).classList.add('invisible');
+          add(prerenderFrame, iframeClass);
+          add(prerenderFrame, clsVisible);
+          add(frame as any, clsInvisible);
           event.on(EVENT.RENDERED, () => {
-            prerenderFrame.classList.remove('visible');
-            prerenderFrame.classList.add('invisible');
-            (frame as any).classList.remove('invisible');
-            (frame as any).classList.add('visible');
+            remove(prerenderFrame, clsVisible);
+            add(prerenderFrame, clsInvisible);
+            remove(frame as any, clsInvisible);
+            add(frame as any, clsVisible);
             // Remove loading close button once main frame is ready
             if (closeBtn && closeBtn.parentElement) {
               try {
@@ -245,6 +255,8 @@ export class IframeWidget {
             }, 1);
           });
           root.appendChild(prerenderFrame);
+        } else if (frame) {
+          add(frame as any, clsVisible);
         }
 
         root.appendChild(frame as any);
