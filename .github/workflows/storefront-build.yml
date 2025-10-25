@@ -67,7 +67,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Validate inputs
+      - name: Validate inputs and brand path
         run: |
           set -euo pipefail
           if [[ -z "${{ inputs.image_tag }}" ]]; then
@@ -77,11 +77,10 @@ jobs:
           # Ensure brand package exists when brand provided
           BRAND_DIR="packages/brand-${{ inputs.brand }}"
           if [[ ! -d "$BRAND_DIR" ]]; then
-            echo "Brand directory missing, attempting to init submodule: $BRAND_DIR" >&2
-            if grep -qE "^\s*path\s*=\s*${BRAND_DIR}$" .gitmodules || grep -q "\[submodule \"${BRAND_DIR}\"\]" .gitmodules; then
-              git submodule sync -- "$BRAND_DIR" || true
-              git -c protocol.file.allow=always submodule update --init --recursive -- "$BRAND_DIR" || true
-            fi
+            echo "Brand package not found: $BRAND_DIR" >&2
+            echo "Configured in .gitmodules:" >&2
+            sed -n '1,200p' .gitmodules || true
+            exit 1
           fi
           if [[ ! -d "$BRAND_DIR" ]]; then
             echo "Brand package not found: $BRAND_DIR" >&2
