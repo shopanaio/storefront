@@ -1,10 +1,10 @@
-import { headers } from "next/headers";
+import { headers } from 'next/headers';
 import loadSerializableQuery, {
   SerializablePreloadedQuery,
-} from "@src/relay/loadSerializableQuery";
-import CollectionByHandleQueryNode, {
-  CollectionByHandleQuery,
-} from "@src/relay/queries/__generated__/CollectionByHandleQuery.graphql";
+} from '@src/relay/loadSerializableQuery';
+import CategoryQueryNode, {
+  CategoryQuery,
+} from '@src/queries/CategoryQuery/__generated__/CategoryQuery.graphql';
 
 interface LoadCategoryServerQueryParams {
   handle: string;
@@ -16,15 +16,15 @@ interface LoadCategoryServerQueryParams {
 const loadCategoryServerQuery = async ({
   handle,
 }: LoadCategoryServerQueryParams): Promise<
-  SerializablePreloadedQuery<typeof CollectionByHandleQueryNode, CollectionByHandleQuery>
+  SerializablePreloadedQuery<typeof CategoryQueryNode, CategoryQuery>
 > => {
-  const cookie = headers().get("cookie") ?? undefined;
+  const cookie = headers().get('cookie') ?? undefined;
 
   const preloadedQuery = await loadSerializableQuery<
-    typeof CollectionByHandleQueryNode,
-    CollectionByHandleQuery
+    typeof CategoryQueryNode,
+    CategoryQuery
   >(
-    CollectionByHandleQueryNode.params,
+    CategoryQueryNode.params,
     {
       handle,
     },

@@ -1,7 +1,7 @@
 import { graphql } from "relay-runtime";
 
-export const CollectionByHandleQuery = graphql`
-  query CollectionByHandleQuery($handle: String!) {
+const CollectionByHandleQuery = graphql`
+  query CategoryQuery($handle: String!) {
     collection(handle: $handle) {
       id
       title
@@ -12,3 +12,5 @@ export const CollectionByHandleQuery = graphql`
     }
   }
 `;
+
+export default CollectionByHandleQuery;

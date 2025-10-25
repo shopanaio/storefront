@@ -7,7 +7,7 @@ import { useRelayEnvironment } from 'react-relay';
 import useSerializablePreloadedQuery from '@src/relay/useSerializablePreloadedQuery';
 import { useQuery } from '@src/providers/relay-query-provider';
 import type { Entity } from '@shopana/entity';
-import { Reviews$key } from '@src/relay/queries/__generated__/Reviews.graphql';
+import { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useSearchParams } from 'next/navigation';
 import usePreloadedProduct from '@src/hooks/product/usePreloadedProduct';

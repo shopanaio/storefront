@@ -1,14 +1,29 @@
 import useCart from "../useCart";
-import { useMutation } from "react-relay";
+import { graphql, useMutation } from "react-relay";
 import { useCartContext } from "@src/providers/cart-context";
 import { ClearCartInput, UseClearCartReturn } from "./interface";
-import { clearCartLinesMutation } from "@src/relay/queries/clearCartLinesMutation.shopana";
+
+const useClearCartMutation = graphql`
+  mutation useClearCartMutation($input: CheckoutLinesClearInput!) {
+    checkoutMutation {
+      checkoutLinesClear(input: $input) {
+        checkout {
+          ...useCart_CartFragment
+        }
+        errors {
+          field
+          message
+        }
+      }
+    }
+  }
+`;
 
 const useClearCart = (): UseClearCartReturn => {
   const { cart } = useCart();
   const { setCartKey, setId } = useCartContext();
 
-  const [commitClearCart, isInFlight] = useMutation<any>(clearCartLinesMutation);
+  const [commitClearCart, isInFlight] = useMutation<any>(useClearCartMutation);
 
   return {
     clearCart: async (

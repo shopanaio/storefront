@@ -1,6 +1,6 @@
 import { graphql } from "relay-runtime";
 
-export const Listing = graphql`
+const Listing = graphql`
   fragment Listing on Collection
   @refetchable(queryName: "CollectionListingPaginationQuery")
   @argumentDefinitions(
@@ -39,3 +39,6 @@ export const Listing = graphql`
     }
   }
 `;
+
+export default Listing;
+

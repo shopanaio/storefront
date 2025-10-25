@@ -11,7 +11,7 @@ import { ShowMoreBtn } from "./ShowMoreBtn";
 import type { Entity } from "@shopana/entity";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "./Rate/Reviews";
-import { Reviews$key } from "@src/relay/queries/__generated__/Reviews.graphql";
+import { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
 import { ShippingReturnsInfo } from "./ShippingReturnsInfo";
 
 const { Paragraph } = Typography;

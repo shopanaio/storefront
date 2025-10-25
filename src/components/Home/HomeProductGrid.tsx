@@ -8,7 +8,7 @@ import ViewAllButton from "./ViewAllButton";
 import { useCategory } from "@src/hooks/useCategory";
 import { useLocale } from "next-intl";
 import { usePaginationFragment } from "react-relay";
-import { Listing } from "@src/relay/queries/Listing.shopana";
+import Listing from "@src/queries/Listing";
 import { ProductsGrid } from "../Listing/ProductsGrid ";
 import { LoadMoreBtn } from "./LoadMoreBtn";
 import { mq } from "../Theme/breakpoints";

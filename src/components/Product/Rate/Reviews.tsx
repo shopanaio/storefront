@@ -17,8 +17,8 @@ import { useState, useTransition } from "react";
 import { createStyles } from "antd-style";
 import { ProductReviewSort, ApiProductReview } from "codegen/schema-client";
 import { usePaginationFragment } from "react-relay";
-import { Reviews$key } from "src/relay/queries/__generated__/Reviews.graphql";
-import { Reviews } from "@src/relay/queries/Reviews.shopana";
+import { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
+import Reviews from "@src/queries/Reviews";
 import { SortPopover, SortOption } from "./SortPopover";
 import { LoadMoreBtn } from "@src/components/Home/LoadMoreBtn";
 

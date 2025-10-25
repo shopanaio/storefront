@@ -1,6 +1,6 @@
 import { graphql } from "relay-runtime";
 
-export const Reviews = graphql`
+const Reviews = graphql`
   fragment Reviews on Product
   @refetchable(queryName: "ProductReviewsPaginationQuery")
   @argumentDefinitions(
@@ -36,3 +36,6 @@ export const Reviews = graphql`
     }
   }
 `;
+
+export default Reviews;
+

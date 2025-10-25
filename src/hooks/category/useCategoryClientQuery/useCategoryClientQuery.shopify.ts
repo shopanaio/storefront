@@ -1,12 +1,12 @@
-import { useLazyLoadQuery } from "react-relay";
-import { CollectionByHandleQuery } from "@src/relay/queries/CollectionByHandle.shopify";
-import { CollectionByHandleQuery as CollectionByHandleQueryType } from "@src/relay/queries/__generated__/CollectionByHandleQuery.graphql";
+import { useLazyLoadQuery } from 'react-relay';
+import CollectionByHandleQuery from '@src/queries/CategoryQuery';
+import { CategoryQuery as CategoryQueryType } from '@src/queries/CategoryQuery/__generated__/CategoryQuery.graphql';
 
-const useCategoryClientQuery = (handle: string, first: number = 20) => {
-  const data = useLazyLoadQuery<CollectionByHandleQueryType>(
+const useCategoryClientQuery = (handle: string) => {
+  const data = useLazyLoadQuery<CategoryQueryType>(
     CollectionByHandleQuery,
     { handle },
-    { fetchPolicy: "store-or-network" }
+    { fetchPolicy: 'store-or-network' }
   );
 
   const collection = data?.collection;

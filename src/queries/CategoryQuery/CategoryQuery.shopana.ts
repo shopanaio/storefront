@@ -1,6 +1,6 @@
 import { graphql } from "relay-runtime";
 
-export const CategoryQuery = graphql`
+const CategoryQuery = graphql`
   query CategoryQuery(
     $handle: String!
     $first: Int = 24
@@ -18,3 +18,6 @@ export const CategoryQuery = graphql`
     }
   }
 `;
+
+export default CategoryQuery;
+
