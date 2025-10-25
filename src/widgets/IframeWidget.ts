@@ -159,10 +159,15 @@ export class IframeWidget {
             width: '100%',
             height: '100%',
             zIndex: '2147483647',
-            background: 'rgba(0,0,0,0.5)',
+            // Mobile: opaque white backdrop
+            background: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            // Desktop: dimmed backdrop around centered content
+            '@media (min-width: 1024px)': {
+              background: 'rgba(0,0,0,0.5)'
+            },
           } as any,
           'root'
         );
