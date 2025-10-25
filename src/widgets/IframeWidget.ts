@@ -358,7 +358,7 @@ export class IframeWidget {
             html, body, #__zoid_prerender__ { height: 100%; margin: 0; }
             body { background: #fff; }
             #__zoid_prerender__ { display: flex; align-items: center; justify-content: center; }
-            #__zoid_spinner__ { width: ${spinnerSize}px; height: ${spinnerSize}px; border: 2px solid #e5e7eb; border-top-color: ${spinnerColor}; border-radius: 50%; animation: _zspin 1s linear infinite; }
+            #__zoid_spinner__ { width: ${spinnerSize}px; height: ${spinnerSize}px; border: 4px solid #e5e7eb; border-top-color: ${spinnerColor}; border-radius: 50%; animation: _zspin 1s linear infinite; }
             @keyframes _zspin { to { transform: rotate(360deg); } }
           `)
         );
