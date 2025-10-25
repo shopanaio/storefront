@@ -189,6 +189,26 @@ export class IframeWidget {
           'content'
         );
         add(content, contentCls);
+        // Append content wrapper to the root overlay (centers on >=1024px)
+        root.appendChild(content);
+
+        // Click on gray overlay (outside content) should request close via parent
+        // Rationale: use zoid.updateProps from the parent to set a requestedClose flag
+        // which the child can observe via xprops.onProps and confirm before exiting.
+        try {
+          root.addEventListener('click', (ev: MouseEvent) => {
+            if (ev.target === root) {
+              try {
+                // Parent may pass a handler to update props
+                (props as any)?.onOverlayClick?.();
+              } catch (_) {
+                /* noop */
+              }
+            }
+          });
+        } catch (_) {
+          /* noop */
+        }
 
         // Iframe base styles + ensure smooth opacity transition unless already specified
         const iframeCss: StyleMap = { ...(iframeStyles || {}) };
@@ -293,7 +313,8 @@ export class IframeWidget {
           add(frame as any, clsVisible);
         }
 
-        root.appendChild(frame as any);
+        // Mount main frame inside the content wrapper
+        content.appendChild(frame as any);
         return root;
       },
 
