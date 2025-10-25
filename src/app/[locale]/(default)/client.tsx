@@ -10,7 +10,12 @@ export const HomeClient = () => {
 
   return (
     <>
-      <Script src="/embed/widgets/box-builder.js" strategy="afterInteractive" />
+      {/* Load widget and pass custom selector via data attribute */}
+      <Script
+        src="/embed/widgets/box-builder.js"
+        strategy="afterInteractive"
+        data-selector=".js-open-boxbuilder"
+      />
       <div
         style={{
           padding: '12px',
@@ -18,7 +23,9 @@ export const HomeClient = () => {
           marginBottom: '16px',
         }}
       >
-        <button id="box-builder-button">Open Box Builder Widget</button>
+        <button className="js-open-boxbuilder" style={{ marginLeft: 8 }}>
+          Open Box Builder (custom selector)
+        </button>
       </div>
       <Home sections={sections} />
     </>

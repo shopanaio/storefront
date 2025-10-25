@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import { build, context } from 'esbuild';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -7,10 +8,17 @@ import fg from 'fast-glob';
 const isWatch = process.argv.includes('--watch');
 const isProd = process.env.NODE_ENV === 'production';
 
+const nodeEnv = process.env.NODE_ENV || (isProd ? 'production' : 'development');
 const define = {
-  'process.env.NEXT_PUBLIC_BOX_BUILDER_WIDGET_DOMAIN': JSON.stringify(
-    process.env.NEXT_PUBLIC_BOX_BUILDER_WIDGET_DOMAIN || ''
-  ),
+  // TODO: map all NEXT_PUBLIC_ env vars to process.env
+  ...Object.entries(process.env).reduce((acc, [k, v]) => {
+    if (k.startsWith('NEXT_PUBLIC_')) {
+      acc[`process.env.${k}`] = JSON.stringify(v);
+    }
+    return acc;
+  }, {}),
+  'process.env.NODE_ENV': JSON.stringify(nodeEnv),
+  'process.env.ZOID_FRAME_ONLY': 'false',
 };
 
 function pascalCase(s) {
@@ -46,7 +54,8 @@ async function discoverWidgets() {
     const entryRel = cfg.entry || './iframe.ts';
     const entryAbs = path.resolve(dir, entryRel);
     const globalName = cfg.globalName || `Shopana${pascalCase(slug)}`;
-    const outFile = cfg.outFile || path.resolve(`public/embed/widgets/${slug}.js`);
+    const outFile =
+      cfg.outFile || path.resolve(`public/embed/widgets/${slug}.js`);
     const autoBootstrap = cfg.autoBootstrap !== false;
     widgets.push({ slug, dir, entryAbs, outFile, globalName, autoBootstrap });
   }

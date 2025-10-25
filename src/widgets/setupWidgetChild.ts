@@ -42,4 +42,3 @@ export function setupWidgetChild<P = any>({
 }
 
 export default setupWidgetChild;
-

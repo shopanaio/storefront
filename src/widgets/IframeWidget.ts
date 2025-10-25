@@ -62,6 +62,12 @@ export type IframeWidgetOptions = {
 
   // Prerender (optional)
   prerenderHTML?: (opts: { doc: Document; props: any }) => HTMLElement | null;
+  // Loading spinner options for default prerender
+  spinner?: { color?: string; size?: number };
+  // Show close button during loading (in parent container)
+  showCloseButton?: boolean;
+  // Close button icon color
+  closeButtonColor?: string;
 };
 
 function applyStyles(el: HTMLElement, styles?: StyleMap) {
@@ -102,6 +108,9 @@ export class IframeWidget {
       dimensions = { width: '100%', height: '100%' },
       autoResize = { height: true, width: false },
       prerenderHTML,
+      spinner = { color: '#888', size: 32 },
+      showCloseButton = true,
+      closeButtonColor = '#111',
     } = opts;
 
     const ctx = defaultContext === 'popup' ? CONTEXT.POPUP : CONTEXT.IFRAME;
@@ -132,7 +141,15 @@ export class IframeWidget {
        *  - If it returns null/undefined, no additional wrapper will be inserted
        *  - Removing the returned element from the DOM initiates closing/re-rendering of the component
        */
-      containerTemplate: ({ uid, frame, prerenderFrame, event, doc, props }) => {
+      containerTemplate: ({
+        uid,
+        frame,
+        prerenderFrame,
+        event,
+        doc,
+        props,
+        close,
+      }) => {
         const root = doc.createElement('div');
         root.setAttribute('id', uid);
         applyStyles(root, containerStyles);
@@ -157,6 +174,8 @@ export class IframeWidget {
               #${uid} > iframe { transition: opacity .2s ease-in-out; }
               #${uid} > iframe.invisible { opacity: 0; }
               #${uid} > iframe.visible { opacity: 1; }
+              #${uid} > .__zoid_close_btn { position: fixed; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: #fff; color: ${closeButtonColor}; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2147483647; font-size: 24px; }
+              #${uid} > .__zoid_close_btn:focus { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.4); }
             `)
           );
           root.appendChild(styleEl);
@@ -169,7 +188,11 @@ export class IframeWidget {
           if (doc && doc.body) {
             disableBodyScroll(doc.body, { reserveScrollBarGap: true });
             const unlock = () => {
-              try { enableBodyScroll(doc.body); } catch (e) { /* noop */ }
+              try {
+                enableBodyScroll(doc.body);
+              } catch (e) {
+                /* noop */
+              }
             };
             event.on(EVENT.CLOSE, unlock);
             event.on(EVENT.DESTROY, unlock);
@@ -178,6 +201,24 @@ export class IframeWidget {
           }
         } catch (e) {
           /* noop: body-scroll-lock best-effort */
+        }
+
+        // Optional close button while loading (removed when main frame renders)
+        let closeBtn: HTMLButtonElement | null = null;
+        if (showCloseButton) {
+          try {
+            closeBtn = doc.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = '__zoid_close_btn';
+            closeBtn.setAttribute('aria-label', 'Close');
+            closeBtn.textContent = '×';
+            closeBtn.addEventListener('click', () => {
+              try {
+                close?.();
+              } catch {}
+            });
+            root.appendChild(closeBtn);
+          } catch {}
         }
 
         // Small smooth switch between prerender and the main frame
@@ -189,6 +230,12 @@ export class IframeWidget {
             prerenderFrame.classList.add('invisible');
             (frame as any).classList.remove('invisible');
             (frame as any).classList.add('visible');
+            // Remove loading close button once main frame is ready
+            if (closeBtn && closeBtn.parentElement) {
+              try {
+                closeBtn.parentElement.removeChild(closeBtn);
+              } catch {}
+            }
             setTimeout(() => {
               try {
                 prerenderFrame.remove();
@@ -232,18 +279,21 @@ export class IframeWidget {
         const style = doc.createElement('style');
         const nonce = (props as ZoidProps<any>)?.cspNonce;
         if (nonce) style.setAttribute('nonce', String(nonce));
+        const spinnerSize = Math.max(8, Number(spinner?.size ?? 32));
+        const spinnerColor = String(spinner?.color ?? '#888');
         style.appendChild(
           doc.createTextNode(`
             html, body, #__zoid_prerender__ { height: 100%; margin: 0; }
-            #__zoid_prerender__ { display: flex; align-items: center; justify-content: center; font-family: sans-serif; color: #666; }
-            #__zoid_spinner__ { width: 24px; height: 24px; border: 2px solid #ddd; border-top-color: #888; border-radius: 50%; animation: _zspin 1s linear infinite; margin-right: 8px; }
+            body { background: #fff; }
+            #__zoid_prerender__ { display: flex; align-items: center; justify-content: center; }
+            #__zoid_spinner__ { width: ${spinnerSize}px; height: ${spinnerSize}px; border: 2px solid #e5e7eb; border-top-color: ${spinnerColor}; border-radius: 50%; animation: _zspin 1s linear infinite; }
             @keyframes _zspin { to { transform: rotate(360deg); } }
           `)
         );
 
         const wrap = doc.createElement('div');
         wrap.setAttribute('id', '__zoid_prerender__');
-        wrap.innerHTML = '<div id="__zoid_spinner__"></div><div>Loading…</div>';
+        wrap.innerHTML = '<div id="__zoid_spinner__"></div>';
 
         head.appendChild(style);
         body.appendChild(wrap);
@@ -257,4 +307,3 @@ export class IframeWidget {
 }
 
 export default IframeWidget;
-
