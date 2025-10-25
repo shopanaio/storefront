@@ -151,10 +151,44 @@ export class IframeWidget {
         const { rule, add, remove } = initNanoInDoc(doc, nonce, `iw-${uid}-`);
 
         // Build classes using nano-css
+        // Root overlay (modal backdrop + center content on >=1024px)
+        const rootBase = rule(
+          {
+            position: 'fixed',
+            inset: '0',
+            width: '100%',
+            height: '100%',
+            zIndex: '2147483647',
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          } as any,
+          'root'
+        );
+        add(root, rootBase);
         if (containerStyles) {
           const containerClass = rule(containerStyles as any, 'container');
           add(root, containerClass);
         }
+
+        // Content wrapper that constrains iframe at >=1024px
+        const content = doc.createElement('div');
+        const contentCls = rule(
+          {
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            '@media (min-width: 1024px)': {
+              width: '800px',
+              height: '90vh',
+              borderRadius: '16px',
+              overflow: 'hidden',
+            },
+          } as any,
+          'content'
+        );
+        add(content, contentCls);
 
         // Iframe base styles + ensure smooth opacity transition unless already specified
         const iframeCss: StyleMap = { ...(iframeStyles || {}) };
@@ -254,7 +288,7 @@ export class IframeWidget {
               }
             }, 1);
           });
-          root.appendChild(prerenderFrame);
+          content.appendChild(prerenderFrame);
         } else if (frame) {
           add(frame as any, clsVisible);
         }
