@@ -62,24 +62,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Use PAT to ensure access to private submodules
           token: ${{ secrets.RFW_TOKEN }}
-          # Fetch repo first; handle submodules after configuring auth
-          submodules: false
+          submodules: recursive
           fetch-depth: 0
           persist-credentials: true
-
-      - name: Configure auth and fetch submodules
-        env:
-          RFW_TOKEN: ${{ secrets.RFW_TOKEN }}
-        run: |
-          set -euo pipefail
-          # Rewrite SSH URLs to HTTPS with token for all GitHub fetches
-          git config --global url."https://x-access-token:${RFW_TOKEN}@github.com/".insteadOf git@github.com:
-          git config --global url."https://x-access-token:${RFW_TOKEN}@github.com/".insteadOf ssh://git@github.com/
-          # Sync any URL changes and fetch submodules recursively
-          git submodule sync --recursive
-          git -c protocol.file.allow=always submodule update --init --recursive
 
       - name: Validate inputs
         run: |
@@ -91,7 +77,18 @@ jobs:
           # Ensure brand package exists when brand provided
           BRAND_DIR="packages/brand-${{ inputs.brand }}"
           if [[ ! -d "$BRAND_DIR" ]]; then
+            echo "Brand directory missing, attempting to init submodule: $BRAND_DIR" >&2
+            if grep -qE "^\s*path\s*=\s*${BRAND_DIR}$" .gitmodules || grep -q "\[submodule \"${BRAND_DIR}\"\]" .gitmodules; then
+              git submodule sync -- "$BRAND_DIR" || true
+              git -c protocol.file.allow=always submodule update --init --recursive -- "$BRAND_DIR" || true
+            fi
+          fi
+          if [[ ! -d "$BRAND_DIR" ]]; then
             echo "Brand package not found: $BRAND_DIR" >&2
+            echo "Known submodules:" >&2
+            git submodule status --recursive || true
+            echo "Configured in .gitmodules:" >&2
+            sed -n '1,200p' .gitmodules || true
             exit 1
           fi
 
