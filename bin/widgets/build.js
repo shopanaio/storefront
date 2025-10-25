@@ -78,7 +78,9 @@ function buildConfigOf(w) {
     target: ['es2019'],
     tsconfig: path.resolve('tsconfig.json'),
     define,
-    banner: { js: `/* shopana widget: ${w.slug} */` },
+    banner: {
+      js: `/* shopana widget: ${w.slug} */\nvar process = typeof process !== "undefined" ? process : { env: {} };`,
+    },
     footer: { js: footer },
   };
 }
