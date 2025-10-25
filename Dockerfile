@@ -68,6 +68,9 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/bin ./bin
+COPY --from=builder /app/relay.shopana.json ./relay.shopana.json
+COPY --from=builder /app/relay.shopify.json ./relay.shopify.json
+
 
 # Default Next.js port; Traefik will route to this
 ENV PORT=3000

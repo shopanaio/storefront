@@ -6,6 +6,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT={{ storefront_container_port }}
+      - CMS={{ CMS }}
+      - NEXT_PUBLIC_APP_URL={{ NEXT_PUBLIC_APP_URL }}
+      - SHOPANA_GRAPHQL_URL={{ SHOPANA_GRAPHQL_URL }}
+      - SHOPANA_API_KEY={{ SHOPANA_API_KEY }}
+      - BRAND={{ BRAND }}
+
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "{{ storefront_container_port }}"]
       interval: 30s
@@ -26,4 +32,3 @@ networks:
     name: shopana-network
     driver: bridge
     external: true
-
