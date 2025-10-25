@@ -1,0 +1,140 @@
+# Build and push storefront Docker image
+# Usage: ansible-playbook playbooks/storefront/build.yml
+---
+- name: Build Storefront Docker Image
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+
+  vars_files:
+    - sandbox.vars.yml
+
+  vars:
+    # Image configuration
+    storefront_image_tag: "{{ image_tag }}"
+    storefront_image_name: "{{ shopana_ghcr_registry }}/{{ shopana_ghcr_owner }}/storefront:{{ storefront_image_tag }}"
+
+    # Build-time arguments (can be overridden via -e)
+    storefront_build_cms: "{{ CMS }}"
+    storefront_build_brand: "{{ BRAND }}"
+    storefront_build_graphql_url: "{{ SHOPANA_GRAPHQL_URL }}"
+    storefront_build_api_key: "{{ SHOPANA_API_KEY }}"
+    storefront_build_app_url: "{{ NEXT_PUBLIC_APP_URL }}"
+    storefront_build_port: "{{ PORT }}"
+
+  tasks:
+    - name: Validate brand package exists when BRAND is set
+      block:
+        - name: Compute brand package path
+          ansible.builtin.set_fact:
+            storefront_brand_dir: "{{ root_dir }}/packages/brand-{{ storefront_build_brand | default('default') }}"
+
+        - name: Check brand package
+          ansible.builtin.stat:
+            path: "{{ storefront_brand_dir }}"
+          register: brand_dir
+
+        - name: Fail if brand package missing
+          ansible.builtin.fail:
+            msg: >-
+              Brand package not found: {{ storefront_brand_dir }}.
+              Ensure the brand package exists (e.g., git submodule) or set BRAND=default.
+          when: not brand_dir.stat.exists
+
+    - name: Ensure required variables are provided
+      ansible.builtin.assert:
+        that:
+          - shopana_ghcr_owner is defined and shopana_ghcr_owner | length > 0
+          - shopana_ghcr_token is defined and shopana_ghcr_token | length > 0
+        fail_msg: >-
+          Please provide required variables via inventory or env.
+          Required: shopana_ghcr_owner, shopana_ghcr_token
+
+    - name: Check if storefront directory exists
+      ansible.builtin.stat:
+        path: "{{ root_dir }}"
+      register: storefront_dir_stat
+
+    - name: Fail if storefront directory doesn't exist
+      ansible.builtin.fail:
+        msg: "Storefront source directory not found: {{ root_dir }}"
+      when: not storefront_dir_stat.stat.exists
+
+    - name: Check if Docker is running
+      ansible.builtin.command:
+        cmd: docker info
+      register: docker_info
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if Docker is not running
+      ansible.builtin.fail:
+        msg: "Docker is not running locally. Please start Docker daemon."
+      when: docker_info.rc != 0
+
+    - name: Build and push block with error handling
+      block:
+        - name: Show build information
+          ansible.builtin.debug:
+            msg:
+              - "🔨 Building storefront"
+              - "  Image: {{ storefront_image_name }}"
+              - "  Platform: {{ docker_platform }}"
+              - "  Build Context: {{ root_dir }}"
+              - "  CMS: {{ storefront_build_cms }}"
+              - "  BRAND: {{ storefront_build_brand }}"
+              - "  GRAPHQL_URL: {{ storefront_build_graphql_url }}"
+              - "  NEXT_PUBLIC_APP_URL: {{ storefront_build_app_url }}"
+
+        - name: Build storefront image
+          ansible.builtin.command:
+            cmd: >
+              docker build
+              --platform {{ docker_platform }}
+              --build-arg CMS={{ storefront_build_cms }}
+              --build-arg BRAND={{ storefront_build_brand }}
+              --build-arg SHOPANA_GRAPHQL_URL={{ storefront_build_graphql_url }}
+              {{ '--build-arg NEXT_PUBLIC_APP_URL=' + storefront_build_app_url if storefront_build_app_url | length > 0 else '' }}
+              --build-arg PORT={{ storefront_build_port }}
+              {{ '--build-arg SHOPANA_API_KEY=' + storefront_build_api_key if storefront_build_api_key | length > 0 else '' }}
+              -t {{ storefront_image_name }}
+              {{ root_dir }}
+            chdir: "{{ root_dir }}"
+          changed_when: true
+
+        - name: Push storefront image
+          ansible.builtin.shell: |
+            echo "{{ shopana_ghcr_token }}" | docker login {{ shopana_ghcr_registry }} -u {{ shopana_ghcr_owner }} --password-stdin
+            docker push {{ storefront_image_name }}
+          no_log: true
+          changed_when: true
+
+        - name: Show success message
+          ansible.builtin.debug:
+            msg:
+              - "✅ Storefront image built and pushed successfully"
+              - "📦 Image: {{ storefront_image_name }}"
+              - ""
+              - "🚀 To deploy:"
+              - "  ansible-playbook playbooks/storefront/deploy.yml -i hosts.ini --limit shopana_sandbox"
+
+      rescue:
+        - name: Show error details
+          ansible.builtin.debug:
+            msg:
+              - "❌ Build or push failed!"
+              - "Task: {{ ansible_failed_task.name }}"
+              - "Error: {{ ansible_failed_result.msg }}"
+              - "{% if ansible_failed_result.stderr is defined and ansible_failed_result.stderr | length > 0 %}Stderr: {{ ansible_failed_result.stderr }}{% endif %}"
+
+        - name: Fail with message
+          ansible.builtin.fail:
+            msg: "Build and push failed. See error details above."
+
+      always:
+        - name: Logout from GitHub Container Registry
+          ansible.builtin.command:
+            cmd: docker logout {{ shopana_ghcr_registry }}
+          changed_when: false
+          ignore_errors: true

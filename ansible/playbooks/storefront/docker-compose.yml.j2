@@ -1,0 +1,29 @@
+services:
+  storefront:
+    image: {{ storefront_image_name }}
+    container_name: shopana-storefront
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT={{ storefront_container_port }}
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "{{ storefront_container_port }}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - shopana-network
+    labels:
+      - "traefik.enable={{ storefront_traefik_enabled | lower }}"
+      - "traefik.http.routers.storefront.rule={{ storefront_traefik_router_rule }}"
+      - "traefik.http.routers.storefront.entrypoints={{ storefront_traefik_entrypoint }}"
+      - "traefik.http.routers.storefront.priority={{ storefront_traefik_router_priority | default('100') }}"
+      - "traefik.http.services.storefront.loadbalancer.server.port={{ storefront_traefik_service_port }}"
+
+networks:
+  shopana-network:
+    name: shopana-network
+    driver: bridge
+    external: true
+

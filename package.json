@@ -6,17 +6,12 @@
   "workspaces": {
     "packages": [
       "packages/*"
-    ],
-    "nohoist": [
-      "@shopana/novaposhta-client",
-      "@shopana/novaposhta-client/**"
     ]
   },
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.2",
     "@apollo/client": "^3.13.8",
     "@hookform/resolvers": "^5.2.2",
-    "@shopana/novaposhta-client": "^1.0.0",
     "@stackflow/config": "^1.2.1",
     "@stackflow/core": "^1.2.0",
     "@stackflow/plugin-basic-ui": "^1.14.2",
@@ -104,24 +99,16 @@
     "typescript": "^5.8.3"
   },
   "scripts": {
+    "start": "next start",
+    "build": "yarn widgets:build && next build",
     "codegen": "node ./bin/graphql/codegen.js",
-    "codegen:shopana": "cross-env CMS=shopana yarn codegen",
-    "codegen:shopify": "cross-env CMS=shopify yarn codegen",
+    "dev": "yarn relay && next dev -p 3001",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "lint": "next lint",
     "relay": "node ./bin/relay/compile.js",
-    "relay:shopana": "cross-env CMS=shopana yarn relay",
-    "relay:shopify": "cross-env CMS=shopify yarn relay",
     "widgets:build": "node ./bin/widgets/build.js",
     "widgets:watch": "node ./bin/widgets/build.js --watch",
-    "dev": "yarn relay && next dev -p 3001",
-    "dev:shopana": "cross-env CMS=shopana yarn dev",
-    "dev:shopify": "cross-env CMS=shopify yarn dev",
-    "build:shopana": "cross-env CMS=shopana yarn widgets:build && next build",
-    "build:shopify": "cross-env CMS=shopify yarn widgets:build && next build",
-    "start:shopana": "cross-env CMS=shopana next start",
-    "start:shopify": "cross-env CMS=shopify next start",
-    "lint": "next lint",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
     "storybook": "cross-env STORYBOOK=true storybook dev -p 6006 -c storybook",
     "build-storybook": "cross-env STORYBOOK=true storybook build -c storybook -o storybook-static"
   }

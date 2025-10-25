@@ -48,8 +48,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy rest of the source
 COPY . .
 
-# Relay artifacts and production build
-RUN yarn relay:shopana && yarn build:shopana
+# Build workspace packages first, then the Next.js app
+# Ensures packages under `packages/*` are compiled (dist) for production
+RUN yarn workspaces run build && yarn build
 
 # ---------- runner ----------
 FROM node:${NODE_VERSION}-alpine AS runner
@@ -65,12 +66,13 @@ COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 
 # Default Next.js port; Traefik will route to this
 ENV PORT=3000
 EXPOSE 3000
 
 # CMS defaults for runtime (used by start script flags/logs; build-time env embeds actual endpoints)
-ENV CMS=shopana
+ENV CMS=${CMS}
 
-CMD ["yarn", "start:shopana"]
+CMD ["yarn", "start"]

@@ -8,12 +8,6 @@
       "@shopana/entity": ["./packages/entity/src/index.ts"],
       "shopana-utils": ["./packages/shopana-utils/dist/index.js"],
       "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
-      "@shopana/novaposhta-client": [
-        "./packages/shopana-novaposhta-client/dist/index.js"
-      ],
-      "@shopana/novaposhta-client/*": [
-        "./packages/shopana-novaposhta-client/dist/*"
-      ],
       "@shopana/brand": ["./packages/brand-default/src"],
       "@shopana/brand/*": ["./packages/brand-default/src/*"],
       "@stackflow/react/future": [

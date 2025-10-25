@@ -10,7 +10,6 @@ const isProd = process.env.NODE_ENV === 'production';
 
 const nodeEnv = process.env.NODE_ENV || (isProd ? 'production' : 'development');
 const define = {
-  // TODO: map all NEXT_PUBLIC_ env vars to process.env
   ...Object.entries(process.env).reduce((acc, [k, v]) => {
     if (k.startsWith('NEXT_PUBLIC_')) {
       acc[`process.env.${k}`] = JSON.stringify(v);
@@ -103,13 +102,17 @@ async function run() {
       const ctx = await context(cfg);
       await ctx.watch();
       contexts.push(ctx);
-      console.log(`[widgets] watching ${w.slug} -> ${path.relative(process.cwd(), w.outFile)}`);
+      console.log(
+        `[widgets] watching ${w.slug} -> ${path.relative(process.cwd(), w.outFile)}`
+      );
     }
   } else {
     await Promise.all(
       widgets.map(async (w) => {
         await build(buildConfigOf(w));
-        console.log(`[widgets] built ${w.slug} -> ${path.relative(process.cwd(), w.outFile)}`);
+        console.log(
+          `[widgets] built ${w.slug} -> ${path.relative(process.cwd(), w.outFile)}`
+        );
       })
     );
   }

@@ -8,6 +8,8 @@ import getEnv from './bin/webpack/env.js';
 import webpack from 'webpack';
 const require = createRequire(import.meta.url);
 
+console.log(process.env);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: getEnv(),
