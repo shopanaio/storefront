@@ -1,6 +1,6 @@
 [submodule "packages/shopana-novaposhta-client"]
-  path = packages/shopana-novaposhta-client
-  url = git@github.com:shopana-io/shopana-novaposhta-client.git
+	path = packages/shopana-novaposhta-client
+	url = git@github.com:shopana-io/shopana-novaposhta-client.git
 [submodule "src/modules/storefront-box-builder-module"]
 	path = src/modules/storefront-box-builder-module
 	url = git@github.com:shopanaio/storefront-box-builder-module.git
