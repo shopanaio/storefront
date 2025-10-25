@@ -2,12 +2,12 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useQueryLoader, usePreloadedQuery, useFragment } from "react-relay";
-import { loadCartQuery } from "@src/relay/queries/loadCartQuery.shopify";
-import { loadCartQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartQuery.graphql";
 import { CartContextProvider } from "../cart-context";
 import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
 import { useCart_CartFragment } from "@src/hooks/cart/useCart/useCart.shopify";
 import cartIdUtils from "@src/utils/cartId";
+import loadCartQuery from '@src/hooks/cart/loadCartQuery';
+import { loadCartQuery as LoadCartQueryType } from '@src/hooks/cart/loadCartQuery/__generated__/loadCartQuery.graphql';
 
 interface CartProviderProps {
   children: React.ReactNode;

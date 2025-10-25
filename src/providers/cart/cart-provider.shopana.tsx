@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
-import { loadCartQuery } from "@src/relay/queries/loadCartMutation.shopana";
-import { loadCartMutationQuery as LoadCartQueryType } from "@src/relay/queries/__generated__/loadCartMutationQuery.graphql";
-import { CartContextProvider } from "../cart-context";
-import { useCart_CartFragment$key } from "@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql";
-import cartIdUtils from "@src/utils/cartId";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { PreloadedQuery, usePreloadedQuery, useQueryLoader } from 'react-relay';
+import { CartContextProvider } from '../cart-context';
+import { useCart_CartFragment$key } from '@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql';
+import cartIdUtils from '@src/utils/cartId';
+import loadCartQuery from '@src/hooks/cart/loadCartQuery';
+import { loadCartQuery as LoadCartQueryType } from '@src/hooks/cart/loadCartQuery/__generated__/loadCartQuery.graphql';
 
 interface CartProviderProps {
   children: React.ReactNode;
@@ -31,7 +31,7 @@ const CartDataHandler: React.FC<{
     if (checkout) {
       onCartData(checkout);
     } else {
-      console.log("Cart not found");
+      console.log('Cart not found');
       onCartNotFound();
     }
   }, [cartData, onCartData, onCartNotFound]);
@@ -71,7 +71,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
     setIsCartLoading(true);
     /* console.log("[CartProvider Shopana] Loading cart with ID:", savedCartId); */
 
-    loadQuery({ checkoutId: savedCartId }, { fetchPolicy: "network-only" });
+    loadQuery({ checkoutId: savedCartId }, { fetchPolicy: 'network-only' });
   }, [loadQuery, cookieKey]);
 
   const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
