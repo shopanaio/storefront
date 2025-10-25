@@ -3,7 +3,7 @@ import "dotenv/config";
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-//import { rimrafSync } from "rimraf";
+import { rimrafSync } from "rimraf";
 
 const cms = (process.env.CMS || "").toLowerCase();
 
@@ -22,7 +22,7 @@ if (!fs.existsSync(configPath)) {
 
 try {
   // Clean previous Relay artifacts
-  //rimrafSync("src/**/__generated__", { glob: { cwd: rootDir } });
+  rimrafSync("src/**/__generated__", { glob: { cwd: rootDir } });
   // relay-compiler <configPath>
   execSync(`relay-compiler ${configPath}`, { stdio: "inherit" });
 } catch (err) {
