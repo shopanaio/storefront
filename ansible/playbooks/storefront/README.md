@@ -19,26 +19,26 @@ storefront/
 - `hosts.ini` configured with `shopana_sandbox`
 - Variables `shopana_ghcr_owner` and `shopana_ghcr_token` available to Ansible
 
-## Сборка образа
+## Build Image
 
-Вариант A — через Ansible playbook (рекомендуется):
+Option A — via Ansible playbook (recommended):
 
 ```bash
-# Сборка и пуш latest
+# Build and push latest
 ansible-playbook ansible/playbooks/storefront/build.yml
 
-# С конкретным тегом и брендом
+# With specific tag and brand
 ansible-playbook ansible/playbooks/storefront/build.yml \
   -e "image_tag=v1.0.0" \
   -e "BRAND=mybrand"
 
-# Переопределить GraphQL URL/API Key (если нужно)
+# Override GraphQL URL/API Key (if needed)
 ansible-playbook ansible/playbooks/storefront/build.yml \
   -e "SHOPANA_GRAPHQL_URL=/api/client/graphql/query" \
   -e "SHOPANA_API_KEY=$SHOPANA_API_KEY"
 ```
 
-Вариант B — вручную docker build:
+Option B — manual docker build:
 
 ```bash
 cd /Users/phl/Projects/shopana-io/services
@@ -65,6 +65,42 @@ ansible-playbook ansible/playbooks/storefront/deploy.yml \
   -i ansible/hosts.ini \
   --limit shopana_sandbox \
   -e "image_tag=v1.0.0"
+```
+
+## Trigger GitHub Actions (gh)
+
+Trigger the build workflow via GitHub CLI:
+
+```bash
+# Requires gh installed and authenticated (run `gh auth login`)
+# Uses defaults from sandbox.vars.yml automatically
+ansible-playbook ansible/playbooks/storefront/trigger-gh-workflow.yml \
+  -e gh_repo_owner=shopana-io \
+  -e gh_repo_name=storefront \
+  -e gh_ref=main \
+  -e workflow_file=.github/workflows/storefront-build.yml \
+  -e image_tag=v1.2.3 \
+  -e BRAND=xyz \
+  -e CMS=shopana \
+  -e SHOPANA_GRAPHQL_URL=https://sandbox.shopana.io/api/client/graphql/query \
+  -e PORT=3000 \
+  -e SHOPANA_API_KEY=$SHOPANA_API_KEY \
+  -e NEXT_PUBLIC_APP_URL=https://bento.shopana.io \
+  -e platforms="linux/amd64,linux/arm64" \
+  -e gh_wait=true
+```
+
+Notes:
+- `NEXT_PUBLIC_APP_URL` and `platforms` are optional; you may omit them.
+- If `gh_wait=true`, the playbook waits for the workflow to finish and returns the exit status.
+
+Quick start using only sandbox defaults:
+
+```bash
+# Define only what you want to override (e.g., image_tag and API key)
+ansible-playbook ansible/playbooks/storefront/trigger-gh-workflow.yml \
+  -e image_tag=v1.2.3 \
+  -e SHOPANA_API_KEY=$SHOPANA_API_KEY
 ```
 
 ## Traefik

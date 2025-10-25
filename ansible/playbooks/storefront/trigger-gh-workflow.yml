@@ -1,0 +1,132 @@
+# Trigger GitHub Actions workflow (storefront-build) via gh CLI
+# Usage example:
+#   ansible-playbook ansible/playbooks/storefront/trigger-gh-workflow.yml \
+#     -e gh_repo_owner=shopana-io \
+#     -e gh_repo_name=storefront \
+#     -e gh_ref=main \
+#     -e workflow_file=.github/workflows/storefront-build.yml \
+#     -e image_tag=v1.2.3 \
+#     -e BRAND=xyz \
+#     -e CMS=shopana \
+#     -e SHOPANA_GRAPHQL_URL=https://sandbox.shopana.io/api/client/graphql/query \
+#     -e PORT=3000 \
+#     -e SHOPANA_API_KEY=*** \
+#     -e NEXT_PUBLIC_APP_URL=https://bento.shopana.io \
+#     -e platforms=linux/amd64,linux/arm64 \
+#     -e gh_wait=true
+---
+- name: Trigger Storefront build workflow via gh
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/sandbox.vars.yml"
+
+  tasks:
+    - name: Ensure required variables are provided
+      ansible.builtin.assert:
+        that:
+          - gh_repo_owner is defined and gh_repo_owner | length > 0
+          - gh_repo_name is defined and gh_repo_name | length > 0
+          - gh_ref is defined and gh_ref | length > 0
+          - workflow_file is defined and workflow_file | length > 0
+          - image_tag is defined and image_tag | length > 0
+          - BRAND is defined and BRAND | length > 0
+          - CMS is defined and CMS | length > 0
+          - SHOPANA_GRAPHQL_URL is defined and SHOPANA_GRAPHQL_URL | length > 0
+          - PORT is defined and (PORT | int) > 0
+          - SHOPANA_API_KEY is defined and SHOPANA_API_KEY | length > 0
+        fail_msg: >-
+          Missing required vars. Provide with -e. Required:
+          gh_repo_owner, gh_repo_name, gh_ref, workflow_file,
+          image_tag, BRAND, CMS, SHOPANA_GRAPHQL_URL, PORT, SHOPANA_API_KEY
+
+    - name: Check gh CLI installed
+      ansible.builtin.command:
+        cmd: gh --version
+      changed_when: false
+
+    - name: Ensure gh is authenticated
+      ansible.builtin.command:
+        cmd: gh auth status -h github.com
+      register: gh_auth
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if gh is not authenticated
+      ansible.builtin.fail:
+        msg: |
+          gh is not authenticated. Run `gh auth login` and try again.
+      when: gh_auth.rc != 0
+
+    - name: Build gh command argv
+      ansible.builtin.set_fact:
+        gh_argv:
+          - gh
+          - workflow
+          - run
+          - "{{ workflow_file | basename }}"
+          - -R
+          - "{{ gh_repo_owner }}/{{ gh_repo_name }}"
+          - --ref
+          - "{{ gh_ref }}"
+          - -f
+          - "image_tag={{ image_tag }}"
+          - -f
+          - "brand={{ BRAND }}"
+          - -f
+          - "cms={{ CMS }}"
+          - -f
+          - "shopana_graphql_url={{ SHOPANA_GRAPHQL_URL }}"
+          - -f
+          - "port={{ PORT }}"
+          - -f
+          - "shopana_api_key={{ SHOPANA_API_KEY }}"
+
+    - name: Add NEXT_PUBLIC_APP_URL arg when provided
+      ansible.builtin.set_fact:
+        gh_argv: "{{ gh_argv + ['-f', 'next_public_app_url=' ~ NEXT_PUBLIC_APP_URL] }}"
+      when: NEXT_PUBLIC_APP_URL is defined and NEXT_PUBLIC_APP_URL | length > 0
+
+    - name: Add platforms arg when provided
+      ansible.builtin.set_fact:
+        gh_argv: "{{ gh_argv + ['-f', 'platforms=' ~ platforms] }}"
+      when: platforms is defined and platforms | length > 0
+
+    - name: Show gh command (sanitized)
+      ansible.builtin.debug:
+        msg: "Running: {{ (gh_argv | map('regex_replace', '^shopana_api_key=.*$', 'shopana_api_key=***')) | join(' ') }}"
+
+    - name: Trigger workflow run via gh
+      ansible.builtin.command:
+        argv: "{{ gh_argv }}"
+      register: trigger_out
+      changed_when: true
+
+    - name: Extract run URL
+      ansible.builtin.set_fact:
+        gh_run_url: "{{ (trigger_out.stdout | default('')) | regex_search('https://[^ ]+/actions/runs/[0-9]+') | default('', true) }}"
+
+    - name: Extract run ID
+      ansible.builtin.set_fact:
+        gh_run_id: "{{ (gh_run_url | default('', true) | regex_replace('.*/actions/runs/', '')) if (gh_run_url | default('', true)) else '' }}"
+
+    - name: Show workflow run info
+      ansible.builtin.debug:
+        msg:
+          - "🚀 Workflow dispatched"
+          - "Repository: {{ gh_repo_owner }}/{{ gh_repo_name }}"
+          - "Ref: {{ gh_ref }}"
+          - "Workflow: {{ workflow_file }}"
+          - "Run URL: {{ gh_run_url | default('n/a') }}"
+          - "Run ID: {{ gh_run_id | default('n/a') }}"
+
+    - name: Wait for workflow completion (optional)
+      ansible.builtin.command:
+        cmd: gh run watch --exit-status {{ gh_run_id }} -R {{ gh_repo_owner }}/{{ gh_repo_name }}
+      when:
+        - gh_wait is defined
+        - gh_wait | bool
+        - gh_run_id is defined
+        - gh_run_id | length > 0
+      changed_when: false
