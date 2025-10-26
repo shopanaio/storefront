@@ -88,7 +88,7 @@ export const useReviewStore = create<ReviewState>((set) => ({
 }));
 
 // boxBuilderStore
-interface BoxBuilderState {
+export interface BoxBuilderState {
   cartId: string | null;
   setCartId: (id: string | null) => void;
   boxProductIds: string[];
@@ -98,6 +98,7 @@ interface BoxBuilderState {
   removeBoxProductId: (id: string) => void;
   cardProductIds: string[];
   markProductIds: string[];
+  setMarkProductIds: (ids: string[]) => void;
   addCardProductId: (id: string) => void;
   setCardProductIds: (ids: string[]) => void;
   removeCardProductId: (id: string) => void;
@@ -132,15 +133,18 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
       },
       addDesignProductId: (id, productType) => {
         if (productType === ProductType.Box) {
-          set((state) => ({ boxProductIds: [...state.boxProductIds, id] }));
+          set(() => ({ boxProductIds: [id] }));
         } else if (productType === ProductType.Card) {
-          set((state) => ({ cardProductIds: [...state.cardProductIds, id] }));
+          set(() => ({ cardProductIds: [id] }));
         } else if (productType === ProductType.Mark) {
-          set((state) => ({ markProductIds: [...state.cardProductIds, id] }));
+          set(() => ({ markProductIds: [id] }));
         }
       },
       setCardProductIds: (ids) => {
         set({ cardProductIds: ids });
+      },
+      setMarkProductIds: (ids) => {
+        set({ markProductIds: ids });
       },
       removeCardProductId: (id) => {
         set((state) => ({
