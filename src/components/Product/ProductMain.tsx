@@ -101,7 +101,6 @@ export const ProductMain = ({
     stockStatus,
     sku,
     compareAtPrice,
-    price,
   } = currentVariant;
   const { isInCart } = useIsInTheCart({ purchasableId: currentVariant.id });
 
@@ -244,11 +243,15 @@ const useStyles = createStyles(
     container: css`
       width: 100%;
       ${getGalleryStyles(galleryBreakpoints, token)}
+
+      ${mq.lg} {
+        padding: ${token.padding}px;
+      }
     `,
     gallery: css`
       height: 100%;
       /* TODO: remove this */
-      width: calc(100vw - ${token.padding * 2}px);
+      width: 100vw;
       ${mq.lg} {
         width: 100%;
       }
@@ -284,7 +287,7 @@ const useStyles = createStyles(
       margin: 0;
     `,
     productInfo: css`
-      padding: 0 1px;
+      padding: 0 ${token.padding}px;
       max-width: 100%;
       max-width: 100%;
       overflow: hidden;
@@ -292,6 +295,10 @@ const useStyles = createStyles(
       white-space: nowrap;
 
       --thumb-size: 70px;
+
+      ${mq.lg} {
+        padding: 0 1px;
+      }
     `,
   })
 );
