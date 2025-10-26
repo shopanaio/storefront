@@ -136,7 +136,7 @@ const useStyles = createStyles(
         box-sizing: border-box;
 
         &.ant-btn-color-primary {
-          box-shadow: 0 0 0 1px ${token.colorPrimary};
+          box-shadow: 0 0 0 2px ${token.colorPrimary};
         }
       `,
       hovered: css`

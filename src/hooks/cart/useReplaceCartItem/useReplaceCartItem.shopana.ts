@@ -28,6 +28,14 @@ import { graphql, useMutation } from "react-relay";
 import { useReplaceCartItemMutation as ReplaceCartItemMutationType } from "@src/hooks/cart/useReplaceCartItem/__generated__/useReplaceCartItemMutation.graphql";
 import cartIdUtils from "@src/utils/cartId";
 import { ReplaceCartItemInput } from "./interface";
+import {
+  applyAggregateDelta,
+  createCheckoutLineRecord,
+  getCheckoutCurrency,
+  getLineCostSummary,
+  getVariantPricing,
+  updateLineCostForQuantity,
+} from "@src/hooks/cart/utils/optimisticCheckout";
 
 export const useReplaceCartItemMutation = graphql`
   mutation useReplaceCartItemMutation(
@@ -80,6 +88,104 @@ const useReplaceCartItem = () => {
               },
             ],
           },
+        },
+        optimisticUpdater: (store) => {
+          if (!cart?.id) {
+            return;
+          }
+
+          const checkoutRecord = store.get(cart.id);
+          if (!checkoutRecord) {
+            return;
+          }
+
+          const lines = checkoutRecord.getLinkedRecords("lines") ?? [];
+          const sourceLine = lines.find(
+            (lineRecord) => lineRecord.getValue("id") === input.lineId
+          );
+
+          if (!sourceLine) {
+            return;
+          }
+
+          const sourceSummary = getLineCostSummary(sourceLine);
+          if (sourceSummary.quantity <= 0) {
+            return;
+          }
+
+          const requestedQuantity =
+            input.quantity === undefined
+              ? sourceSummary.quantity
+              : Math.min(Math.max(input.quantity, 0), sourceSummary.quantity);
+
+          if (requestedQuantity <= 0) {
+            return;
+          }
+
+          const remainingQuantity = sourceSummary.quantity - requestedQuantity;
+
+          const {
+            oldQuantity,
+            newQuantity,
+            oldSubtotal,
+            newSubtotal,
+            oldTotal,
+            newTotal,
+          } = updateLineCostForQuantity(sourceLine, remainingQuantity);
+
+          applyAggregateDelta(checkoutRecord, {
+            quantityDelta: newQuantity - oldQuantity,
+            subtotalDelta: newSubtotal - oldSubtotal,
+            totalDelta: newTotal - oldTotal,
+            discountDelta:
+              (newSubtotal - newTotal) - (oldSubtotal - oldTotal),
+          });
+
+          let updatedLines = lines;
+          if (remainingQuantity <= 0) {
+            updatedLines = lines.filter((line) => line !== sourceLine);
+          }
+
+          const variantRecord = store.get(input.purchasableId);
+          const variantPricing = getVariantPricing(variantRecord);
+          const checkoutCurrency =
+            getCheckoutCurrency(checkoutRecord) ??
+            sourceSummary.currencyCode ??
+            variantPricing.currencyCode ??
+            cart?.cost.totalAmount.currencyCode ??
+            "USD";
+
+          const unitTotal =
+            variantPricing.priceAmount || sourceSummary.unitTotal || 0;
+          const unitSubtotal =
+            variantPricing.compareAtAmount ||
+            sourceSummary.unitSubtotal ||
+            unitTotal;
+
+          const subtotalAmount = unitSubtotal * requestedQuantity;
+          const totalAmount = unitTotal * requestedQuantity;
+
+          const newLine = createCheckoutLineRecord({
+            store,
+            purchasableId: input.purchasableId,
+            quantity: requestedQuantity,
+            currencyCode: checkoutCurrency,
+            unitPrice: unitTotal,
+            compareAtUnitPrice: unitSubtotal,
+            subtotalAmount,
+            totalAmount,
+            variantRecord,
+          });
+
+          const nextLines = [...updatedLines, newLine.lineRecord];
+          checkoutRecord.setLinkedRecords(nextLines, "lines");
+
+          applyAggregateDelta(checkoutRecord, {
+            quantityDelta: newLine.quantity,
+            subtotalDelta: newLine.subtotalAmount,
+            totalDelta: newLine.totalAmount,
+            discountDelta: newLine.discountAmount,
+          });
         },
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
