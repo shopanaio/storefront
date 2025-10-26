@@ -1,7 +1,8 @@
-import { create } from "zustand";
-import type { Entity } from "@shopana/entity";
-import { CurrencyCode } from "@codegen/schema-client";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { create } from 'zustand';
+import type { Entity } from '@shopana/entity';
+import { CurrencyCode } from '@codegen/schema-client';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { ProductType } from '@src/modules/storefront-box-builder-module/config/types';
 
 // modalStore
 interface ModalState {
@@ -32,7 +33,7 @@ export const useModalStore = create<ModalState>((set) => ({
   setIsAppDrawerOpen: (open) => set({ isAppDrawerOpen: open }),
   searchDialogOpen: false,
   setSearchDialogOpen: (open) => set({ searchDialogOpen: open }),
-  searchTerm: "",
+  searchTerm: '',
   setSearchTerm: (term) => set({ searchTerm: term }),
 }));
 
@@ -93,8 +94,10 @@ interface BoxBuilderState {
   boxProductIds: string[];
   setBoxProductIds: (id: string[]) => void;
   addBoxProductId: (id: string) => void;
+  addDesignProductId: (id: string, productType: ProductType) => void;
   removeBoxProductId: (id: string) => void;
   cardProductIds: string[];
+  markProductIds: string[];
   addCardProductId: (id: string) => void;
   setCardProductIds: (ids: string[]) => void;
   removeCardProductId: (id: string) => void;
@@ -110,6 +113,7 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
       setCartId: (id) => set({ cartId: id }),
       /** Box products */
       boxProductIds: [],
+      markProductIds: [],
       setBoxProductIds: (ids) => {
         set({ boxProductIds: ids });
       },
@@ -125,6 +129,15 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
       cardProductIds: [],
       addCardProductId: (id) => {
         set((state) => ({ cardProductIds: [...state.cardProductIds, id] }));
+      },
+      addDesignProductId: (id, productType) => {
+        if (productType === ProductType.Box) {
+          set((state) => ({ boxProductIds: [...state.boxProductIds, id] }));
+        } else if (productType === ProductType.Card) {
+          set((state) => ({ cardProductIds: [...state.cardProductIds, id] }));
+        } else if (productType === ProductType.Mark) {
+          set((state) => ({ markProductIds: [...state.cardProductIds, id] }));
+        }
       },
       setCardProductIds: (ids) => {
         set({ cardProductIds: ids });
@@ -146,7 +159,7 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
       },
     }),
     {
-      name: "box-builder-store",
+      name: 'box-builder-store',
       storage: createJSONStorage(() => localStorage),
     }
   )
@@ -176,7 +189,7 @@ export const useFiltersStore = create<FiltersState>((set, get) => ({
   setSelectedFilters: (filters) =>
     set((state) => ({
       selectedFilters:
-        typeof filters === "function"
+        typeof filters === 'function'
           ? filters(state.selectedFilters)
           : filters,
     })),

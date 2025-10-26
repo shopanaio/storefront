@@ -331,11 +331,15 @@
       "title": "Choose a box",
       "description": "Choose the box that best suits your gift"
     },
+    "step1Combined": {
+      "title": "Select Design",
+      "description": "Select your favorite items for a great box!"
+    },
     "step2": {
       "title": "Choose products",
       "subtitle": "CHOOSE PRODUCTS",
       "description": "We've selected the best products in one place. Choose products below and fill your box!",
-        "size-label": "Box size",
+      "size-label": "Box size",
       "size": {
         "small": "Small",
         "medium": "Medium",
@@ -353,9 +357,9 @@
     "step-check": {
       "subtitle": "READY!",
       "title": "Review your box",
-        "selected-design": "Selected design",
-        "cards": "Cards",
-        "products-in-box": "Products in the box",
+      "selected-design": "Selected design",
+      "cards": "Cards",
+      "products-in-box": "Products in the box",
       "custom-box": "Custom box",
       "description": "Check if everything is perfect before sending.",
       "no-products": "You haven't selected any products yet",
