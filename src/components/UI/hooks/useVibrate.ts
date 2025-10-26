@@ -1,12 +1,16 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
 export type VibratePattern = number | number[];
 
 export function useVibrate() {
-  return useCallback((pattern: VibratePattern) => {
-    if (typeof window !== "undefined" && typeof navigator !== "undefined" && "vibrate" in navigator) {
+  return useCallback((_?: VibratePattern) => {
+    if (
+      typeof window !== 'undefined' &&
+      typeof navigator !== 'undefined' &&
+      'vibrate' in navigator
+    ) {
       try {
-        (navigator as any).vibrate(pattern as any);
+        (navigator as any).vibrate(3);
       } catch {}
     }
   }, []);

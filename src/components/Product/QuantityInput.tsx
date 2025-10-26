@@ -19,10 +19,10 @@ export interface QuantityInputProps {
   loading?: boolean;
 }
 
-const sizes = ['small', 'middle', 'large'] as SizeType[];
+const sizes = ['middle', 'large'] as SizeType[];
 const getSmallerSize = (size: ButtonProps['size']) => {
   const index = sizes.indexOf(size);
-  return sizes[index - 1] || 'small';
+  return sizes[index - 1] || 'middle';
 };
 const iconSize = {
   small: 16,
@@ -117,7 +117,7 @@ const useStyles = createStyles(
 
     return {
       container: css`
-        padding: 3px;
+        padding: 0;
         border-radius: ${borderRadius}px;
         border-color: ${color === 'primary' ? token.colorPrimary : undefined};
       `,
