@@ -42,7 +42,7 @@ export const QuantityInput = ({
   loading = false,
   style,
 }: QuantityInputProps) => {
-  const { styles, theme } = useStyles({ size });
+  const { styles, theme } = useStyles({ size, color });
   const prevAction = useRef<'inc' | 'dec' | null>(null);
   const buttonSize = getSmallerSize(size);
 
@@ -108,7 +108,10 @@ export const QuantityInput = ({
 };
 
 const useStyles = createStyles(
-  ({ css, token }, { size }: { size: ButtonProps['size'] }) => {
+  (
+    { css, token },
+    { size, color }: { size: ButtonProps['size']; color: 'primary' | 'default' }
+  ) => {
     const borderRadius =
       size === 'large' ? token.borderRadiusLG : token.borderRadius;
 
@@ -116,6 +119,7 @@ const useStyles = createStyles(
       container: css`
         padding: 3px;
         border-radius: ${borderRadius}px;
+        border-color: ${color === 'primary' ? token.colorPrimary : undefined};
       `,
     };
   }

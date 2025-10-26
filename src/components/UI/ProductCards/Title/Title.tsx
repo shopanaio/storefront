@@ -39,10 +39,10 @@ const useStyles = createStyles(
   ) => ({
     title: css`
       ${multilineEllipsis(rows, 1.5)};
+      font-weight: 400;
 
       text-align: left;
       font-size: ${size === "large" ? token.fontSizeLG : token.fontSize}px;
-      font-weight: var(--font-weight-400);
       line-height: 1.3;
       color: ${token.colorText};
     `,

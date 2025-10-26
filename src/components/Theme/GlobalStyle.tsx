@@ -8,6 +8,10 @@ export const GlobalStyle = createGlobalStyle`
     background-color: var(--ant-color-bg-base);
   }
 
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   :root {
     --components-header-control-height: 42px;
     --components-drawer-width: min(100vw, 500px);

@@ -5,21 +5,19 @@ import { Listing$key } from "@src/queries/Listing/__generated__/Listing.graphql"
 import Listing from "@src/queries/Listing";
 import { ApiFilterInput, ListingSort } from "codegen/schema-client";
 import { ProductsGrid } from "./ProductsGrid ";
-import { Spin, Button, Progress, Typography } from "antd";
+import { Spin } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import React from "react";
 import useCategoryRefetch from "@src/hooks/category/useCategoryRefetch";
 import { PAGINATION_PAGE_SIZE } from "@src/config";
+import { ListingPagination } from "./ListingPagination";
 
 interface ListingProductsProps {
   category: Listing$key | null;
   sort: ListingSort;
   filters: ApiFilterInput[];
 }
-
-const { Text } = Typography;
-
 export const ListingProducts: React.FC<ListingProductsProps> = ({
   category,
   sort,
@@ -53,39 +51,21 @@ export const ListingProducts: React.FC<ListingProductsProps> = ({
   // Calculate progress data
   const currentCount = products.length;
   const totalCount = data.listing.totalCount;
-  const progressPercent =
-    totalCount > 0 ? (currentCount / totalCount) * 100 : 0;
-
   return (
     <div className={styles.container}>
       <ProductsGrid products={products} />
-      <div className={styles.progressContainer}>
-        <Text>
-          {t("showing-of-total", {
-            current: currentCount,
-            total: totalCount,
-          })}
-        </Text>
-        <Progress
-          percent={progressPercent}
-          showInfo={false}
-          className={styles.progressBar}
-          strokeWidth={6}
-        />
-        {hasNext && (
-          <div className={styles.loadMoreContainer}>
-            <Button
-              type="primary"
-              size="large"
-              loading={isLoadingNext}
-              onClick={handleLoadMore}
-              className={styles.loadMoreButton}
-            >
-              {t("load-more")}
-            </Button>
-          </div>
-        )}
-      </div>
+      <ListingPagination
+        currentCount={currentCount}
+        totalCount={totalCount}
+        hasNext={hasNext}
+        isLoadingNext={isLoadingNext}
+        onLoadMore={handleLoadMore}
+        summaryLabel={t("showing-of-total", {
+          current: currentCount,
+          total: totalCount,
+        })}
+        loadMoreLabel={t("load-more")}
+      />
     </div>
   );
 };
@@ -98,27 +78,6 @@ const useStyles = createStyles(({ token, css }) => {
       flex-direction: column;
       align-items: center;
       gap: ${token.marginLG}px;
-    `,
-    progressContainer: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      max-width: 400px;
-      width: 100%;
-      flex-grow: 1;
-    `,
-    progressBar: css`
-      & .ant-progress-outer {
-        padding: 0 !important;
-      }
-    `,
-    loadMoreContainer: css`
-      display: flex;
-      justify-content: center;
-      padding: ${token.padding}px 0;
-    `,
-    loadMoreButton: css`
-      min-width: 200px;
     `,
     spinnerContainer: css`
       display: flex;

@@ -1,11 +1,17 @@
-"use client";
+'use client';
 
-import { Button } from "antd";
-import { createStyles } from "antd-style";
-import { ReactNode } from "react";
-import FallbackAwareImage from "@src/components/UI/Image";
-import clsx from "clsx";
-import { useHover } from "@src/components/UI/hooks/useHover";
+import { Button } from 'antd';
+import { createStyles } from 'antd-style';
+import { ReactNode } from 'react';
+import FallbackAwareImage from '@src/components/UI/Image';
+import clsx from 'clsx';
+import { useHover } from '@src/components/UI/hooks/useHover';
+
+type OverlayPlacement =
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
 
 export interface ThumbnailProps {
   src?: string;
@@ -21,7 +27,10 @@ export interface ThumbnailProps {
   onMouseOver?: () => void;
   /** Optional overlay element (e.g., Radio / Checkbox) */
   overlay?: ReactNode;
+  overlayClassName?: string;
+  overlayPlacement?: OverlayPlacement;
   className?: string;
+  borderOffset?: number;
 }
 
 /**
@@ -30,7 +39,7 @@ export interface ThumbnailProps {
  */
 export const Thumbnail = ({
   src,
-  alt = "thumbnail",
+  alt = 'thumbnail',
   gallery = [],
   selected = false,
   hovered = false,
@@ -38,9 +47,12 @@ export const Thumbnail = ({
   onClick,
   onMouseOver,
   overlay,
+  overlayPlacement = 'top-right',
+  overlayClassName,
   className,
+  borderOffset = 2,
 }: ThumbnailProps) => {
-  const { styles } = useStyles();
+  const { styles } = useStyles({ overlayPlacement, borderOffset });
   const [isHovering, hoverHandlers] = useHover();
 
   // Use gallery if provided, otherwise fallback to src
@@ -50,16 +62,19 @@ export const Thumbnail = ({
   return (
     <Button
       className={clsx(className, styles.thumbnailButton, {
-        "ant-btn-color-primary": selected,
+        'ant-btn-color-primary': selected,
         [styles.hovered]: hovered,
       })}
       color="default"
       disabled={disabled}
       variant="outlined"
-      onClick={onClick}
       {...hoverHandlers}
     >
-      <div className={styles.imageWrapper} onMouseOver={onMouseOver}>
+      <div
+        onClick={onClick}
+        className={styles.imageWrapper}
+        onMouseOver={onMouseOver}
+      >
         {/* Second image for hover effect */}
         {secondImage && (
           <div
@@ -90,61 +105,78 @@ export const Thumbnail = ({
             loading="lazy"
           />
         </div>
-        {overlay && <div className={styles.overlay}>{overlay}</div>}
       </div>
+      {overlay && (
+        <div className={overlayClassName || styles.overlay}>{overlay}</div>
+      )}
     </Button>
   );
 };
 
-const useStyles = createStyles(({ css, token }) => {
-  return {
-    thumbnailButton: css`
-      /* Height inherits from external class when necessary */
-      padding: ${token.paddingXXS}px;
-      border-radius: ${token.borderRadius}px;
-      transition: all 0.2s ease;
-      min-height: 48px;
-      height: unset;
-      flex-shrink: 0 !important;
-      aspect-ratio: 1 / 1;
-      box-sizing: border-box;
+const useStyles = createStyles(
+  (
+    { css, token },
+    {
+      overlayPlacement,
+      borderOffset,
+    }: { overlayPlacement: OverlayPlacement; borderOffset: number }
+  ) => {
+    const overlayOffset = borderOffset * 2;
 
-      &.ant-btn-color-primary {
-        box-shadow: 0 0 0 1px ${token.colorPrimary};
-      }
-    `,
-    hovered: css`
-      border-color: ${token.colorPrimary};
-    `,
-    imageWrapper: css`
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      border-radius: ${token.borderRadius}px;
-    `,
-    imageContainer: css`
-      position: absolute;
-      inset: 0;
-      transition: opacity 0.2s ease;
-    `,
-    img: css`
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      aspect-ratio: 1 / 1;
-      border-radius: ${token.borderRadius}px;
-    `,
-    placeholder: css`
-      width: 100%;
-      border-radius: ${token.borderRadius}px;
-      background-color: ${token.colorFillSecondary};
-    `,
-    overlay: css`
-      position: absolute;
-      top: 0px;
-      right: 2px;
-      z-index: 3;
-    `,
-  };
-});
+    return {
+      thumbnailButton: css`
+        /* Height inherits from external class when necessary */
+        padding: ${borderOffset}px;
+        border-radius: ${token.borderRadius}px;
+        transition: all 0.2s ease;
+        min-height: 48px;
+        height: unset;
+        flex-shrink: 0 !important;
+        aspect-ratio: 1 / 1;
+        box-sizing: border-box;
+
+        &.ant-btn-color-primary {
+          box-shadow: 0 0 0 1px ${token.colorPrimary};
+        }
+      `,
+      hovered: css`
+        border-color: ${token.colorPrimary};
+      `,
+      imageWrapper: css`
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: ${token.borderRadius}px;
+      `,
+      imageContainer: css`
+        position: absolute;
+        inset: 0;
+        transition: opacity 0.2s ease;
+      `,
+      img: css`
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        aspect-ratio: 1 / 1;
+        border-radius: ${token.borderRadius}px;
+      `,
+      placeholder: css`
+        width: 100%;
+        border-radius: ${token.borderRadius}px;
+        background-color: ${token.colorFillSecondary};
+      `,
+      overlay: css`
+        position: absolute;
+        inset: ${overlayPlacement === 'top-left'
+          ? `${overlayOffset}px auto auto ${overlayOffset}px`
+          : overlayPlacement === 'top-right'
+            ? `${overlayOffset}px ${overlayOffset}px auto auto`
+            : overlayPlacement === 'bottom-left'
+              ? `auto auto ${overlayOffset}px ${overlayOffset}px`
+              : `auto ${overlayOffset}px ${overlayOffset}px auto`};
+        z-index: 3;
+      `,
+    };
+  }
+);
