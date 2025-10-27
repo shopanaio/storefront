@@ -1,7 +1,8 @@
-import useCart from "../useCart";
-import { graphql, useMutation } from "react-relay";
-import { useCartContext } from "@src/providers/cart-context";
-import { ClearCartInput, UseClearCartReturn } from "./interface";
+import useCart from '../useCart';
+import { graphql, useMutation } from 'react-relay';
+import { useCartContext } from '@src/providers/cart-context';
+import { ClearCartInput, UseClearCartReturn } from './interface';
+import { useCartStore } from '@src/store/cartStore';
 
 const useClearCartMutation = graphql`
   mutation useClearCartMutation($input: CheckoutLinesClearInput!) {
@@ -37,11 +38,13 @@ const useClearCart = (): UseClearCartReturn => {
 
       // If no cart in cookie or context — just exit
       if (!cartId) {
-        console.warn("[useClearCart] No cart to clear");
+        console.warn('[useClearCart] No cart to clear');
         return null;
       }
 
       return new Promise((resolve, reject) => {
+        const { checkoutClear } = useCartStore.getState();
+        const { revert } = checkoutClear();
         commitClearCart({
           variables: {
             input: {
@@ -50,12 +53,14 @@ const useClearCart = (): UseClearCartReturn => {
           },
           onCompleted: (response, errors) => {
             if (errors && errors.length > 0) {
+              revert();
               options?.onError?.();
               return reject(errors);
             } else if (
               response?.checkoutMutation?.checkoutLinesClear?.errors &&
               response.checkoutMutation.checkoutLinesClear.errors.length > 0
             ) {
+              revert();
               options?.onError?.();
               return reject(
                 response.checkoutMutation.checkoutLinesClear.errors
@@ -71,6 +76,7 @@ const useClearCart = (): UseClearCartReturn => {
             }
           },
           onError: (err) => {
+            revert();
             options?.onError?.();
             return reject(err);
           },

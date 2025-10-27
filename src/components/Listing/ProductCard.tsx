@@ -126,6 +126,7 @@ export const ListingProductCardRelay = ({
         if (!isInCart) {
           addToCart({
             purchasableId: product.id,
+            purchasableSnapshot: product as Entity.ProductVariant,
             quantity: 1,
           });
         }

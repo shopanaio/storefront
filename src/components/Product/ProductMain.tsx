@@ -210,6 +210,7 @@ export const ProductMain = ({
                       const children = groups.buildChildren();
                       addToCart({
                         purchasableId: currentVariant.id,
+                        purchasableSnapshot: currentVariant,
                         quantity: 1,
                         children,
                       });

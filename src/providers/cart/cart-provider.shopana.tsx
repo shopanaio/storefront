@@ -7,6 +7,9 @@ import { useCart_CartFragment$key } from '@src/hooks/cart/useCart/__generated__/
 import cartIdUtils from '@src/utils/cartId';
 import loadCartQuery from '@src/hooks/cart/loadCartQuery';
 import { loadCartQuery as LoadCartQueryType } from '@src/hooks/cart/loadCartQuery/__generated__/loadCartQuery.graphql';
+import { useCart_CartFragment } from '@src/hooks/cart/useCart/useCart.shopana';
+import useCartFragment from '@src/hooks/cart/useCartFragment';
+import { useCartStore } from '@src/store/cartStore';
 
 interface CartProviderProps {
   children: React.ReactNode;
@@ -14,6 +17,17 @@ interface CartProviderProps {
 }
 
 type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
+
+const CartDataStoreController = () => {
+  const { cart } = useCartFragment();
+  const { setCart } = useCartStore();
+
+  useEffect(() => {
+    setCart(cart);
+  }, [cart]);
+
+  return null;
+};
 
 const CartDataHandler: React.FC<{
   queryReference: LoadCartQueryReference;
@@ -119,6 +133,7 @@ const CartProvider: React.FC<CartProviderProps> = ({
         />
       ) : null}
       {children}
+      <CartDataStoreController />
     </CartContextProvider>
   );
 };

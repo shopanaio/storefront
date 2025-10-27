@@ -1,13 +1,10 @@
-import useCart from "../useCart";
-import { useCartContext } from "@src/providers/cart-context";
-import { graphql, useMutation } from "react-relay";
+import useCart from '../useCart';
+import { useCartContext } from '@src/providers/cart-context';
+import { graphql, useMutation } from 'react-relay';
 //import { CartLineQuantityMutation } from "@src/relay/queries/CartLineQuantityMutation.shopana";
-import { useUpdateCartLineQuantityMutation as CartLineQuantityMutationType } from "@src/hooks/cart/useUpdateCartLineQuantity/__generated__/useUpdateCartLineQuantityMutation.graphql";
-import cartIdUtils from "@src/utils/cartId";
-import {
-  applyAggregateDelta,
-  updateLineCostForQuantity,
-} from "@src/hooks/cart/utils/optimisticCheckout";
+import { useUpdateCartLineQuantityMutation as CartLineQuantityMutationType } from '@src/hooks/cart/useUpdateCartLineQuantity/__generated__/useUpdateCartLineQuantityMutation.graphql';
+import cartIdUtils from '@src/utils/cartId';
+import { useCartStore } from '@src/store/cartStore';
 
 export const useUpdateCartLineQuantityMutation = graphql`
   mutation useUpdateCartLineQuantityMutation(
@@ -43,10 +40,14 @@ const useUpdateCartLineQuantity = () => {
   ) => {
     const cartId = cart?.id;
     if (!cartId || !cart?.id) {
-      console.warn("[useUpdateCartLineQuantity] No cart to update");
+      console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
     return new Promise((resolve, reject) => {
+      const z = useCartStore.getState();
+      const { revert } = z.checkoutLinesUpdate({
+        lines: [{ lineId: cartItemId, quantity }],
+      });
       commit({
         variables: {
           input: {
@@ -59,55 +60,16 @@ const useUpdateCartLineQuantity = () => {
             ],
           },
         },
-        optimisticUpdater: (store) => {
-          if (!cart?.id) {
-            return;
-          }
-
-          const checkoutRecord = store.get(cart.id);
-          if (!checkoutRecord) {
-            return;
-          }
-
-          const lines = checkoutRecord.getLinkedRecords("lines") ?? [];
-          const targetLine = lines.find(
-            (lineRecord) => lineRecord.getValue("id") === cartItemId
-          );
-
-          if (!targetLine) {
-            return;
-          }
-
-          const {
-            oldQuantity,
-            newQuantity,
-            oldSubtotal,
-            newSubtotal,
-            oldTotal,
-            newTotal,
-          } = updateLineCostForQuantity(targetLine, quantity);
-
-          applyAggregateDelta(checkoutRecord, {
-            quantityDelta: newQuantity - oldQuantity,
-            subtotalDelta: newSubtotal - oldSubtotal,
-            totalDelta: newTotal - oldTotal,
-            discountDelta:
-              (newSubtotal - newTotal) - (oldSubtotal - oldTotal),
-          });
-
-          if (newQuantity <= 0) {
-            const filtered = lines.filter((line) => line !== targetLine);
-            checkoutRecord.setLinkedRecords(filtered, "lines");
-          }
-        },
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
+            revert();
             options?.onError?.();
             return reject(errors);
           } else if (
             response?.checkoutMutation?.checkoutLinesUpdate?.errors &&
             response.checkoutMutation.checkoutLinesUpdate.errors.length > 0
           ) {
+            revert();
             options?.onError?.();
             return reject(response.checkoutMutation.checkoutLinesUpdate.errors);
           } else {
@@ -127,6 +89,7 @@ const useUpdateCartLineQuantity = () => {
           }
         },
         onError: (err) => {
+          revert();
           options?.onError?.();
           return reject(err);
         },
