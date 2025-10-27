@@ -34,7 +34,7 @@ export const ListingPagination: React.FC<ListingPaginationProps> = ({
         percent={progressPercent}
         showInfo={false}
         className={styles.progressBar}
-        strokeWidth={6}
+        size={6}
         strokeColor={theme.colorPrimary}
       />
       {hasNext && (

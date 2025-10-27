@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  Suspense,
 } from 'react';
 import {
   PreloadedQuery,
@@ -19,6 +20,7 @@ import { useCheckoutFragment } from '@src/modules/checkout/hooks/useCheckout/use
 import { mapApiCheckoutToCheckout } from '@src/modules/checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
 import { useCheckoutFragment$key } from '@src/modules/checkout/hooks/useCheckout/__generated__/useCheckoutFragment.graphql';
 import type { Entity } from '@shopana/entity';
+import type { ApiCheckout } from '@codegen/schema-client';
 import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
 import { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
 
@@ -129,13 +131,15 @@ export const CheckoutDataContextProvider: React.FC<{
         queryReference: queryReference || null,
       }}
     >
-      {queryReference ? (
-        <CheckoutDataHandler
-          queryReference={queryReference}
-          onCheckoutData={handleCheckoutData}
-          onCheckoutNotFound={handleCheckoutNotFound}
-        />
-      ) : null}
+      <Suspense fallback={null}>
+        {queryReference ? (
+          <CheckoutDataHandler
+            queryReference={queryReference}
+            onCheckoutData={handleCheckoutData}
+            onCheckoutNotFound={handleCheckoutNotFound}
+          />
+        ) : null}
+      </Suspense>
       {children}
     </CheckoutDataContext.Provider>
   );

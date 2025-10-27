@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { PreloadedQuery, usePreloadedQuery, useQueryLoader } from 'react-relay';
 import { CartContextProvider } from '../cart-context';
-import { useCart_CartFragment$key } from '@src/hooks/cart/useCart/__generated__/useCart_CartFragment.graphql';
+import { useCart_CartFragment$key } from '@src/hooks/cart/useCartFragment/__generated__/useCart_CartFragment.graphql';
 import cartIdUtils from '@src/utils/cartId';
 import loadCartQuery from '@src/hooks/cart/loadCartQuery';
 import { loadCartQuery as LoadCartQueryType } from '@src/hooks/cart/loadCartQuery/__generated__/loadCartQuery.graphql';
-import { useCart_CartFragment } from '@src/hooks/cart/useCart/useCart.shopana';
 import useCartFragment from '@src/hooks/cart/useCartFragment';
 import { useCartStore } from '@src/store/cartStore';
 
@@ -20,7 +25,7 @@ type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
 
 const CartDataStoreController = () => {
   const { cart } = useCartFragment();
-  const { setCart } = useCartStore();
+  const { setCart } = useCartStore.getState();
 
   useEffect(() => {
     setCart(cart);
@@ -125,13 +130,15 @@ const CartProvider: React.FC<CartProviderProps> = ({
       }}
       cartId={cartId}
     >
-      {queryReference ? (
-        <CartDataHandler
-          queryReference={queryReference}
-          onCartData={handleCartData}
-          onCartNotFound={handleCartNotFound}
-        />
-      ) : null}
+      <Suspense fallback={null}>
+        {queryReference ? (
+          <CartDataHandler
+            queryReference={queryReference}
+            onCartData={handleCartData}
+            onCartNotFound={handleCartNotFound}
+          />
+        ) : null}
+      </Suspense>
       {children}
       <CartDataStoreController />
     </CartContextProvider>

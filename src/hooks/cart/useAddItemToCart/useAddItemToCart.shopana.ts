@@ -69,23 +69,24 @@ const useAddItemToCart = () => {
       }
 
       // If cart exists — add product through mutation
-      return new Promise((resolve, reject) => {
-        const { revert } = checkoutLinesAdd({
-          lines: [
-            {
-              purchasableId: purchasableId,
-              quantity: quantity,
-            },
-          ],
-          pricing: {
-            [purchasableId]: {
-              unitPrice: purchasableSnapshot.price.amount,
-              compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-              currencyCode,
-            },
-          },
-        });
 
+      const { revert } = checkoutLinesAdd({
+        lines: [
+          {
+            purchasableId: purchasableId,
+            quantity: quantity,
+          },
+        ],
+        pricing: {
+          [purchasableId]: {
+            unitPrice: purchasableSnapshot.price.amount,
+            compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
+            currencyCode,
+          },
+        },
+      });
+
+      return new Promise((resolve, reject) => {
         commitAddLine({
           variables: {
             input: {

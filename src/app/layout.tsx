@@ -3,6 +3,9 @@
 import { getCurrentEnvironment } from '@src/relay/Environment';
 import { RelayEnvironmentProvider } from 'react-relay';
 
+console.error = () => {};
+console.warn = () => {};
+
 export default function RootLayout({
   children,
 }: {

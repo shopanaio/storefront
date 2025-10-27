@@ -43,11 +43,11 @@ const useUpdateCartLineQuantity = () => {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
+    const z = useCartStore.getState();
+    const { revert } = z.checkoutLinesUpdate({
+      lines: [{ lineId: cartItemId, quantity }],
+    });
     return new Promise((resolve, reject) => {
-      const z = useCartStore.getState();
-      const { revert } = z.checkoutLinesUpdate({
-        lines: [{ lineId: cartItemId, quantity }],
-      });
       commit({
         variables: {
           input: {

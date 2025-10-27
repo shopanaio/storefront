@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useQueryLoader, usePreloadedQuery, useFragment } from "react-relay";
 import { CartContextProvider } from "../cart-context";
 import { useCart_CartFragment$key } from "@src/hooks/cart/useCartFragment/__generated__/useCart_CartFragment.graphql";
@@ -121,13 +121,15 @@ const CartProvider: React.FC<CartProviderProps> = ({
       }}
       cartId={cartId}
     >
-      {queryReference && (
-        <CartDataHandler
-          queryReference={queryReference}
-          onCartData={handleCartData}
-          onCartNotFound={handleCartNotFound}
-        />
-      )}
+      <Suspense fallback={null}>
+        {queryReference && (
+          <CartDataHandler
+            queryReference={queryReference}
+            onCartData={handleCartData}
+            onCartNotFound={handleCartNotFound}
+          />
+        )}
+      </Suspense>
       {children}
     </CartContextProvider>
   );
