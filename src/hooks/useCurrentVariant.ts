@@ -31,7 +31,6 @@ export function useCurrentVariant({
     throw new Error('Product not found');
   }
 
-  console.log('product', product, variantHandle);
   const currentVariant = useMemo(() => {
     if (product.variants.length === 1) {
       return product.variants[0];
