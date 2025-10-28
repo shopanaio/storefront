@@ -40,19 +40,11 @@ export const Image: React.FC<UiImageProps> = ({
 
   const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [minDelayElapsed, setMinDelayElapsed] = useState<boolean>(false);
 
   useEffect(() => {
     setResolvedSrc(src || fallbackSrc);
     setIsLoaded(false);
   }, [src, fallbackSrc]);
-
-  // Ensure skeleton is shown for at least 500ms for the current image src
-  useEffect(() => {
-    setMinDelayElapsed(false);
-    const timer = setTimeout(() => setMinDelayElapsed(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setIsLoaded(true);
@@ -74,7 +66,7 @@ export const Image: React.FC<UiImageProps> = ({
     return <Skeleton.Image active={false} className={styles.skeleton} />;
   }, [placeholder, styles.skeleton]);
 
-  const showSkeleton = !isLoaded || !minDelayElapsed;
+  const showSkeleton = !isLoaded;
 
   return (
     <div className={styles.wrapper} style={style}>
