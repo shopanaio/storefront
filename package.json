@@ -101,7 +101,7 @@
   },
   "scripts": {
     "start": "next start",
-    "build": "yarn relay && yarn widgets:build && next build",
+    "build": "yarn relay && yarn widgets:build && next build --webpack",
     "codegen": "node ./bin/graphql/codegen.js",
     "dev": "yarn relay && next dev -p 3001",
     "format:check": "prettier --check .",

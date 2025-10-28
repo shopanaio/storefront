@@ -22,9 +22,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   webpack: (config, { dev }) => {
     // Apply provider-resolving loader only for production builds (next build)
     if (!dev) {
