@@ -5,8 +5,12 @@ import type { ImageProps as AntImageProps } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
-import clsx from 'clsx';
-import { useMountedState } from 'react-use';
+import {
+  isImageCached,
+  preloadImage,
+  releaseImageCache,
+  retainImageCache,
+} from './imageCache';
 
 export interface UiImageProps
   extends Omit<AntImageProps, 'placeholder' | 'fallback'> {
@@ -19,9 +23,11 @@ export interface UiImageProps
 }
 
 /**
- * Image component that avoids broken-image flash:
- * - Shows placeholder until the actual image is fully loaded
- * - On error, swaps to `fallbackSrc` and waits for it to load before revealing
+ * Image component with optimistic preloading:
+ * - Uses a shared in-memory cache to reuse decoded images across component mounts
+ * - Sequentially attempts primary src followed by fallback until one resolves
+ * - Keeps placeholder visible until a cached or newly decoded image is ready
+ * - Allows external consumers to supply a custom placeholder or fallback source
  */
 export const Image: React.FC<UiImageProps> = ({
   src,
@@ -39,58 +45,142 @@ export const Image: React.FC<UiImageProps> = ({
 }) => {
   const { styles, cx } = useStyles({ ratio });
 
-  const isMounted = useMountedState();
-  const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [visibleSrc, setVisibleSrc] = useState<string | null>(null);
+  const [isImageVisible, setIsImageVisible] = useState(false);
 
   useEffect(() => {
-    if (!isMounted()) {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    setResolvedSrc(src || fallbackSrc);
-  }, [src, fallbackSrc, isMounted]);
+    const sources = Array.from(
+      new Set([src, fallbackSrc].filter(Boolean))
+    ) as string[];
 
-  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    setIsLoaded(true);
-    onLoad?.(e);
-  };
+    setIsImageVisible(false);
+    setVisibleSrc(null);
 
-  const handleError: NonNullable<AntImageProps['onError']> = (e) => {
-    if (resolvedSrc !== fallbackSrc) {
-      setResolvedSrc(fallbackSrc);
-      setIsLoaded(false);
-    } else {
-      setIsLoaded(true);
+    if (!sources.length) {
+      return;
     }
-    onError?.(e);
+
+    let isActive = true;
+
+    const preloadSources = async () => {
+      for (const candidate of sources) {
+        if (!isActive) {
+          return;
+        }
+
+        if (isImageCached(candidate)) {
+          setVisibleSrc(candidate);
+          setIsImageVisible(true);
+          return;
+        }
+
+        try {
+          await preloadImage(candidate);
+
+          if (!isActive) {
+            return;
+          }
+
+          setVisibleSrc(candidate);
+          return;
+        } catch {
+          // Try the next source.
+        }
+      }
+
+      if (!isActive) {
+        return;
+      }
+
+      const fallbackToShow = fallbackSrc ?? null;
+
+      if (fallbackToShow) {
+        setVisibleSrc(fallbackToShow);
+        setIsImageVisible(true);
+      }
+
+      onError?.(new Event('error') as any);
+    };
+
+    void preloadSources();
+
+    return () => {
+      isActive = false;
+    };
+  }, [src, fallbackSrc, onError]);
+
+  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    setIsImageVisible(true);
+    onLoad?.(event);
   };
 
-  const placeholderNode = useMemo(() => {
-    if (placeholder) return placeholder;
-    return <Skeleton.Image active={false} className={styles.skeleton} />;
-  }, [placeholder, styles.skeleton]);
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    setIsImageVisible(false);
+    if (fallbackSrc && visibleSrc && visibleSrc !== fallbackSrc) {
+      void preloadImage(fallbackSrc)
+        .then(() => {
+          setVisibleSrc(fallbackSrc);
+        })
+        .catch(() => undefined);
+    }
+    onError?.(event);
+  };
 
-  const showSkeleton = !isLoaded;
+  const placeholderContent = useMemo(
+    () =>
+      placeholder ?? (
+        <Skeleton.Image active={false} className={styles.skeleton} />
+      ),
+    [placeholder, styles.skeleton]
+  );
+
+  const placeholderVisible = !visibleSrc || !isImageVisible;
+
+  useEffect(() => {
+    if (!visibleSrc) {
+      return;
+    }
+
+    retainImageCache(visibleSrc);
+
+    return () => {
+      releaseImageCache(visibleSrc);
+    };
+  }, [visibleSrc]);
 
   return (
     <div className={styles.wrapper} style={style}>
-      {showSkeleton && placeholderNode}
-      <AntImage
-        {...rest}
-        className={styles.image}
-        src={resolvedSrc}
-        alt={alt}
-        preview={preview}
-        loading={loading}
-        width="100%"
-        height="100%"
-        onLoad={handleLoad}
-        onError={handleError}
-        style={{
-          visibility: showSkeleton ? 'hidden' : 'visible',
-        }}
-      />
+      <div
+        className={cx(
+          styles.placeholderWrapper,
+          !placeholderVisible && styles.placeholderHidden
+        )}
+        aria-hidden={!placeholderVisible}
+      >
+        <div className={styles.placeholderContent}>{placeholderContent}</div>
+      </div>
+      {visibleSrc && (
+        <AntImage
+          {...rest}
+          className={cx(
+            styles.image,
+            isImageVisible && styles.imageVisible,
+            className
+          )}
+          src={visibleSrc}
+          alt={alt}
+          preview={preview}
+          loading={loading}
+          width="100%"
+          height="100%"
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
+      )}
     </div>
   );
 };
@@ -104,6 +194,28 @@ const useStyles = createStyles(
         width: 100%;
         position: relative;
         aspect-ratio: ${aspectRatio};
+        overflow: hidden;
+      `,
+      placeholderWrapper: css`
+        position: absolute;
+        inset: 0;
+        display: flex;
+        transition: opacity 180ms ease;
+        opacity: 1;
+        pointer-events: none;
+      `,
+      placeholderHidden: css`
+        opacity: 0;
+      `,
+      placeholderContent: css`
+        width: 100%;
+        height: 100%;
+        aspect-ratio: ${aspectRatio};
+        border-radius: ${token.borderRadius}px;
+        background-color: ${token.colorFillSecondary};
+        display: flex;
+        align-items: stretch;
+        overflow: hidden;
       `,
       image: css`
         width: 100%;
@@ -111,22 +223,17 @@ const useStyles = createStyles(
         aspect-ratio: ${aspectRatio};
         object-fit: cover;
         display: block;
+        opacity: 0;
+        transition: opacity 180ms ease;
       `,
-      placeholderImg: css`
-        width: 100%;
-        height: 100%;
-        aspect-ratio: ${aspectRatio};
-        border-radius: ${token.borderRadius}px;
-        object-fit: cover;
-        display: block;
-        background-color: ${token.colorFillSecondary};
+      imageVisible: css`
+        opacity: 1;
       `,
       skeleton: css`
         width: 100% !important;
         height: 100% !important;
         aspect-ratio: ${aspectRatio};
-        position: absolute;
-        inset: 0;
+        display: block !important;
 
         .ant-skeleton-image {
           width: 100%;
