@@ -1,13 +1,36 @@
-import { useMemo } from "react";
-import type { Entity } from "@shopana/entity";
+import { useMemo } from 'react';
+import type { Entity } from '@shopana/entity';
 
-export const useProductGallery = (product: Entity.Product): Entity.Media[] => {
+export const useProductGallery = (
+  variant: Entity.ProductVariant,
+  product: Entity.Product
+): Entity.Media[] => {
   return useMemo(() => {
-    return [
-      ...product?.gallery?.edges.map((it) => it.node),
-      ...(product?.groups
-        .flatMap((g) => g.items.map((item) => item?.node?.cover))
-        .filter(Boolean) as Entity.Media[]),
-    ];
-  }, [product.gallery, product.groups]);
+    const seen = new Set<string>();
+    const result: Entity.Media[] = [];
+
+    const append = (media?: Entity.Media | null) => {
+      if (!media) return;
+
+      const key = media.id ?? media.url;
+      if (!key || seen.has(key)) return;
+
+      seen.add(key);
+      result.push(media);
+    };
+
+    append(variant?.cover ?? null);
+
+    variant?.gallery?.edges?.forEach((edge) => {
+      append(edge?.node ?? null);
+    });
+
+    product?.groups?.forEach((group) => {
+      group?.items?.forEach((item) => {
+        append(item?.node?.cover ?? null);
+      });
+    });
+
+    return result;
+  }, [variant?.cover, variant?.gallery, product?.groups]);
 };

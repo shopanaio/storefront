@@ -106,11 +106,7 @@ export const ProductMain = ({
 
   const groups = useProductGroups(product, currentVariant);
 
-  const gallery = useProductGallery({
-    ...product,
-    cover,
-    gallery: variantGallery,
-  } as Entity.Product);
+  const gallery = useProductGallery(currentVariant, product);
   const { styleBreakpoints, swiperBreakpoints } = useGalleryBreakpoints(
     galleryBreakpoints,
     gallery.length

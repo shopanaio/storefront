@@ -1,40 +1,40 @@
 /* eslint-disable @next/next/no-img-element */
-"use client";
+'use client';
 
-import { Button, Flex } from "antd";
-import { createStyles, cx } from "antd-style";
-import { mq } from "../Theme/breakpoints";
-import { A11y, Pagination, Thumbs } from "swiper/modules";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { useSwiperSync } from "@src/hooks/useSwiperSync";
-import "swiper/css";
-import "swiper/css/virtual";
-import "swiper/css/pagination";
-import "swiper/css/a11y";
-import "swiper/css/thumbs";
+import { Button, Flex } from 'antd';
+import { createStyles, cx } from 'antd-style';
+import { mq } from '../Theme/breakpoints';
+import { A11y, Pagination, Thumbs } from 'swiper/modules';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { useSwiperSync } from '@src/hooks/useSwiperSync';
+import 'swiper/css';
+import 'swiper/css/virtual';
+import 'swiper/css/pagination';
+import 'swiper/css/a11y';
+import 'swiper/css/thumbs';
 import {
   TbChevronDown,
   TbChevronLeft,
   TbChevronRight,
   TbChevronUp,
-} from "react-icons/tb";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import type { Entity } from "@shopana/entity";
-import { useMemo } from "react";
-import { IsomorphicSwiper } from "../MySwiper/IsomorphicSwiper";
-import type { SwiperOptions } from "swiper/types";
-import FallbackAwareImage from "@src/components/UI/Image";
+} from 'react-icons/tb';
+import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import type { Entity } from '@shopana/entity';
+import { useMemo } from 'react';
+import { IsomorphicSwiper } from '../MySwiper/IsomorphicSwiper';
+import type { SwiperOptions } from 'swiper/types';
+import FallbackAwareImage from '@src/components/UI/Image';
 
 interface Prop {
   gallery: Entity.Media[];
   /** Method for switching slides by thumbnails: click or hover */
-  thumbnailTrigger?: "click" | "hover";
+  thumbnailTrigger?: 'click' | 'hover';
   breakpoints?: Record<number, SwiperOptions>;
 }
 
 export const ProductGallery = ({
   gallery,
-  thumbnailTrigger = "click",
+  thumbnailTrigger = 'click',
   breakpoints,
 }: Prop) => {
   const { styles } = useStyles();
@@ -57,24 +57,28 @@ export const ProductGallery = ({
     if (thumbsSwiper && !thumbsSwiper.destroyed) {
       return thumbsSwiper?.params?.direction;
     }
-    return "horizontal";
+    return 'horizontal';
   }, [thumbsSwiper]);
 
   return (
-    <Flex className={cx(styles.container, "product-gallery-container")}>
-      <div className={cx(styles.swiperContainer, "main-swiper-container")}>
+    <Flex className={cx(styles.container, 'product-gallery-container')}>
+      <div className={cx(styles.swiperContainer, 'main-swiper-container')}>
         <IsomorphicSwiper>
           {({ Swiper, SwiperSlide }) => (
             <Swiper
               modules={[A11y, Thumbs, Pagination]}
               spaceBetween={0}
               slidesPerView={1}
-              thumbs={thumbsSwiper ? { swiper: thumbsSwiper } : undefined}
-              pagination={{
-                clickable: true,
-                dynamicBullets: true,
-                el: `.swiper-pagination`,
+              breakpoints={{
+                1024: {
+                  pagination: false,
+                },
               }}
+              pagination={{
+                el: '.swiper-pagination',
+                type: 'fraction',
+              }}
+              thumbs={thumbsSwiper ? { swiper: thumbsSwiper } : undefined}
               loop
               onSwiper={handleMainSwiperInit}
               onSlideChange={handleMainSlideChange}
@@ -82,10 +86,10 @@ export const ProductGallery = ({
               {gallery.map((it, idx) => (
                 <SwiperSlide key={idx} className={styles.swiperSlide}>
                   <FallbackAwareImage
-                    src={it.url || ""}
+                    src={it.url || ''}
                     className={styles.swiperImage}
                     alt=""
-                    ratio={"var(--gallery-aspect-ratio)"}
+                    ratio={'var(--gallery-aspect-ratio)'}
                     preview={false}
                     loading="lazy"
                   />
@@ -114,7 +118,7 @@ export const ProductGallery = ({
             </Swiper>
           )}
         </IsomorphicSwiper>
-        <div className={cx("swiper-pagination", styles.swiperPagination)} />
+        <div className={cx('swiper-pagination', styles.swiperPagination)} />
       </div>
       <div className="thumbnails-container">
         <IsomorphicSwiper>
@@ -132,10 +136,10 @@ export const ProductGallery = ({
                 <SwiperSlide key={idx}>
                   <Thumbnail
                     className={styles.thumbnailImageContainer}
-                    src={it.url || ""}
+                    src={it.url || ''}
                     alt=""
                     selected={activeIndex === idx}
-                    {...(thumbnailTrigger === "hover"
+                    {...(thumbnailTrigger === 'hover'
                       ? { onMouseOver: () => handleThumbnailHover(idx) }
                       : { onClick: () => handleThumbnailClick(idx) })}
                   />
@@ -148,14 +152,14 @@ export const ProductGallery = ({
                 className={cx(
                   styles.prevNextBtn,
                   styles.thumbnailSwiperBtn,
-                  thumbnailDirection === "horizontal"
+                  thumbnailDirection === 'horizontal'
                     ? styles.galleryHorizontalPrevBtn
                     : styles.navigationPrevButton
                 )}
-                onClick={() => handleThumbnailNavigation("prev")}
+                onClick={() => handleThumbnailNavigation('prev')}
                 disabled={!canGoPrev}
                 icon={
-                  thumbnailDirection === "horizontal" ? (
+                  thumbnailDirection === 'horizontal' ? (
                     <TbChevronLeft />
                   ) : (
                     <TbChevronUp />
@@ -166,17 +170,17 @@ export const ProductGallery = ({
                 className={cx(
                   styles.prevNextBtn,
                   styles.thumbnailSwiperBtn,
-                  thumbnailDirection === "horizontal"
+                  thumbnailDirection === 'horizontal'
                     ? styles.galleryHorizontalNextBtn
                     : styles.navigationNextButton
                 )}
                 size="large"
                 variant="outlined"
                 color="default"
-                onClick={() => handleThumbnailNavigation("next")}
+                onClick={() => handleThumbnailNavigation('next')}
                 disabled={!canGoNext}
                 icon={
-                  thumbnailDirection === "horizontal" ? (
+                  thumbnailDirection === 'horizontal' ? (
                     <TbChevronRight />
                   ) : (
                     <TbChevronDown />
@@ -250,16 +254,14 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   swiperPagination: css`
-    display: none;
-
-    ${mq.max.lg} {
-      display: block;
-      position: absolute;
-      left: 50%;
-      margin-bottom: -${token.margin}px;
-      transform: translateX(-50%);
-      z-index: 2;
-    }
+    color: ${token.colorWhite};
+    background-color: rgba(0, 0, 0, 0.5);
+    width: max-content;
+    border-radius: ${token.borderRadiusLG}px;
+    padding: 2px ${token.paddingXS}px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: ${token.fontSizeSM}px;
   `,
   mainPrevBtn: css`
     top: 50%;

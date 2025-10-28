@@ -9,6 +9,7 @@ const UseProductCardFragment = graphql`
     handle
     description
     product {
+      id
       handle
       title
     }
@@ -20,7 +21,7 @@ const UseProductCardFragment = graphql`
       id
       url
     }
-    gallery(first: 2) {
+    gallery(first: 20) {
       edges {
         node {
           id
