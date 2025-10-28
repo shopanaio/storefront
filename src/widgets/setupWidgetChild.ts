@@ -17,28 +17,30 @@ export function setupWidgetChild<P = any>({
   onProps,
   exports,
 }: WidgetChildOptions<P>): void {
-  const Component = zoid.create<P, any>({
-    tag,
-    url: () => window.location.href,
-    allowedParentDomains,
-    autoResize,
-  });
-
-  if (!Component.isChild()) return;
-
-  const xprops = Component.xprops as any;
-
   try {
-    if (exports) {
-      xprops.export(exports);
-    }
-  } catch (_) {
-    // noop
-  }
+    const Component = zoid.create<P, any>({
+      tag,
+      url: () => window.location.href,
+      allowedParentDomains,
+      autoResize,
+    });
 
-  if (onProps && typeof xprops.onProps === 'function') {
-    xprops.onProps(onProps);
-  }
+    if (!Component.isChild()) return;
+
+    const xprops = Component.xprops as any;
+
+    try {
+      if (exports) {
+        xprops.export(exports);
+      }
+    } catch (_) {
+      // noop
+    }
+
+    if (onProps && typeof xprops.onProps === 'function') {
+      xprops.onProps(onProps);
+    }
+  } catch {}
 }
 
 export default setupWidgetChild;

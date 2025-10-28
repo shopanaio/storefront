@@ -1,13 +1,13 @@
-import { headers, type UnsafeUnwrappedHeaders } from "next/headers";
-import { parseUserAgent } from "@src/utils/parseUserAgent";
-import { ResponsiveClientProvider } from "@src/providers/responsive-client-provider";
+import { headers } from 'next/headers';
+import { parseUserAgent } from '@src/utils/parseUserAgent';
+import { ResponsiveClientProvider } from '@src/providers/responsive-client-provider';
 
-export function ResponsiveServerProvider({
+export async function ResponsiveServerProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const userAgent = (headers() as unknown as UnsafeUnwrappedHeaders).get("user-agent") ?? "";
+  const userAgent = (await headers()).get('user-agent') ?? '';
   const { isMobile, isDesktop } = parseUserAgent(userAgent);
 
   return (
