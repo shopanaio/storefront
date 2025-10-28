@@ -18,7 +18,7 @@ const loadCategoryServerQuery = async ({
 }: LoadCategoryServerQueryParams): Promise<
   SerializablePreloadedQuery<typeof CategoryQueryNode, CategoryQuery>
 > => {
-  const cookie = headers().get('cookie') ?? undefined;
+  const cookie = (await headers()).get('cookie') ?? undefined;
 
   const preloadedQuery = await loadSerializableQuery<
     typeof CategoryQueryNode,

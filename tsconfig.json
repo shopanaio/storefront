@@ -2,14 +2,30 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@src/*": ["./src/*"],
-      "@codegen/*": ["./codegen/*"],
-      "@checkout/*": ["./src/modules/checkout/*"],
-      "@shopana/entity": ["./packages/entity/src/index.ts"],
-      "shopana-utils": ["./packages/shopana-utils/dist/index.js"],
-      "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
-      "@shopana/brand": ["./packages/brand-default/src"],
-      "@shopana/brand/*": ["./packages/brand-default/src/*"],
+      "@src/*": [
+        "./src/*"
+      ],
+      "@codegen/*": [
+        "./codegen/*"
+      ],
+      "@checkout/*": [
+        "./src/modules/checkout/*"
+      ],
+      "@shopana/entity": [
+        "./packages/entity/src/index.ts"
+      ],
+      "shopana-utils": [
+        "./packages/shopana-utils/dist/index.js"
+      ],
+      "shopana-utils/*": [
+        "./packages/shopana-utils/dist/*"
+      ],
+      "@shopana/brand": [
+        "./packages/brand-default/src"
+      ],
+      "@shopana/brand/*": [
+        "./packages/brand-default/src/*"
+      ],
       "@stackflow/react/future": [
         "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
@@ -33,7 +49,11 @@
       ]
     },
     "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -44,15 +64,28 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
-    "types": ["webpack-env", "node", "next"],
+    "types": [
+      "webpack-env",
+      "node",
+      "next"
+    ],
     "plugins": [
       {
         "name": "next"
       }
     ]
   },
-  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.d.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -12,7 +12,7 @@ export async function SessionServerProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const cookie = headers().get("cookie") ?? undefined;
+  const cookie = (await headers()).get("cookie") ?? undefined;
   const customerAccessToken = accessTokenUtils.getAccessTokenFromCookie(cookie);
 
   let preloadedSessionQuery: SerializablePreloadedQuery<

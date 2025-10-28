@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { headers, type UnsafeUnwrappedHeaders } from "next/headers";
 import { parseUserAgent } from "@src/utils/parseUserAgent";
 import { ResponsiveClientProvider } from "@src/providers/responsive-client-provider";
 
@@ -7,7 +7,7 @@ export function ResponsiveServerProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const userAgent = headers().get("user-agent") ?? "";
+  const userAgent = (headers() as unknown as UnsafeUnwrappedHeaders).get("user-agent") ?? "";
   const { isMobile, isDesktop } = parseUserAgent(userAgent);
 
   return (

@@ -5,13 +5,14 @@ import loadCategoryServerQuery from "@src/hooks/category/loadCategoryServerQuery
 import { ListingSort } from "@codegen/schema-client";
 
 interface ListingPageProps {
-  params: {
+  params: Promise<{
     locale: string;
     handle: string;
-  };
+  }>;
 }
 
-export default async function ListingPage({ params }: ListingPageProps) {
+export default async function ListingPage(props: ListingPageProps) {
+  const params = await props.params;
   const { handle } = params;
 
   const preloadedQuery = await loadCategoryServerQuery({

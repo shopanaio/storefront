@@ -9,18 +9,19 @@ import { ListingSort } from "@codegen/schema-client";
 import { SearchPageClient } from "./client";
 
 interface SearchPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     q?: string;
     sort?: string;
-  };
+  }>;
 }
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
+export default async function SearchPage(props: SearchPageProps) {
+  const searchParams = await props.searchParams;
   const { q, sort } = searchParams;
-  const cookie = headers().get("cookie") ?? undefined;
+  const cookie = (await headers()).get("cookie") ?? undefined;
 
   // Load data on server
   const preloadedQuery = await loadSerializableQuery<

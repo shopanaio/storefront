@@ -153,15 +153,16 @@ import { ProductReviewSort } from "@codegen/schema-client";
 import { PageClient } from "./client";
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     locale: string;
     handle: string;
-  };
+  }>;
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage(props: ProductPageProps) {
+  const params = await props.params;
   const { handle } = params;
-  const cookie = headers().get("cookie") ?? undefined;
+  const cookie = (await headers()).get("cookie") ?? undefined;
 
   // Load data on server with default parameters for Reviews fragment
   const preloadedQuery = await loadSerializableQuery<

@@ -12,13 +12,14 @@ import {
  * Server page that resolves modules by slug using the global Module Registry.
  * The first segment of `[...module]` is treated as module slug; the rest are passed to the module.
  */
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { locale: string; module?: string[] };
-  searchParams?: Record<string, string | string[] | undefined>;
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ locale: string; module?: string[] }>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const segments = params.module ?? [];
   const slug = segments[0];
 

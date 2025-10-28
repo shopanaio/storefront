@@ -13,7 +13,7 @@ import HomePageQueryNode, {
 const loadHomeServerQuery = async (): Promise<
   SerializablePreloadedQuery<any, any>
 > => {
-  const cookie = headers().get("cookie") ?? undefined;
+  const cookie = (await headers()).get("cookie") ?? undefined;
 
   const preloadedQuery = await loadSerializableQuery<
     typeof HomePageQueryNode,
