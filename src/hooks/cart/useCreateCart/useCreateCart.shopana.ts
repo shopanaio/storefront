@@ -15,7 +15,7 @@ export const useCreateCartMutation = graphql`
 `;
 
 const useCreateCart = () => {
-  const { setId, cartKey } = useCartContext();
+  const { setId, setCartKey } = useCartContext();
   const [commit, isInFlight] = useMutation<CreateCartMutationType>(
     useCreateCartMutation
   );
@@ -45,7 +45,7 @@ const useCreateCart = () => {
             }
             if (checkout) {
               setId(checkout.id);
-              cartKey(checkout);
+              setCartKey(checkout);
             }
             options?.onSuccess?.();
             return resolve(checkout);
