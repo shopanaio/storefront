@@ -6,6 +6,7 @@ import { createStyles } from 'antd-style';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
 import clsx from 'clsx';
+import { useMountedState } from 'react-use';
 
 export interface UiImageProps
   extends Omit<AntImageProps, 'placeholder' | 'fallback'> {
@@ -38,13 +39,17 @@ export const Image: React.FC<UiImageProps> = ({
 }) => {
   const { styles, cx } = useStyles({ ratio });
 
+  const isMounted = useMountedState();
   const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!isMounted()) {
+      return;
+    }
+
     setResolvedSrc(src || fallbackSrc);
-    setIsLoaded(false);
-  }, [src, fallbackSrc]);
+  }, [src, fallbackSrc, isMounted]);
 
   const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setIsLoaded(true);
