@@ -25,8 +25,6 @@ export const useUpdateCartLineQuantityMutation = graphql`
 `;
 
 const useUpdateCartLineQuantity = () => {
-  const { cart } = useCart();
-  const { setCartKey } = useCartContext();
   const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
     useUpdateCartLineQuantityMutation
   );
@@ -38,8 +36,8 @@ const useUpdateCartLineQuantity = () => {
       onError?: () => void;
     }
   ) => {
-    const cartId = cart?.id;
-    if (!cartId || !cart?.id) {
+    const { cart } = useCartStore.getState();
+    if (!cart?.id) {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
@@ -73,15 +71,6 @@ const useUpdateCartLineQuantity = () => {
             options?.onError?.();
             return reject(response.checkoutMutation.checkoutLinesUpdate.errors);
           } else {
-            // If checkout became null — reset cookie and context
-            if (!response?.checkoutMutation?.checkoutLinesUpdate?.checkout) {
-              cartIdUtils.removeCartIdCookie();
-              setCartKey(null);
-            } else {
-              setCartKey(
-                response.checkoutMutation.checkoutLinesUpdate.checkout
-              );
-            }
             options?.onSuccess?.();
             return resolve(
               response?.checkoutMutation?.checkoutLinesUpdate?.checkout

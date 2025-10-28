@@ -1,15 +1,16 @@
-import useCart from "../useCart";
-import { useCartContext } from "@src/providers/cart-context";
-import { useMutation, graphql } from "react-relay";
-import { CartLineQuantityMutation as CartLineQuantityMutationType } from "@src/relay/queries/__generated__/CartLineQuantityMutation.graphql";
-import cartIdUtils from "@src/utils/cartId";
+import useCart from '../useCart';
+import { useMutation, graphql } from 'react-relay';
+import { CartLineQuantityMutation as CartLineQuantityMutationType } from '@src/relay/queries/__generated__/CartLineQuantityMutation.graphql';
 
 // Define mutation inside hook with correct name
 const useUpdateCartLineQuantityMutation = graphql`
-  mutation useUpdateCartLineQuantityMutation($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+  mutation useUpdateCartLineQuantityMutation(
+    $cartId: ID!
+    $lines: [CartLineUpdateInput!]!
+  ) {
     cartLinesUpdate(cartId: $cartId, lines: $lines) {
       cart {
-        ... useCart_CartFragment
+        ...useCart_CartFragment
       }
       userErrors {
         field
@@ -22,13 +23,20 @@ const useUpdateCartLineQuantityMutation = graphql`
 
 const useUpdateCartLineQuantity = () => {
   const { cart } = useCart();
-  const { setCartKey } = useCartContext();
-  const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(useUpdateCartLineQuantityMutation);
+  const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
+    useUpdateCartLineQuantityMutation
+  );
 
-  const updateQuantity = async ({ cartItemId, quantity }: { cartItemId: string; quantity: number; }) => {
+  const updateQuantity = async ({
+    cartItemId,
+    quantity,
+  }: {
+    cartItemId: string;
+    quantity: number;
+  }) => {
     const cartId = cart?.id;
     if (!cartId || !cart?.id) {
-      console.warn("[useUpdateCartLineQuantity] No cart to update");
+      console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
     return new Promise((resolve, reject) => {
@@ -40,16 +48,12 @@ const useUpdateCartLineQuantity = () => {
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
             reject(errors);
-          } else if (response?.cartLinesUpdate?.userErrors && response.cartLinesUpdate.userErrors.length > 0) {
+          } else if (
+            response?.cartLinesUpdate?.userErrors &&
+            response.cartLinesUpdate.userErrors.length > 0
+          ) {
             reject(response.cartLinesUpdate.userErrors);
           } else {
-            // If cart became null — reset cookie and context
-            if (!response?.cartLinesUpdate?.cart) {
-              cartIdUtils.removeCartIdCookie();
-              setCartKey(null);
-            } else {
-              setCartKey(response.cartLinesUpdate.cart);
-            }
             resolve(response?.cartLinesUpdate?.cart);
           }
         },
@@ -61,6 +65,6 @@ const useUpdateCartLineQuantity = () => {
   };
 
   return { updateQuantity, loading: isInFlight };
-}
+};
 
 export default useUpdateCartLineQuantity;

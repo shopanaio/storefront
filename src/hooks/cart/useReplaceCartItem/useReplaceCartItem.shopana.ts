@@ -48,7 +48,6 @@ export const useReplaceCartItemMutation = graphql`
 `;
 
 const useReplaceCartItem = () => {
-  const { setCartKey } = useCartContext();
   const { currencyCode } = useCurrencyStore.getState();
   const [commit, isInFlight] = useMutation<ReplaceCartItemMutationType>(
     useReplaceCartItemMutation
@@ -111,15 +110,6 @@ const useReplaceCartItem = () => {
               response.checkoutMutation.checkoutLinesReplace.errors
             );
           } else {
-            // If checkout became null — reset cookie and context
-            if (!response?.checkoutMutation?.checkoutLinesReplace?.checkout) {
-              cartIdUtils.removeCartIdCookie();
-              setCartKey(null);
-            } else {
-              setCartKey(
-                response.checkoutMutation.checkoutLinesReplace.checkout
-              );
-            }
             options?.onSuccess?.();
             return resolve(
               response?.checkoutMutation?.checkoutLinesReplace?.checkout

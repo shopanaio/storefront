@@ -24,7 +24,6 @@ export const useRemoveItemFromCartMutation = graphql`
 
 const useRemoveItemFromCart = () => {
   const { cart } = useCart();
-  const { setCartKey, setId } = useCartContext();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
     useRemoveItemFromCartMutation
@@ -71,11 +70,6 @@ const useRemoveItemFromCart = () => {
                 response.checkoutMutation.checkoutLinesDelete.errors
               );
             } else {
-              // If checkout became null — remove cookie and clear context
-              if (!response?.checkoutMutation?.checkoutLinesDelete?.checkout) {
-                setCartKey(null);
-                setId(null);
-              }
               options?.onSuccess?.();
               return resolve(response);
             }

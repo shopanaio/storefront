@@ -1,8 +1,8 @@
-import useCart from "../useCart";
-import { useMutation, graphql } from "react-relay";
-import cartIdUtils from "@src/utils/cartId";
-import { useCartContext } from "@src/providers/cart-context";
-import { RemoveFromCartInput } from "./index";
+import useCart from '../useCart';
+import { useMutation, graphql } from 'react-relay';
+import cartIdUtils from '@src/utils/cartId';
+import { useCartContext } from '@src/providers/cart-context';
+import { RemoveFromCartInput } from './index';
 
 // Define mutation inside hook with correct name
 const useRemoveItemFromCartMutation = graphql`
@@ -10,7 +10,7 @@ const useRemoveItemFromCartMutation = graphql`
     cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
       cart {
         id
-        ... useCart_CartFragment
+        ...useCart_CartFragment
       }
       userErrors {
         field
@@ -23,7 +23,6 @@ const useRemoveItemFromCartMutation = graphql`
 
 const useRemoveItemFromCart = () => {
   const { cart } = useCart();
-  const { setCartKey } = useCartContext();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
     useRemoveItemFromCartMutation
@@ -35,7 +34,7 @@ const useRemoveItemFromCart = () => {
 
       // If no cart in cookie or context — just exit
       if (!cartId || !cart?.id) {
-        console.warn("[useRemoveItemFromCart] No cart to remove from");
+        console.warn('[useRemoveItemFromCart] No cart to remove from');
         return null;
       }
 
@@ -52,18 +51,10 @@ const useRemoveItemFromCart = () => {
               response?.cartLinesRemove?.userErrors &&
               response.cartLinesRemove.userErrors.length > 0
             ) {
-              reject(response.cartLinesRemove.userErrors);
-            } else {
-              // If cart became null — remove cookie and clear context
-              if (!response?.cartLinesRemove?.cart) {
-                cartIdUtils.removeCartIdCookie();
-                setCartKey(null);
-              } else {
-                // Updating context cart fresh data
-                setCartKey(response.cartLinesRemove.cart);
-              }
-              resolve(response);
+              return reject(response.cartLinesRemove.userErrors);
             }
+
+            return resolve(response);
           },
           onError: (err) => {
             reject(err);

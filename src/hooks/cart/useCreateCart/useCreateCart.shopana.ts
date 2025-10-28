@@ -1,7 +1,7 @@
-import { ApiCheckoutCreateInput } from "@codegen/schema-client";
-import { graphql, useMutation } from "react-relay";
-import { useCreateCartMutation as CreateCartMutationType } from "@src/hooks/cart/useCreateCart/__generated__/useCreateCartMutation.graphql";
-import { useCartContext } from "@src/providers/cart-context";
+import { ApiCheckoutCreateInput } from '@codegen/schema-client';
+import { graphql, useMutation } from 'react-relay';
+import { useCreateCartMutation as CreateCartMutationType } from '@src/hooks/cart/useCreateCart/__generated__/useCreateCartMutation.graphql';
+import { useCartContext } from '@src/providers/cart-context';
 
 export const useCreateCartMutation = graphql`
   mutation useCreateCartMutation($input: CheckoutCreateInput!) {
@@ -15,7 +15,7 @@ export const useCreateCartMutation = graphql`
 `;
 
 const useCreateCart = () => {
-  const { setId } = useCartContext();
+  const { setId, cartKey } = useCartContext();
   const [commit, isInFlight] = useMutation<CreateCartMutationType>(
     useCreateCartMutation
   );
@@ -27,7 +27,7 @@ const useCreateCart = () => {
       onError?: () => void;
     }
   ): Promise<
-    CreateCartMutationType["response"]["checkoutMutation"]["checkoutCreate"]
+    CreateCartMutationType['response']['checkoutMutation']['checkoutCreate']
   > => {
     return new Promise((resolve, reject) => {
       commit({
@@ -41,10 +41,11 @@ const useCreateCart = () => {
           } else {
             const checkout = response?.checkoutMutation?.checkoutCreate;
             if (!checkout?.id) {
-              alert("No cart ID found in response");
+              alert('No cart ID found in response');
             }
             if (checkout) {
               setId(checkout.id);
+              cartKey(checkout);
             }
             options?.onSuccess?.();
             return resolve(checkout);

@@ -24,7 +24,6 @@ const useAddItemToCartMutation = graphql`
 
 const useAddItemToCart = () => {
   const { cart } = useCart();
-  const { setCartKey } = useCartContext();
   const currencyCode = useCurrencyStore((state) => state.currencyCode);
   const { createCart } = useCreateCart();
 
@@ -69,7 +68,6 @@ const useAddItemToCart = () => {
           }
 
           if (response?.cartLinesAdd?.cart) {
-            setCartKey(response.cartLinesAdd.cart);
             resolve(response.cartLinesAdd.cart);
           } else {
             reject(new Error("No cart returned from add to cart"));

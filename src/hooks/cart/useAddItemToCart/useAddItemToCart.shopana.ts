@@ -26,7 +26,6 @@ export const useAddItemToCartMutation = graphql`
 `;
 
 const useAddItemToCart = () => {
-  const { setCartKey } = useCartContext();
   const { createCart } = useCreateCart();
   const currencyCode = useCurrencyStore((state) => state.currencyCode);
   const [localeCode] = useLocale();
@@ -48,7 +47,7 @@ const useAddItemToCart = () => {
 
       // If no cart — create new one
       if (!cart?.id) {
-        const newCart = await createCart(
+        return await createCart(
           {
             currencyCode,
             localeCode,
@@ -61,11 +60,6 @@ const useAddItemToCart = () => {
           },
           options
         );
-        // Update context with new cart key
-        if (newCart) {
-          setCartKey(newCart);
-        }
-        return newCart;
       }
 
       // If cart exists — add product through mutation
@@ -113,11 +107,6 @@ const useAddItemToCart = () => {
               onError?.();
               return reject(response.checkoutMutation.checkoutLinesAdd.errors);
             } else {
-              if (response?.checkoutMutation?.checkoutLinesAdd?.checkout) {
-                // Update context cart with new data
-                setCartKey(response.checkoutMutation.checkoutLinesAdd.checkout);
-              }
-
               onSuccess?.();
               return resolve(
                 response?.checkoutMutation?.checkoutLinesAdd?.checkout
