@@ -206,7 +206,6 @@ const useStyles = createStyles(
         height: 100%;
         aspect-ratio: ${aspectRatio};
         border-radius: ${token.borderRadius}px;
-        background-color: ${token.colorFillSecondary};
         display: flex;
         align-items: stretch;
         overflow: hidden;
