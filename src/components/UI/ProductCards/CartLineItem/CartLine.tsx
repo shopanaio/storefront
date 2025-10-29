@@ -160,7 +160,7 @@ const useStyles = createStyles(({ token, css }) => ({
     max-width: 200px;
   `,
   simpleQuantityInput: css`
-    max-width: 100px;
+    max-width: 80px;
   `,
   productCard: css`
     background: transparent;

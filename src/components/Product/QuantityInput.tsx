@@ -3,7 +3,6 @@
 import { Button, ButtonProps, Input } from 'antd';
 import { TbMinus, TbPlus, TbTrash } from 'react-icons/tb';
 import { createStyles, cx } from 'antd-style';
-import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { useRef } from 'react';
 
 export interface QuantityInputProps {
@@ -19,11 +18,6 @@ export interface QuantityInputProps {
   loading?: boolean;
 }
 
-const sizes = ['middle', 'large'] as SizeType[];
-const getSmallerSize = (size: ButtonProps['size']) => {
-  const index = sizes.indexOf(size);
-  return sizes[index - 1] || 'middle';
-};
 const iconSize = {
   small: 16,
   middle: 18,
@@ -44,7 +38,6 @@ export const QuantityInput = ({
 }: QuantityInputProps) => {
   const { styles, theme } = useStyles({ size, color });
   const prevAction = useRef<'inc' | 'dec' | null>(null);
-  const buttonSize = getSmallerSize(size);
 
   const numericValue =
     typeof value === 'number' ? value : parseInt(String(value), 10);
@@ -85,8 +78,8 @@ export const QuantityInput = ({
         <Button
           variant={color === 'default' ? 'text' : 'solid'}
           color={color}
-          size={buttonSize}
-          icon={<DecrementIcon size={iconSize[buttonSize]} />}
+          size={size}
+          icon={<DecrementIcon size={iconSize[size]} />}
           onClick={handleDecrement}
           disabled={disabled}
           loading={loading && prevAction.current === 'dec'}
@@ -94,8 +87,8 @@ export const QuantityInput = ({
       }
       suffix={
         <Button
-          size={buttonSize}
-          icon={<TbPlus size={iconSize[buttonSize]} />}
+          size={size}
+          icon={<TbPlus size={iconSize[size]} />}
           variant={color === 'default' ? 'text' : 'solid'}
           color={color}
           onClick={handleIncrement}

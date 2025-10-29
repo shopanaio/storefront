@@ -1,20 +1,19 @@
-import { Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import type { Entity } from "@shopana/entity";
-import { Price } from "../UI/Price/Price";
-import { SaleBadge } from "../UI/Badges/Sale";
-import { ProductWishlistButton } from "../Listing/ProductWishlistButton";
-import { calcSaleMoney } from "@src/utils/calcSaleMoney";
-import { useTranslations } from "next-intl";
+import { Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import type { Entity } from '@shopana/entity';
+import { Price } from '../UI/Price/Price';
+import { SaleBadge } from '../UI/Badges/Sale';
+import { calcSaleMoney } from '@src/utils/calcSaleMoney';
+import { useTranslations } from 'next-intl';
 
 interface Props {
   compareAtPrice?: Entity.Money | null;
   price: Entity.Money;
-  stockStatus: Entity.StockStatus;
+  stockStatus: Entity.StockStatus | null;
 }
 
 export const PriceAndSale = ({ compareAtPrice, price, stockStatus }: Props) => {
-  const t = useTranslations("Product");
+  const t = useTranslations('Product');
   const { styles } = useStyles();
 
   const sale = calcSaleMoney(compareAtPrice?.amount, price?.amount);
@@ -34,11 +33,11 @@ export const PriceAndSale = ({ compareAtPrice, price, stockStatus }: Props) => {
         <Price
           money={price}
           className={styles.price}
-          type={stockStatus.isAvailable ? undefined : "secondary"}
+          type={stockStatus?.isAvailable ? undefined : 'secondary'}
         />
         {sale ? (
           <Typography.Text>
-            {t("discount")} ${sale}
+            {t('discount')} ${sale}
           </Typography.Text>
         ) : null}
       </Flex>

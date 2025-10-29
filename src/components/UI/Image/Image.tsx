@@ -130,14 +130,6 @@ export const Image: React.FC<UiImageProps> = ({
     onError?.(event);
   };
 
-  const placeholderContent = useMemo(
-    () =>
-      placeholder ?? (
-        <Skeleton.Image active={false} className={styles.skeleton} />
-      ),
-    [placeholder, styles.skeleton]
-  );
-
   const placeholderVisible = !visibleSrc || !isImageVisible;
 
   useEffect(() => {
@@ -161,7 +153,9 @@ export const Image: React.FC<UiImageProps> = ({
         )}
         aria-hidden={!placeholderVisible}
       >
-        <div className={styles.placeholderContent}>{placeholderContent}</div>
+        <div className={styles.placeholderContent}>
+          {placeholder ?? <Skeleton.Image className={styles.skeleton} />}
+        </div>
       </div>
       {visibleSrc && (
         <AntImage
@@ -216,6 +210,30 @@ const useStyles = createStyles(
         display: flex;
         align-items: stretch;
         overflow: hidden;
+        container-type: inline-size;
+
+        & .ant-skeleton-image {
+          width: 100%;
+          height: 100%;
+        }
+
+        @container (min-width: 300px) {
+          & .ant-skeleton-image {
+            --ant-control-height: 48px;
+          }
+        }
+
+        @container (max-width: 100px) {
+          & .ant-skeleton-image {
+            --ant-control-height: 24px;
+          }
+        }
+
+        @container (max-width: 80px) {
+          & .ant-skeleton-image {
+            --ant-control-height: 20px;
+          }
+        }
       `,
       image: css`
         width: 100%;
@@ -233,12 +251,6 @@ const useStyles = createStyles(
         width: 100% !important;
         height: 100% !important;
         aspect-ratio: ${aspectRatio};
-        display: block !important;
-
-        .ant-skeleton-image {
-          width: 100%;
-          height: 100%;
-        }
       `,
     };
   }
