@@ -29,6 +29,7 @@ export const useCartLineFragment_CartLineFragment = graphql`
         title
         handle
         product {
+          id
           title
           handle
         }
@@ -43,6 +44,10 @@ export const useCartLineFragment_CartLineFragment = graphql`
         compareAtPrice {
           amount
           currencyCode
+        }
+        stockStatus {
+          handle
+          isAvailable
         }
       }
     }
