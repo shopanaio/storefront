@@ -81,6 +81,7 @@
     "@types/webpack-env": "^1.18.8",
     "babel-plugin-antd-style": "^1.0.4",
     "babel-plugin-relay": "^20.0.0",
+    "cheerio": "^1.1.2",
     "cross-env": "^10.0.0",
     "dotenv": "^16.4.5",
     "esbuild": "^0.24.0",
@@ -97,7 +98,8 @@
     "relay-compiler": "^20.0.0",
     "rimraf": "^6.0.1",
     "storybook": "^8.4.7",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.4"
   },
   "scripts": {
     "start": "next start",
@@ -111,7 +113,8 @@
     "widgets:build": "node ./bin/widgets/build.js",
     "widgets:watch": "node ./bin/widgets/build.js --watch",
     "storybook": "cross-env STORYBOOK=true storybook dev -p 6006 -c storybook",
-    "build-storybook": "cross-env STORYBOOK=true storybook build -c storybook -o storybook-static"
+    "build-storybook": "cross-env STORYBOOK=true storybook build -c storybook -o storybook-static",
+    "test": "vitest run"
   },
   "resolutions": {
     "@types/react": "19.2.2"

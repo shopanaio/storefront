@@ -1,40 +1,75 @@
-import React from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Button, ButtonProps } from "antd";
-import { TbHeart } from "react-icons/tb";
+import { TbHeart, TbHeartFilled } from "react-icons/tb";
 import { useTranslations } from "next-intl";
-import { useAddItemToWishlist } from "@src/hooks/useAddItemToWishlist";
+import {
+  useAddItemToWishlist,
+  WishlistItemInput,
+} from "@src/hooks/useAddItemToWishlist";
+import { useWishlistItems, useWishlistActions } from "@src/modules/wishlist";
 
 type ProductWishlistButtonProps = {
-  productId: string;
+  item: WishlistItemInput;
   showLabel?: boolean;
-  size?: ButtonProps['size'];
+  size?: ButtonProps["size"];
 };
 
 export const ProductWishlistButton: React.FC<ProductWishlistButtonProps> = ({
-  productId,
+  item,
   showLabel,
   size,
 }) => {
-  const { addItem } = useAddItemToWishlist();
   const t = useTranslations("Product");
+  const { addItem } = useAddItemToWishlist();
+  const { removeItem } = useWishlistActions();
+  const wishlistItems = useWishlistItems();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleClick = async () => {
+  const isInWishlist = useMemo(
+    () => wishlistItems.some((wishlistItem) => wishlistItem.id === item.id),
+    [wishlistItems, item.id]
+  );
+
+  const label = showLabel
+    ? isInWishlist
+      ? t("in-wishlist")
+      : t("add-to-wishlist")
+    : undefined;
+
+  const handleClick = useCallback(async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      await addItem(productId);
+      if (isInWishlist) {
+        await removeItem(item.id);
+      } else {
+        await addItem(item);
+      }
     } catch (error) {
-      console.error("Failed to add item to wishlist", error);
+      console.error("Failed to update wishlist item", error);
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, isInWishlist, removeItem, item, addItem]);
+
+  const icon = isInWishlist ? (
+    <TbHeartFilled size={18} />
+  ) : (
+    <TbHeart size={18} />
+  );
 
   return (
     <Button
       size={size}
       shape={showLabel ? "default" : "circle"}
       onClick={handleClick}
-      aria-label={t("add-to-wishlist")}
-      icon={<TbHeart size={18} />}
+      aria-label={label ?? t("add-to-wishlist")}
+      aria-pressed={isInWishlist}
+      loading={isSubmitting}
+      icon={icon}
+      type={isInWishlist ? "primary" : "default"}
     >
-      {showLabel && t("add-to-wishlist")}
+      {label}
     </Button>
   );
 };

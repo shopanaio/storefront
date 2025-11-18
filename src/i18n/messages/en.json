@@ -442,5 +442,38 @@
     "title": "Oops! Page not found",
     "description": "The page you're looking for doesn't exist or has been moved. Let's get you back on track!",
     "goHome": "Go to homepage"
+  },
+  "Wishlist": {
+    "sections": {
+      "saved-items": "Saved items",
+      "notes": "Notes & tags",
+      "share": "Share"
+    },
+    "validation": {
+      "fill-sections": "Complete sections: {sections}"
+    },
+    "notes": {
+      "description": "Keep private notes or tags to group saved items.",
+      "placeholder-note": "Add a note",
+      "placeholder-tags": "Comma separated tags"
+    },
+    "share": {
+      "description": "Share your wishlist with teammates or clients via email or a simple link.",
+      "placeholder-email": "name@example.com",
+      "copy-link": "Copy link"
+    },
+    "summary": {
+      "title": "Summary",
+      "items-count": "{count, plural, one {# item} other {# items}}",
+      "total": "Total"
+    },
+    "actions": {
+      "clear-all": "Clear all",
+      "move-selected": "Move selected to cart"
+    },
+    "empty": {
+      "title": "No items yet",
+      "description": "Your wishlist is empty"
+    }
   }
 }

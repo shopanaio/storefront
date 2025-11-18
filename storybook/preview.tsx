@@ -5,6 +5,7 @@ import { GlobalStyle } from "@src/components/Theme/GlobalStyle";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@src/i18n/messages/en.json";
 import "modern-normalize/modern-normalize.css";
+import { WishlistProvider } from "@src/modules/wishlist";
 
 const preview: Preview = {
   parameters: {
@@ -39,7 +40,9 @@ const preview: Preview = {
         >
           <App>
             <GlobalStyle />
-            <Story />
+            <WishlistProvider>
+              <Story />
+            </WishlistProvider>
           </App>
         </NextIntlClientProvider>
       </ThemeProvider>

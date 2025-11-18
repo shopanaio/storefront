@@ -24,6 +24,11 @@ export const routes = {
       return "/cart";
     },
   },
+  wishlist: {
+    path() {
+      return "/wishlist";
+    },
+  },
   checkout: {
     path() {
       return "/checkout";

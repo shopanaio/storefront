@@ -4,6 +4,7 @@ import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import clsx from "clsx";
 import useToken from "antd/es/theme/useToken";
+import { Badge } from "@src/components/UI/Badge";
 
 const { Text } = Typography;
 
@@ -26,9 +27,23 @@ export const HeaderLinkButton = ({
   theme = "light",
   mobileBlock = false,
   className,
+  badgeCount,
 }: Props) => {
   const { styles } = useStyles({ theme, mobileBlock });
   const [, token] = useToken();
+  const iconContent =
+    typeof badgeCount === "number" && badgeCount > 0 ? (
+      <Badge
+        count={badgeCount}
+        offset={[-4, 4]}
+        variant="primary"
+        size="small"
+      >
+        {icon}
+      </Badge>
+    ) : (
+      icon
+    );
 
   return (
     <Button
@@ -37,7 +52,7 @@ export const HeaderLinkButton = ({
       color="default"
       onClick={onClick}
     >
-      {icon}
+      <span className={styles.iconWrapper}>{iconContent}</span>
       <Flex className={styles.textWrapper}>
         {topText && <Text className={styles.topText}>{topText}</Text>}
         <Text className={styles.bottomText}>{bottomText}</Text>
@@ -61,6 +76,11 @@ const useStyles = createStyles(
       ${mq.sm} {
         gap: ${token.paddingXS}px;
       }
+    `,
+    iconWrapper: css`
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     `,
     textWrapper: css`
       display: none;

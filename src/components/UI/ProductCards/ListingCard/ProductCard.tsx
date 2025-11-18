@@ -114,7 +114,16 @@ export const ProductCard = ({
   const renderImage = () => (
     <div className={styles.cover}>
       <div className={styles.wishlist}>
-        <ProductWishlistButton productId={id} />
+        <ProductWishlistButton
+          item={{
+            id,
+            title: productTitle,
+            sku: handle ?? id,
+            image: gallery[0] ?? undefined,
+            currency: price.currencyCode,
+            unitPrice: price.amount,
+          }}
+        />
       </div>
       <Thumbnail
         className={styles.thumbnail}

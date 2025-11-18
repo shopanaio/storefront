@@ -6,6 +6,7 @@ import { useQuery } from "@src/providers/relay-query-provider";
 import ConfirmPortalHost from "@src/components/UI/Confirm/ConfirmPortalHost";
 
 import useInitialSessionState from "@src/hooks/session/useInitialSessionState";
+import { WishlistProvider } from "@src/modules/wishlist";
 
 interface IAppProps {
   children: React.ReactNode;
@@ -19,10 +20,12 @@ const App = ({ children }: IAppProps) => {
 
   return (
     <SessionClientProvider initialState={initialSessionState}>
-      <Theme>
-        {children}
-        <ConfirmPortalHost />
-      </Theme>
+      <WishlistProvider>
+        <Theme>
+          {children}
+          <ConfirmPortalHost />
+        </Theme>
+      </WishlistProvider>
     </SessionClientProvider>
   );
 };

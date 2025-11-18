@@ -119,6 +119,21 @@ export const ProductMain = ({
   const groupsLength = product.groups?.length ?? 0;
   const optionsLength = product.options?.length ?? 0;
 
+  const primaryImage =
+    cover?.url ??
+    gallery.find((media) => Boolean(media?.url))?.url ??
+    variantGallery?.edges?.[0]?.node?.url ??
+    undefined;
+
+  const wishlistItem = {
+    id: currentVariant.id,
+    title,
+    sku: sku ?? currentVariant.handle ?? currentVariant.id,
+    image: primaryImage,
+    currency: currentVariant.price.currencyCode,
+    unitPrice: currentVariant.price.amount,
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.gallery}>
@@ -215,7 +230,7 @@ export const ProductMain = ({
                 />
               </Flex>
               <ProductWishlistButton
-                productId={product.id}
+                item={wishlistItem}
                 showLabel
                 size="large"
               />
