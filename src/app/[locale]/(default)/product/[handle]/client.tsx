@@ -6,8 +6,6 @@ import { Product } from '@src/components/Product/Product';
 import { useRelayEnvironment } from 'react-relay';
 import useSerializablePreloadedQuery from '@src/relay/useSerializablePreloadedQuery';
 import { useQuery } from '@src/providers/relay-query-provider';
-import type { Entity } from '@shopana/entity';
-import { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useSearchParams } from 'next/navigation';
 import usePreloadedProduct from '@src/hooks/product/usePreloadedProduct';
@@ -33,7 +31,7 @@ export const PageClient = () => {
   );
 
   // Use preloaded query without refetching
-  const product = usePreloadedProduct(queryReference as any);
+  const { product, productReviewsRef } = usePreloadedProduct(queryReference as any);
 
   // Initialize selected variant from URL on first render and when URL changes externally
   useEffect(() => {
@@ -58,15 +56,15 @@ export const PageClient = () => {
     }
   }, []);
 
+  if (!product) {
+    return null;
+  }
+
   // Find current variant for breadcrumb title
   const { currentVariant, title } = useCurrentVariant({
     product,
     variantHandle: selectedVariantHandle,
   });
-
-  if (!product) {
-    return null;
-  }
 
   return (
     <PageLayout
@@ -84,7 +82,8 @@ export const PageClient = () => {
       }}
     >
       <Product
-        product={product as Entity.Product & Reviews$key}
+        product={product}
+        productReviewsRef={productReviewsRef}
         currentVariant={currentVariant}
         title={title}
         onChangeVariant={handleChangeVariant}

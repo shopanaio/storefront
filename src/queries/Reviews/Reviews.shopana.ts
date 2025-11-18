@@ -6,7 +6,7 @@ const Reviews = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 3 }
     after: { type: "Cursor" }
-    sort: { type: "ProductReviewSort", defaultValue: CREATED_AT_DESC }
+    sort: { type: "ProductReviewSort", defaultValue: HELPFUL_YES_DESC }
   ) {
     reviews(first: $first, after: $after, sort: $sort)
       @connection(key: "ProductReviewsFragment_reviews") {
@@ -38,4 +38,3 @@ const Reviews = graphql`
 `;
 
 export default Reviews;
-

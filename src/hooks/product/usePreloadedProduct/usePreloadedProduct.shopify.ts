@@ -2,6 +2,7 @@ import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
 import type { Entity } from "@shopana/entity";
+import type { UsePreloadedProductResult } from "./types";
 
 // Function for converting Shopify product to Shopana format
 const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']): Entity.Product | null => {
@@ -287,7 +288,9 @@ const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']):
   return transformedProduct;
 };
 
-const usePreloadedProduct = (queryReference: PreloadedQuery<ProductQueryType>) => {
+const usePreloadedProduct = (
+  queryReference: PreloadedQuery<ProductQueryType>
+): UsePreloadedProductResult => {
   const data = usePreloadedQuery<ProductQueryType>(
     ProductQuery,
     queryReference
@@ -298,7 +301,10 @@ const usePreloadedProduct = (queryReference: PreloadedQuery<ProductQueryType>) =
   // Convert Shopify product to Shopana format
   const transformedProduct = transformShopifyToShopana(shopifyProduct);
 
-  return transformedProduct;
+  return {
+    product: transformedProduct,
+    productReviewsRef: null,
+  };
 };
 
 export default usePreloadedProduct;

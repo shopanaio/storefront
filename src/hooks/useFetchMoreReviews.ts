@@ -3,11 +3,15 @@ import { useRelayEnvironment } from "react-relay";
 import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { ProductReviewSort } from "codegen/schema-client";
+import {
+  PRODUCT_REVIEWS_DEFAULT_SORT,
+  PRODUCT_REVIEWS_PAGE_SIZE,
+} from "@src/components/Product/Rate/config";
 
 export const useFetchMoreReviews = (
   handle: string,
-  first: number = 3,
-  sort: ProductReviewSort = ProductReviewSort.CreatedAtDesc
+  first: number = PRODUCT_REVIEWS_PAGE_SIZE,
+  sort: ProductReviewSort = PRODUCT_REVIEWS_DEFAULT_SORT
 ) => {
   const environment = useRelayEnvironment();
 

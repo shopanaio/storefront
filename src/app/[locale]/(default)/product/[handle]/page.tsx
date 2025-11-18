@@ -149,8 +149,11 @@ import ProductQueryNode, {
 } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { notFound } from "next/navigation";
 import { QueryProvider } from "@src/providers/relay-query-provider";
-import { ProductReviewSort } from "@codegen/schema-client";
 import { PageClient } from "./client";
+import {
+  PRODUCT_REVIEWS_DEFAULT_SORT,
+  PRODUCT_REVIEWS_PAGE_SIZE,
+} from "@src/components/Product/Rate/config";
 
 interface ProductPageProps {
   params: Promise<{
@@ -172,8 +175,8 @@ export default async function ProductPage(props: ProductPageProps) {
     ProductQueryNode.params,
     {
       handle,
-      first: 3,
-      sort: ProductReviewSort.HelpfulYesDesc,
+      first: PRODUCT_REVIEWS_PAGE_SIZE,
+      sort: PRODUCT_REVIEWS_DEFAULT_SORT,
     },
     cookie
   );

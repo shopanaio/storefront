@@ -3,13 +3,14 @@
 import { createStyles } from 'antd-style';
 import React from 'react';
 import type { Entity } from '@shopana/entity';
-import { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
+import type { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
 import { ProductMain } from './ProductMain';
 import { ProductDetails } from './ProductDetails';
 
 interface Prop {
   title: string;
-  product: Entity.Product & Reviews$key;
+  product: Entity.Product;
+  productReviewsRef: Reviews$key | null;
   onChangeVariant: (handle: string) => void;
   currentVariant: Entity.ProductVariant;
 }
@@ -17,6 +18,7 @@ interface Prop {
 export const Product = ({
   title,
   product,
+  productReviewsRef,
   onChangeVariant,
   currentVariant,
 }: Prop) => {
@@ -30,7 +32,10 @@ export const Product = ({
         currentVariant={currentVariant}
         onChangeVariant={onChangeVariant}
       />
-      <ProductDetails product={product} />
+      <ProductDetails
+        product={product}
+        productReviewsRef={productReviewsRef}
+      />
     </div>
   );
 };

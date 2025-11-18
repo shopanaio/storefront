@@ -21,16 +21,20 @@ import { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql"
 import Reviews from "@src/queries/Reviews";
 import { SortPopover, SortOption } from "./SortPopover";
 import { LoadMoreBtn } from "@src/components/Home/LoadMoreBtn";
+import {
+  PRODUCT_REVIEWS_DEFAULT_SORT,
+  PRODUCT_REVIEWS_PAGE_SIZE,
+} from "./config";
 
 interface Props {
-  product: Reviews$key;
+  productRef: Reviews$key;
 }
 
-export const ReviewsSection = ({ product }: Props) => {
+export const ReviewsSection = ({ productRef }: Props) => {
   const { styles } = useStyles();
   const t = useTranslations("Product");
   const [sort, setSort] = useState<ProductReviewSort>(
-    ProductReviewSort.CreatedAtDesc
+    PRODUCT_REVIEWS_DEFAULT_SORT
   );
   const [starFilter, setStarFilter] = useState<number[]>([]);
   const [starFilterOpen, setStarFilterOpen] = useState(false);
@@ -41,15 +45,16 @@ export const ReviewsSection = ({ product }: Props) => {
   const starOptions = [5, 4, 3, 2, 1];
 
   const { data, loadNext, hasNext, isLoadingNext, refetch } =
-    usePaginationFragment(Reviews, product);
+    usePaginationFragment(Reviews, productRef);
 
-  const reviewEdges = data.reviews.edges;
+  const reviewsConnection = data.reviews;
+  const reviewEdges = reviewsConnection?.edges ?? [];
+  const totalCount = reviewsConnection?.totalCount ?? 0;
   const reviews = reviewEdges.map((edge) => edge.node);
-  const totalCount = data.reviews.totalCount;
 
   const handleLoadMore = () => {
     if (hasNext && !isLoadingNext) {
-      loadNext(3);
+      loadNext(PRODUCT_REVIEWS_PAGE_SIZE);
     }
   };
 

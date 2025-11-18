@@ -11,16 +11,20 @@ import { ShowMoreBtn } from "./ShowMoreBtn";
 import type { Entity } from "@shopana/entity";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "./Rate/Reviews";
-import { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
+import type { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
 import { ShippingReturnsInfo } from "./ShippingReturnsInfo";
 
 const { Paragraph } = Typography;
 
 interface ProductDetailsProps {
-  product: Entity.Product & Reviews$key;
+  product: Entity.Product;
+  productReviewsRef: Reviews$key | null;
 }
 
-export const ProductDetails = ({ product }: ProductDetailsProps) => {
+export const ProductDetails = ({
+  product,
+  productReviewsRef,
+}: ProductDetailsProps) => {
   const t = useTranslations("Product");
   const { styles } = useStyles();
 
@@ -42,8 +46,8 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
       <ProductCollapse title={t("reviews")} panelKey={t("reviews-key")}>
         <Flex vertical gap={16}>
           <ProductRateSummary product={product} />
-          {product.reviews?.edges?.length > 0 && (
-            <ReviewsSection product={product} />
+          {productReviewsRef && (
+            <ReviewsSection productRef={productReviewsRef} />
           )}
         </Flex>
       </ProductCollapse>

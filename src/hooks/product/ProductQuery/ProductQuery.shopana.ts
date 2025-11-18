@@ -3,8 +3,12 @@ import { graphql } from "relay-runtime";
 const ProductQuery = graphql`
   query ProductQuery(
     $handle: String!
+    $first: Int = 3
+    $after: Cursor
+    $sort: ProductReviewSort = HELPFUL_YES_DESC
   ) {
     product(handle: $handle) {
+      ...Reviews @arguments(first: $first, after: $after, sort: $sort)
       id
       title
       handle
