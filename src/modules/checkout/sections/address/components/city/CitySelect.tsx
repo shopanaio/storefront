@@ -1,9 +1,9 @@
-import { Button, Divider, Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { client } from '@checkout/vendors/novaposta/api';
-import type { City } from '@src/modules/checkout/vendors/novaposta/types';
+import type { SearchSettlementAddress } from '@shopana/novaposhta-api-client';
 import { CityOption } from './CityOption';
 import { TbMapPin } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
@@ -13,7 +13,7 @@ import { popularCities } from '@checkout/vendors/novaposta/popularCities';
 import clsx from 'clsx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 
-export type { City } from '@src/modules/checkout/vendors/novaposta/types';
+export type City = SearchSettlementAddress;
 
 interface Prop {
   city: City | null;
@@ -32,7 +32,10 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
 
   useEffect(() => {
     const fetchSettlements = async () => {
-      if (searchValue.trim().length === 0) return;
+      if (searchValue.trim().length === 0) {
+        setSettlements([]);
+        return;
+      }
 
       try {
         const result = await client.address.searchSettlements({
@@ -41,28 +44,21 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
           page: 1,
         });
 
-        setSettlements(result.data?.[0]?.addresses || []);
+        console.log('=== NOVA POSHTA API RESPONSE ===');
+        console.log('Full result:', result);
+        console.log('result.data:', result.data);
+        console.log('result.data[0]:', result.data?.[0]);
+        console.log('result.data[0].Addresses:', result.data?.[0]?.Addresses);
+        console.log('================================');
+
+        setSettlements(result.data?.[0]?.Addresses || []);
       } catch (error) {
         console.error('Error searching for settlements:', error);
         setSettlements([]);
       }
     };
     fetchSettlements();
-    return () => {
-      setSettlements([]);
-    };
   }, [searchValue]);
-
-  const items = useMemo(() => {
-    const normalized = searchValue.trim().toLowerCase();
-    return normalized.length === 0
-      ? settlements
-      : settlements.filter(
-          (item) =>
-            item.mainDescription.toLowerCase().includes(normalized) ||
-            item.area.toLowerCase().includes(normalized)
-        );
-  }, [searchValue, settlements]);
 
   const handleSelectCity = (item: City) => {
     onSubmit(item);
@@ -85,7 +81,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
               {t('city')}
             </Typography.Text>
             <Typography.Text className={styles.mainText}>
-              {city.mainDescription}
+              {city.MainDescription}
             </Typography.Text>
           </Flex>
         ) : (
@@ -115,19 +111,19 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  key={item.ref}
+                  key={item.Ref}
                   onClick={() => handleSelectCity(item)}
                 >
-                  {item?.mainDescription}
+                  {item?.MainDescription}
                 </Button>
               ))}
             </Flex>
           )}
           <Flex vertical gap={8}>
             {searchValue &&
-              items.map((item) => (
+              settlements.map((item) => (
                 <CityOption
-                  key={item.ref}
+                  key={item.Ref}
                   item={item}
                   changeCity={handleSelectCity}
                 />

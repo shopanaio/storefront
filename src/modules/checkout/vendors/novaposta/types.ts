@@ -4,39 +4,10 @@
  * the checkout module remains agnostic of shipping/payment state details.
  */
 
-/**
- * City type returned by Nova Poshta settlements API.
- * Updated to match the new @shopana/novaposhta-api-client format (camelCase).
- */
-export interface City {
-  addressDeliveryAllowed?: boolean;
-  area: string;
-  deliveryCity: string;
-  mainDescription: string;
-  parentRegionCode?: string;
-  parentRegionTypes?: string;
-  present?: string;
-  ref: string;
-  region: string;
-  regionTypes?: string;
-  regionTypesCode?: string;
-  settlementTypeCode: string;
-  streetsAvailability?: boolean;
-  warehouses: number;
-}
+import type { SearchSettlementAddress, SettlementStreetAddress } from '@shopana/novaposhta-api-client';
 
-/**
- * Street type returned by Nova Poshta streets API.
- */
-export interface Street {
-  present: string;
-  settlementRef: string;
-  settlementStreetDescription: string;
-  settlementStreetDescriptionRu?: string;
-  settlementStreetRef: string;
-  streetsType: string;
-  streetsTypeDescription: string;
-}
+export type City = SearchSettlementAddress;
+export type Street = SettlementStreetAddress;
 
 /**
  * Minimal Warehouse shape used by Nova Poshta UI components.

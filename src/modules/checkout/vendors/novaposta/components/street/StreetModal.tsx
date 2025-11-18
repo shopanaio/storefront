@@ -1,5 +1,4 @@
 import { Flex } from 'antd';
-import { createStyles } from 'antd-style';
 import { useState, useEffect, useMemo } from 'react';
 import debounce from 'lodash/debounce';
 import { useTranslations } from 'next-intl';
@@ -19,7 +18,6 @@ interface Prop {
 }
 
 export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
-  const { styles } = useStyles();
   const isMobile = useIsMobile();
   const t = useTranslations('Checkout');
 
@@ -44,7 +42,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
           };
 
           const result = await client.address.searchSettlementStreets(request);
-          setStreets(result.data?.[0]?.addresses ?? []);
+          setStreets(result.data?.[0]?.Addresses || []);
         } catch (error) {
           console.error('Error searching for streets:', error);
           setStreets([]);
@@ -54,10 +52,6 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   );
 
   useEffect(() => {
-    if (1) {
-      return;
-    }
-
     if (!cityRef || searchValue.trim().length === 0) {
       setStreets([]);
       debouncedFetchStreets.cancel();
@@ -81,7 +75,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
     <>
       <SelectButton
         hasValue={!!street}
-        mainText={street?.present}
+        mainText={street?.Present}
         secondaryText={t('street')}
         placeholder={t('street')}
         onClick={() => setIsStreetModalVisible(true)}
@@ -108,7 +102,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
           <Flex vertical gap={8}>
             {streets.map((item) => (
               <StreetModalItem
-                key={item.settlementStreetRef}
+                key={item.SettlementStreetRef}
                 item={item}
                 changeStreet={handleSelectStreet}
               />
@@ -119,11 +113,3 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
     </>
   );
 };
-
-const useStyles = createStyles(({ css }) => {
-  return {
-    divider: css`
-      margin: 0;
-    `,
-  };
-});

@@ -1,10 +1,10 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { City } from '@src/modules/checkout/vendors/novaposta/types';
+import type { SearchSettlementAddress } from '@shopana/novaposhta-api-client';
 
 interface Prop {
-  item: City | null;
-  changeCity: (city: City) => void;
+  item: SearchSettlementAddress | null;
+  changeCity: (city: SearchSettlementAddress) => void;
 }
 
 export const CityOption = ({ item, changeCity }: Prop) => {
@@ -13,13 +13,13 @@ export const CityOption = ({ item, changeCity }: Prop) => {
   if (!item) return null;
   return (
     <Button
-      key={item?.ref}
+      key={item?.Ref}
       className={styles.item}
       onClick={() => changeCity(item)}
     >
       <Flex vertical align="start">
-        <Typography.Text>{item?.mainDescription}</Typography.Text>
-        <Typography.Text type="secondary">{item?.area}</Typography.Text>
+        <Typography.Text>{item?.MainDescription}</Typography.Text>
+        <Typography.Text type="secondary">{item?.Area}</Typography.Text>
       </Flex>
     </Button>
   );
