@@ -18,7 +18,7 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
 
   useEffect(() => {
     setCity(data?.city ?? null);
-  }, [data?.city?.Ref]);
+  }, [data?.city?.ref]);
 
   const onSubmit = useCallback(
     (city: City) => {
@@ -28,7 +28,7 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
         addDeliveryAddresses({
           addresses: [
             {
-              city: city.MainDescription,
+              city: city.mainDescription,
               data: { city },
             },
           ],
@@ -41,7 +41,7 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
           {
             addressId,
             address: {
-              city: city.MainDescription,
+              city: city.mainDescription,
               data: { city },
             },
           },

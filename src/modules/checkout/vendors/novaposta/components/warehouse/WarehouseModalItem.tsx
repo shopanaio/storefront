@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { WarehouseData } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
+import { type WarehouseData } from '../../api';
 import { NPLogo } from '../Logo';
 
 interface Prop {

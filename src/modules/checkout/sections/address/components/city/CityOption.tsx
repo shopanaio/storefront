@@ -13,13 +13,13 @@ export const CityOption = ({ item, changeCity }: Prop) => {
   if (!item) return null;
   return (
     <Button
-      key={item?.Ref}
+      key={item?.ref}
       className={styles.item}
       onClick={() => changeCity(item)}
     >
       <Flex vertical align="start">
-        <Typography.Text>{item?.MainDescription}</Typography.Text>
-        <Typography.Text type="secondary">{item?.Area}</Typography.Text>
+        <Typography.Text>{item?.mainDescription}</Typography.Text>
+        <Typography.Text type="secondary">{item?.area}</Typography.Text>
       </Flex>
     </Button>
   );

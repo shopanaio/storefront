@@ -2,15 +2,14 @@ import { Button, Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
-import { searchSettlementsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
+import { client } from '@checkout/vendors/novaposta/api';
 import type { City } from '@src/modules/checkout/vendors/novaposta/types';
 import { CityOption } from './CityOption';
 import { TbMapPin } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
-import { popularCities } from '@src/utils/novaposhta-temp-api/cities';
+import { popularCities } from '@checkout/vendors/novaposta/popularCities';
 import clsx from 'clsx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 
@@ -20,8 +19,6 @@ interface Prop {
   city: City | null;
   onSubmit: (city: City) => void;
 }
-
-const np = new NovaPoshta('');
 
 export const CitySelect = ({ city, onSubmit }: Prop) => {
   const { styles } = useStyles();
@@ -38,15 +35,13 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       if (searchValue.trim().length === 0) return;
 
       try {
-        const methodProperties: searchSettlementsProperties = {
-          CityName: searchValue,
-          Limit: '20',
-          Page: '1',
-        };
+        const result = await client.address.searchSettlements({
+          cityName: searchValue,
+          limit: 20,
+          page: 1,
+        });
 
-        const result = await np.searchSettlements(methodProperties);
-        console.log(result.data[0].Addresses);
-        setSettlements(result.data[0].Addresses || []);
+        setSettlements(result.data?.[0]?.addresses || []);
       } catch (error) {
         console.error('Error searching for settlements:', error);
         setSettlements([]);
@@ -56,7 +51,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
     return () => {
       setSettlements([]);
     };
-  }, [searchValue, np]);
+  }, [searchValue]);
 
   const items = useMemo(() => {
     const normalized = searchValue.trim().toLowerCase();
@@ -64,8 +59,8 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       ? settlements
       : settlements.filter(
           (item) =>
-            item.MainDescription.toLowerCase().includes(normalized) ||
-            item.Area.toLowerCase().includes(normalized)
+            item.mainDescription.toLowerCase().includes(normalized) ||
+            item.area.toLowerCase().includes(normalized)
         );
   }, [searchValue, settlements]);
 
@@ -90,7 +85,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
               {t('city')}
             </Typography.Text>
             <Typography.Text className={styles.mainText}>
-              {city.MainDescription}
+              {city.mainDescription}
             </Typography.Text>
           </Flex>
         ) : (
@@ -120,10 +115,10 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  key={item.Ref}
+                  key={item.ref}
                   onClick={() => handleSelectCity(item)}
                 >
-                  {item?.MainDescription}
+                  {item?.mainDescription}
                 </Button>
               ))}
             </Flex>
@@ -132,7 +127,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
             {searchValue &&
               items.map((item) => (
                 <CityOption
-                  key={item.Ref}
+                  key={item.ref}
                   item={item}
                   changeCity={handleSelectCity}
                 />

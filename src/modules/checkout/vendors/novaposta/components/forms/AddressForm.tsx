@@ -51,12 +51,12 @@ export function AddressForm({
 
   // Get city from deliveryAddress prop (passed from delivery group)
   const globalCity = deliveryAddress?.city ?? null;
-  const prevCityRef = usePrevious(globalCity?.Ref ?? null);
-  const cityRef = globalCity?.Ref;
+  const prevCityRef = usePrevious(globalCity?.ref ?? null);
+  const cityRef = globalCity?.ref;
 
   // Reset street when global city changes
   useEffect(() => {
-    const currentRef = globalCity?.Ref ?? null;
+    const currentRef = globalCity?.ref ?? null;
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
       // City changed, reset street selection

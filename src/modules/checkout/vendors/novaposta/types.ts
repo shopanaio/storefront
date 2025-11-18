@@ -6,35 +6,36 @@
 
 /**
  * City type returned by Nova Poshta settlements API.
+ * Updated to match the new @shopana/novaposhta-api-client format (camelCase).
  */
 export interface City {
-  AddressDeliveryAllowed: boolean;
-  Area: string;
-  DeliveryCity: string;
-  MainDescription: string;
-  ParentRegionCode: string;
-  ParentRegionTypes: string;
-  Present: string;
-  Ref: string;
-  Region: string;
-  RegionTypes: string;
-  RegionTypesCode: string;
-  SettlementTypeCode: string;
-  StreetsAvailability: boolean;
-  Warehouses: number;
+  addressDeliveryAllowed?: boolean;
+  area: string;
+  deliveryCity: string;
+  mainDescription: string;
+  parentRegionCode?: string;
+  parentRegionTypes?: string;
+  present?: string;
+  ref: string;
+  region: string;
+  regionTypes?: string;
+  regionTypesCode?: string;
+  settlementTypeCode: string;
+  streetsAvailability?: boolean;
+  warehouses: number;
 }
 
 /**
  * Street type returned by Nova Poshta streets API.
  */
 export interface Street {
-  Present: string;
-  SettlementRef: string;
-  SettlementStreetDescription: string;
-  SettlementStreetDescriptionRu: string;
-  SettlementStreetRef: string;
-  StreetsType: string;
-  StreetsTypeDescription: string;
+  present: string;
+  settlementRef: string;
+  settlementStreetDescription: string;
+  settlementStreetDescriptionRu?: string;
+  settlementStreetRef: string;
+  streetsType: string;
+  streetsTypeDescription: string;
 }
 
 /**

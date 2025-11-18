@@ -3,8 +3,8 @@ import { createStyles } from 'antd-style';
 import { useState, useEffect, useMemo } from 'react';
 import debounce from 'lodash/debounce';
 import { useTranslations } from 'next-intl';
-import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
-import { searchSettlementStreetsProperties } from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
+import { client } from '../../api';
+import type { SearchSettlementStreetsRequest } from '../../api';
 import { StreetModalItem } from './StreetModalItem';
 import { SelectButton } from '@checkout/components/common/SelectButton';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
@@ -17,9 +17,6 @@ interface Prop {
   changeStreet: (street: Street) => void;
   cityRef?: string;
 }
-
-const apiKey = '';
-const np = new NovaPoshta(apiKey);
 
 export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
   const { styles } = useStyles();
@@ -40,14 +37,14 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
         }
 
         try {
-          const methodProperties: searchSettlementStreetsProperties = {
-            SettlementRef: ref,
-            StreetName: search,
-            Limit: '20',
+          const request: SearchSettlementStreetsRequest = {
+            settlementRef: ref,
+            streetName: search,
+            limit: 20,
           };
 
-          const result = await np.searchSettlementStreets(methodProperties);
-          setStreets(result.data?.[0]?.Addresses ?? []);
+          const result = await client.address.searchSettlementStreets(request);
+          setStreets(result.data?.[0]?.addresses ?? []);
         } catch (error) {
           console.error('Error searching for streets:', error);
           setStreets([]);
@@ -84,7 +81,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
     <>
       <SelectButton
         hasValue={!!street}
-        mainText={street?.Present}
+        mainText={street?.present}
         secondaryText={t('street')}
         placeholder={t('street')}
         onClick={() => setIsStreetModalVisible(true)}
@@ -111,7 +108,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
           <Flex vertical gap={8}>
             {streets.map((item) => (
               <StreetModalItem
-                key={item.SettlementStreetRef}
+                key={item.settlementStreetRef}
                 item={item}
                 changeStreet={handleSelectStreet}
               />

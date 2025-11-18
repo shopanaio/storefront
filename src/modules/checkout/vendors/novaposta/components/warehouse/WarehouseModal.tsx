@@ -2,11 +2,7 @@ import { Divider, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { NovaPoshta } from '@src/utils/novaposhta-temp-api/NovaPoshta';
-import {
-  getWarehousesProperties,
-  WarehouseData,
-} from '@src/utils/novaposhta-temp-api/NovaPoshta.types';
+import { getWarehouses, type GetWarehousesRequest, type WarehouseData } from '../../api';
 import { Warehouse } from '../../types';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { SelectButton } from '@checkout/components/common/SelectButton';
@@ -112,23 +108,19 @@ export const WarehouseModal = ({
   const [warehouses, setWarehouses] = useState<WarehouseData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const apiKey = '';
-  const np = new NovaPoshta(apiKey);
-
   useEffect(() => {
     const fetchWarehouses = async () => {
       if (!cityName) return;
 
       setIsLoading(true);
       try {
-        const methodProperties: getWarehousesProperties = {
+        const request: GetWarehousesRequest = {
           CityName: cityName,
           Limit: '150',
           Page: '1',
         };
 
-        const result = await np.getWarehouses(methodProperties);
-        /* console.log(result.data); */
+        const result = await getWarehouses(request);
         setWarehouses(result.data || []);
       } catch {
         setWarehouses([]);

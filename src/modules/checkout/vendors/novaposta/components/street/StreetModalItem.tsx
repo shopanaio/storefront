@@ -16,13 +16,13 @@ export const StreetModalItem = ({ item, changeStreet }: Prop) => {
     <Button
       type="text"
       icon={<TbMapPin size={18} />}
-      key={item?.SettlementStreetRef}
+      key={item?.settlementStreetRef}
       className={styles.item}
       onClick={() => changeStreet(item)}
     >
       <Flex vertical align="start">
         <Typography.Text className={styles.streetName} strong>
-          {item?.Present}
+          {item?.present}
         </Typography.Text>
       </Flex>
     </Button>

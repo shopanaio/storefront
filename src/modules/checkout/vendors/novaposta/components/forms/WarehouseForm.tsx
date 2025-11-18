@@ -36,7 +36,7 @@ export function WarehouseForm({
 
   // Get city from deliveryAddress prop (passed from delivery group)
   const globalCity = (deliveryAddress as { city?: City | null })?.city ?? null;
-  const prevCityRef = usePrevious(globalCity?.Ref ?? null);
+  const prevCityRef = usePrevious(globalCity?.ref ?? null);
 
   const handleChangeWarehouse = (w: Warehouse) => {
     methods.setValue('warehouse', w);
@@ -45,7 +45,7 @@ export function WarehouseForm({
 
   // Reset warehouse when global city changes
   useEffect(() => {
-    const currentRef = globalCity?.Ref ?? null;
+    const currentRef = globalCity?.ref ?? null;
     if (prevCityRef === currentRef) return;
     if (prevCityRef !== undefined) {
       // City changed, reset warehouse selection
@@ -60,7 +60,7 @@ export function WarehouseForm({
         <WarehouseModal
           warehouse={warehouse}
           changeWarehouse={handleChangeWarehouse}
-          cityName={globalCity?.MainDescription || null}
+          cityName={globalCity?.mainDescription || null}
         />
       </FormProvider>
       {!globalCity && (
