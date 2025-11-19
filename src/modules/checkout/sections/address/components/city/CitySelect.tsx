@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { client } from '@checkout/vendors/novaposta/api';
 import type { SearchSettlementAddress } from '@shopana/novaposhta-api-client';
 import { CityOption } from './CityOption';
-import { TbMapPin } from 'react-icons/tb';
+import { TbMapPin, TbX } from 'react-icons/tb';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
@@ -107,6 +107,16 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
               label={t('city')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
+              suffix={
+                searchValue && (
+                  <TbX
+                    size={20}
+                    color={token.colorIcon}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setSearchValue('')}
+                  />
+                )
+              }
             />
           </DrawerBase.Header>
         }
