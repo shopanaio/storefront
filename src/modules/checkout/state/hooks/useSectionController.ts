@@ -89,14 +89,14 @@ export function useSectionController(
     [sectionId]
   );
 
-  return useMemo(() => {
-    console.log('useSectionController', sectionId);
-    return {
+  return useMemo(
+    () => ({
       busy,
       publishValid,
       publishInvalid,
       reset,
       setBusy,
-    };
-  }, [busy, publishValid, publishInvalid, reset, setBusy, sectionId]);
+    }),
+    [busy, publishValid, publishInvalid, reset, setBusy]
+  );
 }

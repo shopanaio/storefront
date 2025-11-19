@@ -26,19 +26,11 @@ export function useDefaultCartCleanup() {
       setCartKey(null);
       setId(null);
 
-      console.log('Cleaning up default cart');
-      console.log('checkoutId', checkoutId);
-
       // Remove specific checkout from Relay store if ID exists
       if (checkoutId) {
         environment.commitUpdate((store) => {
           store.delete(checkoutId);
         });
-        console.log(
-          `[Order Completion] Cleaned up default cart and removed checkout ${checkoutId} from Relay store`
-        );
-      } else {
-        console.log('[Order Completion] Cleaned up default cart');
       }
     },
     [environment, setCartKey, setId]

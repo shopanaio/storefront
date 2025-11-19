@@ -63,7 +63,7 @@ const CheckoutDataHandler: React.FC<{
     if (apiCheckout) {
       onCheckoutData(apiCheckout);
     } else {
-      console.log('Checkout not found');
+      console.error('Checkout not found');
       onCheckoutNotFound();
     }
   }, [data, onCheckoutData, onCheckoutNotFound]);

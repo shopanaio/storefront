@@ -54,7 +54,7 @@ export const SelectButton = ({
     >
       {hasValue ? (
         <Flex className={cx(styles.flex, invert && styles.invert)}>
-          <Typography.Text className={styles.mainText}>
+          <Typography.Text className={styles.mainText} ellipsis>
             {mainText}
           </Typography.Text>
           {secondaryText && (
@@ -79,6 +79,7 @@ const useStyles = createStyles(({ token, css }) => {
         ${token.paddingSM}px;
       min-height: 56px;
       height: 100%;
+      overflow: hidden;
     `,
     flex: css`
       flex-direction: column;

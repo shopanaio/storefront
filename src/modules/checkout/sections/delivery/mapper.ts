@@ -36,8 +36,6 @@ export function mapCheckoutToDeliveryFormData(
           }
         : null;
 
-    console.log('selectedDeliveryMethod ---->', selectedDeliveryMethod);
-
     // Extract address data from delivery group
     const address: DeliveryAddress = group.deliveryAddress
       ? {

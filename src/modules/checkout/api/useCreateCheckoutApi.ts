@@ -33,8 +33,6 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { checkout = null } = useCheckoutData() || {};
   const checkoutId = checkout?.id as string;
 
-  console.log('checkoutId ->', checkoutId);
-
   const { commit: commitSelectDelivery } =
     useCheckoutOperation<SelectDeliveryMethodMutationType>(
       selectDeliveryMethodMutation,
@@ -157,7 +155,6 @@ export function useCreateCheckoutApi(): CheckoutApi {
   );
 
   return useMemo(() => {
-    console.log('Create Checkout API', checkoutId);
     return {
       selectDeliveryMethod: async (input) => {
         await commitSelectDelivery({
@@ -210,7 +207,6 @@ export function useCreateCheckoutApi(): CheckoutApi {
         });
       },
       updateCustomerNote: async (input) => {
-        console.log('updateCustomerNote', input, checkoutId);
         await commitUpdateNote({
           input: { ...input, checkoutId },
         });

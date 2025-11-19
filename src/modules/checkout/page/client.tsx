@@ -29,7 +29,6 @@ export const CheckoutPageClient = () => {
 
   const handleConfirm = useCallback(() => {
     cleanup(cartId);
-    console.log('Order completed and data cleaned up');
   }, [cleanup, cartId]);
 
   return (

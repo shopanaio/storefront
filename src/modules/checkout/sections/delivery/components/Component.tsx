@@ -29,7 +29,6 @@ export interface DeliverySectionViewProps {
 export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
   const { styles } = useStyles();
   const { selectDeliveryMethod, updateShippingMethod } = useCheckoutApi();
-  console.log('data', data);
   // Extract current selected method from data
   const [, deliveryGroup] = Object.entries(data ?? {}).at(0) || [];
   const {

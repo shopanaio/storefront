@@ -28,5 +28,6 @@
       "Sunday": "Sun"
     },
     "not_specified": "Schedule not specified"
-  }
+  },
+  "pickup_from_here": "Pickup from here"
 }

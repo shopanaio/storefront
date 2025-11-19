@@ -31,6 +31,14 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
   const [settlements, setSettlements] = useState<City[]>([]);
 
   useEffect(() => {
+    if (isCityModalVisible && city) {
+      setSearchValue(city.MainDescription);
+    } else if (!isCityModalVisible) {
+      setSearchValue('');
+    }
+  }, [isCityModalVisible, city]);
+
+  useEffect(() => {
     const fetchSettlements = async () => {
       if (searchValue.trim().length === 0) {
         setSettlements([]);
@@ -44,13 +52,6 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
           page: 1,
         });
 
-        console.log('=== NOVA POSHTA API RESPONSE ===');
-        console.log('Full result:', result);
-        console.log('result.data:', result.data);
-        console.log('result.data[0]:', result.data?.[0]);
-        console.log('result.data[0].Addresses:', result.data?.[0]?.Addresses);
-        console.log('================================');
-
         setSettlements(result.data?.[0]?.Addresses || []);
       } catch (error) {
         console.error('Error searching for settlements:', error);
@@ -63,7 +64,6 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
   const handleSelectCity = (item: City) => {
     onSubmit(item);
     setIsCityModalVisible(false);
-    setSearchValue('');
   };
 
   return (
@@ -94,7 +94,12 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         engine={isMobile ? 'overlay' : 'vaul'}
         header={
           <DrawerBase.Header vertical gap={8}>
-            <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>
+            <Flex
+              gap={8}
+              justify="space-between"
+              align="center"
+              style={{ width: '100%' }}
+            >
               <DrawerBase.Title>{t('choose-your-city')}</DrawerBase.Title>
               <DrawerBase.CloseButton />
             </Flex>
@@ -106,31 +111,34 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
           </DrawerBase.Header>
         }
       >
-        <Flex vertical>
+        <Flex vertical gap={16}>
           {!searchValue && (
-            <Flex gap={8} wrap>
+            <Flex vertical gap={8} wrap>
               {popularCities.map((item) => (
                 <Button
-                  variant="outlined"
-                  color="primary"
+                  block
+                  variant={item.Ref === city?.Ref ? 'outlined' : 'text'}
+                  color={item.Ref === city?.Ref ? 'primary' : 'default'}
                   key={item.Ref}
                   onClick={() => handleSelectCity(item)}
+                  style={{ justifyContent: 'start' }}
                 >
                   {item?.MainDescription}
                 </Button>
               ))}
             </Flex>
           )}
-          <Flex vertical gap={8}>
-            {searchValue &&
-              settlements.map((item) => (
+          {searchValue && settlements?.length > 0 && (
+            <Flex vertical gap={8}>
+              {settlements.map((item) => (
                 <CityOption
                   key={item.Ref}
                   item={item}
                   changeCity={handleSelectCity}
                 />
               ))}
-          </Flex>
+            </Flex>
+          )}
         </Flex>
       </DrawerBase>
     </>

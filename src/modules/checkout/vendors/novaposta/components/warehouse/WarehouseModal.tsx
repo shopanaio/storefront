@@ -107,6 +107,7 @@ export const WarehouseModal = ({
   const [searchValue, setSearchValue] = useState('');
   const [warehouses, setWarehouses] = useState<WarehouseData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedWarehouseRef, setExpandedWarehouseRef] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWarehouses = async () => {
@@ -160,6 +161,12 @@ export const WarehouseModal = ({
     changeWarehouse(warehouseData);
     setIsWarehouseModalVisible(false);
     setSearchValue('');
+    setExpandedWarehouseRef(null);
+  };
+
+  const handleCloseModal = () => {
+    setIsWarehouseModalVisible(false);
+    setExpandedWarehouseRef(null);
   };
 
   return (
@@ -178,7 +185,7 @@ export const WarehouseModal = ({
       />
       <DrawerBase
         open={isWarehouseModalVisible}
-        onClose={() => setIsWarehouseModalVisible(false)}
+        onClose={handleCloseModal}
         engine={isMobile ? 'overlay' : 'vaul'}
         header={
           <DrawerBase.Header vertical gap={8}>
@@ -205,6 +212,8 @@ export const WarehouseModal = ({
                 key={item.Ref}
                 item={item}
                 changeWarehouse={handleSelectWarehouse}
+                isExpanded={expandedWarehouseRef === item.Ref}
+                onToggle={() => setExpandedWarehouseRef(expandedWarehouseRef === item.Ref ? null : item.Ref)}
               />
             ))}
           </Flex>

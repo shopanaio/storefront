@@ -1,12 +1,17 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Collapse, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { type WarehouseData } from '../../api';
 import { NPLogo } from '../Logo';
+import clsx from 'clsx';
+
+const { Panel } = Collapse;
 
 interface Prop {
   item: WarehouseData | null;
   changeWarehouse: (warehouse: WarehouseData) => void;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
 /**
@@ -86,59 +91,96 @@ const formatSchedule = (
   return t('not_specified');
 };
 
-export const WarehouseModalItem = ({ item, changeWarehouse }: Prop) => {
+export const WarehouseModalItem = ({
+  item,
+  changeWarehouse,
+  isExpanded,
+  onToggle,
+}: Prop) => {
   const t = useTranslations('Modules.novaposta.schedule');
+  const tButton = useTranslations('Modules.novaposta');
   const { styles } = useStyles();
 
   if (!item) return null;
+
+  const handlePickup = () => {
+    changeWarehouse(item);
+  };
+
   return (
-    <Button
-      type="text"
-      icon={<NPLogo showText={false} />}
-      key={item?.Ref}
-      className={styles.button}
-      onClick={() => changeWarehouse(item)}
+    <Collapse
+      className={clsx(styles.collapse, isExpanded && styles.active)}
+      activeKey={isExpanded ? item.Ref : undefined}
+      onChange={onToggle}
+      ghost
+      bordered={false}
     >
-      <Flex vertical align="start" gap={4} className={styles.content}>
-        <Typography.Text className={styles.warehouseMain} ellipsis>
-          {`№${item?.Number} ${item?.ShortAddress}`}
-        </Typography.Text>
-        <Typography.Text className={styles.workTime} type="secondary">
-          {formatSchedule(item?.Schedule, t)}
-        </Typography.Text>
-      </Flex>
-    </Button>
+      <Panel
+        showArrow={false}
+        key={item.Ref}
+        header={
+          <Flex gap={8} align="center" className={styles.header}>
+            <NPLogo showText={false} />
+            <Flex vertical align="start" gap={4} className={styles.content}>
+              <Typography.Text className={styles.warehouseMain}>
+                {`№${item.Number} ${item.ShortAddress}`}
+              </Typography.Text>
+              <Typography.Text className={styles.workTime} type="secondary">
+                {formatSchedule(item.Schedule, t)}
+              </Typography.Text>
+            </Flex>
+          </Flex>
+        }
+      >
+        <Button type="primary" size="large" block onClick={handlePickup}>
+          {tButton('pickup_from_here')}
+        </Button>
+      </Panel>
+    </Collapse>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    button: css`
-      display: flex;
-      justify-content: flex-start;
-      padding-left: ${token.paddingXS}px;
-      height: 56px;
+    collapse: css`
+      box-sizing: border-box;
+      border: 1px solid;
+      border-color: ${token.colorBorder};
+      border-radius: ${token.borderRadius}px;
+      min-height: 56px;
+      overflow: visible;
+      margin-bottom: ${token.marginXS}px;
+
+      & .ant-collapse-header {
+        padding: ${token.paddingSM}px !important;
+        align-items: center !important;
+      }
+
+      & .ant-collapse-content-box {
+        padding: ${token.paddingSM}px !important;
+        padding-top: 0 !important;
+      }
+    `,
+    active: css`
+      outline: 1px solid ${token.colorPrimary};
+      border-color: ${token.colorPrimary} !important;
+    `,
+    header: css`
+      width: 100%;
+      cursor: pointer;
       overflow: hidden;
     `,
-    postLogoWrapper: css`
-      height: 46px;
-      padding: ${token.paddingXXS}px;
-      border-radius: ${token.borderRadius}px;
-      border: 1px solid ${token.colorBorderSecondary};
-    `,
-    postLogo: css`
-      height: 100%;
-      border-radius: ${token.borderRadius}px;
-    `,
     warehouseMain: css`
-      line-height: 1;
+      line-height: 1.2;
+      font-size: ${token.fontSize}px;
     `,
     workTime: css`
       font-size: ${token.fontSizeSM}px;
-      line-height: 1;
+      line-height: 1.2;
     `,
     content: css`
       overflow: hidden;
+      flex: 1;
     `,
   };
 });

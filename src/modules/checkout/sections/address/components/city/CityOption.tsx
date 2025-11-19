@@ -1,35 +1,28 @@
 import { Button, Flex, Typography } from 'antd';
-import { createStyles } from 'antd-style';
 import type { SearchSettlementAddress } from '@shopana/novaposhta-api-client';
 
 interface Prop {
-  item: SearchSettlementAddress | null;
+  item: SearchSettlementAddress;
   changeCity: (city: SearchSettlementAddress) => void;
 }
 
 export const CityOption = ({ item, changeCity }: Prop) => {
-  const { styles } = useStyles();
-
-  if (!item) return null;
   return (
     <Button
       key={item?.Ref}
-      className={styles.item}
       onClick={() => changeCity(item)}
+      variant="text"
+      size="large"
+      color="default"
+      style={{
+        justifyContent: 'start',
+        padding: 0,
+      }}
     >
       <Flex vertical align="start">
-        <Typography.Text>{item?.MainDescription}</Typography.Text>
-        <Typography.Text type="secondary">{item?.Area}</Typography.Text>
+        <Typography.Text>{item.MainDescription}</Typography.Text>
+        <Typography.Text type="secondary">{item.Area}</Typography.Text>
       </Flex>
     </Button>
   );
 };
-
-const useStyles = createStyles(({ css }) => {
-  return {
-    item: css`
-      justify-content: flex-start;
-      height: 50px;
-    `,
-  };
-});
