@@ -87,14 +87,17 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
         onClose={() => setIsStreetModalVisible(false)}
         engine={isMobile ? 'overlay' : 'vaul'}
         header={
-          <DrawerBase.Header gap={8} justify="space-between" align="center">
+          <DrawerBase.Header vertical gap={8}>
+            <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>
+              <DrawerBase.Title>{t('street')}</DrawerBase.Title>
+              <DrawerBase.CloseButton />
+            </Flex>
             <FloatingLabelInput
               label={t('select-street')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               disabled={!cityRef}
             />
-            <DrawerBase.CloseButton />
           </DrawerBase.Header>
         }
       >
@@ -102,7 +105,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
           <Flex vertical gap={8}>
             {streets.map((item) => (
               <StreetModalItem
-                key={item.SettlementStreetRef}
+                key={item.settlementStreetRef}
                 item={item}
                 changeStreet={handleSelectStreet}
               />

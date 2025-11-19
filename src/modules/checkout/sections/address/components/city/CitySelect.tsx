@@ -91,16 +91,18 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       <DrawerBase
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
-        title={t('choose-your-city')}
         engine={isMobile ? 'overlay' : 'vaul'}
         header={
-          <DrawerBase.Header gap={8} justify="space-between" align="center">
+          <DrawerBase.Header vertical gap={8}>
+            <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>
+              <DrawerBase.Title>{t('choose-your-city')}</DrawerBase.Title>
+              <DrawerBase.CloseButton />
+            </Flex>
             <FloatingLabelInput
               label={t('city')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
             />
-            <DrawerBase.CloseButton />
           </DrawerBase.Header>
         }
       >

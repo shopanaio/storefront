@@ -1,4 +1,4 @@
-import { Divider, Flex, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -181,14 +181,17 @@ export const WarehouseModal = ({
         onClose={() => setIsWarehouseModalVisible(false)}
         engine={isMobile ? 'overlay' : 'vaul'}
         header={
-          <DrawerBase.Header gap={8} justify="space-between" align="center">
+          <DrawerBase.Header vertical gap={8}>
+            <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>
+              <DrawerBase.Title>{t('warehouse')}</DrawerBase.Title>
+              <DrawerBase.CloseButton />
+            </Flex>
             <FloatingLabelInput
               label={t('select-warehouse')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               disabled={!cityName}
             />
-            <DrawerBase.CloseButton />
           </DrawerBase.Header>
         }
       >
