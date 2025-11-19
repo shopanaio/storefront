@@ -3,12 +3,7 @@
 import { Button, Flex, Typography } from 'antd';
 import type { ButtonProps, DrawerProps, FlexProps } from 'antd';
 import { createStyles } from 'antd-style';
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useMemo,
-} from 'react';
+import { ReactNode, createContext, useContext, useMemo } from 'react';
 import { RxCross2 } from 'react-icons/rx';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import RootDrawer, { DrawerEngine } from '@src/components/UI/Drawer/RootDrawer';
@@ -124,9 +119,7 @@ export const DrawerBase = ({
   );
 
   return (
-    <DrawerBaseContext.Provider
-      value={useMemo(() => ({ onClose }), [onClose])}
-    >
+    <DrawerBaseContext.Provider value={useMemo(() => ({ onClose }), [onClose])}>
       <RootDrawer
         open={open}
         onClose={onClose}
@@ -141,10 +134,20 @@ export const DrawerBase = ({
   );
 };
 
-const DrawerBaseTitle = ({ children }: { children: ReactNode }) => {
+const DrawerBaseTitle = ({
+  children,
+  id,
+}: {
+  children: ReactNode;
+  id?: string;
+}) => {
   const { styles } = useStyles();
 
-  return <Text className={styles.title}>{children}</Text>;
+  return (
+    <Text id={id} className={styles.title}>
+      {children}
+    </Text>
+  );
 };
 
 const DrawerBaseHeader = ({
@@ -165,10 +168,7 @@ const DrawerBaseHeader = ({
   );
 };
 
-const DrawerBaseCloseButton = ({
-  onClick,
-  ...buttonProps
-}: ButtonProps) => {
+const DrawerBaseCloseButton = ({ onClick, ...buttonProps }: ButtonProps) => {
   const { styles } = useStyles();
   const [, token] = useToken();
   const { onClose } = useDrawerBaseContext();

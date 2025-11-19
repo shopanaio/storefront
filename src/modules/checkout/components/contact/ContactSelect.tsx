@@ -119,13 +119,20 @@ export const ContactSelect = ({
         onClose={() => setOpen(false)}
         header={
           <DrawerBase.Header gap={8} justify="space-between" align="center">
-            <DrawerBase.Title>{title}</DrawerBase.Title>
+            <DrawerBase.Title id="contact-form-title">{title}</DrawerBase.Title>
             <DrawerBase.CloseButton />
           </DrawerBase.Header>
         }
+        aria-labelledby="contact-form-title"
+        aria-modal="true"
       >
         <FormProvider {...methods}>
-          <Flex vertical gap={12}>
+          <Flex
+            vertical
+            gap={12}
+            role="form"
+            aria-label={t('contact-information-form')}
+          >
             <Controller
               name="firstName"
               control={control}
@@ -140,6 +147,7 @@ export const ContactSelect = ({
                   onBlur={field.onBlur}
                   status={errors.firstName ? 'error' : undefined}
                   error={errors.firstName?.message}
+                  autoComplete="given-name"
                 />
               )}
             />
@@ -157,6 +165,7 @@ export const ContactSelect = ({
                   onBlur={field.onBlur}
                   status={errors.lastName ? 'error' : undefined}
                   error={errors.lastName?.message}
+                  autoComplete="family-name"
                 />
               )}
             />
@@ -174,6 +183,7 @@ export const ContactSelect = ({
                   onBlur={field.onBlur}
                   status={errors.middleName ? 'error' : undefined}
                   error={errors.middleName?.message}
+                  autoComplete="additional-name"
                 />
               )}
             />
@@ -190,6 +200,7 @@ export const ContactSelect = ({
                 invalidLength: t('phone-invalid-length'),
               }}
               error={errors.phone?.message}
+              autoComplete="tel"
             />
             <StickyButton onClick={onDrawerSubmit}>{t('save')}</StickyButton>
           </Flex>
