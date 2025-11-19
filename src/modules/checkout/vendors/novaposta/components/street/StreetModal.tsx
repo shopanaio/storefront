@@ -105,7 +105,7 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
           <Flex vertical gap={8}>
             {streets.map((item) => (
               <StreetModalItem
-                key={item.settlementStreetRef}
+                key={item.SettlementStreetRef}
                 item={item}
                 changeStreet={handleSelectStreet}
               />

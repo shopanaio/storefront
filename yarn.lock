@@ -3232,10 +3232,10 @@
   resolved "https://registry.npmjs.org/@schummar/icu-type-parser/-/icu-type-parser-1.21.5.tgz"
   integrity sha512-bXHSaW5jRTmke9Vd0h5P7BtWZG9Znqb8gSDxZnxaGSJnGwPLDPfS+3g0BKzeWqzgZPsIVZkM7m2tbo18cm5HBw==
 
-"@shopana/novaposhta-api-client@^0.0.1-alpha.0":
-  version "0.0.1-alpha.0"
-  resolved "https://registry.yarnpkg.com/@shopana/novaposhta-api-client/-/novaposhta-api-client-0.0.1-alpha.0.tgz#19b774a49560cd980a969991ecf39fde64d9ca6f"
-  integrity sha512-NgAkiWgnX+28CUAXlKHlvdKdZoWQBbved3eWpsO27tXqyZsJXJ3QRRXj53+pyunVPIufDpJus7P5P6w1/QQHIg==
+"@shopana/novaposhta-api-client@^0.0.1-alpha.1":
+  version "0.0.1-alpha.1"
+  resolved "https://registry.yarnpkg.com/@shopana/novaposhta-api-client/-/novaposhta-api-client-0.0.1-alpha.1.tgz#9f84990238d1de16957087437192bf7c336a9daa"
+  integrity sha512-nGE3w3x99mpjGvxcj8aqjiJ4al+9TsbVSKhtwt1wU56UQo/2A3KaNK075XaIuvP/Qh/8x5XhIkxcYVA/pht8Qg==
 
 "@shopana/novaposhta-transport-fetch@^0.0.1-alpha.0":
   version "0.0.1-alpha.0"

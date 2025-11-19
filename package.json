@@ -12,7 +12,7 @@
     "@ant-design/nextjs-registry": "^1.1.0",
     "@apollo/client": "^3.13.8",
     "@hookform/resolvers": "^5.2.2",
-    "@shopana/novaposhta-api-client": "^0.0.1-alpha.0",
+    "@shopana/novaposhta-api-client": "^0.0.1-alpha.1",
     "@shopana/novaposhta-transport-fetch": "^0.0.1-alpha.0",
     "@stackflow/config": "^1.2.1",
     "@stackflow/core": "^1.2.0",
