@@ -60,8 +60,8 @@ export const MOCK_CURRENCIES: Record<string, Currency> = {
  *
  * @example
  * ```tsx
- * import { ShopProvider } from '@/core/shop';
- * import { mockShopConfig } from '@/core/shop/mockShopConfig';
+ * import { ShopProvider } from '@src/core/shop';
+ * import { mockShopConfig } from '@src/core/shop/mockShopConfig';
  *
  * function App() {
  *   return (

@@ -58,6 +58,18 @@ export interface BlockSchema {
   settings: Setting[];
 }
 
+export interface LayoutSchema {
+  slug: string;
+  name: string;
+  description?: string;
+  templates?: PageTemplateType[];
+  settings: Setting[];
+  sections?: {
+    types: string[];
+    max?: number;
+  };
+}
+
 export interface SectionInstance<TSettings = Record<string, any>> {
   id: string;
   type: string;
@@ -71,6 +83,13 @@ export interface BlockInstance<TSettings = Record<string, any>> {
   settings: TSettings;
 }
 
+export interface LayoutInstance<TSettings = Record<string, any>> {
+  id: string;
+  type: string;
+  settings: TSettings;
+  sections?: SectionInstance[];
+}
+
 export interface SectionProps<TSettings = Record<string, any>> {
   id: string;
   settings: TSettings;
@@ -82,10 +101,18 @@ export interface BlockProps<TSettings = Record<string, any>> {
   settings: TSettings;
 }
 
+export interface LayoutProps<TSettings = Record<string, any>> {
+  id: string;
+  settings: TSettings;
+  sections?: SectionInstance[];
+  children?: React.ReactNode;
+}
+
 export interface PageTemplate<TData = any> {
   id: string;
   name: string;
   pageType: PageTemplateType;
+  layout?: LayoutInstance;
   sections: SectionInstance[];
   data?: TData;
   metadata?: Record<string, any>;
@@ -105,11 +132,19 @@ export interface BlockState<TSettings = Record<string, any>>
   schema?: BlockSchema;
 }
 
+export interface LayoutState<TSettings = Record<string, any>>
+  extends LayoutInstance<TSettings> {
+  schema?: LayoutSchema;
+}
+
 export interface PageBuilderState<TData = any> {
   pageId: string;
   pageName: string;
   data?: TData;
   metadata?: Record<string, any>;
+  layout?: LayoutState;
+  layoutSections: Record<string, SectionState>;
+  layoutSectionOrder: string[];
   sections: Record<string, SectionState>;
   sectionOrder: string[];
   blocks: Record<string, BlockState>;
@@ -119,6 +154,12 @@ export interface PageBuilderState<TData = any> {
 export interface PageBuilderActions<TData = any> {
   setPageData: (data: TData) => void;
   updateMetadata: (metadata: Record<string, any>) => void;
+  setLayout: (layout: LayoutInstance, schema?: LayoutSchema) => void;
+  updateLayout: (updates: Partial<LayoutInstance>) => void;
+  addLayoutSection: (section: SectionInstance, schema?: SectionSchema) => void;
+  updateLayoutSection: (sectionId: string, updates: Partial<SectionInstance>) => void;
+  removeLayoutSection: (sectionId: string) => void;
+  reorderLayoutSections: (newOrder: string[]) => void;
   addSection: (section: SectionInstance, schema?: SectionSchema) => void;
   updateSection: (sectionId: string, updates: Partial<SectionInstance>) => void;
   removeSection: (sectionId: string) => void;
@@ -131,6 +172,9 @@ export interface PageBuilderActions<TData = any> {
 }
 
 export type PageSelector<TData = any, R = any> = (state: PageBuilderState<TData>) => R;
+export type LayoutSelector<TSettings = Record<string, any>, R = any> = (
+  layout: LayoutState<TSettings>
+) => R;
 export type SectionSelector<TSettings = Record<string, any>, R = any> = (
   section: SectionState<TSettings>
 ) => R;

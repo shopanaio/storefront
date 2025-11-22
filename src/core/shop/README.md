@@ -15,7 +15,7 @@ This module provides:
 ### 1. Setup in Root Layout
 
 ```tsx
-import { ShopProvider, mockShopConfig } from '@/core/shop';
+import { ShopProvider, mockShopConfig } from '@src/core/shop';
 
 export default function RootLayout({ children }) {
   return (
@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
 ### 2. Use in Components
 
 ```tsx
-import { useShop } from '@/core/shop';
+import { useShop } from '@src/core/shop';
 
 function ProductCard({ product }) {
   const shop = useShop();
@@ -139,7 +139,7 @@ if (shop.hasFeature('wishlist')) {
 ### Using Mock Configuration (Development)
 
 ```tsx
-import { mockShopConfig } from '@/core/shop';
+import { mockShopConfig } from '@src/core/shop';
 
 // Use in ShopProvider
 <ShopProvider config={mockShopConfig}>
@@ -150,8 +150,8 @@ import { mockShopConfig } from '@/core/shop';
 ### Creating Custom Configuration
 
 ```tsx
-import type { ShopConfig } from '@/core/shop';
-import { MOCK_LOCALES, MOCK_CURRENCIES } from '@/core/shop';
+import type { ShopConfig } from '@src/core/shop';
+import { MOCK_LOCALES, MOCK_CURRENCIES } from '@src/core/shop';
 
 const myShopConfig: ShopConfig = {
   name: 'My Store',
@@ -197,7 +197,7 @@ import type {
   Locale,
   Currency,
   ShopFeatures
-} from '@/core/shop';
+} from '@src/core/shop';
 
 // Typed shop config
 const config: ShopConfig = { /* ... */ };
@@ -215,8 +215,8 @@ const features: ShopFeatures = {
 Shop context can be used alongside PageBuilder:
 
 ```tsx
-import { useShop } from '@/core/shop';
-import { usePage } from '@/core/page-builder';
+import { useShop } from '@src/core/shop';
+import { usePage } from '@src/core/page-builder';
 
 function ProductSection() {
   const shop = useShop();

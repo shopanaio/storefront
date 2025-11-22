@@ -27,8 +27,8 @@ export interface ShopProviderProps {
  *
  * @example
  * ```tsx
- * import { ShopProvider } from '@/core/shop';
- * import { shopConfig } from '@/config/shop';
+ * import { ShopProvider } from '@src/core/shop';
+ * import { shopConfig } from '@src/config/shop';
  *
  * function App() {
  *   return (

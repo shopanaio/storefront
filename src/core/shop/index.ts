@@ -9,7 +9,7 @@
  * @example
  * ```tsx
  * // Setup in root layout
- * import { ShopProvider, mockShopConfig } from '@/core/shop';
+ * import { ShopProvider, mockShopConfig } from '@src/core/shop';
  *
  * export default function RootLayout({ children }) {
  *   return (
@@ -20,7 +20,7 @@
  * }
  *
  * // Use in any component
- * import { useShop } from '@/core/shop';
+ * import { useShop } from '@src/core/shop';
  *
  * function ProductPrice({ amount }) {
  *   const shop = useShop();

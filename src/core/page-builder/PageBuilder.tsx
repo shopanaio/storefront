@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { PageContextProvider } from './context';
 import { SectionRenderer } from './SectionRenderer';
+import { LayoutRenderer } from './LayoutRenderer';
 import { PageBuilderStoreProvider } from './store-provider';
 import { usePageBuilderState } from './hooks';
 import { validateTemplate } from './validation';
@@ -59,11 +60,13 @@ function PageBuilderContent() {
     return null;
   }
 
-  return (
+  const pageSections = (
     <>
       {sectionOrder.map((sectionId) => (
         <SectionRenderer key={sectionId} sectionId={sectionId} />
       ))}
     </>
   );
+
+  return <LayoutRenderer>{pageSections}</LayoutRenderer>;
 }

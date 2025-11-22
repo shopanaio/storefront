@@ -5,6 +5,8 @@ import { pageBuilderRegistry } from './registry';
 import type {
   BlockInstance,
   BlockSchema,
+  LayoutInstance,
+  LayoutSchema,
   PageBuilderState,
   PageTemplate,
   SectionInstance,
@@ -19,6 +21,9 @@ export function createPageBuilderStore<TData = any>(
     pageName: initialTemplate?.name ?? '',
     data: initialTemplate?.data,
     metadata: initialTemplate?.metadata ?? {},
+    layout: undefined,
+    layoutSections: {},
+    layoutSectionOrder: [],
     sections: {},
     sectionOrder: [],
     blocks: {},
@@ -30,6 +35,46 @@ export function createPageBuilderStore<TData = any>(
         set((state) => ({
           metadata: { ...state.metadata, ...metadata },
         }));
+      },
+      setLayout: (layout: LayoutInstance, schema?: LayoutSchema) => {
+        set({ layout: { ...layout, schema } });
+      },
+      updateLayout: (updates: Partial<LayoutInstance>) => {
+        set((state) => ({
+          layout: state.layout ? { ...state.layout, ...updates } : undefined,
+        }));
+      },
+      addLayoutSection: (section: SectionInstance, schema?: SectionSchema) => {
+        set((state) => ({
+          layoutSections: {
+            ...state.layoutSections,
+            [section.id]: { ...section, schema },
+          },
+          layoutSectionOrder: [...state.layoutSectionOrder, section.id],
+        }));
+      },
+      updateLayoutSection: (sectionId: string, updates: Partial<SectionInstance>) => {
+        set((state) => ({
+          layoutSections: {
+            ...state.layoutSections,
+            [sectionId]: {
+              ...state.layoutSections[sectionId],
+              ...updates,
+            },
+          },
+        }));
+      },
+      removeLayoutSection: (sectionId: string) => {
+        set((state) => {
+          const { [sectionId]: removed, ...rest } = state.layoutSections;
+          return {
+            layoutSections: rest,
+            layoutSectionOrder: state.layoutSectionOrder.filter((id) => id !== sectionId),
+          };
+        });
+      },
+      reorderLayoutSections: (newOrder: string[]) => {
+        set({ layoutSectionOrder: newOrder });
       },
       addSection: (section: SectionInstance, schema?: SectionSchema) => {
         set((state) => ({
@@ -114,6 +159,9 @@ export function createPageBuilderStore<TData = any>(
       },
       reset: () => {
         set({
+          layout: undefined,
+          layoutSections: {},
+          layoutSectionOrder: [],
           sections: {},
           sectionOrder: [],
           blocks: {},
@@ -125,7 +173,29 @@ export function createPageBuilderStore<TData = any>(
         const sections: PageBuilderState<TData>['sections'] = {};
         const blocks: PageBuilderState<TData>['blocks'] = {};
         const sectionOrder: string[] = [];
+        const layoutSections: PageBuilderState<TData>['layoutSections'] = {};
+        const layoutSectionOrder: string[] = [];
+        let layout: PageBuilderState<TData>['layout'] = undefined;
 
+        // Initialize layout if present
+        if (template.layout) {
+          const layoutSchema = pageBuilderRegistry.getLayoutSchema(template.layout.type);
+          layout = { ...template.layout, schema: layoutSchema };
+
+          // Process layout sections
+          template.layout.sections?.forEach((section) => {
+            const schema = pageBuilderRegistry.getSectionSchema(section.type);
+            layoutSections[section.id] = { ...section, schema };
+            layoutSectionOrder.push(section.id);
+
+            section.blocks?.forEach((block) => {
+              const blockSchema = pageBuilderRegistry.getBlockSchema(block.type);
+              blocks[block.id] = { ...block, schema: blockSchema };
+            });
+          });
+        }
+
+        // Process page sections
         template.sections.forEach((section) => {
           const schema = pageBuilderRegistry.getSectionSchema(section.type);
           sections[section.id] = { ...section, schema };
@@ -142,6 +212,9 @@ export function createPageBuilderStore<TData = any>(
           pageName: template.name,
           data: template.data,
           metadata: template.metadata ?? {},
+          layout,
+          layoutSections,
+          layoutSectionOrder,
           sections,
           sectionOrder,
           blocks,

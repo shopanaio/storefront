@@ -1342,10 +1342,10 @@ export { BlockRenderer } from './BlockRenderer';
  * Auto-discovery: импортирует все register.ts из sections/ и blocks/
  * Аналогично modules/index.ts
  */
-const sectionsContext = require.context('@/sections', true, /register\.(t|j)sx?$/);
+const sectionsContext = require.context('@src/sections', true, /register\.(t|j)sx?$/);
 sectionsContext.keys().forEach((key) => sectionsContext(key));
 
-const blocksContext = require.context('@/blocks', true, /register\.(t|j)sx?$/);
+const blocksContext = require.context('@src/blocks', true, /register\.(t|j)sx?$/);
 blocksContext.keys().forEach((key) => blocksContext(key));
 ```
 
@@ -1507,7 +1507,7 @@ function PageBuilderContent() {
 
 **1. Schema** (`sections/MySection/schema.ts`):
 ```typescript
-import type { SectionSchema } from '@/core/page-builder/types';
+import type { SectionSchema } from '@src/core/page-builder/types';
 
 export const MySectionSchema: SectionSchema = {
   slug: 'mySection',
@@ -1547,7 +1547,7 @@ export const MySectionSchema: SectionSchema = {
 **Пример секции только для страниц продуктов:**
 ```typescript
 // sections/ProductRecommendations/schema.ts
-import type { SectionSchema } from '@/core/page-builder/types';
+import type { SectionSchema } from '@src/core/page-builder/types';
 
 export const ProductRecommendationsSchema: SectionSchema = {
   slug: 'productRecommendations',
@@ -1579,7 +1579,7 @@ export const ProductRecommendationsSchema: SectionSchema = {
 **Пример секции для нескольких типов страниц:**
 ```typescript
 // sections/ProductGrid/schema.ts
-import type { SectionSchema } from '@/core/page-builder/types';
+import type { SectionSchema } from '@src/core/page-builder/types';
 
 export const ProductGridSchema: SectionSchema = {
   slug: 'productGrid',
@@ -1614,9 +1614,9 @@ export interface MySectionSettings {
 ```typescript
 'use client';
 
-import type { SectionProps } from '@/core/page-builder/types';
-import { BlockRenderer } from '@/core/page-builder';
-import { usePage, useSection } from '@/core/page-builder/hooks';
+import type { SectionProps } from '@src/core/page-builder/types';
+import { BlockRenderer } from '@src/core/page-builder';
+import { usePage, useSection } from '@src/core/page-builder/hooks';
 import type { MySectionSettings } from './types';
 
 // Базовый пример - без селекторов
@@ -1686,7 +1686,7 @@ export function MySectionWithPageData({ id }: SectionProps) {
 
 **4. Register** (`sections/MySection/register.ts`):
 ```typescript
-import { registerSection } from '@/core/page-builder';
+import { registerSection } from '@src/core/page-builder';
 import { MySectionSchema } from './schema';
 
 // Регистрация с lazy loading
@@ -1699,7 +1699,7 @@ registerSection('mySection', async () => {
 
 **1. Schema** (`blocks/MyBlock/schema.ts`):
 ```typescript
-import type { BlockSchema } from '@/core/page-builder/types';
+import type { BlockSchema } from '@src/core/page-builder/types';
 
 export const MyBlockSchema: BlockSchema = {
   slug: 'myBlock',
@@ -1720,8 +1720,8 @@ export const MyBlockSchema: BlockSchema = {
 ```typescript
 'use client';
 
-import type { BlockProps } from '@/core/page-builder/types';
-import { useBlock, usePage, usePageBuilderState } from '@/core/page-builder/hooks';
+import type { BlockProps } from '@src/core/page-builder/types';
+import { useBlock, usePage, usePageBuilderState } from '@src/core/page-builder/hooks';
 
 interface MyBlockSettings {
   content: string;
@@ -1793,7 +1793,7 @@ export function MyBlockWithSection({ id }: BlockProps) {
 
 **3. Register** (`blocks/MyBlock/register.ts`):
 ```typescript
-import { registerBlock } from '@/core/page-builder';
+import { registerBlock } from '@src/core/page-builder';
 import { MyBlockSchema } from './schema';
 
 registerBlock('myBlock', async () => {
@@ -1805,7 +1805,7 @@ registerBlock('myBlock', async () => {
 
 **Static template** (`templates/page.ts`):
 ```typescript
-import type { PageTemplate } from '@/core/page-builder/types';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 export const pageTemplate: PageTemplate = {
   id: 'page-id',
@@ -1836,7 +1836,7 @@ export const pageTemplate: PageTemplate = {
 
 **Product page template:**
 ```typescript
-import type { PageTemplate } from '@/core/page-builder/types';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 interface ProductPageData {
   product: {
@@ -1880,7 +1880,7 @@ export const productPageTemplate: PageTemplate<ProductPageData> = {
 
 **Collection page template:**
 ```typescript
-import type { PageTemplate } from '@/core/page-builder/types';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 export const collectionPageTemplate: PageTemplate = {
   id: 'collection-page',
@@ -1908,7 +1908,7 @@ export const collectionPageTemplate: PageTemplate = {
 
 **Dynamic template with logic** (`templates/dynamic-page.ts`):
 ```typescript
-import type { PageTemplate } from '@/core/page-builder/types';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 const isDarkMode = process.env.THEME === 'dark';
 
@@ -1938,7 +1938,7 @@ export const dynamicPageTemplate: PageTemplate = {
 
 **Template generator function** (`templates/generated-page.ts`):
 ```typescript
-import type { TemplateGenerator } from '@/core/page-builder/types';
+import type { TemplateGenerator } from '@src/core/page-builder/types';
 
 export const generatePageTemplate: TemplateGenerator = (context) => {
   return {
@@ -1964,8 +1964,8 @@ export const generatePageTemplate: TemplateGenerator = (context) => {
 
 **Static template:**
 ```typescript
-import { PageBuilder } from '@/core/page-builder';
-import { myPageTemplate } from '@/templates/my-page';
+import { PageBuilder } from '@src/core/page-builder';
+import { myPageTemplate } from '@src/templates/my-page';
 
 export default function MyPage() {
   return (
@@ -1978,8 +1978,8 @@ export default function MyPage() {
 
 **Dynamic template with logic:**
 ```typescript
-import { PageBuilder } from '@/core/page-builder';
-import { generatePageTemplate } from '@/templates/generated-page';
+import { PageBuilder } from '@src/core/page-builder';
+import { generatePageTemplate } from '@src/templates/generated-page';
 
 export default function DynamicPage({ params }: { params: { theme: string } }) {
   const template = generatePageTemplate({ theme: params.theme });
@@ -1994,8 +1994,8 @@ export default function DynamicPage({ params }: { params: { theme: string } }) {
 
 **Page with data fetching (Server Component):**
 ```typescript
-import { PageBuilder } from '@/core/page-builder';
-import type { PageTemplate } from '@/core/page-builder/types';
+import { PageBuilder } from '@src/core/page-builder';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 // Тип данных для страницы
 interface ProductPageData {
@@ -2063,9 +2063,9 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
 **Dynamic page with template loading:**
 ```typescript
-import { PageBuilder } from '@/core/page-builder';
+import { PageBuilder } from '@src/core/page-builder';
 import { notFound } from 'next/navigation';
-import type { PageTemplate } from '@/core/page-builder/types';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 async function getTemplate(slug: string[]): Promise<PageTemplate | null> {
   const path = slug.join('/');
@@ -2099,8 +2099,8 @@ export default async function DynamicPage({ params }: { params: { slug?: string[
 
 **1. Проверка совместимости секций с типом страницы:**
 ```typescript
-import { validateTemplate } from '@/core/page-builder';
-import type { PageTemplate } from '@/core/page-builder/types';
+import { validateTemplate } from '@src/core/page-builder';
+import type { PageTemplate } from '@src/core/page-builder/types';
 
 const template: PageTemplate = {
   id: 'my-page',
@@ -2126,7 +2126,7 @@ if (errors.length > 0) {
 
 **2. Получение доступных секций для UI редактора:**
 ```typescript
-import { getAvailableSectionsForPageType } from '@/core/page-builder';
+import { getAvailableSectionsForPageType } from '@src/core/page-builder';
 
 function SectionPicker({ pageType }: { pageType: PageTemplateType }) {
   const availableSections = getAvailableSectionsForPageType(pageType);
@@ -2152,7 +2152,7 @@ function SectionPicker({ pageType }: { pageType: PageTemplateType }) {
 
 **3. Проверка перед добавлением секции:**
 ```typescript
-import { canSectionBeUsedOnPage } from '@/core/page-builder';
+import { canSectionBeUsedOnPage } from '@src/core/page-builder';
 
 function addSectionToPage(sectionSlug: string, pageType: PageTemplateType) {
   if (!canSectionBeUsedOnPage(sectionSlug, pageType)) {
@@ -2167,7 +2167,7 @@ function addSectionToPage(sectionSlug: string, pageType: PageTemplateType) {
 
 **4. Валидация в strict mode (выбрасывает ошибку):**
 ```typescript
-import { PageBuilder } from '@/core/page-builder';
+import { PageBuilder } from '@src/core/page-builder';
 
 export default function MyPage() {
   return (
@@ -2181,7 +2181,7 @@ export default function MyPage() {
 
 **5. Получение разрешенных блоков для секции:**
 ```typescript
-import { getAvailableBlocksForSection } from '@/core/page-builder';
+import { getAvailableBlocksForSection } from '@src/core/page-builder';
 
 function BlockPicker({ sectionSlug }: { sectionSlug: string }) {
   const allowedBlocks = getAvailableBlocksForSection(sectionSlug);
@@ -2203,7 +2203,7 @@ function BlockPicker({ sectionSlug }: { sectionSlug: string }) {
 
 **1. Композиция селекторов для сложной логики:**
 ```typescript
-import { usePageBuilderState } from '@/core/page-builder';
+import { usePageBuilderState } from '@src/core/page-builder';
 
 function ProductListSection({ id }: SectionProps) {
   // Композиция нескольких значений в один селектор
@@ -2235,7 +2235,7 @@ function ProductListSection({ id }: SectionProps) {
 
 **2. Использование actions для обновления состояния:**
 ```typescript
-import { usePageBuilderActions, useSection } from '@/core/page-builder';
+import { usePageBuilderActions, useSection } from '@src/core/page-builder';
 
 function EditableTitleSection({ id }: SectionProps) {
   const title = useSection(id, (s) => s.settings.title);
@@ -2262,7 +2262,7 @@ function EditableTitleSection({ id }: SectionProps) {
 **3. Мемоизация сложных вычислений с селекторами:**
 ```typescript
 import { useMemo } from 'react';
-import { usePageBuilderState } from '@/core/page-builder';
+import { usePageBuilderState } from '@src/core/page-builder';
 
 function AnalyticsSection({ id }: SectionProps) {
   // Селектор извлекает только нужные данные
@@ -2290,7 +2290,7 @@ function AnalyticsSection({ id }: SectionProps) {
 
 **4. Подписка на изменения с равенством (shallow/deep):**
 ```typescript
-import { usePageBuilderState } from '@/core/page-builder';
+import { usePageBuilderState } from '@src/core/page-builder';
 import { shallow } from 'zustand/shallow';
 
 function OptimizedSection({ id }: SectionProps) {
@@ -2314,7 +2314,7 @@ function OptimizedSection({ id }: SectionProps) {
 
 **5. Динамическое добавление и удаление секций/блоков:**
 ```typescript
-import { usePageBuilderActions } from '@/core/page-builder';
+import { usePageBuilderActions } from '@src/core/page-builder';
 
 function DynamicPageBuilder() {
   const actions = usePageBuilderActions();
@@ -2348,7 +2348,7 @@ function DynamicPageBuilder() {
 ### 4.6 Runtime API
 
 ```typescript
-import { pageBuilderRegistry } from '@/core/page-builder';
+import { pageBuilderRegistry } from '@src/core/page-builder';
 
 // Получить список всех зарегистрированных секций
 const sectionTypes = pageBuilderRegistry.listSections();
@@ -2524,8 +2524,8 @@ export default function ProductHero({ id }: SectionProps) {
 
 **Setup в root layout (`app/layout.tsx`):**
 ```typescript
-import { ShopProvider } from '@/core/shop';
-import type { ShopConfig } from '@/core/shop/types';
+import { ShopProvider } from '@src/core/shop';
+import type { ShopConfig } from '@src/core/shop/types';
 
 // Конфигурация магазина (может загружаться из ENV, API, Database)
 const shopConfig: ShopConfig = {
@@ -2602,7 +2602,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```typescript
 'use client';
 
-import { useShop } from '@/core/shop';
+import { useShop } from '@src/core/shop';
 
 export default function ProductPrice({ price }: { price: number }) {
   const shop = useShop();
@@ -2624,9 +2624,9 @@ export default function ProductPrice({ price }: { price: number }) {
 ```typescript
 'use client';
 
-import { useShop } from '@/core/shop';
-import { usePage } from '@/core/page-builder/hooks';
-import type { SectionProps } from '@/core/page-builder/types';
+import { useShop } from '@src/core/shop';
+import { usePage } from '@src/core/page-builder/hooks';
+import type { SectionProps } from '@src/core/page-builder/types';
 
 interface ProductListSectionSettings {
   title: string;
@@ -2662,7 +2662,7 @@ export default function ProductListSection({ settings }: SectionProps) {
 ```typescript
 'use client';
 
-import { useShop } from '@/core/shop';
+import { useShop } from '@src/core/shop';
 
 export default function Header() {
   const shop = useShop();
@@ -2705,7 +2705,7 @@ export default function Header() {
 ```typescript
 'use client';
 
-import { useShop } from '@/core/shop';
+import { useShop } from '@src/core/shop';
 
 export default function OrderInfo({
   orderDate,
@@ -2733,7 +2733,7 @@ export default function OrderInfo({
 ```typescript
 'use client';
 
-import { useShop } from '@/core/shop';
+import { useShop } from '@src/core/shop';
 
 export default function Footer() {
   const shop = useShop();
@@ -2770,8 +2770,8 @@ export default function Footer() {
 ```typescript
 'use client';
 
-import { usePage } from '@/core/page-builder/hooks';
-import type { ProductPageData } from '@/types';
+import { usePage } from '@src/core/page-builder/hooks';
+import type { ProductPageData } from '@src/types';
 
 export default function ProductHeroSection({ settings }: SectionProps) {
   // Получаем типизированные данные страницы
@@ -2798,7 +2798,7 @@ export default function ProductHeroSection({ settings }: SectionProps) {
 ```typescript
 'use client';
 
-import { useSection } from '@/core/page-builder/hooks';
+import { useSection } from '@src/core/page-builder/hooks';
 
 export default function MyBlock({ settings }: BlockProps) {
   // Блок может получить информацию о родительской секции
@@ -2824,7 +2824,7 @@ export default function MyBlock({ settings }: BlockProps) {
 ```typescript
 'use client';
 
-import { useBlock } from '@/core/page-builder/hooks';
+import { useBlock } from '@src/core/page-builder/hooks';
 
 export default function MyBlock({ settings }: BlockProps) {
   const block = useBlock();
@@ -2849,7 +2849,7 @@ export default function MyBlock({ settings }: BlockProps) {
 ```typescript
 'use client';
 
-import { usePageBuilder } from '@/core/page-builder/hooks';
+import { usePageBuilder } from '@src/core/page-builder/hooks';
 import { useState, useEffect } from 'react';
 
 export default function SectionPicker() {
@@ -2885,7 +2885,7 @@ export default function SectionPicker() {
 ```typescript
 'use client';
 
-import { usePage, useSection, useBlock } from '@/core/page-builder/hooks';
+import { usePage, useSection, useBlock } from '@src/core/page-builder/hooks';
 
 interface MyBlockSettings {
   useGlobalData: boolean;
@@ -2924,7 +2924,7 @@ export default function SmartBlock({ settings }: BlockProps) {
 ```typescript
 'use client';
 
-import { usePageOptional } from '@/core/page-builder/hooks';
+import { usePageOptional } from '@src/core/page-builder/hooks';
 
 // Компонент может работать как внутри так и вне PageBuilder
 export default function FlexibleComponent() {
