@@ -1,4 +1,4 @@
-import type { PageType } from './types';
+import type { PageType } from '../types';
 
 export interface RouteConfig {
   pattern: string;

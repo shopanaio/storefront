@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { match as createMatcher } from 'path-to-regexp';
-import { getTemplateRegistration } from './template-registry';
-import type { PageTemplate } from './types';
-import type { PageType } from './types';
+import { getTemplateRegistration } from '../registry/template-registry';
+import type { PageTemplate, PageType } from '../types';
 import { ROUTE_CONFIG } from './route-config';
 
 export interface RouteMatch {

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, type ReactNode } from 'react';
-import type { PageType } from './types';
+import type { PageType } from '../types';
 
 export interface PageDataContextValue<TData = unknown> {
   pageType: PageType;

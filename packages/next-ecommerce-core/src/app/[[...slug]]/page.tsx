@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { PageBuilder } from '../../core/PageBuilder';
-import { resolvePageRequest } from '../../core/page-router';
+import { PageBuilder, resolvePageRequest } from '../../core';
 
 interface PageProps {
   params?: {

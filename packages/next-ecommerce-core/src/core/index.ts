@@ -1,3 +1,4 @@
+// Types
 export type {
   PageType,
   SectionProps,
@@ -8,16 +9,27 @@ export type {
   PageDataLoader,
   MetadataBuilder,
   TemplateParams,
+  BlockInstance,
+  SectionComponent,
+  TemplateLoaderContext,
 } from './types';
-export { PageBuilder } from './PageBuilder';
-export { PageDataContext, PageDataProvider } from './PageDataContext';
-export { usePageData } from './usePageData';
-export { SectionErrorBoundary } from './SectionErrorBoundary';
+
+// Builder
+export { PageBuilder, SectionErrorBoundary } from './builder';
+
+// Context
+export { PageDataContext, PageDataProvider, usePageData } from './context';
+export type { PageDataContextValue } from './context';
+
+// Registry
 export {
   registerTemplate,
   registerTemplates,
   clearTemplates,
   getTemplateRegistration,
-} from './template-registry';
-export { parseRoute, resolvePageRequest } from './page-router';
-export type { RouteMatch, ResolvedPage } from './page-router';
+} from './registry';
+export type { TemplateRegistry, TemplateConfig } from './registry';
+
+// Router
+export { parseRoute, resolvePageRequest, ROUTE_CONFIG } from './router';
+export type { RouteMatch, ResolvedPage, RouteConfig } from './router';

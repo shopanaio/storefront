@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { usePageData } from '../../core/usePageData';
+import { usePageData } from '../../core';
 import type {
   CartPageData,
   CollectionPageData,

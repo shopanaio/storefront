@@ -4,7 +4,7 @@ import type {
   PageTemplate,
   TemplateRegistration,
   PageType,
-} from './types';
+} from '../types';
 
 const registry = new Map<PageType, TemplateRegistration<any>>();
 

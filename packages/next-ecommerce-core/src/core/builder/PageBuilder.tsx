@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
-import { PageDataProvider } from './PageDataContext';
+import { PageDataProvider } from '../context/PageDataContext';
 import { SectionErrorBoundary } from './SectionErrorBoundary';
-import type { PageBuilderProps, SectionInstance, SectionProps } from './types';
+import type { PageBuilderProps, SectionInstance, SectionProps } from '../types';
 
 function renderSection<TSettings, TData>(
   section: SectionInstance<TSettings, TData>,
