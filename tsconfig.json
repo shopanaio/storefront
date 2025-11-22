@@ -49,6 +49,24 @@
       ],
       "@stackflow/plugin-renderer-basic": [
         "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
+      ],
+      "@shopana/next-ecommerce-core": [
+        "./packages/next-ecommerce-core/src/index.ts"
+      ],
+      "@shopana/next-ecommerce-core/*": [
+        "./packages/next-ecommerce-core/src/*"
+      ],
+      "@shopana/next-ecommerce-core/core": [
+        "./packages/next-ecommerce-core/src/core/index.ts"
+      ],
+      "@shopana/next-ecommerce-core/shop": [
+        "./packages/next-ecommerce-core/src/shop/index.ts"
+      ],
+      "@shopana/next-ecommerce-core/sdk": [
+        "./packages/next-ecommerce-core/src/sdk/index.ts"
+      ],
+      "@shopana/next-ecommerce-core/app/[[...slug]]/page": [
+        "./packages/next-ecommerce-core/src/app/[[...slug]]/page.tsx"
       ]
     },
     "target": "esnext",

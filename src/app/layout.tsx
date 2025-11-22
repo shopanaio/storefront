@@ -2,6 +2,8 @@
 
 import { getCurrentEnvironment } from '@src/relay/Environment';
 import { RelayEnvironmentProvider } from 'react-relay';
+import { ShopProvider } from '@shopana/next-ecommerce-core/shop';
+import { mockShopConfig } from '@shopana/next-ecommerce-core/shop/mockShopConfig';
 
 console.error = () => {};
 console.warn = () => {};
@@ -28,10 +30,12 @@ export default function RootLayout({
         {/* <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" /> */}
       </head>
       <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
-        <body>
-          <div id="app">{children}</div>
-          <div id="sheet-wrapper"></div>
-        </body>
+        <ShopProvider config={mockShopConfig}>
+          <body>
+            <div id="app">{children}</div>
+            <div id="sheet-wrapper"></div>
+          </body>
+        </ShopProvider>
       </RelayEnvironmentProvider>
     </html>
   );

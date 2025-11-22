@@ -13,6 +13,8 @@ const nextConfig = {
   env: getEnv(),
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
+  // Transpile local packages for hot reload during development
+  transpilePackages: ['@shopana/next-ecommerce-core'],
   compiler: {
     styledComponents: true,
     ...(process.env.STORYBOOK
