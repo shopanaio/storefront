@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { match as createMatcher } from 'path-to-regexp';
 import { getTemplateRegistration } from './template-registry';
 import type { PageTemplate } from './types';
-import type { PageType, TemplateParams } from './types';
+import type { PageType } from './types';
+import { ROUTE_CONFIG } from './route-config';
 
 export interface RouteMatch {
   pageType: PageType;
@@ -10,30 +12,26 @@ export interface RouteMatch {
 }
 
 export function parseRoute(slug: string[] = []): RouteMatch {
-  if (!slug.length) {
-    return { pageType: 'home', params: {} };
+  const path = slug.length ? `/${slug.join('/')}` : '/';
+
+  for (const route of ROUTE_CONFIG) {
+    const matcher = createMatcher(route.pattern);
+    const matched = matcher(path);
+
+    if (matched) {
+      const params = route.paramsMapper
+        ? route.paramsMapper(matched.params as Record<string, string>)
+        : (matched.params as Record<string, string | undefined>);
+
+      return {
+        pageType: route.pageType,
+        params,
+      };
+    }
   }
 
-  const [first, second] = slug;
-
-  if (first === 'products' && second) {
-    return { pageType: 'product', params: { handle: second } };
-  }
-
-  if (first === 'collections' && second) {
-    return { pageType: 'collection', params: { handle: second } };
-  }
-
-  if (first === 'cart') {
-    return { pageType: 'cart', params: {} };
-  }
-
-  if (first === 'pages' && second) {
-    return { pageType: 'page', params: { handle: second } };
-  }
-
-  // Fallback: treat as static page handle (e.g., /about)
-  return { pageType: 'page', params: { handle: first } };
+  // This should never happen due to fallback route, but just in case
+  return { pageType: 'page', params: { handle: slug[0] } };
 }
 
 export interface ResolvePageOptions {

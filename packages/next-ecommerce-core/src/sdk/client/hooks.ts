@@ -42,7 +42,7 @@ export function useStaticPage(): StaticPageData['page'] {
   return data.page;
 }
 
-export function useRelatedProducts() {
+export function useRelatedProducts(): ProductPageData['relatedProducts'] {
   const data = usePageData<ProductPageData>();
   assertPageType(data.pageType, 'product');
   return useMemo(() => data.data.relatedProducts, [data.data.relatedProducts]);

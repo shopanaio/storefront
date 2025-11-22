@@ -1,21 +1,22 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
+    "rootDir": "./src",
     "declaration": true,
     "declarationMap": false,
     "emitDeclarationOnly": false,
     "noEmit": false,
     "composite": false,
-    "rootDir": "./src",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "target": "ES2020",
-    "isolatedModules": false,
-    "baseUrl": "../../",
-    "paths": {
-      "@codegen/*": ["./codegen/*"]
-    }
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"]

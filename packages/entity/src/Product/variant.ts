@@ -1,7 +1,7 @@
 import type { Money } from '../Money';
 import type { Media } from '../Media';
 import type { Connection } from '../Connection';
-import { Product } from 'packages/entity/src/Product/product';
+import type { Product } from './product';
 
 /**
  * StockStatus - product availability information
