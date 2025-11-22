@@ -2,7 +2,7 @@ import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { getWarehouses, type GetWarehousesRequest, type WarehouseData } from '../../api';
+import { client, type GetWarehousesRequest, type WarehouseData } from '../../api';
 import { Warehouse } from '../../types';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { SelectButton } from '@checkout/components/common/SelectButton';
@@ -117,11 +117,11 @@ export const WarehouseModal = ({
       try {
         const request: GetWarehousesRequest = {
           CityName: cityName,
-          Limit: '150',
-          Page: '1',
+          Limit: 150,
+          Page: 1,
         };
 
-        const result = await getWarehouses(request);
+        const result = await client.address.getWarehouses(request);
         setWarehouses(result.data || []);
       } catch {
         setWarehouses([]);

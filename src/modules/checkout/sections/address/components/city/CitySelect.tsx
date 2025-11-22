@@ -47,9 +47,9 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
 
       try {
         const result = await client.address.searchSettlements({
-          cityName: searchValue,
-          limit: 20,
-          page: 1,
+          CityName: searchValue,
+          Limit: 20,
+          Page: 1,
         });
 
         setSettlements(result.data?.[0]?.Addresses || []);

@@ -36,9 +36,9 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
 
         try {
           const request: SearchSettlementStreetsRequest = {
-            settlementRef: ref,
-            streetName: search,
-            limit: 20,
+            SettlementRef: ref,
+            StreetName: search,
+            Limit: 20,
           };
 
           const result = await client.address.searchSettlementStreets(request);
