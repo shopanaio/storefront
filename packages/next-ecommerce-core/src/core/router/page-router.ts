@@ -46,9 +46,10 @@ export interface ResolvedPage<TData = unknown> {
   metadata?: Metadata;
 }
 
-export async function resolvePageRequest<TData = unknown>(
-  { slug, searchParams }: ResolvePageOptions = {}
-): Promise<ResolvedPage<TData>> {
+export async function resolvePageRequest<TData = unknown>({
+  slug,
+  searchParams,
+}: ResolvePageOptions = {}): Promise<ResolvedPage<TData>> {
   const { pageType, params } = parseRoute(slug ?? []);
   const registration = getTemplateRegistration(pageType);
 
@@ -58,7 +59,12 @@ export async function resolvePageRequest<TData = unknown>(
 
   const data = await registration!.loadData({ pageType, params, searchParams });
   const metadata = registration!.buildMetadata
-    ? await registration!.buildMetadata({ pageType, params, searchParams, resolved: data })
+    ? await registration!.buildMetadata({
+        pageType,
+        params,
+        searchParams,
+        resolved: data,
+      })
     : undefined;
 
   return {
