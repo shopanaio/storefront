@@ -1,5 +1,5 @@
 // Search page template (placeholder)
-import type { Template, PageDataLoader } from '@shopana/next-ecommerce-core';
+import type { Template } from '@shopana/next-ecommerce-core';
 import MainLayout from '@/layout/MainLayout';
 import HelloSection from '@/sections/HelloSection';
 
@@ -16,7 +16,5 @@ const searchTemplate: Template = {
     },
   },
 };
-
-export const loadData: PageDataLoader = async () => ({});
 
 export default searchTemplate;

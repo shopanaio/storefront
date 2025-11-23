@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import type { PageTemplate, PageType, PageDataLoader } from '@shopana/next-ecommerce-core/core';
+import type { PageTemplate, PageType, TemplateParams } from '@shopana/next-ecommerce-core/core';
 import { Builder } from '@shopana/next-ecommerce-core/core';
 import { parseRoute } from '@shopana/next-ecommerce-core';
 import { notFound } from 'next/navigation';
@@ -13,37 +13,31 @@ interface PageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-interface TemplateModule {
-  default: PageTemplate;
-  loadData: PageDataLoader;
-  buildMetadata?: (ctx: any) => Promise<Metadata> | Metadata;
-}
-
 // Dynamic template imports using switch
 // Templates are resolved from user project via @/templates/* path
-async function loadTemplate(pageType: string): Promise<TemplateModule | null> {
+async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
   try {
     switch (pageType) {
       case 'home':
-        return await import('@/templates/index');
+        return (await import('@/templates/index')).default;
       case 'product':
-        return await import('@/templates/product');
+        return (await import('@/templates/product')).default;
       case 'collection':
-        return await import('@/templates/collection');
+        return (await import('@/templates/collection')).default;
       case 'search':
-        return await import('@/templates/search');
+        return (await import('@/templates/search')).default;
       case 'blog':
-        return await import('@/templates/blog');
+        return (await import('@/templates/blog')).default;
       case 'article':
-        return await import('@/templates/article');
+        return (await import('@/templates/article')).default;
       case 'page':
-        return await import('@/templates/page');
+        return (await import('@/templates/page')).default;
       case 'cart':
-        return await import('@/templates/cart');
+        return (await import('@/templates/cart')).default;
       case 'list-collections':
-        return await import('@/templates/list-collections');
+        return (await import('@/templates/list-collections')).default;
       case '404':
-        return await import('@/templates/404');
+        return (await import('@/templates/404')).default;
       default:
         return null;
     }
@@ -53,30 +47,46 @@ async function loadTemplate(pageType: string): Promise<TemplateModule | null> {
   }
 }
 
-// Generate metadata for the page
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug?: SlugParam }>;
-}): Promise<Metadata> {
-  const resolvedParams = await params;
-  const { pageType } = parseRoute(resolvedParams.slug ?? []);
+// Internal framework data loader (will be replaced with SDK later)
+// This is where framework's server SDK will fetch data from backend
+async function loadPageData(ctx: TemplateParams): Promise<any> {
+  // TODO: Replace with actual SDK implementation
+  // For now, return empty data object
+  return {};
+}
+
+// Internal framework metadata builder (will be replaced with SDK later)
+// This is where framework generates SEO metadata
+async function buildPageMetadata(ctx: TemplateParams): Promise<Metadata> {
+  // TODO: Replace with actual SDK implementation
+  const { pageType } = ctx;
 
   if (pageType === '404') {
-    return {
-      title: 'Page not found',
-    };
-  }
-
-  const templateModule = await loadTemplate(pageType);
-
-  if (templateModule?.buildMetadata) {
-    return templateModule.buildMetadata({ pageType, params: {} });
+    return { title: 'Page not found' };
   }
 
   return {
     title: `${pageType.charAt(0).toUpperCase() + pageType.slice(1)}`,
   };
+}
+
+// Generate metadata for the page
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug?: SlugParam }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const { pageType, params: routeParams } = parseRoute(resolvedParams.slug ?? []);
+
+  return buildPageMetadata({
+    pageType,
+    params: routeParams,
+    searchParams: resolvedSearchParams,
+  });
 }
 
 // Main page component
@@ -92,15 +102,15 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   // Load template dynamically from user project
-  const templateModule = await loadTemplate(pageType);
+  const template = await loadTemplate(pageType);
 
-  if (!templateModule) {
+  if (!template) {
     console.error(`No template found for pageType: ${pageType}`);
     notFound();
   }
 
-  // Load data using the template's data loader
-  const data = await templateModule.loadData({
+  // Load data using framework's internal data loader
+  const data = await loadPageData({
     pageType,
     params: routeParams,
     searchParams: resolvedSearchParams,
@@ -109,7 +119,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   // Render using Builder
   return (
     <Builder
-      template={templateModule.default}
+      template={template}
       data={data}
       pageType={pageType}
       fallback={<div>Loading...</div>}

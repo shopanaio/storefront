@@ -19,9 +19,6 @@ export type {
   SectionProps,
   BlockProps,
   PageType,
-  PageDataLoader,
-  MetadataBuilder,
-  TemplateParams,
 } from './core/index';
 
 // Shop context exports
