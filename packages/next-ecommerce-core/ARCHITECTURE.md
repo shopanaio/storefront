@@ -12,7 +12,7 @@
 2.  **Code-First Templates:** Шаблоны страниц — это TypeScript файлы, которые напрямую импортируют компоненты секций. Template содержит конфигурацию страницы (похоже на как в shopify template liquid) только содержит импорты страниц, секций и блоков которые передаются в соответствующие поля template. Template это .ts объект экспортированный как export default.
 3.  **Type Safety:** TypeScript автоматически проверяет соответствие настроек (`settings`) пропсам компонента прямо в шаблоне.
 4.  **Islands Architecture:** Все остальное кроме страниц это клиентские компоненты с 'use client'
-5.  **Dynamic Imports:** Страницы, секции и блоки импортируются динамически (`next/dynamic`) для оптимизации размера бандла.
+5.  **Dynamic Imports:** Внутренние RSC-страницы и пользовательские секции/блоки импортируются динамически (`next/dynamic`) для оптимизации размера бандла, а шаблоны подключаются синхронно через обычные импорты (`import productTemplate from '@/templates/product'`) для сохранения типизации.
 6.  **Fault Tolerance:** Каждая страница, секция и блок оборачивается в Error Boundary, чтобы ошибка в одном блоке не ломала всю страницу.
 
 ---
@@ -23,7 +23,7 @@
 
 Шаблон — это объект, описывающий структуру страницы **как в Shopify Liquid**. Он импортирует все компоненты (Page, Sections, Blocks) и определяет их конфигурацию.
 
-Во фреймворке зарезервированы названия шаблонов для всех основных страниц, home, product, collection, cart etc. Фреймворк импортирует их все через dynamic чтобы в bundle не попадали сразу все страницы а только та что рендерится по url. Те пользователь обязан создать все зарезервированые файлы в /templates/\*.ts иначе будет ошибка сборки (можно создать пусты placeholders на момент старта чтобы сборка работала).
+Во фреймворке зарезервированы названия шаблонов для всех основных страниц, home, product, collection, cart etc. Фреймворк импортирует их все через dynamic чтобы в bundle не попадали сразу все страницы а только та что рендерится по url. Пользователь обязан создать все зарезервированые файлы в `/templates/\*.ts`, даже если функциональность страницы пока не нужна (допустимы пустые плейсхолдеры, чтобы сборка не падала). Так реестр шаблонов всегда полный, а рантайм знает про все страницы.
 
 Это просто пример шаблона главной страницы:
 
@@ -74,12 +74,12 @@ const template: Template = {
 export default template;
 ```
 
-Layout внутри `template` — это просто React-компонент верхнего уровня. Builder передает в него массив секций (уже собранных из `template.sections`), но сам layout не описывает ни секции, ни блоки — он только решает, где и как отрендерить переданный список.
+Layout внутри `template` — это просто React-компонент верхнего уровня. Builder передает в него массив секций (уже собранных из `template.sections`), но сам layout не описывает ни секции, ни блоки — он только решает, где и как отрендерить переданный список. Сами компоненты внутри шаблона разработчик может импортировать как напрямую, так и оборачивать в `next/dynamic`, а подключение готового шаблона к рантайму выполняется обычным `import`, чтобы Next.js сохранял прозрачную типизацию.
 
 > **Важно (аналогия с Shopify Liquid):**
 >
 > - `type` → тип страницы (home, product, collection)
-> - `layout` → компонент layout (обязательный; просто оборачивает переданные секции и сам не описывает их структуру)
+> - `layout` → компонент layout (обязательный; просто оборачивает переданные секции как `children` и сам не описывает их структуру)
 > - `sections.order` → порядок секций (как order в Shopify)
 > - `sections[id]` → объект секции с компонентом и настройками (аналог `sections[id]` в Shopify)
 > - `sections[id].blocks.order` → порядок блоков внутри секции (как block_order)
@@ -88,17 +88,15 @@ Layout внутри `template` — это просто React-компонент 
 
 ### 2.2. Страница (Server Component) внутри пакета
 
-Во фреймворке реализована собственная RSC-страница (обработчик `app/[[...slug]]/page.tsx`), которая отвечает за загрузку данных (через Apollo/Relay/GraphQL), генерацию метаданных (SEO), выбор нужного шаблона и передачу **одного объекта данных** вниз в `Builder`. Фактически все запросы обслуживает Apollo (кеш, рефетч, пагинация), но пользователи фреймворка об этом не знают: наружу торчит только типобезопасный интерфейс вида `fetchHomeData()` с уже собранным объектом. Пользователь пакета эту логику не пишет и не видит, максимум — реэкспортирует готовый компонент страницы.
+Во фреймворке реализована собственная RSC-страница (обработчик `app/[[...slug]]/page.tsx`), которая отвечает за загрузку данных (через Relay/GraphQL), генерацию метаданных (SEO), выбор нужного шаблона и передачу **одного объекта данных** вниз в `Builder`. Фактически все запросы обслуживает Relay, но пользователи фреймворка об этом не знают: наружу торчит только типобезопасный интерфейс вида `fetchHomeData()` с уже собранным объектом. Пользователь пакета эту логику не пишет и не видит, максимум — реэкспортирует готовый компонент страницы.
 
 `/templates/*.ts` это точки входа во фреймворк - остальное может быть импортировано из произвольных мест но мы рекомендуем иметь структуру папко как в shopify/liquid те. layouts, pages, sections, blocks.
 
-Это пример страницы [...slug] которая парсит роут и рендерит правильную страницу и темплейт. Темплейт импортирован динамически поэтому в бандл попадут только активные компоненты. Это точка входа в рендеринг nextjs. Файл будет добавлен в пользовательский проект в app туда где пользователь желает монтировать зарезервированные пути. (Возможен сценарий с i18n /[locale]/[...slug]/page.tsx)
+Это пример страницы [...slug] которая парсит роут и рендерит правильную страницу и темплейт. Шаблоны импортируются динамически через компилируемый switch для оптимизации размера бандла, а оптимизацию дополнительно обеспечивают динамические секции/блоки. Это точка входа в рендеринг nextjs. Файл будет добавлен в пользовательский проект в app туда где пользователь желает монтировать зарезервированные пути. (Возможен сценарий с i18n /[locale]/[...slug]/page.tsx)
 
 ```tsx
 // (внутри пакета)
 import { Builder } from '@/core/Builder';
-import { homeTemplate } from '@/templates/home';
-import type { HomeTemplateData } from '@/types';
 import type { Metadata } from 'next';
 
 // 1. Генерация мета-тегов (Standard Next.js Mechanism)
@@ -113,17 +111,37 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 }
 
 // 2. Основной рендер
-export default async function Page() {
-  const data: HomeTemplateData = await fetchHomeData();
+export default async function Page({ params }: { params: { slug?: string[] } }) {
+  const { pageType, params: routeParams } = parseRoute(params.slug || []);
+
+  // Динамический импорт шаблона на основе pageType
+  let template;
+  if (pageType === 'home') {
+    template = await import('@/templates/home').then(m => m.default);
+  } else if (pageType === 'product') {
+    template = await import('@/templates/product').then(m => m.default);
+  } else if (pageType === 'collection') {
+    template = await import('@/templates/collection').then(m => m.default);
+  } else if (pageType === 'cart') {
+    template = await import('@/templates/cart').then(m => m.default);
+  } else if (pageType === 'page') {
+    template = await import('@/templates/page').then(m => m.default);
+  }
+
+  // Загрузка данных на основе pageType и параметров
+  const data = await loadPageData(pageType, routeParams);
 
   return (
     <Builder
-      template={homeTemplate}
-      data={data} // Все данные страницы в одном объекте
+      template={template}
+      data={data}
+      pageType={pageType}
     />
   );
 }
 ```
+
+Такой подход используется для всех зарезервированных страниц — шаблоны импортируются динамически через switch, что позволяет загружать только нужный шаблон для конкретного URL, сохраняя при этом полную типобезопасность на этапе компиляции.
 
 ### 2.3. Структура роутов (Shopify-style) и выбор шаблонов
 
@@ -140,56 +158,83 @@ export default async function Page() {
 - по массиву сегментов (`['products', handle]`, `['collections', handle]`, `['cart']`, `[]` и т.д.) возвращает `pageType` и `params`;
 - по `pageType` выбирает нужный `PageTemplate` из реестра шаблонов.
 
+Если используется i18n-структура вида `/[locale]/[[...slug]]`, Next.js middleware (например, `next-intl` или встроенный i18n) кладёт `locale` и связанные параметры в `params` до вызова нашей страницы. Фреймворк получает уже очищенный `slug` и locale в `params.locale`, поэтому `parseRoute` продолжает работать без изменений.
+
 Пользователь пакета только определяет свои шаблоны (`home`, `product`, `collection` и т.д.) и регистрирует их в этом реестре; парсинг роута и выбор шаблона целиком инкапсулированы во фреймворке.
 
 Для парсинга url используется библиотека path to regexp как в популярных фреймворках чтобы определить роут качественно.
 
 ### 2.4. Builder (Renderer)
 
-Компонент, который выбирает layout из шаблона, прокидывает в него секции и данные и оборачивает всё в `PageDataProvider`.
+Компонент, который выбирает layout из шаблона, рендерит секции и данные и оборачивает всё в `PageDataProvider`. Layout получает уже собранные секции как `children`, поэтому внутри него достаточно просто разместить `{children}` в нужном месте.
 
 ```tsx
-// src/core/PageBuilder.tsx
-import { PageDataProvider } from '@/core/PageDataContext';
+// src/core/Builder.tsx
+import { TemplateDataProvider } from '@/core/TemplateDataContext';
+import { Section } from '@/core/Section';
 
-export function PageBuilder({ template, data, pageType }: PageBuilderProps) {
+export function Builder({ template, data, pageType }: BuilderProps) {
   const LayoutComponent = template.layout.component;
-  const sections = resolveSections(template.sections);
 
   return (
-    <PageDataProvider value={{ pageType, data }}>
+    <TemplateDataProvider value={{ pageType, data }}>
       <LayoutComponent
-        sections={sections}
         data={data}
         pageType={pageType}
         settings={template.layout.settings}
-      />
-    </PageDataProvider>
+      >
+        {template.sections.order.map((sectionId) => {
+          const section = template.sections[sectionId];
+          if (!section || Array.isArray(section)) return null;
+
+          const blocks = section.blocks
+            ? section.blocks.order
+                .map((blockId) => {
+                  const block = section.blocks?.[blockId];
+                  if (!block || Array.isArray(block)) return null;
+                  return {
+                    id: blockId,
+                    component: block.component,
+                    settings: block.settings,
+                  };
+                })
+                .filter(Boolean)
+            : undefined;
+
+          return (
+            <Section
+              key={sectionId}
+              id={sectionId}
+              settings={section.settings}
+              blocks={blocks}
+              data={data}
+            />
+          );
+        })}
+      </LayoutComponent>
+    </TemplateDataProvider>
   );
 }
 ```
 
 ### 2.4.1. Компоненты Layout (Shopify liquid analogue)
 
-Компоненты layouts получают секции через props и рендерят их в нужных местах, не управляя их структурой. Пользователь может создать несколько layouts для разных страниц, например для страниц аутентификации можно использовать специальный layout. Вокруг секций можно создать произвольную верстку как и в Shopify/Liquid. Эти компоненты создаются в проекте пользователем фреймворка.
+Компоненты layouts получают уже отрендеренную страницу (все секции) через `children` и просто оборачивают её в собственную разметку. Пользователь может создать несколько layouts для разных страниц, например для страниц аутентификации можно использовать специальный layout. Вокруг `{children}` можно создать произвольную верстку как и в Shopify/Liquid. Эти компоненты создаются в проекте пользователем фреймворка.
 
 ```tsx
 // /layout/Main/index.tsx
 'use client';
 
-import { Section } from '@shopana/next-ecommerce-core/core';
 import type { LayoutProps } from '@shopana/next-ecommerce-core/core';
 import type { HomeTemplateData } from '@shopana/next-ecommerce-core/sdk';
 
-export default function MainLayout({ sections, data }: LayoutProps<any, HomeTemplateData>) {
+export default function MainLayout({ children, data }: LayoutProps<any, HomeTemplateData>) {
   return (
-    <>
-      {/* Custom JSX */}
-      {sections.map((section) => {
-        return <Section key={section.id} {...section} />;
-      })}
-      {/* Custom JSX */}
-    </>
+    <main>
+      {/* Custom JSX до контента */}
+      {children}
+      {/* Custom JSX после контента */}
+    </main>
   );
 }
 ```
@@ -209,6 +254,8 @@ export const Section = ({ component, ...config }: SectionConfig) => {
   );
 };
 ```
+
+`SectionErrorBoundary` работает исключительно как источник логов (например, для Sentry/Datadog). Пользователь не задаёт здесь UI-фолбек — если секция падает, на странице срабатывает общий fallback layout/page.
 
 Это пример пользовательской секции. Секции получают блоки через props и рендерят их. Пользователь может рендерить их произвольно.
 
@@ -254,6 +301,8 @@ export const Block = ({ component, ...config }: BlockConfig) => {
 };
 ```
 
+`BlockErrorBoundary` выполняет ту же задачу — логирование и сигнализация об ошибках. Отдельный визуальный fallback не рендерится; пользователь видит только page-level fallback.
+
 Блоки — это переиспользуемые UI-компоненты.
 Это пример блока Button в пользовательском проекте.
 
@@ -279,31 +328,7 @@ export default function CTABlock({ id, settings }: BlockProps) {
 
 Помимо данных конкретной страницы, в приложении есть глобальный контекст магазина (название проекта, валюта, локаль, включенные фичи и т.д.), доступный через хук `useShop`.
 
-- На уровне корневого лейаута приложение оборачивается в `ShopProvider`:
-
-```tsx
-// src/app/layout.tsx
-import './globals.css';
-import type { ReactNode } from 'react';
-import { ShopProvider } from '@/core/shop';
-import type { ShopConfig } from '@/core/shop';
-
-const shopConfig: ShopConfig = {
-  name: 'My Shop',
-  currency: 'USD',
-  // ...
-};
-
-export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <ShopProvider config={shopConfig}>{children}</ShopProvider>
-      </body>
-    </html>
-  );
-}
-```
+`ShopProvider` — часть фреймворка: Builder оборачивает layout и все секции в провайдер автоматически, используя конфигурацию, определенную в пакете (например, на основе настроек магазина и локали). ShopConfig приезжает из бекенда (GraphQL/REST) вместе с данными страницы — server SDK получает его на сервере, и Builder передает готовый объект в `ShopProvider`. Пользовательский проект ничего не настраивает руками, а только читает данные или вызывает клиентские action-методы контекста.
 
 - В любых секциях и блоках (и вообще в любом клиентском компоненте) можно вызвать `useShop()` и получить глобальную информацию:
 
@@ -340,7 +365,12 @@ export default function ProductHero({
 
 ### 2.6. Entity-интерфейсы и Page Data
 
-В проекте существуют зарезервированные entity-интерфейсы для доменных сущностей (продукт, категория, корзина и т.д.). Они используются как базовый слой данных, на котором строятся типы данных страниц. Пакет packages/entity
+В проекте существуют зарезервированные entity-интерфейсы для доменных сущностей (продукт, категория, корзина и т.д.). Они используются как базовый слой данных, на котором строятся типы данных страниц. Этот слой вынесен в отдельный пакет `packages/entity`, и `@shopana/next-ecommerce-core` реэкспортирует нужные типы наружу, чтобы потребителю не приходилось подключать зависимость напрямую.
+
+**Уточнение:** Entity-интерфейсы уже реализованы в отдельном пакете `packages/entity` и включают:
+- `ProductEntity` - поля: id, title, handle, description, price, images, variants, options
+- `CollectionEntity` - поля: id, title, handle, description, products
+- `CartEntity` - поля: id, lines, totalPrice, checkoutUrl
 
 - Для каждой зарезервированной страницы определяется свой Page Data-тип на основе этих сущностей:
 
@@ -408,6 +438,15 @@ export default function ProductHero({
 Таким образом, entity-интерфейсы являются единым источником правды по структуре доменных объектов, Page Data-типы описывают данные конкретных страниц, а Builder просто прокидывает один объект `data` из страницы в секции/блоки без использования глобального стора.
 
 ### 2.7. Page Data Context и SDK-хуки (`useProduct`, `useCollection`, ...)
+
+Чтобы в секциях использовать удобные SDK-хуки (как в Shopify Liquid есть `product`, `collection` и т.д.), но при этом **не фетчить данные на клиенте заново**, поверх Page Data вводится общий контекст страницы.
+
+**Уточнение технической реализации:**
+- **Data Loading:** Используется Relay для загрузки данных на сервере
+- **Mutations:** GraphQL mutations через Relay как в текущем проекте
+- **Error Handling:** Глобальный error boundary с кастомным UI и логированием в Sentry
+- **Caching:** стандартный relay
+
 
 Чтобы в секциях использовать удобные SDK-хуки (как в Shopify Liquid есть `product`, `collection` и т.д.), но при этом **не фетчить данные на клиенте заново**, поверх Page Data вводится общий контекст страницы.
 
@@ -567,15 +606,18 @@ export function useCollection() {
 src/
 ├── app/
 │   └── [[...slug]]/
-│       └── page.tsx           # Внутренняя RSC-страница фреймворка (зарезервированные роуты)
+│       ├── page.tsx           # Внутренняя RSC-страница фреймворка (зарезервированные роуты)
+│       ├── error.tsx          # Глобальный error boundary с Sentry логированием
+│       └── not-found.tsx      # 404 страница для несуществующих роутов
 │
 ├── core/
-│   ├── Builder.tsx        # Основной рендерер
+│   ├── Builder.tsx            # Основной рендерер
 │   ├── TemplateDataContext.tsx    # Провайдер/хук useTemplateData
 │   ├── Section.tsx            # Системный компонент секции
 │   ├── Block.tsx              # Системный компонент блока
+│   ├── ErrorBoundary.tsx      # Глобальный error boundary для секций и блоков
 │   ├── types.ts               # TypeScript интерфейсы (SectionProps, PageTemplate, ...)
-│   └── entities.ts            # Базовые entity-интерфейсы (ProductEntity, CollectionEntity, ...)
+│   └── entities.ts            # Реэкспорт entity-интерфейсов из packages/entity
 │
 ├── shop/                      # Глобальный контекст проекта/магазина
 │   ├── types.ts               # ShopConfig и сопутствующие типы
@@ -583,14 +625,20 @@ src/
 │   ├── useShop.ts             # Хук useShop()
 │   └── index.ts               # Публичные реэкспорты
 │
-└── sdk/
-    ├── server/                # Внутренний server SDK (только внутри пакета)
-    │   ├── product.ts
-    │   ├── collection.ts
-    │   └── cart.ts
-    └── client/                # Публичные client-хуки
-        ├── hooks.ts           # useProduct, useCollection, useCart, useTemplateData, ...
-        └── index.ts
+├── sdk/
+│   ├── server/                # Внутренний server SDK (только внутри пакета)
+│   │   ├── product.ts         # Relay queries для product страниц
+│   │   ├── collection.ts      # Relay queries для collection страниц
+│   │   ├── cart.ts            # Relay queries для cart страниц
+│   │   └── home.ts            # Relay queries для home страниц
+│   └── client/                # Публичные client-хуки
+│       ├── hooks.ts           # useProduct, useCollection, useCart, useTemplateData
+│       ├── mutations.ts       # GraphQL mutations через Relay
+│       └── index.ts           # Публичные реэкспорты
+│
+└── utils/
+    ├── routeParser.ts         # Утилита parseRoute для парсинга URL
+    └── logger.ts              # Sentry интеграция для логирования ошибок
 ```
 
 Снаружи пакет экспортирует:
@@ -660,7 +708,44 @@ my-shop/src.                      # src
 
 ---
 
-## 4. Типизация (Core Types)
+## 4. Технические уточнения и типизация
+
+### 4.1. Техническая реализация
+
+**Уточненные технические решения:**
+- **Data Loading:** Relay для загрузки данных на сервере без кэширования
+- **Mutations:** GraphQL mutations через Relay как в текущем проекте
+- **Error Handling:** Глобальный error boundary с кастомным UI и логированием в Sentry
+- **Entity Types:** Используются из готового пакета `packages/entity`
+
+### 4.2. Зависимости пакета (обновленные)
+
+```json
+{
+  "name": "@shopana/next-ecommerce-core",
+  "version": "1.0.0",
+  "peerDependencies": {
+    "next": "^14.0.0 || ^15.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@shopana/entity": "^1.0.0",
+    "relay-runtime": "^15.0.0"
+  },
+  "devDependencies": {
+    "next": "^15.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "@shopana/entity": "^1.0.0",
+    "relay-runtime": "^15.0.0",
+    "@sentry/nextjs": "^7.0.0"
+  }
+}
+```
+
+### 4.3. Core Types
 
 Ключевой момент — правильная типизация на всех уровнях: blocks, sections, pages, templates (как в Shopify Liquid).
 
@@ -729,7 +814,7 @@ export interface SectionCollection<TData = any> {
 }
 
 export interface LayoutProps<TSettings = any, TData = any> {
-  sections: SectionInstance<any, TData>[];
+  children: ReactNode;
   data: TData;
   pageType: PageType;
   settings?: TSettings;
@@ -745,7 +830,6 @@ export interface TemplateLayout<TSettings = any, TData = any> {
 }
 
 export interface PageTemplate<TData = any, TLayoutSettings = any> {
-  name: string;
   layout: TemplateLayout<TLayoutSettings, TData>;
   sections: SectionCollection<TData>;
 }
@@ -768,6 +852,8 @@ export interface TemplateRegistration<TData = any> {
   loadData: PageDataLoader<TData>;
   buildMetadata?: MetadataBuilder<TData>;
 }
+
+Реестр `TemplateRegistration` полностью живёт внутри пакета: для каждой зарезервированной страницы мы предоставляем свой `template`, `loadData` и `buildMetadata`. Пользовательские шаблоны подключаются через TypeScript-файлы в `/templates`, а к данным они получают доступ только из секций/блоков (второй дженерик `SectionProps`) и через клиентские SDK-хуки. Пользователю не нужно (и не разрешается) регистрировать собственные лоадеры или метаданные — все запросы обслуживаются серверным SDK, инкапсулированным во фреймворке.
 ```
 
 ### Поток данных:
@@ -783,3 +869,39 @@ Section Components (получают settings + blocks + data)
   ↓ (map по blocks)
 Block Components (получают settings)
 ```
+
+---
+
+## 5. Технические решения и ограничения
+
+### 5.1. Реализованные технические решения
+
+| Компонент | Реализация | Комментарий |
+|-----------|------------|-------------|
+| **Data Loading** | Relay | Используется для загрузки данных на сервере |
+| **Mutations** | GraphQL mutations через Relay | Как в текущем проекте |
+| **Error Handling** | Global error boundary + Sentry | Кастомный UI и логирование |
+загружаются при каждом запросе |
+| **Entity Types** | packages/entity | Готовые типы ProductEntity, CollectionEntity, CartEntity |
+| **Routing** | Next.js App Router | [[...slug]] для всех страниц |
+| **State Management** | React Context + Relay | Без дополнительных state management библиотек |
+
+### 5.2. Зарезервированные пути
+
+Фреймворк использует следующие зарезервированные пути:
+- `/` → home
+- `/products/[handle]` → product
+- `/collections/[handle]` → collection
+- `/cart` → cart
+- `/pages/[handle]` → page
+
+### 5.3. Обязательные файлы для пользователя
+
+Пользователь обязан создать следующие файлы в `/templates/*.ts`:
+- `home.ts`
+- `product.ts`
+- `collection.ts`
+- `cart.ts`
+- `page.ts`
+
+Даже если функциональность не нужна, файлы должны существовать (можно пустые).
