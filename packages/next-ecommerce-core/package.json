@@ -7,7 +7,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src/app"
   ],
   "exports": {
     ".": {
@@ -27,8 +28,16 @@
       "default": "./dist/sdk/index.js"
     },
     "./app/[[...slug]]/page": {
-      "types": "./dist/app/[[...slug]]/page.d.ts",
-      "default": "./dist/app/[[...slug]]/page.js"
+      "types": "./src/app/[[...slug]]/page.tsx",
+      "default": "./src/app/[[...slug]]/page.tsx"
+    },
+    "./app/[[...slug]]/error": {
+      "types": "./src/app/[[...slug]]/error.tsx",
+      "default": "./src/app/[[...slug]]/error.tsx"
+    },
+    "./app/[[...slug]]/not-found": {
+      "types": "./src/app/[[...slug]]/not-found.tsx",
+      "default": "./src/app/[[...slug]]/not-found.tsx"
     }
   },
   "scripts": {

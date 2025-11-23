@@ -1,6 +1,7 @@
 // Публичные типы для потребителей пакета
 export type {
   Template,
+  PageTemplate,
   LayoutProps,
   SectionProps,
   BlockProps,

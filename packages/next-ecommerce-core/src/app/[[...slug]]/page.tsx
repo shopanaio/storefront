@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import type { PageTemplate, PageType, PageDataLoader } from '../../core/types';
-import { Builder } from '../../core/Builder';
-import { parseRoute } from '../../utils/routeParser';
+import type { PageTemplate, PageType, PageDataLoader } from '@shopana/next-ecommerce-core/core';
+import { Builder } from '@shopana/next-ecommerce-core/core';
+import { parseRoute } from '@shopana/next-ecommerce-core';
 import { notFound } from 'next/navigation';
 
 type SlugParam = string[] | undefined;

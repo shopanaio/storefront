@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
-import { logError } from '../../utils/logger';
+import { logError } from '@shopana/next-ecommerce-core';
 
 interface ErrorProps {
   error: Error & { digest?: string };

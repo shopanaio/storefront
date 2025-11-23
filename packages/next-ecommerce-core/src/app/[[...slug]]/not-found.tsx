@@ -1,5 +1,5 @@
-import type { PageTemplate, LayoutProps } from '../../core/types';
-import { Builder } from '../../core/Builder';
+import type { PageTemplate, LayoutProps } from '@shopana/next-ecommerce-core/core';
+import { Builder } from '@shopana/next-ecommerce-core/core';
 
 interface NotFoundData {}
 
