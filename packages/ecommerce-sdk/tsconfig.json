@@ -13,9 +13,10 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "paths": {
-      "@shopana/entity": ["../entity/dist/index.d.ts"]
+      "@shopana/entity": ["../../entity/dist/index.d.ts"],
+      "@ecommerce-sdk/*": ["./*"]
     }
   },
   "include": ["src/**/*"],

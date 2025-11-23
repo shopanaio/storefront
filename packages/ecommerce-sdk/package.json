@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "default": "./dist/config.js"
+    },
     "./hooks": {
       "types": "./dist/hooks/index.d.ts",
       "default": "./dist/hooks/index.js"
@@ -21,18 +25,6 @@
     "./hooks/cart": {
       "types": "./dist/hooks/cart/index.d.ts",
       "default": "./dist/hooks/cart/index.js"
-    },
-    "./hooks/product": {
-      "types": "./dist/hooks/product/index.d.ts",
-      "default": "./dist/hooks/product/index.js"
-    },
-    "./hooks/category": {
-      "types": "./dist/hooks/category/index.d.ts",
-      "default": "./dist/hooks/category/index.js"
-    },
-    "./hooks/search": {
-      "types": "./dist/hooks/search/index.d.ts",
-      "default": "./dist/hooks/search/index.js"
     },
     "./hooks/session": {
       "types": "./dist/hooks/session/index.d.ts",
@@ -50,14 +42,11 @@
       "types": "./dist/providers/index.d.ts",
       "default": "./dist/providers/index.js"
     },
-    "./queries": {
-      "types": "./dist/queries/index.d.ts",
-      "default": "./dist/queries/index.js"
-    },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "default": "./dist/utils/index.js"
-    }
+    },
+    "./webpack/resolve-provider": "./webpack/resolve-provider.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

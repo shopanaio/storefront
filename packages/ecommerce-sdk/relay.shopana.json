@@ -1,0 +1,8 @@
+{
+  "src": "./src",
+  "schema": "./schema.shopana.graphql",
+  "exclude": ["**/*.shopify.ts", "**/node_modules/**", "**/dist/**"],
+  "language": "typescript",
+  "artifactDirectory": "./src/__generated__"
+}
+
