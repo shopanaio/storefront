@@ -13,47 +13,51 @@ interface RouteDefinition {
   matcher: Matcher;
 }
 
+// TODO: Remove /demo prefix when integration is ready
+const DEMO_PREFIX = '/demo';
+
 const routes: RouteDefinition[] = [
   {
     pageType: 'home',
-    matcher: match('/', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'product',
-    matcher: match('/products/:handle', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/products/:handle`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'collection',
-    matcher: match('/collections/:handle', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/collections/:handle`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'search',
-    matcher: match('/search', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/search`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'blog',
-    matcher: match('/blogs', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/blogs`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'article',
-    matcher: match('/blogs/:handle', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/blogs/:handle`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'page',
-    matcher: match('/pages/:handle', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/pages/:handle`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'cart',
-    matcher: match('/cart', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/cart`, { decode: decodeURIComponent }),
   },
   {
     pageType: 'list-collections',
-    matcher: match('/collections', { decode: decodeURIComponent }),
+    matcher: match(`${DEMO_PREFIX}/collections`, { decode: decodeURIComponent }),
   },
 ];
 
 export function parseRoute(slug: string[] | undefined | null): ParsedRoute {
-  const path = `/${(slug ?? []).join('/')}`;
+  // TODO: Remove DEMO_PREFIX logic when integration is ready
+  const path = `${DEMO_PREFIX}/${(slug ?? []).join('/')}`;
 
   for (const route of routes) {
     const result = route.matcher(path);

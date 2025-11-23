@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
-import type { PageTemplate, PageType, TemplateParams } from '@shopana/next-ecommerce-core/core';
+import type {
+  PageTemplate,
+  TemplateParams,
+} from '@shopana/next-ecommerce-core/core';
 import { Builder } from '@shopana/next-ecommerce-core/core';
 import { parseRoute } from '@shopana/next-ecommerce-core';
 import { notFound } from 'next/navigation';
@@ -80,7 +83,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  const { pageType, params: routeParams } = parseRoute(resolvedParams.slug ?? []);
+  const { pageType, params: routeParams } = parseRoute(
+    resolvedParams.slug ?? []
+  );
 
   return buildPageMetadata({
     pageType,
@@ -94,7 +99,9 @@ export default async function Page({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const { pageType, params: routeParams } = parseRoute(resolvedParams.slug ?? []);
+  const { pageType, params: routeParams } = parseRoute(
+    resolvedParams.slug ?? []
+  );
 
   // Handle 404
   if (pageType === '404') {
