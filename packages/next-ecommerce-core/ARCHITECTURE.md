@@ -178,11 +178,7 @@ export function Builder({ template, data, pageType }: BuilderProps) {
 
   return (
     <TemplateDataProvider value={{ pageType, data }}>
-      <LayoutComponent
-        data={data}
-        pageType={pageType}
-        settings={template.layout.settings}
-      >
+      <LayoutComponent>
         {template.sections.order.map((sectionId) => {
           const section = template.sections[sectionId];
           if (!section || Array.isArray(section)) return null;
@@ -226,9 +222,8 @@ export function Builder({ template, data, pageType }: BuilderProps) {
 'use client';
 
 import type { LayoutProps } from '@shopana/next-ecommerce-core/core';
-import type { HomeTemplateData } from '@shopana/next-ecommerce-core/sdk';
 
-export default function MainLayout({ children, data }: LayoutProps<any, HomeTemplateData>) {
+export default function MainLayout({ children }: LayoutProps) {
   return (
     <main>
       {/* Custom JSX до контента */}
@@ -749,11 +744,31 @@ my-shop/src.                      # src
 
 Ключевой момент — правильная типизация на всех уровнях: blocks, sections, pages, templates (как в Shopify Liquid).
 
+Публичные типы, доступные потребителю через `@shopana/next-ecommerce-core/core`:
+
+- `PageType` — union типов страниц (`'home' | 'product' | ...`);
+- `BlockProps` — пропсы блоков в пользовательском коде;
+- `SectionProps` — пропсы секций в пользовательском коде;
+- `LayoutProps` — пропсы layout-компонентов (только `children`);
+- `Template` — тип шаблона страницы, используемый в `/templates/*.ts`.
+
+Остальные типы из этого блока (`TemplateParams`, `BlockInstance`, `SectionCollection`, `PageBuilderProps`, `PageDataLoader`, `TemplateRegistration` и т.д.) являются **внутренними типами фреймворка** и используются только внутри пакета.
+
 ```typescript
 // src/core/types.ts
 import type { ComponentType, LazyExoticComponent, ReactNode } from 'react';
 
-export type PageType = 'home' | 'product' | 'collection' | 'cart' | 'page';
+export type PageType =
+  | 'home'
+  | 'product'
+  | 'collection'
+  | 'search'
+  | 'blog'
+  | 'article'
+  | 'page'
+  | 'cart'
+  | 'list-collections'
+  | '404';
 
 export interface TemplateParams {
   pageType: PageType;
@@ -813,19 +828,16 @@ export interface SectionCollection<TData = any> {
   [sectionId: string]: SectionConfig<any, TData> | string[];
 }
 
-export interface LayoutProps<TSettings = any, TData = any> {
+export interface LayoutProps {
   children: ReactNode;
-  data: TData;
-  pageType: PageType;
-  settings?: TSettings;
 }
 
-export type LayoutComponent<TSettings = any, TData = any> =
-  | ComponentType<LayoutProps<TSettings, TData>>
-  | LazyExoticComponent<ComponentType<LayoutProps<TSettings, TData>>>;
+export type LayoutComponent =
+  | ComponentType<LayoutProps>
+  | LazyExoticComponent<ComponentType<LayoutProps>>;
 
 export interface TemplateLayout<TSettings = any, TData = any> {
-  component: LayoutComponent<TSettings, TData>;
+  component: LayoutComponent;
   settings?: TSettings;
 }
 
@@ -888,20 +900,32 @@ Block Components (получают settings)
 
 ### 5.2. Зарезервированные пути
 
-Фреймворк использует следующие зарезервированные пути:
-- `/` → home
-- `/products/[handle]` → product
-- `/collections/[handle]` → collection
-- `/cart` → cart
-- `/pages/[handle]` → page
+Фреймворк использует следующие зарезервированные пути и соответствующие им шаблоны:
+- `/` → `index` (home)
+- `/products/[handle]` → `product`
+- `/collections/[handle]` → `collection`
+- `/search` → `search`
+- `/blogs` → `blog`
+- `/blogs/[handle]` → `article`
+- `/pages/[handle]` → `page`
+- `/cart` → `cart`
+- `/collections` → `list-collections`
+- `*` (fallback 404) → `404`
 
 ### 5.3. Обязательные файлы для пользователя
 
 Пользователь обязан создать следующие файлы в `/templates/*.ts`:
-- `home.ts`
+- `index.ts` (home)
 - `product.ts`
 - `collection.ts`
-- `cart.ts`
+- `search.ts`
+- `blog.ts`
+- `article.ts`
 - `page.ts`
+- `cart.ts`
+- `list-collections.ts`
+- `404.ts`
 
 Даже если функциональность не нужна, файлы должны существовать (можно пустые).
+
+> **План внедрения и актуальный трекер задач** см. в `packages/next-ecommerce-core/IMPLEMENTATION_PLAN.md`.
