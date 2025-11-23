@@ -5,6 +5,9 @@ export type {
   SectionProps,
   BlockProps,
   PageType,
+  PageDataLoader,
+  MetadataBuilder,
+  TemplateParams,
 } from './types';
 
 export { Builder } from './Builder';
@@ -22,10 +25,4 @@ export {
   SectionErrorBoundary,
   BlockErrorBoundary,
 } from './ErrorBoundary';
-
-export {
-  registerTemplate,
-  getTemplateRegistration,
-  getRegisteredPageTypes,
-} from './templateRegistry';
 

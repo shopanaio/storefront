@@ -1,6 +1,4 @@
-import type { LayoutProps } from 'react';
-
-import type { PageTemplate } from '../../core/types';
+import type { PageTemplate, LayoutProps } from '../../core/types';
 import { Builder } from '../../core/Builder';
 
 interface NotFoundData {}

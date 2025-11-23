@@ -15,7 +15,7 @@
 | 8 | ✅ | ShopContext | Создать `shop/ShopContext.tsx`, `useShop`, конфиг `ShopProvider` и публичные экспорты | DX | 2 |
 | 9 | ✅ | Template registry | Описать внутренний реестр зарезервированных страниц и типобезопасное сопоставление с шаблонами (страницы подключают шаблоны через обычные импорты, роутер — динамически) | Core | 4,6 |
 |10 | ✅ | Тесты Builder и роутинга | Написать Vitest/React Testing Library тесты на Builder, Sections, `parseRoute` и fallback-логики | QA | 4,5 |
-|11 | ⬜ | Интеграция с Next App | Добавить инструкцию по подключению `app/[[...slug]]/page.tsx` в пользовательском проекте, smoke-тесты | DX | 6 |
+|11 | ✅ | Интеграция с Next App /src главный в репозитории с тестовыми компонентами | Сдлеать так чтобы пакет был доступен в src как yarn workspace и чтобы собраниые файлы были поделючены через tsconfig.json. Добавить всю структуру файлов и папок которые нужны чтоыбы интеграция с фрейворком работала корректно | Добавить простой Hello World UI |
 |12 | ⬜ | Server SDK | В `sdk/server/*` реализовать Relay-запросы для всех зарезервированных типов страниц (`home/product/collection/search/blog/article/page/cart/list-collections/404`), покрыть типами Entity | Data | 2 |
 |13 | ⬜ | Client SDK | Добавить `sdk/client/hooks.ts`, `mutations.ts` (Relay hooks), использовать `TemplateDataContext` | Data | 4,12 |
 |14 | ⬜ | Release Prep | Настроить CI (lint/test/build), семантические версии, dry-run публикации | Platform | 10,13 |
