@@ -79,5 +79,53 @@ describe('parseRoute', () => {
     expect(result.pageType).toBe('home');
     expect(result.params).toEqual({});
   });
+
+  it('handles null slug as home', () => {
+    const result = parseRoute(null);
+
+    expect(result.pageType).toBe('home');
+    expect(result.params).toEqual({});
+  });
+
+  it('handles product with special characters', () => {
+    const result = parseRoute(['products', 'product-with-dashes']);
+
+    expect(result.pageType).toBe('product');
+    expect(result.params).toEqual({ handle: 'product-with-dashes' });
+  });
+
+  it('handles collection with special characters', () => {
+    const result = parseRoute(['collections', 'collection-2024']);
+
+    expect(result.pageType).toBe('collection');
+    expect(result.params).toEqual({ handle: 'collection-2024' });
+  });
+
+  it('returns 404 for empty product handle', () => {
+    const result = parseRoute(['products']);
+
+    expect(result.pageType).toBe('404');
+    expect(result.params).toEqual({});
+  });
+
+  it('returns list-collections for empty collection handle', () => {
+    const result = parseRoute(['collections', '']);
+
+    expect(result.pageType).toBe('list-collections');
+    expect(result.params).toEqual({});
+  });
+
+  it('returns 404 for deeply nested paths', () => {
+    const result = parseRoute(['products', 'some', 'deep', 'path']);
+
+    expect(result.pageType).toBe('404');
+    expect(result.params).toEqual({});
+  });
+
+  it('has searchParams undefined by default', () => {
+    const result = parseRoute(['products', 'test']);
+
+    expect(result.searchParams).toBeUndefined();
+  });
 });
 

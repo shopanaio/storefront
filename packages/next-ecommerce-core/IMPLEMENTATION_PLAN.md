@@ -13,14 +13,12 @@
 | 6 | ✅ | RSC страница | Создать `src/app/[[...slug]]/page.tsx`, `error.tsx`, `not-found.tsx`, подключить динамический импорт шаблонов и `parseRoute` | Core | 4,5 |
 | 7 | ✅ | Генерация metadata | Реализовать `generateMetadata` с использованием SDK и fallback по типам страниц | Core | 6 |
 | 8 | ✅ | ShopContext | Создать `shop/ShopContext.tsx`, `useShop`, конфиг `ShopProvider` и публичные экспорты | DX | 2 |
-| 9 | ⬜ | Template registry | Описать внутренний реестр зарезервированных страниц и типобезопасное сопоставление с шаблонами (страницы подключают шаблоны через обычные импорты, роутер — динамически) | Core | 4,6 |
-|10 | ⬜ | Тесты Builder и роутинга | Написать Vitest/React Testing Library тесты на Builder, Sections, `parseRoute` и fallback-логики | QA | 4,5 |
-|11 | ⬜ | Примерные шаблоны | В `templates/*.ts` подготовить эталонные файлы (`index/product/collection/search/blog/article/page/cart/list-collections/404`) | DX | 4,11 |
-|12 | ⬜ | Документация | Обновить `ARCHITECTURE.md`, добавить HOWTO по созданию блоков/секций, гайды по миграции | DX | 13 |
-|13 | ⬜ | Интеграция с Next App | Добавить инструкцию по подключению `app/[[...slug]]/page.tsx` в пользовательском проекте, smoke-тесты | DX | 6,13 |
-|14 | ⬜ | Server SDK | В `sdk/server/*` реализовать Relay-запросы для всех зарезервированных типов страниц (`home/product/collection/search/blog/article/page/cart/list-collections/404`), покрыть типами Entity | Data | 2 |
-|15 | ⬜ | Client SDK | Добавить `sdk/client/hooks.ts`, `mutations.ts` (Relay hooks), использовать `TemplateDataContext` | Data | 4,14 |
-|16 | ⬜ | Release Prep | Настроить CI (lint/test/build), семантические версии, dry-run публикации | Platform | 10,15 |
+| 9 | ✅ | Template registry | Описать внутренний реестр зарезервированных страниц и типобезопасное сопоставление с шаблонами (страницы подключают шаблоны через обычные импорты, роутер — динамически) | Core | 4,6 |
+|10 | ✅ | Тесты Builder и роутинга | Написать Vitest/React Testing Library тесты на Builder, Sections, `parseRoute` и fallback-логики | QA | 4,5 |
+|11 | ⬜ | Интеграция с Next App | Добавить инструкцию по подключению `app/[[...slug]]/page.tsx` в пользовательском проекте, smoke-тесты | DX | 6 |
+|12 | ⬜ | Server SDK | В `sdk/server/*` реализовать Relay-запросы для всех зарезервированных типов страниц (`home/product/collection/search/blog/article/page/cart/list-collections/404`), покрыть типами Entity | Data | 2 |
+|13 | ⬜ | Client SDK | Добавить `sdk/client/hooks.ts`, `mutations.ts` (Relay hooks), использовать `TemplateDataContext` | Data | 4,12 |
+|14 | ⬜ | Release Prep | Настроить CI (lint/test/build), семантические версии, dry-run публикации | Platform | 10,13 |
 
 ## Правила обновления трекера
 

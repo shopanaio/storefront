@@ -23,3 +23,9 @@ export {
   BlockErrorBoundary,
 } from './ErrorBoundary';
 
+export {
+  registerTemplate,
+  getTemplateRegistration,
+  getRegisteredPageTypes,
+} from './templateRegistry';
+
