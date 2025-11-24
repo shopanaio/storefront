@@ -120,6 +120,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
   const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
   const [cartId, setCartId] = useState<string | null>(null);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isCartLoaded, setIsCartLoaded] = useState(false);
   const isLoadingRef = useRef(false);
   const loadedRef = useRef(false);
 
@@ -134,12 +136,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       // No saved cart: consider cart as loaded with empty state
       setCartKey(null);
       setCartId(null);
+      setIsCartLoading(false);
+      setIsCartLoaded(true);
       loadedRef.current = true;
       return;
     }
 
     setCartId(savedCartId);
     isLoadingRef.current = true;
+    setIsCartLoading(true);
 
     // Load cart data
     loadQuery({ checkoutId: savedCartId }, { fetchPolicy: 'network-only' });
@@ -147,14 +152,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({
 
   const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
     setCartKey(cart);
+    setIsCartLoading(false);
+    setIsCartLoaded(true);
     isLoadingRef.current = false;
     loadedRef.current = true;
   }, []);
 
   const handleCartNotFound = useCallback(() => {
     isLoadingRef.current = false;
+    setIsCartLoading(false);
     setCartKey(null);
     setCartId(null);
+    setIsCartLoaded(true);
     loadedRef.current = true;
     // Remove invalid cart ID from cookies
     cartIdUtils.removeCartIdCookie();
@@ -181,7 +190,16 @@ export const CartProvider: React.FC<CartProviderProps> = ({
   }, [disposeQuery]);
 
   return (
-    <CartContextProvider store={store} config={config}>
+    <CartContextProvider
+      store={store}
+      config={config}
+      cartKey={cartKey}
+      setCartKey={setCartKey}
+      cartId={cartId}
+      setId={handleSetCartId}
+      isCartLoading={isCartLoading}
+      isCartLoaded={isCartLoaded}
+    >
       <Suspense fallback={null}>
         {queryReference && (
           <CartDataHandler

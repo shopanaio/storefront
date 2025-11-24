@@ -2,8 +2,7 @@
 
 import { graphql, useMutation } from 'react-relay';
 import { useUpdateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/useUpdateCartLineQuantityMutation.graphql';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
+import { useCartStore } from '../context';
 
 export const useUpdateCartLineQuantityMutation = graphql`
   mutation useUpdateCartLineQuantityMutation(
@@ -24,6 +23,7 @@ export const useUpdateCartLineQuantityMutation = graphql`
 `;
 
 const useUpdateCartLineQuantity = () => {
+  const store = useCartStore();
   const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
     useUpdateCartLineQuantityMutation
   );
@@ -35,13 +35,12 @@ const useUpdateCartLineQuantity = () => {
       onError?: () => void;
     }
   ) => {
-    const { cart } = useCartStore.getState();
+    const { cart, checkoutLinesUpdate } = store;
     if (!cart?.id) {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
-    const z = useCartStore.getState();
-    const { revert } = z.checkoutLinesUpdate({
+    const { revert } = checkoutLinesUpdate({
       lines: [{ lineId: cartItemId, quantity }],
     });
     return new Promise((resolve, reject) => {

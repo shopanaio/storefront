@@ -1,9 +1,8 @@
 "use client";
 
 import { graphql, useMutation } from 'react-relay';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
 
+import { useCartStore } from '../context';
 import useCart from './useCart';
 import { RemoveFromCartInput } from '../../core/types';
 
@@ -27,6 +26,7 @@ export const useRemoveItemFromCartMutation = graphql`
 
 const useRemoveItemFromCart = () => {
   const { cart } = useCart();
+  const store = useCartStore();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
     useRemoveItemFromCartMutation
@@ -49,7 +49,7 @@ const useRemoveItemFromCart = () => {
       }
 
       return new Promise((resolve, reject) => {
-        const { checkoutLinesDelete } = useCartStore.getState();
+        const { checkoutLinesDelete } = store;
         const { revert } = checkoutLinesDelete({ lineIds: [input.lineId] });
         commitRemoveLine({
           variables: {

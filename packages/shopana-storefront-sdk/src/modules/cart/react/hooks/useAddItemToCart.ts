@@ -3,13 +3,7 @@
 import { graphql, useMutation } from 'react-relay';
 import { useAddItemToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/useAddItemToCartMutation.graphql';
 
-// @ts-ignore - TODO: Phase 2 - Move useCurrencyStore to SDK
-import { useCurrencyStore } from '@src/store/appStore';
-// @ts-ignore - TODO: Phase 2 - Move useLocale to SDK
-import { useLocale } from 'next-intl';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
-
+import { useCartStore, useCartConfig } from '../context';
 import useCreateCart from './useCreateCart';
 import { AddToCartInput } from '../../core/types';
 
@@ -32,8 +26,8 @@ export const useAddItemToCartMutation = graphql`
 
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
-  const currencyCode = useCurrencyStore((state) => state.currencyCode);
-  const [localeCode] = useLocale();
+  const store = useCartStore();
+  const { defaultCurrency, defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
     useAddItemToCartMutation
   );
@@ -48,14 +42,14 @@ const useAddItemToCart = () => {
     ): Promise<unknown> => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
-      const { cart, checkoutLinesAdd } = useCartStore.getState();
+      const { cart, checkoutLinesAdd } = store;
 
       // If no cart — create new one
       if (!cart?.id) {
         return await createCart(
           {
-            currencyCode,
-            localeCode,
+            currencyCode: defaultCurrency,
+            localeCode: defaultLocale,
             items: [
               {
                 purchasableId,
@@ -80,7 +74,7 @@ const useAddItemToCart = () => {
           [purchasableId]: {
             unitPrice: purchasableSnapshot.price.amount,
             compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode,
+            currencyCode: defaultCurrency,
           },
         },
       });

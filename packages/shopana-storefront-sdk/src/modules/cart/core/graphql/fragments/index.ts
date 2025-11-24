@@ -1,2 +1,2 @@
-export { CartFragment } from './CartFragment';
-export { CartLineFragment } from './CartLineFragment';
+export { useCart_CartFragment } from './CartFragment';
+export { useCartLineFragment_CartLineFragment } from './CartLineFragment';

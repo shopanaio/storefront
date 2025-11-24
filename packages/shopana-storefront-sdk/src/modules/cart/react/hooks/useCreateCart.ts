@@ -1,11 +1,9 @@
 "use client";
 
-// @ts-ignore - TODO: Phase 2 - Move ApiCheckoutCreateInput to SDK
-import { ApiCheckoutCreateInput } from '@codegen/schema-client';
 import { graphql, useMutation } from 'react-relay';
 import { useCreateCartMutation as CreateCartMutationType } from '../../core/graphql/mutations/__generated__/useCreateCartMutation.graphql';
-// @ts-ignore - TODO: Phase 2 - Move useCartContext to SDK
-import { useCartContext } from '@src/providers/cart-context';
+import { useCartContext } from '../context';
+import { CreateCartInput } from '../../core/types';
 
 export const useCreateCartMutation = graphql`
   mutation useCreateCartMutation($input: CheckoutCreateInput!) {
@@ -25,7 +23,7 @@ const useCreateCart = () => {
   );
 
   const createCart = (
-    input: ApiCheckoutCreateInput,
+    input: CreateCartInput,
     options?: {
       onSuccess?: () => void;
       onError?: () => void;

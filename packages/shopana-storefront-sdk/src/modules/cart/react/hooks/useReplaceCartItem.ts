@@ -26,11 +26,8 @@
 
 import { graphql, useMutation } from 'react-relay';
 import { useReplaceCartItemMutation as ReplaceCartItemMutationType } from '../../core/graphql/mutations/__generated__/useReplaceCartItemMutation.graphql';
-// @ts-ignore - TODO: Phase 2 - Move useCurrencyStore to SDK
-import { useCurrencyStore } from '@src/store/appStore';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
 
+import { useCartStore, useCartConfig } from '../context';
 import { ReplaceCartItemInput } from '../../core/types';
 
 export const useReplaceCartItemMutation = graphql`
@@ -50,7 +47,8 @@ export const useReplaceCartItemMutation = graphql`
 `;
 
 const useReplaceCartItem = () => {
-  const { currencyCode } = useCurrencyStore.getState();
+  const store = useCartStore();
+  const { defaultCurrency } = useCartConfig();
   const [commit, isInFlight] = useMutation<ReplaceCartItemMutationType>(
     useReplaceCartItemMutation
   );
@@ -63,7 +61,7 @@ const useReplaceCartItem = () => {
     }
   ) => {
     const { lineId, purchasableId, purchasableSnapshot, quantity } = input;
-    const { cart, checkoutLinesReplace } = useCartStore.getState();
+    const { cart, checkoutLinesReplace } = store;
     const cartId = cart?.id;
     if (!cartId || !cart?.id) {
       console.warn('[useReplaceCartItem] No cart to replace items in');
@@ -77,7 +75,7 @@ const useReplaceCartItem = () => {
           [purchasableId]: {
             unitPrice: purchasableSnapshot.price.amount,
             compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode,
+            currencyCode: defaultCurrency,
           },
         },
       });

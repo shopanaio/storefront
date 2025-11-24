@@ -1,11 +1,8 @@
 "use client";
 
 import { graphql, useMutation } from 'react-relay';
-// @ts-ignore - TODO: Phase 2 - Move useCartContext to SDK
-import { useCartContext } from '@src/providers/cart-context';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
 
+import { useCartContext, useCartStore } from '../context';
 import useCart from './useCart';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
 
@@ -28,6 +25,7 @@ const useClearCartMutation = graphql`
 const useClearCart = (): UseClearCartReturn => {
   const { cart } = useCart();
   const { setCartKey, setId } = useCartContext();
+  const store = useCartStore();
 
   const [commitClearCart, isInFlight] = useMutation<any>(useClearCartMutation);
 
@@ -48,7 +46,7 @@ const useClearCart = (): UseClearCartReturn => {
       }
 
       return new Promise((resolve, reject) => {
-        const { checkoutClear } = useCartStore.getState();
+        const { checkoutClear } = store;
         const { revert } = checkoutClear();
         commitClearCart({
           variables: {

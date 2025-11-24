@@ -1,7 +1,6 @@
 "use client";
 
-// @ts-ignore - TODO: Phase 2 - Move useCartContext to SDK
-import { useCartContext } from '@src/providers/cart-context';
+import { useCartContext } from '../context';
 
 /**
  * Returns the cart ID with loading states from context.

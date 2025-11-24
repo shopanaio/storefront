@@ -23,6 +23,36 @@ export interface CartContextValue {
    * Utilities for managing cart ID in cookies
    */
   cartIdUtils: ReturnType<typeof createCartIdUtils>;
+
+  /**
+   * Cart fragment key for Relay
+   */
+  cartKey: any | null;
+
+  /**
+   * Set cart fragment key
+   */
+  setCartKey: (key: any | null) => void;
+
+  /**
+   * Current cart ID
+   */
+  cartId: string | null;
+
+  /**
+   * Set cart ID and save to cookies
+   */
+  setId: (id: string | null) => void;
+
+  /**
+   * Is cart currently loading
+   */
+  isCartLoading: boolean;
+
+  /**
+   * Has cart finished loading
+   */
+  isCartLoaded: boolean;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -31,6 +61,12 @@ export interface CartContextProviderProps {
   children: React.ReactNode;
   store: CartStore;
   config: Required<CartConfig>;
+  cartKey: any | null;
+  setCartKey: (key: any | null) => void;
+  cartId: string | null;
+  setId: (id: string | null) => void;
+  isCartLoading: boolean;
+  isCartLoaded: boolean;
 }
 
 /**
@@ -42,7 +78,13 @@ export interface CartContextProviderProps {
 export function CartContextProvider({
   children,
   store,
-  config
+  config,
+  cartKey,
+  setCartKey,
+  cartId,
+  setId,
+  isCartLoading,
+  isCartLoaded,
 }: CartContextProviderProps) {
   // Create cart ID utils with config
   const cartIdUtils = useMemo(
@@ -58,8 +100,14 @@ export function CartContextProvider({
       store,
       config,
       cartIdUtils,
+      cartKey,
+      setCartKey,
+      cartId,
+      setId,
+      isCartLoading,
+      isCartLoaded,
     }),
-    [store, config, cartIdUtils]
+    [store, config, cartIdUtils, cartKey, setCartKey, cartId, setId, isCartLoading, isCartLoaded]
   );
 
   return (

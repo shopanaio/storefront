@@ -13,8 +13,9 @@ import { cartIdUtils } from '../../core/utils';
  *
  * @example
  * ```ts
- * import { networkFetch } from '@src/relay/Environment';
- * import loadCartQueryNode from './__generated__/loadCartQuery.graphql';
+ * // Import your network fetch function from your Relay environment
+ * import { networkFetch } from '@/lib/relay/Environment';
+ * import loadCartQueryNode from '@shopana/storefront-sdk/modules/cart/core/graphql/queries/__generated__/loadCartQuery.graphql';
  *
  * const cartData = await loadCartServerQuery(networkFetch, loadCartQueryNode.params);
  * ```
