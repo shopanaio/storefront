@@ -4,10 +4,11 @@ import React, {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import { PreloadedQuery, usePreloadedQuery, useQueryLoader } from 'react-relay';
+import { PreloadedQuery, readInlineData, useFragment, usePreloadedQuery, useQueryLoader } from 'react-relay';
 import { CartContextProvider } from '../context/CartContext';
 import { CartStore } from '../../store';
 import type { CartConfig } from '../../core/config';
@@ -16,6 +17,8 @@ import { createCartIdUtils } from '../../core/utils/cartId';
 import { loadCartQuery } from '../../core/graphql/queries';
 import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/queries/__generated__/loadCartQuery.graphql';
 import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
+import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';
+import { CartLineFragment_line } from '../hooks/useCartLineFragment';
 
 export interface CartProviderProps {
   children: React.ReactNode;
@@ -31,18 +34,40 @@ type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
 
 /**
  * Internal component to sync cart fragment data to Zustand store
+ * Reads Relay fragment and denormalizes data before storing in Zustand
  */
 const CartDataStoreController: React.FC<{
   cartKey: CartFragment_cart$key | null;
   store: CartStore;
 }> = ({ cartKey, store }) => {
-  useEffect(() => {
-    if (cartKey) {
-      // Cart data is already in fragment form, set it to store
-      // The fragment will be read by hooks using useFragment
-      store.setCart(cartKey as any);
+  // Read fragment data from Relay
+  const cart = useFragment<CartFragment_cart$key>(
+    CartFragment_cart,
+    cartKey
+  );
+
+  // Denormalize cart data (read inline data for lines)
+  const cartData = useMemo(() => {
+    if (!cart) {
+      return null;
     }
-  }, [cartKey, store]);
+    return {
+      ...cart,
+      lines: (cart?.lines || [])?.map((cartLineRef: any) =>
+        readInlineData(CartLineFragment_line, cartLineRef)
+      ),
+    };
+  }, [cart]);
+
+  // Sync denormalized data to Zustand store
+  useEffect(() => {
+    if (cartData) {
+      store.setCart(cartData as any);
+    } else if (cartKey === null) {
+      // Explicitly set null when cart is cleared
+      store.setCart(null);
+    }
+  }, [cartData, cartKey, store]);
 
   return null;
 };

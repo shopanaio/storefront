@@ -9,13 +9,18 @@ type UseCart = () => {
 };
 
 const useCart: UseCart = () => {
-  const store = useCartStore();
+  const cart = useCartStore((s) => s.cart);
+  const loading = useCartStore((s) => s.loading);
+  const loaded = useCartStore((s) => s.loaded);
+  const error = useCartStore((s) => s.error);
+
+  console.log('useCart store:', store);
 
   return {
-    cart: store.cart,
-    loading: store.loading,
-    loaded: store.loaded,
-    error: store.error,
+    cart,
+    loading,
+    loaded,
+    error,
   };
 };
 
