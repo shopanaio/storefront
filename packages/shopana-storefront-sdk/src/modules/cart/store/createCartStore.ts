@@ -25,9 +25,6 @@ export function createCartStore(
     get error() {
       return impl.getState().error;
     },
-    get version() {
-      return impl.getState().version;
-    },
 
     setCart(cart: model.Cart | null) {
       impl.setState({
@@ -41,7 +38,7 @@ export function createCartStore(
 
     checkoutLinesAdd(input) {
       const state = impl.getState();
-      if (!state.cart) return { version: state.version, revert: () => {} };
+      if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
       const base = state.cart;
@@ -90,49 +87,43 @@ export function createCartStore(
       }
 
       const nextCart = recalcCart({ ...base, lines: nextLines });
-      const nextVersion = state.version + 1;
 
       impl.setState({
         ...state,
         cart: nextCart,
-        version: nextVersion,
       });
 
       return {
-        version: nextVersion,
         revert: () => {
-          impl.setState({ ...impl.getState(), cart: prev, version: nextVersion - 1 });
+          impl.setState({ ...impl.getState(), cart: prev });
         },
       };
     },
 
     checkoutLinesDelete(input) {
       const state = impl.getState();
-      if (!state.cart) return { version: state.version, revert: () => {} };
+      if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
       const base = state.cart;
       const nextLines = base.lines.filter((l) => !input.lineIds.includes(l.id));
       const nextCart = recalcCart({ ...base, lines: nextLines });
-      const nextVersion = state.version + 1;
 
       impl.setState({
         ...state,
         cart: nextCart,
-        version: nextVersion,
       });
 
       return {
-        version: nextVersion,
         revert: () => {
-          impl.setState({ ...impl.getState(), cart: prev, version: nextVersion - 1 });
+          impl.setState({ ...impl.getState(), cart: prev });
         },
       };
     },
 
     checkoutLinesUpdate(input) {
       const state = impl.getState();
-      if (!state.cart) return { version: state.version, revert: () => {} };
+      if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
       const base = state.cart;
@@ -145,25 +136,22 @@ export function createCartStore(
         )
         .filter((l) => l.quantity > 0);
       const nextCart = recalcCart({ ...base, lines: nextLines });
-      const nextVersion = state.version + 1;
 
       impl.setState({
         ...state,
         cart: nextCart,
-        version: nextVersion,
       });
 
       return {
-        version: nextVersion,
         revert: () => {
-          impl.setState({ ...impl.getState(), cart: prev, version: nextVersion - 1 });
+          impl.setState({ ...impl.getState(), cart: prev });
         },
       };
     },
 
     checkoutLinesReplace(input) {
       const state = impl.getState();
-      if (!state.cart) return { version: state.version, revert: () => {} };
+      if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
       const base = state.cart;
@@ -240,25 +228,22 @@ export function createCartStore(
       }
 
       const nextCart = recalcCart({ ...base, lines: nextLines });
-      const nextVersion = state.version + 1;
 
       impl.setState({
         ...state,
         cart: nextCart,
-        version: nextVersion,
       });
 
       return {
-        version: nextVersion,
         revert: () => {
-          impl.setState({ ...impl.getState(), cart: prev, version: nextVersion - 1 });
+          impl.setState({ ...impl.getState(), cart: prev });
         },
       };
     },
 
     checkoutClear() {
       const state = impl.getState();
-      if (!state.cart) return { version: state.version, revert: () => {} };
+      if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
       const base = state.cart;
@@ -275,18 +260,15 @@ export function createCartStore(
           totalShippingAmount: { amount: 0, currencyCode },
         },
       };
-      const nextVersion = state.version + 1;
 
       impl.setState({
         ...state,
         cart: empty,
-        version: nextVersion,
       });
 
       return {
-        version: nextVersion,
         revert: () => {
-          impl.setState({ ...impl.getState(), cart: prev, version: nextVersion - 1 });
+          impl.setState({ ...impl.getState(), cart: prev });
         },
       };
     },

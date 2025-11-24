@@ -31,13 +31,12 @@ export function createCartStoreZustand(): CartStoreZustand {
     loading: false,
     loaded: false,
     error: null,
-    version: 0,
     setCart: () => {},
-    checkoutLinesAdd: () => ({ version: 0, revert: () => {} }),
-    checkoutLinesDelete: () => ({ version: 0, revert: () => {} }),
-    checkoutLinesUpdate: () => ({ version: 0, revert: () => {} }),
-    checkoutLinesReplace: () => ({ version: 0, revert: () => {} }),
-    checkoutClear: () => ({ version: 0, revert: () => {} }),
+    checkoutLinesAdd: () => ({ revert: () => {} }),
+    checkoutLinesDelete: () => ({ revert: () => {} }),
+    checkoutLinesUpdate: () => ({ revert: () => {} }),
+    checkoutLinesReplace: () => ({ revert: () => {} }),
+    checkoutClear: () => ({ revert: () => {} }),
   }));
 
   const store = createCartStore({

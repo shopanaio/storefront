@@ -10,7 +10,6 @@ export interface CartStore {
   loading: boolean;
   loaded: boolean;
   error: Error | null;
-  version: number;
 
   // Actions
   setCart(cart: model.Cart | null): void;
@@ -26,13 +25,13 @@ export interface CartStore {
       string,
       { unitPrice: number; compareAtUnitPrice?: number; currencyCode: string }
     >;
-  }): { version: number; revert(): void };
+  }): { revert(): void };
 
-  checkoutLinesDelete(input: { lineIds: string[] }): { version: number; revert(): void };
+  checkoutLinesDelete(input: { lineIds: string[] }): { revert(): void };
 
   checkoutLinesUpdate(input: {
     lines: Array<{ lineId: string; quantity: number }>;
-  }): { version: number; revert(): void };
+  }): { revert(): void };
 
   checkoutLinesReplace(input: {
     lines: Array<{ lineId: string; purchasableId: string; quantity?: number }>;
@@ -40,15 +39,15 @@ export interface CartStore {
       string,
       { unitPrice: number; compareAtUnitPrice?: number; currencyCode: string }
     >;
-  }): { version: number; revert(): void };
+  }): { revert(): void };
 
-  checkoutClear(): { version: number; revert(): void };
+  checkoutClear(): { revert(): void };
 }
 
 /**
  * Cart actions type - only methods, no state
  */
-export type CartActions = Omit<CartStore, 'cart' | 'loading' | 'loaded' | 'error' | 'version'>;
+export type CartActions = Omit<CartStore, 'cart' | 'loading' | 'loaded' | 'error'>;
 
 /**
  * Store implementation interface for dependency injection
