@@ -22,8 +22,7 @@ import { useProductGallery } from '@src/hooks/useProductGallery';
 import { useGalleryBreakpoints } from '@src/hooks/useGalleryBreakpoints';
 import { ProductCartButton } from '@src/components/UI/ProductCards/ListingCard/CartButton';
 import { ProductGallery } from '@src/components/Product/ProductGallery';
-import useIsInTheCart from '@src/hooks/cart/useIsInTheCart';
-import useAddItemToCart from '@src/hooks/cart/useAddItemToCart';
+import { useIsInTheCart, useAddItemToCart } from '@src/hooks/cart';
 import { useProductGroups } from '@src/hooks/product/useProductGroups';
 
 const { Text, Title } = Typography;

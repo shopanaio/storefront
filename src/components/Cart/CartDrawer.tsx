@@ -7,7 +7,7 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
 
-import useCart from '@src/hooks/cart/useCart';
+import { useCart } from '@src/hooks/cart';
 
 import { CartTable } from './CartTable';
 import { useModalStore } from '@src/store/appStore';

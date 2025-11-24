@@ -1,3 +1,25 @@
+/**
+ * Cart Store - SDK Integration
+ *
+ * This file creates a cart store instance using the SDK's cart module.
+ * The store is created using createCartStoreZustand() from SDK and provides
+ * a centralized state management solution for the cart functionality.
+ *
+ * @deprecated Old Zustand implementation moved to cartStore.old.ts
+ * Now using SDK cart module for better consistency and maintainability
+ */
+
+import { createCartStoreZustand } from '@shopana/storefront-sdk/modules/cart/react';
+
+/**
+ * Global cart store instance
+ * This store is provided to CartProvider and used throughout the application
+ */
+export const cartStore = createCartStoreZustand();
+
+// For backward compatibility, export the store as useCartStore
+// Components can still use `useCartStore` from this file
+// but should migrate to using SDK hooks: useCart, useCartStore from SDK
 import { create } from 'zustand';
 import type { model } from '@shopana/storefront-sdk';
 import { recalcCart } from './cartMath';

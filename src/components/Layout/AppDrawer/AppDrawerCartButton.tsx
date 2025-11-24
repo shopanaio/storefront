@@ -6,7 +6,7 @@ import { Badge } from '@src/components/UI/Badge';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
-import useCart from '@src/hooks/cart/useCart';
+import { useCart } from '@src/hooks/cart';
 import { useModalStore } from '@src/store/appStore';
 import { AppDrawerButton } from './AppDrawerButton';
 import { Money } from '@src/components/UI/Price/Money';

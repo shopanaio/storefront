@@ -4,6 +4,9 @@ import { getCurrentEnvironment } from '@src/relay/Environment';
 import { RelayEnvironmentProvider } from 'react-relay';
 import { ShopProvider } from '@shopana/storefront-sdk/shop';
 import { mockShopConfig } from '@shopana/storefront-sdk/shop/mockShopConfig';
+import { CartProvider } from '@shopana/storefront-sdk/modules/cart/react';
+import { cartStore } from '@src/store/cartStore';
+import { cartConfig } from '@src/config/cart.config';
 
 console.error = () => {};
 console.warn = () => {};
@@ -31,10 +34,12 @@ export default function RootLayout({
       </head>
       <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
         <ShopProvider config={mockShopConfig}>
-          <body>
-            <div id="app">{children}</div>
-            <div id="sheet-wrapper"></div>
-          </body>
+          <CartProvider store={cartStore} config={cartConfig}>
+            <body>
+              <div id="app">{children}</div>
+              <div id="sheet-wrapper"></div>
+            </body>
+          </CartProvider>
         </ShopProvider>
       </RelayEnvironmentProvider>
     </html>

@@ -1,7 +1,7 @@
 import React from "react";
 import { TbShoppingCart } from "react-icons/tb";
 import { useTranslations } from "next-intl";
-import useCart from "@src/hooks/cart/useCart";
+import { useCart } from "@src/hooks/cart";
 import { Money } from "@src/components/UI/Price/Money";
 import { createStyles } from "antd-style";
 import { Button } from "antd";

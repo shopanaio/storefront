@@ -4,7 +4,7 @@ import { Flex, Typography } from "antd";
 import { TbHome } from "react-icons/tb";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import useCart from "@src/hooks/cart/useCart";
+import { useCart } from "@src/hooks/cart";
 
 import { CartSubtotal } from "@src/components/Cart/CartSubtotal";
 import { mq } from "@src/components/Theme/breakpoints";

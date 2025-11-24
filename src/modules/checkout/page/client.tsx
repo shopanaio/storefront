@@ -4,7 +4,7 @@ import { CheckoutBrand } from '@src/modules/checkout/page/brand';
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
-import useCartId from '@src/hooks/cart/useCartId';
+import { useCartId } from '@src/hooks/cart';
 import { useDefaultCartCleanup } from '@src/modules/checkout/hooks/useDefaultCartCleanup';
 
 const features = {

@@ -1,6 +1,5 @@
 import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
-import useRemoveItemFromCart from "@src/hooks/cart/useRemoveItemFromCart";
-import useUpdateCartLineQuantity from "@src/hooks/cart/useUpdateCartLineQuantity";
+import { useRemoveItemFromCart, useUpdateCartLineQuantity } from "@src/hooks/cart";
 import { Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
