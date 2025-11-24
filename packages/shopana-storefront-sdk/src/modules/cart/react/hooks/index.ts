@@ -9,6 +9,18 @@ export { default as useReplaceCartItem } from './useReplaceCartItem';
 export { default as useIsInTheCart } from './useIsInTheCart';
 export { default as useCartId } from './useCartId';
 
+// Optimized selectors
+export {
+  useCartIdOnly,
+  useCartData,
+  useCartLoadingState,
+  useIsInCart,
+  useCartLineId,
+  useCartLineQuantity,
+  useCartLine,
+  useCartLineItem,
+} from './useCartSelectors';
+
 // Export interfaces
 export type { UseIsInCartProps, UseIsInCartReturn } from './useIsInTheCart';
 export type { ReplaceCartItemInput, ClearCartInput, UseClearCartReturn, RemoveFromCartInput, AddToCartInput } from '../../core/types';

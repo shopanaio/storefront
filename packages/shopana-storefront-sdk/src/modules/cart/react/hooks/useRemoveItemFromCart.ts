@@ -4,11 +4,11 @@ import { useMutation } from 'react-relay';
 import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
 
 import { useCartActions } from '../context';
-import useCart from './useCart';
+import { useCartIdOnly } from './useCartSelectors';
 import { RemoveFromCartInput } from '../../core/types';
 
 const useRemoveItemFromCart = () => {
-  const { cart } = useCart();
+  const cartId = useCartIdOnly();
   const actions = useCartActions();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
@@ -23,10 +23,8 @@ const useRemoveItemFromCart = () => {
         onError?: () => void;
       }
     ): Promise<any> => {
-      const cartId = cart?.id;
-
       // If no cart in cookie or context — just exit
-      if (!cartId || !cart?.id) {
+      if (!cartId) {
         console.warn('[useRemoveItemFromCart] No cart to remove from');
         return null;
       }
@@ -37,7 +35,7 @@ const useRemoveItemFromCart = () => {
         commitRemoveLine({
           variables: {
             input: {
-              checkoutId: cart.id,
+              checkoutId: cartId,
               lineIds: [input.lineId],
             },
           },

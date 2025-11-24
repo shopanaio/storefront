@@ -4,10 +4,10 @@ import { useMutation } from 'react-relay';
 import type { updateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/updateCartLineQuantityMutation.graphql';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
 import { useCartActions } from '../context';
-import useCart from './useCart';
+import { useCartIdOnly } from './useCartSelectors';
 
 const useUpdateCartLineQuantity = () => {
-  const { cart } = useCart();
+  const cartId = useCartIdOnly();
   const actions = useCartActions();
   const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
     updateCartLineQuantityMutation
@@ -21,7 +21,7 @@ const useUpdateCartLineQuantity = () => {
     }
   ) => {
     const { checkoutLinesUpdate } = actions;
-    if (!cart?.id) {
+    if (!cartId) {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
@@ -32,7 +32,7 @@ const useUpdateCartLineQuantity = () => {
       commit({
         variables: {
           input: {
-            checkoutId: cart.id,
+            checkoutId: cartId,
             lines: [
               {
                 lineId: cartItemId,

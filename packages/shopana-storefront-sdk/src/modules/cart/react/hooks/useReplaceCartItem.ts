@@ -29,11 +29,11 @@ import type { replaceCartItemMutation as ReplaceCartItemMutationType } from '../
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 
 import { useCartActions, useCartConfig } from '../context';
-import useCart from './useCart';
+import { useCartIdOnly } from './useCartSelectors';
 import { ReplaceCartItemInput } from '../../core/types';
 
 const useReplaceCartItem = () => {
-  const { cart } = useCart();
+  const cartId = useCartIdOnly();
   const actions = useCartActions();
   const { defaultCurrency } = useCartConfig();
   const [commit, isInFlight] = useMutation<ReplaceCartItemMutationType>(
@@ -49,8 +49,7 @@ const useReplaceCartItem = () => {
   ) => {
     const { lineId, purchasableId, purchasableSnapshot, quantity } = input;
     const { checkoutLinesReplace } = actions;
-    const cartId = cart?.id;
-    if (!cartId || !cart?.id) {
+    if (!cartId) {
       console.warn('[useReplaceCartItem] No cart to replace items in');
       return null;
     }
@@ -70,7 +69,7 @@ const useReplaceCartItem = () => {
       commit({
         variables: {
           input: {
-            checkoutId: cart.id,
+            checkoutId: cartId,
             lines: [
               {
                 lineId: lineId,

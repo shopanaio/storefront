@@ -1,5 +1,6 @@
 import type { model } from '../../../../model';
 import { useCartStore } from '../context';
+import { useShallow } from 'zustand/shallow';
 
 type UseCart = () => {
   cart: model.Cart | null;
@@ -11,17 +12,14 @@ type UseCart = () => {
 const useCart: UseCart = () => {
   const useStore = useCartStore();
 
-  const cart = useStore((s) => s.cart);
-  const loading = useStore((s) => s.loading);
-  const loaded = useStore((s) => s.loaded);
-  const error = useStore((s) => s.error);
-
-  return {
-    cart,
-    loading,
-    loaded,
-    error,
-  };
+  return useStore(
+    useShallow((s) => ({
+      cart: s.cart,
+      loading: s.loading,
+      loaded: s.loaded,
+      error: s.error,
+    }))
+  );
 };
 
 export default useCart;

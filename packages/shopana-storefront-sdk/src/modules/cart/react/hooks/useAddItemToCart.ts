@@ -6,12 +6,12 @@ import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutatio
 
 import { useCartActions, useCartConfig } from '../context';
 import useCreateCart from './useCreateCart';
-import useCart from './useCart';
+import { useCartIdOnly } from './useCartSelectors';
 import { AddToCartInput } from '../../core/types';
 
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
-  const { cart } = useCart();
+  const cartId = useCartIdOnly();
   const actions = useCartActions();
   const { defaultCurrency, defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
@@ -31,7 +31,7 @@ const useAddItemToCart = () => {
       const { checkoutLinesAdd } = actions;
 
       // If no cart — create new one
-      if (!cart?.id) {
+      if (!cartId) {
         return await createCart(
           {
             currencyCode: purchasableSnapshot.price.currencyCode as any,
@@ -69,7 +69,7 @@ const useAddItemToCart = () => {
         commitAddLine({
           variables: {
             input: {
-              checkoutId: cart.id,
+              checkoutId: cartId,
               lines: [
                 {
                   purchasableId: input.purchasableId,

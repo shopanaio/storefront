@@ -4,11 +4,11 @@ import { useMutation } from 'react-relay';
 import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
 
 import { useCartContext, useCartActions } from '../context';
-import useCart from './useCart';
+import { useCartIdOnly } from './useCartSelectors';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
 
 const useClearCart = (): UseClearCartReturn => {
-  const { cart } = useCart();
+  const cartId = useCartIdOnly();
   const { setCartKey, setId } = useCartContext();
   const actions = useCartActions();
 
@@ -22,10 +22,10 @@ const useClearCart = (): UseClearCartReturn => {
         onError?: () => void;
       }
     ): Promise<any> => {
-      const cartId = input?.checkoutId || cart?.id;
+      const currentCartId = input?.checkoutId || cartId;
 
       // If no cart in cookie or context — just exit
-      if (!cartId) {
+      if (!currentCartId) {
         console.warn('[useClearCart] No cart to clear');
         return null;
       }
@@ -36,7 +36,7 @@ const useClearCart = (): UseClearCartReturn => {
         commitClearCart({
           variables: {
             input: {
-              checkoutId: cartId,
+              checkoutId: currentCartId,
             },
           },
           onCompleted: (response, errors) => {
