@@ -3,13 +3,13 @@
 import { useMutation } from 'react-relay';
 import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
 
-import { useCartStore } from '../context';
+import { useCartActions } from '../context';
 import useCart from './useCart';
 import { RemoveFromCartInput } from '../../core/types';
 
 const useRemoveItemFromCart = () => {
   const { cart } = useCart();
-  const store = useCartStore();
+  const actions = useCartActions();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
     removeFromCartMutation
@@ -32,7 +32,7 @@ const useRemoveItemFromCart = () => {
       }
 
       return new Promise((resolve, reject) => {
-        const { checkoutLinesDelete } = store;
+        const { checkoutLinesDelete } = actions;
         const { revert } = checkoutLinesDelete({ lineIds: [input.lineId] });
         commitRemoveLine({
           variables: {

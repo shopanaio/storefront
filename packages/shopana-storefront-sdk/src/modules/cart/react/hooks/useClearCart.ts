@@ -3,14 +3,14 @@
 import { useMutation } from 'react-relay';
 import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
 
-import { useCartContext, useCartStore } from '../context';
+import { useCartContext, useCartActions } from '../context';
 import useCart from './useCart';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
 
 const useClearCart = (): UseClearCartReturn => {
   const { cart } = useCart();
   const { setCartKey, setId } = useCartContext();
-  const store = useCartStore();
+  const actions = useCartActions();
 
   const [commitClearCart, isInFlight] = useMutation<any>(clearCartMutation);
 
@@ -31,7 +31,7 @@ const useClearCart = (): UseClearCartReturn => {
       }
 
       return new Promise((resolve, reject) => {
-        const { checkoutClear } = store;
+        const { checkoutClear } = actions;
         const { revert } = checkoutClear();
         commitClearCart({
           variables: {

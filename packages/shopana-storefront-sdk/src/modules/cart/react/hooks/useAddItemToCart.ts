@@ -4,13 +4,15 @@ import { useMutation } from 'react-relay';
 import type { addToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/addToCartMutation.graphql';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
 
-import { useCartStore, useCartConfig } from '../context';
+import { useCartActions, useCartConfig } from '../context';
 import useCreateCart from './useCreateCart';
+import useCart from './useCart';
 import { AddToCartInput } from '../../core/types';
 
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
-  const store = useCartStore();
+  const { cart } = useCart();
+  const actions = useCartActions();
   const { defaultCurrency, defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
     addToCartMutation
@@ -26,13 +28,13 @@ const useAddItemToCart = () => {
     ): Promise<unknown> => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
-      const { cart, checkoutLinesAdd } = store;
+      const { checkoutLinesAdd } = actions;
 
       // If no cart — create new one
       if (!cart?.id) {
         return await createCart(
           {
-            currencyCode: defaultCurrency as any,
+            currencyCode: purchasableSnapshot.price.currencyCode as any,
             localeCode: defaultLocale,
             items: [
               {
@@ -58,7 +60,7 @@ const useAddItemToCart = () => {
           [purchasableId]: {
             unitPrice: purchasableSnapshot.price.amount,
             compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode: defaultCurrency,
+            currencyCode: purchasableSnapshot.price.currencyCode,
           },
         },
       });

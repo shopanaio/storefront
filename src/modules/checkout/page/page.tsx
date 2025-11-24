@@ -1,12 +1,11 @@
 "use client";
 
 import { CheckoutPageClient } from "@src/modules/checkout/page/client";
-import CartProvider from "@src/providers/cart";
 
+/**
+ * Checkout module page component
+ * Uses global CartProvider from root layout
+ */
 export default function CheckoutModulePage() {
-  return (
-    <CartProvider cookie="default_cart_id">
-      <CheckoutPageClient />
-    </CartProvider>
-  );
+  return <CheckoutPageClient />;
 }

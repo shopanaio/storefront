@@ -19,10 +19,16 @@ import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/quer
 import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
 import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';
 import { CartLineFragment_line } from '../hooks/useCartLineFragment';
+import type { CartStoreZustand } from '../store/CartStoreZustand';
 
 export interface CartProviderProps {
   children: React.ReactNode;
-  store: CartStore;
+  /**
+   * Cart store - can be either:
+   * - CartStoreZustand object from createCartStoreZustand() (recommended)
+   * - CartStore object (legacy)
+   */
+  store: CartStoreZustand | CartStore;
   config: CartConfig;
   /**
    * Optional initial cart data from server (SSR)
@@ -31,6 +37,13 @@ export interface CartProviderProps {
 }
 
 type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
+
+/**
+ * Check if store is CartStoreZustand (new format) or CartStore (legacy)
+ */
+function isCartStoreZustand(store: any): store is CartStoreZustand {
+  return store && typeof store === 'object' && 'store' in store && 'useStore' in store;
+}
 
 /**
  * Internal component to sync cart fragment data to Zustand store
@@ -128,10 +141,34 @@ const CartDataHandler: React.FC<{
  */
 export const CartProvider: React.FC<CartProviderProps> = ({
   children,
-  store,
+  store: storeProp,
   config: userConfig,
   initialCartData,
 }) => {
+  // Extract store and useStore from prop
+  const { storeObject, useStoreHook } = useMemo(() => {
+    if (isCartStoreZustand(storeProp)) {
+      // New format: { store, useStore }
+      return {
+        storeObject: storeProp.store,
+        useStoreHook: storeProp.useStore,
+      };
+    } else {
+      // Legacy format: just CartStore object
+      // Create a dummy useStore that throws error if used
+      const dummyUseStore = (() => {
+        throw new Error(
+          'useCartStore with selectors requires CartStoreZustand. ' +
+          'Please update your code to use createCartStoreZustand() and pass the result to CartProvider.'
+        );
+      }) as any;
+      return {
+        storeObject: storeProp,
+        useStoreHook: dummyUseStore,
+      };
+    }
+  }, [storeProp]);
+
   // Merge user config with defaults
   const config = createCartConfig(userConfig);
 
@@ -216,7 +253,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({
 
   return (
     <CartContextProvider
-      store={store}
+      store={storeObject}
+      useStore={useStoreHook}
       config={config}
       cartKey={cartKey}
       setCartKey={setCartKey}
@@ -242,7 +280,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
         )}
       </Suspense>
       {children}
-      <CartDataStoreController cartKey={cartKey} store={store} />
+      <CartDataStoreController cartKey={cartKey} store={storeObject} />
     </CartContextProvider>
   );
 };

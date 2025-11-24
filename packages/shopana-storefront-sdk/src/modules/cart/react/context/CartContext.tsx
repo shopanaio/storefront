@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useMemo } from "react";
-import { CartStore } from "../../store";
-import type { CartConfig } from "../../core/config";
-import { createCartIdUtils } from "../../core/utils/cartId";
+import React, { createContext, useContext, useMemo } from 'react';
+import { CartStore, CartActions } from '../../store';
+import type { CartConfig } from '../../core/config';
+import { createCartIdUtils } from '../../core/utils/cartId';
+import type { CartStoreZustand } from '../store/CartStoreZustand';
+import type { UseBoundStore, StoreApi } from 'zustand';
 
 /**
  * Cart context value providing store, config, and utilities
@@ -13,6 +15,12 @@ export interface CartContextValue {
    * Cart store instance (Zustand or custom implementation)
    */
   store: CartStore;
+
+  /**
+   * Zustand hook for accessing state with selectors
+   * Use this in React components: useCartStore(s => s.cart)
+   */
+  useStore: UseBoundStore<StoreApi<CartStore>>;
 
   /**
    * Cart configuration (currency, locale, cookies)
@@ -60,6 +68,7 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 export interface CartContextProviderProps {
   children: React.ReactNode;
   store: CartStore;
+  useStore: UseBoundStore<StoreApi<CartStore>>;
   config: Required<CartConfig>;
   cartKey: any | null;
   setCartKey: (key: any | null) => void;
@@ -78,6 +87,7 @@ export interface CartContextProviderProps {
 export function CartContextProvider({
   children,
   store,
+  useStore,
   config,
   cartKey,
   setCartKey,
@@ -88,16 +98,18 @@ export function CartContextProvider({
 }: CartContextProviderProps) {
   // Create cart ID utils with config
   const cartIdUtils = useMemo(
-    () => createCartIdUtils({
-      cookieName: config.cookieName,
-      cookieOptions: config.cookieOptions,
-    }),
+    () =>
+      createCartIdUtils({
+        cookieName: config.cookieName,
+        cookieOptions: config.cookieOptions,
+      }),
     [config.cookieName, config.cookieOptions]
   );
 
   const value = useMemo<CartContextValue>(
     () => ({
       store,
+      useStore,
       config,
       cartIdUtils,
       cartKey,
@@ -107,14 +119,21 @@ export function CartContextProvider({
       isCartLoading,
       isCartLoaded,
     }),
-    [store, config, cartIdUtils, cartKey, setCartKey, cartId, setId, isCartLoading, isCartLoaded]
+    [
+      store,
+      useStore,
+      config,
+      cartIdUtils,
+      cartKey,
+      setCartKey,
+      cartId,
+      setId,
+      isCartLoading,
+      isCartLoaded,
+    ]
   );
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 /**
@@ -126,19 +145,52 @@ export function CartContextProvider({
 export function useCartContext(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error("useCartContext must be used within CartProvider");
+    throw new Error('useCartContext must be used within CartProvider');
   }
   return context;
 }
 
 /**
- * Hook to access cart store only
+ * Hook to access cart store (Zustand hook)
+ * Returns the Zustand hook directly for use with selectors
+ *
+ * @example
+ * ```tsx
+ * // Select only cart data
+ * const cart = useCartStore()(s => s.cart);
+ *
+ * // Select multiple values
+ * const { cart, loading } = useCartStore()(s => ({ cart: s.cart, loading: s.loading }));
+ *
+ * // Or save to variable first
+ * const useStore = useCartStore();
+ * const cart = useStore(s => s.cart);
+ * ```
  *
  * @throws Error if used outside CartProvider
  */
-export function useCartStore(): CartStore {
+export function useCartStore() {
+  const { useStore } = useCartContext();
+  return useStore;
+}
+
+/**
+ * Hook to access cart actions/methods (without state)
+ * Returns only action methods, not state properties
+ * Use this when you need to call mutations like checkoutLinesAdd, checkoutLinesDelete, etc.
+ *
+ * @example
+ * ```tsx
+ * const actions = useCartActions();
+ * actions.checkoutLinesAdd({ lines: [...] });
+ * actions.checkoutClear();
+ * ```
+ *
+ * @throws Error if used outside CartProvider
+ */
+export function useCartActions(): CartActions {
   const { store } = useCartContext();
-  return store;
+  return store as CartActions;
 }
 
 /**

@@ -28,11 +28,13 @@ import { useMutation } from 'react-relay';
 import type { replaceCartItemMutation as ReplaceCartItemMutationType } from '../../core/graphql/mutations/__generated__/replaceCartItemMutation.graphql';
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 
-import { useCartStore, useCartConfig } from '../context';
+import { useCartActions, useCartConfig } from '../context';
+import useCart from './useCart';
 import { ReplaceCartItemInput } from '../../core/types';
 
 const useReplaceCartItem = () => {
-  const store = useCartStore();
+  const { cart } = useCart();
+  const actions = useCartActions();
   const { defaultCurrency } = useCartConfig();
   const [commit, isInFlight] = useMutation<ReplaceCartItemMutationType>(
     replaceCartItemMutation
@@ -46,7 +48,7 @@ const useReplaceCartItem = () => {
     }
   ) => {
     const { lineId, purchasableId, purchasableSnapshot, quantity } = input;
-    const { cart, checkoutLinesReplace } = store;
+    const { checkoutLinesReplace } = actions;
     const cartId = cart?.id;
     if (!cartId || !cart?.id) {
       console.warn('[useReplaceCartItem] No cart to replace items in');
@@ -60,7 +62,7 @@ const useReplaceCartItem = () => {
           [purchasableId]: {
             unitPrice: purchasableSnapshot.price.amount,
             compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode: defaultCurrency,
+            currencyCode: purchasableSnapshot.price.currencyCode,
           },
         },
       });

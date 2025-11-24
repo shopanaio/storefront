@@ -2,6 +2,7 @@ export {
   CartContextProvider,
   useCartContext,
   useCartStore,
+  useCartActions,
   useCartConfig,
   useCartIdUtils,
 } from './CartContext';
