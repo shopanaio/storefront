@@ -1,6 +1,5 @@
-import type { model } from '@shopana/storefront-sdk';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
+import type { model } from '../../../../model';
+import { useCartStore } from '../context';
 
 type UseCart = () => {
   cart: model.Cart | null;
@@ -10,16 +9,13 @@ type UseCart = () => {
 };
 
 const useCart: UseCart = () => {
-  const cart = useCartStore((state) => state.cart);
-  const loading = useCartStore((state) => state.loading);
-  const loaded = useCartStore((state) => state.loaded);
-  const error = useCartStore((state) => state.error);
+  const store = useCartStore();
 
   return {
-    cart,
-    loading,
-    loaded,
-    error,
+    cart: store.cart,
+    loading: store.loading,
+    loaded: store.loaded,
+    error: store.error,
   };
 };
 

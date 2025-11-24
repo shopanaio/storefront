@@ -1,8 +1,20 @@
 // Context
-export { CartProvider as CartContextProvider, useCartStore as useCartStoreContext } from './context';
+export {
+  CartContextProvider,
+  useCartContext,
+  useCartStore,
+  useCartConfig,
+  useCartIdUtils,
+} from './context';
+
+export type {
+  CartContextValue,
+  CartContextProviderProps,
+} from './context';
 
 // Providers
 export { CartProvider } from './providers';
+export type { CartProviderProps } from './providers/CartProvider';
 
 // Hooks
 export * from './hooks';

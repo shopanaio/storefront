@@ -13,11 +13,11 @@ export function createCartStoreZustand(): CartStore {
     error: null,
     version: 0,
     setCart: () => {},
-    optimisticAdd: () => ({ version: 0, revert: () => {} }),
-    optimisticRemove: () => ({ version: 0, revert: () => {} }),
-    optimisticUpdate: () => ({ version: 0, revert: () => {} }),
-    optimisticReplace: () => ({ version: 0, revert: () => {} }),
-    optimisticClear: () => ({ version: 0, revert: () => {} }),
+    checkoutLinesAdd: () => ({ version: 0, revert: () => {} }),
+    checkoutLinesDelete: () => ({ version: 0, revert: () => {} }),
+    checkoutLinesUpdate: () => ({ version: 0, revert: () => {} }),
+    checkoutLinesReplace: () => ({ version: 0, revert: () => {} }),
+    checkoutClear: () => ({ version: 0, revert: () => {} }),
   }));
 
   return createCartStore({

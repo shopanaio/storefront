@@ -8,39 +8,48 @@ import React, {
   useState,
 } from 'react';
 import { PreloadedQuery, usePreloadedQuery, useQueryLoader } from 'react-relay';
-// @ts-ignore - TODO: Phase 2 - Move CartContextProvider to SDK
-import { CartContextProvider } from '@src/providers/cart-context';
-// @ts-ignore - TODO: Phase 2 - Move useCart_CartFragment$key to SDK
-import { useCart_CartFragment$key } from '@src/hooks/cart/useCartFragment/__generated__/useCart_CartFragment.graphql';
-// @ts-ignore - TODO: Phase 2 - Move cartIdUtils to SDK
-import cartIdUtils from '@src/utils/cartId';
-// @ts-ignore - TODO: Phase 2 - Move loadCartQuery to SDK
-import loadCartQuery from '@src/hooks/cart/loadCartQuery';
-// @ts-ignore - TODO: Phase 2 - Move LoadCartQueryType to SDK
-import { loadCartQuery as LoadCartQueryType } from '@src/hooks/cart/loadCartQuery/__generated__/loadCartQuery.graphql';
-// @ts-ignore - TODO: Phase 2 - Move useCartFragment to SDK (local version)
-import useCartFragment from '../hooks/useCartFragment';
-// @ts-ignore - TODO: Phase 2 - Move useCartStore to SDK
-import { useCartStore } from '@src/store/cartStore';
+import { CartContextProvider } from '../context/CartContext';
+import { CartStore } from '../../store';
+import type { CartConfig } from '../../core/config';
+import { createCartConfig } from '../../core/config';
+import { createCartIdUtils } from '../../core/utils/cartId';
+import { loadCartQuery } from '../../core/graphql/queries';
+import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/queries/__generated__/loadCartQuery.graphql';
+import type { useCart_CartFragment$key } from '../../core/graphql/fragments/__generated__/useCart_CartFragment.graphql';
 
-interface CartProviderProps {
+export interface CartProviderProps {
   children: React.ReactNode;
-  cookie: string;
+  store: CartStore;
+  config: CartConfig;
+  /**
+   * Optional initial cart data from server (SSR)
+   */
+  initialCartData?: PreloadedQuery<LoadCartQueryType> | null;
 }
 
 type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
 
-const CartDataStoreController = () => {
-  const { cart } = useCartFragment();
-  const { setCart } = useCartStore.getState();
-
+/**
+ * Internal component to sync cart fragment data to Zustand store
+ */
+const CartDataStoreController: React.FC<{
+  cartKey: useCart_CartFragment$key | null;
+  store: CartStore;
+}> = ({ cartKey, store }) => {
   useEffect(() => {
-    setCart(cart);
-  }, [cart]);
+    if (cartKey) {
+      // Cart data is already in fragment form, set it to store
+      // The fragment will be read by hooks using useFragment
+      store.setCart(cartKey as any);
+    }
+  }, [cartKey, store]);
 
   return null;
 };
 
+/**
+ * Internal component to handle cart query loading
+ */
 const CartDataHandler: React.FC<{
   queryReference: LoadCartQueryReference;
   onCartData: (cart: useCart_CartFragment$key) => void;
@@ -57,7 +66,7 @@ const CartDataHandler: React.FC<{
     if (checkout) {
       onCartData(checkout);
     } else {
-      console.log('Cart not found');
+      console.log('[CartProvider] Cart not found');
       onCartNotFound();
     }
   }, [cartData, onCartData, onCartNotFound]);
@@ -65,57 +74,103 @@ const CartDataHandler: React.FC<{
   return null;
 };
 
-const CartProvider: React.FC<CartProviderProps> = ({
+/**
+ * Cart Provider Component
+ *
+ * Provides cart state management with automatic loading from cookies.
+ * Works with both client-side and server-side rendering.
+ *
+ * @example
+ * ```tsx
+ * import { CartProvider, createCartStoreZustand } from '@shopana/storefront-sdk/modules/cart/react';
+ *
+ * const cartStore = createCartStoreZustand();
+ *
+ * function App() {
+ *   return (
+ *     <CartProvider
+ *       store={cartStore}
+ *       config={{
+ *         defaultCurrency: 'USD',
+ *         defaultLocale: 'en',
+ *       }}
+ *     >
+ *       {children}
+ *     </CartProvider>
+ *   );
+ * }
+ * ```
+ */
+export const CartProvider: React.FC<CartProviderProps> = ({
   children,
-  cookie: cookieKey,
+  store,
+  config: userConfig,
+  initialCartData,
 }) => {
+  // Merge user config with defaults
+  const config = createCartConfig(userConfig);
+
+  // Create cart ID utils
+  const cartIdUtils = createCartIdUtils({
+    cookieName: config.cookieName,
+    cookieOptions: config.cookieOptions,
+  });
+
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
   const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
   const [cartId, setCartId] = useState<string | null>(null);
-  const [isCartLoading, setIsCartLoading] = useState(false);
-  const [isCartLoaded, setIsCartLoaded] = useState(false);
   const isLoadingRef = useRef(false);
   const loadedRef = useRef(false);
 
+  // Load cart on mount
   useEffect(() => {
     if (loadedRef.current || isLoadingRef.current) return;
 
-    const savedCartId = cartIdUtils.getCartIdFromCookie(cookieKey);
+    // Try to get cart ID from cookies
+    const savedCartId = cartIdUtils.getCartIdFromCookie();
+
     if (!savedCartId) {
-      // No saved cart id: consider cart as loaded with empty state
+      // No saved cart: consider cart as loaded with empty state
       setCartKey(null);
       setCartId(null);
-      setIsCartLoading(false);
-      setIsCartLoaded(true);
       loadedRef.current = true;
       return;
     }
 
     setCartId(savedCartId);
     isLoadingRef.current = true;
-    setIsCartLoading(true);
-    /* console.log("[CartProvider Shopana] Loading cart with ID:", savedCartId); */
 
+    // Load cart data
     loadQuery({ checkoutId: savedCartId }, { fetchPolicy: 'network-only' });
-  }, [loadQuery, cookieKey]);
+  }, [loadQuery, cartIdUtils]);
 
   const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
     setCartKey(cart);
-    setIsCartLoaded(true);
     isLoadingRef.current = false;
-    setIsCartLoading(false);
     loadedRef.current = true;
   }, []);
 
   const handleCartNotFound = useCallback(() => {
     isLoadingRef.current = false;
-    setIsCartLoading(false);
     setCartKey(null);
     setCartId(null);
-    setIsCartLoaded(true);
     loadedRef.current = true;
-  }, []);
+    // Remove invalid cart ID from cookies
+    cartIdUtils.removeCartIdCookie();
+  }, [cartIdUtils]);
+
+  const handleSetCartId = useCallback(
+    (id: string | null) => {
+      setCartId(id);
+      if (id) {
+        cartIdUtils.setCartIdCookie(id);
+      } else {
+        cartIdUtils.removeCartIdCookie();
+      }
+    },
+    [cartIdUtils]
+  );
 
   useEffect(() => {
     return () => {
@@ -126,30 +181,25 @@ const CartProvider: React.FC<CartProviderProps> = ({
   }, [disposeQuery]);
 
   return (
-    <CartContextProvider
-      cartKey={cartKey}
-      setCartKey={setCartKey}
-      isCartLoading={isCartLoading}
-      isCartLoaded={isCartLoaded}
-      setId={(id: string | null) => {
-        setCartId(id);
-        if (id) {
-          cartIdUtils.setCartIdCookie(id, cookieKey);
-        }
-      }}
-      cartId={cartId}
-    >
+    <CartContextProvider store={store} config={config}>
       <Suspense fallback={null}>
-        {queryReference ? (
+        {queryReference && (
           <CartDataHandler
             queryReference={queryReference}
             onCartData={handleCartData}
             onCartNotFound={handleCartNotFound}
           />
-        ) : null}
+        )}
+        {initialCartData && (
+          <CartDataHandler
+            queryReference={initialCartData}
+            onCartData={handleCartData}
+            onCartNotFound={handleCartNotFound}
+          />
+        )}
       </Suspense>
       {children}
-      <CartDataStoreController />
+      <CartDataStoreController cartKey={cartKey} store={store} />
     </CartContextProvider>
   );
 };
