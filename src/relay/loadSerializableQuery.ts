@@ -1,24 +1,15 @@
-import {
-  GraphQLResponse,
-  OperationType,
-  RequestParameters,
-  VariablesOf,
-} from "relay-runtime";
+import { OperationType, RequestParameters, VariablesOf } from "relay-runtime";
 import { ConcreteRequest } from "relay-runtime/lib/util/RelayConcreteNode";
+import {
+  loadSerializableQuery as loadSerializableQuerySDK,
+  SerializablePreloadedQuery,
+} from "@shopana/storefront-sdk/graphql/relay";
 import { networkFetch } from "@src/relay/Environment";
 
-export interface SerializablePreloadedQuery<
-  TRequest extends ConcreteRequest,
-  TQuery extends OperationType
-> {
-  params: TRequest["params"];
-  variables: VariablesOf<TQuery>;
-  response: GraphQLResponse;
-}
+// Re-export type from SDK
+export type { SerializablePreloadedQuery };
 
-// Call into raw network fetch to get serializable GraphQL query response
-// This response will be sent to the client to "warm" the QueryResponseCache
-// to avoid the client fetches.
+// Wrapper function that uses project's networkFetch
 export default async function loadSerializableQuery<
   TRequest extends ConcreteRequest,
   TQuery extends OperationType
@@ -27,10 +18,5 @@ export default async function loadSerializableQuery<
   variables: VariablesOf<TQuery>,
   serverCookies?: string
 ): Promise<SerializablePreloadedQuery<TRequest, TQuery>> {
-  const response = await networkFetch(params, variables, serverCookies);
-  return {
-    params,
-    variables,
-    response,
-  };
+  return loadSerializableQuerySDK(networkFetch, params, variables, serverCookies);
 }

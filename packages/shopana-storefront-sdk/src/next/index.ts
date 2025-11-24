@@ -11,3 +11,6 @@ export const NEXT_JS_INTEGRATION_VERSION = '1.0.0';
 // Re-export utilities that might be useful for Next.js projects
 export { logError, configureLogger } from '../utils/logger';
 export type { LogLevel, LogContext, LogErrorOptions } from '../utils/logger';
+
+// Re-export Relay integration for Next.js
+export { QueryProvider, useQuery } from './relay';

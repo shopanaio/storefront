@@ -27,9 +27,25 @@
       "types": "./dist/sdk/index.d.ts",
       "default": "./dist/sdk/index.js"
     },
+    "./graphql": {
+      "types": "./dist/graphql/index.d.ts",
+      "default": "./dist/graphql/index.js"
+    },
+    "./graphql/relay": {
+      "types": "./dist/graphql/relay/index.d.ts",
+      "default": "./dist/graphql/relay/index.js"
+    },
+    "./cms": {
+      "types": "./dist/cms/index.d.ts",
+      "default": "./dist/cms/index.js"
+    },
     "./next": {
       "types": "./dist/next/index.d.ts",
       "default": "./dist/next/index.js"
+    },
+    "./next/relay": {
+      "types": "./dist/next/relay/index.d.ts",
+      "default": "./dist/next/relay/index.js"
     },
     "./next/page": {
       "types": "./src/next/page.tsx",
@@ -50,7 +66,9 @@
   "peerDependencies": {
     "next": "^14.0.0 || ^15.0.0 || ^16.0.0",
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "react-relay": "^18.0.0 || ^19.0.0 || ^20.0.0",
+    "relay-runtime": "^18.0.0 || ^19.0.0 || ^20.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
