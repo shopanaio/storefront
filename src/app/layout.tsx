@@ -1,21 +1,22 @@
-'use client';
-
-import { getCurrentEnvironment } from '@src/relay/Environment';
-import { RelayEnvironmentProvider } from 'react-relay';
-import { ShopProvider } from '@shopana/storefront-sdk/shop';
-import { mockShopConfig } from '@shopana/storefront-sdk/shop/mockShopConfig';
-import { CartProvider } from '@shopana/storefront-sdk/modules/cart/react';
-import { cartStore } from '@src/store/cartStore';
-import { cartConfig } from '@src/config/cart.config';
+import React from 'react';
+import { ClientProviders } from './ClientProviders';
+import { loadCartSSR } from '@src/utils/cart/loadCartSSR';
 
 console.error = () => {};
 console.warn = () => {};
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const preloadedCartQuery = await loadCartSSR();
+
+  console.log(
+    'RootLayout preloadedCartQuery:',
+    preloadedCartQuery?.response.data.checkoutQuery?.checkout
+  );
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -30,18 +31,15 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        {/* <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" /> */}
       </head>
-      <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
-        <ShopProvider config={mockShopConfig}>
-          <CartProvider store={cartStore} config={cartConfig}>
-            <body>
-              <div id="app">{children}</div>
-              <div id="sheet-wrapper"></div>
-            </body>
-          </CartProvider>
-        </ShopProvider>
-      </RelayEnvironmentProvider>
+      <body>
+        <div id="app">
+          <ClientProviders preloadedCartQuery={preloadedCartQuery}>
+            {children}
+          </ClientProviders>
+        </div>
+        <div id="sheet-wrapper" />
+      </body>
     </html>
   );
 }

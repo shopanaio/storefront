@@ -1,5 +1,6 @@
 import { create, UseBoundStore, StoreApi } from 'zustand';
 import { CartStore, createCartStore } from '../../store';
+import type { model } from '../../../model';
 
 /**
  * Return type for createCartStoreZustand
@@ -23,13 +24,19 @@ export interface CartStoreZustand {
  * Create cart store using Zustand
  * This is the default React implementation
  *
+ * Added optional initialCart to support SSR hydration:
+ * store can be created with server-loaded cart data.
+ *
+ * @param initialCart - Optional initial cart state (for SSR hydration)
  * @returns Object with store (for actions) and useStore (for selectors)
  */
-export function createCartStoreZustand(): CartStoreZustand {
+export function createCartStoreZustand(
+  initialCart?: model.Cart | null
+): CartStoreZustand {
   const useZustandStore = create<CartStore>(() => ({
-    cart: null,
+    cart: initialCart ?? null,
     loading: false,
-    loaded: false,
+    loaded: !!initialCart,
     error: null,
     setCart: () => {},
     checkoutLinesAdd: () => ({ revert: () => {} }),

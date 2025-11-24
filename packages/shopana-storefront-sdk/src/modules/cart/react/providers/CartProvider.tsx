@@ -52,7 +52,8 @@ function isCartStoreZustand(store: any): store is CartStoreZustand {
 const CartDataStoreController: React.FC<{
   cartKey: CartFragment_cart$key | null;
   store: CartStore;
-}> = ({ cartKey, store }) => {
+  isCartLoaded: boolean;
+}> = ({ cartKey, store, isCartLoaded }) => {
   // Read fragment data from Relay
   const cart = useFragment<CartFragment_cart$key>(
     CartFragment_cart,
@@ -76,11 +77,11 @@ const CartDataStoreController: React.FC<{
   useEffect(() => {
     if (cartData) {
       store.setCart(cartData as any);
-    } else if (cartKey === null) {
-      // Explicitly set null when cart is cleared
+    } else if (cartKey === null && isCartLoaded) {
+      // Only clear store when cart is known to be empty after loading
       store.setCart(null);
     }
-  }, [cartData, cartKey, store]);
+  }, [cartData, cartKey, isCartLoaded, store]);
 
   return null;
 };
@@ -189,6 +190,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({
 
   // Load cart on mount
   useEffect(() => {
+    // If we already have initial cart data from SSR
+    // or store already has cart (hydrated), skip auto-loading from cookies
+    // to avoid double fetch and state flicker on hydration.
+    if (initialCartData || storeObject.cart) {
+      return;
+    }
+
     if (loadedRef.current || isLoadingRef.current) return;
 
     // Try to get cart ID from cookies
@@ -210,7 +218,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
 
     // Load cart data
     loadQuery({ checkoutId: savedCartId }, { fetchPolicy: 'network-only' });
-  }, [loadQuery, cartIdUtils]);
+  }, [loadQuery, cartIdUtils, initialCartData, storeObject]);
 
   const handleCartData = useCallback((cart: CartFragment_cart$key) => {
     setCartKey(cart);
@@ -280,7 +288,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({
         )}
       </Suspense>
       {children}
-      <CartDataStoreController cartKey={cartKey} store={storeObject} />
+      <CartDataStoreController
+        cartKey={cartKey}
+        store={storeObject}
+        isCartLoaded={isCartLoaded}
+      />
     </CartContextProvider>
   );
 };

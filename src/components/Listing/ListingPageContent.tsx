@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Flex, Typography } from "antd";
-import { ListingTitleAndBtn } from "@src/components/Listing/ListingTitleAndBtn";
-import { ListingSort, ApiFilterInput, ApiFilter } from "@codegen/schema-client";
-import { ListingProducts } from "@src/components/Listing/ListingProducts";
-import { useFragment } from "react-relay";
-import Listing from "@src/queries/Listing";
-import { Listing$key } from "@src/queries/Listing/__generated__/Listing.graphql";
-import useFilters from "@src/hooks/category/useFilters";
-import { useFiltersStore } from "@src/store/appStore";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Flex, Typography } from 'antd';
+import { ListingTitleAndBtn } from '@src/components/Listing/ListingTitleAndBtn';
+import { ListingSort, ApiFilterInput, ApiFilter } from '@codegen/schema-client';
+import { ListingProducts } from '@src/components/Listing/ListingProducts';
+import { useFragment } from 'react-relay';
+import Listing from '@src/queries/Listing';
+import { Listing$key } from '@src/queries/Listing/__generated__/Listing.graphql';
+import useFilters from '@src/hooks/category/useFilters';
+import { useFiltersStore } from '@src/store/appStore';
 
 const { Text } = Typography;
 
@@ -20,10 +20,10 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
 
   const listingData = useFragment<Listing$key>(Listing, category);
 
-  console.log("listingData filters", listingData?.listing?.filters);
-
   // Use hook for filter normalization
-  const normalizedFilters = useFilters((listingData?.listing?.filters || []) as any[]);
+  const normalizedFilters = useFilters(
+    (listingData?.listing?.filters || []) as any[]
+  );
 
   // Save original filter values on first load
   useEffect(() => {
@@ -39,17 +39,17 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
     0;
 
   // Convert zustand filters to API format when needed
-  const apiFilters: ApiFilterInput[] = useMemo(() =>
-    Object.entries(selectedFilters).map(
-      ([handle, filterData]) => ({
+  const apiFilters: ApiFilterInput[] = useMemo(
+    () =>
+      Object.entries(selectedFilters).map(([handle, filterData]) => ({
         handle,
         values: filterData.values.map(String),
         ...(filterData.inputs &&
           filterData.inputs.length > 0 && {
             inputs: filterData.inputs,
           }),
-      })
-    ), [selectedFilters]
+      })),
+    [selectedFilters]
   );
 
   if (!listingData) {
@@ -60,7 +60,7 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
     <Flex gap={16} vertical className="container">
       <ListingTitleAndBtn
         filters={normalizedFilters}
-        title={listingData.title || "Category"}
+        title={listingData.title || 'Category'}
         productsCount={totalCount}
         sort={sort}
         setSort={setSort}

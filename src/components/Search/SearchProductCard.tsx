@@ -1,14 +1,14 @@
-import { Button, Typography } from "antd";
-import { createStyles } from "antd-style";
+import { Button, Typography } from 'antd';
+import { createStyles } from 'antd-style';
 import {
   ApiArticle,
   ApiCategory,
   ApiPage,
   ApiProduct,
-} from "@codegen/schema-client";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
-import { useHover } from "@src/components/UI/hooks/useHover";
-import { useRoutes } from "@src/hooks/useRoutes";
+} from '@codegen/schema-client';
+import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { useHover } from '@src/components/UI/hooks/useHover';
+import { useRoutes } from '@src/hooks/useRoutes';
 
 const { Text } = Typography;
 
@@ -23,11 +23,7 @@ export const SearchProductCard: React.FC<SearchProductCardProps> = ({
   const routes = useRoutes();
   const [isHovered, hoverHandlers] = useHover();
 
-  console.log("item", item);
-
   const image = item.cover?.url || item.gallery?.edges[0]?.node?.url;
-
-  console.log("image", image);
 
   return (
     <Button
@@ -47,7 +43,7 @@ export const SearchProductCard: React.FC<SearchProductCardProps> = ({
     >
       <span className={styles.content}>
         {item.title}
-        {"price" in item && item.price?.amount && (
+        {'price' in item && item.price?.amount && (
           <Text strong>${item.price.amount}</Text>
         )}
       </span>

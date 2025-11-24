@@ -35,7 +35,6 @@ export const HomeProductGrid = ({
 
   const products = data?.listing?.edges?.map((edge) => edge.node) ?? [];
 
-  console.log("Products:", products);
   const handleLoadMore = () => {
     if (hasNext && !isLoadingNext) {
       loadNext(paginationCount);
