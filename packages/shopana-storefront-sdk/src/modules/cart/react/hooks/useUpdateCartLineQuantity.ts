@@ -1,31 +1,14 @@
 "use client";
 
-import { graphql, useMutation } from 'react-relay';
-import { useUpdateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/useUpdateCartLineQuantityMutation.graphql';
+import { useMutation } from 'react-relay';
+import type { updateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/updateCartLineQuantityMutation.graphql';
+import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
 import { useCartStore } from '../context';
-
-export const useUpdateCartLineQuantityMutation = graphql`
-  mutation useUpdateCartLineQuantityMutation(
-    $input: CheckoutLinesUpdateInput!
-  ) {
-    checkoutMutation {
-      checkoutLinesUpdate(input: $input) {
-        checkout {
-          ...useCart_CartFragment
-        }
-        errors {
-          field
-          message
-        }
-      }
-    }
-  }
-`;
 
 const useUpdateCartLineQuantity = () => {
   const store = useCartStore();
   const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
-    useUpdateCartLineQuantityMutation
+    updateCartLineQuantityMutation
   );
 
   const updateQuantity = async (

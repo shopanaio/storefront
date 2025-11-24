@@ -1,35 +1,18 @@
 "use client";
 
-import { graphql, useMutation } from 'react-relay';
+import { useMutation } from 'react-relay';
+import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
 
 import { useCartStore } from '../context';
 import useCart from './useCart';
 import { RemoveFromCartInput } from '../../core/types';
-
-// Define mutation inside hook with correct name
-export const useRemoveItemFromCartMutation = graphql`
-  mutation useRemoveItemFromCartMutation($input: CheckoutLinesDeleteInput!) {
-    checkoutMutation {
-      checkoutLinesDelete(input: $input) {
-        checkout {
-          id
-          ...useCart_CartFragment
-        }
-        errors {
-          field
-          message
-        }
-      }
-    }
-  }
-`;
 
 const useRemoveItemFromCart = () => {
   const { cart } = useCart();
   const store = useCartStore();
 
   const [commitRemoveLine, isInFlight] = useMutation<any>(
-    useRemoveItemFromCartMutation
+    removeFromCartMutation
   );
 
   return {

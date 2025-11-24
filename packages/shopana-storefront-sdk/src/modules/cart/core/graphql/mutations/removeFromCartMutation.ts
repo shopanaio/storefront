@@ -1,15 +1,16 @@
 import { graphql } from 'react-relay';
+import '../fragments/CartFragment';
 
 /**
  * Mutation for removing items from cart
  */
 export const removeFromCartMutation = graphql`
-  mutation useRemoveItemFromCartMutation($input: CheckoutLinesDeleteInput!) {
+  mutation removeFromCartMutation($input: CheckoutLinesDeleteInput!) {
     checkoutMutation {
       checkoutLinesDelete(input: $input) {
         checkout {
           id
-          ...useCart_CartFragment
+          ...CartFragment_cart
         }
         errors {
           field

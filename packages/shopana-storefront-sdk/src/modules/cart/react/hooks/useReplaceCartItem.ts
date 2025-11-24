@@ -24,33 +24,18 @@
  */
 "use client";
 
-import { graphql, useMutation } from 'react-relay';
-import { useReplaceCartItemMutation as ReplaceCartItemMutationType } from '../../core/graphql/mutations/__generated__/useReplaceCartItemMutation.graphql';
+import { useMutation } from 'react-relay';
+import type { replaceCartItemMutation as ReplaceCartItemMutationType } from '../../core/graphql/mutations/__generated__/replaceCartItemMutation.graphql';
+import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 
 import { useCartStore, useCartConfig } from '../context';
 import { ReplaceCartItemInput } from '../../core/types';
-
-export const useReplaceCartItemMutation = graphql`
-  mutation useReplaceCartItemMutation($input: CheckoutLinesReplaceInput!) {
-    checkoutMutation {
-      checkoutLinesReplace(input: $input) {
-        checkout {
-          ...useCart_CartFragment
-        }
-        errors {
-          field
-          message
-        }
-      }
-    }
-  }
-`;
 
 const useReplaceCartItem = () => {
   const store = useCartStore();
   const { defaultCurrency } = useCartConfig();
   const [commit, isInFlight] = useMutation<ReplaceCartItemMutationType>(
-    useReplaceCartItemMutation
+    replaceCartItemMutation
   );
 
   const replaceCartItem = async (

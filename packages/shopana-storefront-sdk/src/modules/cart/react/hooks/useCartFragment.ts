@@ -1,15 +1,15 @@
 import { readInlineData, useFragment } from 'react-relay';
 import { useCartContext } from '../context';
 import { useMemo } from 'react';
-import { useCartLineFragment_CartLineFragment } from './useCartLineFragment';
-import { useCart_CartFragment } from '../../core/graphql/fragments/CartFragment';
-import type { useCart_CartFragment$key } from '../../core/graphql/fragments/__generated__/useCart_CartFragment.graphql';
+import { CartLineFragment_line } from './useCartLineFragment';
+import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';
+import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
 
 const useCart = () => {
   const { cartKey, isCartLoading, isCartLoaded } = useCartContext();
 
-  const cart = useFragment<useCart_CartFragment$key>(
-    useCart_CartFragment,
+  const cart = useFragment<CartFragment_cart$key>(
+    CartFragment_cart,
     cartKey
   );
 
@@ -20,7 +20,7 @@ const useCart = () => {
     return {
       ...cart,
       lines: (cart?.lines || [])?.map((cartLineRef: any) =>
-        readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
+        readInlineData(CartLineFragment_line, cartLineRef)
       ),
     };
   }, [cart]);

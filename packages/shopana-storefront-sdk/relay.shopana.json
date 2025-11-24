@@ -1,0 +1,10 @@
+{
+  "src": "./src",
+  "schema": "../../schema.shopana.graphql",
+  "language": "typescript",
+  "noFutureProofEnums": true,
+  "exclude": [
+    "**/node_modules/**",
+    "**/__generated__/**"
+  ]
+}

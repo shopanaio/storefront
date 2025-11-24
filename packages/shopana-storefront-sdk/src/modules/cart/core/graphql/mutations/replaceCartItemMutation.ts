@@ -1,4 +1,5 @@
 import { graphql } from 'react-relay';
+import '../fragments/CartFragment';
 
 /**
  * Mutation for replacing cart items
@@ -10,7 +11,7 @@ export const replaceCartItemMutation = graphql`
       checkoutLinesReplace(input: $input) {
         checkout {
           id
-          ...useCart_CartFragment
+          ...CartFragment_cart
         }
         errors {
           field

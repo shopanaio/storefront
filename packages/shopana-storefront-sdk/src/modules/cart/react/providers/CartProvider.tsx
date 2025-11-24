@@ -15,7 +15,7 @@ import { createCartConfig } from '../../core/config';
 import { createCartIdUtils } from '../../core/utils/cartId';
 import { loadCartQuery } from '../../core/graphql/queries';
 import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/queries/__generated__/loadCartQuery.graphql';
-import type { useCart_CartFragment$key } from '../../core/graphql/fragments/__generated__/useCart_CartFragment.graphql';
+import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
 
 export interface CartProviderProps {
   children: React.ReactNode;
@@ -33,7 +33,7 @@ type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
  * Internal component to sync cart fragment data to Zustand store
  */
 const CartDataStoreController: React.FC<{
-  cartKey: useCart_CartFragment$key | null;
+  cartKey: CartFragment_cart$key | null;
   store: CartStore;
 }> = ({ cartKey, store }) => {
   useEffect(() => {
@@ -52,7 +52,7 @@ const CartDataStoreController: React.FC<{
  */
 const CartDataHandler: React.FC<{
   queryReference: LoadCartQueryReference;
-  onCartData: (cart: useCart_CartFragment$key) => void;
+  onCartData: (cart: CartFragment_cart$key) => void;
   onCartNotFound: () => void;
 }> = ({ queryReference, onCartData, onCartNotFound }) => {
   const cartData = usePreloadedQuery<LoadCartQueryType>(
@@ -118,7 +118,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
 
   const [queryReference, loadQuery, disposeQuery] =
     useQueryLoader<LoadCartQueryType>(loadCartQuery);
-  const [cartKey, setCartKey] = useState<useCart_CartFragment$key | null>(null);
+  const [cartKey, setCartKey] = useState<CartFragment_cart$key | null>(null);
   const [cartId, setCartId] = useState<string | null>(null);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
@@ -150,7 +150,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     loadQuery({ checkoutId: savedCartId }, { fetchPolicy: 'network-only' });
   }, [loadQuery, cartIdUtils]);
 
-  const handleCartData = useCallback((cart: useCart_CartFragment$key) => {
+  const handleCartData = useCallback((cart: CartFragment_cart$key) => {
     setCartKey(cart);
     setIsCartLoading(false);
     setIsCartLoaded(true);

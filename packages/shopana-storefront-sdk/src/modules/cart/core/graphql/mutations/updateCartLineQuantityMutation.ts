@@ -1,16 +1,17 @@
 import { graphql } from 'react-relay';
+import '../fragments/CartFragment';
 
 /**
  * Mutation for updating cart line quantity
  */
 export const updateCartLineQuantityMutation = graphql`
-  mutation useUpdateCartLineQuantityMutation(
+  mutation updateCartLineQuantityMutation(
     $input: CheckoutLinesUpdateInput!
   ) {
     checkoutMutation {
       checkoutLinesUpdate(input: $input) {
         checkout {
-          ...useCart_CartFragment
+          ...CartFragment_cart
         }
         errors {
           field

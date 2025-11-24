@@ -1,29 +1,18 @@
 "use client";
 
-import { graphql, useMutation } from 'react-relay';
-import { useCreateCartMutation as CreateCartMutationType } from '../../core/graphql/mutations/__generated__/useCreateCartMutation.graphql';
+import { useMutation } from 'react-relay';
+import type { createCartMutation as CreateCartMutationType, CheckoutCreateInput } from '../../core/graphql/mutations/__generated__/createCartMutation.graphql';
+import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
 import { useCartContext } from '../context';
-import { CreateCartInput } from '../../core/types';
-
-export const useCreateCartMutation = graphql`
-  mutation useCreateCartMutation($input: CheckoutCreateInput!) {
-    checkoutMutation {
-      checkoutCreate(input: $input) {
-        id
-        ...useCart_CartFragment
-      }
-    }
-  }
-`;
 
 const useCreateCart = () => {
   const { setId, setCartKey } = useCartContext();
   const [commit, isInFlight] = useMutation<CreateCartMutationType>(
-    useCreateCartMutation
+    createCartMutation
   );
 
   const createCart = (
-    input: CreateCartInput,
+    input: CheckoutCreateInput,
     options?: {
       onSuccess?: () => void;
       onError?: () => void;

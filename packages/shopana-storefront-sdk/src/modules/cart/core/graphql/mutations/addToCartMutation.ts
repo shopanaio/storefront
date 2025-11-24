@@ -1,15 +1,16 @@
 import { graphql } from 'react-relay';
+import '../fragments/CartFragment';
 
 /**
  * Mutation for adding items to cart
  */
 export const addToCartMutation = graphql`
-  mutation useAddItemToCartMutation($input: CheckoutLinesAddInput!) {
+  mutation addToCartMutation($input: CheckoutLinesAddInput!) {
     checkoutMutation {
       checkoutLinesAdd(input: $input) {
         checkout {
           id
-          ...useCart_CartFragment
+          ...CartFragment_cart
         }
         errors {
           field

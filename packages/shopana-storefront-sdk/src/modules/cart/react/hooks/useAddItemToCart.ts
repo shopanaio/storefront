@@ -1,35 +1,19 @@
 "use client";
 
-import { graphql, useMutation } from 'react-relay';
-import { useAddItemToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/useAddItemToCartMutation.graphql';
+import { useMutation } from 'react-relay';
+import type { addToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/addToCartMutation.graphql';
+import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
 
 import { useCartStore, useCartConfig } from '../context';
 import useCreateCart from './useCreateCart';
 import { AddToCartInput } from '../../core/types';
-
-export const useAddItemToCartMutation = graphql`
-  mutation useAddItemToCartMutation($input: CheckoutLinesAddInput!) {
-    checkoutMutation {
-      checkoutLinesAdd(input: $input) {
-        checkout {
-          id
-          ...useCart_CartFragment
-        }
-        errors {
-          field
-          message
-        }
-      }
-    }
-  }
-`;
 
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
   const store = useCartStore();
   const { defaultCurrency, defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
-    useAddItemToCartMutation
+    addToCartMutation
   );
 
   return {
@@ -48,7 +32,7 @@ const useAddItemToCart = () => {
       if (!cart?.id) {
         return await createCart(
           {
-            currencyCode: defaultCurrency,
+            currencyCode: defaultCurrency as any,
             localeCode: defaultLocale,
             items: [
               {

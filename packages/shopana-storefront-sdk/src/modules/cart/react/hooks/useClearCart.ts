@@ -1,33 +1,18 @@
 "use client";
 
-import { graphql, useMutation } from 'react-relay';
+import { useMutation } from 'react-relay';
+import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
 
 import { useCartContext, useCartStore } from '../context';
 import useCart from './useCart';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
-
-const useClearCartMutation = graphql`
-  mutation useClearCartMutation($input: CheckoutLinesClearInput!) {
-    checkoutMutation {
-      checkoutLinesClear(input: $input) {
-        checkout {
-          ...useCart_CartFragment
-        }
-        errors {
-          field
-          message
-        }
-      }
-    }
-  }
-`;
 
 const useClearCart = (): UseClearCartReturn => {
   const { cart } = useCart();
   const { setCartKey, setId } = useCartContext();
   const store = useCartStore();
 
-  const [commitClearCart, isInFlight] = useMutation<any>(useClearCartMutation);
+  const [commitClearCart, isInFlight] = useMutation<any>(clearCartMutation);
 
   return {
     clearCart: async (

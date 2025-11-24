@@ -1,11 +1,12 @@
 import { graphql } from 'react-relay';
+import './CartLineFragment';
 
 /**
  * Fragment for cart (checkout) data
  * Use with useFragment hook
  */
-export const useCart_CartFragment = graphql`
-  fragment useCart_CartFragment on Checkout {
+export const CartFragment_cart = graphql`
+  fragment CartFragment_cart on Checkout {
     id
     createdAt
     updatedAt
@@ -39,7 +40,7 @@ export const useCart_CartFragment = graphql`
       isDismissed
     }
     lines {
-      ...useCartLineFragment_CartLineFragment
+      ...CartLineFragment_line
     }
   }
 `;

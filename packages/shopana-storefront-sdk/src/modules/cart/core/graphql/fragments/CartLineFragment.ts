@@ -4,8 +4,8 @@ import { graphql } from "react-relay";
  * Fragment for cart line (checkout line) data
  * Use with readInlineData since it's marked as @inline
  */
-export const useCartLineFragment_CartLineFragment = graphql`
-  fragment useCartLineFragment_CartLineFragment on CheckoutLine @inline {
+export const CartLineFragment_line = graphql`
+  fragment CartLineFragment_line on CheckoutLine @inline {
     id
     quantity
     cost {
