@@ -39,6 +39,10 @@
       "types": "./dist/cms/index.d.ts",
       "default": "./dist/cms/index.js"
     },
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "default": "./dist/api/index.js"
+    },
     "./next": {
       "types": "./dist/next/index.d.ts",
       "default": "./dist/next/index.js"
@@ -54,6 +58,26 @@
     "./model": {
       "types": "./dist/model/index.d.ts",
       "default": "./dist/model/index.js"
+    },
+    "./modules/cart": {
+      "types": "./dist/modules/cart/index.d.ts",
+      "default": "./dist/modules/cart/index.js"
+    },
+    "./modules/cart/core": {
+      "types": "./dist/modules/cart/core/index.d.ts",
+      "default": "./dist/modules/cart/core/index.js"
+    },
+    "./modules/cart/store": {
+      "types": "./dist/modules/cart/store/index.d.ts",
+      "default": "./dist/modules/cart/store/index.js"
+    },
+    "./modules/cart/react": {
+      "types": "./dist/modules/cart/react/index.d.ts",
+      "default": "./dist/modules/cart/react/index.js"
+    },
+    "./modules/cart/next": {
+      "types": "./dist/modules/cart/next/index.d.ts",
+      "default": "./dist/modules/cart/next/index.js"
     }
   },
   "scripts": {
@@ -64,11 +88,13 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
+    "js-cookie": "^3.0.0",
     "next": "^14.0.0 || ^15.0.0 || ^16.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
     "react-relay": "^18.0.0 || ^19.0.0 || ^20.0.0",
-    "relay-runtime": "^18.0.0 || ^19.0.0 || ^20.0.0"
+    "relay-runtime": "^18.0.0 || ^19.0.0 || ^20.0.0",
+    "zustand": "^4.0.0 || ^5.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

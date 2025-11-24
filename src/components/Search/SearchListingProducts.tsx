@@ -9,7 +9,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   SearchProductsFragment$key,
   SearchProductsFragment$data,
-} from "@src/relay/queries/__generated__/SearchProductsFragment.graphql";
+} from "@src/hooks/search/SearchProductsFragment/__generated__/SearchProductsFragment.graphql";
 import { useSearchParams } from "next/navigation";
 import { useSearchPagination } from "@src/hooks/useSearchPagination";
 import useSearchProductsFragment from "@src/hooks/search/useSearchProductsFragment";

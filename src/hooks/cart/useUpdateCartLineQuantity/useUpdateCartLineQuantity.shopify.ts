@@ -1,6 +1,6 @@
 import useCart from '../useCart';
 import { useMutation, graphql } from 'react-relay';
-import { CartLineQuantityMutation as CartLineQuantityMutationType } from '@src/relay/queries/__generated__/CartLineQuantityMutation.graphql';
+import { CartLineQuantityMutation as CartLineQuantityMutationType } from '@src/hooks/cart/useUpdateCartLineQuantity/__generated__/useUpdateCartLineQuantityMutation.graphql';
 
 // Define mutation inside hook with correct name
 const useUpdateCartLineQuantityMutation = graphql`

@@ -1,5 +1,5 @@
 import SearchProductsFragment from "@src/hooks/search/SearchProductsFragment";
-import { SearchProductsFragment$key } from "@src/relay/queries/__generated__/SearchProductsFragment.graphql";
+import { SearchProductsFragment$key } from "@src/hooks/search/SearchProductsFragment/__generated__/SearchProductsFragment.graphql";
 import { useFragment } from "react-relay";
 
 
