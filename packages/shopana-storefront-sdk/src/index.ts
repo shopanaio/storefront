@@ -11,6 +11,7 @@ export {
   ErrorBoundary,
   SectionErrorBoundary,
   BlockErrorBoundary,
+  parseRoute,
 } from './core/index';
 
 export type {
@@ -19,6 +20,7 @@ export type {
   SectionProps,
   BlockProps,
   PageType,
+  ParsedRoute,
 } from './core/index';
 
 // Shop context exports
@@ -46,6 +48,5 @@ export type {
 } from './shop/index';
 
 // Utilities
-export { parseRoute } from './utils/routeParser';
 export { logError, configureLogger } from './utils/logger';
 export type { LogLevel, LogContext, LogErrorOptions } from './utils/logger';

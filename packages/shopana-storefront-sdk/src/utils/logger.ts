@@ -35,7 +35,7 @@ export function logError(message: string, options: LogErrorOptions): void {
   // Fallback: логируем в консоль, чтобы не терять ошибки в режиме без Sentry.
   // eslint-disable-next-line no-console
   console.error(
-    `[next-ecommerce-core] ${message}`,
+    `[@shopana/storefront-sdk] ${message}`,
     options.error,
     options.component,
     options.boundary,

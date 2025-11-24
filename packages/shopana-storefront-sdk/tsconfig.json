@@ -20,5 +20,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "src/app", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["dist", "node_modules", "src/next/page.tsx", "**/*.test.ts", "**/*.test.tsx"]
 }

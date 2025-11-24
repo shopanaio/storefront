@@ -3,8 +3,7 @@ import type {
   PageTemplate,
   TemplateParams,
 } from '@shopana/storefront-sdk/core';
-import { Builder } from '@shopana/storefront-sdk/core';
-import { parseRoute } from '@shopana/storefront-sdk';
+import { Builder, parseRoute } from '@shopana/storefront-sdk/core';
 import { notFound } from 'next/navigation';
 
 type SlugParam = string[] | undefined;
@@ -52,7 +51,7 @@ async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
 
 // Internal framework data loader (will be replaced with SDK later)
 // This is where framework's server SDK will fetch data from backend
-async function loadPageData(ctx: TemplateParams): Promise<any> {
+async function loadPageData(_ctx: TemplateParams): Promise<any> {
   // TODO: Replace with actual SDK implementation
   // For now, return empty data object
   return {};

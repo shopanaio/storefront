@@ -27,3 +27,7 @@ export {
   BlockErrorBoundary,
 } from './ErrorBoundary';
 
+// Route parsing utilities
+export { parseRoute } from '../utils/routeParser';
+export type { ParsedRoute } from '../utils/routeParser';
+

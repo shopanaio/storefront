@@ -8,7 +8,7 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "src/app"
+    "src/next"
   ],
   "exports": {
     ".": {
@@ -27,17 +27,13 @@
       "types": "./dist/sdk/index.d.ts",
       "default": "./dist/sdk/index.js"
     },
-    "./app/[[...slug]]/page": {
-      "types": "./src/app/[[...slug]]/page.tsx",
-      "default": "./src/app/[[...slug]]/page.tsx"
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "default": "./dist/next/index.js"
     },
-    "./app/[[...slug]]/error": {
-      "types": "./src/app/[[...slug]]/error.tsx",
-      "default": "./src/app/[[...slug]]/error.tsx"
-    },
-    "./app/[[...slug]]/not-found": {
-      "types": "./src/app/[[...slug]]/not-found.tsx",
-      "default": "./src/app/[[...slug]]/not-found.tsx"
+    "./next/page": {
+      "types": "./src/next/page.tsx",
+      "default": "./src/next/page.tsx"
     }
   },
   "scripts": {
