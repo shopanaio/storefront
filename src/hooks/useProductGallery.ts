@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 export const useProductGallery = (
-  variant: Entity.ProductVariant,
-  product: Entity.Product
-): Entity.Media[] => {
+  variant: model.ProductVariant,
+  product: model.Product
+): model.Media[] => {
   return useMemo(() => {
     const seen = new Set<string>();
-    const result: Entity.Media[] = [];
+    const result: model.Media[] = [];
 
-    const append = (media?: Entity.Media | null) => {
+    const append = (media?: model.Media | null) => {
       if (!media) return;
 
       const key = media.id ?? media.url;

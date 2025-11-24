@@ -10,12 +10,12 @@ import { useProductGroups as useGroupsLogic } from '@src/hooks/product/useProduc
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { IncludedComponent } from '@src/components/Product/Options/IncludedComponent';
-import { Entity } from '@shopana/entity';
+import { model } from '@shopana/storefront-sdk';
 
 const { Text } = Typography;
 
 interface ProductGroupsProps {
-  product: Entity.Product;
+  product: model.Product;
 }
 
 export const ProductComponents = ({ product }: ProductGroupsProps) => {
@@ -36,7 +36,7 @@ export const ProductComponents = ({ product }: ProductGroupsProps) => {
   }, [groups.selectionsByGroupId]);
 
   const handleChange = useCallback(
-    (group: Entity.ProductGroup, newProductId: string) => {
+    (group: model.ProductGroup, newProductId: string) => {
       groups.toggleItem(group.id, newProductId, group.isMultiple);
     },
     [groups]

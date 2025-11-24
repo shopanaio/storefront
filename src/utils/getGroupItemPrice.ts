@@ -1,4 +1,4 @@
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 
 /**
  * Returns the final price for the component (ProductGroupItem).
@@ -6,7 +6,7 @@ import type { Entity } from "@shopana/entity";
  * so it's enough to take the child product price.
  */
 export const getGroupItemPrice = (
-  item?: Entity.ProductGroupItem | null
-): Entity.Money | undefined => {
+  item?: model.ProductGroupItem | null
+): model.Money | undefined => {
   return item?.node?.price;
 };

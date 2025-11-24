@@ -12,7 +12,7 @@ import {
 } from '@src/components/Product/QuantityInput';
 import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
 import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { Money } from '@src/components/UI/Price/Money';
 
 const { Text } = Typography;
@@ -28,10 +28,10 @@ export interface CartLineProps {
 
   // Quantity and prices
   quantity: number | string;
-  unitPrice: Entity.Money;
-  compareAtUnitPrice?: Entity.Money | null;
-  totalPrice?: Entity.Money; // Total price for the item (unitPrice * quantity), optional if calculated internally
-  totalDiscount?: Entity.Money | null;
+  unitPrice: model.Money;
+  compareAtUnitPrice?: model.Money | null;
+  totalPrice?: model.Money; // Total price for the item (unitPrice * quantity), optional if calculated internally
+  totalDiscount?: model.Money | null;
 
   // Settings display
   variant?: 'drawer' | 'page';
@@ -66,7 +66,7 @@ export const CartLine = ({
   const { styles } = useStyles();
 
   // Calculate total price if not provided
-  const computedTotalPrice: Entity.Money = totalPrice || {
+  const computedTotalPrice: model.Money = totalPrice || {
     amount:
       unitPrice.amount *
       (typeof quantity === 'number' ? quantity : parseInt(quantity.toString())),

@@ -1,18 +1,18 @@
 'use client';
 
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 /**
  * Compute bundle price by applying group items pricing rules on top of base price.
  */
 export function computeBundlePrice(
-  basePrice: Entity.Money,
-  groups: Entity.ProductGroup[] | undefined,
+  basePrice: model.Money,
+  groups: model.ProductGroup[] | undefined,
   selectionsByGroupId: Record<
     string,
     { purchasableId: string; quantity: number }[]
   >
-): Entity.Money {
+): model.Money {
   let total = basePrice.amount;
   const currencyCode = basePrice.currencyCode;
 
@@ -34,7 +34,7 @@ export function computeBundlePrice(
 
       const priceCfg = item.price;
       // Default behavior mirrors BASE when nothing specified
-      const type = ((): Entity.ProductGroupPriceType => {
+      const type = ((): model.ProductGroupPriceType => {
         // Infer type by present fields
         const hasPercent = (priceCfg as any)?.percentage != null;
         const hasAmount = (priceCfg as any)?.amount != null;

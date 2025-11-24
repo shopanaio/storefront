@@ -2,10 +2,10 @@ import { Flex, Empty } from 'antd';
 import { SearchProductCard } from './SearchProductCard';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 interface SearchResultsContentProps {
-  products: Entity.Product[];
+  products: model.Product[];
   searchTerm: string;
 }
 

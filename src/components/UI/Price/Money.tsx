@@ -1,9 +1,9 @@
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useMoney } from "@src/hooks/useMoney";
 import type { ComponentPropsWithoutRef, ElementType, ReactElement } from "react";
 import { createElement } from "react";
 
-type MoneyBaseProps = { money: Entity.Money };
+type MoneyBaseProps = { money: model.Money };
 type MoneyAsProps<P extends ElementType> = { as: P } & Omit<ComponentPropsWithoutRef<P>, "children">;
 
 export function Money(props: MoneyBaseProps): string;

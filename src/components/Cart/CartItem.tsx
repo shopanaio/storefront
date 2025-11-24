@@ -5,13 +5,13 @@ import { Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useConfirm } from "@src/components/UI/Confirm/useConfirm";
 
 const { Text } = Typography;
 
 interface CartItemProps {
-  cartLine: Entity.CartLine;
+  cartLine: model.CartLine;
   onClick?: () => void;
   variant?: "drawer" | "page";
   /** Whether to show confirmation modal before removing item. Defaults to false. */

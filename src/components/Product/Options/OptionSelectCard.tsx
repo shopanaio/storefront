@@ -3,7 +3,7 @@
 import { Flex, Typography } from "antd";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { OptionImage } from "@src/components/UI/OptionImage";
 import { OptionCard } from "@src/components/UI/OptionCard";
 
@@ -12,7 +12,7 @@ const { Text } = Typography;
 interface OptionSelectCardProps {
   title: string;
   selectedValues: UiOptionValue | UiOptionValue[] | null;
-  cover?: Entity.Media | null;
+  cover?: model.Media | null;
   onClick: () => void;
 }
 

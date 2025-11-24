@@ -1,5 +1,5 @@
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import {
   type ApiCheckout,
   type ApiMoney,
@@ -48,13 +48,13 @@ export function mapApiCheckoutToCheckout(
  */
 function mapApiMoney(
   apiMoney: Readonly<ApiMoney> | null | undefined
-): Entity.Money {
+): model.Money {
   if (!apiMoney) {
     return { amount: 0, currencyCode: CurrencyCode.Uah };
   }
   return {
     amount: apiMoney.amount,
-    currencyCode: apiMoney.currencyCode as Entity.Money['currencyCode'],
+    currencyCode: apiMoney.currencyCode as model.Money['currencyCode'],
   };
 }
 

@@ -1,10 +1,10 @@
 import { cmsPick } from '@src/cms/pick';
 import useCartShopana from './useCart.shopana';
 import useCartShopify from './useCart.shopify';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 type UseCart = () => {
-  cart: Entity.Cart | null;
+  cart: model.Cart | null;
   loading: boolean;
   loaded: boolean;
   error: Error | null;

@@ -8,7 +8,7 @@ import { ProductCollapse } from "./ProductCollapse";
 import { mq } from "@src/components/Theme/breakpoints";
 import { ProductSpecification } from "./ProductSpecification";
 import { ShowMoreBtn } from "./ShowMoreBtn";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "./Rate/Reviews";
 import type { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
@@ -17,7 +17,7 @@ import { ShippingReturnsInfo } from "./ShippingReturnsInfo";
 const { Paragraph } = Typography;
 
 interface ProductDetailsProps {
-  product: Entity.Product;
+  product: model.Product;
   productReviewsRef: Reviews$key | null;
 }
 

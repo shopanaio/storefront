@@ -1,15 +1,15 @@
 import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { Price } from '../UI/Price/Price';
 import { SaleBadge } from '../UI/Badges/Sale';
 import { calcSaleMoney } from '@src/utils/calcSaleMoney';
 import { useTranslations } from 'next-intl';
 
 interface Props {
-  compareAtPrice?: Entity.Money | null;
-  price: Entity.Money;
-  stockStatus: Entity.StockStatus | null;
+  compareAtPrice?: model.Money | null;
+  price: model.Money;
+  stockStatus: model.StockStatus | null;
 }
 
 export const PriceAndSale = ({ compareAtPrice, price, stockStatus }: Props) => {

@@ -1,5 +1,5 @@
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
-export function mapShopanaCheckoutToEntityCart(checkout: any): Entity.Cart {
-  return checkout as Entity.Cart;
+export function mapShopanaCheckoutToEntityCart(checkout: any): model.Cart {
+  return checkout as model.Cart;
 }

@@ -50,3 +50,6 @@ export type {
 // Utilities
 export { logError, configureLogger } from './utils/logger';
 export type { LogLevel, LogContext, LogErrorOptions } from './utils/logger';
+
+// Model namespace
+export { model } from './model/index';

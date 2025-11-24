@@ -4,11 +4,11 @@ import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useLocale, useTranslations } from "next-intl";
 import { Money } from "@src/components/UI/Price/Money";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 const { Text } = Typography;
 
 interface CartSubtotalProps {
-  subtotal: Entity.Money;
+  subtotal: model.Money;
 }
 
 export const CartSubtotal: React.FC<CartSubtotalProps> = ({ subtotal }) => {

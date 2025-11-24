@@ -14,14 +14,14 @@ import {
   UiOptionValue,
   useFlattenProductOptions,
 } from "@src/hooks/useFlattenProductOptions";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { VariantCoverOption } from "@src/components/Product/Options/OptionVariantCover";
 
 // Note: Typography.Text is not used here currently
 
 interface ProductOptionsProps {
-  product: Entity.Product;
-  currentVariant?: Entity.ProductVariant | Entity.Product;
+  product: model.Product;
+  currentVariant?: model.ProductVariant | model.Product;
   onOptionSelect?: (optionId: string, value: UiOptionValue) => void;
 }
 
@@ -36,7 +36,7 @@ export const ProductOptions = ({
   const optionGroups = useFlattenProductOptions(
     product.options,
     product.variants,
-    (currentVariant ?? product) as unknown as Entity.ProductVariant
+    (currentVariant ?? product) as unknown as model.ProductVariant
   );
 
   const handleOptionSelect = (optionId: string) => (value: UiOptionValue) => {

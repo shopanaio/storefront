@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import _ from "lodash";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 
 /**
  * Hook for processing and structuring product options
@@ -13,10 +13,10 @@ import type { Entity } from "@shopana/entity";
 /**
  * Extended option value with metadata for UI
  */
-export type UiOptionValue = Entity.ProductOptionValue & {
+export type UiOptionValue = model.ProductOptionValue & {
   isActive: boolean;
-  variant?: Entity.ProductVariant; // Reference to product variant with this value
-  amount?: Entity.Money; // Additional cost if exists
+  variant?: model.ProductVariant; // Reference to product variant with this value
+  amount?: model.Money; // Additional cost if exists
 };
 
 /**
@@ -27,13 +27,13 @@ export type UiOption = {
   handle: string;
   title: string;
   values: UiOptionValue[];
-  displayType?: Entity.ProductOptionDisplayType;
+  displayType?: model.ProductOptionDisplayType;
 };
 
 export const useFlattenProductOptions = (
-  options: Entity.ProductOption[], // All product options, grouped in array
-  variants: Entity.ProductVariant[], // Variants with selectedOptions: string[]
-  currentVariant: Entity.ProductVariant
+  options: model.ProductOption[], // All product options, grouped in array
+  variants: model.ProductVariant[], // Variants with selectedOptions: string[]
+  currentVariant: model.ProductVariant
 ): UiOption[] => {
   return useMemo(() => {
     if (!variants?.length || !options?.length) {
@@ -44,7 +44,7 @@ export const useFlattenProductOptions = (
      * Creates a map of selected values for a specific product variant
      * Returns object like: { [group_handle]: value_handle }
      */
-    const buildVariantMap = (variant: Entity.ProductVariant): Record<string, string> => {
+    const buildVariantMap = (variant: model.ProductVariant): Record<string, string> => {
       if (!variant.selectedOptions?.length) return {};
 
       const mapping: Record<string, string> = {};
@@ -56,7 +56,7 @@ export const useFlattenProductOptions = (
         if (!groupHandle || !values?.length) continue;
 
         // Find the value from this group that is selected in the variant
-        const selectedValue = values.find((val: Entity.ProductOptionValue) =>
+        const selectedValue = values.find((val: model.ProductOptionValue) =>
           variant.selectedOptions?.includes(val.handle)
         );
 
@@ -79,7 +79,7 @@ export const useFlattenProductOptions = (
         .join("|");
 
     // Create index of all variants by combination key for O(1) lookup
-    const variantIndex = new Map<string, Entity.ProductVariant>();
+    const variantIndex = new Map<string, model.ProductVariant>();
     for (const variant of variants) {
       const key = buildKey(buildVariantMap(variant));
       if (key) variantIndex.set(key, variant);

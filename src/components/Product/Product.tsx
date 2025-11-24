@@ -2,17 +2,17 @@
 
 import { createStyles } from 'antd-style';
 import React from 'react';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import type { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
 import { ProductMain } from './ProductMain';
 import { ProductDetails } from './ProductDetails';
 
 interface Prop {
   title: string;
-  product: Entity.Product;
+  product: model.Product;
   productReviewsRef: Reviews$key | null;
   onChangeVariant: (handle: string) => void;
-  currentVariant: Entity.ProductVariant;
+  currentVariant: model.ProductVariant;
 }
 
 export const Product = ({

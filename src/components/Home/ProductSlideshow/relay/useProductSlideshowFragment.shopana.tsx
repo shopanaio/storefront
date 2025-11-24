@@ -3,7 +3,7 @@
 
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { ProductSlideShowRelay_category$key } from "@src/components/Home/ProductSlideshow/relay/__generated__/ProductSlideShowRelay_category.graphql";
 
 const ProductSlideShowFragment = graphql`
@@ -26,12 +26,12 @@ const ProductSlideShowFragment = graphql`
 
 const useProductSlideShowFragment = (
   sources: readonly ProductSlideShowRelay_category$key[]
-): Entity.Category[] => {
+): model.Category[] => {
   const categories = sources.map((source) =>
     useFragment(ProductSlideShowFragment, source)
   );
 
-  return categories as unknown as Entity.Category[];
+  return categories as unknown as model.Category[];
 };
 
 export default useProductSlideShowFragment;

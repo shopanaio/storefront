@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { CurrencyCode } from '@codegen/schema-client';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ProductType } from '@src/modules/storefront-box-builder-module/config/types';
@@ -49,8 +49,8 @@ export const useCurrencyStore = create<CurrencyState>((set) => ({
 
 // cartStore
 interface CartState {
-  cart: Entity.Cart | null;
-  setCart: (cart: Entity.Cart | null) => void;
+  cart: model.Cart | null;
+  setCart: (cart: model.Cart | null) => void;
   error: Error | null;
   setError: (error: Error | null) => void;
   loading: boolean;
@@ -72,8 +72,8 @@ interface ReviewState {
   reviewProductId: string | null;
   setReviewProductId: (id: string) => void;
   clearReviewProductId: () => void;
-  reviewProduct: Entity.Product | null;
-  setReviewProduct: (product: Entity.Product) => void;
+  reviewProduct: model.Product | null;
+  setReviewProduct: (product: model.Product) => void;
   clearReviewProduct: () => void;
 }
 export const useReviewStore = create<ReviewState>((set) => ({

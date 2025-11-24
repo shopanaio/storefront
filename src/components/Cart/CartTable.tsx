@@ -7,10 +7,10 @@ import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";
 import clsx from "clsx";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 
 interface CartTableListProps {
-  cartLines: Entity.CartLine[];
+  cartLines: model.CartLine[];
   variant?: "drawer" | "page";
   className?: string;
   divider?: boolean;

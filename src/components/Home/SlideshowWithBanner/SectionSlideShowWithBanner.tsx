@@ -4,7 +4,7 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ProductCard } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import Banner from "./Banner";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";
@@ -17,10 +17,10 @@ import React from "react";
 
 export interface HomeSliderWithBannerProps {
   title: string;
-  sources: Entity.Category[];
+  sources: model.Category[];
   banner: {
     placement: "before" | "after";
-    entry: Entity.Product | Entity.Category;
+    entry: model.Product | model.Category;
   };
   pagination: boolean;
 }

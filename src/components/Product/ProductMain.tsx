@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import React from 'react';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { StockStatus } from './StockStatus';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { PriceAndSale } from './PriceAndSale';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
@@ -59,7 +59,7 @@ interface ProductMainProps {
   /**
    * Product entity loaded on server
    */
-  product: Entity.Product;
+  product: model.Product;
   /**
    * Gallery breakpoints for the product gallery
    */
@@ -80,7 +80,7 @@ interface ProductMainProps {
   /**
    * Current variant of the product
    */
-  currentVariant: Entity.ProductVariant;
+  currentVariant: model.ProductVariant;
 }
 
 export const ProductMain = ({

@@ -1,4 +1,4 @@
-import { Entity } from '@shopana/entity';
+import { model } from '@shopana/storefront-sdk';
 
 /**
  * Input for replacing a cart item with another.
@@ -16,7 +16,7 @@ export interface ReplaceCartItemInput {
   /**
    * Purchasable snapshot (price and compareAtPrice) to ensure price consistency.
    */
-  purchasableSnapshot: Pick<Entity.ProductVariant, 'price' | 'compareAtPrice'>;
+  purchasableSnapshot: Pick<model.ProductVariant, 'price' | 'compareAtPrice'>;
   /**
    * Quantity to move; if not set, moves full quantity from source line.
    * Must be greater than 0 if provided.

@@ -5,7 +5,7 @@ import {
   ProductCard,
 } from '@src/components/UI/ProductCards/ListingCard/ProductCard';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { CurrencyCode } from '@codegen/schema-client';
 
 import useIsInTheCart from '@src/hooks/cart/useIsInTheCart';
@@ -37,12 +37,12 @@ interface CommonProductData {
   };
   price?: Money;
   compareAtPrice?: Money | null;
-  options?: Entity.ProductOption[];
+  options?: model.ProductOption[];
   variants?:
-    | Entity.ProductVariant[]
+    | model.ProductVariant[]
     | {
         edges: Array<{
-          node: Entity.Product;
+          node: model.Product;
         }>;
       };
 }
@@ -72,11 +72,11 @@ export const ListingProductCardRelay = ({
     Array.isArray(product.options) ? product.options : [],
     // Check that variants exists and is array
     Array.isArray(product.variants) ? product.variants : [],
-    product as Entity.ProductVariant
+    product as model.ProductVariant
   );
 
   // Safely extract data with type checking
-  const rating: Entity.ProductRating = {
+  const rating: model.ProductRating = {
     id: product.id,
     rating: product.rating?.rating || 0,
     count: product.rating?.count || 0,
@@ -126,12 +126,12 @@ export const ListingProductCardRelay = ({
         if (!isInCart) {
           addToCart({
             purchasableId: product.id,
-            purchasableSnapshot: product as Entity.ProductVariant,
+            purchasableSnapshot: product as model.ProductVariant,
             quantity: 1,
           });
         }
       }}
-      onReviewClick={() => setReviewProduct(product as Entity.Product)}
+      onReviewClick={() => setReviewProduct(product as model.Product)}
     />
   );
 };

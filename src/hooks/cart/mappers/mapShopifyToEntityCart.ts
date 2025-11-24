@@ -1,11 +1,11 @@
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
-export function mapShopifyCartToEntityCart(cart: any): Entity.Cart | null {
+export function mapShopifyCartToEntityCart(cart: any): model.Cart | null {
   if (!cart) return null;
   const currency = cart?.cost?.totalAmount?.currencyCode || cart?.cost?.subtotalAmount?.currencyCode || 'USD';
 
   const edges = cart?.lines?.edges || [];
-  const lines: Entity.Cart['lines'] = edges.map((edge: any) => {
+  const lines: model.Cart['lines'] = edges.map((edge: any) => {
     const node = edge?.node;
     const merch = node?.merchandise;
     const unitMoney = node?.cost?.amountPerQuantity || merch?.price;

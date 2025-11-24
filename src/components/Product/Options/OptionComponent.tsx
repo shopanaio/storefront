@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { useCallback, useMemo, useState } from 'react';
 import { OptionDrawerLayout } from './DrawerLayout';
 import { DrawerGrid } from './DrawerGrid';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { OptionHeader } from './Header';
 import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
 import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
@@ -17,10 +17,10 @@ import { ProductOptionDisplayType } from '@codegen/schema-client';
 interface ComponentOptionProps {
   multiple: boolean;
   pageTitle: string;
-  options: Entity.ProductGroupItem[];
+  options: model.ProductGroupItem[];
   selectedIds?: string[];
   onChange: (id: string) => void;
-  displayType: Entity.ProductOptionDisplayType;
+  displayType: model.ProductOptionDisplayType;
 }
 
 export const ComponentOption = ({
@@ -71,7 +71,7 @@ export const ComponentOption = ({
   /* Selected values to display on the page (uses props) */
   const selectedValues = useMemo<UiOptionValue | UiOptionValue[] | null>(() => {
     const mapToUiOptionValue = (
-      item: Entity.ProductGroupItem
+      item: model.ProductGroupItem
     ): UiOptionValue => ({
       id: item.node.id,
       handle: item.node.handle || item.node.id,
@@ -123,7 +123,7 @@ export const ComponentOption = ({
     return found ? found.node.title : '';
   }, [multiple, draftSelectedIds, options]);
 
-  const renderOption = (item: Entity.ProductGroupItem, inDrawer: boolean) => {
+  const renderOption = (item: model.ProductGroupItem, inDrawer: boolean) => {
     const isSelected = inDrawer
       ? draftSelectedIds.includes(item.node.id)
       : (selectedIds?.includes(item.node.id) ?? false);

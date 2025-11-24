@@ -2,10 +2,10 @@
 
 import { Flex, Button } from "antd";
 import { createStyles } from "antd-style";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 
 interface Props {
-  tags: Entity.Edge<Entity.Tag>[];
+  tags: model.Edge<model.Tag>[];
 }
 
 export const ProductTags = ({ tags }: Props) => {

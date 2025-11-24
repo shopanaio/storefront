@@ -1,9 +1,9 @@
 import { createStore } from 'zustand/vanilla';
 import { create } from 'zustand';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 export interface Session {
-  user: Entity.User | null;
+  user: model.User | null;
   token?: string;
   expiresAt?: string;
 }

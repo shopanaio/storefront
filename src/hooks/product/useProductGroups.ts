@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { useProductGroupsState } from './useProductGroupsState';
 import { computeBundlePrice } from './useProductBundlePricing';
 
@@ -26,7 +26,7 @@ export interface UseProductGroupsResult {
     purchasableId: string,
     quantity: number
   ) => void;
-  computedPrice: Entity.Money;
+  computedPrice: model.Money;
   isAddAllowed: boolean;
   buildChildren: () => AddToCartGroupSelectionItem[];
 }
@@ -35,8 +35,8 @@ export interface UseProductGroupsResult {
  * Compose groups state with pricing and cart-lines builder for a given product.
  */
 export function useProductGroups(
-  product: Entity.Product,
-  currentVariant: Entity.ProductVariant
+  product: model.Product,
+  currentVariant: model.ProductVariant
 ): UseProductGroupsResult {
   const { state, toggleItem, setItemQty } = useProductGroupsState(
     product.id

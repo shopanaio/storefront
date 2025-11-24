@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex } from "antd";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import ViewAllButton from "../ViewAllButton";
 import SectionTitle from "../SectionTitle";
 import { useLocale } from "next-intl";
@@ -13,7 +13,7 @@ import CategoryCard from "./CategoryCard";
 
 export interface CategoryGridSectionProps {
   title: string;
-  sources: Entity.Category[];
+  sources: model.Category[];
   pagination: boolean;
   renderItem: "CategoryCardCircle" | "CategoryCard";
 }

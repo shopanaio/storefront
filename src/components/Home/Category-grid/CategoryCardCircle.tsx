@@ -2,14 +2,14 @@
 
 import { Card, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 
 const { Text } = Typography;
 
 interface Props {
-  category: Entity.Category;
+  category: model.Category;
 }
 
 export default function CategoryCardCircle({ category }: Props) {

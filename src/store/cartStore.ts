@@ -1,14 +1,14 @@
 import { create } from 'zustand';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { recalcCart } from './cartMath';
 
 export interface CartStoreState {
-  cart: Entity.Cart | null;
+  cart: model.Cart | null;
   loading: boolean;
   loaded: boolean;
   error: Error | null;
   version: number;
-  setCart: (cart: Entity.Cart | null) => void;
+  setCart: (cart: model.Cart | null) => void;
   // item operations compatible with mutations
   checkoutLinesAdd: (input: {
     lines: {
@@ -230,7 +230,7 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
     const base = state.cart;
     const prev = state.cart;
     const currencyCode = base.cost.totalAmount.currencyCode;
-    const empty: Entity.Cart = {
+    const empty: model.Cart = {
       ...base,
       totalQuantity: 0,
       lines: [],

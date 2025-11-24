@@ -48,10 +48,11 @@ import type * as ProductRatingTypes from './Product/ProductRating';
 import type * as ProductTypes from './Product/product';
 
 /**
- * Entity namespace containing all entity types for backward compatibility
- * You can also import types directly: import { Product, Category } from '@entity'
+ * Model namespace containing all model types
+ * Usage: import { model } from '@shopana/storefront-sdk'
+ * Then use as: model.Product, model.Cart, etc.
  */
-export namespace Entity {
+export namespace model {
   // Connection types
   export type PageInfo = ConnectionTypes.PageInfo;
   export type Edge<T> = ConnectionTypes.Edge<T>;

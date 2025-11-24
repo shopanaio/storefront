@@ -1,15 +1,15 @@
 import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import type { UsePreloadedProductResult } from "./types";
 
 // Function for converting Shopify product to Shopana format
-const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']): Entity.Product | null => {
+const transformShopifyToShopana = (shopifyProduct: ProductQueryType['product']): model.Product | null => {
   if (!shopifyProduct) return null;
 
   // Convert category
-  const category: Entity.Category | null = shopifyProduct.category ? {
+  const category: model.Category | null = shopifyProduct.category ? {
     id: shopifyProduct.category.id,
     iid: shopifyProduct.category.id as any, // Shopify doesn't have iid, use id
     title: shopifyProduct.category.name,

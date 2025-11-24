@@ -1,5 +1,5 @@
 import { CurrencyCode } from "@codegen/schema-client";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useMemo } from "react";
 
 export type UseMoneyValue = {
@@ -35,7 +35,7 @@ export type UseMoneyValue = {
   /**
    * The `Money` object provided as an argument to the hook.
    */
-  original: Entity.Money;
+  original: model.Money;
   /**
    * A string with trailing zeros removed from the fractional part, if any exist. If there are no trailing zeros, then the fractional part remains.
    * For example, `$640.00` turns into `$640`.
@@ -101,7 +101,7 @@ export type UseMoneyValue = {
  * money.withoutTrailingZerosAndCurrency
  * ```
  */
-export function useMoney(money: Entity.Money): UseMoneyValue {
+export function useMoney(money: model.Money): UseMoneyValue {
   // const { countryIsoCode, languageIsoCode } = useShop();
   const locale = "en-US"; // TODO: Implement shop settings for locale
 
@@ -178,7 +178,7 @@ export function useMoney(money: Entity.Money): UseMoneyValue {
   // create formatters if they are going to be used.
   const lazyFormatters = useMemo(
     () => ({
-      original: (): Entity.Money => money,
+      original: (): model.Money => money,
       currencyCode: (): CurrencyCode => money.currencyCode,
       localizedString: (): string => {
         const formatted = defaultFormatter().format(amount);

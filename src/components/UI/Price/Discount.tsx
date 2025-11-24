@@ -5,13 +5,13 @@ import { createStyles } from "antd-style";
 import React from "react";
 
 import { SaleBadge } from "@src/components/UI/Badges/Sale";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { Money } from "@src/components/UI/Price/Money";
 
 export interface Props {
   isAvailable: boolean;
-  price: Entity.Money;
-  compareAtPrice?: Entity.Money;
+  price: model.Money;
+  compareAtPrice?: model.Money;
 }
 
 export const Discount = ({ isAvailable, price, compareAtPrice }: Props) => {

@@ -1,6 +1,6 @@
 import { CurrencyCode } from '@codegen/schema-client';
 import type { ProductQuery$data } from '@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 type ApiProduct = NonNullable<ProductQuery$data['product']>;
 type ApiVariant = NonNullable<ApiProduct['variants']>[number];
@@ -8,7 +8,7 @@ type ApiVariant = NonNullable<ApiProduct['variants']>[number];
 /**
  * Maps API product variant to domain ProductVariant
  */
-function mapApiVariantToVariant(apiVariant: ApiVariant): Entity.ProductVariant {
+function mapApiVariantToVariant(apiVariant: ApiVariant): model.ProductVariant {
   return {
     __typename: 'ProductVariant',
     id: apiVariant.id,
@@ -65,7 +65,7 @@ function mapApiVariantToVariant(apiVariant: ApiVariant): Entity.ProductVariant {
  * @param apiProduct - Product data from GraphQL API
  * @returns Domain Product model
  */
-export function mapApiProductToProduct(apiProduct: ApiProduct | null): Entity.Product | null {
+export function mapApiProductToProduct(apiProduct: ApiProduct | null): model.Product | null {
   if (!apiProduct) {
     return null;
   }

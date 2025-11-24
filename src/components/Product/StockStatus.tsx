@@ -3,11 +3,11 @@
 import { Tag } from "antd";
 import { TbCircleCheck, TbCross } from "react-icons/tb";
 import { createStyles } from "antd-style";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 
 export interface Props {
-  product?: Entity.Product;
-  stockStatus?: Entity.StockStatus;
+  product?: model.Product;
+  stockStatus?: model.StockStatus;
 }
 
 export const StockStatus = ({ product, stockStatus }: Props) => {

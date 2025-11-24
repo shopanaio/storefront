@@ -6,7 +6,7 @@ import { OptionDrawerLayout } from "./DrawerLayout";
 import { useState } from "react";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./Header";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { OptionRadioButton } from "@src/components/Product/Options/OptionRadioButton";
 import { OptionGrid } from "@src/components/UI/OptionGrid";
 
@@ -14,7 +14,7 @@ interface Props {
   title: string;
   values: UiOptionValue[];
   onSelect: (value: UiOptionValue) => void;
-  product: Entity.Product;
+  product: model.Product;
 }
 
 export const SwatchOption = ({ title, values, onSelect, product }: Props) => {

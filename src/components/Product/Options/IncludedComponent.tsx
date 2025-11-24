@@ -3,7 +3,7 @@
 import { Flex, Image, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useState } from 'react';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
 import { mq } from '@src/components/Theme/breakpoints';
 import { OptionCard } from '@src/components/UI/OptionCard';
@@ -15,7 +15,7 @@ import { OptionDrawerLayout } from '@src/components/Product/Options/DrawerLayout
 const { Text } = Typography;
 
 interface Props {
-  option: Entity.ProductGroupItem['node'];
+  option: model.ProductGroupItem['node'];
 }
 
 export const IncludedComponent = ({ option }: Props) => {

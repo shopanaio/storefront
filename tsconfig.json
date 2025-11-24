@@ -14,8 +14,8 @@
       "@checkout/*": [
         "./src/modules/checkout/*"
       ],
-      "@shopana/entity": [
-        "./packages/entity/dist/index.d.ts"
+      "@shopana/storefront-sdk/model": [
+        "./packages/shopana-storefront-sdk/src/model/index.ts"
       ],
       "shopana-utils": [
         "./packages/shopana-utils/dist/index.js"

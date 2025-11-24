@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { CreateReview } from "./CreateReview";
 import { ReviewSended } from "./ReviewSended";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 
 type ModalType = "create" | "success";
 
 interface Prop {
-  product: Entity.Product;
+  product: model.Product;
   onClose: () => void;
 }
 

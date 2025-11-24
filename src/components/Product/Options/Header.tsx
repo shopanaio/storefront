@@ -4,7 +4,7 @@ import { Button, Flex, Tag, Typography } from "antd";
 import { createStyles, css } from "antd-style";
 import { TbChevronRight } from "react-icons/tb";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useHover } from "@src/components/UI/hooks/useHover";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";
@@ -21,7 +21,7 @@ interface OptionHeaderProps {
   /**
    * Optional image to render as preview thumbnail
    */
-  cover?: Entity.Media | null;
+  cover?: model.Media | null;
 }
 
 export const OptionHeader = ({

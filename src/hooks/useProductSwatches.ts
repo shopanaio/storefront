@@ -1,4 +1,4 @@
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useMemo } from "react";
 import { useFlattenProductOptions } from "./useFlattenProductOptions";
 
@@ -9,9 +9,9 @@ import { useFlattenProductOptions } from "./useFlattenProductOptions";
  * the first option group with display type "Swatch" (color swatches)
  */
 export const useProductSwatches = (
-  options: Entity.ProductOption[],
-  variants: Entity.ProductVariant[],
-  currentVariant: Entity.ProductVariant
+  options: model.ProductOption[],
+  variants: model.ProductVariant[],
+  currentVariant: model.ProductVariant
 ) => {
   // Get all processed option groups
   const allOptions = useFlattenProductOptions(

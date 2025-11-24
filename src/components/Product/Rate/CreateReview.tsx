@@ -13,13 +13,13 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { TbInfoCircle } from "react-icons/tb";
 import TextArea from "antd/es/input/TextArea";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useCreateReview } from "@src/hooks/useCreateReview";
 import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
 const { Text, Paragraph } = Typography;
 
 interface Prop {
-  product: Entity.Product;
+  product: model.Product;
   onSwitchContent: (content: "success") => void;
 }
 

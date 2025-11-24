@@ -1,8 +1,8 @@
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { Price } from "@src/components/UI/Price/Price";
 import { Tag } from "antd";
 
-export const AmountTag = ({ money }: { money: Entity.Money }) => {
+export const AmountTag = ({ money }: { money: model.Money }) => {
   return (
     <Tag
       color="blue"

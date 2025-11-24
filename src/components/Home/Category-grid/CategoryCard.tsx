@@ -3,7 +3,7 @@
 import { Card, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 
@@ -34,7 +34,7 @@ export default function CategoryCard({ categoryRef }: Props) {
 } */
 
 interface Prop {
-  category: Entity.Category;
+  category: model.Category;
 }
 export default function CategoryCard({ category }: Prop) {
   const { styles } = useStyles();

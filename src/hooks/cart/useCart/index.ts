@@ -1,8 +1,8 @@
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 import { useCartStore } from '@src/store/cartStore';
 
 type UseCart = () => {
-  cart: Entity.Cart | null;
+  cart: model.Cart | null;
   loading: boolean;
   loaded: boolean;
   error: Error | null;

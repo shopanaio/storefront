@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 interface UseCurrentVariantProps {
   /** Base product entity with all data */
-  product: Entity.Product;
+  product: model.Product;
   /** Selected variant handle from URL */
   variantHandle?: string;
 }
@@ -12,7 +12,7 @@ interface CurrentVariantData {
   /** Combined title of the product and variant */
   title: string;
   /** Current variant or first variant if none selected */
-  currentVariant: Entity.ProductVariant;
+  currentVariant: model.ProductVariant;
 }
 
 /**

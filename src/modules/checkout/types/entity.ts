@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 /**
  * Checkout domain types namespace
  */
 export namespace Checkout {
-  export type Purchasable = Entity.ProductVariant;
+  export type Purchasable = model.ProductVariant;
 
   /**
    * Checkout domain entity shaped like API Checkout.
@@ -63,23 +63,23 @@ export namespace Checkout {
    * Cost breakdown for the entire checkout.
    */
   export interface Cost {
-    subtotalAmount: Entity.Money;
-    totalAmount: Entity.Money;
-    totalDiscountAmount: Entity.Money;
-    totalShippingAmount: Entity.Money;
-    totalTaxAmount: Entity.Money;
+    subtotalAmount: model.Money;
+    totalAmount: model.Money;
+    totalDiscountAmount: model.Money;
+    totalShippingAmount: model.Money;
+    totalTaxAmount: model.Money;
   }
 
   /**
    * Detailed breakdown of costs for a checkout line item
    */
   export interface LineCost {
-    compareAtUnitPrice: Entity.Money;
-    discountAmount?: Entity.Money;
-    subtotalAmount: Entity.Money;
-    taxAmount?: Entity.Money;
-    totalAmount: Entity.Money;
-    unitPrice: Entity.Money;
+    compareAtUnitPrice: model.Money;
+    discountAmount?: model.Money;
+    subtotalAmount: model.Money;
+    taxAmount?: model.Money;
+    totalAmount: model.Money;
+    unitPrice: model.Money;
   }
 
   /** Applied promo code for a checkout. */
@@ -150,7 +150,7 @@ export namespace Checkout {
 
   /** Delivery cost with payment model */
   export interface DeliveryCost {
-    amount: Entity.Money;
+    amount: model.Money;
     paymentModel: ShippingPaymentModel;
   }
 
@@ -161,7 +161,7 @@ export namespace Checkout {
 
   /** Payment aggregate for a checkout. */
   export interface Payment {
-    payableAmount: Entity.Money;
+    payableAmount: model.Money;
     paymentMethods: PaymentMethod[];
     selectedPaymentMethod?: PaymentMethod | null;
   }

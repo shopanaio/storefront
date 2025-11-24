@@ -1,4 +1,4 @@
-import type { Entity } from '@shopana/entity';
+import type { model } from '@shopana/storefront-sdk';
 
 export const parseAmount = (value: unknown): number => {
   if (typeof value === 'number') return value;
@@ -12,7 +12,7 @@ export const parseAmount = (value: unknown): number => {
   return Number.isNaN(n) ? 0 : n;
 };
 
-export type LineWithPrice = Entity.Cart['lines'][number];
+export type LineWithPrice = model.Cart['lines'][number];
 
 export const computeLineTotals = (line: LineWithPrice): LineWithPrice['cost'] => {
   const unit = parseAmount(line.cost.unitPrice?.amount ?? 0);
@@ -36,7 +36,7 @@ export const computeLineTotals = (line: LineWithPrice): LineWithPrice['cost'] =>
   };
 };
 
-export const computeCartTotals = (cart: Entity.Cart): Entity.Cart['cost'] => {
+export const computeCartTotals = (cart: model.Cart): model.Cart['cost'] => {
   const currency = cart.cost.totalAmount.currencyCode || cart.cost.subtotalAmount.currencyCode;
   const subtotal = cart.lines.reduce((acc, l) => acc + parseAmount(l.cost.subtotalAmount.amount), 0);
   const localDiscount = cart.lines.reduce(
@@ -56,12 +56,12 @@ export const computeCartTotals = (cart: Entity.Cart): Entity.Cart['cost'] => {
   };
 };
 
-export const recalcCart = (cart: Entity.Cart): Entity.Cart => {
+export const recalcCart = (cart: model.Cart): model.Cart => {
   const lines = cart.lines.map((line) => ({
     ...line,
     cost: computeLineTotals(line),
   }));
   const totalQuantity = lines.reduce((acc, l) => acc + parseAmount(l.quantity), 0);
-  const cost = computeCartTotals({ ...cart, lines, totalQuantity } as Entity.Cart);
+  const cost = computeCartTotals({ ...cart, lines, totalQuantity } as model.Cart);
   return { ...cart, lines, totalQuantity, cost };
 };

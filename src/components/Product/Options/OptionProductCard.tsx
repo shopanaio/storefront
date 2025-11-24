@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex, Typography } from "antd";
-import type { Entity } from "@shopana/entity";
+import type { model } from "@shopana/storefront-sdk";
 import { OptionCard } from "@src/components/UI/OptionCard";
 import { OptionImage } from "@src/components/UI/OptionImage";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";
@@ -12,8 +12,8 @@ export interface OptionProductCardProps {
   src?: string;
   alt?: string;
   title: string;
-  /** Entity.Money | number | string (amount) */
-  price?: Entity.Money;
+  /** model.Money | number | string (amount) */
+  price?: model.Money;
   /** Highlights the card as selected */
   selected?: boolean;
   /** Temporarily highlights the card, e.g., on external hover */
