@@ -1,4 +1,4 @@
-# План миграции API слоя в @shopana/ecommerce-sdk
+# План миграции API слоя в @shopana/storefront-sdk
 
 **Дата создания:** 2025-11-23
 **Статус:** В работе
@@ -8,7 +8,7 @@
 
 ## Обзор
 
-Создание нового пакета `@shopana/ecommerce-sdk` в монорепозитории, который будет содержать:
+Создание нового пакета `@shopana/storefront-sdk` в монорепозитории, который будет содержать:
 - GraphQL hooks (Relay)
 - Relay инфраструктуру (Environment, SSR helpers)
 - Zustand stores (cart, session, app)
@@ -88,7 +88,7 @@ mkdir -p packages/ecommerce-sdk/src/{hooks,relay,store,queries,providers,utils}
 
 ```json
 {
-  "name": "@shopana/ecommerce-sdk",
+  "name": "@shopana/storefront-sdk",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -550,7 +550,7 @@ yarn install
 ```json
 {
   "dependencies": {
-    "@shopana/ecommerce-sdk": "*"
+    "@shopana/storefront-sdk": "*"
   }
 }
 ```
@@ -618,7 +618,7 @@ yarn install
 ## Следующие шаги (НЕ в этом плане)
 
 После создания SDK пакета:
-1. Миграция storefront на использование `@shopana/ecommerce-sdk`
+1. Миграция storefront на использование `@shopana/storefront-sdk`
 2. Обновление импортов в storefront
 3. Удаление старого кода из storefront
 4. Тестирование интеграции

@@ -1,6 +1,6 @@
 'use client';
 
-import type { LayoutProps } from '@shopana/next-ecommerce-core';
+import type { LayoutProps } from '@shopana/storefront-sdk';
 
 export default function MainLayout({ children }: LayoutProps) {
   return (
@@ -26,7 +26,7 @@ export default function MainLayout({ children }: LayoutProps) {
 
       <footer className="bg-gray-800 text-white p-4 mt-8">
         <div className="container mx-auto text-center">
-          <p>&copy; 2024 Shopana Store. Built with Next.js and @shopana/next-ecommerce-core</p>
+          <p>&copy; 2024 Shopana Store. Built with Next.js and @shopana/storefront-sdk</p>
         </div>
       </footer>
     </div>

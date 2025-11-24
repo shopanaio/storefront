@@ -1,5 +1,5 @@
 // Product page template (placeholder)
-import type { Template } from '@shopana/next-ecommerce-core';
+import type { Template } from '@shopana/storefront-sdk';
 import MainLayout from '@/layout/MainLayout';
 import HelloSection from '@/sections/HelloSection';
 

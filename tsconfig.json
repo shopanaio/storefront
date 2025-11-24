@@ -50,23 +50,23 @@
       "@stackflow/plugin-renderer-basic": [
         "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
-      "@shopana/next-ecommerce-core": [
-        "./packages/next-ecommerce-core/src/index.ts"
+      "@shopana/storefront-sdk": [
+        "./packages/shopana-storefront-sdk/src/index.ts"
       ],
-      "@shopana/next-ecommerce-core/*": [
-        "./packages/next-ecommerce-core/src/*"
+      "@shopana/storefront-sdk/*": [
+        "./packages/shopana-storefront-sdk/src/*"
       ],
-      "@shopana/next-ecommerce-core/core": [
-        "./packages/next-ecommerce-core/src/core/index.ts"
+      "@shopana/storefront-sdk/core": [
+        "./packages/shopana-storefront-sdk/src/core/index.ts"
       ],
-      "@shopana/next-ecommerce-core/shop": [
-        "./packages/next-ecommerce-core/src/shop/index.ts"
+      "@shopana/storefront-sdk/shop": [
+        "./packages/shopana-storefront-sdk/src/shop/index.ts"
       ],
-      "@shopana/next-ecommerce-core/sdk": [
-        "./packages/next-ecommerce-core/src/sdk/index.ts"
+      "@shopana/storefront-sdk/sdk": [
+        "./packages/shopana-storefront-sdk/src/sdk/index.ts"
       ],
-      "@shopana/next-ecommerce-core/app/[[...slug]]/page": [
-        "./packages/next-ecommerce-core/src/app/[[...slug]]/page.tsx"
+      "@shopana/storefront-sdk/app/[[...slug]]/page": [
+        "./packages/shopana-storefront-sdk/src/app/[[...slug]]/page.tsx"
       ]
     },
     "target": "esnext",

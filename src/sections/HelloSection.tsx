@@ -1,7 +1,7 @@
 'use client';
 
-import type { SectionProps } from '@shopana/next-ecommerce-core';
-import { Block } from '@shopana/next-ecommerce-core';
+import type { SectionProps } from '@shopana/storefront-sdk';
+import { Block } from '@shopana/storefront-sdk';
 
 interface HelloSectionSettings {
   title: string;
@@ -50,7 +50,7 @@ export default function HelloSection({
             🎉 Framework Integration Success!
           </h2>
           <p className="text-green-700">
-            The @shopana/next-ecommerce-core page builder framework is working correctly.
+            The @shopana/storefront-sdk page builder framework is working correctly.
             This page was built using the Builder component with templates, sections, and blocks.
           </p>
         </div>

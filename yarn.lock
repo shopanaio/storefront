@@ -2390,7 +2390,7 @@
   version "0.0.1"
   resolved "file:packages/entity"
 
-"@shopana/next-ecommerce-core@file:/Users/phl/Projects/shopana-io/storefront/packages/next-ecommerce-core":
+"@shopana/storefront-sdk@file:/Users/phl/Projects/shopana-io/storefront/packages/next-ecommerce-core":
   version "0.1.0"
   resolved "file:packages/next-ecommerce-core"
   dependencies:

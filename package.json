@@ -15,7 +15,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@shopana/novaposhta-api-client": "^0.0.1-alpha.10",
     "@shopana/novaposhta-transport-fetch": "^0.0.1-alpha.0",
-    "@shopana/next-ecommerce-core": "0.1.0",
+    "@shopana/storefront-sdk": "0.1.0",
     "@stackflow/config": "^1.2.1",
     "@stackflow/core": "^1.2.0",
     "@stackflow/plugin-basic-ui": "^1.14.2",

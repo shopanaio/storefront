@@ -1,0 +1,75 @@
+{
+  "name": "@shopana/storefront-sdk",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/app"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
+    },
+    "./shop": {
+      "types": "./dist/shop/index.d.ts",
+      "default": "./dist/shop/index.js"
+    },
+    "./sdk": {
+      "types": "./dist/sdk/index.d.ts",
+      "default": "./dist/sdk/index.js"
+    },
+    "./app/[[...slug]]/page": {
+      "types": "./src/app/[[...slug]]/page.tsx",
+      "default": "./src/app/[[...slug]]/page.tsx"
+    },
+    "./app/[[...slug]]/error": {
+      "types": "./src/app/[[...slug]]/error.tsx",
+      "default": "./src/app/[[...slug]]/error.tsx"
+    },
+    "./app/[[...slug]]/not-found": {
+      "types": "./src/app/[[...slug]]/not-found.tsx",
+      "default": "./src/app/[[...slug]]/not-found.tsx"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "next": "^14.0.0 || ^15.0.0 || ^16.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.14.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "^18.0.0 || ^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "next": "16.0.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.0.5"
+  },
+  "dependencies": {
+    "@shopana/entity": "*",
+    "path-to-regexp": "^8.3.0"
+  }
+}

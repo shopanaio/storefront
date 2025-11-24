@@ -1,6 +1,6 @@
 'use client';
 
-import type { BlockProps } from '@shopana/next-ecommerce-core';
+import type { BlockProps } from '@shopana/storefront-sdk';
 
 interface TextBlockSettings {
   text: string;

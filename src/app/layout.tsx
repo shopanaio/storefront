@@ -2,8 +2,8 @@
 
 import { getCurrentEnvironment } from '@src/relay/Environment';
 import { RelayEnvironmentProvider } from 'react-relay';
-import { ShopProvider } from '@shopana/next-ecommerce-core/shop';
-import { mockShopConfig } from '@shopana/next-ecommerce-core/shop/mockShopConfig';
+import { ShopProvider } from '@shopana/storefront-sdk/shop';
+import { mockShopConfig } from '@shopana/storefront-sdk/shop/mockShopConfig';
 
 console.error = () => {};
 console.warn = () => {};

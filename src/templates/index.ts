@@ -1,5 +1,5 @@
 // Home page template
-import type { Template } from '@shopana/next-ecommerce-core';
+import type { Template } from '@shopana/storefront-sdk';
 
 // Import components
 import MainLayout from '@/layout/MainLayout';
@@ -24,7 +24,7 @@ const homeTemplate: Template = {
         intro: {
           component: TextBlock,
           settings: {
-            text: 'This is a demonstration of the @shopana/next-ecommerce-core framework integration.',
+            text: 'This is a demonstration of the @shopana/storefront-sdk framework integration.',
             variant: 'default',
           },
         },

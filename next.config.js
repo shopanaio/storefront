@@ -14,7 +14,7 @@ const nextConfig = {
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
   // Transpile local packages for hot reload during development
-  transpilePackages: ['@shopana/next-ecommerce-core'],
+  transpilePackages: ['@shopana/storefront-sdk'],
   compiler: {
     styledComponents: true,
     ...(process.env.STORYBOOK
