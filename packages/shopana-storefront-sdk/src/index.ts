@@ -1,9 +1,13 @@
 // Main entry point for @shopana/storefront-sdk
 // Re-exports all public APIs
 
-// App component - main wrapper with all providers
+// App component - client-only wrapper with all providers
 export { App } from './App';
 export type { AppProps } from './App';
+
+// AppProvider - server component with SSR cart loading
+export { AppProvider } from './AppProvider';
+export type { AppProviderProps } from './AppProvider';
 
 // Core exports (Builder, types, components)
 export {
