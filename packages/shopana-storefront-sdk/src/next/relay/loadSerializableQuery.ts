@@ -4,20 +4,54 @@ import { ConcreteRequest } from "relay-runtime/lib/util/RelayConcreteNode";
 import {
   loadSerializableQuery as loadSerializableQueryBase,
   SerializablePreloadedQuery,
+  createFetchGraphQL,
 } from "../../graphql/relay";
-import type { FetchGraphQLFunction } from "../../graphql/relay";
+import type { FetchGraphQLFunction, RelayEnvironmentConfig } from "../../graphql/relay";
 
 // Re-export type from base relay module
 export type { SerializablePreloadedQuery };
 
-export default async function loadSerializableQuery<
+// Overload 1: Accept FetchGraphQLFunction
+async function loadSerializableQuery<
   TRequest extends ConcreteRequest,
   TQuery extends OperationType
 >(
   fetchGraphQL: FetchGraphQLFunction,
   params: RequestParameters,
   variables: VariablesOf<TQuery>
+): Promise<SerializablePreloadedQuery<TRequest, TQuery>>;
+
+// Overload 2: Accept RelayEnvironmentConfig
+async function loadSerializableQuery<
+  TRequest extends ConcreteRequest,
+  TQuery extends OperationType
+>(
+  config: RelayEnvironmentConfig,
+  params: RequestParameters,
+  variables: VariablesOf<TQuery>
+): Promise<SerializablePreloadedQuery<TRequest, TQuery>>;
+
+// Implementation
+async function loadSerializableQuery<
+  TRequest extends ConcreteRequest,
+  TQuery extends OperationType
+>(
+  fetchGraphQLOrConfig: FetchGraphQLFunction | RelayEnvironmentConfig,
+  params: RequestParameters,
+  variables: VariablesOf<TQuery>
 ): Promise<SerializablePreloadedQuery<TRequest, TQuery>> {
   const cookie = (await headers()).get("cookie") ?? undefined;
+
+  // Check if first argument is a function or config object
+  const fetchGraphQL =
+    typeof fetchGraphQLOrConfig === "function"
+      ? fetchGraphQLOrConfig
+      : createFetchGraphQL({
+          ...fetchGraphQLOrConfig,
+          serverCookies: cookie,
+        });
+
   return loadSerializableQueryBase(fetchGraphQL, params, variables, cookie);
 }
+
+export default loadSerializableQuery;

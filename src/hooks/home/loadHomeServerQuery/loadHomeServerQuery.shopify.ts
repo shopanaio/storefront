@@ -3,7 +3,7 @@ import {
   loadSerializableQuery,
   SerializablePreloadedQuery,
 } from "@shopana/storefront-sdk/next/relay/server";
-import { networkFetch } from "@src/relay/networkFetch";
+import { environmentConfig } from "@src/config/environment.config";
 import HomePageQueryNode, {
   HomePageQuery,
 } from "@src/hooks/home/HomePageQuery/__generated__/HomePageQuery.graphql";
@@ -17,7 +17,7 @@ const loadHomeServerQuery = async (): Promise<
   const preloadedQuery = await loadSerializableQuery<
     typeof HomePageQueryNode,
     HomePageQuery
-  >(networkFetch, HomePageQueryNode.params, {});
+  >(environmentConfig, HomePageQueryNode.params, {});
 
   return preloadedQuery;
 };

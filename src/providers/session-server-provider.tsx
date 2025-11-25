@@ -4,7 +4,7 @@ import {
   loadSerializableQuery,
   SerializablePreloadedQuery,
 } from "@shopana/storefront-sdk/next/relay/server";
-import { networkFetch } from "@src/relay/networkFetch";
+import { environmentConfig } from "@src/config/environment.config";
 import useGetSessionQuery from "@src/hooks/session/useGetSession/__generated__/useGetSessionQuery.graphql";
 import { QueryProvider } from "@src/providers/relay-query-provider";
 import { ConcreteRequest, OperationType } from "relay-runtime";
@@ -24,7 +24,7 @@ export async function SessionServerProvider({
 
   if (customerAccessToken) {
     preloadedSessionQuery = await loadSerializableQuery(
-      networkFetch,
+      environmentConfig,
       useGetSessionQuery.params,
       { customerAccessToken }
     );

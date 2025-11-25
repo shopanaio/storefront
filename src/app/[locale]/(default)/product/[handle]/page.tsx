@@ -143,7 +143,7 @@
 
 import React from "react";
 import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay/server";
-import { networkFetch } from "@src/relay/networkFetch";
+import { environmentConfig } from "@src/config/environment.config";
 import ProductQueryNode, {
   ProductQuery as ProductQueryType,
 } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
@@ -171,7 +171,7 @@ export default async function ProductPage(props: ProductPageProps) {
     typeof ProductQueryNode,
     ProductQueryType
   >(
-    networkFetch,
+    environmentConfig,
     ProductQueryNode.params,
     {
       handle,

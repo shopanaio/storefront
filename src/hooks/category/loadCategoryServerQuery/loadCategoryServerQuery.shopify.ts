@@ -2,7 +2,7 @@ import {
   loadSerializableQuery,
   SerializablePreloadedQuery,
 } from '@shopana/storefront-sdk/next/relay/server';
-import { networkFetch } from '@src/relay/networkFetch';
+import { environmentConfig } from '@src/config/environment.config';
 import CategoryQueryNode, {
   CategoryQuery,
 } from '@src/queries/CategoryQuery/__generated__/CategoryQuery.graphql';
@@ -23,7 +23,7 @@ const loadCategoryServerQuery = async ({
     typeof CategoryQueryNode,
     CategoryQuery
   >(
-    networkFetch,
+    environmentConfig,
     CategoryQueryNode.params,
     {
       handle,

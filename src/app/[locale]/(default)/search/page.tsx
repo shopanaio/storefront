@@ -1,6 +1,6 @@
 import React from "react";
 import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay/server";
-import { networkFetch } from "@src/relay/networkFetch";
+import { environmentConfig } from "@src/config/environment.config";
 import SearchQueryNode, {
   SearchQuery,
 } from "@src/hooks/search/SearchQuery/__generated__/SearchQuery.graphql";
@@ -27,7 +27,7 @@ export default async function SearchPage(props: SearchPageProps) {
     typeof SearchQueryNode,
     SearchQuery
   >(
-    networkFetch,
+    environmentConfig,
     SearchQueryNode.params,
     {
       query: q.trim(),
