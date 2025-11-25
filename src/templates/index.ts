@@ -1,25 +1,30 @@
 import type { Template } from '@shopana/storefront-sdk/core/types';
-import HeroSection from '@/sections/HeroSection';
-import CategoryProductsSection from '@/sections/CategoryProductsSection';
+import ProductGridSection from '@/sections/ProductGridSection';
+import HomeSlideshowSection from '@/sections/HomeSlideshowSection';
 
 const homeTemplate: Template = {
   sections: {
-    order: ['hero', 'electronics', 'sport', 'toys'],
-    hero: {
-      component: HeroSection,
-      settings: {},
+    order: [
+      'electronicsGrid',
+      'electronics',
+      'sport',
+      'toys',
+    ],
+    electronicsGrid: {
+      component: ProductGridSection,
+      settings: { categoryHandle: 'electronics' },
     },
     electronics: {
-      component: CategoryProductsSection,
-      settings: { categoryKey: 'electronics' },
+      component: HomeSlideshowSection,
+      settings: { categoryKey: 'electronics', pagination: true },
     },
     sport: {
-      component: CategoryProductsSection,
-      settings: { categoryKey: 'sport' },
+      component: HomeSlideshowSection,
+      settings: { categoryKey: 'sport', pagination: true },
     },
     toys: {
-      component: CategoryProductsSection,
-      settings: { categoryKey: 'toys' },
+      component: HomeSlideshowSection,
+      settings: { categoryKey: 'toys', pagination: true },
     },
   },
 };
