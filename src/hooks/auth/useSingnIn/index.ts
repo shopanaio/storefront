@@ -1,13 +1,14 @@
-import { cmsPick } from "@src/cms/pick";
-import useSignInShopana from "./useSignIn.shopana";
-import useSignInShopify from "./useSignIn.shopify";
+/**
+ * Sign In Hook - SDK Integration
+ *
+ * Re-exports useSignIn from SDK
+ *
+ * @deprecated Use import from @shopana/storefront-sdk/modules/session/react/hooks instead
+ */
+
+export { useSignIn as default } from '@shopana/storefront-sdk/modules/session/react/hooks';
 
 export interface SignInInput {
   email: string;
   password: string;
 }
-
-export default cmsPick({
-  shopana: useSignInShopana,
-  shopify: useSignInShopify,
-});

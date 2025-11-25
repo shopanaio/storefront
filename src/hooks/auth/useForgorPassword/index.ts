@@ -1,12 +1,13 @@
-import { cmsPick } from "@src/cms/pick";
-import useForgotPasswordShopana from "./useForgotPassword.shopana";
-import useForgotPasswordShopify from "./useForgotPassword.shopify";
+/**
+ * Forgot Password Hook - SDK Integration
+ *
+ * Re-exports useForgotPassword from SDK
+ *
+ * @deprecated Use import from @shopana/storefront-sdk/modules/session/react/hooks instead
+ */
+
+export { useForgotPassword as default } from '@shopana/storefront-sdk/modules/session/react/hooks';
 
 export interface ForgotPasswordInput {
   email: string;
 }
-
-export default cmsPick({
-  shopana: useForgotPasswordShopana,
-  shopify: useForgotPasswordShopify,
-});

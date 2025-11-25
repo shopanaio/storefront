@@ -33,53 +33,33 @@ function getOrCreateEnvironment(config: RelayEnvironmentConfig): Environment {
   return clientEnvironment;
 }
 
-export interface AppProps {
+/**
+ * Internal providers wrapper that encapsulates all SDK providers
+ * @internal
+ */
+interface AppProvidersProps {
   children: React.ReactNode;
-  /**
-   * Relay environment configuration
-   */
-  environmentConfig: RelayEnvironmentConfig;
-  /**
-   * Shop configuration (currency, locale, features)
-   */
+  environment: Environment;
   shopConfig: ShopConfig;
-  /**
-   * Cart configuration
-   */
   cartConfig: CartConfig;
-  /**
-   * Optional preloaded cart query from SSR (SerializablePreloadedQuery)
-   */
   preloadedCartQuery?: SerializablePreloadedQuery<
     ConcreteRequest,
     LoadCartQueryType
   > | null;
-  /**
-   * Optional preloaded session query from SSR (SerializablePreloadedQuery)
-   */
   preloadedSessionQuery?: SerializablePreloadedQuery<
     ConcreteRequest,
     LoadSessionQueryType
   > | null;
 }
 
-/**
- * Main App component that wraps the application with all necessary providers:
- * - RelayEnvironmentProvider (GraphQL)
- * - ShopProvider (shop config, locale, currency)
- * - CartProvider (cart state management)
- * - SessionProvider (session state management)
- */
-export function App({
+const AppProviders: React.FC<AppProvidersProps> = ({
   children,
-  environmentConfig,
+  environment,
   shopConfig,
   cartConfig,
   preloadedCartQuery,
   preloadedSessionQuery,
-}: AppProps) {
-  const environment = getOrCreateEnvironment(environmentConfig);
-
+}) => {
   // Extract initial cart entity from SSR preloaded query (for store hydration)
   const initialCart =
     preloadedCartQuery &&
@@ -133,5 +113,67 @@ export function App({
         </SessionProvider>
       </ShopProvider>
     </RelayEnvironmentProvider>
+  );
+};
+
+export interface AppProps {
+  children: React.ReactNode;
+  /**
+   * Relay environment configuration
+   */
+  environmentConfig: RelayEnvironmentConfig;
+  /**
+   * Shop configuration (currency, locale, features)
+   */
+  shopConfig: ShopConfig;
+  /**
+   * Cart configuration
+   */
+  cartConfig: CartConfig;
+  /**
+   * Optional preloaded cart query from SSR (SerializablePreloadedQuery)
+   */
+  preloadedCartQuery?: SerializablePreloadedQuery<
+    ConcreteRequest,
+    LoadCartQueryType
+  > | null;
+  /**
+   * Optional preloaded session query from SSR (SerializablePreloadedQuery)
+   */
+  preloadedSessionQuery?: SerializablePreloadedQuery<
+    ConcreteRequest,
+    LoadSessionQueryType
+  > | null;
+}
+
+/**
+ * Main App component that wraps the application with all necessary providers:
+ * - RelayEnvironmentProvider (GraphQL)
+ * - ShopProvider (shop config, locale, currency)
+ * - SessionProvider (session state management)
+ * - CartProvider (cart state management)
+ *
+ * All providers are hidden inside and managed automatically.
+ */
+export function App({
+  children,
+  environmentConfig,
+  shopConfig,
+  cartConfig,
+  preloadedCartQuery,
+  preloadedSessionQuery,
+}: AppProps) {
+  const environment = getOrCreateEnvironment(environmentConfig);
+
+  return (
+    <AppProviders
+      environment={environment}
+      shopConfig={shopConfig}
+      cartConfig={cartConfig}
+      preloadedCartQuery={preloadedCartQuery}
+      preloadedSessionQuery={preloadedSessionQuery}
+    >
+      {children}
+    </AppProviders>
   );
 }

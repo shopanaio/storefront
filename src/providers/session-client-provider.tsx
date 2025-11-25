@@ -5,13 +5,15 @@
  * All session management logic has been moved to @shopana/storefront-sdk
  *
  * @deprecated Use SessionProvider directly from SDK instead
+ * Session is now automatically managed inside SDK App component
  */
 
 "use client";
 
 import React, { type ReactNode } from "react";
+import { createSessionStoreZustand } from '@shopana/storefront-sdk/modules/session/react/store/SessionStoreZustand';
 import { SessionProvider as SDKSessionProvider } from '@shopana/storefront-sdk/modules/session/react';
-import { createSessionStoreZustand, type Session } from '@src/store/sessionStore';
+import type { Session } from '@shopana/storefront-sdk/modules/session/core/types';
 
 // Re-export everything from SDK
 export {
