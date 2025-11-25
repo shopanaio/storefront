@@ -51,6 +51,14 @@
       "types": "./dist/next/relay/index.d.ts",
       "default": "./dist/next/relay/index.js"
     },
+    "./next/relay/server": {
+      "types": "./dist/next/relay/server.d.ts",
+      "default": "./dist/next/relay/server.js"
+    },
+    "./next/relay/client": {
+      "types": "./dist/next/relay/client.d.ts",
+      "default": "./dist/next/relay/client.js"
+    },
     "./next/page": {
       "types": "./src/next/page.tsx",
       "default": "./src/next/page.tsx"

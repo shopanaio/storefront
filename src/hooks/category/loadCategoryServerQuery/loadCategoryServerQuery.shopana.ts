@@ -2,7 +2,7 @@
 import {
   loadSerializableQuery,
   SerializablePreloadedQuery,
-} from "@shopana/storefront-sdk/next/relay";
+} from "@shopana/storefront-sdk/next/relay/server";
 import { networkFetch } from "@src/relay/networkFetch";
 import CategoryQueryNode, {
   CategoryQuery,

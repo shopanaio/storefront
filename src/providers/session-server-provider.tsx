@@ -3,7 +3,7 @@ import accessTokenUtils from "@src/utils/accessToken";
 import {
   loadSerializableQuery,
   SerializablePreloadedQuery,
-} from "@shopana/storefront-sdk/next/relay";
+} from "@shopana/storefront-sdk/next/relay/server";
 import { networkFetch } from "@src/relay/networkFetch";
 import useGetSessionQuery from "@src/hooks/session/useGetSession/__generated__/useGetSessionQuery.graphql";
 import { QueryProvider } from "@src/providers/relay-query-provider";

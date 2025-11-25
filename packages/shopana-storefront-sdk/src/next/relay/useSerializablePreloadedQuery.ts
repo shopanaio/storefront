@@ -1,20 +1,19 @@
+"use client";
+
 import { PreloadedQuery, PreloadFetchPolicy } from "react-relay";
 import { ConcreteRequest, IEnvironment, OperationType } from "relay-runtime";
 import {
-  useSerializablePreloadedQuery as useSerializablePreloadedQuerySDK,
+  useSerializablePreloadedQuery as useSerializablePreloadedQueryBase,
   createResponseCache,
   SerializablePreloadedQuery,
-} from "@shopana/storefront-sdk/graphql/relay";
-import { environmentConfig } from "@src/config/environment.config";
+} from "../../graphql/relay";
 
 // Re-export type for client components
 export type { SerializablePreloadedQuery };
 
-// Client-side response cache
-const responseCache = createResponseCache(
-  environmentConfig.cacheTTL,
-  environmentConfig.cacheSize
-);
+// Client-side response cache singleton
+// Default: 5 minutes TTL, cache size 100
+const responseCache = createResponseCache(5 * 60 * 1000, 100);
 
 export default function useSerializablePreloadedQuery<
   TRequest extends ConcreteRequest,
@@ -24,7 +23,7 @@ export default function useSerializablePreloadedQuery<
   preloadQuery: SerializablePreloadedQuery<TRequest, TQuery>,
   fetchPolicy: PreloadFetchPolicy = "store-or-network"
 ): PreloadedQuery<TQuery> {
-  return useSerializablePreloadedQuerySDK(
+  return useSerializablePreloadedQueryBase(
     environment,
     preloadQuery,
     responseCache,

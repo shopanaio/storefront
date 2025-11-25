@@ -13,5 +13,9 @@ export { logError, configureLogger } from '../utils/logger';
 export type { LogLevel, LogContext, LogErrorOptions } from '../utils/logger';
 
 // Re-export Relay integration for Next.js
-export { QueryProvider, useQuery, loadSerializableQuery } from './relay';
-export type { SerializablePreloadedQuery } from './relay';
+// Note: For better tree-shaking, import directly from:
+// - '@shopana/storefront-sdk/next/relay/server' for server components
+// - '@shopana/storefront-sdk/next/relay/client' for client components
+export { loadSerializableQuery } from './relay/server';
+export { QueryProvider, useQuery, useSerializablePreloadedQuery } from './relay/client';
+export type { SerializablePreloadedQuery } from './relay/server';

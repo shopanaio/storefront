@@ -26,7 +26,7 @@
  * "use client";
  *
  * import React, { createContext, useContext } from "react";
- * import { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay";
+ * import { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/server";
  * import { YourPageQuery as YourPageQueryType } from "@src/relay/queries/__generated__/YourPageQuery.graphql";
  * import { ConcreteRequest } from "relay-runtime";
  *
@@ -142,7 +142,7 @@
  */
 
 import React from "react";
-import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay";
+import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay/server";
 import { networkFetch } from "@src/relay/networkFetch";
 import ProductQueryNode, {
   ProductQuery as ProductQueryType,

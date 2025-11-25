@@ -1,11 +1,11 @@
 /* import React, { useState, useCallback, useEffect } from "react";
 import useGetSession from "@src/hooks/session";
-import { SerializablePreloadedQuery } from "@src/relay/useSerializablePreloadedQuery";
+import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/server";
+import { useSerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/client";
 import { useGetSessionQuery as useGetSessionQueryType } from "@src/hooks/session/__generated__/useGetSessionQuery.graphql";
 import { ConcreteRequest } from "relay-runtime";
 import { useRelayEnvironment } from "react-relay";
-import useSerializablePreloadedQuery from "@src/relay/useSerializablePreloadedQuery";
-import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay";
+import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay/server";
 import { networkFetch } from "@src/relay/networkFetch";
 import useGetSessionQuery from "@src/hooks/session/__generated__/useGetSessionQuery.graphql";
 import { useSession } from "@src/store/sessionStore";

@@ -1,5 +1,5 @@
 import React from "react";
-import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay";
+import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay/server";
 import { networkFetch } from "@src/relay/networkFetch";
 import SearchQueryNode, {
   SearchQuery,

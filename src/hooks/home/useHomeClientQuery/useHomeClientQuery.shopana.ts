@@ -1,5 +1,5 @@
 import { usePreloadedQuery, useRelayEnvironment } from "react-relay";
-import useSerializablePreloadedQuery from "@src/relay/useSerializablePreloadedQuery";
+import { useSerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/client";
 import HomePageQueryNode from "@src/hooks/home/HomePageQuery/__generated__/HomePageQuery.graphql";
 import { HomePageQuery } from "@src/hooks/home/HomePageQuery/__generated__/HomePageQuery.graphql";
 import { ProductSlideShowRelay_category$key } from "@src/components/Home/ProductSlideshow/__generated__/ProductSlideShowRelay_category.graphql";
