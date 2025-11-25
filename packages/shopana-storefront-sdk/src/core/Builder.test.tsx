@@ -9,10 +9,6 @@ vi.mock('../utils/logger', () => ({
 }));
 
 // Mock components
-const MockLayout = ({ children }: { children: React.ReactNode }) => (
-  <div data-testid="mock-layout">{children}</div>
-);
-
 const MockSection = ({ id, settings }: SectionProps<{ title: string }>) => (
   <div data-testid={`section-${id}`}>
     Section: {settings.title}
@@ -24,11 +20,8 @@ const MockBlock = ({ id, settings }: BlockProps<{ text: string }>) => (
 );
 
 describe('Builder', () => {
-  it('renders layout with sections', () => {
+  it('renders sections', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['hero'],
         hero: {
@@ -46,16 +39,12 @@ describe('Builder', () => {
       />,
     );
 
-    expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
     expect(screen.getByTestId('section-hero')).toBeInTheDocument();
     expect(screen.getByText('Section: Hero Section')).toBeInTheDocument();
   });
 
   it('renders multiple sections in correct order', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['first', 'second', 'third'],
         first: {
@@ -90,9 +79,6 @@ describe('Builder', () => {
 
   it('skips sections with invalid config', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['valid', 'missing', 'another-valid'],
         valid: {
@@ -121,9 +107,6 @@ describe('Builder', () => {
 
   it('shows fallback when no sections are rendered', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: [],
       },
@@ -139,14 +122,10 @@ describe('Builder', () => {
     );
 
     expect(screen.getByTestId('fallback')).toBeInTheDocument();
-    expect(screen.queryByTestId('mock-layout')).not.toBeInTheDocument();
   });
 
   it('shows fallback when all sections are invalid', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['missing1', 'missing2'],
       },
@@ -162,20 +141,16 @@ describe('Builder', () => {
     );
 
     expect(screen.getByTestId('fallback')).toBeInTheDocument();
-    expect(screen.queryByTestId('mock-layout')).not.toBeInTheDocument();
   });
 
-  it('renders layout even without fallback and no sections', () => {
+  it('renders empty when no fallback and no sections', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: [],
       },
     };
 
-    render(
+    const { container } = render(
       <Builder
         template={template}
         data={{ name: 'Test' }}
@@ -183,7 +158,7 @@ describe('Builder', () => {
       />,
     );
 
-    expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-testid^="section-"]')).toHaveLength(0);
   });
 
   it('handles sections with blocks', () => {
@@ -197,9 +172,6 @@ describe('Builder', () => {
     );
 
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['main'],
         main: {
@@ -246,9 +218,6 @@ describe('Builder', () => {
     );
 
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['main'],
         main: {
@@ -284,9 +253,6 @@ describe('Builder', () => {
 
   it('handles sections without blocks property', () => {
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['simple'],
         simple: {
@@ -309,9 +275,6 @@ describe('Builder', () => {
 
   it('handles invalid sections.order (not an array)', () => {
     const template = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: 'invalid' as any,
         section1: {
@@ -341,9 +304,6 @@ describe('Builder', () => {
     );
 
     const template: PageTemplate = {
-      layout: {
-        component: MockLayout,
-      },
       sections: {
         order: ['main'],
         main: {

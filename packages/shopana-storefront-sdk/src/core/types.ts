@@ -76,28 +76,11 @@ export interface SectionCollection<TData = any> {
   [sectionId: string]: SectionConfig<any, TData> | string[];
 }
 
-export interface LayoutProps {
-  children: ReactNode;
-}
-
-export type LayoutComponent =
-  | ComponentType<LayoutProps>
-  | LazyExoticComponent<ComponentType<LayoutProps>>;
-
-export interface TemplateLayout<TSettings = any, TData = any> {
-  component: LayoutComponent;
-  settings?: TSettings;
-}
-
-export interface PageTemplate<TData = any, TLayoutSettings = any> {
-  layout: TemplateLayout<TLayoutSettings, TData>;
+export interface PageTemplate<TData = any> {
   sections: SectionCollection<TData>;
 }
 
-export type Template<TData = any, TLayoutSettings = any> = PageTemplate<
-  TData,
-  TLayoutSettings
->;
+export type Template<TData = any> = PageTemplate<TData>;
 
 export interface PageBuilderProps<TData = any> {
   template: PageTemplate<TData>;

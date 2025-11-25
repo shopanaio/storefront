@@ -73,8 +73,6 @@ export function Builder<TData>({
   pageType,
   fallback,
 }: PageBuilderProps<TData>) {
-  const LayoutComponent = template.layout.component;
-
   const sections = resolveSections(template.sections, data);
 
   if (!sections.length && fallback) {
@@ -83,7 +81,7 @@ export function Builder<TData>({
 
   return (
     <TemplateDataProvider value={{ pageType, data }}>
-      <LayoutComponent>{sections}</LayoutComponent>
+      {sections}
     </TemplateDataProvider>
   );
 }
