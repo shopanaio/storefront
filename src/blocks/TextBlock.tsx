@@ -1,6 +1,6 @@
 'use client';
 
-import type { BlockProps } from '@shopana/storefront-sdk';
+import type { BlockProps } from "@shopana/storefront-sdk/core/types";
 
 interface TextBlockSettings {
   text: string;

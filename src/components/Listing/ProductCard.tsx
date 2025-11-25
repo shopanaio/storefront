@@ -5,7 +5,7 @@ import {
   ProductCard,
 } from '@src/components/UI/ProductCards/ListingCard/ProductCard';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { CurrencyCode } from '@codegen/schema-client';
 
 import { useIsInTheCart, useAddItemToCart } from '@src/hooks/cart';

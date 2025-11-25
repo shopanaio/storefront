@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { useProductGroupsState } from './useProductGroupsState';
 import { computeBundlePrice } from './useProductBundlePricing';
 

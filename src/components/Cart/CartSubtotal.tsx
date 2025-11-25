@@ -4,7 +4,7 @@ import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useLocale, useTranslations } from "next-intl";
 import { Money } from "@src/components/UI/Price/Money";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 const { Text } = Typography;
 
 interface CartSubtotalProps {

@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import React from 'react';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { StockStatus } from './StockStatus';
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { PriceAndSale } from './PriceAndSale';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';

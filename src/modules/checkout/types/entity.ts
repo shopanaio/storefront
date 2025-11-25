@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 /**
  * Checkout domain types namespace

@@ -1,6 +1,6 @@
 'use client';
 
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 /**
  * Compute bundle price by applying group items pricing rules on top of base price.

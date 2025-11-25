@@ -1,4 +1,4 @@
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 /**
  * Returns the final price for the component (ProductGroupItem).

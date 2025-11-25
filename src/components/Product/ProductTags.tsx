@@ -2,7 +2,7 @@
 
 import { Flex, Button } from "antd";
 import { createStyles } from "antd-style";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 interface Props {
   tags: model.Edge<model.Tag>[];

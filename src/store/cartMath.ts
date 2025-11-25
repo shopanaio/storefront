@@ -1,4 +1,4 @@
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 export const parseAmount = (value: unknown): number => {
   if (typeof value === 'number') return value;

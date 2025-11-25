@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex, Typography } from "antd";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { OptionCard } from "@src/components/UI/OptionCard";
 import { OptionImage } from "@src/components/UI/OptionImage";
 import { AmountTag } from "@src/components/Product/Options/AmountTag";

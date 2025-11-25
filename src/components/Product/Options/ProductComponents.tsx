@@ -10,7 +10,7 @@ import { useProductGroups as useGroupsLogic } from '@src/hooks/product/useProduc
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { IncludedComponent } from '@src/components/Product/Options/IncludedComponent';
-import { model } from '@shopana/storefront-sdk';
+import { model } from "@shopana/storefront-sdk/model/namespace";
 
 const { Text } = Typography;
 

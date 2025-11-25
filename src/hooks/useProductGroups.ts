@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { model } from "@shopana/storefront-sdk";
+import { model } from "@shopana/storefront-sdk/model/namespace";
 import _ from "lodash";
 
 type PartitionedGroups = {

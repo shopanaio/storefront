@@ -1,5 +1,5 @@
 // Home page template
-import type { Template } from '@shopana/storefront-sdk';
+import type { Template } from "@shopana/storefront-sdk/core/types";
 
 // Import components
 import MainLayout from '@/layout/MainLayout';

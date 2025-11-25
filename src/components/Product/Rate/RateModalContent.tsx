@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CreateReview } from "./CreateReview";
 import { ReviewSended } from "./ReviewSended";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 type ModalType = "create" | "success";
 

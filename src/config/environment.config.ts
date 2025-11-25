@@ -1,4 +1,4 @@
-import type { RelayEnvironmentConfig } from '@shopana/storefront-sdk';
+import type { RelayEnvironmentConfig } from "@shopana/storefront-sdk/graphql/relay/types";
 
 const apiKeyHeader = {
   shopana: 'X-Api-Key',

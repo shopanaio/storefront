@@ -1,5 +1,5 @@
 import { UseInitialSessionStateProps } from "./index";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 export const useInitialSessionStateShopana = (
   props: UseInitialSessionStateProps

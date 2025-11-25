@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 export const useProductGallery = (
   variant: model.ProductVariant,

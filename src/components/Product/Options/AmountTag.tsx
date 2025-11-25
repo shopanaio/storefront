@@ -1,4 +1,4 @@
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { Price } from "@src/components/UI/Price/Price";
 import { Tag } from "antd";
 

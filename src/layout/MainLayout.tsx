@@ -1,6 +1,6 @@
 'use client';
 
-import type { LayoutProps } from '@shopana/storefront-sdk';
+import type { LayoutProps } from "@shopana/storefront-sdk/core/types";
 
 export default function MainLayout({ children }: LayoutProps) {
   return (

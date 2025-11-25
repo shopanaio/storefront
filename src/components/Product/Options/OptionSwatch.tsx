@@ -6,7 +6,7 @@ import { OptionDrawerLayout } from "./DrawerLayout";
 import { useState } from "react";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./Header";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { OptionRadioButton } from "@src/components/Product/Options/OptionRadioButton";
 import { OptionGrid } from "@src/components/UI/OptionGrid";
 

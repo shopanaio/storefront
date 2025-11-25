@@ -11,16 +11,10 @@
     "src/next"
   ],
   "exports": {
-    "./next/page": {
-      "types": "./src/next/page.tsx",
-      "import": "./src/next/page.tsx",
-      "default": "./src/next/page.tsx"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.js",
-      "default": "./dist/*.js"
-    }
+    "./next/page": "./src/next/page.tsx",
+    "./package.json": "./package.json",
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

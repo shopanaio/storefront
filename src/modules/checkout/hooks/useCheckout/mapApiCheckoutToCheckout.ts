@@ -1,5 +1,5 @@
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import {
   type ApiCheckout,
   type ApiMoney,

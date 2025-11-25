@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex } from "antd";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import ViewAllButton from "../ViewAllButton";
 import SectionTitle from "../SectionTitle";
 import { useLocale } from "next-intl";

@@ -2,7 +2,7 @@ import { Flex, Empty } from 'antd';
 import { SearchProductCard } from './SearchProductCard';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
-import type { model } from '@shopana/storefront-sdk';
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 
 interface SearchResultsContentProps {
   products: model.Product[];

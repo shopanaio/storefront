@@ -19,7 +19,7 @@ import {
   type ProductCardSwatchesProps,
 } from "@src/components/UI/ProductCards/Swatch/Swatch";
 import { Price } from "@src/components/UI/Price/Price";
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from "@shopana/storefront-sdk/model/namespace";
 import { Discount } from "@src/components/UI/Price/Discount";
 import {
   StockStatus,
