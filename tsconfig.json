@@ -14,9 +14,6 @@
       "@checkout/*": [
         "./src/modules/checkout/*"
       ],
-      "@shopana/storefront-sdk/model": [
-        "./packages/shopana-storefront-sdk/src/model/index.ts"
-      ],
       "shopana-utils": [
         "./packages/shopana-utils/dist/index.js"
       ],
@@ -51,22 +48,10 @@
         "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
       ],
       "@shopana/storefront-sdk": [
-        "./packages/shopana-storefront-sdk/src/index.ts"
+        "./packages/shopana-storefront-sdk/dist/index.js"
       ],
       "@shopana/storefront-sdk/*": [
-        "./packages/shopana-storefront-sdk/src/*"
-      ],
-      "@shopana/storefront-sdk/core": [
-        "./packages/shopana-storefront-sdk/src/core/index.ts"
-      ],
-      "@shopana/storefront-sdk/shop": [
-        "./packages/shopana-storefront-sdk/src/shop/index.ts"
-      ],
-      "@shopana/storefront-sdk/sdk": [
-        "./packages/shopana-storefront-sdk/src/sdk/index.ts"
-      ],
-      "@shopana/storefront-sdk/app/[[...slug]]/page": [
-        "./packages/shopana-storefront-sdk/src/app/[[...slug]]/page.tsx"
+        "./packages/shopana-storefront-sdk/dist/*"
       ]
     },
     "target": "esnext",
