@@ -3,26 +3,24 @@
 import { Flex } from "antd";
 import React from "react";
 import { createStyles } from "antd-style";
-import SectionTitle from "./SectionTitle";
-import ViewAllButton from "./ViewAllButton";
+import { SectionTitle, ViewAllButton, LoadMoreBtn } from "@/sections/shared";
 import { useCategory } from "@src/hooks/useCategory";
 import { useLocale } from "next-intl";
 import { usePaginationFragment } from "react-relay";
 import Listing from "@src/queries/Listing";
-import { ProductsGrid } from "../Listing/ProductsGrid ";
-import { LoadMoreBtn } from "./LoadMoreBtn";
-import { mq } from "../Theme/breakpoints";
+import { ProductsGrid } from "@src/components/Listing/ProductsGrid ";
+import { mq } from "@src/components/Theme/breakpoints";
 import clsx from "clsx";
 
-interface HomeGridProps {
+interface HomeProductGridSectionProps {
   categoryHandle: string;
   paginationCount?: number;
 }
 
-export const HomeProductGrid = ({
+export default function HomeProductGridSection({
   categoryHandle,
   paginationCount = 16,
-}: HomeGridProps) => {
+}: HomeProductGridSectionProps) {
   const { styles } = useStyles();
   const locale = useLocale();
 
@@ -56,7 +54,7 @@ export const HomeProductGrid = ({
       </Flex>
     </div>
   );
-};
+}
 
 const useStyles = createStyles(({ token, css }) => {
   return {
@@ -70,3 +68,5 @@ const useStyles = createStyles(({ token, css }) => {
     productsGrid: css``,
   };
 });
+
+export { HomeProductGridSection };

@@ -2,13 +2,12 @@
 
 import { Flex } from "antd";
 import type { model } from "@shopana/storefront-sdk";
-import ViewAllButton from "../ViewAllButton";
-import SectionTitle from "../SectionTitle";
 import { useLocale } from "next-intl";
 import { useMemo } from "react";
-import CategoryCardCircle from "./CategoryCardCircle";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
+import { SectionTitle, ViewAllButton } from "@/sections/shared";
+import CategoryCardCircle from "./CategoryCardCircle";
 import CategoryCard from "./CategoryCard";
 
 export interface CategoryGridSectionProps {
@@ -46,7 +45,6 @@ export default function CategoryGridSection({
             <CategoryCard
               key={category.id}
               category={category}
-              /* categoryRef={category} */
             />
           )
         )}

@@ -9,33 +9,10 @@ import Link from "next/link";
 
 const { Text } = Typography;
 
-/* import { graphql, useFragment } from "react-relay";
-
-const categoryCardFragment = graphql`
-  fragment CategoryCardFragment on Category {
-    id
-    title
-    handle
-    cover {
-      url
-    }
-  }
-`;
-
-interface Props {
-  categoryRef: any;
-}
-
-
-export default function CategoryCard({ categoryRef }: Props) {
-  const category = useFragment(categoryFragment, categoryRef);
-  return (
-  );
-} */
-
 interface Prop {
   category: model.Category;
 }
+
 export default function CategoryCard({ category }: Prop) {
   const { styles } = useStyles();
   const locale = useLocale();

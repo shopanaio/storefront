@@ -1,7 +1,7 @@
 import { graphql } from 'relay-runtime';
 
 export const CategoryFragment = graphql`
-  fragment CategoryFragment_category on Category {
+  fragment CategoryFragment_category on Category @inline {
     id
     title
     handle

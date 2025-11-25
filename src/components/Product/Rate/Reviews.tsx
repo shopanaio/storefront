@@ -20,7 +20,7 @@ import { usePaginationFragment } from "react-relay";
 import { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
 import Reviews from "@src/queries/Reviews";
 import { SortPopover, SortOption } from "./SortPopover";
-import { LoadMoreBtn } from "@src/components/Home/LoadMoreBtn";
+import { LoadMoreBtn } from "@/sections/shared";
 import {
   PRODUCT_REVIEWS_DEFAULT_SORT,
   PRODUCT_REVIEWS_PAGE_SIZE,

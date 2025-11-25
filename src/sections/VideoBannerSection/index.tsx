@@ -10,18 +10,18 @@ import { mq } from "@src/components/Theme/breakpoints";
 
 const { Text } = Typography;
 
-export interface VideoBannerProps {
+export interface VideoBannerSectionProps {
   title: string;
   description: string;
   video: string;
   cover: string;
 }
 
-export default function VideoBanner({
+export default function VideoBannerSection({
   title,
   description,
   video,
-}: VideoBannerProps) {
+}: VideoBannerSectionProps) {
   const t = useTranslations("Home");
   const { styles } = useStyles();
   const [isPlaying, setIsPlaying] = useState(false);

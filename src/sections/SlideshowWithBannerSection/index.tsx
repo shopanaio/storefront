@@ -9,13 +9,11 @@ import Banner from "./Banner";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
-import { UniversalSlider } from "../ProductSlideshow/UniversalSwiper";
-import ViewAllButton from "../ViewAllButton";
+import { UniversalSlider, ViewAllButton, SliderNavButtons } from "@/sections/shared";
 import { useLocale } from "next-intl";
-import SliderNavButtons from "../SliderNavButtons";
 import React from "react";
 
-export interface HomeSliderWithBannerProps {
+export interface SlideshowWithBannerSectionProps {
   title: string;
   sources: model.Category[];
   banner: {
@@ -25,12 +23,12 @@ export interface HomeSliderWithBannerProps {
   pagination: boolean;
 }
 
-export default function HomeSliderWithBanner({
+export default function SlideshowWithBannerSection({
   title,
   sources,
   banner,
 }: // pagination,
-HomeSliderWithBannerProps) {
+SlideshowWithBannerSectionProps) {
   const locale = useLocale();
   const { styles } = useStyles();
 
@@ -38,7 +36,7 @@ HomeSliderWithBannerProps) {
     () =>
       sources
         .map((cat) =>
-          cat.listing?.edges?.map((edge: { node: ApiProduct }) => edge.node)
+          cat.listing?.edges?.map((edge: { node: any }) => edge.node)
         )
         .flat(),
     [sources]
@@ -51,7 +49,7 @@ HomeSliderWithBannerProps) {
       <div className={styles.grid}>
         {banner.placement === "before" && (
           <div className={styles.banner}>
-            <Banner banner={banner.entry as ApiProduct} />
+            <Banner banner={banner.entry as any} />
           </div>
         )}
 
@@ -90,7 +88,7 @@ HomeSliderWithBannerProps) {
 
         {banner.placement === "after" && (
           <div className={styles.banner}>
-            <Banner banner={banner.entry as ApiProduct} />
+            <Banner banner={banner.entry as any} />
           </div>
         )}
       </div>

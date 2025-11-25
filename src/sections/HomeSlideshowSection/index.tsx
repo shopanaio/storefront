@@ -8,11 +8,7 @@ import { Flex } from 'antd';
 import { useRef } from 'react';
 import type { Swiper as SwiperType } from 'swiper';
 import { useLocale } from 'next-intl';
-import SectionTitle from '@/components/Home/SectionTitle';
-import SliderNavButtons from '@/components/Home/SliderNavButtons';
-import ViewAllButton from '@/components/Home/ViewAllButton';
-import SwiperContainer from '@/components/Home/ProductSlideshow/SwiperContainer';
-import { UniversalSlider } from '@/components/Home/ProductSlideshow/UniversalSwiper';
+import { SectionTitle, SliderNavButtons, ViewAllButton, SwiperContainer, UniversalSlider } from '@/sections/shared';
 import { HomeSlideshowProductCard } from './ProductCard';
 
 type CategoryKey = 'electronics' | 'sport' | 'toys';

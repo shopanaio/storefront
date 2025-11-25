@@ -1,7 +1,7 @@
 'use client';
 
 import type { SectionProps } from '@shopana/storefront-sdk/core/types';
-import { HomeProductGrid } from '@/components/Home/HomeProductGrid';
+import HomeProductGridSection from '@/sections/HomeProductGridSection';
 
 interface ProductGridSectionSettings {
   categoryHandle: string;
@@ -12,7 +12,7 @@ export default function ProductGridSection({
   settings,
 }: SectionProps<ProductGridSectionSettings>) {
   return (
-    <HomeProductGrid
+    <HomeProductGridSection
       categoryHandle={settings.categoryHandle}
       paginationCount={settings.paginationCount}
     />
