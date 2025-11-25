@@ -5,6 +5,7 @@ import type { CartConfig } from './modules/cart/core/config';
 import type { RelayEnvironmentConfig } from './graphql/relay/types';
 import { loadCartServerQuery } from './modules/cart/next/loaders/loadCartServerQuery';
 import { loadSessionServerQuery } from './modules/session/next/loaders/loadSessionServerQuery';
+import { setEnvironmentConfig } from './config';
 
 export interface AppProviderProps {
   children: React.ReactNode;
@@ -59,6 +60,7 @@ export async function AppProvider({
   shopConfig,
   cartConfig,
 }: AppProviderProps) {
+  setEnvironmentConfig(environmentConfig);
   // Load cart and session data on server in parallel
   const [preloadedCartQuery, preloadedSessionQuery] = await Promise.all([
     loadCartServerQuery({

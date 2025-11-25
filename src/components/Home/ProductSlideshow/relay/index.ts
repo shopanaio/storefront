@@ -1,8 +1,13 @@
 import { cmsPick } from "@src/cms/pick";
-import useProductSlideShowShopanaFragment from "./useProductSlideshowFragment.shopana";
 import useProductSlideShowShopifyFragment from "./useProductSlideshowFragment.shopify";
 
+const deprecatedShopanaFragment = () => {
+  throw new Error(
+    "Shopana home page fragment has moved to the storefront SDK module."
+  );
+};
+
 export default cmsPick({
-  shopana: useProductSlideShowShopanaFragment,
+  shopana: deprecatedShopanaFragment,
   shopify: useProductSlideShowShopifyFragment,
 });

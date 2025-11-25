@@ -1,48 +1,29 @@
-// Home page template
-import type { Template } from "@shopana/storefront-sdk/core/types";
-
-// Import components
+import type { Template } from '@shopana/storefront-sdk/core/types';
 import MainLayout from '@/layout/MainLayout';
-import HelloSection from '@/sections/HelloSection';
-import TextBlock from '@/blocks/TextBlock';
+import HeroSection from '@/sections/HeroSection';
+import CategoryProductsSection from '@/sections/CategoryProductsSection';
 
-// Define the template structure
 const homeTemplate: Template = {
   layout: {
     component: MainLayout,
   },
   sections: {
-    order: ['hero'],
+    order: ['hero', 'electronics', 'sport', 'toys'],
     hero: {
-      component: HelloSection,
-      settings: {
-        title: 'Hello World!',
-        subtitle: 'Welcome to the Shopana Page Builder Framework',
-      },
-      blocks: {
-        order: ['intro', 'features', 'status'],
-        intro: {
-          component: TextBlock,
-          settings: {
-            text: 'This is a demonstration of the @shopana/storefront-sdk framework integration.',
-            variant: 'default',
-          },
-        },
-        features: {
-          component: TextBlock,
-          settings: {
-            text: 'The framework provides a type-safe, code-first approach to building e-commerce pages with React Server Components.',
-            variant: 'highlight',
-          },
-        },
-        status: {
-          component: TextBlock,
-          settings: {
-            text: 'Task #11: Framework integration is complete! ✓',
-            variant: 'muted',
-          },
-        },
-      },
+      component: HeroSection,
+      settings: {},
+    },
+    electronics: {
+      component: CategoryProductsSection,
+      settings: { categoryKey: 'electronics' },
+    },
+    sport: {
+      component: CategoryProductsSection,
+      settings: { categoryKey: 'sport' },
+    },
+    toys: {
+      component: CategoryProductsSection,
+      settings: { categoryKey: 'toys' },
     },
   },
 };

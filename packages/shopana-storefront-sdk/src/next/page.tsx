@@ -1,11 +1,19 @@
+/**
+ * This file is exported as source (.tsx) via package.json exports.
+ * All imports from SDK modules MUST use package imports (@shopana/storefront-sdk/...)
+ * instead of relative imports (../modules/...) to ensure the same module instances
+ * are used as external consumers.
+ */
 import type { Metadata } from 'next';
-import type {
-  PageTemplate,
-  TemplateParams,
-} from '../core/types';
+import type { ReactNode } from 'react';
+import type { PageTemplate, TemplateParams } from '../core/types';
 import { Builder } from '../core/Builder';
 import { parseRoute } from '../utils/routeParser';
 import { notFound } from 'next/navigation';
+import type { SerializablePreloadedQuery } from '../graphql/relay/loadSerializableQuery';
+import { loadHomeServerQuery } from '@shopana/storefront-sdk/modules/home/next/loaders/loadHomeServerQuery';
+import { HomeDataProvider } from '@shopana/storefront-sdk/modules/home/react/providers/HomeDataProvider';
+import type { RelayEnvironmentConfig } from '../graphql/relay/types';
 
 type SlugParam = string[] | undefined;
 
@@ -50,12 +58,29 @@ async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
   }
 }
 
-// Internal framework data loader (will be replaced with SDK later)
-// This is where framework's server SDK will fetch data from backend
-async function loadPageData(_ctx: TemplateParams): Promise<any> {
-  // TODO: Replace with actual SDK implementation
-  // For now, return empty data object
-  return {};
+interface HomePageData {
+  preloadedQuery: SerializablePreloadedQuery<any, any>;
+}
+
+type LoadedPageData = HomePageData | null;
+
+async function loadPageData(
+  ctx: TemplateParams,
+  environmentConfig: RelayEnvironmentConfig,
+): Promise<LoadedPageData> {
+  const { pageType } = ctx;
+
+  switch (pageType) {
+    case 'home': {
+      const preloadedQuery = await loadHomeServerQuery({
+        environmentConfig,
+      });
+
+      return { preloadedQuery };
+    }
+    default:
+      return null;
+  }
 }
 
 // Internal framework metadata builder (will be replaced with SDK later)
@@ -73,63 +98,116 @@ async function buildPageMetadata(ctx: TemplateParams): Promise<Metadata> {
   };
 }
 
-// Generate metadata for the page
-export async function generateMetadata({
-  params,
-  searchParams,
+function PageWrapper({
+  pageType,
+  data,
+  children,
 }: {
-  params: Promise<{ slug?: SlugParam }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}): Promise<Metadata> {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  const { pageType, params: routeParams } = parseRoute(
-    resolvedParams.slug ?? []
-  );
+  pageType: string;
+  data: LoadedPageData;
+  children: ReactNode;
+}) {
+  switch (pageType) {
+    case 'home': {
+      if (!data) {
+        throw new Error('Home page data was not loaded');
+      }
 
-  return buildPageMetadata({
-    pageType,
-    params: routeParams,
-    searchParams: resolvedSearchParams,
-  });
+      return (
+        <HomeDataProvider preloadedQuery={data.preloadedQuery}>
+          {children}
+        </HomeDataProvider>
+      );
+    }
+    default:
+      return <>{children}</>;
+  }
 }
 
-// Main page component
-export default async function Page({ params, searchParams }: PageProps) {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
+export interface CreateSDKPageOptions {
+  environmentConfig: RelayEnvironmentConfig;
+}
 
-  const { pageType, params: routeParams } = parseRoute(
-    resolvedParams.slug ?? []
-  );
+/**
+ * Factory function to create SDK page exports with configuration.
+ *
+ * @example
+ * ```tsx
+ * // app/[...slug]/page.tsx
+ * import { createSDKPage } from '@shopana/storefront-sdk/next/page';
+ * import { environmentConfig } from '@/config/environment.config';
+ *
+ * const { Page, generateMetadata } = createSDKPage({ environmentConfig });
+ *
+ * export default Page;
+ * export { generateMetadata };
+ * ```
+ */
+export function createSDKPage(options: CreateSDKPageOptions) {
+  const { environmentConfig } = options;
 
-  // Handle 404
-  if (pageType === '404') {
-    notFound();
+  async function generateMetadata({
+    params,
+    searchParams,
+  }: {
+    params: Promise<{ slug?: SlugParam }>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  }): Promise<Metadata> {
+    const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
+    const { pageType, params: routeParams } = parseRoute(
+      resolvedParams.slug ?? [],
+    );
+
+    return buildPageMetadata({
+      pageType,
+      params: routeParams,
+      searchParams: resolvedSearchParams,
+    });
   }
 
-  // Load template dynamically from user project
-  const template = await loadTemplate(pageType);
+  async function Page({ params, searchParams }: PageProps) {
+    const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
 
-  if (!template) {
-    console.error(`No template found for pageType: ${pageType}`);
-    notFound();
+    const { pageType, params: routeParams } = parseRoute(
+      resolvedParams.slug ?? [],
+    );
+
+    // Handle 404
+    if (pageType === '404') {
+      notFound();
+    }
+
+    // Load template dynamically from user project
+    const template = await loadTemplate(pageType);
+
+    if (!template) {
+      console.error(`No template found for pageType: ${pageType}`);
+      notFound();
+    }
+
+    // Load data using framework's internal data loader
+    const data = await loadPageData(
+      {
+        pageType,
+        params: routeParams,
+        searchParams: resolvedSearchParams,
+      },
+      environmentConfig,
+    );
+
+    return (
+      <PageWrapper pageType={pageType} data={data}>
+        <Builder
+          template={template}
+          data={data}
+          pageType={pageType}
+          fallback={<div>Loading...</div>}
+        />
+      </PageWrapper>
+    );
   }
 
-  // Load data using framework's internal data loader
-  const data = await loadPageData({
-    pageType,
-    params: routeParams,
-    searchParams: resolvedSearchParams,
-  });
-
-  // Render using Builder
-  return (
-    <Builder
-      template={template}
-      data={data}
-      pageType={pageType}
-      fallback={<div>Loading...</div>}
-    />
-  );
+  return { Page, generateMetadata };
 }

@@ -1,18 +1,18 @@
-import { graphql } from "relay-runtime";
+import { graphql } from 'relay-runtime';
 
 export const HomePageQuery = graphql`
   query HomePageQuery {
     electronics: category(handle: "electronics") {
       title
-      ...useProductSlideshowFragment_category
+      ...CategoryFragment_category
     }
     toys: category(handle: "toys-kids") {
       title
-      ...useProductSlideshowFragment_category
+      ...CategoryFragment_category
     }
     sport: category(handle: "sport-i-otdyh") {
       title
-      ...useProductSlideshowFragment_category
+      ...CategoryFragment_category
     }
     homeAndGarden: category(handle: "home-garden") {
       id
@@ -21,10 +21,13 @@ export const HomePageQuery = graphql`
       children(first: 10) {
         edges {
           node {
-            ...useProductSlideshowFragment_category
+            ...CategoryFragment_category
           }
         }
       }
     }
   }
 `;
+
+export { default as HomePageQueryNode } from './__generated__/HomePageQuery.graphql';
+export type { HomePageQuery as HomePageQueryType } from './__generated__/HomePageQuery.graphql';
