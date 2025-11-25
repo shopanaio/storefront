@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { usePreloadedQuery, useRelayEnvironment } from 'react-relay';
+import { usePreloadedQuery, useRelayEnvironment, readInlineData } from 'react-relay';
 import { useSerializablePreloadedQuery } from '../../../../graphql/relay/useSerializablePreloadedQuery';
 import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
 import { HomeDataContext } from '../context/HomeDataContext';
@@ -14,6 +14,10 @@ import type {
 import HomePageQueryNode, {
   HomePageQuery,
 } from '../../core/graphql/queries/__generated__/HomePageQuery.graphql';
+import CategoryFragmentNode, {
+  CategoryFragment_category$key,
+  CategoryFragment_category$data,
+} from '../../core/graphql/fragments/__generated__/CategoryFragment_category.graphql';
 
 interface HomeDataProviderProps {
   children: ReactNode;
@@ -23,27 +27,37 @@ interface HomeDataProviderProps {
   >;
 }
 
-function transformCategory(category: any): HomeCategory | null {
+function transformCategory(categoryRef: CategoryFragment_category$key | null | undefined): HomeCategory | null {
+  if (!categoryRef) {
+    return null;
+  }
+
+  const category = readInlineData(
+    CategoryFragmentNode,
+    categoryRef,
+  ) as CategoryFragment_category$data | null;
+
   if (!category) {
     return null;
   }
 
-  const listingEdges = category.listing?.edges as Array<{ node: any }> | undefined;
+  const listingEdges = category.listing?.edges;
 
   const mappedProducts: Array<HomeProduct | null> =
     listingEdges?.map((edge) => {
-      if (!edge?.node) {
+      const node = edge?.node;
+      if (!node?.id || !node?.title || !node?.handle || !node?.price || !node?.product) {
         return null;
       }
 
       return {
-        id: edge.node.id,
-        title: edge.node.title,
-        handle: edge.node.handle,
-        price: edge.node.price,
-        compareAtPrice: edge.node.compareAtPrice,
-        image: edge.node.cover,
-        product: edge.node.product,
+        id: node.id,
+        title: node.title,
+        handle: node.handle,
+        price: node.price,
+        compareAtPrice: node.compareAtPrice,
+        image: node.cover,
+        product: node.product,
       };
     }) ?? [];
 
