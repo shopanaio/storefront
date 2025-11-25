@@ -4,7 +4,7 @@ import { Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { useConfirm } from "@src/components/UI/Confirm/useConfirm";
 
 const { Text } = Typography;

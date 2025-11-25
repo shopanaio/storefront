@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { useCallback, useMemo, useState } from 'react';
 import { OptionDrawerLayout } from './DrawerLayout';
 import { DrawerGrid } from './DrawerGrid';
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { OptionHeader } from './Header';
 import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
 import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';

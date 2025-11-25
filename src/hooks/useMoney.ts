@@ -1,5 +1,5 @@
 import { CurrencyCode } from "@codegen/schema-client";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { useMemo } from "react";
 
 export type UseMoneyValue = {

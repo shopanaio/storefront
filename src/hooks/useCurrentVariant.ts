@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 
 interface UseCurrentVariantProps {
   /** Base product entity with all data */

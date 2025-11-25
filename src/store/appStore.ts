@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { CurrencyCode } from '@codegen/schema-client';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ProductType } from '@src/modules/storefront-box-builder-module/config/types';

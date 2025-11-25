@@ -7,7 +7,7 @@ import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";
 import clsx from "clsx";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 
 interface CartTableListProps {
   cartLines: model.CartLine[];

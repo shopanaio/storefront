@@ -8,7 +8,7 @@ import { ProductCollapse } from "./ProductCollapse";
 import { mq } from "@src/components/Theme/breakpoints";
 import { ProductSpecification } from "./ProductSpecification";
 import { ShowMoreBtn } from "./ShowMoreBtn";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "./Rate/Reviews";
 import type { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";

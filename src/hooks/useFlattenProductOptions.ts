@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import _ from "lodash";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 
 /**
  * Hook for processing and structuring product options

@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { Price } from '../UI/Price/Price';
 import { SaleBadge } from '../UI/Badges/Sale';
 import { calcSaleMoney } from '@src/utils/calcSaleMoney';

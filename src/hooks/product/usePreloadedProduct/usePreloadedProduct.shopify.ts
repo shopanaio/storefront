@@ -1,7 +1,7 @@
 import ProductQuery from "@src/hooks/product/ProductQuery";
 import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import type { UsePreloadedProductResult } from "./types";
 
 // Function for converting Shopify product to Shopana format

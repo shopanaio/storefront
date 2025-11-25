@@ -1,4 +1,4 @@
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { useMoney } from "@src/hooks/useMoney";
 import type { ComponentPropsWithoutRef, ElementType, ReactElement } from "react";
 import { createElement } from "react";

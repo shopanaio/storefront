@@ -1,6 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import { create } from 'zustand';
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 
 export interface Session {
   user: model.User | null;

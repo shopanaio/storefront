@@ -2,7 +2,7 @@
 
 import { Card, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 

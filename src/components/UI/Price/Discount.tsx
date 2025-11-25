@@ -5,7 +5,7 @@ import { createStyles } from "antd-style";
 import React from "react";
 
 import { SaleBadge } from "@src/components/UI/Badges/Sale";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 import { Money } from "@src/components/UI/Price/Money";
 
 export interface Props {

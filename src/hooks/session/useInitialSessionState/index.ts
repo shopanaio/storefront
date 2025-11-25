@@ -3,7 +3,7 @@ import { useInitialSessionStateShopify } from "@src/hooks/session/useInitialSess
 import { useInitialSessionStateShopana } from "@src/hooks/session/useInitialSessionState/useInitialSessionState.shopana";
 import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
 import { ConcreteRequest, OperationType } from "relay-runtime";
-import type { model } from "@shopana/storefront-sdk/model/namespace";
+import type { model } from "@shopana/storefront-sdk";
 
 // Interface for input props
 export interface UseInitialSessionStateProps {
