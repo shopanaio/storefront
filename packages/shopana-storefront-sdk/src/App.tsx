@@ -17,6 +17,7 @@ import type { RelayEnvironmentConfig } from './graphql/relay/types';
 import type { Environment } from 'relay-runtime';
 import { SessionProvider } from './modules/session/react/context/SessionContext';
 import { createSessionStoreZustand } from './modules/session/react/store/SessionStoreZustand';
+import { QueryProvider } from './next/relay/QueryProvider';
 
 // Client-side singleton
 let clientEnvironment: Environment | null = null;
@@ -108,7 +109,13 @@ const AppProviders: React.FC<AppProvidersProps> = ({
             config={cartConfig}
             initialCartData={initialCartPreloadedQuery ?? undefined}
           >
-            {children}
+            {preloadedSessionQuery ? (
+              <QueryProvider preloadedQuery={preloadedSessionQuery}>
+                {children}
+              </QueryProvider>
+            ) : (
+              children
+            )}
           </CartProvider>
         </SessionProvider>
       </ShopProvider>
