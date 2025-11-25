@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { headers } from "next/headers";
-import loadSerializableQuery, {
+import {
+  loadSerializableQuery,
   SerializablePreloadedQuery,
-} from "@src/relay/loadSerializableQuery";
+} from "@shopana/storefront-sdk/next/relay";
+import { networkFetch } from "@src/relay/networkFetch";
 import HomePageQueryNode, {
   HomePageQuery,
 } from "@src/hooks/home/HomePageQuery/__generated__/HomePageQuery.graphql";
@@ -13,12 +14,10 @@ import HomePageQueryNode, {
 const loadHomeServerQuery = async (): Promise<
   SerializablePreloadedQuery<any, any>
 > => {
-  const cookie = (await headers()).get("cookie") ?? undefined;
-
   const preloadedQuery = await loadSerializableQuery<
     typeof HomePageQueryNode,
     HomePageQuery
-  >(HomePageQueryNode.params, {}, cookie);
+  >(networkFetch, HomePageQueryNode.params, {});
 
   return preloadedQuery;
 };

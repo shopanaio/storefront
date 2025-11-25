@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import accessTokenUtils from "@src/utils/accessToken";
-import loadSerializableQuery, {
+import {
+  loadSerializableQuery,
   SerializablePreloadedQuery,
-} from "@src/relay/loadSerializableQuery";
+} from "@shopana/storefront-sdk/next/relay";
+import { networkFetch } from "@src/relay/networkFetch";
 import useGetSessionQuery from "@src/hooks/session/useGetSession/__generated__/useGetSessionQuery.graphql";
 import { QueryProvider } from "@src/providers/relay-query-provider";
 import { ConcreteRequest, OperationType } from "relay-runtime";
@@ -22,9 +24,9 @@ export async function SessionServerProvider({
 
   if (customerAccessToken) {
     preloadedSessionQuery = await loadSerializableQuery(
+      networkFetch,
       useGetSessionQuery.params,
-      { customerAccessToken },
-      cookie
+      { customerAccessToken }
     );
   } else {
     preloadedSessionQuery = {

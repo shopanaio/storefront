@@ -13,4 +13,5 @@ export { logError, configureLogger } from '../utils/logger';
 export type { LogLevel, LogContext, LogErrorOptions } from '../utils/logger';
 
 // Re-export Relay integration for Next.js
-export { QueryProvider, useQuery } from './relay';
+export { QueryProvider, useQuery, loadSerializableQuery } from './relay';
+export type { SerializablePreloadedQuery } from './relay';

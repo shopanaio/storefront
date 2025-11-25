@@ -1,6 +1,6 @@
-import { headers } from "next/headers";
 import React from "react";
-import loadSerializableQuery from "@src/relay/loadSerializableQuery";
+import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay";
+import { networkFetch } from "@src/relay/networkFetch";
 import SearchQueryNode, {
   SearchQuery,
 } from "@src/hooks/search/SearchQuery/__generated__/SearchQuery.graphql";
@@ -21,13 +21,13 @@ interface SearchPageProps {
 export default async function SearchPage(props: SearchPageProps) {
   const searchParams = await props.searchParams;
   const { q, sort } = searchParams;
-  const cookie = (await headers()).get("cookie") ?? undefined;
 
   // Load data on server
   const preloadedQuery = await loadSerializableQuery<
     typeof SearchQueryNode,
     SearchQuery
   >(
+    networkFetch,
     SearchQueryNode.params,
     {
       query: q.trim(),
@@ -35,8 +35,7 @@ export default async function SearchPage(props: SearchPageProps) {
       after: null,
       sort: (sort as ListingSort) || ListingSort.MostRelevant,
       filters: [], // For now use empty filters, they will be updated on client
-    },
-    cookie
+    }
   );
 
   // Check data availability

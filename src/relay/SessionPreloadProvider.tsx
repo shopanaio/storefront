@@ -5,7 +5,8 @@ import { useGetSessionQuery as useGetSessionQueryType } from "@src/hooks/session
 import { ConcreteRequest } from "relay-runtime";
 import { useRelayEnvironment } from "react-relay";
 import useSerializablePreloadedQuery from "@src/relay/useSerializablePreloadedQuery";
-import loadSerializableQuery from "@src/relay/loadSerializableQuery";
+import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay";
+import { networkFetch } from "@src/relay/networkFetch";
 import useGetSessionQuery from "@src/hooks/session/__generated__/useGetSessionQuery.graphql";
 import { useSession } from "@src/store/sessionStore";
 

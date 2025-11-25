@@ -1,8 +1,9 @@
 
-import { headers } from "next/headers";
-import loadSerializableQuery, {
+import {
+  loadSerializableQuery,
   SerializablePreloadedQuery,
-} from "@src/relay/loadSerializableQuery";
+} from "@shopana/storefront-sdk/next/relay";
+import { networkFetch } from "@src/relay/networkFetch";
 import CategoryQueryNode, {
   CategoryQuery,
 } from "@src/queries/CategoryQuery/__generated__/CategoryQuery.graphql";
@@ -24,20 +25,18 @@ const loadCategoryServerQuery = async ({
 }: LoadCategoryServerQueryParams): Promise<
   SerializablePreloadedQuery<any, any>
 > => {
-  const cookie = (await headers()).get("cookie") ?? undefined;
-
   const preloadedQuery = await loadSerializableQuery<
     typeof CategoryQueryNode,
     CategoryQuery
   >(
+    networkFetch,
     CategoryQueryNode.params,
     {
       handle,
       first,
       sort,
       filters,
-    },
-    cookie
+    }
   );
 
   return preloadedQuery;

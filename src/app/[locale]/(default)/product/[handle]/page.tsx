@@ -26,7 +26,7 @@
  * "use client";
  *
  * import React, { createContext, useContext } from "react";
- * import { SerializablePreloadedQuery } from "@src/relay/loadSerializableQuery";
+ * import { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay";
  * import { YourPageQuery as YourPageQueryType } from "@src/relay/queries/__generated__/YourPageQuery.graphql";
  * import { ConcreteRequest } from "relay-runtime";
  *
@@ -141,9 +141,9 @@
  * - all data should come from server through hydration.
  */
 
-import { headers } from "next/headers";
 import React from "react";
-import loadSerializableQuery from "@src/relay/loadSerializableQuery";
+import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay";
+import { networkFetch } from "@src/relay/networkFetch";
 import ProductQueryNode, {
   ProductQuery as ProductQueryType,
 } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
@@ -165,20 +165,19 @@ interface ProductPageProps {
 export default async function ProductPage(props: ProductPageProps) {
   const params = await props.params;
   const { handle } = params;
-  const cookie = (await headers()).get("cookie") ?? undefined;
 
   // Load data on server with default parameters for Reviews fragment
   const preloadedQuery = await loadSerializableQuery<
     typeof ProductQueryNode,
     ProductQueryType
   >(
+    networkFetch,
     ProductQueryNode.params,
     {
       handle,
       first: PRODUCT_REVIEWS_PAGE_SIZE,
       sort: PRODUCT_REVIEWS_DEFAULT_SORT,
-    },
-    cookie
+    }
   );
 
   // Check data availability
