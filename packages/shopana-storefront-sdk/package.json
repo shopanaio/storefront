@@ -17,7 +17,8 @@
     "./*": "./dist/*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/copy-generated.cjs",
+    "relay": "CMS=shopana ../../node_modules/.bin/relay-compiler relay.shopana.json",
+    "build": "yarn relay && tsc -p tsconfig.json && node scripts/copy-generated.cjs",
     "dev": "tsc -p tsconfig.json --watch",
     "clean": "rimraf dist",
     "test": "vitest run",

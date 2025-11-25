@@ -1,15 +1,8 @@
 'use client';
 
-import { graphql, useMutation } from 'react-relay/hooks';
-
-/**
- * GraphQL mutation for signing out
- */
-const useSignOutMutation = graphql`
-  mutation useSignOutMutation {
-    signOut
-  }
-`;
+import { useMutation } from 'react-relay/hooks';
+import type { signOutMutation as SignOutMutationType } from '../../../core/graphql/mutations/__generated__/signOutMutation.graphql';
+import { signOutMutation } from '../../../core/graphql/mutations/signOutMutation';
 
 /**
  * Hook to sign out the current user
@@ -32,7 +25,7 @@ const useSignOutMutation = graphql`
  * ```
  */
 export const useSignOut = () => {
-  return useMutation(useSignOutMutation);
+  return useMutation<SignOutMutationType>(signOutMutation);
 };
 
 export default useSignOut;

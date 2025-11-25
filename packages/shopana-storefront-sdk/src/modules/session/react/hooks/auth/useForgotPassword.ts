@@ -1,21 +1,8 @@
 'use client';
 
-import { graphql, useMutation } from 'react-relay/hooks';
-
-/**
- * GraphQL mutation for requesting password recovery
- */
-const useForgotPasswordMutation = graphql`
-  mutation useForgotPasswordMutation($input: PasswordRecoveryInput!) {
-    requestPasswordRecovery(input: $input) {
-      success
-      clientMutationId
-      errors {
-        message
-      }
-    }
-  }
-`;
+import { useMutation } from 'react-relay/hooks';
+import type { forgotPasswordMutation as ForgotPasswordMutationType } from '../../../core/graphql/mutations/__generated__/forgotPasswordMutation.graphql';
+import { forgotPasswordMutation } from '../../../core/graphql/mutations/forgotPasswordMutation';
 
 /**
  * Hook to request password recovery/reset
@@ -41,7 +28,7 @@ const useForgotPasswordMutation = graphql`
  * ```
  */
 export const useForgotPassword = () => {
-  return useMutation(useForgotPasswordMutation);
+  return useMutation<ForgotPasswordMutationType>(forgotPasswordMutation);
 };
 
 export default useForgotPassword;

@@ -1,27 +1,8 @@
 'use client';
 
-import { graphql, useMutation } from 'react-relay/hooks';
-
-/**
- * GraphQL mutation for signing up with email and password
- */
-const useSignUpMutation = graphql`
-  mutation useSignUpMutation($input: PasswordSignUpInput!) {
-    passwordSignUp(input: $input) {
-      session {
-        accessToken
-        user {
-          id
-          iid
-          email
-        }
-      }
-      errors {
-        message
-      }
-    }
-  }
-`;
+import { useMutation } from 'react-relay/hooks';
+import type { signUpMutation as SignUpMutationType } from '../../../core/graphql/mutations/__generated__/signUpMutation.graphql';
+import { signUpMutation } from '../../../core/graphql/mutations/signUpMutation';
 
 /**
  * Hook to sign up a new user with email and password
@@ -52,7 +33,7 @@ const useSignUpMutation = graphql`
  * ```
  */
 export const useSignUp = () => {
-  return useMutation(useSignUpMutation);
+  return useMutation<SignUpMutationType>(signUpMutation);
 };
 
 export default useSignUp;
