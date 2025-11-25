@@ -1,35 +1,58 @@
+/**
+ * Session Client Provider - SDK Integration
+ *
+ * This file re-exports SessionProvider from the SDK.
+ * All session management logic has been moved to @shopana/storefront-sdk
+ *
+ * @deprecated Use SessionProvider directly from SDK instead
+ */
+
 "use client";
 
-import { type ReactNode, createContext, useRef } from "react";
-import {
-  type SessionStore,
-  createSessionStore,
-  defaultInitState,
-} from "@src/store/sessionStore";
+import React, { type ReactNode } from "react";
+import { SessionProvider as SDKSessionProvider } from '@shopana/storefront-sdk/modules/session/react';
+import { createSessionStoreZustand, type Session } from '@src/store/sessionStore';
 
-export type SessionStoreApi = ReturnType<typeof createSessionStore>;
+// Re-export everything from SDK
+export {
+  useSessionContext,
+  type SessionContextValue,
+  type SessionProviderProps,
+} from '@shopana/storefront-sdk/modules/session/react';
 
-export const SessionStoreContext = createContext<SessionStoreApi | undefined>(
-  undefined
-);
-
+// Backward compatible props type
 export interface SessionStoreProviderProps {
   children: ReactNode;
-  initialState?: Partial<SessionStore>;
+  initialState?: {
+    session?: Session | null;
+  };
 }
 
-export const SessionClientProvider = ({
+/**
+ * Backward compatible SessionClientProvider
+ * Creates per-tree session store instance (like CartProvider)
+ */
+export const SessionClientProvider: React.FC<SessionStoreProviderProps> = ({
   children,
   initialState,
-}: SessionStoreProviderProps) => {
-  const storeRef = useRef<SessionStoreApi | null>(null);
-  if (storeRef.current === null) {
-    storeRef.current = createSessionStore(initialState || defaultInitState);
+}) => {
+  // Create per-tree session store instance (no global singleton)
+  const sessionStoreInstance = React.useRef<ReturnType<
+    typeof createSessionStoreZustand
+  > | null>(null);
+
+  if (!sessionStoreInstance.current) {
+    sessionStoreInstance.current = createSessionStoreZustand(
+      initialState?.session ?? null
+    );
   }
 
   return (
-    <SessionStoreContext.Provider value={storeRef.current}>
+    <SDKSessionProvider store={sessionStoreInstance.current}>
       {children}
-    </SessionStoreContext.Provider>
+    </SDKSessionProvider>
   );
 };
+
+// Alias for SessionProvider
+export const SessionProvider = SDKSessionProvider;

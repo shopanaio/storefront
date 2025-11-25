@@ -1,25 +1,19 @@
-import { cmsPick } from "@src/cms/pick";
-import { useGetSessionDataShopana } from "./useGetSessionData.shopana";
-import { useGetSessionDataShopify } from "./useGetSessionData.shopify";
-import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
-import { ConcreteRequest, OperationType } from "relay-runtime";
+/**
+ * Get Session Data Hook - SDK Integration
+ *
+ * This file re-exports useGetSessionData from the SDK.
+ * All session management logic has been moved to @shopana/storefront-sdk
+ *
+ * @deprecated Use hooks from @shopana/storefront-sdk/modules/session/react instead
+ */
 
-// Interface for session data
-export interface SessionData {
-  user: any;
-  token: string | null;
-  expiresAt?: string | null;
-}
+// Re-export from SDK
+export {
+  useGetSessionData,
+  type SessionData,
+  type UseGetSessionDataProps,
+} from '@shopana/storefront-sdk/modules/session/react/hooks';
 
-// Interface for input data
-export interface UseGetSessionDataProps {
-  preloadedSessionQuery?: SerializablePreloadedQuery<
-    ConcreteRequest,
-    OperationType
-  >;
-}
-
-export default cmsPick({
-  shopana: useGetSessionDataShopana,
-  shopify: useGetSessionDataShopify,
-});
+// Default export for backward compatibility
+import { useGetSessionData } from '@shopana/storefront-sdk/modules/session/react/hooks';
+export default useGetSessionData;

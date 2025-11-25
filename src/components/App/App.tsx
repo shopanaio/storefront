@@ -5,7 +5,7 @@ import { Theme } from "@src/components/Theme/Theme";
 import { useQuery } from "@src/providers/relay-query-provider";
 import ConfirmPortalHost from "@src/components/UI/Confirm/ConfirmPortalHost";
 
-import useInitialSessionState from "@src/hooks/session/useInitialSessionState";
+import { useInitialSessionState } from "@shopana/storefront-sdk/modules/session/react/hooks";
 import { WishlistProvider } from "@src/modules/wishlist";
 
 interface IAppProps {
@@ -14,12 +14,12 @@ interface IAppProps {
 
 const App = ({ children }: IAppProps) => {
   const preloadedSessionQuery = useQuery();
-  const initialSessionState = useInitialSessionState({
+  const { session } = useInitialSessionState({
     preloadedSessionQuery,
   });
 
   return (
-    <SessionClientProvider initialState={initialSessionState}>
+    <SessionClientProvider initialState={{ session }}>
       <WishlistProvider>
         <Theme>
           {children}

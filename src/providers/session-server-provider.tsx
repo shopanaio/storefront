@@ -1,38 +1,22 @@
-import { headers } from "next/headers";
-import accessTokenUtils from "@src/utils/accessToken";
-import loadSerializableQuery from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
-import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
+/**
+ * Session Server Provider - SDK Integration
+ *
+ * Loads session data on server and provides it to the app via QueryProvider
+ */
+
+import { loadSessionServerQuery } from "@shopana/storefront-sdk/modules/session/next";
 import { environmentConfig } from "@src/config/environment.config";
-import useGetSessionQuery from "@src/hooks/session/useGetSession/__generated__/useGetSessionQuery.graphql";
 import { QueryProvider } from "@src/providers/relay-query-provider";
-import { ConcreteRequest, OperationType } from "relay-runtime";
 
 export async function SessionServerProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookie = (await headers()).get("cookie") ?? undefined;
-  const customerAccessToken = accessTokenUtils.getAccessTokenFromCookie(cookie);
-
-  let preloadedSessionQuery: SerializablePreloadedQuery<
-    ConcreteRequest,
-    OperationType
-  >;
-
-  if (customerAccessToken) {
-    preloadedSessionQuery = await loadSerializableQuery(
-      environmentConfig,
-      useGetSessionQuery.params,
-      { customerAccessToken }
-    );
-  } else {
-    preloadedSessionQuery = {
-      params: useGetSessionQuery.params,
-      variables: {} as any,
-      response: { data: {} } as any,
-    };
-  }
+  // Load session data on server
+  const preloadedSessionQuery = await loadSessionServerQuery({
+    environmentConfig,
+  });
 
   return (
     <QueryProvider preloadedQuery={preloadedSessionQuery}>

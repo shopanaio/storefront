@@ -15,7 +15,8 @@ import { useSerializablePreloadedQuery } from './graphql/relay/useSerializablePr
 import { createEnvironment } from './graphql/relay/Environment';
 import type { RelayEnvironmentConfig } from './graphql/relay/types';
 import type { Environment } from 'relay-runtime';
-import { SessionProvider } from './modules/session/react/providers/SessionProvider';
+import { SessionProvider } from './modules/session/react/context/SessionContext';
+import { createSessionStoreZustand } from './modules/session/react/store/SessionStoreZustand';
 
 // Client-side singleton
 let clientEnvironment: Environment | null = null;
@@ -78,11 +79,19 @@ export function App({
   preloadedSessionQuery,
 }: AppProps) {
   const environment = getOrCreateEnvironment(environmentConfig);
+
   // Extract initial cart entity from SSR preloaded query (for store hydration)
   const initialCart =
     preloadedCartQuery &&
     (preloadedCartQuery.response as any)?.data?.checkoutQuery?.checkout
       ? ((preloadedCartQuery.response as any).data.checkoutQuery.checkout as any)
+      : null;
+
+  // Extract initial session from SSR preloaded query
+  const initialSession =
+    preloadedSessionQuery &&
+    (preloadedSessionQuery.response as any)?.data?.session
+      ? ((preloadedSessionQuery.response as any).data.session as any)
       : null;
 
   // Create per-tree cart store instance (no global singleton)
@@ -94,6 +103,17 @@ export function App({
     cartStoreInstance.current = createCartStoreZustand(initialCart);
   }
 
+  // Create per-tree session store instance (no global singleton)
+  const sessionStoreInstance = React.useRef<ReturnType<
+    typeof createSessionStoreZustand
+  > | null>(null);
+
+  if (!sessionStoreInstance.current) {
+    sessionStoreInstance.current = createSessionStoreZustand(
+      initialSession ? { user: initialSession.user, token: initialSession.accessToken } : null
+    );
+  }
+
   // Convert serializable query to Relay PreloadedQuery
   const initialCartPreloadedQuery = preloadedCartQuery
     ? useSerializablePreloadedQuery(environment, preloadedCartQuery)
@@ -102,7 +122,7 @@ export function App({
   return (
     <RelayEnvironmentProvider environment={environment}>
       <ShopProvider config={shopConfig}>
-        <SessionProvider preloadedSessionQuery={preloadedSessionQuery}>
+        <SessionProvider store={sessionStoreInstance.current!}>
           <CartProvider
             store={cartStoreInstance.current!}
             config={cartConfig}

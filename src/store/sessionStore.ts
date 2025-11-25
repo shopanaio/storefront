@@ -1,42 +1,31 @@
-import { createStore } from 'zustand/vanilla';
-import { create } from 'zustand';
-import type { model } from "@shopana/storefront-sdk";
+/**
+ * Session Store - SDK Integration
+ *
+ * Re-exports session store utilities from SDK.
+ * Store should be created per-component tree, not as global singleton.
+ */
 
-export interface Session {
-  user: model.User | null;
-  token?: string;
-  expiresAt?: string;
-}
+// Re-export store creation function
+export { createSessionStoreZustand } from '@shopana/storefront-sdk/modules/session/react/store/SessionStoreZustand';
 
-export interface SessionState {
-  session: Session | null;
-  setSession: (session: Session | null) => void;
-  refreshSession: () => void;
-  setRefreshSession: (fn: () => void) => void;
-}
+// Re-export types
+export type {
+  SessionStore,
+  SessionActions,
+  StoreImplementation,
+} from '@shopana/storefront-sdk/modules/session/store/SessionStore';
 
-export type SessionStore = SessionState;
+export type {
+  Session,
+} from '@shopana/storefront-sdk/modules/session/core/types';
 
-export const defaultInitState: SessionState = {
-  session: null,
-  setSession: () => { },
-  refreshSession: () => { },
-  setRefreshSession: () => { },
-};
+export type {
+  SessionStoreZustand,
+} from '@shopana/storefront-sdk/modules/session/react/store/SessionStoreZustand';
 
-export const createSessionStore = (initState: Partial<SessionState> = defaultInitState) => {
-  return createStore<SessionStore>()((set) => ({
-    ...defaultInitState,
-    ...initState,
-    setSession: (session) => set({ session }),
-    refreshSession: () => { },
-    setRefreshSession: (fn) => set({ refreshSession: fn }),
-  }));
-};
+// For backward compatibility
+export type { SessionStore as SessionState } from '@shopana/storefront-sdk/modules/session/store/SessionStore';
 
-export const useSession = create<SessionStore>()((set) => ({
-  ...defaultInitState,
-  setSession: (session) => set({ session }),
-  refreshSession: () => { },
-  setRefreshSession: (fn) => set({ refreshSession: fn }),
-}));
+// Backward compatibility exports
+export { createSessionStoreZustand as createSessionStore } from '@shopana/storefront-sdk/modules/session/react/store/SessionStoreZustand';
+export const defaultInitState = { session: null };
