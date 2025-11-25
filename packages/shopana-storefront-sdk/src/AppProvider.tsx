@@ -4,6 +4,7 @@ import type { ShopConfig } from './shop/types';
 import type { CartConfig } from './modules/cart/core/config';
 import type { RelayEnvironmentConfig } from './graphql/relay/types';
 import { loadCartServerQuery } from './modules/cart/next/loaders/loadCartServerQuery';
+import { loadSessionServerQuery } from './modules/session/next/loaders/loadSessionServerQuery';
 
 export interface AppProviderProps {
   children: React.ReactNode;
@@ -24,10 +25,11 @@ export interface AppProviderProps {
 /**
  * App Provider (Server Component)
  *
- * Main wrapper component that handles SSR cart loading internally.
+ * Main wrapper component that handles SSR cart and session loading internally.
  * This is an async Server Component that:
  * 1. Loads cart data on the server using cookies
- * 2. Passes preloaded data to the client App component
+ * 2. Loads session data on the server using cookies
+ * 3. Passes preloaded data to the client App component
  *
  * @example
  * ```tsx
@@ -57,11 +59,16 @@ export async function AppProvider({
   shopConfig,
   cartConfig,
 }: AppProviderProps) {
-  // Load cart data on server
-  const preloadedCartQuery = await loadCartServerQuery({
-    environmentConfig,
-    cartConfig,
-  });
+  // Load cart and session data on server in parallel
+  const [preloadedCartQuery, preloadedSessionQuery] = await Promise.all([
+    loadCartServerQuery({
+      environmentConfig,
+      cartConfig,
+    }),
+    loadSessionServerQuery({
+      environmentConfig,
+    }),
+  ]);
 
   return (
     <App
@@ -69,6 +76,7 @@ export async function AppProvider({
       shopConfig={shopConfig}
       cartConfig={cartConfig}
       preloadedCartQuery={preloadedCartQuery}
+      preloadedSessionQuery={preloadedSessionQuery}
     >
       {children}
     </App>

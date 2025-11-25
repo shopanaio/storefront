@@ -9,11 +9,13 @@ import { CartProvider } from './modules/cart/react/providers/CartProvider';
 import { createCartStoreZustand } from './modules/cart/react/store/CartStoreZustand';
 import type { CartConfig } from './modules/cart/core/config';
 import type { loadCartQuery as LoadCartQueryType } from './modules/cart/core/graphql/queries/__generated__/loadCartQuery.graphql';
+import type { loadSessionQuery as LoadSessionQueryType } from './modules/session/core/graphql/queries/__generated__/loadSessionQuery.graphql';
 import type { SerializablePreloadedQuery } from './graphql/relay/loadSerializableQuery';
 import { useSerializablePreloadedQuery } from './graphql/relay/useSerializablePreloadedQuery';
 import { createEnvironment } from './graphql/relay/Environment';
 import type { RelayEnvironmentConfig } from './graphql/relay/types';
 import type { Environment } from 'relay-runtime';
+import { SessionProvider } from './modules/session/react/providers/SessionProvider';
 
 // Client-side singleton
 let clientEnvironment: Environment | null = null;
@@ -51,6 +53,13 @@ export interface AppProps {
     ConcreteRequest,
     LoadCartQueryType
   > | null;
+  /**
+   * Optional preloaded session query from SSR (SerializablePreloadedQuery)
+   */
+  preloadedSessionQuery?: SerializablePreloadedQuery<
+    ConcreteRequest,
+    LoadSessionQueryType
+  > | null;
 }
 
 /**
@@ -58,6 +67,7 @@ export interface AppProps {
  * - RelayEnvironmentProvider (GraphQL)
  * - ShopProvider (shop config, locale, currency)
  * - CartProvider (cart state management)
+ * - SessionProvider (session state management)
  */
 export function App({
   children,
@@ -65,6 +75,7 @@ export function App({
   shopConfig,
   cartConfig,
   preloadedCartQuery,
+  preloadedSessionQuery,
 }: AppProps) {
   const environment = getOrCreateEnvironment(environmentConfig);
   // Extract initial cart entity from SSR preloaded query (for store hydration)
@@ -91,13 +102,15 @@ export function App({
   return (
     <RelayEnvironmentProvider environment={environment}>
       <ShopProvider config={shopConfig}>
-        <CartProvider
-          store={cartStoreInstance.current!}
-          config={cartConfig}
-          initialCartData={initialCartPreloadedQuery ?? undefined}
-        >
-          {children}
-        </CartProvider>
+        <SessionProvider preloadedSessionQuery={preloadedSessionQuery}>
+          <CartProvider
+            store={cartStoreInstance.current!}
+            config={cartConfig}
+            initialCartData={initialCartPreloadedQuery ?? undefined}
+          >
+            {children}
+          </CartProvider>
+        </SessionProvider>
       </ShopProvider>
     </RelayEnvironmentProvider>
   );
