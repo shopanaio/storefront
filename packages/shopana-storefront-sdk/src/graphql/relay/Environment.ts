@@ -14,6 +14,26 @@ import type { RelayEnvironmentConfig, FetchGraphQLOptions } from "./types";
 const IS_SERVER = typeof window === "undefined";
 
 /**
+ * Get access token from cookies
+ */
+function getAccessTokenFromCookie(
+  cookieName: string,
+  serverCookies?: string
+): string | null {
+  if (IS_SERVER) {
+    if (serverCookies) {
+      const regex = new RegExp(`(?:^|; )${cookieName}=([^;]*)`);
+      const match = serverCookies.match(regex);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+    return null;
+  }
+  // Client: read from document.cookie
+  const match = document.cookie.match(new RegExp(`(?:^|; )${cookieName}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
  * Create fetchGraphQL function with provided configuration
  */
 export function createFetchGraphQL(options: FetchGraphQLOptions) {
@@ -27,9 +47,10 @@ export function createFetchGraphQL(options: FetchGraphQLOptions) {
       [options.apiKeyHeader]: options.apiKey,
     };
 
-    // Get access token if function is provided
-    if (options.getAccessToken) {
-      const accessToken = options.getAccessToken(
+    // Get access token from cookie
+    if (options.accessTokenCookieName) {
+      const accessToken = getAccessTokenFromCookie(
+        options.accessTokenCookieName,
         serverCookies ?? options.serverCookies
       );
       if (accessToken) {
@@ -98,7 +119,7 @@ export function createEnvironment(
     graphqlUrl: config.graphqlUrl,
     apiKeyHeader: config.apiKeyHeader,
     apiKey: config.apiKey,
-    getAccessToken: config.getAccessToken,
+    accessTokenCookieName: config.accessTokenCookieName,
     serverCookies,
   });
 

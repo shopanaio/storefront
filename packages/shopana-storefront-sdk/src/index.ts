@@ -1,6 +1,10 @@
 // Main entry point for @shopana/storefront-sdk
 // Re-exports all public APIs
 
+// App component - main wrapper with all providers
+export { App } from './App';
+export type { AppProps } from './App';
+
 // Core exports (Builder, types, components)
 export {
   Builder,
@@ -50,6 +54,9 @@ export type {
 // Utilities
 export { logError, configureLogger } from './utils/logger';
 export type { LogLevel, LogContext, LogErrorOptions } from './utils/logger';
+
+// Relay environment
+export type { RelayEnvironmentConfig } from './graphql/relay/index';
 
 // Model namespace
 export { model } from './model/index';

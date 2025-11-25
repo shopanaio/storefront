@@ -17,11 +17,9 @@ export interface RelayEnvironmentConfig {
   apiKey: string;
 
   /**
-   * Function to get access token from cookies
-   * @param serverCookies - Optional server-side cookie string
-   * @returns Access token or null
+   * Cookie name for access token (default: 'accessToken')
    */
-  getAccessToken?: (serverCookies?: string) => string | null;
+  accessTokenCookieName?: string;
 
   /**
    * Cache TTL in milliseconds (default: 5 minutes)
@@ -38,7 +36,7 @@ export interface FetchGraphQLOptions {
   graphqlUrl: string;
   apiKeyHeader: string;
   apiKey: string;
-  getAccessToken?: (serverCookies?: string) => string | null;
+  accessTokenCookieName?: string;
   serverCookies?: string;
 }
 

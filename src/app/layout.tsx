@@ -1,5 +1,8 @@
 import React from 'react';
-import { ClientProviders } from './ClientProviders';
+import { App } from '@shopana/storefront-sdk';
+import { mockShopConfig } from '@shopana/storefront-sdk/shop';
+import { environmentConfig } from '@src/config/environment.config';
+import { cartConfig } from '@src/config/cart.config';
 import { loadCartSSR } from '@src/utils/cart/loadCartSSR';
 
 console.error = () => {};
@@ -11,11 +14,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const preloadedCartQuery = await loadCartSSR();
-
-  console.log(
-    'RootLayout preloadedCartQuery:',
-    preloadedCartQuery?.response.data.checkoutQuery?.checkout
-  );
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -34,9 +32,14 @@ export default async function RootLayout({
       </head>
       <body>
         <div id="app">
-          <ClientProviders preloadedCartQuery={preloadedCartQuery}>
+          <App
+            environmentConfig={environmentConfig}
+            shopConfig={mockShopConfig}
+            cartConfig={cartConfig}
+            preloadedCartQuery={preloadedCartQuery}
+          >
             {children}
-          </ClientProviders>
+          </App>
         </div>
         <div id="sheet-wrapper" />
       </body>
