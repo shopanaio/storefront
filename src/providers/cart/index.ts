@@ -8,7 +8,7 @@
  * import { CartProvider } from '@shopana/storefront-sdk/modules/cart/react';
  */
 
-export { CartProvider } from '@shopana/storefront-sdk/modules/cart/react';
+export { CartProvider } from '@shopana/storefront-sdk/modules/cart/react/providers/CartProvider';
 
 // Old providers kept for reference (renamed to .old.tsx)
 // import CartProviderShopana from "./cart-provider.shopana.old";

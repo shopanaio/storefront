@@ -1,7 +1,7 @@
 'use client';
 
-import type { SectionProps } from '@shopana/storefront-sdk';
-import { Block } from '@shopana/storefront-sdk';
+import type { SectionProps } from '@shopana/storefront-sdk/core/types';
+import { Block } from '@shopana/storefront-sdk/core/Block';
 
 interface HelloSectionSettings {
   title: string;

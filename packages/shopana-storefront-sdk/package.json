@@ -11,100 +11,10 @@
     "src/next"
   ],
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js",
-      "default": "./dist/core/index.js"
-    },
-    "./shop": {
-      "types": "./dist/shop/index.d.ts",
-      "import": "./dist/shop/index.js",
-      "default": "./dist/shop/index.js"
-    },
-    "./sdk": {
-      "types": "./dist/sdk/index.d.ts",
-      "import": "./dist/sdk/index.js",
-      "default": "./dist/sdk/index.js"
-    },
-    "./graphql": {
-      "types": "./dist/graphql/index.d.ts",
-      "import": "./dist/graphql/index.js",
-      "default": "./dist/graphql/index.js"
-    },
-    "./graphql/relay": {
-      "types": "./dist/graphql/relay/index.d.ts",
-      "import": "./dist/graphql/relay/index.js",
-      "default": "./dist/graphql/relay/index.js"
-    },
-    "./cms": {
-      "types": "./dist/cms/index.d.ts",
-      "import": "./dist/cms/index.js",
-      "default": "./dist/cms/index.js"
-    },
-    "./api": {
-      "types": "./dist/api/index.d.ts",
-      "import": "./dist/api/index.js",
-      "default": "./dist/api/index.js"
-    },
-    "./next": {
-      "types": "./dist/next/index.d.ts",
-      "import": "./dist/next/index.js",
-      "default": "./dist/next/index.js"
-    },
-    "./next/relay": {
-      "types": "./dist/next/relay/index.d.ts",
-      "import": "./dist/next/relay/index.js",
-      "default": "./dist/next/relay/index.js"
-    },
-    "./next/relay/server": {
-      "types": "./dist/next/relay/server.d.ts",
-      "import": "./dist/next/relay/server.js",
-      "default": "./dist/next/relay/server.js"
-    },
-    "./next/relay/client": {
-      "types": "./dist/next/relay/client.d.ts",
-      "import": "./dist/next/relay/client.js",
-      "default": "./dist/next/relay/client.js"
-    },
     "./next/page": {
       "types": "./src/next/page.tsx",
       "import": "./src/next/page.tsx",
       "default": "./src/next/page.tsx"
-    },
-    "./model": {
-      "types": "./dist/model/index.d.ts",
-      "import": "./dist/model/index.js",
-      "default": "./dist/model/index.js"
-    },
-    "./modules/cart": {
-      "types": "./dist/modules/cart/index.d.ts",
-      "import": "./dist/modules/cart/index.js",
-      "default": "./dist/modules/cart/index.js"
-    },
-    "./modules/cart/core": {
-      "types": "./dist/modules/cart/core/index.d.ts",
-      "import": "./dist/modules/cart/core/index.js",
-      "default": "./dist/modules/cart/core/index.js"
-    },
-    "./modules/cart/store": {
-      "types": "./dist/modules/cart/store/index.d.ts",
-      "import": "./dist/modules/cart/store/index.js",
-      "default": "./dist/modules/cart/store/index.js"
-    },
-    "./modules/cart/react": {
-      "types": "./dist/modules/cart/react/index.d.ts",
-      "import": "./dist/modules/cart/react/index.js",
-      "default": "./dist/modules/cart/react/index.js"
-    },
-    "./modules/cart/next": {
-      "types": "./dist/modules/cart/next/index.d.ts",
-      "import": "./dist/modules/cart/next/index.js",
-      "default": "./dist/modules/cart/next/index.js"
     },
     "./*": {
       "types": "./dist/*.d.ts",

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { PageLayout } from '@src/components/Layout/PageLayout';
 import { Product } from '@src/components/Product/Product';
 import { useRelayEnvironment } from 'react-relay';
-import { useSerializablePreloadedQuery } from '@shopana/storefront-sdk/next/relay/client';
+import useSerializablePreloadedQuery from '@shopana/storefront-sdk/next/relay/useSerializablePreloadedQuery';
 import { useQuery } from '@src/providers/relay-query-provider';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useSearchParams } from 'next/navigation';

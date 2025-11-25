@@ -1,5 +1,5 @@
 import React from "react";
-import { loadSerializableQuery } from "@shopana/storefront-sdk/next/relay/server";
+import loadSerializableQuery from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
 import { environmentConfig } from "@src/config/environment.config";
 import SearchQueryNode, {
   SearchQuery,

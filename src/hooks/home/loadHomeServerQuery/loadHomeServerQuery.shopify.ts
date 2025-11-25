@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  loadSerializableQuery,
-  SerializablePreloadedQuery,
-} from "@shopana/storefront-sdk/next/relay/server";
+import loadSerializableQuery from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
+import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
 import { environmentConfig } from "@src/config/environment.config";
 import HomePageQueryNode, {
   HomePageQuery,

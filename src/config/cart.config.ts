@@ -1,5 +1,4 @@
-import { createCartConfig } from '@shopana/storefront-sdk/modules/cart/core';
-import type { CartConfig } from '@shopana/storefront-sdk/modules/cart/core';
+import { createCartConfig, type CartConfig } from '@shopana/storefront-sdk/modules/cart/core/config';
 
 /**
  * Cart module configuration

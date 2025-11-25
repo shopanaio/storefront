@@ -9,7 +9,7 @@
  * Now using SDK cart module for better consistency and maintainability
  */
 
-import { createCartStoreZustand } from '@shopana/storefront-sdk/modules/cart/react';
+import { createCartStoreZustand } from '@shopana/storefront-sdk/modules/cart/react/store/CartStoreZustand';
 
 /**
  * Global cart store instance (new format with { store, useStore })

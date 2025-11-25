@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppProvider } from '@shopana/storefront-sdk';
-import { mockShopConfig } from '@shopana/storefront-sdk/shop';
+import { AppProvider } from '@shopana/storefront-sdk/AppProvider';
+import { mockShopConfig } from '@shopana/storefront-sdk/shop/mockShopConfig';
 import { environmentConfig } from '@src/config/environment.config';
 import { cartConfig } from '@src/config/cart.config';
 

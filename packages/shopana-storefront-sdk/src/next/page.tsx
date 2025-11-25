@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import type {
   PageTemplate,
   TemplateParams,
-} from '@shopana/storefront-sdk/core';
-import { Builder, parseRoute } from '@shopana/storefront-sdk/core';
+} from '../core/types';
+import { Builder } from '../core/Builder';
+import { parseRoute } from '../utils/routeParser';
 import { notFound } from 'next/navigation';
 
 type SlugParam = string[] | undefined;

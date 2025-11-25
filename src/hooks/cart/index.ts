@@ -16,18 +16,16 @@
  */
 
 // Main cart hooks
-export {
-  useCart,
-  useCartId,
-  useAddItemToCart,
-  useRemoveItemFromCart,
-  useUpdateCartLineQuantity,
-  useReplaceCartItem,
-  useClearCart,
-  useCreateCart,
-  useIsInTheCart,
-  useCartFragment,
-} from '@shopana/storefront-sdk/modules/cart/react';
+export { default as useCart } from '@shopana/storefront-sdk/modules/cart/react/hooks/useCart';
+export { default as useCartId } from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
+export { default as useAddItemToCart } from '@shopana/storefront-sdk/modules/cart/react/hooks/useAddItemToCart';
+export { default as useRemoveItemFromCart } from '@shopana/storefront-sdk/modules/cart/react/hooks/useRemoveItemFromCart';
+export { default as useUpdateCartLineQuantity } from '@shopana/storefront-sdk/modules/cart/react/hooks/useUpdateCartLineQuantity';
+export { default as useReplaceCartItem } from '@shopana/storefront-sdk/modules/cart/react/hooks/useReplaceCartItem';
+export { default as useClearCart } from '@shopana/storefront-sdk/modules/cart/react/hooks/useClearCart';
+export { default as useCreateCart } from '@shopana/storefront-sdk/modules/cart/react/hooks/useCreateCart';
+export { default as useIsInTheCart } from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
+export { default as useCartFragment } from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartFragment';
 
 // Context hooks
 export {
@@ -35,16 +33,18 @@ export {
   useCartStore,
   useCartConfig,
   useCartIdUtils,
-} from '@shopana/storefront-sdk/modules/cart/react';
+} from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 
 // Types
 export type {
   UseIsInCartProps,
   UseIsInCartReturn,
+} from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
+export type {
   ReplaceCartItemInput,
   ClearCartInput,
   UseClearCartReturn,
   RemoveFromCartInput,
   AddToCartInput,
-} from '@shopana/storefront-sdk/modules/cart/react';
+} from '@shopana/storefront-sdk/modules/cart/core/types';
 //
