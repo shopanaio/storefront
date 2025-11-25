@@ -1,7 +1,7 @@
 import { cmsPick } from "@src/cms/pick";
 import { useInitialSessionStateShopify } from "@src/hooks/session/useInitialSessionState/useInitialSessionState.shopify";
 import { useInitialSessionStateShopana } from "@src/hooks/session/useInitialSessionState/useInitialSessionState.shopana";
-import { SerializablePreloadedQuery } from "@src/relay/loadSerializableQuery";
+import { SerializablePreloadedQuery } from "@src/relay/useSerializablePreloadedQuery";
 import { ConcreteRequest, OperationType } from "relay-runtime";
 import type { model } from "@shopana/storefront-sdk";
 

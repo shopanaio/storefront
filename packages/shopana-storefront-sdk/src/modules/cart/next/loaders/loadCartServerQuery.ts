@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { loadSerializableQuery, SerializablePreloadedQuery, createFetchGraphQL } from '../../../../graphql/relay';
 import type { RelayEnvironmentConfig } from '../../../../graphql/relay';
 import { createCartIdUtils } from '../../core/utils/cartId';
@@ -40,6 +39,8 @@ export async function loadCartServerQuery(
 ): Promise<SerializablePreloadedQuery<typeof loadCartQueryNode, LoadCartQueryType> | null> {
   const { environmentConfig, cartConfig } = options;
 
+  // Dynamic import to avoid bundling next/headers in client code
+  const { headers } = await import('next/headers');
   const cookie = (await headers()).get('cookie') ?? undefined;
 
   // Create cart ID utils with cart config

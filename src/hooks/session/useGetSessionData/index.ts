@@ -1,7 +1,7 @@
 import { cmsPick } from "@src/cms/pick";
 import { useGetSessionDataShopana } from "./useGetSessionData.shopana";
 import { useGetSessionDataShopify } from "./useGetSessionData.shopify";
-import { SerializablePreloadedQuery } from "@src/relay/loadSerializableQuery";
+import { SerializablePreloadedQuery } from "@src/relay/useSerializablePreloadedQuery";
 import { ConcreteRequest, OperationType } from "relay-runtime";
 
 // Interface for session data

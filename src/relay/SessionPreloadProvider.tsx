@@ -1,6 +1,6 @@
 /* import React, { useState, useCallback, useEffect } from "react";
 import useGetSession from "@src/hooks/session";
-import { SerializablePreloadedQuery } from "@src/relay/loadSerializableQuery";
+import { SerializablePreloadedQuery } from "@src/relay/useSerializablePreloadedQuery";
 import { useGetSessionQuery as useGetSessionQueryType } from "@src/hooks/session/__generated__/useGetSessionQuery.graphql";
 import { ConcreteRequest } from "relay-runtime";
 import { useRelayEnvironment } from "react-relay";
