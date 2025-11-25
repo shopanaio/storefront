@@ -1,4 +1,4 @@
-import type { model } from '../../../../model';
+import type { model } from '../../../../model/namespace';
 
 /**
  * Parse amount from various types to number

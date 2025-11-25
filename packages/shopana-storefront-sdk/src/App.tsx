@@ -3,18 +3,16 @@
 import React from 'react';
 import { RelayEnvironmentProvider } from 'react-relay';
 import type { ConcreteRequest } from 'relay-runtime/lib/util/RelayConcreteNode';
-import { ShopProvider } from './shop';
-import type { ShopConfig } from './shop';
-import {
-  CartProvider,
-  createCartStoreZustand,
-} from './modules/cart/react';
+import { ShopProvider } from './shop/ShopContext';
+import type { ShopConfig } from './shop/types';
+import { CartProvider } from './modules/cart/react/providers/CartProvider';
+import { createCartStoreZustand } from './modules/cart/react/store/CartStoreZustand';
 import type { CartConfig } from './modules/cart/core/config';
 import type { loadCartQuery as LoadCartQueryType } from './modules/cart/core/graphql/queries/__generated__/loadCartQuery.graphql';
 import type { SerializablePreloadedQuery } from './graphql/relay/loadSerializableQuery';
 import { useSerializablePreloadedQuery } from './graphql/relay/useSerializablePreloadedQuery';
-import { createEnvironment } from './graphql/relay';
-import type { RelayEnvironmentConfig } from './graphql/relay';
+import { createEnvironment } from './graphql/relay/Environment';
+import type { RelayEnvironmentConfig } from './graphql/relay/types';
 import type { Environment } from 'relay-runtime';
 
 // Client-side singleton

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCartContext } from '../context';
+import { useCartContext } from '../context/CartContext';
 
 /**
  * Returns the cart ID with loading states from context.

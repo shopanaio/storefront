@@ -2,11 +2,9 @@
 
 import { PreloadedQuery, PreloadFetchPolicy } from "react-relay";
 import { ConcreteRequest, IEnvironment, OperationType } from "relay-runtime";
-import {
-  useSerializablePreloadedQuery as useSerializablePreloadedQueryBase,
-  createResponseCache,
-  SerializablePreloadedQuery,
-} from "../../graphql/relay";
+import { useSerializablePreloadedQuery as useSerializablePreloadedQueryBase } from "../../graphql/relay/useSerializablePreloadedQuery";
+import { createResponseCache } from "../../graphql/relay/Environment";
+import type { SerializablePreloadedQuery } from "../../graphql/relay/loadSerializableQuery";
 
 // Re-export type for client components
 export type { SerializablePreloadedQuery };

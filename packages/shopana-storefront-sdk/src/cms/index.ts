@@ -1,1 +1,0 @@
-export { cmsPick } from './pick';

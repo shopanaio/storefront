@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { CartStore, CartActions } from '../../store';
+import type { CartStore, CartActions } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartIdUtils } from '../../core/utils/cartId';
 import type { CartStoreZustand } from '../store/CartStoreZustand';

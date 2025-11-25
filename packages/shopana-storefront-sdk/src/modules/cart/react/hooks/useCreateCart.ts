@@ -3,7 +3,7 @@
 import { useMutation } from 'react-relay';
 import type { createCartMutation as CreateCartMutationType, CheckoutCreateInput } from '../../core/graphql/mutations/__generated__/createCartMutation.graphql';
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
-import { useCartContext } from '../context';
+import { useCartContext } from '../context/CartContext';
 
 const useCreateCart = () => {
   const { setId, setCartKey } = useCartContext();

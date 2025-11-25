@@ -1,4 +1,4 @@
-import type { model } from '../../../../model';
+import type { model } from '../../../../model/namespace';
 
 /**
  * Maps Shopana checkout response to Entity Cart model

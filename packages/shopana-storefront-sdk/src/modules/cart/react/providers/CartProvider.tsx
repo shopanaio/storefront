@@ -10,11 +10,11 @@ import React, {
 } from 'react';
 import { PreloadedQuery, readInlineData, useFragment, usePreloadedQuery, useQueryLoader } from 'react-relay';
 import { CartContextProvider } from '../context/CartContext';
-import { CartStore } from '../../store';
+import type { CartStore } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartConfig } from '../../core/config';
 import { createCartIdUtils } from '../../core/utils/cartId';
-import { loadCartQuery } from '../../core/graphql/queries';
+import { loadCartQuery } from '../../core/graphql/queries/loadCartQuery';
 import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/queries/__generated__/loadCartQuery.graphql';
 import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
 import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';

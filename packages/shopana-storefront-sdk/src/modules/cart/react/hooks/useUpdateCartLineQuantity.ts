@@ -3,7 +3,7 @@
 import { useMutation } from 'react-relay';
 import type { updateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/updateCartLineQuantityMutation.graphql';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
-import { useCartActions } from '../context';
+import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
 
 const useUpdateCartLineQuantity = () => {

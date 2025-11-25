@@ -1,5 +1,5 @@
-import type { model } from '../../../../model';
-import { useCartStore } from '../context';
+import type { model } from '../../../../model/namespace';
+import { useCartStore } from '../context/CartContext';
 import { useShallow } from 'zustand/shallow';
 
 type UseCart = () => {

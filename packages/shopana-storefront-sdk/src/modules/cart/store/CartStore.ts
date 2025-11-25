@@ -1,4 +1,4 @@
-import type { model } from '../../../model';
+import type { model } from '../../../model/namespace';
 
 /**
  * Cart store interface - matches Zustand implementation

@@ -4,7 +4,7 @@ import { useMutation } from 'react-relay';
 import type { addToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/addToCartMutation.graphql';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
 
-import { useCartActions, useCartConfig } from '../context';
+import { useCartActions, useCartConfig } from '../context/CartContext';
 import useCreateCart from './useCreateCart';
 import { useCartIdOnly } from './useCartSelectors';
 import { AddToCartInput } from '../../core/types';

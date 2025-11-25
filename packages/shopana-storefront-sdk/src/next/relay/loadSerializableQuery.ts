@@ -3,10 +3,10 @@ import { OperationType, RequestParameters, VariablesOf } from "relay-runtime";
 import { ConcreteRequest } from "relay-runtime/lib/util/RelayConcreteNode";
 import {
   loadSerializableQuery as loadSerializableQueryBase,
-  SerializablePreloadedQuery,
-  createFetchGraphQL,
-} from "../../graphql/relay";
-import type { FetchGraphQLFunction, RelayEnvironmentConfig } from "../../graphql/relay";
+} from "../../graphql/relay/loadSerializableQuery";
+import type { SerializablePreloadedQuery } from "../../graphql/relay/loadSerializableQuery";
+import { createFetchGraphQL } from "../../graphql/relay/Environment";
+import type { FetchGraphQLFunction, RelayEnvironmentConfig } from "../../graphql/relay/types";
 
 // Re-export type from base relay module
 export type { SerializablePreloadedQuery };

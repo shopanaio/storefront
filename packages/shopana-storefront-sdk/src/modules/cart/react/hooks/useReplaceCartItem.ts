@@ -28,7 +28,7 @@ import { useMutation } from 'react-relay';
 import type { replaceCartItemMutation as ReplaceCartItemMutationType } from '../../core/graphql/mutations/__generated__/replaceCartItemMutation.graphql';
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 
-import { useCartActions, useCartConfig } from '../context';
+import { useCartActions, useCartConfig } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
 import { ReplaceCartItemInput } from '../../core/types';
 

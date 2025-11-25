@@ -1,6 +1,6 @@
 import { CartStore, StoreImplementation } from './CartStore';
-import type { model } from '../../../model';
-import { recalcCart } from '../core/utils';
+import type { model } from '../../../model/namespace';
+import { recalcCart } from '../core/utils/cartMath';
 
 let clientLineCounter = 0;
 const genClientLineId = () => `client:checkoutLine:${++clientLineCounter}`;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCartStore } from '../context';
+import { useCartStore } from '../context/CartContext';
 import { useShallow } from 'zustand/shallow';
 
 /**

@@ -1,9 +1,9 @@
 import React from 'react';
 import { App } from './App';
-import type { ShopConfig } from './shop';
+import type { ShopConfig } from './shop/types';
 import type { CartConfig } from './modules/cart/core/config';
-import type { RelayEnvironmentConfig } from './graphql/relay';
-import { loadCartServerQuery } from './modules/cart/next';
+import type { RelayEnvironmentConfig } from './graphql/relay/types';
+import { loadCartServerQuery } from './modules/cart/next/loaders/loadCartServerQuery';
 
 export interface AppProviderProps {
   children: React.ReactNode;

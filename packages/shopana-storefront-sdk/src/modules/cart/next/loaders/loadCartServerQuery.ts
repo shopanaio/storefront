@@ -1,5 +1,7 @@
-import { loadSerializableQuery, SerializablePreloadedQuery, createFetchGraphQL } from '../../../../graphql/relay';
-import type { RelayEnvironmentConfig } from '../../../../graphql/relay';
+import { loadSerializableQuery } from '../../../../graphql/relay/loadSerializableQuery';
+import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
+import { createFetchGraphQL } from '../../../../graphql/relay/Environment';
+import type { RelayEnvironmentConfig } from '../../../../graphql/relay/types';
 import { createCartIdUtils } from '../../core/utils/cartId';
 import type { CartConfig } from '../../core/config';
 import loadCartQueryNode, {

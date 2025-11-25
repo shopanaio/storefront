@@ -1,5 +1,5 @@
 import { readInlineData, useFragment } from 'react-relay';
-import { useCartContext } from '../context';
+import { useCartContext } from '../context/CartContext';
 import { useMemo } from 'react';
 import { CartLineFragment_line } from './useCartLineFragment';
 import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';

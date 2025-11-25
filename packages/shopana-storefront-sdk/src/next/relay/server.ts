@@ -3,4 +3,4 @@
 
 export { default as loadSerializableQuery } from "./loadSerializableQuery";
 export type { SerializablePreloadedQuery } from "./loadSerializableQuery";
-export type { RelayEnvironmentConfig } from "../../graphql/relay";
+export type { RelayEnvironmentConfig } from "../../graphql/relay/types";

@@ -3,7 +3,7 @@
 import { useMutation } from 'react-relay';
 import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
 
-import { useCartContext, useCartActions } from '../context';
+import { useCartContext, useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
 
