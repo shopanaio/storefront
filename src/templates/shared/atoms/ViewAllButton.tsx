@@ -10,7 +10,7 @@ interface ViewAllButtonProps {
 export default function ViewAllButton({ href }: ViewAllButtonProps) {
   const t = useTranslations("Home");
   return (
-    <Button href={href} icon={<TbArrowRight />} iconPosition="end">
+    <Button href={href} icon={<TbArrowRight />} iconPlacement="end">
       {t("view-all")}
     </Button>
   );

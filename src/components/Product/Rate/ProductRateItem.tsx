@@ -68,7 +68,7 @@ export const ProductRateItem = ({ node }: Props) => {
               className={styles.verifiedBtn}
               type="text"
               icon={<TbInfoCircle />}
-              iconPosition="end"
+              iconPlacement="end"
             >
               {t("verified-purchase")}
             </Button>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { mq } from '@src/components/Theme/breakpoints';
 import { useLogo } from '@src/hooks/useLogo';
 import { CartButton } from './CartButton';
-import { DesktopSearch } from '@src/templates/search';
+import { DesktopSearch } from '@src/templates/search/blocks/DesktopSearch';
 import { createStyles } from 'antd-style';
 import { SupportButton } from './SupportButton';
 import { WishlistButton } from './WishlistButton';

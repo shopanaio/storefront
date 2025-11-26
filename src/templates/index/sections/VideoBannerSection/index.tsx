@@ -44,7 +44,7 @@ export default function VideoBannerSection({
               </Text>
               <Text className={styles.videoDescription}>{description}</Text>
             </Flex>
-            <Button icon={<TbArrowRight />} size="large" iconPosition="end">
+            <Button icon={<TbArrowRight />} size="large" iconPlacement="end">
               {t("go-to-collections")}
             </Button>
           </Flex>

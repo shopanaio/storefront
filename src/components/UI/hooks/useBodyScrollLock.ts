@@ -1,12 +1,5 @@
-import {
-  disableBodyScroll,
-  enableBodyScroll,
-} from 'body-scroll-lock';
-import {
-  MutableRefObject,
-  useLayoutEffect,
-  useRef,
-} from 'react';
+import { disableBodyScroll, enableBodyScroll } from 'body-scroll-lock';
+import { MutableRefObject, useLayoutEffect, useRef } from 'react';
 
 /**
  * Locks and unlocks body scrolling based on `isLocked`.

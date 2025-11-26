@@ -44,7 +44,7 @@ export const FiltersProvider: React.FC<Props> = ({ handle, children }) => {
     >
       <Collapse
         defaultActiveKey={[handle]}
-        expandIconPosition="end"
+        expandIconPlacement="end"
         bordered={false}
       >
         <Panel className={styles.collapsePanel} header={filterTitle} key={handle}>

@@ -238,7 +238,7 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
                 className={styles.infoBtn}
                 type="text"
                 icon={<TbInfoCircle />}
-                iconPosition="end"
+                iconPlacement="end"
               />
             </Tooltip>
           </Flex>

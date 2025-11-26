@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 export { WishlistProvider } from '@src/modules/wishlist/providers/WishlistProvider';
 export {

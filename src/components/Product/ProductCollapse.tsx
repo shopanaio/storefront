@@ -36,7 +36,7 @@ export const ProductCollapse = ({
     >
       <Collapse
         activeKey={isOpen ? [panelKey] : []}
-        expandIconPosition="end"
+        expandIconPlacement="end"
         bordered={false}
         onChange={(keys) => setIsOpen(keys.length > 0)}
       >
