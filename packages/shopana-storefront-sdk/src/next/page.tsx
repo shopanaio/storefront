@@ -13,6 +13,12 @@ import { notFound } from 'next/navigation';
 import type { SerializablePreloadedQuery } from '../graphql/relay/loadSerializableQuery';
 import { loadHomeServerQuery } from '@shopana/storefront-sdk/modules/home/next/loaders/loadHomeServerQuery';
 import { HomeDataProvider } from '@shopana/storefront-sdk/modules/home/react/providers/HomeDataProvider';
+import { loadProductServerQuery } from '@shopana/storefront-sdk/modules/product/next/loaders/loadProductServerQuery';
+import { ProductDataProvider } from '@shopana/storefront-sdk/modules/product/react/providers/ProductDataProvider';
+import { loadCollectionServerQuery } from '@shopana/storefront-sdk/modules/collection/next/loaders/loadCollectionServerQuery';
+import { CollectionDataProvider } from '@shopana/storefront-sdk/modules/collection/react/providers/CollectionDataProvider';
+import { loadSearchServerQuery } from '@shopana/storefront-sdk/modules/search/next/loaders/loadSearchServerQuery';
+import { SearchDataProvider } from '@shopana/storefront-sdk/modules/search/react/providers/SearchDataProvider';
 import type { RelayEnvironmentConfig } from '../graphql/relay/types';
 
 type SlugParam = string[] | undefined;
@@ -59,16 +65,33 @@ async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
 }
 
 interface HomePageData {
+  type: 'home';
   preloadedQuery: SerializablePreloadedQuery<any, any>;
 }
 
-type LoadedPageData = HomePageData | null;
+interface ProductPageData {
+  type: 'product';
+  preloadedQuery: SerializablePreloadedQuery<any, any>;
+}
+
+interface CollectionPageData {
+  type: 'collection';
+  preloadedQuery: SerializablePreloadedQuery<any, any>;
+}
+
+interface SearchPageData {
+  type: 'search';
+  preloadedQuery: SerializablePreloadedQuery<any, any>;
+  query: string;
+}
+
+type LoadedPageData = HomePageData | ProductPageData | CollectionPageData | SearchPageData | null;
 
 async function loadPageData(
   ctx: TemplateParams,
   environmentConfig: RelayEnvironmentConfig,
 ): Promise<LoadedPageData> {
-  const { pageType } = ctx;
+  const { pageType, params, searchParams } = ctx;
 
   switch (pageType) {
     case 'home': {
@@ -76,7 +99,43 @@ async function loadPageData(
         environmentConfig,
       });
 
-      return { preloadedQuery };
+      return { type: 'home', preloadedQuery };
+    }
+    case 'product': {
+      const handle = params?.handle;
+      if (!handle) {
+        return null;
+      }
+
+      const preloadedQuery = await loadProductServerQuery({
+        environmentConfig,
+        handle,
+      });
+
+      return { type: 'product', preloadedQuery };
+    }
+    case 'collection': {
+      const handle = params?.handle;
+      if (!handle) {
+        return null;
+      }
+
+      const preloadedQuery = await loadCollectionServerQuery({
+        environmentConfig,
+        handle,
+      });
+
+      return { type: 'collection', preloadedQuery };
+    }
+    case 'search': {
+      const query = typeof searchParams?.q === 'string' ? searchParams.q : '';
+
+      const preloadedQuery = await loadSearchServerQuery({
+        environmentConfig,
+        query,
+      });
+
+      return { type: 'search', preloadedQuery, query };
     }
     default:
       return null;
@@ -99,24 +158,43 @@ async function buildPageMetadata(ctx: TemplateParams): Promise<Metadata> {
 }
 
 function PageWrapper({
-  pageType,
   data,
   children,
 }: {
-  pageType: string;
   data: LoadedPageData;
   children: ReactNode;
 }) {
-  switch (pageType) {
-    case 'home': {
-      if (!data) {
-        throw new Error('Home page data was not loaded');
-      }
+  if (!data) {
+    return <>{children}</>;
+  }
 
+  switch (data.type) {
+    case 'home': {
       return (
         <HomeDataProvider preloadedQuery={data.preloadedQuery}>
           {children}
         </HomeDataProvider>
+      );
+    }
+    case 'product': {
+      return (
+        <ProductDataProvider preloadedQuery={data.preloadedQuery}>
+          {children}
+        </ProductDataProvider>
+      );
+    }
+    case 'collection': {
+      return (
+        <CollectionDataProvider preloadedQuery={data.preloadedQuery}>
+          {children}
+        </CollectionDataProvider>
+      );
+    }
+    case 'search': {
+      return (
+        <SearchDataProvider preloadedQuery={data.preloadedQuery} query={data.query}>
+          {children}
+        </SearchDataProvider>
       );
     }
     default:
@@ -198,7 +276,7 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     );
 
     return (
-      <PageWrapper pageType={pageType} data={data}>
+      <PageWrapper data={data}>
         <Builder
           template={template}
           data={data}
