@@ -6,7 +6,7 @@ import { createStyles } from "antd-style";
 import { ProductCard } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
 import type { model } from "@shopana/storefront-sdk";
 import Banner from "./Banner";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import { useMemo, useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider, ViewAllButton, SliderNavButtons } from "../../../shared/atoms";

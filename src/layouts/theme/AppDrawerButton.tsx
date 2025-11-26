@@ -6,7 +6,7 @@ import { TbMenu2 } from 'react-icons/tb';
 import { useModalStore } from '@src/store/appStore';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 
 type AppDrawerButtonProps = {
   size?: number;

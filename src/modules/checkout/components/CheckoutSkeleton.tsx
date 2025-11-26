@@ -2,7 +2,7 @@
 
 import { Divider, Flex, Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import React, { useEffect, useState } from 'react';
 
 const { Text } = Typography;

@@ -2,10 +2,10 @@
 
 import 'modern-normalize/modern-normalize.css';
 import 'nprogress/nprogress.css';
-import { GlobalStyle } from '@src/components/Theme/GlobalStyle';
+import { GlobalStyle } from '@src/components/UI/Theme/GlobalStyle';
 import { App, notification } from 'antd';
 import { ThemeProvider } from 'antd-style';
-import { AntdRegistry } from '@src/components/Theme/AntdRegistry';
+import { AntdRegistry } from '@src/components/UI/Theme/AntdRegistry';
 import { useEffect } from 'react';
 import { setNotificationApi } from '@src/components/UI/Toast/Toast';
 import { BrandProvider } from '@src/providers/brand-context';

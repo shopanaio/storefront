@@ -9,7 +9,7 @@ import { useIsMobile } from '@src/hooks/useIsMobile';
 import RootDrawer, { DrawerEngine } from '@src/components/UI/Drawer/RootDrawer';
 import clsx from 'clsx';
 import useToken from 'antd/es/theme/useToken';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 
 const { Text } = Typography;
 

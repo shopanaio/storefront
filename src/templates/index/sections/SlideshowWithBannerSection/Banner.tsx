@@ -2,7 +2,7 @@
 
 import { Flex, Image, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import type { model } from "@shopana/storefront-sdk";
 import { Price } from "@src/components/UI/Price/Price";
 import { calcSale } from "@src/utils/calcSale";

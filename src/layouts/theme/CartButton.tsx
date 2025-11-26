@@ -7,7 +7,7 @@ import { createStyles } from "antd-style";
 import { Button } from "antd";
 import { Badge } from "@src/components/UI/Badge";
 import useToken from "antd/es/theme/useToken";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import clsx from "clsx";
 import { useModalStore } from "@src/store/appStore";
 

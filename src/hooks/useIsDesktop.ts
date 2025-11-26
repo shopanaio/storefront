@@ -1,5 +1,5 @@
 import { useMediaQuery } from "react-responsive";
-import { breakpoints } from "../components/Theme/breakpoints";
+import { breakpoints } from "../components/UI/Theme/breakpoints";
 import { useUA } from "@src/hooks/useUA";
 import { useServer } from "@src/hooks/useServer";
 

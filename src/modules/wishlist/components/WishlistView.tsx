@@ -2,7 +2,7 @@
 
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { WishlistFeatures, WishlistSectionId } from '@src/modules/wishlist/types';
 import { WishlistSectionRenderer } from '@src/modules/wishlist/infra/SectionRenderer';
 import { WishlistSection } from '@src/modules/wishlist/components/common/WishlistSection';

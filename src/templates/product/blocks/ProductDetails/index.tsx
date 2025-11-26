@@ -5,7 +5,7 @@ import { createStyles } from "antd-style";
 import React from "react";
 import { ProductRateSummary } from "../Rate/ProductRateSummary";
 import { ProductCollapse } from "../../atoms/ProductCollapse";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import { ProductSpecification } from "../../atoms/ProductSpecification";
 import { ShowMoreBtn } from "../../atoms/ShowMoreBtn";
 import type { model } from "@shopana/storefront-sdk";

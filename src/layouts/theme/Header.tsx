@@ -2,7 +2,7 @@
 
 import { Flex } from 'antd';
 import Link from 'next/link';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { useLogo } from '@src/hooks/useLogo';
 import { CartButton } from './CartButton';
 import { DesktopSearch } from '@src/templates/search/blocks/DesktopSearch';

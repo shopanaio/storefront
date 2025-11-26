@@ -2,7 +2,7 @@
 
 import { Flex, Typography } from "antd";
 import { createStyles, cx } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import { TbChevronRight } from "react-icons/tb";
 import { OptionDrawerLayout } from "./DrawerLayout";
 import { useMemo, useState } from "react";

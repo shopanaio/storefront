@@ -8,7 +8,7 @@ import { useModalStore } from "@src/store/appStore";
 import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
 
-import { SignUp } from "../UI/Auth/SignUp";
+import { SignUp } from "@src/templates/auth/atoms/SignUp";
 import accessTokenUtils from "@src/utils/accessToken";
 
 interface SignUpFormProps {

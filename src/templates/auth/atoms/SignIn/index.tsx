@@ -1,29 +1,37 @@
 import React from "react";
 import { Controller } from "react-hook-form";
-import { Flex, Divider, Button, Input, Typography, Alert } from "antd";
-import { TbUser, TbBrandGoogleFilled } from "react-icons/tb";
-import PasswordInput from "@src/components/Auth/PasswordInput";
+import {
+  Flex,
+  Divider,
+  Button,
+  Input,
+  Typography,
+  Checkbox,
+  Alert,
+} from "antd";
 import { createStyles } from "antd-style";
+import { TbUser, TbBrandGoogleFilled } from "react-icons/tb";
+import PasswordInput from "@src/templates/auth/atoms/PasswordInput";
 import type { Control, FieldErrors } from "react-hook-form";
 
 const { Text } = Typography;
 
-interface SignUpFormData {
+interface SignInFormData {
   email: string;
   password: string;
 }
 
-interface SignUpProps {
-  onSwitchForm: (form: "signIn") => void;
-  control: Control<SignUpFormData>;
-  errors: FieldErrors<SignUpFormData>;
+interface SignInProps {
+  onSwitchForm: (form: "signUp" | "forgotPassword") => void;
+  control: Control<SignInFormData>;
+  errors: FieldErrors<SignInFormData>;
   error: string | null;
   isInFlight: boolean;
   onSubmit: (e: React.FormEvent) => void;
   t: (key: string) => string;
 }
 
-export const SignUp: React.FC<SignUpProps> = ({
+export const SignIn: React.FC<SignInProps> = ({
   onSwitchForm,
   control,
   errors,
@@ -36,8 +44,7 @@ export const SignUp: React.FC<SignUpProps> = ({
 
   return (
     <>
-      <Text className={styles.modalTitle}>{t("sign-up")}</Text>
-
+      <Text className={styles.modalTitle}>{t("sign-in")}</Text>
       <Button
         className={styles.googleBtn}
         size="large"
@@ -45,12 +52,10 @@ export const SignUp: React.FC<SignUpProps> = ({
       >
         {t("continue-with-google")}
       </Button>
-
       <Divider className={styles.orDivider} orientation="center">
         {t("or-divider")}
       </Divider>
-
-      <form onSubmit={onSubmit}>
+      <form className={styles.form} onSubmit={onSubmit}>
         <div className={styles.inputWrapper}>
           <Controller
             name="email"
@@ -61,7 +66,7 @@ export const SignUp: React.FC<SignUpProps> = ({
                 {...field}
                 size="large"
                 placeholder={t("email")}
-                prefix={<TbUser className={styles.inputIcon} size={18} />}
+                prefix={<TbUser className={styles.inputUserIcon} size={18} />}
                 status={errors.email ? "error" : ""}
               />
             )}
@@ -89,6 +94,18 @@ export const SignUp: React.FC<SignUpProps> = ({
           )}
         </div>
 
+        <Flex className={styles.rememberWrapper}>
+          <Checkbox>{t("remember-me")}</Checkbox>
+          <Button
+            className={styles.forgotPasswordBtn}
+            variant="link"
+            color="primary"
+            onClick={() => onSwitchForm("forgotPassword")}
+          >
+            {t("forgot-link")}
+          </Button>
+        </Flex>
+
         {error && (
           <Alert
             className={styles.styledAlert}
@@ -106,31 +123,19 @@ export const SignUp: React.FC<SignUpProps> = ({
           htmlType="submit"
           loading={isInFlight}
         >
-          {t("continue")}
+          {t("sign-in")}
         </Button>
       </form>
 
-      <Text className={styles.privacyText}>
-        {t("privacy-paragraph")}{" "}
-        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
-          {t("terms-link")}
-        </Button>{" "}
-        {t("and")}{" "}
-        <Button className={styles.privacyLink} size="small" variant="link" color="primary">
-          {t("privacy-link")}
-        </Button>
-        .
-      </Text>
-
       <Flex className={styles.modalFooter}>
-        <Text>{t("have-account")}</Text>
+        <Text>{t("don't-account")}</Text>
         <Button
           className={styles.modalFooterBtn}
           variant="link"
           color="primary"
-          onClick={() => onSwitchForm("signIn")}
+          onClick={() => onSwitchForm("signUp")}
         >
-          {t("sign-in")}
+          {t("sign-up")}
         </Button>
       </Flex>
     </>
@@ -155,31 +160,29 @@ const useStyles = createStyles(({ token, css }) => {
       margin-bottom: ${token.marginSM}px;
       color: ${token.colorTextPlaceholder} !important;
     `,
+    form: css`
+      margin-bottom: ${token.marginXL * 2}px;
+    `,
     inputWrapper: css`
       margin-bottom: ${token.margin}px;
     `,
-    inputIcon: css`
-      color: ${token.colorTextPlaceholder};
+    inputUserIcon: css`
+      color: var(--ant-color-text-placeholder);
+    `,
+    rememberWrapper: css`
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: ${token.marginSM}px;
+    `,
+    forgotPasswordBtn: css`
+      padding: 0;
+      height: auto;
     `,
     styledAlert: css`
       margin-bottom: ${token.marginSM}px;
     `,
     submitBtn: css`
       width: 100%;
-      margin-bottom: ${token.marginSM}px;
-    `,
-    privacyText: css`
-      font-size: ${token.fontSizeSM}px;
-      margin-bottom: ${token.marginXL * 2}px;
-    `,
-    privacyLink: css`
-      font-size: ${token.fontSizeSM}px;
-      letter-spacing: 0%;
-      color: ${token.colorPrimary};
-      border: 0;
-      box-shadow: none;
-      padding: 0;
-      text-decoration: underline;
     `,
     modalFooter: css`
       justify-content: center;

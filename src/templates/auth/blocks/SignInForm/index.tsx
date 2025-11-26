@@ -7,7 +7,7 @@ import { useModalStore } from "@src/store/appStore";
 import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
 
-import { SignIn } from "../UI/Auth/SignIn";
+import { SignIn } from "@src/templates/auth/atoms/SignIn";
 
 interface SignInFormProps {
   onSwitchForm: (form: "signUp" | "forgotPassword") => void;

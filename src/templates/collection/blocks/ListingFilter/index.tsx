@@ -8,7 +8,7 @@ import { useFilterActions } from "@src/hooks/useFilterActions";
 import { useFiltersStore } from "@src/store/appStore";
 import { useDraftFilters } from "@src/hooks/useDraftFilters";
 import { FilterItem } from "@src/templates/collection/atoms/Filters/FilterItem";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 
 interface ListingFilterProps {
   onClose?: () => void;

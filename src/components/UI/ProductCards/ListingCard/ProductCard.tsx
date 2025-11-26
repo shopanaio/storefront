@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-// import { mq } from "@src/components/Theme/breakpoints";
+// import { mq } from "@src/components/UI/Theme/breakpoints";
 import { useRoutes } from "@src/hooks/useRoutes";
 import {
   ProductCardTitle,

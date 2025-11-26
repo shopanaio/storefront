@@ -8,7 +8,7 @@ import { ListingSortMenu } from '@src/templates/collection/atoms/ListingSortMenu
 import { SortOption } from '@src/components/Product/Rate/SortPopover';
 import { ApiFilter, ListingSort } from '@codegen/schema-client';
 import { useTranslations } from 'next-intl';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 
 interface ListingControlsProps {
   filters: ApiFilter[];

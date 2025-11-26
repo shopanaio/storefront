@@ -1,7 +1,7 @@
 import { Flex, Skeleton } from "antd";
 import { createStyles } from "antd-style";
 import { GallerySkeleton } from "../GallerySkeleton";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 
 export const SkeletonProduct = () => {
   const { styles } = useStyles();

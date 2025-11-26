@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Popover, Button } from 'antd';
 import SearchResults from '../SearchResults';
 import { useSearchInput } from '@src/hooks/useSearchInput';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { createStyles } from 'antd-style';
 import { useElementWidth } from '@src/hooks/useElementWidth';
 import { SearchInput } from '../../atoms/SearchInput';

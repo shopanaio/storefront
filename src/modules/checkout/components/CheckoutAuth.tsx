@@ -6,7 +6,7 @@ import { useModalStore } from '@src/store/appStore';
 import dynamic from 'next/dynamic';
 
 const AuthModal = dynamic(
-  () => import('@src/components/Auth/AuthModal').then((m) => m.AuthModal),
+  () => import('@src/templates/auth/sections/AuthModal').then((m) => m.AuthModal),
   { ssr: false }
 );
 

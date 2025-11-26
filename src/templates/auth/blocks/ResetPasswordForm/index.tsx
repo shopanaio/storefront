@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button, Typography, Alert } from "antd";
-import PasswordInput from "./PasswordInput";
+import PasswordInput from "@src/templates/auth/atoms/PasswordInput";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useResetPasswordMutation } from "@src/hooks/useResetPasswordMutation";

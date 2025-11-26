@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, Flex, Typography, Button } from 'antd';
 import { createStyles, cx } from 'antd-style';
 import { TbTrash } from 'react-icons/tb';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { Price } from '@src/components/UI/Price/Price';
 import { SaleBadge } from '@src/components/UI/Badges/Sale';
 import { fallbackImageBase64 } from '@src/components/UI/fallbackImageBase64';

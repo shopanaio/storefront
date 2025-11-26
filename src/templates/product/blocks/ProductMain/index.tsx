@@ -16,7 +16,7 @@ import {
   getGalleryStyles,
   GalleryBreakpointSettings,
 } from '@src/utils/galleryStyles';
-import { breakpoints, mq } from '@src/components/Theme/breakpoints';
+import { breakpoints, mq } from '@src/components/UI/Theme/breakpoints';
 import { useProductGallery } from '@src/hooks/useProductGallery';
 import { useGalleryBreakpoints } from '@src/hooks/useGalleryBreakpoints';
 import { ProductCartButton } from '@src/components/UI/ProductCards/ListingCard/CartButton';

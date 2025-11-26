@@ -1,6 +1,6 @@
 import { Flex, Modal } from "antd";
 import { useModalStore } from "@src/store/appStore";
-import { Auth } from "./Auth";
+import { Auth } from "@src/templates/auth/blocks/Auth";
 import { useLogo } from "@src/hooks/useLogo";
 import { createStyles } from "antd-style";
 

@@ -1,7 +1,7 @@
 import type { Preview } from "@storybook/react";
 import { App } from "antd";
 import { ThemeProvider } from "antd-style";
-import { GlobalStyle } from "@src/components/Theme/GlobalStyle";
+import { GlobalStyle } from "@src/components/UI/Theme/GlobalStyle";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@src/i18n/messages/en.json";
 import "modern-normalize/modern-normalize.css";

@@ -1,6 +1,6 @@
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import { SwiperOptions } from "swiper/types";
 import { Swiper, SwiperSlide } from "swiper/react";
 

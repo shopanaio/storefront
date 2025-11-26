@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { useState } from 'react';
 import type { model } from "@shopana/storefront-sdk";
 import { fallbackImageBase64 } from '@src/components/UI/fallbackImageBase64';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { OptionCard } from '@src/components/UI/OptionCard';
 import { OptionImage } from '@src/components/UI/OptionImage';
 import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';

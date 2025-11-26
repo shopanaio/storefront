@@ -9,7 +9,7 @@ import { ListingFilter } from '@src/templates/collection/blocks/ListingFilter';
 import { useTranslations } from 'next-intl';
 import { useActiveFiltersCount } from '@src/hooks/useActiveFiltersCount';
 import { ApiFilter } from '@codegen/schema-client';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { DrawerBase } from '@src/components/UI/DrawerBase';
 import { useFiltersStore } from '@src/store/appStore';
 import { StickyButton } from '@src/components/UI/StickyButton';

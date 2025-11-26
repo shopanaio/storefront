@@ -2,7 +2,7 @@
 
 import { Card, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import type { model } from "@shopana/storefront-sdk";
 import Link from "next/link";
 import { useRoutes } from "@src/hooks/useRoutes";

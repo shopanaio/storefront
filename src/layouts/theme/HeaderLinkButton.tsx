@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from "antd";
 import { ReactNode } from "react";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import clsx from "clsx";
 import useToken from "antd/es/theme/useToken";
 import { Badge } from "@src/components/UI/Badge";

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { SignInForm } from "./SignInForm";
-import { SignUpForm } from "./SignUpForm";
-import { ForgotPasswordForm } from "./ForgotPasswordForm";
-import { ResetPasswordForm } from "./ResetPasswordForm";
+import { SignInForm } from "@src/templates/auth/blocks/SignInForm";
+import { SignUpForm } from "@src/templates/auth/blocks/SignUpForm";
+import { ForgotPasswordForm } from "@src/templates/auth/blocks/ForgotPasswordForm";
+import { ResetPasswordForm } from "@src/templates/auth/blocks/ResetPasswordForm";
 
 type AuthFormType = "signIn" | "signUp" | "forgotPassword" | "resetPassword";
 

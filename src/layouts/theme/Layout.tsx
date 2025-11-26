@@ -8,7 +8,7 @@ import { AnnouncementBar } from './AnnouncementBar';
 import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
-  () => import('@src/components/Auth/AuthModal').then((m) => m.AuthModal),
+  () => import('@src/templates/auth/sections/AuthModal').then((m) => m.AuthModal),
   { ssr: false }
 );
 const RateModal = dynamic(

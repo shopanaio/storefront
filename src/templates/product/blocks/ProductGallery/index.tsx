@@ -3,7 +3,7 @@
 
 import { Button, Flex } from 'antd';
 import { createStyles, cx } from 'antd-style';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { A11y, Pagination, Thumbs } from 'swiper/modules';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useSwiperSync } from '@src/hooks/useSwiperSync';

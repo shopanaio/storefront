@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCart } from '@src/hooks/cart';
 import { CartSubtotal } from '@src/templates/cart/blocks/CartSubtotal';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { CartTable } from '@src/templates/cart/blocks/CartTable';
 import { PageLayout } from '@src/layouts/theme/PageLayout';
 import { CartPageTitleAndBtn } from '@src/templates/cart/blocks/CartPageTitleAndBtn';

@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { Button, Flex, Typography } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { mq } from '@src/components/Theme/breakpoints';
+import { mq } from '@src/components/UI/Theme/breakpoints';
 import { ApiMenu } from '@codegen/schema-client';
 import { useMenuHref } from '@src/hooks/useMenuHref';
 import { NewsletterSubscribe } from './NewsletterSubscribe';

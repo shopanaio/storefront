@@ -1,4 +1,4 @@
-import { Theme } from '@src/components/Theme/Theme';
+import { Theme } from '@src/components/UI/Theme/Theme';
 import ConfirmPortalHost from '@src/components/UI/Confirm/ConfirmPortalHost';
 import { WishlistProvider } from '@src/modules/wishlist';
 import { ResponsiveServerProvider } from '@src/providers/responsive-server-provider';

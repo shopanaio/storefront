@@ -2,7 +2,7 @@
 
 import { Button, Typography, MenuProps, message, Flex } from "antd";
 import { DropdownButton } from "./DropdownButton";
-import { mq } from "@src/components/Theme/breakpoints";
+import { mq } from "@src/components/UI/Theme/breakpoints";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
 import { useCurrencyStore } from "@src/store/appStore";
