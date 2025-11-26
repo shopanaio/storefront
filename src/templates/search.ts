@@ -1,11 +1,11 @@
 import type { Template } from "@shopana/storefront-sdk/core/types";
-import { SearchResultsSection } from "@/sections/test/SearchResultsSection";
+import SearchPageSection from "@/sections/SearchPageSection";
 
 const searchTemplate: Template = {
   sections: {
-    order: ['searchResults'],
-    searchResults: {
-      component: SearchResultsSection,
+    order: ['searchPage'],
+    searchPage: {
+      component: SearchPageSection,
       settings: {},
     },
   },

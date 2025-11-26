@@ -1,16 +1,11 @@
 import type { Template } from "@shopana/storefront-sdk/core/types";
-import { CartLinesSection } from "@/sections/test/CartLinesSection";
-import { CartTotalSection } from "@/sections/test/CartTotalSection";
+import CartPageSection from "@/sections/CartPageSection";
 
 const cartTemplate: Template = {
   sections: {
-    order: ['cartLines', 'cartTotal'],
-    cartLines: {
-      component: CartLinesSection,
-      settings: {},
-    },
-    cartTotal: {
-      component: CartTotalSection,
+    order: ['cartPage'],
+    cartPage: {
+      component: CartPageSection,
       settings: {},
     },
   },

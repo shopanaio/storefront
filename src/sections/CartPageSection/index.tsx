@@ -1,36 +1,33 @@
-"use client";
+'use client';
 
-import { Flex, Typography } from "antd";
-import { TbHome } from "react-icons/tb";
-import { createStyles } from "antd-style";
-import { useTranslations } from "next-intl";
-import { useCart } from "@src/hooks/cart";
+import { Flex } from 'antd';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
+import { useCart } from '@src/hooks/cart';
+import { CartSubtotal } from '@src/components/Cart/CartSubtotal';
+import { mq } from '@src/components/Theme/breakpoints';
+import { CartTable } from '@src/components/Cart/CartTable';
+import { PageLayout } from '@src/components/Layout/PageLayout';
+import { CartPageTitleAndBtn } from '@src/components/Cart/CartPageTitleAndBtn';
 
-import { CartSubtotal } from "@src/components/Cart/CartSubtotal";
-import { mq } from "@src/components/Theme/breakpoints";
-import { CartTable } from "@src/components/Cart/CartTable";
-import { PageLayout } from "@src/components/Layout/PageLayout";
-import { CartPageTitleAndBtn } from "@src/components/Cart/CartPageTitleAndBtn";
-
-export default function CartPage() {
-  const t = useTranslations("Cart");
+export default function CartPageSection() {
+  const t = useTranslations('Cart');
   const { styles } = useStyles();
   const { cart } = useCart();
 
   const cartLines = cart?.lines ?? [];
-
   const subtotal = cart?.cost?.subtotalAmount;
 
   return (
     <PageLayout
       breadcrumbs={{
         index: true,
-        items: [{ title: t("cart") }],
+        items: [{ title: t('cart') }],
       }}
     >
       <div className={styles.container}>
         <CartPageTitleAndBtn
-          title={t("cart")}
+          title={t('cart')}
           productsCount={cartLines.length}
         />
         <Flex className={styles.pageBody} vertical>
@@ -57,55 +54,30 @@ const useStyles = createStyles(({ token, css }) => {
         padding: 0;
         margin-right: auto;
         margin-left: auto;
-
         max-width: 1280px;
       }
-
       ${mq.xxl} {
         max-width: 1400px;
       }
     `,
     pageBody: css`
       background: ${token.colorBgContainer};
-
       min-height: 100vh;
-
       ${mq.xl} {
         flex-direction: row;
         align-items: flex-start;
         gap: ${token.margin}px;
       }
     `,
-
-    contentContainer: css`
-      ${mq.xl} {
-        flex: 1;
-      }
-    `,
-
-    cartTableHeat: css`
-      display: none;
-      ${mq.lg} {
-        display: grid;
-
-        grid-template-columns: 64px 2fr 1fr 1fr 40px;
-        padding: ${token.padding}px;
-        background-color: ${token.colorBgLayout};
-        border-radius: ${token.borderRadiusLG}px;
-      }
-    `,
-
     subtotalWrapper: css`
       position: sticky;
       bottom: 0;
       z-index: 10;
       margin-top: auto;
       padding: 0 ${token.padding}px 0;
-
       ${mq.lg} {
         padding: 0;
       }
-
       ${mq.xl} {
         margin-top: 0;
         position: sticky;
