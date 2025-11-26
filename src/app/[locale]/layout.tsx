@@ -1,4 +1,6 @@
-import App from '@src/components/App/App';
+import { Theme } from '@src/components/Theme/Theme';
+import ConfirmPortalHost from '@src/components/UI/Confirm/ConfirmPortalHost';
+import { WishlistProvider } from '@src/modules/wishlist';
 import { ResponsiveServerProvider } from '@src/providers/responsive-server-provider';
 import { IntlProvider } from '@src/providers/intl-provider';
 
@@ -14,7 +16,12 @@ export default async function Layout({
   return (
     <IntlProvider locale={locale}>
       <ResponsiveServerProvider>
-        <App>{children}</App>
+        <WishlistProvider>
+          <Theme>
+            {children}
+            <ConfirmPortalHost />
+          </Theme>
+        </WishlistProvider>
       </ResponsiveServerProvider>
     </IntlProvider>
   );

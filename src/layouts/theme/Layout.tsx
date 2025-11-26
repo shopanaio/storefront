@@ -4,19 +4,19 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Footer } from './Footer';
 import { Header } from './Header';
-import { AnnouncementBar } from '@src/components/Layout/AnnouncementBar';
+import { AnnouncementBar } from './AnnouncementBar';
 import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
-  () => import('../Auth/AuthModal').then((m) => m.AuthModal),
+  () => import('@src/components/Auth/AuthModal').then((m) => m.AuthModal),
   { ssr: false }
 );
 const RateModal = dynamic(
-  () => import('../Product/Rate/RateModal').then((m) => m.RateModal),
+  () => import('@src/components/Product/Rate/RateModal').then((m) => m.RateModal),
   { ssr: false }
 );
 const CartDrawer = dynamic(
-  () => import('../Cart/CartDrawer').then((m) => m.CartDrawer),
+  () => import('@src/components/Cart/CartDrawer').then((m) => m.CartDrawer),
   { ssr: false }
 );
 const AppDrawer = dynamic(
@@ -24,7 +24,7 @@ const AppDrawer = dynamic(
   { ssr: false }
 );
 const MobileSearch = dynamic(
-  () => import('../Search/MobileSearch ').then((m) => m.MobileSearch),
+  () => import('@src/components/Search/MobileSearch ').then((m) => m.MobileSearch),
   { ssr: false }
 );
 

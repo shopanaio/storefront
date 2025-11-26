@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import {
   Breadcrumbs,
   BreadcrumbsProps,
-} from '@src/components/Layout/Breadcrumbs';
+} from './Breadcrumbs';
 import { Flex } from 'antd';
 
 interface PageLayoutProps {

@@ -2,9 +2,9 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Footer } from '@src/components/Layout/Footer';
-import { Header } from '@src/components/Layout/Header';
-import { AnnouncementBar } from '@src/components/Layout/AnnouncementBar';
+import { Footer } from '@src/layouts/theme/Footer';
+import { Header } from '@src/layouts/theme/Header';
+import { AnnouncementBar } from '@src/layouts/theme/AnnouncementBar';
 import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
@@ -20,7 +20,7 @@ const CartDrawer = dynamic(
   { ssr: false }
 );
 const AppDrawer = dynamic(
-  () => import('@src/components/Layout/AppDrawer/AppDrawer').then((m) => m.AppDrawer),
+  () => import('@src/layouts/theme/AppDrawer/AppDrawer').then((m) => m.AppDrawer),
   { ssr: false }
 );
 const MobileSearch = dynamic(

@@ -1,8 +1,25 @@
 "use client";
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { CurrencyCode } from "@codegen/schema-client";
 import { ProductCard } from "./ProductCard";
-import { mockProduct } from "@src/mocks/Product";
+
+const mockProduct = {
+  id: "product-id-1",
+  title: "Бокс Ведьмак 2.0 | Witcher | Подарочный набор в стиле Ведьмака",
+  handle: "main-product",
+  rating: { rating: 4.5, count: 6 },
+  stockStatus: { isAvailable: true },
+  price: { amount: 100, currencyCode: CurrencyCode.Usd },
+  compareAtPrice: { amount: 150, currencyCode: CurrencyCode.Usd },
+  gallery: {
+    edges: [
+      { node: { url: "https://kashalot.gift/image/cachewebp/catalog/Witcher-2022/witcher-premium-2022-600x600.webp" } },
+      { node: { url: "https://kashalot.gift/image/cachewebp/catalog/Witcher-2022/bloknot-witcher-2022-600x600.webp" } },
+      { node: { url: "https://kashalot.gift/image/cachewebp/catalog/Witcher/witcher-new-cup-600x600.webp" } },
+    ],
+  },
+};
 
 const meta: Meta<typeof ProductCard> = {
   title: "UI/ProductCard",

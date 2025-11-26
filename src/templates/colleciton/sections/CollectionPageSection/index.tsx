@@ -9,7 +9,7 @@ import CollectionListingFragmentNode from '@shopana/storefront-sdk/modules/colle
 import { ListingSort, ApiFilterInput, ApiFilter } from '@codegen/schema-client';
 import { ListingTitleAndBtn } from '@src/components/Listing/ListingTitleAndBtn';
 import { ListingPagination } from '@src/components/Listing/ListingPagination';
-import { PageLayout } from '@src/components/Layout/PageLayout';
+import { PageLayout } from '@src/layouts/theme/PageLayout';
 import { useFiltersStore } from '@src/store/appStore';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useTranslations } from 'next-intl';

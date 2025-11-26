@@ -7,7 +7,7 @@ import { useCart } from '@src/hooks/cart';
 import { CartSubtotal } from '@src/components/Cart/CartSubtotal';
 import { mq } from '@src/components/Theme/breakpoints';
 import { CartTable } from '@src/components/Cart/CartTable';
-import { PageLayout } from '@src/components/Layout/PageLayout';
+import { PageLayout } from '@src/layouts/theme/PageLayout';
 import { CartPageTitleAndBtn } from '@src/components/Cart/CartPageTitleAndBtn';
 
 export default function CartPageSection() {
