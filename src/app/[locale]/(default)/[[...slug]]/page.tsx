@@ -49,13 +49,12 @@ export default async function Page(props: {
       const typedLoader = loader as AsyncModuleLoader<
         ModuleExport<DynamicModulePageProps>
       >;
-      const mod = await typedLoader();
-      const Component = getComponentFromModule(
-        mod as ModuleExport<DynamicModulePageProps>
-      );
 
-      return React.createElement(Component, {
-        params: { locale: params.locale, module: segments },
+      return React.createElement(getComponentFromModule(await typedLoader()), {
+        params: {
+          locale: params.locale,
+          module: segments,
+        },
         searchParams,
         segments: segments.slice(1),
       });

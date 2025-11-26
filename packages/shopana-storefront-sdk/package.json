@@ -12,6 +12,7 @@
   ],
   "exports": {
     "./next/page": "./src/next/page.tsx",
+    "./next/layout": "./src/next/layout.tsx",
     "./next/middleware": "./src/next/middleware.ts",
     "./next/headers": "./src/next/headers.ts",
     "./package.json": "./package.json",
