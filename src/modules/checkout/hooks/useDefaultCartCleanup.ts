@@ -1,13 +1,12 @@
 import { useCallback } from 'react';
 import { useRelayEnvironment } from 'react-relay';
-import Cookies from 'js-cookie';
-import { useCartContext } from '@src/providers/cart-context';
+import { useCartContext, useCartIdUtils } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 
 /**
  * Hook that provides a cleanup function to clear default cart data after order completion.
  *
  * Cleans up:
- * - Default cart cookie (default_cart_id)
+ * - Default cart cookie (via SDK cartIdUtils)
  * - Cart context (cartKey and cartId)
  * - Specific checkout record from Relay store by ID
  *
@@ -16,11 +15,12 @@ import { useCartContext } from '@src/providers/cart-context';
 export function useDefaultCartCleanup() {
   const environment = useRelayEnvironment();
   const { setCartKey, setId } = useCartContext();
+  const { removeCartId } = useCartIdUtils();
 
   const cleanup = useCallback(
     (checkoutId: string | null) => {
-      // Remove default cart cookie (using the correct key from CartProvider)
-      Cookies.remove('default_cart_id');
+      // Remove cart cookie via SDK utils
+      removeCartId();
 
       // Clear cart context
       setCartKey(null);
@@ -33,7 +33,7 @@ export function useDefaultCartCleanup() {
         });
       }
     },
-    [environment, setCartKey, setId]
+    [environment, setCartKey, setId, removeCartId]
   );
 
   return cleanup;
