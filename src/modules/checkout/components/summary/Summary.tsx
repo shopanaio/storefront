@@ -6,7 +6,7 @@ import { SummaryTotals } from './SummaryTotals';
 import { useTranslations } from 'next-intl';
 import { TbShoppingCart } from 'react-icons/tb';
 import { useState } from 'react';
-import { CartDrawer } from '@src/components/Cart/CartDrawerDynamic';
+import { CartDrawer } from '@src/templates/cart/sections/CartDrawer/dynamic';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import { SectionTitle } from '@src/modules/checkout/components/common/SectionTitle';
 import { SectionRenderer } from '@src/modules/checkout/infra/SectionRenderer';

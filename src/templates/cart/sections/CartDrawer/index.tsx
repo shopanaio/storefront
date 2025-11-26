@@ -9,11 +9,11 @@ import { useRoutes } from '@src/hooks/useRoutes';
 
 import { useCart } from '@src/hooks/cart';
 
-import { CartTable } from './CartTable';
+import { CartTable } from '@src/templates/cart/blocks/CartTable';
 import { useModalStore } from '@src/store/appStore';
 import { DrawerBase } from '@src/components/UI/DrawerBase/DrawerBase';
 import { StickyButton } from '@src/components/UI/StickyButton';
-import { EmptyCart } from '@src/components/Cart/EmptyCartIcon';
+import { EmptyCart } from '@src/templates/cart/atoms/EmptyCartIcon';
 
 export const CartDrawer: React.FC = () => {
   const { styles } = useStyles();

@@ -16,7 +16,7 @@ const RateModal = dynamic(
   { ssr: false }
 );
 const CartDrawer = dynamic(
-  () => import('@src/components/Cart/CartDrawer').then((m) => m.CartDrawer),
+  () => import('@src/templates/cart/sections/CartDrawer').then((m) => m.CartDrawer),
   { ssr: false }
 );
 const AppDrawer = dynamic(

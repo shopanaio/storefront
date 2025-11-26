@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Divider, Flex, Typography } from "antd";
-import { CartItem } from "@src/components/Cart/CartItem";
+import { CartItem } from "@src/templates/cart/blocks/CartItem";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useTranslations } from "next-intl";

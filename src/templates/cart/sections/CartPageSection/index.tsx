@@ -4,11 +4,11 @@ import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCart } from '@src/hooks/cart';
-import { CartSubtotal } from '@src/components/Cart/CartSubtotal';
+import { CartSubtotal } from '@src/templates/cart/blocks/CartSubtotal';
 import { mq } from '@src/components/Theme/breakpoints';
-import { CartTable } from '@src/components/Cart/CartTable';
+import { CartTable } from '@src/templates/cart/blocks/CartTable';
 import { PageLayout } from '@src/layouts/theme/PageLayout';
-import { CartPageTitleAndBtn } from '@src/components/Cart/CartPageTitleAndBtn';
+import { CartPageTitleAndBtn } from '@src/templates/cart/blocks/CartPageTitleAndBtn';
 
 export default function CartPageSection() {
   const t = useTranslations('Cart');
