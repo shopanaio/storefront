@@ -26,6 +26,7 @@
     "node_modules",
     "src/next/page.tsx",
     "src/next/layout.tsx",
+    "src/next/not-found.tsx",
     "**/*.test.ts",
     "**/*.test.tsx"
   ]
