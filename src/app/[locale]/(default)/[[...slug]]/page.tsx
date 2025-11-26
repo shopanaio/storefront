@@ -63,7 +63,7 @@ export default async function Page(props: {
   }
 
   // Fall back to SDK page handler
-  return SDKPage({ ...props, __url__: '/123', key: 'sdk-page' });
+  return SDKPage(props);
 }
 
 export { generateMetadata };
