@@ -2,7 +2,7 @@ import { graphql } from 'relay-runtime';
 
 export const CollectionListingFragment = graphql`
   fragment CollectionListingFragment on Category
-  @refetchable(queryName: "CollectionListingPaginationQuery")
+  @refetchable(queryName: "SDKCollectionListingPaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 25 }
     after: { type: "Cursor" }

@@ -11,7 +11,7 @@ import { ShowMoreBtn } from "../../atoms/ShowMoreBtn";
 import type { model } from "@shopana/storefront-sdk";
 import { useTranslations } from "next-intl";
 import { ReviewsSection } from "../Rate/Reviews";
-import type { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
+import type { Reviews$key } from "@shopana/storefront-sdk/queries/Reviews";
 import { ShippingReturnsInfo } from "../../atoms/ShippingReturnsInfo";
 
 const { Paragraph } = Typography;

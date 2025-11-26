@@ -1,9 +1,9 @@
 import { PreloadedQuery, usePreloadedQuery } from "react-relay";
 import ProductQuery from "@src/hooks/product/ProductQuery";
-import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
+import { ProductQueryType } from "@src/hooks/product/ProductQuery";
 import { mapApiProductToProduct } from "@src/hooks/product/mapApiProductToProduct";
 import type { UsePreloadedProductResult } from "./types";
-import type { Reviews$key } from "@src/queries/Reviews/__generated__/Reviews.graphql";
+import type { Reviews$key } from "@shopana/storefront-sdk/queries/Reviews";
 
 const usePreloadedProduct = (
   queryReference: PreloadedQuery<ProductQueryType>

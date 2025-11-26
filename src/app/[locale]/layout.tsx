@@ -2,7 +2,7 @@ import { Theme } from '@src/ui-kit/Theme/Theme';
 import ConfirmPortalHost from '@src/ui-kit/Confirm/ConfirmPortalHost';
 import { WishlistProvider } from '@src/modules/wishlist';
 import { ResponsiveServerProvider } from '@src/providers/responsive-server-provider';
-import { IntlProvider } from '@src/providers/intl-provider';
+import { IntlProvider } from '@src/i18n/Provider';
 
 export default async function Layout({
   children,

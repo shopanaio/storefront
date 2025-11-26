@@ -61,4 +61,3 @@ const Listing = graphql`
 `;
 
 export default Listing;
-

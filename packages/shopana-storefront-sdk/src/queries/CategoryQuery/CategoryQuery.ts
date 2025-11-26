@@ -20,4 +20,3 @@ const CategoryQuery = graphql`
 `;
 
 export default CategoryQuery;
-

@@ -2,7 +2,7 @@ import { graphql } from 'relay-runtime';
 
 export const ProductReviewsFragment = graphql`
   fragment ProductReviewsFragment on Product
-  @refetchable(queryName: "ProductReviewsPaginationQuery")
+  @refetchable(queryName: "SDKProductReviewsPaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 3 }
     after: { type: "Cursor" }

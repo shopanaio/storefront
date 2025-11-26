@@ -1,6 +1,5 @@
 import { useLazyLoadQuery } from "react-relay";
-import CategoryQuery from "@src/queries/CategoryQuery";
-import { CategoryQuery as CategoryQueryType } from "@src/queries/CategoryQuery/__generated__/CategoryQuery.graphql";
+import CategoryQuery, { CategoryQuery as CategoryQueryType } from "@shopana/storefront-sdk/queries/CategoryQuery";
 import { PAGINATION_PAGE_SIZE } from "@src/config";
 
 const useCategoryClientQuery = (handle: string, first: number = PAGINATION_PAGE_SIZE) => {

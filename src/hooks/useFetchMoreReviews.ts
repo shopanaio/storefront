@@ -1,7 +1,7 @@
 import { fetchQuery } from "relay-runtime";
 import { useRelayEnvironment } from "react-relay";
 import ProductQuery from "@src/hooks/product/ProductQuery";
-import { ProductQuery as ProductQueryType } from "@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql";
+import { ProductQueryType } from "@src/hooks/product/ProductQuery";
 import { ProductReviewSort } from "codegen/schema-client";
 import {
   PRODUCT_REVIEWS_DEFAULT_SORT,

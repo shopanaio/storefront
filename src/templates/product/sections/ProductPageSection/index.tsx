@@ -8,7 +8,7 @@ import { PageLayout } from '@src/layouts/theme/PageLayout';
 import { Product } from '../../blocks/Product';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
-import type { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
+import type { Reviews$key } from '@shopana/storefront-sdk/queries/Reviews';
 
 // Helper to check if an object has valid Relay fragment spread for Reviews
 function isValidReviewsKey(obj: unknown): obj is Reviews$key {

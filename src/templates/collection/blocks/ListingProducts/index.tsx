@@ -1,8 +1,7 @@
 "use client";
 
 import { usePaginationFragment } from "react-relay";
-import { Listing$key } from "@src/queries/Listing/__generated__/Listing.graphql";
-import Listing from "@src/queries/Listing";
+import Listing, { Listing$key } from "@shopana/storefront-sdk/queries/Listing";
 import { ApiFilterInput, ListingSort } from "codegen/schema-client";
 import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
 import { Spin } from "antd";

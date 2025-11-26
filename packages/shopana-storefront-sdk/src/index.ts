@@ -5,3 +5,6 @@ export { model } from './model/namespace';
 // Re-export main AppProvider
 export { App } from './App';
 export { AppProvider } from './AppProvider';
+
+// Re-export queries
+export * from './queries';

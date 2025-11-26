@@ -8,7 +8,7 @@ export const ProductQuery = graphql`
     $sort: ProductReviewSort = HELPFUL_YES_DESC
   ) {
     product(handle: $handle) {
-      ...ProductReviewsFragment @arguments(first: $first, after: $after, sort: $sort)
+      ...Reviews @arguments(first: $first, after: $after, sort: $sort)
       id
       title
       handle

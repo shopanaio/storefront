@@ -2,9 +2,10 @@
 import loadSerializableQuery from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
 import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
 import { environmentConfig } from "@src/config/environment.config";
-import CategoryQueryNode, {
+import {
+  CategoryQueryNode,
   CategoryQuery,
-} from "@src/queries/CategoryQuery/__generated__/CategoryQuery.graphql";
+} from "@shopana/storefront-sdk/queries/CategoryQuery";
 import { ListingSort } from "@codegen/schema-client";
 import { PAGINATION_PAGE_SIZE } from "@src/config";
 

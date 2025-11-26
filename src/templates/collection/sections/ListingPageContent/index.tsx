@@ -4,8 +4,7 @@ import { ListingTitleAndBtn } from '@src/templates/collection/blocks/ListingTitl
 import { ListingSort, ApiFilterInput, ApiFilter } from '@codegen/schema-client';
 import { ListingProducts } from '@src/templates/collection/blocks/ListingProducts';
 import { useFragment } from 'react-relay';
-import Listing from '@src/queries/Listing';
-import { Listing$key } from '@src/queries/Listing/__generated__/Listing.graphql';
+import Listing, { Listing$key } from '@shopana/storefront-sdk/queries/Listing';
 import useFilters from '@src/hooks/category/useFilters';
 import { useFiltersStore } from '@src/store/appStore';
 

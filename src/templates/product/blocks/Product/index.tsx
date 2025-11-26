@@ -3,7 +3,7 @@
 import { createStyles } from 'antd-style';
 import React from 'react';
 import type { model } from '@shopana/storefront-sdk';
-import type { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
+import type { Reviews$key } from '@shopana/storefront-sdk/queries/Reviews';
 import { ProductMain } from '../ProductMain';
 import { ProductDetails } from '../ProductDetails';
 

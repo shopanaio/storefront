@@ -1,5 +1,5 @@
 import { CurrencyCode } from '@codegen/schema-client';
-import type { ProductQuery$data } from '@src/hooks/product/ProductQuery/__generated__/ProductQuery.graphql';
+import type { ProductQuery$data } from '@src/hooks/product/ProductQuery';
 import type { model } from "@shopana/storefront-sdk";
 
 type ApiProduct = NonNullable<ProductQuery$data['product']>;
