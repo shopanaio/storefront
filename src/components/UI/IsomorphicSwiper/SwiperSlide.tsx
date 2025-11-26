@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { createStyles } from "antd-style";
 import type { SwiperProps, SwiperSlideProps } from "swiper/react";
 import type { SwiperOptions } from "swiper/types";
-import { ctx } from "@src/components/MySwiper/context";
+import { ctx } from "@src/components/ui/IsomorphicSwiper/context";
 import clsx from "clsx";
 
 export const StaticSwiperSlide = ({

@@ -7,7 +7,7 @@ import { A11y, Pagination, FreeMode } from "swiper/modules";
 import { createStyles, cx } from "antd-style";
 import { useIsMobile } from "@src/hooks/useIsMobile";
 import { useBreakpoints } from "@src/hooks/useBreakpoints";
-import { IsomorphicSwiper } from "@src/components/MySwiper/IsomorphicSwiper";
+import { IsomorphicSwiper } from "@src/components/ui/IsomorphicSwiper";
 
 export type DataSource = {
   id: string;

@@ -21,7 +21,7 @@ import {
 import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
 import type { model } from "@shopana/storefront-sdk";
 import { useMemo } from 'react';
-import { IsomorphicSwiper } from '../MySwiper/IsomorphicSwiper';
+import { IsomorphicSwiper } from '@src/components/ui/IsomorphicSwiper';
 import type { SwiperOptions } from 'swiper/types';
 import FallbackAwareImage from '@src/components/UI/Image';
 
