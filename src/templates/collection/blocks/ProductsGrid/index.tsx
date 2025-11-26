@@ -4,7 +4,7 @@ import { Empty } from "antd";
 import { createStyles } from "antd-style";
 
 import { mq } from "@src/components/Theme/breakpoints";
-import { ListingProductCardRelay } from "@src/components/Listing/ProductCard";
+import { ListingProductCardRelay } from "@src/templates/collection/blocks/ProductCard";
 import clsx from "clsx";
 
 interface ListingProps {

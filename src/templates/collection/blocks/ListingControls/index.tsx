@@ -3,9 +3,9 @@
 import React from 'react';
 import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { FilterDrawer } from './Filters/FilterDrawer';
-import { ListingSortMenu } from './ListingSortMenu';
-import { SortOption } from '../Product/Rate/SortPopover';
+import { FilterDrawer } from '@src/templates/collection/blocks/FilterDrawer';
+import { ListingSortMenu } from '@src/templates/collection/atoms/ListingSortMenu';
+import { SortOption } from '@src/components/Product/Rate/SortPopover';
 import { ApiFilter, ListingSort } from '@codegen/schema-client';
 import { useTranslations } from 'next-intl';
 import { mq } from '@src/components/Theme/breakpoints';

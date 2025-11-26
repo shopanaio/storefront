@@ -7,7 +7,7 @@ import { useCategory } from "@src/hooks/useCategory";
 import { useRoutes } from "@src/hooks/useRoutes";
 import { usePaginationFragment } from "react-relay";
 import Listing from "@src/queries/Listing";
-import { ProductsGrid } from "@src/components/Listing/ProductsGrid ";
+import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
 import clsx from "clsx";
 
 interface HomeProductGridSectionProps {

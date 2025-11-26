@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { ProductComponents } from '../Options/ProductComponents';
 import { ProductRating } from '@src/components/UI/Rating/Rating';
-import { ProductWishlistButton } from '@src/components/Listing/ProductWishlistButton';
+import { ProductWishlistButton } from '@src/templates/collection/atoms/ProductWishlistButton';
 import { ProductOptions } from '../Options/ProductOptions';
 import {
   getGalleryStyles,

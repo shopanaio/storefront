@@ -2,11 +2,11 @@
 
 import { Flex, Button } from "antd";
 import { createStyles } from "antd-style";
-import { FilterTags } from "./Filters/FilterTags";
-import { ListingHeader } from "./ListingHeader";
-import { ListingControls } from "./ListingControls";
+import { FilterTags } from "@src/templates/collection/blocks/FilterTags";
+import { ListingHeader } from "@src/templates/collection/atoms/ListingHeader";
+import { ListingControls } from "@src/templates/collection/blocks/ListingControls";
 import { ApiFilter, ListingSort } from "@codegen/schema-client";
-import { SortOption } from "../Product/Rate/SortPopover";
+import { SortOption } from "@src/components/Product/Rate/SortPopover";
 import { useTranslations } from "next-intl";
 import { useFilterActions } from "@src/hooks/useFilterActions";
 import { useActiveFiltersCount } from "@src/hooks/useActiveFiltersCount";

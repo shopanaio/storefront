@@ -6,7 +6,7 @@ import { mq } from "@src/components/Theme/breakpoints";
 import type { model } from "@shopana/storefront-sdk";
 import { Price } from "@src/components/UI/Price/Price";
 import { calcSale } from "@src/utils/calcSale";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import { fallbackImageBase64 } from "@src/components/UI/fallbackImageBase64";
 
 const { Text } = Typography;
 

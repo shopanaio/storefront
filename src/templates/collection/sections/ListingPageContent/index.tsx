@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Flex, Typography } from 'antd';
-import { ListingTitleAndBtn } from '@src/components/Listing/ListingTitleAndBtn';
+import { ListingTitleAndBtn } from '@src/templates/collection/blocks/ListingTitleAndBtn';
 import { ListingSort, ApiFilterInput, ApiFilter } from '@codegen/schema-client';
-import { ListingProducts } from '@src/components/Listing/ListingProducts';
+import { ListingProducts } from '@src/templates/collection/blocks/ListingProducts';
 import { useFragment } from 'react-relay';
 import Listing from '@src/queries/Listing';
 import { Listing$key } from '@src/queries/Listing/__generated__/Listing.graphql';

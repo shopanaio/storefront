@@ -4,7 +4,7 @@ import { Image as AntImage, Skeleton } from 'antd';
 import type { ImageProps as AntImageProps } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
-import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
+import { fallbackImageBase64 } from '@src/components/UI/fallbackImageBase64';
 import {
   isImageCached,
   preloadImage,

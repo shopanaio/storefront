@@ -5,7 +5,7 @@ import { TbTrash } from 'react-icons/tb';
 import { mq } from '@src/components/Theme/breakpoints';
 import { Price } from '@src/components/UI/Price/Price';
 import { SaleBadge } from '@src/components/UI/Badges/Sale';
-import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64';
+import { fallbackImageBase64 } from '@src/components/UI/fallbackImageBase64';
 import {
   QuantityInput,
   QuantityInputProps,

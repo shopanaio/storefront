@@ -3,10 +3,10 @@
 import React from "react";
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
-import { FilterDrawer } from "./Filters/FilterDrawer";
-import { ListingSortMenu } from "./ListingSortMenu";
+import { FilterDrawer } from "@src/templates/collection/blocks/FilterDrawer";
+import { ListingSortMenu } from "@src/templates/collection/atoms/ListingSortMenu";
 import { ApiFilter, ListingSort } from "@codegen/schema-client";
-import { SortOption } from "../Product/Rate/SortPopover";
+import { SortOption } from "@src/components/Product/Rate/SortPopover";
 
 interface ListingMobileControlsProps {
   filters: ApiFilter[];

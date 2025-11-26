@@ -2,7 +2,7 @@
 
 import { ListingSort } from "codegen/schema-client";
 import InfiniteScroll from "react-infinite-scroller";
-import { ProductsGrid } from "@src/components/Listing/ProductsGrid ";
+import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
 import { Spin, Alert } from "antd";
 import { createStyles } from "antd-style";
 import React, { useState, useEffect, useCallback } from "react";

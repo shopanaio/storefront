@@ -4,7 +4,7 @@ import { Button, Flex, Image, Typography } from "antd";
 import { createStyles, cx } from "antd-style";
 import { TbChevronRight } from "react-icons/tb";
 import { ApiProductGroupItem } from "@codegen/schema-client";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import { fallbackImageBase64 } from "@src/components/UI/fallbackImageBase64";
 import { getGroupItemPrice } from "@src/utils/getGroupItemPrice";
 import { Price } from "@src/components/UI/Price/Price";
 

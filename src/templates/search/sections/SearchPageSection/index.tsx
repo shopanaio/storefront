@@ -8,9 +8,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import InfiniteScroll from 'react-infinite-scroller';
 import { useSearchData } from '@shopana/storefront-sdk/modules/search/react/hooks/useSearchData';
 import { ListingSort, ApiFilter, ApiFilterInput } from '@codegen/schema-client';
-import { ListingTitleAndBtn } from '@src/components/Listing/ListingTitleAndBtn';
+import { ListingTitleAndBtn } from '@src/templates/collection/blocks/ListingTitleAndBtn';
 import { PageLayout } from '@src/layouts/theme/PageLayout';
-import { ProductsGrid } from '@src/components/Listing/ProductsGrid ';
+import { ProductsGrid } from '@src/templates/collection/blocks/ProductsGrid';
 import { useFiltersStore } from '@src/store/appStore';
 
 export default function SearchPageSection() {

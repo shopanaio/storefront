@@ -7,7 +7,7 @@ import type { ApiFilter } from "@codegen/schema-client";
 import { useFilterActions } from "@src/hooks/useFilterActions";
 import { useFiltersStore } from "@src/store/appStore";
 import { useDraftFilters } from "@src/hooks/useDraftFilters";
-import { FilterItem } from "./FilterItem";
+import { FilterItem } from "@src/templates/collection/atoms/Filters/FilterItem";
 import { mq } from "@src/components/Theme/breakpoints";
 
 interface ListingFilterProps {

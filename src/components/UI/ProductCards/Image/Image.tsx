@@ -1,7 +1,7 @@
 import { createStyles } from "antd-style";
 import { Image } from "antd";
 import { useHover } from "@src/components/UI/hooks/useHover";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import { fallbackImageBase64 } from "@src/components/UI/fallbackImageBase64";
 
 export interface ProductCardImageProps {
   gallery: string[];

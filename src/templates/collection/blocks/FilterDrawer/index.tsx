@@ -5,7 +5,7 @@ import { Button, Flex } from 'antd';
 import { Badge } from '@src/components/UI/Badge';
 import { TbFilter } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
-import { ListingFilter } from './ListingFilter';
+import { ListingFilter } from '@src/templates/collection/blocks/ListingFilter';
 import { useTranslations } from 'next-intl';
 import { useActiveFiltersCount } from '@src/hooks/useActiveFiltersCount';
 import { ApiFilter } from '@codegen/schema-client';

@@ -1,5 +1,5 @@
 import { ApiProduct } from "@codegen/schema-client";
-import { useListingProductCardFragment_product$key } from "@src/components/Listing/relay/__generated__/useListingProductCardFragment_product.graphql";
+import { useListingProductCardFragment_product$key } from "@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql";
 import { graphql, useFragment } from "react-relay";
 
 export const UseProductCardFragment = graphql`

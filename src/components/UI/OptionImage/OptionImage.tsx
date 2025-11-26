@@ -2,7 +2,7 @@
 
 import { Image, ImageProps } from "antd";
 import { createStyles, cx } from "antd-style";
-import { fallbackImageBase64 } from "@src/components/Listing/fallbackImageBase64";
+import { fallbackImageBase64 } from "@src/components/UI/fallbackImageBase64";
 
 export interface OptionImageProps
   extends Omit<ImageProps, "fallback" | "preview"> {

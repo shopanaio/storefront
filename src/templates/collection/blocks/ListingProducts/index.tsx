@@ -4,14 +4,14 @@ import { usePaginationFragment } from "react-relay";
 import { Listing$key } from "@src/queries/Listing/__generated__/Listing.graphql";
 import Listing from "@src/queries/Listing";
 import { ApiFilterInput, ListingSort } from "codegen/schema-client";
-import { ProductsGrid } from "./ProductsGrid ";
+import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
 import { Spin } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
 import React from "react";
 import useCategoryRefetch from "@src/hooks/category/useCategoryRefetch";
 import { PAGINATION_PAGE_SIZE } from "@src/config";
-import { ListingPagination } from "./ListingPagination";
+import { ListingPagination } from "@src/templates/collection/atoms/ListingPagination";
 
 interface ListingProductsProps {
   category: Listing$key | null;

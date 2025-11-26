@@ -12,7 +12,7 @@ import {
   ProductCardTitle,
   type ProductCardTitleProps,
 } from "@src/components/UI/ProductCards/Title/Title";
-import { ProductWishlistButton } from "@src/components/Listing/ProductWishlistButton";
+import { ProductWishlistButton } from "@src/templates/collection/atoms/ProductWishlistButton";
 import { type ProductCardImageProps } from "@src/components/UI/ProductCards/Image/Image";
 import {
   ProductCardSwatches,
