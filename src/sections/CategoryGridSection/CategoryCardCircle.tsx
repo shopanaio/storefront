@@ -3,8 +3,8 @@
 import { Card, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import type { model } from "@shopana/storefront-sdk";
-import { useLocale } from "next-intl";
 import Link from "next/link";
+import { useRoutes } from "@src/hooks/useRoutes";
 
 const { Text } = Typography;
 
@@ -14,9 +14,9 @@ interface Props {
 
 export default function CategoryCardCircle({ category }: Props) {
   const { styles } = useStyles();
-  const locale = useLocale();
+  const routes = useRoutes();
   return (
-    <Link href={`${locale}/l/${category.handle}`}>
+    <Link href={routes.collection.path(category.handle)}>
       <Card
         bodyStyle={{ padding: 0 }}
         key={category.id}

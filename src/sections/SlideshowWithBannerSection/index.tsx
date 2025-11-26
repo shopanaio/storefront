@@ -10,7 +10,7 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider, ViewAllButton, SliderNavButtons } from "@/sections/shared";
-import { useLocale } from "next-intl";
+import { useRoutes } from "@src/hooks/useRoutes";
 import React from "react";
 
 export interface SlideshowWithBannerSectionProps {
@@ -29,7 +29,7 @@ export default function SlideshowWithBannerSection({
   banner,
 }: // pagination,
 SlideshowWithBannerSectionProps) {
-  const locale = useLocale();
+  const routes = useRoutes();
   const { styles } = useStyles();
 
   const products = useMemo(
@@ -67,7 +67,7 @@ SlideshowWithBannerSectionProps) {
                 swiperRef={swiperRef}
                 itemsLength={sources[0].listing.edges.length}
               />
-              <ViewAllButton href={`${locale}/l/${sources[0]?.handle}`} />
+              <ViewAllButton href={routes.collection.path(sources[0]?.handle)} />
             </Flex>
           </Flex>
 

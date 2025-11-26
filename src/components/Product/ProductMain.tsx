@@ -149,7 +149,7 @@ export const ProductMain = ({
               <Button
                 variant="link"
                 color="primary"
-                href={routes.category.path(product.category.handle)}
+                href={routes.collection.path(product.category.handle)}
                 className={styles.categoryButton}
               >
                 {product.category.title}

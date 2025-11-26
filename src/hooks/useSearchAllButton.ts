@@ -1,4 +1,5 @@
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
+import { useRoutes } from "@src/hooks/useRoutes";
 
 /**
  * Hook that provides props for "Show all" search button
@@ -7,9 +8,9 @@ import { useTranslations, useLocale } from "next-intl";
  */
 export const useSearchAllButton = (searchTerm: string) => {
   const t = useTranslations("Header");
-  const locale = useLocale();
+  const routes = useRoutes();
 
-  const href = `/${locale}/search?q=${encodeURIComponent(searchTerm)}`;
+  const href = routes.search.path(searchTerm);
   const label = `${t("show-all")} "${searchTerm}"`;
 
   return {

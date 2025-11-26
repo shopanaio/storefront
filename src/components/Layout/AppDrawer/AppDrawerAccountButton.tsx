@@ -8,7 +8,7 @@ import useToken from 'antd/es/theme/useToken';
 import { AppDrawerButton } from './AppDrawerButton';
 import { useSession as useSessionStore } from '@src/hooks/useSession';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useRoutes } from '@src/hooks/useRoutes';
 import { createStyles } from 'antd-style';
 
 /**
@@ -19,7 +19,7 @@ export const AppDrawerAccountButton: React.FC = () => {
   const [, token] = useToken();
   const { styles } = useStyles();
   const router = useRouter();
-  const locale = useLocale();
+  const routes = useRoutes();
   const session = useSessionStore((state) => state.session);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
@@ -31,7 +31,7 @@ export const AppDrawerAccountButton: React.FC = () => {
   const handleClick = () => {
     if (isAuthenticated) {
       setIsAppDrawerOpen(false);
-      router.push(`/${locale}/profile/general`);
+      router.push(routes.profile.path('general'));
     } else {
       setIsAppDrawerOpen(false);
       setIsAuthModalVisible(true);

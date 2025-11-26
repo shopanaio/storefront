@@ -1,11 +1,11 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
 import { TbUserCircle, TbUser } from "react-icons/tb";
 import { HeaderLinkButton } from "./HeaderLinkButton";
 import { useSession as useSessionStore } from "@src/hooks/useSession";
 import { useModalStore } from "@src/store/appStore";
+import { useRoutes } from "@src/hooks/useRoutes";
 
 type AccountButtonProps = {
   className?: string;
@@ -18,7 +18,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({
 }) => {
   const t = useTranslations("Header");
   const router = useRouter();
-  const locale = useLocale();
+  const routes = useRoutes();
   const session = useSessionStore((state) => state.session);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
@@ -28,7 +28,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({
 
   const onClick = () => {
     if (isAuthenticated) {
-      router.push(`/${locale}/profile/general`);
+      router.push(routes.profile.path('general'));
     } else {
       setIsAuthModalVisible(true);
     }

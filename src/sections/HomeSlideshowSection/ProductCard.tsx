@@ -4,7 +4,7 @@ import type { HomeProduct } from '@shopana/storefront-sdk/modules/home/core/type
 import { Card, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useRoutes } from '@src/hooks/useRoutes';
 import { Price } from '@/components/UI/Price/Price';
 import { Thumbnail } from '@/components/UI/Thumbnail/Thumbnail';
 
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function HomeSlideshowProductCard({ product }: Props) {
-  const locale = useLocale();
+  const routes = useRoutes();
   const { styles } = useStyles();
 
   const price = {
@@ -32,7 +32,7 @@ export function HomeSlideshowProductCard({ product }: Props) {
 
   return (
     <Link
-      href={`/${locale}/product/${product.product.handle}?variant=${product.handle}`}
+      href={routes.product.path(product.product.handle, { variant: product.handle })}
       className={styles.link}
     >
       <Card className={styles.card} styles={{ body: { padding: 12 } }} hoverable>

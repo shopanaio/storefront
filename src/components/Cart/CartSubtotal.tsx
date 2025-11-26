@@ -2,9 +2,10 @@
 
 import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Money } from "@src/components/UI/Price/Money";
 import type { model } from "@shopana/storefront-sdk";
+import { useRoutes } from "@src/hooks/useRoutes";
 const { Text } = Typography;
 
 interface CartSubtotalProps {
@@ -12,7 +13,7 @@ interface CartSubtotalProps {
 }
 
 export const CartSubtotal: React.FC<CartSubtotalProps> = ({ subtotal }) => {
-  const locale = useLocale();
+  const routes = useRoutes();
 
   const t = useTranslations("Cart");
   const { styles } = useStyles();
@@ -33,7 +34,7 @@ export const CartSubtotal: React.FC<CartSubtotalProps> = ({ subtotal }) => {
         </Flex>
       </Flex>
 
-      <Button href={`/${locale}/checkout`} type="primary" size="large">
+      <Button href={routes.checkout.path()} type="primary" size="large">
         {t("checkout")}
       </Button>
     </Flex>

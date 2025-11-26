@@ -1,16 +1,19 @@
 import { ApiMenuNode } from "@codegen/schema-client";
+import { useRoutes } from "@src/hooks/useRoutes";
 
-export const useMenuHref = (locale: string) => {
+export const useMenuHref = () => {
+  const routes = useRoutes();
+
   return (node: ApiMenuNode): string => {
     if (!node || typeof node !== "object") return "#";
 
     switch ((node as ApiMenuNode).__typename) {
       case "Category":
-        return `/${locale}/category/${node.handle}`;
+        return routes.collection.path(node.handle);
       case "Product":
-        return `/${locale}/product/${node.handle}`;
+        return routes.product.path(node.handle);
       case "Page":
-        return `/${locale}/page/${node.handle}`;
+        return routes.page.path(node.handle);
       case "URLNode":
         return node.url || "#";
       default:

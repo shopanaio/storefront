@@ -69,7 +69,7 @@ export default function ProductPageSection() {
             ...(product.category?.breadcrumbs || []),
             ...(product.category ? [product.category] : []),
           ].map((breadcrumb) => ({
-            href: routes.category.path(breadcrumb.handle),
+            href: routes.collection.path(breadcrumb.handle),
             title: breadcrumb.title,
           })),
           { title },

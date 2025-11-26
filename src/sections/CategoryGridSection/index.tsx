@@ -2,7 +2,7 @@
 
 import { Flex } from "antd";
 import type { model } from "@shopana/storefront-sdk";
-import { useLocale } from "next-intl";
+import { useRoutes } from "@src/hooks/useRoutes";
 import { useMemo } from "react";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
@@ -23,7 +23,7 @@ export default function CategoryGridSection({
   // pagination,
   renderItem,
 }: CategoryGridSectionProps) {
-  const locale = useLocale();
+  const routes = useRoutes();
   const { styles } = useStyles();
 
   const children = useMemo(
@@ -34,7 +34,7 @@ export default function CategoryGridSection({
   return (
     <Flex vertical gap={16}>
       <SectionTitle title={title}>
-        <ViewAllButton href={`${locale}/l/${sources[0]?.handle}`} />
+        <ViewAllButton href={routes.collection.path(sources[0]?.handle ?? '')} />
       </SectionTitle>
 
       <Flex className={styles.container} justify="space-between">

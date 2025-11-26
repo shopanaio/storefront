@@ -1,18 +1,19 @@
 import { Button, Input } from 'antd';
 import { TbSearch } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 import { mq } from '@src/components/Theme/breakpoints';
 import { useModalStore } from '@src/store/appStore';
 import { useIsMobile } from '@src/hooks/useIsMobile';
+import { useRoutes } from '@src/hooks/useRoutes';
 
 type SearchInputProps = {
   onClick?: () => void;
 };
 
 export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
-  const locale = useLocale();
+  const routes = useRoutes();
   const t = useTranslations('Header');
   const { styles } = useStyles();
   const searchTerm = useModalStore((state) => state.searchTerm);
@@ -47,7 +48,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
         <Button
           href={
             searchTerm.trim()
-              ? `${locale}/search?q=${encodeURIComponent(searchTerm)}`
+              ? routes.search.path(searchTerm)
               : undefined
           }
           type="primary"

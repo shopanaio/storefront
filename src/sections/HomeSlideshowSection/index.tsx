@@ -7,7 +7,7 @@ import type { HomeProduct } from '@shopana/storefront-sdk/modules/home/core/type
 import { Flex } from 'antd';
 import { useRef } from 'react';
 import type { Swiper as SwiperType } from 'swiper';
-import { useLocale } from 'next-intl';
+import { useRoutes } from '@src/hooks/useRoutes';
 import { SectionTitle, SliderNavButtons, ViewAllButton, SwiperContainer, UniversalSlider } from '@/sections/shared';
 import { HomeSlideshowProductCard } from './ProductCard';
 
@@ -21,7 +21,7 @@ interface HomeSlideshowSectionSettings {
 export default function HomeSlideshowSection({
   settings,
 }: SectionProps<HomeSlideshowSectionSettings>) {
-  const locale = useLocale();
+  const routes = useRoutes();
   const swiperRef = useRef<SwiperType | null>(null);
 
   const category = useHomeCategory(settings.categoryKey);
@@ -39,7 +39,7 @@ export default function HomeSlideshowSection({
             swiperRef={swiperRef}
             itemsLength={products.length}
           />
-          <ViewAllButton href={`/${locale}/l/${category.handle}`} />
+          <ViewAllButton href={routes.collection.path(category.handle)} />
         </Flex>
       </SectionTitle>
       <SwiperContainer itemsLength={products.length}>

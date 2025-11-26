@@ -6,7 +6,7 @@ export const routes = {
   },
   product: {
     path(handle: string, opts?: { variant?: string | null }) {
-      const base = `/product/${handle}`;
+      const base = `/products/${handle}`;
       if (opts?.variant) {
         const search = new URLSearchParams({ variant: opts.variant }).toString();
         return `${base}?${search}`;
@@ -14,9 +14,39 @@ export const routes = {
       return base;
     },
   },
-  category: {
+  collection: {
     path(handle: string) {
-      return `/l/${handle}`;
+      return `/collections/${handle}`;
+    },
+  },
+  listCollections: {
+    path() {
+      return "/collections";
+    },
+  },
+  search: {
+    path(query?: string) {
+      const base = "/search";
+      if (query) {
+        const search = new URLSearchParams({ q: query }).toString();
+        return `${base}?${search}`;
+      }
+      return base;
+    },
+  },
+  blog: {
+    path() {
+      return "/blogs";
+    },
+  },
+  article: {
+    path(handle: string) {
+      return `/blogs/${handle}`;
+    },
+  },
+  page: {
+    path(handle: string) {
+      return `/pages/${handle}`;
     },
   },
   cart: {
@@ -32,6 +62,15 @@ export const routes = {
   checkout: {
     path() {
       return "/checkout";
+    },
+  },
+  profile: {
+    path(section?: string) {
+      const base = "/profile";
+      if (section) {
+        return `${base}/${section}`;
+      }
+      return base;
     },
   },
 };

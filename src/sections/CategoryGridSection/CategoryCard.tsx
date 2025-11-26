@@ -4,8 +4,8 @@ import { Card, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
 import type { model } from "@shopana/storefront-sdk";
-import { useLocale } from "next-intl";
 import Link from "next/link";
+import { useRoutes } from "@src/hooks/useRoutes";
 
 const { Text } = Typography;
 
@@ -15,10 +15,10 @@ interface Prop {
 
 export default function CategoryCard({ category }: Prop) {
   const { styles } = useStyles();
-  const locale = useLocale();
+  const routes = useRoutes();
 
   return (
-    <Link href={`${locale}/l/${category.handle}`}>
+    <Link href={routes.collection.path(category.handle)}>
       <Card
         className={styles.categoryCard}
         bodyStyle={{ padding: 0 }}

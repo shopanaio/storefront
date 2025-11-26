@@ -1,16 +1,11 @@
 import type { Template } from "@shopana/storefront-sdk/core/types";
-import { CollectionInfoSection } from "@/sections/test/CollectionInfoSection";
-import { CollectionProductsSection } from "@/sections/test/CollectionProductsSection";
+import CollectionPageSection from "@/sections/CollectionPageSection";
 
 const collectionTemplate: Template = {
   sections: {
-    order: ['collectionInfo', 'products'],
-    collectionInfo: {
-      component: CollectionInfoSection,
-      settings: {},
-    },
-    products: {
-      component: CollectionProductsSection,
+    order: ['collectionPage'],
+    collectionPage: {
+      component: CollectionPageSection,
       settings: {},
     },
   },
