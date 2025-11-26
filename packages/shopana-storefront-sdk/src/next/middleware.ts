@@ -67,13 +67,6 @@ export function createSDKMiddleware(options?: {
 }
 
 /**
- * Configuration for SDK middleware
- */
-export interface SDKMiddlewareConfig {
-  matcher?: string | string[];
-}
-
-/**
  * Default matcher that excludes static files and API routes
  */
 export const defaultMatcher =
