@@ -1,15 +1,17 @@
-// Collection page template (placeholder)
 import type { Template } from "@shopana/storefront-sdk/core/types";
+import { CollectionInfoSection } from "@/sections/test/CollectionInfoSection";
+import { CollectionProductsSection } from "@/sections/test/CollectionProductsSection";
 
 const collectionTemplate: Template = {
   sections: {
-    order: ['placeholder'],
-    placeholder: {
-      component: () => null,
-      settings: {
-        title: 'Collection Page',
-        subtitle: 'Coming soon...',
-      },
+    order: ['collectionInfo', 'products'],
+    collectionInfo: {
+      component: CollectionInfoSection,
+      settings: {},
+    },
+    products: {
+      component: CollectionProductsSection,
+      settings: {},
     },
   },
 };

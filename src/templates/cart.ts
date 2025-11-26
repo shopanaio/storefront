@@ -1,15 +1,17 @@
-// Cart page template (placeholder)
 import type { Template } from "@shopana/storefront-sdk/core/types";
+import { CartLinesSection } from "@/sections/test/CartLinesSection";
+import { CartTotalSection } from "@/sections/test/CartTotalSection";
 
 const cartTemplate: Template = {
   sections: {
-    order: ['placeholder'],
-    placeholder: {
-      component: () => null,
-      settings: {
-        title: 'Cart Page',
-        subtitle: 'Coming soon...',
-      },
+    order: ['cartLines', 'cartTotal'],
+    cartLines: {
+      component: CartLinesSection,
+      settings: {},
+    },
+    cartTotal: {
+      component: CartTotalSection,
+      settings: {},
     },
   },
 };

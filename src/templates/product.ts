@@ -1,15 +1,17 @@
-// Product page template (placeholder)
 import type { Template } from "@shopana/storefront-sdk/core/types";
+import { ProductInfoSection } from "@/sections/test/ProductInfoSection";
+import { ProductVariantsSection } from "@/sections/test/ProductVariantsSection";
 
 const productTemplate: Template = {
   sections: {
-    order: ['placeholder'],
-    placeholder: {
-      component: () => null,
-      settings: {
-        title: 'Product Page',
-        subtitle: 'Coming soon...',
-      },
+    order: ['productInfo', 'variants'],
+    productInfo: {
+      component: ProductInfoSection,
+      settings: {},
+    },
+    variants: {
+      component: ProductVariantsSection,
+      settings: {},
     },
   },
 };
