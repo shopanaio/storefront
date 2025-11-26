@@ -24,6 +24,8 @@ export const Product = ({
 }: Prop) => {
   const { styles } = useStyles();
 
+  console.log('Product render', { currentVariant });
+
   return (
     <div className={styles.container} data-testid="product-page">
       <ProductMain

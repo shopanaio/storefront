@@ -1,16 +1,11 @@
 import type { Template } from "@shopana/storefront-sdk/core/types";
-import { ProductInfoSection } from "@/sections/test/ProductInfoSection";
-import { ProductVariantsSection } from "@/sections/test/ProductVariantsSection";
+import ProductPageSection from "@/sections/ProductPageSection";
 
 const productTemplate: Template = {
   sections: {
-    order: ['productInfo', 'variants'],
-    productInfo: {
-      component: ProductInfoSection,
-      settings: {},
-    },
-    variants: {
-      component: ProductVariantsSection,
+    order: ['productPage'],
+    productPage: {
+      component: ProductPageSection,
       settings: {},
     },
   },
