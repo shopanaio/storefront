@@ -36,25 +36,25 @@ async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
   try {
     switch (pageType) {
       case 'home':
-        return (await import('@/templates/index')).default;
+        return (await import('@/templates/index/index')).default;
       case 'product':
-        return (await import('@/templates/product')).default;
+        return (await import('@/templates/product/index')).default;
       case 'collection':
-        return (await import('@/templates/collection')).default;
+        return (await import('@/templates/collection/index')).default;
       case 'search':
-        return (await import('@/templates/search')).default;
+        return (await import('@/templates/search/index')).default;
       case 'blog':
-        return (await import('@/templates/blog')).default;
+        return (await import('@/templates/blog/index')).default;
       case 'article':
-        return (await import('@/templates/article')).default;
+        return (await import('@/templates/article/index')).default;
       case 'page':
-        return (await import('@/templates/page')).default;
+        return (await import('@/templates/page/index')).default;
       case 'cart':
-        return (await import('@/templates/cart')).default;
+        return (await import('@/templates/cart/index')).default;
       case 'list-collections':
-        return (await import('@/templates/list-collections')).default;
+        return (await import('@/templates/list-collections/index')).default;
       case '404':
-        return (await import('@/templates/404')).default;
+        return (await import('@/templates/404/index')).default;
       default:
         return null;
     }
@@ -85,11 +85,16 @@ interface SearchPageData {
   query: string;
 }
 
-type LoadedPageData = HomePageData | ProductPageData | CollectionPageData | SearchPageData | null;
+type LoadedPageData =
+  | HomePageData
+  | ProductPageData
+  | CollectionPageData
+  | SearchPageData
+  | null;
 
 async function loadPageData(
   ctx: TemplateParams,
-  environmentConfig: RelayEnvironmentConfig,
+  environmentConfig: RelayEnvironmentConfig
 ): Promise<LoadedPageData> {
   const { pageType, params, searchParams } = ctx;
 
@@ -192,7 +197,10 @@ function PageWrapper({
     }
     case 'search': {
       return (
-        <SearchDataProvider preloadedQuery={data.preloadedQuery} query={data.query}>
+        <SearchDataProvider
+          preloadedQuery={data.preloadedQuery}
+          query={data.query}
+        >
           {children}
         </SearchDataProvider>
       );
@@ -234,7 +242,7 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     const resolvedParams = await params;
     const resolvedSearchParams = await searchParams;
     const { pageType, params: routeParams } = parseRoute(
-      resolvedParams.slug ?? [],
+      resolvedParams.slug ?? []
     );
 
     return buildPageMetadata({
@@ -249,7 +257,7 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     const resolvedSearchParams = await searchParams;
 
     const { pageType, params: routeParams } = parseRoute(
-      resolvedParams.slug ?? [],
+      resolvedParams.slug ?? []
     );
 
     // Handle 404
@@ -272,7 +280,7 @@ export function createSDKPage(options: CreateSDKPageOptions) {
         params: routeParams,
         searchParams: resolvedSearchParams,
       },
-      environmentConfig,
+      environmentConfig
     );
 
     return (
