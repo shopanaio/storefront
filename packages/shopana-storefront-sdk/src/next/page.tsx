@@ -32,30 +32,30 @@ interface PageProps {
 }
 
 // Dynamic template imports using switch
-// Templates are resolved from user project via @/templates/* path
+// Templates are resolved from user project via @src/templates/* path
 async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
   try {
     switch (pageType) {
       case 'home':
-        return (await import('@/templates/index/index')).default;
+        return (await import('@src/templates/index/index')).default;
       case 'product':
-        return (await import('@/templates/product/index')).default;
+        return (await import('@src/templates/product/index')).default;
       case 'collection':
-        return (await import('@/templates/colleciton/index')).default;
+        return (await import('@src/templates/colleciton/index')).default;
       case 'search':
-        return (await import('@/templates/search/index')).default;
+        return (await import('@src/templates/search/index')).default;
       case 'blog':
-        return (await import('@/templates/blog/index')).default;
+        return (await import('@src/templates/blog/index')).default;
       case 'article':
-        return (await import('@/templates/article/index')).default;
+        return (await import('@src/templates/article/index')).default;
       case 'page':
-        return (await import('@/templates/page/index')).default;
+        return (await import('@src/templates/page/index')).default;
       case 'cart':
-        return (await import('@/templates/cart/index')).default;
+        return (await import('@src/templates/cart/index')).default;
       case 'list-collections':
-        return (await import('@/templates/list-collections/index')).default;
+        return (await import('@src/templates/list-collections/index')).default;
       case '404':
-        return (await import('@/templates/404/index')).default;
+        return (await import('@src/templates/404/index')).default;
       default:
         return null;
     }
@@ -224,7 +224,7 @@ export type { SDKRequestContext };
  * ```tsx
  * // app/[...slug]/page.tsx
  * import { createSDKPage } from '@shopana/storefront-sdk/next/page';
- * import { environmentConfig } from '@/config/environment.config';
+ * import { environmentConfig } from '@src/config/environment.config';
  *
  * const { Page, generateMetadata } = createSDKPage({ environmentConfig });
  *

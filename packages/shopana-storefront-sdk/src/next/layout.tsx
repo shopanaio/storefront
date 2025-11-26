@@ -25,27 +25,21 @@ interface PageLayoutComponent {
  * Layouts are resolved from user project via @src/layouts/* path.
  * Returns null if no layout found for the pageType.
  */
-async function loadLayout(pageType: PageType): Promise<PageLayoutComponent | null> {
+async function loadLayout(
+  pageType: PageType
+): Promise<PageLayoutComponent | null> {
   try {
     switch (pageType) {
       case 'home':
-        return (await import('@/layouts/theme')).default;
       case 'product':
-        return (await import('@/layouts/theme')).default;
       case 'collection':
-        return (await import('@/layouts/theme')).default;
       case 'search':
-        return (await import('@/layouts/theme')).default;
       case 'blog':
-        return (await import('@/layouts/theme')).default;
       case 'article':
-        return (await import('@/layouts/theme')).default;
       case 'page':
-        return (await import('@/layouts/theme')).default;
       case 'cart':
-        return (await import('@/layouts/theme')).default;
       case 'list-collections':
-        return (await import('@/layouts/theme')).default;
+        return (await import('@src/layouts/theme')).default;
       case '404':
         return null;
       default:
@@ -86,7 +80,6 @@ export function createSDKLayout(options: CreateSDKLayoutOptions = {}) {
 
     // Parse route from pathname to get pageType
     const { pageType } = parseRoute(requestContext.pathname);
-
     // Load layout dynamically based on pageType
     const LayoutComponent = await layoutLoader(pageType);
 
