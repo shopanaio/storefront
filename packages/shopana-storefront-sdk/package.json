@@ -12,6 +12,8 @@
   ],
   "exports": {
     "./next/page": "./src/next/page.tsx",
+    "./next/middleware": "./src/next/middleware.ts",
+    "./next/headers": "./src/next/headers.ts",
     "./package.json": "./package.json",
     ".": "./dist/index.js",
     "./*": "./dist/*"

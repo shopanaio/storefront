@@ -20,6 +20,7 @@ import { CollectionDataProvider } from '@shopana/storefront-sdk/modules/collecti
 import { loadSearchServerQuery } from '@shopana/storefront-sdk/modules/search/next/loaders/loadSearchServerQuery';
 import { SearchDataProvider } from '@shopana/storefront-sdk/modules/search/react/providers/SearchDataProvider';
 import type { RelayEnvironmentConfig } from '../graphql/relay/types';
+import { getRequestContext, type SDKRequestContext } from './headers';
 
 type SlugParam = string[] | undefined;
 
@@ -214,6 +215,8 @@ export interface CreateSDKPageOptions {
   environmentConfig: RelayEnvironmentConfig;
 }
 
+export type { SDKRequestContext };
+
 /**
  * Factory function to create SDK page exports with configuration.
  *
@@ -233,17 +236,16 @@ export function createSDKPage(options: CreateSDKPageOptions) {
   const { environmentConfig } = options;
 
   async function generateMetadata({
-    params,
     searchParams,
   }: {
     params: Promise<{ slug?: SlugParam }>;
     searchParams?: Promise<Record<string, string | string[] | undefined>>;
   }): Promise<Metadata> {
-    const resolvedParams = await params;
     const resolvedSearchParams = await searchParams;
-    const { pageType, params: routeParams } = parseRoute(
-      resolvedParams.slug ?? []
-    );
+
+    // Get URL context from middleware headers
+    const requestContext = await getRequestContext();
+    const { pageType, params: routeParams } = parseRoute(requestContext.pathname);
 
     return buildPageMetadata({
       pageType,
@@ -252,13 +254,14 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     });
   }
 
-  async function Page({ params, searchParams }: PageProps) {
-    const resolvedParams = await params;
+  async function Page({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams;
 
-    const { pageType, params: routeParams } = parseRoute(
-      resolvedParams.slug ?? []
-    );
+    // Get URL context from middleware headers
+    const requestContext = await getRequestContext();
+
+    // Parse route from pathname
+    const { pageType, params: routeParams } = parseRoute(requestContext.pathname);
 
     // Handle 404
     if (pageType === '404') {
