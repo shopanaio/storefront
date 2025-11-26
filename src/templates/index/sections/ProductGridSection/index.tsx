@@ -1,7 +1,7 @@
 'use client';
 
 import type { SectionProps } from '@shopana/storefront-sdk/core/types';
-import HomeProductGridSection from '@/sections/HomeProductGridSection';
+import HomeProductGridSection from '../HomeProductGridSection';
 
 interface ProductGridSectionSettings {
   categoryHandle: string;

@@ -1,6 +1,6 @@
 import type { Template } from '@shopana/storefront-sdk/core/types';
-import ProductGridSection from '@/sections/ProductGridSection';
-import HomeSlideshowSection from '@/sections/HomeSlideshowSection';
+import ProductGridSection from './sections/ProductGridSection';
+import HomeSlideshowSection from './sections/HomeSlideshowSection';
 
 const homeTemplate: Template = {
   sections: {

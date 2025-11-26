@@ -1,5 +1,5 @@
 import type { Template } from "@shopana/storefront-sdk/core/types";
-import CartPageSection from "@/sections/CartPageSection";
+import CartPageSection from "./sections/CartPageSection";
 
 const cartTemplate: Template = {
   sections: {

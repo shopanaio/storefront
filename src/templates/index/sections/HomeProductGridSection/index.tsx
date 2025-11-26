@@ -2,7 +2,7 @@
 
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
-import { SectionTitle, ViewAllButton, LoadMoreBtn } from "@/sections/shared";
+import { SectionTitle, ViewAllButton, LoadMoreBtn } from "../../../shared/atoms";
 import { useCategory } from "@src/hooks/useCategory";
 import { useRoutes } from "@src/hooks/useRoutes";
 import { usePaginationFragment } from "react-relay";

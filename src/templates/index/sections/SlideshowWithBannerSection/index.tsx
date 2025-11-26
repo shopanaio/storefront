@@ -9,7 +9,7 @@ import Banner from "./Banner";
 import { mq } from "@src/components/Theme/breakpoints";
 import { useMemo, useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
-import { UniversalSlider, ViewAllButton, SliderNavButtons } from "@/sections/shared";
+import { UniversalSlider, ViewAllButton, SliderNavButtons } from "../../../shared/atoms";
 import { useRoutes } from "@src/hooks/useRoutes";
 import React from "react";
 

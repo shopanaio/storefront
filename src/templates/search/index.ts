@@ -1,5 +1,5 @@
 import type { Template } from "@shopana/storefront-sdk/core/types";
-import SearchPageSection from "@/sections/SearchPageSection";
+import SearchPageSection from "./sections/SearchPageSection";
 
 const searchTemplate: Template = {
   sections: {

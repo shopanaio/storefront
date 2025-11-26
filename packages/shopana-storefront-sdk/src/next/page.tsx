@@ -40,7 +40,7 @@ async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
       case 'product':
         return (await import('@/templates/product/index')).default;
       case 'collection':
-        return (await import('@/templates/collection/index')).default;
+        return (await import('@/templates/colleciton/index')).default;
       case 'search':
         return (await import('@/templates/search/index')).default;
       case 'blog':

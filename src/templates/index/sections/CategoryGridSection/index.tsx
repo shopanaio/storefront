@@ -6,7 +6,7 @@ import { useRoutes } from "@src/hooks/useRoutes";
 import { useMemo } from "react";
 import { createStyles } from "antd-style";
 import { mq } from "@src/components/Theme/breakpoints";
-import { SectionTitle, ViewAllButton } from "@/sections/shared";
+import { SectionTitle, ViewAllButton } from "../../../shared/atoms";
 import CategoryCardCircle from "./CategoryCardCircle";
 import CategoryCard from "./CategoryCard";
 
