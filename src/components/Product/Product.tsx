@@ -2,7 +2,7 @@
 
 import { createStyles } from 'antd-style';
 import React from 'react';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 import type { Reviews$key } from '@src/queries/Reviews/__generated__/Reviews.graphql';
 import { ProductMain } from './ProductMain';
 import { ProductDetails } from './ProductDetails';
@@ -24,8 +24,6 @@ export const Product = ({
 }: Prop) => {
   const { styles } = useStyles();
 
-  console.log('Product render', { currentVariant });
-
   return (
     <div className={styles.container} data-testid="product-page">
       <ProductMain
@@ -34,10 +32,7 @@ export const Product = ({
         currentVariant={currentVariant}
         onChangeVariant={onChangeVariant}
       />
-      <ProductDetails
-        product={product}
-        productReviewsRef={productReviewsRef}
-      />
+      <ProductDetails product={product} productReviewsRef={productReviewsRef} />
     </div>
   );
 };

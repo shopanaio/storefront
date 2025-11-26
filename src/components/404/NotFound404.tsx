@@ -4,7 +4,6 @@ import React from 'react';
 import { Flex, Typography, Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { Image404 } from './Image';
 
 const { Title, Text } = Typography;
@@ -15,7 +14,6 @@ const { Title, Text } = Typography;
 export const NotFound404: React.FC = () => {
   const { styles } = useStyles();
   const t = useTranslations('NotFound');
-  const router = useRouter();
 
   const handleGoHome = () => {
     window.location.assign('/');

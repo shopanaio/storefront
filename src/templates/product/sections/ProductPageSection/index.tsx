@@ -59,8 +59,6 @@ export default function ProductPageSection() {
     variantHandle: selectedVariantHandle,
   });
 
-  console.log('ProductPageSection render', { currentVariant });
-
   return (
     <PageLayout
       breadcrumbs={{

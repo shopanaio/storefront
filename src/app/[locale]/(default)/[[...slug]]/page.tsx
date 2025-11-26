@@ -9,7 +9,9 @@ import {
   type AsyncModuleLoader,
 } from '@src/modules/registry';
 
-const { Page: SDKPage, generateMetadata } = createSDKPage({ environmentConfig });
+const { Page: SDKPage, generateMetadata } = createSDKPage({
+  environmentConfig,
+});
 
 /**
  * Extracts component from a module namespace or returns the component itself.
@@ -61,7 +63,7 @@ export default async function Page(props: {
   }
 
   // Fall back to SDK page handler
-  return SDKPage(props);
+  return SDKPage({ ...props, __url__: '/123', key: 'sdk-page' });
 }
 
 export { generateMetadata };
