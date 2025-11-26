@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { Flex, Input, Typography } from 'antd';
 import { TbSearch } from 'react-icons/tb';
 import type { InputRef } from 'antd';
-import SearchResults from './SearchResults';
+import SearchResults from '../SearchResults';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { useSearchInput } from '@src/hooks/useSearchInput';

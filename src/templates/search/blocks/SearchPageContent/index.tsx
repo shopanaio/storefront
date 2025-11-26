@@ -5,7 +5,7 @@ import { mq } from "@src/components/Theme/breakpoints";
 import { ListingFilter } from "@src/components/Listing/Filters/ListingFilter";
 import { ListingTitleAndBtn } from "@src/components/Listing/ListingTitleAndBtn";
 import { ListingSort } from "@codegen/schema-client";
-import { SearchListingProducts } from "./SearchListingProducts";
+import { SearchListingProducts } from "../SearchListingProducts";
 import { useSearchParams, useRouter } from "next/navigation";
 import useSearchProductsFragment from "@src/hooks/search/useSearchProductsFragment";
 import useFilters from "@src/hooks/category/useFilters";

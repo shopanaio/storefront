@@ -24,7 +24,7 @@ const AppDrawer = dynamic(
   { ssr: false }
 );
 const MobileSearch = dynamic(
-  () => import('@src/components/Search/MobileSearch ').then((m) => m.MobileSearch),
+  () => import('@src/templates/search').then((m) => m.MobileSearch),
   { ssr: false }
 );
 

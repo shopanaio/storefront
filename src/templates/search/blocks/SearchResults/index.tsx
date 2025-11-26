@@ -1,6 +1,6 @@
 import React from 'react';
 import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
-import SearchResultsContent from './SearchResultsContent';
+import SearchResultsContent from '../SearchResultsContent';
 
 interface SearchResultsProps {
   searchTerm: string;

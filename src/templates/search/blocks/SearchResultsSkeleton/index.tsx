@@ -1,6 +1,6 @@
 import React from "react";
 import { Flex, Skeleton } from "antd";
-import { SearchProductSkeleton } from "./SearchProductSkeleton";
+import { SearchProductSkeleton } from "../../atoms/SearchProductSkeleton";
 import { createStyles } from "antd-style";
 
 export const SearchResultsSkeleton: React.FC = () => {

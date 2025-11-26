@@ -1,11 +1,11 @@
 import { useRef, useEffect, useState } from 'react';
 import { Popover, Button } from 'antd';
-import SearchResults from './SearchResults';
+import SearchResults from '../SearchResults';
 import { useSearchInput } from '@src/hooks/useSearchInput';
 import { mq } from '@src/components/Theme/breakpoints';
 import { createStyles } from 'antd-style';
 import { useElementWidth } from '@src/hooks/useElementWidth';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../../atoms/SearchInput';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import { useModalStore } from '@src/store/appStore';
 import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
