@@ -4,7 +4,7 @@ import React from 'react';
 import { Flex, Typography, Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { FilterDrawer } from '@src/templates/collection/blocks/FilterDrawer';
-import { SortPopover, SortOption } from '@src/components/Product/Rate/SortPopover';
+import { SortPopover, SortOption } from '@src/templates/product/blocks/Rate/SortPopover';
 import { TbArrowsUpDown } from 'react-icons/tb';
 import { ApiFilter, ListingSort } from '@codegen/schema-client';
 import { useTranslations } from 'next-intl';

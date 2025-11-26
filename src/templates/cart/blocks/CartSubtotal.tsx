@@ -3,7 +3,7 @@
 import { Button, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { Money } from "@src/components/UI/Price/Money";
+import { Money } from "@src/ui-kit/Price/Money";
 import type { model } from "@shopana/storefront-sdk";
 import { useRoutes } from "@src/hooks/useRoutes";
 const { Text } = Typography;

@@ -3,7 +3,7 @@
 import React from "react";
 import { Typography } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 
 const { Text } = Typography;
 

@@ -5,8 +5,8 @@ import { Card, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import Link from 'next/link';
 import { useRoutes } from '@src/hooks/useRoutes';
-import { Price } from '@src/components/UI/Price/Price';
-import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { Price } from '@src/ui-kit/Price/Price';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
 
 const { Text, Paragraph } = Typography;
 

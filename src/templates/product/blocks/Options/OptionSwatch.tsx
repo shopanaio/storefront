@@ -8,7 +8,7 @@ import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./OptionHeader";
 import type { model } from "@shopana/storefront-sdk";
 import { OptionRadioButton } from "./OptionRadioButton";
-import { OptionGrid } from "@src/components/UI/OptionGrid";
+import { OptionGrid } from "@src/ui-kit/OptionGrid";
 
 interface Props {
   title: string;

@@ -5,10 +5,10 @@ import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { FilterDrawer } from '@src/templates/collection/blocks/FilterDrawer';
 import { ListingSortMenu } from '@src/templates/collection/atoms/ListingSortMenu';
-import { SortOption } from '@src/components/Product/Rate/SortPopover';
+import { SortOption } from '@src/templates/product/blocks/Rate/SortPopover';
 import { ApiFilter, ListingSort } from '@codegen/schema-client';
 import { useTranslations } from 'next-intl';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 
 interface ListingControlsProps {
   filters: ApiFilter[];

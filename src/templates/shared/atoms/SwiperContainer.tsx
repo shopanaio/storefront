@@ -3,7 +3,7 @@
 import { createStyles, cx } from "antd-style";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { useBreakpoints } from "@src/hooks/useBreakpoints";
 
 interface Prop {

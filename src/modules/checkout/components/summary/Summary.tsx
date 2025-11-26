@@ -1,5 +1,5 @@
 import { Flex, Button } from 'antd';
-import { Badge } from '@src/components/UI/Badge';
+import { Badge } from '@src/ui-kit/Badge';
 import { createStyles } from 'antd-style';
 import { SummaryItem } from './SummaryItem';
 import { SummaryTotals } from './SummaryTotals';

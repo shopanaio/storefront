@@ -7,7 +7,7 @@ import CollectionProductCardFragmentNode, {
 } from '@shopana/storefront-sdk/modules/collection/core/graphql/fragments/__generated__/CollectionProductCardFragment.graphql';
 import {
   ProductCard,
-} from '@src/components/UI/ProductCards/ListingCard/ProductCard';
+} from '@src/ui-kit/ProductCards/ListingCard/ProductCard';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
 import type { model } from '@shopana/storefront-sdk';
 import { CurrencyCode } from '@codegen/schema-client';

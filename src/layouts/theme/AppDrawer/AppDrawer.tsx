@@ -11,7 +11,7 @@ import { CurrencyDropdown } from '../CurrencyDropdown';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
-import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { AppDrawerCartButton } from './AppDrawerCartButton';
 import { AppDrawerWishlistButton } from './AppDrawerWishlistButton';
 import { AppDrawerAccountButton } from './AppDrawerAccountButton';

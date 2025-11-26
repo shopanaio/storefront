@@ -1,6 +1,6 @@
 "use client";
 
-import { OptionGrid, type OptionGridProps } from "@src/components/UI/OptionGrid";
+import { OptionGrid, type OptionGridProps } from "@src/ui-kit/OptionGrid";
 
 export type DrawerGridProps = Omit<OptionGridProps, 'gap'> & {
   gap?: OptionGridProps['gap'];

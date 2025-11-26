@@ -1,5 +1,5 @@
 import type { model } from "@shopana/storefront-sdk";
-import { Price } from "@src/components/UI/Price/Price";
+import { Price } from "@src/ui-kit/Price/Price";
 import { Tag } from "antd";
 
 interface AmountTagProps {

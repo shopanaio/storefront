@@ -6,10 +6,10 @@ import { TbArrowsUpDown } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { ListingSort } from '@codegen/schema-client';
-import { mq } from '@src/components/UI/Theme/breakpoints';
-import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
+import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { OptionRadioButton } from '@src/templates/product/blocks/Options/OptionRadioButton';
-import { StickyButton } from '@src/components/UI/StickyButton';
+import { StickyButton } from '@src/ui-kit/StickyButton';
 
 export interface SortOption<T> {
   value: T;

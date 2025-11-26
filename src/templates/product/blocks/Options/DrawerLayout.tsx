@@ -4,8 +4,8 @@ import React from "react";
 import { Tag } from "antd";
 import { createStyles } from "antd-style";
 import { useTranslations } from "next-intl";
-import { DrawerBase } from "@src/components/UI/DrawerBase/DrawerBase";
-import { StickyButton } from "@src/components/UI/StickyButton/StickyButton";
+import { DrawerBase } from "@src/ui-kit/DrawerBase/DrawerBase";
+import { StickyButton } from "@src/ui-kit/StickyButton/StickyButton";
 
 interface Props {
   /** Whether the drawer is open */

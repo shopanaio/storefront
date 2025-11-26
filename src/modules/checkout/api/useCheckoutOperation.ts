@@ -1,5 +1,5 @@
 import { useMutation } from 'react-relay';
-import { toast } from '@src/components/UI/Toast/Toast';
+import { toast } from '@src/ui-kit/Toast/Toast';
 import { GraphQLTaggedNode, MutationParameters } from 'relay-runtime';
 import { useCallback, useRef, useEffect } from 'react';
 import { debounce, type DebouncedFunc } from 'lodash';

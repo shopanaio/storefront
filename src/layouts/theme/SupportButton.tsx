@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { TbPhone } from 'react-icons/tb';
 import { HeaderLinkButton } from './HeaderLinkButton';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
 import { Divider } from 'antd';

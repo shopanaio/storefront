@@ -3,7 +3,7 @@ import useListingProductCardFragment from '@src/templates/collection/relay';
 import {
   ProductCardProps,
   ProductCard,
-} from '@src/components/UI/ProductCards/ListingCard/ProductCard';
+} from '@src/ui-kit/ProductCards/ListingCard/ProductCard';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
 import type { model } from "@shopana/storefront-sdk";
 import { CurrencyCode } from '@codegen/schema-client';
@@ -11,7 +11,7 @@ import { CurrencyCode } from '@codegen/schema-client';
 import { useIsInTheCart, useAddItemToCart } from '@src/hooks/cart';
 import { useProductSwatches } from '@src/hooks/useProductSwatches';
 import { useReviewStore } from '@src/store/appStore';
-import { Money } from '@src/components/UI/Price/Price';
+import { Money } from '@src/ui-kit/Price/Price';
 
 interface CommonProductData {
   id: string;

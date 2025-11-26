@@ -11,7 +11,7 @@ import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
 import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
 import { OptionProductCard } from './OptionProductCard';
 import { OptionSelectCard } from './OptionSelectCard';
-import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
 import { ProductOptionDisplayType } from '@codegen/schema-client';
 
 interface ComponentOptionProps {

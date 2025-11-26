@@ -6,7 +6,7 @@ import { TbArrowRight, TbPlayerPlayFilled } from "react-icons/tb";
 import ReactPlayer from "react-player/lazy";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 
 const { Text } = Typography;
 

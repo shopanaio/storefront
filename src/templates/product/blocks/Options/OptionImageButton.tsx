@@ -1,6 +1,6 @@
 "use client";
 
-import { Thumbnail, type ThumbnailProps } from "@src/components/UI/Thumbnail/Thumbnail";
+import { Thumbnail, type ThumbnailProps } from "@src/ui-kit/Thumbnail/Thumbnail";
 
 // Re-export props for backward compatibility
 export type OptionImageButtonProps = ThumbnailProps;

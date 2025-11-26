@@ -6,7 +6,7 @@ import { createStyles } from "antd-style";
 import { FilterDrawer } from "@src/templates/collection/blocks/FilterDrawer";
 import { ListingSortMenu } from "@src/templates/collection/atoms/ListingSortMenu";
 import { ApiFilter, ListingSort } from "@codegen/schema-client";
-import { SortOption } from "@src/components/Product/Rate/SortPopover";
+import { SortOption } from "@src/templates/product/blocks/Rate/SortPopover";
 
 interface ListingMobileControlsProps {
   filters: ApiFilter[];

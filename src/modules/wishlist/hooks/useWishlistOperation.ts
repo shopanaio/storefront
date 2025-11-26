@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import debounce, { DebouncedFunc } from 'lodash/debounce';
-import { toast } from '@src/components/UI/Toast/Toast';
+import { toast } from '@src/ui-kit/Toast/Toast';
 import {
   emitWishlistEvent,
   WishlistEvent,

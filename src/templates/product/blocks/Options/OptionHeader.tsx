@@ -5,8 +5,8 @@ import { createStyles, css } from "antd-style";
 import { TbChevronRight } from "react-icons/tb";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import type { model } from "@shopana/storefront-sdk";
-import { useHover } from "@src/components/UI/hooks/useHover";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { useHover } from "@src/ui-kit/hooks/useHover";
+import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
 import { AmountTag } from "./AmountTag";
 
 const { Text } = Typography;

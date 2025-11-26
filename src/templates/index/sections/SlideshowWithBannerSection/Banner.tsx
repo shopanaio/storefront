@@ -2,11 +2,11 @@
 
 import { Flex, Image, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import type { model } from "@shopana/storefront-sdk";
-import { Price } from "@src/components/UI/Price/Price";
+import { Price } from "@src/ui-kit/Price/Price";
 import { calcSale } from "@src/utils/calcSale";
-import { fallbackImageBase64 } from "@src/components/UI/fallbackImageBase64";
+import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
 
 const { Text } = Typography;
 

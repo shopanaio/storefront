@@ -10,7 +10,7 @@ import { useWishlistCounts } from '@src/modules/wishlist';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useRouter } from 'next/navigation';
 import { useModalStore } from '@src/store/appStore';
-import { Badge } from '@src/components/UI/Badge';
+import { Badge } from '@src/ui-kit/Badge';
 
 /**
  * Wishlist button for the app drawer

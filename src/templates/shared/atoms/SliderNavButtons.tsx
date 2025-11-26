@@ -4,7 +4,7 @@ import type { Swiper as SwiperType } from 'swiper';
 import { useBreakpoints } from '@src/hooks/useBreakpoints';
 import { useEffect, useState } from 'react';
 import { createStyles, cx } from 'antd-style';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 
 interface SliderNavButtonsProps {
   swiperRef: React.MutableRefObject<SwiperType | null>;

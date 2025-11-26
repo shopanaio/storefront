@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Flex, Typography } from "antd";
-import { Badge } from "@src/components/UI/Badge";
+import { Badge } from "@src/ui-kit/Badge";
 import { createStyles } from "antd-style";
 import { TbArrowLeft } from "react-icons/tb";
 import { useTranslations, useLocale } from "next-intl";

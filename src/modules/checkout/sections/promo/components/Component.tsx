@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
 import { TbTicket, TbX, TbDiscount, TbCircleCheckFilled } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
 import { useCheckoutApi } from '@src/modules/checkout/context/CheckoutApiContext';
-import { useConfirm } from '@src/components/UI/Confirm/useConfirm';
+import { useConfirm } from '@src/ui-kit/Confirm/useConfirm';
 
 /**
  * View component for the checkout promo section.

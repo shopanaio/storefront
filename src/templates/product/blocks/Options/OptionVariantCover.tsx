@@ -6,8 +6,8 @@ import { OptionDrawerLayout } from "./DrawerLayout";
 import { DrawerGrid } from "./DrawerGrid";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./OptionHeader";
-import { OptionGrid } from "@src/components/UI/OptionGrid";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { OptionGrid } from "@src/ui-kit/OptionGrid";
+import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
 
 interface Props {
   title: string;

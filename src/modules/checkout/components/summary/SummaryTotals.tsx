@@ -1,7 +1,7 @@
 import { Flex, Divider, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { Money } from '@src/components/UI/Price/Money';
+import { Money } from '@src/ui-kit/Price/Money';
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import { ShippingPaymentModel } from '@codegen/schema-client';
 

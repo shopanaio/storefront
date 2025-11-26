@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Empty, Flex, Typography } from 'antd';
-import { Badge } from '@src/components/UI/Badge';
+import { Badge } from '@src/ui-kit/Badge';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
@@ -11,8 +11,8 @@ import { useCart } from '@src/hooks/cart';
 
 import { CartTable } from '@src/templates/cart/blocks/CartTable';
 import { useModalStore } from '@src/store/appStore';
-import { DrawerBase } from '@src/components/UI/DrawerBase/DrawerBase';
-import { StickyButton } from '@src/components/UI/StickyButton';
+import { DrawerBase } from '@src/ui-kit/DrawerBase/DrawerBase';
+import { StickyButton } from '@src/ui-kit/StickyButton';
 import { EmptyCart } from '@src/templates/cart/atoms/EmptyCartIcon';
 
 export const CartDrawer: React.FC = () => {

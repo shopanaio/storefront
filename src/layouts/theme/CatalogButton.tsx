@@ -2,7 +2,7 @@ import { Button } from "antd";
 import { ReactNode } from "react";
 import { createStyles } from "antd-style";
 
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { TbLayoutGridFilled } from "react-icons/tb";
 import { useTranslations } from "next-intl";
 

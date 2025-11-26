@@ -6,13 +6,13 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import useToken from 'antd/es/theme/useToken';
-import { DrawerBase } from '@src/components/UI/DrawerBase';
-import { StickyButton } from '@src/components/UI/StickyButton';
+import { DrawerBase } from '@src/ui-kit/DrawerBase';
+import { StickyButton } from '@src/ui-kit/StickyButton';
 import { PhoneInputField } from './phone/PhoneNumberField';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
-import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
 import { formatPhoneNumberIntl } from 'react-phone-number-input';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 

@@ -1,5 +1,5 @@
-import { Theme } from '@src/components/UI/Theme/Theme';
-import ConfirmPortalHost from '@src/components/UI/Confirm/ConfirmPortalHost';
+import { Theme } from '@src/ui-kit/Theme/Theme';
+import ConfirmPortalHost from '@src/ui-kit/Confirm/ConfirmPortalHost';
 import { WishlistProvider } from '@src/modules/wishlist';
 import { ResponsiveServerProvider } from '@src/providers/responsive-server-provider';
 import { IntlProvider } from '@src/providers/intl-provider';

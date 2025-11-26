@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Popover, Button } from 'antd';
 import SearchResults from '../SearchResults';
 import { useSearchInput } from '@src/hooks/useSearchInput';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { createStyles } from 'antd-style';
 import { useElementWidth } from '@src/hooks/useElementWidth';
 import { SearchInput } from '../../atoms/SearchInput';
@@ -10,7 +10,7 @@ import { useIsMobile } from '@src/hooks/useIsMobile';
 import { useModalStore } from '@src/store/appStore';
 import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
 import { useSearchAllButton } from '@src/hooks/useSearchAllButton';
-import useBodyScrollLock from '@src/components/UI/hooks/useBodyScrollLock';
+import useBodyScrollLock from '@src/ui-kit/hooks/useBodyScrollLock';
 
 export const DesktopSearch: React.FC = () => {
   const { searchTerm, debouncedTerm } = useSearchInput('', 300);

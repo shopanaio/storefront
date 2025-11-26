@@ -1,11 +1,11 @@
-import { CartLine } from "@src/components/UI/ProductCards/CartLineItem/CartLine";
+import { CartLine } from "@src/ui-kit/ProductCards/CartLineItem/CartLine";
 import { useRemoveItemFromCart, useUpdateCartLineQuantity } from "@src/hooks/cart";
 import { Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
-import { Thumbnail } from "@src/components/UI/Thumbnail/Thumbnail";
+import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
 import { createStyles } from "antd-style";
 import type { model } from "@shopana/storefront-sdk";
-import { useConfirm } from "@src/components/UI/Confirm/useConfirm";
+import { useConfirm } from "@src/ui-kit/Confirm/useConfirm";
 
 const { Text } = Typography;
 

@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { TbShoppingCart } from 'react-icons/tb';
-import { Badge } from '@src/components/UI/Badge';
+import { Badge } from '@src/ui-kit/Badge';
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import useToken from 'antd/es/theme/useToken';
 import { useCart } from '@src/hooks/cart';
 import { useModalStore } from '@src/store/appStore';
 import { AppDrawerButton } from './AppDrawerButton';
-import { Money } from '@src/components/UI/Price/Money';
+import { Money } from '@src/ui-kit/Price/Money';
 
 /**
  * Cart button for the app drawer

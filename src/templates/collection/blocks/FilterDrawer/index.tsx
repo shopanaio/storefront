@@ -2,17 +2,17 @@
 
 import { useState, useRef } from 'react';
 import { Button, Flex } from 'antd';
-import { Badge } from '@src/components/UI/Badge';
+import { Badge } from '@src/ui-kit/Badge';
 import { TbFilter } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
 import { ListingFilter } from '@src/templates/collection/blocks/ListingFilter';
 import { useTranslations } from 'next-intl';
 import { useActiveFiltersCount } from '@src/hooks/useActiveFiltersCount';
 import { ApiFilter } from '@codegen/schema-client';
-import { mq } from '@src/components/UI/Theme/breakpoints';
-import { DrawerBase } from '@src/components/UI/DrawerBase';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
+import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { useFiltersStore } from '@src/store/appStore';
-import { StickyButton } from '@src/components/UI/StickyButton';
+import { StickyButton } from '@src/ui-kit/StickyButton';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 
 interface FilterDrawerProps {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Flex } from "antd";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { ListingFilter } from "@src/templates/collection/blocks/ListingFilter";
 import { ListingTitleAndBtn } from "@src/templates/collection/blocks/ListingTitleAndBtn";
 import { ListingSort } from "@codegen/schema-client";

@@ -6,8 +6,8 @@ import { client, type GetWarehousesRequest, type WarehouseData } from '../../api
 import { Warehouse } from '../../types';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { SelectButton } from '@checkout/components/common/SelectButton';
-import { DrawerBase } from '@src/components/UI/DrawerBase';
-import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { DrawerBase } from '@src/ui-kit/DrawerBase';
+import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 
 interface Props {

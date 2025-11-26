@@ -3,10 +3,10 @@
 
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { ProductCard } from "@src/components/UI/ProductCards/ListingCard/ProductCard";
+import { ProductCard } from "@src/ui-kit/ProductCards/ListingCard/ProductCard";
 import type { model } from "@shopana/storefront-sdk";
 import Banner from "./Banner";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { useMemo, useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider, ViewAllButton, SliderNavButtons } from "../../../shared/atoms";

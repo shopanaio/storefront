@@ -8,7 +8,7 @@ import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import { OptionHeader } from "./OptionHeader";
 import { OptionRadioButton } from "./OptionRadioButton";
 import { DrawerGrid } from "./DrawerGrid";
-import { OptionFlex, OptionGrid } from "@src/components/UI/OptionGrid";
+import { OptionFlex, OptionGrid } from "@src/ui-kit/OptionGrid";
 
 interface Props {
   title: string;

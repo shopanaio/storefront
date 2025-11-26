@@ -4,8 +4,8 @@ import { Flex, Typography } from "antd";
 import { AmountTag } from "./AmountTag";
 import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
 import type { model } from "@shopana/storefront-sdk";
-import { OptionImage } from "@src/components/UI/OptionImage";
-import { OptionCard } from "@src/components/UI/OptionCard";
+import { OptionImage } from "@src/ui-kit/OptionImage";
+import { OptionCard } from "@src/ui-kit/OptionCard";
 
 const { Text } = Typography;
 

@@ -1,4 +1,4 @@
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { css } from "antd-style";
 
 export interface GalleryBreakpointSettings {

@@ -9,8 +9,8 @@ import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { useSearchInput } from '@src/hooks/useSearchInput';
 import { useModalStore } from '@src/store/appStore';
-import { DrawerBase } from '@src/components/UI/DrawerBase';
-import { StickyButton } from '@src/components/UI/StickyButton/StickyButton';
+import { DrawerBase } from '@src/ui-kit/DrawerBase';
+import { StickyButton } from '@src/ui-kit/StickyButton/StickyButton';
 import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
 import { useSearchAllButton } from '@src/hooks/useSearchAllButton';
 

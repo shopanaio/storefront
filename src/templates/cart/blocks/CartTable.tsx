@@ -4,7 +4,7 @@ import React from "react";
 import { Divider, Flex, Typography } from "antd";
 import { CartItem } from "@src/templates/cart/blocks/CartItem";
 import { createStyles } from "antd-style";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { useTranslations } from "next-intl";
 import clsx from "clsx";
 import type { model } from "@shopana/storefront-sdk";

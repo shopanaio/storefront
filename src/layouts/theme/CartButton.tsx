@@ -2,12 +2,12 @@ import React from "react";
 import { TbShoppingCart } from "react-icons/tb";
 import { useTranslations } from "next-intl";
 import { useCart } from "@src/hooks/cart";
-import { Money } from "@src/components/UI/Price/Money";
+import { Money } from "@src/ui-kit/Price/Money";
 import { createStyles } from "antd-style";
 import { Button } from "antd";
-import { Badge } from "@src/components/UI/Badge";
+import { Badge } from "@src/ui-kit/Badge";
 import useToken from "antd/es/theme/useToken";
-import { mq } from "@src/components/UI/Theme/breakpoints";
+import { mq } from "@src/ui-kit/Theme/breakpoints";
 import clsx from "clsx";
 import { useModalStore } from "@src/store/appStore";
 

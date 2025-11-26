@@ -12,7 +12,7 @@ import {
 import {
   FloatingLabelInput,
   FloatingLabelInputProps,
-} from '@src/components/UI/FloatingLabelInput';
+} from '@src/ui-kit/FloatingLabelInput';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useController } from 'react-hook-form';
 import { PhoneCountrySelect } from './PhoneCountrySelect';

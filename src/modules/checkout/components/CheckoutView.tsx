@@ -1,6 +1,6 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { Summary } from './summary/Summary';
 import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '@src/modules/checkout/infra/SectionRenderer';

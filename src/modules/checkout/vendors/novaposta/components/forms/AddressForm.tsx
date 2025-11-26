@@ -4,7 +4,7 @@ import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { FloatingLabelInput } from '@src/components/UI/FloatingLabelInput';
+import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
 import { StreetModal } from '../street/StreetModal';
 import { ChangeEvent, useCallback, useEffect, useMemo } from 'react';
 import { usePrevious } from 'react-use';

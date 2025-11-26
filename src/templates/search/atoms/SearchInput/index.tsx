@@ -3,7 +3,7 @@ import { TbSearch } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import React from 'react';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { useModalStore } from '@src/store/appStore';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import { useRoutes } from '@src/hooks/useRoutes';

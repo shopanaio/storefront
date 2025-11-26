@@ -3,7 +3,7 @@
 
 import { Button, Flex } from 'antd';
 import { createStyles, cx } from 'antd-style';
-import { mq } from '@src/components/UI/Theme/breakpoints';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { A11y, Pagination, Thumbs } from 'swiper/modules';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useSwiperSync } from '@src/hooks/useSwiperSync';
@@ -18,12 +18,12 @@ import {
   TbChevronRight,
   TbChevronUp,
 } from 'react-icons/tb';
-import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
 import type { model } from "@shopana/storefront-sdk";
 import { useMemo } from 'react';
-import { IsomorphicSwiper } from '@src/components/UI/IsomorphicSwiper';
+import { IsomorphicSwiper } from '@src/ui-kit/IsomorphicSwiper';
 import type { SwiperOptions } from 'swiper/types';
-import FallbackAwareImage from '@src/components/UI/Image';
+import FallbackAwareImage from '@src/ui-kit/Image';
 
 interface Prop {
   gallery: model.Media[];

@@ -4,11 +4,11 @@ import { Flex, Image, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useState } from 'react';
 import type { model } from "@shopana/storefront-sdk";
-import { fallbackImageBase64 } from '@src/components/UI/fallbackImageBase64';
-import { mq } from '@src/components/UI/Theme/breakpoints';
-import { OptionCard } from '@src/components/UI/OptionCard';
-import { OptionImage } from '@src/components/UI/OptionImage';
-import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
+import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
+import { OptionCard } from '@src/ui-kit/OptionCard';
+import { OptionImage } from '@src/ui-kit/OptionImage';
+import { ProductCardTitle } from '@src/ui-kit/ProductCards/Title/Title';
 import { IncludedInSetBadge } from './IncludedInSetBadge';
 import { OptionDrawerLayout } from './DrawerLayout';
 

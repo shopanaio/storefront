@@ -9,17 +9,17 @@ import { PriceAndSale } from '../../atoms/PriceAndSale';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { ProductComponents } from '../Options/ProductComponents';
-import { ProductRating } from '@src/components/UI/Rating/Rating';
+import { ProductRating } from '@src/ui-kit/Rating/Rating';
 import { ProductWishlistButton } from '@src/templates/collection/atoms/ProductWishlistButton';
 import { ProductOptions } from '../Options/ProductOptions';
 import {
   getGalleryStyles,
   GalleryBreakpointSettings,
 } from '@src/utils/galleryStyles';
-import { breakpoints, mq } from '@src/components/UI/Theme/breakpoints';
+import { breakpoints, mq } from '@src/ui-kit/Theme/breakpoints';
 import { useProductGallery } from '@src/hooks/useProductGallery';
 import { useGalleryBreakpoints } from '@src/hooks/useGalleryBreakpoints';
-import { ProductCartButton } from '@src/components/UI/ProductCards/ListingCard/CartButton';
+import { ProductCartButton } from '@src/ui-kit/ProductCards/ListingCard/CartButton';
 import { ProductGallery } from '../ProductGallery';
 import { useIsInTheCart, useAddItemToCart } from '@src/hooks/cart';
 import { useProductGroups } from '@src/hooks/product/useProductGroups';

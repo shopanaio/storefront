@@ -1,6 +1,6 @@
 "use client";
 
-import { OptionCard } from "@src/components/UI/OptionCard";
+import { OptionCard } from "@src/ui-kit/OptionCard";
 
 interface OptionRadioButtonProps {
   selected: boolean;

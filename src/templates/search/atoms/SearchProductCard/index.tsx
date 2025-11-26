@@ -6,8 +6,8 @@ import {
   ApiPage,
   ApiProduct,
 } from '@codegen/schema-client';
-import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
-import { useHover } from '@src/components/UI/hooks/useHover';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
+import { useHover } from '@src/ui-kit/hooks/useHover';
 import { useRoutes } from '@src/hooks/useRoutes';
 
 const { Text } = Typography;
