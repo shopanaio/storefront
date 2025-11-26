@@ -1,0 +1,10 @@
+export { ReviewsSection } from './Reviews';
+export { ProductRateSummary } from './ProductRateSummary';
+export { ProductRateItem } from './ProductRateItem';
+export { RateModal } from './RateModal';
+export { RateModalContent } from './RateModalContent';
+export { CreateReview } from './CreateReview';
+export { ReviewSended } from './ReviewSended';
+export { SortPopover } from './SortPopover';
+export type { SortOption } from './SortPopover';
+export { PRODUCT_REVIEWS_PAGE_SIZE, PRODUCT_REVIEWS_DEFAULT_SORT } from './config';

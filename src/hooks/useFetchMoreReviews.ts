@@ -6,7 +6,7 @@ import { ProductReviewSort } from "codegen/schema-client";
 import {
   PRODUCT_REVIEWS_DEFAULT_SORT,
   PRODUCT_REVIEWS_PAGE_SIZE,
-} from "@src/components/Product/Rate/config";
+} from "@src/templates/product/blocks/Rate/config";
 
 export const useFetchMoreReviews = (
   handle: string,

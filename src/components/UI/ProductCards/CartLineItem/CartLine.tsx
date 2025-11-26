@@ -9,7 +9,7 @@ import { fallbackImageBase64 } from '@src/components/Listing/fallbackImageBase64
 import {
   QuantityInput,
   QuantityInputProps,
-} from '@src/components/Product/QuantityInput';
+} from '@src/templates/product/atoms/QuantityInput';
 import { Thumbnail } from '@src/components/UI/Thumbnail/Thumbnail';
 import { ProductCardTitle } from '@src/components/UI/ProductCards/Title/Title';
 import type { model } from "@shopana/storefront-sdk";

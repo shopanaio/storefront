@@ -12,7 +12,7 @@ const AuthModal = dynamic(
   { ssr: false }
 );
 const RateModal = dynamic(
-  () => import('@src/components/Product/Rate/RateModal').then((m) => m.RateModal),
+  () => import('@src/templates/product/blocks/Rate/RateModal').then((m) => m.RateModal),
   { ssr: false }
 );
 const CartDrawer = dynamic(
