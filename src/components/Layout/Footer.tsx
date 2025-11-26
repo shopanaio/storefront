@@ -1,16 +1,15 @@
-"use client";
+'use client';
 
-import { useTranslations } from "next-intl";
-import { createStyles } from "antd-style";
-import { Button, Flex, Typography } from "antd";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { mq } from "@src/components/Theme/breakpoints";
-import { useLocale } from "next-intl";
-import { ApiMenu } from "@codegen/schema-client";
-import { useMenuHref } from "@src/hooks/useMenuHref";
-import { footerMenusArr } from "@src/mocks/footerMenusArr";
-import { NewsletterSubscribe } from "./NewsletterSubscribe";
+import { useTranslations, useLocale } from 'next-intl';
+import { createStyles } from 'antd-style';
+import { Button, Flex, Typography } from 'antd';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { mq } from '@src/components/Theme/breakpoints';
+import { ApiMenu } from '@codegen/schema-client';
+import { useMenuHref } from '@src/hooks/useMenuHref';
+import { footerMenusArr } from '@src/mocks/footerMenusArr';
+import { NewsletterSubscribe } from './NewsletterSubscribe';
 
 const { Text } = Typography;
 
@@ -19,7 +18,7 @@ type Props = {
 };
 
 export const Footer = ({ menus = footerMenusArr }: Props) => {
-  const t = useTranslations("Footer");
+  const t = useTranslations('Footer');
   const { styles } = useStyles();
   const pathname = usePathname();
   const locale = useLocale();
@@ -50,8 +49,8 @@ export const Footer = ({ menus = footerMenusArr }: Props) => {
                         type="text"
                         style={{
                           color: isActive
-                            ? "var(--ant-color-primary)"
-                            : "var(--ant-color-text)",
+                            ? 'var(--ant-color-primary)'
+                            : 'var(--ant-color-text)',
                         }}
                       >
                         {edge.node.title}
