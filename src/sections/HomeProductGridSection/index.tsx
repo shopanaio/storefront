@@ -1,7 +1,6 @@
 "use client";
 
 import { Flex } from "antd";
-import React from "react";
 import { createStyles } from "antd-style";
 import { SectionTitle, ViewAllButton, LoadMoreBtn } from "@/sections/shared";
 import { useCategory } from "@src/hooks/useCategory";
@@ -9,7 +8,6 @@ import { useLocale } from "next-intl";
 import { usePaginationFragment } from "react-relay";
 import Listing from "@src/queries/Listing";
 import { ProductsGrid } from "@src/components/Listing/ProductsGrid ";
-import { mq } from "@src/components/Theme/breakpoints";
 import clsx from "clsx";
 
 interface HomeProductGridSectionProps {
