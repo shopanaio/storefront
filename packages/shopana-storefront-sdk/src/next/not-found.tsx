@@ -67,19 +67,6 @@ export interface CreateSDKNotFoundOptions {
  *
  * export default NotFound;
  * ```
- *
- * @example
- * ```tsx
- * // With custom fallback
- * import { createSDKNotFound } from '@shopana/storefront-sdk/next/not-found';
- * import { Custom404 } from '@src/components/Custom404';
- *
- * const { NotFound } = createSDKNotFound({
- *   fallback: () => <Custom404 />,
- * });
- *
- * export default NotFound;
- * ```
  */
 export function createSDKNotFound(options: CreateSDKNotFoundOptions = {}) {
   const templateLoader = options.loadTemplate ?? loadNotFoundTemplate;

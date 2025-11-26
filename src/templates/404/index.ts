@@ -1,15 +1,12 @@
-// 404 page template (placeholder)
 import type { Template } from "@shopana/storefront-sdk/core/types";
+import NotFoundSection from './sections/NotFoundSection';
 
 const notFoundTemplate: Template = {
   sections: {
-    order: ['placeholder'],
-    placeholder: {
-      component: () => null,
-      settings: {
-        title: '404 - Page Not Found',
-        subtitle: 'The page you are looking for does not exist.',
-      },
+    order: ['notFound'],
+    notFound: {
+      component: NotFoundSection,
+      settings: {},
     },
   },
 };
