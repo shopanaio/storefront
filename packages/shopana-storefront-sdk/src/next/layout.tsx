@@ -5,9 +5,9 @@
  * are used as external consumers.
  */
 import type { ReactNode } from 'react';
-import type { PageType } from '../core/types';
-import { parseRoute } from '../utils/routeParser';
-import { getRequestContext } from './headers';
+import type { PageType } from '@shopana/storefront-sdk/core/types';
+import { parseRoute } from '@shopana/storefront-sdk/utils/routeParser';
+import { getRequestContext } from '@shopana/storefront-sdk/next/headers';
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,7 +22,7 @@ interface PageLayoutComponent {
 
 /**
  * Dynamic layout imports using switch.
- * Layouts are resolved from user project via @/layouts/* path.
+ * Layouts are resolved from user project via @src/layouts/* path.
  * Returns null if no layout found for the pageType.
  */
 async function loadLayout(pageType: PageType): Promise<PageLayoutComponent | null> {
