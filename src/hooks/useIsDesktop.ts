@@ -1,6 +1,6 @@
 import { useMediaQuery } from "react-responsive";
 import { breakpoints } from "../ui-kit/Theme/breakpoints";
-import { useUA } from "@src/ui-kit/UserAgent";
+import { useUA } from "@src/ui-kit/UserAgent/useUA";
 import { useServer } from "@src/hooks/useServer";
 
 export const useIsDesktop = () => {
