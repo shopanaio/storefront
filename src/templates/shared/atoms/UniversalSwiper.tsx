@@ -183,7 +183,7 @@ export function UniversalSlider<T extends DataSource>({
   );
 }
 
-const useStyles = createStyles(({ css }) => ({
+const useStyles = createStyles(({ css, token }) => ({
   swiperContainer: css`
     position: relative;
 
@@ -205,6 +205,7 @@ const useStyles = createStyles(({ css }) => ({
       height: 6px !important;
       width: 24px !important;
       border-radius: 3px;
+      background-color: ${token.colorPrimary} !important;
     }
   `,
 
@@ -231,6 +232,7 @@ const useStyles = createStyles(({ css }) => ({
       height: 6px;
       width: 24px !important;
       border-radius: 3px;
+      background-color: ${token.colorPrimary} !important;
     }
   `,
 }));
