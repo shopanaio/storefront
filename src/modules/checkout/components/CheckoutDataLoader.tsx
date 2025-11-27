@@ -34,9 +34,7 @@ export function CheckoutDataLoader({
     queryReference
   );
 
-  // For Shopana: checkoutQuery.checkout
-  // For Shopify: cart
-  const checkoutData = (data as any).checkoutQuery?.checkout || (data as any).cart;
+  const checkoutData = (data as any).checkoutQuery?.checkout;
 
   const checkout = useMemo(() => {
     if (!checkoutData) return null;

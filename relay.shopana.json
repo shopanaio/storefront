@@ -6,8 +6,6 @@
   "noFutureProofEnums": true,
   "exclude": [
     "**/node_modules/**",
-    "**/__generated__/**",
-    "**/*.shopify.ts",
-    "**/*.shopify.tsx"
+    "**/__generated__/**"
   ]
 }

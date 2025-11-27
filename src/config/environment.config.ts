@@ -1,9 +1,6 @@
 import type { RelayEnvironmentConfig } from "@shopana/storefront-sdk/graphql/relay/types";
 
-const apiKeyHeader = {
-  shopana: 'X-Api-Key',
-  shopify: 'X-Shopify-Storefront-Access-Token',
-}[process.env.NEXT_PUBLIC_CMS_PROVIDER!];
+const apiKeyHeader = 'X-Api-Key';
 
 export const environmentConfig: RelayEnvironmentConfig = {
   graphqlUrl: process.env.NEXT_PUBLIC_GRAPHQL_URL!,

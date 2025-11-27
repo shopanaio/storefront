@@ -31,11 +31,7 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
     }
   }, [normalizedFilters, originalFilters]);
 
-  // For Shopify totalCount doesn't exist, use edges count
-  const totalCount =
-    listingData?.listing?.totalCount ||
-    listingData?.listing?.edges?.length ||
-    0;
+  const totalCount = listingData?.listing?.totalCount || 0;
 
   // Convert zustand filters to API format when needed
   const apiFilters: ApiFilterInput[] = useMemo(

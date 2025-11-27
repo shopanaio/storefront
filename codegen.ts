@@ -23,7 +23,6 @@ const config: CodegenConfig = {
   overwrite: true,
   documents: [],
   generates: {
-    // Main schema
     'codegen/schema-client.ts': {
       schema: 'schema.shopana.graphql',
       plugins: ['typescript', 'typescript-operations'],
@@ -33,19 +32,6 @@ const config: CodegenConfig = {
         scalars: {
           ...scalars,
           Decimal: { input: 'number', output: 'number' },
-        },
-      },
-    },
-    // Shopify schema
-    'codegen/shopify-storefront-api.ts': {
-      schema: 'schema.shopify.graphql',
-      plugins: ['typescript', 'typescript-operations'],
-      config: {
-        typesPrefix: 'Shopify',
-        enumPrefix: false,
-        scalars: {
-          ...scalars,
-          Decimal: { input: 'string', output: 'string' },
         },
       },
     },
