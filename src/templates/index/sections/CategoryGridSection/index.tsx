@@ -1,7 +1,7 @@
 "use client";
 
 import { Flex } from "antd";
-import type { model } from "@shopana/storefront-sdk";
+import type { SectionProps } from "@shopana/storefront-sdk/core/types";
 import { useRoutes } from "@src/hooks/useRoutes";
 import { useMemo } from "react";
 import { createStyles } from "antd-style";
@@ -9,42 +9,43 @@ import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { SectionTitle, ViewAllButton } from "../../../shared/atoms";
 import CategoryCardCircle from "./CategoryCardCircle";
 import CategoryCard from "./CategoryCard";
+import { useCategory } from "@src/hooks/useCategory";
 
-export interface CategoryGridSectionProps {
-  title: string;
-  sources: model.Category[];
-  pagination: boolean;
-  renderItem: "CategoryCardCircle" | "CategoryCard";
+interface CategoryGridSectionSettings {
+  categoryHandle: string;
+  title?: string;
+  renderItem?: "CategoryCardCircle" | "CategoryCard";
 }
 
 export default function CategoryGridSection({
-  title,
-  sources,
-  // pagination,
-  renderItem,
-}: CategoryGridSectionProps) {
+  settings,
+}: SectionProps<CategoryGridSectionSettings>) {
   const routes = useRoutes();
   const { styles } = useStyles();
+  const { category } = useCategory(settings.categoryHandle);
 
   const children = useMemo(
-    () => sources[0].children.edges.map((edge) => edge.node),
-    [sources[0].children.edges]
+    () => category?.children?.edges?.map((edge) => edge.node) ?? [],
+    [category?.children?.edges]
   );
+
+  const title = settings.title ?? category?.title ?? "";
+  const renderItem = settings.renderItem ?? "CategoryCard";
 
   return (
     <Flex vertical gap={16}>
       <SectionTitle title={title}>
-        <ViewAllButton href={routes.collection.path(sources[0]?.handle ?? '')} />
+        <ViewAllButton href={routes.collection.path(category?.handle ?? '')} />
       </SectionTitle>
 
       <Flex className={styles.container} justify="space-between">
-        {children.map((category) =>
+        {children.map((child) =>
           renderItem === "CategoryCardCircle" ? (
-            <CategoryCardCircle key={category.id} category={category} />
+            <CategoryCardCircle key={child.id} category={child} />
           ) : (
             <CategoryCard
-              key={category.id}
-              category={category}
+              key={child.id}
+              category={child}
             />
           )
         )}

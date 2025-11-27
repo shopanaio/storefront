@@ -27,19 +27,15 @@ export default function HomeSlideshowSection({
   const category = useHomeCategory(settings.categoryKey);
   const products = useCategoryProducts(settings.categoryKey);
 
-  if (!category || products.length === 0) {
-    return null;
-  }
-
   return (
     <Flex vertical gap={16}>
-      <SectionTitle title={category.title}>
+      <SectionTitle title={category?.title ?? ''}>
         <Flex gap={16}>
           <SliderNavButtons
             swiperRef={swiperRef}
             itemsLength={products.length}
           />
-          <ViewAllButton href={routes.collection.path(category.handle)} />
+          <ViewAllButton href={routes.collection.path(category?.handle ?? '')} />
         </Flex>
       </SectionTitle>
       <SwiperContainer itemsLength={products.length}>

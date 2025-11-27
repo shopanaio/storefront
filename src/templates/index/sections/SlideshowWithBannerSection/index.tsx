@@ -3,53 +3,49 @@
 
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import { ProductCard } from "@src/ui-kit/ProductCards/ListingCard/ProductCard";
-import type { model } from "@shopana/storefront-sdk";
+import type { SectionProps } from "@shopana/storefront-sdk/core/types";
+import { useHomeCategory } from "@shopana/storefront-sdk/modules/home/react/hooks/useHomeCategories";
+import { useCategoryProducts } from "@shopana/storefront-sdk/modules/home/react/hooks/useCategoryProducts";
+import type { HomeProduct } from "@shopana/storefront-sdk/modules/home/core/types";
 import Banner from "./Banner";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider, ViewAllButton, SliderNavButtons } from "../../../shared/atoms";
 import { useRoutes } from "@src/hooks/useRoutes";
-import React from "react";
+import { HomeSlideshowProductCard } from "../HomeSlideshowSection/ProductCard";
 
-export interface SlideshowWithBannerSectionProps {
-  title: string;
-  sources: model.Category[];
-  banner: {
-    placement: "before" | "after";
-    entry: model.Product | model.Category;
-  };
-  pagination: boolean;
+type CategoryKey = "electronics" | "sport" | "toys";
+
+interface SlideshowWithBannerSectionSettings {
+  categoryKey: CategoryKey;
+  title?: string;
+  bannerPlacement?: "before" | "after";
 }
 
 export default function SlideshowWithBannerSection({
-  title,
-  sources,
-  banner,
-}: // pagination,
-SlideshowWithBannerSectionProps) {
+  settings,
+}: SectionProps<SlideshowWithBannerSectionSettings>) {
   const routes = useRoutes();
   const { styles } = useStyles();
 
-  const products = useMemo(
-    () =>
-      sources
-        .map((cat) =>
-          cat.listing?.edges?.map((edge: { node: any }) => edge.node)
-        )
-        .flat(),
-    [sources]
-  );
+  const category = useHomeCategory(settings.categoryKey);
+  const allProducts = useCategoryProducts(settings.categoryKey);
+
+  const bannerProduct = allProducts[0];
+  const products = allProducts;
 
   const swiperRef = useRef<SwiperType | null>(null);
+
+  const title = settings.title ?? category?.title ?? "";
+  const bannerPlacement = settings.bannerPlacement ?? "before";
 
   return (
     <Flex className={styles.container} gap={16}>
       <div className={styles.grid}>
-        {banner.placement === "before" && (
+        {bannerPlacement === "before" && bannerProduct && (
           <div className={styles.banner}>
-            <Banner banner={banner.entry as any} />
+            <Banner banner={bannerProduct} />
           </div>
         )}
 
@@ -65,30 +61,32 @@ SlideshowWithBannerSectionProps) {
             <Flex gap={16}>
               <SliderNavButtons
                 swiperRef={swiperRef}
-                itemsLength={sources[0].listing.edges.length}
+                itemsLength={products.length}
               />
-              <ViewAllButton href={routes.collection.path(sources[0]?.handle)} />
+              <ViewAllButton href={routes.collection.path(category?.handle ?? '')} />
             </Flex>
           </Flex>
 
           <div>
             <UniversalSlider
               items={products}
-              renderItem={(product) => (
-                <ProductCard product={product} hoverable={false} />
+              renderItem={(product: HomeProduct) => (
+                <HomeSlideshowProductCard product={product} />
               )}
               swiperRef={swiperRef}
               breakpoints={{
-                1024: { slidesPerView: 3, spaceBetween: 16 },
-                1440: { slidesPerView: 4, spaceBetween: 16 },
+                0: { slidesPerView: 2, spaceBetween: 12 },
+                520: { slidesPerView: 4, spaceBetween: 12 },
+                768: { slidesPerView: 4, spaceBetween: 16 },
+                1280: { slidesPerView: 6, spaceBetween: 16 },
               }}
             />
           </div>
         </Flex>
 
-        {banner.placement === "after" && (
+        {bannerPlacement === "after" && bannerProduct && (
           <div className={styles.banner}>
-            <Banner banner={banner.entry as any} />
+            <Banner banner={bannerProduct} />
           </div>
         )}
       </div>
@@ -130,22 +128,22 @@ const useStyles = createStyles(({ css, token }) => {
 
       ${mq.md} {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: ${token.margin}px;
         width: 100%;
         align-items: stretch;
       }
 
       ${mq.lg} {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
       }
 
       ${mq.xl} {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(8, 1fr);
       }
 
       ${mq.xxl} {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(8, 1fr);
       }
     `,
 
@@ -181,34 +179,31 @@ const useStyles = createStyles(({ css, token }) => {
 
     banner: css`
       width: 100%;
-      //aspect-ratio: 1/1;
       border-radius: ${token.borderRadiusLG}px;
       overflow: hidden;
 
-      grid-column: span 4;
-
-      ${mq.lg} {
+      ${mq.md} {
         grid-column: span 2;
-        //aspect-ratio: 16/9;
       }
     `,
 
     sideContainer: css`
+      overflow: hidden;
+
       ${mq.md} {
-        overflow: hidden;
         grid-column: span 4;
       }
 
       ${mq.lg} {
-        grid-column: span 3;
+        grid-column: span 4;
       }
 
       ${mq.xl} {
-        grid-column: span 3;
+        grid-column: span 6;
       }
 
       ${mq.xxl} {
-        grid-column: span 4;
+        grid-column: span 6;
       }
     `,
     sectionTitleWrapper: css`

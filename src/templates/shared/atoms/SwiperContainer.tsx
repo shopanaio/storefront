@@ -75,6 +75,7 @@ const useStyles = createStyles(({ css, token }) => {
         margin-left: var(--offset);
         padding-right: var(--offset);
         width: auto;
+        max-width: calc(100vw - var(--offset));
       }
 
       ${mq.xxl} {
@@ -82,6 +83,7 @@ const useStyles = createStyles(({ css, token }) => {
         --offset: calc((100vw - var(--container-width)) / 2);
         margin-left: var(--offset);
         padding-right: var(--offset);
+        max-width: calc(100vw - var(--offset));
       }
     `,
 

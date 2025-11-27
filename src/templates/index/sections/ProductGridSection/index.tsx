@@ -13,8 +13,10 @@ export default function ProductGridSection({
 }: SectionProps<ProductGridSectionSettings>) {
   return (
     <HomeProductGridSection
-      categoryHandle={settings.categoryHandle}
-      paginationCount={settings.paginationCount}
+      settings={{
+        categoryHandle: settings.categoryHandle,
+        paginationCount: settings.paginationCount,
+      }}
     />
   );
 }

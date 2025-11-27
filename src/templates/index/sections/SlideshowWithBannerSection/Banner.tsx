@@ -3,7 +3,7 @@
 import { Flex, Image, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
-import type { model } from "@shopana/storefront-sdk";
+import type { HomeProduct } from "@shopana/storefront-sdk/modules/home/core/types";
 import { Price } from "@src/ui-kit/Price/Price";
 import { calcSale } from "@src/utils/calcSale";
 import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
@@ -11,7 +11,7 @@ import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
 const { Text } = Typography;
 
 interface Prop {
-  banner: model.Product | model.Category;
+  banner: HomeProduct;
 }
 
 export default function Banner({ banner }: Prop) {
@@ -23,7 +23,7 @@ export default function Banner({ banner }: Prop) {
     <div className={styles.banner}>
       <Image
         loading="lazy"
-        src={banner?.cover?.url || ""}
+        src={banner?.image?.url || ""}
         alt={banner?.title || ""}
         width="100%"
         className={styles.bannerImg}
@@ -59,10 +59,6 @@ const useStyles = createStyles(({ css, token }) => {
       overflow: hidden;
       position: relative;
       aspect-ratio: 1/1;
-
-      ${mq.lg} {
-        aspect-ratio: 16/9;
-      }
     `,
 
     bannerImg: css`

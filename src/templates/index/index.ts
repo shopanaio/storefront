@@ -1,30 +1,47 @@
 import type { Template } from '@shopana/storefront-sdk/core/types';
 import ProductGridSection from './sections/ProductGridSection';
+import HomeProductGridSection from './sections/HomeProductGridSection';
 import HomeSlideshowSection from './sections/HomeSlideshowSection';
+import SlideshowWithBannerSection from './sections/SlideshowWithBannerSection';
 
 const homeTemplate: Template = {
   sections: {
     order: [
-      'electronicsGrid',
-      'electronics',
-      'sport',
-      'toys',
+      'homeSlideshowSection',
+      'slideshowWithBannerLeft',
+      'productGridSection',
+      'homeProductGridSection',
+      'slideshowWithBannerRight',
     ],
-    electronicsGrid: {
-      component: ProductGridSection,
-      settings: { categoryHandle: 'electronics' },
-    },
-    electronics: {
+    homeSlideshowSection: {
       component: HomeSlideshowSection,
       settings: { categoryKey: 'electronics', pagination: true },
     },
-    sport: {
-      component: HomeSlideshowSection,
-      settings: { categoryKey: 'sport', pagination: true },
+    slideshowWithBannerLeft: {
+      component: SlideshowWithBannerSection,
+      settings: {
+        categoryKey: 'electronics',
+        bannerPlacement: 'before',
+      },
     },
-    toys: {
-      component: HomeSlideshowSection,
-      settings: { categoryKey: 'toys', pagination: true },
+    productGridSection: {
+      component: ProductGridSection,
+      settings: { categoryHandle: 'electronics' },
+    },
+    homeProductGridSection: {
+      component: HomeProductGridSection,
+      settings: {
+        categoryHandle: 'electronics',
+        first: 16,
+        paginationCount: 16,
+      },
+    },
+    slideshowWithBannerRight: {
+      component: SlideshowWithBannerSection,
+      settings: {
+        categoryKey: 'electronics',
+        bannerPlacement: 'after',
+      },
     },
   },
 };

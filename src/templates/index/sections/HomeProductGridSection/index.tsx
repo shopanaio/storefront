@@ -9,20 +9,23 @@ import { usePaginationFragment } from "react-relay";
 import Listing from "@shopana/storefront-sdk/queries/Listing";
 import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
 import clsx from "clsx";
+import type { SectionProps } from "@shopana/storefront-sdk/core/types";
 
-interface HomeProductGridSectionProps {
+interface HomeProductGridSectionSettings {
   categoryHandle: string;
+  first?: number;
   paginationCount?: number;
 }
 
 export default function HomeProductGridSection({
-  categoryHandle,
-  paginationCount = 16,
-}: HomeProductGridSectionProps) {
+  settings,
+}: SectionProps<HomeProductGridSectionSettings>) {
   const { styles } = useStyles();
   const routes = useRoutes();
 
-  const { category } = useCategory(categoryHandle);
+  const first = settings.first ?? 16;
+  const { category } = useCategory(settings.categoryHandle, first);
+  const paginationCount = settings.paginationCount ?? 16;
 
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
     Listing,
