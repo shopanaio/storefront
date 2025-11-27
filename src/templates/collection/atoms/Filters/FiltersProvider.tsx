@@ -1,7 +1,7 @@
-import React from "react";
-import { Collapse, ConfigProvider } from "antd";
-import { createStyles } from "antd-style";
-import { useTranslations } from "next-intl";
+import React from 'react';
+import { Collapse, ConfigProvider } from 'antd';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
 
 const { Panel } = Collapse;
 
@@ -12,7 +12,7 @@ interface Props {
 
 export const FiltersProvider: React.FC<Props> = ({ handle, children }) => {
   const { styles } = useStyles();
-  const t = useTranslations("Listing.filter-groups");
+  const t = useTranslations('Listing.filter-groups');
 
   /**
    * Gets the translated title for the filter handle
@@ -32,12 +32,13 @@ export const FiltersProvider: React.FC<Props> = ({ handle, children }) => {
   return (
     <ConfigProvider
       theme={{
+        zeroRuntime: true,
         components: {
           Collapse: {
             headerPadding: 0,
             contentPadding: 0,
-            headerBg: "transparent",
-            contentBg: "transparent",
+            headerBg: 'transparent',
+            contentBg: 'transparent',
           },
         },
       }}
@@ -47,7 +48,11 @@ export const FiltersProvider: React.FC<Props> = ({ handle, children }) => {
         expandIconPlacement="end"
         bordered={false}
       >
-        <Panel className={styles.collapsePanel} header={filterTitle} key={handle}>
+        <Panel
+          className={styles.collapsePanel}
+          header={filterTitle}
+          key={handle}
+        >
           {children}
         </Panel>
       </Collapse>
