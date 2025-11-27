@@ -74,6 +74,7 @@ const useStyles = createStyles(({ css, token }) => {
         --offset: max(16px, calc((100vw - var(--container-width)) / 2));
         margin-left: var(--offset);
         margin-right: var(--offset);
+        padding-left: 0;
         padding-right: 0;
         width: auto;
         max-width: var(--container-width);

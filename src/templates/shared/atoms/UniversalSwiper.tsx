@@ -184,14 +184,18 @@ const useStyles = createStyles(({ css, token }) => ({
   swiperContainer: css`
     position: relative;
     overflow: visible;
+    padding-bottom: 24px;
 
     .swiper-pagination {
       position: absolute;
-      top: 50%;
-      left: calc(-50% - 2px) !important;
-      transform: translateY(-50%) rotate(90deg) !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      top: auto !important;
+      width: 100% !important;
+      display: flex;
+      justify-content: center;
       z-index: 2;
-      height: 6px;
     }
 
     .swiper-pagination-bullet {
@@ -213,16 +217,18 @@ const useStyles = createStyles(({ css, token }) => ({
   swiperContainerDynamic: css`
     position: relative;
     overflow: visible;
+    padding-bottom: 24px;
 
     .swiper-pagination {
       position: absolute;
-      top: 50%;
-      left: -85px !important;
-      transform: translateY(-50%) rotate(90deg) !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      top: auto !important;
+      width: 100% !important;
+      display: flex;
+      justify-content: center;
       z-index: 2;
-      height: 6px;
-      min-width: 140px;
-      max-width: 140px;
     }
 
     .swiper-pagination-bullet {
