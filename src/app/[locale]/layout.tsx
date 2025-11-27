@@ -1,7 +1,7 @@
 import { Theme } from '@src/ui-kit/Theme/Theme';
 import ConfirmPortalHost from '@src/ui-kit/Confirm/ConfirmPortalHost';
 import { WishlistProvider } from '@src/modules/wishlist';
-import { ResponsiveServerProvider } from '@src/providers/responsive-server-provider';
+import { ResponsiveServerProvider } from '@src/ui-kit/UserAgent';
 import { IntlProvider } from '@src/i18n/Provider';
 
 export default async function Layout({

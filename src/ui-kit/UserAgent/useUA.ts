@@ -1,5 +1,7 @@
-import { UAClientContext } from "@src/providers/responsive-client-provider";
+"use client";
+
 import { useContext } from "react";
+import { UAClientContext } from "./ResponsiveClientProvider";
 
 export const useUA = () => {
   return useContext(UAClientContext);

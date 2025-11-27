@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
-import { parseUserAgent } from '@src/utils/parseUserAgent';
-import { ResponsiveClientProvider } from '@src/providers/responsive-client-provider';
+import { parseUserAgent } from './parseUserAgent';
+import { ResponsiveClientProvider } from './ResponsiveClientProvider';
 
 export async function ResponsiveServerProvider({
   children,
