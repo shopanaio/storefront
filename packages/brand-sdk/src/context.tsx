@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, ComponentType } from 'react';
-import { brandConfig, LogoProps } from '@src/brand.config';
+import type { LogoProps, BrandConfig } from './types';
 
 /**
  * Brand context interface
@@ -20,13 +20,14 @@ const BrandContext = createContext<BrandContextValue | undefined>(undefined);
  */
 interface BrandProviderProps {
   children: React.ReactNode;
+  brandConfig: BrandConfig;
 }
 
 /**
  * Provider for brand configuration
  * Provides logo component through context
  */
-export const BrandProvider = ({ children }: BrandProviderProps) => {
+export const BrandProvider = ({ children, brandConfig }: BrandProviderProps) => {
   const value: BrandContextValue = {
     LogoComponent: brandConfig.components.logo,
   };

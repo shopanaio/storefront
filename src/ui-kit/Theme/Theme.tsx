@@ -8,7 +8,7 @@ import { ThemeProvider } from 'antd-style';
 import { AntdRegistry } from '@src/ui-kit/Theme/AntdRegistry';
 import { useEffect } from 'react';
 import { setNotificationApi } from '@src/ui-kit/Toast/Toast';
-import { BrandProvider } from '@src/providers/brand-context';
+import { BrandProvider } from '@shopana/brand-sdk';
 import { brandConfig } from '@src/brand.config';
 
 export const Theme = ({ children }: { children: React.ReactNode }) => {
@@ -42,7 +42,7 @@ export const Theme = ({ children }: { children: React.ReactNode }) => {
         }}
       >
         <App>
-          <BrandProvider>
+          <BrandProvider brandConfig={brandConfig}>
             <GlobalStyle />
             {contextHolder}
             {children}

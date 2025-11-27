@@ -1,4 +1,4 @@
-import { useBrand } from '@src/providers/brand-context';
+import { useBrand } from '@shopana/brand-sdk';
 
 /**
  * Hook to get the current logo component from brand configuration
