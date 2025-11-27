@@ -221,6 +221,7 @@ function PageWrapper({
 
 export interface CreateSDKPageOptions {
   environmentConfig: RelayEnvironmentConfig;
+  modulesContext?: ReturnType<typeof require.context>;
 }
 
 /**
@@ -258,7 +259,12 @@ export type { SDKRequestContext };
  * ```
  */
 export function createSDKPage(options: CreateSDKPageOptions) {
-  const { environmentConfig } = options;
+  const { environmentConfig, modulesContext } = options;
+
+  // Auto-load modules from context if provided
+  if (modulesContext) {
+    modulesContext.keys().forEach((key) => modulesContext(key));
+  }
 
   async function generateMetadata({
     searchParams,
