@@ -1,4 +1,4 @@
-import { cmsPick } from "@src/cms/pick";
+import { cmsPick } from "../../cms/pick";
 import accessTokenShopana from "./accessToken.shopana";
 import accessTokenShopify from "./accessToken.shopify";
 

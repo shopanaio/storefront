@@ -1,5 +1,5 @@
-import { SignUpHandler } from "./index";
-import accessTokenUtils from "@src/utils/accessToken";
+import { SignUpHandler } from "./useSignUpHandler";
+import accessTokenUtils from "../../../../../utils/accessToken";
 
 const useSignUpHandlerShopana = (): SignUpHandler => {
   return {
@@ -11,13 +11,13 @@ const useSignUpHandlerShopana = (): SignUpHandler => {
       refreshSession: () => void,
       t: (key: string) => string
     ) => {
-      console.log("🛍️ Processing response from Shopana");
+      console.log("Processing response from Shopana");
 
       if (response?.passwordSignUp?.session) {
         const session = response.passwordSignUp.session;
-        console.log("🔑 Shopana session received:", session);
-        console.log("👤 User:", session.user);
-        console.log("🔐 Access token:", session.accessToken);
+        console.log("Shopana session received:", session);
+        console.log("User:", session.user);
+        console.log("Access token:", session.accessToken);
 
         // Set token in cookie
         if (session.accessToken) {
@@ -30,7 +30,7 @@ const useSignUpHandlerShopana = (): SignUpHandler => {
           token: session.accessToken,
         });
 
-        console.log("🎉 Shopana registration successful! Session established.");
+        console.log("Shopana registration successful! Session established.");
 
         // First update session, then close modal
         refreshSession();
@@ -43,10 +43,10 @@ const useSignUpHandlerShopana = (): SignUpHandler => {
         response?.passwordSignUp?.errors &&
         response.passwordSignUp.errors.length > 0
       ) {
-        console.error("⚠️ Shopana errors:", response.passwordSignUp.errors);
+        console.error("Shopana errors:", response.passwordSignUp.errors);
         setError(response.passwordSignUp.errors[0].message);
       } else {
-        console.warn("⚠️ Unexpected Shopana response format");
+        console.warn("Unexpected Shopana response format");
         setError(t("alert"));
       }
     },

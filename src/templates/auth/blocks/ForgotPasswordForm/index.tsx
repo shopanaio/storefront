@@ -4,7 +4,7 @@ import { Flex, Button, Input, Typography, Alert } from "antd";
 import { TbUser, TbCircleKey } from "react-icons/tb";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
-import useForgotPassword from "@src/hooks/auth/useForgorPassword";
+import { useForgotPassword } from "@shopana/storefront-sdk/modules/session/react/hooks";
 
 const { Text } = Typography;
 
@@ -33,14 +33,23 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     try {
       setError(null);
 
-      await commit({
+      commit({
         variables: {
-          email: data.email,
+          input: {
+            email: data.email,
+          },
+        },
+        onCompleted: (response) => {
+          if (response.requestPasswordRecovery?.success) {
+            onSwitchForm("resetPassword");
+          } else if (response.requestPasswordRecovery?.errors?.length) {
+            setError(response.requestPasswordRecovery.errors[0]?.message || "An error occurred");
+          }
+        },
+        onError: (error) => {
+          setError(error.message);
         },
       });
-
-      // If successful, switch to password reset form
-      onSwitchForm("resetPassword");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }

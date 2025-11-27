@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import useSignIn from "@src/hooks/auth/useSingnIn";
-import useGetSession from "@src/hooks/session/useGetSession";
-import useSignInHandler from "@src/hooks/auth/useSignInHandler";
+import { useSignIn, useSignInHandler } from "@shopana/storefront-sdk/modules/session/react/hooks";
 import { useModalStore } from "@src/store/appStore";
 import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
+import type { signInMutation$data } from "@shopana/storefront-sdk/modules/session/core/graphql/mutations/__generated__/signInMutation.graphql";
 
 import { SignIn } from "@src/templates/auth/atoms/SignIn";
 
@@ -13,85 +12,20 @@ interface SignInFormProps {
   onSwitchForm: (form: "signUp" | "forgotPassword") => void;
 }
 
-// Types for responses from different providers
-interface ShopifySignInResponse {
-  customerAccessTokenCreate?: {
-    customerAccessToken?: {
-      accessToken: string;
-    };
-    customerUserErrors?: Array<{
-      message: string;
-    }>;
-  };
-}
-
-interface ShopanaSignInResponse {
-  passwordSignIn?: {
-    session?: {
-      accessToken: string;
-      user: {
-        id: string;
-        iid: string;
-        email: string;
-      };
-    };
-    errors?: Array<{ message: string }>;
-  };
-}
-
-type SignInResponse = ShopifySignInResponse | ShopanaSignInResponse;
-
 export const SignInForm: React.FC<SignInFormProps> = ({ onSwitchForm }) => {
   const [error, setError] = useState<string | null>(null);
-  const [shopifyAccessToken, setShopifyAccessToken] = useState<string | null>(
-    null
-  );
   const [commit, isInFlight] = useSignIn();
-  const setSession = useSession((state) => state.setSession);
+  const sessionStore = useSession();
+  const setSession = sessionStore((state) => state.setSession);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );
-  const refreshSession = useSession((state) => state.refreshSession);
+  const refreshSession = sessionStore((state) => state.refreshSession);
 
   // Use new hook for handling sign-in
   const signInHandler = useSignInHandler();
 
   const t = useTranslations("Auth");
-
-  // Hook for getting Shopify user information
-  const customer = useGetSession.useGetSession(shopifyAccessToken || "");
-
-  console.log("👤 Received user data:", customer);
-
-  // Effect for handling Shopify user data
-  useEffect(() => {
-    if (customer && shopifyAccessToken) {
-      console.log("👤 Received Shopify user information:", customer);
-
-      // Update session with user information
-      if (customer.customer) {
-        setSession({
-          accessToken: shopifyAccessToken,
-          user: {
-            id: customer.customer.id,
-            email: customer.customer.email || "",
-            firstName: customer.customer.firstName || "",
-            lastName: customer.customer.lastName || "",
-            iid: customer.customer.id, // For Shopify use id as iid
-          },
-        });
-
-        console.log(
-          "🎉 Shopify session updated with user information!"
-        );
-
-        // Close modal
-        setTimeout(() => {
-          setIsAuthModalVisible(false);
-        }, 100);
-      }
-    }
-  }, [customer, shopifyAccessToken, setSession, setIsAuthModalVisible]);
 
   const {
     control,
@@ -104,7 +38,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSwitchForm }) => {
   const onSubmit = async (data: { email: string; password: string }) => {
     setError(null);
 
-    console.log("🚀 Sending login data:", data);
+    console.log("Sending login data:", data);
 
     commit({
       variables: {
@@ -113,25 +47,14 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSwitchForm }) => {
           password: data.password,
         },
       },
-      onCompleted: (response: SignInResponse, errors) => {
-        console.log("✅ Login request completed successfully!");
-        console.log("📥 Full server response:", response);
+      onCompleted: (response: signInMutation$data, errors) => {
+        console.log("Login request completed successfully!");
+        console.log("Full server response:", response);
 
         if (errors && errors.length > 0) {
-          console.error("❌ GraphQL errors during login:", errors);
+          console.error("GraphQL errors during login:", errors);
           setError(errors[0].message);
           return;
-        }
-
-        // For Shopify save token for getting user information
-        if ("customerAccessTokenCreate" in response) {
-          if (response.customerAccessTokenCreate?.customerAccessToken) {
-            const token =
-              response.customerAccessTokenCreate.customerAccessToken
-                .accessToken;
-            console.log(token);
-            setShopifyAccessToken(token);
-          }
         }
 
         signInHandler.handleSignInResponse(
@@ -144,7 +67,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSwitchForm }) => {
         );
       },
       onError: (error) => {
-        console.error("💥 Login request execution error:", error);
+        console.error("Login request execution error:", error);
         setError(error.message);
       },
     });

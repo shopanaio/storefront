@@ -1,5 +1,5 @@
-import { SignInHandler } from "./index";
-import accessTokenUtils from "@src/utils/accessToken";
+import { SignInHandler } from "./useSignInHandler";
+import accessTokenUtils from "../../../../../utils/accessToken";
 
 export const useSignInHandlerShopify = (): SignInHandler => {
   return {
@@ -11,11 +11,11 @@ export const useSignInHandlerShopify = (): SignInHandler => {
       refreshSession: () => void,
       t: (key: string) => string
     ) => {
-      console.log("🛍️ Processing sign-in response from Shopify");
+      console.log("Processing sign-in response from Shopify");
 
       if (response?.customerAccessTokenCreate?.customerAccessToken) {
         const accessToken = response.customerAccessTokenCreate.customerAccessToken;
-        console.log("🔑 Shopify access token received:", accessToken.accessToken);
+        console.log("Shopify access token received:", accessToken.accessToken);
 
         // Set token in cookie
         accessTokenUtils.setAccessTokenCookie(accessToken.accessToken);
@@ -26,7 +26,7 @@ export const useSignInHandlerShopify = (): SignInHandler => {
           user: null, // User will be fetched separately
         });
 
-        console.log("🎉 Shopify sign-in successful! Token established.");
+        console.log("Shopify sign-in successful! Token established.");
 
         // Update session
         refreshSession();
@@ -35,14 +35,14 @@ export const useSignInHandlerShopify = (): SignInHandler => {
         response.customerAccessTokenCreate.customerUserErrors.length > 0
       ) {
         console.error(
-          "⚠️ Shopify sign-in errors:",
+          "Shopify sign-in errors:",
           response.customerAccessTokenCreate.customerUserErrors
         );
         setError(
           response.customerAccessTokenCreate.customerUserErrors[0].message
         );
       } else {
-        console.warn("⚠️ Unexpected Shopify sign-in response format");
+        console.warn("Unexpected Shopify sign-in response format");
         setError(t("alert"));
       }
     },

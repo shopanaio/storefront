@@ -1,4 +1,4 @@
-import { cmsPick } from "@src/cms/pick";
+import { cmsPick } from "../../../../../cms/pick";
 import useSignUpHandlerShopana from "./useSignUpHandler.shopana";
 import useSignUpHandlerShopify from "./useSignUpHandler.shopify";
 
@@ -25,7 +25,9 @@ export interface SignUpHandler {
   ) => void;
 }
 
-export default cmsPick({
+export const useSignUpHandler = cmsPick({
   shopana: useSignUpHandlerShopana,
   shopify: useSignUpHandlerShopify,
 });
+
+export default useSignUpHandler;
