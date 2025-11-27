@@ -76,11 +76,7 @@ export const DesktopSearch: React.FC = () => {
         placement="bottom"
         arrow={false}
         open={isPopoverOpen && !isMobile}
-        styles={{
-          body: {
-            width: popoverWidth,
-          },
-        }}
+        styles={{ root: { width: popoverWidth } }}
         content={
           <div className={styles.popover} ref={popoverContentRef}>
             <SearchResults searchTerm={debouncedTerm} />
@@ -100,7 +96,7 @@ export const DesktopSearch: React.FC = () => {
   );
 };
 
-const useStyles = createStyles(({ token, css }) => {
+const useStyles = createStyles(({ css }) => {
   return {
     inputContainer: css`
       order: 999;

@@ -12,7 +12,7 @@ type SearchInputProps = {
   onClick?: () => void;
 };
 
-export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
+export const SearchInput: React.FC<SearchInputProps> = ({ onClick, ref }) => {
   const routes = useRoutes();
   const t = useTranslations('Header');
   const { styles } = useStyles();
@@ -35,6 +35,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
 
   return (
     <Input
+      ref={ref}
       allowClear
       size="middle"
       readOnly={isMobile}
@@ -46,11 +47,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClick }) => {
       onClick={onClick}
       suffix={
         <Button
-          href={
-            searchTerm.trim()
-              ? routes.search.path(searchTerm)
-              : undefined
-          }
+          href={searchTerm.trim() ? routes.search.path(searchTerm) : undefined}
           type="primary"
           className={styles.searchButton}
         >
