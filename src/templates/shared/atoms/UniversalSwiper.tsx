@@ -195,16 +195,18 @@ const useStyles = createStyles(({ css, token }) => ({
     }
 
     .swiper-pagination-bullet {
-      height: 6px !important;
-      width: 6px !important;
+      height: 8px !important;
+      width: 8px !important;
       background: ${token.colorPrimaryBorder};
+      border: 1px solid ${token.colorBgContainer};
     }
 
     .swiper-pagination-bullet-active {
-      height: 6px !important;
-      width: 24px !important;
-      border-radius: 3px;
+      height: 8px !important;
+      width: 26px !important;
+      border-radius: 4px;
       background: ${token.colorPrimary} !important;
+      border: 1px solid ${token.colorBgContainer};
     }
   `,
 
@@ -224,16 +226,18 @@ const useStyles = createStyles(({ css, token }) => ({
     }
 
     .swiper-pagination-bullet {
-      height: 6px !important;
-      width: 6px !important;
+      height: 8px !important;
+      width: 8px !important;
       background: ${token.colorPrimaryBorder};
+      border: 1px solid ${token.colorBgContainer};
     }
 
     .swiper-pagination-bullet-active {
-      height: 6px;
-      width: 24px !important;
-      border-radius: 3px;
+      height: 8px;
+      width: 26px !important;
+      border-radius: 4px;
       background: ${token.colorPrimary} !important;
+      border: 1px solid ${token.colorBgContainer};
     }
   `,
 }));
