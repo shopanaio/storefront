@@ -14,11 +14,11 @@ interface SliderNavButtonsProps {
 }
 
 const defaultBreakpoints = {
-  0: 1,
-  375: 2,
+  0: 2,
+  520: 3,
   768: 4,
   1024: 5,
-  1440: 6,
+  1280: 8,
 };
 
 function getSlidesPerView(
@@ -28,13 +28,13 @@ function getSlidesPerView(
 ): number {
   const { isXxl, isXl, isLg, isMd, isSm } = activeBreakpoints;
 
-  if (isXxl) return breakpoints[1440];
-  if (isXl) return breakpoints[1024];
-  if (isLg) return breakpoints[768];
-  if (isMd) return breakpoints[375];
-  if (isSm) return breakpoints[0];
+  if (isXxl) return breakpoints[1280] ?? fallback;
+  if (isXl) return breakpoints[1280] ?? fallback;
+  if (isLg) return breakpoints[1024] ?? fallback;
+  if (isMd) return breakpoints[768] ?? fallback;
+  if (isSm) return breakpoints[520] ?? fallback;
 
-  return fallback;
+  return breakpoints[0] ?? fallback;
 }
 
 export function SliderNavButtons({
@@ -45,18 +45,29 @@ export function SliderNavButtons({
 }: SliderNavButtonsProps) {
   const activeBreakpoints = useBreakpoints();
   const { styles } = useStyles();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [isBeginning, setIsBeginning] = useState(true);
+  const [isEnd, setIsEnd] = useState(false);
 
   useEffect(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
 
-    const handle = () => setActiveIndex(swiper.activeIndex);
-    swiper.on('slideChange', handle);
-    setActiveIndex(swiper.activeIndex);
+    const updateState = () => {
+      setIsBeginning(swiper.isBeginning);
+      setIsEnd(swiper.isEnd);
+    };
+
+    swiper.on('slideChange', updateState);
+    swiper.on('reachBeginning', updateState);
+    swiper.on('reachEnd', updateState);
+    swiper.on('fromEdge', updateState);
+    updateState();
 
     return () => {
-      swiper.off('slideChange', handle);
+      swiper.off('slideChange', updateState);
+      swiper.off('reachBeginning', updateState);
+      swiper.off('reachEnd', updateState);
+      swiper.off('fromEdge', updateState);
     };
   }, [swiperRef]);
 
@@ -65,20 +76,17 @@ export function SliderNavButtons({
 
   if (pageCount <= 1) return null;
 
-  const isFirst = activeIndex === 0;
-  const isLast = activeIndex >= itemsLength - slidesPerView;
-
   return (
     <Flex gap={10} className={cx(className, styles.navButtons)}>
       <Button
         icon={<TbArrowLeft />}
         onClick={() => swiperRef.current?.slidePrev()}
-        disabled={isFirst}
+        disabled={isBeginning}
       />
       <Button
         icon={<TbArrowRight />}
         onClick={() => swiperRef.current?.slideNext()}
-        disabled={isLast}
+        disabled={isEnd}
       />
     </Flex>
   );

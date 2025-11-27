@@ -154,7 +154,7 @@ export function UniversalSlider<T extends DataSource>({
                 : styles.swiperContainer
             )}
             slidesPerView={currentSlidesPerView}
-            /* slidesPerGroup={currentSlidesPerView} */
+            slidesPerGroup={Math.floor(currentSlidesPerView)}
             freeMode={freeMode}
             modules={freeMode ? [...modules, FreeMode] : modules}
             spaceBetween={spaceBetween}
