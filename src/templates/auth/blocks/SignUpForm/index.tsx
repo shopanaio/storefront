@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSignUp, useSignUpHandler } from "@shopana/storefront-sdk/modules/session/react/hooks";
+import { useSessionStore } from "@shopana/storefront-sdk/modules/session/react";
 import { useModalStore } from "@src/store/appStore";
-import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
 import type { signUpMutation$data } from "@shopana/storefront-sdk/modules/session/core/graphql/mutations/__generated__/signUpMutation.graphql";
 
@@ -18,9 +18,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchForm }) => {
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );
-  const sessionStore = useSession();
-  const setSession = sessionStore((state) => state.setSession);
-  const refreshSession = sessionStore((state) => state.refreshSession);
+  const setSession = useSessionStore()((state) => state.setSession);
+  const refreshSession = useSessionStore()((state) => state.refreshSession);
 
   // Use new hook for handling registration
   const signUpHandler = useSignUpHandler();

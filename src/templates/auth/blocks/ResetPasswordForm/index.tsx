@@ -4,13 +4,13 @@ import { Button, Typography, Alert } from "antd";
 import PasswordInput from "@src/templates/auth/atoms/PasswordInput";
 import { useTranslations } from "next-intl";
 import { createStyles } from "antd-style";
-import { useResetPasswordMutation } from "@src/hooks/useResetPasswordMutation";
+import { useResetPassword } from "@shopana/storefront-sdk/modules/session/react/hooks";
 
 const { Text } = Typography;
 
 export const ResetPasswordForm: React.FC = () => {
   const [showMismatchError, setShowMismatchError] = useState(false);
-  const [commit] = useResetPasswordMutation();
+  const [commit] = useResetPassword();
   const t = useTranslations("Auth");
   const { styles } = useStyles();
 

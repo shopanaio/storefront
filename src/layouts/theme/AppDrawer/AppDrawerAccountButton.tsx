@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useModalStore } from '@src/store/appStore';
 import useToken from 'antd/es/theme/useToken';
 import { AppDrawerButton } from './AppDrawerButton';
-import { useSession as useSessionStore } from '@src/hooks/useSession';
+import { useSessionStore } from '@shopana/storefront-sdk/modules/session/react';
 import { useRouter } from 'next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { createStyles } from 'antd-style';
@@ -20,7 +20,7 @@ export const AppDrawerAccountButton: React.FC = () => {
   const { styles } = useStyles();
   const router = useRouter();
   const routes = useRoutes();
-  const session = useSessionStore((state) => state.session);
+  const session = useSessionStore()((state) => state.session);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );

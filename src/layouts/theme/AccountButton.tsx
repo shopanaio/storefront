@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { TbUserCircle, TbUser } from "react-icons/tb";
 import { HeaderLinkButton } from "./HeaderLinkButton";
-import { useSession as useSessionStore } from "@src/hooks/useSession";
+import { useSessionStore } from "@shopana/storefront-sdk/modules/session/react";
 import { useModalStore } from "@src/store/appStore";
 import { useRoutes } from "@src/hooks/useRoutes";
 
@@ -19,7 +19,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({
   const t = useTranslations("Header");
   const router = useRouter();
   const routes = useRoutes();
-  const session = useSessionStore((state) => state.session);
+  const session = useSessionStore()((state) => state.session);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );

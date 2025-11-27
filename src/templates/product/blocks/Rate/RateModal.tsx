@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { RateModalContent } from "./RateModalContent";
 import { useModalStore, useReviewStore } from "@src/store/appStore";
 
-import { useSession } from "@src/hooks/useSession";
+import { useSessionStore } from "@shopana/storefront-sdk/modules/session/react";
 
 export const RateModal = () => {
   const setIsRateModalVisible = useModalStore(
@@ -17,7 +17,7 @@ export const RateModal = () => {
   const clearReviewProduct = useReviewStore(
     (state) => state.clearReviewProduct
   );
-  const session = useSession((state) => state.session);
+  const session = useSessionStore()((state) => state.session);
   const user = session?.user;
 
   // If user is not authorized — open authorization modal

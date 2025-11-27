@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSignIn, useSignInHandler } from "@shopana/storefront-sdk/modules/session/react/hooks";
+import { useSessionStore } from "@shopana/storefront-sdk/modules/session/react";
 import { useModalStore } from "@src/store/appStore";
-import { useSession } from "@src/hooks/useSession";
 import { useTranslations } from "next-intl";
 import type { signInMutation$data } from "@shopana/storefront-sdk/modules/session/core/graphql/mutations/__generated__/signInMutation.graphql";
 
@@ -15,12 +15,11 @@ interface SignInFormProps {
 export const SignInForm: React.FC<SignInFormProps> = ({ onSwitchForm }) => {
   const [error, setError] = useState<string | null>(null);
   const [commit, isInFlight] = useSignIn();
-  const sessionStore = useSession();
-  const setSession = sessionStore((state) => state.setSession);
+  const setSession = useSessionStore()((state) => state.setSession);
   const setIsAuthModalVisible = useModalStore(
     (state) => state.setIsAuthModalVisible
   );
-  const refreshSession = sessionStore((state) => state.refreshSession);
+  const refreshSession = useSessionStore()((state) => state.refreshSession);
 
   // Use new hook for handling sign-in
   const signInHandler = useSignInHandler();
