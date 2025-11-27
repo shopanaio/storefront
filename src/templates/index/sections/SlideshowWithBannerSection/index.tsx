@@ -75,8 +75,8 @@ export default function SlideshowWithBannerSection({
               )}
               swiperRef={swiperRef}
               breakpoints={{
-                0: { slidesPerView: 3, slidesPerGroup: 3, spaceBetween: 12 },
-                520: { slidesPerView: 3, slidesPerGroup: 3, spaceBetween: 12 },
+                0: { slidesPerView: 2.3, slidesPerGroup: 2, spaceBetween: 12 },
+                520: { slidesPerView: 3.3, slidesPerGroup: 3, spaceBetween: 12 },
                 768: { slidesPerView: 3, slidesPerGroup: 3, spaceBetween: 12 },
                 1024: { slidesPerView: 4, slidesPerGroup: 4, spaceBetween: 12 },
                 1280: { slidesPerView: 6, slidesPerGroup: 6, spaceBetween: 12 },

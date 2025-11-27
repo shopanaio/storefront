@@ -28,22 +28,22 @@ export interface UniversalSliderProps<T extends DataSource> {
 
 const defaultBreakpoints: NonNullable<SwiperOptions["breakpoints"]> = {
   0: {
-    slidesPerView: 2.7,
+    slidesPerView: 2.3,
     slidesPerGroup: 2,
     spaceBetween: 12,
   },
   520: {
-    slidesPerView: 3.7,
+    slidesPerView: 3.3,
     slidesPerGroup: 3,
     spaceBetween: 12,
   },
   768: {
-    slidesPerView: 4.7,
+    slidesPerView: 4.3,
     slidesPerGroup: 4,
     spaceBetween: 12,
   },
   1024: {
-    slidesPerView: 5.7,
+    slidesPerView: 5.3,
     slidesPerGroup: 5,
     spaceBetween: 12,
   },
