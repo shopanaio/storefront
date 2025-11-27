@@ -1,5 +1,5 @@
 import { ProviderModuleType } from '@src/modules/checkout/vendors/types';
-import { registerModule } from '@src/modules/registry';
+import { registerModule } from '@shopana/storefront-sdk/registry';
 
 /**
  * Registers the bank_transfer payment provider module.

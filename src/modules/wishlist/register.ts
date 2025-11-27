@@ -1,4 +1,4 @@
-import { registerModule } from '@src/modules/registry';
+import { registerModule } from '@shopana/storefront-sdk/registry';
 
 registerModule('page', 'wishlist', async () => {
   return await import('@src/modules/wishlist/page/page');

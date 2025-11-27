@@ -4,6 +4,7 @@
  * instead of relative imports (../modules/...) to ensure the same module instances
  * are used as external consumers.
  */
+import React from 'react';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import type { PageTemplate, TemplateParams } from '../core/types';
@@ -21,11 +22,18 @@ import { loadSearchServerQuery } from '@shopana/storefront-sdk/modules/search/ne
 import { SearchDataProvider } from '@shopana/storefront-sdk/modules/search/react/providers/SearchDataProvider';
 import type { RelayEnvironmentConfig } from '../graphql/relay/types';
 import { getRequestContext, type SDKRequestContext } from './headers';
+import {
+  moduleRegistry,
+  type DynamicModulePageProps,
+  type ModuleExport,
+  type AsyncModuleLoader,
+} from '@shopana/storefront-sdk/registry';
 
 type SlugParam = string[] | undefined;
 
 interface PageProps {
   params: Promise<{
+    locale?: string;
     slug?: SlugParam;
   }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -215,6 +223,23 @@ export interface CreateSDKPageOptions {
   environmentConfig: RelayEnvironmentConfig;
 }
 
+/**
+ * Extracts component from a module namespace or returns the component itself.
+ */
+function getComponentFromModule(
+  input: ModuleExport<DynamicModulePageProps>
+): React.ComponentType<DynamicModulePageProps> {
+  if (
+    input &&
+    typeof input === 'object' &&
+    'default' in (input as Record<string, unknown>)
+  ) {
+    return (input as { default: React.ComponentType<DynamicModulePageProps> })
+      .default;
+  }
+  return input as React.ComponentType<DynamicModulePageProps>;
+}
+
 export type { SDKRequestContext };
 
 /**
@@ -254,8 +279,33 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     });
   }
 
-  async function Page({ searchParams }: PageProps) {
-    const resolvedSearchParams = await searchParams;
+  async function Page(props: PageProps) {
+    const params = await props.params;
+    const segments = params.slug ?? [];
+    const firstSegment = segments[0];
+
+    // Check if first segment matches a registered module
+    if (firstSegment) {
+      const loader = moduleRegistry.resolve('page', firstSegment);
+      if (loader) {
+        const searchParams = await props.searchParams;
+        const typedLoader = loader as AsyncModuleLoader<
+          ModuleExport<DynamicModulePageProps>
+        >;
+
+        return React.createElement(getComponentFromModule(await typedLoader()), {
+          params: {
+            locale: params.locale ?? 'en',
+            module: segments,
+          },
+          searchParams,
+          segments: segments.slice(1),
+        });
+      }
+    }
+
+    // Fall back to SDK page handler
+    const resolvedSearchParams = await props.searchParams;
 
     // Get URL context from middleware headers
     const requestContext = await getRequestContext();

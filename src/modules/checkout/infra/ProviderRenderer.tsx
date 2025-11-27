@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { moduleRegistry } from '@src/modules/registry';
+import { moduleRegistry } from '@shopana/storefront-sdk/registry';
 import {
   ProviderModuleApi,
   ProviderProps,

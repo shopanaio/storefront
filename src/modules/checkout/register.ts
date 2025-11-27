@@ -1,4 +1,4 @@
-import { registerModule } from '@src/modules/registry';
+import { registerModule } from '@shopana/storefront-sdk/registry';
 
 /**
  * Registers `checkout` module.

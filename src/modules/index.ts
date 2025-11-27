@@ -1,16 +1,3 @@
-export {
-  moduleRegistry,
-  registerModule,
-  registerWidget,
-  type ModuleSlug,
-  type AsyncModuleLoader,
-  type RegisteredModuleRecord,
-  type DynamicModulePageProps,
-  type ModuleExport,
-  type WidgetSourceLoader,
-  type WidgetSourceLoaderContext,
-} from "./registry";
-
 /**
  * Auto-discovers and imports all `register.ts` files under `src/modules/**`.
  * This enables plugin-style modules (e.g., via git submodules) without

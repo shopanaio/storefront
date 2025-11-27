@@ -18,9 +18,6 @@ export type ModuleType = 'page' | string;
 export type AsyncModuleLoader<T = unknown> = () => Promise<T> | T;
 
 /**
- * Optional metadata associated with a registered module.
- */
-/**
  * Record held inside the registry for each module.
  */
 export interface RegisteredModuleRecord<T = unknown> {
@@ -74,7 +71,7 @@ export type WidgetSourceLoader = (
  * - Safe server/runtime usage (no globals on window; SSR friendly).
  * - Backward compatible: legacy `register(slug, loader)` and `resolve(slug)` operate on `page` type.
  */
-class ModuleRegistry {
+export class ModuleRegistry {
   private readonly typeToSlugToRecord: Map<
     ModuleType,
     Map<ModuleSlug, RegisteredModuleRecord>
@@ -136,7 +133,6 @@ export const moduleRegistry = new ModuleRegistry();
 
 /**
  * Helper to standardize registration from modules.
- * Overloads keep backward compatibility for existing page modules.
  *
  * @param type Module type to register.
  * @param slug Unique slug.
