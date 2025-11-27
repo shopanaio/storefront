@@ -2,6 +2,7 @@
   "src": "./src",
   "schema": "./schema.shopana.graphql",
   "language": "typescript",
+  "eagerEsModules": true,
   "noFutureProofEnums": true,
   "exclude": [
     "**/node_modules/**",
