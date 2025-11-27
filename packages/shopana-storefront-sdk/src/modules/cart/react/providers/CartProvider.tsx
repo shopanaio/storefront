@@ -222,6 +222,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({
 
   const handleCartData = useCallback((cart: CartFragment_cart$key) => {
     setCartKey(cart);
+    // Set cartId from the cart fragment (important for SSR hydration)
+    // Relay stores the ID in __id for fragment references
+    const id = (cart as any)?.id ?? (cart as any)?.__id;
+    if (id) {
+      setCartId(id);
+    }
     setIsCartLoading(false);
     setIsCartLoaded(true);
     isLoadingRef.current = false;

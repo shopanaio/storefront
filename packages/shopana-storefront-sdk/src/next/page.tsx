@@ -299,7 +299,9 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     );
 
     if (matchResult) {
-      const searchParams = await props.searchParams;
+      const rawSearchParams = await props.searchParams;
+      // Convert to plain object to avoid "Classes or null prototypes are not supported" error
+      const searchParams = rawSearchParams ? { ...rawSearchParams } : {};
       const modulePayload = await matchResult.record.loader();
 
       return React.createElement(getComponentFromModule(modulePayload), {
@@ -309,7 +311,7 @@ export function createSDKPage(options: CreateSDKPageOptions) {
         },
         searchParams,
         segments: segments.slice(1),
-        pathParams: matchResult.params,
+        pathParams: matchResult.params ? { ...matchResult.params } : {},
       });
     }
 
