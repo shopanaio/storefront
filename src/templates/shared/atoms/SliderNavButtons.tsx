@@ -37,6 +37,49 @@ function getSlidesPerView(
   return breakpoints[0] ?? fallback;
 }
 
+function useSwiperNavState(swiperRef: React.MutableRefObject<SwiperType | null>) {
+  const [navState, setNavState] = useState({ isBeginning: true, isEnd: false });
+
+  useEffect(() => {
+    let mounted = true;
+    let rafId: number;
+
+    const updateState = () => {
+      const swiper = swiperRef.current;
+      if (!swiper || !mounted) return;
+      setNavState({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+    };
+
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateState);
+    };
+
+    // Poll until swiper is ready
+    const waitForSwiper = () => {
+      if (swiperRef.current) {
+        const swiper = swiperRef.current;
+        swiper.on('slideChange', scheduleUpdate);
+        swiper.on('transitionEnd', scheduleUpdate);
+        updateState();
+      } else if (mounted) {
+        rafId = requestAnimationFrame(waitForSwiper);
+      }
+    };
+
+    waitForSwiper();
+
+    return () => {
+      mounted = false;
+      cancelAnimationFrame(rafId);
+      swiperRef.current?.off('slideChange', scheduleUpdate);
+      swiperRef.current?.off('transitionEnd', scheduleUpdate);
+    };
+  }, [swiperRef]);
+
+  return navState;
+}
+
 export function SliderNavButtons({
   swiperRef,
   itemsLength,
@@ -45,31 +88,7 @@ export function SliderNavButtons({
 }: SliderNavButtonsProps) {
   const activeBreakpoints = useBreakpoints();
   const { styles } = useStyles();
-  const [isBeginning, setIsBeginning] = useState(true);
-  const [isEnd, setIsEnd] = useState(false);
-
-  useEffect(() => {
-    const swiper = swiperRef.current;
-    if (!swiper) return;
-
-    const updateState = () => {
-      setIsBeginning(swiper.isBeginning);
-      setIsEnd(swiper.isEnd);
-    };
-
-    swiper.on('slideChange', updateState);
-    swiper.on('reachBeginning', updateState);
-    swiper.on('reachEnd', updateState);
-    swiper.on('fromEdge', updateState);
-    updateState();
-
-    return () => {
-      swiper.off('slideChange', updateState);
-      swiper.off('reachBeginning', updateState);
-      swiper.off('reachEnd', updateState);
-      swiper.off('fromEdge', updateState);
-    };
-  }, [swiperRef]);
+  const { isBeginning, isEnd } = useSwiperNavState(swiperRef);
 
   const slidesPerView = getSlidesPerView(breakpoints, activeBreakpoints, 1);
   const pageCount = Math.ceil(itemsLength / slidesPerView);

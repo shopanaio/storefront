@@ -201,8 +201,9 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination-bullet {
       height: 8px !important;
       width: 8px !important;
-      background: ${token.colorPrimaryBorder};
+      background: ${token.colorBorder};
       border: 1px solid ${token.colorBgContainer};
+      opacity: 1;
     }
 
     .swiper-pagination-bullet-active {
@@ -234,12 +235,12 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination-bullet {
       height: 8px !important;
       width: 8px !important;
-      background: ${token.colorPrimaryBorder};
+      background: ${token.colorBorderSecondary};
       border: 1px solid ${token.colorBgContainer};
     }
 
     .swiper-pagination-bullet-active {
-      height: 8px;
+      height: 8px !important;
       width: 26px !important;
       border-radius: 4px;
       background: ${token.colorPrimary} !important;
