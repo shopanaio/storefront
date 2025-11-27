@@ -48,9 +48,9 @@ export const Image: React.FC<UiImageProps> = ({
   const { styles, cx } = useStyles({ ratio });
   const { styles: skeletonClassNames } = useSkeletonStyles();
 
-  const [_, setVisibleSrc] = useState<string | null>(null);
+  const [visibleSrc, setVisibleSrc] = useState<string | null>(null);
   const [isImageVisible, setIsImageVisible] = useState(false);
-  const visibleSrc = null;
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -133,7 +133,7 @@ export const Image: React.FC<UiImageProps> = ({
     onError?.(event);
   };
 
-  const placeholderVisible = 1 || !visibleSrc || !isImageVisible;
+  const placeholderVisible = !visibleSrc || !isImageVisible;
 
   useEffect(() => {
     if (!visibleSrc) {
