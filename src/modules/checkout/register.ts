@@ -3,8 +3,11 @@ import { registerModule } from '@shopana/storefront-sdk/registry';
 /**
  * Registers `checkout` module.
  */
-registerModule('page', 'checkout', async () => {
-  return await import('@src/modules/checkout/page/page');
+registerModule({
+  type: 'page',
+  slug: 'checkout',
+  path: '/checkout',
+  loader: async () => import('@src/modules/checkout/page/page'),
 });
 
 /**

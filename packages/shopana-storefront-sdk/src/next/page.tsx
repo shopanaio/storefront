@@ -26,7 +26,6 @@ import {
   moduleRegistry,
   type DynamicModulePageProps,
   type ModuleExport,
-  type AsyncModuleLoader,
 } from '@shopana/storefront-sdk/registry';
 
 type SlugParam = string[] | undefined;
@@ -288,36 +287,37 @@ export function createSDKPage(options: CreateSDKPageOptions) {
   async function Page(props: PageProps) {
     const params = await props.params;
     const segments = params.slug ?? [];
-    const firstSegment = segments[0];
 
-    // Check if first segment matches a registered module
-    if (firstSegment) {
-      const loader = moduleRegistry.resolve('page', firstSegment);
-      if (loader) {
-        const searchParams = await props.searchParams;
-        const typedLoader = loader as AsyncModuleLoader<
-          ModuleExport<DynamicModulePageProps>
-        >;
+    // Get URL context from middleware headers for path matching
+    const requestContext = await getRequestContext();
+    const pathname = requestContext.pathname;
 
-        return React.createElement(getComponentFromModule(await typedLoader()), {
-          params: {
-            locale: params.locale ?? 'en',
-            module: segments,
-          },
-          searchParams,
-          segments: segments.slice(1),
-        });
-      }
+    // Try to match pathname against registered page modules
+    const matchResult = moduleRegistry.matchPath<ModuleExport<DynamicModulePageProps>>(
+      'page',
+      pathname
+    );
+
+    if (matchResult) {
+      const searchParams = await props.searchParams;
+      const modulePayload = await matchResult.record.loader();
+
+      return React.createElement(getComponentFromModule(modulePayload), {
+        params: {
+          locale: params.locale ?? 'en',
+          module: segments,
+        },
+        searchParams,
+        segments: segments.slice(1),
+        pathParams: matchResult.params,
+      });
     }
 
     // Fall back to SDK page handler
     const resolvedSearchParams = await props.searchParams;
 
-    // Get URL context from middleware headers
-    const requestContext = await getRequestContext();
-
-    // Parse route from pathname
-    const { pageType, params: routeParams } = parseRoute(requestContext.pathname);
+    // Parse route from pathname (requestContext already fetched above)
+    const { pageType, params: routeParams } = parseRoute(pathname);
 
     // Handle 404
     if (pageType === '404') {

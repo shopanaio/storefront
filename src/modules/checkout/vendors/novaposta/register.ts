@@ -4,12 +4,14 @@ import { registerModule } from '@shopana/storefront-sdk/registry';
 /**
  * Register delivery-related modules (shipping methods).
  */
-registerModule(ProviderModuleType.Delivery, 'novaposhta', async () => {
-  const api = await import('./module.shipping');
-  return api.default;
+registerModule({
+  type: ProviderModuleType.Delivery,
+  slug: 'novaposhta',
+  loader: async () => (await import('./module.shipping')).default,
 });
 
-registerModule(ProviderModuleType.Payment, 'novaposhta', async () => {
-  const api = await import('./module.payment');
-  return api.default;
+registerModule({
+  type: ProviderModuleType.Payment,
+  slug: 'novaposhta',
+  loader: async () => (await import('./module.payment')).default,
 });

@@ -1,4 +1,8 @@
 import type { ComponentType } from 'react';
+import { match, type MatchFunction, type ParamData } from 'path-to-regexp';
+
+// Re-export ParamData for module authors
+export type { ParamData };
 
 /**
  * Unique identifier used to resolve modules or widgets within the registry.
@@ -18,12 +22,42 @@ export type ModuleType = 'page' | string;
 export type AsyncModuleLoader<T = unknown> = () => Promise<T> | T;
 
 /**
+ * Configuration for registering a module.
+ */
+export interface ModuleConfig<T = unknown> {
+  /**
+   * Module type, e.g. `page` or `widget`.
+   */
+  type: ModuleType;
+  /**
+   * Unique slug identifier.
+   */
+  slug: ModuleSlug;
+  /**
+   * URL path pattern using path-to-regexp syntax.
+   * Required for 'page' modules, optional for internal modules.
+   * Examples: '/checkout', '/checkout/:step', '/wishlist/:id?'
+   */
+  path?: string;
+  /**
+   * Lazy loader that returns the module payload.
+   */
+  loader: AsyncModuleLoader<T>;
+}
+
+/**
  * Record held inside the registry for each module.
  */
-export interface RegisteredModuleRecord<T = unknown> {
-  type: ModuleType;
-  slug: ModuleSlug;
-  loader: AsyncModuleLoader<T>;
+export interface RegisteredModuleRecord<T = unknown> extends ModuleConfig<T> {
+  matcher: MatchFunction<ParamData> | null;
+}
+
+/**
+ * Result of a successful module match.
+ */
+export interface ModuleMatchResult<T = unknown> {
+  record: RegisteredModuleRecord<T>;
+  params: ParamData;
 }
 
 /**
@@ -32,7 +66,10 @@ export interface RegisteredModuleRecord<T = unknown> {
 export interface DynamicModulePageProps {
   params: { locale: string; module?: string[] };
   searchParams?: Record<string, string | string[] | undefined>;
+  /** @deprecated Use pathParams instead */
   segments?: string[];
+  /** Extracted path parameters from the URL pattern (e.g., { step: 'shipping' } for /checkout/:step) */
+  pathParams: ParamData;
 }
 
 /**
@@ -69,7 +106,7 @@ export type WidgetSourceLoader = (
  * - Allows feature modules to self-register with a type and slug.
  * - Supports lazy dynamic imports to keep bundles small.
  * - Safe server/runtime usage (no globals on window; SSR friendly).
- * - Backward compatible: legacy `register(slug, loader)` and `resolve(slug)` operate on `page` type.
+ * - Uses path-to-regexp for flexible URL pattern matching.
  */
 export class ModuleRegistry {
   private readonly typeToSlugToRecord: Map<
@@ -78,23 +115,19 @@ export class ModuleRegistry {
   > = new Map();
 
   /**
-   * Registers a module by type and slug. Overwrites existing pair by design.
+   * Registers a module. Overwrites existing pair by design.
    *
-   * @param type Module type, e.g. `page` or `widget`.
-   * @param slug Unique slug.
-   * @param loader Lazy loader that returns the module payload.
+   * @param config Module configuration object.
    */
-  register<T = unknown>(
-    type: ModuleType,
-    slug: ModuleSlug,
-    loader: AsyncModuleLoader<T>
-  ): void {
+  register<T = unknown>(config: ModuleConfig<T>): void {
+    const { type, slug, path, loader } = config;
     let bySlug = this.typeToSlugToRecord.get(type);
     if (!bySlug) {
       bySlug = new Map();
       this.typeToSlugToRecord.set(type, bySlug);
     }
-    const record: RegisteredModuleRecord = { type, slug, loader };
+    const matcher = path ? match(path, { decode: decodeURIComponent }) : null;
+    const record: RegisteredModuleRecord<T> = { type, slug, path, loader, matcher };
     bySlug.set(slug, record);
   }
 
@@ -112,6 +145,35 @@ export class ModuleRegistry {
     const bySlug = this.typeToSlugToRecord.get(type);
     const record = bySlug?.get(slug);
     return record?.loader as AsyncModuleLoader<T> | undefined;
+  }
+
+  /**
+   * Matches a URL path against registered modules of a given type.
+   *
+   * @param type Module type to match against.
+   * @param pathname URL pathname to match (e.g. '/checkout/shipping').
+   * @returns Match result with the record and extracted params, or undefined if no match.
+   */
+  matchPath<T = unknown>(
+    type: ModuleType,
+    pathname: string
+  ): ModuleMatchResult<T> | undefined {
+    const bySlug = this.typeToSlugToRecord.get(type);
+    if (!bySlug) return undefined;
+
+    const records = Array.from(bySlug.values());
+    for (const record of records) {
+      if (!record.matcher) continue;
+      const result = record.matcher(pathname);
+      if (result) {
+        return {
+          record: record as RegisteredModuleRecord<T>,
+          params: result.params,
+        };
+      }
+    }
+
+    return undefined;
   }
 
   /**
@@ -134,16 +196,19 @@ export const moduleRegistry = new ModuleRegistry();
 /**
  * Helper to standardize registration from modules.
  *
- * @param type Module type to register.
- * @param slug Unique slug.
- * @param loader Lazy loader returning the module payload.
+ * @param config Module configuration object.
  */
-export function registerModule<T = unknown>(
-  type: ModuleType,
-  slug: ModuleSlug,
-  loader: AsyncModuleLoader<T>
-): void {
-  moduleRegistry.register(type, slug, loader);
+export function registerModule<T = unknown>(config: ModuleConfig<T>): void {
+  moduleRegistry.register(config);
+}
+
+/**
+ * Widget configuration (convenience type for widget modules).
+ */
+export interface WidgetConfig {
+  slug: ModuleSlug;
+  path?: string;
+  loader: AsyncModuleLoader<WidgetSourceLoader>;
 }
 
 /**
@@ -151,12 +216,13 @@ export function registerModule<T = unknown>(
  *
  * The loader should return a `WidgetSourceLoader` which in turn produces the JS string.
  *
- * @param slug Widget slug.
- * @param loader Lazy loader producing the widget source generator.
+ * @param config Widget configuration object.
  */
-export function registerWidget(
-  slug: ModuleSlug,
-  loader: AsyncModuleLoader<WidgetSourceLoader>
-): void {
-  moduleRegistry.register('widget', slug, loader);
+export function registerWidget(config: WidgetConfig): void {
+  moduleRegistry.register({
+    type: 'widget',
+    slug: config.slug,
+    path: config.path,
+    loader: config.loader,
+  });
 }
