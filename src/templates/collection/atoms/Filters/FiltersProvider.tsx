@@ -32,7 +32,6 @@ export const FiltersProvider: React.FC<Props> = ({ handle, children }) => {
   return (
     <ConfigProvider
       theme={{
-        zeroRuntime: true,
         components: {
           Collapse: {
             headerPadding: 0,

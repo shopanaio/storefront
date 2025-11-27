@@ -10,6 +10,8 @@ import { useEffect } from 'react';
 import { setNotificationApi } from '@src/ui-kit/Toast/Toast';
 import { BrandProvider } from '@shopana/brand-sdk';
 import { brandConfig } from '@src/brand.config';
+import { theme } from 'antd';
+import 'antd/dist/antd.css';
 
 export const Theme = ({ children }: { children: React.ReactNode }) => {
   const [api, contextHolder] = notification.useNotification({
@@ -27,10 +29,9 @@ export const Theme = ({ children }: { children: React.ReactNode }) => {
   return (
     <AntdRegistry>
       <ThemeProvider
-        themeMode="light"
-        prefixCls="ant"
         theme={{
           cssVar: { prefix: 'ant' },
+          zeroRuntime: true,
           hashed: false,
           token: {
             // eslint-disable-next-line @atlaskit/design-system/use-tokens-typography

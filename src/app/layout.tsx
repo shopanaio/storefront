@@ -3,15 +3,24 @@ import { AppProvider } from '@shopana/storefront-sdk/AppProvider';
 import { mockShopConfig } from '@shopana/storefront-sdk/shop/mockShopConfig';
 import { environmentConfig } from '@src/config/environment.config';
 import { cartConfig } from '@src/config/cart.config';
+import { Theme } from '@src/ui-kit/Theme/Theme';
+import ConfirmPortalHost from '@src/ui-kit/Confirm/ConfirmPortalHost';
+import { WishlistProvider } from '@src/modules/wishlist';
+import { ResponsiveServerProvider } from '@src/ui-kit/UserAgent/ResponsiveServerProvider';
+import { IntlProvider } from '@src/i18n/Provider';
 
 console.error = () => {};
 console.warn = () => {};
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -34,7 +43,16 @@ export default function RootLayout({
             shopConfig={mockShopConfig}
             cartConfig={cartConfig}
           >
-            {children}
+            <IntlProvider locale={locale}>
+              <ResponsiveServerProvider>
+                <WishlistProvider>
+                  <Theme>
+                    {children}
+                    <ConfirmPortalHost />
+                  </Theme>
+                </WishlistProvider>
+              </ResponsiveServerProvider>
+            </IntlProvider>
           </AppProvider>
         </div>
         <div id="sheet-wrapper" />

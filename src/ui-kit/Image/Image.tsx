@@ -3,7 +3,7 @@
 import { Image as AntImage, Skeleton } from 'antd';
 import type { ImageProps as AntImageProps } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
 import {
   isImageCached,
@@ -12,8 +12,10 @@ import {
   retainImageCache,
 } from './imageCache';
 
-export interface UiImageProps
-  extends Omit<AntImageProps, 'placeholder' | 'fallback'> {
+export interface UiImageProps extends Omit<
+  AntImageProps,
+  'placeholder' | 'fallback'
+> {
   /** Custom placeholder while image is loading */
   placeholder?: ReactNode;
   /** Fallback image when `src` fails */
@@ -44,10 +46,11 @@ export const Image: React.FC<UiImageProps> = ({
   ...rest
 }) => {
   const { styles, cx } = useStyles({ ratio });
+  const { styles: skeletonClassNames } = useSkeletonStyles();
 
-  const [visibleSrc, setVisibleSrc] = useState<string | null>(null);
+  const [_, setVisibleSrc] = useState<string | null>(null);
   const [isImageVisible, setIsImageVisible] = useState(false);
-
+  const visibleSrc = null;
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -130,7 +133,7 @@ export const Image: React.FC<UiImageProps> = ({
     onError?.(event);
   };
 
-  const placeholderVisible = !visibleSrc || !isImageVisible;
+  const placeholderVisible = 1 || !visibleSrc || !isImageVisible;
 
   useEffect(() => {
     if (!visibleSrc) {
@@ -154,7 +157,7 @@ export const Image: React.FC<UiImageProps> = ({
         aria-hidden={!placeholderVisible}
       >
         <div className={styles.placeholderContent}>
-          {placeholder ?? <Skeleton.Image className={styles.skeleton} />}
+          {placeholder ?? <Skeleton.Image classNames={skeletonClassNames} />}
         </div>
       </div>
       {visibleSrc && (
@@ -178,6 +181,36 @@ export const Image: React.FC<UiImageProps> = ({
     </div>
   );
 };
+
+const useSkeletonStyles = createStyles(({ css }) => ({
+  root: css`
+    width: 100% !important;
+    height: 100% !important;
+    container-type: inline-size;
+
+    @container (min-width: 300px) {
+      .ant-skeleton-image {
+        --ant-control-height: 48px;
+      }
+    }
+
+    @container (max-width: 100px) {
+      .ant-skeleton-image {
+        --ant-control-height: 24px;
+      }
+    }
+
+    @container (max-width: 80px) {
+      .ant-skeleton-image {
+        --ant-control-height: 20px;
+      }
+    }
+  `,
+  content: css`
+    width: 100% !important;
+    height: 100% !important;
+  `,
+}));
 
 const useStyles = createStyles(
   ({ css, token }, params: { ratio: number | string }) => {
@@ -209,30 +242,6 @@ const useStyles = createStyles(
         display: flex;
         align-items: stretch;
         overflow: hidden;
-        container-type: inline-size;
-
-        & .ant-skeleton-image {
-          width: 100%;
-          height: 100%;
-        }
-
-        @container (min-width: 300px) {
-          & .ant-skeleton-image {
-            --ant-control-height: 48px;
-          }
-        }
-
-        @container (max-width: 100px) {
-          & .ant-skeleton-image {
-            --ant-control-height: 24px;
-          }
-        }
-
-        @container (max-width: 80px) {
-          & .ant-skeleton-image {
-            --ant-control-height: 20px;
-          }
-        }
       `,
       image: css`
         width: 100%;
@@ -245,11 +254,6 @@ const useStyles = createStyles(
       `,
       imageVisible: css`
         opacity: 1;
-      `,
-      skeleton: css`
-        width: 100% !important;
-        height: 100% !important;
-        aspect-ratio: ${aspectRatio};
       `,
     };
   }
