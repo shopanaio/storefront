@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { CheckoutPageClient } from "@src/modules/checkout/page/client";
+import { CheckoutPageClient } from '@src/modules/checkout/page/client';
 
 /**
  * Checkout module page component
