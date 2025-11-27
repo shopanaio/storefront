@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { AntdRegistry as BaseAntdRegistry } from '@ant-design/nextjs-registry';
 import {
   StyleProvider as AntdStyleProvider,
@@ -9,12 +9,14 @@ import {
 import { useServerInsertedHTML } from 'next/navigation';
 
 export function AntdRegistry({ children }: { children: React.ReactNode }) {
-  useServerInsertedHTML(() => {
-    const styles = extractStaticStyle();
-    if (!styles.length) return null;
-    return <>{styles.map((item) => item.style)}</>;
-  });
+  const isInsert = useRef(false);
 
+  useServerInsertedHTML(() => {
+    if (isInsert.current) return;
+    isInsert.current = true;
+
+    return <>{extractStaticStyle().map((item) => item.style)}</>;
+  });
   return (
     <BaseAntdRegistry>
       <AntdStyleProvider cache={extractStaticStyle.cache}>
