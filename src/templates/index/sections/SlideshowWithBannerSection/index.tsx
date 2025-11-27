@@ -75,10 +75,11 @@ export default function SlideshowWithBannerSection({
               )}
               swiperRef={swiperRef}
               breakpoints={{
-                0: { slidesPerView: 2, spaceBetween: 12 },
-                520: { slidesPerView: 4, spaceBetween: 12 },
-                768: { slidesPerView: 4, spaceBetween: 16 },
-                1280: { slidesPerView: 6, spaceBetween: 16 },
+                0: { slidesPerView: 3, slidesPerGroup: 3, spaceBetween: 12 },
+                520: { slidesPerView: 3, slidesPerGroup: 3, spaceBetween: 12 },
+                768: { slidesPerView: 3, slidesPerGroup: 3, spaceBetween: 12 },
+                1024: { slidesPerView: 4, slidesPerGroup: 4, spaceBetween: 12 },
+                1280: { slidesPerView: 6, slidesPerGroup: 6, spaceBetween: 12 },
               }}
             />
           </div>
@@ -99,6 +100,7 @@ const useStyles = createStyles(({ css, token }) => {
     container: css`
       width: 100%;
       padding-inline: ${token.padding}px;
+      margin-bottom: 64px;
 
       ${mq.xl} {
         --container-width: 1280px;
@@ -124,12 +126,12 @@ const useStyles = createStyles(({ css, token }) => {
       display: flex;
       flex-direction: column;
       width: 100%;
-      gap: ${token.margin}px;
+      gap: 12px;
 
       ${mq.md} {
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: ${token.margin}px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
         width: 100%;
         align-items: stretch;
       }
@@ -191,7 +193,7 @@ const useStyles = createStyles(({ css, token }) => {
       overflow: hidden;
 
       ${mq.md} {
-        grid-column: span 4;
+        grid-column: span 3;
       }
 
       ${mq.lg} {
@@ -199,10 +201,6 @@ const useStyles = createStyles(({ css, token }) => {
       }
 
       ${mq.xl} {
-        grid-column: span 6;
-      }
-
-      ${mq.xxl} {
         grid-column: span 6;
       }
     `,

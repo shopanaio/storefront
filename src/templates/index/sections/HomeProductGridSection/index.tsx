@@ -65,6 +65,7 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       gap: ${token.margin}px;
       margin-inline: auto;
+      margin-bottom: 64px;
     `,
     productsGrid: css``,
   };

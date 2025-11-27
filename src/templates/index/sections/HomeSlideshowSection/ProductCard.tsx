@@ -1,118 +1,70 @@
 'use client';
 
 import type { HomeProduct } from '@shopana/storefront-sdk/modules/home/core/types';
-import { Card, Typography } from 'antd';
-import { createStyles } from 'antd-style';
-import Link from 'next/link';
-import { useRoutes } from '@src/hooks/useRoutes';
-import { Price } from '@src/ui-kit/Price/Price';
-import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
-
-const { Text, Paragraph } = Typography;
+import type { model } from '@shopana/storefront-sdk';
+import { ProductCard } from '@src/ui-kit/ProductCards/ListingCard/ProductCard';
+import { CurrencyCode } from '@codegen/schema-client';
+import { composeProductTitle } from '@src/utils/composeProductTitle';
+import useIsInTheCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
+import useAddItemToCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useAddItemToCart';
+import { useReviewStore } from '@src/store/appStore';
 
 interface Props {
   product: HomeProduct;
 }
 
 export function HomeSlideshowProductCard({ product }: Props) {
-  const routes = useRoutes();
-  const { styles } = useStyles();
-
   const price = {
     amount: Number(product.price.amount),
-    currencyCode: product.price.currencyCode,
+    currencyCode: product.price.currencyCode as CurrencyCode,
   };
 
   const compareAtPrice = product.compareAtPrice
     ? {
         amount: Number(product.compareAtPrice.amount),
-        currencyCode: product.compareAtPrice.currencyCode,
+        currencyCode: product.compareAtPrice.currencyCode as CurrencyCode,
       }
     : undefined;
 
+  const gallery = product.image?.url ? [product.image.url] : [];
+
+  const productTitle = composeProductTitle({
+    productTitle: product.product.title,
+    variantTitle: product.title,
+    fallback: product.title || '',
+  });
+
+  const { isInCart } = useIsInTheCart({
+    purchasableId: product.id,
+  });
+
+  const { addToCart, isInFlight } = useAddItemToCart();
+  const setReviewProduct = useReviewStore((state) => state.setReviewProduct);
+
   return (
-    <Link
-      href={routes.product.path(product.product.handle, { variant: product.handle })}
-      className={styles.link}
-    >
-      <Card className={styles.card} styles={{ body: { padding: 12 } }} hoverable>
-        <div className={styles.imageWrapper}>
-          <Thumbnail
-            src={product.image?.url}
-            alt={product.title}
-            className={styles.image}
-          />
-        </div>
-        <div className={styles.content}>
-          <Text type="secondary" className={styles.productName}>
-            {product.product.title}
-          </Text>
-          <Paragraph strong className={styles.title} ellipsis={{ rows: 2 }}>
-            {product.title}
-          </Paragraph>
-          <div className={styles.priceWrapper}>
-            <Price money={price} className={styles.price} />
-            {compareAtPrice && (
-              <Price money={compareAtPrice} className={styles.comparePrice} />
-            )}
-          </div>
-        </div>
-      </Card>
-    </Link>
+    <ProductCard
+      id={product.id}
+      productTitle={productTitle}
+      handle={product.product.handle}
+      variantHandle={product.handle}
+      title={{ rows: 1, size: 'default' }}
+      rating={{ rating: 0, ratingCount: 0, compact: true }}
+      isAvailable={true}
+      price={price}
+      compareAtPrice={compareAtPrice}
+      gallery={gallery}
+      isInCart={isInCart}
+      isLoading={isInFlight}
+      onAddToCart={() => {
+        if (!isInCart) {
+          addToCart({
+            purchasableId: product.id,
+            purchasableSnapshot: product as unknown as model.ProductVariant,
+            quantity: 1,
+          });
+        }
+      }}
+      onReviewClick={() => setReviewProduct(product as unknown as model.Product)}
+    />
   );
 }
-
-const useStyles = createStyles(({ css, token }) => ({
-  link: css`
-    text-decoration: none;
-    display: block;
-    height: 100%;
-  `,
-  card: css`
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  `,
-  imageWrapper: css`
-    aspect-ratio: 1;
-    overflow: hidden;
-    border-radius: ${token.borderRadius}px;
-    margin-bottom: ${token.marginSM}px;
-  `,
-  image: css`
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  `,
-  content: css`
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  `,
-  productName: css`
-    font-size: 12px;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  `,
-  title: css`
-    font-size: 14px;
-    line-height: 1.3;
-  `,
-  priceWrapper: css`
-    display: flex;
-    align-items: center;
-    gap: ${token.marginXS}px;
-    margin-top: auto;
-  `,
-  price: css`
-    font-weight: 600;
-    font-size: 16px;
-  `,
-  comparePrice: css`
-    font-size: 14px;
-    color: ${token.colorTextSecondary};
-    text-decoration: line-through;
-  `,
-}));

@@ -28,7 +28,7 @@ export default function HomeSlideshowSection({
   const products = useCategoryProducts(settings.categoryKey);
 
   return (
-    <Flex vertical gap={16}>
+    <Flex vertical gap={16} style={{ marginBottom: 64 }}>
       <SectionTitle title={category?.title ?? ''}>
         <Flex gap={16}>
           <SliderNavButtons

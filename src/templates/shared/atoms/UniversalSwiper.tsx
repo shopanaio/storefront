@@ -28,23 +28,23 @@ export interface UniversalSliderProps<T extends DataSource> {
 
 const defaultBreakpoints: NonNullable<SwiperOptions["breakpoints"]> = {
   0: {
-    slidesPerView: 2.5,
+    slidesPerView: 2.7,
     slidesPerGroup: 2,
     spaceBetween: 12,
   },
   520: {
-    slidesPerView: 3.5,
+    slidesPerView: 3.7,
     slidesPerGroup: 3,
     spaceBetween: 12,
   },
   768: {
-    slidesPerView: 4.5,
+    slidesPerView: 4.7,
     slidesPerGroup: 4,
     spaceBetween: 12,
   },
   1024: {
-    slidesPerView: 6.5,
-    slidesPerGroup: 6,
+    slidesPerView: 5.7,
+    slidesPerGroup: 5,
     spaceBetween: 12,
   },
   1280: {
@@ -169,7 +169,7 @@ export function UniversalSlider<T extends DataSource>({
                 internalRef.current = swiper;
               }
             }}
-            style={{ overflow: "visible" }}
+            style={{ overflow: "hidden" }}
           >
             {items.map((item) => (
               <SwiperSlide key={item.id} className={slideClassName}>
