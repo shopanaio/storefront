@@ -1,13 +1,13 @@
-import "swiper/css";
-import "swiper/css/pagination";
-import { useRef } from "react";
-import type { Swiper as SwiperType } from "swiper";
-import type { SwiperOptions } from "swiper/types";
-import { A11y, Pagination, FreeMode } from "swiper/modules";
-import { createStyles, cx } from "antd-style";
-import { useIsMobile } from "@src/hooks/useIsMobile";
-import { useBreakpoints } from "@src/hooks/useBreakpoints";
-import { IsomorphicSwiper } from "@src/ui-kit/IsomorphicSwiper";
+import 'swiper/css';
+import 'swiper/css/pagination';
+import { useRef } from 'react';
+import type { Swiper as SwiperType } from 'swiper';
+import type { SwiperOptions } from 'swiper/types';
+import { A11y, Pagination, FreeMode } from 'swiper/modules';
+import { createStyles, cx } from 'antd-style';
+import { useIsMobile } from '@src/hooks/useIsMobile';
+import { useBreakpoints } from '@src/hooks/useBreakpoints';
+import { IsomorphicSwiper } from '@src/ui-kit/IsomorphicSwiper';
 
 export type DataSource = {
   id: string;
@@ -18,15 +18,15 @@ export interface UniversalSliderProps<T extends DataSource> {
   renderItem: (item: T) => React.ReactNode;
   slidesPerView?: number;
   spaceBetween?: number;
-  freeMode?: SwiperOptions["freeMode"];
-  breakpoints?: SwiperOptions["breakpoints"];
+  freeMode?: SwiperOptions['freeMode'];
+  breakpoints?: SwiperOptions['breakpoints'];
   swiperRef?: React.MutableRefObject<SwiperType | null>;
   className?: string;
   slideClassName?: string;
   paginationProp?: boolean;
 }
 
-const defaultBreakpoints: NonNullable<SwiperOptions["breakpoints"]> = {
+const defaultBreakpoints: NonNullable<SwiperOptions['breakpoints']> = {
   0: {
     slidesPerView: 2.3,
     slidesPerGroup: 2,
@@ -55,8 +55,8 @@ const defaultBreakpoints: NonNullable<SwiperOptions["breakpoints"]> = {
 };
 
 function getEnhancedBreakpoints(
-  breakpoints: NonNullable<SwiperOptions["breakpoints"]>
-): NonNullable<SwiperOptions["breakpoints"]> {
+  breakpoints: NonNullable<SwiperOptions['breakpoints']>
+): NonNullable<SwiperOptions['breakpoints']> {
   return Object.fromEntries(
     Object.entries(breakpoints).map(([key, value]) => {
       const v = value as SwiperOptions;
@@ -66,7 +66,7 @@ function getEnhancedBreakpoints(
 }
 
 function getCurrentSlidesPerView(
-  breakpoints: NonNullable<SwiperOptions["breakpoints"]>,
+  breakpoints: NonNullable<SwiperOptions['breakpoints']>,
   activeBreakpoints: ReturnType<typeof useBreakpoints>,
   fallback: number = 1
 ): number {
@@ -111,7 +111,7 @@ export function UniversalSlider<T extends DataSource>({
   const activeBreakpoints = useBreakpoints();
   const isMobile = useIsMobile();
 
-  const mergedBreakpoints: NonNullable<SwiperOptions["breakpoints"]> = {
+  const mergedBreakpoints: NonNullable<SwiperOptions['breakpoints']> = {
     ...defaultBreakpoints,
     ...breakpoints,
   };
@@ -145,22 +145,20 @@ export function UniversalSlider<T extends DataSource>({
       {({ Swiper, SwiperSlide }) => {
         return (
           <Swiper
-            key={isMobile ? "mobile" : "desktop"}
+            key={isMobile ? 'mobile' : 'desktop'}
             className={cx(
               className
                 ? className
                 : dynamicBullets
-                ? styles.swiperContainerDynamic
-                : styles.swiperContainer
+                  ? styles.swiperContainerDynamic
+                  : styles.swiperContainer
             )}
             slidesPerView={currentSlidesPerView}
             slidesPerGroup={Math.floor(currentSlidesPerView)}
             freeMode={freeMode}
             modules={freeMode ? [...modules, FreeMode] : modules}
             spaceBetween={spaceBetween}
-            pagination={pagination} /*
-      centeredSlides={true}
-      initialSlide={2} */
+            pagination={pagination}
             breakpoints={enhancedBreakpoints}
             onBeforeInit={(swiper) => {
               if (swiperRef) {
@@ -169,7 +167,6 @@ export function UniversalSlider<T extends DataSource>({
                 internalRef.current = swiper;
               }
             }}
-            style={{ overflow: "hidden" }}
           >
             {items.map((item) => (
               <SwiperSlide key={item.id} className={slideClassName}>
@@ -186,6 +183,7 @@ export function UniversalSlider<T extends DataSource>({
 const useStyles = createStyles(({ css, token }) => ({
   swiperContainer: css`
     position: relative;
+    overflow: visible;
 
     .swiper-pagination {
       position: absolute;
@@ -199,18 +197,20 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination-bullet {
       height: 6px !important;
       width: 6px !important;
+      background: ${token.colorPrimaryBorder};
     }
 
     .swiper-pagination-bullet-active {
       height: 6px !important;
       width: 24px !important;
       border-radius: 3px;
-      background-color: ${token.colorPrimary} !important;
+      background: ${token.colorPrimary} !important;
     }
   `,
 
   swiperContainerDynamic: css`
     position: relative;
+    overflow: visible;
 
     .swiper-pagination {
       position: absolute;
@@ -226,13 +226,14 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination-bullet {
       height: 6px !important;
       width: 6px !important;
+      background: ${token.colorPrimaryBorder};
     }
 
     .swiper-pagination-bullet-active {
       height: 6px;
       width: 24px !important;
       border-radius: 3px;
-      background-color: ${token.colorPrimary} !important;
+      background: ${token.colorPrimary} !important;
     }
   `,
 }));

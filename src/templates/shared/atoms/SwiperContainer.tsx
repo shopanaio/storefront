@@ -73,23 +73,23 @@ const useStyles = createStyles(({ css, token }) => {
         --container-width: 1280px;
         --offset: max(16px, calc((100vw - var(--container-width)) / 2));
         margin-left: var(--offset);
-        padding-right: var(--offset);
+        margin-right: var(--offset);
+        padding-right: 0;
         width: auto;
-        max-width: calc(100vw - var(--offset));
+        max-width: var(--container-width);
       }
 
       ${mq.xxl} {
         --container-width: 1400px;
         --offset: calc((100vw - var(--container-width)) / 2);
         margin-left: var(--offset);
-        padding-right: var(--offset);
-        max-width: calc(100vw - var(--offset));
+        margin-right: var(--offset);
+        max-width: var(--container-width);
       }
     `,
 
     paddingRight: css`
       padding-right: 0 !important;
-      margin-right: var(--offset) !important;
     `,
 
     noLeftPadding: css`
