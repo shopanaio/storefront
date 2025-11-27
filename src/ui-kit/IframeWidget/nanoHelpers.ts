@@ -30,4 +30,3 @@ export function initNanoInDoc(doc: Document, nonce?: string, pfx?: string): Nano
 
   return { rule, add, remove };
 }
-

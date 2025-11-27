@@ -96,4 +96,3 @@ export class MediaMatch {
 }
 
 export default MediaMatch;
-
