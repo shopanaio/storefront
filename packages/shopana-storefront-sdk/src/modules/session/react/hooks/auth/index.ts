@@ -14,5 +14,5 @@ export { useForgotPassword, default as useForgotPasswordDefault } from './useFor
 export { useResetPassword, default as useResetPasswordDefault } from './useResetPassword';
 
 // Response Handlers
-export { useSignInHandler, default as useSignInHandlerDefault, type SessionData, type SignInHandler } from './useSignInHandler';
-export { useSignUpHandler, default as useSignUpHandlerDefault, type SignUpHandler } from './useSignUpHandler';
+export { useSignInHandler, default as useSignInHandlerDefault, type SessionData as SignInSessionData, type SignInHandler } from './useSignInHandler';
+export { useSignUpHandler, default as useSignUpHandlerDefault, type SessionData as SignUpSessionData, type SignUpHandler } from './useSignUpHandler';
