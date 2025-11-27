@@ -111,7 +111,7 @@
     "start": "next start",
     "build": "yarn workspace @shopana/storefront-sdk build && yarn relay && yarn widgets:build && next build --webpack",
     "codegen": "node ./bin/graphql/codegen.js",
-    "dev": "yarn workspace @shopana/storefront-sdk build && yarn relay && next dev -p 3001",
+    "dev": "yarn workspace @shopana/storefront-sdk build && yarn relay && next dev -p 3001 --turbo",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint .",

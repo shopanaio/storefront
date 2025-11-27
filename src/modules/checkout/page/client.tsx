@@ -1,4 +1,3 @@
-import '@src/modules/checkout/vendors/autoload';
 import { Checkout } from '@src/modules/checkout';
 import { CheckoutBrand } from '@src/modules/checkout/page/brand';
 import { useCallback, useEffect } from 'react';
