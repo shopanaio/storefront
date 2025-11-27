@@ -1,5 +1,6 @@
 import { CartLine } from "@src/ui-kit/ProductCards/CartLineItem/CartLine";
-import { useRemoveItemFromCart, useUpdateCartLineQuantity } from "@src/hooks/cart";
+import useRemoveItemFromCart from "@shopana/storefront-sdk/modules/cart/react/hooks/useRemoveItemFromCart";
+import useUpdateCartLineQuantity from "@shopana/storefront-sdk/modules/cart/react/hooks/useUpdateCartLineQuantity";
 import { Flex, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";

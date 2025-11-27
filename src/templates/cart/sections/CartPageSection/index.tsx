@@ -3,7 +3,7 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useCart } from '@src/hooks/cart';
+import useCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useCart';
 import { CartSubtotal } from '@src/templates/cart/blocks/CartSubtotal';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { CartTable } from '@src/templates/cart/blocks/CartTable';

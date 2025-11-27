@@ -21,7 +21,8 @@ import { useProductGallery } from '@src/hooks/useProductGallery';
 import { useGalleryBreakpoints } from '@src/hooks/useGalleryBreakpoints';
 import { ProductCartButton } from '@src/ui-kit/ProductCards/ListingCard/CartButton';
 import { ProductGallery } from '../ProductGallery';
-import { useIsInTheCart, useAddItemToCart } from '@src/hooks/cart';
+import useIsInTheCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
+import useAddItemToCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useAddItemToCart';
 import { useProductGroups } from '@src/hooks/product/useProductGroups';
 import { AdditionalInfoSection } from '../../atoms/AdditionalInfoSection';
 

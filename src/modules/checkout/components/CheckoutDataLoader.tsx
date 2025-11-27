@@ -7,7 +7,7 @@ import { loadCheckoutQuery } from '@src/modules/checkout/queries';
 import type { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/queries/__generated__/loadCheckoutQuery.graphql';
 import { useMemo } from 'react';
 import { readInlineData } from 'react-relay';
-import { useCartLineFragment_CartLineFragment } from '@src/hooks/cart/useCartLineFragment/useCartLineFragment.shopana';
+import { CartLineFragment_line } from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartLineFragment';
 
 interface CheckoutDataLoaderProps {
   queryReference: PreloadedQuery<LoadCheckoutQueryType>;
@@ -44,7 +44,7 @@ export function CheckoutDataLoader({
     return {
       ...checkoutData,
       lines: (checkoutData?.lines || [])?.map((cartLineRef: any) =>
-        readInlineData(useCartLineFragment_CartLineFragment, cartLineRef)
+        readInlineData(CartLineFragment_line, cartLineRef)
       ),
     };
   }, [checkoutData]);

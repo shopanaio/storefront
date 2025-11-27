@@ -8,7 +8,8 @@ import { composeProductTitle } from '@src/utils/composeProductTitle';
 import type { model } from "@shopana/storefront-sdk";
 import { CurrencyCode } from '@codegen/schema-client';
 
-import { useIsInTheCart, useAddItemToCart } from '@src/hooks/cart';
+import useIsInTheCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
+import useAddItemToCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useAddItemToCart';
 import { useProductSwatches } from '@src/hooks/useProductSwatches';
 import { useReviewStore } from '@src/store/appStore';
 import { Money } from '@src/ui-kit/Price/Price';

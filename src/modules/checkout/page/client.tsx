@@ -3,7 +3,7 @@ import { CheckoutBrand } from '@src/modules/checkout/page/brand';
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
-import { useCartId } from '@src/hooks/cart';
+import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '@src/modules/checkout/hooks/useDefaultCartCleanup';
 
 const features = {

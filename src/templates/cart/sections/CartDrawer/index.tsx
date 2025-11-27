@@ -7,7 +7,7 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
 
-import { useCart } from '@src/hooks/cart';
+import useCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useCart';
 
 import { CartTable } from '@src/templates/cart/blocks/CartTable';
 import { useModalStore } from '@src/store/appStore';
