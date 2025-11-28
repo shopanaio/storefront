@@ -8,6 +8,7 @@ import { useFilterActions } from "@src/hooks/useFilterActions";
 import { useFiltersStore } from "@src/store/appStore";
 import { useDraftFilters } from "@src/hooks/useDraftFilters";
 import { FilterItem } from "@src/templates/collection/atoms/Filters/FilterItem";
+import { isPriceRangeFilter, isAvailabilityFilter } from "@src/templates/collection/atoms/Filters/filterUtils";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
 
 interface ListingFilterProps {
@@ -56,9 +57,14 @@ export const ListingFilter: React.FC<ListingFilterProps> = ({
 
   const containerStyle = mode === "sidebar" ? styles.sidebarWrapper : styles.drawerWrapper;
 
+  // TODO: Temporarily only show price and availability filters
+  const filteredFilters = filters.filter((f) =>
+    isPriceRangeFilter(f) || isAvailabilityFilter(f)
+  );
+
   return (
     <div className={containerStyle}>
-      {filters.map((filter) => (
+      {filteredFilters.map((filter) => (
         <FilterItem
           key={filter.handle}
           filter={filter}

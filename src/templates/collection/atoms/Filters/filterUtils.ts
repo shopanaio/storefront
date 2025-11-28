@@ -1,5 +1,7 @@
 import type { ApiFilter, ApiPriceRangeFilter, ApiListFilter } from "@codegen/schema-client";
 
+export const AVAILABILITY_FILTER_HANDLE = "AVAILABILITY";
+
 /**
  * Type guard to check if filter is a price range filter
  */
@@ -8,6 +10,13 @@ export const isPriceRangeFilter = (filter: ApiFilter): filter is ApiPriceRangeFi
     (filter as ApiPriceRangeFilter).minPrice !== undefined &&
     (filter as ApiPriceRangeFilter).maxPrice !== undefined
   );
+};
+
+/**
+ * Check if filter is the availability filter
+ */
+export const isAvailabilityFilter = (filter: ApiFilter): boolean => {
+  return filter.handle === AVAILABILITY_FILTER_HANDLE;
 };
 
 /**
