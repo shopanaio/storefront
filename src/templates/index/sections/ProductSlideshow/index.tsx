@@ -8,8 +8,8 @@ import { Flex } from 'antd';
 import { useRef } from 'react';
 import type { Swiper as SwiperType } from 'swiper';
 import { useRoutes } from '@src/hooks/useRoutes';
-import { SectionTitle, SliderNavButtons, ViewAllButton, SwiperContainer, UniversalSlider } from '../../../shared/atoms';
-import { HomeSlideshowProductCard } from './ProductCard';
+import { SectionTitle, SliderNavButtons, ViewAllButton, SwiperContainer, UniversalSlider } from '@src/templates/shared/atoms';
+import { HomeSlideshowProductCard } from '@src/templates/index/blocks/ProductCard';
 
 type CategoryKey = 'electronics' | 'sport' | 'toys';
 

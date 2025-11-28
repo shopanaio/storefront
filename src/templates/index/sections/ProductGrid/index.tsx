@@ -1,15 +1,19 @@
-"use client";
+'use client';
 
-import { Flex } from "antd";
-import { createStyles } from "antd-style";
-import { SectionTitle, ViewAllButton, LoadMoreBtn } from "../../../shared/atoms";
-import { useCategory } from "@src/hooks/useCategory";
-import { useRoutes } from "@src/hooks/useRoutes";
-import { usePaginationFragment } from "react-relay";
-import Listing from "@shopana/storefront-sdk/queries/Listing";
-import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
-import clsx from "clsx";
-import type { SectionProps } from "@shopana/storefront-sdk/core/types";
+import { Flex } from 'antd';
+import { createStyles } from 'antd-style';
+import {
+  SectionTitle,
+  ViewAllButton,
+  LoadMoreBtn,
+} from '@src/templates/shared/atoms';
+import { useCategory } from '@src/hooks/useCategory';
+import { useRoutes } from '@src/hooks/useRoutes';
+import { usePaginationFragment } from 'react-relay';
+import Listing from '@shopana/storefront-sdk/queries/Listing';
+import { ProductsGrid } from '@src/templates/collection/blocks/ProductsGrid';
+import clsx from 'clsx';
+import type { SectionProps } from '@shopana/storefront-sdk/core/types';
 
 interface HomeProductGridSectionSettings {
   categoryHandle: string;
@@ -41,11 +45,11 @@ export default function HomeProductGridSection({
   };
 
   return (
-    <div className={clsx(styles.container, "container")}>
-      <SectionTitle title={category?.title ?? ""}>
+    <div className={clsx(styles.container, 'container')}>
+      <SectionTitle title={category?.title ?? ''}>
         <ViewAllButton href={routes.collection.path(category?.handle ?? '')} />
       </SectionTitle>
-      <ProductsGrid products={products} className={styles.productsGrid} />
+      <ProductsGrid products={products} />
       <Flex justify="center" style={{ display: 'none' }}>
         <LoadMoreBtn
           hasNext={hasNext}
@@ -67,7 +71,6 @@ const useStyles = createStyles(({ token, css }) => {
       margin-inline: auto;
       margin-bottom: 64px;
     `,
-    productsGrid: css``,
   };
 });
 

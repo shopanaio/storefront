@@ -34,7 +34,6 @@ const useStyles = createStyles(({ css, token }) => {
       flex-wrap: wrap;
       gap: ${token.margin}px;
     `,
-
     sectionTitle: css`
       font-size: ${token.fontSizeHeading4}px;
       ${mq.lg} {

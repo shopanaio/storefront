@@ -6,9 +6,9 @@ import { useRoutes } from "@src/hooks/useRoutes";
 import { useMemo } from "react";
 import { createStyles } from "antd-style";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
-import { SectionTitle, ViewAllButton } from "../../../shared/atoms";
-import CategoryCardCircle from "./CategoryCardCircle";
-import CategoryCard from "./CategoryCard";
+import { SectionTitle, ViewAllButton } from "@src/templates/shared/atoms";
+import CategoryCardCircle from "@src/templates/index/blocks/CategoryCardCircle";
+import CategoryCard from "@src/templates/index/blocks/CategoryCard";
 import { useCategory } from "@src/hooks/useCategory";
 
 interface CategoryGridSectionSettings {
@@ -84,7 +84,7 @@ const useStyles = createStyles(({ css, token }) => {
       }
 
       ${mq.lg} {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
       }
 
       ${mq.xl} {

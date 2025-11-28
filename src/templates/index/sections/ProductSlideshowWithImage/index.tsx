@@ -7,13 +7,13 @@ import type { SectionProps } from "@shopana/storefront-sdk/core/types";
 import { useHomeCategory } from "@shopana/storefront-sdk/modules/home/react/hooks/useHomeCategories";
 import { useCategoryProducts } from "@shopana/storefront-sdk/modules/home/react/hooks/useCategoryProducts";
 import type { HomeProduct } from "@shopana/storefront-sdk/modules/home/core/types";
-import Banner from "./Banner";
+import Banner from "@src/templates/index/blocks/Banner";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
 import { useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
-import { UniversalSlider, ViewAllButton, SliderNavButtons } from "../../../shared/atoms";
+import { UniversalSlider, ViewAllButton, SliderNavButtons } from "@src/templates/shared/atoms";
 import { useRoutes } from "@src/hooks/useRoutes";
-import { HomeSlideshowProductCard } from "../HomeSlideshowSection/ProductCard";
+import { HomeSlideshowProductCard } from "@src/templates/index/blocks/ProductCard";
 
 type CategoryKey = "electronics" | "sport" | "toys";
 
@@ -146,36 +146,6 @@ const useStyles = createStyles(({ css, token }) => {
 
       ${mq.xxl} {
         grid-template-columns: repeat(8, 1fr);
-      }
-    `,
-
-    swiperDynamic: css`
-      position: relative;
-
-      ${mq.lg} {
-        padding-left: ${token.padding}px;
-      }
-
-      .swiper-pagination {
-        position: absolute;
-        top: 50%;
-        left: -66px !important;
-        transform: translateY(-50%) rotate(90deg) !important;
-        z-index: 2;
-        height: 6px;
-        min-width: 140px;
-        max-width: 140px;
-      }
-
-      .swiper-pagination-bullet {
-        height: 6px !important;
-        width: 6px !important;
-      }
-
-      .swiper-pagination-bullet-active {
-        height: 6px;
-        width: 24px !important;
-        border-radius: 3px;
       }
     `,
 
