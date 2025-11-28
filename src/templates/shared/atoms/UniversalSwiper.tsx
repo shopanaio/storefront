@@ -129,7 +129,7 @@ export function UniversalSlider<T extends DataSource>({
   const pageCount = Math.ceil(items.length / resolvedSlidesPerView);
   const dynamicBullets = pageCount >= 5;
 
-  const paginationEnabled = !isMobile;
+  const paginationEnabled = true;
   const pagination =
     paginationProp && paginationEnabled
       ? {
@@ -189,10 +189,11 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination {
       position: absolute;
       bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
+      left: 50% !important;
+      right: auto !important;
       top: auto !important;
-      width: 100% !important;
+      transform: translateX(-50%);
+      width: auto !important;
       display: flex;
       justify-content: center;
       z-index: 2;
@@ -201,9 +202,8 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination-bullet {
       height: 8px !important;
       width: 8px !important;
-      background: ${token.colorBorder};
-      border: 1px solid ${token.colorBgContainer};
-      opacity: 1;
+      background: ${token.colorTextQuaternary} !important;
+      opacity: 1 !important;
     }
 
     .swiper-pagination-bullet-active {
@@ -223,10 +223,11 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination {
       position: absolute;
       bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
+      left: 50% !important;
+      right: auto !important;
       top: auto !important;
-      width: 100% !important;
+      transform: translateX(-50%);
+      width: auto !important;
       display: flex;
       justify-content: center;
       z-index: 2;
@@ -235,8 +236,8 @@ const useStyles = createStyles(({ css, token }) => ({
     .swiper-pagination-bullet {
       height: 8px !important;
       width: 8px !important;
-      background: ${token.colorBorderSecondary};
-      border: 1px solid ${token.colorBgContainer};
+      background: ${token.colorTextQuaternary} !important;
+      opacity: 1 !important;
     }
 
     .swiper-pagination-bullet-active {

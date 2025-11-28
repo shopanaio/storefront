@@ -191,6 +191,7 @@ const useStyles = createStyles(({ css, token }) => {
 
     sideContainer: css`
       overflow: hidden;
+      padding-bottom: 24px;
 
       ${mq.md} {
         grid-column: span 3;

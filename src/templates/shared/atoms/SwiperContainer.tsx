@@ -60,6 +60,7 @@ const useStyles = createStyles(({ css, token }) => {
       overflow: hidden;
       padding-left: ${token.paddingSM}px;
       padding-right: ${token.paddingSM}px;
+      padding-bottom: 24px;
 
       --container-width: 100%;
       --offset: 0px;
