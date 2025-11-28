@@ -13,8 +13,6 @@ const useCategoryRefetch = (
   }) => void
 ) => {
   useEffect(() => {
-    console.log("Shopana refetch - sort:", sort, "filters:", filters);
-
     refetch({
       sort,
       filters,

@@ -57,21 +57,21 @@ export default function CollectionPageSection() {
     return <Text>Collection loading error</Text>;
   }
 
-  // Get filters from normalized collection data
-  const filters: ApiFilter[] = (collection.listing?.filters ?? []).map((f) => ({
+  // Get filters from pagination fragment data (data.listing contains filters from GraphQL fragment)
+  const filters: ApiFilter[] = (data?.listing?.filters ?? []).map((f: any) => ({
     id: f.id,
     iid: f.iid,
     handle: f.handle,
     title: f.title,
-    ...(f.type === 'price_range' && {
+    ...('minPrice' in f && 'maxPrice' in f && {
       minPrice: f.minPrice,
       maxPrice: f.maxPrice,
     }),
-    ...(f.type === 'rating_range' && {
+    ...('minRate' in f && 'maxRate' in f && {
       minRate: f.minRate,
       maxRate: f.maxRate,
     }),
-    ...(f.type === 'list' && {
+    ...('values' in f && {
       values: f.values,
     }),
   })) as ApiFilter[];

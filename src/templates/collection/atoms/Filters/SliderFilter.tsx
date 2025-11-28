@@ -17,8 +17,6 @@ export const SliderFilter: React.FC<SliderFilterProps> = ({
 }) => {
   const { styles } = useStyles();
 
-  console.log(min, "MIN");
-
   return (
     <Flex vertical gap={8}>
       <Slider
