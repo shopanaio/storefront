@@ -10,24 +10,15 @@ import { useRoutes } from '@src/hooks/useRoutes';
 import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
 import type { Reviews$key } from '@shopana/storefront-sdk/queries/Reviews';
 
-// Helper to check if an object has valid Relay fragment spread for Reviews
-function isValidReviewsKey(obj: unknown): obj is Reviews$key {
-  return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    ' $fragmentSpreads' in obj &&
-    typeof (obj as Record<string, unknown>)[' $fragmentSpreads'] === 'object'
-  );
-}
-
 export default function ProductPageSection() {
   const routes = useRoutes();
   const searchParams = useSearchParams();
 
   const product = useProduct();
   const { raw } = useProductData();
-  // Only use as Reviews$key if the object has valid Relay fragment metadata
-  const productReviewsRef = isValidReviewsKey(raw.product) ? raw.product : null;
+  // raw.product contains the Reviews fragment spread from ProductQuery
+  // TypeScript types guarantee this, runtime check is not needed
+  const productReviewsRef = raw.product as Reviews$key | null;
 
   const [selectedVariantHandle, setSelectedVariantHandle] =
     useState<string>('');

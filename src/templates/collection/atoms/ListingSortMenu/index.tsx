@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Flex } from 'antd';
 import { TbArrowsUpDown } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
@@ -9,7 +9,6 @@ import { ListingSort } from '@codegen/schema-client';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { OptionRadioButton } from '@src/templates/product/blocks/Options/OptionRadioButton';
-import { StickyButton } from '@src/ui-kit/StickyButton';
 
 export interface SortOption<T> {
   value: T;
@@ -23,71 +22,44 @@ interface Props {
   onChange: (value: ListingSort) => void;
 }
 
-type SortValue = ListingSort | 'Newest first';
-
 export const ListingSortMenu = ({ options, value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
-  const [pendingValue, setPendingValue] = useState<SortValue>(value);
   const { styles } = useStyles();
   const t = useTranslations('Listing');
   const s = useTranslations('Sort');
 
-  const showDrawer = () => {
-    setPendingValue(value);
-    setOpen(true);
-  };
-
-  const closeDrawer = () => {
+  const handleSelect = (optionValue: ListingSort | 'Newest first') => {
     setOpen(false);
-  };
-
-  useEffect(() => {
-    if (!open) {
-      setPendingValue(value);
-    }
-  }, [open, value]);
-
-  const handleApplySort = () => {
-    closeDrawer();
-    if (pendingValue !== value) {
-      onChange(pendingValue as ListingSort);
+    if (optionValue !== value) {
+      onChange(optionValue as ListingSort);
     }
   };
-
-  const footerContent = (
-    <StickyButton
-      onClick={handleApplySort}
-      label={s('apply-sort')}
-      disabled={pendingValue === value}
-    />
-  );
 
   return (
     <>
       <Button
         className={styles.drawerBtn}
         icon={<TbArrowsUpDown />}
-        onClick={showDrawer}
+        onClick={() => setOpen(true)}
       >
         {options.find((o) => o.value === value)?.label ?? t('sort')}
       </Button>
       <DrawerBase
         open={open}
-        onClose={closeDrawer}
+        onClose={() => setOpen(false)}
         title={s('sort-by')}
-        footer={footerContent}
         engine="vaul"
       >
         <Flex vertical gap={8}>
           {options.map((option) => (
             <OptionRadioButton
               key={option.value}
-              selected={pendingValue === option.value}
+              selected={value === option.value}
               disabled={option.disabled}
               showRadio
               onClick={() => {
                 if (!option.disabled) {
-                  setPendingValue(option.value as SortValue);
+                  handleSelect(option.value);
                 }
               }}
             >
