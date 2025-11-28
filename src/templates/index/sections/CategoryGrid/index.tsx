@@ -25,6 +25,7 @@ export default function CategoryGridSection({
   const { styles } = useStyles();
   const { category } = useCategory(settings.categoryHandle);
 
+  // TODO: make a main category for items, pass a list of categories instead
   const children = useMemo(
     () => category?.children?.edges?.map((edge) => edge.node) ?? [],
     [category?.children?.edges]
