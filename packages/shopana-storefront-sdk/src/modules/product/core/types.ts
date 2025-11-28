@@ -14,6 +14,20 @@ export interface ProductImage {
   url: string;
 }
 
+export interface ProductImageEdge {
+  node: ProductImage;
+  cursor?: string;
+}
+
+export interface GalleryConnection {
+  edges: ProductImageEdge[];
+  pageInfo?: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  totalCount?: number;
+}
+
 export interface ProductSwatch {
   id: string;
   color?: string | null;
@@ -42,7 +56,7 @@ export interface ProductVariant {
   title: string;
   selectedOptions?: readonly string[] | null;
   cover?: ProductImage | null;
-  gallery: ProductImage[];
+  gallery?: GalleryConnection;
   price: ProductMoney;
   compareAtPrice?: ProductMoney | null;
   sku?: string | null;

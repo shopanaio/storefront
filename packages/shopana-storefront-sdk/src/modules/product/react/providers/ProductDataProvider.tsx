@@ -38,10 +38,13 @@ function transformProduct(rawProduct: ProductQuery['response']['product']): Prod
     title: v.title,
     selectedOptions: v.selectedOptions,
     cover: v.cover ? { id: v.cover.id, url: v.cover.url } : null,
-    gallery: (v.gallery?.edges ?? [])
-      .map((e) => e?.node)
-      .filter((n): n is ProductImage => Boolean(n?.id && n?.url))
-      .map((n) => ({ id: n.id, url: n.url })),
+    gallery: v.gallery ? {
+      edges: (v.gallery.edges ?? [])
+        .filter((e): e is NonNullable<typeof e> => Boolean(e?.node?.id && e?.node?.url))
+        .map((e) => ({
+          node: { id: e.node.id, url: e.node.url },
+        })),
+    } : undefined,
     price: {
       amount: v.price.amount,
       currencyCode: v.price.currencyCode,

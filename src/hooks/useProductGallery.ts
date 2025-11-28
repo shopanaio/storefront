@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 
 export const useProductGallery = (
   variant: model.ProductVariant,
@@ -18,8 +18,6 @@ export const useProductGallery = (
       seen.add(key);
       result.push(media);
     };
-
-    append(variant?.cover ?? null);
 
     variant?.gallery?.edges?.forEach((edge) => {
       append(edge?.node ?? null);
