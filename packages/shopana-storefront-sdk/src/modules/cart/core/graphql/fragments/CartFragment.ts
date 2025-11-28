@@ -39,6 +39,11 @@ export const CartFragment_cart = graphql`
       severity
       isDismissed
     }
+    tags {
+      id
+      slug
+      unique
+    }
     lines {
       ...CartLineFragment_line
     }

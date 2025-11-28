@@ -17,7 +17,7 @@ import { useState, useTransition } from "react";
 import { createStyles } from "antd-style";
 import { ProductReviewSort, ApiProductReview } from "codegen/schema-client";
 import { usePaginationFragment } from "react-relay";
-import Reviews, { Reviews$key } from "@shopana/storefront-sdk/queries/Reviews";
+import { ReviewsNode, Reviews$key } from "@shopana/storefront-sdk/queries/Reviews";
 import { SortPopover, SortOption } from "./SortPopover";
 import { LoadMoreBtn } from "@src/templates/shared/atoms";
 import {
@@ -44,7 +44,7 @@ export const ReviewsSection = ({ productRef }: Props) => {
   const starOptions = [5, 4, 3, 2, 1];
 
   const { data, loadNext, hasNext, isLoadingNext, refetch } =
-    usePaginationFragment(Reviews, productRef);
+    usePaginationFragment(ReviewsNode, productRef);
 
   const reviewsConnection = data.reviews;
   const reviewEdges = reviewsConnection?.edges ?? [];

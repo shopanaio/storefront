@@ -59,5 +59,10 @@ export const CartLineFragment_line = graphql`
       id
       quantity
     }
+    tag {
+      id
+      slug
+      unique
+    }
   }
 `;

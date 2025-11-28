@@ -275,10 +275,28 @@ export type ApiCheckout = ApiNode & {
   notifications: Array<ApiCheckoutNotification>;
   /** Payment aggregate for this checkout. */
   payment: ApiCheckoutPayment;
+  /** Tags that can be used to organize checkout lines. */
+  tags: Array<ApiCheckoutTag>;
   /** Quantity of the item being purchased. */
   totalQuantity: Scalars['Int']['output'];
   /** When this checkout was last updated. */
   updatedAt: Scalars['DateTime']['output'];
+};
+
+/**
+ * Input data for a child item in a bundle.
+ * Price configuration is automatically taken from ProductGroup in the database.
+ */
+export type ApiCheckoutChildLineInput = {
+  /**
+   * ID of the purchasable for child item.
+   * Must be a variant that exists in parent product's groups.
+   */
+  purchasableId: Scalars['ID']['input'];
+  /** Snapshot data for child purchasable. */
+  purchasableSnapshot?: InputMaybe<ApiPurchasableSnapshotInput>;
+  /** Quantity of the child item. */
+  quantity: Scalars['Int']['input'];
 };
 
 /** All monetary calculations related to the checkout. */
@@ -308,6 +326,8 @@ export type ApiCheckoutCreateInput = {
   items: Array<ApiCheckoutLineAddInput>;
   /** Locale code for the checkout. ISO 639-1 (2 letters, e.g., "en", "ru") */
   localeCode: Scalars['String']['input'];
+  /** Optional tag definitions to initialize for this checkout. */
+  tags?: InputMaybe<Array<ApiCheckoutTagInput>>;
 };
 
 /** Payload returned after creating a checkout. */
@@ -583,13 +603,17 @@ export type ApiCheckoutLanguageCodeUpdateInput = {
 export type ApiCheckoutLine = ApiNode & {
   __typename?: 'CheckoutLine';
   /** A list of components that make up this checkout line, such as individual products in a bundle. */
-  children: Array<Maybe<ApiCheckoutLine>>;
+  children: Array<ApiCheckoutLine>;
   /** Cost calculations for this checkout item. */
   cost: ApiCheckoutLineCost;
   /** Global unique identifier for the checkout line. */
   id: Scalars['ID']['output'];
   /** Image URL of the purchasable. */
   imageSrc?: Maybe<Scalars['String']['output']>;
+  /** Original price before any adjustments (e.g., child price config). */
+  originalPrice: ApiMoney;
+  /** Price adjustment applied to this line (for child items in bundles). */
+  priceConfig?: Maybe<ApiCheckoutLinePriceConfig>;
   purchasable: ApiProductVariant;
   /** ID of the purchasable. */
   purchasableId: Scalars['ID']['output'];
@@ -599,18 +623,24 @@ export type ApiCheckoutLine = ApiNode & {
   quantity: Scalars['Int']['output'];
   /** SKU of the purchasable. */
   sku?: Maybe<Scalars['String']['output']>;
+  /** Optional tag assigned to this checkout line. */
+  tag?: Maybe<ApiCheckoutTag>;
   /** Title of the purchasable. */
   title: Scalars['String']['output'];
 };
 
 /** Input data for a single item in the checkout. */
 export type ApiCheckoutLineAddInput = {
+  /** Child items for this line. If provided, this line becomes a parent. */
+  children?: InputMaybe<Array<ApiCheckoutChildLineInput>>;
   /** ID of the product to add or update. */
   purchasableId: Scalars['ID']['input'];
   /** ID of the purchasable snapshot to add or update. */
   purchasableSnapshot?: InputMaybe<ApiPurchasableSnapshotInput>;
   /** Quantity of the product in the checkout. */
   quantity: Scalars['Int']['input'];
+  /** Optional tag slug to associate with this line. */
+  tagSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Detailed breakdown of costs for a checkout line item */
@@ -628,6 +658,17 @@ export type ApiCheckoutLineCost = {
   totalAmount: ApiMoney;
   /** The current price per unit before discounts are applied (may differ from compareAt price if on sale). */
   unitPrice: ApiMoney;
+};
+
+/** Price adjustment configuration applied to a child line item. */
+export type ApiCheckoutLinePriceConfig = {
+  __typename?: 'CheckoutLinePriceConfig';
+  /** Amount in minor units (always positive). Used for DISCOUNT_AMOUNT, MARKUP_AMOUNT, OVERRIDE. */
+  amount?: Maybe<Scalars['Int']['output']>;
+  /** Percentage (always positive). Used for DISCOUNT_PERCENT, MARKUP_PERCENT. */
+  percent?: Maybe<Scalars['Float']['output']>;
+  /** Type of price adjustment. */
+  type: ChildPriceType;
 };
 
 /** Single replacement operation. */
@@ -786,6 +827,12 @@ export type ApiCheckoutMutation = {
   checkoutPromoCodeAdd: ApiCheckout;
   /** Removes a previously applied promo code/coupon from the checkout. */
   checkoutPromoCodeRemove: ApiCheckout;
+  /** Creates a new checkout tag. */
+  checkoutTagCreate: ApiCheckout;
+  /** Deletes a checkout tag. */
+  checkoutTagDelete: ApiCheckout;
+  /** Updates a checkout tag. */
+  checkoutTagUpdate: ApiCheckout;
 };
 
 
@@ -886,6 +933,21 @@ export type ApiCheckoutMutationCheckoutPromoCodeAddArgs = {
 
 export type ApiCheckoutMutationCheckoutPromoCodeRemoveArgs = {
   input: ApiCheckoutPromoCodeRemoveInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutTagCreateArgs = {
+  input: ApiCheckoutTagCreateInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutTagDeleteArgs = {
+  input: ApiCheckoutTagDeleteInput;
+};
+
+
+export type ApiCheckoutMutationCheckoutTagUpdateArgs = {
+  input: ApiCheckoutTagUpdateInput;
 };
 
 /** A non-blocking warning generated by checkout operations. */
@@ -1052,6 +1114,78 @@ export type ApiCheckoutRecipientInput = {
   /** Phone of the recipient. */
   phone?: InputMaybe<Scalars['String']['input']>;
 };
+
+/** A tag that can be attached to checkout lines. */
+export type ApiCheckoutTag = ApiNode & {
+  __typename?: 'CheckoutTag';
+  /** Tag creation timestamp. */
+  createdAt: Scalars['DateTime']['output'];
+  /** Global identifier of the tag. */
+  id: Scalars['ID']['output'];
+  /** Slug identifier (a-zA-Z0-9). */
+  slug: Scalars['String']['output'];
+  /** Whether the tag enforces uniqueness for checkout lines. */
+  unique: Scalars['Boolean']['output'];
+  /** Last update timestamp. */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** Input payload for checkoutTagCreate mutation. */
+export type ApiCheckoutTagCreateInput = {
+  /** Checkout identifier. */
+  checkoutId: Scalars['ID']['input'];
+  /** Tag configuration. */
+  tag: ApiCheckoutTagInput;
+};
+
+/** Input payload for checkoutTagDelete mutation. */
+export type ApiCheckoutTagDeleteInput = {
+  /** Checkout identifier. */
+  checkoutId: Scalars['ID']['input'];
+  /** Tag identifier (global ID). */
+  tagId: Scalars['ID']['input'];
+};
+
+/** Tag definition used when initializing or mutating checkout tags. */
+export type ApiCheckoutTagInput = {
+  /** Slug identifier consisting of alphanumeric characters. */
+  slug: Scalars['String']['input'];
+  /** Whether this tag enforces uniqueness for checkout lines. */
+  unique: Scalars['Boolean']['input'];
+};
+
+/** Input payload for checkoutTagUpdate mutation. */
+export type ApiCheckoutTagUpdateInput = {
+  /** Checkout identifier. */
+  checkoutId: Scalars['ID']['input'];
+  /** New slug, if tag needs to be renamed. */
+  slug?: InputMaybe<Scalars['String']['input']>;
+  /** Tag identifier (global ID). */
+  tagId: Scalars['ID']['input'];
+  /** Updated uniqueness flag. */
+  unique?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/**
+ * Price adjustment type for child items in a bundle.
+ * Values are always positive - the type determines the operation.
+ */
+export enum ChildPriceType {
+  /** Use original price without adjustments */
+  Base = 'BASE',
+  /** Subtract fixed amount from original price */
+  DiscountAmount = 'DISCOUNT_AMOUNT',
+  /** Subtract percentage from original price */
+  DiscountPercent = 'DISCOUNT_PERCENT',
+  /** Item is free (price = 0) */
+  Free = 'FREE',
+  /** Add fixed amount to original price */
+  MarkupAmount = 'MARKUP_AMOUNT',
+  /** Add percentage to original price */
+  MarkupPercent = 'MARKUP_PERCENT',
+  /** Override with fixed price */
+  Override = 'OVERRIDE'
+}
 
 export enum CountryCode {
   /** Andorra */

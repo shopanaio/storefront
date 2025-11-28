@@ -40,8 +40,10 @@ const useAddItemToCart = () => {
               {
                 purchasableId,
                 quantity,
+                tagSlug: input.tagSlug,
               },
             ],
+            tags: input.tags,
           },
           options
         );
@@ -74,6 +76,7 @@ const useAddItemToCart = () => {
                 {
                   purchasableId: input.purchasableId,
                   quantity: input.quantity,
+                  tagSlug: input.tagSlug,
                 },
               ],
             },

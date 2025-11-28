@@ -350,8 +350,29 @@ type Checkout implements Node {
   """Applied promo codes for the checkout."""
   appliedPromoCodes: [CheckoutPromoCode!]!
 
+  """Tags that can be used to organize checkout lines."""
+  tags: [CheckoutTag!]!
+
   """Payment aggregate for this checkout."""
   payment: CheckoutPayment!
+}
+
+"""
+Input data for a child item in a bundle.
+Price configuration is automatically taken from ProductGroup in the database.
+"""
+input CheckoutChildLineInput {
+  """Quantity of the child item."""
+  quantity: Int!
+
+  """
+  ID of the purchasable for child item.
+  Must be a variant that exists in parent product's groups.
+  """
+  purchasableId: ID!
+
+  """Snapshot data for child purchasable."""
+  purchasableSnapshot: PurchasableSnapshotInput
 }
 
 """All monetary calculations related to the checkout."""
@@ -390,6 +411,9 @@ input CheckoutCreateInput {
 
   """Initial items to add to the new checkout."""
   items: [CheckoutLineAddInput!]!
+
+  """Optional tag definitions to initialize for this checkout."""
+  tags: [CheckoutTagInput!]
 }
 
 """Payload returned after creating a checkout."""
@@ -744,16 +768,25 @@ type CheckoutLine implements Node {
   """Cost calculations for this checkout item."""
   cost: CheckoutLineCost!
 
+  """Original price before any adjustments (e.g., child price config)."""
+  originalPrice: Money!
+
+  """Price adjustment applied to this line (for child items in bundles)."""
+  priceConfig: CheckoutLinePriceConfig
+
   """
   A list of components that make up this checkout line, such as individual products in a bundle.
   """
-  children: [CheckoutLine]!
+  children: [CheckoutLine!]!
 
   """ID of the purchasable."""
   purchasableId: ID!
 
   """Purchasable snapshot data at the time of adding to checkout."""
   purchasableSnapshot: JSON!
+
+  """Optional tag assigned to this checkout line."""
+  tag: CheckoutTag
   purchasable: ProductVariant!
 }
 
@@ -767,6 +800,12 @@ input CheckoutLineAddInput {
 
   """ID of the purchasable snapshot to add or update."""
   purchasableSnapshot: PurchasableSnapshotInput
+
+  """Optional tag slug to associate with this line."""
+  tagSlug: String
+
+  """Child items for this line. If provided, this line becomes a parent."""
+  children: [CheckoutChildLineInput!]
 }
 
 """Detailed breakdown of costs for a checkout line item"""
@@ -790,6 +829,22 @@ type CheckoutLineCost {
 
   """Total cost of this line (all units), after discounts and taxes."""
   totalAmount: Money!
+}
+
+"""Price adjustment configuration applied to a child line item."""
+type CheckoutLinePriceConfig {
+  """Type of price adjustment."""
+  type: ChildPriceType!
+
+  """
+  Amount in minor units (always positive). Used for DISCOUNT_AMOUNT, MARKUP_AMOUNT, OVERRIDE.
+  """
+  amount: Int
+
+  """
+  Percentage (always positive). Used for DISCOUNT_PERCENT, MARKUP_PERCENT.
+  """
+  percent: Float
 }
 
 """Single replacement operation."""
@@ -987,6 +1042,15 @@ type CheckoutMutation {
   """Removes a previously applied promo code/coupon from the checkout."""
   checkoutPromoCodeRemove(input: CheckoutPromoCodeRemoveInput!): Checkout!
 
+  """Creates a new checkout tag."""
+  checkoutTagCreate(input: CheckoutTagCreateInput!): Checkout!
+
+  """Updates a checkout tag."""
+  checkoutTagUpdate(input: CheckoutTagUpdateInput!): Checkout!
+
+  """Deletes a checkout tag."""
+  checkoutTagDelete(input: CheckoutTagDeleteInput!): Checkout!
+
   """Selects or changes the payment method for the checkout."""
   checkoutPaymentMethodUpdate(input: CheckoutPaymentMethodUpdateInput!): Checkout!
 }
@@ -1176,6 +1240,93 @@ input CheckoutRecipientInput {
 
   """Phone of the recipient."""
   phone: String
+}
+
+"""A tag that can be attached to checkout lines."""
+type CheckoutTag implements Node {
+  """Global identifier of the tag."""
+  id: ID!
+
+  """Slug identifier (a-zA-Z0-9)."""
+  slug: String!
+
+  """Whether the tag enforces uniqueness for checkout lines."""
+  unique: Boolean!
+
+  """Tag creation timestamp."""
+  createdAt: DateTime!
+
+  """Last update timestamp."""
+  updatedAt: DateTime!
+}
+
+"""Input payload for checkoutTagCreate mutation."""
+input CheckoutTagCreateInput {
+  """Checkout identifier."""
+  checkoutId: ID!
+
+  """Tag configuration."""
+  tag: CheckoutTagInput!
+}
+
+"""Input payload for checkoutTagDelete mutation."""
+input CheckoutTagDeleteInput {
+  """Checkout identifier."""
+  checkoutId: ID!
+
+  """Tag identifier (global ID)."""
+  tagId: ID!
+}
+
+"""Tag definition used when initializing or mutating checkout tags."""
+input CheckoutTagInput {
+  """Slug identifier consisting of alphanumeric characters."""
+  slug: String!
+
+  """Whether this tag enforces uniqueness for checkout lines."""
+  unique: Boolean!
+}
+
+"""Input payload for checkoutTagUpdate mutation."""
+input CheckoutTagUpdateInput {
+  """Checkout identifier."""
+  checkoutId: ID!
+
+  """Tag identifier (global ID)."""
+  tagId: ID!
+
+  """New slug, if tag needs to be renamed."""
+  slug: String
+
+  """Updated uniqueness flag."""
+  unique: Boolean
+}
+
+"""
+Price adjustment type for child items in a bundle.
+Values are always positive - the type determines the operation.
+"""
+enum ChildPriceType {
+  """Item is free (price = 0)"""
+  FREE
+
+  """Use original price without adjustments"""
+  BASE
+
+  """Subtract fixed amount from original price"""
+  DISCOUNT_AMOUNT
+
+  """Subtract percentage from original price"""
+  DISCOUNT_PERCENT
+
+  """Add fixed amount to original price"""
+  MARKUP_AMOUNT
+
+  """Add percentage to original price"""
+  MARKUP_PERCENT
+
+  """Override with fixed price"""
+  OVERRIDE
 }
 
 enum CountryCode {
@@ -2943,6 +3094,7 @@ input MoneyInput {
 
 type Mutation {
   checkoutMutation: CheckoutMutation!
+  orderMutation: OrderMutation!
 
   """Create a review."""
   createReview(input: CreateReviewInput!): ProductReview!
@@ -3006,7 +3158,6 @@ type Mutation {
     """Input for updating user profile."""
     input: UpdateUserProfileInput!
   ): UpdateUserProfilePayload!
-  orderMutation: OrderMutation!
 }
 
 interface Node {
@@ -3062,15 +3213,14 @@ type OrderLine {
   """A globally-unique ID."""
   id: ID!
 
-  """ID of the purchasable."""
-  purchasableId: ID!
-  purchasable: ProductVariant!
-
   """Quantity of the item being purchased."""
   quantity: Int!
 
   """Cost breakdown for the order line."""
   cost: OrderLineCost!
+
+  """ID of the purchasable."""
+  purchasableId: ID!
 
   """Purchasable snapshot data at the time of adding to checkout."""
   purchasableSnapshot: JSON!
@@ -3080,6 +3230,7 @@ type OrderLine {
 
   """Last updated date."""
   updatedAt: DateTime!
+  purchasable: ProductVariant!
 }
 
 type OrderLineCost {
@@ -4294,6 +4445,9 @@ type User implements Node {
   """Global unique identifier for the address."""
   id: ID!
 
+  """List of the user's orders."""
+  orders: [Order!]!
+
   """Object identifier (Internal)."""
   iid: Uuid!
 
@@ -4311,9 +4465,6 @@ type User implements Node {
 
   """Phone number in E.164 format."""
   phone: Phone
-
-  """List of the user's orders."""
-  orders: [Order!]!
 }
 
 """Customer's first, middle, and last name."""

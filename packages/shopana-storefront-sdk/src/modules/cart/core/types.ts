@@ -19,6 +19,14 @@ export interface AddToCartChildInput {
 }
 
 /**
+ * Tag definition for checkout initialization
+ */
+export interface CheckoutTagDefinition {
+  slug: string;
+  unique: boolean;
+}
+
+/**
  * Input for adding item to cart
  */
 export interface AddToCartInput {
@@ -29,6 +37,16 @@ export interface AddToCartInput {
    * Optional children lines to be added as a batch with the parent (bundle).
    */
   children?: AddToCartChildInput[];
+  /**
+   * Optional tag slug to associate with this line.
+   * If the tag has unique=true, adding an item with this tag will replace any existing item with the same tag.
+   */
+  tagSlug?: string;
+  /**
+   * Optional tags to initialize when creating a new cart.
+   * Only used when cart doesn't exist yet.
+   */
+  tags?: CheckoutTagDefinition[];
 }
 
 /**
@@ -101,8 +119,13 @@ export interface CreateCartInput {
   items: {
     purchasableId: string;
     quantity: number;
+    tagSlug?: string;
     children?: AddToCartChildInput[];
   }[];
+  /**
+   * Optional tags to initialize for this checkout.
+   */
+  tags?: CheckoutTagDefinition[];
 }
 
 /**

@@ -85,8 +85,8 @@ export const DefaultLogo = ({
           y2="48.8547"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.00296965" stop-color="#14CC80" />
-          <stop offset="0.847275" stop-color="#30F2A2" />
+          <stop offset="0.00296965" stopColor="#14CC80" />
+          <stop offset="0.847275" stopColor="#30F2A2" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_181203_328"
@@ -96,8 +96,8 @@ export const DefaultLogo = ({
           y2="48.8547"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.00296965" stop-color="#14CC80" />
-          <stop offset="0.847275" stop-color="#30F2A2" />
+          <stop offset="0.00296965" stopColor="#14CC80" />
+          <stop offset="0.847275" stopColor="#30F2A2" />
         </linearGradient>
       </defs>
     </svg>
