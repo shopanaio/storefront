@@ -30,17 +30,20 @@ export const CheckoutMethodPanel = ({
   const { styles } = useStyles();
   return (
     <Collapse
-      className={clsx(styles.collapse, isActive && styles.active)}
       activeKey={isActive ? codeRef.current : ''}
       onChange={onActive}
       ghost
       bordered
+      classNames={{
+        body: clsx(styles.body, !Component && styles.hiddenBody),
+        header: styles.header,
+        root: clsx(styles.root, isActive && styles.active),
+      }}
     >
       <Panel
         forceRender
         showArrow={false}
         key={codeRef.current}
-        className={clsx(!Component ? styles.emptyPanel : '')}
         header={
           <Flex justify="space-between" align="center">
             <Flex gap={8}>
@@ -65,7 +68,7 @@ export const CheckoutMethodPanel = ({
 };
 
 const useStyles = createStyles(({ token, css }) => ({
-  collapse: css`
+  root: css`
     box-sizing: border-box;
     border: 1px solid;
     border-color: ${token.colorBorder};
@@ -76,13 +79,15 @@ const useStyles = createStyles(({ token, css }) => ({
     outline: 1px solid ${token.colorPrimary};
     border-color: ${token.colorPrimary} !important;
   `,
+  header: css``,
+  body: css`
+    padding: ${token.paddingXXS}px ${token.paddingSM}px ${token.paddingSM}px !important;
+  `,
+  hiddenBody: css`
+    display: none !important;
+  `,
   title: css`
     font-size: ${token.fontSize}px;
-  `,
-  emptyPanel: css`
-    & .ant-collapse-content {
-      display: none !important;
-    }
   `,
   description: css`
     font-size: ${token.fontSizeSM}px;

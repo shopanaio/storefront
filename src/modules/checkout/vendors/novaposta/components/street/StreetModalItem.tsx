@@ -18,6 +18,7 @@ export const StreetModalItem = ({ item, changeStreet }: Prop) => {
       icon={<TbMapPin size={18} />}
       key={item?.SettlementStreetRef}
       className={styles.item}
+      size="large"
       onClick={() => changeStreet(item)}
     >
       <Flex vertical align="start">
@@ -35,7 +36,6 @@ const useStyles = createStyles(({ css }) => {
       display: flex;
       justify-content: flex-start;
       padding-left: 0;
-      height: 60px;
     `,
 
     streetName: css`

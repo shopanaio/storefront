@@ -33,14 +33,23 @@ export const CheckoutProgressBar = () => {
   `);
 
   useEffect(() => {
+    let forceResetTimeout: NodeJS.Timeout | null = null;
+
     if (hasActiveOperations) {
       NProgress.start();
+      // Force reset after 5 seconds to prevent stuck progress bar
+      forceResetTimeout = setTimeout(() => {
+        NProgress.done();
+      }, 5000);
     } else {
       NProgress.done();
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount or when hasActiveOperations changes
     return () => {
+      if (forceResetTimeout) {
+        clearTimeout(forceResetTimeout);
+      }
       NProgress.done();
     };
   }, [hasActiveOperations]);
