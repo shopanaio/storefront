@@ -218,62 +218,8 @@
 
     - name: Show dry run skip message
       ansible.builtin.debug:
-        msg: "🔸 Dry run: skipping push and workflow trigger"
+        msg: "🔸 Dry run: skipping push (workflow will not be triggered)"
       when: dry_run | bool
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # Trigger build workflow (skip if dry_run)
-    # ─────────────────────────────────────────────────────────────────────────
-    - name: Build gh workflow command
-      ansible.builtin.set_fact:
-        gh_argv:
-          - gh
-          - workflow
-          - run
-          - "{{ workflow_file | basename }}"
-          - -R
-          - "{{ gh_repo_owner }}/{{ gh_repo_name }}"
-          - --ref
-          - "{{ release_branch }}"
-          - -f
-          - "image_tag={{ release_tag }}"
-          - -f
-          - "brand={{ BRAND }}"
-          - -f
-          - "cms={{ CMS }}"
-          - -f
-          - "shopana_graphql_url={{ SHOPANA_GRAPHQL_URL }}"
-          - -f
-          - "port={{ PORT }}"
-          - -f
-          - "shopana_api_key={{ SHOPANA_API_KEY }}"
-      when: not dry_run | bool
-
-    - name: Add NEXT_PUBLIC_APP_URL arg when provided
-      ansible.builtin.set_fact:
-        gh_argv: "{{ gh_argv + ['-f', 'next_public_app_url=' ~ NEXT_PUBLIC_APP_URL] }}"
-      when:
-        - not dry_run | bool
-        - NEXT_PUBLIC_APP_URL is defined and NEXT_PUBLIC_APP_URL | length > 0
-
-    - name: Add platforms arg when provided
-      ansible.builtin.set_fact:
-        gh_argv: "{{ gh_argv + ['-f', 'platforms=' ~ platforms] }}"
-      when:
-        - not dry_run | bool
-        - platforms is defined and platforms | length > 0
-
-    - name: Show gh command (sanitized)
-      ansible.builtin.debug:
-        msg: "Running: {{ (gh_argv | map('regex_replace', '^shopana_api_key=.*$', 'shopana_api_key=***')) | join(' ') }}"
-      when: not dry_run | bool
-
-    - name: Trigger build workflow
-      ansible.builtin.command:
-        argv: "{{ gh_argv }}"
-      register: trigger_out
-      when: not dry_run | bool
-      changed_when: true
 
     # ─────────────────────────────────────────────────────────────────────────
     # Summary
@@ -287,7 +233,7 @@
           - "  Version: {{ current_version }} → {{ new_version | trim }}"
           - "  Branch: {{ release_branch }}"
           - "  Tag: {{ release_tag }}"
-          - "{% if not dry_run | bool %}  Build workflow triggered on branch {{ release_branch }}{% endif %}"
+          - "{% if not dry_run | bool %}  Build workflow auto-triggered on push to {{ release_branch }}{% endif %}"
           - ""
           - "🔗 Links:"
           - "  Branch: https://github.com/{{ gh_repo_owner }}/{{ gh_repo_name }}/tree/{{ release_branch }}"

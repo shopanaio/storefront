@@ -1,6 +1,9 @@
 name: Build and Push Storefront
 
 on:
+  push:
+    branches:
+      - "releases/**"
   workflow_dispatch:
     inputs:
       image_tag:
@@ -67,25 +70,43 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      - name: Set build variables
+        id: vars
+        run: |
+          # For push trigger: extract version from branch name (releases/vX.Y.Z -> vX.Y.Z)
+          # For workflow_dispatch: use inputs
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            VERSION=$(echo "${{ github.ref_name }}" | sed 's|releases/||')
+            echo "image_tag=${VERSION}" >> $GITHUB_OUTPUT
+            echo "brand=${{ vars.BRAND || 'xyz' }}" >> $GITHUB_OUTPUT
+            echo "cms=${{ vars.CMS || 'shopana' }}" >> $GITHUB_OUTPUT
+            echo "shopana_graphql_url=${{ vars.SHOPANA_GRAPHQL_URL || 'https://sandbox.shopana.io/api/client/graphql/query' }}" >> $GITHUB_OUTPUT
+            echo "next_public_app_url=${{ vars.NEXT_PUBLIC_APP_URL || 'https://bento.shopana.io' }}" >> $GITHUB_OUTPUT
+            echo "port=${{ vars.PORT || '3000' }}" >> $GITHUB_OUTPUT
+            echo "platforms=${{ vars.PLATFORMS || 'linux/amd64' }}" >> $GITHUB_OUTPUT
+            echo "shopana_api_key=${{ secrets.SHOPANA_API_KEY }}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+            echo "brand=${{ inputs.brand }}" >> $GITHUB_OUTPUT
+            echo "cms=${{ inputs.cms }}" >> $GITHUB_OUTPUT
+            echo "shopana_graphql_url=${{ inputs.shopana_graphql_url }}" >> $GITHUB_OUTPUT
+            echo "next_public_app_url=${{ inputs.next_public_app_url }}" >> $GITHUB_OUTPUT
+            echo "port=${{ inputs.port }}" >> $GITHUB_OUTPUT
+            echo "platforms=${{ inputs.platforms }}" >> $GITHUB_OUTPUT
+            echo "shopana_api_key=${{ inputs.shopana_api_key }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Validate inputs and brand path
         run: |
           set -euo pipefail
-          if [[ -z "${{ inputs.image_tag }}" ]]; then
+          if [[ -z "${{ steps.vars.outputs.image_tag }}" ]]; then
             echo "image_tag is required" >&2
             exit 1
           fi
           # Ensure brand package exists when brand provided
-          BRAND_DIR="packages/brand-${{ inputs.brand }}"
+          BRAND_DIR="packages/brand-${{ steps.vars.outputs.brand }}"
           if [[ ! -d "$BRAND_DIR" ]]; then
             echo "Brand package not found: $BRAND_DIR" >&2
-            echo "Configured in .gitmodules:" >&2
-            sed -n '1,200p' .gitmodules || true
-            exit 1
-          fi
-          if [[ ! -d "$BRAND_DIR" ]]; then
-            echo "Brand package not found: $BRAND_DIR" >&2
-            echo "Known submodules:" >&2
-            git submodule status --recursive || true
             echo "Configured in .gitmodules:" >&2
             sed -n '1,200p' .gitmodules || true
             exit 1
@@ -110,30 +131,31 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ inputs.image_tag }}
+            type=raw,value=${{ steps.vars.outputs.image_tag }}
 
       - name: Build and push (with platforms)
-        if: ${{ inputs.platforms != '' }}
+        if: ${{ steps.vars.outputs.platforms != '' }}
         id: build_with_platforms
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: ${{ inputs.platforms }}
+          platforms: ${{ steps.vars.outputs.platforms }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            CMS=${{ inputs.cms }}
-            BRAND=${{ inputs.brand }}
-            SHOPANA_GRAPHQL_URL=${{ inputs.shopana_graphql_url }}
-            NEXT_PUBLIC_APP_URL=${{ inputs.next_public_app_url }}
-            PORT=${{ inputs.port }}
-            SHOPANA_API_KEY=${{ inputs.shopana_api_key }}
+            CMS=${{ steps.vars.outputs.cms }}
+            BRAND=${{ steps.vars.outputs.brand }}
+            SHOPANA_GRAPHQL_URL=${{ steps.vars.outputs.shopana_graphql_url }}
+            NEXT_PUBLIC_APP_URL=${{ steps.vars.outputs.next_public_app_url }}
+            PORT=${{ steps.vars.outputs.port }}
+            SHOPANA_API_KEY=${{ steps.vars.outputs.shopana_api_key }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push
+      - name: Build and push (no platforms)
+        if: ${{ steps.vars.outputs.platforms == '' }}
         id: build
         uses: docker/build-push-action@v6
         with:
@@ -143,11 +165,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            CMS=${{ inputs.cms }}
-            BRAND=${{ inputs.brand }}
-            SHOPANA_GRAPHQL_URL=${{ inputs.shopana_graphql_url }}
-            NEXT_PUBLIC_APP_URL=${{ inputs.next_public_app_url }}
-            PORT=${{ inputs.port }}
-            SHOPANA_API_KEY=${{ inputs.shopana_api_key }}
+            CMS=${{ steps.vars.outputs.cms }}
+            BRAND=${{ steps.vars.outputs.brand }}
+            SHOPANA_GRAPHQL_URL=${{ steps.vars.outputs.shopana_graphql_url }}
+            NEXT_PUBLIC_APP_URL=${{ steps.vars.outputs.next_public_app_url }}
+            PORT=${{ steps.vars.outputs.port }}
+            SHOPANA_API_KEY=${{ steps.vars.outputs.shopana_api_key }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
