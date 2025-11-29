@@ -23,16 +23,16 @@ export function AddressForm({
   deliveryAddress,
 }: AddressFormProps) {
   const { styles } = useStyles();
+  const existingData = data as { userStreet?: Street | null; userBuilding?: string; userApartment?: string } | null;
   const methods = useForm<{
     street?: Street | null;
     building: string;
     apartment: string;
   }>({
     defaultValues: {
-      street: null,
-      building: '',
-      apartment: '',
-      ...(data as any),
+      street: existingData?.userStreet ?? null,
+      building: existingData?.userBuilding ?? '',
+      apartment: existingData?.userApartment ?? '',
     },
     mode: 'onChange',
   });
@@ -68,27 +68,27 @@ export function AddressForm({
   const handleChangeStreet = useCallback(
     (s: Street) => {
       setValue('street', s);
-      onSubmit({ street: s });
+      onSubmit({ userStreet: s, userBuilding: building, userApartment: apartment });
     },
-    [setValue, onSubmit]
+    [setValue, onSubmit, building, apartment]
   );
 
   const handleChangeBuilding = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const { value: building } = e.target;
       setValue('building', building);
-      debouncedOnSubmit({ building });
+      debouncedOnSubmit({ userStreet: street, userBuilding: building, userApartment: apartment });
     },
-    [setValue, debouncedOnSubmit]
+    [setValue, debouncedOnSubmit, street, apartment]
   );
 
   const handleChangeApartment = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const { value: apartment } = e.target;
       setValue('apartment', apartment);
-      debouncedOnSubmit({ apartment });
+      debouncedOnSubmit({ userStreet: street, userBuilding: building, userApartment: apartment });
     },
-    [setValue, debouncedOnSubmit]
+    [setValue, debouncedOnSubmit, street, building]
   );
 
   return (
