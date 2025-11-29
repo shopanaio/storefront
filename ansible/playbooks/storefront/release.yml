@@ -186,7 +186,7 @@
 
     - name: Commit version bump
       ansible.builtin.command:
-        cmd: git commit -am "chore(release): bump version to {{ new_version | trim }}"
+        cmd: "git commit -am 'chore(release): bump version to {{ new_version | trim }}'"
         chdir: "{{ repo_root }}"
       changed_when: true
 
