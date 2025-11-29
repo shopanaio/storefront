@@ -22,7 +22,7 @@ FROM base AS deps
 COPY package.json yarn.lock ./
 COPY packages ./packages
 
-RUN yarn install --frozen-lockfile
+RUN yarn install
 
 # ---------- builder ----------
 FROM base AS builder

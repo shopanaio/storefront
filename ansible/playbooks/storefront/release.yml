@@ -1,0 +1,301 @@
+# Release playbook: bump version, create release branch, tag, and trigger build
+# Usage examples:
+#   ansible-playbook ansible/playbooks/storefront/release.yml -e bump=patch
+#   ansible-playbook ansible/playbooks/storefront/release.yml -e bump=minor
+#   ansible-playbook ansible/playbooks/storefront/release.yml -e bump=major
+#   ansible-playbook ansible/playbooks/storefront/release.yml -e bump=patch -e dry_run=true
+---
+- name: Release Storefront
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/sandbox.vars.yml"
+
+  vars:
+    # Version bump type: patch, minor, or major
+    bump: "patch"
+    # Set to true to skip push and workflow trigger
+    dry_run: false
+    # Source branch to create release from
+    source_branch: "main"
+    # Path to package.json
+    package_json_path: "{{ playbook_dir }}/../../../package.json"
+
+  tasks:
+    # ─────────────────────────────────────────────────────────────────────────
+    # Validation
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Validate bump type
+      ansible.builtin.assert:
+        that:
+          - bump in ['patch', 'minor', 'major']
+        fail_msg: "Invalid bump type '{{ bump }}'. Must be one of: patch, minor, major"
+
+    - name: Check gh CLI installed
+      ansible.builtin.command:
+        cmd: gh --version
+      changed_when: false
+
+    - name: Ensure gh is authenticated
+      ansible.builtin.command:
+        cmd: gh auth status -h github.com
+      register: gh_auth
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if gh is not authenticated
+      ansible.builtin.fail:
+        msg: "gh is not authenticated. Run `gh auth login` and try again."
+      when: gh_auth.rc != 0
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Git state validation
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Get git root directory
+      ansible.builtin.command:
+        cmd: git rev-parse --show-toplevel
+        chdir: "{{ playbook_dir }}"
+      register: git_root
+      changed_when: false
+
+    - name: Set repo root fact
+      ansible.builtin.set_fact:
+        repo_root: "{{ git_root.stdout }}"
+
+    - name: Check for uncommitted changes
+      ansible.builtin.command:
+        cmd: git status --porcelain
+        chdir: "{{ repo_root }}"
+      register: git_status
+      changed_when: false
+
+    - name: Fail if there are uncommitted changes
+      ansible.builtin.fail:
+        msg: |
+          Working directory has uncommitted changes. Please commit or stash them first.
+          {{ git_status.stdout }}
+      when: git_status.stdout | length > 0
+
+    - name: Fetch latest from origin
+      ansible.builtin.command:
+        cmd: git fetch origin
+        chdir: "{{ repo_root }}"
+      changed_when: false
+
+    - name: Checkout source branch
+      ansible.builtin.command:
+        cmd: git checkout {{ source_branch }}
+        chdir: "{{ repo_root }}"
+      changed_when: false
+
+    - name: Pull latest changes
+      ansible.builtin.command:
+        cmd: git pull origin {{ source_branch }}
+        chdir: "{{ repo_root }}"
+      changed_when: false
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Version calculation
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Read package.json
+      ansible.builtin.slurp:
+        src: "{{ repo_root }}/package.json"
+      register: package_json_content
+
+    - name: Parse current version
+      ansible.builtin.set_fact:
+        package_json: "{{ package_json_content.content | b64decode | from_json }}"
+
+    - name: Extract version parts
+      ansible.builtin.set_fact:
+        current_version: "{{ package_json.version }}"
+        version_parts: "{{ package_json.version.split('.') }}"
+
+    - name: Calculate new version
+      ansible.builtin.set_fact:
+        new_version: >-
+          {%- set major = version_parts[0] | int -%}
+          {%- set minor = version_parts[1] | int -%}
+          {%- set patch = version_parts[2] | int -%}
+          {%- if bump == 'major' -%}
+            {{ major + 1 }}.0.0
+          {%- elif bump == 'minor' -%}
+            {{ major }}.{{ minor + 1 }}.0
+          {%- else -%}
+            {{ major }}.{{ minor }}.{{ patch + 1 }}
+          {%- endif -%}
+
+    - name: Set release branch and tag names
+      ansible.builtin.set_fact:
+        release_branch: "releases/v{{ new_version | trim }}"
+        release_tag: "v{{ new_version | trim }}"
+
+    - name: Show release plan
+      ansible.builtin.debug:
+        msg:
+          - "📦 Release Plan"
+          - "  Current version: {{ current_version }}"
+          - "  Bump type: {{ bump }}"
+          - "  New version: {{ new_version | trim }}"
+          - "  Release branch: {{ release_branch }}"
+          - "  Release tag: {{ release_tag }}"
+          - "  Dry run: {{ dry_run }}"
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Create release branch
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Check if release branch already exists
+      ansible.builtin.command:
+        cmd: git branch -a --list "*{{ release_branch }}"
+        chdir: "{{ repo_root }}"
+      register: branch_exists
+      changed_when: false
+
+    - name: Fail if release branch already exists
+      ansible.builtin.fail:
+        msg: "Release branch '{{ release_branch }}' already exists!"
+      when: branch_exists.stdout | length > 0
+
+    - name: Check if tag already exists
+      ansible.builtin.command:
+        cmd: git tag -l "{{ release_tag }}"
+        chdir: "{{ repo_root }}"
+      register: tag_exists
+      changed_when: false
+
+    - name: Fail if tag already exists
+      ansible.builtin.fail:
+        msg: "Tag '{{ release_tag }}' already exists!"
+      when: tag_exists.stdout | length > 0
+
+    - name: Create release branch
+      ansible.builtin.command:
+        cmd: git checkout -b {{ release_branch }}
+        chdir: "{{ repo_root }}"
+      changed_when: true
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Update package.json version
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Update version in package.json
+      ansible.builtin.replace:
+        path: "{{ repo_root }}/package.json"
+        regexp: '"version":\s*"[^"]+"'
+        replace: '"version": "{{ new_version | trim }}"'
+
+    - name: Commit version bump
+      ansible.builtin.command:
+        cmd: git commit -am "chore(release): bump version to {{ new_version | trim }}"
+        chdir: "{{ repo_root }}"
+      changed_when: true
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Create tag
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Create release tag
+      ansible.builtin.command:
+        cmd: git tag -a {{ release_tag }} -m "Release {{ new_version | trim }}"
+        chdir: "{{ repo_root }}"
+      changed_when: true
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Push (skip if dry_run)
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Push release branch
+      ansible.builtin.command:
+        cmd: git push -u origin {{ release_branch }}
+        chdir: "{{ repo_root }}"
+      when: not dry_run | bool
+      changed_when: true
+
+    - name: Push release tag
+      ansible.builtin.command:
+        cmd: git push origin {{ release_tag }}
+        chdir: "{{ repo_root }}"
+      when: not dry_run | bool
+      changed_when: true
+
+    - name: Show dry run skip message
+      ansible.builtin.debug:
+        msg: "🔸 Dry run: skipping push and workflow trigger"
+      when: dry_run | bool
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Trigger build workflow (skip if dry_run)
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Build gh workflow command
+      ansible.builtin.set_fact:
+        gh_argv:
+          - gh
+          - workflow
+          - run
+          - "{{ workflow_file | basename }}"
+          - -R
+          - "{{ gh_repo_owner }}/{{ gh_repo_name }}"
+          - --ref
+          - "{{ release_branch }}"
+          - -f
+          - "image_tag={{ release_tag }}"
+          - -f
+          - "brand={{ BRAND }}"
+          - -f
+          - "cms={{ CMS }}"
+          - -f
+          - "shopana_graphql_url={{ SHOPANA_GRAPHQL_URL }}"
+          - -f
+          - "port={{ PORT }}"
+          - -f
+          - "shopana_api_key={{ SHOPANA_API_KEY }}"
+      when: not dry_run | bool
+
+    - name: Add NEXT_PUBLIC_APP_URL arg when provided
+      ansible.builtin.set_fact:
+        gh_argv: "{{ gh_argv + ['-f', 'next_public_app_url=' ~ NEXT_PUBLIC_APP_URL] }}"
+      when:
+        - not dry_run | bool
+        - NEXT_PUBLIC_APP_URL is defined and NEXT_PUBLIC_APP_URL | length > 0
+
+    - name: Add platforms arg when provided
+      ansible.builtin.set_fact:
+        gh_argv: "{{ gh_argv + ['-f', 'platforms=' ~ platforms] }}"
+      when:
+        - not dry_run | bool
+        - platforms is defined and platforms | length > 0
+
+    - name: Show gh command (sanitized)
+      ansible.builtin.debug:
+        msg: "Running: {{ (gh_argv | map('regex_replace', '^shopana_api_key=.*$', 'shopana_api_key=***')) | join(' ') }}"
+      when: not dry_run | bool
+
+    - name: Trigger build workflow
+      ansible.builtin.command:
+        argv: "{{ gh_argv }}"
+      register: trigger_out
+      when: not dry_run | bool
+      changed_when: true
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Summary
+    # ─────────────────────────────────────────────────────────────────────────
+    - name: Show success summary
+      ansible.builtin.debug:
+        msg:
+          - "✅ Release {{ release_tag }} created successfully!"
+          - ""
+          - "📋 Summary:"
+          - "  Version: {{ current_version }} → {{ new_version | trim }}"
+          - "  Branch: {{ release_branch }}"
+          - "  Tag: {{ release_tag }}"
+          - "{% if not dry_run | bool %}  Build workflow triggered on branch {{ release_branch }}{% endif %}"
+          - ""
+          - "🔗 Links:"
+          - "  Branch: https://github.com/{{ gh_repo_owner }}/{{ gh_repo_name }}/tree/{{ release_branch }}"
+          - "  Tag: https://github.com/{{ gh_repo_owner }}/{{ gh_repo_name }}/releases/tag/{{ release_tag }}"
+          - "  Actions: https://github.com/{{ gh_repo_owner }}/{{ gh_repo_name }}/actions"
+
+    - name: Return to source branch
+      ansible.builtin.command:
+        cmd: git checkout {{ source_branch }}
+        chdir: "{{ repo_root }}"
+      changed_when: false
