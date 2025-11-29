@@ -292,10 +292,16 @@ export function createSDKPage(options: CreateSDKPageOptions) {
     const requestContext = await getRequestContext();
     const pathname = requestContext.pathname;
 
+    // Strip locale prefix if present (use params.locale from Next.js)
+    const locale = params.locale;
+    const pathnameWithoutLocale = locale && pathname.startsWith(`/${locale}`)
+      ? pathname.slice(locale.length + 1) || '/'
+      : pathname;
+
     // Try to match pathname against registered page modules
     const matchResult = moduleRegistry.matchPath<ModuleExport<DynamicModulePageProps>>(
       'page',
-      pathname
+      pathnameWithoutLocale
     );
 
     if (matchResult) {
