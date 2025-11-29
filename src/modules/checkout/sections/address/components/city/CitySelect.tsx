@@ -6,6 +6,7 @@ import { client } from '@checkout/vendors/novaposta/api';
 import type { SearchSettlementAddress } from '@shopana/novaposhta-api-client';
 import { CityOption } from './CityOption';
 import { TbMapPin, TbX } from 'react-icons/tb';
+import { PiArrowCircleRightDuotone, PiArrowCircleRight } from 'react-icons/pi';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
@@ -66,27 +67,45 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
     setIsCityModalVisible(false);
   };
 
+  const ArrowIcon = city ? PiArrowCircleRightDuotone : PiArrowCircleRight;
+
   return (
     <>
       <Button
-        color="default"
+        color={city ? 'primary' : 'default'}
         variant={'outlined'}
         onClick={() => setIsCityModalVisible(true)}
-        icon={<TbMapPin size={24} color={token.colorIcon} />}
+        icon={
+          <TbMapPin
+            size={24}
+            color={city ? token.colorPrimary : token.colorIcon}
+          />
+        }
         className={clsx(styles.button)}
       >
-        {city ? (
-          <Flex vertical align="start" gap={4}>
-            <Typography.Text className={styles.secondaryText} type="secondary">
-              {t('city')}
-            </Typography.Text>
-            <Typography.Text className={styles.mainText}>
-              {city.MainDescription}
-            </Typography.Text>
-          </Flex>
-        ) : (
-          <Typography.Text type="secondary">{t('city')}</Typography.Text>
-        )}
+        <Flex align="center" justify="space-between" style={{ width: '100%' }}>
+          {city ? (
+            <Flex vertical align="start" gap={4}>
+              <Typography.Text className={styles.secondaryText} type="secondary">
+                {t('city')}
+              </Typography.Text>
+              <Typography.Text className={styles.mainText}>
+                {city.MainDescription}
+              </Typography.Text>
+            </Flex>
+          ) : (
+            <Flex vertical align="start">
+              <Typography.Text type="secondary">{t('city')}</Typography.Text>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('select-city')}
+              </Typography.Text>
+            </Flex>
+          )}
+          <ArrowIcon
+            color={city ? token.colorPrimary : token.colorIcon}
+            size={28}
+          />
+        </Flex>
       </Button>
       <DrawerBase
         open={isCityModalVisible}
@@ -160,8 +179,7 @@ const useStyles = createStyles(({ css, token }) => {
     button: css`
       display: flex;
       justify-content: start;
-      padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
-        ${token.paddingSM}px;
+      padding: ${token.paddingXXS}px ${token.paddingSM}px;
       min-height: 64px;
       height: 100%;
     `,

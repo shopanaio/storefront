@@ -224,8 +224,10 @@
     "middle-name": "Middle name",
     "required-field": "This field is required",
     "i-am-recipient": "Recipient is another person",
+    "enter-contact-details": "Enter your contact details",
 
     "city": "City",
+    "select-city": "Select city",
     "warehouse": "Warehouse",
     "select-warehouse": "Select a warehouse",
     "street": "Street",

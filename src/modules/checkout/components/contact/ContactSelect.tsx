@@ -10,11 +10,12 @@ import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { StickyButton } from '@src/ui-kit/StickyButton';
 import { PhoneInputField } from './phone/PhoneNumberField';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import { TbUser } from 'react-icons/tb';
+import { TbCheck, TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
 import { formatPhoneNumberIntl } from 'react-phone-number-input';
 import { useIsMobile } from '@src/hooks/useIsMobile';
+import { PiArrowCircleRightDuotone, PiArrowCircleRight } from 'react-icons/pi';
 
 export type ContactForm = {
   firstName: string;
@@ -88,29 +89,47 @@ export const ContactSelect = ({
     setOpen(false);
   });
 
+  const ArrowIcon = hasValue ? PiArrowCircleRightDuotone : PiArrowCircleRight;
+
   return (
     <>
       <Button
-        color="default"
+        color={hasValue ? 'primary' : 'default'}
         variant={'outlined'}
         onClick={() => setOpen(true)}
-        icon={<TbUser size={24} color={token.colorIcon} />}
+        icon={
+          <TbUser
+            size={24}
+            color={hasValue ? token.colorPrimary : token.colorIcon}
+          />
+        }
         className={clsx(styles.button)}
       >
-        {hasValue ? (
-          <Flex vertical align="start">
-            <Typography.Text className={styles.mainText}>
-              {fullName || t('full-name')}
-            </Typography.Text>
-            {formattedPhone && (
-              <Typography.Text type="secondary">
-                {formattedPhone}
+        <Flex align="center" justify="space-between" style={{ width: '100%' }}>
+          {hasValue ? (
+            <Flex vertical align="start">
+              <Typography.Text className={styles.mainText}>
+                {fullName || t('full-name')}
               </Typography.Text>
-            )}
-          </Flex>
-        ) : (
-          <Typography.Text type="secondary">{title}</Typography.Text>
-        )}
+              {formattedPhone && (
+                <Typography.Text type="secondary">
+                  {formattedPhone}
+                </Typography.Text>
+              )}
+            </Flex>
+          ) : (
+            <Flex vertical align="start">
+              <Typography.Text type="secondary">{title}</Typography.Text>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('enter-contact-details')}
+              </Typography.Text>
+            </Flex>
+          )}
+          <ArrowIcon
+            color={hasValue ? token.colorPrimary : token.colorIcon}
+            size={28}
+          />
+        </Flex>
       </Button>
 
       <DrawerBase
@@ -215,8 +234,7 @@ const useStyles = createStyles(({ css, token }) => {
     button: css`
       display: flex;
       justify-content: start;
-      padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
-        ${token.paddingSM}px;
+      padding: ${token.paddingXXS}px ${token.paddingSM}px;
       min-height: 64px;
       height: 100%;
     `,
