@@ -6,7 +6,7 @@
 # - Build-time app URL: NEXT_PUBLIC_APP_URL
 # - Pass SHOPANA_API_KEY at build time if required by backend
 
-ARG NODE_VERSION=20.12.2
+ARG NODE_VERSION=20.19.0
 
 FROM node:${NODE_VERSION}-alpine AS base
 ENV CI=1
