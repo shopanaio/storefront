@@ -50,7 +50,9 @@ COPY . .
 
 # Build workspace packages first, then the Next.js app
 # Ensures packages under `packages/*` are compiled (dist) for production
-RUN yarn workspaces run build && yarn build
+RUN yarn workspace @shopana/brand-sdk build && \
+    yarn workspaces run build && \
+    yarn build
 
 # ---------- runner ----------
 FROM node:${NODE_VERSION}-alpine AS runner
