@@ -151,8 +151,9 @@ jobs:
             NEXT_PUBLIC_APP_URL=${{ steps.vars.outputs.next_public_app_url }}
             PORT=${{ steps.vars.outputs.port }}
             SHOPANA_API_KEY=${{ steps.vars.outputs.shopana_api_key }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Temporarily disabled cache to debug build issues
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
       - name: Build and push (no platforms)
         if: ${{ steps.vars.outputs.platforms == '' }}
@@ -171,5 +172,6 @@ jobs:
             NEXT_PUBLIC_APP_URL=${{ steps.vars.outputs.next_public_app_url }}
             PORT=${{ steps.vars.outputs.port }}
             SHOPANA_API_KEY=${{ steps.vars.outputs.shopana_api_key }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Temporarily disabled cache to debug build issues
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
