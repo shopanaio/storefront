@@ -11,6 +11,9 @@ const brand = process.env.BRAND || 'default';
 const brandPathRelative = `./packages/brand-${brand}/src`;
 const brandPathAbsolute = path.resolve(`packages/brand-${brand}/src`);
 
+const cms = (process.env.CMS || 'shopana').toLowerCase();
+const relayConfig = require(`./relay.${cms}.json`);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: getEnv(),
@@ -22,7 +25,7 @@ const nextConfig = {
     styledComponents: true,
     ...(process.env.STORYBOOK
       ? {}
-      : { relay: require('./relay.shopana.json') }),
+      : { relay: relayConfig }),
   },
   typescript: {
     ignoreBuildErrors: true,

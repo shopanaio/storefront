@@ -13,7 +13,7 @@ ENV CI=1
 WORKDIR /app
 
 # Common deps for Next.js build on Alpine
-RUN apk add --no-cache libc6-compat yarn
+RUN apk add --no-cache libc6-compat
 
 # ---------- deps ----------
 FROM base AS deps
@@ -48,16 +48,17 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy rest of the source
 COPY . .
 
-# Build workspace packages first, then the Next.js app
-# Ensures packages under `packages/*` are compiled (dist) for production
-RUN yarn workspace @shopana/brand-sdk build && \
-    yarn workspaces run build && \
-    yarn build
+# Build brand-sdk first (other brands use src via alias), then run root build
+# Root build: storefront-sdk -> relay -> widgets -> next build
+RUN yarn workspace @shopana/brand-sdk build && yarn build
 
 # ---------- runner ----------
 FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Re-declare build args needed at runtime
+ARG CMS=shopana
 
 # Runtime deps only
 RUN apk add --no-cache libc6-compat
@@ -71,7 +72,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/relay.shopana.json ./relay.shopana.json
-COPY --from=builder /app/relay.shopify.json ./relay.shopify.json
 
 
 # Default Next.js port; Traefik will route to this

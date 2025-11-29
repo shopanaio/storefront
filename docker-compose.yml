@@ -1,0 +1,18 @@
+services:
+  storefront:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CMS: shopana
+        BRAND: xyz
+        SHOPANA_GRAPHQL_URL: ${SHOPANA_GRAPHQL_URL:-https://sandbox.shopana.io/api/client/graphql/query}
+        SHOPANA_API_KEY: ${SHOPANA_API_KEY:-}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        PORT: 3000
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - CMS=shopana
+    restart: unless-stopped
