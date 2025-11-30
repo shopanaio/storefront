@@ -7,7 +7,7 @@ import type { SectionProps } from "@shopana/storefront-sdk/core/types";
 import type { HomeProduct } from "@shopana/storefront-sdk/modules/home/core/types";
 import Banner from "@src/templates/index/blocks/Banner";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
-import { useRef, useMemo } from "react";
+import { useRef } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider, ViewAllButton, SliderNavButtons } from "@src/templates/shared/atoms";
 import { useRoutes } from "@src/hooks/useRoutes";
@@ -15,11 +15,34 @@ import { useCategory } from "@src/hooks/useCategory";
 import { usePaginationFragment } from "react-relay";
 import Listing from "@shopana/storefront-sdk/queries/Listing";
 import { ListingProductCardRelay } from "@src/templates/collection/blocks/ProductCard";
+import { useListingProductCardFragment_product$key } from "@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql";
+import useListingProductCardFragment from "@src/templates/collection/relay";
 
 interface SlideshowWithBannerSectionSettings {
   categoryHandle: string;
   title?: string;
   bannerPlacement?: "before" | "after";
+}
+
+// Component that reads fragment data for the banner
+function BannerFromProduct({
+  productRef,
+}: {
+  productRef: useListingProductCardFragment_product$key;
+}) {
+  const product = useListingProductCardFragment(productRef);
+
+  const bannerProduct: HomeProduct = {
+    id: product.id,
+    title: product.title,
+    handle: product.handle,
+    price: product.price,
+    compareAtPrice: product.compareAtPrice,
+    image: product.cover,
+    product: product.product ?? { id: product.id, title: product.title, handle: product.handle },
+  };
+
+  return <Banner banner={bannerProduct} />;
 }
 
 export default function SlideshowWithBannerSection({
@@ -34,19 +57,7 @@ export default function SlideshowWithBannerSection({
 
   const products = (data as any)?.listing?.edges?.map((edge: any) => edge.node) ?? [];
 
-  const bannerProduct = useMemo((): HomeProduct | null => {
-    const first = products[0];
-    if (!first) return null;
-    return {
-      id: first.id,
-      title: first.title,
-      handle: first.handle,
-      price: first.price,
-      compareAtPrice: first.compareAtPrice,
-      image: (first as any).cover,
-      product: (first as any).product,
-    };
-  }, [products]);
+  const firstProductRef = products[0] as useListingProductCardFragment_product$key | undefined;
 
   const swiperRef = useRef<SwiperType | null>(null);
 
@@ -56,9 +67,9 @@ export default function SlideshowWithBannerSection({
   return (
     <Flex className={styles.container} gap={16}>
       <div className={styles.grid}>
-        {bannerPlacement === "before" && bannerProduct && (
+        {bannerPlacement === "before" && firstProductRef && (
           <div className={styles.banner}>
-            <Banner banner={bannerProduct} />
+            <BannerFromProduct productRef={firstProductRef} />
           </div>
         )}
         <Flex className={styles.sideContainer} vertical gap={16}>
@@ -96,9 +107,9 @@ export default function SlideshowWithBannerSection({
           </div>
         </Flex>
 
-        {bannerPlacement === "after" && bannerProduct && (
+        {bannerPlacement === "after" && firstProductRef && (
           <div className={styles.banner}>
-            <Banner banner={bannerProduct} />
+            <BannerFromProduct productRef={firstProductRef} />
           </div>
         )}
       </div>
