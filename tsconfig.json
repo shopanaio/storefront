@@ -23,27 +23,6 @@
       "@shopana/brand/*": [
         "./packages/brand-default/src/*"
       ],
-      "@stackflow/react/future": [
-        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
-      ],
-      "@stackflow/react": [
-        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
-      ],
-      "@stackflow/config": [
-        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
-      ],
-      "@stackflow/plugin-basic-ui": [
-        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
-      ],
-      "@stackflow/plugin-basic-ui/*": [
-        "./src/modules/storefront-box-builder-module/stack-engine/*"
-      ],
-      "@stackflow/plugin-history-sync": [
-        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
-      ],
-      "@stackflow/plugin-renderer-basic": [
-        "./src/modules/storefront-box-builder-module/stack-engine/index.tsx"
-      ],
       "@shopana/storefront-sdk": [
         "./packages/shopana-storefront-sdk/dist/index.js"
       ],

@@ -1,12 +1,11 @@
 'use client';
 
-import { Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
+import React, { ReactNode, useCallback } from 'react';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
+import clsx from 'clsx';
+import NextImage from 'next/image';
 import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
-import { releaseImageCache, retainImageCache } from './imageCache';
 
 export interface UiImageProps {
   /** Image source URL */
@@ -31,57 +30,24 @@ export interface UiImageProps {
   threshold?: number;
   /** Show image immediately without lazy loading */
   visibleByDefault?: boolean;
+  /** Width of the image in pixels */
+  width?: number;
 }
-
-/**
- * Image component with lazy loading:
- * - Uses react-lazy-load-image-component for efficient lazy loading
- * - Uses a shared in-memory cache to reuse decoded images across component mounts
- * - Sequentially attempts primary src followed by fallback until one resolves
- * - Shows placeholder while loading with smooth opacity transition
- * - Allows external consumers to supply a custom placeholder or fallback source
- */
-const isServer = typeof window === 'undefined';
 
 export const Image: React.FC<UiImageProps> = ({
   src,
   alt,
   className,
   style,
-  placeholder,
-  fallbackSrc = fallbackImageBase64,
   ratio = 1,
+  width,
   onLoad,
-  onError,
-  threshold = 100,
-  visibleByDefault = isServer,
 }) => {
-  const { styles, cx } = useStyles({ ratio });
-  const { styles: skeletonClassNames } = useSkeletonStyles();
+  if (width !== undefined && width <= 0) {
+    throw new Error('Width must be a positive number.');
+  }
 
-  const [currentSrc, setCurrentSrc] = useState(src);
-  const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Reset state when src changes
-  useEffect(() => {
-    setCurrentSrc(src);
-    setHasError(false);
-    setIsLoaded(false);
-  }, [src]);
-
-  // Retain/release image cache
-  useEffect(() => {
-    if (!currentSrc) {
-      return;
-    }
-
-    retainImageCache(currentSrc);
-
-    return () => {
-      releaseImageCache(currentSrc);
-    };
-  }, [currentSrc]);
+  const { styles } = useStyles({ ratio });
 
   const handleLoad = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -90,50 +56,17 @@ export const Image: React.FC<UiImageProps> = ({
     [onLoad]
   );
 
-  const handleAfterLoad = useCallback(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const handleError = useCallback(
-    (event: React.SyntheticEvent<HTMLImageElement>) => {
-      if (!hasError && fallbackSrc && currentSrc !== fallbackSrc) {
-        setCurrentSrc(fallbackSrc);
-        setHasError(true);
-      } else {
-        onError?.(event);
-      }
-    },
-    [hasError, fallbackSrc, currentSrc, onError]
-  );
-
-  const placeholderElement = placeholder ?? (
-    <Skeleton.Image classNames={skeletonClassNames} />
-  );
-
-  const showPlaceholder = !isLoaded;
-
   return (
-    <div className={cx(styles.wrapper, className)} style={style}>
-      <div
-        className={cx(
-          styles.placeholderWrapper,
-          !showPlaceholder && styles.placeholderHidden
-        )}
-        aria-hidden={!showPlaceholder}
-      >
-        <div className={styles.placeholderContent}>{placeholderElement}</div>
-      </div>
-      <LazyLoadImage
-        src={currentSrc}
-        alt={alt}
-        effect="opacity"
-        threshold={threshold}
-        visibleByDefault={visibleByDefault}
-        wrapperClassName={styles.imageWrapper}
+    <div className={clsx(styles.wrapper, className)} style={style}>
+      <NextImage
+        width={width || 1000}
+        height={(width || 1000) / (typeof ratio === 'number' ? ratio : 1)}
+        src={src || fallbackImageBase64 || ''}
+        alt={alt || ''}
         className={styles.image}
         onLoad={handleLoad}
-        afterLoad={handleAfterLoad}
-        onError={handleError}
+        loading="lazy"
+        placeholder="empty"
       />
     </div>
   );
@@ -200,11 +133,6 @@ const useStyles = createStyles(
         display: flex;
         align-items: stretch;
         overflow: hidden;
-      `,
-      imageWrapper: css`
-        width: 100% !important;
-        height: 100% !important;
-        display: block !important;
       `,
       image: css`
         width: 100%;

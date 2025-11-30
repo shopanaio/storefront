@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Button, Flex, Tag, Typography } from "antd";
-import { createStyles, css } from "antd-style";
-import { TbChevronRight } from "react-icons/tb";
-import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import type { model } from "@shopana/storefront-sdk";
-import { useHover } from "@src/ui-kit/hooks/useHover";
-import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
-import { AmountTag } from "./AmountTag";
+import { Button, Flex, Tag, Typography } from 'antd';
+import { createStyles, css } from 'antd-style';
+import { TbChevronRight } from 'react-icons/tb';
+import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
+import type { model } from '@shopana/storefront-sdk';
+import { useHover } from '@src/ui-kit/hooks/useHover';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
+import { AmountTag } from './AmountTag';
 
 const { Text } = Typography;
 
@@ -36,8 +36,8 @@ export const OptionHeader = ({
   const selectedValues: UiOptionValue[] = Array.isArray(value)
     ? value
     : value
-    ? [value]
-    : [];
+      ? [value]
+      : [];
 
   return (
     <Flex
@@ -52,12 +52,13 @@ export const OptionHeader = ({
           <Thumbnail
             hovered={isHovered}
             src={cover.url}
-            alt={selectedValues.map((v) => v.title).join(", ")}
+            alt={selectedValues.map((v) => v.title).join(', ')}
             className={styles.cover}
+            width={100}
           />
         )}
         <Flex vertical>
-          <Text style={{ display: "flex", gap: 8 }}>{title}</Text>
+          <Text style={{ display: 'flex', gap: 8 }}>{title}</Text>
           {selectedValues.length ? (
             <Flex vertical={selectedValues.length > 1}>
               {selectedValues.map((v, idx) => (
@@ -76,7 +77,7 @@ export const OptionHeader = ({
         onClick={onClick}
         size="large"
         variant="outlined"
-        color={isHovered ? "primary" : "default"}
+        color={isHovered ? 'primary' : 'default'}
       />
     </Flex>
   );

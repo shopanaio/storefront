@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style';
 import { useCallback, useMemo, useState } from 'react';
 import { OptionDrawerLayout } from './DrawerLayout';
 import { DrawerGrid } from './DrawerGrid';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 import { OptionHeader } from './OptionHeader';
 import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
 import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
@@ -166,6 +166,7 @@ export const ComponentOption = ({
         alt={item.node?.title ?? 'Untitled'}
         selected={isSelected}
         onClick={handleClick}
+        width={100}
         overlay={
           inDrawer ? (
             multiple ? (

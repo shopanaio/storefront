@@ -30,5 +30,5 @@ export const useProductGallery = (
     });
 
     return result;
-  }, [variant?.cover, variant?.gallery, product?.groups]);
+  }, [variant?.gallery, product?.groups]);
 };

@@ -96,7 +96,6 @@ export const ProductMain = ({
   const { addToCart, isInFlight } = useAddItemToCart();
 
   const {
-    cover,
     gallery: variantGallery,
     stockStatus,
     sku,
@@ -120,7 +119,6 @@ export const ProductMain = ({
   const optionsLength = product.options?.length ?? 0;
 
   const primaryImage =
-    cover?.url ??
     gallery.find((media) => Boolean(media?.url))?.url ??
     variantGallery?.edges?.[0]?.node?.url ??
     undefined;

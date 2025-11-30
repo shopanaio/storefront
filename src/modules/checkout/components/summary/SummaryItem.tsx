@@ -1,10 +1,10 @@
-import { Flex, Typography } from "antd";
-import { Badge } from "@src/ui-kit/Badge";
-import { createStyles } from "antd-style";
-import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
-import type { Checkout } from "@src/modules/checkout/types/entity";
-import { Money } from "@src/ui-kit/Price/Money";
-import { composeProductTitle } from "@src/utils/composeProductTitle";
+import { Flex, Typography } from 'antd';
+import { Badge } from '@src/ui-kit/Badge';
+import { createStyles } from 'antd-style';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
+import type { Checkout } from '@src/modules/checkout/types/entity';
+import { Money } from '@src/ui-kit/Price/Money';
+import { composeProductTitle } from '@src/utils/composeProductTitle';
 
 const { Text } = Typography;
 
@@ -35,6 +35,7 @@ export const SummaryItem = ({ line }: Prop) => {
             className={styles.thumbnail}
             src={imageUrl}
             alt={title}
+            width={100}
           />
         </Badge>
         <Text className={styles.productName}>{title}</Text>

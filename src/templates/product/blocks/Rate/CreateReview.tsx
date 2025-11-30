@@ -1,30 +1,21 @@
-import {
-  Alert,
-  Button,
-  Flex,
-  Image,
-  Input,
-  Rate,
-  Tooltip,
-  Typography,
-} from "antd";
-import { createStyles } from "antd-style";
-import { Controller, useForm } from "react-hook-form";
-import { useTranslations } from "next-intl";
-import { TbInfoCircle } from "react-icons/tb";
-import TextArea from "antd/es/input/TextArea";
-import type { model } from "@shopana/storefront-sdk";
-import { useCreateReview } from "@src/hooks/useCreateReview";
-import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
+import { Alert, Button, Flex, Input, Rate, Tooltip, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { Controller, useForm } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
+import { TbInfoCircle } from 'react-icons/tb';
+import TextArea from 'antd/es/input/TextArea';
+import type { model } from '@shopana/storefront-sdk';
+import { useCreateReview } from '@src/hooks/useCreateReview';
+import Image from '@src/ui-kit/Image';
 const { Text, Paragraph } = Typography;
 
 interface Prop {
   product: model.Product;
-  onSwitchContent: (content: "success") => void;
+  onSwitchContent: (content: 'success') => void;
 }
 
 export const CreateReview = ({ product, onSwitchContent }: Prop) => {
-  const t = useTranslations("Product");
+  const t = useTranslations('Product');
   const error = null;
 
   const { createReview, loading } = useCreateReview();
@@ -45,10 +36,10 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
   }>({
     defaultValues: {
       rating: 0,
-      review: "",
-      pros: "",
-      cons: "",
-      displayName: "",
+      review: '',
+      pros: '',
+      cons: '',
+      displayName: '',
     },
   });
 
@@ -66,13 +57,13 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
         message: data.review,
         pros: data.pros,
         cons: data.cons,
-        title: "",
+        title: '',
         displayName: data.displayName,
       },
       (response, errors) => {
         if (!errors) {
           reset();
-          onSwitchContent("success");
+          onSwitchContent('success');
         } else {
           console.log(errors);
         }
@@ -85,15 +76,15 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
 
   return (
     <Flex vertical>
-      <Text strong>{t("rate-our-product")}</Text>
+      <Text strong>{t('rate-our-product')}</Text>
 
       <Flex vertical className={styles.modalContent} gap={28}>
         <Flex gap={12} align="center">
           <Image
+            width={100}
             className={styles.productImg}
             src={product.cover?.url}
             alt={product.title}
-            fallback={fallbackImageBase64}
           />
           <Paragraph
             className={styles.productTitle}
@@ -109,11 +100,11 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
             name="rating"
             control={control}
             rules={{
-              validate: (value) => value > 0 || t("rating-is-required"),
+              validate: (value) => value > 0 || t('rating-is-required'),
             }}
             render={({ field }) => (
               <Flex vertical>
-                <label htmlFor="rate">{t("rating")}</label>
+                <label htmlFor="rate">{t('rating')}</label>
                 <Flex wrap align="center" gap={20}>
                   <Rate
                     id="rate"
@@ -135,18 +126,18 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
           <Controller
             name="review"
             control={control}
-            rules={{ required: t("product-review-is-required") }}
+            rules={{ required: t('product-review-is-required') }}
             render={({ field }) => (
               <div>
-                <label htmlFor="review-text">{t("product-review")}</label>
+                <label htmlFor="review-text">{t('product-review')}</label>
                 <TextArea
                   id="review-text"
                   {...field}
                   size="large"
-                  placeholder={t("product-review")}
-                  status={errors.review ? "error" : ""}
+                  placeholder={t('product-review')}
+                  status={errors.review ? 'error' : ''}
                   showCount
-                  style={{ height: 64, resize: "none" }}
+                  style={{ height: 64, resize: 'none' }}
                   maxLength={200}
                 />
                 {errors.review && (
@@ -163,12 +154,12 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
             control={control}
             render={({ field }) => (
               <div>
-                <label htmlFor="pros">{t("pros")}</label>
+                <label htmlFor="pros">{t('pros')}</label>
                 <Input
                   id="pros"
                   {...field}
                   size="large"
-                  placeholder={t("pros")}
+                  placeholder={t('pros')}
                   showCount
                   maxLength={100}
                 />
@@ -181,12 +172,12 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
             control={control}
             render={({ field }) => (
               <div>
-                <label htmlFor="cons">{t("cons")}</label>
+                <label htmlFor="cons">{t('cons')}</label>
                 <Input
                   id="cons"
                   {...field}
                   size="large"
-                  placeholder={t("cons")}
+                  placeholder={t('cons')}
                   showCount
                   maxLength={100}
                 />
@@ -197,16 +188,16 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
           <Controller
             name="displayName"
             control={control}
-            rules={{ required: t("display-name-is-required") }}
+            rules={{ required: t('display-name-is-required') }}
             render={({ field }) => (
               <div>
-                <label htmlFor="display-name">{t("display-name")}</label>
+                <label htmlFor="display-name">{t('display-name')}</label>
                 <Input
                   id="display-name"
                   {...field}
                   size="large"
-                  placeholder={t("display-name")}
-                  status={errors.displayName ? "error" : ""}
+                  placeholder={t('display-name')}
+                  status={errors.displayName ? 'error' : ''}
                   showCount
                   maxLength={100}
                 />
@@ -227,12 +218,12 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
             size="large"
             loading={loading}
           >
-            {t("submit-your-review")}
+            {t('submit-your-review')}
           </Button>
 
           <Flex align="center">
-            <Text className={styles.infoBtn}>{t("send-review-info-text")}</Text>
-            <Tooltip title={t("send-review-additional-test")}>
+            <Text className={styles.infoBtn}>{t('send-review-info-text')}</Text>
+            <Tooltip title={t('send-review-additional-test')}>
               <Button
                 shape="circle"
                 className={styles.infoBtn}

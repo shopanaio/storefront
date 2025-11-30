@@ -38,6 +38,7 @@ export const SearchProductCard: React.FC<SearchProductCardProps> = ({
           className={styles.thumbnail}
           src={image}
           alt={item.title}
+          width={100}
         />
       }
     >

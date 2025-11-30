@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
-import { Flex, Image } from "antd";
-import { createStyles } from "antd-style";
-import { OptionDrawerLayout } from "./DrawerLayout";
-import { useState } from "react";
-import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import { OptionHeader } from "./OptionHeader";
-import type { model } from "@shopana/storefront-sdk";
-import { OptionRadioButton } from "./OptionRadioButton";
-import { OptionGrid } from "@src/ui-kit/OptionGrid";
+import { Flex } from 'antd';
+import { createStyles } from 'antd-style';
+import { OptionDrawerLayout } from './DrawerLayout';
+import { useState } from 'react';
+import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
+import { OptionHeader } from './OptionHeader';
+import type { model } from '@shopana/storefront-sdk';
+import { OptionRadioButton } from './OptionRadioButton';
+import { OptionGrid } from '@src/ui-kit/OptionGrid';
+import Image from '@src/ui-kit/Image';
 
 interface Props {
   title: string;
@@ -62,7 +63,7 @@ export const SwatchOption = ({ title, values, onSelect, product }: Props) => {
                 <div
                   className={styles.colorCircleInner}
                   style={{
-                    backgroundColor: option.swatch?.color || "#fff",
+                    backgroundColor: option.swatch?.color || '#fff',
                   }}
                 />
               </div>
@@ -83,7 +84,10 @@ export const SwatchOption = ({ title, values, onSelect, product }: Props) => {
           <Image
             className={styles.image}
             src={draftValue?.variant?.cover?.url}
-            alt={draftValue?.variant?.title || draftValue?.title || product.title}
+            width={100}
+            alt={
+              draftValue?.variant?.title || draftValue?.title || product.title
+            }
           />
           <OptionGrid columns={4} gap="sm">
             {values.map((option, index) => (
@@ -98,7 +102,7 @@ export const SwatchOption = ({ title, values, onSelect, product }: Props) => {
                   <div
                     className={styles.colorCircleInner}
                     style={{
-                      backgroundColor: option.swatch?.color || "#fff",
+                      backgroundColor: option.swatch?.color || '#fff',
                     }}
                   />
                 </div>

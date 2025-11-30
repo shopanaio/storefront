@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { Button, Flex, Image, Typography } from "antd";
-import { createStyles, cx } from "antd-style";
-import { TbChevronRight } from "react-icons/tb";
-import { ApiProductGroupItem } from "@codegen/schema-client";
-import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
-import { getGroupItemPrice } from "@src/utils/getGroupItemPrice";
-import { Price } from "@src/ui-kit/Price/Price";
+import { Button, Flex, Typography } from 'antd';
+import { createStyles, cx } from 'antd-style';
+import { TbChevronRight } from 'react-icons/tb';
+import { ApiProductGroupItem } from '@codegen/schema-client';
+import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
+import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
+import { Price } from '@src/ui-kit/Price/Price';
+import Image from '@src/ui-kit/Image';
 
 const { Text } = Typography;
 
@@ -30,9 +31,7 @@ export const ComponentSelect = ({ option, isSelected, onClick }: Props) => {
           className={styles.optionImg}
           src={option.product.cover?.url}
           alt={option.product.title}
-          loading="lazy"
-          preview={false}
-          fallback={fallbackImageBase64}
+          width={100}
         />
         <Flex vertical align="start">
           <Text strong>{option.product.title}</Text>

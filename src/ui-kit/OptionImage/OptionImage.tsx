@@ -1,19 +1,21 @@
-"use client";
+'use client';
 
-import { Image, ImageProps } from "antd";
-import { createStyles, cx } from "antd-style";
-import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
+import { ImageProps } from 'antd';
+import { createStyles, cx } from 'antd-style';
+import Image from '@src/ui-kit/Image';
 
-export interface OptionImageProps
-  extends Omit<ImageProps, "fallback" | "preview"> {
+export interface OptionImageProps extends Omit<
+  ImageProps,
+  'fallback' | 'preview'
+> {
   /** Size variant */
-  size?: "small" | "medium" | "large" | "custom";
+  size?: 'small' | 'medium' | 'large' | 'custom';
   /** Custom size in pixels (when size="custom") */
   customSize?: number;
   /** Whether to show border */
   bordered?: boolean;
   /** Aspect ratio */
-  aspectRatio?: "1/1" | "4/3" | "16/9" | "auto";
+  aspectRatio?: '1/1' | '4/3' | '16/9' | 'auto';
 }
 
 /**
@@ -21,14 +23,14 @@ export interface OptionImageProps
  * Automatically applies fallback and common styles.
  */
 export const OptionImage = ({
-  size = "medium",
+  size = 'medium',
   customSize,
   bordered = false,
-  aspectRatio = "1/1",
+  aspectRatio = '1/1',
   className,
   src,
-  alt = "option image",
-  loading = "lazy",
+  alt = 'option image',
+  loading = 'lazy',
   ...imageProps
 }: OptionImageProps) => {
   const { styles, theme } = useStyles();
@@ -38,17 +40,15 @@ export const OptionImage = ({
       className={cx(styles.image, className)}
       src={src}
       alt={alt}
-      loading={loading}
-      preview={false}
-      fallback={fallbackImageBase64}
       style={
         {
-          "--image-size": `var(--thumb-size)`,
-          "--aspect-ratio": aspectRatio,
-          "--border": bordered ? `1px solid ${theme.colorBorder}` : "none",
+          '--image-size': `var(--thumb-size)`,
+          '--aspect-ratio': aspectRatio,
+          '--border': bordered ? `1px solid ${theme.colorBorder}` : 'none',
         } as React.CSSProperties
       }
       {...imageProps}
+      width={100}
     />
   );
 };

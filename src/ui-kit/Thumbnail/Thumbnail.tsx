@@ -3,7 +3,7 @@
 import { Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { ReactNode } from 'react';
-import FallbackAwareImage from '@src/ui-kit/Image';
+import Image from '@src/ui-kit/Image';
 import clsx from 'clsx';
 import { useHover } from '@src/ui-kit/hooks/useHover';
 
@@ -31,6 +31,7 @@ export interface ThumbnailProps {
   overlayPlacement?: OverlayPlacement;
   className?: string;
   borderOffset?: number;
+  width?: number;
 }
 
 /**
@@ -51,6 +52,7 @@ export const Thumbnail = ({
   overlayClassName,
   className,
   borderOffset = 2,
+  width,
 }: ThumbnailProps) => {
   const { styles } = useStyles({ overlayPlacement, borderOffset });
   const [isHovering, hoverHandlers] = useHover();
@@ -81,13 +83,12 @@ export const Thumbnail = ({
             className={styles.imageContainer}
             style={{ opacity: isHovering ? 1 : 0 }}
           >
-            <FallbackAwareImage
+            <Image
+              width={width}
               className={styles.img}
               src={secondImage}
               alt={alt}
               ratio={1}
-              preview={false}
-              loading="lazy"
             />
           </div>
         )}
@@ -96,13 +97,12 @@ export const Thumbnail = ({
           className={styles.imageContainer}
           style={{ opacity: secondImage && isHovering ? 0 : 1 }}
         >
-          <FallbackAwareImage
+          <Image
             className={styles.img}
             src={firstImage}
             alt={alt}
             ratio={1}
-            preview={false}
-            loading="lazy"
+            width={width}
           />
         </div>
       </div>

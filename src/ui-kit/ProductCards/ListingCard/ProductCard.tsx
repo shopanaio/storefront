@@ -130,6 +130,7 @@ export const ProductCard = ({
         gallery={gallery}
         alt={productTitle}
         onClick={handleImageClick}
+        width={300}
       />
     </div>
   );

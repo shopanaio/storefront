@@ -19,11 +19,11 @@ import {
   TbChevronUp,
 } from 'react-icons/tb';
 import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 import { useMemo } from 'react';
 import { IsomorphicSwiper } from '@src/ui-kit/IsomorphicSwiper';
 import type { SwiperOptions } from 'swiper/types';
-import FallbackAwareImage from '@src/ui-kit/Image';
+import Image from '@src/ui-kit/Image';
 
 interface Prop {
   gallery: model.Media[];
@@ -85,13 +85,12 @@ export const ProductGallery = ({
             >
               {gallery.map((it, idx) => (
                 <SwiperSlide key={idx} className={styles.swiperSlide}>
-                  <FallbackAwareImage
+                  <Image
                     src={it.url || ''}
                     className={styles.swiperImage}
                     alt=""
                     ratio={'var(--gallery-aspect-ratio)'}
-                    preview={false}
-                    loading="lazy"
+                    width={800}
                   />
                 </SwiperSlide>
               ))}
@@ -124,21 +123,24 @@ export const ProductGallery = ({
         <IsomorphicSwiper>
           {({ Swiper, SwiperSlide }) => (
             <Swiper
-              loop={true}
               onSwiper={handleThumbsSwiperInit}
               className={styles.thumbnailsSwiper}
               allowTouchMove={false}
               simulateTouch={false}
-              spaceBetween={10}
+              spaceBetween={8}
               breakpoints={breakpoints}
+              observer={true}
+              observeParents={true}
+              resizeObserver={true}
             >
               {gallery.map((it, idx) => (
                 <SwiperSlide key={idx}>
                   <Thumbnail
+                    alt=""
                     className={styles.thumbnailImageContainer}
                     src={it.url || ''}
-                    alt=""
                     selected={activeIndex === idx}
+                    width={100}
                     {...(thumbnailTrigger === 'hover'
                       ? { onMouseOver: () => handleThumbnailHover(idx) }
                       : { onClick: () => handleThumbnailClick(idx) })}
@@ -355,6 +357,12 @@ const useStyles = createStyles(({ css, token }) => ({
       width: var(--thumbnails-width);
       height: var(--thumbnails-height);
       max-height: var(--gallery-size);
+
+      /* Force slide dimensions via CSS to prevent Swiper miscalculation */
+      .swiper-slide {
+        width: var(--thumb-size) !important;
+        height: var(--thumb-size) !important;
+      }
     }
   `,
   thumbnailImageContainer: css`

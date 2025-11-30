@@ -18,14 +18,22 @@ const relayConfig = require(`./relay.${cms}.json`);
 const nextConfig = {
   env: getEnv(),
   reactStrictMode: false,
+  images: {
+    // unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'nbg1.your-objectstorage.com',
+        pathname: '/**',
+      },
+    ],
+  },
   productionBrowserSourceMaps: true,
   // Transpile local packages for hot reload during development
   transpilePackages: ['@shopana/storefront-sdk'],
   compiler: {
     styledComponents: true,
-    ...(process.env.STORYBOOK
-      ? {}
-      : { relay: relayConfig }),
+    ...(process.env.STORYBOOK ? {} : { relay: relayConfig }),
   },
   typescript: {
     ignoreBuildErrors: true,

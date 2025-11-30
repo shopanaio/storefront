@@ -1,9 +1,9 @@
 'use client';
 
-import { Flex, Image, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useState } from 'react';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { OptionCard } from '@src/ui-kit/OptionCard';
@@ -11,6 +11,7 @@ import { OptionImage } from '@src/ui-kit/OptionImage';
 import { ProductCardTitle } from '@src/ui-kit/ProductCards/Title/Title';
 import { IncludedInSetBadge } from './IncludedInSetBadge';
 import { OptionDrawerLayout } from './DrawerLayout';
+import Image from '@src/ui-kit/Image';
 
 const { Text } = Typography;
 
@@ -47,9 +48,7 @@ export const IncludedComponent = ({ option }: Props) => {
           className={styles.cover}
           src={option.cover?.url}
           alt={option.title}
-          loading="lazy"
-          preview={false}
-          fallback={fallbackImageBase64}
+          width={100}
         />
 
         <Text strong>{option.title}</Text>

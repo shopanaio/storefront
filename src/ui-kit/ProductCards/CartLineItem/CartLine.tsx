@@ -1,10 +1,9 @@
 import React from 'react';
-import { Image, Flex, Typography, Button } from 'antd';
+import { Flex, Typography, Button } from 'antd';
 import { createStyles, cx } from 'antd-style';
 import { TbTrash } from 'react-icons/tb';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { Price } from '@src/ui-kit/Price/Price';
-import { SaleBadge } from '@src/ui-kit/Badges/Sale';
 import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
 import {
   QuantityInput,
@@ -12,8 +11,9 @@ import {
 } from '@src/templates/product/atoms/QuantityInput';
 import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
 import { ProductCardTitle } from '@src/ui-kit/ProductCards/Title/Title';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 import { Money } from '@src/ui-kit/Price/Money';
+import Image from '@src/ui-kit/Image';
 
 const { Text } = Typography;
 
@@ -82,6 +82,7 @@ export const CartLine = ({
             src={imageUrl || fallbackImageBase64}
             alt={title}
             className={styles.simpleProductImage}
+            width={100}
           />
           <Flex vertical className={styles.simpleProductInfo}>
             <ProductCardTitle rows={2}>{title}</ProductCardTitle>
@@ -104,12 +105,7 @@ export const CartLine = ({
   return (
     <Flex key={id} className={cx(styles.productCard, 'page')} onClick={onClick}>
       <div className={cx(styles.imageWrapper, 'page')}>
-        <Image
-          src={imageUrl}
-          alt={title}
-          fallback={fallbackImageBase64}
-          preview={false}
-        />
+        <Image src={imageUrl} alt={title} width={100} />
       </div>
       <Flex className={cx(styles.nameAndFeatures, 'page')} vertical>
         <Text className={styles.productName}>{title}</Text>

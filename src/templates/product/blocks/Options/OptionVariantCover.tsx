@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Flex, Radio } from "antd";
-import { useState } from "react";
-import { OptionDrawerLayout } from "./DrawerLayout";
-import { DrawerGrid } from "./DrawerGrid";
-import { UiOptionValue } from "@src/hooks/useFlattenProductOptions";
-import { OptionHeader } from "./OptionHeader";
-import { OptionGrid } from "@src/ui-kit/OptionGrid";
-import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
+import { Flex, Radio } from 'antd';
+import { useState } from 'react';
+import { OptionDrawerLayout } from './DrawerLayout';
+import { DrawerGrid } from './DrawerGrid';
+import { UiOptionValue } from '@src/hooks/useFlattenProductOptions';
+import { OptionHeader } from './OptionHeader';
+import { OptionGrid } from '@src/ui-kit/OptionGrid';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
 
 interface Props {
   title: string;
@@ -55,11 +55,12 @@ export const VariantCoverOption = ({ title, values, onSelect }: Props) => {
           {values.map((item) => (
             <Thumbnail
               key={item.id}
-              src={item.variant?.cover?.url || ""}
+              src={item.variant?.cover?.url || ''}
               alt={item.title}
               selected={item.isActive}
               disabled={!item.variant}
               onClick={() => onSelect(item)}
+              width={100}
             />
           ))}
         </OptionGrid>
@@ -70,7 +71,7 @@ export const VariantCoverOption = ({ title, values, onSelect }: Props) => {
         title={title}
         onClose={handleCancel}
         footer={{
-          selectedLabel: draftValue?.title || "",
+          selectedLabel: draftValue?.title || '',
           onConfirm: handleConfirm,
         }}
       >
@@ -78,11 +79,10 @@ export const VariantCoverOption = ({ title, values, onSelect }: Props) => {
           {values.map((item) => (
             <Thumbnail
               key={item.id}
-              src={item.variant?.cover?.url || ""}
+              src={item.variant?.cover?.url || ''}
               alt={item.title}
-              selected={
-                draftValue ? draftValue.id === item.id : item.isActive
-              }
+              width={100}
+              selected={draftValue ? draftValue.id === item.id : item.isActive}
               disabled={!item.variant}
               onClick={() => setDraftValue(item)}
               overlay={

@@ -1,19 +1,19 @@
-import { CartLine } from "@src/ui-kit/ProductCards/CartLineItem/CartLine";
-import useRemoveItemFromCart from "@shopana/storefront-sdk/modules/cart/react/hooks/useRemoveItemFromCart";
-import useUpdateCartLineQuantity from "@shopana/storefront-sdk/modules/cart/react/hooks/useUpdateCartLineQuantity";
-import { Flex, Typography } from "antd";
-import { useTranslations } from "next-intl";
-import { Thumbnail } from "@src/ui-kit/Thumbnail/Thumbnail";
-import { createStyles } from "antd-style";
-import type { model } from "@shopana/storefront-sdk";
-import { useConfirm } from "@src/ui-kit/Confirm/useConfirm";
+import { CartLine } from '@src/ui-kit/ProductCards/CartLineItem/CartLine';
+import useRemoveItemFromCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useRemoveItemFromCart';
+import useUpdateCartLineQuantity from '@shopana/storefront-sdk/modules/cart/react/hooks/useUpdateCartLineQuantity';
+import { Flex, Typography } from 'antd';
+import { useTranslations } from 'next-intl';
+import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
+import { createStyles } from 'antd-style';
+import type { model } from '@shopana/storefront-sdk';
+import { useConfirm } from '@src/ui-kit/Confirm/useConfirm';
 
 const { Text } = Typography;
 
 interface CartItemProps {
   cartLine: model.CartLine;
   onClick?: () => void;
-  variant?: "drawer" | "page";
+  variant?: 'drawer' | 'page';
   /** Whether to show confirmation modal before removing item. Defaults to false. */
   confirmRemove?: boolean;
 }
@@ -21,12 +21,12 @@ interface CartItemProps {
 export const CartItem = ({
   cartLine,
   onClick,
-  variant = "drawer",
+  variant = 'drawer',
   confirmRemove = false,
 }: CartItemProps) => {
   const { removeFromCart, loading: isRemoving } = useRemoveItemFromCart();
   const { updateQuantity, loading: isUpdating } = useUpdateCartLineQuantity();
-  const t = useTranslations("Cart");
+  const t = useTranslations('Cart');
   const { styles } = useStyles();
   const confirm = useConfirm();
 
@@ -41,9 +41,8 @@ export const CartItem = ({
   // Concatenate parent product title with variant title
   const parentTitle = (purchasable as any)?.product?.title;
   const variantTitle = purchasable.title;
-  const productTitle = [parentTitle, variantTitle]
-    .filter(Boolean)
-    .join(' ') || "";
+  const productTitle =
+    [parentTitle, variantTitle].filter(Boolean).join(' ') || '';
 
   const increment = () => {
     updateQuantity({ cartItemId, quantity: quantity + 1 });
@@ -63,23 +62,24 @@ export const CartItem = ({
       return;
     }
 
-    const imageUrl = purchasable.cover?.url ?? "";
+    const imageUrl = purchasable.cover?.url ?? '';
 
     const ok = await confirm({
       icon: null,
-      title: t("remove-confirm-title"),
+      title: t('remove-confirm-title'),
       content: (
         <Flex gap={12} align="center">
           <Thumbnail
             src={imageUrl}
             alt={productTitle}
             className={styles.confirmModalThumbnail}
+            width={100}
           />
-          <Text>{t("remove-confirm-content", { productTitle })}</Text>
+          <Text>{t('remove-confirm-content', { productTitle })}</Text>
         </Flex>
       ),
-      okText: t("remove-confirm-ok"),
-      cancelText: t("remove-confirm-cancel"),
+      okText: t('remove-confirm-ok'),
+      cancelText: t('remove-confirm-cancel'),
     });
     if (ok) {
       removeFromCart({
@@ -92,7 +92,7 @@ export const CartItem = ({
     <CartLine
       id={cartLine.id}
       title={productTitle}
-      imageUrl={purchasable.cover?.url ?? ""}
+      imageUrl={purchasable.cover?.url ?? ''}
       quantity={quantity}
       unitPrice={cartLine.cost.unitPrice}
       totalPrice={cartLine.cost.totalAmount}
@@ -105,8 +105,8 @@ export const CartItem = ({
         onRemove: handleRemove,
         onIncrement: increment,
         onDecrement: decrement,
-        size: "small",
-        color: "primary",
+        size: 'small',
+        color: 'primary',
         loading: isUpdating || isRemoving,
       }}
     />
