@@ -1,12 +1,11 @@
-"use client";
+'use client';
 
-import { Flex, Image, Typography } from "antd";
-import { createStyles } from "antd-style";
-import { mq } from "@src/ui-kit/Theme/breakpoints";
-import type { HomeProduct } from "@shopana/storefront-sdk/modules/home/core/types";
-import { Price } from "@src/ui-kit/Price/Price";
-import { calcSale } from "@src/utils/calcSale";
-import { fallbackImageBase64 } from "@src/ui-kit/fallbackImageBase64";
+import { Flex, Image, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
+import type { HomeProduct } from '@shopana/storefront-sdk/modules/home/core/types';
+import { Price } from '@src/ui-kit/Price/Price';
+import { calcSale } from '@src/utils/calcSale';
 
 const { Text } = Typography;
 
@@ -23,12 +22,10 @@ export default function Banner({ banner }: Prop) {
     <div className={styles.banner}>
       <Image
         loading="lazy"
-        src={banner?.image?.url || ""}
-        alt={banner?.title || ""}
-        width="100%"
+        src={banner?.image?.url}
+        alt={banner?.title || ''}
+        width={400}
         className={styles.bannerImg}
-        preview={false}
-        fallback={fallbackImageBase64}
       />
       <div className={styles.bannerContentWrapper}>
         <Flex className={styles.bannerContent} vertical gap={4}>
@@ -76,7 +73,7 @@ const useStyles = createStyles(({ css, token }) => {
       width: 100%;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         z-index: 0;

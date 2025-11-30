@@ -32,6 +32,10 @@ export interface UiImageProps {
   visibleByDefault?: boolean;
   /** Width of the image in pixels */
   width?: number;
+  /** Loading strategy: 'lazy' (default) or 'eager' for sliders */
+  loading?: 'lazy' | 'eager';
+  /** Priority loading (disables lazy loading) */
+  priority?: boolean;
 }
 
 export const Image: React.FC<UiImageProps> = ({
@@ -43,6 +47,8 @@ export const Image: React.FC<UiImageProps> = ({
   width,
   onLoad,
   onError,
+  loading = 'eager',
+  priority = false,
 }) => {
   if (width !== undefined && width <= 0) {
     throw new Error('Width must be a positive number.');
@@ -63,12 +69,20 @@ export const Image: React.FC<UiImageProps> = ({
         key={src}
         width={width || 1000}
         height={(width || 1000) / (typeof ratio === 'number' ? ratio : 1)}
-        src={src || ''}
+        src={src || fallbackImageBase64}
         alt={alt || ''}
         className={styles.image}
         onLoad={handleLoad}
-        placeholder="blur"
-        blurDataURL={src}
+        loading={priority ? undefined : loading}
+        priority={priority}
+        {...{
+          ...(src
+            ? {
+                placeholder: 'blur',
+                blurDataURL: fallbackImageBase64,
+              }
+            : { placeholder: 'empty' }),
+        }}
       />
     </div>
   );

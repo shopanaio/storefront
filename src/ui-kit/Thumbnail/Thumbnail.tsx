@@ -89,6 +89,7 @@ export const Thumbnail = ({
               src={secondImage}
               alt={alt}
               ratio={1}
+              loading="eager"
             />
           </div>
         )}
@@ -103,6 +104,7 @@ export const Thumbnail = ({
             alt={alt}
             ratio={1}
             width={width}
+            loading="eager"
           />
         </div>
       </div>

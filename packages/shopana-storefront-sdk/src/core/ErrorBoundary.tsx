@@ -25,6 +25,13 @@ class BaseErrorBoundary extends Component<
     return { hasError: true };
   }
 
+  componentDidUpdate(prevProps: BaseErrorBoundaryProps) {
+    // Reset error state when children change (e.g., client-side navigation)
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.setState({ hasError: false });
+    }
+  }
+
   componentDidCatch(error: Error, info: ErrorInfo) {
     logError('Component render error', {
       error,
