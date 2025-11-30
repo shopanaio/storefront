@@ -103,12 +103,15 @@
           ansible.builtin.debug:
             var: startup_logs.stdout_lines
 
-        - name: Wait for storefront to listen on {{ storefront_container_port }}
-          ansible.builtin.wait_for:
-            host: 127.0.0.1
-            port: "{{ storefront_container_port }}"
-            delay: 3
-            timeout: 60
+        - name: Wait for storefront container to be healthy
+          ansible.builtin.command:
+            cmd: docker inspect --format='{{ '{{' }}.State.Health.Status{{ '}}' }}' shopana-storefront
+            chdir: "{{ app_dir }}"
+          register: health_check
+          until: health_check.stdout == "healthy"
+          retries: 12
+          delay: 5
+          changed_when: false
 
         - name: Show container status
           ansible.builtin.command:
