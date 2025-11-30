@@ -4,7 +4,6 @@ import { createStyles, cx } from 'antd-style';
 import { TbTrash } from 'react-icons/tb';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { Price } from '@src/ui-kit/Price/Price';
-import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
 import {
   QuantityInput,
   QuantityInputProps,
@@ -24,7 +23,7 @@ export interface CartLineProps {
   // Main product data
   id: string;
   title: string;
-  imageUrl: string;
+  imageUrl?: string;
 
   // Quantity and prices
   quantity: number | string;
@@ -79,7 +78,7 @@ export const CartLine = ({
       <Flex key={id} justify="space-between" align="center">
         <Flex align="center" gap={8} onClick={onClick}>
           <Thumbnail
-            src={imageUrl || fallbackImageBase64}
+            src={imageUrl}
             alt={title}
             className={styles.simpleProductImage}
             width={100}

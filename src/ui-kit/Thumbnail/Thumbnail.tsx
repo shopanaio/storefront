@@ -58,7 +58,7 @@ export const Thumbnail = ({
   const [isHovering, hoverHandlers] = useHover();
 
   // Use gallery if provided, otherwise fallback to src
-  const firstImage = gallery.length > 0 ? gallery[0] : src;
+  const firstImage = src || gallery[0];
   const secondImage = gallery.length > 1 ? gallery[1] : undefined;
 
   return (

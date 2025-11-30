@@ -1,7 +1,7 @@
 'use client';
 
 import { createStyles } from 'antd-style';
-import React, { ReactNode, useCallback } from 'react';
+import React, { ReactNode, useCallback, useState, useEffect } from 'react';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
 import clsx from 'clsx';
 import NextImage from 'next/image';
@@ -42,6 +42,7 @@ export const Image: React.FC<UiImageProps> = ({
   ratio = 1,
   width,
   onLoad,
+  onError,
 }) => {
   if (width !== undefined && width <= 0) {
     throw new Error('Width must be a positive number.');
@@ -59,14 +60,15 @@ export const Image: React.FC<UiImageProps> = ({
   return (
     <div className={clsx(styles.wrapper, className)} style={style}>
       <NextImage
+        key={src}
         width={width || 1000}
         height={(width || 1000) / (typeof ratio === 'number' ? ratio : 1)}
-        src={src || fallbackImageBase64 || ''}
+        src={src || ''}
         alt={alt || ''}
         className={styles.image}
         onLoad={handleLoad}
-        loading="lazy"
-        placeholder="empty"
+        placeholder="blur"
+        blurDataURL={src}
       />
     </div>
   );

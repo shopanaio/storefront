@@ -62,15 +62,13 @@ export const CartItem = ({
       return;
     }
 
-    const imageUrl = purchasable.cover?.url ?? '';
-
     const ok = await confirm({
       icon: null,
       title: t('remove-confirm-title'),
       content: (
         <Flex gap={12} align="center">
           <Thumbnail
-            src={imageUrl}
+            src={purchasable.cover?.url}
             alt={productTitle}
             className={styles.confirmModalThumbnail}
             width={100}
@@ -92,7 +90,7 @@ export const CartItem = ({
     <CartLine
       id={cartLine.id}
       title={productTitle}
-      imageUrl={purchasable.cover?.url ?? ''}
+      imageUrl={purchasable.cover?.url}
       quantity={quantity}
       unitPrice={cartLine.cost.unitPrice}
       totalPrice={cartLine.cost.totalAmount}

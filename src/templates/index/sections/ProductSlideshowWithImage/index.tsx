@@ -48,7 +48,6 @@ export default function SlideshowWithBannerSection({
             <Banner banner={bannerProduct} />
           </div>
         )}
-
         <Flex className={styles.sideContainer} vertical gap={16}>
           <Flex
             className={styles.sectionTitleWrapper}
@@ -66,7 +65,6 @@ export default function SlideshowWithBannerSection({
               <ViewAllButton href={routes.collection.path(category?.handle ?? '')} />
             </Flex>
           </Flex>
-
           <div>
             <UniversalSlider
               items={products}

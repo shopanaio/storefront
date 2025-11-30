@@ -13,14 +13,6 @@ const homeTemplate: Template = {
       'homeSlideshowSection',
       'slideshowWithBannerRight',
     ],
-    categoryGridSection: {
-      component: CategoryGridSection,
-      settings: {
-        categoryHandle: 'electronics',
-        title: 'Categories',
-        repeatCount: 8,
-      },
-    },
     homeSlideshowSection: {
       component: HomeSlideshowSection,
       settings: { categoryKey: 'electronics', pagination: true },
