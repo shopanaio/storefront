@@ -85,11 +85,14 @@ export const Image: React.FC<UiImageProps> = ({
 
   const handleLoad = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
-      setIsLoaded(true);
       onLoad?.(event);
     },
     [onLoad]
   );
+
+  const handleAfterLoad = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
 
   const handleError = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -129,6 +132,7 @@ export const Image: React.FC<UiImageProps> = ({
         wrapperClassName={styles.imageWrapper}
         className={styles.image}
         onLoad={handleLoad}
+        afterLoad={handleAfterLoad}
         onError={handleError}
       />
     </div>
