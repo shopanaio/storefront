@@ -10,12 +10,13 @@ import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { StickyButton } from '@src/ui-kit/StickyButton';
 import { PhoneInputField } from './phone/PhoneNumberField';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import { TbCheck, TbUser } from 'react-icons/tb';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
 import { formatPhoneNumberIntl } from 'react-phone-number-input';
 import { useIsMobile } from '@src/hooks/useIsMobile';
 import { PiArrowCircleRightDuotone, PiArrowCircleRight } from 'react-icons/pi';
+import { PiUserCircleCheckDuotone } from 'react-icons/pi';
+import { PiUserCircle } from 'react-icons/pi';
 
 export type ContactForm = {
   firstName: string;
@@ -90,6 +91,7 @@ export const ContactSelect = ({
   });
 
   const ArrowIcon = hasValue ? PiArrowCircleRightDuotone : PiArrowCircleRight;
+  const UserIcon = hasValue ? PiUserCircleCheckDuotone : PiUserCircle;
 
   return (
     <>
@@ -98,7 +100,7 @@ export const ContactSelect = ({
         variant={'outlined'}
         onClick={() => setOpen(true)}
         icon={
-          <TbUser
+          <UserIcon
             size={24}
             color={hasValue ? token.colorPrimary : token.colorIcon}
           />
@@ -127,7 +129,7 @@ export const ContactSelect = ({
           )}
           <ArrowIcon
             color={hasValue ? token.colorPrimary : token.colorIcon}
-            size={28}
+            size={24}
           />
         </Flex>
       </Button>

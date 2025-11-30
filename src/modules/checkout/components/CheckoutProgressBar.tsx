@@ -8,10 +8,10 @@ import { useToken } from 'antd/es/theme/internal';
 
 // Configure nprogress
 NProgress.configure({
+  minimum: 1,
   showSpinner: false,
-  trickle: true,
-  trickleSpeed: 200,
-  minimum: 0.25,
+  speed: 500,
+  easing: 'ease-in',
 });
 
 /**
@@ -32,27 +32,35 @@ export const CheckoutProgressBar = () => {
     }
   `);
 
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    let forceResetTimeout: NodeJS.Timeout | null = null;
+    const DURATION = 500;
 
     if (hasActiveOperations) {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       NProgress.start();
-      // Force reset after 5 seconds to prevent stuck progress bar
-      forceResetTimeout = setTimeout(() => {
+      // Always complete after fixed duration
+      timeoutRef.current = setTimeout(() => {
         NProgress.done();
-      }, 5000);
-    } else {
-      NProgress.done();
+        timeoutRef.current = null;
+      }, DURATION);
     }
+    // Ignore when hasActiveOperations becomes false - let the timeout handle it
+  }, [hasActiveOperations]);
 
-    // Cleanup on unmount or when hasActiveOperations changes
+  // Cleanup only on unmount
+  useEffect(() => {
     return () => {
-      if (forceResetTimeout) {
-        clearTimeout(forceResetTimeout);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
       NProgress.done();
     };
-  }, [hasActiveOperations]);
+  }, []);
 
   return <Style />;
 };

@@ -5,8 +5,13 @@ import { useTranslations } from 'next-intl';
 import { client } from '@checkout/vendors/novaposta/api';
 import type { SearchSettlementAddress } from '@shopana/novaposhta-api-client';
 import { CityOption } from './CityOption';
-import { TbMapPin, TbX } from 'react-icons/tb';
-import { PiArrowCircleRightDuotone, PiArrowCircleRight } from 'react-icons/pi';
+import { TbX } from 'react-icons/tb';
+import {
+  PiArrowCircleRightDuotone,
+  PiArrowCircleRight,
+  PiMapPinDuotone,
+  PiMapPin,
+} from 'react-icons/pi';
 import useToken from 'antd/es/theme/useToken';
 import { DrawerBase } from '@src/ui-kit/DrawerBase';
 import { FloatingLabelInput } from '@src/ui-kit/FloatingLabelInput';
@@ -68,7 +73,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
   };
 
   const ArrowIcon = city ? PiArrowCircleRightDuotone : PiArrowCircleRight;
-
+  const UserIcon = city ? PiMapPinDuotone : PiMapPin;
   return (
     <>
       <Button
@@ -76,7 +81,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         variant={'outlined'}
         onClick={() => setIsCityModalVisible(true)}
         icon={
-          <TbMapPin
+          <UserIcon
             size={24}
             color={city ? token.colorPrimary : token.colorIcon}
           />
@@ -86,7 +91,10 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         <Flex align="center" justify="space-between" style={{ width: '100%' }}>
           {city ? (
             <Flex vertical align="start" gap={4}>
-              <Typography.Text className={styles.secondaryText} type="secondary">
+              <Typography.Text
+                className={styles.secondaryText}
+                type="secondary"
+              >
                 {t('city')}
               </Typography.Text>
               <Typography.Text className={styles.mainText}>
@@ -103,7 +111,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
           )}
           <ArrowIcon
             color={city ? token.colorPrimary : token.colorIcon}
-            size={28}
+            size={24}
           />
         </Flex>
       </Button>

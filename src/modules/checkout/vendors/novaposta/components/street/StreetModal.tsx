@@ -88,7 +88,12 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
         engine={isMobile ? 'overlay' : 'vaul'}
         header={
           <DrawerBase.Header vertical gap={8}>
-            <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>
+            <Flex
+              gap={8}
+              justify="space-between"
+              align="center"
+              style={{ width: '100%' }}
+            >
               <DrawerBase.Title>{t('street')}</DrawerBase.Title>
               <DrawerBase.CloseButton />
             </Flex>
@@ -101,16 +106,14 @@ export const StreetModal = ({ street, changeStreet, cityRef }: Prop) => {
           </DrawerBase.Header>
         }
       >
-        <Flex vertical>
-          <Flex vertical gap={8}>
-            {streets.map((item) => (
-              <StreetModalItem
-                key={item.SettlementStreetRef}
-                item={item}
-                changeStreet={handleSelectStreet}
-              />
-            ))}
-          </Flex>
+        <Flex vertical gap={4}>
+          {streets.map((item) => (
+            <StreetModalItem
+              key={item.SettlementStreetRef}
+              item={item}
+              changeStreet={handleSelectStreet}
+            />
+          ))}
         </Flex>
       </DrawerBase>
     </>

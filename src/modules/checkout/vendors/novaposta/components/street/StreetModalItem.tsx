@@ -1,6 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { TbMapPin } from 'react-icons/tb';
+import { PiMapPin } from 'react-icons/pi';
 import type { SettlementStreetAddress } from '@shopana/novaposhta-api-client';
 
 interface Prop {
@@ -14,15 +14,16 @@ export const StreetModalItem = ({ item, changeStreet }: Prop) => {
   if (!item) return null;
   return (
     <Button
-      type="text"
-      icon={<TbMapPin size={18} />}
+      variant="text"
+      color="default"
+      icon={<PiMapPin size={18} />}
       key={item?.SettlementStreetRef}
       className={styles.item}
       size="large"
       onClick={() => changeStreet(item)}
     >
       <Flex vertical align="start">
-        <Typography.Text className={styles.streetName} strong>
+        <Typography.Text className={styles.streetName}>
           {item?.Present}
         </Typography.Text>
       </Flex>
@@ -30,7 +31,7 @@ export const StreetModalItem = ({ item, changeStreet }: Prop) => {
   );
 };
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, token }) => {
   return {
     item: css`
       display: flex;
