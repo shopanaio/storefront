@@ -47,7 +47,7 @@ interface CommonProductData {
       };
 }
 
-type ProductCardRelayProps = Omit<ProductCardProps, 'product'> & {
+type ProductCardRelayProps = Partial<Omit<ProductCardProps, 'product'>> & {
   $productRef: useListingProductCardFragment_product$key;
 };
 

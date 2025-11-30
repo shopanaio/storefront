@@ -15,12 +15,12 @@ const homeTemplate: Template = {
     ],
     homeSlideshowSection: {
       component: HomeSlideshowSection,
-      settings: { categoryKey: 'electronics', pagination: true },
+      settings: { categoryHandle: 'electronics', pagination: true },
     },
     slideshowWithBannerLeft: {
       component: SlideshowWithBannerSection,
       settings: {
-        categoryKey: 'electronics',
+        categoryHandle: 'electronics',
         bannerPlacement: 'before',
       },
     },
@@ -35,7 +35,7 @@ const homeTemplate: Template = {
     slideshowWithBannerRight: {
       component: SlideshowWithBannerSection,
       settings: {
-        categoryKey: 'electronics',
+        categoryHandle: 'electronics',
         bannerPlacement: 'after',
       },
     },

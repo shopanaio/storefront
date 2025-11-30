@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { usePreloadedQuery, useRelayEnvironment } from 'react-relay';
-import { useSerializablePreloadedQuery } from '../../../../graphql/relay/useSerializablePreloadedQuery';
+import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
 import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
 import { ProductDataContext } from '../context/ProductDataContext';
 import type {

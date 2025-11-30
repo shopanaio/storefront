@@ -4,21 +4,20 @@
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import type { SectionProps } from "@shopana/storefront-sdk/core/types";
-import { useHomeCategory } from "@shopana/storefront-sdk/modules/home/react/hooks/useHomeCategories";
-import { useCategoryProducts } from "@shopana/storefront-sdk/modules/home/react/hooks/useCategoryProducts";
 import type { HomeProduct } from "@shopana/storefront-sdk/modules/home/core/types";
 import Banner from "@src/templates/index/blocks/Banner";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import type { Swiper as SwiperType } from "swiper";
 import { UniversalSlider, ViewAllButton, SliderNavButtons } from "@src/templates/shared/atoms";
 import { useRoutes } from "@src/hooks/useRoutes";
-import { HomeSlideshowProductCard } from "@src/templates/index/blocks/ProductCard";
-
-type CategoryKey = "electronics" | "sport" | "toys";
+import { useCategory } from "@src/hooks/useCategory";
+import { usePaginationFragment } from "react-relay";
+import Listing from "@shopana/storefront-sdk/queries/Listing";
+import { ListingProductCardRelay } from "@src/templates/collection/blocks/ProductCard";
 
 interface SlideshowWithBannerSectionSettings {
-  categoryKey: CategoryKey;
+  categoryHandle: string;
   title?: string;
   bannerPlacement?: "before" | "after";
 }
@@ -29,11 +28,25 @@ export default function SlideshowWithBannerSection({
   const routes = useRoutes();
   const { styles } = useStyles();
 
-  const category = useHomeCategory(settings.categoryKey);
-  const allProducts = useCategoryProducts(settings.categoryKey);
+  const { category } = useCategory(settings.categoryHandle, 12);
 
-  const bannerProduct = allProducts[0];
-  const products = allProducts;
+  const { data } = usePaginationFragment(Listing, category);
+
+  const products = (data as any)?.listing?.edges?.map((edge: any) => edge.node) ?? [];
+
+  const bannerProduct = useMemo((): HomeProduct | null => {
+    const first = products[0];
+    if (!first) return null;
+    return {
+      id: first.id,
+      title: first.title,
+      handle: first.handle,
+      price: first.price,
+      compareAtPrice: first.compareAtPrice,
+      image: (first as any).cover,
+      product: (first as any).product,
+    };
+  }, [products]);
 
   const swiperRef = useRef<SwiperType | null>(null);
 
@@ -68,8 +81,8 @@ export default function SlideshowWithBannerSection({
           <div>
             <UniversalSlider
               items={products}
-              renderItem={(product: HomeProduct) => (
-                <HomeSlideshowProductCard product={product} />
+              renderItem={(product: any) => (
+                <ListingProductCardRelay $productRef={product} />
               )}
               swiperRef={swiperRef}
               breakpoints={{
