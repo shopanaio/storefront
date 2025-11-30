@@ -1,183 +1,136 @@
 'use client';
 
-import { Image as AntImage, Skeleton } from 'antd';
-import type { ImageProps as AntImageProps } from 'antd';
+import { Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import 'react-lazy-load-image-component/src/effects/opacity.css';
 import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
-import {
-  isImageCached,
-  preloadImage,
-  releaseImageCache,
-  retainImageCache,
-} from './imageCache';
+import { releaseImageCache, retainImageCache } from './imageCache';
 
-export interface UiImageProps extends Omit<
-  AntImageProps,
-  'placeholder' | 'fallback'
-> {
+export interface UiImageProps {
+  /** Image source URL */
+  src?: string;
+  /** Alt text for the image */
+  alt?: string;
+  /** Additional CSS class name */
+  className?: string;
+  /** Inline styles for the wrapper */
+  style?: React.CSSProperties;
   /** Custom placeholder while image is loading */
   placeholder?: ReactNode;
   /** Fallback image when `src` fails */
   fallbackSrc?: string;
   /** Placeholder aspect ratio; accepts number (e.g., 1) or CSS string (e.g., "4 / 3") */
   ratio?: number | string;
+  /** Callback when image loads successfully */
+  onLoad?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  /** Callback when image fails to load */
+  onError?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  /** Pixels before viewport to trigger loading */
+  threshold?: number;
+  /** Show image immediately without lazy loading */
+  visibleByDefault?: boolean;
 }
 
 /**
- * Image component with optimistic preloading:
+ * Image component with lazy loading:
+ * - Uses react-lazy-load-image-component for efficient lazy loading
  * - Uses a shared in-memory cache to reuse decoded images across component mounts
  * - Sequentially attempts primary src followed by fallback until one resolves
- * - Keeps placeholder visible until a cached or newly decoded image is ready
+ * - Shows placeholder while loading with smooth opacity transition
  * - Allows external consumers to supply a custom placeholder or fallback source
  */
+const isServer = typeof window === 'undefined';
+
 export const Image: React.FC<UiImageProps> = ({
   src,
   alt,
   className,
   style,
-  preview = false,
-  loading = 'lazy',
   placeholder,
   fallbackSrc = fallbackImageBase64,
   ratio = 1,
   onLoad,
   onError,
-  ...rest
+  threshold = 100,
+  visibleByDefault = isServer,
 }) => {
   const { styles, cx } = useStyles({ ratio });
   const { styles: skeletonClassNames } = useSkeletonStyles();
 
-  const [visibleSrc, setVisibleSrc] = useState<string | null>(null);
-  const [isImageVisible, setIsImageVisible] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Reset state when src changes
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    setCurrentSrc(src);
+    setHasError(false);
+    setIsLoaded(false);
+  }, [src]);
+
+  // Retain/release image cache
+  useEffect(() => {
+    if (!currentSrc) {
       return;
     }
 
-    const sources = Array.from(
-      new Set([src, fallbackSrc].filter(Boolean))
-    ) as string[];
-
-    setIsImageVisible(false);
-    setVisibleSrc(null);
-
-    if (!sources.length) {
-      return;
-    }
-
-    let isActive = true;
-
-    const preloadSources = async () => {
-      for (const candidate of sources) {
-        if (!isActive) {
-          return;
-        }
-
-        if (isImageCached(candidate)) {
-          setVisibleSrc(candidate);
-          setIsImageVisible(true);
-          return;
-        }
-
-        try {
-          await preloadImage(candidate);
-
-          if (!isActive) {
-            return;
-          }
-
-          setVisibleSrc(candidate);
-          return;
-        } catch {
-          // Try the next source.
-        }
-      }
-
-      if (!isActive) {
-        return;
-      }
-
-      const fallbackToShow = fallbackSrc ?? null;
-
-      if (fallbackToShow) {
-        setVisibleSrc(fallbackToShow);
-        setIsImageVisible(true);
-      }
-
-      onError?.(new Event('error') as any);
-    };
-
-    void preloadSources();
+    retainImageCache(currentSrc);
 
     return () => {
-      isActive = false;
+      releaseImageCache(currentSrc);
     };
-  }, [src, fallbackSrc, onError]);
+  }, [currentSrc]);
 
-  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    setIsImageVisible(true);
-    onLoad?.(event);
-  };
+  const handleLoad = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      setIsLoaded(true);
+      onLoad?.(event);
+    },
+    [onLoad]
+  );
 
-  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    setIsImageVisible(false);
-    if (fallbackSrc && visibleSrc && visibleSrc !== fallbackSrc) {
-      void preloadImage(fallbackSrc)
-        .then(() => {
-          setVisibleSrc(fallbackSrc);
-        })
-        .catch(() => undefined);
-    }
-    onError?.(event);
-  };
+  const handleError = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      if (!hasError && fallbackSrc && currentSrc !== fallbackSrc) {
+        setCurrentSrc(fallbackSrc);
+        setHasError(true);
+      } else {
+        onError?.(event);
+      }
+    },
+    [hasError, fallbackSrc, currentSrc, onError]
+  );
 
-  const placeholderVisible = !visibleSrc || !isImageVisible;
+  const placeholderElement = placeholder ?? (
+    <Skeleton.Image classNames={skeletonClassNames} />
+  );
 
-  useEffect(() => {
-    if (!visibleSrc) {
-      return;
-    }
-
-    retainImageCache(visibleSrc);
-
-    return () => {
-      releaseImageCache(visibleSrc);
-    };
-  }, [visibleSrc]);
+  const showPlaceholder = !isLoaded;
 
   return (
-    <div className={styles.wrapper} style={style}>
+    <div className={cx(styles.wrapper, className)} style={style}>
       <div
         className={cx(
           styles.placeholderWrapper,
-          !placeholderVisible && styles.placeholderHidden
+          !showPlaceholder && styles.placeholderHidden
         )}
-        aria-hidden={!placeholderVisible}
+        aria-hidden={!showPlaceholder}
       >
-        <div className={styles.placeholderContent}>
-          {placeholder ?? <Skeleton.Image classNames={skeletonClassNames} />}
-        </div>
+        <div className={styles.placeholderContent}>{placeholderElement}</div>
       </div>
-      {visibleSrc && (
-        <AntImage
-          {...rest}
-          className={cx(
-            styles.image,
-            isImageVisible && styles.imageVisible,
-            className
-          )}
-          src={visibleSrc}
-          alt={alt}
-          preview={preview}
-          loading={loading}
-          width="100%"
-          height="100%"
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
-      )}
+      <LazyLoadImage
+        src={currentSrc}
+        alt={alt}
+        effect="opacity"
+        threshold={threshold}
+        visibleByDefault={visibleByDefault}
+        wrapperClassName={styles.imageWrapper}
+        className={styles.image}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
     </div>
   );
 };
@@ -230,6 +183,7 @@ const useStyles = createStyles(
         transition: opacity 180ms ease;
         opacity: 1;
         pointer-events: none;
+        z-index: 1;
       `,
       placeholderHidden: css`
         opacity: 0;
@@ -243,17 +197,17 @@ const useStyles = createStyles(
         align-items: stretch;
         overflow: hidden;
       `,
+      imageWrapper: css`
+        width: 100% !important;
+        height: 100% !important;
+        display: block !important;
+      `,
       image: css`
         width: 100%;
         height: 100%;
         aspect-ratio: ${aspectRatio};
         object-fit: cover;
         display: block;
-        opacity: 0;
-        transition: opacity 180ms ease;
-      `,
-      imageVisible: css`
-        opacity: 1;
       `,
     };
   }
