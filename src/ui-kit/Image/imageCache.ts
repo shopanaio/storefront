@@ -7,6 +7,7 @@ interface CacheEntry {
   error?: Error;
   usageCount: number;
   pinned: boolean;
+  abort: () => void;
 }
 
 const cache = new Map<string, CacheEntry>();
@@ -21,14 +22,23 @@ const createPreloadPromise = (src: string) => {
   const loader = new window.Image();
   loader.decoding = 'async';
 
+  let settled = false;
+
+  const cleanup = () => {
+    loader.onload = null;
+    loader.onerror = null;
+  };
+
+  const abort = () => {
+    if (settled) {
+      return;
+    }
+    settled = true;
+    cleanup();
+    loader.src = '';
+  };
+
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    let settled = false;
-
-    const cleanup = () => {
-      loader.onload = null;
-      loader.onerror = null;
-    };
-
     const fulfill = () => {
       if (settled) {
         return;
@@ -89,7 +99,19 @@ const createPreloadPromise = (src: string) => {
     }
   });
 
-  return { promise, loader };
+  return { promise, loader, abort };
+};
+
+const maybeCleanupEntry = (src: string) => {
+  const entry = cache.get(src);
+  if (!entry) {
+    return;
+  }
+
+  if (entry.usageCount === 0 && !entry.pinned) {
+    entry.abort();
+    cache.delete(src);
+  }
 };
 
 const ensureEntry = (src: string): CacheEntry | null => {
@@ -102,13 +124,14 @@ const ensureEntry = (src: string): CacheEntry | null => {
     return existing;
   }
 
-  const { promise, loader } = createPreloadPromise(src);
+  const { promise, loader, abort } = createPreloadPromise(src);
   const entry: CacheEntry = {
     status: 'pending',
     promise,
     image: loader,
     usageCount: 0,
     pinned: false,
+    abort,
   };
 
   cache.set(src, entry);
@@ -121,7 +144,8 @@ const ensureEntry = (src: string): CacheEntry | null => {
     .catch((error) => {
       entry.status = 'error';
       entry.error = error;
-      cache.delete(src);
+      // Only cleanup if no one is using this entry
+      maybeCleanupEntry(src);
     });
 
   return entry;
@@ -165,10 +189,7 @@ export const releaseImageCache = (src?: string | null) => {
   }
 
   entry.usageCount = Math.max(0, entry.usageCount - 1);
-
-  if (entry.usageCount === 0 && !entry.pinned) {
-    cache.delete(src);
-  }
+  maybeCleanupEntry(src);
 };
 
 export const pinImageCache = (src?: string | null) => {
@@ -195,10 +216,7 @@ export const unpinImageCache = (src?: string | null) => {
   }
 
   entry.pinned = false;
-
-  if (entry.usageCount === 0) {
-    cache.delete(src);
-  }
+  maybeCleanupEntry(src);
 };
 
 export const primeImageCache = (src?: string | null) => {
@@ -212,4 +230,24 @@ export const primeImageCache = (src?: string | null) => {
 export const isImageCached = (src: string) =>
   cache.get(src)?.status === 'loaded';
 
+export const isImageError = (src: string) =>
+  cache.get(src)?.status === 'error';
+
 export const getCachedImage = (src: string) => cache.get(src)?.image ?? null;
+
+export const abortImagePreload = (src?: string | null) => {
+  if (!src || !isClient()) {
+    return;
+  }
+
+  const entry = cache.get(src);
+  if (!entry || entry.status !== 'pending') {
+    return;
+  }
+
+  // Only abort if no one else is using this entry
+  if (entry.usageCount === 0 && !entry.pinned) {
+    entry.abort();
+    cache.delete(src);
+  }
+};
