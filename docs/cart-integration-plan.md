@@ -1,93 +1,88 @@
-# План интеграции модуля Cart с корневым приложением
+# Cart Module Integration Plan for the Root Application
 
-## Оглавление
-1. [Обзор](#обзор)
-2. [Текущее состояние](#текущее-состояние)
-3. [Архитектура модуля Cart](#архитектура-модуля-cart)
-4. [Этапы интеграции](#этапы-интеграции)
-5. [Миграция существующего кода](#миграция-существующего-кода)
-6. [Тестирование](#тестирование)
-7. [Потенциальные проблемы](#потенциальные-проблемы)
+## Table of Contents
 
----
+1. [Overview](#overview)
+2. [Current State](#current-state)
+3. [Cart Module Architecture](#cart-module-architecture)
+4. [Integration Stages](#integration-stages)
+5. [Existing Code Migration](#existing-code-migration)
+6. [Testing](#testing)
+7. [Potential Issues](#potential-issues)
 
-## Обзор
+## Overview
 
-Модуль Cart находится в `packages/shopana-storefront-sdk/src/modules/cart` и представляет собой полнофункциональное решение для управления корзиной покупок с поддержкой:
-- Framework-agnostic core логики
-- React адаптеров (хуки, контекст, провайдеры)
-- Next.js специфичных решений (SSR loaders)
-- Интеграции с Relay GraphQL
-- State management через Zustand
+The Cart module is located in `packages/shopana-storefront-sdk/src/modules/cart`. It is a full-featured cart management solution with support for:
+- Framework-agnostic core logic
+- React adapters: hooks, context, providers
+- Next.js-specific SSR loaders
+- Relay GraphQL integration
+- Zustand state management
 
-**Цель**: Полностью интегрировать модуль Cart SDK в корневое приложение, заменив существующую реализацию корзины.
+**Goal:** fully integrate the SDK Cart module into the root application and replace the existing cart implementation.
 
----
+## Current State
 
-## Текущее состояние
+### Existing Cart Implementation
 
-### Существующая реализация корзины
+**Location:** `/src/providers/cart/`
 
-**Расположение**: `/src/providers/cart/`
+**Files:**
+- `cart-context.tsx` - old cart context
+- `cart-provider.shopana.tsx` - Shopana provider
+- `cart-provider.shopify.tsx` - Shopify provider
+- `index.ts` - provider selection through `cmsPick`
 
-**Файлы**:
-- `cart-context.tsx` - старый контекст корзины
-- `cart-provider.shopana.tsx` - провайдер для Shopana
-- `cart-provider.shopify.tsx` - провайдер для Shopify
-- `index.ts` - выбор провайдера через `cmsPick`
+**Hooks in use:**
+- `/src/hooks/cart/` - existing cart hooks
 
-**Используемые хуки**:
-- `/src/hooks/cart/` - существующие хуки для работы с корзиной
+**Problems with the current implementation:**
+- Duplicated logic between providers
+- Tight coupling to application Relay fragments
+- No single source of truth
+- Difficult to test
 
-**Проблемы текущей реализации**:
-- Дублирование логики между провайдерами
-- Тесная связь с Relay фрагментами приложения
-- Отсутствие единого источника правды (single source of truth)
-- Сложность тестирования
+## Cart Module Architecture
 
----
+### Module Structure
 
-## Архитектура модуля Cart
-
-### Структура модуля
-
-```
+```text
 packages/shopana-storefront-sdk/src/modules/cart/
-├── core/                           # Framework-agnostic ядро
-│   ├── config.ts                   # Конфигурация модуля
-│   ├── types.ts                    # TypeScript типы
+├── core/                           # Framework-agnostic core
+│   ├── config.ts                   # Module configuration
+│   ├── types.ts                    # TypeScript types
 │   ├── graphql/
-│   │   ├── fragments/              # GraphQL фрагменты
+│   │   ├── fragments/              # GraphQL fragments
 │   │   │   ├── CartFragment.ts
 │   │   │   └── CartLineFragment.ts
-│   │   ├── queries/                # GraphQL запросы
+│   │   ├── queries/                # GraphQL queries
 │   │   │   └── loadCartQuery.ts
-│   │   └── mutations/              # GraphQL мутации
+│   │   └── mutations/              # GraphQL mutations
 │   │       ├── addToCartMutation.ts
 │   │       ├── removeFromCartMutation.ts
 │   │       ├── updateCartLineQuantityMutation.ts
 │   │       ├── replaceCartItemMutation.ts
 │   │       ├── clearCartMutation.ts
 │   │       └── createCartMutation.ts
-│   ├── mappers/                    # Преобразование данных
+│   ├── mappers/                    # Data transformation
 │   │   └── mapShopanaToEntityCart.ts
 │   └── utils/
-│       ├── cartId.ts               # Работа с ID корзины (cookies)
-│       └── cartMath.ts             # Математические операции
+│       ├── cartId.ts               # Cart ID and cookies
+│       └── cartMath.ts             # Cart math helpers
 │
-├── store/                          # Абстракция хранилища
-│   ├── CartStore.ts                # Интерфейс хранилища
-│   └── createCartStore.ts          # Фабрика хранилища
+├── store/                          # Store abstraction
+│   ├── CartStore.ts                # Store interface
+│   └── createCartStore.ts          # Store factory
 │
-├── react/                          # React адаптер
-│   ├── context/                    # React контекст
+├── react/                          # React adapter
+│   ├── context/                    # React context
 │   │   └── CartContext.tsx
-│   ├── providers/                  # Провайдеры
+│   ├── providers/                  # Providers
 │   │   └── CartProvider.tsx
-│   ├── store/                      # Zustand реализация
+│   ├── store/                      # Zustand implementation
 │   │   └── CartStoreZustand.ts
-│   └── hooks/                      # React хуки
-│       ├── useCart.ts              # Основной хук корзины
+│   └── hooks/                      # React hooks
+│       ├── useCart.ts              # Main cart hook
 │       ├── useCartId.ts
 │       ├── useAddItemToCart.ts
 │       ├── useRemoveItemFromCart.ts
@@ -99,17 +94,19 @@ packages/shopana-storefront-sdk/src/modules/cart/
 │       ├── useCartFragment.ts
 │       └── useCartLineFragment.ts
 │
-├── next/                           # Next.js адаптер
+├── next/                           # Next.js adapter
 │   └── loaders/
-│       └── loadCartServerQuery.ts  # SSR загрузка корзины
+│       └── loadCartServerQuery.ts  # SSR cart loader
 │
-└── index.ts                        # Главный экспорт
+└── index.ts                        # Main export
 ```
 
-### Ключевые компоненты
+### Key Components
 
-#### 1. **CartStore** (Zustand)
-Централизованное хранилище состояния корзины:
+#### 1. `CartStore` (Zustand)
+
+Centralized cart state store:
+
 ```typescript
 interface CartStore {
   cart: model.Cart | null;
@@ -122,49 +119,51 @@ interface CartStore {
 }
 ```
 
-#### 2. **CartProvider**
-React провайдер, который:
-- Инициализирует store
-- Загружает корзину из cookies при монтировании
-- Управляет жизненным циклом корзины
-- Предоставляет контекст для дочерних компонентов
-- Поддерживает SSR через `initialCartData`
+#### 2. `CartProvider`
 
-#### 3. **Хуки**
-Набор хуков для работы с корзиной:
-- `useCart()` - получение текущего состояния корзины
-- `useAddItemToCart()` - добавление товаров
-- `useRemoveItemFromCart()` - удаление товаров
-- `useUpdateCartLineQuantity()` - обновление количества
-- `useReplaceCartItem()` - замена варианта товара
-- `useClearCart()` - очистка корзины
-- `useCreateCart()` - создание новой корзины
+React provider that:
+- Initializes the store
+- Loads the cart from cookies on mount
+- Manages the cart lifecycle
+- Provides context to child components
+- Supports SSR through `initialCartData`
 
-#### 4. **GraphQL интеграция**
-- Все операции работают через Relay
-- Автоматическая генерация типов через `__generated__`
-- Фрагменты для повторного использования данных
+#### 3. Hooks
 
----
+Hooks for cart operations:
+- `useCart()` - get current cart state
+- `useAddItemToCart()` - add products
+- `useRemoveItemFromCart()` - remove products
+- `useUpdateCartLineQuantity()` - update quantity
+- `useReplaceCartItem()` - replace a product variant
+- `useClearCart()` - clear the cart
+- `useCreateCart()` - create a new cart
 
-## Этапы интеграции
+#### 4. GraphQL Integration
 
-### Этап 1: Подготовка (Preparation)
+- All operations use Relay
+- Types are generated automatically through `__generated__`
+- Fragments are used for reusable data shapes
 
-**Цель**: Подготовить инфраструктуру для интеграции
+## Integration Stages
 
-**Задачи**:
+### Stage 1: Preparation
 
-1. **Анализ зависимостей**
-   - Составить список всех компонентов, использующих старую корзину
-   - Проверить совместимость версий зависимостей (React, Relay, Zustand)
-   - Документировать API старой реализации
+**Goal:** prepare the infrastructure for integration.
 
-2. **Создание резервной копии**
-   - Создать feature branch: `feat/cart-sdk-integration`
-   - Сохранить старую реализацию с суффиксом `.old.tsx`
+**Tasks:**
 
-3. **Настройка конфигурации**
+1. **Dependency analysis**
+   - List all components that use the old cart
+   - Check dependency version compatibility: React, Relay, Zustand
+   - Document the old implementation API
+
+2. **Backup**
+   - Create feature branch `feat/cart-sdk-integration`
+   - Preserve the old implementation with the `.old.tsx` suffix
+
+3. **Configuration**
+
    ```typescript
    // src/config/cart.config.ts
    import { createCartConfig } from '@shopana/storefront-sdk/cart';
@@ -181,17 +180,16 @@ React провайдер, который:
    });
    ```
 
-**Результат**: Готовая инфраструктура для начала интеграции
+**Result:** infrastructure is ready for integration.
 
----
+### Stage 2: Integrate `CartProvider` into Root Layout
 
-### Этап 2: Интеграция CartProvider в Root Layout
+**Goal:** replace the old provider with the SDK provider.
 
-**Цель**: Заменить старый провайдер на новый из SDK
+**Tasks:**
 
-**Задачи**:
+1. **Create a store instance**
 
-1. **Создание экземпляра store**
    ```typescript
    // src/store/cart.store.ts
    import { createCartStoreZustand } from '@shopana/storefront-sdk/cart';
@@ -199,7 +197,8 @@ React провайдер, который:
    export const cartStore = createCartStoreZustand();
    ```
 
-2. **Обновление Root Layout**
+2. **Update Root Layout**
+
    ```typescript
    // src/app/layout.tsx
    'use client';
@@ -221,7 +220,6 @@ React провайдер, который:
        <html lang="en" suppressHydrationWarning>
          <head>
            <title>Shopana</title>
-           {/* meta tags */}
          </head>
          <RelayEnvironmentProvider environment={getCurrentEnvironment()}>
            <ShopProvider config={mockShopConfig}>
@@ -238,26 +236,25 @@ React провайдер, который:
    }
    ```
 
-3. **Удаление старого провайдера**
-   - Убрать импорты из `src/providers/cart/`
-   - Переименовать старые файлы: `*.old.tsx`
-   - Обновить `src/providers/cart/index.ts`:
+3. **Remove the old provider**
+   - Remove imports from `src/providers/cart/`
+   - Rename old files to `*.old.tsx`
+   - Update `src/providers/cart/index.ts`:
+
    ```typescript
-   // src/providers/cart/index.ts
    export { CartProvider } from '@shopana/storefront-sdk/cart';
    ```
 
-**Результат**: CartProvider из SDK активен во всем приложении
+**Result:** the SDK `CartProvider` is active across the application.
 
----
+### Stage 3: Migrate Hooks
 
-### Этап 3: Миграция хуков
+**Goal:** replace all old cart hooks with SDK hooks.
 
-**Цель**: Заменить все использования старых хуков корзины на новые из SDK
+**Tasks:**
 
-**Задачи**:
+1. **Create a hooks barrel file**
 
-1. **Создание barrel-файла для хуков**
    ```typescript
    // src/hooks/cart/index.ts
    export {
@@ -275,43 +272,42 @@ React провайдер, который:
    } from '@shopana/storefront-sdk/cart';
    ```
 
-2. **Обновление импортов в компонентах**
+2. **Update component imports**
 
-   **До**:
+   Before:
+
    ```typescript
    import { useCart } from '@src/hooks/cart/useCart';
    ```
 
-   **После**:
+   After:
+
    ```typescript
    import { useCart } from '@shopana/storefront-sdk/cart';
-   // или
+   // or
    import { useCart } from '@src/hooks/cart';
    ```
 
-3. **Адаптация типов**
-   - Обновить типы компонентов под новые типы из SDK
-   - Заменить `model.Cart` на типы из SDK, если требуется
+3. **Adapt types**
+   - Update component props for SDK types
+   - Replace `model.Cart` with SDK types when needed
 
-4. **Массовая замена**
+4. **Mass replacement**
+
    ```bash
-   # Найти все файлы, использующие старые хуки
    grep -r "from '@src/hooks/cart/" src/
-
-   # Заменить импорты (используя IDE или скрипт)
    ```
 
-**Результат**: Все компоненты используют хуки из SDK
+**Result:** all components use SDK hooks.
 
----
+### Stage 4: Next.js SSR Integration
 
-### Этап 4: Интеграция с Next.js SSR
+**Goal:** add server-side rendering support for the cart.
 
-**Цель**: Добавить поддержку Server-Side Rendering для корзины
+**Tasks:**
 
-**Задачи**:
+1. **Create an SSR loader utility**
 
-1. **Создание SSR loader утилиты**
    ```typescript
    // src/utils/cart/loadCartSSR.ts
    import { loadCartServerQuery } from '@shopana/storefront-sdk/cart/next';
@@ -323,7 +319,8 @@ React провайдер, который:
    }
    ```
 
-2. **Обновление page компонентов**
+2. **Update page components**
+
    ```typescript
    // src/app/[locale]/(default)/page.tsx
    import { loadCartSSR } from '@src/utils/cart/loadCartSSR';
@@ -333,428 +330,156 @@ React провайдер, который:
      const cartId = cookies().get('shopana_cart_id')?.value;
      const initialCartData = cartId ? await loadCartSSR(cartId) : null;
 
-     return (
-       <ClientHomePage initialCartData={initialCartData} />
-     );
+     return <ClientHomePage initialCartData={initialCartData} />;
    }
    ```
 
-3. **Передача данных в CartProvider**
-   - Использовать `initialCartData` prop для передачи предзагруженных данных
+3. **Pass data into `CartProvider`**
+   - Use the `initialCartData` prop for preloaded cart data
 
-**Результат**: Корзина загружается на сервере, улучшая UX
+**Result:** cart data is loaded on the server for better UX.
 
----
+### Stage 5: Update UI Components
 
-### Этап 5: Обновление компонентов UI
+**Goal:** adapt all cart UI components.
 
-**Цель**: Адаптировать все UI компоненты корзины
+**Tasks:**
+- Inventory components: `CartButton`, `CartIcon`, `CartDrawer`, `CartSheet`, `CartItem`, `CartSummary`, `CheckoutButton`, `MiniCart`
+- Update each component to read cart data from the SDK
+- Update add-to-cart forms to use `useAddItemToCart`
 
-**Задачи**:
+Example:
 
-1. **Инвентаризация компонентов**
-   - CartButton/CartIcon
-   - CartDrawer/CartSheet
-   - CartItem
-   - CartSummary
-   - CheckoutButton
-   - MiniCart
+```typescript
+'use client';
 
-2. **Обновление каждого компонента**
+import { useCart } from '@shopana/storefront-sdk/cart';
 
-   **Пример: CartButton**
-   ```typescript
-   // src/components/Cart/CartButton.tsx
-   'use client';
+export function CartButton() {
+  const { cart, loading } = useCart();
+  const itemCount = cart?.lines?.length ?? 0;
 
-   import { useCart } from '@shopana/storefront-sdk/cart';
-   import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+  return (
+    <button className="relative">
+      Cart
+      {itemCount > 0 && <span>{itemCount}</span>}
+    </button>
+  );
+}
+```
 
-   export function CartButton() {
-     const { cart, loading } = useCart();
-     const itemCount = cart?.lines?.length ?? 0;
+**Result:** all UI components use the SDK.
 
-     return (
-       <button className="relative">
-         <ShoppingCartIcon className="w-6 h-6" />
-         {itemCount > 0 && (
-           <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-             {itemCount}
-           </span>
-         )}
-       </button>
-     );
-   }
-   ```
+### Stage 6: Update Tests
 
-3. **Обновление форм добавления в корзину**
-   ```typescript
-   // src/components/Product/AddToCartForm.tsx
-   'use client';
+**Goal:** cover the new implementation with tests.
 
-   import { useAddItemToCart } from '@shopana/storefront-sdk/cart';
-   import type { AddToCartInput } from '@shopana/storefront-sdk/cart';
+**Tasks:**
+- Create SDK mocks
+- Update existing test expectations
+- Add integration tests for the cart provider and add-to-cart flow
 
-   export function AddToCartForm({ variant }) {
-     const { addItem, loading } = useAddItemToCart();
+### Stage 7: Optimization and Polish
 
-     const handleAddToCart = async () => {
-       const input: AddToCartInput = {
-         purchasableId: variant.id,
-         purchasableSnapshot: {
-           price: variant.price,
-           compareAtPrice: variant.compareAtPrice,
-         },
-         quantity: 1,
-       };
+**Goal:** improve performance and UX.
 
-       await addItem(input, {
-         onSuccess: () => {
-           console.log('Added to cart!');
-         },
-         onError: (error) => {
-           console.error('Failed to add to cart:', error);
-         },
-       });
-     };
+**Tasks:**
+- Implement optimistic updates for mutations
+- Add error handling
+- Add analytics wrappers for cart actions
+- Add loaders, success toasts, and update animations
 
-     return (
-       <button
-         onClick={handleAddToCart}
-         disabled={loading}
-       >
-         {loading ? 'Adding...' : 'Add to Cart'}
-       </button>
-     );
-   }
-   ```
+## Existing Code Migration
 
-**Результат**: Все UI компоненты используют SDK
+### Old API to New API Mapping
 
----
+| Old API | New API (SDK) | Notes |
+| --- | --- | --- |
+| `useCartContext()` | `useCartContext()` | Compatible, but with new types |
+| `useCart()` | `useCart()` | Returns `{ cart, loading, loaded, error }` |
+| `useAddToCart()` | `useAddItemToCart()` | New name, similar API |
+| `useRemoveFromCart()` | `useRemoveItemFromCart()` | New name |
+| `useUpdateQuantity()` | `useUpdateCartLineQuantity()` | More explicit name |
+| `useClearCart()` | `useClearCart()` | Compatible |
+| `cartKey` fragment | `cart` model | SDK uses data mapping |
 
-### Этап 6: Обновление тестов
+### Per-Component Migration Checklist
 
-**Цель**: Обеспечить покрытие тестами новой реализации
+- [ ] Update hook imports
+- [ ] Update prop types
+- [ ] Update cart data access
+- [ ] Update mutation handlers
+- [ ] Update tests
+- [ ] Check behavior in dev mode
+- [ ] Check SSR/SSG scenarios
 
-**Задачи**:
+### Application-Wide Checklist
 
-1. **Создание моков для SDK**
-   ```typescript
-   // src/__tests__/mocks/cart.mock.ts
-   import { vi } from 'vitest';
+- [ ] Update Root Layout
+- [ ] Update configuration
+- [ ] Create barrel exports
+- [ ] Update documentation
+- [ ] Run E2E validation
+- [ ] Run a performance audit
 
-   export const mockCartStore = {
-     cart: null,
-     loading: false,
-     loaded: false,
-     error: null,
-     setCart: vi.fn(),
-     setLoading: vi.fn(),
-     setError: vi.fn(),
-   };
+## Testing
 
-   export const mockUseCart = () => ({
-     cart: mockCartStore.cart,
-     loading: false,
-     loaded: true,
-     error: null,
-   });
-   ```
+### Unit Tests
 
-2. **Обновление существующих тестов**
-   - Заменить моки старой реализации на новые
-   - Обновить expectations под новый API
-
-3. **Написание интеграционных тестов**
-   ```typescript
-   // src/__tests__/cart/cart-integration.test.tsx
-   import { render, screen, waitFor } from '@testing-library/react';
-   import { CartProvider, createCartStoreZustand } from '@shopana/storefront-sdk/cart';
-   import { AddToCartForm } from '@src/components/Product/AddToCartForm';
-
-   describe('Cart Integration', () => {
-     it('should add item to cart', async () => {
-       const store = createCartStoreZustand();
-
-       render(
-         <CartProvider store={store} config={cartConfig}>
-           <AddToCartForm variant={mockVariant} />
-         </CartProvider>
-       );
-
-       const button = screen.getByText('Add to Cart');
-       fireEvent.click(button);
-
-       await waitFor(() => {
-         expect(store.cart?.lines.length).toBe(1);
-       });
-     });
-   });
-   ```
-
-**Результат**: Полное покрытие тестами
-
----
-
-### Этап 7: Оптимизация и доработка
-
-**Цель**: Оптимизировать производительность и UX
-
-**Задачи**:
-
-1. **Оптимистичные обновления**
-   - Реализовать optimistic updates для мутаций
-   - Использовать Relay optimistic response
-
-2. **Обработка ошибок**
-   ```typescript
-   // src/components/Cart/ErrorBoundary.tsx
-   import { useCartStore } from '@shopana/storefront-sdk/cart';
-
-   export function CartErrorBoundary({ children }) {
-     const { error } = useCartStore();
-
-     if (error) {
-       return (
-         <div className="error-state">
-           <p>Oops! Something went wrong with your cart.</p>
-           <button onClick={() => window.location.reload()}>
-             Reload
-           </button>
-         </div>
-       );
-     }
-
-     return children;
-   }
-   ```
-
-3. **Добавление аналитики**
-   ```typescript
-   // src/hooks/cart/useCartAnalytics.ts
-   import { useAddItemToCart } from '@shopana/storefront-sdk/cart';
-   import { trackEvent } from '@src/analytics';
-
-   export function useCartWithAnalytics() {
-     const { addItem, ...rest } = useAddItemToCart();
-
-     const addItemWithTracking = async (input, options) => {
-       trackEvent('add_to_cart', {
-         product_id: input.purchasableId,
-         quantity: input.quantity,
-       });
-
-       return addItem(input, options);
-     };
-
-     return {
-       addItem: addItemWithTracking,
-       ...rest,
-     };
-   }
-   ```
-
-4. **Улучшение UX**
-   - Добавить лоадеры
-   - Добавить тосты для успешных операций
-   - Анимации для обновлений корзины
-
-**Результат**: Оптимизированная и отполированная реализация
-
----
-
-## Миграция существующего кода
-
-### Mapping старого API на новый
-
-| Старый API | Новый API (SDK) | Примечания |
-|------------|-----------------|------------|
-| `useCartContext()` | `useCartContext()` | Совместимый, но с новыми типами |
-| `useCart()` | `useCart()` | Возвращает `{ cart, loading, loaded, error }` |
-| `useAddToCart()` | `useAddItemToCart()` | Новое название, схожий API |
-| `useRemoveFromCart()` | `useRemoveItemFromCart()` | Новое название |
-| `useUpdateQuantity()` | `useUpdateCartLineQuantity()` | Более явное название |
-| `useClearCart()` | `useClearCart()` | Совместимый |
-| `cartKey` (fragment) | `cart` (модель) | SDK использует маппинг |
-
-### Контрольный список миграции
-
-**Для каждого компонента:**
-
-- [ ] Обновить импорты хуков
-- [ ] Обновить типы props
-- [ ] Обновить обращения к данным корзины
-- [ ] Обновить обработчики мутаций
-- [ ] Обновить тесты
-- [ ] Проверить работу в dev режиме
-- [ ] Проверить SSR/SSG сценарии
-
-**Для всего приложения:**
-
-- [ ] Обновить Root Layout
-- [ ] Обновить конфигурацию
-- [ ] Создать barrel exports
-- [ ] Обновить документацию
-- [ ] Провести E2E тестирование
-- [ ] Провести performance audit
-
----
-
-## Тестирование
-
-### Unit тесты
-
-**Что тестировать:**
-- Хуки корзины в изоляции
+Test:
+- Cart hooks in isolation
 - Zustand store
-- Маппинг данных
-- Утилиты (cartId, cartMath)
+- Data mapping
+- Utilities: `cartId`, `cartMath`
 
-**Инструменты:**
+Tools:
 - Vitest
-- @testing-library/react
-- @testing-library/react-hooks
+- `@testing-library/react`
+- `@testing-library/react-hooks`
 
-### Integration тесты
+### Integration Tests
 
-**Что тестировать:**
-- Полный flow добавления в корзину
-- Обновление количества
-- Удаление товаров
-- Очистка корзины
-- Работа с cookies
-- SSR загрузка
+Test:
+- `CartProvider` initialization
+- Cart loading from cookies
+- Add, remove, update, replace, and clear cart flows
+- SSR hydration with `initialCartData`
 
-### E2E тесты
+### E2E Tests
 
-**Что тестировать:**
-- Добавление товара в корзину со страницы продукта
-- Переход в корзину
-- Изменение количества
-- Переход к оформлению заказа
-- Сохранение корзины между сессиями
+Test:
+- Add product to cart from product page
+- Add product to cart from listing
+- Open cart drawer
+- Change quantity
+- Remove item
+- Go to checkout
 
-**Инструменты:**
-- Playwright / Cypress
+## Potential Issues
 
-### Performance тесты
+1. **Relay environment mismatch**
+   - Ensure the SDK and application use the same Relay environment instance.
 
-**Метрики:**
-- Время первой загрузки корзины
-- Время выполнения мутаций
-- Размер bundle
-- Количество re-renders
+2. **Cart ID synchronization**
+   - Check cookie name and lifetime.
+   - Ensure cart ID is cleared after checkout when required.
 
----
+3. **Type mismatches**
+   - Align application models with SDK models.
+   - Avoid importing old cart fragments after migration.
 
-## Потенциальные проблемы
+4. **SSR hydration**
+   - Confirm that `initialCartData` is passed only when available.
+   - Avoid client/server state mismatches.
 
-### 1. Несовместимость типов GraphQL
+5. **Shopify provider support**
+   - Keep provider-specific behavior behind the SDK boundary.
 
-**Проблема**: Фрагменты в SDK могут отличаться от текущих
+## Final Result
 
-**Решение**:
-- Использовать маппинг для преобразования данных
-- Обновить фрагменты в SDK под нужды приложения
-- Использовать адаптеры
-
-### 2. Конфликты с существующими cookies
-
-**Проблема**: Старая и новая реализация могут использовать разные форматы
-
-**Решение**:
-- Использовать миграционный скрипт
-- Очистить cookies при деплое
-- Добавить версионирование в cookie
-
-### 3. Relay cache invalidation
-
-**Проблема**: После мутаций может не обновляться UI
-
-**Решение**:
-- Правильно настроить Relay updater functions
-- Использовать `store.invalidateStore()` после мутаций
-- Добавить manual refetch при необходимости
-
-### 4. SSR hydration mismatch
-
-**Проблема**: Расхождение между серверным и клиентским рендерингом
-
-**Решение**:
-- Передавать `initialCartData` корректно
-- Использовать `suppressHydrationWarning` где нужно
-- Синхронизировать состояние до гидрации
-
-### 5. Bundle size увеличение
-
-**Проблема**: SDK может увеличить размер бандла
-
-**Решение**:
-- Использовать tree-shaking
-- Импортировать только нужные части SDK
-- Провести bundle analysis
-- Lazy loading для cart модалов/drawer
-
----
-
-## Финальный чеклист перед продакшеном
-
-- [ ] Все тесты проходят (unit, integration, e2e)
-- [ ] Performance не ухудшилась
-- [ ] Bundle size в пределах допустимого
-- [ ] SSR работает корректно
-- [ ] Cookies работают правильно
-- [ ] Все компоненты мигрированы
-- [ ] Старый код удален или помечен как deprecated
-- [ ] Документация обновлена
-- [ ] Аналитика настроена
-- [ ] Error tracking настроен
-- [ ] Проведен code review
-- [ ] Получено одобрение stakeholders
-
----
-
-## Rollback план
-
-В случае критических проблем:
-
-1. **Быстрый откат**
-   ```bash
-   git revert <commit-hash>
-   git push origin main
-   ```
-
-2. **Восстановление старой реализации**
-   - Переименовать `*.old.tsx` обратно
-   - Вернуть старые импорты
-   - Откатить Root Layout
-
-3. **Постепенный откат**
-   - Использовать feature flag для переключения между реализациями
-   - Откатить по компонентам, а не всё сразу
-
----
-
-## Заключение
-
-Интеграция модуля Cart SDK в корневое приложение - это комплексная задача, требующая:
-- Тщательного планирования
-- Поэтапного подхода
-- Полного тестового покрытия
-- Мониторинга производительности
-
-При правильном выполнении план приведет к:
-- Более чистому и maintainable коду
-- Лучшей производительности
-- Улучшенному DX (Developer Experience)
-- Единообразному API для работы с корзиной
-- Упрощению дальнейшей разработки
-
-**Рекомендуемый timeline**: 2-3 недели с учетом тестирования и code review.
-
-**Следующие шаги**:
-1. Создать feature branch
-2. Начать с Этапа 1 (Подготовка)
-3. Проводить ежедневные standup для отслеживания прогресса
-4. Делать промежуточные code reviews после каждого этапа
+After the migration:
+- The root app uses the SDK Cart module
+- Cart state has one source of truth
+- UI components no longer depend on old cart providers
+- SSR cart loading is supported
+- Cart mutations and hooks are reusable by other storefronts

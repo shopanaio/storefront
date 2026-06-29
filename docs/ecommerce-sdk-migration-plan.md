@@ -1,70 +1,66 @@
-# План миграции API слоя в @shopana/storefront-sdk
+# API Layer Migration Plan for `@shopana/storefront-sdk`
 
-**Дата создания:** 2025-11-23
-**Статус:** В работе
-**Цель:** Вынести весь API слой из storefront в отдельный SDK пакет для переиспользования
+**Created:** 2025-11-23  
+**Status:** In progress  
+**Goal:** move the entire API layer from the storefront into a reusable SDK package.
 
----
+## Overview
 
-## Обзор
-
-Создание нового пакета `@shopana/storefront-sdk` в монорепозитории, который будет содержать:
-- GraphQL hooks (Relay)
-- Relay инфраструктуру (Environment, SSR helpers)
-- Zustand stores (cart, session, app)
+Create a new monorepo package named `@shopana/storefront-sdk`. The package should contain:
+- GraphQL hooks based on Relay
+- Relay infrastructure: environment and SSR helpers
+- Zustand stores: cart, session, app
 - React providers
 - GraphQL queries
-- Multi-provider поддержку (Shopana/Shopify)
+- Multi-provider support for Shopana and Shopify
 
----
+## Project Structure
 
-## Структура проекта
+### Current Structure: Code to Move
 
-### Текущая структура (что переносим)
-
-```
+```text
 storefront/src/
-├── hooks/              # ~158 файлов хуков
-│   ├── auth/          # useSignIn, useSignUp, useSignOut
-│   ├── cart/          # useAddItemToCart, useCart, useUpdateCartLineQuantity
-│   ├── category/      # useCategoryClientQuery
-│   ├── product/       # useProduct, useProductBundlePricing
-│   ├── search/        # usePredictiveSearch
-│   ├── session/       # useGetSession, useGetSessionData
-│   └── [utils]        # useBreakpoints, useCurrency, useIsMobile
-├── relay/             # 4 файла Relay инфраструктуры
+├── hooks/              # About 158 hook files
+│   ├── auth/           # useSignIn, useSignUp, useSignOut
+│   ├── cart/           # useAddItemToCart, useCart, useUpdateCartLineQuantity
+│   ├── category/       # useCategoryClientQuery
+│   ├── product/        # useProduct, useProductBundlePricing
+│   ├── search/         # usePredictiveSearch
+│   ├── session/        # useGetSession, useGetSessionData
+│   └── [utils]         # useBreakpoints, useCurrency, useIsMobile
+├── relay/              # 4 Relay infrastructure files
 │   ├── Environment.ts
 │   ├── loadSerializableQuery.ts
 │   ├── useSerializablePreloadedQuery.ts
 │   └── SessionPreloadProvider.tsx
-├── store/             # 4 Zustand stores
-│   ├── cartStore.ts   # Optimistic updates
+├── store/              # 4 Zustand stores
+│   ├── cartStore.ts    # Optimistic updates
 │   ├── sessionStore.ts
 │   ├── appStore.ts
 │   └── cartMath.ts
-├── queries/           # Shared GraphQL queries
+├── queries/            # Shared GraphQL queries
 │   ├── CategoryQuery/
 │   ├── Listing/
 │   └── Reviews/
-├── providers/         # React contexts
+├── providers/          # React contexts
 │   ├── cart-context.tsx
 │   └── session-context.tsx
 └── cms/
-    └── pick.ts        # Multi-provider picker
+    └── pick.ts         # Multi-provider picker
 ```
 
-### Целевая структура SDK
+### Target SDK Structure
 
-```
+```text
 packages/ecommerce-sdk/
 ├── src/
-│   ├── hooks/         # Все хуки из storefront
-│   ├── relay/         # Relay инфраструктура
-│   ├── store/         # Zustand stores
-│   ├── queries/       # GraphQL queries
-│   ├── providers/     # React providers
-│   ├── utils/         # cmsPick, accessToken
-│   └── index.ts       # Главный экспорт
+│   ├── hooks/          # All hooks from storefront
+│   ├── relay/          # Relay infrastructure
+│   ├── store/          # Zustand stores
+│   ├── queries/        # GraphQL queries
+│   ├── providers/      # React providers
+│   ├── utils/          # cmsPick, accessToken
+│   └── index.ts        # Main export
 ├── schema.shopana.graphql
 ├── schema.shopify.graphql
 ├── relay.shopana.json
@@ -74,17 +70,15 @@ packages/ecommerce-sdk/
 └── README.md
 ```
 
----
+## Stage 1: Create the Package Structure
 
-## Этап 1: Создание структуры пакета
-
-### 1.1 Создать директорию и базовые файлы
+### 1.1 Create Directories and Base Files
 
 ```bash
 mkdir -p packages/ecommerce-sdk/src/{hooks,relay,store,queries,providers,utils}
 ```
 
-### 1.2 Создать package.json
+### 1.2 Create `package.json`
 
 ```json
 {
@@ -155,7 +149,7 @@ mkdir -p packages/ecommerce-sdk/src/{hooks,relay,store,queries,providers,utils}
 }
 ```
 
-### 1.3 Создать tsconfig.json
+### 1.3 Create `tsconfig.json`
 
 ```json
 {
@@ -183,29 +177,26 @@ mkdir -p packages/ecommerce-sdk/src/{hooks,relay,store,queries,providers,utils}
 }
 ```
 
----
+## Stage 2: Move Code
 
-## Этап 2: Перенос кода
+### 2.1 Hooks: About 158 Files
 
-### 2.1 Hooks (~158 файлов)
-
-**Команда:**
 ```bash
 cp -r storefront/src/hooks/* packages/ecommerce-sdk/src/hooks/
 ```
 
-**Категории хуков:**
-- ✅ `auth/` - useSignIn, useSignUp, useSignOut, useForgotPassword, useResetPassword
-- ✅ `cart/` - useAddItemToCart, useCart, useUpdateCartLineQuantity, useRemoveItemFromCart
-- ✅ `category/` - useCategoryClientQuery, loadCategoryServerQuery, useFilters
-- ✅ `product/` - useProduct, usePreloadedProduct, useProductBundlePricing
-- ✅ `search/` - usePredictiveSearch, useSearchRefetch
-- ✅ `session/` - useGetSession, useGetSessionData, useInitialSessionState
-- ✅ Utility hooks - useBreakpoints, useCurrency, useMoney, useIsClient
+Hook categories:
+- `auth/` - `useSignIn`, `useSignUp`, `useSignOut`, `useForgotPassword`, `useResetPassword`
+- `cart/` - `useAddItemToCart`, `useCart`, `useUpdateCartLineQuantity`, `useRemoveItemFromCart`
+- `category/` - `useCategoryClientQuery`, `loadCategoryServerQuery`, `useFilters`
+- `product/` - `useProduct`, `usePreloadedProduct`, `useProductBundlePricing`
+- `search/` - `usePredictiveSearch`, `useSearchRefetch`
+- `session/` - `useGetSession`, `useGetSessionData`, `useInitialSessionState`
+- Utility hooks - `useBreakpoints`, `useCurrency`, `useMoney`, `useIsClient`
 
-**Multi-provider pattern:**
-Каждый хук имеет структуру:
-```
+Multi-provider pattern:
+
+```text
 hooks/cart/useAddItemToCart/
 ├── index.ts                    # CMS picker
 ├── useAddItemToCart.shopana.ts
@@ -213,340 +204,259 @@ hooks/cart/useAddItemToCart/
 └── interface.ts
 ```
 
-### 2.2 Relay инфраструктура
+### 2.2 Relay Infrastructure
 
-**Файлы:**
-- `relay/Environment.ts` - Relay Environment с Query Response Cache
-- `relay/loadSerializableQuery.ts` - SSR загрузка
-- `relay/useSerializablePreloadedQuery.ts` - клиентский preload
-- `relay/SessionPreloadProvider.tsx` - preload provider
+Files:
+- `relay/Environment.ts` - Relay environment with query response cache
+- `relay/loadSerializableQuery.ts` - SSR loading
+- `relay/useSerializablePreloadedQuery.ts` - client preload
+- `relay/SessionPreloadProvider.tsx` - session preload provider
 
-**Команда:**
+Command:
+
 ```bash
-cp storefront/src/relay/* packages/ecommerce-sdk/src/relay/
+cp -r storefront/src/relay/* packages/ecommerce-sdk/src/relay/
 ```
 
 ### 2.3 Zustand Stores
 
-**Файлы:**
-- `store/cartStore.ts` - Optimistic updates, versioning, операции с корзиной
-- `store/sessionStore.ts` - Состояние сессии пользователя
-- `store/appStore.ts` - Currency, locale (БЕЗ UI состояний!)
-- `store/cartMath.ts` - Утилиты расчетов
+Files:
+- `store/cartStore.ts` - optimistic updates, versioning, cart operations
+- `store/sessionStore.ts` - user session state
+- `store/appStore.ts` - currency and locale only
+- `store/cartMath.ts` - calculation utilities
 
-**Команда:**
+Command:
+
 ```bash
-cp storefront/src/store/cartStore.ts packages/ecommerce-sdk/src/store/
-cp storefront/src/store/sessionStore.ts packages/ecommerce-sdk/src/store/
-cp storefront/src/store/appStore.ts packages/ecommerce-sdk/src/store/
-cp storefront/src/store/cartMath.ts packages/ecommerce-sdk/src/store/
+cp -r storefront/src/store/* packages/ecommerce-sdk/src/store/
 ```
 
-**⚠️ Важно:** Рефакторинг `appStore.ts`:
-- Оставить: `currency`, `locale`
-- Удалить: `isMobileMenuOpen`, `isSearchOpen`, `isSidebarOpen` и другие UI состояния
+Important refactor for `appStore.ts`:
+- Keep `currency` and `locale`
+- Remove UI state such as `isMobileMenuOpen`, `isSearchOpen`, `isSidebarOpen`, and similar flags
 
-### 2.4 GraphQL Queries
+### 2.4 Queries
 
-**Команда:**
+Command:
+
 ```bash
 cp -r storefront/src/queries/* packages/ecommerce-sdk/src/queries/
 ```
 
 ### 2.5 Providers
 
-**Файлы:**
-- `providers/cart-context.tsx` (из `storefront/src/providers/cart-context.tsx`)
-- `providers/session-context.tsx` (из `storefront/src/providers/session-context.tsx`)
+Files:
+- `providers/cart-context.tsx`
+- `providers/session-context.tsx`
 
-**Команда:**
+Command:
+
 ```bash
-cp storefront/src/providers/cart-context.tsx packages/ecommerce-sdk/src/providers/CartProvider.tsx
-cp storefront/src/providers/session-context.tsx packages/ecommerce-sdk/src/providers/SessionProvider.tsx
+cp -r storefront/src/providers/* packages/ecommerce-sdk/src/providers/
 ```
 
 ### 2.6 Utilities
 
-**Файлы:**
-- `utils/cmsPick.ts` - Multi-provider picker
-- `utils/accessToken.ts` - Access token management
+Move shared utilities such as CMS provider selection and access-token helpers.
 
-**Команда:**
+Command:
+
 ```bash
-cp storefront/src/cms/pick.ts packages/ecommerce-sdk/src/utils/cmsPick.ts
-cp storefront/src/utils/accessToken.ts packages/ecommerce-sdk/src/utils/
+cp -r storefront/src/cms packages/ecommerce-sdk/src/cms
+cp -r storefront/src/utils/accessToken packages/ecommerce-sdk/src/utils/accessToken
 ```
 
----
+## Stage 3: Fix Imports
 
-## Этап 3: Исправление импортов
+### 3.1 Replace Path Aliases
 
-### 3.1 Замена алиасов путей
-
-**Паттерны для поиска и замены:**
+Before:
 
 ```typescript
-// Было:
 import { useCartStore } from '@src/store/cartStore';
-import { cmsPick } from '@src/cms/pick';
-import { getAccessToken } from '@src/utils/accessToken';
+import type { Cart } from '@src/types';
+```
 
-// Стало:
+After:
+
+```typescript
 import { useCartStore } from '../store/cartStore';
-import { cmsPick } from '../utils/cmsPick';
-import { getAccessToken } from '../utils/accessToken';
+import type { Cart } from '../types';
 ```
 
-**Замены:**
-- `@src/store/*` → `../store/*` или `../../store/*`
-- `@src/relay/*` → `../relay/*`
-- `@src/providers/*` → `../providers/*`
-- `@src/cms/pick` → `../utils/cmsPick`
-- `@src/utils/accessToken` → `../utils/accessToken`
-- `@codegen/*` → `../__generated__/*` (после настройки Relay)
+Replacement rules:
+- `@src/store/*` -> relative `../store/*` or `../../store/*`
+- `@src/hooks/*` -> relative paths inside SDK
+- `@src/relay/*` -> relative `../relay/*`
+- `@src/queries/*` -> relative `../queries/*`
+- `@codegen/*` -> `../__generated__/*` after Relay setup
 
-### 3.2 Удаление зависимостей от next-intl
+### 3.2 Remove Dependency on `next-intl`
 
-**Проблема:**
+Problem:
+- Hooks use `useLocale()` from `next-intl`
+- SDK should not depend on a specific i18n library
+
+Solution 1: use `appStore`
+
 ```typescript
-import { useLocale } from 'next-intl';
-
-const locale = useLocale();
+const locale = useAppStore((s) => s.locale);
 ```
 
-**Решение 1:** Использовать appStore
+Solution 2: pass locale as a function parameter
+
 ```typescript
-import { useAppStore } from '../store/appStore';
-
-const locale = useAppStore((state) => state.locale);
-```
-
-**Решение 2:** Параметр функции
-```typescript
-// Было:
-export const useProduct = () => {
-  const locale = useLocale();
-  // ...
-}
-
-// Стало:
-export const useProduct = (locale?: string) => {
-  const fallbackLocale = useAppStore((state) => state.locale);
-  const actualLocale = locale || fallbackLocale;
+function useProduct(handle: string, locale: string) {
   // ...
 }
 ```
 
-### 3.3 Environment Variables → Конфигурация
+### 3.3 Environment Variables to Configuration
 
-**Проблема:**
-```typescript
-const provider = process.env.NEXT_PUBLIC_CMS_PROVIDER;
-```
+Problem:
+- Code uses `process.env.NEXT_PUBLIC_*`
+- SDK should work in different applications
 
-**Решение:** Создать конфигурацию SDK
+Solution: create SDK configuration.
 
-**Файл:** `src/config.ts`
+**File:** `src/config.ts`
+
 ```typescript
 export interface SDKConfig {
-  cmsProvider: 'shopana' | 'shopify';
-  apiEndpoint: string;
+  graphqlUrl: string;
   apiKey?: string;
-  locale?: string;
-  currency?: string;
+  provider: 'shopana' | 'shopify';
+  defaultLocale?: string;
+  defaultCurrency?: string;
 }
 
 let config: SDKConfig | null = null;
 
-export const initSDK = (cfg: SDKConfig) => {
-  config = cfg;
-};
+export function initSDK(nextConfig: SDKConfig) {
+  config = nextConfig;
+}
 
-export const getSDKConfig = (): SDKConfig => {
+export function getSDKConfig(): SDKConfig {
   if (!config) {
-    throw new Error('SDK not initialized. Call initSDK() first.');
+    throw new Error('SDK is not initialized. Call initSDK(config) first.');
   }
   return config;
-};
+}
 ```
 
-**Обновить cmsPick:**
-```typescript
-import { getSDKConfig } from './config';
+Update `cmsPick` to read the configured provider.
 
-export const cmsPick = <T>(mapping: Record<string, T>): T => {
-  const { cmsProvider } = getSDKConfig();
-  return mapping[cmsProvider];
-};
-```
+## Stage 4: GraphQL Code Generation
 
----
-
-## Этап 4: GraphQL кодогенерация
-
-### 4.1 Скопировать схемы
+### 4.1 Copy Schemas
 
 ```bash
 cp storefront/schema.shopana.graphql packages/ecommerce-sdk/
 cp storefront/schema.shopify.graphql packages/ecommerce-sdk/
 ```
 
-### 4.2 Настроить Relay Compiler
+### 4.2 Configure Relay Compiler
 
-**Файл:** `relay.shopana.json`
+**File:** `relay.shopana.json`
+
 ```json
 {
   "src": "./src",
   "schema": "./schema.shopana.graphql",
-  "exclude": ["**/*.shopify.ts", "**/node_modules/**", "**/dist/**"],
   "language": "typescript",
   "artifactDirectory": "./src/__generated__"
 }
 ```
 
-**Файл:** `relay.shopify.json`
+**File:** `relay.shopify.json`
+
 ```json
 {
   "src": "./src",
   "schema": "./schema.shopify.graphql",
-  "exclude": ["**/*.shopana.ts", "**/node_modules/**", "**/dist/**"],
   "language": "typescript",
   "artifactDirectory": "./src/__generated__"
 }
 ```
 
-### 4.3 Запустить генерацию
+### 4.3 Run Generation
 
 ```bash
-cd packages/ecommerce-sdk
 yarn relay
 ```
 
----
+## Stage 5: Create Exports
 
-## Этап 5: Создание экспортов
+### 5.1 Main Export
 
-### 5.1 Главный экспорт
+**File:** `src/index.ts`
 
-**Файл:** `src/index.ts`
 ```typescript
-// Hooks
-export * from './hooks';
-
-// Relay
-export * from './relay';
-
-// Stores
-export * from './store';
-
-// Providers
-export * from './providers';
-
-// Queries
-export * from './queries';
-
-// Utils
-export * from './utils/cmsPick';
-export * from './utils/accessToken';
-
-// Config
 export * from './config';
+export * from './hooks';
+export * from './relay';
+export * from './store';
+export * from './providers';
+export * from './queries';
 ```
 
-### 5.2 Экспорты хуков
+### 5.2 Hook Exports
 
-**Файл:** `src/hooks/index.ts`
+**File:** `src/hooks/index.ts`
+
 ```typescript
-// Auth
-export * from './auth/useSignIn';
-export * from './auth/useSignUp';
-export * from './auth/useSignOut';
-export * from './auth/useForgotPassword';
-export * from './auth/useResetPassword';
-
-// Cart
-export * from './cart/useAddItemToCart';
-export * from './cart/useCart';
-export * from './cart/useUpdateCartLineQuantity';
-export * from './cart/useRemoveItemFromCart';
-export * from './cart/useClearCart';
-
-// ... и так далее для всех категорий
+export * from './auth';
+export * from './cart';
+export * from './category';
+export * from './product';
+export * from './search';
+export * from './session';
 ```
 
-**Создать отдельные индексы для категорий:**
-- `src/hooks/auth/index.ts`
-- `src/hooks/cart/index.ts`
-- `src/hooks/product/index.ts`
-- `src/hooks/category/index.ts`
-- `src/hooks/search/index.ts`
-- `src/hooks/session/index.ts`
+Create category-specific indexes for each hook group.
 
-### 5.3 Экспорты других модулей
+### 5.3 Other Module Exports
 
-**Файл:** `src/relay/index.ts`
-```typescript
-export { default as RelayEnvironment } from './Environment';
-export * from './loadSerializableQuery';
-export * from './useSerializablePreloadedQuery';
-export * from './SessionPreloadProvider';
-```
+Create indexes for:
+- `src/relay/index.ts`
+- `src/store/index.ts`
+- `src/providers/index.ts`
 
-**Файл:** `src/store/index.ts`
-```typescript
-export * from './cartStore';
-export * from './sessionStore';
-export * from './appStore';
-export * from './cartMath';
-```
+## Stage 6: Build and Validation
 
-**Файл:** `src/providers/index.ts`
-```typescript
-export * from './CartProvider';
-export * from './SessionProvider';
-```
-
----
-
-## Этап 6: Сборка и валидация
-
-### 6.1 Запустить сборку
+### 6.1 Run Build
 
 ```bash
-cd packages/ecommerce-sdk
 yarn build
 ```
 
-### 6.2 Проверить результаты
+### 6.2 Check Output
 
-Проверить что создано:
-- ✅ `dist/` директория
-- ✅ `dist/index.js` и `dist/index.d.ts`
-- ✅ `dist/hooks/`, `dist/relay/`, `dist/store/` и т.д.
-- ✅ `.d.ts` файлы для TypeScript типов
+Expected output:
+- `dist/`
+- `dist/index.js` and `dist/index.d.ts`
+- `dist/hooks/`, `dist/relay/`, `dist/store/`, and related folders
+- `.d.ts` files for TypeScript types
 
-### 6.3 Проверить на ошибки TypeScript
+### 6.3 Check TypeScript Errors
 
-```bash
-yarn build 2>&1 | grep "error TS"
-```
+The SDK build must pass before the application starts using it.
 
----
+## Stage 7: Monorepo Integration
 
-## Этап 7: Интеграция с монорепой
-
-### 7.1 Установить зависимости
+### 7.1 Install Dependencies
 
 ```bash
-cd /Users/phl/Projects/shopana-io/storefront
 yarn install
 ```
 
-Это создаст symlink для нового пакета.
+This creates a symlink for the new package.
 
-### 7.2 Добавить в storefront (опционально)
+### 7.2 Add the SDK to the Storefront
 
-**Файл:** `storefront/package.json`
+**File:** `storefront/package.json`
+
 ```json
 {
   "dependencies": {
@@ -555,83 +465,79 @@ yarn install
 }
 ```
 
----
+## Stage 8: Documentation
 
-## Этап 8: Документация
+### 8.1 Create `README.md`
 
-### 8.1 Создать README.md
+**File:** `packages/ecommerce-sdk/README.md`
 
-**Файл:** `packages/ecommerce-sdk/README.md`
+It should include:
+- Package description
+- Installation
+- SDK initialization
+- Hook usage examples
+- Relay configuration
+- Provider setup
 
-Должен содержать:
-- Описание пакета
-- Установка
-- Инициализация SDK
-- Примеры использования хуков
-- API reference
-- Конфигурация Relay
+## Problem Areas and Solutions
 
----
+### 1. Dependency on `next-intl`
 
-## Проблемные моменты и решения
+- **Problem:** hooks use `useLocale()` from `next-intl`
+- **Solution:** use `appStore.locale` or pass locale as a parameter
 
-### 1. Зависимость от next-intl
-- **Проблема:** Hooks используют `useLocale()` из `next-intl`
-- **Решение:** Использовать `appStore.locale` или передавать параметром
+### 2. Environment Variables
 
-### 2. Environment variables
-- **Проблема:** `process.env.NEXT_PUBLIC_*` используется в коде
-- **Решение:** Конфигурация через `initSDK(config)`
+- **Problem:** code uses `process.env.NEXT_PUBLIC_*`
+- **Solution:** use `initSDK(config)`
 
-### 3. Optimistic updates в cartStore
-- **Проблема:** Тесная интеграция с Relay mutations
-- **Решение:** Сохранить как есть, это часть API логики
+### 3. Optimistic Updates in `cartStore`
 
-### 4. __generated__ файлы Relay
-- **Проблема:** Генерируются в storefront, нужны в SDK
-- **Решение:** Настроить Relay Compiler для SDK отдельно
+- **Problem:** tight integration with Relay mutations
+- **Solution:** keep it as part of the API logic
 
-### 5. appStore UI состояния
-- **Проблема:** `isMobileMenuOpen` и др. не относятся к API
-- **Решение:** Удалить из SDK версии, оставить только `currency` и `locale`
+### 4. Relay `__generated__` Files
 
----
+- **Problem:** files are generated in storefront, but the SDK needs them
+- **Solution:** configure Relay Compiler for the SDK separately
 
-## Чеклист выполнения
+### 5. UI State in `appStore`
 
-- [ ] Создана структура пакета
-- [ ] Настроены package.json и tsconfig.json
-- [ ] Перенесены hooks (~158 файлов)
-- [ ] Перенесена Relay инфраструктура
-- [ ] Перенесены Zustand stores
-- [ ] Перенесены providers и queries
-- [ ] Перенесены утилиты
-- [ ] Исправлены все импорты
-- [ ] Настроены GraphQL схемы и Relay Compiler
-- [ ] Созданы индексные файлы для экспортов
-- [ ] Запущена успешная сборка TypeScript
-- [ ] Интегрирован с монорепой
-- [ ] Создана документация
+- **Problem:** `isMobileMenuOpen` and similar state do not belong to the API layer
+- **Solution:** remove UI state from the SDK version and keep only `currency` and `locale`
 
----
+## Execution Checklist
 
-## Следующие шаги (НЕ в этом плане)
+- [ ] Package structure created
+- [ ] `package.json` and `tsconfig.json` configured
+- [ ] Hooks moved, about 158 files
+- [ ] Relay infrastructure moved
+- [ ] Zustand stores moved
+- [ ] Providers and queries moved
+- [ ] Utilities moved
+- [ ] Imports fixed
+- [ ] GraphQL schemas and Relay Compiler configured
+- [ ] Export index files created
+- [ ] TypeScript build succeeds
+- [ ] Package integrated into the monorepo
+- [ ] Documentation created
 
-После создания SDK пакета:
-1. Миграция storefront на использование `@shopana/storefront-sdk`
-2. Обновление импортов в storefront
-3. Удаление старого кода из storefront
-4. Тестирование интеграции
-5. Обновление других проектов для использования SDK
+## Next Steps Outside This Plan
 
----
+After the SDK package is created:
 
-## Контакты и помощь
+1. Migrate storefront to use `@shopana/storefront-sdk`
+2. Update imports in storefront
+3. Remove old code from storefront
+4. Test integration
+5. Update other projects to use the SDK
 
-При возникновении проблем:
-- Проверить TypeScript ошибки: `yarn build`
-- Проверить Relay генерацию: `yarn relay`
-- Проверить зависимости: `yarn install`
+## Contacts and Help
 
-**Автор плана:** Claude Code
-**Дата последнего обновления:** 2025-11-23
+If problems occur:
+- Check TypeScript errors with `yarn build`
+- Check Relay generation with `yarn relay`
+- Check dependencies with `yarn install`
+
+**Plan author:** Claude Code  
+**Last updated:** 2025-11-23
