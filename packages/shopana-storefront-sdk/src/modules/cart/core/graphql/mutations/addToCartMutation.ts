@@ -6,16 +6,15 @@ import '../fragments/CartFragment';
  */
 export const addToCartMutation = graphql`
   mutation addToCartMutation($input: CheckoutLinesAddInput!) {
-    checkoutMutation {
-      checkoutLinesAdd(input: $input) {
-        checkout {
-          id
-          ...CartFragment_cart
-        }
-        errors {
-          field
-          message
-        }
+    checkoutLinesAdd(input: $input) {
+      checkout {
+        ...CartFragment_cart
+      }
+      errors: userErrors {
+        code
+        field
+        message
+        retryable
       }
     }
   }

@@ -1,66 +1,69 @@
 import { graphql } from 'relay-runtime';
 
 export const CollectionProductCardFragment = graphql`
-  fragment CollectionProductCardFragment on ProductVariant {
+  fragment CollectionProductCardFragment on Product {
     id
     title
     handle
-    description
-    product {
-      id
-      handle
-      title
+    description {
+      text
+      html
     }
-    rating {
-      rating
-      count
+    rating: reviewSummary {
+      rating: averageRating
+      count: reviewCount
     }
-    cover {
-      id
-      url
+    cover: featuredMedia {
+      ... on MediaImage {
+        id
+        image { url }
+      }
     }
-    gallery(first: 20) {
+    gallery: media(first: 20) {
       edges {
         node {
           id
-          url
+          ... on MediaImage {
+            image { url }
+          }
         }
       }
-    }
-    price {
-      amount
-      currencyCode
-    }
-    compareAtPrice {
-      amount
-      currencyCode
-    }
-    stockStatus {
-      handle
-      isAvailable
     }
     options {
       id
       handle
-      title
+      title: name
       displayType
-      values {
+      values: optionValues {
         id
-        title
+        title: name
         handle
         swatch {
-          id
           color
-          color2
+          color2: secondaryColor
           image {
             id
-            url
+            ... on MediaImage { image { url } }
           }
-          displayType
+          displayType: type
         }
       }
     }
-    selectedOptions
+    selectedVariant: selectedOrFirstAvailableVariant {
+      id
+      title
+      handle
+      sku
+      price { amount currencyCode }
+      compareAtPrice { amount currencyCode }
+      isAvailable: availableForSale
+      selectedOptions {
+        name
+        value
+        option { id handle name }
+        optionValue { id handle name }
+      }
+    }
   }
 `;
 

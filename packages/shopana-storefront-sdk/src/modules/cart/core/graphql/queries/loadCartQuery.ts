@@ -7,10 +7,8 @@ import '../fragments/CartFragment';
  */
 export const loadCartQuery = graphql`
   query loadCartQuery($checkoutId: ID!) {
-    checkoutQuery {
-      checkout(id: $checkoutId) {
-        ...CartFragment_cart
-      }
+    checkout(id: $checkoutId) {
+      ...CartFragment_cart
     }
   }
 `;

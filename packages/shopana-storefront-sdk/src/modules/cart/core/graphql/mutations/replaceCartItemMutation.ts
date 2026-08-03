@@ -7,16 +7,15 @@ import '../fragments/CartFragment';
  */
 export const replaceCartItemMutation = graphql`
   mutation replaceCartItemMutation($input: CheckoutLinesReplaceInput!) {
-    checkoutMutation {
-      checkoutLinesReplace(input: $input) {
-        checkout {
-          id
-          ...CartFragment_cart
-        }
-        errors {
-          field
-          message
-        }
+    checkoutLinesReplace(input: $input) {
+      checkout {
+        ...CartFragment_cart
+      }
+      errors: userErrors {
+        code
+        field
+        message
+        retryable
       }
     }
   }

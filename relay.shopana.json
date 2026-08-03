@@ -1,6 +1,7 @@
 {
   "src": "./src",
   "schema": "./schema.shopana.graphql",
+  "schemaExtensions": ["./relay-schema-extensions"],
   "language": "typescript",
   "eagerEsModules": true,
   "noFutureProofEnums": true,

@@ -8,6 +8,21 @@ import './CartLineFragment';
 export const CartFragment_cart = graphql`
   fragment CartFragment_cart on Checkout {
     id
+    channelCode
+    localeCode
+    currencyCode
+    version
+    resultRevision
+    valid
+    issues {
+      code
+      message
+      severity
+      effect
+      field
+      lineId
+      retryable
+    }
     createdAt
     updatedAt
     totalQuantity

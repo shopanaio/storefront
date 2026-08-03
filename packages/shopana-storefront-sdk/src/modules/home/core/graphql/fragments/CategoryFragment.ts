@@ -3,19 +3,26 @@ import { graphql } from 'relay-runtime';
 export const CategoryFragment = graphql`
   fragment CategoryFragment_category on Category @inline {
     id
-    title
+    title: name
     handle
-    listing(first: 12) {
+    listing: products(first: 12) {
       edges {
         node {
-          ... on ProductVariant {
+          id
+          title
+          handle
+          featuredMedia {
+            ... on MediaImage {
+              id
+              image {
+                url
+              }
+            }
+          }
+          selectedOrFirstAvailableVariant {
             id
             title
             handle
-            cover {
-              url
-              source
-            }
             price {
               amount
               currencyCode
@@ -23,11 +30,6 @@ export const CategoryFragment = graphql`
             compareAtPrice {
               amount
               currencyCode
-            }
-            product {
-              id
-              title
-              handle
             }
           }
         }

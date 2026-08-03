@@ -5,13 +5,11 @@ const SearchQuery = graphql`
     $query: String!
     $first: Int = 12
     $after: Cursor
-    $sort: ListingSort = MOST_RELEVANT
-    $filters: [FilterInput!] = []
+    $sort: ListingSort = RELEVANCE
+    $filters: [ListingFilterInput!] = []
   ) {
-    search(input: { query: $query }) {
-      products(first: $first, after: $after, sort: $sort, filters: $filters) {
-        ...SearchProductsFragment
-      }
+    searchProducts(query: $query, first: $first, after: $after, sort: $sort, filters: $filters) {
+      ...SearchProductsFragment
     }
   }
 `;

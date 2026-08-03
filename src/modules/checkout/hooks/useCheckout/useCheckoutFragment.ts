@@ -3,6 +3,21 @@ import { graphql } from "react-relay";
 export const useCheckoutFragment = graphql`
   fragment useCheckoutFragment on Checkout {
     id
+    channelCode
+    localeCode
+    currencyCode
+    version
+    resultRevision
+    valid
+    issues {
+      code
+      message
+      severity
+      effect
+      field
+      lineId
+      retryable
+    }
     createdAt
     updatedAt
     totalQuantity
@@ -57,7 +72,10 @@ export const useCheckoutFragment = graphql`
           currencyCode
         }
       }
-      imageSrc
+      image {
+        id
+        image { url width height altText }
+      }
       purchasable {
         ... on ProductVariant {
           id
@@ -70,7 +88,10 @@ export const useCheckoutFragment = graphql`
         }
       }
       purchasableId
-      purchasableSnapshot
+      attributes
+      purchase {
+        type
+      }
       sku
       title
       children {
@@ -89,11 +110,11 @@ export const useCheckoutFragment = graphql`
       countryCode
       customer {
         id
-        email
-        name {
-          first
-          middle
-          last
+        displayName
+        firstName
+        lastName
+        emailAddress {
+          emailAddress
         }
       }
       email
@@ -115,23 +136,28 @@ export const useCheckoutFragment = graphql`
         city
         countryCode
         data
-        postalCode
+        postalCode: zip
         provinceCode
+        name
+        company
+        phone
+        country
+        province
+        formatted
+        formattedArea
       }
-      deliveryMethods {
+      deliveryMethods: options {
+        handle
         code
+        title
+        description
         deliveryMethodType
-        provider {
-          code
-        }
-        data
-      }
-      estimatedCost {
-        amount {
-          amount
-          currencyCode
-        }
-        paymentModel
+        providerCode: carrierCode
+        data: publicData
+        cost { amount currencyCode }
+        estimatedMinDeliveryAt
+        estimatedMaxDeliveryAt
+        phoneRequired
       }
       recipient {
         email
@@ -140,13 +166,20 @@ export const useCheckoutFragment = graphql`
         middleName
         phone
       }
-      selectedDeliveryMethod {
-        code
-        deliveryMethodType
-        provider {
+      selectedDeliveryMethod: selection {
+        status
+        previousOptionHandle
+        resetReason { code message }
+        option {
+          handle
           code
+          title
+          description
+          deliveryMethodType
+          providerCode: carrierCode
+          data: publicData
+          cost { amount currencyCode }
         }
-        data
       }
     }
     payment {
@@ -154,21 +187,24 @@ export const useCheckoutFragment = graphql`
         amount
         currencyCode
       }
-      paymentMethods {
+      paymentMethods: methods {
+        handle
         code
-        provider {
-          code
-        }
+        title
+        providerCode
         flow
-        data
       }
-      selectedPaymentMethod {
-        code
-        provider {
+      selectedPaymentMethod: selection {
+        status
+        previousMethodHandle
+        resetReason { code message }
+        method {
+          handle
           code
+          title
+          providerCode
+          flow
         }
-        flow
-        data
       }
     }
     notifications {

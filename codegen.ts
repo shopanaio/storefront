@@ -24,7 +24,7 @@ const config: CodegenConfig = {
   documents: [],
   generates: {
     'codegen/schema-client.ts': {
-      schema: 'schema.shopana.graphql',
+      schema: ['schema.shopana.graphql', 'relay-schema-extensions/*.graphql'],
       plugins: ['typescript', 'typescript-operations'],
       config: {
         typesPrefix: 'Api',

@@ -6,16 +6,15 @@ import '../fragments/CartFragment';
  */
 export const removeFromCartMutation = graphql`
   mutation removeFromCartMutation($input: CheckoutLinesDeleteInput!) {
-    checkoutMutation {
-      checkoutLinesDelete(input: $input) {
-        checkout {
-          id
-          ...CartFragment_cart
-        }
-        errors {
-          field
-          message
-        }
+    checkoutLinesDelete(input: $input) {
+      checkout {
+        ...CartFragment_cart
+      }
+      errors: userErrors {
+        code
+        field
+        message
+        retryable
       }
     }
   }

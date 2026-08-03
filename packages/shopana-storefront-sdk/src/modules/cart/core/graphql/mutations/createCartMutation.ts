@@ -6,11 +6,11 @@ import '../fragments/CartFragment';
  */
 export const createCartMutation = graphql`
   mutation createCartMutation($input: CheckoutCreateInput!) {
-    checkoutMutation {
-      checkoutCreate(input: $input) {
-        id
+    checkoutCreate(input: $input) {
+      checkout {
         ...CartFragment_cart
       }
+      errors: userErrors { code field message retryable }
     }
   }
 `;

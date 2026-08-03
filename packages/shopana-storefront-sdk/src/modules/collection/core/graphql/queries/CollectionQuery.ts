@@ -5,14 +5,18 @@ export const CollectionQuery = graphql`
     $handle: String!
     $first: Int = 24
     $after: Cursor
-    $sort: ListingSort = MOST_RELEVANT
-    $filters: [FilterInput!] = []
+    $sort: ListingSort = MANUAL
+    $filters: [ListingFilterInput!] = []
   ) {
-    category(handle: $handle) {
+    category: categoryByHandle(handle: $handle) {
       id
-      title
+      title: name
       handle
-      description
+      description {
+        text
+        html
+        json
+      }
       ...CollectionListingFragment
         @arguments(first: $first, after: $after, sort: $sort, filters: $filters)
     }

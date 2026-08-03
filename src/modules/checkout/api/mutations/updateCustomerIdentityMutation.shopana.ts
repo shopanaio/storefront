@@ -4,10 +4,11 @@ export const updateCustomerIdentityMutation = graphql`
   mutation updateCustomerIdentityMutation(
     $input: CheckoutCustomerIdentityUpdateInput!
   ) {
-    checkoutMutation {
-      checkoutCustomerIdentityUpdate(input: $input) {
+    checkoutCustomerIdentityUpdate(input: $input) {
+      checkout {
         ...useCheckoutFragment
       }
+      errors: userErrors { code field message retryable }
     }
   }
 `;

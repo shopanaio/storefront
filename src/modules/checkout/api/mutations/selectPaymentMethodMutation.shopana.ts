@@ -4,10 +4,11 @@ export const selectPaymentMethodMutation = graphql`
   mutation selectPaymentMethodMutation(
     $input: CheckoutPaymentMethodUpdateInput!
   ) {
-    checkoutMutation {
-      checkoutPaymentMethodUpdate(input: $input) {
+    checkoutPaymentMethodUpdate(input: $input) {
+      checkout {
         ...useCheckoutFragment
       }
+      errors: userErrors { code field message retryable }
     }
   }
 `;

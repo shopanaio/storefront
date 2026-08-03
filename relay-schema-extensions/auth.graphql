@@ -1,0 +1,164 @@
+# Relay-only legacy authentication compatibility.
+# Remove when the storefront schema exposes equivalent auth operations.
+
+extend type Query {
+  """Retrieves the current authentication session."""
+  session: Session
+}
+
+extend type Mutation {
+  """Creates a new session using email and password."""
+  passwordSignIn(
+    """Input for signing in."""
+    input: PasswordSignInInput!
+  ): PasswordSignInPayload!
+  """Registers a new user and returns a session."""
+  passwordSignUp(
+    """Input for signing up."""
+    input: PasswordSignUpInput!
+  ): PasswordSignUpPayload!
+  """Signs out the current user."""
+  signOut: Boolean!
+  """Sends a password recovery email."""
+  requestPasswordRecovery(
+    """Input for requesting password recovery."""
+    input: PasswordRecoveryInput!
+  ): PasswordRecoveryPayload!
+  """Resets the user's password with a recovery token."""
+  resetPassword(
+    """Input for password reset."""
+    input: ResetPasswordInput!
+  ): ResetPasswordPayload!
+}
+
+"""Error information for a failed field."""
+type FieldError {
+  """Name of the field that caused the error."""
+  field: String!
+  """Human-readable error message."""
+  message: String!
+  """Optional machine-readable error code."""
+  code: String
+}
+
+"""Input data for requesting a password recovery email."""
+input PasswordRecoveryInput {
+  """User's email address."""
+  email: Email!
+  """Unique identifier for the client mutation."""
+  clientMutationId: String
+}
+
+"""Payload returned after requesting password recovery."""
+type PasswordRecoveryPayload {
+  """True if the recovery email was sent successfully."""
+  success: Boolean!
+  """List of field-specific errors."""
+  errors: [FieldError!]
+  """Unique identifier echoed from the input."""
+  clientMutationId: String
+}
+
+"""Input data for signing in with email and password."""
+input PasswordSignInInput {
+  """User's email address."""
+  email: Email!
+  """User's password."""
+  password: String!
+  """Unique identifier for the client mutation."""
+  clientMutationId: String
+}
+
+"""Payload returned after signing in."""
+type PasswordSignInPayload {
+  """Newly created session."""
+  session: Session
+  """List of field-specific errors."""
+  errors: [FieldError!]
+  """Unique identifier echoed from the input."""
+  clientMutationId: String
+}
+
+"""Input data for registering a new user."""
+input PasswordSignUpInput {
+  """User's email address."""
+  email: Email!
+  """User's password."""
+  password: String!
+  """Unique identifier for the client mutation."""
+  clientMutationId: String
+}
+
+"""Payload returned after signing up."""
+type PasswordSignUpPayload {
+  """Newly created session."""
+  session: Session
+  """List of field-specific errors."""
+  errors: [FieldError!]
+  """Unique identifier echoed from the input."""
+  clientMutationId: String
+}
+
+scalar Phone
+
+"""Input data for resetting a password using a token."""
+input ResetPasswordInput {
+  """User's email address."""
+  email: Email!
+  """New password."""
+  password: String!
+  """Password reset token sent to the email."""
+  token: String!
+  """Unique identifier for the client mutation."""
+  clientMutationId: String
+}
+
+"""Payload returned after resetting the password."""
+type ResetPasswordPayload {
+  """True if the password was reset successfully."""
+  success: Boolean!
+  """List of field-specific errors."""
+  errors: [FieldError!]
+  """Unique identifier echoed from the input."""
+  clientMutationId: String
+}
+
+"""Represents an authentication session."""
+type Session {
+  """The authenticated user."""
+  user: User!
+  """JWT access token for authenticating subsequent requests."""
+  accessToken: String
+}
+
+"""Represents a user in the system."""
+type User implements Node {
+  """Global unique identifier for the address."""
+  id: ID!
+  """List of the user's orders."""
+  orders: [Order!]!
+  """Object identifier (Internal)."""
+  iid: Uuid!
+  """User's email address."""
+  email: Email!
+  """Full name of the user."""
+  name: UserName!
+  """Whether the user's email has been verified."""
+  isVerified: Boolean!
+  """Preferred interface language (locale code)."""
+  language: LocaleCode
+  """Phone number in E.164 format."""
+  phone: Phone
+}
+
+"""Customer's first, middle, and last name."""
+type UserName {
+  """First name."""
+  first: String!
+  """Middle name (optional)."""
+  middle: String
+  """Last name."""
+  last: String!
+}
+
+scalar Uuid

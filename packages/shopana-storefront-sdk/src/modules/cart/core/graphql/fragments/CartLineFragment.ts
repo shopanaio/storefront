@@ -37,9 +37,9 @@ export const CartLineFragment_line = graphql`
           title
           handle
         }
-        cover {
+        cover: featuredMedia {
           id
-          url
+          ... on MediaImage { image { url } }
         }
         price {
           amount
@@ -49,9 +49,14 @@ export const CartLineFragment_line = graphql`
           amount
           currencyCode
         }
-        stockStatus {
-          handle
-          isAvailable
+        isAvailable: availableForSale
+        currentlyNotInStock
+        quantityAvailable
+        selectedOptions {
+          name
+          value
+          option { id handle name }
+          optionValue { id handle name }
         }
       }
     }
@@ -59,6 +64,14 @@ export const CartLineFragment_line = graphql`
       id
       quantity
     }
+    image {
+      id
+      image { url width height altText }
+    }
+    purchase {
+      type
+    }
+    attributes
     tag {
       id
       slug

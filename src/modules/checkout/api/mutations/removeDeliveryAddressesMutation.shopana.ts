@@ -4,10 +4,11 @@ export const removeDeliveryAddressesMutation = graphql`
   mutation removeDeliveryAddressesMutation(
     $input: CheckoutDeliveryAddressesRemoveInput!
   ) {
-    checkoutMutation {
-      checkoutDeliveryAddressesRemove(input: $input) {
+    checkoutDeliveryAddressesRemove(input: $input) {
+      checkout {
         ...useCheckoutFragment
       }
+      errors: userErrors { code field message retryable }
     }
   }
 `;

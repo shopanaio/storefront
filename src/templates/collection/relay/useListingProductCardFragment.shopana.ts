@@ -2,67 +2,45 @@ import { useListingProductCardFragment_product$key } from '@src/templates/collec
 import { graphql, useFragment } from 'react-relay';
 
 const UseProductCardFragment = graphql`
-  fragment useListingProductCardFragment_product on ProductVariant
+  fragment useListingProductCardFragment_product on Product
   @argumentDefinitions(withOptions: { type: "Boolean!", defaultValue: false }) {
     id
     title
     handle
-    description
-    product {
-      id
-      handle
-      title
-    }
-    rating {
-      rating
-      count
-    }
-    cover {
-      id
-      url
-    }
-    gallery(first: 20) {
-      edges {
-        node {
-          id
-          url
-        }
-      }
-    }
-    price {
-      amount
-      currencyCode
-    }
-    compareAtPrice {
-      amount
-      currencyCode
-    }
-    stockStatus {
-      handle
-      isAvailable
+    description { text html }
+    rating: reviewSummary { rating: averageRating count: reviewCount }
+    cover: featuredMedia { ... on MediaImage { id image { url } } }
+    gallery: media(first: 20) {
+      edges { node { id ... on MediaImage { image { url } } } }
     }
     options @include(if: $withOptions) {
       id
       handle
-      title
+      title: name
       displayType
-      values {
+      values: optionValues {
         id
-        title
+        title: name
         handle
         swatch {
-          id
           color
-          color2
-          image {
-            id
-            url
-          }
-          displayType
+          color2: secondaryColor
+          image { id ... on MediaImage { image { url } } }
+          displayType: type
         }
       }
     }
-    selectedOptions @include(if: $withOptions)
+    selectedVariant: selectedOrFirstAvailableVariant {
+      id title handle sku
+      price { amount currencyCode }
+      compareAtPrice { amount currencyCode }
+      isAvailable: availableForSale
+      selectedOptions @include(if: $withOptions) {
+        name value
+        option { id handle name }
+        optionValue { id handle name }
+      }
+    }
   }
 `;
 

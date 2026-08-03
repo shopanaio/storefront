@@ -4,10 +4,11 @@ export const selectDeliveryMethodMutation = graphql`
   mutation selectDeliveryMethodMutation(
     $input: CheckoutDeliveryMethodUpdateInput!
   ) {
-    checkoutMutation {
-      checkoutDeliveryMethodUpdate(input: $input) {
+    checkoutDeliveryMethodUpdate(input: $input) {
+      checkout {
         ...useCheckoutFragment
       }
+      errors: userErrors { code field message retryable }
     }
   }
 `;

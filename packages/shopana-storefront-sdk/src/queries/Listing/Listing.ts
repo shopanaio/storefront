@@ -6,41 +6,36 @@ const Listing = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 25 }
     after: { type: "Cursor" }
-    sort: { type: "ListingSort", defaultValue: MOST_RELEVANT }
-    filters: { type: "[FilterInput!]", defaultValue: [] }
+    sort: { type: "ListingSort", defaultValue: MANUAL }
+    filters: { type: "[ListingFilterInput!]", defaultValue: [] }
   ) {
-    title
+    title: name
     handle
-    listing(first: $first, after: $after, sort: $sort, filters: $filters)
+    listing: products(first: $first, after: $after, sort: $sort, filters: $filters)
       @connection(key: "ListingFragment_listing") {
       totalCount
+      sort
+      availableSorts
       filters {
         id
-        iid
-        handle
-        title
-        ... on PriceRangeFilter {
-          minPrice {
-            amount
-            currencyCode
-          }
-          maxPrice {
-            amount
-            currencyCode
-          }
+        handle: id
+        label
+        title: label
+        type
+        priceRange {
+          min { amount currencyCode }
+          max { amount currencyCode }
+          selectedMin { amount currencyCode }
+          selectedMax { amount currencyCode }
         }
-        ... on RatingRangeFilter {
-          minRate
-          maxRate
-        }
-        ... on ListFilter {
-          values {
-            id
-            iid
-            handle
-            title
-            count
-          }
+        values {
+          id
+          handle: id
+          label
+          title: label
+          count
+          selected
+          input
         }
       }
       pageInfo {
@@ -50,10 +45,8 @@ const Listing = graphql`
       edges {
         cursor
         node {
-          ... on ProductVariant {
-            ...useListingProductCardFragment_product
-              @arguments(withOptions: true)
-          }
+          ...useListingProductCardFragment_product
+            @arguments(withOptions: true)
         }
       }
     }

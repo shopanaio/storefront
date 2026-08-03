@@ -1,35 +1,24 @@
 import { graphql } from "relay-runtime";
 
 const SearchProductsFragment = graphql`
-  fragment SearchProductsFragment on ListingConnection {
+  fragment SearchProductsFragment on ProductConnection {
     totalCount
+    sort
+    availableSorts
     filters {
         id
-        iid
-        handle
-        title
-        ... on PriceRangeFilter {
-          minPrice {
-            amount
-            currencyCode
-          }
-          maxPrice {
-            amount
-            currencyCode
-          }
-        }
-        ... on RatingRangeFilter {
-          minRate
-          maxRate
-        }
-        ... on ListFilter {
-          values {
-            id
-            iid
-            handle
-            title
-            count
-          }
+        handle: id
+        label
+        title: label
+        type
+        values {
+          id
+          handle: id
+          label
+          title: label
+          count
+          selected
+          input
         }
       }
       pageInfo {
@@ -39,10 +28,8 @@ const SearchProductsFragment = graphql`
       edges {
         cursor
         node {
-          ... on ProductVariant {
-            ...useListingProductCardFragment_product
-              @arguments(withOptions: true)
-          }
+          ...useListingProductCardFragment_product
+            @arguments(withOptions: true)
         }
       }
   }

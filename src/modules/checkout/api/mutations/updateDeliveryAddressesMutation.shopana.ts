@@ -4,10 +4,11 @@ export const updateDeliveryAddressesMutation = graphql`
   mutation updateDeliveryAddressesMutation(
     $input: CheckoutDeliveryAddressesUpdateInput!
   ) {
-    checkoutMutation {
-      checkoutDeliveryAddressesUpdate(input: $input) {
+    checkoutDeliveryAddressesUpdate(input: $input) {
+      checkout {
         ...useCheckoutFragment
       }
+      errors: userErrors { code field message retryable }
     }
   }
 `;

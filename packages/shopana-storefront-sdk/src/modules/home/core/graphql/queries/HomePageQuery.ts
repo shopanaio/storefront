@@ -2,21 +2,21 @@ import { graphql } from 'relay-runtime';
 
 export const HomePageQuery = graphql`
   query HomePageQuery {
-    electronics: category(handle: "electronics") {
-      title
+    electronics: categoryByHandle(handle: "electronics") {
+      title: name
       ...CategoryFragment_category
     }
-    toys: category(handle: "toys-kids") {
-      title
+    toys: categoryByHandle(handle: "toys-kids") {
+      title: name
       ...CategoryFragment_category
     }
-    sport: category(handle: "sport-i-otdyh") {
-      title
+    sport: categoryByHandle(handle: "sport-i-otdyh") {
+      title: name
       ...CategoryFragment_category
     }
-    homeAndGarden: category(handle: "home-garden") {
+    homeAndGarden: categoryByHandle(handle: "home-garden") {
       id
-      title
+      title: name
       handle
       children(first: 10) {
         edges {

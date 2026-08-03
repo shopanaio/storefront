@@ -5,131 +5,132 @@ export const ProductQuery = graphql`
     $handle: String!
     $first: Int = 3
     $after: Cursor
-    $sort: ProductReviewSort = HELPFUL_YES_DESC
+    $sort: ReviewSort = MOST_HELPFUL
   ) {
-    product(handle: $handle) {
+    product: productByHandle(handle: $handle) {
       ...Reviews @arguments(first: $first, after: $after, sort: $sort)
       id
       title
       handle
-      description
-      excerpt
+      description { text html json }
+      excerpt { text html json }
+      seo { title description }
+      vendor { id name }
       options {
         id
         handle
-        title
+        title: name
         displayType
-        values {
+        position
+        values: optionValues {
           id
-          title
+          title: name
           handle
+          position
           swatch {
-            id
             color
-            displayType
+            color2: secondaryColor
+            displayType: type
             image {
-              url
               id
+              ... on MediaImage { image { url } }
             }
           }
         }
       }
-      category {
+      category: primaryCategory {
         id
-        title
+        title: name
         handle
-        breadcrumbs {
+        breadcrumbs: ancestors {
           id
-          title
+          title: name
           handle
         }
       }
-      variants {
+      featuredMedia {
         id
-        handle
-        title
-        selectedOptions
-        cover {
-          id
-          url
-        }
-        gallery(first: 20) {
-          edges {
-            node {
-              id
-              url
-            }
+        ... on MediaImage { image { url width height altText } }
+      }
+      media(first: 20) {
+        totalCount
+        edges {
+          cursor
+          node {
+            id
+            alt
+            mediaContentType
+            ... on MediaImage { image { url width height altText } }
           }
         }
-        price {
-          currencyCode
-          amount
-        }
-        compareAtPrice {
-          currencyCode
-          amount
-        }
-        sku
-        stockStatus {
-          isAvailable
-        }
       }
-      tags(first: 10) {
+      variants(first: 100) {
+        totalCount
         edges {
+          cursor
           node {
             id
             handle
             title
-          }
-        }
-      }
-      groups {
-        id
-        title
-        isRequired
-        isMultiple
-        items {
-          node {
-            ... on ProductVariant {
+            sku
+            isDefault
+            selectedOptions {
+              name
+              value
+              option { id handle name }
+              optionValue { id handle name }
+            }
+            featuredMedia {
               id
-              title
-              handle
-              product {
-                title
-                handle
-              }
-              price {
-                amount
-                currencyCode
-              }
-              cover {
-                id
-                url
+              ... on MediaImage { image { url } }
+            }
+            media(first: 20) {
+              edges {
+                node { id ... on MediaImage { image { url } } }
               }
             }
-          }
-          maxQuantity
-          price {
-            amount {
-              currencyCode
-              amount
-            }
-            percentage
+            price { currencyCode amount }
+            compareAtPrice { currencyCode amount }
+            isAvailable: availableForSale
+            currentlyNotInStock
+            quantityAvailable
           }
         }
       }
-      seoTitle
-      seoDescription
+      tags {
+        id
+        handle
+        title: name
+      }
+      features {
+        id
+        handle
+        title: name
+        position
+      }
+      priceRange {
+        minVariantPrice { amount currencyCode }
+        maxVariantPrice { amount currencyCode }
+      }
+      compareAtPriceRange {
+        minVariantPrice { amount currencyCode }
+        maxVariantPrice { amount currencyCode }
+      }
+      availableForSale
+      totalInventory
       createdAt
       updatedAt
-      rating {
-        id
-        count
-        rating
-        breakdown {
-          star
-          count
-          percentage
+      rating: reviewSummary {
+        count: reviewCount
+        rating: averageRating
+        verifiedReviewCount
+        mediaReviewCount
+        breakdown: ratingBreakdown {
+          rating1Count
+          rating2Count
+          rating3Count
+          rating4Count
+          rating5Count
         }
       }
     }

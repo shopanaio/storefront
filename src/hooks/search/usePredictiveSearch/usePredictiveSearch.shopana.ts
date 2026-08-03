@@ -9,49 +9,21 @@ import type { usePredictiveSearchQuery as UsePredictiveSearchQueryType } from ".
 
 export const usePredictiveSearchQuery = graphql`
   query usePredictiveSearchQuery($query: String!) {
-    predictiveSearch(input: { query: $query }) {
-      products {
+    predictiveSearch: searchProducts(query: $query, first: 8, sort: RELEVANCE) {
+      products: nodes {
         id
         title
         handle
-        product {
-          title
-          handle
+        cover: featuredMedia {
+          ... on MediaImage { image { url } }
         }
-        cover {
-          url
-        }
-        #gallery{
-        #  edges{
-        #    node{
-        #      id
-        #      url
-        #    }
-        #    cursor
-        #  }
-        #}
-        price {
-          amount
-          currencyCode
-        }
-        compareAtPrice {
-          amount
-          currencyCode
-        }
-        variants {
+        selectedVariant: selectedOrFirstAvailableVariant {
           id
+          price { amount currencyCode }
+          compareAtPrice { amount currencyCode }
         }
       }
-      categories {
-        id
-        title
-        handle
-      }
-      articles {
-        id
-        title
-        handle
-      }
+      totalCount
     }
   }
 `;

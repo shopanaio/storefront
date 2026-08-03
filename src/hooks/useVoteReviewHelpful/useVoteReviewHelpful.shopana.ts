@@ -2,8 +2,16 @@ import { graphql } from "react-relay";
 import { useMutation } from "react-relay/hooks";
 
 const useVoteReviewHelpfulMutation = graphql`
-  mutation useVoteReviewHelpfulMutation($input: VoteReviewHelpfulInput!) {
-    voteReviewHelpful(input: $input)
+  mutation useVoteReviewHelpfulMutation($input: ReviewContentVoteSetInput!) {
+    reviewContentVoteSet(input: $input) {
+      content {
+        id
+        metrics { likeCount dislikeCount }
+        viewerEngagement { vote hasReported }
+      }
+      vote { id type }
+      errors: userErrors { code field message }
+    }
   }
 `;
 

@@ -2,8 +2,20 @@ import { graphql } from "react-relay";
 import { useMutation } from "react-relay/hooks";
 
 const useReportReviewAbuseMutation = graphql`
-  mutation useReportReviewAbuseMutation($reviewId: ID!, $reason: String!) {
-    reportReviewAbuse(reviewId: $reviewId, reason: $reason)
+  mutation useReportReviewAbuseMutation(
+    $reviewId: ID!
+    $reason: ReviewContentReportReason!
+  ) {
+    reviewContentReportCreate(
+      input: { contentId: $reviewId, reason: $reason }
+    ) {
+      content {
+        id
+        viewerEngagement { vote hasReported }
+      }
+      report { id reason status createdAt }
+      errors: userErrors { code field message }
+    }
   }
 `;
 

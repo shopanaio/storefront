@@ -8,15 +8,15 @@ export const updateCartLineQuantityMutation = graphql`
   mutation updateCartLineQuantityMutation(
     $input: CheckoutLinesUpdateInput!
   ) {
-    checkoutMutation {
-      checkoutLinesUpdate(input: $input) {
-        checkout {
-          ...CartFragment_cart
-        }
-        errors {
-          field
-          message
-        }
+    checkoutLinesUpdate(input: $input) {
+      checkout {
+        ...CartFragment_cart
+      }
+      errors: userErrors {
+        code
+        field
+        message
+        retryable
       }
     }
   }

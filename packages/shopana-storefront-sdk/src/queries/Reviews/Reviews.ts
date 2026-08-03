@@ -6,7 +6,7 @@ const Reviews = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 3 }
     after: { type: "Cursor" }
-    sort: { type: "ProductReviewSort", defaultValue: HELPFUL_YES_DESC }
+    sort: { type: "ReviewSort", defaultValue: MOST_HELPFUL }
   ) {
     reviews(first: $first, after: $after, sort: $sort)
       @connection(key: "ProductReviewsFragment_reviews") {
@@ -19,18 +19,32 @@ const Reviews = graphql`
         cursor
         node {
           id
+          kind
           rating
           title
-          message
-          displayName
-          pros
-          cons
-          verifiedPurchase
-          helpfulNo
-          helpfulYes
-          meHelpful
+          message: body
+          locale
+          author { type displayName }
+          status
+          revision
+          verifiedPurchase: isVerifiedPurchase
+          verificationStatus
+          metrics {
+            helpfulYes: likeCount
+            helpfulNo: dislikeCount
+            mediaCount
+          }
+          viewerEngagement {
+            meHelpful: vote
+            hasReported
+          }
           createdAt
-          editedAt
+          editedAt: updatedAt
+          publishedAt
+          media {
+            id
+            media { id ... on MediaImage { image { url } } }
+          }
         }
       }
     }

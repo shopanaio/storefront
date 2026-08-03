@@ -6,7 +6,7 @@ import { graphql } from "relay-runtime";
 // Test (stub) query for Relay integration and schema validation
 export const ProviderGreetingTestQuery = graphql`
   query useGreetingTestQuery {
-    product(handle: "example") {
+    product: productByHandle(handle: "example") {
       id
     }
   }
