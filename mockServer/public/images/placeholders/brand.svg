@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
+  <title id="title">Northstar Supply brand placeholder</title>
+  <desc id="description">Brand image used by deterministic demo fixtures.</desc>
+  <rect width="1920" height="1080" fill="#22352f"/>
+  <circle cx="960" cy="430" r="210" fill="#e9ddc7"/>
+  <path d="m960 254 42 126 132 2-106 78 38 127-106-75-106 75 38-127-106-78 132-2z" fill="#22352f"/>
+  <text x="960" y="790" fill="#f7f2e8" font-family="Arial, sans-serif" font-size="76" letter-spacing="18" text-anchor="middle">NORTHSTAR SUPPLY</text>
+  <text x="960" y="870" fill="#e9ddc7" font-family="Arial, sans-serif" font-size="30" letter-spacing="5" text-anchor="middle">USEFUL THINGS, THOUGHTFULLY MADE</text>
+</svg>

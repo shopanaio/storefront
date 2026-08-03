@@ -61,3 +61,8 @@ public/
 
 Store fixture records under `src/fixtures/` and reference the corresponding
 local image URLs from those records.
+
+The bundled `Northstar Supply` demo dataset is documented in
+[`src/fixtures/README.md`](src/fixtures/README.md). It covers catalog, media,
+markets, customers, checkout, orders, returns, reviews, questions, and Online
+Store content.

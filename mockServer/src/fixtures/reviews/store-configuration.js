@@ -1,1 +1,26 @@
-export const reviewStoreConfiguration = null;
+import { FIXTURE_NOW, gid } from "../shared.js";
+
+export const reviewStoreConfiguration = {
+  id: gid("ReviewStoreConfiguration", "northstar-supply"),
+  reviewsEnabled: true,
+  questionsEnabled: true,
+  guestReviewsEnabled: true,
+  guestQuestionsEnabled: true,
+  customerAnswersEnabled: true,
+  verifiedPurchaseRequired: false,
+  reviewModerationMode: "POSTMODERATION",
+  questionModerationMode: "PREMODERATION",
+  answerModerationMode: "PREMODERATION",
+  reviewDuplicatePolicy: "ONE_PER_ORDER_LINE",
+  reviewRequestsEnabled: true,
+  reviewRequestDelayDays: 7,
+  reviewRequestExpiryDays: 30,
+  reviewEditWindowHours: 72,
+  questionEditWindowHours: 24,
+  answerEditWindowHours: 24,
+  maxReviewMediaCount: 5,
+  maxAnswersPerQuestion: 20,
+  revision: 3,
+  createdAt: "2026-01-10T09:00:00.000Z",
+  updatedAt: FIXTURE_NOW,
+};

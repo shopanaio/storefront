@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="title description">
+  <title id="title">Northstar customer review placeholder</title>
+  <desc id="description">Customer review image used by deterministic demo fixtures.</desc>
+  <rect width="1200" height="1200" fill="#d8cfbd"/>
+  <rect x="135" y="165" width="930" height="780" rx="48" fill="#f7f2e8"/>
+  <circle cx="420" cy="490" r="125" fill="#8ca095"/>
+  <path d="m165 860 250-255 170 165 155-205 295 295z" fill="#22352f" opacity=".9"/>
+  <path d="m600 1025 22 46h51l-40 31 15 49-48-28-48 28 15-49-40-31h51z" fill="#22352f"/>
+</svg>
