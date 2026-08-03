@@ -481,6 +481,7 @@ const supplementalProductDefinitions = supplementalCollections.flatMap((collecti
     return {
       handle: `${collection.handle}-${template.handle}`,
       title: `${collection.name} ${template.title}`,
+      hasComponents: sequence <= 50,
       primaryCategoryHandle: template.primaryCategoryHandle,
       categoryHandles: [...new Set([...template.categoryHandles, ...promotionalCategories])],
       vendor: template.vendor,
@@ -567,6 +568,7 @@ export const products = productDefinitions.map((product, productIndex) => {
         }
       : null,
     availableForSale: product.variants.some(({ quantity }) => quantity > 0),
+    hasComponents: Boolean(product.hasComponents),
     totalInventory: product.variants.reduce((total, { quantity }) => total + quantity, 0),
     publishedAt: new Date(Date.parse(publishedAt) + productIndex * 12 * 3_600_000).toISOString(),
     createdAt: new Date(Date.parse(publishedAt) - 7 * 86_400_000 + productIndex * 12 * 3_600_000).toISOString(),

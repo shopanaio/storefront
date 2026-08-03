@@ -5,7 +5,9 @@ Standalone GraphQL mock server based on the storefront federation supergraph sch
 The server implements the complete Storefront schema over the bundled fixtures. It
 includes Relay pagination, product search/filtering/sorting, catalog relationship
 hydration, customer-scoped data, checkout and order workflows, and reviews and
-questions mutations.
+questions mutations. Product component configurations support merchant defaults,
+explicit selections, allowed variant selection, quantity limits, and calculated
+component and configured-product totals.
 
 ## Run
 

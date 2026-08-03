@@ -8,7 +8,7 @@ import {
   isUnionType,
 } from "graphql";
 
-import { FIXTURE_NOW, gid } from "./fixtures/shared.js";
+import { FIXTURE_NOW, gid, money } from "./fixtures/shared.js";
 import {
   buildListingFilters,
   connection,
@@ -157,6 +157,66 @@ const selectedVariant = (store, product, selectedOptions = [], availableFallback
   return selected ?? (availableFallback ? variants.find(({ availableForSale }) => availableForSale) ?? variants[0] : null) ?? null;
 };
 
+const resolvedComponentConfiguration = (store, parentVariant, selections) => {
+  const fixture = store.get(parentVariant.componentConfigurationId);
+  if (!fixture) return null;
+
+  const selectionByItemId = selections === undefined || selections === null
+    ? null
+    : new Map(selections.map((selection) => [selection.itemId, selection]));
+  let componentsSubtotal = 0;
+
+  const groups = fixture.groups.map((group) => {
+    const explicitlySelectedIds = selectionByItemId === null
+      ? null
+      : group.items
+        .filter((item) => (selectionByItemId.get(item.id)?.quantity ?? 0) > 0)
+        .slice(0, group.maxSelection ?? group.items.length)
+        .map(({ id }) => id);
+    const selectedIdSet = explicitlySelectedIds === null ? null : new Set(explicitlySelectedIds);
+
+    return {
+      ...group,
+      items: group.items.map((item) => {
+        const selection = selectionByItemId?.get(item.id);
+        const selected = selectedIdSet === null ? item.defaultSelected : selectedIdSet.has(item.id);
+        const requestedVariantId = selection?.variantId;
+        const variantId = requestedVariantId && item.allowedVariantIds.includes(requestedVariantId)
+          ? requestedVariantId
+          : item.defaultVariantId;
+        const variant = store.get(variantId);
+        const requestedQuantity = selected ? (selection?.quantity ?? item.minQuantity) : 0;
+        const quantity = selected
+          ? Math.max(item.minQuantity, Math.min(requestedQuantity, item.maxQuantity ?? requestedQuantity))
+          : 0;
+        const sourceAmount = Number(variant?.price?.amount ?? 0);
+        const unitAmount = sourceAmount * (1 - item.discountPercent / 100);
+        const totalAmount = unitAmount * quantity;
+        const currencyCode = variant?.price?.currencyCode ?? parentVariant.price?.currencyCode ?? "USD";
+        componentsSubtotal += totalAmount;
+
+        return {
+          ...item,
+          variantId,
+          selected,
+          availableForSale: Boolean(variant?.availableForSale),
+          quantity,
+          unitPrice: money(unitAmount, currencyCode),
+          totalPrice: money(totalAmount, currencyCode),
+        };
+      }),
+    };
+  });
+
+  const currencyCode = parentVariant.price?.currencyCode ?? "USD";
+  return {
+    ...fixture,
+    groups,
+    componentsSubtotal: money(componentsSubtotal, currencyCode),
+    totalPrice: money(Number(parentVariant.price?.amount ?? 0) + componentsSubtotal, currencyCode),
+  };
+};
+
 const validateFirst = (first) => {
   if (first !== undefined && first !== null && (first < 1 || first > 100)) {
     throw new GraphQLError("first must be between 1 and 100", { extensions: { code: "BAD_USER_INPUT" } });
@@ -250,6 +310,8 @@ const specialFields = (store) => ({
   "ProductVariant.product": (variant) => store.get(variant.productId),
   "ProductVariant.media": (variant, args) => connection(variant.mediaIds.map((id) => store.get(id)).filter(Boolean), args),
   "ProductVariant.featuredMedia": (variant) => store.get(variant.featuredMediaId),
+  "ProductVariant.componentConfiguration": (variant, { selections }) =>
+    resolvedComponentConfiguration(store, variant, selections),
   "ProductVariant.reviews": (variant, args) => connection(sortReviews(store.state.reviews.filter((review) =>
     review.variantId === variant.id && review.status === "PUBLISHED"), args.sort), args),
   "ProductVariant.questions": (variant, args) => connection(sortQuestions(store.state.productQuestions.filter((question) =>

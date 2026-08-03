@@ -53,6 +53,9 @@ export const productVariants = productDefinitions.flatMap((product) => {
       dimensions: { width: 30, height: 10, length: 40, unit: "cm" },
       mediaIds: [gid("MediaImage", `product-${product.handle}`)],
       featuredMediaId: gid("MediaImage", `product-${product.handle}`),
+      componentConfigurationId: product.hasComponents
+        ? gid("ProductComponentConfiguration", product.handle)
+        : null,
       createdAt,
       updatedAt: FIXTURE_NOW,
     };

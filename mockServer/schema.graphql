@@ -1014,6 +1014,122 @@ type ProductFeatureGroup implements Node @join__type(graph: CATALOG_STOREFRONT, 
 }
 
 """
+A presentation-ready component configuration for one product variant.
+
+Catalog has already applied visibility, required-state, selection, and price
+dependency rules. Storefront clients must render this projection instead of
+interpreting component rules themselves.
+"""
+type ProductComponentConfiguration @join__type(graph: CATALOG_STOREFRONT)  {
+  id: ID!
+  """
+  The presentation selected by the merchant for this configurator.
+  """
+  displayStyle: ProductComponentDisplayStyle!
+  """
+  Effective groups in display order. Groups hidden by backend rules, including
+  groups without any effective visible items, are omitted.
+  """
+  groups: [ProductComponentGroup!]!
+  """
+  Sum of totalPrice for all selected component items.
+  """
+  componentsSubtotal: Money!
+  """
+  Price of one configured parent variant including all selected components.
+  Discounts, shipping, and taxes are applied later by checkout.
+  """
+  totalPrice: Money!
+}
+
+"""
+A presentation-ready component group after backend rule evaluation.
+"""
+type ProductComponentGroup @join__type(graph: CATALOG_STOREFRONT)  {
+  id: ID!
+  """
+  Localized display title resolved by Catalog.
+  """
+  title: String!
+  """
+  Whether the effective group state requires at least one selection.
+  """
+  required: Boolean!
+  """
+  Effective minimum number of selected items.
+  """
+  minSelection: Int
+  """
+  Effective maximum number of selected items.
+  """
+  maxSelection: Int
+  """
+  Effective visible items in display order. Hidden items are omitted rather
+  than returned for the storefront to evaluate.
+  """
+  items: [ProductComponentItem!]!
+}
+
+"""
+A presentation-ready component item with a concrete merchandise variant and
+prices already calculated in the active storefront currency.
+"""
+type ProductComponentItem @join__type(graph: CATALOG_STOREFRONT)  {
+  id: ID!
+  """
+  Localized display title. Catalog applies the component title override first,
+  then falls back to the resolved variant or product title.
+  """
+  title: String!
+  """
+  Referenced published product.
+  """
+  product: Product!
+  """
+  Concrete published variant resolved for this state. A product-backed item
+  uses the selected allowed variant or a backend-selected default.
+  """
+  variant: ProductVariant!
+  """
+  Effective media after applying the item override and merchandise fallback.
+  """
+  featuredMedia: Media
+  """
+  Whether this item is selected in the resolved state.
+  """
+  selected: Boolean!
+  """
+  Whether backend dependency rules require this item.
+  """
+  required: Boolean!
+  """
+  Whether the resolved merchandise variant can currently be purchased.
+  """
+  availableForSale: Boolean!
+  """
+  Resolved quantity. Zero means the item is not selected.
+  """
+  quantity: Int!
+  """
+  Effective minimum quantity when the item is selected.
+  """
+  minQuantity: Int!
+  """
+  Effective maximum quantity, or null when no maximum is configured.
+  """
+  maxQuantity: Int
+  """
+  Final price for one item unit after all component price rules have been
+  evaluated in the active storefront currency.
+  """
+  unitPrice: Money!
+  """
+  Final unitPrice multiplied by quantity.
+  """
+  totalPrice: Money!
+}
+
+"""
 A published item offered for sale in the storefront catalog.
 """
 type Product implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
@@ -1102,6 +1218,16 @@ type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: 
   dimensions: Dimensions @join__field(graph: CATALOG_STOREFRONT) 
   media(first: Int, after: Cursor, last: Int, before: Cursor) : ProductVariantMediaConnection! @join__field(graph: CATALOG_STOREFRONT) 
   featuredMedia: Media @join__field(graph: CATALOG_STOREFRONT) 
+  componentConfiguration(
+    """
+    Complete current component selection.
+    
+    When omitted, merchant-defined default selections are applied. An explicit
+    empty list means that no items are selected. Catalog evaluates dependency
+    rules and returns a presentation-ready configuration for this state.
+    """
+    selections: [ProductComponentSelectionInput!]
+  ): ProductComponentConfiguration @join__field(graph: CATALOG_STOREFRONT) 
   createdAt: DateTime! @join__field(graph: CATALOG_STOREFRONT) 
   updatedAt: DateTime! @join__field(graph: CATALOG_STOREFRONT) 
   reviews(
@@ -5237,6 +5363,16 @@ enum ProductVariantInventoryPolicy @join__type(graph: CATALOG_STOREFRONT)  {
 }
 
 """
+How the resolved component configurator should be presented.
+"""
+enum ProductComponentDisplayStyle @join__type(graph: CATALOG_STOREFRONT)  {
+  ACCORDION @join__enumValue(graph: CATALOG_STOREFRONT) 
+  TABS @join__enumValue(graph: CATALOG_STOREFRONT) 
+  FLAT @join__enumValue(graph: CATALOG_STOREFRONT) 
+  WIZARD @join__enumValue(graph: CATALOG_STOREFRONT) 
+}
+
+"""
 How an option should be presented by a product option picker.
 """
 enum ProductOptionDisplayType @join__type(graph: CATALOG_STOREFRONT)  {
@@ -5988,6 +6124,20 @@ enum ReviewExternalSyncStatus @join__type(graph: REVIEWS_STOREFRONT)  {
   SYNCED @join__enumValue(graph: REVIEWS_STOREFRONT) 
   FAILED @join__enumValue(graph: REVIEWS_STOREFRONT) 
   DISABLED @join__enumValue(graph: REVIEWS_STOREFRONT) 
+}
+
+"""
+One item selected in a product component configuration.
+
+The list supplied to ProductVariant.componentConfiguration is the complete
+selection state. For an item that references a product, variantId identifies
+the concrete allowed variant selected by the buyer. For an item that already
+references a concrete variant, variantId may be omitted.
+"""
+input ProductComponentSelectionInput @join__type(graph: CATALOG_STOREFRONT)  {
+  itemId: ID!
+  variantId: ID
+  quantity: Int!
 }
 
 """
