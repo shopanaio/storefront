@@ -34,6 +34,13 @@ export function WarehouseForm({
   const { watch } = methods;
   const warehouse = watch('warehouse') || null;
 
+  useEffect(() => {
+    methods.reset({
+      warehouse: null,
+      ...(data as { warehouse?: Warehouse | null } | null),
+    });
+  }, [data, methods]);
+
   // Get city from deliveryAddress prop (passed from delivery group)
   const globalCity = (deliveryAddress as { city?: City | null })?.city ?? null;
   const prevCityRef = usePrevious(globalCity?.Ref ?? null);

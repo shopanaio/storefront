@@ -9,8 +9,11 @@ import { buildSelectedProviderMethodSchema } from '@src/modules/checkout/utils/v
 const deliveryMethodSchema = yup.object<DeliveryMethod>().shape({
   handle: yup.string().required('Delivery method handle is required'),
   code: yup.string().required('Delivery method code is required'),
+  title: yup.string().required('Delivery method title is required'),
+  description: yup.string().nullable().optional(),
   provider: yup.string().required('Delivery provider is required'),
   data: yup.mixed(),
+  publicData: yup.mixed(),
 });
 
 /**

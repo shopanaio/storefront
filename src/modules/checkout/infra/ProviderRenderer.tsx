@@ -1,10 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Flex } from 'antd';
 
 import { moduleRegistry } from '@shopana/storefront-sdk/registry';
 import {
+  ProviderMethod,
   ProviderModuleApi,
+  ProviderModuleType,
   ProviderProps,
 } from '@src/modules/checkout/vendors/types';
+import { CheckoutMethodPanel } from '@src/modules/checkout/components/common/CheckoutMethodPanel';
+
+const GenericDeliveryProvider = ({
+  availableMethods,
+  selectedMethod,
+  onSelectMethod,
+}: Pick<
+  ProviderProps,
+  'availableMethods' | 'selectedMethod' | 'onSelectMethod'
+>) => (
+  <Flex vertical gap={12}>
+    {availableMethods.map((method: ProviderMethod) => (
+      <CheckoutMethodPanel
+        key={method.handle}
+        title={method.title || method.code}
+        description={method.description ?? null}
+        isActive={selectedMethod?.handle === method.handle}
+        onActive={() => onSelectMethod?.(method)}
+        component={null}
+      />
+    ))}
+  </Flex>
+);
 
 /**
  * Generic component for loading and rendering provider modules.
@@ -21,13 +47,12 @@ export const ProviderRenderer = ({
   ...componentProps
 }: ProviderProps) => {
   const [api, setApi] = useState<ProviderModuleApi | null>(null);
+  const loader = useMemo(
+    () => moduleRegistry.resolve<ProviderModuleApi>(moduleType, provider),
+    [moduleType, provider]
+  );
 
   useEffect(() => {
-    const loader = moduleRegistry.resolve<ProviderModuleApi>(
-      moduleType,
-      provider
-    );
-
     if (!loader) {
       setApi(null);
       return;
@@ -45,11 +70,23 @@ export const ProviderRenderer = ({
     return () => {
       cancelled = true;
     };
-  }, [provider, moduleType]);
+  }, [loader]);
 
-  const { Component, config } = api || {};
+  const activeApi =
+    api?.provider === provider && api.moduleType === moduleType ? api : null;
+  const { Component, config } = activeApi || {};
 
   if (!Component || !config) {
+    if (!loader && moduleType === ProviderModuleType.Delivery) {
+      return (
+        <GenericDeliveryProvider
+          availableMethods={componentProps.availableMethods}
+          selectedMethod={componentProps.selectedMethod}
+          onSelectMethod={onSelectMethod}
+        />
+      );
+    }
+
     return null;
   }
 

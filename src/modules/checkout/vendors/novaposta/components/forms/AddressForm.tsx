@@ -23,7 +23,11 @@ export function AddressForm({
   deliveryAddress,
 }: AddressFormProps) {
   const { styles } = useStyles();
-  const existingData = data as { userStreet?: Street | null; userBuilding?: string; userApartment?: string } | null;
+  const existingData = data as {
+    userStreet?: Street | null;
+    userBuilding?: string;
+    userApartment?: string;
+  } | null;
   const methods = useForm<{
     street?: Street | null;
     building: string;
@@ -44,7 +48,7 @@ export function AddressForm({
     }, 1000);
   }, [onSubmit]);
 
-  const { watch, setValue } = methods;
+  const { watch, setValue, reset } = methods;
   const street = watch('street') || null;
   const building = watch('building') || '';
   const apartment = watch('apartment') || '';
@@ -53,6 +57,21 @@ export function AddressForm({
   const globalCity = deliveryAddress?.city ?? null;
   const prevCityRef = usePrevious(globalCity?.Ref ?? null);
   const cityRef = globalCity?.Ref;
+
+  useEffect(() => {
+    reset({
+      street: existingData?.userStreet ?? null,
+      building: existingData?.userBuilding ?? '',
+      apartment: existingData?.userApartment ?? '',
+    });
+  }, [
+    existingData?.userApartment,
+    existingData?.userBuilding,
+    existingData?.userStreet,
+    reset,
+  ]);
+
+  useEffect(() => () => debouncedOnSubmit.cancel(), [debouncedOnSubmit]);
 
   // Reset street when global city changes
   useEffect(() => {
@@ -68,7 +87,11 @@ export function AddressForm({
   const handleChangeStreet = useCallback(
     (s: Street) => {
       setValue('street', s);
-      onSubmit({ userStreet: s, userBuilding: building, userApartment: apartment });
+      onSubmit({
+        userStreet: s,
+        userBuilding: building,
+        userApartment: apartment,
+      });
     },
     [setValue, onSubmit, building, apartment]
   );
@@ -77,7 +100,11 @@ export function AddressForm({
     (e: ChangeEvent<HTMLInputElement>) => {
       const { value: building } = e.target;
       setValue('building', building);
-      debouncedOnSubmit({ userStreet: street, userBuilding: building, userApartment: apartment });
+      debouncedOnSubmit({
+        userStreet: street,
+        userBuilding: building,
+        userApartment: apartment,
+      });
     },
     [setValue, debouncedOnSubmit, street, apartment]
   );
@@ -86,7 +113,11 @@ export function AddressForm({
     (e: ChangeEvent<HTMLInputElement>) => {
       const { value: apartment } = e.target;
       setValue('apartment', apartment);
-      debouncedOnSubmit({ userStreet: street, userBuilding: building, userApartment: apartment });
+      debouncedOnSubmit({
+        userStreet: street,
+        userBuilding: building,
+        userApartment: apartment,
+      });
     },
     [setValue, debouncedOnSubmit, street, building]
   );

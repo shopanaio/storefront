@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -29,12 +30,19 @@ export interface ProductGroupSelectionState {
 interface GroupsStoreState {
   /** productId -> state */
   products: Record<string, ProductGroupSelectionState>;
+  /** Initialize server-resolved selections when a product variant changes. */
+  initializeProduct: (
+    productId: string,
+    variantId: string,
+    selectionsByGroupId: Record<string, GroupSelectionItem[]>
+  ) => void;
   /** Toggle a purchasable in a group (add/remove, respect single vs multiple outside). */
   toggleItem: (
     productId: string,
     groupId: string,
     purchasableId: string,
-    isMultiple: boolean
+    isMultiple: boolean,
+    initialQuantity: number
   ) => void;
   /** Set quantity for a selected purchasable. */
   setItemQty: (
@@ -64,9 +72,30 @@ const ensureProductState = (
 
 export const useProductGroupsStore = create<GroupsStoreState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       products: {},
-      toggleItem: (productId, groupId, purchasableId, isMultiple) => {
+      initializeProduct: (productId, variantId, selectionsByGroupId) => {
+        set((state) => {
+          const current = state.products[productId];
+          if (current?.variantId === variantId) {
+            return state;
+          }
+
+          return {
+            products: {
+              ...state.products,
+              [productId]: { variantId, selectionsByGroupId },
+            },
+          };
+        });
+      },
+      toggleItem: (
+        productId,
+        groupId,
+        purchasableId,
+        isMultiple,
+        initialQuantity
+      ) => {
         set((state) => {
           const current = ensureProductState(state.products, productId);
           const currentItems = current.selectionsByGroupId[groupId] ?? [];
@@ -78,9 +107,11 @@ export const useProductGroupsStore = create<GroupsStoreState>()(
           if (isMultiple) {
             nextItems = exists
               ? currentItems.filter((x) => x.purchasableId !== purchasableId)
-              : [...currentItems, { purchasableId, quantity: 1 }];
+              : [...currentItems, { purchasableId, quantity: initialQuantity }];
           } else {
-            nextItems = exists ? [] : [{ purchasableId, quantity: 1 }];
+            nextItems = exists
+              ? []
+              : [{ purchasableId, quantity: initialQuantity }];
           }
 
           return {
@@ -168,13 +199,37 @@ export function useProductGroupsState(productId: string) {
     (s) => s.products[productId] ?? EMPTY_PRODUCT_STATE
   );
 
-  const { toggleItem, setItemQty, setGroupSelection, clearProduct } =
-    useProductGroupsStore.getState();
+  const {
+    initializeProduct,
+    toggleItem,
+    setItemQty,
+    setGroupSelection,
+    clearProduct,
+  } = useProductGroupsStore.getState();
+  const initialize = useCallback(
+    (
+      variantId: string,
+      selectionsByGroupId: Record<string, GroupSelectionItem[]>
+    ) => initializeProduct(productId, variantId, selectionsByGroupId),
+    [initializeProduct, productId]
+  );
 
   return {
     state,
-    toggleItem: (groupId: string, purchasableId: string, isMultiple: boolean) =>
-      toggleItem(productId, groupId, purchasableId, isMultiple),
+    initialize,
+    toggleItem: (
+      groupId: string,
+      purchasableId: string,
+      isMultiple: boolean,
+      initialQuantity: number
+    ) =>
+      toggleItem(
+        productId,
+        groupId,
+        purchasableId,
+        isMultiple,
+        initialQuantity
+      ),
     setItemQty: (groupId: string, purchasableId: string, quantity: number) =>
       setItemQty(productId, groupId, purchasableId, quantity),
     setGroupSelection: (groupId: string, items: GroupSelectionItem[]) =>

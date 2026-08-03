@@ -4,7 +4,7 @@ import { Flex, Typography, Button } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
 import { StockStatus } from '../../atoms/StockStatus';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 import { PriceAndSale } from '../../atoms/PriceAndSale';
 import { useTranslations } from 'next-intl';
 import { useRoutes } from '@src/hooks/useRoutes';
@@ -103,7 +103,14 @@ export const ProductMain = ({
   } = currentVariant;
   const { isInCart } = useIsInTheCart({ purchasableId: currentVariant.id });
 
-  const groups = useProductGroups(product, currentVariant);
+  const productWithCurrentGroups = React.useMemo(
+    () => ({
+      ...product,
+      groups: currentVariant.groups ?? product.groups ?? [],
+    }),
+    [currentVariant.groups, product]
+  );
+  const groups = useProductGroups(productWithCurrentGroups, currentVariant);
 
   const gallery = useProductGallery(currentVariant, product);
   const { styleBreakpoints, swiperBreakpoints } = useGalleryBreakpoints(
@@ -115,7 +122,7 @@ export const ProductMain = ({
     galleryBreakpoints: styleBreakpoints,
   });
 
-  const groupsLength = product.groups?.length ?? 0;
+  const groupsLength = productWithCurrentGroups.groups.length;
   const optionsLength = product.options?.length ?? 0;
 
   const primaryImage =
@@ -197,7 +204,12 @@ export const ProductMain = ({
               }}
             />
           )}
-          {groupsLength > 0 && <ProductComponents product={product} />}
+          {groupsLength > 0 && (
+            <ProductComponents
+              product={productWithCurrentGroups}
+              currentVariant={currentVariant}
+            />
+          )}
           {appearance === 'page' && (
             <Flex className={styles.buySection} vertical gap={16}>
               <PriceAndSale
@@ -208,14 +220,14 @@ export const ProductMain = ({
 
               <Flex wrap gap={16}>
                 <ProductCartButton
-                  isAvailable={stockStatus.isAvailable}
+                  isAvailable={stockStatus.isAvailable && groups.isAddAllowed}
                   showLabel
                   size="large"
                   className={styles.cartBtn}
                   isInCart={isInCart}
                   isLoading={isInFlight}
                   onAddToCart={() => {
-                    if (!isInCart) {
+                    if (!isInCart && groups.isAddAllowed) {
                       const children = groups.buildChildren();
                       addToCart({
                         purchasableId: currentVariant.id,

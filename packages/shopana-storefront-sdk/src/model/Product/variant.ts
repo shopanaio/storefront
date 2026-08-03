@@ -2,6 +2,7 @@ import type { Money } from '../Money';
 import type { Media } from '../Media';
 import type { Connection } from '../Connection';
 import type { Product } from './product';
+import type { ProductGroup } from './ProductGroup';
 
 /**
  * StockStatus - product availability information
@@ -73,4 +74,10 @@ export interface ProductVariant {
 
   /** Product associated with the variant */
   product?: Product | null;
+
+  /** Whether this is the default variant selected by the catalog */
+  isDefault?: boolean;
+
+  /** Component configuration resolved specifically for this variant */
+  groups?: ProductGroup[];
 }

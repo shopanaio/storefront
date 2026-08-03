@@ -43,7 +43,10 @@ interface ProductDataProviderProps {
 type RawProduct = NonNullable<ProductQuery['response']['product']>;
 type RawVariant = RawProduct['variants']['edges'][number]['node'];
 
-const toAmount = (amount: unknown): string => String(amount ?? '0');
+const toAmount = (amount: unknown): number => {
+  const value = Number(amount ?? 0);
+  return Number.isFinite(value) ? value : 0;
+};
 
 const toImage = (
   media:
@@ -86,6 +89,8 @@ const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
       title: group.title,
       isRequired: group.isRequired,
       isMultiple: group.maxSelection == null || group.maxSelection > 1,
+      minSelection: group.minSelection,
+      maxSelection: group.maxSelection,
       items: group.items.map((itemRef) => {
         const item = readInlineData(
           ProductComponentItemFragmentNode,
@@ -112,6 +117,11 @@ const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
                 cover: toImage(node.cover),
               }
             : null,
+          selected: item.selected,
+          required: item.required,
+          availableForSale: item.availableForSale,
+          quantity: item.quantity,
+          minQuantity: item.minQuantity,
           maxQuantity: item.maxQuantity,
           price: {
             amount: unitPrice,
@@ -123,7 +133,9 @@ const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
   });
 };
 
-function transformProduct(rawProduct: ProductQuery['response']['product']): Product | null {
+function transformProduct(
+  rawProduct: ProductQuery['response']['product']
+): Product | null {
   if (!rawProduct) {
     return null;
   }
@@ -133,50 +145,54 @@ function transformProduct(rawProduct: ProductQuery['response']['product']): Prod
     ...rawProduct.media.edges.map((edge) => toImage(edge.node)),
   ].filter((image): image is ProductImage => image !== null);
 
-  const variants: ProductVariant[] = rawProduct.variants.edges.map(({ node }) => {
-    const seen = new Set<string>();
-    const images = [
-      toImage(node.featuredMedia),
-      ...node.media.edges.map((edge) => toImage(edge.node)),
-      ...productMedia,
-    ].filter((image): image is ProductImage => {
-      if (!image || seen.has(image.id)) {
-        return false;
-      }
-      seen.add(image.id);
-      return true;
-    });
+  const variants: ProductVariant[] = rawProduct.variants.edges.map(
+    ({ node }) => {
+      const seen = new Set<string>();
+      const images = [
+        toImage(node.featuredMedia),
+        ...node.media.edges.map((edge) => toImage(edge.node)),
+        ...productMedia,
+      ].filter((image): image is ProductImage => {
+        if (!image || seen.has(image.id)) {
+          return false;
+        }
+        seen.add(image.id);
+        return true;
+      });
 
-    return {
-      id: node.id,
-      handle: node.handle,
-      title: node.title,
-      selectedOptions: node.selectedOptions.map(
-        (selection) => selection.optionValue.handle
-      ),
-      cover: images[0] ?? null,
-      gallery: {
-        edges: images.map((image) => ({ node: image })),
-        pageInfo: {
-          hasNextPage: false,
-          hasPreviousPage: false,
+      return {
+        id: node.id,
+        handle: node.handle,
+        title: node.title,
+        selectedOptions: node.selectedOptions.map(
+          (selection) => selection.optionValue.handle
+        ),
+        cover: images[0] ?? null,
+        gallery: {
+          edges: images.map((image) => ({ node: image })),
+          pageInfo: {
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+          totalCount: images.length,
         },
-        totalCount: images.length,
-      },
-      price: {
-        amount: toAmount(node.price?.amount),
-        currencyCode: node.price?.currencyCode ?? 'USD',
-      },
-      compareAtPrice: node.compareAtPrice
-        ? {
-            amount: toAmount(node.compareAtPrice.amount),
-            currencyCode: node.compareAtPrice.currencyCode,
-          }
-        : null,
-      sku: node.sku,
-      stockStatus: { isAvailable: node.isAvailable },
-    };
-  });
+        price: {
+          amount: toAmount(node.price?.amount),
+          currencyCode: node.price?.currencyCode ?? 'USD',
+        },
+        compareAtPrice: node.compareAtPrice
+          ? {
+              amount: toAmount(node.compareAtPrice.amount),
+              currencyCode: node.compareAtPrice.currencyCode,
+            }
+          : null,
+        sku: node.sku,
+        stockStatus: { isAvailable: node.isAvailable },
+        isDefault: node.isDefault,
+        groups: transformGroups(node),
+      };
+    }
+  );
 
   const options: ProductOption[] = (rawProduct.options ?? []).map((o) => ({
     id: o.id,
@@ -207,7 +223,10 @@ function transformProduct(rawProduct: ProductQuery['response']['product']): Prod
     title: tag.title,
   }));
 
-  const groups = transformGroups(rawProduct.variants.edges[0]?.node);
+  const defaultVariant =
+    rawProduct.variants.edges.find(({ node }) => node.isDefault)?.node ??
+    rawProduct.variants.edges[0]?.node;
+  const groups = transformGroups(defaultVariant);
 
   return {
     id: rawProduct.id,
@@ -269,7 +288,9 @@ function transformProduct(rawProduct: ProductQuery['response']['product']): Prod
   };
 }
 
-function transformQueryData(data: ProductQuery['response']): ProductTemplateData {
+function transformQueryData(
+  data: ProductQuery['response']
+): ProductTemplateData {
   return {
     pageType: 'product',
     raw: data,
@@ -285,12 +306,12 @@ export function ProductDataProvider({
 
   const queryReference = useSerializablePreloadedQuery(
     environment,
-    preloadedQuery,
+    preloadedQuery
   );
 
   const rawData = usePreloadedQuery<ProductQuery>(
     ProductQueryNode,
-    queryReference,
+    queryReference
   );
 
   const data = useMemo(() => transformQueryData(rawData), [rawData]);

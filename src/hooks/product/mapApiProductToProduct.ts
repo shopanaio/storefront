@@ -127,14 +127,16 @@ const mapApiVariantToVariant = (
     stockStatus: {
       isAvailable: apiVariant.isAvailable,
     },
+    isDefault: apiVariant.isDefault,
+    groups: mapComponentGroups(apiVariant),
     createdAt: '',
     updatedAt: '',
   };
 };
 
-const mapComponentGroups = (
+function mapComponentGroups(
   variant: ApiVariant | undefined
-): model.ProductGroup[] => {
+): model.ProductGroup[] {
   if (!variant) {
     return [];
   }
@@ -159,6 +161,8 @@ const mapComponentGroups = (
       title: group.title,
       isRequired: group.isRequired,
       isMultiple: group.maxSelection == null || group.maxSelection > 1,
+      minSelection: group.minSelection,
+      maxSelection: group.maxSelection,
       items: group.items.map((itemRef) => {
         const item = readInlineData(
           ProductComponentItemFragmentNode,
@@ -179,7 +183,12 @@ const mapComponentGroups = (
             price,
             cover: toMedia(node.cover),
           },
-          maxQuantity: item.maxQuantity ?? undefined,
+          selected: item.selected,
+          required: item.required,
+          availableForSale: item.availableForSale,
+          quantity: item.quantity,
+          minQuantity: item.minQuantity,
+          maxQuantity: item.maxQuantity,
           price: {
             amount: price,
             percentage: null,
@@ -188,7 +197,7 @@ const mapComponentGroups = (
       }),
     };
   });
-};
+}
 
 /** Maps the current GraphQL product response to the storefront domain model. */
 export function mapApiProductToProduct(
@@ -212,6 +221,9 @@ export function mapApiProductToProduct(
     apiProduct.rating.breakdown.rating4Count,
     apiProduct.rating.breakdown.rating5Count,
   ];
+  const defaultVariant =
+    apiProduct.variants.edges.find(({ node }) => node.isDefault)?.node ??
+    apiProduct.variants.edges[0]?.node;
 
   return {
     __typename: 'Product',
@@ -249,16 +261,14 @@ export function mapApiProductToProduct(
           ? {
               id: `${value.id}:swatch`,
               color: value.swatch.color ? String(value.swatch.color) : '',
-              color2: value.swatch.color2
-                ? String(value.swatch.color2)
-                : null,
+              color2: value.swatch.color2 ? String(value.swatch.color2) : null,
               displayType: mapSwatchDisplayType(value.swatch.displayType),
               image: toMedia(value.swatch.image),
             }
           : null,
       })),
     })),
-    groups: mapComponentGroups(apiProduct.variants.edges[0]?.node),
+    groups: mapComponentGroups(defaultVariant),
     features: apiProduct.features.map((feature) => ({
       id: feature.id,
       handle: feature.handle,

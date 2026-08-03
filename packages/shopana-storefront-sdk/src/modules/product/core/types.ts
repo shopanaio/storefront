@@ -6,12 +6,13 @@ import type { ProductComponentItemFragment$data } from './graphql/fragments/__ge
 
 export type ProductQueryResponse = ProductQuery$data;
 export type ProductReviewsData = ProductReviewsFragment$data;
-export type ProductComponentConfigurationData = ProductComponentConfigurationFragment$data;
+export type ProductComponentConfigurationData =
+  ProductComponentConfigurationFragment$data;
 export type ProductComponentGroupData = ProductComponentGroupFragment$data;
 export type ProductComponentItemData = ProductComponentItemFragment$data;
 
 export interface ProductMoney {
-  amount: string;
+  amount: number;
   currencyCode: string;
 }
 
@@ -69,6 +70,8 @@ export interface ProductVariant {
   stockStatus?: {
     isAvailable: boolean;
   } | null;
+  isDefault?: boolean;
+  groups?: ProductGroup[];
 }
 
 export interface ProductTag {
@@ -103,6 +106,11 @@ export interface ProductGroupItem {
     price: ProductMoney;
     cover?: ProductImage | null;
   } | null;
+  selected: boolean;
+  required: boolean;
+  availableForSale: boolean;
+  quantity: number;
+  minQuantity: number;
   maxQuantity?: number | null;
   price?: {
     amount: ProductMoney;
@@ -115,6 +123,8 @@ export interface ProductGroup {
   title: string;
   isRequired: boolean;
   isMultiple: boolean;
+  minSelection?: number | null;
+  maxSelection?: number | null;
   items: ProductGroupItem[];
 }
 

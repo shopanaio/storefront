@@ -9,6 +9,8 @@ type ApiDeliveryGroup = ApiCheckout['deliveryGroups'][number];
 type ApiDeliveryMethod = ApiDeliveryGroup['deliveryMethods'][number];
 type ApiPaymentMethod = ApiCheckout['payment']['paymentMethods'][number];
 
+const GENERIC_DELIVERY_PROVIDER = 'generic';
+
 const toAmount = (amount: unknown): number => {
   const value = Number(amount ?? 0);
   return Number.isFinite(value) ? value : 0;
@@ -176,9 +178,7 @@ const mapLine = (line: ApiLine): Checkout.Line => {
     purchasableSnapshot: line.attributes,
     sku: line.sku,
     title: line.title,
-    children: line.children.map((child) =>
-      mapChildLine(child, currencyCode)
-    ),
+    children: line.children.map((child) => mapChildLine(child, currencyCode)),
   };
 };
 
@@ -187,10 +187,14 @@ const mapDeliveryMethod = (
 ): Checkout.DeliveryMethod => ({
   handle: method.handle,
   code: method.code,
+  title: method.title,
+  description: method.description,
   deliveryMethodType:
     method.deliveryMethodType === 'SHIPPING' ? 'SHIPPING' : 'PICKUP',
-  provider: { code: method.providerCode ?? '' },
-  data: method.data,
+  provider: {
+    code: method.providerCode?.trim() || GENERIC_DELIVERY_PROVIDER,
+  },
+  publicData: method.data,
 });
 
 const mapSelectedDeliveryMethod = (
@@ -259,7 +263,8 @@ export function mapApiCheckoutToCheckout(
 ): Checkout.Checkout {
   const lines = apiCheckout.lines.map(mapLine);
   const linesById = new Map(lines.map((line) => [line.id, line]));
-  const selectedPaymentMethod = apiCheckout.payment.selectedPaymentMethod.method;
+  const selectedPaymentMethod =
+    apiCheckout.payment.selectedPaymentMethod.method;
 
   return {
     id: apiCheckout.id,

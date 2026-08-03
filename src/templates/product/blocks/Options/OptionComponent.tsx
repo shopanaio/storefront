@@ -129,6 +129,10 @@ export const ComponentOption = ({
       : (selectedIds?.includes(item.node.id) ?? false);
 
     const handleClick = () => {
+      if (item.availableForSale === false) {
+        return;
+      }
+
       if (inDrawer) {
         if (multiple) {
           setDraftSelectedIds((prev) =>
@@ -153,6 +157,7 @@ export const ComponentOption = ({
           title={item.node.title}
           price={getGroupItemPrice(item)}
           selected={isSelected}
+          disabled={item.availableForSale === false}
           onClick={handleClick}
           control={multiple ? 'checkbox' : 'radio'}
         />
@@ -165,6 +170,7 @@ export const ComponentOption = ({
         src={item.node?.cover?.url}
         alt={item.node?.title ?? 'Untitled'}
         selected={isSelected}
+        disabled={item.availableForSale === false}
         onClick={handleClick}
         width={100}
         overlay={

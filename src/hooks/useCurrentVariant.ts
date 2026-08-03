@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 
 interface UseCurrentVariantProps {
   /** Base product entity with all data */
@@ -38,6 +38,7 @@ export function useCurrentVariant({
 
     return (
       product.variants?.find((v) => v.handle === variantHandle) ||
+      product.variants?.find((v) => v.isDefault) ||
       product.variants?.[0]
     );
   }, [product, variantHandle]);

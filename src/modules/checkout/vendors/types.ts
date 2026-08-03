@@ -45,6 +45,9 @@ export interface ProviderMethod {
   handle: string;
   code: string;
   data: unknown;
+  publicData?: unknown;
+  title?: string;
+  description?: string | null;
   provider: string;
 }
 

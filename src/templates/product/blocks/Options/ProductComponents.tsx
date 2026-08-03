@@ -10,27 +10,34 @@ import { useProductGroups as useGroupsLogic } from '@src/hooks/product/useProduc
 import { useTranslations } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { IncludedComponent } from './IncludedComponent';
-import { model } from "@shopana/storefront-sdk";
+import { model } from '@shopana/storefront-sdk';
 
 const { Text } = Typography;
 
 interface ProductGroupsProps {
   product: model.Product;
+  currentVariant: model.ProductVariant;
 }
 
-export const ProductComponents = ({ product }: ProductGroupsProps) => {
+export const ProductComponents = ({
+  product,
+  currentVariant,
+}: ProductGroupsProps) => {
   const t = useTranslations('Product');
   const { styles } = useStyles();
 
   const { multiple: multiItemGroups, single: singleItemGroups } =
     usePartitionGroups(product.groups);
 
-  const groups = useGroupsLogic(product, product.variants[0]);
+  const groups = useGroupsLogic(product, currentVariant);
 
   const selectedGroupMap = useMemo(() => {
     const map = new Map<string, { id: string; items: string[] }>();
     for (const [groupId, items] of Object.entries(groups.selectionsByGroupId)) {
-      map.set(groupId, { id: groupId, items: items.map((x) => x.purchasableId) });
+      map.set(groupId, {
+        id: groupId,
+        items: items.map((x) => x.purchasableId),
+      });
     }
     return map;
   }, [groups.selectionsByGroupId]);

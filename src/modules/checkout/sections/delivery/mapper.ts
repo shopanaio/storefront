@@ -23,8 +23,11 @@ export function mapCheckoutToDeliveryFormData(
       (method) => ({
         handle: method.handle,
         code: method.code,
+        title: method.title,
+        description: method.description,
         provider: method.provider.code,
-        data: method.data,
+        data: undefined,
+        publicData: method.publicData,
       })
     );
 
@@ -33,8 +36,11 @@ export function mapCheckoutToDeliveryFormData(
         ? {
             handle: group.selectedDeliveryMethod.handle,
             code: group.selectedDeliveryMethod.code,
+            title: group.selectedDeliveryMethod.title,
+            description: group.selectedDeliveryMethod.description,
             provider: group.selectedDeliveryMethod.provider.code,
-            data: group.selectedDeliveryMethod.data,
+            data: undefined,
+            publicData: group.selectedDeliveryMethod.publicData,
           }
         : null;
 

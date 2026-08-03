@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
 
 /**
  * Checkout domain types namespace
@@ -140,10 +140,12 @@ export namespace Checkout {
   export interface DeliveryMethod {
     handle: string;
     code: string;
+    title: string;
+    description?: string | null;
     deliveryMethodType: DeliveryMethodType;
     provider: DeliveryProvider;
-    /** User-provided data for this delivery method */
-    data?: unknown;
+    /** Public provider metadata returned by the checkout API. */
+    publicData?: unknown;
   }
 
   export type DeliveryMethodType = 'PICKUP' | 'SHIPPING';

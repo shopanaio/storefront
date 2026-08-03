@@ -1,8 +1,13 @@
 export interface DeliveryMethod {
   handle: string;
   code: string;
+  title: string;
+  description?: string | null;
   provider: string;
+  /** Locally persisted private input sent back through customerInput. */
   data: unknown;
+  /** Read-only metadata returned by the provider through publicData. */
+  publicData: unknown;
 }
 
 /**
@@ -40,6 +45,9 @@ export type DeliveryProviderMethodsRecord = Record<
     handle: string;
     code: DeliveryMethodCode;
     data: DeliveryMethodData;
+    publicData: unknown;
+    title: string;
+    description?: string | null;
     provider: string;
   }>
 >;
