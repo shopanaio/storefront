@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { NormalizedCacheObject } from '@apollo/client';
 import { RelayEnvironmentProvider } from 'react-relay';
 import type { ConcreteRequest } from 'relay-runtime/lib/util/RelayConcreteNode';
 import { ShopProvider } from './shop/ShopContext';
@@ -18,6 +19,8 @@ import type { Environment } from 'relay-runtime';
 import { SessionProvider } from './modules/session/react/context/SessionContext';
 import { createSessionStoreZustand } from './modules/session/react/store/SessionStoreZustand';
 import { QueryProvider } from './next/relay/QueryProvider';
+import { ApolloAppProvider } from './next/apollo/ApolloProvider';
+import type { ApolloEnvironmentConfig } from './graphql/apollo/types';
 
 // Client-side singleton
 let clientEnvironment: Environment | null = null;
@@ -41,6 +44,8 @@ function getOrCreateEnvironment(config: RelayEnvironmentConfig): Environment {
 interface AppProvidersProps {
   children: React.ReactNode;
   environment: Environment;
+  apolloEnvironmentConfig: ApolloEnvironmentConfig;
+  apolloInitialState?: NormalizedCacheObject;
   shopConfig: ShopConfig;
   cartConfig: CartConfig;
   preloadedCartQuery?: SerializablePreloadedQuery<
@@ -56,6 +61,8 @@ interface AppProvidersProps {
 const AppProviders: React.FC<AppProvidersProps> = ({
   children,
   environment,
+  apolloEnvironmentConfig,
+  apolloInitialState,
   shopConfig,
   cartConfig,
   preloadedCartQuery,
@@ -65,7 +72,8 @@ const AppProviders: React.FC<AppProvidersProps> = ({
   const initialCart =
     preloadedCartQuery &&
     (preloadedCartQuery.response as any)?.data?.checkoutQuery?.checkout
-      ? ((preloadedCartQuery.response as any).data.checkoutQuery.checkout as any)
+      ? ((preloadedCartQuery.response as any).data.checkoutQuery
+          .checkout as any)
       : null;
 
   // Extract initial session from SSR preloaded query
@@ -91,7 +99,9 @@ const AppProviders: React.FC<AppProvidersProps> = ({
 
   if (!sessionStoreInstance.current) {
     sessionStoreInstance.current = createSessionStoreZustand(
-      initialSession ? { user: initialSession.user, token: initialSession.accessToken } : null
+      initialSession
+        ? { user: initialSession.user, token: initialSession.accessToken }
+        : null
     );
   }
 
@@ -101,25 +111,30 @@ const AppProviders: React.FC<AppProvidersProps> = ({
     : null;
 
   return (
-    <RelayEnvironmentProvider environment={environment}>
-      <ShopProvider config={shopConfig}>
-        <SessionProvider store={sessionStoreInstance.current!}>
-          <CartProvider
-            store={cartStoreInstance.current!}
-            config={cartConfig}
-            initialCartData={initialCartPreloadedQuery ?? undefined}
-          >
-            {preloadedSessionQuery ? (
-              <QueryProvider preloadedQuery={preloadedSessionQuery}>
-                {children}
-              </QueryProvider>
-            ) : (
-              children
-            )}
-          </CartProvider>
-        </SessionProvider>
-      </ShopProvider>
-    </RelayEnvironmentProvider>
+    <ApolloAppProvider
+      environmentConfig={apolloEnvironmentConfig}
+      initialState={apolloInitialState}
+    >
+      <RelayEnvironmentProvider environment={environment}>
+        <ShopProvider config={shopConfig}>
+          <SessionProvider store={sessionStoreInstance.current!}>
+            <CartProvider
+              store={cartStoreInstance.current!}
+              config={cartConfig}
+              initialCartData={initialCartPreloadedQuery ?? undefined}
+            >
+              {preloadedSessionQuery ? (
+                <QueryProvider preloadedQuery={preloadedSessionQuery}>
+                  {children}
+                </QueryProvider>
+              ) : (
+                children
+              )}
+            </CartProvider>
+          </SessionProvider>
+        </ShopProvider>
+      </RelayEnvironmentProvider>
+    </ApolloAppProvider>
   );
 };
 
@@ -129,6 +144,13 @@ export interface AppProps {
    * Relay environment configuration
    */
   environmentConfig: RelayEnvironmentConfig;
+  /**
+   * Optional Apollo network configuration. Defaults to environmentConfig so
+   * Relay and Apollo can use the same endpoint during incremental migration.
+   */
+  apolloEnvironmentConfig?: ApolloEnvironmentConfig;
+  /** Optional normalized cache produced by an imperative Apollo SSR loader. */
+  apolloInitialState?: NormalizedCacheObject;
   /**
    * Shop configuration (currency, locale, features)
    */
@@ -155,6 +177,7 @@ export interface AppProps {
 
 /**
  * Main App component that wraps the application with all necessary providers:
+ * - ApolloNextAppProvider (GraphQL, new UI)
  * - RelayEnvironmentProvider (GraphQL)
  * - ShopProvider (shop config, locale, currency)
  * - SessionProvider (session state management)
@@ -165,6 +188,8 @@ export interface AppProps {
 export function App({
   children,
   environmentConfig,
+  apolloEnvironmentConfig = environmentConfig,
+  apolloInitialState,
   shopConfig,
   cartConfig,
   preloadedCartQuery,
@@ -175,6 +200,8 @@ export function App({
   return (
     <AppProviders
       environment={environment}
+      apolloEnvironmentConfig={apolloEnvironmentConfig}
+      apolloInitialState={apolloInitialState}
       shopConfig={shopConfig}
       cartConfig={cartConfig}
       preloadedCartQuery={preloadedCartQuery}
