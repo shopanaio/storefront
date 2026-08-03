@@ -23,6 +23,7 @@ A storefront template built with Next.js 14 + Relay that can work with two CMS p
 git clone <your-fork-or-repo-url>
 cd storefront-ui
 yarn install
+yarn --cwd mockServer install
 ```
 
 ## Environment variables (.env)
@@ -71,25 +72,27 @@ In dev scripts, this command is run automatically before the server starts.
 ## Run in development mode
 
 ```bash
-# Shopana
-yarn dev:shopana
-
-# Shopify
-yarn dev:shopify
+yarn dev
 ```
 
-What `yarn dev:<cms>` does:
+This starts both services for local development:
 
-- compiles Relay for the selected CMS;
-- runs `next dev` with `CMS=<cms>`;
-- uses `NEXT_PUBLIC_*` variables from `.env` for the Relay network layer (see `src/relay/Environment.ts`).
+- the GraphQL mock server at `http://127.0.0.1:4100/graphql`;
+- Next.js at `http://localhost:3001`.
 
-## Switching between CMS
+The development command sets the mock URL for the shared environment config, so
+both Relay and Apollo send requests to the local mock. Values from `.env` are not
+used for the Shopana GraphQL URL while this command is running.
 
-1. Update `.env` for the new CMS (URL, keys).
-2. Regenerate schema and types: `yarn codegen:<cms>`.
-3. Rebuild Relay artifacts: `yarn relay:<cms>`.
-4. Restart the dev server (`yarn dev:<cms>`) or rebuild for production.
+Use `MOCK_SERVER_HOST` and `MOCK_SERVER_PORT` to override the mock address:
+
+```bash
+MOCK_SERVER_PORT=4200 yarn dev
+```
+
+The services can also be started separately with `yarn dev:mock` and
+`yarn dev:next`. In that case, provide `SHOPANA_GRAPHQL_URL` to the Next.js
+process explicitly if it should use the mock server.
 
 ## Storybook
 
