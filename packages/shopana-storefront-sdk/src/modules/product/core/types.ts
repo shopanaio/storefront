@@ -1,8 +1,14 @@
 import type { ProductQuery$data } from './graphql/queries/__generated__/ProductQuery.graphql';
 import type { ProductReviewsFragment$data } from './graphql/fragments/__generated__/ProductReviewsFragment.graphql';
+import type { ProductComponentConfigurationFragment$data } from './graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
+import type { ProductComponentGroupFragment$data } from './graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
+import type { ProductComponentItemFragment$data } from './graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
 
 export type ProductQueryResponse = ProductQuery$data;
 export type ProductReviewsData = ProductReviewsFragment$data;
+export type ProductComponentConfigurationData = ProductComponentConfigurationFragment$data;
+export type ProductComponentGroupData = ProductComponentGroupFragment$data;
+export type ProductComponentItemData = ProductComponentItemFragment$data;
 
 export interface ProductMoney {
   amount: string;
@@ -165,3 +171,6 @@ export interface ProductTemplateData {
 }
 
 export type { ProductReviewsFragment$key } from './graphql/fragments/__generated__/ProductReviewsFragment.graphql';
+export type { ProductComponentConfigurationFragment$key } from './graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
+export type { ProductComponentGroupFragment$key } from './graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
+export type { ProductComponentItemFragment$key } from './graphql/fragments/__generated__/ProductComponentItemFragment.graphql';

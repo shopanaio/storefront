@@ -1013,6 +1013,39 @@ type ProductFeatureGroup implements Node @join__type(graph: CATALOG_STOREFRONT, 
   features: [ProductFeature!]!
 }
 
+type ProductComponentConfiguration @join__type(graph: CATALOG_STOREFRONT)  {
+  id: ID!
+  displayStyle: ProductComponentDisplayStyle!
+  groups: [ProductComponentGroup!]!
+  componentsSubtotal: Money!
+  totalPrice: Money!
+}
+
+type ProductComponentGroup @join__type(graph: CATALOG_STOREFRONT)  {
+  id: ID!
+  title: String!
+  required: Boolean!
+  minSelection: Int
+  maxSelection: Int
+  items: [ProductComponentItem!]!
+}
+
+type ProductComponentItem @join__type(graph: CATALOG_STOREFRONT)  {
+  id: ID!
+  title: String!
+  product: Product!
+  variant: ProductVariant!
+  featuredMedia: Media
+  selected: Boolean!
+  required: Boolean!
+  availableForSale: Boolean!
+  quantity: Int!
+  minQuantity: Int!
+  maxQuantity: Int
+  unitPrice: Money!
+  totalPrice: Money!
+}
+
 """
 A published item offered for sale in the storefront catalog.
 """
@@ -1102,6 +1135,7 @@ type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: 
   dimensions: Dimensions @join__field(graph: CATALOG_STOREFRONT)
   media(first: Int, after: Cursor, last: Int, before: Cursor) : ProductVariantMediaConnection! @join__field(graph: CATALOG_STOREFRONT)
   featuredMedia: Media @join__field(graph: CATALOG_STOREFRONT)
+  componentConfiguration(selections: [ProductComponentSelectionInput!]) : ProductComponentConfiguration @join__field(graph: CATALOG_STOREFRONT)
   createdAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
   updatedAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
   reviews(
@@ -5236,6 +5270,13 @@ enum ProductVariantInventoryPolicy @join__type(graph: CATALOG_STOREFRONT)  {
   CONTINUE @join__enumValue(graph: CATALOG_STOREFRONT)
 }
 
+enum ProductComponentDisplayStyle @join__type(graph: CATALOG_STOREFRONT)  {
+  ACCORDION @join__enumValue(graph: CATALOG_STOREFRONT)
+  TABS @join__enumValue(graph: CATALOG_STOREFRONT)
+  FLAT @join__enumValue(graph: CATALOG_STOREFRONT)
+  WIZARD @join__enumValue(graph: CATALOG_STOREFRONT)
+}
+
 """
 How an option should be presented by a product option picker.
 """
@@ -5988,6 +6029,12 @@ enum ReviewExternalSyncStatus @join__type(graph: REVIEWS_STOREFRONT)  {
   SYNCED @join__enumValue(graph: REVIEWS_STOREFRONT)
   FAILED @join__enumValue(graph: REVIEWS_STOREFRONT)
   DISABLED @join__enumValue(graph: REVIEWS_STOREFRONT)
+}
+
+input ProductComponentSelectionInput @join__type(graph: CATALOG_STOREFRONT)  {
+  itemId: ID!
+  variantId: ID
+  quantity: Int!
 }
 
 """

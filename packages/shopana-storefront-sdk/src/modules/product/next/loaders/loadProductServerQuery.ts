@@ -3,16 +3,19 @@ import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadS
 import { createFetchGraphQL } from '../../../../graphql/relay/Environment';
 import type { RelayEnvironmentConfig } from '../../../../graphql/relay/types';
 import ProductQueryNode, {
+  ProductComponentSelectionInput,
   ProductQuery as ProductQueryType,
+  ReviewSort,
 } from '../../core/graphql/queries/__generated__/ProductQuery.graphql';
 
-export type ProductReviewSort = 'HELPFUL_YES_DESC' | 'CREATED_AT_DESC' | 'CREATED_AT_ASC' | 'RATING_DESC';
+export type ProductReviewSort = ReviewSort;
 
 export interface LoadProductServerQueryOptions {
   environmentConfig: RelayEnvironmentConfig;
   handle: string;
   reviewsFirst?: number;
   reviewsSort?: ProductReviewSort;
+  componentSelections?: ReadonlyArray<ProductComponentSelectionInput>;
 }
 
 export async function loadProductServerQuery(
@@ -24,7 +27,8 @@ export async function loadProductServerQuery(
     environmentConfig,
     handle,
     reviewsFirst = 3,
-    reviewsSort = 'HELPFUL_YES_DESC'
+    reviewsSort = 'MOST_HELPFUL',
+    componentSelections,
   } = options;
 
   const { headers } = await import('next/headers');
@@ -45,6 +49,7 @@ export async function loadProductServerQuery(
     handle,
     first: reviewsFirst,
     sort: reviewsSort,
+    componentSelections,
   }, cookie);
 
   return preloadedQuery;

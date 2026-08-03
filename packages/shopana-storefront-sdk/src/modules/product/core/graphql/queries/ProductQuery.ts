@@ -6,6 +6,7 @@ export const ProductQuery = graphql`
     $first: Int = 3
     $after: Cursor
     $sort: ReviewSort = MOST_HELPFUL
+    $componentSelections: [ProductComponentSelectionInput!]
   ) {
     product: productByHandle(handle: $handle) {
       ...Reviews @arguments(first: $first, after: $after, sort: $sort)
@@ -69,6 +70,8 @@ export const ProductQuery = graphql`
         edges {
           cursor
           node {
+            ...ProductComponentConfigurationFragment
+              @arguments(selections: $componentSelections)
             id
             handle
             title
