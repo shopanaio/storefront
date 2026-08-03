@@ -29,3 +29,35 @@ For development with automatic restart:
 ```sh
 yarn dev
 ```
+
+## Mock images and data
+
+[DummyJSON Products](https://dummyjson.com/docs/products) is the recommended
+starting point for product fixtures. It provides products, categories, prices,
+descriptions, thumbnails, and image galleries.
+
+Useful alternatives:
+
+- [Lorem Picsum](https://picsum.photos/) for seeded photos, for example
+  `https://picsum.photos/seed/product-1/800/800`.
+- [DummyJSON Image](https://dummyjson.com/docs/image) for generated placeholders
+  with controlled dimensions, colors, and labels.
+- [Unsplash](https://unsplash.com/) for realistic photos, subject to its usage
+  terms.
+
+Do not rely on remote image URLs in stable fixtures. Download selected images
+once and keep them in the mock server so that local development, offline use,
+and screenshot tests are deterministic. Use the following asset structure:
+
+```text
+public/
+  images/
+    products/
+    categories/
+    avatars/
+    reviews/
+    placeholders/
+```
+
+Store fixture records under `src/fixtures/` and reference the corresponding
+local image URLs from those records.
