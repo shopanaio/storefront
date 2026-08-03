@@ -741,6 +741,11 @@ type Mutation @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: CHECKOU
   """
   orderReturnRequestCancel(input: OrderReturnRequestCancelInput!) : OrderReturnRequestCancelPayload! @join__field(graph: ORDERS_STOREFRONT) 
   """
+  Starts another payment attempt for an eligible failed, expired, or pending
+  order payment. Replaying the same idempotency key returns the same attempt.
+  """
+  orderPaymentRetry(input: OrderPaymentRetryInput!) : OrderPaymentRetryPayload! @join__field(graph: ORDERS_STOREFRONT) 
+  """
   Submits a product review in the active storefront context.
   
   The authenticated customer is resolved from trusted request context. Guest
@@ -2453,11 +2458,148 @@ type OrderPaymentMethod @join__type(graph: ORDERS_STOREFRONT)  {
 }
 
 """
+Quantity from an order line assigned to a fulfillment.
+"""
+type OrderFulfillmentLine @join__type(graph: ORDERS_STOREFRONT)  {
+  orderLine: OrderLine!
+  quantity: Int!
+}
+
+"""
+Carrier tracking identity. A shipment may expose multiple tracking numbers.
+"""
+type OrderTrackingInfo @join__type(graph: ORDERS_STOREFRONT)  {
+  number: String!
+  url: URL
+  company: String
+}
+
+"""
+Carrier scan or merchant-provided progress event for a shipment.
+"""
+type OrderTrackingEvent implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+  id: ID!
+  status: OrderShipmentStatus!
+  message: String
+  location: String
+  happenedAt: DateTime!
+}
+
+"""
+One physical shipment created for an order fulfillment.
+"""
+type OrderShipment implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+  id: ID!
+  status: OrderShipmentStatus!
+  carrierCode: String
+  carrierName: String
+  serviceCode: String
+  tracking: [OrderTrackingInfo!]!
+  events: [OrderTrackingEvent!]!
+  shippedAt: DateTime
+  estimatedDeliveryAt: DateTime
+  deliveredAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Merchant fulfillment of one or more purchased line quantities.
+"""
+type OrderFulfillment implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+  id: ID!
+  status: OrderFulfillmentOperationStatus!
+  lines: [OrderFulfillmentLine!]!
+  shipments: [OrderShipment!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+One immutable payment operation recorded against an order.
+"""
+type OrderPaymentTransaction implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+  id: ID!
+  kind: OrderPaymentTransactionKind!
+  status: OrderPaymentTransactionStatus!
+  amount: Money!
+  providerCode: String!
+  reference: String
+  failureCode: String
+  failureMessage: String
+  createdAt: DateTime!
+  processedAt: DateTime
+}
+
+"""
+Quantity and amount returned for one purchased order line.
+"""
+type OrderRefundLine @join__type(graph: ORDERS_STOREFRONT)  {
+  orderLine: OrderLine!
+  quantity: Int!
+  amount: Money!
+}
+
+"""
+Customer-visible refund recorded against the order.
+"""
+type OrderRefund implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+  id: ID!
+  status: OrderRefundStatus!
+  amount: Money!
+  reason: String
+  note: String
+  lines: [OrderRefundLine!]!
+  createdAt: DateTime!
+  processedAt: DateTime
+}
+
+"""
+Customer-visible void of a previously authorized payment amount.
+"""
+type OrderVoid implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+  id: ID!
+  status: OrderVoidStatus!
+  amount: Money!
+  reason: String
+  createdAt: DateTime!
+  processedAt: DateTime
+}
+
+"""
+Availability of another customer-initiated payment attempt.
+"""
+type OrderPaymentRetry @join__type(graph: ORDERS_STOREFRONT)  {
+  available: Boolean!
+  unavailableReasonCode: String
+  unavailableReason: String
+  expiresAt: DateTime
+}
+
+"""
+Current payment aggregate and immutable payment history for an order.
+"""
+type OrderPayment @join__type(graph: ORDERS_STOREFRONT)  {
+  status: OrderPaymentStatus!
+  method: OrderPaymentMethod
+  authorizedAmount: Money!
+  capturedAmount: Money!
+  refundedAmount: Money!
+  outstandingAmount: Money!
+  transactions: [OrderPaymentTransaction!]!
+  refunds: [OrderRefund!]!
+  voids: [OrderVoid!]!
+  retry: OrderPaymentRetry!
+}
+
+"""
 A customer-visible order in the active storefront context.
 """
 type Order implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
   id: ID!
   status: OrderStatus!
+  fulfillmentStatus: OrderFulfillmentStatus!
+  deliveryStatus: OrderDeliveryStatus!
   """
   Human-readable order number unique within the store.
   """
@@ -2472,7 +2614,9 @@ type Order implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @jo
   lines: [OrderLine!]!
   appliedPromoCodes: [OrderPromoCode!]!
   deliveryGroups: [OrderDeliveryGroup!]!
-  paymentMethod: OrderPaymentMethod
+  fulfillments: [OrderFulfillment!]!
+  payment: OrderPayment!
+  paymentMethod: OrderPaymentMethod @deprecated(reason: "Use payment.method.") 
   """
   Server-evaluated post-order actions available to the current customer.
   """
@@ -2549,6 +2693,7 @@ type OrderSelfService @join__type(graph: ORDERS_STOREFRONT)  {
   cancel: OrderSelfServiceAction!
   reorder: OrderSelfServiceAction!
   requestReturn: OrderSelfServiceAction!
+  retryPayment: OrderSelfServiceAction!
 }
 
 """
@@ -2639,6 +2784,26 @@ type OrderReturnRequestCreatePayload @join__type(graph: ORDERS_STOREFRONT)  {
 
 type OrderReturnRequestCancelPayload @join__type(graph: ORDERS_STOREFRONT)  {
   returnRequest: OrderReturnRequest
+  userErrors: [OrderUserError!]!
+}
+
+"""
+Customer interaction required to continue the new payment attempt.
+"""
+type OrderPaymentCustomerAction @join__type(graph: ORDERS_STOREFRONT)  {
+  type: OrderPaymentCustomerActionType!
+  url: URL
+  title: String
+  instructions: String
+  expiresAt: DateTime
+  data: JSON
+}
+
+type OrderPaymentRetryPayload @join__type(graph: ORDERS_STOREFRONT)  {
+  order: Order
+  attemptId: ID
+  status: OrderPaymentRetryStatus
+  customerAction: OrderPaymentCustomerAction
   userErrors: [OrderUserError!]!
 }
 
@@ -5456,6 +5621,138 @@ enum OrderPaymentFlow @join__type(graph: ORDERS_STOREFRONT)  {
 }
 
 """
+Aggregate fulfillment state across every line in an order.
+"""
+enum OrderFulfillmentStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  UNFULFILLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SCHEDULED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  ON_HOLD @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PARTIALLY_FULFILLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FULFILLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Lifecycle state of one fulfillment operation.
+"""
+enum OrderFulfillmentOperationStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  PENDING @join__enumValue(graph: ORDERS_STOREFRONT) 
+  OPEN @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SUCCESS @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FAILURE @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Aggregate customer-facing delivery state across all shipments.
+"""
+enum OrderDeliveryStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  NOT_SHIPPED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PARTIALLY_SHIPPED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SHIPPED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  IN_TRANSIT @join__enumValue(graph: ORDERS_STOREFRONT) 
+  OUT_FOR_DELIVERY @join__enumValue(graph: ORDERS_STOREFRONT) 
+  DELIVERED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  DELIVERY_ATTEMPTED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  DELAYED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  EXCEPTION @join__enumValue(graph: ORDERS_STOREFRONT) 
+  RETURNED_TO_SENDER @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Customer-facing lifecycle state of one physical shipment.
+"""
+enum OrderShipmentStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  LABEL_CREATED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  READY_FOR_PICKUP @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PICKED_UP @join__enumValue(graph: ORDERS_STOREFRONT) 
+  IN_TRANSIT @join__enumValue(graph: ORDERS_STOREFRONT) 
+  OUT_FOR_DELIVERY @join__enumValue(graph: ORDERS_STOREFRONT) 
+  DELIVERED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  DELIVERY_ATTEMPTED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  DELAYED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  EXCEPTION @join__enumValue(graph: ORDERS_STOREFRONT) 
+  RETURNED_TO_SENDER @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Aggregate payment state for an order.
+"""
+enum OrderPaymentStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  PENDING @join__enumValue(graph: ORDERS_STOREFRONT) 
+  AUTHORIZED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PARTIALLY_PAID @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PAID @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PARTIALLY_REFUNDED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  REFUNDED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  VOIDED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  EXPIRED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FAILED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+The accounting operation represented by a payment transaction.
+"""
+enum OrderPaymentTransactionKind @join__type(graph: ORDERS_STOREFRONT)  {
+  AUTHORIZATION @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CAPTURE @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SALE @join__enumValue(graph: ORDERS_STOREFRONT) 
+  REFUND @join__enumValue(graph: ORDERS_STOREFRONT) 
+  VOID @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Lifecycle state of a payment transaction.
+"""
+enum OrderPaymentTransactionStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  PENDING @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SUCCESS @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FAILURE @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Lifecycle state of a customer-visible refund.
+"""
+enum OrderRefundStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  PENDING @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SUCCEEDED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FAILED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Lifecycle state of a payment authorization void.
+"""
+enum OrderVoidStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  PENDING @join__enumValue(graph: ORDERS_STOREFRONT) 
+  SUCCEEDED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FAILED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  CANCELLED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+State returned after requesting another payment attempt.
+"""
+enum OrderPaymentRetryStatus @join__type(graph: ORDERS_STOREFRONT)  {
+  REQUIRES_ACTION @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PENDING @join__enumValue(graph: ORDERS_STOREFRONT) 
+  AUTHORIZED @join__enumValue(graph: ORDERS_STOREFRONT) 
+  PAID @join__enumValue(graph: ORDERS_STOREFRONT) 
+  FAILED @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
+Customer interaction required to continue a retried payment.
+"""
+enum OrderPaymentCustomerActionType @join__type(graph: ORDERS_STOREFRONT)  {
+  REDIRECT @join__enumValue(graph: ORDERS_STOREFRONT) 
+  INSTRUCTIONS @join__enumValue(graph: ORDERS_STOREFRONT) 
+}
+
+"""
 Customer-selected reason for cancelling an order.
 """
 enum OrderCancellationReason @join__type(graph: ORDERS_STOREFRONT)  {
@@ -6712,6 +7009,16 @@ input OrderReturnRequestCancelInput @join__type(graph: ORDERS_STOREFRONT)  {
   returnRequestId: ID!
   expectedRevision: Int!
   idempotencyKey: String!
+}
+
+input OrderPaymentRetryInput @join__type(graph: ORDERS_STOREFRONT)  {
+  orderId: ID!
+  expectedOrderUpdatedAt: DateTime!
+  idempotencyKey: String!
+  """
+  HTTPS URL to which an online payment provider may return the customer.
+  """
+  returnUrl: URL
 }
 
 """
