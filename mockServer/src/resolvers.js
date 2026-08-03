@@ -263,7 +263,14 @@ const contentViewerCapabilities = (store, content, context) => {
   };
 };
 
+const absoluteAssetUrl = (value, request) => {
+  if (typeof value !== "string" || !value.startsWith("/")) return value;
+  return new URL(value, request.url).href;
+};
+
 const specialFields = (store) => ({
+  "Image.url": (image, _args, context) => absoluteAssetUrl(image.url, context.request),
+  "OrderLine.imageUrl": (line, _args, context) => absoluteAssetUrl(line.imageUrl, context.request),
   "OnlineStoreNavigationMenu.items": (menu, args) => connection(menu.items, args),
   "OnlineStoreNavigationMenuItem.menu": (item) => findContaining(store.state.navigationMenus, item.id, "items"),
   "OnlineStoreNavigationMenuItem.parent": (item) => findParentItem(store.state.navigationMenus, item.id),

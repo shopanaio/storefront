@@ -14,6 +14,21 @@ const brandPathAbsolute = path.resolve(`packages/brand-${brand}/src`);
 const cms = (process.env.CMS || 'shopana').toLowerCase();
 const relayConfig = require(`./relay.${cms}.json`);
 
+const graphqlImagePattern = (() => {
+  try {
+    const url = new URL(process.env.SHOPANA_GRAPHQL_URL);
+
+    return {
+      protocol: url.protocol.slice(0, -1),
+      hostname: url.hostname,
+      port: url.port,
+      pathname: '/images/**',
+    };
+  } catch {
+    return null;
+  }
+})();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: getEnv(),
@@ -21,6 +36,7 @@ const nextConfig = {
   images: {
     // unoptimized: true,
     remotePatterns: [
+      ...(graphqlImagePattern ? [graphqlImagePattern] : []),
       {
         protocol: 'https',
         hostname: 'nbg1.your-objectstorage.com',
