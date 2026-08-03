@@ -1,8 +1,10 @@
 import React from 'react';
+import type { NormalizedCacheObject } from '@apollo/client';
 import { App } from './App';
 import type { ShopConfig } from './shop/types';
 import type { CartConfig } from './modules/cart/core/config';
 import type { RelayEnvironmentConfig } from './graphql/relay/types';
+import type { ApolloEnvironmentConfig } from './graphql/apollo/types';
 import { loadCartServerQuery } from './modules/cart/next/loaders/loadCartServerQuery';
 import { loadSessionServerQuery } from './modules/session/next/loaders/loadSessionServerQuery';
 import { setEnvironmentConfig } from './config';
@@ -13,6 +15,10 @@ export interface AppProviderProps {
    * Relay environment configuration
    */
   environmentConfig: RelayEnvironmentConfig;
+  /** Defaults to environmentConfig when both clients use the same endpoint. */
+  apolloEnvironmentConfig?: ApolloEnvironmentConfig;
+  /** Optional normalized cache produced before rendering the root provider. */
+  apolloInitialState?: NormalizedCacheObject;
   /**
    * Shop configuration (currency, locale, features)
    */
@@ -57,6 +63,8 @@ export interface AppProviderProps {
 export async function AppProvider({
   children,
   environmentConfig,
+  apolloEnvironmentConfig,
+  apolloInitialState,
   shopConfig,
   cartConfig,
 }: AppProviderProps) {
@@ -75,6 +83,8 @@ export async function AppProvider({
   return (
     <App
       environmentConfig={environmentConfig}
+      apolloEnvironmentConfig={apolloEnvironmentConfig}
+      apolloInitialState={apolloInitialState}
       shopConfig={shopConfig}
       cartConfig={cartConfig}
       preloadedCartQuery={preloadedCartQuery}
