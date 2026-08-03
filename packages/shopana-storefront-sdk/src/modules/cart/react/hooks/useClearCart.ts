@@ -2,17 +2,21 @@
 
 import { useMutation } from 'react-relay';
 import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
+import type { clearCartMutation as ClearCartMutationType } from '../../core/graphql/mutations/__generated__/clearCartMutation.graphql';
 
 import { useCartContext, useCartActions } from '../context/CartContext';
-import { useCartIdOnly } from './useCartSelectors';
+import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 
 const useClearCart = (): UseClearCartReturn => {
   const cartId = useCartIdOnly();
+  const cartVersion = useCartVersionOnly();
   const { setCartKey, setId } = useCartContext();
   const actions = useCartActions();
 
-  const [commitClearCart, isInFlight] = useMutation<any>(clearCartMutation);
+  const [commitClearCart, isInFlight] =
+    useMutation<ClearCartMutationType>(clearCartMutation);
 
   return {
     clearCart: async (
@@ -29,6 +33,9 @@ const useClearCart = (): UseClearCartReturn => {
         console.warn('[useClearCart] No cart to clear');
         return null;
       }
+      if (cartVersion == null) {
+        throw new Error('Cart version is unavailable');
+      }
 
       return new Promise((resolve, reject) => {
         const { checkoutClear } = actions;
@@ -37,6 +44,8 @@ const useClearCart = (): UseClearCartReturn => {
           variables: {
             input: {
               checkoutId: currentCartId,
+              expectedCheckoutVersion: cartVersion,
+              idempotencyKey: createCheckoutIdempotencyKey(),
             },
           },
           onCompleted: (response, errors) => {
@@ -45,17 +54,16 @@ const useClearCart = (): UseClearCartReturn => {
               options?.onError?.();
               return reject(errors);
             } else if (
-              response?.checkoutMutation?.checkoutLinesClear?.errors &&
-              response.checkoutMutation.checkoutLinesClear.errors.length > 0
+              response.checkoutLinesClear.errors.length > 0
             ) {
               revert();
               options?.onError?.();
               return reject(
-                response.checkoutMutation.checkoutLinesClear.errors
+                response.checkoutLinesClear.errors
               );
             } else {
               // If checkout became null — remove cookie and clear context
-              if (!response?.checkoutMutation?.checkoutLinesClear?.checkout) {
+              if (!response.checkoutLinesClear.checkout) {
                 setCartKey(null);
                 setId(null);
               }

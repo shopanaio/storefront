@@ -21,6 +21,7 @@ export function mapCheckoutToDeliveryFormData(
   for (const group of checkout.deliveryGroups) {
     const deliveryMethods: DeliveryMethod[] = group.deliveryMethods.map(
       (method) => ({
+        handle: method.handle,
         code: method.code,
         provider: method.provider.code,
         data: method.data,
@@ -30,6 +31,7 @@ export function mapCheckoutToDeliveryFormData(
     const selectedDeliveryMethod: DeliveryMethod | null =
       group.selectedDeliveryMethod
         ? {
+            handle: group.selectedDeliveryMethod.handle,
             code: group.selectedDeliveryMethod.code,
             provider: group.selectedDeliveryMethod.provider.code,
             data: group.selectedDeliveryMethod.data,

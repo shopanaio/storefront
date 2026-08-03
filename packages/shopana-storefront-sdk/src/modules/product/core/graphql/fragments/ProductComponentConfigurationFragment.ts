@@ -2,6 +2,7 @@ import { graphql } from 'relay-runtime';
 
 export const ProductComponentConfigurationFragment = graphql`
   fragment ProductComponentConfigurationFragment on ProductVariant
+  @inline
   @argumentDefinitions(
     selections: { type: "[ProductComponentSelectionInput!]" }
   ) {

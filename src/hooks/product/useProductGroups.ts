@@ -6,9 +6,9 @@ import { useProductGroupsState } from './useProductGroupsState';
 import { computeBundlePrice } from './useProductBundlePricing';
 
 export interface AddToCartGroupSelectionItem {
+  componentItemId: string;
   purchasableId: string;
   quantity: number;
-  groupId?: string;
 }
 
 export interface UseProductGroupsResult {
@@ -69,10 +69,15 @@ export function useProductGroups(
     for (const g of groups) {
       const selected = selectionsByGroupId[g.id] ?? [];
       for (const sel of selected) {
+        const componentItem = g.items.find(
+          (item) => item.node.id === sel.purchasableId
+        );
+        if (!componentItem) continue;
+
         children.push({
+          componentItemId: componentItem.id,
           purchasableId: sel.purchasableId,
           quantity: sel.quantity,
-          groupId: g.id,
         });
       }
     }

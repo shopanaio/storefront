@@ -4,12 +4,12 @@ import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { ShowMoreBtn } from "../ShowMoreBtn";
 import { ProductCollapse } from "../ProductCollapse";
-import { ApiProductFeature } from "@codegen/schema-client";
+import type { model } from '@shopana/storefront-sdk';
 
 const { Text } = Typography;
 
 interface Prop {
-  features: ApiProductFeature[];
+  features: model.ProductFeature[];
 }
 
 export const ProductSpecification = ({ features }: Prop) => {

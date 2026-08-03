@@ -79,9 +79,11 @@ export const useCheckoutFragment = graphql`
       purchasable {
         ... on ProductVariant {
           id
+          handle
           sku
           title
           product {
+            id
             title
             handle
           }

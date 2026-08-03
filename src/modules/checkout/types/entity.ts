@@ -14,6 +14,10 @@ export namespace Checkout {
   export interface Checkout {
     /** A globally-unique ID. */
     id: string;
+    /** Optimistic concurrency version required by checkout mutations. */
+    version: number;
+    /** Revision of the latest completed checkout calculation. */
+    resultRevision: string;
     /** When this checkout was first created. */
     createdAt: Date;
     /** When this checkout was last updated. */
@@ -122,18 +126,19 @@ export namespace Checkout {
 
   /** Delivery address associated with a checkout. */
   export interface DeliveryAddress {
-    address1: string;
+    address1?: string | null;
     address2?: string | null;
-    city: string;
-    countryCode: string;
+    city?: string | null;
+    countryCode?: string | null;
     data?: unknown;
-    id: string;
+    id: string | null;
     postalCode?: string | null;
     provinceCode?: string | null;
   }
 
   /** Delivery method available for a checkout. */
   export interface DeliveryMethod {
+    handle: string;
     code: string;
     deliveryMethodType: DeliveryMethodType;
     provider: DeliveryProvider;
@@ -168,6 +173,7 @@ export namespace Checkout {
 
   /** Payment method available/selected for checkout. */
   export interface PaymentMethod {
+    handle: string;
     code: string;
     constraints?: PaymentMethodConstraints | null;
     flow: PaymentFlow;

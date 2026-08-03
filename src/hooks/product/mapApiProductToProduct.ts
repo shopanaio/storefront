@@ -1,182 +1,306 @@
-import { CurrencyCode } from '@codegen/schema-client';
 import type { ProductQuery$data } from '@src/hooks/product/ProductQuery';
-import type { model } from "@shopana/storefront-sdk";
+import type { model } from '@shopana/storefront-sdk';
+import { readInlineData } from 'react-relay';
+import ProductComponentConfigurationFragmentNode, {
+  type ProductComponentConfigurationFragment$key,
+} from '@shopana/storefront-sdk/modules/product/core/graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
+import ProductComponentGroupFragmentNode, {
+  type ProductComponentGroupFragment$key,
+} from '@shopana/storefront-sdk/modules/product/core/graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
+import ProductComponentItemFragmentNode, {
+  type ProductComponentItemFragment$key,
+} from '@shopana/storefront-sdk/modules/product/core/graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
 
 type ApiProduct = NonNullable<ProductQuery$data['product']>;
-type ApiVariant = NonNullable<ApiProduct['variants']>[number];
+type ApiVariant = ApiProduct['variants']['edges'][number]['node'];
 
-/**
- * Maps API product variant to domain ProductVariant
- */
-function mapApiVariantToVariant(apiVariant: ApiVariant): model.ProductVariant {
+const toAmount = (amount: unknown): number => {
+  const value = Number(amount ?? 0);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const toDateTime = (value: unknown): string =>
+  value == null ? '' : String(value);
+
+const toMedia = (
+  media:
+    | {
+        readonly id?: string;
+        readonly image?: { readonly url: unknown } | null;
+      }
+    | null
+    | undefined
+): model.Media | null => {
+  if (!media?.id || !media.image?.url) {
+    return null;
+  }
+
+  return { id: media.id, url: String(media.image.url) };
+};
+
+const mapOptionDisplayType = (
+  displayType: ApiProduct['options'][number]['displayType']
+): model.ProductOptionDisplayType => {
+  switch (displayType) {
+    case 'SWATCH':
+      return 'SWATCH';
+    case 'DROPDOWN':
+      return 'DROPDOWN';
+    case 'BUTTONS':
+    default:
+      return 'RADIO';
+  }
+};
+
+const mapSwatchDisplayType = (
+  displayType: NonNullable<
+    ApiProduct['options'][number]['values'][number]['swatch']
+  >['displayType']
+): model.SwatchDisplayType => {
+  switch (displayType) {
+    case 'IMAGE':
+      return 'IMAGE';
+    case 'GRADIENT':
+      return 'COLOR_DUO';
+    case 'COLOR':
+    default:
+      return 'COLOR';
+  }
+};
+
+const createGallery = (
+  media: Array<model.Media | null>
+): model.GalleryConnection => {
+  const seen = new Set<string>();
+  const images = media.filter((item): item is model.Media => {
+    if (!item || seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
+  });
+
+  return {
+    edges: images.map((node) => ({ node, cursor: '' })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    totalCount: images.length,
+  };
+};
+
+const mapApiVariantToVariant = (
+  apiVariant: ApiVariant,
+  productMedia: model.Media[]
+): model.ProductVariant => {
+  const gallery = createGallery([
+    toMedia(apiVariant.featuredMedia),
+    ...apiVariant.media.edges.map((edge) => toMedia(edge.node)),
+    ...productMedia,
+  ]);
+
   return {
     __typename: 'ProductVariant',
     id: apiVariant.id,
-    iid: apiVariant.id, // API doesn't have iid, using id
+    iid: apiVariant.id,
     handle: apiVariant.handle,
     title: apiVariant.title,
-    description: '', // Variants don't have description in current schema
-    excerpt: '', // Variants don't have excerpt in current schema
-    selectedOptions: [...(apiVariant.selectedOptions || [])],
+    description: '',
+    excerpt: '',
+    selectedOptions: apiVariant.selectedOptions.map(
+      (selection) => selection.optionValue.handle
+    ),
     price: {
-      amount: apiVariant.price?.amount || 0,
-      currencyCode: (apiVariant.price?.currencyCode || 'USD') as CurrencyCode,
+      amount: toAmount(apiVariant.price?.amount),
+      currencyCode: apiVariant.price?.currencyCode ?? 'USD',
     },
     compareAtPrice: apiVariant.compareAtPrice
       ? {
-          amount: apiVariant.compareAtPrice.amount,
-          currencyCode: apiVariant.compareAtPrice.currencyCode as CurrencyCode,
+          amount: toAmount(apiVariant.compareAtPrice.amount),
+          currencyCode: apiVariant.compareAtPrice.currencyCode,
         }
       : null,
-    cover: apiVariant.cover
-      ? {
-          id: apiVariant.cover.id,
-          url: apiVariant.cover.url,
-        }
-      : null,
-    gallery: apiVariant.gallery
-      ? {
-          edges: (apiVariant.gallery.edges || []).map((edge) => ({
-            node: {
-              id: edge.node.id,
-              url: edge.node.url,
-            },
-            cursor: '', // Not provided in current schema
-          })),
-          pageInfo: {
-            hasNextPage: false,
-            hasPreviousPage: false,
-          },
-          totalCount: (apiVariant.gallery.edges || []).length,
-        }
-      : undefined,
-    sku: apiVariant.sku || null,
+    cover: gallery.edges[0]?.node ?? null,
+    gallery,
+    sku: apiVariant.sku ?? null,
     stockStatus: {
-      isAvailable: apiVariant.stockStatus?.isAvailable || false,
+      isAvailable: apiVariant.isAvailable,
     },
-    createdAt: '', // Not provided in current schema
-    updatedAt: '', // Not provided in current schema
+    createdAt: '',
+    updatedAt: '',
   };
-}
+};
 
-/**
- * Maps API product to domain Product
- *
- * @param apiProduct - Product data from GraphQL API
- * @returns Domain Product model
- */
-export function mapApiProductToProduct(apiProduct: ApiProduct | null): model.Product | null {
+const mapComponentGroups = (
+  variant: ApiVariant | undefined
+): model.ProductGroup[] => {
+  if (!variant) {
+    return [];
+  }
+
+  const configuration = readInlineData(
+    ProductComponentConfigurationFragmentNode,
+    variant as ProductComponentConfigurationFragment$key
+  ).componentConfiguration;
+
+  if (!configuration) {
+    return [];
+  }
+
+  return configuration.groups.map((groupRef) => {
+    const group = readInlineData(
+      ProductComponentGroupFragmentNode,
+      groupRef as ProductComponentGroupFragment$key
+    );
+
+    return {
+      id: group.id,
+      title: group.title,
+      isRequired: group.isRequired,
+      isMultiple: group.maxSelection == null || group.maxSelection > 1,
+      items: group.items.map((itemRef) => {
+        const item = readInlineData(
+          ProductComponentItemFragmentNode,
+          itemRef as ProductComponentItemFragment$key
+        );
+        const node = item.node;
+        const price = {
+          amount: toAmount(item.unitPrice.amount),
+          currencyCode: item.unitPrice.currencyCode,
+        };
+
+        return {
+          id: item.id,
+          node: {
+            id: node.id,
+            title: node.title,
+            handle: node.handle,
+            price,
+            cover: toMedia(node.cover),
+          },
+          maxQuantity: item.maxQuantity ?? undefined,
+          price: {
+            amount: price,
+            percentage: null,
+          },
+        };
+      }),
+    };
+  });
+};
+
+/** Maps the current GraphQL product response to the storefront domain model. */
+export function mapApiProductToProduct(
+  apiProduct: ApiProduct | null
+): model.Product | null {
   if (!apiProduct) {
     return null;
   }
 
+  const productMedia = createGallery([
+    toMedia(apiProduct.featuredMedia),
+    ...apiProduct.media.edges.map((edge) => toMedia(edge.node)),
+  ]).edges.map((edge) => edge.node);
+  const variants = apiProduct.variants.edges.map(({ node }) =>
+    mapApiVariantToVariant(node, productMedia)
+  );
+  const ratingCounts = [
+    apiProduct.rating.breakdown.rating1Count,
+    apiProduct.rating.breakdown.rating2Count,
+    apiProduct.rating.breakdown.rating3Count,
+    apiProduct.rating.breakdown.rating4Count,
+    apiProduct.rating.breakdown.rating5Count,
+  ];
+
   return {
     __typename: 'Product',
     id: apiProduct.id,
-    iid: apiProduct.id, // API doesn't have iid, using id
     handle: apiProduct.handle,
     title: apiProduct.title,
-    description: apiProduct.description || '',
-    excerpt: apiProduct.excerpt || '',
+    description: apiProduct.description?.text ?? '',
+    excerpt: apiProduct.excerpt?.text ?? '',
     category: apiProduct.category
       ? {
           id: apiProduct.category.id,
           title: apiProduct.category.title,
           handle: apiProduct.category.handle,
-          breadcrumbs: (apiProduct.category.breadcrumbs || []).map((bc) => ({
-            id: bc.id,
-            title: bc.title,
-            handle: bc.handle,
+          description: '',
+          excerpt: '',
+          breadcrumbs: apiProduct.category.breadcrumbs.map((breadcrumb) => ({
+            id: breadcrumb.id,
+            title: breadcrumb.title,
+            handle: breadcrumb.handle,
           })),
+          createdAt: '',
+          updatedAt: '',
         }
       : null,
-    options: (apiProduct.options || []).map((option) => ({
+    options: apiProduct.options.map((option) => ({
       id: option.id,
       handle: option.handle,
       title: option.title,
-      displayType: option.displayType,
+      displayType: mapOptionDisplayType(option.displayType),
       values: option.values.map((value) => ({
         id: value.id,
         title: value.title,
         handle: value.handle,
         swatch: value.swatch
           ? {
-              id: value.swatch.id,
-              color: value.swatch.color,
-              displayType: value.swatch.displayType,
-              image: value.swatch.image
-                ? {
-                    id: value.swatch.image.id,
-                    url: value.swatch.image.url,
-                  }
+              id: `${value.id}:swatch`,
+              color: value.swatch.color ? String(value.swatch.color) : '',
+              color2: value.swatch.color2
+                ? String(value.swatch.color2)
                 : null,
+              displayType: mapSwatchDisplayType(value.swatch.displayType),
+              image: toMedia(value.swatch.image),
             }
           : null,
       })),
     })),
-    groups: (apiProduct.groups || []).map((group) => ({
-      id: group.id,
-      title: group.title,
-      isRequired: group.isRequired,
-      isMultiple: group.isMultiple,
-        items: group.items.map((item) => ({
-        node: {
-          id: item.node.id || '',
-          title: item.node.title || '',
-          handle: item.node.handle || '',
-          price: {
-            amount: item.node.price?.amount || 0,
-            currencyCode: (item.node.price?.currencyCode || 'USD') as CurrencyCode,
-          },
-          cover: item.node.cover
-            ? {
-                id: item.node.cover.id,
-                url: item.node.cover.url,
-              }
-            : null,
-        },
-        maxQuantity: item.maxQuantity || undefined,
-        price: {
-          amount: item.price?.amount
-            ? {
-                amount: item.price.amount.amount,
-                currencyCode: item.price.amount.currencyCode as CurrencyCode,
-              }
-            : null,
-          percentage: item.price?.percentage || null,
-        },
+    groups: mapComponentGroups(apiProduct.variants.edges[0]?.node),
+    features: apiProduct.features.map((feature) => ({
+      id: feature.id,
+      handle: feature.handle,
+      title: feature.title,
+      values: feature.values.map((value) => ({
+        id: value.id,
+        handle: value.handle,
+        title: value.title,
       })),
     })),
-    features: [], // Not loaded in current query, can be added later
     rating: {
-      id: apiProduct.rating?.id || '',
-      rating: apiProduct.rating?.rating || 0,
-      count: apiProduct.rating?.count || 0,
-      breakdown: (apiProduct.rating?.breakdown || []).map((b) => ({
-        star: b.star,
-        count: b.count,
-        percentage: b.percentage,
+      id: apiProduct.id,
+      rating: apiProduct.rating.rating,
+      count: apiProduct.rating.count,
+      breakdown: ratingCounts.map((count, index) => ({
+        star: index + 1,
+        count,
+        percentage:
+          apiProduct.rating.count > 0
+            ? (count / apiProduct.rating.count) * 100
+            : 0,
       })),
     },
     tags: {
-      edges: (apiProduct.tags?.edges || []).map((edge) => ({
+      edges: apiProduct.tags.map((tag) => ({
         node: {
-          id: edge.node.id,
-          handle: edge.node.handle,
-          title: edge.node.title,
+          id: tag.id,
+          handle: tag.handle,
+          title: tag.title,
         },
-        cursor: '', // Not provided in current schema
+        cursor: '',
       })),
       pageInfo: {
         hasNextPage: false,
         hasPreviousPage: false,
       },
-      totalCount: (apiProduct.tags?.edges || []).length,
+      totalCount: apiProduct.tags.length,
     },
-    seoDescription: apiProduct.seoDescription || null,
-    seoTitle: apiProduct.seoTitle || null,
-    createdAt: apiProduct.createdAt || '',
-    updatedAt: apiProduct.updatedAt || '',
-    variants: (apiProduct.variants || []).map(mapApiVariantToVariant),
+    seoDescription: apiProduct.seo.description ?? null,
+    seoTitle: apiProduct.seo.title ?? null,
+    createdAt: toDateTime(apiProduct.createdAt),
+    updatedAt: toDateTime(apiProduct.updatedAt),
+    variants,
   };
 }

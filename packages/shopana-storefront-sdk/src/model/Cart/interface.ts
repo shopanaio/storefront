@@ -18,6 +18,8 @@ export interface CartLine {
 
 export interface Cart {
   id: string;
+  /** Optimistic concurrency version required by checkout mutations. */
+  version: number;
   createdAt: Date;
   updatedAt: Date;
   totalQuantity: number;

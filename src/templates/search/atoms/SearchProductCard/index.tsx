@@ -1,11 +1,6 @@
 import { Button, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import {
-  ApiArticle,
-  ApiCategory,
-  ApiPage,
-  ApiProduct,
-} from '@codegen/schema-client';
+import type { PredictiveSearchProduct } from '@src/hooks/search/usePredictiveSearch/usePredictiveSearch.shopana';
 import { Thumbnail } from '@src/ui-kit/Thumbnail/Thumbnail';
 import { useHover } from '@src/ui-kit/hooks/useHover';
 import { useRoutes } from '@src/hooks/useRoutes';
@@ -13,7 +8,7 @@ import { useRoutes } from '@src/hooks/useRoutes';
 const { Text } = Typography;
 
 interface SearchProductCardProps {
-  item: ApiArticle | ApiCategory | ApiPage | ApiProduct;
+  item: PredictiveSearchProduct;
 }
 
 export const SearchProductCard: React.FC<SearchProductCardProps> = ({

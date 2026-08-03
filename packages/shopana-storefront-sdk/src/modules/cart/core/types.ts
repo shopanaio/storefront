@@ -12,9 +12,9 @@ export interface AddToCartAttribute {
  * Child item in a bundle/group
  */
 export interface AddToCartChildInput {
+  componentItemId: string;
   purchasableId: string;
   quantity: number;
-  groupId?: string;
   attributes?: AddToCartAttribute[];
 }
 

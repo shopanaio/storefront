@@ -45,7 +45,7 @@ const UseProductCardFragment = graphql`
 `;
 
 const useListingProductCardFragment = (
-  ref: useListingProductCardFragment_product$key
+  ref: useListingProductCardFragment_product$key | null
 ) => {
   return useFragment(UseProductCardFragment, ref);
 };

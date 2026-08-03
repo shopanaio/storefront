@@ -7,6 +7,7 @@ import { buildSelectedProviderMethodSchema } from '@src/modules/checkout/utils/v
  * Yup validation schema for DeliveryMethod
  */
 const deliveryMethodSchema = yup.object<DeliveryMethod>().shape({
+  handle: yup.string().required('Delivery method handle is required'),
   code: yup.string().required('Delivery method code is required'),
   provider: yup.string().required('Delivery provider is required'),
   data: yup.mixed(),

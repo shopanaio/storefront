@@ -17,6 +17,7 @@ export function mapCheckoutToAddressFormData(
   if (!firstDeliveryGroup?.deliveryAddress) {
     return {
       addressId: null,
+      checkoutLineIds: firstDeliveryGroup?.checkoutLines.map((line) => line.id) ?? [],
       city: null,
     };
   }
@@ -31,6 +32,7 @@ export function mapCheckoutToAddressFormData(
 
   return {
     addressId: deliveryAddress.id,
+    checkoutLineIds: firstDeliveryGroup.checkoutLines.map((line) => line.id),
     city,
   };
 }

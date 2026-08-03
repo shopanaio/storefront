@@ -42,6 +42,7 @@ export interface ProviderConfig {
 }
 
 export interface ProviderMethod {
+  handle: string;
   code: string;
   data: unknown;
   provider: string;

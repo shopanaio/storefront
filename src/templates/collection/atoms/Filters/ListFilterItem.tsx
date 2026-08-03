@@ -7,7 +7,7 @@ import { getFilterInputs } from "./filterUtils";
 interface ListFilterItemProps {
   filter: ApiListFilter;
   value: string[];
-  onUpdate: (handle: string, value: { values: string[]; inputs?: string[] }) => void;
+  onUpdate: (handle: string, value: { values: string[]; inputs?: unknown[] }) => void;
 }
 
 /**

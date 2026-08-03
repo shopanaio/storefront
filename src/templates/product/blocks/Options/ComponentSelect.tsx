@@ -3,8 +3,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { createStyles, cx } from 'antd-style';
 import { TbChevronRight } from 'react-icons/tb';
-import { ApiProductGroupItem } from '@codegen/schema-client';
-import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
+import type { model } from '@shopana/storefront-sdk';
 import { getGroupItemPrice } from '@src/utils/getGroupItemPrice';
 import { Price } from '@src/ui-kit/Price/Price';
 import Image from '@src/ui-kit/Image';
@@ -12,7 +11,7 @@ import Image from '@src/ui-kit/Image';
 const { Text } = Typography;
 
 interface Props {
-  option: ApiProductGroupItem;
+  option: model.ProductGroupItem;
   isSelected: boolean;
   onClick: () => void;
 }
@@ -29,12 +28,12 @@ export const ComponentSelect = ({ option, isSelected, onClick }: Props) => {
       <Flex align="center" gap={8}>
         <Image
           className={styles.optionImg}
-          src={option.product.cover?.url}
-          alt={option.product.title}
+          src={option.node.cover?.url}
+          alt={option.node.title}
           width={100}
         />
         <Flex vertical align="start">
-          <Text strong>{option.product.title}</Text>
+          <Text strong>{option.node.title}</Text>
           <Text type="secondary">{price && <Price money={price} raw />}</Text>
         </Flex>
       </Flex>

@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { CartLineFragment_line } from './useCartLineFragment';
 import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';
 import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
+import type { CartLineFragment_line$data } from '../../core/graphql/fragments/__generated__/CartLineFragment_line.graphql';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 
 const useCart = () => {
   const { cartKey, isCartLoading, isCartLoaded } = useCartContext();
@@ -17,12 +19,14 @@ const useCart = () => {
     if (!cart) {
       return null;
     }
-    return {
+    const denormalizedCart = {
       ...cart,
-      lines: (cart?.lines || [])?.map((cartLineRef: any) =>
-        readInlineData(CartLineFragment_line, cartLineRef)
+      lines: cart.lines.map((cartLineRef) =>
+        readInlineData(CartLineFragment_line, cartLineRef) as CartLineFragment_line$data
       ),
     };
+
+    return mapShopanaCheckoutToEntityCart(denormalizedCart);
   }, [cart]);
 
   return {

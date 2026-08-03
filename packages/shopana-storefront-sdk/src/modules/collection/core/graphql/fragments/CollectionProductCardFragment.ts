@@ -1,7 +1,7 @@
 import { graphql } from 'relay-runtime';
 
 export const CollectionProductCardFragment = graphql`
-  fragment CollectionProductCardFragment on Product {
+  fragment CollectionProductCardFragment on Product @inline {
     id
     title
     handle

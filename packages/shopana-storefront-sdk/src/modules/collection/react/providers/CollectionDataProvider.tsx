@@ -2,7 +2,12 @@
 
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { usePreloadedQuery, useRelayEnvironment } from 'react-relay';
+import {
+  readInlineData,
+  useFragment,
+  usePreloadedQuery,
+  useRelayEnvironment,
+} from 'react-relay';
 import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
 import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
 import { CollectionDataContext } from '../context/CollectionDataContext';
@@ -17,6 +22,13 @@ import type {
 import CollectionQueryNode, {
   CollectionQuery,
 } from '../../core/graphql/queries/__generated__/CollectionQuery.graphql';
+import CollectionListingFragmentNode, {
+  type CollectionListingFragment$data,
+  type CollectionListingFragment$key,
+} from '../../core/graphql/fragments/__generated__/CollectionListingFragment.graphql';
+import CollectionProductCardFragmentNode, {
+  type CollectionProductCardFragment$key,
+} from '../../core/graphql/fragments/__generated__/CollectionProductCardFragment.graphql';
 
 interface CollectionDataProviderProps {
   children: ReactNode;
@@ -26,141 +38,163 @@ interface CollectionDataProviderProps {
   >;
 }
 
-function transformFilter(rawFilter: any): CollectionFilter {
+type RawFilter = CollectionListingFragment$data['listing']['filters'][number];
+type RawPriceRange = NonNullable<RawFilter['priceRange']>;
+
+const toMoney = (money: RawPriceRange['min']) => ({
+  amount: String(money.amount),
+  currencyCode: money.currencyCode,
+});
+
+function transformFilter(rawFilter: RawFilter): CollectionFilter {
   const base = {
     id: rawFilter.id,
-    iid: rawFilter.iid,
+    iid: rawFilter.id,
     handle: rawFilter.handle,
     title: rawFilter.title,
   };
 
-  if ('minPrice' in rawFilter && 'maxPrice' in rawFilter) {
+  if (rawFilter.type === 'PRICE_RANGE' && rawFilter.priceRange) {
     return {
       ...base,
-      type: 'price_range' as const,
-      minPrice: rawFilter.minPrice,
-      maxPrice: rawFilter.maxPrice,
-    };
-  }
-
-  if ('minRate' in rawFilter && 'maxRate' in rawFilter) {
-    return {
-      ...base,
-      type: 'rating_range' as const,
-      minRate: rawFilter.minRate,
-      maxRate: rawFilter.maxRate,
+      type: 'price_range',
+      minPrice: toMoney(rawFilter.priceRange.min),
+      maxPrice: toMoney(rawFilter.priceRange.max),
     };
   }
 
   return {
     ...base,
-    type: 'list' as const,
-    values: rawFilter.values?.map((v: any) => ({
-      id: v.id,
-      iid: v.iid,
-      handle: v.handle,
-      title: v.title,
-      count: v.count,
-    })) ?? [],
+    type: 'list',
+    values: rawFilter.values.map((value) => ({
+      id: value.id,
+      iid: value.id,
+      handle: value.handle,
+      title: value.title,
+      count: value.count,
+      input: value.input,
+      selected: value.selected,
+    })),
   };
 }
 
-function transformProduct(rawProduct: any): CollectionProduct | null {
-  if (!rawProduct?.id) {
-    return null;
-  }
+const toImage = (
+  media:
+    | {
+        readonly id?: string;
+        readonly image?: { readonly url: unknown } | null;
+      }
+    | null
+    | undefined
+): CollectionImage | null =>
+  media?.id && media.image?.url
+    ? { id: media.id, url: String(media.image.url) }
+    : null;
 
-  const gallery: CollectionImage[] = (rawProduct.gallery?.edges ?? [])
-    .map((e: any) => e?.node)
-    .filter((n: any): n is CollectionImage => Boolean(n?.id && n?.url))
-    .map((n: any) => ({ id: n.id, url: n.url }));
+function transformProduct(
+  productRef: CollectionProductCardFragment$key
+): CollectionProduct {
+  const rawProduct = readInlineData(
+    CollectionProductCardFragmentNode,
+    productRef
+  );
+  const selectedVariant = rawProduct.selectedVariant;
+  const seen = new Set<string>();
+  const gallery = [
+    toImage(rawProduct.cover),
+    ...rawProduct.gallery.edges.map((edge) => toImage(edge.node)),
+  ].filter((image): image is CollectionImage => {
+    if (!image || seen.has(image.id)) {
+      return false;
+    }
+    seen.add(image.id);
+    return true;
+  });
 
   return {
-    id: rawProduct.id,
-    title: rawProduct.title,
-    handle: rawProduct.handle,
-    description: rawProduct.description,
+    id: selectedVariant?.id ?? rawProduct.id,
+    title: selectedVariant?.title ?? rawProduct.title,
+    handle: selectedVariant?.handle ?? rawProduct.handle,
+    description: rawProduct.description?.text ?? null,
     product: {
-      id: rawProduct.product?.id ?? '',
-      handle: rawProduct.product?.handle ?? '',
-      title: rawProduct.product?.title ?? '',
+      id: rawProduct.id,
+      handle: rawProduct.handle,
+      title: rawProduct.title,
     },
-    rating: rawProduct.rating
-      ? {
-          rating: rawProduct.rating.rating,
-          count: rawProduct.rating.count,
-        }
-      : null,
-    cover: rawProduct.cover
-      ? { id: rawProduct.cover.id, url: rawProduct.cover.url }
-      : null,
+    rating: {
+      rating: rawProduct.rating.rating,
+      count: rawProduct.rating.count,
+    },
+    cover: gallery[0] ?? null,
     gallery,
     price: {
-      amount: rawProduct.price?.amount ?? '0',
-      currencyCode: rawProduct.price?.currencyCode ?? 'USD',
+      amount: String(selectedVariant?.price?.amount ?? '0'),
+      currencyCode: selectedVariant?.price?.currencyCode ?? 'USD',
     },
-    compareAtPrice: rawProduct.compareAtPrice
+    compareAtPrice: selectedVariant?.compareAtPrice
       ? {
-          amount: rawProduct.compareAtPrice.amount,
-          currencyCode: rawProduct.compareAtPrice.currencyCode,
+          amount: String(selectedVariant.compareAtPrice.amount),
+          currencyCode: selectedVariant.compareAtPrice.currencyCode,
         }
       : null,
-    stockStatus: rawProduct.stockStatus
-      ? {
-          handle: rawProduct.stockStatus.handle,
-          isAvailable: rawProduct.stockStatus.isAvailable,
-        }
-      : null,
-    options: (rawProduct.options ?? []).map((o: any) => ({
-      id: o.id,
-      handle: o.handle,
-      title: o.title,
-      displayType: o.displayType,
-      values: (o.values ?? []).map((v: any) => ({
-        id: v.id,
-        title: v.title,
-        handle: v.handle,
-        swatch: v.swatch
+    stockStatus: {
+      isAvailable: selectedVariant?.isAvailable ?? false,
+    },
+    options: rawProduct.options.map((option) => ({
+      id: option.id,
+      handle: option.handle,
+      title: option.title,
+      displayType: option.displayType,
+      values: option.values.map((value) => ({
+        id: value.id,
+        title: value.title,
+        handle: value.handle,
+        swatch: value.swatch
           ? {
-              id: v.swatch.id,
-              color: v.swatch.color,
-              color2: v.swatch.color2,
-              image: v.swatch.image
-                ? { id: v.swatch.image.id, url: v.swatch.image.url }
+              id: `${value.id}:swatch`,
+              color: value.swatch.color
+                ? String(value.swatch.color)
                 : null,
-              displayType: v.swatch.displayType,
+              color2: value.swatch.color2
+                ? String(value.swatch.color2)
+                : null,
+              image: toImage(value.swatch.image),
+              displayType: value.swatch.displayType,
             }
           : null,
       })),
     })),
-    selectedOptions: rawProduct.selectedOptions as Record<string, string> | null,
+    selectedOptions:
+      selectedVariant?.selectedOptions.map(
+        (selection) => selection.optionValue.handle
+      ) ?? [],
   };
 }
 
-function transformListing(rawCategory: any): CollectionListing | null {
-  const rawListing = rawCategory?.listing;
+function transformListing(
+  rawListing: CollectionListingFragment$data['listing'] | undefined
+): CollectionListing | null {
   if (!rawListing) {
     return null;
   }
 
-  const products = (rawListing.edges ?? [])
-    .map((e: any) => transformProduct(e?.node))
-    .filter((p: CollectionProduct | null): p is CollectionProduct => p !== null);
-
-  const filters = (rawListing.filters ?? []).map(transformFilter);
-
   return {
-    totalCount: rawListing.totalCount ?? 0,
-    filters,
+    totalCount: rawListing.totalCount,
+    filters: rawListing.filters.map(transformFilter),
     pageInfo: {
-      hasNextPage: rawListing.pageInfo?.hasNextPage ?? false,
-      endCursor: rawListing.pageInfo?.endCursor,
+      hasNextPage: rawListing.pageInfo.hasNextPage,
+      endCursor: rawListing.pageInfo.endCursor,
     },
-    products,
+    products: rawListing.edges.map((edge) =>
+      transformProduct(edge.node as CollectionProductCardFragment$key)
+    ),
   };
 }
 
-function transformCollection(rawCategory: any): Collection | null {
+function transformCollection(
+  rawCategory: CollectionQuery['response']['category'],
+  listingData: CollectionListingFragment$data | null
+): Collection | null {
   if (!rawCategory) {
     return null;
   }
@@ -169,16 +203,19 @@ function transformCollection(rawCategory: any): Collection | null {
     id: rawCategory.id,
     title: rawCategory.title,
     handle: rawCategory.handle,
-    description: rawCategory.description,
-    listing: transformListing(rawCategory),
+    description: rawCategory.description?.text ?? null,
+    listing: transformListing(listingData?.listing),
   };
 }
 
-function transformQueryData(data: CollectionQuery['response']): CollectionTemplateData {
+function transformQueryData(
+  data: CollectionQuery['response'],
+  listingData: CollectionListingFragment$data | null
+): CollectionTemplateData {
   return {
     pageType: 'collection',
     raw: data,
-    collection: transformCollection(data.category),
+    collection: transformCollection(data.category, listingData),
   };
 }
 
@@ -187,18 +224,22 @@ export function CollectionDataProvider({
   preloadedQuery,
 }: CollectionDataProviderProps) {
   const environment = useRelayEnvironment();
-
   const queryReference = useSerializablePreloadedQuery(
     environment,
-    preloadedQuery,
+    preloadedQuery
   );
-
   const rawData = usePreloadedQuery<CollectionQuery>(
     CollectionQueryNode,
-    queryReference,
+    queryReference
   );
-
-  const data = useMemo(() => transformQueryData(rawData), [rawData]);
+  const listingData = useFragment<CollectionListingFragment$key>(
+    CollectionListingFragmentNode,
+    rawData.category
+  );
+  const data = useMemo(
+    () => transformQueryData(rawData, listingData ?? null),
+    [rawData, listingData]
+  );
 
   return (
     <CollectionDataContext.Provider value={{ data }}>

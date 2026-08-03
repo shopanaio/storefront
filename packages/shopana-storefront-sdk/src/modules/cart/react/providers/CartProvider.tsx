@@ -17,9 +17,11 @@ import { createCartIdUtils } from '../../core/utils/cartId';
 import { loadCartQuery } from '../../core/graphql/queries/loadCartQuery';
 import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/queries/__generated__/loadCartQuery.graphql';
 import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
+import type { CartLineFragment_line$data } from '../../core/graphql/fragments/__generated__/CartLineFragment_line.graphql';
 import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';
 import { CartLineFragment_line } from '../hooks/useCartLineFragment';
 import type { CartStoreZustand } from '../store/CartStoreZustand';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 
 export interface CartProviderProps {
   children: React.ReactNode;
@@ -65,18 +67,20 @@ const CartDataStoreController: React.FC<{
     if (!cart) {
       return null;
     }
-    return {
+    const denormalizedCart = {
       ...cart,
-      lines: (cart?.lines || [])?.map((cartLineRef: any) =>
-        readInlineData(CartLineFragment_line, cartLineRef)
+      lines: cart.lines.map((cartLineRef) =>
+        readInlineData(CartLineFragment_line, cartLineRef) as CartLineFragment_line$data
       ),
     };
+
+    return mapShopanaCheckoutToEntityCart(denormalizedCart);
   }, [cart]);
 
   // Sync denormalized data to Zustand store
   useEffect(() => {
     if (cartData) {
-      store.setCart(cartData as any);
+      store.setCart(cartData);
     } else if (cartKey === null && isCartLoaded) {
       // Only clear store when cart is known to be empty after loading
       store.setCart(null);
@@ -100,7 +104,7 @@ const CartDataHandler: React.FC<{
   );
 
   useEffect(() => {
-    const checkout = cartData?.checkoutQuery?.checkout;
+    const checkout = cartData.checkout;
 
     if (checkout) {
       onCartData(checkout);
@@ -132,6 +136,7 @@ const CartDataHandler: React.FC<{
  *       config={{
  *         defaultCurrency: 'USD',
  *         defaultLocale: 'en',
+ *         channelCode: 'online-store',
  *       }}
  *     >
  *       {children}

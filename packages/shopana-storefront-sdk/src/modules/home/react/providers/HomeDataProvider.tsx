@@ -46,18 +46,33 @@ function transformCategory(categoryRef: CategoryFragment_category$key | null | u
   const mappedProducts: Array<HomeProduct | null> =
     listingEdges?.map((edge) => {
       const node = edge?.node;
-      if (!node?.id || !node?.title || !node?.handle || !node?.price || !node?.product) {
+      const variant = node?.selectedOrFirstAvailableVariant;
+      if (!node || !variant?.price) {
         return null;
       }
 
       return {
-        id: node.id,
-        title: node.title,
-        handle: node.handle,
-        price: node.price,
-        compareAtPrice: node.compareAtPrice,
-        image: node.cover,
-        product: node.product,
+        id: variant.id,
+        title: variant.title,
+        handle: variant.handle,
+        price: {
+          amount: String(variant.price.amount),
+          currencyCode: variant.price.currencyCode,
+        },
+        compareAtPrice: variant.compareAtPrice
+          ? {
+              amount: String(variant.compareAtPrice.amount),
+              currencyCode: variant.compareAtPrice.currencyCode,
+            }
+          : null,
+        image: node.featuredMedia?.image?.url
+          ? { url: String(node.featuredMedia.image.url) }
+          : null,
+        product: {
+          id: node.id,
+          title: node.title,
+          handle: node.handle,
+        },
       };
     }) ?? [];
 
@@ -88,7 +103,7 @@ function transformQueryData(data: HomePageQuery['response']): HomeTemplateData {
             handle: data.homeAndGarden.handle,
             children:
               data.homeAndGarden.children?.edges
-                ?.map((edge: any) => transformCategory(edge?.node))
+                ?.map((edge) => transformCategory(edge.node))
                 .filter(
                   (category): category is HomeCategory => Boolean(category),
                 ) ?? [],

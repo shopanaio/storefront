@@ -1,50 +1,80 @@
 "use client";
 
 import { useMutation } from 'react-relay';
-import type { createCartMutation as CreateCartMutationType, CheckoutCreateInput } from '../../core/graphql/mutations/__generated__/createCartMutation.graphql';
+import type {
+  createCartMutation as CreateCartMutationType,
+  CurrencyCode,
+  LocaleCode,
+} from '../../core/graphql/mutations/__generated__/createCartMutation.graphql';
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
-import { useCartContext } from '../context/CartContext';
+import { useCartConfig, useCartContext } from '../context/CartContext';
+import type { CreateCartInput } from '../../core/types';
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
+
+type CreatedCheckout =
+  CreateCartMutationType['response']['checkoutCreate']['checkout'];
 
 const useCreateCart = () => {
   const { setId, setCartKey } = useCartContext();
+  const { channelCode } = useCartConfig();
   const [commit, isInFlight] = useMutation<CreateCartMutationType>(
     createCartMutation
   );
 
   const createCart = (
-    input: CheckoutCreateInput,
+    input: CreateCartInput,
     options?: {
       onSuccess?: () => void;
       onError?: () => void;
     }
-  ): Promise<
-    CreateCartMutationType['response']['checkoutMutation']['checkoutCreate']
-  > => {
+  ): Promise<CreatedCheckout> => {
     return new Promise((resolve, reject) => {
       commit({
         variables: {
-          input,
+          input: {
+            channelCode,
+            currencyCode: input.currencyCode as CurrencyCode,
+            localeCode: input.localeCode as LocaleCode,
+            idempotencyKey: createCheckoutIdempotencyKey(),
+            tags: input.tags,
+            items: input.items.map((item) => ({
+              purchasableId: item.purchasableId,
+              quantity: item.quantity,
+              tagSlug: item.tagSlug,
+              children: item.children?.map((child) => ({
+                componentItemId: child.componentItemId,
+                purchasableId: child.purchasableId,
+                quantity: child.quantity,
+                attributes: child.attributes,
+              })),
+            })),
+          },
         },
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
             options?.onError?.();
             return reject(errors);
-          } else {
-            const checkout = response?.checkoutMutation?.checkoutCreate;
-            if (!checkout?.id) {
-              alert('No cart ID found in response');
-            }
-            if (checkout) {
-              setId(checkout.id);
-              setCartKey(checkout);
-            }
-            options?.onSuccess?.();
-            return resolve(checkout);
           }
+
+          if (response.checkoutCreate.errors.length > 0) {
+            options?.onError?.();
+            return reject(response.checkoutCreate.errors);
+          }
+
+          const checkout = response.checkoutCreate.checkout;
+          if (!checkout) {
+            options?.onError?.();
+            return reject(new Error('No cart found in checkoutCreate response'));
+          }
+
+          setId(checkout.id);
+          setCartKey(checkout);
+          options?.onSuccess?.();
+          return resolve(checkout);
         },
-        onError: (err) => {
+        onError: (error) => {
           options?.onError?.();
-          reject(err);
+          reject(error);
         },
       });
     });

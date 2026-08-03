@@ -10,6 +10,18 @@ import {
 } from '@src/modules/checkout/state/checkoutBus';
 import type { SectionId } from '@src/modules/checkout/state/interface';
 
+function getCheckoutUserErrors(response: object): unknown[] {
+  for (const payload of Object.values(response)) {
+    if (!payload || typeof payload !== 'object') continue;
+    const errors = Reflect.get(payload, 'errors');
+    if (Array.isArray(errors) && errors.length > 0) {
+      return errors;
+    }
+  }
+
+  return [];
+}
+
 /**
  * Options for checkout operation
  */
@@ -196,6 +208,13 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
                 toast.error(errorMessage);
               }
               return reject(errors);
+            }
+            const userErrors = getCheckoutUserErrors(response);
+            if (userErrors.length > 0) {
+              if (showErrorToast) {
+                toast.error(errorMessage);
+              }
+              return reject(userErrors);
             }
             resolve(response);
           },

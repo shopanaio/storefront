@@ -11,7 +11,7 @@ interface FilterTagsProps {
   filters: ApiFilter[];
   selectedFilters: Record<
     string,
-    { values: string[] | [number, number]; inputs?: string[] }
+    { values: string[] | [number, number]; inputs?: unknown[] }
   >;
   onCloseTag: (handle: string, value?: string) => void;
   gap?: number;
@@ -36,7 +36,7 @@ export const FilterTags: React.FC<FilterTagsProps> = ({
     const tags: React.ReactNode[] = [];
     Object.entries(selectedFilters).forEach(([handle, filterData]) => {
       if (
-        (handle === "PRICE" || handle === "Price") &&
+        handle.toLowerCase() === 'price' &&
         Array.isArray(filterData.values) &&
         filterData.values.length === 2
       ) {

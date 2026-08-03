@@ -1,6 +1,9 @@
 import type { ApiFilter, ApiPriceRangeFilter, ApiListFilter } from "@codegen/schema-client";
 
-export const AVAILABILITY_FILTER_HANDLE = "AVAILABILITY";
+export const AVAILABILITY_FILTER_HANDLES = new Set([
+  'availability',
+  'available',
+]);
 
 /**
  * Type guard to check if filter is a price range filter
@@ -16,7 +19,7 @@ export const isPriceRangeFilter = (filter: ApiFilter): filter is ApiPriceRangeFi
  * Check if filter is the availability filter
  */
 export const isAvailabilityFilter = (filter: ApiFilter): boolean => {
-  return filter.handle === AVAILABILITY_FILTER_HANDLE;
+  return AVAILABILITY_FILTER_HANDLES.has(filter.handle.toLowerCase());
 };
 
 /**
@@ -62,7 +65,7 @@ export const getPriceValue = (
 export const getFilterInputs = (
   filter: ApiListFilter,
   selectedValues: string[]
-): string[] => {
+): unknown[] => {
   if (!selectedValues.length) return [];
 
   const inputs = selectedValues
@@ -70,9 +73,9 @@ export const getFilterInputs = (
       const filterValue = filter.values.find(
         (v) => v.handle === selectedValue
       );
-      return filterValue?.input || "";
+      return filterValue?.input;
     })
-    .filter((input) => input !== "");
+    .filter((input) => input != null);
 
   return inputs;
 };

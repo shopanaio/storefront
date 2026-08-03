@@ -6,14 +6,16 @@ import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutatio
 
 import { useCartActions, useCartConfig } from '../context/CartContext';
 import useCreateCart from './useCreateCart';
-import { useCartIdOnly } from './useCartSelectors';
-import { AddToCartInput } from '../../core/types';
+import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
+import type { AddToCartInput } from '../../core/types';
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
   const cartId = useCartIdOnly();
+  const cartVersion = useCartVersionOnly();
   const actions = useCartActions();
-  const { defaultCurrency, defaultLocale } = useCartConfig();
+  const { defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
     addToCartMutation
   );
@@ -30,17 +32,17 @@ const useAddItemToCart = () => {
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
 
-      // If no cart — create new one
       if (!cartId) {
-        return await createCart(
+        return createCart(
           {
-            currencyCode: purchasableSnapshot.price.currencyCode as any,
+            currencyCode: purchasableSnapshot.price.currencyCode,
             localeCode: defaultLocale,
             items: [
               {
                 purchasableId,
                 quantity,
                 tagSlug: input.tagSlug,
+                children: input.children,
               },
             ],
             tags: input.tags,
@@ -49,13 +51,16 @@ const useAddItemToCart = () => {
         );
       }
 
-      // If cart exists — add product through mutation
+      if (cartVersion == null) {
+        throw new Error('Cart version is unavailable');
+      }
 
       const { revert } = checkoutLinesAdd({
         lines: [
           {
-            purchasableId: purchasableId,
-            quantity: quantity,
+            purchasableId,
+            quantity,
+            children: input.children,
           },
         ],
         pricing: {
@@ -72,39 +77,43 @@ const useAddItemToCart = () => {
           variables: {
             input: {
               checkoutId: cartId,
+              expectedCheckoutVersion: cartVersion,
+              idempotencyKey: createCheckoutIdempotencyKey(),
               lines: [
                 {
-                  purchasableId: input.purchasableId,
-                  quantity: input.quantity,
+                  purchasableId,
+                  quantity,
                   tagSlug: input.tagSlug,
+                  children: input.children?.map((child) => ({
+                    componentItemId: child.componentItemId,
+                    purchasableId: child.purchasableId,
+                    quantity: child.quantity,
+                    attributes: child.attributes,
+                  })),
                 },
               ],
             },
           },
-          // no Relay optimistic updater — Zustand обеспечивает мгновенный UI
           onCompleted: (response, errors) => {
             if (errors && errors.length > 0) {
               revert();
               onError?.();
               return reject(errors);
-            } else if (
-              response?.checkoutMutation?.checkoutLinesAdd?.errors &&
-              response.checkoutMutation.checkoutLinesAdd.errors.length > 0
-            ) {
+            }
+
+            if (response.checkoutLinesAdd.errors.length > 0) {
               revert();
               onError?.();
-              return reject(response.checkoutMutation.checkoutLinesAdd.errors);
-            } else {
-              onSuccess?.();
-              return resolve(
-                response?.checkoutMutation?.checkoutLinesAdd?.checkout
-              );
+              return reject(response.checkoutLinesAdd.errors);
             }
+
+            onSuccess?.();
+            return resolve(response.checkoutLinesAdd.checkout);
           },
-          onError: (err) => {
+          onError: (error) => {
             revert();
             onError?.();
-            reject(err);
+            reject(error);
           },
         });
       });

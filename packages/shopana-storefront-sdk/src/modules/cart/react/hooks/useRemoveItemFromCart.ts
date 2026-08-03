@@ -2,16 +2,19 @@
 
 import { useMutation } from 'react-relay';
 import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
+import type { removeFromCartMutation as RemoveFromCartMutationType } from '../../core/graphql/mutations/__generated__/removeFromCartMutation.graphql';
 
 import { useCartActions } from '../context/CartContext';
-import { useCartIdOnly } from './useCartSelectors';
+import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import { RemoveFromCartInput } from '../../core/types';
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 
 const useRemoveItemFromCart = () => {
   const cartId = useCartIdOnly();
+  const cartVersion = useCartVersionOnly();
   const actions = useCartActions();
 
-  const [commitRemoveLine, isInFlight] = useMutation<any>(
+  const [commitRemoveLine, isInFlight] = useMutation<RemoveFromCartMutationType>(
     removeFromCartMutation
   );
 
@@ -28,6 +31,9 @@ const useRemoveItemFromCart = () => {
         console.warn('[useRemoveItemFromCart] No cart to remove from');
         return null;
       }
+      if (cartVersion == null) {
+        throw new Error('Cart version is unavailable');
+      }
 
       return new Promise((resolve, reject) => {
         const { checkoutLinesDelete } = actions;
@@ -36,6 +42,8 @@ const useRemoveItemFromCart = () => {
           variables: {
             input: {
               checkoutId: cartId,
+              expectedCheckoutVersion: cartVersion,
+              idempotencyKey: createCheckoutIdempotencyKey(),
               lineIds: [input.lineId],
             },
           },
@@ -45,13 +53,12 @@ const useRemoveItemFromCart = () => {
               options?.onError?.();
               return reject(errors);
             } else if (
-              response?.checkoutMutation?.checkoutLinesDelete?.errors &&
-              response.checkoutMutation.checkoutLinesDelete.errors.length > 0
+              response.checkoutLinesDelete.errors.length > 0
             ) {
               revert();
               options?.onError?.();
               return reject(
-                response.checkoutMutation.checkoutLinesDelete.errors
+                response.checkoutLinesDelete.errors
               );
             } else {
               options?.onSuccess?.();

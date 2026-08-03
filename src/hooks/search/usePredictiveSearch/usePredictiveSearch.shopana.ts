@@ -3,7 +3,6 @@ import {
   fetchQuery,
   useRelayEnvironment,
 } from "react-relay";
-import { ApiArticle, ApiCategory, ApiProduct } from "codegen/schema-client";
 import { graphql } from "relay-runtime";
 import type { usePredictiveSearchQuery as UsePredictiveSearchQueryType } from "./__generated__/usePredictiveSearchQuery.graphql";
 
@@ -19,6 +18,8 @@ export const usePredictiveSearchQuery = graphql`
         }
         selectedVariant: selectedOrFirstAvailableVariant {
           id
+          title
+          handle
           price { amount currencyCode }
           compareAtPrice { amount currencyCode }
         }
@@ -28,10 +29,21 @@ export const usePredictiveSearchQuery = graphql`
   }
 `;
 
+export interface PredictiveSearchProduct {
+  id: string;
+  title: string;
+  handle: string;
+  variantHandle?: string;
+  cover?: { id: string; url: string } | null;
+  gallery: { edges: Array<{ node: { id: string; url: string } }> };
+  price?: { amount: number; currencyCode: string } | null;
+  compareAtPrice?: { amount: number; currencyCode: string } | null;
+}
+
 type UseSearchResult = {
-  products: ApiProduct[];
-  categories: ApiCategory[];
-  articles: ApiArticle[];
+  products: PredictiveSearchProduct[];
+  categories: [];
+  articles: [];
   loading: boolean;
   error: Error | null;
 };
@@ -71,30 +83,46 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
         const maxLength = 5;
         const rawProducts = data?.predictiveSearch?.products?.slice(0, maxLength) ?? [];
 
-        // Transform products to use product.handle and concatenated title
-        const products = rawProducts.map((variant: any) => {
-          const parentTitle = variant?.product?.title;
-          const concatenatedTitle = [parentTitle, variant.title]
+        const products = rawProducts.map((product) => {
+          const variant = product.selectedVariant;
+          const concatenatedTitle = [product.title, variant?.title]
             .filter(Boolean)
             .join(' ');
+          const cover = product.cover?.image?.url
+            ? {
+                id: product.cover.id ?? product.id,
+                url: String(product.cover.image.url),
+              }
+            : null;
 
           return {
-            ...variant,
+            id: variant?.id ?? product.id,
             title: concatenatedTitle,
-            // Use product handle for URL building, keep variant handle separately
-            handle: variant?.product?.handle ?? variant.handle,
-            variantHandle: variant.handle,
+            handle: product.handle,
+            variantHandle: variant?.handle,
+            cover,
+            gallery: {
+              edges: cover ? [{ node: cover }] : [],
+            },
+            price: variant?.price
+              ? {
+                  amount: Number(variant.price.amount),
+                  currencyCode: variant.price.currencyCode,
+                }
+              : null,
+            compareAtPrice: variant?.compareAtPrice
+              ? {
+                  amount: Number(variant.compareAtPrice.amount),
+                  currencyCode: variant.compareAtPrice.currencyCode,
+                }
+              : null,
           };
-        }) as unknown as ApiProduct[];
-
-        const categories = (data?.predictiveSearch?.categories ?? []) as unknown as ApiCategory[];
-        const articles = (data?.predictiveSearch?.articles ?? []) as unknown as ApiArticle[];
-
+        });
 
         setState({
           products,
-          categories,
-          articles,
+          categories: [],
+          articles: [],
           loading: false,
           error: null,
         });

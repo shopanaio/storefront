@@ -5,5 +5,6 @@ import type { City } from '@src/modules/checkout/sections/delivery/components/ci
  */
 export interface AddressFormData {
   addressId: string | null;
+  checkoutLineIds: string[];
   city: City | null;
 }

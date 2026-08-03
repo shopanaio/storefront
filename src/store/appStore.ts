@@ -172,7 +172,7 @@ export const useBoxBuilderStore = create<BoxBuilderState>()(
 // filtersStore
 export type FiltersMap = Record<
   string,
-  { values: string[] | [number, number]; inputs?: string[] }
+  { values: string[] | [number, number]; inputs?: unknown[] }
 >;
 
 interface FiltersState {
@@ -182,7 +182,7 @@ interface FiltersState {
   ) => void;
   updateFilter: (
     handle: string,
-    filterData: { values: string[] | [number, number]; inputs?: string[] }
+    filterData: { values: string[] | [number, number]; inputs?: unknown[] }
   ) => void;
   removeFilter: (handle: string) => void;
   clearFilters: () => void;

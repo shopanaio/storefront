@@ -28,8 +28,11 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
         addDeliveryAddresses({
           addresses: [
             {
-              city: city.MainDescription,
-              data: { city },
+              address: {
+                city: city.MainDescription,
+                data: { city },
+              },
+              checkoutLineIds: data?.checkoutLineIds ?? [],
             },
           ],
         });
@@ -48,7 +51,7 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
         ],
       });
     },
-    [updateDeliveryAddresses, addressId, addDeliveryAddresses]
+    [updateDeliveryAddresses, addressId, addDeliveryAddresses, data?.checkoutLineIds]
   );
 
   return <CitySelect city={city} onSubmit={onSubmit} />;

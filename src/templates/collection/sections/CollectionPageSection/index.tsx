@@ -6,7 +6,8 @@ import { usePaginationFragment } from 'react-relay';
 import { useCollectionData } from '@shopana/storefront-sdk/modules/collection/react/hooks/useCollectionData';
 import { CollectionListingFragment$key } from '@shopana/storefront-sdk/modules/collection/core/types';
 import CollectionListingFragmentNode from '@shopana/storefront-sdk/modules/collection/core/graphql/fragments/__generated__/CollectionListingFragment.graphql';
-import { ListingSort, ApiFilterInput, ApiFilter } from '@codegen/schema-client';
+import { ListingSort, ApiFilter } from '@codegen/schema-client';
+import type { ListingFilterInput } from '@shopana/storefront-sdk/modules/collection/core/graphql/queries/__generated__/CollectionQuery.graphql';
 import { ListingTitleAndBtn } from '@src/templates/collection/blocks/ListingTitleAndBtn';
 import { ListingPagination } from '@src/templates/collection/atoms/ListingPagination';
 import { PageLayout } from '@src/layouts/theme/PageLayout';
@@ -37,16 +38,23 @@ export default function CollectionPageSection() {
     );
 
   // Convert zustand filters to API format
-  const apiFilters: ApiFilterInput[] = useMemo(
+  const apiFilters: ListingFilterInput[] = useMemo(
     () =>
-      Object.entries(selectedFilters).map(([handle, filterData]) => ({
-        handle,
-        values: filterData.values.map(String),
-        ...(filterData.inputs &&
-          filterData.inputs.length > 0 && {
-            inputs: filterData.inputs,
-          }),
-      })),
+      Object.values(selectedFilters).flatMap((filterData) => {
+        const values = filterData.values;
+        if (
+          values.length === 2 &&
+          typeof values[0] === 'number' &&
+          typeof values[1] === 'number'
+        ) {
+          return [{ price: { min: values[0], max: values[1] } }];
+        }
+
+        return (filterData.inputs ?? []).filter(
+          (input): input is ListingFilterInput =>
+            input !== null && typeof input === 'object'
+        );
+      }),
     [selectedFilters]
   );
 
@@ -58,23 +66,40 @@ export default function CollectionPageSection() {
   }
 
   // Get filters from pagination fragment data (data.listing contains filters from GraphQL fragment)
-  const filters: ApiFilter[] = (data?.listing?.filters ?? []).map((f: any) => ({
-    id: f.id,
-    iid: f.iid,
-    handle: f.handle,
-    title: f.title,
-    ...('minPrice' in f && 'maxPrice' in f && {
-      minPrice: f.minPrice,
-      maxPrice: f.maxPrice,
-    }),
-    ...('minRate' in f && 'maxRate' in f && {
-      minRate: f.minRate,
-      maxRate: f.maxRate,
-    }),
-    ...('values' in f && {
-      values: f.values,
-    }),
-  })) as ApiFilter[];
+  const filters: ApiFilter[] = (data?.listing?.filters ?? []).map((filter: any) => {
+    const base = {
+      id: filter.id,
+      iid: filter.id,
+      handle: filter.handle,
+      title: filter.title,
+    };
+
+    if (filter.type === 'PRICE_RANGE' && filter.priceRange) {
+      return {
+        ...base,
+        minPrice: {
+          amount: Number(filter.priceRange.min.amount),
+          currencyCode: filter.priceRange.min.currencyCode,
+        },
+        maxPrice: {
+          amount: Number(filter.priceRange.max.amount),
+          currencyCode: filter.priceRange.max.currencyCode,
+        },
+      };
+    }
+
+    return {
+      ...base,
+      values: filter.values.map((value: any) => ({
+        id: value.id,
+        iid: value.id,
+        handle: value.handle,
+        title: value.title,
+        count: value.count,
+        input: value.input,
+      })),
+    };
+  }) as ApiFilter[];
 
   // Get products from pagination data
   const products = data?.listing?.edges?.map((edge: any) => edge.node) ?? [];

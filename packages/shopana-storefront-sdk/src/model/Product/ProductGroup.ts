@@ -36,6 +36,8 @@ export interface ProductGroupNode {
  * ProductGroupItem - item within a product group
  */
 export interface ProductGroupItem {
+  /** Component item identifier required when the selection is added to checkout. */
+  id: string;
   /** The product node */
   node: ProductGroupNode;
   /** Maximum quantity allowed */

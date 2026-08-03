@@ -1,137 +1,168 @@
-import { useListingProductCardFragment_product$key } from '@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql';
+import type { useListingProductCardFragment_product$key } from '@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql';
 import useListingProductCardFragment from '@src/templates/collection/relay';
 import {
-  ProductCardProps,
+  type ProductCardProps,
   ProductCard,
 } from '@src/ui-kit/ProductCards/ListingCard/ProductCard';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
-import type { model } from "@shopana/storefront-sdk";
-import { CurrencyCode } from '@codegen/schema-client';
-
+import type { model } from '@shopana/storefront-sdk';
+import type { SearchProduct } from '@shopana/storefront-sdk/modules/search/core/types';
 import useIsInTheCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
 import useAddItemToCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useAddItemToCart';
 import { useProductSwatches } from '@src/hooks/useProductSwatches';
 import { useReviewStore } from '@src/store/appStore';
-import { Money } from '@src/ui-kit/Price/Price';
+import { mapListingProductCard } from '@src/templates/collection/mappers/mapListingProductCard';
 
-interface CommonProductData {
-  id: string;
-  title: string;
-  handle: string;
-  rating?: {
-    rating: number;
-    count: number;
-  };
-  cover?: {
-    url: string;
-  } | null;
-  gallery?: {
-    edges: Array<{
-      node: {
-        url: string;
-      };
-    }>;
-  } | null;
-  stockStatus?: {
-    isAvailable: boolean;
-  };
-  price?: Money;
-  compareAtPrice?: Money | null;
-  options?: model.ProductOption[];
-  variants?:
-    | model.ProductVariant[]
+type ProductCardRelayProps = Partial<Omit<ProductCardProps, 'product'>> &
+  (
     | {
-        edges: Array<{
-          node: model.Product;
-        }>;
-      };
-}
+        $productRef: useListingProductCardFragment_product$key;
+        product?: never;
+      }
+    | {
+        $productRef?: never;
+        product: SearchProduct;
+      }
+  );
 
-type ProductCardRelayProps = Partial<Omit<ProductCardProps, 'product'>> & {
-  $productRef: useListingProductCardFragment_product$key;
+const mapSearchProduct = (product: SearchProduct) => {
+  const productReference: model.Product = {
+    __typename: 'Product',
+    id: product.product.id,
+    handle: product.product.handle,
+    title: product.product.title,
+    description: product.description ?? '',
+    excerpt: '',
+    category: null,
+    options: product.options.map((option) => ({
+      ...option,
+      displayType:
+        option.displayType === 'BUTTONS'
+          ? 'RADIO'
+          : (option.displayType as model.ProductOptionDisplayType),
+      values: option.values.map((value) => ({
+        ...value,
+        swatch: value.swatch
+          ? {
+              ...value.swatch,
+              color: value.swatch.color ?? '',
+              displayType:
+                value.swatch.displayType === 'GRADIENT'
+                  ? 'COLOR_DUO'
+                  : (value.swatch.displayType as model.SwatchDisplayType),
+            }
+          : null,
+      })),
+    })),
+    groups: [],
+    features: [],
+    rating: {
+      id: product.product.id,
+      rating: product.rating?.rating ?? 0,
+      count: product.rating?.count ?? 0,
+      breakdown: [],
+    },
+    tags: {
+      edges: [],
+      pageInfo: { hasNextPage: false, hasPreviousPage: false },
+      totalCount: 0,
+    },
+    createdAt: '',
+    updatedAt: '',
+    variants: [],
+  };
+  const images = product.gallery.map((image) => ({ ...image }));
+  const variant: model.ProductVariant = {
+    __typename: 'ProductVariant',
+    id: product.id,
+    iid: product.id,
+    handle: product.handle,
+    title: product.title,
+    description: product.description ?? '',
+    excerpt: '',
+    selectedOptions: product.selectedOptions ?? [],
+    price: {
+      amount: Number(product.price.amount),
+      currencyCode: product.price.currencyCode,
+    },
+    compareAtPrice: product.compareAtPrice
+      ? {
+          amount: Number(product.compareAtPrice.amount),
+          currencyCode: product.compareAtPrice.currencyCode,
+        }
+      : null,
+    cover: product.cover ?? images[0] ?? null,
+    gallery: {
+      edges: images.map((node) => ({ node, cursor: '' })),
+      pageInfo: { hasNextPage: false, hasPreviousPage: false },
+      totalCount: images.length,
+    },
+    sku: null,
+    stockStatus: { isAvailable: product.stockStatus?.isAvailable ?? false },
+    createdAt: '',
+    updatedAt: '',
+    product: productReference,
+  };
+
+  return {
+    product: { ...productReference, variants: [variant] },
+    variant,
+    gallery: images.map((image) => image.url),
+  };
 };
 
 export const ListingProductCardRelay = ({
   $productRef,
+  product: mappedProduct,
   ...props
 }: ProductCardRelayProps) => {
-  // @ts-expect-error don't fix this
-  const product = useListingProductCardFragment(
-    $productRef
-  ) as CommonProductData;
-
-  const { isInCart } = useIsInTheCart({
-    purchasableId: product.id,
-  });
-
+  const rawProduct = useListingProductCardFragment($productRef ?? null);
+  const { product, variant, gallery } = mappedProduct
+    ? mapSearchProduct(mappedProduct)
+    : mapListingProductCard(rawProduct!);
+  const { isInCart } = useIsInTheCart({ purchasableId: variant.id });
   const { addToCart, isInFlight } = useAddItemToCart();
-
-  // Safely get swatches with type checking
   const swatches = useProductSwatches(
-    // Check that options exists and is array
-    Array.isArray(product.options) ? product.options : [],
-    // Check that variants exists and is array
-    Array.isArray(product.variants) ? product.variants : [],
-    product as model.ProductVariant
+    product.options,
+    product.variants,
+    variant
   );
-
-  // Safely extract data with type checking
-  const rating: model.ProductRating = {
-    id: product.id,
-    rating: product.rating?.rating || 0,
-    count: product.rating?.count || 0,
-    breakdown: [],
-  };
-
-  const gallery = product.gallery?.edges?.map((edge) => edge.node.url) || [];
   const productTitle = composeProductTitle({
-    productTitle: (product as any)?.product?.title,
-    variantTitle: product.title,
-    fallback: product.title || '',
+    productTitle: product.title,
+    variantTitle: variant.title,
+    fallback: variant.title,
   });
-  const handle = (product as any)?.product?.handle || product.handle || '';
-  const variantHandle =
-    (product as any)?.variantHandle || product.handle || undefined;
-  const isAvailable = product.stockStatus?.isAvailable || false;
-  const price = product.price || {
-    amount: 0,
-    currencyCode: CurrencyCode.Usd,
-  };
-
-  const compareAtPrice = product.compareAtPrice
-    ? ({ ...product.compareAtPrice } as any)
-    : undefined;
   const setReviewProduct = useReviewStore((state) => state.setReviewProduct);
 
   return (
     <ProductCard
       {...props}
-      id={product.id}
+      id={variant.id}
       swatches={swatches}
       rating={{
-        rating: rating.rating,
-        ratingCount: rating.count,
+        rating: product.rating.rating,
+        ratingCount: product.rating.count,
         compact: true,
       }}
       gallery={gallery}
       productTitle={productTitle}
-      handle={handle}
-      variantHandle={variantHandle}
-      isAvailable={isAvailable}
-      price={price}
-      compareAtPrice={compareAtPrice as any}
+      handle={product.handle}
+      variantHandle={variant.handle || undefined}
+      isAvailable={variant.stockStatus.isAvailable}
+      price={variant.price}
+      compareAtPrice={variant.compareAtPrice ?? undefined}
       isInCart={isInCart}
       isLoading={isInFlight}
       onAddToCart={() => {
         if (!isInCart) {
           addToCart({
-            purchasableId: product.id,
-            purchasableSnapshot: product as model.ProductVariant,
+            purchasableId: variant.id,
+            purchasableSnapshot: variant,
             quantity: 1,
           });
         }
       }}
-      onReviewClick={() => setReviewProduct(product as model.Product)}
+      onReviewClick={() => setReviewProduct(product)}
     />
   );
 };

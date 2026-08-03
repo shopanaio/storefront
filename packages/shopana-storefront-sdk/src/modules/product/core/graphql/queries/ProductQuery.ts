@@ -110,6 +110,11 @@ export const ProductQuery = graphql`
         handle
         title: name
         position
+        values {
+          id
+          handle
+          title: name
+        }
       }
       priceRange {
         minVariantPrice { amount currencyCode }

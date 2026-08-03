@@ -1,4 +1,5 @@
 export interface PaymentMethod {
+  handle: string;
   code: string;
   provider: string;
   data: unknown;

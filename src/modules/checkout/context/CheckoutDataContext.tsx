@@ -19,8 +19,6 @@ import type { Checkout } from '@src/modules/checkout/types/entity';
 import { useCheckoutFragment } from '@src/modules/checkout/hooks/useCheckout/useCheckoutFragment';
 import { mapApiCheckoutToCheckout } from '@src/modules/checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
 import { useCheckoutFragment$key } from '@src/modules/checkout/hooks/useCheckout/__generated__/useCheckoutFragment.graphql';
-import type { model } from "@shopana/storefront-sdk";
-import type { ApiCheckout } from '@codegen/schema-client';
 import { loadCheckoutQuery } from '@src/modules/checkout/api/queries/loadCheckoutQuery.shopana';
 import { loadCheckoutQuery as LoadCheckoutQueryType } from '@src/modules/checkout/api/queries/__generated__/loadCheckoutQuery.graphql';
 
@@ -58,7 +56,7 @@ const CheckoutDataHandler: React.FC<{
   );
 
   useEffect(() => {
-    const apiCheckout = data?.checkoutQuery?.checkout;
+    const apiCheckout = data.checkout;
 
     if (apiCheckout) {
       onCheckoutData(apiCheckout);
@@ -160,9 +158,7 @@ export function useCheckoutData(): CheckoutDataContextValue {
     if (!checkoutFragment) {
       return null;
     }
-    return mapApiCheckoutToCheckout(
-      checkoutFragment as unknown as Readonly<ApiCheckout>
-    );
+    return mapApiCheckoutToCheckout(checkoutFragment);
   }, [checkoutFragment]);
 
   return {

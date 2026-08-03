@@ -83,7 +83,7 @@ export const CreateReview = ({ product, onSwitchContent }: Prop) => {
           <Image
             width={100}
             className={styles.productImg}
-            src={product.cover?.url}
+            src={product.variants[0]?.cover?.url}
             alt={product.title}
           />
           <Paragraph

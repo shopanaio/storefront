@@ -27,11 +27,15 @@ import type { removeDeliveryAddressesMutation as RemoveDeliveryAddressesMutation
 import type { addPromoCodeMutation as AddPromoCodeMutationType } from '@src/modules/checkout/api/mutations/__generated__/addPromoCodeMutation.graphql';
 import type { removePromoCodeMutation as RemovePromoCodeMutationType } from '@src/modules/checkout/api/mutations/__generated__/removePromoCodeMutation.graphql';
 import type { updateCustomerNoteMutation as UpdateCustomerNoteMutationType } from '@src/modules/checkout/api/mutations/__generated__/updateCustomerNoteMutation.graphql';
+import type { addDeliveryRecipientsMutation as AddDeliveryRecipientsMutationType } from '@src/modules/checkout/api/mutations/__generated__/addDeliveryRecipientsMutation.graphql';
+import type { updateDeliveryRecipientsMutation as UpdateDeliveryRecipientsMutationType } from '@src/modules/checkout/api/mutations/__generated__/updateDeliveryRecipientsMutation.graphql';
+import type { removeDeliveryRecipientsMutation as RemoveDeliveryRecipientsMutationType } from '@src/modules/checkout/api/mutations/__generated__/removeDeliveryRecipientsMutation.graphql';
+import type { submitCheckoutMutation as SubmitCheckoutMutationType } from '@src/modules/checkout/api/mutations/__generated__/submitCheckoutMutation.graphql';
 import { useCheckoutData } from '@src/modules/checkout/context/CheckoutDataContext';
+import { createCheckoutIdempotencyKey } from '@shopana/storefront-sdk/modules/cart/core/utils/idempotencyKey';
 
 export function useCreateCheckoutApi(): CheckoutApi {
   const { checkout = null } = useCheckoutData() || {};
-  const checkoutId = checkout?.id as string;
 
   const { commit: commitSelectDelivery } =
     useCheckoutOperation<SelectDeliveryMethodMutationType>(
@@ -119,7 +123,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
       }
     );
 
-  const { commit: commitSubmitCheckout } = useCheckoutOperation(
+  const { commit: commitSubmitCheckout } =
+    useCheckoutOperation<SubmitCheckoutMutationType>(
     submitCheckoutMutation,
     {
       errorMessage: 'Failed to submit checkout',
@@ -127,7 +132,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
     }
   );
 
-  const { commit: commitAddRecipients } = useCheckoutOperation(
+  const { commit: commitAddRecipients } =
+    useCheckoutOperation<AddDeliveryRecipientsMutationType>(
     addDeliveryRecipientsMutation,
     {
       errorMessage: 'Failed to add delivery recipients',
@@ -136,7 +142,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
     }
   );
 
-  const { commit: commitUpdateRecipients } = useCheckoutOperation(
+  const { commit: commitUpdateRecipients } =
+    useCheckoutOperation<UpdateDeliveryRecipientsMutationType>(
     updateDeliveryRecipientsMutation,
     {
       errorMessage: 'Failed to update delivery recipients',
@@ -145,7 +152,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
     }
   );
 
-  const { commit: commitRemoveRecipients } = useCheckoutOperation(
+  const { commit: commitRemoveRecipients } =
+    useCheckoutOperation<RemoveDeliveryRecipientsMutationType>(
     removeDeliveryRecipientsMutation,
     {
       errorMessage: 'Failed to remove delivery recipients',
@@ -155,82 +163,85 @@ export function useCreateCheckoutApi(): CheckoutApi {
   );
 
   return useMemo(() => {
+    const mutationContext = () => {
+      if (!checkout) {
+        throw new Error('Checkout is unavailable');
+      }
+
+      return {
+        checkoutId: checkout.id,
+        expectedCheckoutVersion: checkout.version,
+        idempotencyKey: createCheckoutIdempotencyKey(),
+      };
+    };
+
     return {
       selectDeliveryMethod: async (input) => {
-        await commitSelectDelivery({
-          input: { ...input, checkoutId },
-        });
+        await commitSelectDelivery({ input: { ...input, ...mutationContext() } });
       },
       selectPaymentMethod: async (input) => {
-        await commitSelectPayment({
-          input: { ...input, checkoutId },
-        });
+        await commitSelectPayment({ input: { ...input, ...mutationContext() } });
       },
       updatePaymentMethod: async (input) => {
-        await commitSelectPayment({
-          input: { ...input, checkoutId },
-        });
+        await commitSelectPayment({ input: { ...input, ...mutationContext() } });
       },
       updateCustomerIdentity: async (input) => {
-        await commitUpdateIdentity({
-          input: { ...input, checkoutId },
-        });
+        await commitUpdateIdentity({ input: { ...input, ...mutationContext() } });
       },
       addDeliveryAddresses: async (input) => {
-        await commitAddAddresses({
-          input: { ...input, checkoutId },
-        });
+        await commitAddAddresses({ input: { ...input, ...mutationContext() } });
       },
       updateDeliveryAddresses: async (input) => {
-        await commitUpdateAddresses({
-          input: { ...input, checkoutId },
-        });
+        await commitUpdateAddresses({ input: { ...input, ...mutationContext() } });
       },
       removeDeliveryAddresses: async (input) => {
-        await commitRemoveAddresses({
-          input: { ...input, checkoutId },
-        });
+        await commitRemoveAddresses({ input: { ...input, ...mutationContext() } });
       },
       addDeliveryRecipients: async (input) => {
-        await commitAddRecipients({
-          input: { ...input, checkoutId },
-        });
+        await commitAddRecipients({ input: { ...input, ...mutationContext() } });
       },
       updateDeliveryRecipients: async (input) => {
-        await commitUpdateRecipients({
-          input: { ...input, checkoutId },
-        });
+        await commitUpdateRecipients({ input: { ...input, ...mutationContext() } });
       },
       removeDeliveryRecipients: async (input) => {
-        await commitRemoveRecipients({
-          input: { ...input, checkoutId },
-        });
+        await commitRemoveRecipients({ input: { ...input, ...mutationContext() } });
       },
       updateCustomerNote: async (input) => {
-        await commitUpdateNote({
-          input: { ...input, checkoutId },
-        });
+        await commitUpdateNote({ input: { ...input, ...mutationContext() } });
       },
       addPromoCode: async (input) => {
-        await commitAddPromo({
-          input: { ...input, checkoutId },
-        });
+        await commitAddPromo({ input: { ...input, ...mutationContext() } });
       },
       removePromoCode: async (input) => {
-        await commitRemovePromo({
-          input: { ...input, checkoutId },
-        });
+        await commitRemovePromo({ input: { ...input, ...mutationContext() } });
       },
       updateShippingMethod: async (input) => {
-        await commitSelectDelivery({
-          input: { ...input, checkoutId },
-        });
+        await commitSelectDelivery({ input: { ...input, ...mutationContext() } });
       },
       submitCheckout: async (input) => {
         await commitSubmitCheckout({
-          input: { ...input, checkoutId },
+          input: {
+            ...input,
+            ...mutationContext(),
+            expectedResultRevision: checkout?.resultRevision ?? '',
+          },
         });
       },
     };
-  }, [checkoutId]);
+  }, [
+    checkout,
+    commitSelectDelivery,
+    commitSelectPayment,
+    commitUpdateIdentity,
+    commitAddAddresses,
+    commitUpdateAddresses,
+    commitRemoveAddresses,
+    commitAddRecipients,
+    commitUpdateRecipients,
+    commitRemoveRecipients,
+    commitUpdateNote,
+    commitAddPromo,
+    commitRemovePromo,
+    commitSubmitCheckout,
+  ]);
 }

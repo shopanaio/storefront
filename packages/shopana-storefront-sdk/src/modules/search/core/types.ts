@@ -27,6 +27,8 @@ export interface SearchFilterValue {
   handle: string;
   title: string;
   count: number;
+  input: unknown;
+  selected: boolean;
 }
 
 export interface SearchFilter {
@@ -85,7 +87,7 @@ export interface SearchProduct {
     isAvailable: boolean;
   } | null;
   options: SearchProductOption[];
-  selectedOptions?: Record<string, string> | null;
+  selectedOptions?: string[] | null;
 }
 
 export interface SearchPageInfo {

@@ -12,11 +12,11 @@ interface ListingMobileControlsProps {
   filters: ApiFilter[];
   selectedFilters: Record<
     string,
-    { values: string[] | [number, number]; inputs?: string[] }
+    { values: string[] | [number, number]; inputs?: unknown[] }
   >;
   setSelectedFilters: (
     value: React.SetStateAction<
-      Record<string, { values: string[] | [number, number]; inputs?: string[] }>
+      Record<string, { values: string[] | [number, number]; inputs?: unknown[] }>
     >
   ) => void;
   sortOptions: SortOption<ListingSort>[];

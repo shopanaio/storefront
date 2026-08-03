@@ -4,14 +4,12 @@ import { createFetchGraphQL } from '../../../../graphql/relay/Environment';
 import type { RelayEnvironmentConfig } from '../../../../graphql/relay/types';
 import SearchQueryNode, {
   SearchQuery as SearchQueryType,
+  ListingFilterInput,
+  ListingSort,
 } from '../../core/graphql/queries/__generated__/SearchQuery.graphql';
 
-export type SearchSort = 'MOST_RELEVANT' | 'PRICE_ASC' | 'PRICE_DESC' | 'CREATED_AT_DESC' | 'CREATED_AT_ASC' | 'TITLE_ASC' | 'TITLE_DESC';
-
-export interface SearchFilterInput {
-  handle: string;
-  values: readonly string[];
-}
+export type SearchSort = ListingSort;
+export type SearchFilterInput = ListingFilterInput;
 
 export interface LoadSearchServerQueryOptions {
   environmentConfig: RelayEnvironmentConfig;
@@ -32,7 +30,7 @@ export async function loadSearchServerQuery(
     query,
     first = 12,
     after = null,
-    sort = 'MOST_RELEVANT',
+    sort = 'RELEVANCE',
     filters = [],
   } = options;
 

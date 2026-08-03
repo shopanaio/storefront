@@ -4,9 +4,14 @@ import { Empty } from 'antd';
 import { createStyles } from 'antd-style';
 import { ListingProductCardRelay } from '@src/templates/collection/blocks/ProductCard';
 import clsx from 'clsx';
+import type { SearchProduct } from '@shopana/storefront-sdk/modules/search/core/types';
+import type { useListingProductCardFragment_product$key } from '@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql';
 
 interface ListingProps {
-  products: readonly any[];
+  products: readonly (
+    | SearchProduct
+    | useListingProductCardFragment_product$key
+  )[];
   className?: string;
 }
 
@@ -21,12 +26,19 @@ export const ProductsGrid: React.FC<ListingProps> = ({
       {products.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No Data" />
       ) : (
-        products.map((product) => (
-          <ListingProductCardRelay
-            key={(product as any).id}
-            $productRef={product} // Fix: use $productRef instead of product
-          />
-        ))
+        products.map((product, index) =>
+          'price' in product && 'product' in product ? (
+            <ListingProductCardRelay
+              key={product.id}
+              product={product}
+            />
+          ) : (
+            <ListingProductCardRelay
+              key={index}
+              $productRef={product}
+            />
+          )
+        )
       )}
     </div>
   );

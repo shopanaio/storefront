@@ -4,14 +4,12 @@ import { createFetchGraphQL } from '../../../../graphql/relay/Environment';
 import type { RelayEnvironmentConfig } from '../../../../graphql/relay/types';
 import CollectionQueryNode, {
   CollectionQuery as CollectionQueryType,
+  ListingFilterInput,
+  ListingSort,
 } from '../../core/graphql/queries/__generated__/CollectionQuery.graphql';
 
-export type CollectionSort = 'MOST_RELEVANT' | 'PRICE_ASC' | 'PRICE_DESC' | 'CREATED_AT_DESC' | 'CREATED_AT_ASC' | 'TITLE_ASC' | 'TITLE_DESC';
-
-export interface CollectionFilterInput {
-  handle: string;
-  values: readonly string[];
-}
+export type CollectionSort = ListingSort;
+export type CollectionFilterInput = ListingFilterInput;
 
 export interface LoadCollectionServerQueryOptions {
   environmentConfig: RelayEnvironmentConfig;
@@ -32,7 +30,7 @@ export async function loadCollectionServerQuery(
     handle,
     first = 24,
     after = null,
-    sort = 'MOST_RELEVANT',
+    sort = 'MANUAL',
     filters = [],
   } = options;
 

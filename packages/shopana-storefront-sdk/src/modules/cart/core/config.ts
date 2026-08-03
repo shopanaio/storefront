@@ -1,3 +1,8 @@
+import type {
+  CurrencyCode,
+  LocaleCode,
+} from './graphql/mutations/__generated__/createCartMutation.graphql';
+
 /**
  * Cart module configuration interface
  * Provides default settings for currency, locale, and cookie management
@@ -7,13 +12,19 @@ export interface CartConfig {
    * Default currency code (ISO 4217)
    * @example 'USD', 'EUR', 'GBP'
    */
-  defaultCurrency: string;
+  defaultCurrency: CurrencyCode;
 
   /**
    * Default locale code
    * @example 'en', 'en-US', 'ru-RU'
    */
-  defaultLocale: string;
+  defaultLocale: LocaleCode;
+
+  /**
+   * Canonical sales channel used for checkout pricing and eligibility.
+   * @example 'online-store'
+   */
+  channelCode: string;
 
   /**
    * Cookie name for storing cart ID
@@ -64,6 +75,7 @@ export function createCartConfig(userConfig: CartConfig): Required<CartConfig> {
   return {
     defaultCurrency: userConfig.defaultCurrency,
     defaultLocale: userConfig.defaultLocale,
+    channelCode: userConfig.channelCode,
     cookieName: userConfig.cookieName ?? DEFAULT_CART_CONFIG.cookieName!,
     cookieOptions: {
       ...DEFAULT_CART_CONFIG.cookieOptions!,

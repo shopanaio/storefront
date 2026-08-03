@@ -56,7 +56,7 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
    * Handle delivery method selection with optimistic update
    */
   const handleSelectMethod = useCallback(
-    async (method: { code: string; data: unknown; provider: string }) => {
+    async (method: { handle: string; code: string; data: unknown; provider: string }) => {
       // Find full method object from deliveryMethods
       const fullMethod = deliveryMethods?.find(
         (m) => m.code === method.code && m.provider === method.provider
@@ -73,10 +73,9 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
       try {
         // Call API to persist the selection
         await selectDeliveryMethod({
-          shippingMethodCode: fullMethod.code,
+          optionHandle: fullMethod.handle,
           deliveryGroupId,
-          data: fullMethod.data as object | undefined,
-          provider: fullMethod.provider,
+          customerInput: fullMethod.data,
         });
       } catch (error) {
         // On error, revert to previous state
@@ -118,10 +117,9 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
       try {
         // Call API to persist the updated data
         await updateShippingMethod({
-          shippingMethodCode: localSelectedMethod.code,
-          provider: localSelectedMethod.provider,
+          optionHandle: localSelectedMethod.handle,
           deliveryGroupId,
-          data: updatedData as object | undefined,
+          customerInput: updatedData,
         });
       } catch (error) {
         // On error, revert to previous state
@@ -150,11 +148,12 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
 
     const providerMethodsRecord =
       deliveryMethods.reduce<DeliveryProviderMethodsRecord>((acc, method) => {
-        const { provider, code } = method;
+        const { provider, handle, code } = method;
         if (!acc[provider]) {
           acc[provider] = [];
         }
         acc[provider].push({
+          handle,
           code,
           data: method.data,
           provider,

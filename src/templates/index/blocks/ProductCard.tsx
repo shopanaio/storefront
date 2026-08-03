@@ -27,6 +27,52 @@ export function HomeSlideshowProductCard({ product }: Props) {
     : undefined;
 
   const gallery = product.image?.url ? [product.image.url] : [];
+  const cover = product.image?.url
+    ? { id: `${product.id}:cover`, url: product.image.url }
+    : null;
+  const variant: model.ProductVariant = {
+    __typename: 'ProductVariant',
+    id: product.id,
+    iid: product.id,
+    title: product.title,
+    handle: product.handle,
+    description: '',
+    excerpt: '',
+    selectedOptions: [],
+    price,
+    compareAtPrice: compareAtPrice ?? null,
+    cover,
+    gallery: {
+      edges: cover ? [{ node: cover, cursor: '' }] : [],
+      pageInfo: { hasNextPage: false, hasPreviousPage: false },
+      totalCount: cover ? 1 : 0,
+    },
+    sku: null,
+    stockStatus: { isAvailable: true },
+    createdAt: '',
+    updatedAt: '',
+  };
+  const reviewProduct: model.Product = {
+    __typename: 'Product',
+    id: product.product.id,
+    title: product.product.title,
+    handle: product.product.handle,
+    description: '',
+    excerpt: '',
+    category: null,
+    options: [],
+    groups: [],
+    features: [],
+    rating: { id: product.product.id, rating: 0, count: 0, breakdown: [] },
+    tags: {
+      edges: [],
+      pageInfo: { hasNextPage: false, hasPreviousPage: false },
+      totalCount: 0,
+    },
+    createdAt: '',
+    updatedAt: '',
+    variants: [variant],
+  };
 
   const productTitle = composeProductTitle({
     productTitle: product.product.title,
@@ -59,12 +105,12 @@ export function HomeSlideshowProductCard({ product }: Props) {
         if (!isInCart) {
           addToCart({
             purchasableId: product.id,
-            purchasableSnapshot: product as unknown as model.ProductVariant,
+            purchasableSnapshot: variant,
             quantity: 1,
           });
         }
       }}
-      onReviewClick={() => setReviewProduct(product as unknown as model.Product)}
+      onReviewClick={() => setReviewProduct(reviewProduct)}
     />
   );
 }

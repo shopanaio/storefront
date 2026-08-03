@@ -1,4 +1,5 @@
 export interface DeliveryMethod {
+  handle: string;
   code: string;
   provider: string;
   data: unknown;
@@ -36,6 +37,7 @@ type DeliveryMethodData = unknown;
 export type DeliveryProviderMethodsRecord = Record<
   DeliveryProviderCode,
   Array<{
+    handle: string;
     code: DeliveryMethodCode;
     data: DeliveryMethodData;
     provider: string;

@@ -2,7 +2,11 @@
 
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { usePreloadedQuery, useRelayEnvironment } from 'react-relay';
+import {
+  readInlineData,
+  usePreloadedQuery,
+  useRelayEnvironment,
+} from 'react-relay';
 import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
 import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
 import { ProductDataContext } from '../context/ProductDataContext';
@@ -18,6 +22,15 @@ import type {
 import ProductQueryNode, {
   ProductQuery,
 } from '../../core/graphql/queries/__generated__/ProductQuery.graphql';
+import ProductComponentConfigurationFragmentNode, {
+  type ProductComponentConfigurationFragment$key,
+} from '../../core/graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
+import ProductComponentGroupFragmentNode, {
+  type ProductComponentGroupFragment$key,
+} from '../../core/graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
+import ProductComponentItemFragmentNode, {
+  type ProductComponentItemFragment$key,
+} from '../../core/graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
 
 interface ProductDataProviderProps {
   children: ReactNode;
@@ -27,122 +40,181 @@ interface ProductDataProviderProps {
   >;
 }
 
+type RawProduct = NonNullable<ProductQuery['response']['product']>;
+type RawVariant = RawProduct['variants']['edges'][number]['node'];
+
+const toAmount = (amount: unknown): string => String(amount ?? '0');
+
+const toImage = (
+  media:
+    | {
+        readonly id?: string;
+        readonly image?: { readonly url: unknown } | null;
+      }
+    | null
+    | undefined
+): ProductImage | null => {
+  if (!media?.id || !media.image?.url) {
+    return null;
+  }
+
+  return { id: media.id, url: String(media.image.url) };
+};
+
+const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
+  if (!variant) {
+    return [];
+  }
+
+  const configuration = readInlineData(
+    ProductComponentConfigurationFragmentNode,
+    variant as ProductComponentConfigurationFragment$key
+  ).componentConfiguration;
+
+  if (!configuration) {
+    return [];
+  }
+
+  return configuration.groups.map((groupRef) => {
+    const group = readInlineData(
+      ProductComponentGroupFragmentNode,
+      groupRef as ProductComponentGroupFragment$key
+    );
+
+    return {
+      id: group.id,
+      title: group.title,
+      isRequired: group.isRequired,
+      isMultiple: group.maxSelection == null || group.maxSelection > 1,
+      items: group.items.map((itemRef) => {
+        const item = readInlineData(
+          ProductComponentItemFragmentNode,
+          itemRef as ProductComponentItemFragment$key
+        );
+        const node = item.node;
+        const unitPrice = {
+          amount: toAmount(item.unitPrice.amount),
+          currencyCode: item.unitPrice.currencyCode,
+        };
+
+        return {
+          id: item.id,
+          node: node
+            ? {
+                id: node.id,
+                title: node.title,
+                handle: node.handle,
+                product: {
+                  title: node.product.title,
+                  handle: node.product.handle,
+                },
+                price: unitPrice,
+                cover: toImage(node.cover),
+              }
+            : null,
+          maxQuantity: item.maxQuantity,
+          price: {
+            amount: unitPrice,
+            percentage: null,
+          },
+        };
+      }),
+    };
+  });
+};
+
 function transformProduct(rawProduct: ProductQuery['response']['product']): Product | null {
   if (!rawProduct) {
     return null;
   }
 
-  const variants: ProductVariant[] = (rawProduct.variants ?? []).map((v) => ({
-    id: v.id,
-    handle: v.handle,
-    title: v.title,
-    selectedOptions: v.selectedOptions,
-    cover: v.cover ? { id: v.cover.id, url: v.cover.url } : null,
-    gallery: v.gallery ? {
-      edges: (v.gallery.edges ?? [])
-        .filter((e): e is NonNullable<typeof e> => Boolean(e?.node?.id && e?.node?.url))
-        .map((e) => ({
-          node: { id: e.node.id, url: e.node.url },
-        })),
-    } : undefined,
-    price: {
-      amount: v.price.amount,
-      currencyCode: v.price.currencyCode,
-    },
-    compareAtPrice: v.compareAtPrice
-      ? {
-          amount: v.compareAtPrice.amount,
-          currencyCode: v.compareAtPrice.currencyCode,
-        }
-      : null,
-    sku: v.sku,
-    stockStatus: v.stockStatus
-      ? { isAvailable: v.stockStatus.isAvailable }
-      : null,
-  }));
+  const productMedia = [
+    toImage(rawProduct.featuredMedia),
+    ...rawProduct.media.edges.map((edge) => toImage(edge.node)),
+  ].filter((image): image is ProductImage => image !== null);
+
+  const variants: ProductVariant[] = rawProduct.variants.edges.map(({ node }) => {
+    const seen = new Set<string>();
+    const images = [
+      toImage(node.featuredMedia),
+      ...node.media.edges.map((edge) => toImage(edge.node)),
+      ...productMedia,
+    ].filter((image): image is ProductImage => {
+      if (!image || seen.has(image.id)) {
+        return false;
+      }
+      seen.add(image.id);
+      return true;
+    });
+
+    return {
+      id: node.id,
+      handle: node.handle,
+      title: node.title,
+      selectedOptions: node.selectedOptions.map(
+        (selection) => selection.optionValue.handle
+      ),
+      cover: images[0] ?? null,
+      gallery: {
+        edges: images.map((image) => ({ node: image })),
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+        totalCount: images.length,
+      },
+      price: {
+        amount: toAmount(node.price?.amount),
+        currencyCode: node.price?.currencyCode ?? 'USD',
+      },
+      compareAtPrice: node.compareAtPrice
+        ? {
+            amount: toAmount(node.compareAtPrice.amount),
+            currencyCode: node.compareAtPrice.currencyCode,
+          }
+        : null,
+      sku: node.sku,
+      stockStatus: { isAvailable: node.isAvailable },
+    };
+  });
 
   const options: ProductOption[] = (rawProduct.options ?? []).map((o) => ({
     id: o.id,
     handle: o.handle,
     title: o.title,
-    displayType: o.displayType,
+    displayType: o.displayType === 'BUTTONS' ? 'RADIO' : o.displayType,
     values: (o.values ?? []).map((v) => ({
       id: v.id,
       title: v.title,
       handle: v.handle,
       swatch: v.swatch
         ? {
-            id: v.swatch.id,
-            color: v.swatch.color,
-            displayType: v.swatch.displayType,
-            image: v.swatch.image
-              ? { id: v.swatch.image.id, url: v.swatch.image.url }
-              : null,
+            id: `${v.id}:swatch`,
+            color: v.swatch.color ? String(v.swatch.color) : null,
+            displayType:
+              v.swatch.displayType === 'GRADIENT'
+                ? 'COLOR_DUO'
+                : v.swatch.displayType,
+            image: toImage(v.swatch.image),
           }
         : null,
     })),
   }));
 
-  const tags: ProductTag[] = (rawProduct.tags?.edges ?? [])
-    .map((e) => e?.node)
-    .filter((n): n is { id: string; handle: string; title: string } =>
-      Boolean(n?.id && n?.handle && n?.title)
-    )
-    .map((n) => ({
-      id: n.id,
-      handle: n.handle,
-      title: n.title,
-    }));
-
-  const groups: ProductGroup[] = (rawProduct.groups ?? []).map((g) => ({
-    id: g.id,
-    title: g.title,
-    isRequired: g.isRequired,
-    isMultiple: g.isMultiple,
-    items: (g.items ?? []).map((item) => {
-      const nodeId = item.node?.id;
-      const nodeTitle = item.node?.title;
-      const nodeHandle = item.node?.handle;
-
-      return {
-        node: (nodeId && nodeTitle && nodeHandle)
-          ? {
-              id: nodeId,
-              title: nodeTitle,
-              handle: nodeHandle,
-              product: {
-                title: item.node?.product?.title ?? '',
-                handle: item.node?.product?.handle ?? '',
-              },
-              price: {
-                amount: String(item.node?.price?.amount ?? '0'),
-                currencyCode: String(item.node?.price?.currencyCode ?? 'USD'),
-              },
-              cover: item.node?.cover
-                ? { id: item.node.cover.id, url: item.node.cover.url }
-                : null,
-            }
-          : null,
-        maxQuantity: item.maxQuantity,
-        price: item.price
-          ? {
-              amount: {
-                amount: String(item.price.amount?.amount ?? '0'),
-                currencyCode: String(item.price.amount?.currencyCode ?? 'USD'),
-              },
-              percentage: item.price.percentage,
-            }
-          : null,
-      };
-    }),
+  const tags: ProductTag[] = rawProduct.tags.map((tag) => ({
+    id: tag.id,
+    handle: tag.handle,
+    title: tag.title,
   }));
+
+  const groups = transformGroups(rawProduct.variants.edges[0]?.node);
 
   return {
     id: rawProduct.id,
     title: rawProduct.title,
     handle: rawProduct.handle,
-    description: rawProduct.description,
-    excerpt: rawProduct.excerpt,
+    description: rawProduct.description?.text ?? null,
+    excerpt: rawProduct.excerpt?.text ?? null,
     options,
     category: rawProduct.category
       ? {
@@ -158,20 +230,39 @@ function transformProduct(rawProduct: ProductQuery['response']['product']): Prod
       : null,
     variants,
     tags,
+    features: rawProduct.features.map((feature) => ({
+      id: feature.id,
+      handle: feature.handle,
+      title: feature.title,
+      values: feature.values.map((value) => ({
+        id: value.id,
+        handle: value.handle,
+        title: value.title,
+      })),
+    })),
     groups,
-    seoTitle: rawProduct.seoTitle,
-    seoDescription: rawProduct.seoDescription,
+    seoTitle: rawProduct.seo.title,
+    seoDescription: rawProduct.seo.description,
     createdAt: rawProduct.createdAt,
     updatedAt: rawProduct.updatedAt,
     rating: rawProduct.rating
       ? {
-          id: rawProduct.rating.id,
+          id: rawProduct.id,
           count: rawProduct.rating.count,
           rating: rawProduct.rating.rating,
-          breakdown: (rawProduct.rating.breakdown ?? []).map((b) => ({
-            star: b.star,
-            count: b.count,
-            percentage: b.percentage,
+          breakdown: [
+            rawProduct.rating.breakdown.rating1Count,
+            rawProduct.rating.breakdown.rating2Count,
+            rawProduct.rating.breakdown.rating3Count,
+            rawProduct.rating.breakdown.rating4Count,
+            rawProduct.rating.breakdown.rating5Count,
+          ].map((count, index) => ({
+            star: index + 1,
+            count,
+            percentage:
+              rawProduct.rating.count > 0
+                ? (count / rawProduct.rating.count) * 100
+                : 0,
           })),
         }
       : null,

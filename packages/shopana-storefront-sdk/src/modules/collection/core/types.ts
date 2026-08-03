@@ -27,6 +27,8 @@ export interface CollectionFilterValue {
   handle: string;
   title: string;
   count: number;
+  input: unknown;
+  selected: boolean;
 }
 
 export interface CollectionFilter {
@@ -85,7 +87,7 @@ export interface CollectionProduct {
     isAvailable: boolean;
   } | null;
   options: CollectionProductOption[];
-  selectedOptions?: Record<string, string> | null;
+  selectedOptions?: string[] | null;
 }
 
 export interface CollectionPageInfo {

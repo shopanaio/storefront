@@ -3,7 +3,7 @@ import { useMemo } from "react";
 interface UseActiveFiltersCountProps {
   selectedFilters: Record<
     string,
-    { values: string[] | [number, number]; inputs?: string[] }
+    { values: string[] | [number, number]; inputs?: unknown[] }
   >;
 }
 

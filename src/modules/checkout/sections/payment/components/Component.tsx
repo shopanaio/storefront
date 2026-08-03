@@ -42,7 +42,7 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
    * Handle payment method selection with optimistic update
    */
   const handleSelectMethod = useCallback(
-    async (method: { code: string; data: unknown; provider: string }) => {
+    async (method: { handle: string; code: string; data: unknown; provider: string }) => {
       // Find full method object from paymentMethods
 
       // Optimistically update local state for immediate UI feedback
@@ -51,9 +51,8 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
       try {
         // Call API to persist the selection
         await selectPaymentMethod({
-          paymentMethodCode: method.code,
-          provider: method.provider,
-          data: method.data as object,
+          methodHandle: method.handle,
+          customerInput: method.data,
         });
       } catch (error) {
         // On error, revert to previous state
@@ -74,13 +73,13 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
     }
 
     const grouped = paymentMethods.reduce<
-      Record<string, Array<{ code: string; data: unknown; provider: string }>>
+      Record<string, Array<{ handle: string; code: string; data: unknown; provider: string }>>
     >((acc, method) => {
-      const { provider, code, data } = method;
+      const { provider, handle, code, data } = method;
       if (!acc[provider]) {
         acc[provider] = [];
       }
-      acc[provider].push({ code, data, provider });
+      acc[provider].push({ handle, code, data, provider });
       return acc;
     }, {});
 

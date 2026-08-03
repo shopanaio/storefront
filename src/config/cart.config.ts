@@ -7,6 +7,7 @@ import { createCartConfig, type CartConfig } from '@shopana/storefront-sdk/modul
 export const cartConfig: CartConfig = createCartConfig({
   defaultCurrency: 'UAH',
   defaultLocale: 'uk',
+  channelCode: 'online-store',
   cookieName: 'shopana_cart_id',
   cookieOptions: {
     maxAge: 60 * 60 * 24 * 30, // 30 days

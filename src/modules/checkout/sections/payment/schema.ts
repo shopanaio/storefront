@@ -6,6 +6,7 @@ import { buildSelectedProviderMethodSchema } from '@src/modules/checkout/utils/v
  * Yup validation schema for PaymentMethod
  */
 const paymentMethodSchema = yup.object<PaymentMethod>().shape({
+  handle: yup.string().required('Payment method handle is required'),
   code: yup.string().required('Payment method code is required'),
   provider: yup.string().required('Payment provider is required'),
   data: yup.mixed(),

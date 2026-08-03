@@ -77,7 +77,21 @@ export interface ProductTag {
   title: string;
 }
 
+export interface ProductFeatureValue {
+  id: string;
+  handle: string;
+  title: string;
+}
+
+export interface ProductFeature {
+  id: string;
+  handle: string;
+  title: string;
+  values: ProductFeatureValue[];
+}
+
 export interface ProductGroupItem {
+  id: string;
   node: {
     id: string;
     title: string;
@@ -156,6 +170,7 @@ export interface Product {
   category?: ProductCategory | null;
   variants: ProductVariant[];
   tags: ProductTag[];
+  features: ProductFeature[];
   groups: ProductGroup[];
   seoTitle?: string | null;
   seoDescription?: string | null;

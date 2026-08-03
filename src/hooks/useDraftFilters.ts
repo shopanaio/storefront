@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 type FilterValue = {
   values: string[] | [number, number];
-  inputs?: string[];
+  inputs?: unknown[];
 };
 
 type FiltersState = Record<string, FilterValue>;

@@ -11,6 +11,12 @@ export const SearchProductsFragment = graphql`
       label
       title: label
       type
+      priceRange {
+        min { amount currencyCode }
+        max { amount currencyCode }
+        selectedMin { amount currencyCode }
+        selectedMax { amount currencyCode }
+      }
       values {
         id
         handle: id

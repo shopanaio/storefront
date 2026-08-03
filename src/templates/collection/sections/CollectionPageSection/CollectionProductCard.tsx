@@ -1,20 +1,18 @@
 'use client';
 
-import { useFragment } from 'react-relay';
+import { readInlineData } from 'react-relay';
 import CollectionProductCardFragmentNode, {
   CollectionProductCardFragment$key,
-  CollectionProductCardFragment$data,
 } from '@shopana/storefront-sdk/modules/collection/core/graphql/fragments/__generated__/CollectionProductCardFragment.graphql';
 import {
   ProductCard,
 } from '@src/ui-kit/ProductCards/ListingCard/ProductCard';
 import { composeProductTitle } from '@src/utils/composeProductTitle';
-import type { model } from '@shopana/storefront-sdk';
-import { CurrencyCode } from '@codegen/schema-client';
 import useIsInTheCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useIsInTheCart';
 import useAddItemToCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useAddItemToCart';
 import { useProductSwatches } from '@src/hooks/useProductSwatches';
 import { useReviewStore } from '@src/store/appStore';
+import { mapListingProductCard } from '@src/templates/collection/mappers/mapListingProductCard';
 
 interface CollectionProductCardProps {
   $productRef: CollectionProductCardFragment$key;
@@ -23,57 +21,49 @@ interface CollectionProductCardProps {
 export const CollectionProductCard = ({
   $productRef,
 }: CollectionProductCardProps) => {
-  const product = useFragment<CollectionProductCardFragment$key>(
+  const rawProduct = readInlineData(
     CollectionProductCardFragmentNode,
     $productRef
-  ) as CollectionProductCardFragment$data;
+  );
+  const { product, variant, gallery } = mapListingProductCard(rawProduct);
 
   const { isInCart } = useIsInTheCart({
-    purchasableId: product.id,
+    purchasableId: variant.id,
   });
 
   const { addToCart, isInFlight } = useAddItemToCart();
 
   // Safely get swatches with type checking
   const swatches = useProductSwatches(
-    Array.isArray(product.options) ? (product.options as model.ProductOption[]) : [],
-    [], // No variants in listing cards
-    product as unknown as model.ProductVariant
+    product.options,
+    product.variants,
+    variant
   );
 
   // Extract rating data
-  const rating = {
-    rating: product.rating?.rating || 0,
-    count: product.rating?.count || 0,
-  };
-
-  // Extract gallery URLs
-  const gallery = product.gallery?.edges?.map((edge) => edge.node.url) || [];
+  const rating = product.rating;
 
   // Compose product title
   const productTitle = composeProductTitle({
-    productTitle: product.product?.title,
-    variantTitle: product.title,
-    fallback: product.title || '',
+    productTitle: product.title,
+    variantTitle: variant.title,
+    fallback: variant.title,
   });
 
-  const handle = product.product?.handle || product.handle || '';
-  const variantHandle = product.handle || undefined;
-  const isAvailable = product.stockStatus?.isAvailable || false;
-  const price = product.price || {
-    amount: 0,
-    currencyCode: CurrencyCode.Usd,
-  };
+  const handle = product.handle;
+  const variantHandle = variant.handle || undefined;
+  const isAvailable = variant.stockStatus.isAvailable;
+  const price = variant.price;
 
-  const compareAtPrice = product.compareAtPrice
-    ? { ...product.compareAtPrice }
+  const compareAtPrice = variant.compareAtPrice
+    ? { ...variant.compareAtPrice }
     : undefined;
 
   const setReviewProduct = useReviewStore((state) => state.setReviewProduct);
 
   return (
     <ProductCard
-      id={product.id}
+      id={variant.id}
       swatches={swatches}
       rating={{
         rating: rating.rating,
@@ -86,19 +76,19 @@ export const CollectionProductCard = ({
       variantHandle={variantHandle}
       isAvailable={isAvailable}
       price={price}
-      compareAtPrice={compareAtPrice as any}
+      compareAtPrice={compareAtPrice}
       isInCart={isInCart}
       isLoading={isInFlight}
       onAddToCart={() => {
         if (!isInCart) {
           addToCart({
-            purchasableId: product.id,
-            purchasableSnapshot: product as unknown as model.ProductVariant,
+            purchasableId: variant.id,
+            purchasableSnapshot: variant,
             quantity: 1,
           });
         }
       }}
-      onReviewClick={() => setReviewProduct(product as unknown as model.Product)}
+      onReviewClick={() => setReviewProduct(product)}
     />
   );
 };
