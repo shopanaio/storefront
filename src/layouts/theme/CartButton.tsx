@@ -14,6 +14,7 @@ type CartButtonProps = {
   onClick?: () => void;
   className?: string;
   iconSize?: number;
+  iconColor?: string;
   showTextOnDesktop?: boolean;
 };
 
@@ -21,6 +22,7 @@ export const CartButton: React.FC<CartButtonProps> = ({
   onClick,
   className,
   iconSize = 24,
+  iconColor = 'currentColor',
   showTextOnDesktop = true,
 }) => {
   const t = useTranslations('Header');
@@ -38,7 +40,7 @@ export const CartButton: React.FC<CartButtonProps> = ({
   );
 
   const badgeColor = 'var(--header-badge-background, var(--ant-color-primary))';
-  const icon = <ShoppingCart size={iconSize} color="currentColor" />;
+  const icon = <ShoppingCart size={iconSize} color={iconColor} />;
   const iconWithBadge = totalQuantity ? (
     <Badge
       style={{
@@ -113,7 +115,6 @@ const useStyles = createStyles(
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: var(--header-icon-color, currentColor);
       `,
       amount: css`
         display: none;

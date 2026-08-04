@@ -10,12 +10,14 @@ import { useRoutes } from '@src/hooks/useRoutes';
 type AccountButtonProps = {
   className?: string;
   iconSize?: number;
+  iconColor?: string;
   showTextOnDesktop?: boolean;
 };
 
 export const AccountButton: React.FC<AccountButtonProps> = ({
   className,
   iconSize = 24,
+  iconColor = 'currentColor',
   showTextOnDesktop = true,
 }) => {
   const t = useTranslations('Header');
@@ -40,9 +42,9 @@ export const AccountButton: React.FC<AccountButtonProps> = ({
     <HeaderLinkButton
       icon={
         isAuthenticated ? (
-          <CircleUserRound size={iconSize} />
+          <CircleUserRound size={iconSize} color={iconColor} />
         ) : (
-          <User size={iconSize} />
+          <User size={iconSize} color={iconColor} />
         )
       }
       topText={isAuthenticated ? t('my-account') : t('sign-in')}

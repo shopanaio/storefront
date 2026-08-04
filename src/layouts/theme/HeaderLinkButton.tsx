@@ -101,7 +101,6 @@ const useStyles = createStyles(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: var(--header-icon-color, currentColor);
     `,
     textWrapper: css`
       display: none;

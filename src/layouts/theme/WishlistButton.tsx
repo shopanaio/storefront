@@ -11,6 +11,7 @@ type WishlistButtonProps = {
   className?: string;
   onClick?: () => void;
   iconSize?: number;
+  iconColor?: string;
   showTextOnDesktop?: boolean;
 };
 
@@ -19,6 +20,7 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({
   className,
   onClick,
   iconSize = 24,
+  iconColor = 'currentColor',
   showTextOnDesktop = true,
 }) => {
   const t = useTranslations('Header');
@@ -34,7 +36,7 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({
 
   return (
     <HeaderLinkButton
-      icon={<Heart size={iconSize} />}
+      icon={<Heart size={iconSize} color={iconColor} />}
       topText={t('my-items')}
       bottomText={t('wishlist')}
       badgeCount={resolvedBadgeCount}

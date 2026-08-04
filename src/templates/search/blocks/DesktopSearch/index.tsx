@@ -14,6 +14,7 @@ import useBodyScrollLock from '@src/ui-kit/hooks/useBodyScrollLock';
 
 type DesktopSearchProps = {
   iconSize?: number;
+  iconColor?: string;
   showSubmitButton?: boolean;
   placeholder?: string;
   submitLabel?: string;
@@ -21,6 +22,7 @@ type DesktopSearchProps = {
 
 export const DesktopSearch: React.FC<DesktopSearchProps> = ({
   iconSize,
+  iconColor,
   showSubmitButton,
   placeholder,
   submitLabel,
@@ -105,6 +107,7 @@ export const DesktopSearch: React.FC<DesktopSearchProps> = ({
         <SearchInput
           onClick={handleClick}
           iconSize={iconSize}
+          iconColor={iconColor}
           showSubmitButton={showSubmitButton}
           placeholder={placeholder}
           submitLabel={submitLabel}

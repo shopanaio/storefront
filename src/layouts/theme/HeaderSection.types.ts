@@ -14,6 +14,9 @@ export interface HeaderSettings {
     controlHoverBackground: string;
     searchBackground: string;
     searchBorder: string;
+    searchText: string;
+    searchIcon: string;
+    searchPlaceholder: string;
     primaryButtonBackground: string;
     primaryButtonText: string;
     badgeBackground: string;

@@ -10,11 +10,13 @@ import { mq } from '@src/ui-kit/Theme/breakpoints';
 
 type AppDrawerButtonProps = {
   size?: number;
+  iconColor?: string;
   className?: string;
 };
 
 export const AppDrawerButton: React.FC<AppDrawerButtonProps> = ({
   size = 24,
+  iconColor = 'currentColor',
   className,
 }) => {
   const setIsAppDrawerOpen = useModalStore((s) => s.setIsAppDrawerOpen);
@@ -24,7 +26,7 @@ export const AppDrawerButton: React.FC<AppDrawerButtonProps> = ({
     <Button
       className={clsx(styles.button, className)}
       type="text"
-      icon={<Menu size={size} />}
+      icon={<Menu size={size} color={iconColor} />}
       onClick={() => setIsAppDrawerOpen(true)}
     />
   );
@@ -38,11 +40,9 @@ const useStyles = createStyles(({ token, css }) => {
       aspect-ratio: 1/1;
       flex-shrink: 0;
       width: var(--components-header-control-height) !important;
-      color: var(--header-icon-color, ${token.colorText});
       background: var(--header-control-background, transparent);
 
       &:not(:disabled):not(.ant-btn-disabled):hover {
-        color: var(--header-icon-color, ${token.colorText});
         background: var(
           --header-control-hover-background,
           ${token.colorBgTextHover}

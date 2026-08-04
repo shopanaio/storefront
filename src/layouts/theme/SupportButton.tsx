@@ -11,6 +11,7 @@ type SupportButtonProps = {
   mobileBlock?: boolean;
   className?: string;
   iconSize?: number;
+  iconColor?: string;
   phoneNumber?: string;
   showTextOnDesktop?: boolean;
   showDivider?: boolean;
@@ -20,6 +21,7 @@ export const SupportButton: React.FC<SupportButtonProps> = ({
   mobileBlock = true,
   className,
   iconSize = 24,
+  iconColor = 'currentColor',
   phoneNumber = '+1 (999) 111-11-11',
   showTextOnDesktop = true,
   showDivider = true,
@@ -30,7 +32,7 @@ export const SupportButton: React.FC<SupportButtonProps> = ({
   return (
     <>
       <HeaderLinkButton
-        icon={<Phone size={iconSize} />}
+        icon={<Phone size={iconSize} color={iconColor} />}
         topText={t('customer-support')}
         bottomText={phoneNumber}
         mobileBlock={mobileBlock}

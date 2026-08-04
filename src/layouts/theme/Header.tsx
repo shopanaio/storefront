@@ -31,7 +31,10 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
     <div className={styles.container}>
       <div className={styles.inner}>
         {settings.menu.enabled && (
-          <AppDrawerButton size={settings.menu.iconSize} />
+          <AppDrawerButton
+            size={settings.menu.iconSize}
+            iconColor={settings.colors.icon}
+          />
         )}
         {settings.logo.enabled && (
           <Link className={styles.logo} href="/">
@@ -47,6 +50,7 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
         {settings.search.enabled && (
           <DesktopSearch
             iconSize={settings.search.iconSize}
+            iconColor={settings.colors.searchIcon}
             showSubmitButton={settings.search.showSubmitButton}
             placeholder={settings.search.placeholder}
             submitLabel={settings.search.submitLabel}
@@ -57,6 +61,7 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
             {settings.support.enabled && (
               <SupportButton
                 iconSize={settings.support.iconSize}
+                iconColor={settings.colors.icon}
                 phoneNumber={settings.support.phoneNumber}
                 showTextOnDesktop={settings.support.showTextOnDesktop}
                 showDivider={settings.support.showDivider}
@@ -65,18 +70,21 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
             {settings.wishlist.enabled && (
               <WishlistButton
                 iconSize={settings.wishlist.iconSize}
+                iconColor={settings.colors.icon}
                 showTextOnDesktop={settings.wishlist.showTextOnDesktop}
               />
             )}
             {settings.account.enabled && (
               <AccountButton
                 iconSize={settings.account.iconSize}
+                iconColor={settings.colors.icon}
                 showTextOnDesktop={settings.account.showTextOnDesktop}
               />
             )}
             {settings.cart.enabled && (
               <CartButton
                 iconSize={settings.cart.iconSize}
+                iconColor={settings.colors.icon}
                 showTextOnDesktop={settings.cart.showTextOnDesktop}
               />
             )}
@@ -91,12 +99,13 @@ const useStyles = createStyles(({ token, css }, settings: HeaderSettings) => ({
   container: css`
     --components-header-control-height: ${settings.layout.controlHeight}px;
     --header-text-color: ${settings.colors.text};
-    --header-icon-color: ${settings.colors.icon};
     --header-control-background: ${settings.colors.controlBackground};
     --header-control-hover-background: ${settings.colors
       .controlHoverBackground};
     --header-search-background: ${settings.colors.searchBackground};
     --header-search-border: ${settings.colors.searchBorder};
+    --header-search-text: ${settings.colors.searchText};
+    --header-search-placeholder: ${settings.colors.searchPlaceholder};
     --header-primary-button-background: ${settings.colors
       .primaryButtonBackground};
     --header-primary-button-text: ${settings.colors.primaryButtonText};
@@ -116,12 +125,6 @@ const useStyles = createStyles(({ token, css }, settings: HeaderSettings) => ({
     position: ${settings.layout.sticky ? 'sticky' : 'relative'};
     top: 0;
     z-index: 20;
-
-    button svg,
-    .ant-input-prefix svg,
-    .ant-input-clear-icon {
-      color: var(--header-icon-color) !important;
-    }
 
     ${mq.lg} {
       padding: ${token.paddingSM}px ${token.padding}px;
