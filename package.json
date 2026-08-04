@@ -1,5 +1,5 @@
 {
-  "name": "@shopana/storefront",
+  "name": "@shopana/storefront-app",
   "type": "module",
   "version": "0.0.5",
   "private": true,
@@ -18,7 +18,7 @@
     "@shopana/brand-sdk": "1.0.0",
     "@shopana/novaposhta-api-client": "^0.0.1-alpha.10",
     "@shopana/novaposhta-transport-fetch": "^0.0.1-alpha.0",
-    "@shopana/storefront-runtime": "0.1.0",
+    "@shopana/storefront": "0.1.0",
     "@shopana/storefront-sdk": "0.1.0",
     "@stackflow/config": "^1.2.1",
     "@stackflow/core": "^1.2.0",

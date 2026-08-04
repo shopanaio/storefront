@@ -24,7 +24,7 @@ export interface SDKRequestContext {
  * @example
  * ```tsx
  * // In a server component
- * import { getRequestContext } from '@shopana/storefront-runtime/next/headers';
+ * import { getRequestContext } from '@shopana/storefront/next/headers';
  *
  * export default async function Page() {
  *   const ctx = await getRequestContext();

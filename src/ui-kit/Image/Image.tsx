@@ -4,7 +4,7 @@ import { createStyles } from 'antd-style';
 import React, { ReactNode, useCallback, useState, useEffect } from 'react';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
 import clsx from 'clsx';
-import NextImage from '@shopana/storefront-runtime/next/image';
+import NextImage from '@shopana/storefront/next/image';
 import { fallbackImageBase64 } from '@src/ui-kit/fallbackImageBase64';
 
 export interface UiImageProps {

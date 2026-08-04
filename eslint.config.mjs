@@ -97,7 +97,7 @@ export default defineConfig([
             {
               name: 'next',
               message:
-                'Import Next.js APIs through @shopana/storefront-runtime/next/*.',
+                'Import Next.js APIs through @shopana/storefront/next/*.',
             },
             {
               name: 'react-relay',
@@ -114,7 +114,7 @@ export default defineConfig([
             {
               group: ['next/*'],
               message:
-                'Import Next.js APIs through @shopana/storefront-runtime/next/*.',
+                'Import Next.js APIs through @shopana/storefront/next/*.',
             },
           ],
         },

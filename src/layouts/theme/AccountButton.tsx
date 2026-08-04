@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@shopana/storefront-runtime/next/navigation';
+import { useRouter } from '@shopana/storefront/next/navigation';
 import { CircleUserRound, User } from 'lucide-react';
 import { HeaderLinkButton } from './HeaderLinkButton';
 import { useSessionStore } from '@shopana/storefront-sdk/modules/session/react';

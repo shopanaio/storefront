@@ -3,7 +3,7 @@ import { Heart } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { HeaderLinkButton } from './HeaderLinkButton';
 import { useWishlistCounts } from '@src/modules/wishlist';
-import { useRouter } from '@shopana/storefront-runtime/next/navigation';
+import { useRouter } from '@shopana/storefront/next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
 import type { HeaderTextBreakpoint } from './HeaderSection.types';
 

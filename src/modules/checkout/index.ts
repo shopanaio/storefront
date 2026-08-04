@@ -1,4 +1,4 @@
-import dynamic from '@shopana/storefront-runtime/next/dynamic';
+import dynamic from '@shopana/storefront/next/dynamic';
 
 export const Checkout = dynamic(
   () => import('./components/Checkout').then((m) => m.Checkout),

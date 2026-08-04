@@ -1,4 +1,4 @@
-# @shopana/storefront-runtime
+# @shopana/storefront
 
 Generated Next.js App Router runtime for a Shopana storefront. This package
 owns the Next.js dependency, the generated application, its default
@@ -40,10 +40,10 @@ the storefront root. Conflicting variants fail generation with a diagnostic.
 Storefront source should consume framework APIs through the runtime facade:
 
 ```tsx
-import dynamic from '@shopana/storefront-runtime/next/dynamic';
-import Image from '@shopana/storefront-runtime/next/image';
-import Link from '@shopana/storefront-runtime/next/link';
-import { useRouter } from '@shopana/storefront-runtime/next/navigation';
+import dynamic from '@shopana/storefront/next/dynamic';
+import Image from '@shopana/storefront/next/image';
+import Link from '@shopana/storefront/next/link';
+import { useRouter } from '@shopana/storefront/next/navigation';
 ```
 
 The existing `next/headers`, `next/middleware`, `next/page`, `next/layout`, and

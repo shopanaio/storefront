@@ -7,7 +7,7 @@ import { Spin, Alert } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
 import type { StorefrontSearchProductsFragment } from '../../../../../codegen/apollo/storefront-operations';
-import { useSearchParams } from '@shopana/storefront-runtime/next/navigation';
+import { useSearchParams } from '@shopana/storefront/next/navigation';
 import {
   SearchPagination,
   usePaginationQuery,

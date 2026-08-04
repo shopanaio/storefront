@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import {
   useRouter,
   useSearchParams,
-} from '@shopana/storefront-runtime/next/navigation';
+} from '@shopana/storefront/next/navigation';
 import { useProduct } from '@shopana/storefront-sdk/modules/product/react/hooks/useProduct';
 import { useProductData } from '@shopana/storefront-sdk/modules/product/react/hooks/useProductData';
 import { PageLayout } from '@src/layouts/theme/PageLayout';

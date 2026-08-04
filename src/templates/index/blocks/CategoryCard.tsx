@@ -4,7 +4,7 @@ import { Card, Typography } from "antd";
 import { createStyles } from "antd-style";
 import { mq } from "@src/ui-kit/Theme/breakpoints";
 import type { model } from "@shopana/storefront-sdk";
-import Link from "@shopana/storefront-runtime/next/link";
+import Link from "@shopana/storefront/next/link";
 import { useRoutes } from "@src/hooks/useRoutes";
 
 const { Text } = Typography;

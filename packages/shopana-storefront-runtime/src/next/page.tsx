@@ -36,7 +36,7 @@ import { SearchDataProvider } from '@shopana/storefront-sdk/modules/search/react
 import {
   getRequestContext,
   type SDKRequestContext,
-} from '@shopana/storefront-runtime/next/headers';
+} from '@shopana/storefront/next/headers';
 import {
   moduleRegistry,
   type DynamicModulePageProps,
@@ -242,7 +242,7 @@ export type { SDKRequestContext };
  * @example
  * ```tsx
  * // app/[...slug]/page.tsx
- * import { createRuntimePage } from '@shopana/storefront-runtime/next/page';
+ * import { createRuntimePage } from '@shopana/storefront/next/page';
  * import { environmentConfig } from '@src/config/environment.config';
  *
  * const { Page, generateMetadata } = createRuntimePage({

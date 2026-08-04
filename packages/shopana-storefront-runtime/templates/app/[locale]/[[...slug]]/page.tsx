@@ -1,4 +1,4 @@
-import { createRuntimePage } from '@shopana/storefront-runtime/next/page';
+import { createRuntimePage } from '@shopana/storefront/next/page';
 import { environmentConfig } from '@src/config/environment.config';
 
 const { Page, generateMetadata } = createRuntimePage({

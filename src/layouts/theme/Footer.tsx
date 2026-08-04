@@ -3,8 +3,8 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { createStyles } from 'antd-style';
 import { Button, Flex, Typography } from 'antd';
-import Link from '@shopana/storefront-runtime/next/link';
-import { usePathname } from '@shopana/storefront-runtime/next/navigation';
+import Link from '@shopana/storefront/next/link';
+import { usePathname } from '@shopana/storefront/next/navigation';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { ApiMenu } from '@codegen/schema-client';
 import { useMenuHref } from '@src/hooks/useMenuHref';

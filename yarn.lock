@@ -3055,15 +3055,17 @@
   dependencies:
     cross-fetch "^4.0.0"
 
-"@shopana/storefront-runtime@file:/Users/phl/Projects/shopana-io/storefront/packages/shopana-storefront-runtime":
-  version "0.1.0"
-  resolved "file:packages/shopana-storefront-runtime"
-
 "@shopana/storefront-sdk@file:/Users/phl/Projects/shopana-io/storefront/packages/shopana-storefront-sdk":
   version "0.1.0"
   resolved "file:packages/shopana-storefront-sdk"
   dependencies:
     path-to-regexp "^8.3.0"
+
+"@shopana/storefront@file:/Users/phl/Projects/shopana-io/storefront/packages/shopana-storefront-runtime":
+  version "0.1.0"
+  resolved "file:packages/shopana-storefront-runtime"
+  dependencies:
+    next "16.0.5"
 
 "@stackflow/config@^1.2.1":
   version "1.2.1"

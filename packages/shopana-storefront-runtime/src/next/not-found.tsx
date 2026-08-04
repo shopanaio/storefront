@@ -42,7 +42,7 @@ export interface CreateRuntimeNotFoundOptions {
  * @example
  * ```tsx
  * // app/[locale]/not-found.tsx
- * import { createRuntimeNotFound } from '@shopana/storefront-runtime/next/not-found';
+ * import { createRuntimeNotFound } from '@shopana/storefront/next/not-found';
  *
  * const { NotFound } = createRuntimeNotFound({ loadTemplate });
  *

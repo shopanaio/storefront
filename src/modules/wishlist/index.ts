@@ -1,6 +1,6 @@
 'use client';
 
-import dynamic from '@shopana/storefront-runtime/next/dynamic';
+import dynamic from '@shopana/storefront/next/dynamic';
 export { WishlistProvider } from '@src/modules/wishlist/providers/WishlistProvider';
 export {
   useWishlist,

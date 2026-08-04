@@ -6,7 +6,7 @@
 import type { ReactNode } from 'react';
 import type { PageType } from '@shopana/storefront-sdk/core/types';
 import { parseRoute } from '@shopana/storefront-sdk/utils/routeParser';
-import { getRequestContext } from '@shopana/storefront-runtime/next/headers';
+import { getRequestContext } from '@shopana/storefront/next/headers';
 
 interface LayoutProps {
   children: ReactNode;
@@ -29,7 +29,7 @@ export interface CreateRuntimeLayoutOptions {
  * @example
  * ```tsx
  * // app/[locale]/(default)/[[...slug]]/layout.tsx
- * import { createRuntimeLayout } from '@shopana/storefront-runtime/next/layout';
+ * import { createRuntimeLayout } from '@shopana/storefront/next/layout';
  *
  * const { Layout } = createRuntimeLayout({ loadLayout });
  *

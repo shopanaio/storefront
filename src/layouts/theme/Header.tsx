@@ -1,7 +1,7 @@
 'use client';
 
 import { Divider, Flex } from 'antd';
-import Link from '@shopana/storefront-runtime/next/link';
+import Link from '@shopana/storefront/next/link';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { useLogo } from '@src/hooks/useLogo';
 import { CartButton } from './CartButton';

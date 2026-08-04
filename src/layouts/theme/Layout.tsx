@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import dynamic from '@shopana/storefront-runtime/next/dynamic';
+import dynamic from '@shopana/storefront/next/dynamic';
 import { Footer } from './Footer';
 import { HeaderSection } from './HeaderSection';
 import { createStyles } from 'antd-style';

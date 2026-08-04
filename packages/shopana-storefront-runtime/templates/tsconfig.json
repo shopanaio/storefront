@@ -15,10 +15,10 @@
       "@shopana/storefront-sdk/*": [
         "./packages/shopana-storefront-sdk/dist/*"
       ],
-      "@shopana/storefront-runtime": [
+      "@shopana/storefront": [
         "./packages/shopana-storefront-runtime/src/init.js"
       ],
-      "@shopana/storefront-runtime/*": [
+      "@shopana/storefront/*": [
         "./packages/shopana-storefront-runtime/src/*"
       ]
     },

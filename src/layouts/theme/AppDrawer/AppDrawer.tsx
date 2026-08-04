@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Link from '@shopana/storefront-runtime/next/link';
-import { usePathname } from '@shopana/storefront-runtime/next/navigation';
+import Link from '@shopana/storefront/next/link';
+import { usePathname } from '@shopana/storefront/next/navigation';
 import { useModalStore } from '@src/store/appStore';
 import { Divider, Flex, Button, Typography } from 'antd';
 import { useLogo } from '@src/hooks/useLogo';

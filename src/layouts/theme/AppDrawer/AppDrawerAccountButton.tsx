@@ -7,7 +7,7 @@ import { useModalStore } from '@src/store/appStore';
 import useToken from 'antd/es/theme/useToken';
 import { AppDrawerButton } from './AppDrawerButton';
 import { useSessionStore } from '@shopana/storefront-sdk/modules/session/react';
-import { useRouter } from '@shopana/storefront-runtime/next/navigation';
+import { useRouter } from '@shopana/storefront/next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { createStyles } from 'antd-style';
 

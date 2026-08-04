@@ -50,7 +50,7 @@ const nextConfig = {
   productionBrowserSourceMaps: true,
   transpilePackages: [
     brandPackage,
-    '@shopana/storefront-runtime',
+    '@shopana/storefront',
     '@shopana/storefront-sdk',
   ],
   compiler: {

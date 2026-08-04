@@ -1,4 +1,4 @@
-import { createRuntimeLayout } from '@shopana/storefront-runtime/next/layout';
+import { createRuntimeLayout } from '@shopana/storefront/next/layout';
 
 const { Layout } = createRuntimeLayout({
   loadLayout: async (pageType) => {

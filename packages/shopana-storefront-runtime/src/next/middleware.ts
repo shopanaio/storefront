@@ -23,7 +23,7 @@ export const SDK_HOST_HEADER = 'x-sdk-host';
  * @example
  * ```ts
  * // middleware.ts
- * import { createRuntimeMiddleware } from '@shopana/storefront-runtime/next/middleware';
+ * import { createRuntimeMiddleware } from '@shopana/storefront/next/middleware';
  * import createIntlMiddleware from 'next-intl/middleware';
  *
  * const intlMiddleware = createIntlMiddleware(routing);

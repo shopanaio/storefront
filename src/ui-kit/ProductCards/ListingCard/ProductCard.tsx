@@ -2,8 +2,8 @@
 
 import { Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
-import Link from "@shopana/storefront-runtime/next/link";
-import { useRouter } from "@shopana/storefront-runtime/next/navigation";
+import Link from "@shopana/storefront/next/link";
+import { useRouter } from "@shopana/storefront/next/navigation";
 import React from "react";
 
 // import { mq } from "@src/ui-kit/Theme/breakpoints";
