@@ -7,6 +7,8 @@ import {
   SDK_HOST_HEADER,
 } from './middleware';
 
+export * from 'next/headers';
+
 export interface SDKRequestContext {
   url: string;
   pathname: string;

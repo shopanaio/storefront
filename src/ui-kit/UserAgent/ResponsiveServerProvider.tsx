@@ -1,4 +1,4 @@
-import { headers } from 'next/headers';
+import { headers } from '@shopana/storefront-runtime/next/headers';
 import { parseUserAgent } from './parseUserAgent';
 import { ResponsiveClientProvider } from './ResponsiveClientProvider';
 

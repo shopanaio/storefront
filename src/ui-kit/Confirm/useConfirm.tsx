@@ -3,7 +3,7 @@ import type { ModalFuncProps } from "antd";
 import { useCallback } from "react";
 import { useIsMobile } from "@src/hooks/useIsMobile";
 import { mobileConfirmApi } from "@src/ui-kit/Confirm/mobileConfirmStore";
-import dynamic from "next/dynamic";
+import dynamic from "@shopana/storefront-runtime/next/dynamic";
 
 /**
  * Returns a confirm function that opens Ant Design confirm modal and resolves to user's choice.

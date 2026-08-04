@@ -19,17 +19,23 @@
       "default": "./src/init.js"
     },
     "./next/headers": "./src/next/headers.ts",
+    "./next/dynamic": "./src/next/dynamic.ts",
+    "./next/image": "./src/next/image.ts",
     "./next/layout": "./src/next/layout.tsx",
+    "./next/link": "./src/next/link.ts",
     "./next/middleware": "./src/next/middleware.ts",
+    "./next/navigation": "./src/next/navigation.ts",
     "./next/not-found": "./src/next/not-found.tsx",
     "./next/page": "./src/next/page.tsx",
     "./package.json": "./package.json"
   },
   "peerDependencies": {
     "@shopana/storefront-sdk": "^0.1.0",
-    "next": "^15.2.3 || ^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "next": "16.0.5"
   },
   "engines": {
     "node": ">=18.17"

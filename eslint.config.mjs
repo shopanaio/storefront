@@ -87,4 +87,38 @@ export default defineConfig([
       '@graphql-eslint/variables-in-allowed-position': 'error',
     },
   },
+  {
+    files: ['src/**/*.{js,jsx,ts,tsx,mjs,cjs}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'next',
+              message:
+                'Import Next.js APIs through @shopana/storefront-runtime/next/*.',
+            },
+            {
+              name: 'react-relay',
+              message: 'Use @shopana/storefront-sdk/graphql/apollo.',
+            },
+            {
+              name: 'react-relay/hooks',
+              message: 'Use @shopana/storefront-sdk/graphql/apollo.',
+            },
+            { name: 'relay-runtime', message: 'Relay has been removed.' },
+          ],
+          patterns: [
+            'relay-runtime/*',
+            {
+              group: ['next/*'],
+              message:
+                'Import Next.js APIs through @shopana/storefront-runtime/next/*.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

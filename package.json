@@ -40,7 +40,6 @@
     "lucide-react": "^1.28.0",
     "modern-normalize": "^3.0.1",
     "nano-css": "^5.6.2",
-    "next": "16.0.5",
     "next-intl": "^4.5.6",
     "nextjs-toploader": "^3.8.16",
     "nprogress": "^0.2.0",
@@ -113,11 +112,11 @@
     "webpack": "^5.97.1"
   },
   "scripts": {
-    "start": "next start .runtime",
-    "build": "yarn workspace @shopana/storefront-sdk build && yarn runtime:init && yarn widgets:build && next build .runtime --turbo",
+    "start": "storefront-runtime start",
+    "build": "yarn workspace @shopana/storefront-sdk build && yarn widgets:build && storefront-runtime build --turbo",
     "codegen": "node ./bin/graphql/codegen.js",
     "dev": "node ./bin/dev.js",
-    "dev:next": "yarn workspace @shopana/storefront-sdk build && yarn runtime:init && next dev .runtime -p 3001 --turbo",
+    "dev:next": "yarn workspace @shopana/storefront-sdk build && storefront-runtime dev -p 3001 --turbo",
     "dev:mock": "yarn --cwd mockServer dev",
     "format:check": "prettier --check .",
     "format": "prettier --write .",

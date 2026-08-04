@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+export * from 'next/server';
+
 type MiddlewareFunction = (
   request: NextRequest
 ) =>

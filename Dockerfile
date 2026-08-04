@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# Multi-stage build for Next.js 14 (Shopana Storefront)
+# Multi-stage build for the runtime-owned Next.js application
 # - Build-time CMS: shopana (default)
 # - GraphQL URL defaults to Traefik path: /api/client/graphql/query
 # - Build-time app URL: NEXT_PUBLIC_APP_URL
@@ -35,7 +35,7 @@ ARG SHOPANA_API_KEY
 ARG NEXT_PUBLIC_APP_URL
 ARG PORT=3000
 
-# Ensure env visible during `next build`
+# Ensure env is visible while the runtime CLI builds Next.js
 ENV CMS=${CMS}
 ENV BRAND=${BRAND}
 ENV SHOPANA_GRAPHQL_URL=${SHOPANA_GRAPHQL_URL}
@@ -49,7 +49,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build brand-sdk first (other brands use src via alias), then run root build
-# Root build: storefront-sdk -> widgets -> next build
+# Root build: storefront-sdk -> widgets -> storefront-runtime build
 RUN yarn workspace @shopana/brand-sdk build && yarn build
 
 # ---------- runner ----------
@@ -65,7 +65,6 @@ RUN apk add --no-cache libc6-compat
 
 # Copy minimal runtime files
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.runtime ./.runtime
 COPY --from=builder /app/node_modules ./node_modules

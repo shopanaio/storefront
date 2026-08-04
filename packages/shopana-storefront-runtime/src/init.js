@@ -15,41 +15,148 @@ const packageDir = path.resolve(
   '..'
 );
 
-const generatedFiles = [
+const defaultGeneratedFiles = [
   'app/layout.tsx',
   'app/not-found.tsx',
   'app/[locale]/[[...slug]]/layout.tsx',
   'app/[locale]/[[...slug]]/page.tsx',
   'src/i18n/request.ts',
-  'middleware.ts',
-  'next.config.js',
+  'next-env.d.ts',
   'tsconfig.json',
 ];
 
+const overrideGroups = [
+  {
+    kind: 'nextConfig',
+    candidates: ['next.config.js', 'next.config.mjs', 'next.config.ts'],
+    defaultTemplate: 'next.config.js',
+  },
+  {
+    kind: 'routing',
+    candidates: [
+      'middleware.js',
+      'middleware.ts',
+      'proxy.js',
+      'proxy.ts',
+    ],
+    defaultTemplate: 'middleware.ts',
+  },
+  {
+    kind: 'instrumentation',
+    candidates: ['instrumentation.js', 'instrumentation.ts'],
+  },
+  {
+    kind: 'instrumentationClient',
+    candidates: [
+      'instrumentation-client.js',
+      'instrumentation-client.ts',
+    ],
+  },
+];
+
+const generatedOverridePaths = overrideGroups.flatMap(
+  ({ candidates }) => candidates
+);
+const generatorOwnedPaths = [
+  ...defaultGeneratedFiles,
+  ...generatedOverridePaths,
+  'public',
+];
 const obsoleteGeneratedPaths = ['i18n'];
 
-async function writeGeneratedFile(runtimeDir, relativePath) {
-  const source = path.join(packageDir, 'templates', relativePath);
+async function exists(filePath) {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function writeGeneratedFile(runtimeDir, relativePath, templatePath) {
+  const source = path.join(
+    packageDir,
+    'templates',
+    templatePath ?? relativePath
+  );
   const target = path.join(runtimeDir, relativePath);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, await readFile(source, 'utf8'));
+}
+
+function toImportSpecifier(fromFile, sourceFile) {
+  let specifier = path.relative(path.dirname(fromFile), sourceFile);
+
+  specifier = specifier.split(path.sep).join('/');
+  return specifier.startsWith('.') ? specifier : `./${specifier}`;
+}
+
+async function writeOverrideWrapper(rootDir, runtimeDir, override) {
+  const source = path.join(rootDir, override.file);
+  const target = path.join(runtimeDir, override.file);
+  const specifier = toImportSpecifier(target, source);
+  let contents;
+
+  if (override.kind === 'nextConfig') {
+    contents = `export { default } from '${specifier}';\n`;
+  } else if (override.kind === 'routing') {
+    const defaultExpression = override.file.endsWith('.ts')
+      ? '(rootOverride as { default?: unknown }).default'
+      : 'rootOverride.default';
+    contents = [
+      `import * as rootOverride from '${specifier}';`,
+      `export * from '${specifier}';`,
+      `export default ${defaultExpression};`,
+      '',
+    ].join('\n');
+  } else {
+    contents = `export * from '${specifier}';\n`;
+  }
+
+  await mkdir(path.dirname(target), { recursive: true });
+  await writeFile(target, contents);
+}
+
+async function detectOverrides(rootDir) {
+  const overrides = [];
+
+  for (const group of overrideGroups) {
+    const matches = [];
+
+    for (const candidate of group.candidates) {
+      if (await exists(path.join(rootDir, candidate))) {
+        matches.push(candidate);
+      }
+    }
+
+    if (matches.length > 1) {
+      throw new Error(
+        `Conflicting ${group.kind} overrides: ${matches.join(', ')}. ` +
+          'Keep exactly one file from this override group.'
+      );
+    }
+
+    if (matches.length === 1) {
+      overrides.push({ kind: group.kind, file: matches[0] });
+    }
+  }
+
+  return overrides;
 }
 
 async function linkPublicDirectory(rootDir, runtimeDir) {
   const source = path.join(rootDir, 'public');
   const target = path.join(runtimeDir, 'public');
 
-  await rm(target, { force: true, recursive: true });
-
-  try {
-    await access(source);
-  } catch {
+  if (!(await exists(source))) {
     return;
   }
 
   try {
     await symlink(
-      process.platform === 'win32' ? source : '../public',
+      process.platform === 'win32'
+        ? source
+        : path.relative(path.dirname(target), source),
       target,
       process.platform === 'win32' ? 'junction' : 'dir'
     );
@@ -61,19 +168,43 @@ async function linkPublicDirectory(rootDir, runtimeDir) {
 export async function initRuntime(options = {}) {
   const rootDir = path.resolve(options.rootDir ?? process.cwd());
   const runtimeDir = path.resolve(rootDir, options.runtimeDir ?? '.runtime');
+  const overrides = await detectOverrides(rootDir);
 
   await mkdir(runtimeDir, { recursive: true });
   await Promise.all(
-    obsoleteGeneratedPaths.map((relativePath) =>
+    [...generatorOwnedPaths, ...obsoleteGeneratedPaths].map((relativePath) =>
       rm(path.join(runtimeDir, relativePath), { force: true, recursive: true })
     )
   );
   await Promise.all(
-    generatedFiles.map((relativePath) =>
+    defaultGeneratedFiles.map((relativePath) =>
       writeGeneratedFile(runtimeDir, relativePath)
     )
   );
+
+  for (const group of overrideGroups) {
+    const override = overrides.find(({ kind }) => kind === group.kind);
+
+    if (override) {
+      await writeOverrideWrapper(rootDir, runtimeDir, override);
+    } else if (group.defaultTemplate) {
+      await writeGeneratedFile(
+        runtimeDir,
+        group.defaultTemplate,
+        group.defaultTemplate
+      );
+    }
+  }
+
   await linkPublicDirectory(rootDir, runtimeDir);
 
-  return { rootDir, runtimeDir };
+  return {
+    rootDir,
+    runtimeDir,
+    overrides: overrides.map((override) => ({
+      ...override,
+      source: path.join(rootDir, override.file),
+      target: path.join(runtimeDir, override.file),
+    })),
+  };
 }

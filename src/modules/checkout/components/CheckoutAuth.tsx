@@ -3,7 +3,7 @@
 import { Button } from 'antd';
 import { useTranslations } from 'next-intl';
 import { useModalStore } from '@src/store/appStore';
-import dynamic from 'next/dynamic';
+import dynamic from '@shopana/storefront-runtime/next/dynamic';
 
 const AuthModal = dynamic(
   () => import('@src/templates/auth/sections/AuthModal').then((m) => m.AuthModal),

@@ -1,14 +1,58 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "incremental": true
+    "baseUrl": "..",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@codegen/*": ["./codegen/*"],
+      "@checkout/*": ["./src/modules/checkout/*"],
+      "shopana-utils": ["./packages/shopana-utils/dist/index.js"],
+      "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
+      "@shopana/brand": ["./packages/brand-bite-crunch/src"],
+      "@shopana/brand/*": ["./packages/brand-bite-crunch/src/*"],
+      "@shopana/storefront-sdk": [
+        "./packages/shopana-storefront-sdk/dist/index.js"
+      ],
+      "@shopana/storefront-sdk/*": [
+        "./packages/shopana-storefront-sdk/dist/*"
+      ],
+      "@shopana/storefront-runtime": [
+        "./packages/shopana-storefront-runtime/src/init.js"
+      ],
+      "@shopana/storefront-runtime/*": [
+        "./packages/shopana-storefront-runtime/src/*"
+      ]
+    },
+    "target": "esnext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "types": ["webpack-env", "node", "next"],
+    "plugins": [{ "name": "next" }]
   },
   "include": [
-    "../next-env.d.ts",
+    "next-env.d.ts",
+    "../src/**/*.ts",
+    "../src/**/*.tsx",
+    "../codegen/**/*.ts",
+    "../codegen/**/*.tsx",
+    "../packages/**/*.ts",
+    "../packages/**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "**/*.d.ts"
   ],
-  "exclude": ["../node_modules"]
+  "exclude": ["../node_modules", "../packages/**/node_modules"]
 }

@@ -8,7 +8,7 @@ import useToken from 'antd/es/theme/useToken';
 import { AppDrawerButton } from './AppDrawerButton';
 import { useWishlistCounts } from '@src/modules/wishlist';
 import { useRoutes } from '@src/hooks/useRoutes';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@shopana/storefront-runtime/next/navigation';
 import { useModalStore } from '@src/store/appStore';
 import { Badge } from '@src/ui-kit/Badge';
 

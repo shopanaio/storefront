@@ -4,7 +4,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { Flex, Spin } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  useSearchParams,
+  useRouter,
+} from '@shopana/storefront-runtime/next/navigation';
 import InfiniteScroll from 'react-infinite-scroller';
 import { useSearchData } from '@shopana/storefront-sdk/modules/search/react/hooks/useSearchData';
 import { ListingSort, ApiFilter, ApiFilterInput } from '@codegen/schema-client';

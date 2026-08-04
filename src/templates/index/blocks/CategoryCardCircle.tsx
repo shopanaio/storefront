@@ -3,7 +3,7 @@
 import { Card, Flex, Typography } from "antd";
 import { createStyles } from "antd-style";
 import type { model } from "@shopana/storefront-sdk";
-import Link from "next/link";
+import Link from "@shopana/storefront-runtime/next/link";
 import { useRoutes } from "@src/hooks/useRoutes";
 
 const { Text } = Typography;

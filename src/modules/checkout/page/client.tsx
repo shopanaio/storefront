@@ -1,7 +1,7 @@
 import { Checkout } from '@src/modules/checkout';
 import { CheckoutBrand } from '@src/modules/checkout/page/brand';
 import { useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@shopana/storefront-runtime/next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
 import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '@src/modules/checkout/hooks/useDefaultCartCleanup';

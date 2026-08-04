@@ -6,7 +6,7 @@ import {
   StyleProvider as AntdStyleProvider,
   extractStaticStyle,
 } from 'antd-style';
-import { useServerInsertedHTML } from 'next/navigation';
+import { useServerInsertedHTML } from '@shopana/storefront-runtime/next/navigation';
 
 export function AntdRegistry({ children }: { children: React.ReactNode }) {
   const isInsert = useRef(false);
