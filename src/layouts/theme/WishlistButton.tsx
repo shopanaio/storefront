@@ -5,6 +5,7 @@ import { HeaderLinkButton } from './HeaderLinkButton';
 import { useWishlistCounts } from '@src/modules/wishlist';
 import { useRouter } from 'next/navigation';
 import { useRoutes } from '@src/hooks/useRoutes';
+import type { HeaderTextBreakpoint } from './HeaderSection.types';
 
 type WishlistButtonProps = {
   badgeCount?: number | null;
@@ -12,7 +13,7 @@ type WishlistButtonProps = {
   onClick?: () => void;
   iconSize?: number;
   iconColor?: string;
-  showTextOnDesktop?: boolean;
+  showTextFrom?: HeaderTextBreakpoint;
 };
 
 export const WishlistButton: React.FC<WishlistButtonProps> = ({
@@ -21,7 +22,7 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({
   onClick,
   iconSize = 24,
   iconColor = 'currentColor',
-  showTextOnDesktop = true,
+  showTextFrom = 'md',
 }) => {
   const t = useTranslations('Header');
   const router = useRouter();
@@ -42,7 +43,7 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({
       badgeCount={resolvedBadgeCount}
       className={className}
       onClick={handleClick}
-      showTextOnDesktop={showTextOnDesktop}
+      showTextFrom={showTextFrom}
       badgeColor="var(--header-badge-background)"
     />
   );

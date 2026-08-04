@@ -1,33 +1,50 @@
+export const HEADER_SETTINGS_VERSION = 1 as const;
+
+export type HeaderSettingsVersion = typeof HEADER_SETTINGS_VERSION;
+export type HeaderTextBreakpoint = 'md' | 'lg' | 'xl' | 'never';
+
 export interface HeaderButtonSettings {
   enabled: boolean;
   iconSize: number;
-  showTextOnDesktop: boolean;
+  showTextFrom: HeaderTextBreakpoint;
 }
 
 export interface HeaderSettings {
+  version: HeaderSettingsVersion;
   colors: {
     background: string;
     text: string;
     icon: string;
     border: string;
-    controlBackground: string;
-    controlHoverBackground: string;
-    searchBackground: string;
-    searchBorder: string;
-    searchText: string;
-    searchIcon: string;
-    searchPlaceholder: string;
-    primaryButtonBackground: string;
-    primaryButtonText: string;
-    badgeBackground: string;
-    badgeText: string;
+    divider: string;
+    control: {
+      background: string;
+      hoverBackground: string;
+    };
+    search: {
+      background: string;
+      border: string;
+      text: string;
+      icon: string;
+      placeholder: string;
+    };
+    primaryButton: {
+      background: string;
+      text: string;
+    };
+    badge: {
+      background: string;
+      text: string;
+    };
   };
   layout: {
     sticky: boolean;
     showShadow: boolean;
     controlHeight: number;
-    desktopMaxWidth: number;
-    wideMaxWidth: number;
+    maxWidth: {
+      xl: number;
+      xxl: number;
+    };
   };
   logo: {
     enabled: boolean;
@@ -48,9 +65,15 @@ export interface HeaderSettings {
   };
   support: HeaderButtonSettings & {
     phoneNumber: string;
-    showDivider: boolean;
+    href: string;
   };
   wishlist: HeaderButtonSettings;
   account: HeaderButtonSettings;
   cart: HeaderButtonSettings;
 }
+
+export type DeepPartial<T> = {
+  [Key in keyof T]?: T[Key] extends object ? DeepPartial<T[Key]> : T[Key];
+};
+
+export type HeaderSettingsOverrides = DeepPartial<HeaderSettings>;

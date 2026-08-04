@@ -1,6 +1,6 @@
 'use client';
 
-import { Flex } from 'antd';
+import { Divider, Flex } from 'antd';
 import Link from 'next/link';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { useLogo } from '@src/hooks/useLogo';
@@ -26,6 +26,11 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
     settings.wishlist.enabled ||
     settings.account.enabled ||
     settings.cart.enabled;
+  const showSupportDivider =
+    settings.support.enabled &&
+    (settings.wishlist.enabled ||
+      settings.account.enabled ||
+      settings.cart.enabled);
 
   return (
     <div className={styles.container}>
@@ -50,7 +55,7 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
         {settings.search.enabled && (
           <DesktopSearch
             iconSize={settings.search.iconSize}
-            iconColor={settings.colors.searchIcon}
+            iconColor={settings.colors.search.icon}
             showSubmitButton={settings.search.showSubmitButton}
             placeholder={settings.search.placeholder}
             submitLabel={settings.search.submitLabel}
@@ -59,33 +64,41 @@ export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
         {showActions && (
           <Flex className={styles.actions}>
             {settings.support.enabled && (
-              <SupportButton
-                iconSize={settings.support.iconSize}
-                iconColor={settings.colors.icon}
-                phoneNumber={settings.support.phoneNumber}
-                showTextOnDesktop={settings.support.showTextOnDesktop}
-                showDivider={settings.support.showDivider}
-              />
+              <>
+                <SupportButton
+                  iconSize={settings.support.iconSize}
+                  iconColor={settings.colors.icon}
+                  phoneNumber={settings.support.phoneNumber}
+                  href={settings.support.href}
+                  showTextFrom={settings.support.showTextFrom}
+                />
+                {showSupportDivider && (
+                  <Divider
+                    className={styles.actionDivider}
+                    orientation="vertical"
+                  />
+                )}
+              </>
             )}
             {settings.wishlist.enabled && (
               <WishlistButton
                 iconSize={settings.wishlist.iconSize}
                 iconColor={settings.colors.icon}
-                showTextOnDesktop={settings.wishlist.showTextOnDesktop}
+                showTextFrom={settings.wishlist.showTextFrom}
               />
             )}
             {settings.account.enabled && (
               <AccountButton
                 iconSize={settings.account.iconSize}
                 iconColor={settings.colors.icon}
-                showTextOnDesktop={settings.account.showTextOnDesktop}
+                showTextFrom={settings.account.showTextFrom}
               />
             )}
             {settings.cart.enabled && (
               <CartButton
                 iconSize={settings.cart.iconSize}
                 iconColor={settings.colors.icon}
-                showTextOnDesktop={settings.cart.showTextOnDesktop}
+                showTextFrom={settings.cart.showTextFrom}
               />
             )}
           </Flex>
@@ -99,18 +112,18 @@ const useStyles = createStyles(({ token, css }, settings: HeaderSettings) => ({
   container: css`
     --components-header-control-height: ${settings.layout.controlHeight}px;
     --header-text-color: ${settings.colors.text};
-    --header-control-background: ${settings.colors.controlBackground};
-    --header-control-hover-background: ${settings.colors
-      .controlHoverBackground};
-    --header-search-background: ${settings.colors.searchBackground};
-    --header-search-border: ${settings.colors.searchBorder};
-    --header-search-text: ${settings.colors.searchText};
-    --header-search-placeholder: ${settings.colors.searchPlaceholder};
-    --header-primary-button-background: ${settings.colors
-      .primaryButtonBackground};
-    --header-primary-button-text: ${settings.colors.primaryButtonText};
-    --header-badge-background: ${settings.colors.badgeBackground};
-    --header-badge-text: ${settings.colors.badgeText};
+    --header-control-background: ${settings.colors.control.background};
+    --header-control-hover-background: ${settings.colors.control
+      .hoverBackground};
+    --header-search-background: ${settings.colors.search.background};
+    --header-search-border: ${settings.colors.search.border};
+    --header-search-text: ${settings.colors.search.text};
+    --header-search-placeholder: ${settings.colors.search.placeholder};
+    --header-primary-button-background: ${settings.colors.primaryButton
+      .background};
+    --header-primary-button-text: ${settings.colors.primaryButton.text};
+    --header-badge-background: ${settings.colors.badge.background};
+    --header-badge-text: ${settings.colors.badge.text};
 
     display: flex;
     flex-wrap: wrap;
@@ -143,11 +156,11 @@ const useStyles = createStyles(({ token, css }, settings: HeaderSettings) => ({
 
     ${mq.xl} {
       margin: 0 auto;
-      max-width: ${settings.layout.desktopMaxWidth}px;
+      max-width: ${settings.layout.maxWidth.xl}px;
     }
 
     ${mq.xxl} {
-      max-width: ${settings.layout.wideMaxWidth}px;
+      max-width: ${settings.layout.maxWidth.xxl}px;
     }
   `,
   logo: css`
@@ -169,6 +182,16 @@ const useStyles = createStyles(({ token, css }, settings: HeaderSettings) => ({
     ${mq.lg} {
       order: 4;
       min-width: max-content;
+    }
+  `,
+  actionDivider: css`
+    display: none;
+    height: 32px;
+    margin-inline: 4px;
+    border-color: ${settings.colors.divider};
+
+    ${mq.xl} {
+      display: block;
     }
   `,
 }));

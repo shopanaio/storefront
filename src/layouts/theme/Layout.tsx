@@ -4,7 +4,6 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Footer } from './Footer';
 import { HeaderSection } from './HeaderSection';
-import { AnnouncementBar } from './AnnouncementBar';
 import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
@@ -42,7 +41,6 @@ export const Layout = ({ children }: ILayoutProps) => {
 
   return (
     <>
-      <AnnouncementBar />
       <HeaderSection />
       <main className={styles.main}>{children}</main>
       <AuthModal />

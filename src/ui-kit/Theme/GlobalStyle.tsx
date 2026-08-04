@@ -16,7 +16,6 @@ export const GlobalStyle = createGlobalStyle`
     --components-header-control-height: 42px;
     --components-drawer-width: min(100vw, 500px);
 
-    --always-black-bg: #000;
     --sticky-header-height: 70px;
   }
 

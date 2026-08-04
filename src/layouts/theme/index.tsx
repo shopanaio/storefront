@@ -4,7 +4,6 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Footer } from '@src/layouts/theme/Footer';
 import { HeaderSection } from '@src/layouts/theme/HeaderSection';
-import { AnnouncementBar } from '@src/layouts/theme/AnnouncementBar';
 import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
@@ -58,7 +57,6 @@ export default function ThemeLayout({ children }: ThemeLayoutProps) {
 
   return (
     <>
-      <AnnouncementBar />
       <HeaderSection />
       <main className={styles.main}>{children}</main>
       <AuthModal />

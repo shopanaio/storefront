@@ -4,6 +4,7 @@ import { createStyles } from 'antd-style';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import clsx from 'clsx';
 import { Badge } from '@src/ui-kit/Badge';
+import type { HeaderTextBreakpoint } from './HeaderSection.types';
 
 const { Text } = Typography;
 
@@ -13,10 +14,9 @@ type Props = {
   bottomText: ReactNode;
   badgeCount?: number | null;
   onClick?: () => void;
-  theme?: 'dark' | 'light';
-  mobileBlock?: boolean;
+  href?: string;
   className?: string;
-  showTextOnDesktop?: boolean;
+  showTextFrom?: HeaderTextBreakpoint;
   badgeColor?: string;
 };
 
@@ -25,14 +25,13 @@ export const HeaderLinkButton = ({
   topText,
   bottomText,
   onClick,
-  theme = 'light',
-  mobileBlock = false,
+  href,
   className,
   badgeCount,
-  showTextOnDesktop = true,
+  showTextFrom = 'md',
   badgeColor,
 }: Props) => {
-  const { styles } = useStyles({ theme, mobileBlock, showTextOnDesktop });
+  const { styles } = useStyles({ showTextFrom });
   const iconContent =
     typeof badgeCount === 'number' && badgeCount > 0 ? (
       <Badge
@@ -55,6 +54,7 @@ export const HeaderLinkButton = ({
       variant="text"
       color="default"
       onClick={onClick}
+      href={href}
     >
       <span className={styles.iconWrapper}>{iconContent}</span>
       <Flex className={styles.textWrapper}>
@@ -69,11 +69,9 @@ const useStyles = createStyles(
   (
     { token, css },
     {
-      showTextOnDesktop,
+      showTextFrom,
     }: {
-      theme: 'dark' | 'light';
-      mobileBlock: boolean;
-      showTextOnDesktop: boolean;
+      showTextFrom: HeaderTextBreakpoint;
     }
   ) => ({
     headerLinkBtn: css`
@@ -108,11 +106,13 @@ const useStyles = createStyles(
       align-items: flex-start;
       margin-left: ${token.marginXS}px;
 
-      ${mq.md} {
-        display: ${showTextOnDesktop ? 'flex' : 'none'};
-        flex-direction: column;
-        margin-left: 0;
-      }
+      ${showTextFrom !== 'never'
+        ? `${mq[showTextFrom]} {
+            display: flex;
+            flex-direction: column;
+            margin-left: 0;
+          }`
+        : ''}
     `,
     topText: css`
       font-size: ${token.fontSizeSM}px;

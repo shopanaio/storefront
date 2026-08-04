@@ -9,13 +9,14 @@ import { Badge } from '@src/ui-kit/Badge';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import clsx from 'clsx';
 import { useModalStore } from '@src/store/appStore';
+import type { HeaderTextBreakpoint } from './HeaderSection.types';
 
 type CartButtonProps = {
   onClick?: () => void;
   className?: string;
   iconSize?: number;
   iconColor?: string;
-  showTextOnDesktop?: boolean;
+  showTextFrom?: HeaderTextBreakpoint;
 };
 
 export const CartButton: React.FC<CartButtonProps> = ({
@@ -23,11 +24,11 @@ export const CartButton: React.FC<CartButtonProps> = ({
   className,
   iconSize = 24,
   iconColor = 'currentColor',
-  showTextOnDesktop = true,
+  showTextFrom = 'md',
 }) => {
   const t = useTranslations('Header');
   const { cart } = useCart();
-  const { styles } = useStyles({ showTextOnDesktop });
+  const { styles } = useStyles({ showTextFrom });
   const setIsCartDrawerOpen = useModalStore(
     (state) => state.setIsCartDrawerOpen
   );
@@ -79,7 +80,10 @@ export const CartButton: React.FC<CartButtonProps> = ({
 };
 
 const useStyles = createStyles(
-  ({ token, css }, { showTextOnDesktop }: { showTextOnDesktop: boolean }) => {
+  (
+    { token, css },
+    { showTextFrom }: { showTextFrom: HeaderTextBreakpoint }
+  ) => {
     return {
       button: css`
         height: var(--components-header-control-height);
@@ -95,11 +99,13 @@ const useStyles = createStyles(
           );
         }
 
-        ${mq.md} {
-          min-width: ${showTextOnDesktop ? '84px' : 'auto'};
-          max-width: ${showTextOnDesktop ? '84px' : 'none'};
-          padding-bottom: ${showTextOnDesktop ? `${token.paddingXS}px` : '0'};
-        }
+        ${showTextFrom !== 'never'
+          ? `${mq[showTextFrom]} {
+              min-width: 84px;
+              max-width: 84px;
+              padding-bottom: ${token.paddingXS}px;
+            }`
+          : ''}
       `,
       content: css`
         display: inline-flex;
@@ -123,9 +129,11 @@ const useStyles = createStyles(
         line-height: ${token.lineHeight}px;
         color: currentColor;
 
-        ${mq.md} {
-          display: ${showTextOnDesktop ? 'block' : 'none'};
-        }
+        ${showTextFrom !== 'never'
+          ? `${mq[showTextFrom]} {
+              display: block;
+            }`
+          : ''}
       `,
     };
   }

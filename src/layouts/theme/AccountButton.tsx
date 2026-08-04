@@ -6,19 +6,20 @@ import { HeaderLinkButton } from './HeaderLinkButton';
 import { useSessionStore } from '@shopana/storefront-sdk/modules/session/react';
 import { useModalStore } from '@src/store/appStore';
 import { useRoutes } from '@src/hooks/useRoutes';
+import type { HeaderTextBreakpoint } from './HeaderSection.types';
 
 type AccountButtonProps = {
   className?: string;
   iconSize?: number;
   iconColor?: string;
-  showTextOnDesktop?: boolean;
+  showTextFrom?: HeaderTextBreakpoint;
 };
 
 export const AccountButton: React.FC<AccountButtonProps> = ({
   className,
   iconSize = 24,
   iconColor = 'currentColor',
-  showTextOnDesktop = true,
+  showTextFrom = 'md',
 }) => {
   const t = useTranslations('Header');
   const router = useRouter();
@@ -51,7 +52,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({
       bottomText={t('account')}
       className={className}
       onClick={onClick}
-      showTextOnDesktop={showTextOnDesktop}
+      showTextFrom={showTextFrom}
     />
   );
 };
