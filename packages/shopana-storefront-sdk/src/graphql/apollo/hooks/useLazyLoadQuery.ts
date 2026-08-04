@@ -4,14 +4,12 @@ import { useSuspenseQuery } from '@apollo/client/react';
 export type CompatibleFetchPolicy =
   | 'store-or-network'
   | 'store-and-network'
-  | 'network-only'
-  | 'store-only';
+  | 'network-only';
 
 const policies = {
   'store-or-network': 'cache-first',
   'store-and-network': 'cache-and-network',
   'network-only': 'network-only',
-  'store-only': 'cache-only',
 } as const;
 
 export function useLazyLoadQuery<TData, TVariables extends OperationVariables>(

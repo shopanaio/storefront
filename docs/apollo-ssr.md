@@ -9,7 +9,7 @@ After the root queries finish, `AppProvider` extracts one normalized cache
 snapshot. Client-side stores read their initial values from that hydrated cache;
 the GraphQL results are not serialized a second time in React props.
 
-GraphQL documents live in external `*.apollo.graphql` files. Components import
+GraphQL documents live in external `*.graphql` files. Components import
 generated `TypedDocumentNode` values and generated operation/fragment types:
 
 - storefront documents generate `codegen/apollo/storefront-operations.ts`;

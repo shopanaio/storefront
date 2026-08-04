@@ -13,8 +13,8 @@ const forbiddenDirectives = new Set([
 
 export async function validateApolloDocuments() {
   const files = await fg([
-    'src/**/*.apollo.graphql',
-    'packages/shopana-storefront-sdk/src/**/*.apollo.graphql',
+    'src/**/*.graphql',
+    'packages/shopana-storefront-sdk/src/**/*.graphql',
   ]);
   const names = new Map();
   const errors = [];

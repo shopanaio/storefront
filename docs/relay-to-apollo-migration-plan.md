@@ -12,7 +12,7 @@
 
 - миграция выполняется постепенно, по одному домену; Relay и Apollo временно работают параллельно;
 - компоненты не содержат GraphQL-текст и не объявляют фрагменты;
-- запросы, мутации и фрагменты описываются как обычные Apollo GraphQL documents в отдельных `*.apollo.graphql` файлах;
+- запросы, мутации и фрагменты описываются как обычные Apollo GraphQL documents в отдельных `*.graphql` файлах;
 - типы операций и фрагментов генерируются GraphQL Code Generator, ручные GraphQL-типы не создаются;
 - Relay-директивы `@connection`, `@refetchable`, `@argumentDefinitions`, `@arguments` и `@inline` не переносятся в Apollo documents;
 - публичные UI-компоненты, domain providers и Zustand stores по возможности сохраняют существующие props и возвращаемые значения;
@@ -68,17 +68,17 @@ packages/shopana-storefront-sdk/src/
       types.ts
   modules/collection/core/graphql/
     fragments/
-      CollectionListing.apollo.graphql
-      CollectionProductCard.apollo.graphql
+      CollectionListing.graphql
+      CollectionProductCard.graphql
     queries/
-      Collection.apollo.graphql
-      CollectionPagination.apollo.graphql
+      Collection.graphql
+      CollectionPagination.graphql
   modules/product/core/graphql/
     fragments/
-      ProductReviews.apollo.graphql
+      ProductReviews.graphql
     queries/
-      Product.apollo.graphql
-      ProductReviewsPagination.apollo.graphql
+      Product.graphql
+      ProductReviewsPagination.graphql
 
 codegen/apollo/
   storefront-operations.ts
@@ -89,7 +89,7 @@ codegen/apollo/
 1. Один именованный fragment/query/mutation на файл, кроме очень тесно связанных private fragments.
 2. Fragment располагается в `core/graphql/fragments`, query — в `core/graphql/queries`, mutation — в `core/graphql/mutations`.
 3. Компонент импортирует generated `TypedDocumentNode` и generated types, но не `gql`/`graphql` tag.
-4. Во время совместной работы клиентов используется суффикс `.apollo.graphql`, чтобы Relay compiler не видел Apollo documents. После полного удаления Relay суффикс можно отдельно сократить до `.graphql` механическим changeset-free рефакторингом.
+4. После полного удаления Relay все Apollo documents используют стандартный суффикс `.graphql`. Временный миграционный суффикс удалён отдельным механическим changeset-free рефакторингом.
 5. Имя операции уникально во всём monorepo и содержит доменный контекст: `SDKCollectionQuery`, `SDKCollectionPaginationQuery`, `StorefrontCreateReviewMutation`.
 6. Fragment всегда включает `__typename` и стабильный ключ нормализации (`id`, если тип его имеет).
 7. Компонентный fragment содержит только данные одного UI-контракта. Родительская query собирает его через fragment spread.
@@ -153,8 +153,8 @@ query SDKCollectionPagination(
 - существующий output `codegen/schema-client.ts` сохраняет текущую schema-конфигурацию, включая `relay-schema-extensions`, пока Relay остаётся в проекте;
 - Apollo outputs используют реальную `schema.shopana.graphql` без `relay-schema-extensions`;
 - каждый Apollo output обрабатывает только свои внешние documents:
-  - `src/**/*.apollo.graphql` → `codegen/apollo/storefront-operations.ts`;
-  - `packages/shopana-storefront-sdk/src/**/*.apollo.graphql` → `packages/shopana-storefront-sdk/src/graphql/apollo/generated/operations.ts`;
+  - `src/**/*.graphql` → `codegen/apollo/storefront-operations.ts`;
+  - `packages/shopana-storefront-sdk/src/**/*.graphql` → `packages/shopana-storefront-sdk/src/graphql/apollo/generated/operations.ts`;
 - SDK-generated код находится внутри `packages/shopana-storefront-sdk/src`, поэтому попадает в SDK build и публикуемый `dist`;
 - plugins: `typescript`, `typescript-operations`, `typed-document-node`;
 - `documentMode`/output должны давать готовые `TypedDocumentNode<TData, TVariables>`;
@@ -216,7 +216,6 @@ const data = useLazyLoadQuery(ProductQueryDocument, variables, {
 | `store-or-network`  | `cache-first`       |
 | `store-and-network` | `cache-and-network` |
 | `network-only`      | `network-only`      |
-| `store-only`        | `cache-only`        |
 
 Не следует копировать все Relay options. Поддерживается только реально используемое подмножество, остальные callsites переводятся на явные Apollo options.
 
@@ -354,7 +353,7 @@ Adapter переводит вызов в Apollo mutate promise. Cache update н�
 
 1. Расширить существующий `codegen.ts` Apollo outputs и общим scalar mapping.
 2. Перенести настройки из временного `codegen.apollo.ts`, затем удалить его и script `codegen:apollo`.
-3. Ограничить Apollo documents до внешних `*.apollo.graphql` файлов и закрепить раздельные storefront/SDK outputs.
+3. Ограничить Apollo documents до внешних `*.graphql` файлов и закрепить раздельные storefront/SDK outputs.
 4. Закрепить прямые codegen dependencies и generated output policy.
 5. Реализовать и экспортировать compatibility hooks.
 6. Реализовать `definePaginationQuery` и общий cursor merge helper.
@@ -362,7 +361,7 @@ Adapter переводит вызов в Apollo mutate promise. Cache update н�
 8. Проверить одинаковую конфигурацию cache в RSC и browser.
 9. Добавить ESLint/GraphQL lint guardrails:
    - запрет `graphql`/`gql` tags в `*.tsx` и UI-папках;
-   - запрет Relay directives в `*.apollo.graphql`;
+   - запрет Relay directives в `*.graphql`;
    - запрет импорта Relay из уже мигрированных доменов;
    - уникальные operation/fragment names.
 10. Документировать шаблон нового fragment/query/mutation.
@@ -375,7 +374,7 @@ Adapter переводит вызов в Apollo mutate promise. Cache update н�
 
 Для каждого pilot:
 
-1. Вынести documents в `core/graphql/{fragments,queries,mutations}/*.apollo.graphql`.
+1. Вынести documents в `core/graphql/{fragments,queries,mutations}/*.graphql`.
 2. Запустить существующую команду `codegen`.
 3. Заменить Relay hook на compatibility hook.
 4. Сохранить публичный domain hook и его return shape.
@@ -445,7 +444,7 @@ Cart и session мигрируются последними, потому что
 
 | Relay                                  | Целевой Apollo подход                                                                          |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `graphql` tag в TS                     | внешний `*.apollo.graphql` + generated `TypedDocumentNode`                                     |
+| `graphql` tag в TS                     | внешний `*.graphql` + generated `TypedDocumentNode`                                     |
 | generated `__generated__/*.graphql.ts` | Apollo outputs существующего `codegen.ts`: отдельные generated operations для storefront и SDK |
 | fragment `$key`                        | normalized object/reference + generated fragment type                                          |
 | `useFragment(fragment, key)`           | compatibility `useFragment(document, reference)`                                               |
@@ -466,7 +465,7 @@ Cart и session мигрируются последними, потому что
 
 Каждый domain PR считается законченным, если:
 
-- [ ] все его fragments/queries/mutations находятся во внешних `*.apollo.graphql`;
+- [ ] все его fragments/queries/mutations находятся во внешних `*.graphql`;
 - [ ] в UI-компонентах нет GraphQL tags или GraphQL-текста;
 - [ ] documents не содержат Relay client directives;
 - [ ] operation variables и result types generated, нет новых `any`;

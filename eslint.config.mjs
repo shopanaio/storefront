@@ -36,15 +36,15 @@ export default defineConfig([
         'error',
         {
           selector: 'TaggedTemplateExpression[tag.name=/^(gql|graphql)$/]',
-          message: 'Move GraphQL text to a *.apollo.graphql document.',
+          message: 'Move GraphQL text to a *.graphql document.',
         },
       ],
     },
   },
   {
     files: [
-      'src/**/*.apollo.graphql',
-      'packages/shopana-storefront-sdk/src/**/*.apollo.graphql',
+      'src/**/*.graphql',
+      'packages/shopana-storefront-sdk/src/**/*.graphql',
     ],
     languageOptions: {
       parser: graphqlEslint.parser,
@@ -55,8 +55,8 @@ export default defineConfig([
             'graphql-schema-extensions/auth.graphql',
           ],
           documents: [
-            'src/**/*.apollo.graphql',
-            'packages/shopana-storefront-sdk/src/**/*.apollo.graphql',
+            'src/**/*.graphql',
+            'packages/shopana-storefront-sdk/src/**/*.graphql',
           ],
         },
       },

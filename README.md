@@ -55,7 +55,7 @@ CMS=shopana npm run codegen
 
 Important: the commands read variables from `.env`. Make sure you set correct values for the chosen provider.
 
-Apollo documents use the `*.apollo.graphql` suffix. Generated storefront
+Apollo documents use the `*.graphql` suffix. Generated storefront
 operations are written to `codegen/apollo/storefront-operations.ts`; SDK
 operations are generated inside the SDK source tree.
 

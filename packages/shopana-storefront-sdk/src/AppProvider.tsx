@@ -86,7 +86,7 @@ export async function AppProvider({
   ]);
 
   const initialState = mergeApolloCacheStates(
-    client.extract(),
+    client.extract() as NormalizedCacheObject,
     apolloInitialState
   );
 

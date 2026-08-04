@@ -37,7 +37,7 @@ const config: CodegenConfig = {
     },
     'codegen/apollo/storefront-operations.ts': {
       schema: 'schema.shopana.graphql',
-      documents: ['src/**/*.apollo.graphql'],
+      documents: ['src/**/*.graphql'],
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
       config: {
         arrayInputCoercion: false,
@@ -56,7 +56,7 @@ const config: CodegenConfig = {
           'schema.shopana.graphql',
           'graphql-schema-extensions/auth.graphql',
         ],
-        documents: ['packages/shopana-storefront-sdk/src/**/*.apollo.graphql'],
+        documents: ['packages/shopana-storefront-sdk/src/**/*.graphql'],
         plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
         config: {
           arrayInputCoercion: false,

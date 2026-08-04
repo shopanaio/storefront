@@ -15,7 +15,7 @@ Final inventory after the Relay-to-Apollo migration:
 
 All domains are complete: home, search, collection, product, reviews, checkout,
 box builder, cart and session. New or changed GraphQL code must use an external
-`*.apollo.graphql` document and the generated typed document from the single
+`*.graphql` document and the generated typed document from the single
 root `codegen.ts` workflow.
 
 Root cart and session queries share one request-scoped Apollo Client. The root
