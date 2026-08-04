@@ -1,18 +1,20 @@
 /**
  * This file is exported as source (.tsx) via package.json exports.
- * All imports from SDK modules MUST use package imports (@shopana/storefront-sdk/...)
- * instead of relative imports (../modules/...) to ensure the same module instances
- * are used as external consumers.
+ * The generated adapter supplies project templates and module registrations.
  */
 import React from 'react';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import type { PageTemplate, TemplateParams } from '../core/types';
-import { Builder } from '../core/Builder';
-import { parseRoute } from '../utils/routeParser';
+import type {
+  PageTemplate,
+  PageType,
+  TemplateParams,
+} from '@shopana/storefront-sdk/core/types';
+import { Builder } from '@shopana/storefront-sdk/core/Builder';
+import { parseRoute } from '@shopana/storefront-sdk/utils/routeParser';
 import { notFound } from 'next/navigation';
-import type { SerializableApolloQuery } from '../graphql/apollo/loadSerializableQuery';
-import type { ApolloEnvironmentConfig } from '../graphql/apollo/types';
+import type { SerializableApolloQuery } from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
+import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
 import type {
   SdkCollectionQuery,
   SdkCollectionQueryVariables,
@@ -22,7 +24,7 @@ import type {
   SdkProductQueryVariables,
   SdkSearchQuery,
   SdkSearchQueryVariables,
-} from '../graphql/apollo/generated/operations';
+} from '@shopana/storefront-sdk/graphql/apollo/generated/operations';
 import { loadHomeServerQuery } from '@shopana/storefront-sdk/modules/home/next/loaders/loadHomeServerQuery';
 import { HomeDataProvider } from '@shopana/storefront-sdk/modules/home/react/providers/HomeDataProvider';
 import { loadProductServerQuery } from '@shopana/storefront-sdk/modules/product/next/loaders/loadProductServerQuery';
@@ -31,7 +33,10 @@ import { loadCollectionServerQuery } from '@shopana/storefront-sdk/modules/colle
 import { CollectionDataProvider } from '@shopana/storefront-sdk/modules/collection/react/providers/CollectionDataProvider';
 import { loadSearchServerQuery } from '@shopana/storefront-sdk/modules/search/next/loaders/loadSearchServerQuery';
 import { SearchDataProvider } from '@shopana/storefront-sdk/modules/search/react/providers/SearchDataProvider';
-import { getRequestContext, type SDKRequestContext } from './headers';
+import {
+  getRequestContext,
+  type SDKRequestContext,
+} from '@shopana/storefront-runtime/next/headers';
 import {
   moduleRegistry,
   type DynamicModulePageProps,
@@ -46,40 +51,6 @@ interface PageProps {
     slug?: SlugParam;
   }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}
-
-// Dynamic template imports using switch
-// Templates are resolved from user project via @src/templates/* path
-async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
-  try {
-    switch (pageType) {
-      case 'home':
-        return (await import('@src/templates/index/index')).default;
-      case 'product':
-        return (await import('@src/templates/product/index')).default;
-      case 'collection':
-        return (await import('@src/templates/collection/index')).default;
-      case 'search':
-        return (await import('@src/templates/search/index')).default;
-      case 'blog':
-        return (await import('@src/templates/blog/index')).default;
-      case 'article':
-        return (await import('@src/templates/article/index')).default;
-      case 'page':
-        return (await import('@src/templates/page/index')).default;
-      case 'cart':
-        return (await import('@src/templates/cart/index')).default;
-      case 'list-collections':
-        return (await import('@src/templates/list-collections/index')).default;
-      case '404':
-        return (await import('@src/templates/404/index')).default;
-      default:
-        return null;
-    }
-  } catch (error) {
-    console.error(`Failed to load template for pageType: ${pageType}`, error);
-    return null;
-  }
 }
 
 interface HomePageData {
@@ -240,9 +211,10 @@ function PageWrapper({
   }
 }
 
-export interface CreateSDKPageOptions {
+export interface CreateRuntimePageOptions {
   environmentConfig: ApolloEnvironmentConfig;
   modulesContext?: ReturnType<typeof require.context>;
+  loadTemplate: (pageType: PageType) => Promise<PageTemplate | null>;
 }
 
 /**
@@ -270,17 +242,20 @@ export type { SDKRequestContext };
  * @example
  * ```tsx
  * // app/[...slug]/page.tsx
- * import { createSDKPage } from '@shopana/storefront-sdk/next/page';
+ * import { createRuntimePage } from '@shopana/storefront-runtime/next/page';
  * import { environmentConfig } from '@src/config/environment.config';
  *
- * const { Page, generateMetadata } = createSDKPage({ environmentConfig });
+ * const { Page, generateMetadata } = createRuntimePage({
+ *   environmentConfig,
+ *   loadTemplate,
+ * });
  *
  * export default Page;
  * export { generateMetadata };
  * ```
  */
-export function createSDKPage(options: CreateSDKPageOptions) {
-  const { environmentConfig, modulesContext } = options;
+export function createRuntimePage(options: CreateRuntimePageOptions) {
+  const { environmentConfig, modulesContext, loadTemplate } = options;
 
   // Auto-load modules from context if provided
   if (modulesContext) {

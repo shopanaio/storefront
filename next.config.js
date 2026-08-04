@@ -1,13 +1,21 @@
 import 'dotenv/config';
 import createNextIntlPlugin from 'next-intl/plugin';
 import path from 'path';
-const withNextIntl = createNextIntlPlugin();
+import { fileURLToPath } from 'url';
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 import getEnv from './bin/webpack/env.js';
 
 const brand = process.env.BRAND || 'bite-crunch';
-const brandPathRelative = `./packages/brand-${brand}/src`;
-const brandPathAbsolute = path.resolve(`packages/brand-${brand}/src`);
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+const brandPackage =
+  brand === 'xyz' ? '@shopana/brand-piknik' : `@shopana/brand-${brand}`;
+const brandPathAbsolute = path.join(
+  projectRoot,
+  'packages',
+  `brand-${brand}`,
+  'src'
+);
 
 const graphqlImagePattern = (() => {
   try {
@@ -26,6 +34,7 @@ const graphqlImagePattern = (() => {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: projectRoot,
   env: getEnv(),
   reactStrictMode: false,
   images: {
@@ -41,7 +50,11 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: true,
   // Transpile local packages for hot reload during development
-  transpilePackages: ['@shopana/storefront-sdk'],
+  transpilePackages: [
+    brandPackage,
+    '@shopana/storefront-runtime',
+    '@shopana/storefront-sdk',
+  ],
   compiler: {
     styledComponents: true,
   },
@@ -49,9 +62,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   turbopack: {
+    root: projectRoot,
     resolveAlias: {
-      '@shopana/brand': brandPathRelative,
-      '@shopana/brand/*': `${brandPathRelative}/*`,
+      '@shopana/brand': `${brandPackage}/src`,
     },
   },
   webpack: (config) => {

@@ -1,0 +1,37 @@
+{
+  "name": "@shopana/storefront-runtime",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "bin",
+    "src",
+    "templates"
+  ],
+  "bin": {
+    "storefront-runtime": "./bin/storefront-runtime.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/init.d.ts",
+      "import": "./src/init.js",
+      "default": "./src/init.js"
+    },
+    "./next/headers": "./src/next/headers.ts",
+    "./next/layout": "./src/next/layout.tsx",
+    "./next/middleware": "./src/next/middleware.ts",
+    "./next/not-found": "./src/next/not-found.tsx",
+    "./next/page": "./src/next/page.tsx",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@shopana/storefront-sdk": "^0.1.0",
+    "next": "^15.2.3 || ^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}

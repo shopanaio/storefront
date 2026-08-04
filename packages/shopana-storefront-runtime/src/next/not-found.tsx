@@ -1,25 +1,10 @@
 /**
  * This file is exported as source (.tsx) via package.json exports.
- * All imports from SDK modules MUST use package imports (@shopana/storefront-sdk/...)
- * instead of relative imports (../modules/...) to ensure the same module instances
- * are used as external consumers.
+ * The generated adapter supplies the project 404 template.
  */
 import type { ReactNode } from 'react';
-import type { PageTemplate } from '../core/types';
-import { Builder } from '../core/Builder';
-
-/**
- * Default 404 template loader.
- * Loads template from user project via @src/templates/404/index path.
- */
-async function loadNotFoundTemplate(): Promise<PageTemplate | null> {
-  try {
-    return (await import('@src/templates/404/index')).default;
-  } catch (error) {
-    console.error('Failed to load 404 template:', error);
-    return null;
-  }
-}
+import type { PageTemplate } from '@shopana/storefront-sdk/core/types';
+import { Builder } from '@shopana/storefront-sdk/core/Builder';
 
 /**
  * Default fallback component when no template is available.
@@ -42,12 +27,8 @@ function DefaultNotFound(): ReactNode {
   );
 }
 
-export interface CreateSDKNotFoundOptions {
-  /**
-   * Optional: Override the default template loading behavior.
-   * Return your custom template or null to use the fallback.
-   */
-  loadTemplate?: () => Promise<PageTemplate | null>;
+export interface CreateRuntimeNotFoundOptions {
+  loadTemplate: () => Promise<PageTemplate | null>;
 
   /**
    * Optional: Custom fallback component when template fails to load.
@@ -61,15 +42,15 @@ export interface CreateSDKNotFoundOptions {
  * @example
  * ```tsx
  * // app/[locale]/not-found.tsx
- * import { createSDKNotFound } from '@shopana/storefront-sdk/next/not-found';
+ * import { createRuntimeNotFound } from '@shopana/storefront-runtime/next/not-found';
  *
- * const { NotFound } = createSDKNotFound();
+ * const { NotFound } = createRuntimeNotFound({ loadTemplate });
  *
  * export default NotFound;
  * ```
  */
-export function createSDKNotFound(options: CreateSDKNotFoundOptions = {}) {
-  const templateLoader = options.loadTemplate ?? loadNotFoundTemplate;
+export function createRuntimeNotFound(options: CreateRuntimeNotFoundOptions) {
+  const templateLoader = options.loadTemplate;
   const FallbackComponent = options.fallback ?? DefaultNotFound;
 
   async function NotFound() {

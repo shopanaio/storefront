@@ -22,7 +22,7 @@ export interface SDKRequestContext {
  * @example
  * ```tsx
  * // In a server component
- * import { getRequestContext } from '@shopana/storefront-sdk/next/headers';
+ * import { getRequestContext } from '@shopana/storefront-runtime/next/headers';
  *
  * export default async function Page() {
  *   const ctx = await getRequestContext();
@@ -31,21 +31,19 @@ export interface SDKRequestContext {
  * }
  * ```
  */
-export const getRequestContext = cache(
-  async (): Promise<SDKRequestContext> => {
-    const h = await headers();
+export const getRequestContext = cache(async (): Promise<SDKRequestContext> => {
+  const h = await headers();
 
-    const url = h.get(SDK_URL_HEADER) || '';
-    const pathname = h.get(SDK_PATHNAME_HEADER) || '/';
-    const search = h.get(SDK_SEARCH_HEADER) || '';
-    const host = h.get(SDK_HOST_HEADER) || '';
+  const url = h.get(SDK_URL_HEADER) || '';
+  const pathname = h.get(SDK_PATHNAME_HEADER) || '/';
+  const search = h.get(SDK_SEARCH_HEADER) || '';
+  const host = h.get(SDK_HOST_HEADER) || '';
 
-    return {
-      url,
-      pathname,
-      search,
-      host,
-      searchParams: new URLSearchParams(search),
-    };
-  }
-);
+  return {
+    url,
+    pathname,
+    search,
+    host,
+    searchParams: new URLSearchParams(search),
+  };
+});

@@ -4,6 +4,7 @@
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
 .next
+.runtime
 next-env.d.ts
 package-lock.json
 

@@ -65,6 +65,18 @@ operations are generated inside the SDK source tree.
 yarn dev
 ```
 
+Before Next.js starts, `@shopana/storefront-runtime` generates the App Router
+application in `.runtime`. The generated routes connect the project-owned
+`src/layouts`, `src/templates`, and `src/modules` directories. Run the generator
+directly after changing its package templates:
+
+```bash
+yarn runtime:init
+```
+
+Do not edit `.runtime`; customize the root app integration in `src/runtime` and
+the page implementation in the corresponding source directories.
+
 This starts both services for local development:
 
 - the GraphQL mock server at `http://127.0.0.1:4100/graphql`;
