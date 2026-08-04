@@ -29,7 +29,7 @@ FROM base AS builder
 
 # Build-time arguments for CMS configuration
 ARG CMS=shopana
-ARG BRAND=default
+ARG BRAND=bite-crunch
 ARG SHOPANA_GRAPHQL_URL=/api/client/graphql/query
 ARG SHOPANA_API_KEY
 ARG NEXT_PUBLIC_APP_URL

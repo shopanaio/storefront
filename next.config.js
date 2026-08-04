@@ -7,7 +7,7 @@ import { createRequire } from 'module';
 import getEnv from './bin/webpack/env.js';
 const require = createRequire(import.meta.url);
 
-const brand = process.env.BRAND || 'default';
+const brand = process.env.BRAND || 'bite-crunch';
 const brandPathRelative = `./packages/brand-${brand}/src`;
 const brandPathAbsolute = path.resolve(`packages/brand-${brand}/src`);
 

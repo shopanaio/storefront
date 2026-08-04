@@ -8,15 +8,16 @@ The storefront supports multiple brand configurations through a package-based ap
 
 ## Available Brands
 
-- **default** - Shopana default branding (default)
+- **bite-crunch** - Bite&Crunch veterinary store branding (default)
+- **default** - Shopana branding
 
 ## Switching Brands
 
 Set the `BRAND` environment variable when building or running the application:
 
 ```bash
-# Build with default branding (or omit BRAND variable)
-BRAND=default yarn build
+# Build with Bite&Crunch branding (or omit BRAND variable)
+BRAND=bite-crunch yarn build
 yarn build
 ```
 
@@ -43,7 +44,7 @@ packages/
 The webpack configuration in `next.config.js` dynamically resolves the `@shopana/brand` alias based on the `BRAND` environment variable:
 
 ```javascript
-const brand = process.env.BRAND || 'default';
+const brand = process.env.BRAND || 'bite-crunch';
 config.resolve.alias = {
   ...config.resolve.alias,
   '@shopana/brand': path.resolve(`packages/brand-${brand}/src`),
@@ -185,7 +186,7 @@ BRAND=mybrand yarn build
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `BRAND` | Brand package to use | `default` |
+| `BRAND` | Brand package to use | `bite-crunch` |
 
 ## Troubleshooting
 
@@ -202,7 +203,7 @@ yarn tsc --watch
 Restart the development server after changing the `BRAND` environment variable:
 
 ```bash
-BRAND=default yarn dev
+BRAND=bite-crunch yarn dev
 ```
 
 ### Logo not displaying

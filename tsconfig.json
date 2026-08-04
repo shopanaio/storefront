@@ -18,10 +18,10 @@
         "./packages/shopana-utils/dist/*"
       ],
       "@shopana/brand": [
-        "./packages/brand-default/src"
+        "./packages/brand-bite-crunch/src"
       ],
       "@shopana/brand/*": [
-        "./packages/brand-default/src/*"
+        "./packages/brand-bite-crunch/src/*"
       ],
       "@shopana/storefront-sdk": [
         "./packages/shopana-storefront-sdk/dist/index.js"
