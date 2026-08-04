@@ -4,3 +4,6 @@
 [submodule "packages/brand-xyz"]
 	path = packages/brand-xyz
 	url = git@github.com:shopanaio/storefront-brand-piknik.git
+[submodule "packages/brand-bite-crunch"]
+	path = packages/brand-bite-crunch
+	url = git@github.com:shopanaio/storefront-brand-bite-and-crunch.git
