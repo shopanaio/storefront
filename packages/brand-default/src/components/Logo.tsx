@@ -8,6 +8,7 @@ export interface DefaultLogoProps {
   theme?: 'dark' | 'light';
   size: number;
   gradient?: boolean;
+  textColor?: string;
 }
 
 const X = 418;
@@ -24,13 +25,17 @@ export const DefaultLogo = ({
   noText = false,
   theme = 'light',
   size,
+  textColor: customTextColor,
 }: DefaultLogoProps) => {
   const noTextWidth = size;
   const width = noText ? noTextWidth : getLogoWidth(size);
   const height = size;
 
   const textColor =
-    theme === 'light' ? 'var(--ant-color-text-base)' : 'var(--ant-geekblue-1)';
+    customTextColor ??
+    (theme === 'light'
+      ? 'var(--ant-color-text-base)'
+      : 'var(--ant-geekblue-1)');
 
   const renderText = () => {
     return (

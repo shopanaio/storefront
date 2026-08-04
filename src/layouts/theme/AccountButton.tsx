@@ -1,22 +1,24 @@
-import React from "react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { TbUserCircle, TbUser } from "react-icons/tb";
-import { HeaderLinkButton } from "./HeaderLinkButton";
-import { useSessionStore } from "@shopana/storefront-sdk/modules/session/react";
-import { useModalStore } from "@src/store/appStore";
-import { useRoutes } from "@src/hooks/useRoutes";
+import React from 'react';
+import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { CircleUserRound, User } from 'lucide-react';
+import { HeaderLinkButton } from './HeaderLinkButton';
+import { useSessionStore } from '@shopana/storefront-sdk/modules/session/react';
+import { useModalStore } from '@src/store/appStore';
+import { useRoutes } from '@src/hooks/useRoutes';
 
 type AccountButtonProps = {
   className?: string;
   iconSize?: number;
+  showTextOnDesktop?: boolean;
 };
 
 export const AccountButton: React.FC<AccountButtonProps> = ({
   className,
   iconSize = 24,
+  showTextOnDesktop = true,
 }) => {
-  const t = useTranslations("Header");
+  const t = useTranslations('Header');
   const router = useRouter();
   const routes = useRoutes();
   const session = useSessionStore()((state) => state.session);
@@ -38,15 +40,16 @@ export const AccountButton: React.FC<AccountButtonProps> = ({
     <HeaderLinkButton
       icon={
         isAuthenticated ? (
-          <TbUserCircle size={iconSize} />
+          <CircleUserRound size={iconSize} />
         ) : (
-          <TbUser size={iconSize} />
+          <User size={iconSize} />
         )
       }
-      topText={isAuthenticated ? t("my-account") : t("sign-in")}
-      bottomText={t("account")}
+      topText={isAuthenticated ? t('my-account') : t('sign-in')}
+      bottomText={t('account')}
       className={className}
       onClick={onClick}
+      showTextOnDesktop={showTextOnDesktop}
     />
   );
 };

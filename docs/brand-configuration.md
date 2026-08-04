@@ -8,7 +8,7 @@ The storefront supports multiple brand configurations through a package-based ap
 
 ## Available Brands
 
-- **bite-crunch** - Bite&Crunch veterinary store branding (default)
+- **bite-crunch** - Кусь та Хрусь pet store branding (default)
 - **default** - Shopana branding
 
 ## Switching Brands
@@ -16,7 +16,7 @@ The storefront supports multiple brand configurations through a package-based ap
 Set the `BRAND` environment variable when building or running the application:
 
 ```bash
-# Build with Bite&Crunch branding (or omit BRAND variable)
+# Build with Кусь та Хрусь branding (or omit BRAND variable)
 BRAND=bite-crunch yarn build
 yarn build
 ```

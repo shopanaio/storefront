@@ -3,20 +3,25 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { Footer } from './Footer';
-import { Header } from './Header';
+import { HeaderSection } from './HeaderSection';
 import { AnnouncementBar } from './AnnouncementBar';
 import { createStyles } from 'antd-style';
 
 const AuthModal = dynamic(
-  () => import('@src/templates/auth/sections/AuthModal').then((m) => m.AuthModal),
+  () =>
+    import('@src/templates/auth/sections/AuthModal').then((m) => m.AuthModal),
   { ssr: false }
 );
 const RateModal = dynamic(
-  () => import('@src/templates/product/blocks/Rate/RateModal').then((m) => m.RateModal),
+  () =>
+    import('@src/templates/product/blocks/Rate/RateModal').then(
+      (m) => m.RateModal
+    ),
   { ssr: false }
 );
 const CartDrawer = dynamic(
-  () => import('@src/templates/cart/sections/CartDrawer').then((m) => m.CartDrawer),
+  () =>
+    import('@src/templates/cart/sections/CartDrawer').then((m) => m.CartDrawer),
   { ssr: false }
 );
 const AppDrawer = dynamic(
@@ -38,7 +43,7 @@ export const Layout = ({ children }: ILayoutProps) => {
   return (
     <>
       <AnnouncementBar />
-      <Header />
+      <HeaderSection />
       <main className={styles.main}>{children}</main>
       <AuthModal />
       <RateModal />

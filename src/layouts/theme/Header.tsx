@@ -12,87 +12,160 @@ import { WishlistButton } from './WishlistButton';
 import { AccountButton } from './AccountButton';
 import { AppDrawerButton } from './AppDrawerButton';
 import { useIsMobile } from '@src/hooks/useIsMobile';
+import type { SectionProps } from '@shopana/storefront-sdk/core/types';
+import type { HeaderSettings } from './HeaderSection.types';
 
-export const Header: React.FC = () => {
-  const { styles } = useStyles();
+export const Header: React.FC<SectionProps<HeaderSettings, null>> = ({
+  settings,
+}) => {
+  const { styles } = useStyles(settings);
   const isMobile = useIsMobile();
   const Logo = useLogo();
+  const showActions =
+    settings.support.enabled ||
+    settings.wishlist.enabled ||
+    settings.account.enabled ||
+    settings.cart.enabled;
 
   return (
     <div className={styles.container}>
       <div className={styles.inner}>
-        <AppDrawerButton />
-        <Link className={styles.logo} href="/">
-          <Logo theme="light" size={isMobile ? 30 : 36} />
-        </Link>
-        <DesktopSearch />
-        <Flex className={styles.actions}>
-          <SupportButton />
-          <WishlistButton />
-          <AccountButton />
-          <CartButton />
-        </Flex>
+        {settings.menu.enabled && (
+          <AppDrawerButton size={settings.menu.iconSize} />
+        )}
+        {settings.logo.enabled && (
+          <Link className={styles.logo} href="/">
+            <Logo
+              theme={settings.logo.theme}
+              textColor={settings.colors.text}
+              size={
+                isMobile ? settings.logo.mobileSize : settings.logo.desktopSize
+              }
+            />
+          </Link>
+        )}
+        {settings.search.enabled && (
+          <DesktopSearch
+            iconSize={settings.search.iconSize}
+            showSubmitButton={settings.search.showSubmitButton}
+            placeholder={settings.search.placeholder}
+            submitLabel={settings.search.submitLabel}
+          />
+        )}
+        {showActions && (
+          <Flex className={styles.actions}>
+            {settings.support.enabled && (
+              <SupportButton
+                iconSize={settings.support.iconSize}
+                phoneNumber={settings.support.phoneNumber}
+                showTextOnDesktop={settings.support.showTextOnDesktop}
+                showDivider={settings.support.showDivider}
+              />
+            )}
+            {settings.wishlist.enabled && (
+              <WishlistButton
+                iconSize={settings.wishlist.iconSize}
+                showTextOnDesktop={settings.wishlist.showTextOnDesktop}
+              />
+            )}
+            {settings.account.enabled && (
+              <AccountButton
+                iconSize={settings.account.iconSize}
+                showTextOnDesktop={settings.account.showTextOnDesktop}
+              />
+            )}
+            {settings.cart.enabled && (
+              <CartButton
+                iconSize={settings.cart.iconSize}
+                showTextOnDesktop={settings.cart.showTextOnDesktop}
+              />
+            )}
+          </Flex>
+        )}
       </div>
     </div>
   );
 };
 
-const useStyles = createStyles(({ token, css }) => {
-  return {
-    container: css`
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      padding: ${token.paddingSM}px;
-      background-color: ${token.colorBgBase};
-      box-shadow: ${token.boxShadowTertiary};
-      position: sticky;
-      top: 0;
-      z-index: 20;
+const useStyles = createStyles(({ token, css }, settings: HeaderSettings) => ({
+  container: css`
+    --components-header-control-height: ${settings.layout.controlHeight}px;
+    --header-text-color: ${settings.colors.text};
+    --header-icon-color: ${settings.colors.icon};
+    --header-control-background: ${settings.colors.controlBackground};
+    --header-control-hover-background: ${settings.colors
+      .controlHoverBackground};
+    --header-search-background: ${settings.colors.searchBackground};
+    --header-search-border: ${settings.colors.searchBorder};
+    --header-primary-button-background: ${settings.colors
+      .primaryButtonBackground};
+    --header-primary-button-text: ${settings.colors.primaryButtonText};
+    --header-badge-background: ${settings.colors.badgeBackground};
+    --header-badge-text: ${settings.colors.badgeText};
 
-      ${mq.lg} {
-        padding: ${token.paddingSM}px ${token.padding}px;
-      }
-    `,
-    inner: css`
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      width: 100%;
-      gap: ${token.marginSM}px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: ${token.paddingSM}px;
+    color: var(--header-text-color);
+    background-color: ${settings.colors.background};
+    border-bottom: 1px solid ${settings.colors.border};
+    box-shadow: ${settings.layout.showShadow
+      ? token.boxShadowTertiary
+      : 'none'};
+    position: ${settings.layout.sticky ? 'sticky' : 'relative'};
+    top: 0;
+    z-index: 20;
 
-      ${mq.md} {
-        column-gap: ${token.margin}px;
-      }
+    button svg,
+    .ant-input-prefix svg,
+    .ant-input-clear-icon {
+      color: var(--header-icon-color) !important;
+    }
 
-      ${mq.xl} {
-        margin: 0 auto;
-        max-width: 1280px;
-      }
+    ${mq.lg} {
+      padding: ${token.paddingSM}px ${token.padding}px;
+    }
+  `,
+  inner: css`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    gap: ${token.marginSM}px;
 
-      ${mq.xxl} {
-        max-width: 1400px;
-      }
-    `,
-    logo: css`
-      flex-grow: 1;
-      display: flex;
-      align-items: center;
+    ${mq.md} {
+      column-gap: ${token.margin}px;
+    }
 
-      ${mq.lg} {
-        flex-grow: unset;
-        padding-right: ${token.padding}px;
-      }
-    `,
-    actions: css`
-      order: 3;
-      justify-content: flex-end;
-      align-items: center;
-      gap: ${token.marginXXS}px;
-      ${mq.lg} {
-        order: 4;
-        min-width: max-content;
-      }
-    `,
-  };
-});
+    ${mq.xl} {
+      margin: 0 auto;
+      max-width: ${settings.layout.desktopMaxWidth}px;
+    }
+
+    ${mq.xxl} {
+      max-width: ${settings.layout.wideMaxWidth}px;
+    }
+  `,
+  logo: css`
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+
+    ${mq.lg} {
+      flex-grow: unset;
+      padding-right: ${token.padding}px;
+    }
+  `,
+  actions: css`
+    order: 3;
+    justify-content: flex-end;
+    align-items: center;
+    gap: ${token.marginXXS}px;
+
+    ${mq.lg} {
+      order: 4;
+      min-width: max-content;
+    }
+  `,
+}));

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from 'antd';
-import { TbMenu2 } from 'react-icons/tb';
+import { Menu } from 'lucide-react';
 import { useModalStore } from '@src/store/appStore';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
@@ -24,7 +24,7 @@ export const AppDrawerButton: React.FC<AppDrawerButtonProps> = ({
     <Button
       className={clsx(styles.button, className)}
       type="text"
-      icon={<TbMenu2 size={size} />}
+      icon={<Menu size={size} />}
       onClick={() => setIsAppDrawerOpen(true)}
     />
   );
@@ -38,6 +38,16 @@ const useStyles = createStyles(({ token, css }) => {
       aspect-ratio: 1/1;
       flex-shrink: 0;
       width: var(--components-header-control-height) !important;
+      color: var(--header-icon-color, ${token.colorText});
+      background: var(--header-control-background, transparent);
+
+      &:not(:disabled):not(.ant-btn-disabled):hover {
+        color: var(--header-icon-color, ${token.colorText});
+        background: var(
+          --header-control-hover-background,
+          ${token.colorBgTextHover}
+        );
+      }
     `,
   };
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { TbPhone } from 'react-icons/tb';
+import { Phone } from 'lucide-react';
 import { HeaderLinkButton } from './HeaderLinkButton';
 import { mq } from '@src/ui-kit/Theme/breakpoints';
 import { createStyles } from 'antd-style';
@@ -11,12 +11,18 @@ type SupportButtonProps = {
   mobileBlock?: boolean;
   className?: string;
   iconSize?: number;
+  phoneNumber?: string;
+  showTextOnDesktop?: boolean;
+  showDivider?: boolean;
 };
 
 export const SupportButton: React.FC<SupportButtonProps> = ({
   mobileBlock = true,
   className,
   iconSize = 24,
+  phoneNumber = '+1 (999) 111-11-11',
+  showTextOnDesktop = true,
+  showDivider = true,
 }) => {
   const t = useTranslations('Header');
   const { styles } = useStyles();
@@ -24,19 +30,23 @@ export const SupportButton: React.FC<SupportButtonProps> = ({
   return (
     <>
       <HeaderLinkButton
-        icon={<TbPhone size={iconSize} />}
+        icon={<Phone size={iconSize} />}
         topText={t('customer-support')}
-        bottomText={'+1 (999) 111-11-11'}
+        bottomText={phoneNumber}
         mobileBlock={mobileBlock}
         className={clsx(styles.button, className)}
+        showTextOnDesktop={showTextOnDesktop}
       />
-      <Divider
-        orientation="vertical"
-        style={{
-          height: 32,
-          marginInline: 4,
-        }}
-      />
+      {showDivider && (
+        <Divider
+          orientation="vertical"
+          style={{
+            height: 32,
+            marginInline: 4,
+            borderColor: 'var(--header-search-border)',
+          }}
+        />
+      )}
     </>
   );
 };

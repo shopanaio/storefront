@@ -12,7 +12,19 @@ import usePredictiveSearch from '@src/hooks/search/usePredictiveSearch';
 import { useSearchAllButton } from '@src/hooks/useSearchAllButton';
 import useBodyScrollLock from '@src/ui-kit/hooks/useBodyScrollLock';
 
-export const DesktopSearch: React.FC = () => {
+type DesktopSearchProps = {
+  iconSize?: number;
+  showSubmitButton?: boolean;
+  placeholder?: string;
+  submitLabel?: string;
+};
+
+export const DesktopSearch: React.FC<DesktopSearchProps> = ({
+  iconSize,
+  showSubmitButton,
+  placeholder,
+  submitLabel,
+}) => {
   const { searchTerm, debouncedTerm } = useSearchInput('', 300);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
@@ -90,7 +102,13 @@ export const DesktopSearch: React.FC = () => {
           </div>
         }
       >
-        <SearchInput onClick={handleClick} />
+        <SearchInput
+          onClick={handleClick}
+          iconSize={iconSize}
+          showSubmitButton={showSubmitButton}
+          placeholder={placeholder}
+          submitLabel={submitLabel}
+        />
       </Popover>
     </div>
   );

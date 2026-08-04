@@ -1,10 +1,9 @@
-import { Button, Flex, Typography } from "antd";
-import { ReactNode } from "react";
-import { createStyles } from "antd-style";
-import { mq } from "@src/ui-kit/Theme/breakpoints";
-import clsx from "clsx";
-import useToken from "antd/es/theme/useToken";
-import { Badge } from "@src/ui-kit/Badge";
+import { Button, Flex, Typography } from 'antd';
+import { ReactNode } from 'react';
+import { createStyles } from 'antd-style';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
+import clsx from 'clsx';
+import { Badge } from '@src/ui-kit/Badge';
 
 const { Text } = Typography;
 
@@ -14,9 +13,11 @@ type Props = {
   bottomText: ReactNode;
   badgeCount?: number | null;
   onClick?: () => void;
-  theme?: "dark" | "light";
+  theme?: 'dark' | 'light';
   mobileBlock?: boolean;
   className?: string;
+  showTextOnDesktop?: boolean;
+  badgeColor?: string;
 };
 
 export const HeaderLinkButton = ({
@@ -24,20 +25,23 @@ export const HeaderLinkButton = ({
   topText,
   bottomText,
   onClick,
-  theme = "light",
+  theme = 'light',
   mobileBlock = false,
   className,
   badgeCount,
+  showTextOnDesktop = true,
+  badgeColor,
 }: Props) => {
-  const { styles } = useStyles({ theme, mobileBlock });
-  const [, token] = useToken();
+  const { styles } = useStyles({ theme, mobileBlock, showTextOnDesktop });
   const iconContent =
-    typeof badgeCount === "number" && badgeCount > 0 ? (
+    typeof badgeCount === 'number' && badgeCount > 0 ? (
       <Badge
         count={badgeCount}
         offset={[-4, 4]}
-        variant="primary"
+        variant={badgeColor ? 'default' : 'primary'}
+        color={badgeColor}
         size="small"
+        style={{ color: 'var(--header-badge-text, #ffffff)' }}
       >
         {icon}
       </Badge>
@@ -64,7 +68,13 @@ export const HeaderLinkButton = ({
 const useStyles = createStyles(
   (
     { token, css },
-    { mobileBlock }: { theme: "dark" | "light"; mobileBlock: boolean }
+    {
+      showTextOnDesktop,
+    }: {
+      theme: 'dark' | 'light';
+      mobileBlock: boolean;
+      showTextOnDesktop: boolean;
+    }
   ) => ({
     headerLinkBtn: css`
       justify-content: flex-start;
@@ -72,6 +82,16 @@ const useStyles = createStyles(
       flex-shrink: 0;
       height: var(--components-header-control-height);
       gap: 0;
+      color: var(--header-text-color, ${token.colorText});
+      background: var(--header-control-background, transparent);
+
+      &:not(:disabled):not(.ant-btn-disabled):hover {
+        color: var(--header-text-color, ${token.colorText});
+        background: var(
+          --header-control-hover-background,
+          ${token.colorBgTextHover}
+        );
+      }
 
       ${mq.sm} {
         gap: ${token.paddingXS}px;
@@ -81,6 +101,7 @@ const useStyles = createStyles(
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      color: var(--header-icon-color, currentColor);
     `,
     textWrapper: css`
       display: none;
@@ -89,7 +110,7 @@ const useStyles = createStyles(
       margin-left: ${token.marginXS}px;
 
       ${mq.md} {
-        display: flex;
+        display: ${showTextOnDesktop ? 'flex' : 'none'};
         flex-direction: column;
         margin-left: 0;
       }
