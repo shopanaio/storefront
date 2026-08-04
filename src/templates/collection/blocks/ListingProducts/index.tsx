@@ -1,19 +1,22 @@
-"use client";
+'use client';
 
-import { usePaginationFragment } from "react-relay";
-import Listing, { Listing$key } from "@shopana/storefront-sdk/queries/Listing";
-import { ApiFilterInput, ListingSort } from "codegen/schema-client";
-import { ProductsGrid } from "@src/templates/collection/blocks/ProductsGrid";
-import { Spin } from "antd";
-import { createStyles } from "antd-style";
-import { useTranslations } from "next-intl";
-import React from "react";
-import useCategoryRefetch from "@src/hooks/category/useCategoryRefetch";
-import { PAGINATION_PAGE_SIZE } from "@src/config";
-import { ListingPagination } from "@src/templates/collection/atoms/ListingPagination";
+import type { ListingData } from '@shopana/storefront-sdk/queries/Listing';
+import {
+  CategoryPagination,
+  usePaginationQuery,
+} from '@shopana/storefront-sdk/graphql/apollo';
+import { ApiFilterInput, ListingSort } from 'codegen/schema-client';
+import { ProductsGrid } from '@src/templates/collection/blocks/ProductsGrid';
+import { Spin } from 'antd';
+import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
+import React from 'react';
+import useCategoryRefetch from '@src/hooks/category/useCategoryRefetch';
+import { PAGINATION_PAGE_SIZE } from '@src/config';
+import { ListingPagination } from '@src/templates/collection/atoms/ListingPagination';
 
 interface ListingProductsProps {
-  category: Listing$key | null;
+  category: ListingData | null;
   sort: ListingSort;
   filters: ApiFilterInput[];
 }
@@ -23,10 +26,21 @@ export const ListingProducts: React.FC<ListingProductsProps> = ({
   filters,
 }) => {
   const { styles } = useStyles();
-  const t = useTranslations("Listing");
+  const t = useTranslations('Listing');
 
-  const { data, loadNext, hasNext, isLoadingNext, refetch } =
-    usePaginationFragment(Listing, category);
+  const {
+    data: queryData,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+    refetch,
+  } = usePaginationQuery(CategoryPagination, {
+    handle: category?.handle ?? '',
+    first: PAGINATION_PAGE_SIZE,
+    sort,
+    filters,
+  });
+  const data = queryData?.category;
 
   // Use hook for category refetch when filters or sort change
   useCategoryRefetch(sort, filters, refetch);
@@ -59,11 +73,11 @@ export const ListingProducts: React.FC<ListingProductsProps> = ({
         hasNext={hasNext}
         isLoadingNext={isLoadingNext}
         onLoadMore={handleLoadMore}
-        summaryLabel={t("showing-of-total", {
+        summaryLabel={t('showing-of-total', {
           current: currentCount,
           total: totalCount,
         })}
-        loadMoreLabel={t("load-more")}
+        loadMoreLabel={t('load-more')}
       />
     </div>
   );

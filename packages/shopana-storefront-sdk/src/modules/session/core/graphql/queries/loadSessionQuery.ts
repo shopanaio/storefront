@@ -1,14 +1,3 @@
-import { graphql } from 'react-relay';
+import { SdkLoadSessionQueryDocument } from '../../../../../graphql/apollo/generated/operations';
 
-export const loadSessionQuery = graphql`
-  query loadSessionQuery {
-    session {
-      user {
-        id
-        iid
-        email
-      }
-      accessToken
-    }
-  }
-`;
+export const loadSessionQuery = SdkLoadSessionQueryDocument;

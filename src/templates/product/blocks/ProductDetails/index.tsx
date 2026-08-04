@@ -1,36 +1,36 @@
-"use client";
+'use client';
 
-import { Flex, Typography } from "antd";
-import { createStyles } from "antd-style";
-import React from "react";
-import { ProductRateSummary } from "../Rate/ProductRateSummary";
-import { ProductCollapse } from "../../atoms/ProductCollapse";
-import { mq } from "@src/ui-kit/Theme/breakpoints";
-import { ProductSpecification } from "../../atoms/ProductSpecification";
-import { ShowMoreBtn } from "../../atoms/ShowMoreBtn";
-import type { model } from "@shopana/storefront-sdk";
-import { useTranslations } from "next-intl";
-import { ReviewsSection } from "../Rate/Reviews";
-import type { Reviews$key } from "@shopana/storefront-sdk/queries/Reviews";
-import { ShippingReturnsInfo } from "../../atoms/ShippingReturnsInfo";
+import { Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
+import React from 'react';
+import { ProductRateSummary } from '../Rate/ProductRateSummary';
+import { ProductCollapse } from '../../atoms/ProductCollapse';
+import { mq } from '@src/ui-kit/Theme/breakpoints';
+import { ProductSpecification } from '../../atoms/ProductSpecification';
+import { ShowMoreBtn } from '../../atoms/ShowMoreBtn';
+import type { model } from '@shopana/storefront-sdk';
+import { useTranslations } from 'next-intl';
+import { ReviewsSection } from '../Rate/Reviews';
+import type { ReviewsData } from '@shopana/storefront-sdk/queries/Reviews';
+import { ShippingReturnsInfo } from '../../atoms/ShippingReturnsInfo';
 
 const { Paragraph } = Typography;
 
 interface ProductDetailsProps {
   product: model.Product;
-  productReviewsRef: Reviews$key | null;
+  productReviewsRef: ReviewsData | null;
 }
 
 export const ProductDetails = ({
   product,
   productReviewsRef,
 }: ProductDetailsProps) => {
-  const t = useTranslations("Product");
+  const t = useTranslations('Product');
   const { styles } = useStyles();
 
   return (
     <div className={styles.container}>
-      <ProductCollapse title={t("info")} panelKey={t("information-key")}>
+      <ProductCollapse title={t('info')} panelKey={t('information-key')}>
         <Flex vertical gap={16}>
           {product.description ? (
             <>
@@ -43,7 +43,7 @@ export const ProductDetails = ({
         </Flex>
       </ProductCollapse>
       {product.features && <ProductSpecification features={product.features} />}
-      <ProductCollapse title={t("reviews")} panelKey={t("reviews-key")}>
+      <ProductCollapse title={t('reviews')} panelKey={t('reviews-key')}>
         <Flex vertical gap={16}>
           <ProductRateSummary product={product} />
           {productReviewsRef && (
@@ -52,8 +52,8 @@ export const ProductDetails = ({
         </Flex>
       </ProductCollapse>
       <ProductCollapse
-        title={t("shipping-returns")}
-        panelKey={t("shipping-returns-key")}
+        title={t('shipping-returns')}
+        panelKey={t('shipping-returns-key')}
       >
         <ShippingReturnsInfo />
       </ProductCollapse>

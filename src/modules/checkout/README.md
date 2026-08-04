@@ -5,8 +5,9 @@ This document describes the checkout module architecture: its key layers, events
 ## Overview
 
 The module is composed of several layers:
+
 - UI layer: visual components and checkout sections
-- Data: loading and normalizing checkout data via Relay/GraphQL
+- Data: loading and normalizing checkout data via Apollo Client/GraphQL
 - State: local Zustand store and an event bus
 - API: atomic checkout operations (mutations)
 - Validation: Yup schemas for sections and provider methods
@@ -17,6 +18,7 @@ The module page entry is `page/page.tsx`, client is `page/client.tsx`; public ex
 ## UI Layer
 
 Key components:
+
 - `components/Checkout.tsx`: Checkout container. Mounts data (`CheckoutDataContextProvider`) and API (`CheckoutApiProvider`) contexts, wires the controller (`CheckoutController`), renders progress and the view (`CheckoutView`). Handles submit via `useCheckoutStore().requestSubmit()` and shows validation alerts via `useValidationAlert`.
 - `components/CheckoutController.tsx`: subscribes to `SubmitCompleted` and calls `onConfirm`. Hooks in `useOperationTracker` and `useSubmitHandler`.
 - `components/CheckoutView.tsx`: render-only component. Renders sections using `infra/SectionRenderer` wrapped with `components/common/CheckoutSection`. Left column — sections, right — `summary`.
@@ -24,6 +26,7 @@ Key components:
 - `components/section/SectionContainer.tsx` and `components/section/makeSection.tsx`: polymorphic section containers. Register the section in the store, validate data via Yup schema, publish validity state, and pass `invalidate` to the View.
 
 Sections live under `sections/*` and include:
+
 - `components/Container.tsx` — section container (uses SectionContainer)
 - `components/Component.tsx` — View (rendering and local handlers)
 - `schema.ts` — Yup validation schema
@@ -33,8 +36,8 @@ Sections live under `sections/*` and include:
 ## Data and Contexts
 
 - `context/CheckoutDataContext.tsx`:
-  - Loads checkout via Relay `loadCheckoutQuery.shopana` with `useQueryLoader`.
-  - Reads a fragment with `useCheckoutFragment`, converts API type to domain `Checkout.Checkout` via `mapApiCheckoutToCheckout`.
+  - Loads checkout with `StorefrontLoadCheckoutQueryDocument` and Apollo `useQuery`.
+  - Converts generated Apollo data to domain `Checkout.Checkout` via `mapApiCheckoutToCheckout`.
   - Provides `checkout`, `loading/loaded`, and errors.
 - `context/CheckoutApiContext.tsx`:
   - Builds `CheckoutApi` via `api/useCreateCheckoutApi` and exposes it through `useCheckoutApi`.
@@ -60,7 +63,7 @@ Sections live under `sections/*` and include:
   - Uses `useCheckoutOperation` for each operation with `OperationKey` and `sectionId`.
   - Automatically injects `checkoutId` from `CheckoutDataContext` into all calls.
 - Mutation wrapper: `api/useCheckoutOperation.ts`
-  - Wraps Relay `useMutation` with: promise-based API, debounce, race protection, `OperationStart/End/Error` events, and optional error toasts.
+  - Wraps the typed Apollo mutation adapter with: promise-based API, debounce, race protection, `OperationStart/End/Error` events, and optional error toasts.
   - Supports `commit` and `commitScheduled`.
 
 ## Validation

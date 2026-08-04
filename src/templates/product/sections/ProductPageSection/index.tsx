@@ -1,52 +1,75 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useProduct } from '@shopana/storefront-sdk/modules/product/react/hooks/useProduct';
 import { useProductData } from '@shopana/storefront-sdk/modules/product/react/hooks/useProductData';
 import { PageLayout } from '@src/layouts/theme/PageLayout';
 import { Product } from '../../blocks/Product';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useCurrentVariant } from '@src/hooks/useCurrentVariant';
-import type { Reviews$key } from '@shopana/storefront-sdk/queries/Reviews';
+import type { ReviewsData } from '@shopana/storefront-sdk/queries/Reviews';
+import type { model } from '@shopana/storefront-sdk';
 
 export default function ProductPageSection() {
-  const routes = useRoutes();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const product = useProduct();
   const { raw } = useProductData();
   // raw.product contains the Reviews fragment spread from ProductQuery
   // TypeScript types guarantee this, runtime check is not needed
-  const productReviewsRef = raw.product as Reviews$key | null;
+  const productReviewsRef = raw.product as ReviewsData | null;
 
-  const [selectedVariantHandle, setSelectedVariantHandle] =
-    useState<string>('');
+  const selectedVariantHandle = searchParams?.get('variant') || '';
 
-  useEffect(() => {
-    setSelectedVariantHandle(searchParams?.get('variant') || '');
-  }, [searchParams]);
-
-  const handleChangeVariant = useCallback((handle: string) => {
-    setSelectedVariantHandle(handle);
-
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (handle) {
-        url.searchParams.set('variant', handle);
-      } else {
-        url.searchParams.delete('variant');
+  const handleChangeVariant = useCallback(
+    (handle: string) => {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (handle) {
+          url.searchParams.set('variant', handle);
+        } else {
+          url.searchParams.delete('variant');
+        }
+        router.replace(`${url.pathname}${url.search}${url.hash}`, {
+          scroll: false,
+        });
       }
-      window.history.replaceState(null, '', url.toString());
-    }
-  }, []);
+    },
+    [router]
+  );
 
   if (!product) {
     return null;
   }
 
+  return (
+    <ProductPageContent
+      product={product as model.Product}
+      productReviewsRef={productReviewsRef}
+      selectedVariantHandle={selectedVariantHandle}
+      onChangeVariant={handleChangeVariant}
+    />
+  );
+}
+
+interface ProductPageContentProps {
+  product: model.Product;
+  productReviewsRef: ReviewsData | null;
+  selectedVariantHandle: string;
+  onChangeVariant: (handle: string) => void;
+}
+
+function ProductPageContent({
+  product,
+  productReviewsRef,
+  selectedVariantHandle,
+  onChangeVariant,
+}: ProductPageContentProps) {
+  const routes = useRoutes();
   const { currentVariant, title } = useCurrentVariant({
-    product: product as any,
+    product,
     variantHandle: selectedVariantHandle,
   });
 
@@ -66,11 +89,11 @@ export default function ProductPageSection() {
       }}
     >
       <Product
-        product={product as any}
+        product={product}
         productReviewsRef={productReviewsRef}
         currentVariant={currentVariant}
         title={title}
-        onChangeVariant={handleChangeVariant}
+        onChangeVariant={onChangeVariant}
       />
     </PageLayout>
   );

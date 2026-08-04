@@ -1,5 +1,5 @@
-import type { useListingProductCardFragment_product$key } from '@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql';
-import useListingProductCardFragment from '@src/templates/collection/relay';
+import type { StorefrontUseListingProductCardFragment_ProductFragment } from '../../../../../codegen/apollo/storefront-operations';
+import useListingProductCardFragment from '@src/templates/collection/apollo';
 import {
   type ProductCardProps,
   ProductCard,
@@ -12,19 +12,17 @@ import useAddItemToCart from '@shopana/storefront-sdk/modules/cart/react/hooks/u
 import { useProductSwatches } from '@src/hooks/useProductSwatches';
 import { useReviewStore } from '@src/store/appStore';
 import { mapListingProductCard } from '@src/templates/collection/mappers/mapListingProductCard';
-
-type ProductCardRelayProps = Partial<Omit<ProductCardProps, 'product'>> &
+type ListingProductCardProps = Partial<Omit<ProductCardProps, 'product'>> &
   (
     | {
-        $productRef: useListingProductCardFragment_product$key;
+        productRef: StorefrontUseListingProductCardFragment_ProductFragment;
         product?: never;
       }
     | {
-        $productRef?: never;
+        productRef?: never;
         product: SearchProduct;
       }
   );
-
 const mapSearchProduct = (product: SearchProduct) => {
   const productReference: model.Product = {
     __typename: 'Product',
@@ -103,20 +101,18 @@ const mapSearchProduct = (product: SearchProduct) => {
     updatedAt: '',
     product: productReference,
   };
-
   return {
     product: { ...productReference, variants: [variant] },
     variant,
     gallery: images.map((image) => image.url),
   };
 };
-
-export const ListingProductCardRelay = ({
-  $productRef,
+export const ListingProductCard = ({
+  productRef,
   product: mappedProduct,
   ...props
-}: ProductCardRelayProps) => {
-  const rawProduct = useListingProductCardFragment($productRef ?? null);
+}: ListingProductCardProps) => {
+  const rawProduct = useListingProductCardFragment(productRef ?? null);
   const { product, variant, gallery } = mappedProduct
     ? mapSearchProduct(mappedProduct)
     : mapListingProductCard(rawProduct!);
@@ -133,7 +129,6 @@ export const ListingProductCardRelay = ({
     fallback: variant.title,
   });
   const setReviewProduct = useReviewStore((state) => state.setReviewProduct);
-
   return (
     <ProductCard
       {...props}

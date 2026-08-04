@@ -1,32 +1,20 @@
-import type { ProductQuery$data } from '@src/hooks/product/ProductQuery';
+import type { SdkProductQuery } from '@shopana/storefront-sdk/graphql/apollo/generated/operations';
 import type { model } from '@shopana/storefront-sdk';
-import { readInlineData } from 'react-relay';
-import ProductComponentConfigurationFragmentNode, {
-  type ProductComponentConfigurationFragment$key,
-} from '@shopana/storefront-sdk/modules/product/core/graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
-import ProductComponentGroupFragmentNode, {
-  type ProductComponentGroupFragment$key,
-} from '@shopana/storefront-sdk/modules/product/core/graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
-import ProductComponentItemFragmentNode, {
-  type ProductComponentItemFragment$key,
-} from '@shopana/storefront-sdk/modules/product/core/graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
-
-type ApiProduct = NonNullable<ProductQuery$data['product']>;
+type ApiProduct = NonNullable<SdkProductQuery['product']>;
 type ApiVariant = ApiProduct['variants']['edges'][number]['node'];
-
 const toAmount = (amount: unknown): number => {
   const value = Number(amount ?? 0);
   return Number.isFinite(value) ? value : 0;
 };
-
 const toDateTime = (value: unknown): string =>
   value == null ? '' : String(value);
-
 const toMedia = (
   media:
     | {
         readonly id?: string;
-        readonly image?: { readonly url: unknown } | null;
+        readonly image?: {
+          readonly url: unknown;
+        } | null;
       }
     | null
     | undefined
@@ -34,10 +22,8 @@ const toMedia = (
   if (!media?.id || !media.image?.url) {
     return null;
   }
-
   return { id: media.id, url: String(media.image.url) };
 };
-
 const mapOptionDisplayType = (
   displayType: ApiProduct['options'][number]['displayType']
 ): model.ProductOptionDisplayType => {
@@ -51,7 +37,6 @@ const mapOptionDisplayType = (
       return 'RADIO';
   }
 };
-
 const mapSwatchDisplayType = (
   displayType: NonNullable<
     ApiProduct['options'][number]['values'][number]['swatch']
@@ -67,7 +52,6 @@ const mapSwatchDisplayType = (
       return 'COLOR';
   }
 };
-
 const createGallery = (
   media: Array<model.Media | null>
 ): model.GalleryConnection => {
@@ -79,7 +63,6 @@ const createGallery = (
     seen.add(item.id);
     return true;
   });
-
   return {
     edges: images.map((node) => ({ node, cursor: '' })),
     pageInfo: {
@@ -89,7 +72,6 @@ const createGallery = (
     totalCount: images.length,
   };
 };
-
 const mapApiVariantToVariant = (
   apiVariant: ApiVariant,
   productMedia: model.Media[]
@@ -99,7 +81,6 @@ const mapApiVariantToVariant = (
     ...apiVariant.media.edges.map((edge) => toMedia(edge.node)),
     ...productMedia,
   ]);
-
   return {
     __typename: 'ProductVariant',
     id: apiVariant.id,
@@ -133,29 +114,17 @@ const mapApiVariantToVariant = (
     updatedAt: '',
   };
 };
-
 function mapComponentGroups(
   variant: ApiVariant | undefined
 ): model.ProductGroup[] {
   if (!variant) {
     return [];
   }
-
-  const configuration = readInlineData(
-    ProductComponentConfigurationFragmentNode,
-    variant as ProductComponentConfigurationFragment$key
-  ).componentConfiguration;
-
+  const configuration = variant.componentConfiguration;
   if (!configuration) {
     return [];
   }
-
-  return configuration.groups.map((groupRef) => {
-    const group = readInlineData(
-      ProductComponentGroupFragmentNode,
-      groupRef as ProductComponentGroupFragment$key
-    );
-
+  return configuration.groups.map((group) => {
     return {
       id: group.id,
       title: group.title,
@@ -163,17 +132,12 @@ function mapComponentGroups(
       isMultiple: group.maxSelection == null || group.maxSelection > 1,
       minSelection: group.minSelection,
       maxSelection: group.maxSelection,
-      items: group.items.map((itemRef) => {
-        const item = readInlineData(
-          ProductComponentItemFragmentNode,
-          itemRef as ProductComponentItemFragment$key
-        );
+      items: group.items.map((item) => {
         const node = item.node;
         const price = {
           amount: toAmount(item.unitPrice.amount),
           currencyCode: item.unitPrice.currencyCode,
         };
-
         return {
           id: item.id,
           node: {
@@ -198,7 +162,6 @@ function mapComponentGroups(
     };
   });
 }
-
 /** Maps the current GraphQL product response to the storefront domain model. */
 export function mapApiProductToProduct(
   apiProduct: ApiProduct | null
@@ -206,7 +169,6 @@ export function mapApiProductToProduct(
   if (!apiProduct) {
     return null;
   }
-
   const productMedia = createGallery([
     toMedia(apiProduct.featuredMedia),
     ...apiProduct.media.edges.map((edge) => toMedia(edge.node)),
@@ -224,7 +186,6 @@ export function mapApiProductToProduct(
   const defaultVariant =
     apiProduct.variants.edges.find(({ node }) => node.isDefault)?.node ??
     apiProduct.variants.edges[0]?.node;
-
   return {
     __typename: 'Product',
     id: apiProduct.id,

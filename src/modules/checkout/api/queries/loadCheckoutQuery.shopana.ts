@@ -1,9 +1,3 @@
-import { graphql } from 'react-relay';
+import { StorefrontLoadCheckoutQueryDocument } from '../../../../../codegen/apollo/storefront-operations';
 
-export const loadCheckoutQuery = graphql`
-  query loadCheckoutQuery($checkoutId: ID!) {
-    checkout(id: $checkoutId) {
-      ...useCheckoutFragment
-    }
-  }
-`;
+export const loadCheckoutQuery = StorefrontLoadCheckoutQueryDocument;

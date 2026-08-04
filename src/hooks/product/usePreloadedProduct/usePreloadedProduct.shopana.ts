@@ -1,24 +1,26 @@
-import { PreloadedQuery, usePreloadedQuery } from "react-relay";
-import ProductQuery from "@src/hooks/product/ProductQuery";
-import { ProductQueryType } from "@src/hooks/product/ProductQuery";
-import { mapApiProductToProduct } from "@src/hooks/product/mapApiProductToProduct";
-import type { UsePreloadedProductResult } from "./types";
-import type { Reviews$key } from "@shopana/storefront-sdk/queries/Reviews";
+import type { SerializableApolloQuery } from '@shopana/storefront-sdk/graphql/apollo';
+import type {
+  SdkProductQuery,
+  SdkProductQueryVariables,
+} from '@shopana/storefront-sdk/graphql/apollo/generated/operations';
+import { mapApiProductToProduct } from '@src/hooks/product/mapApiProductToProduct';
+import type { UsePreloadedProductResult } from './types';
+import type { ReviewsData } from '@shopana/storefront-sdk/queries/Reviews';
 
 const usePreloadedProduct = (
-  queryReference: PreloadedQuery<ProductQueryType>
+  queryReference: SerializableApolloQuery<
+    SdkProductQuery,
+    SdkProductQueryVariables
+  >
 ): UsePreloadedProductResult => {
-  const data = usePreloadedQuery<ProductQueryType>(
-    ProductQuery,
-    queryReference
-  );
+  const data = queryReference.data;
 
   const apiProduct = data?.product ?? null;
   const product = mapApiProductToProduct(apiProduct);
 
   return {
     product,
-    productReviewsRef: apiProduct as Reviews$key | null,
+    productReviewsRef: apiProduct as ReviewsData | null,
   };
 };
 

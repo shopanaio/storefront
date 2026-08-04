@@ -3,21 +3,23 @@ import { Flex, Typography } from 'antd';
 import { ListingTitleAndBtn } from '@src/templates/collection/blocks/ListingTitleAndBtn';
 import { ListingSort, ApiFilterInput, ApiFilter } from '@codegen/schema-client';
 import { ListingProducts } from '@src/templates/collection/blocks/ListingProducts';
-import { useFragment } from 'react-relay';
-import Listing, { Listing$key } from '@shopana/storefront-sdk/queries/Listing';
+import { useFragment } from '@shopana/storefront-sdk/graphql/apollo';
+import Listing, {
+  type ListingData,
+} from '@shopana/storefront-sdk/queries/Listing';
 import useFilters from '@src/hooks/category/useFilters';
 import { useFiltersStore } from '@src/store/appStore';
 
 const { Text } = Typography;
 
-export function ListingPageContent({ category }: { category: Listing$key }) {
+export function ListingPageContent({ category }: { category: ListingData }) {
   const [sort, setSort] = useState<ListingSort>(ListingSort.MostRelevant);
   const { selectedFilters } = useFiltersStore();
 
   // Save original filter values so they don't change after refetch
   const [originalFilters, setOriginalFilters] = useState<ApiFilter[]>([]);
 
-  const listingData = useFragment<Listing$key>(Listing, category);
+  const listingData = useFragment(Listing, category);
 
   // Use hook for filter normalization
   const normalizedFilters = useFilters(
@@ -27,6 +29,7 @@ export function ListingPageContent({ category }: { category: Listing$key }) {
   // Save original filter values on first load
   useEffect(() => {
     if (normalizedFilters.length > 0 && originalFilters.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOriginalFilters(normalizedFilters);
     }
   }, [normalizedFilters, originalFilters]);

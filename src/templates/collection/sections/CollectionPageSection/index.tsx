@@ -1,13 +1,13 @@
 'use client';
-
 import { useState, useMemo } from 'react';
 import { Flex, Spin, Typography } from 'antd';
-import { usePaginationFragment } from 'react-relay';
+import {
+  CollectionPagination,
+  usePaginationQuery,
+} from '@shopana/storefront-sdk/graphql/apollo';
 import { useCollectionData } from '@shopana/storefront-sdk/modules/collection/react/hooks/useCollectionData';
-import { CollectionListingFragment$key } from '@shopana/storefront-sdk/modules/collection/core/types';
-import CollectionListingFragmentNode from '@shopana/storefront-sdk/modules/collection/core/graphql/fragments/__generated__/CollectionListingFragment.graphql';
 import { ListingSort, ApiFilter } from '@codegen/schema-client';
-import type { ListingFilterInput } from '@shopana/storefront-sdk/modules/collection/core/graphql/queries/__generated__/CollectionQuery.graphql';
+import type { ListingFilterInput } from '../../../../../codegen/apollo/storefront-operations';
 import { ListingTitleAndBtn } from '@src/templates/collection/blocks/ListingTitleAndBtn';
 import { ListingPagination } from '@src/templates/collection/atoms/ListingPagination';
 import { PageLayout } from '@src/layouts/theme/PageLayout';
@@ -16,27 +16,32 @@ import { useRoutes } from '@src/hooks/useRoutes';
 import { useTranslations } from 'next-intl';
 import { PAGINATION_PAGE_SIZE } from '@src/config';
 import { createStyles } from 'antd-style';
-import useCategoryRefetch from '@src/hooks/category/useCategoryRefetch';
+import useCategoryRefetch, {
+  mapListingSort,
+} from '@src/hooks/category/useCategoryRefetch';
 import { CollectionProductsGrid } from './CollectionProductsGrid';
-
 const { Text } = Typography;
-
 export default function CollectionPageSection() {
   const routes = useRoutes();
   const t = useTranslations('Listing');
   const { styles } = useStyles();
   const [sort, setSort] = useState<ListingSort>(ListingSort.MostRelevant);
   const { selectedFilters } = useFiltersStore();
-
   const { raw, collection } = useCollectionData();
-
   // Use pagination fragment on the raw category data
-  const { data, loadNext, hasNext, isLoadingNext, refetch } =
-    usePaginationFragment<any, CollectionListingFragment$key>(
-      CollectionListingFragmentNode,
-      raw.category as CollectionListingFragment$key
-    );
-
+  const {
+    data: queryData,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+    refetch,
+  } = usePaginationQuery(CollectionPagination, {
+    handle: raw.category?.handle ?? collection?.handle ?? '',
+    first: PAGINATION_PAGE_SIZE,
+    sort: mapListingSort(sort),
+    filters: [],
+  });
+  const data = queryData?.category;
   // Convert zustand filters to API format
   const apiFilters: ListingFilterInput[] = useMemo(
     () =>
@@ -49,7 +54,6 @@ export default function CollectionPageSection() {
         ) {
           return [{ price: { min: values[0], max: values[1] } }];
         }
-
         return (filterData.inputs ?? []).filter(
           (input): input is ListingFilterInput =>
             input !== null && typeof input === 'object'
@@ -57,61 +61,56 @@ export default function CollectionPageSection() {
       }),
     [selectedFilters]
   );
-
   // Use hook for category refetch when filters or sort change
   useCategoryRefetch(sort, apiFilters, refetch);
-
   if (!collection) {
     return <Text>Collection loading error</Text>;
   }
-
   // Get filters from pagination fragment data (data.listing contains filters from GraphQL fragment)
-  const filters: ApiFilter[] = (data?.listing?.filters ?? []).map((filter: any) => {
-    const base = {
-      id: filter.id,
-      iid: filter.id,
-      handle: filter.handle,
-      title: filter.title,
-    };
-
-    if (filter.type === 'PRICE_RANGE' && filter.priceRange) {
+  const filters: ApiFilter[] = (data?.listing?.filters ?? []).map(
+    (filter) => {
+      const base = {
+        id: filter.id,
+        iid: filter.id,
+        handle: filter.handle,
+        title: filter.title,
+      };
+      if (filter.type === 'PRICE_RANGE' && filter.priceRange) {
+        return {
+          ...base,
+          minPrice: {
+            amount: Number(filter.priceRange.min.amount),
+            currencyCode: filter.priceRange.min.currencyCode,
+          },
+          maxPrice: {
+            amount: Number(filter.priceRange.max.amount),
+            currencyCode: filter.priceRange.max.currencyCode,
+          },
+        };
+      }
       return {
         ...base,
-        minPrice: {
-          amount: Number(filter.priceRange.min.amount),
-          currencyCode: filter.priceRange.min.currencyCode,
-        },
-        maxPrice: {
-          amount: Number(filter.priceRange.max.amount),
-          currencyCode: filter.priceRange.max.currencyCode,
-        },
+        values: filter.values.map((value) => ({
+          id: value.id,
+          iid: value.id,
+          handle: value.handle,
+          title: value.title,
+          count: value.count,
+          input: value.input,
+        })),
       };
     }
-
-    return {
-      ...base,
-      values: filter.values.map((value: any) => ({
-        id: value.id,
-        iid: value.id,
-        handle: value.handle,
-        title: value.title,
-        count: value.count,
-        input: value.input,
-      })),
-    };
-  }) as ApiFilter[];
-
+  ) as ApiFilter[];
   // Get products from pagination data
-  const products = data?.listing?.edges?.map((edge: any) => edge.node) ?? [];
-  const totalCount = data?.listing?.totalCount ?? collection.listing?.totalCount ?? 0;
+  const products = data?.listing?.edges?.map((edge) => edge.node) ?? [];
+  const totalCount =
+    data?.listing?.totalCount ?? collection.listing?.totalCount ?? 0;
   const currentCount = products.length;
-
   const handleLoadMore = () => {
     if (hasNext && !isLoadingNext) {
       loadNext(PAGINATION_PAGE_SIZE);
     }
   };
-
   return (
     <PageLayout
       breadcrumbs={{
@@ -154,7 +153,6 @@ export default function CollectionPageSection() {
     </PageLayout>
   );
 }
-
 const useStyles = createStyles(({ token, css }) => {
   return {
     container: css`

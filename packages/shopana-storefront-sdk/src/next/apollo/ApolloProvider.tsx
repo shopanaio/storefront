@@ -14,7 +14,7 @@ export interface ApolloAppProviderProps {
 
 /**
  * Client boundary for Apollo hooks, streaming SSR and RSC cache hydration.
- * It is safe to render next to RelayEnvironmentProvider during migration.
+ * It owns the single Apollo lifecycle used by browser-side SDK consumers.
  */
 export function ApolloAppProvider({
   children,
@@ -23,13 +23,7 @@ export function ApolloAppProvider({
 }: ApolloAppProviderProps) {
   const makeClient = useCallback(
     () => createApolloClient(environmentConfig, { initialState }),
-    [
-      environmentConfig.graphqlUrl,
-      environmentConfig.apiKeyHeader,
-      environmentConfig.apiKey,
-      environmentConfig.accessTokenCookieName,
-      initialState,
-    ]
+    [environmentConfig, initialState]
   );
 
   return (

@@ -3,10 +3,9 @@ import { ListingSort as LegacyListingSort } from '@codegen/schema-client';
 import type {
   ListingFilterInput,
   ListingSort,
-} from '@shopana/storefront-sdk/modules/collection/core/graphql/queries/__generated__/CollectionQuery.graphql';
+} from '../../../../codegen/apollo/storefront-operations';
 import { PAGINATION_PAGE_SIZE } from '@src/config';
-
-const mapListingSort = (sort: LegacyListingSort): ListingSort => {
+export const mapListingSort = (sort: LegacyListingSort): ListingSort => {
   switch (sort) {
     case LegacyListingSort.PriceAsc:
       return 'PRICE_ASC';
@@ -25,7 +24,6 @@ const mapListingSort = (sort: LegacyListingSort): ListingSort => {
       return 'MANUAL';
   }
 };
-
 const useCategoryRefetch = (
   sort: LegacyListingSort,
   filters: ListingFilterInput[],
@@ -45,5 +43,4 @@ const useCategoryRefetch = (
     });
   }, [sort, filters, refetch]);
 };
-
 export default useCategoryRefetch;

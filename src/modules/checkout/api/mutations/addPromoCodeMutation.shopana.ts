@@ -1,12 +1,3 @@
-import { graphql } from "react-relay";
+import { StorefrontAddPromoCodeMutationDocument } from '../../../../../codegen/apollo/storefront-operations';
 
-export const addPromoCodeMutation = graphql`
-  mutation addPromoCodeMutation($input: CheckoutPromoCodeAddInput!) {
-    checkoutPromoCodeAdd(input: $input) {
-      checkout {
-        ...useCheckoutFragment
-      }
-      errors: userErrors { code field message retryable }
-    }
-  }
-`;
+export const addPromoCodeMutation = StorefrontAddPromoCodeMutationDocument;

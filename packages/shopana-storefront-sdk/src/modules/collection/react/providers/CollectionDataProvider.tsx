@@ -1,15 +1,7 @@
 'use client';
-
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import {
-  readInlineData,
-  useFragment,
-  usePreloadedQuery,
-  useRelayEnvironment,
-} from 'react-relay';
-import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
 import { CollectionDataContext } from '../context/CollectionDataContext';
 import type {
   CollectionTemplateData,
@@ -19,33 +11,25 @@ import type {
   CollectionFilter,
   CollectionImage,
 } from '../../core/types';
-import CollectionQueryNode, {
-  CollectionQuery,
-} from '../../core/graphql/queries/__generated__/CollectionQuery.graphql';
-import CollectionListingFragmentNode, {
-  type CollectionListingFragment$data,
-  type CollectionListingFragment$key,
-} from '../../core/graphql/fragments/__generated__/CollectionListingFragment.graphql';
-import CollectionProductCardFragmentNode, {
-  type CollectionProductCardFragment$key,
-} from '../../core/graphql/fragments/__generated__/CollectionProductCardFragment.graphql';
-
+import type {
+  SdkCollectionListingFragment,
+  SdkCollectionProductCardFragment,
+  SdkCollectionQuery,
+  SdkCollectionQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 interface CollectionDataProviderProps {
   children: ReactNode;
-  preloadedQuery: SerializablePreloadedQuery<
-    typeof CollectionQueryNode,
-    CollectionQuery
+  preloadedQuery: SerializableApolloQuery<
+    SdkCollectionQuery,
+    SdkCollectionQueryVariables
   >;
 }
-
-type RawFilter = CollectionListingFragment$data['listing']['filters'][number];
+type RawFilter = SdkCollectionListingFragment['listing']['filters'][number];
 type RawPriceRange = NonNullable<RawFilter['priceRange']>;
-
 const toMoney = (money: RawPriceRange['min']) => ({
   amount: String(money.amount),
   currencyCode: money.currencyCode,
 });
-
 function transformFilter(rawFilter: RawFilter): CollectionFilter {
   const base = {
     id: rawFilter.id,
@@ -53,7 +37,6 @@ function transformFilter(rawFilter: RawFilter): CollectionFilter {
     handle: rawFilter.handle,
     title: rawFilter.title,
   };
-
   if (rawFilter.type === 'PRICE_RANGE' && rawFilter.priceRange) {
     return {
       ...base,
@@ -62,7 +45,6 @@ function transformFilter(rawFilter: RawFilter): CollectionFilter {
       maxPrice: toMoney(rawFilter.priceRange.max),
     };
   }
-
   return {
     ...base,
     type: 'list',
@@ -77,27 +59,19 @@ function transformFilter(rawFilter: RawFilter): CollectionFilter {
     })),
   };
 }
-
-const toImage = (
-  media:
-    | {
-        readonly id?: string;
-        readonly image?: { readonly url: unknown } | null;
-      }
-    | null
-    | undefined
-): CollectionImage | null =>
-  media?.id && media.image?.url
-    ? { id: media.id, url: String(media.image.url) }
+const toImage = (media: unknown): CollectionImage | null => {
+  if (!media || typeof media !== 'object') return null;
+  const candidate = media as {
+    readonly id?: string;
+    readonly image?: { readonly url?: unknown } | null;
+  };
+  return candidate.id && candidate.image?.url
+    ? { id: candidate.id, url: String(candidate.image.url) }
     : null;
-
+};
 function transformProduct(
-  productRef: CollectionProductCardFragment$key
+  rawProduct: SdkCollectionProductCardFragment
 ): CollectionProduct {
-  const rawProduct = readInlineData(
-    CollectionProductCardFragmentNode,
-    productRef
-  );
   const selectedVariant = rawProduct.selectedVariant;
   const seen = new Set<string>();
   const gallery = [
@@ -110,7 +84,6 @@ function transformProduct(
     seen.add(image.id);
     return true;
   });
-
   return {
     id: selectedVariant?.id ?? rawProduct.id,
     title: selectedVariant?.title ?? rawProduct.title,
@@ -152,12 +125,8 @@ function transformProduct(
         swatch: value.swatch
           ? {
               id: `${value.id}:swatch`,
-              color: value.swatch.color
-                ? String(value.swatch.color)
-                : null,
-              color2: value.swatch.color2
-                ? String(value.swatch.color2)
-                : null,
+              color: value.swatch.color ? String(value.swatch.color) : null,
+              color2: value.swatch.color2 ? String(value.swatch.color2) : null,
               image: toImage(value.swatch.image),
               displayType: value.swatch.displayType,
             }
@@ -170,14 +139,12 @@ function transformProduct(
       ) ?? [],
   };
 }
-
 function transformListing(
-  rawListing: CollectionListingFragment$data['listing'] | undefined
+  rawListing: SdkCollectionListingFragment['listing'] | undefined
 ): CollectionListing | null {
   if (!rawListing) {
     return null;
   }
-
   return {
     totalCount: rawListing.totalCount,
     filters: rawListing.filters.map(transformFilter),
@@ -185,20 +152,16 @@ function transformListing(
       hasNextPage: rawListing.pageInfo.hasNextPage,
       endCursor: rawListing.pageInfo.endCursor,
     },
-    products: rawListing.edges.map((edge) =>
-      transformProduct(edge.node as CollectionProductCardFragment$key)
-    ),
+    products: rawListing.edges.map((edge) => transformProduct(edge.node)),
   };
 }
-
 function transformCollection(
-  rawCategory: CollectionQuery['response']['category'],
-  listingData: CollectionListingFragment$data | null
+  rawCategory: SdkCollectionQuery['category'],
+  listingData: SdkCollectionListingFragment | null
 ): Collection | null {
   if (!rawCategory) {
     return null;
   }
-
   return {
     id: rawCategory.id,
     title: rawCategory.title,
@@ -207,10 +170,9 @@ function transformCollection(
     listing: transformListing(listingData?.listing),
   };
 }
-
 function transformQueryData(
-  data: CollectionQuery['response'],
-  listingData: CollectionListingFragment$data | null
+  data: SdkCollectionQuery,
+  listingData: SdkCollectionListingFragment | null
 ): CollectionTemplateData {
   return {
     pageType: 'collection',
@@ -218,29 +180,16 @@ function transformQueryData(
     collection: transformCollection(data.category, listingData),
   };
 }
-
 export function CollectionDataProvider({
   children,
   preloadedQuery,
 }: CollectionDataProviderProps) {
-  const environment = useRelayEnvironment();
-  const queryReference = useSerializablePreloadedQuery(
-    environment,
-    preloadedQuery
-  );
-  const rawData = usePreloadedQuery<CollectionQuery>(
-    CollectionQueryNode,
-    queryReference
-  );
-  const listingData = useFragment<CollectionListingFragment$key>(
-    CollectionListingFragmentNode,
-    rawData.category
-  );
+  const rawData = preloadedQuery.data;
+  const listingData = rawData.category;
   const data = useMemo(
     () => transformQueryData(rawData, listingData ?? null),
     [rawData, listingData]
   );
-
   return (
     <CollectionDataContext.Provider value={{ data }}>
       {children}

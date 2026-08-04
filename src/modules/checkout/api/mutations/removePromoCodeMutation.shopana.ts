@@ -1,12 +1,4 @@
-import { graphql } from 'react-relay';
+import { StorefrontRemovePromoCodeMutationDocument } from '../../../../../codegen/apollo/storefront-operations';
 
-export const removePromoCodeMutation = graphql`
-  mutation removePromoCodeMutation($input: CheckoutPromoCodeRemoveInput!) {
-    checkoutPromoCodeRemove(input: $input) {
-      checkout {
-        ...useCheckoutFragment
-      }
-      errors: userErrors { code field message retryable }
-    }
-  }
-`;
+export const removePromoCodeMutation =
+  StorefrontRemovePromoCodeMutationDocument;

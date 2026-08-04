@@ -1,25 +1,18 @@
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { addToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/addToCartMutation.graphql';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
-
 import { useCartActions, useCartConfig } from '../context/CartContext';
 import useCreateCart from './useCreateCart';
 import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import type { AddToCartInput } from '../../core/types';
 import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
-
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
   const cartId = useCartIdOnly();
   const cartVersion = useCartVersionOnly();
   const actions = useCartActions();
   const { defaultLocale } = useCartConfig();
-  const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
-    addToCartMutation
-  );
-
+  const [commitAddLine, isInFlight] = useMutation(addToCartMutation);
   return {
     addToCart: async (
       input: AddToCartInput,
@@ -31,7 +24,6 @@ const useAddItemToCart = () => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
-
       if (!cartId) {
         return createCart(
           {
@@ -50,11 +42,9 @@ const useAddItemToCart = () => {
           options
         );
       }
-
       if (cartVersion == null) {
         throw new Error('Cart version is unavailable');
       }
-
       const { revert } = checkoutLinesAdd({
         lines: [
           {
@@ -71,7 +61,6 @@ const useAddItemToCart = () => {
           },
         },
       });
-
       return new Promise((resolve, reject) => {
         commitAddLine({
           variables: {
@@ -100,13 +89,11 @@ const useAddItemToCart = () => {
               onError?.();
               return reject(errors);
             }
-
             if (response.checkoutLinesAdd.errors.length > 0) {
               revert();
               onError?.();
               return reject(response.checkoutLinesAdd.errors);
             }
-
             onSuccess?.();
             return resolve(response.checkoutLinesAdd.checkout);
           },
@@ -121,5 +108,4 @@ const useAddItemToCart = () => {
     isInFlight,
   };
 };
-
 export default useAddItemToCart;

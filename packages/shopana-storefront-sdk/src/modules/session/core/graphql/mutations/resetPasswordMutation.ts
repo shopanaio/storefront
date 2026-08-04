@@ -1,16 +1,6 @@
-import { graphql } from 'react-relay';
+import { SdkResetPasswordMutationDocument } from '../../../../../graphql/apollo/generated/operations';
 
 /**
  * GraphQL mutation for resetting password with token
  */
-export const resetPasswordMutation = graphql`
-  mutation resetPasswordMutation($input: ResetPasswordInput!) {
-    resetPassword(input: $input) {
-      success
-      clientMutationId
-      errors {
-        message
-      }
-    }
-  }
-`;
+export const resetPasswordMutation = SdkResetPasswordMutationDocument;

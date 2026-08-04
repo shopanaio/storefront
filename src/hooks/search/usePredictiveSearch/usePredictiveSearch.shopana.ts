@@ -1,45 +1,35 @@
-import { useEffect, useState } from "react";
-import {
-  fetchQuery,
-  useRelayEnvironment,
-} from "react-relay";
-import { graphql } from "relay-runtime";
-import type { usePredictiveSearchQuery as UsePredictiveSearchQueryType } from "./__generated__/usePredictiveSearchQuery.graphql";
-
-export const usePredictiveSearchQuery = graphql`
-  query usePredictiveSearchQuery($query: String!) {
-    predictiveSearch: searchProducts(query: $query, first: 8, sort: RELEVANCE) {
-      products: nodes {
-        id
-        title
-        handle
-        cover: featuredMedia {
-          ... on MediaImage { image { url } }
-        }
-        selectedVariant: selectedOrFirstAvailableVariant {
-          id
-          title
-          handle
-          price { amount currencyCode }
-          compareAtPrice { amount currencyCode }
-        }
-      }
-      totalCount
-    }
-  }
-`;
-
+import { StorefrontUsePredictiveSearchQueryDocument } from '../../../../codegen/apollo/storefront-operations';
+import { useEffect, useState } from 'react';
+import { useApolloClient } from '@apollo/client/react';
+import { fetchQuery } from '@shopana/storefront-sdk/graphql/apollo';
+export const usePredictiveSearchQuery =
+  StorefrontUsePredictiveSearchQueryDocument;
 export interface PredictiveSearchProduct {
   id: string;
   title: string;
   handle: string;
   variantHandle?: string;
-  cover?: { id: string; url: string } | null;
-  gallery: { edges: Array<{ node: { id: string; url: string } }> };
-  price?: { amount: number; currencyCode: string } | null;
-  compareAtPrice?: { amount: number; currencyCode: string } | null;
+  cover?: {
+    id: string;
+    url: string;
+  } | null;
+  gallery: {
+    edges: Array<{
+      node: {
+        id: string;
+        url: string;
+      };
+    }>;
+  };
+  price?: {
+    amount: number;
+    currencyCode: string;
+  } | null;
+  compareAtPrice?: {
+    amount: number;
+    currencyCode: string;
+  } | null;
 }
-
 type UseSearchResult = {
   products: PredictiveSearchProduct[];
   categories: [];
@@ -47,9 +37,8 @@ type UseSearchResult = {
   loading: boolean;
   error: Error | null;
 };
-
 const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
-  const environment = useRelayEnvironment();
+  const client = useApolloClient();
   const [state, setState] = useState<UseSearchResult>({
     products: [],
     categories: [],
@@ -57,10 +46,10 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
     loading: false,
     error: null,
   });
-
   useEffect(() => {
     if (!searchTerm.trim()) {
       // reset state when field is empty
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({
         products: [],
         categories: [],
@@ -70,19 +59,15 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
       });
       return;
     }
-
     // run query
     setState((prev) => ({ ...prev, loading: true }));
-
-    const subscription = fetchQuery<UsePredictiveSearchQueryType>(
-      environment,
-      usePredictiveSearchQuery,
-      { query: searchTerm }
-    ).subscribe({
-      next: (data) => {
+    let active = true;
+    void fetchQuery(client, usePredictiveSearchQuery, { query: searchTerm })
+      .then((data) => {
+        if (!active) return;
         const maxLength = 5;
-        const rawProducts = data?.predictiveSearch?.products?.slice(0, maxLength) ?? [];
-
+        const rawProducts =
+          data?.predictiveSearch?.products?.slice(0, maxLength) ?? [];
         const products = rawProducts.map((product) => {
           const variant = product.selectedVariant;
           const concatenatedTitle = [product.title, variant?.title]
@@ -94,7 +79,6 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
                 url: String(product.cover.image.url),
               }
             : null;
-
           return {
             id: variant?.id ?? product.id,
             title: concatenatedTitle,
@@ -118,7 +102,6 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
               : null,
           };
         });
-
         setState({
           products,
           categories: [],
@@ -126,25 +109,22 @@ const usePredictiveSearch = (searchTerm: string): UseSearchResult => {
           loading: false,
           error: null,
         });
-      },
-      error: (error: Error) => {
-        setState({
-          products: [],
-          categories: [],
-          articles: [],
-          loading: false,
-          error: error as Error,
-        });
-      },
-    });
-
+      })
+      .catch((error: Error) => {
+        if (active) {
+          setState({
+            products: [],
+            categories: [],
+            articles: [],
+            loading: false,
+            error: error as Error,
+          });
+        }
+      });
     return () => {
-      // cancel subscription on term change/unmount
-      subscription.unsubscribe();
+      active = false;
     };
-  }, [searchTerm, environment]);
-
+  }, [searchTerm, client]);
   return state;
 };
-
 export default usePredictiveSearch;

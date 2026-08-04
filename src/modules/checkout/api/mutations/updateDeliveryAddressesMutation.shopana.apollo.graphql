@@ -1,0 +1,15 @@
+mutation StorefrontUpdateDeliveryAddressesMutation(
+  $input: CheckoutDeliveryAddressesUpdateInput!
+) {
+  checkoutDeliveryAddressesUpdate(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

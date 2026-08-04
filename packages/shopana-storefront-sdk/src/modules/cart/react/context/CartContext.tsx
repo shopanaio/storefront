@@ -4,7 +4,6 @@ import React, { createContext, useContext, useMemo } from 'react';
 import type { CartStore, CartActions } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartIdUtils } from '../../core/utils/cartId';
-import type { CartStoreZustand } from '../store/CartStoreZustand';
 import type { UseBoundStore, StoreApi } from 'zustand';
 
 /**
@@ -33,12 +32,12 @@ export interface CartContextValue {
   cartIdUtils: ReturnType<typeof createCartIdUtils>;
 
   /**
-   * Cart fragment key for Relay
+   * Current normalized cart data
    */
   cartKey: any | null;
 
   /**
-   * Set cart fragment key
+   * Set normalized cart data
    */
   setCartKey: (key: any | null) => void;
 

@@ -1,38 +1,31 @@
 import type { Checkout } from '@src/modules/checkout/types/entity';
 import type { model } from '@shopana/storefront-sdk';
-import type { useCheckoutFragment$data } from './__generated__/useCheckoutFragment.graphql';
-
-type ApiCheckout = useCheckoutFragment$data;
+import type { StorefrontUseCheckoutFragment } from '../../../../../codegen/apollo/storefront-operations';
+type ApiCheckout = StorefrontUseCheckoutFragment;
 type ApiMoney = ApiCheckout['cost']['totalAmount'];
 type ApiLine = ApiCheckout['lines'][number];
 type ApiDeliveryGroup = ApiCheckout['deliveryGroups'][number];
 type ApiDeliveryMethod = ApiDeliveryGroup['deliveryMethods'][number];
 type ApiPaymentMethod = ApiCheckout['payment']['paymentMethods'][number];
-
 const GENERIC_DELIVERY_PROVIDER = 'generic';
-
 const toAmount = (amount: unknown): number => {
   const value = Number(amount ?? 0);
   return Number.isFinite(value) ? value : 0;
 };
-
 const toDate = (value: unknown): Date => {
   const date = new Date(String(value ?? ''));
   return Number.isNaN(date.getTime()) ? new Date(0) : date;
 };
-
 const mapMoney = (money: ApiMoney | null | undefined): model.Money => ({
   amount: toAmount(money?.amount),
   currencyCode: money?.currencyCode ?? 'UAH',
 });
-
 const emptyRating = (id: string): model.ProductRating => ({
   id,
   rating: 0,
   count: 0,
   breakdown: [],
 });
-
 const emptyTags = (): model.TagConnection => ({
   edges: [],
   pageInfo: {
@@ -41,7 +34,6 @@ const emptyTags = (): model.TagConnection => ({
   },
   totalCount: 0,
 });
-
 const createProductReference = (
   product: NonNullable<ApiLine['purchasable']['product']> | undefined,
   fallbackId: string
@@ -49,7 +41,6 @@ const createProductReference = (
   if (!product) {
     return null;
   }
-
   const id = product.id ?? fallbackId;
   return {
     __typename: 'Product',
@@ -69,7 +60,6 @@ const createProductReference = (
     variants: [],
   };
 };
-
 const mapLinePurchasable = (
   line: ApiLine,
   cover: model.Media | null
@@ -84,7 +74,6 @@ const mapLinePurchasable = (
     },
     totalCount: cover ? 1 : 0,
   };
-
   return {
     __typename: 'ProductVariant',
     id,
@@ -105,7 +94,6 @@ const mapLinePurchasable = (
     product: createProductReference(apiPurchasable.product, id),
   };
 };
-
 const mapLineCost = (cost: ApiLine['cost']): Checkout.LineCost => ({
   unitPrice: mapMoney(cost.unitPrice),
   compareAtUnitPrice: mapMoney(cost.compareAtUnitPrice),
@@ -114,14 +102,12 @@ const mapLineCost = (cost: ApiLine['cost']): Checkout.LineCost => ({
   discountAmount: mapMoney(cost.discountAmount),
   taxAmount: mapMoney(cost.taxAmount),
 });
-
 const mapChildLine = (
   child: ApiLine['children'][number],
   currencyCode: string
 ): Checkout.Line => {
   const zero = { amount: 0, currencyCode };
   const purchasableId = child.id;
-
   return {
     id: child.id,
     quantity: child.quantity,
@@ -158,7 +144,6 @@ const mapChildLine = (
     },
   };
 };
-
 const mapLine = (line: ApiLine): Checkout.Line => {
   const image = line.image?.image?.url
     ? {
@@ -167,7 +152,6 @@ const mapLine = (line: ApiLine): Checkout.Line => {
       }
     : null;
   const currencyCode = line.cost.totalAmount.currencyCode;
-
   return {
     id: line.id,
     quantity: line.quantity,
@@ -181,7 +165,6 @@ const mapLine = (line: ApiLine): Checkout.Line => {
     children: line.children.map((child) => mapChildLine(child, currencyCode)),
   };
 };
-
 const mapDeliveryMethod = (
   method: ApiDeliveryMethod
 ): Checkout.DeliveryMethod => ({
@@ -196,12 +179,10 @@ const mapDeliveryMethod = (
   },
   publicData: method.data,
 });
-
 const mapSelectedDeliveryMethod = (
   selection: ApiDeliveryGroup['selectedDeliveryMethod']
 ): Checkout.DeliveryMethod | null =>
   selection.option ? mapDeliveryMethod(selection.option) : null;
-
 const mapDeliveryGroup = (
   group: ApiDeliveryGroup,
   linesById: ReadonlyMap<string, Checkout.Line>
@@ -209,7 +190,6 @@ const mapDeliveryGroup = (
   const selectedDeliveryMethod = mapSelectedDeliveryMethod(
     group.selectedDeliveryMethod
   );
-
   return {
     id: group.id,
     checkoutLines: group.checkoutLines
@@ -246,7 +226,6 @@ const mapDeliveryGroup = (
     selectedDeliveryMethod,
   };
 };
-
 const mapPaymentMethod = (
   method: ApiPaymentMethod
 ): Checkout.PaymentMethod => ({
@@ -256,8 +235,7 @@ const mapPaymentMethod = (
   flow: method.flow,
   data: undefined,
 });
-
-/** Maps the Relay checkout fragment from the current schema to the UI entity. */
+/** Maps the checkout fragment from the current schema to the UI entity. */
 export function mapApiCheckoutToCheckout(
   apiCheckout: Readonly<ApiCheckout>
 ): Checkout.Checkout {
@@ -265,7 +243,6 @@ export function mapApiCheckoutToCheckout(
   const linesById = new Map(lines.map((line) => [line.id, line]));
   const selectedPaymentMethod =
     apiCheckout.payment.selectedPaymentMethod.method;
-
   return {
     id: apiCheckout.id,
     version: apiCheckout.version,

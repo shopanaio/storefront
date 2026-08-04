@@ -1,15 +1,7 @@
 'use client';
-
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import {
-  readInlineData,
-  useFragment,
-  usePreloadedQuery,
-  useRelayEnvironment,
-} from 'react-relay';
-import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
 import { SearchDataContext } from '../context/SearchDataContext';
 import type {
   SearchTemplateData,
@@ -18,34 +10,26 @@ import type {
   SearchFilter,
   SearchImage,
 } from '../../core/types';
-import SearchQueryNode, {
-  SearchQuery,
-} from '../../core/graphql/queries/__generated__/SearchQuery.graphql';
-import SearchProductsFragmentNode, {
-  type SearchProductsFragment$data,
-  type SearchProductsFragment$key,
-} from '../../core/graphql/fragments/__generated__/SearchProductsFragment.graphql';
-import SearchProductCardFragmentNode, {
-  type SearchProductCardFragment$key,
-} from '../../core/graphql/fragments/__generated__/SearchProductCardFragment.graphql';
-
+import type {
+  SdkSearchProductCardFragment,
+  SdkSearchProductsFragment,
+  SdkSearchQuery,
+  SdkSearchQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 interface SearchDataProviderProps {
   children: ReactNode;
-  preloadedQuery: SerializablePreloadedQuery<
-    typeof SearchQueryNode,
-    SearchQuery
+  preloadedQuery: SerializableApolloQuery<
+    SdkSearchQuery,
+    SdkSearchQueryVariables
   >;
   query: string;
 }
-
-type RawFilter = SearchProductsFragment$data['filters'][number];
+type RawFilter = SdkSearchProductsFragment['filters'][number];
 type RawPriceRange = NonNullable<RawFilter['priceRange']>;
-
 const toMoney = (money: RawPriceRange['min']) => ({
   amount: String(money.amount),
   currencyCode: money.currencyCode,
 });
-
 function transformFilter(rawFilter: RawFilter): SearchFilter {
   const base = {
     id: rawFilter.id,
@@ -53,7 +37,6 @@ function transformFilter(rawFilter: RawFilter): SearchFilter {
     handle: rawFilter.handle,
     title: rawFilter.title,
   };
-
   if (rawFilter.type === 'PRICE_RANGE' && rawFilter.priceRange) {
     return {
       ...base,
@@ -62,7 +45,6 @@ function transformFilter(rawFilter: RawFilter): SearchFilter {
       maxPrice: toMoney(rawFilter.priceRange.max),
     };
   }
-
   return {
     ...base,
     type: 'list',
@@ -77,24 +59,19 @@ function transformFilter(rawFilter: RawFilter): SearchFilter {
     })),
   };
 }
-
-const toImage = (
-  media:
-    | {
-        readonly id?: string;
-        readonly image?: { readonly url: unknown } | null;
-      }
-    | null
-    | undefined
-): SearchImage | null =>
-  media?.id && media.image?.url
-    ? { id: media.id, url: String(media.image.url) }
+const toImage = (media: unknown): SearchImage | null => {
+  if (!media || typeof media !== 'object') return null;
+  const candidate = media as {
+    readonly id?: string;
+    readonly image?: { readonly url?: unknown } | null;
+  };
+  return candidate.id && candidate.image?.url
+    ? { id: candidate.id, url: String(candidate.image.url) }
     : null;
-
+};
 function transformProduct(
-  productRef: SearchProductCardFragment$key
+  rawProduct: SdkSearchProductCardFragment
 ): SearchProduct {
-  const rawProduct = readInlineData(SearchProductCardFragmentNode, productRef);
   const selectedVariant = rawProduct.selectedVariant;
   const seen = new Set<string>();
   const gallery = [
@@ -107,7 +84,6 @@ function transformProduct(
     seen.add(image.id);
     return true;
   });
-
   return {
     id: selectedVariant?.id ?? rawProduct.id,
     title: selectedVariant?.title ?? rawProduct.title,
@@ -149,12 +125,8 @@ function transformProduct(
         swatch: value.swatch
           ? {
               id: `${value.id}:swatch`,
-              color: value.swatch.color
-                ? String(value.swatch.color)
-                : null,
-              color2: value.swatch.color2
-                ? String(value.swatch.color2)
-                : null,
+              color: value.swatch.color ? String(value.swatch.color) : null,
+              color2: value.swatch.color2 ? String(value.swatch.color2) : null,
               image: toImage(value.swatch.image),
               displayType: value.swatch.displayType,
             }
@@ -167,14 +139,12 @@ function transformProduct(
       ) ?? [],
   };
 }
-
 function transformSearchResults(
-  rawProducts: SearchProductsFragment$data | null
+  rawProducts: SdkSearchProductsFragment | null
 ): SearchResults | null {
   if (!rawProducts) {
     return null;
   }
-
   return {
     totalCount: rawProducts.totalCount,
     filters: rawProducts.filters.map(transformFilter),
@@ -182,15 +152,12 @@ function transformSearchResults(
       hasNextPage: rawProducts.pageInfo.hasNextPage,
       endCursor: rawProducts.pageInfo.endCursor,
     },
-    products: rawProducts.edges.map((edge) =>
-      transformProduct(edge.node as SearchProductCardFragment$key)
-    ),
+    products: rawProducts.edges.map((edge) => transformProduct(edge.node)),
   };
 }
-
 function transformQueryData(
-  data: SearchQuery['response'],
-  productsData: SearchProductsFragment$data | null,
+  data: SdkSearchQuery,
+  productsData: SdkSearchProductsFragment | null,
   query: string
 ): SearchTemplateData {
   return {
@@ -200,30 +167,17 @@ function transformQueryData(
     results: transformSearchResults(productsData),
   };
 }
-
 export function SearchDataProvider({
   children,
   preloadedQuery,
   query,
 }: SearchDataProviderProps) {
-  const environment = useRelayEnvironment();
-  const queryReference = useSerializablePreloadedQuery(
-    environment,
-    preloadedQuery
-  );
-  const rawData = usePreloadedQuery<SearchQuery>(
-    SearchQueryNode,
-    queryReference
-  );
-  const productsData = useFragment<SearchProductsFragment$key>(
-    SearchProductsFragmentNode,
-    rawData.searchProducts
-  );
+  const rawData = preloadedQuery.data;
+  const productsData = rawData.searchProducts;
   const data = useMemo(
     () => transformQueryData(rawData, productsData, query),
     [rawData, productsData, query]
   );
-
   return (
     <SearchDataContext.Provider value={{ data }}>
       {children}

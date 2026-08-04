@@ -1,39 +1,24 @@
-import { loadSerializableQuery } from '../../../../graphql/relay/loadSerializableQuery';
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
-import { createFetchGraphQL } from '../../../../graphql/relay/Environment';
-import type { RelayEnvironmentConfig } from '../../../../graphql/relay/types';
-import HomePageQueryNode, {
-  HomePageQuery as HomePageQueryType,
-} from '../../core/graphql/queries/__generated__/HomePageQuery.graphql';
-
+import {
+  loadSerializableQuery,
+  type SerializableApolloQuery,
+} from '../../../../graphql/apollo/loadSerializableQuery';
+import { getApolloRequestClient } from '../../../../next/apollo/server';
+import type { ApolloEnvironmentConfig } from '../../../../graphql/apollo/types';
+import {
+  SdkHomePageQueryDocument,
+  type SdkHomePageQuery,
+  type SdkHomePageQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 export interface LoadHomeServerQueryOptions {
-  environmentConfig: RelayEnvironmentConfig;
+  environmentConfig: ApolloEnvironmentConfig;
 }
-
 export async function loadHomeServerQuery(
-  options: LoadHomeServerQueryOptions,
+  options: LoadHomeServerQueryOptions
 ): Promise<
-  SerializablePreloadedQuery<typeof HomePageQueryNode, HomePageQueryType>
+  SerializableApolloQuery<SdkHomePageQuery, SdkHomePageQueryVariables>
 > {
   const { environmentConfig } = options;
-
-  const { headers } = await import('next/headers');
-  const cookie = (await headers()).get('cookie') ?? undefined;
-
-  const networkFetch = createFetchGraphQL({
-    graphqlUrl: environmentConfig.graphqlUrl,
-    apiKeyHeader: environmentConfig.apiKeyHeader,
-    apiKey: environmentConfig.apiKey,
-    accessTokenCookieName: environmentConfig.accessTokenCookieName,
-    serverCookies: cookie,
-  });
-
-  const preloadedQuery = await loadSerializableQuery<
-    typeof HomePageQueryNode,
-    HomePageQueryType
-  >(networkFetch, HomePageQueryNode.params, {}, cookie);
-
-  return preloadedQuery;
+  const client = await getApolloRequestClient(environmentConfig);
+  return loadSerializableQuery(client, SdkHomePageQueryDocument, {});
 }
-
-export type { HomePageQueryType };
+export type { SdkHomePageQuery as HomePageQueryType };

@@ -1,5 +1,9 @@
 # API Layer Migration Plan for `@shopana/storefront-sdk`
 
+> Historical document. Its Relay setup describes the pre-migration state and
+> must not be used for new code. Current GraphQL and SSR conventions are
+> documented in `docs/apollo-ssr.md`.
+
 **Created:** 2025-11-23  
 **Status:** In progress  
 **Goal:** move the entire API layer from the storefront into a reusable SDK package.

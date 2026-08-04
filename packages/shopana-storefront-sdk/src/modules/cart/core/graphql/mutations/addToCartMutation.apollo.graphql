@@ -1,0 +1,13 @@
+mutation SdkAddToCartMutation($input: CheckoutLinesAddInput!) {
+  checkoutLinesAdd(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

@@ -1,64 +1,34 @@
 'use client';
 
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
-import { ConcreteRequest, OperationType } from 'relay-runtime';
-import type { Session } from '../../core/types';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
+import type {
+  SdkLoadSessionQuery,
+  SdkLoadSessionQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 
-/**
- * Interface for session data returned from query
- */
 export interface SessionData {
-  user: any;
+  user: SdkLoadSessionQuery['session'] extends infer T
+    ? T extends { user: infer TUser }
+      ? TUser
+      : never
+    : never;
   token: string | null;
-  expiresAt?: string | null;
 }
 
-/**
- * Interface for input props
- */
 export interface UseGetSessionDataProps {
-  preloadedSessionQuery?: SerializablePreloadedQuery<
-    ConcreteRequest,
-    OperationType
+  preloadedSessionQuery?: SerializableApolloQuery<
+    SdkLoadSessionQuery,
+    SdkLoadSessionQueryVariables
   >;
 }
 
-/**
- * Hook to extract session data from preloaded query
- * Works with both Shopana and Shopify response structures
- *
- * @param props - Input props with preloaded query
- * @returns Session data or null
- *
- * @example
- * ```tsx
- * const sessionData = useGetSessionData({ preloadedSessionQuery });
- * ```
- */
-export const useGetSessionData = (
-  props: UseGetSessionDataProps
-): SessionData | null => {
-  const { preloadedSessionQuery } = props;
-
-  if (!preloadedSessionQuery?.response) {
-    return null;
-  }
-
-  const response = preloadedSessionQuery.response;
-
-  // Handle Shopana response structure
-  if (response && typeof response === 'object' && 'data' in response) {
-    const data = (response as any).data;
-    if (data?.session) {
-      return {
-        user: data.session.user,
-        token: data.session.accessToken,
-        expiresAt: data.session.expiresAt,
-      };
-    }
-  }
-
-  return null;
+export const useGetSessionData = ({
+  preloadedSessionQuery,
+}: UseGetSessionDataProps): SessionData | null => {
+  const session = preloadedSessionQuery?.data.session;
+  return session
+    ? { user: session.user, token: session.accessToken ?? null }
+    : null;
 };
 
 export default useGetSessionData;

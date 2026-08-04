@@ -1,5 +1,9 @@
-import type { InMemoryCacheConfig } from '@apollo/client';
+import type {
+  InMemoryCacheConfig,
+  NormalizedCacheObject,
+} from '@apollo/client';
 import { InMemoryCache } from '@apollo/client-integration-nextjs';
+import { cursorConnectionPolicy } from './pagination/cursorPagination';
 
 /**
  * Shared cache policy factory for the RSC and browser clients.
@@ -9,8 +13,81 @@ import { InMemoryCache } from '@apollo/client-integration-nextjs';
 export function createApolloCache(
   overrides: InMemoryCacheConfig = {}
 ): InMemoryCache {
+  const baseTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
+    Category: {
+      fields: {
+        products: cursorConnectionPolicy(['sort', 'filters']),
+      },
+    },
+    Product: {
+      fields: {
+        reviews: cursorConnectionPolicy(['sort']),
+      },
+    },
+    Query: {
+      fields: {
+        searchProducts: cursorConnectionPolicy(['query', 'sort', 'filters']),
+      },
+    },
+  };
+
   return new InMemoryCache({
-    typePolicies: {},
     ...overrides,
+    typePolicies: {
+      ...baseTypePolicies,
+      ...overrides.typePolicies,
+      Category: {
+        ...baseTypePolicies.Category,
+        ...overrides.typePolicies?.Category,
+        fields: {
+          ...baseTypePolicies.Category?.fields,
+          ...overrides.typePolicies?.Category?.fields,
+        },
+      },
+      Product: {
+        ...baseTypePolicies.Product,
+        ...overrides.typePolicies?.Product,
+        fields: {
+          ...baseTypePolicies.Product?.fields,
+          ...overrides.typePolicies?.Product?.fields,
+        },
+      },
+      Query: {
+        ...baseTypePolicies.Query,
+        ...overrides.typePolicies?.Query,
+        fields: {
+          ...baseTypePolicies.Query?.fields,
+          ...overrides.typePolicies?.Query?.fields,
+        },
+      },
+    },
   });
+}
+
+/**
+ * Combines independently extracted request-scoped caches without losing fields
+ * stored on shared records such as ROOT_QUERY.
+ */
+export function mergeApolloCacheStates(
+  ...states: Array<NormalizedCacheObject | null | undefined>
+): NormalizedCacheObject {
+  const merged: NormalizedCacheObject = {};
+
+  for (const state of states) {
+    if (!state) continue;
+
+    for (const [cacheKey, incoming] of Object.entries(state)) {
+      const existing = merged[cacheKey];
+      merged[cacheKey] =
+        isCacheRecord(existing) && isCacheRecord(incoming)
+          ? { ...existing, ...incoming }
+          : incoming;
+    }
+  }
+
+  return merged;
+}
+
+function isCacheRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

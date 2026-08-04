@@ -1,5 +1,9 @@
 # Cart Module Integration Plan for the Root Application
 
+> Historical document. Its Relay examples describe the pre-migration
+> implementation and must not be used for new code. Current GraphQL and SSR
+> conventions are documented in `docs/apollo-ssr.md`.
+
 ## Table of Contents
 
 1. [Overview](#overview)

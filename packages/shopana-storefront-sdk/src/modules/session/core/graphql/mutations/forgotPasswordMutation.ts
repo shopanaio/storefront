@@ -1,16 +1,6 @@
-import { graphql } from 'react-relay';
+import { SdkForgotPasswordMutationDocument } from '../../../../../graphql/apollo/generated/operations';
 
 /**
  * GraphQL mutation for requesting password recovery
  */
-export const forgotPasswordMutation = graphql`
-  mutation forgotPasswordMutation($input: PasswordRecoveryInput!) {
-    requestPasswordRecovery(input: $input) {
-      success
-      clientMutationId
-      errors {
-        message
-      }
-    }
-  }
-`;
+export const forgotPasswordMutation = SdkForgotPasswordMutationDocument;

@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
-import { useRelayEnvironment } from 'react-relay';
-import { useCartContext, useCartIdUtils } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
+import { useApolloClient } from '@apollo/client/react';
+import {
+  useCartContext,
+  useCartIdUtils,
+} from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 
 /**
  * Hook that provides a cleanup function to clear default cart data after order completion.
@@ -8,12 +11,12 @@ import { useCartContext, useCartIdUtils } from '@shopana/storefront-sdk/modules/
  * Cleans up:
  * - Default cart cookie (via SDK cartIdUtils)
  * - Cart context (cartKey and cartId)
- * - Specific checkout record from Relay store by ID
+ * - Specific checkout record from Apollo cache by ID
  *
  * @returns Cleanup function that accepts checkoutId to be called after successful order creation
  */
 export function useDefaultCartCleanup() {
-  const environment = useRelayEnvironment();
+  const client = useApolloClient();
   const { setCartKey, setId } = useCartContext();
   const { removeCartId } = useCartIdUtils();
 
@@ -26,14 +29,15 @@ export function useDefaultCartCleanup() {
       setCartKey(null);
       setId(null);
 
-      // Remove specific checkout from Relay store if ID exists
+      // Remove the checkout from Apollo cache if an ID exists
       if (checkoutId) {
-        environment.commitUpdate((store) => {
-          store.delete(checkoutId);
+        client.cache.evict({
+          id: client.cache.identify({ __typename: 'Checkout', id: checkoutId }),
         });
+        client.cache.gc();
       }
     },
-    [environment, setCartKey, setId, removeCartId]
+    [client, setCartKey, setId, removeCartId]
   );
 
   return cleanup;

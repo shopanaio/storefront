@@ -1,22 +1,6 @@
-import { graphql } from 'react-relay';
+import { SdkSignUpMutationDocument } from '../../../../../graphql/apollo/generated/operations';
 
 /**
  * GraphQL mutation for signing up with email and password
  */
-export const signUpMutation = graphql`
-  mutation signUpMutation($input: PasswordSignUpInput!) {
-    passwordSignUp(input: $input) {
-      session {
-        accessToken
-        user {
-          id
-          iid
-          email
-        }
-      }
-      errors {
-        message
-      }
-    }
-  }
-`;
+export const signUpMutation = SdkSignUpMutationDocument;

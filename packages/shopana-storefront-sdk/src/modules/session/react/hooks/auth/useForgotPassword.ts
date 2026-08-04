@@ -1,13 +1,10 @@
 'use client';
-
-import { useMutation } from 'react-relay/hooks';
-import type { forgotPasswordMutation as ForgotPasswordMutationType } from '../../../core/graphql/mutations/__generated__/forgotPasswordMutation.graphql';
+import { useMutation } from '../../../../../graphql/apollo/hooks/useMutation';
 import { forgotPasswordMutation } from '../../../core/graphql/mutations/forgotPasswordMutation';
-
 /**
  * Hook to request password recovery/reset
  *
- * @returns Relay mutation tuple [commit, isInFlight]
+ * @returns Mutation tuple [commit, isInFlight]
  *
  * @example
  * ```tsx
@@ -28,7 +25,6 @@ import { forgotPasswordMutation } from '../../../core/graphql/mutations/forgotPa
  * ```
  */
 export const useForgotPassword = () => {
-  return useMutation<ForgotPasswordMutationType>(forgotPasswordMutation);
+  return useMutation(forgotPasswordMutation);
 };
-
 export default useForgotPassword;

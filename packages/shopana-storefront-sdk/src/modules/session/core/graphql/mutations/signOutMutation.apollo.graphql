@@ -1,0 +1,3 @@
+mutation SdkSignOutMutation {
+  signOut
+}

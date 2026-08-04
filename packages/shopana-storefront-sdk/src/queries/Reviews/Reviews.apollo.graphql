@@ -1,0 +1,53 @@
+fragment SdkReviews on Product {
+  __typename
+  id
+  reviews(first: $first, after: $after, sort: $sort) {
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        id
+        kind
+        rating
+        title
+        message: body
+        locale
+        author {
+          type
+          displayName
+        }
+        status
+        revision
+        verifiedPurchase: isVerifiedPurchase
+        verificationStatus
+        metrics {
+          helpfulYes: likeCount
+          helpfulNo: dislikeCount
+          mediaCount
+        }
+        viewerEngagement {
+          meHelpful: vote
+          hasReported
+        }
+        createdAt
+        editedAt: updatedAt
+        publishedAt
+        media {
+          id
+          media {
+            id
+            ... on MediaImage {
+              image {
+                url
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

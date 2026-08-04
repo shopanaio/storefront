@@ -1,0 +1,15 @@
+mutation SdkSignInMutation($input: PasswordSignInInput!) {
+  passwordSignIn(input: $input) {
+    session {
+      accessToken
+      user {
+        id
+        iid
+        email
+      }
+    }
+    errors {
+      message
+    }
+  }
+}

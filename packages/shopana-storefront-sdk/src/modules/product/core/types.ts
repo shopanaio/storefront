@@ -1,31 +1,28 @@
-import type { ProductQuery$data } from './graphql/queries/__generated__/ProductQuery.graphql';
-import type { ProductReviewsFragment$data } from './graphql/fragments/__generated__/ProductReviewsFragment.graphql';
-import type { ProductComponentConfigurationFragment$data } from './graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
-import type { ProductComponentGroupFragment$data } from './graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
-import type { ProductComponentItemFragment$data } from './graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
-
-export type ProductQueryResponse = ProductQuery$data;
-export type ProductReviewsData = ProductReviewsFragment$data;
+import type {
+  SdkProductComponentConfigurationFragment,
+  SdkProductComponentGroupFragment,
+  SdkProductComponentItemFragment,
+  SdkProductQuery,
+  SdkProductReviewsFragment,
+} from '../../../graphql/apollo/generated/operations';
+export type ProductQueryResponse = SdkProductQuery;
+export type ProductReviewsData = SdkProductReviewsFragment;
 export type ProductComponentConfigurationData =
-  ProductComponentConfigurationFragment$data;
-export type ProductComponentGroupData = ProductComponentGroupFragment$data;
-export type ProductComponentItemData = ProductComponentItemFragment$data;
-
+  SdkProductComponentConfigurationFragment;
+export type ProductComponentGroupData = SdkProductComponentGroupFragment;
+export type ProductComponentItemData = SdkProductComponentItemFragment;
 export interface ProductMoney {
   amount: number;
   currencyCode: string;
 }
-
 export interface ProductImage {
   id: string;
   url: string;
 }
-
 export interface ProductImageEdge {
   node: ProductImage;
   cursor?: string;
 }
-
 export interface GalleryConnection {
   edges: ProductImageEdge[];
   pageInfo?: {
@@ -34,21 +31,18 @@ export interface GalleryConnection {
   };
   totalCount?: number;
 }
-
 export interface ProductSwatch {
   id: string;
   color?: string | null;
   displayType?: string | null;
   image?: ProductImage | null;
 }
-
 export interface ProductOptionValue {
   id: string;
   title: string;
   handle: string;
   swatch?: ProductSwatch | null;
 }
-
 export interface ProductOption {
   id: string;
   handle: string;
@@ -56,7 +50,6 @@ export interface ProductOption {
   displayType?: string | null;
   values: ProductOptionValue[];
 }
-
 export interface ProductVariant {
   id: string;
   handle: string;
@@ -73,26 +66,22 @@ export interface ProductVariant {
   isDefault?: boolean;
   groups?: ProductGroup[];
 }
-
 export interface ProductTag {
   id: string;
   handle: string;
   title: string;
 }
-
 export interface ProductFeatureValue {
   id: string;
   handle: string;
   title: string;
 }
-
 export interface ProductFeature {
   id: string;
   handle: string;
   title: string;
   values: ProductFeatureValue[];
 }
-
 export interface ProductGroupItem {
   id: string;
   node: {
@@ -117,7 +106,6 @@ export interface ProductGroupItem {
     percentage?: number | null;
   } | null;
 }
-
 export interface ProductGroup {
   id: string;
   title: string;
@@ -127,33 +115,28 @@ export interface ProductGroup {
   maxSelection?: number | null;
   items: ProductGroupItem[];
 }
-
 export interface ProductRatingBreakdown {
   star: number;
   count: number;
   percentage: number;
 }
-
 export interface ProductRating {
   id: string;
   count: number;
   rating: number;
   breakdown: ProductRatingBreakdown[];
 }
-
 export interface ProductBreadcrumb {
   id: string;
   title: string;
   handle: string;
 }
-
 export interface ProductCategory {
   id: string;
   title: string;
   handle: string;
   breadcrumbs: ProductBreadcrumb[];
 }
-
 export interface ProductReview {
   id: string;
   rating: number;
@@ -169,7 +152,6 @@ export interface ProductReview {
   createdAt: string;
   editedAt?: string | null;
 }
-
 export interface Product {
   id: string;
   title: string;
@@ -188,14 +170,15 @@ export interface Product {
   updatedAt?: string | null;
   rating?: ProductRating | null;
 }
-
 export interface ProductTemplateData {
   pageType: 'product';
   raw: ProductQueryResponse;
   product: Product | null;
 }
-
-export type { ProductReviewsFragment$key } from './graphql/fragments/__generated__/ProductReviewsFragment.graphql';
-export type { ProductComponentConfigurationFragment$key } from './graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
-export type { ProductComponentGroupFragment$key } from './graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
-export type { ProductComponentItemFragment$key } from './graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
+export type ProductReviewsFragmentReference = SdkProductReviewsFragment;
+export type ProductComponentConfigurationFragmentReference =
+  SdkProductComponentConfigurationFragment;
+export type ProductComponentGroupFragmentReference =
+  SdkProductComponentGroupFragment;
+export type ProductComponentItemFragmentReference =
+  SdkProductComponentItemFragment;

@@ -6,7 +6,7 @@ export { model } from './model/namespace';
 export { App } from './App';
 export { AppProvider } from './AppProvider';
 
-// Apollo and Relay intentionally coexist while new UI is migrated by domain.
+// Public Apollo environment configuration.
 export type { ApolloEnvironmentConfig } from './graphql/apollo/types';
 
 // Re-export queries

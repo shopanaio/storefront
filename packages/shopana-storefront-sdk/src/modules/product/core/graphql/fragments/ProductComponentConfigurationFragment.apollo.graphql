@@ -1,0 +1,19 @@
+fragment SdkProductComponentConfigurationFragment on ProductVariant {
+  __typename
+  id
+  componentConfiguration(selections: $componentSelections) {
+    id
+    displayStyle
+    componentsSubtotal {
+      amount
+      currencyCode
+    }
+    totalPrice {
+      amount
+      currencyCode
+    }
+    groups {
+      ...SdkProductComponentGroupFragment
+    }
+  }
+}

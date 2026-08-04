@@ -1,30 +1,22 @@
-import { graphql } from "react-relay";
-import { useMutation } from "react-relay/hooks";
+import { StorefrontUseReportReviewAbuseMutationDocument } from '../../../codegen/apollo/storefront-operations';
+import type { ReviewContentReportReason } from '../../../codegen/apollo/storefront-operations';
+import { useMutation } from '@shopana/storefront-sdk/graphql/apollo';
 
-const useReportReviewAbuseMutation = graphql`
-  mutation useReportReviewAbuseMutation(
-    $reviewId: ID!
-    $reason: ReviewContentReportReason!
-  ) {
-    reviewContentReportCreate(
-      input: { contentId: $reviewId, reason: $reason }
-    ) {
-      content {
-        id
-        viewerEngagement { vote hasReported }
-      }
-      report { id reason status createdAt }
-      errors: userErrors { code field message }
-    }
-  }
-`;
+const useReportReviewAbuseMutation =
+  StorefrontUseReportReviewAbuseMutationDocument;
 
 export const useReportReviewAbuse = () => {
-  const [commit, isInFlight] = useMutation(useReportReviewAbuseMutation as any);
+  const [commit, isInFlight] = useMutation(useReportReviewAbuseMutation);
 
-  const reportReviewAbuse = (reviewId: string, reason: string) => {
+  const reportReviewAbuse = (
+    reviewId: string,
+    details: string,
+    reason: ReviewContentReportReason = 'OTHER'
+  ) => {
     commit({
-      variables: { reviewId, reason },
+      // The returned content carries id and viewerEngagement; normalized cache
+      // replacement updates every rendered reference to the review.
+      variables: { reviewId, reason, details },
     });
   };
 

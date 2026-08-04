@@ -1,54 +1,5 @@
-import { graphql } from "relay-runtime";
+import { SdkReviewsFragmentDoc } from '../../graphql/apollo/generated/operations';
 
-const Reviews = graphql`
-  fragment Reviews on Product
-  @refetchable(queryName: "ProductReviewsPaginationQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 3 }
-    after: { type: "Cursor" }
-    sort: { type: "ReviewSort", defaultValue: MOST_HELPFUL }
-  ) {
-    reviews(first: $first, after: $after, sort: $sort)
-      @connection(key: "ProductReviewsFragment_reviews") {
-      totalCount
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      edges {
-        cursor
-        node {
-          id
-          kind
-          rating
-          title
-          message: body
-          locale
-          author { type displayName }
-          status
-          revision
-          verifiedPurchase: isVerifiedPurchase
-          verificationStatus
-          metrics {
-            helpfulYes: likeCount
-            helpfulNo: dislikeCount
-            mediaCount
-          }
-          viewerEngagement {
-            meHelpful: vote
-            hasReported
-          }
-          createdAt
-          editedAt: updatedAt
-          publishedAt
-          media {
-            id
-            media { id ... on MediaImage { image { url } } }
-          }
-        }
-      }
-    }
-  }
-`;
+const Reviews = SdkReviewsFragmentDoc;
 
 export default Reviews;

@@ -1,5 +1,8 @@
 # Home Page Data Loading Migration Plan for the SDK
 
+> Historical document. Relay snippets below describe the pre-migration state.
+> New SDK GraphQL code must follow `docs/apollo-ssr.md` in the repository root.
+
 ## Overview
 
 Move the GraphQL loader and provider for the home page from the application into the SDK. The scope is Shopana backend only, without CMS abstractions.

@@ -11,7 +11,18 @@ import type { PageTemplate, TemplateParams } from '../core/types';
 import { Builder } from '../core/Builder';
 import { parseRoute } from '../utils/routeParser';
 import { notFound } from 'next/navigation';
-import type { SerializablePreloadedQuery } from '../graphql/relay/loadSerializableQuery';
+import type { SerializableApolloQuery } from '../graphql/apollo/loadSerializableQuery';
+import type { ApolloEnvironmentConfig } from '../graphql/apollo/types';
+import type {
+  SdkCollectionQuery,
+  SdkCollectionQueryVariables,
+  SdkHomePageQuery,
+  SdkHomePageQueryVariables,
+  SdkProductQuery,
+  SdkProductQueryVariables,
+  SdkSearchQuery,
+  SdkSearchQueryVariables,
+} from '../graphql/apollo/generated/operations';
 import { loadHomeServerQuery } from '@shopana/storefront-sdk/modules/home/next/loaders/loadHomeServerQuery';
 import { HomeDataProvider } from '@shopana/storefront-sdk/modules/home/react/providers/HomeDataProvider';
 import { loadProductServerQuery } from '@shopana/storefront-sdk/modules/product/next/loaders/loadProductServerQuery';
@@ -20,7 +31,6 @@ import { loadCollectionServerQuery } from '@shopana/storefront-sdk/modules/colle
 import { CollectionDataProvider } from '@shopana/storefront-sdk/modules/collection/react/providers/CollectionDataProvider';
 import { loadSearchServerQuery } from '@shopana/storefront-sdk/modules/search/next/loaders/loadSearchServerQuery';
 import { SearchDataProvider } from '@shopana/storefront-sdk/modules/search/react/providers/SearchDataProvider';
-import type { RelayEnvironmentConfig } from '../graphql/relay/types';
 import { getRequestContext, type SDKRequestContext } from './headers';
 import {
   moduleRegistry,
@@ -74,22 +84,34 @@ async function loadTemplate(pageType: string): Promise<PageTemplate | null> {
 
 interface HomePageData {
   type: 'home';
-  preloadedQuery: SerializablePreloadedQuery<any, any>;
+  preloadedQuery: SerializableApolloQuery<
+    SdkHomePageQuery,
+    SdkHomePageQueryVariables
+  >;
 }
 
 interface ProductPageData {
   type: 'product';
-  preloadedQuery: SerializablePreloadedQuery<any, any>;
+  preloadedQuery: SerializableApolloQuery<
+    SdkProductQuery,
+    SdkProductQueryVariables
+  >;
 }
 
 interface CollectionPageData {
   type: 'collection';
-  preloadedQuery: SerializablePreloadedQuery<any, any>;
+  preloadedQuery: SerializableApolloQuery<
+    SdkCollectionQuery,
+    SdkCollectionQueryVariables
+  >;
 }
 
 interface SearchPageData {
   type: 'search';
-  preloadedQuery: SerializablePreloadedQuery<any, any>;
+  preloadedQuery: SerializableApolloQuery<
+    SdkSearchQuery,
+    SdkSearchQueryVariables
+  >;
   query: string;
 }
 
@@ -102,7 +124,7 @@ type LoadedPageData =
 
 async function loadPageData(
   ctx: TemplateParams,
-  environmentConfig: RelayEnvironmentConfig
+  environmentConfig: ApolloEnvironmentConfig
 ): Promise<LoadedPageData> {
   const { pageType, params, searchParams } = ctx;
 
@@ -219,7 +241,7 @@ function PageWrapper({
 }
 
 export interface CreateSDKPageOptions {
-  environmentConfig: RelayEnvironmentConfig;
+  environmentConfig: ApolloEnvironmentConfig;
   modulesContext?: ReturnType<typeof require.context>;
 }
 
@@ -275,7 +297,9 @@ export function createSDKPage(options: CreateSDKPageOptions) {
 
     // Get URL context from middleware headers
     const requestContext = await getRequestContext();
-    const { pageType, params: routeParams } = parseRoute(requestContext.pathname);
+    const { pageType, params: routeParams } = parseRoute(
+      requestContext.pathname
+    );
 
     return buildPageMetadata({
       pageType,
@@ -294,15 +318,15 @@ export function createSDKPage(options: CreateSDKPageOptions) {
 
     // Strip locale prefix if present (use params.locale from Next.js)
     const locale = params.locale;
-    const pathnameWithoutLocale = locale && pathname.startsWith(`/${locale}`)
-      ? pathname.slice(locale.length + 1) || '/'
-      : pathname;
+    const pathnameWithoutLocale =
+      locale && pathname.startsWith(`/${locale}`)
+        ? pathname.slice(locale.length + 1) || '/'
+        : pathname;
 
     // Try to match pathname against registered page modules
-    const matchResult = moduleRegistry.matchPath<ModuleExport<DynamicModulePageProps>>(
-      'page',
-      pathnameWithoutLocale
-    );
+    const matchResult = moduleRegistry.matchPath<
+      ModuleExport<DynamicModulePageProps>
+    >('page', pathnameWithoutLocale);
 
     if (matchResult) {
       const rawSearchParams = await props.searchParams;

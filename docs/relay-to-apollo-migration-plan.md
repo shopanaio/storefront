@@ -1,5 +1,9 @@
 # План миграции Relay → Apollo Client
 
+> Статус: выполнен. Финальный inventory находится в
+> `docs/apollo-migration-inventory.md`, а выбранные стратегии обновления cache —
+> в `docs/apollo-mutation-cache-strategies.md`.
+
 ## 1. Цель миграции
 
 Полностью заменить Relay в storefront и `@shopana/storefront-sdk` на Apollo Client, сохранив текущую модульную структуру и максимально похожие контракты React-хуков.
@@ -207,12 +211,12 @@ const data = useLazyLoadQuery(ProductQueryDocument, variables, {
 
 Внутри используется Apollo `useSuspenseQuery`. Compatibility layer переводит ограниченный набор политик:
 
-| Relay-like policy | Apollo policy |
-| --- | --- |
-| `store-or-network` | `cache-first` |
+| Relay-like policy   | Apollo policy       |
+| ------------------- | ------------------- |
+| `store-or-network`  | `cache-first`       |
 | `store-and-network` | `cache-and-network` |
-| `network-only` | `network-only` |
-| `store-only` | `cache-only` |
+| `network-only`      | `network-only`      |
+| `store-only`        | `cache-only`        |
 
 Не следует копировать все Relay options. Поддерживается только реально используемое подмножество, остальные callsites переводятся на явные Apollo options.
 
@@ -223,14 +227,8 @@ const data = useLazyLoadQuery(ProductQueryDocument, variables, {
 Возвращаемый контракт сохраняет привычную форму:
 
 ```ts
-const {
-  data,
-  loadNext,
-  hasNext,
-  isLoadingNext,
-  refetch,
-  error,
-} = usePaginationQuery(CollectionPagination, variables);
+const { data, loadNext, hasNext, isLoadingNext, refetch, error } =
+  usePaginationQuery(CollectionPagination, variables);
 ```
 
 `CollectionPagination` — типизированный descriptor, объявленный рядом с query, а не в компоненте:
@@ -445,24 +443,24 @@ Cart и session мигрируются последними, потому что
 
 ## 5. Маппинг Relay → Apollo
 
-| Relay | Целевой Apollo подход |
-| --- | --- |
-| `graphql` tag в TS | внешний `*.apollo.graphql` + generated `TypedDocumentNode` |
+| Relay                                  | Целевой Apollo подход                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `graphql` tag в TS                     | внешний `*.apollo.graphql` + generated `TypedDocumentNode`                                     |
 | generated `__generated__/*.graphql.ts` | Apollo outputs существующего `codegen.ts`: отдельные generated operations для storefront и SDK |
-| fragment `$key` | normalized object/reference + generated fragment type |
-| `useFragment(fragment, key)` | compatibility `useFragment(document, reference)` |
-| `readInlineData` + `@inline` | named Apollo fragment + hook/cache read/generated mapper input |
-| `useLazyLoadQuery` | compatibility hook поверх `useSuspenseQuery` |
-| `usePreloadedQuery` | Apollo `PreloadQuery`/query ref; bridge loader только где нужен |
-| `usePaginationFragment` | `usePaginationQuery(descriptor, variables)` |
-| `@refetchable` | отдельная именованная pagination/refetch query |
-| `@argumentDefinitions`/`@arguments` | variables owning query |
-| `@connection` | Apollo `typePolicies.fields.*.keyArgs/merge/read` |
-| `loadNext` | `fetchMore` внутри compatibility hook |
-| fragment `refetch` | query `refetch` со сбросом cursor |
-| Relay `useMutation` | Apollo mutation adapter + domain cache updater |
-| Relay `fetchQuery` | Apollo client `query`/`watchQuery` через SDK wrapper |
-| Relay environment | Apollo Client из единого cache/network factory |
+| fragment `$key`                        | normalized object/reference + generated fragment type                                          |
+| `useFragment(fragment, key)`           | compatibility `useFragment(document, reference)`                                               |
+| `readInlineData` + `@inline`           | named Apollo fragment + hook/cache read/generated mapper input                                 |
+| `useLazyLoadQuery`                     | compatibility hook поверх `useSuspenseQuery`                                                   |
+| `usePreloadedQuery`                    | Apollo `PreloadQuery`/query ref; bridge loader только где нужен                                |
+| `usePaginationFragment`                | `usePaginationQuery(descriptor, variables)`                                                    |
+| `@refetchable`                         | отдельная именованная pagination/refetch query                                                 |
+| `@argumentDefinitions`/`@arguments`    | variables owning query                                                                         |
+| `@connection`                          | Apollo `typePolicies.fields.*.keyArgs/merge/read`                                              |
+| `loadNext`                             | `fetchMore` внутри compatibility hook                                                          |
+| fragment `refetch`                     | query `refetch` со сбросом cursor                                                              |
+| Relay `useMutation`                    | Apollo mutation adapter + domain cache updater                                                 |
+| Relay `fetchQuery`                     | Apollo client `query`/`watchQuery` через SDK wrapper                                           |
+| Relay environment                      | Apollo Client из единого cache/network factory                                                 |
 
 ## 6. Checklist миграции одного домена
 

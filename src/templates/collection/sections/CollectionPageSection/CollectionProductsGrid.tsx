@@ -4,10 +4,10 @@ import { Empty } from 'antd';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
 import { CollectionProductCard } from './CollectionProductCard';
-import type { CollectionProductCardFragment$key } from '@shopana/storefront-sdk/modules/collection/core/types';
+import type { CollectionProductCardFragmentReference } from '@shopana/storefront-sdk/modules/collection/core/types';
 
 interface CollectionProductsGridProps {
-  products: readonly CollectionProductCardFragment$key[];
+  products: readonly CollectionProductCardFragmentReference[];
   className?: string;
 }
 
@@ -23,7 +23,7 @@ export const CollectionProductsGrid: React.FC<CollectionProductsGridProps> = ({
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No Data" />
       ) : (
         products.map((product, index) => (
-          <CollectionProductCard key={index} $productRef={product} />
+          <CollectionProductCard key={product.id ?? index} product={product} />
         ))
       )}
     </div>

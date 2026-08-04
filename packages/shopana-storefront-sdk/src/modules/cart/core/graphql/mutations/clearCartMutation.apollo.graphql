@@ -1,0 +1,13 @@
+mutation SdkClearCartMutation($input: CheckoutLinesClearInput!) {
+  checkoutLinesClear(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

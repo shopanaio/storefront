@@ -1,14 +1,7 @@
 'use client';
-
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import {
-  readInlineData,
-  usePreloadedQuery,
-  useRelayEnvironment,
-} from 'react-relay';
-import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
 import { ProductDataContext } from '../context/ProductDataContext';
 import type {
   Product,
@@ -19,40 +12,30 @@ import type {
   ProductGroup,
   ProductImage,
 } from '../../core/types';
-import ProductQueryNode, {
-  ProductQuery,
-} from '../../core/graphql/queries/__generated__/ProductQuery.graphql';
-import ProductComponentConfigurationFragmentNode, {
-  type ProductComponentConfigurationFragment$key,
-} from '../../core/graphql/fragments/__generated__/ProductComponentConfigurationFragment.graphql';
-import ProductComponentGroupFragmentNode, {
-  type ProductComponentGroupFragment$key,
-} from '../../core/graphql/fragments/__generated__/ProductComponentGroupFragment.graphql';
-import ProductComponentItemFragmentNode, {
-  type ProductComponentItemFragment$key,
-} from '../../core/graphql/fragments/__generated__/ProductComponentItemFragment.graphql';
-
+import type {
+  SdkProductQuery,
+  SdkProductQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 interface ProductDataProviderProps {
   children: ReactNode;
-  preloadedQuery: SerializablePreloadedQuery<
-    typeof ProductQueryNode,
-    ProductQuery
+  preloadedQuery: SerializableApolloQuery<
+    SdkProductQuery,
+    SdkProductQueryVariables
   >;
 }
-
-type RawProduct = NonNullable<ProductQuery['response']['product']>;
+type RawProduct = NonNullable<SdkProductQuery['product']>;
 type RawVariant = RawProduct['variants']['edges'][number]['node'];
-
 const toAmount = (amount: unknown): number => {
   const value = Number(amount ?? 0);
   return Number.isFinite(value) ? value : 0;
 };
-
 const toImage = (
   media:
     | {
         readonly id?: string;
-        readonly image?: { readonly url: unknown } | null;
+        readonly image?: {
+          readonly url: unknown;
+        } | null;
       }
     | null
     | undefined
@@ -60,30 +43,17 @@ const toImage = (
   if (!media?.id || !media.image?.url) {
     return null;
   }
-
   return { id: media.id, url: String(media.image.url) };
 };
-
 const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
   if (!variant) {
     return [];
   }
-
-  const configuration = readInlineData(
-    ProductComponentConfigurationFragmentNode,
-    variant as ProductComponentConfigurationFragment$key
-  ).componentConfiguration;
-
+  const configuration = variant.componentConfiguration;
   if (!configuration) {
     return [];
   }
-
-  return configuration.groups.map((groupRef) => {
-    const group = readInlineData(
-      ProductComponentGroupFragmentNode,
-      groupRef as ProductComponentGroupFragment$key
-    );
-
+  return configuration.groups.map((group) => {
     return {
       id: group.id,
       title: group.title,
@@ -91,17 +61,12 @@ const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
       isMultiple: group.maxSelection == null || group.maxSelection > 1,
       minSelection: group.minSelection,
       maxSelection: group.maxSelection,
-      items: group.items.map((itemRef) => {
-        const item = readInlineData(
-          ProductComponentItemFragmentNode,
-          itemRef as ProductComponentItemFragment$key
-        );
+      items: group.items.map((item) => {
         const node = item.node;
         const unitPrice = {
           amount: toAmount(item.unitPrice.amount),
           currencyCode: item.unitPrice.currencyCode,
         };
-
         return {
           id: item.id,
           node: node
@@ -132,19 +97,16 @@ const transformGroups = (variant: RawVariant | undefined): ProductGroup[] => {
     };
   });
 };
-
 function transformProduct(
-  rawProduct: ProductQuery['response']['product']
+  rawProduct: SdkProductQuery['product']
 ): Product | null {
   if (!rawProduct) {
     return null;
   }
-
   const productMedia = [
     toImage(rawProduct.featuredMedia),
     ...rawProduct.media.edges.map((edge) => toImage(edge.node)),
   ].filter((image): image is ProductImage => image !== null);
-
   const variants: ProductVariant[] = rawProduct.variants.edges.map(
     ({ node }) => {
       const seen = new Set<string>();
@@ -159,7 +121,6 @@ function transformProduct(
         seen.add(image.id);
         return true;
       });
-
       return {
         id: node.id,
         handle: node.handle,
@@ -193,7 +154,6 @@ function transformProduct(
       };
     }
   );
-
   const options: ProductOption[] = (rawProduct.options ?? []).map((o) => ({
     id: o.id,
     handle: o.handle,
@@ -216,18 +176,15 @@ function transformProduct(
         : null,
     })),
   }));
-
   const tags: ProductTag[] = rawProduct.tags.map((tag) => ({
     id: tag.id,
     handle: tag.handle,
     title: tag.title,
   }));
-
   const defaultVariant =
     rawProduct.variants.edges.find(({ node }) => node.isDefault)?.node ??
     rawProduct.variants.edges[0]?.node;
   const groups = transformGroups(defaultVariant);
-
   return {
     id: rawProduct.id,
     title: rawProduct.title,
@@ -287,35 +244,19 @@ function transformProduct(
       : null,
   };
 }
-
-function transformQueryData(
-  data: ProductQuery['response']
-): ProductTemplateData {
+function transformQueryData(data: SdkProductQuery): ProductTemplateData {
   return {
     pageType: 'product',
     raw: data,
     product: transformProduct(data.product),
   };
 }
-
 export function ProductDataProvider({
   children,
   preloadedQuery,
 }: ProductDataProviderProps) {
-  const environment = useRelayEnvironment();
-
-  const queryReference = useSerializablePreloadedQuery(
-    environment,
-    preloadedQuery
-  );
-
-  const rawData = usePreloadedQuery<ProductQuery>(
-    ProductQueryNode,
-    queryReference
-  );
-
+  const rawData = preloadedQuery.data;
   const data = useMemo(() => transformQueryData(rawData), [rawData]);
-
   return (
     <ProductDataContext.Provider value={{ data }}>
       {children}

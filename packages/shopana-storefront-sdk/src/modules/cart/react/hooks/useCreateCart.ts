@@ -1,26 +1,19 @@
-"use client";
-
-import { useMutation } from 'react-relay';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import type {
-  createCartMutation as CreateCartMutationType,
   CurrencyCode,
   LocaleCode,
-} from '../../core/graphql/mutations/__generated__/createCartMutation.graphql';
+  SdkCreateCartMutation,
+} from '../../../../graphql/apollo/generated/operations';
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
 import { useCartConfig, useCartContext } from '../context/CartContext';
 import type { CreateCartInput } from '../../core/types';
 import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
-
-type CreatedCheckout =
-  CreateCartMutationType['response']['checkoutCreate']['checkout'];
-
+type CreatedCheckout = SdkCreateCartMutation['checkoutCreate']['checkout'];
 const useCreateCart = () => {
   const { setId, setCartKey } = useCartContext();
   const { channelCode } = useCartConfig();
-  const [commit, isInFlight] = useMutation<CreateCartMutationType>(
-    createCartMutation
-  );
-
+  const [commit, isInFlight] = useMutation(createCartMutation);
   const createCart = (
     input: CreateCartInput,
     options?: {
@@ -55,18 +48,17 @@ const useCreateCart = () => {
             options?.onError?.();
             return reject(errors);
           }
-
           if (response.checkoutCreate.errors.length > 0) {
             options?.onError?.();
             return reject(response.checkoutCreate.errors);
           }
-
           const checkout = response.checkoutCreate.checkout;
           if (!checkout) {
             options?.onError?.();
-            return reject(new Error('No cart found in checkoutCreate response'));
+            return reject(
+              new Error('No cart found in checkoutCreate response')
+            );
           }
-
           setId(checkout.id);
           setCartKey(checkout);
           options?.onSuccess?.();
@@ -79,8 +71,6 @@ const useCreateCart = () => {
       });
     });
   };
-
   return { createCart, isLoading: isInFlight };
 };
-
 export default useCreateCart;

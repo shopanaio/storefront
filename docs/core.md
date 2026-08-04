@@ -4,7 +4,7 @@
 
 Превратить корневой `@shopana/storefront` в тонкий Next.js-каркас, который выбирает и подключает тему и бренд. Весь код конкретной витрины Bite & Crunch переносится в локальный workspace-пакет `packages/theme-bite-crunch` (`@shopana/theme-bite-crunch`).
 
-Тема владеет не только визуальными компонентами, но и всей storefront-specific реализацией: templates, layouts, UI, locales, API, Relay, hooks, stores, utils, wishlist и box-builder. `brand-bite-crunch` остаётся отдельным пакетом цветов, логотипов и brand config. Checkout остаётся независимым корневым module и не зависит от темы.
+Тема владеет не только визуальными компонентами, но и всей storefront-specific реализацией: templates, layouts, UI, locales, API, Apollo documents, hooks, stores, utils, wishlist и box-builder. `brand-bite-crunch` остаётся отдельным пакетом цветов, логотипов и brand config. Checkout остаётся независимым корневым module и не зависит от темы.
 
 После миграции корневой репозиторий содержит каркас приложения, SDK, brand-пакеты и checkout, но не содержит реализацию стандартной витрины.
 
@@ -19,9 +19,9 @@
 - platform bootstrap и environment config;
 - подключение storefront SDK, выбранной темы и выбранного бренда;
 - независимый `src/modules/checkout`;
-- workspace, сборочная и Relay-инфраструктура, необходимая для запуска пакетов.
+- workspace, сборочная и Apollo-инфраструктура, необходимая для запуска пакетов.
 
-Корневой app не содержит templates, storefront layouts, UI kit, storefront locales, page hooks, storefront API/Relay-код, wishlist или box-builder.
+Корневой app не содержит templates, storefront layouts, UI kit, storefront locales, page hooks, storefront API/Apollo-код, wishlist или box-builder.
 
 ### `@shopana/theme-bite-crunch`
 
@@ -31,7 +31,7 @@
 - layouts, sections, blocks, snippets и assets;
 - storefront locales и visual/runtime providers;
 - storefront-specific API clients и operations;
-- Relay queries, fragments, mutations, compiler config и generated artifacts темы;
+- Apollo queries, fragments, mutations, codegen config и generated operations темы;
 - page/data hooks, stores, mappers, utils и storefront config;
 - wishlist как theme extension;
 - box-builder как theme extension и Git submodule.
@@ -45,7 +45,7 @@ SDK остаётся независимым от конкретной темы �
 - `ThemeRegistry` и module registry;
 - `Builder`, базовые types и contexts;
 - общий routing и интеграцию с Next.js;
-- универсальные GraphQL/Relay transport primitives, если они не содержат Bite & Crunch-specific operations;
+- универсальные GraphQL/Apollo transport primitives, если они не содержат Bite & Crunch-specific operations;
 - общие model contracts и platform providers.
 
 SDK не импортирует `@src/templates`, `@src/layouts`, `@shopana/theme` или конкретный theme package. Storefront-specific queries, loaders, fragments и hooks в SDK не остаются: они переносятся в тему.
@@ -69,7 +69,7 @@ Checkout остаётся в `src/modules/checkout` и владеет собст
 ```text
 packages/theme-bite-crunch/
 ├── package.json
-├── relay.config.*
+├── codegen.ts
 └── src/
     ├── api/
     ├── assets/
@@ -78,7 +78,7 @@ packages/theme-bite-crunch/
     ├── hooks/
     ├── layout/
     ├── locales/
-    ├── relay/
+    ├── graphql/
     │   ├── queries/
     │   ├── fragments/
     │   ├── mutations/
@@ -141,7 +141,7 @@ packages/theme-bite-crunch/
 - порядок sections и blocks определяется только массивами `order`;
 - неизвестные section/block types не пропускаются молча, а завершаются диагностической ошибкой.
 
-Стандартные page data loaders, metadata builders и Relay operations являются exports темы и связываются с соответствующими templates в theme registry. SDK вызывает зарегистрированный theme contract, но не содержит switch с Bite & Crunch-specific imports или operations.
+Стандартные page data loaders, metadata builders и Apollo operations являются exports темы и связываются с соответствующими templates в theme registry. SDK вызывает зарегистрированный theme contract, но не содержит switch с Bite & Crunch-specific imports или operations.
 
 Обязательные templates для Bite & Crunch:
 
@@ -176,7 +176,7 @@ Checkout не должен неявно зависеть от наличия the
 - storefront-specific части `src/store`;
 - storefront-specific `src/utils` и config;
 - API operations, data loaders и CMS adapters конкретной витрины;
-- Relay queries, fragments, mutations и generated artifacts стандартных страниц;
+- Apollo queries, fragments, mutations и generated operations стандартных страниц;
 - styles, fonts и images.
 
 При переносе разложить UI по роли:
@@ -186,14 +186,14 @@ Checkout не должен неявно зависеть от наличия the
 - низкоуровневые UI primitives — `snippets`;
 - глобальные styles, images и fonts — `assets`.
 
-Hooks, stores, mappers и Relay artifacts размещаются рядом с владеющей ими feature либо в соответствующих общих каталогах темы. Нельзя оставлять в root app прокси-файлы только ради сохранения старых `@src/*` импортов.
+Hooks, stores, mappers и Apollo documents размещаются рядом с владеющей ими feature либо в соответствующих общих каталогах темы. Нельзя оставлять в root app прокси-файлы только ради сохранения старых `@src/*` импортов.
 
 После перевода импортов удалить опустевшие root theme-каталоги.
 
 ## Wishlist extension
 
 - Перенести wishlist целиком в `packages/theme-bite-crunch/src/extensions/wishlist`.
-- Перенести вместе с ним API, Relay, hooks, context, providers, state, sections и page.
+- Перенести вместе с ним API, Apollo documents, hooks, context, providers, state, sections и page.
 - `extensions/wishlist/register.ts` регистрирует `/wishlist` через существующий module registry.
 - Wishlist UI использует внутренние sections/blocks/snippets темы.
 - Theme header/layout получает wishlist provider и hooks из extension, не из root app.
@@ -204,7 +204,7 @@ Hooks, stores, mappers и Relay artifacts размещаются рядом с �
 - Переместить Git submodule из `src/modules/storefront-box-builder-module` в `packages/theme-bite-crunch/src/extensions/box-builder`.
 - Обновить `.gitmodules` и gitlink superproject.
 - В отдельном submodule-репозитории обновить импорты на внутренние theme APIs либо `@shopana/theme/*`.
-- Перенести необходимые box-builder hooks, state, API, Relay artifacts, config и utils в extension или общие каталоги темы.
+- Перенести необходимые box-builder hooks, state, API, Apollo documents, config и utils в extension или общие каталоги темы.
 - Устранить все импорты box-builder из root `@src/**`.
 - `extensions/box-builder/register.ts` продолжает регистрировать `/box-builder` через module registry.
 - Изменения внутри submodule фиксируются отдельным commit; storefront хранит обновлённый gitlink.
@@ -236,7 +236,7 @@ Brand logo checkout получает через `@shopana/brand-sdk` и platform
 3. Получить новую собранную версию SDK, необходимую root app для использования изменённых exports и types.
 4. Подключить `@shopana/theme/registry` к SDK page, layout и not-found entrypoints.
 5. Разделить platform shell и theme layout/providers.
-6. Перенести storefront API, Relay operations/generated artifacts, hooks, stores, utils и config в тему.
+6. Перенести storefront API, Apollo operations/generated types, hooks, stores, utils и config в тему.
 7. Перенести UI kit, templates, layouts, locales и assets; заменить components в template configs строковыми `type`.
 8. Перенести wishlist extension.
 9. Перенести и обновить box-builder submodule.
@@ -249,7 +249,7 @@ Brand logo checkout получает через `@shopana/brand-sdk` и platform
 - Root `src` содержит только app/platform skeleton и `modules/checkout`; в нём отсутствует реализация стандартной витрины.
 - `packages/theme-bite-crunch` не содержит импортов `@src/**`.
 - SDK не импортирует `@src/templates`, `@src/layouts`, `@shopana/theme` или `@shopana/theme-bite-crunch`.
-- SDK не содержит Bite & Crunch-specific API operations, Relay queries/fragments, page loaders или hooks.
+- SDK не содержит Bite & Crunch-specific API operations, Apollo queries/fragments, page loaders или hooks.
 - Стандартные templates, layouts, sections и blocks разрешаются только через переданный `ThemeRegistry`.
 - Templates содержат строковые `type`; components разрешаются registry с сохранением вложенных blocks и `order`.
 - `home`, `product`, `collection`, `search`, `blog`, `article`, `page`, `cart`, `list-collections` и `404` загружаются из выбранной темы.
@@ -266,7 +266,7 @@ Build, test и tsc для проверки не запускать. Build storef
 ## Зафиксированные решения
 
 - Theme — обычный workspace-пакет, не отдельный репозиторий.
-- Весь storefront-specific API, Relay, hooks, state и UI принадлежит теме.
+- Весь storefront-specific API, Apollo documents, hooks, state и UI принадлежит теме.
 - Корневой storefront остаётся тонким Next.js-каркасом.
 - Box-builder сохраняется как Git submodule внутри темы.
 - Wishlist является theme extension.

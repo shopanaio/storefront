@@ -74,6 +74,7 @@ export default template;
 `layout` is a top-level React component. The builder passes assembled sections to it as `children`; the layout only decides where and how to render that content. Components inside templates may be imported directly or wrapped with `next/dynamic`.
 
 Important Shopify Liquid analogy:
+
 - `type` -> page type: home, product, collection
 - `layout` -> layout component
 - `sections.order` -> section order
@@ -85,7 +86,8 @@ Important Shopify Liquid analogy:
 ### 2.2 Package-Owned Page (Server Component)
 
 The framework implements its own RSC page handler, `app/[[...slug]]/page.tsx`. It is responsible for:
-- Loading data through Relay/GraphQL
+
+- Loading data through Apollo Client/GraphQL
 - Generating metadata for SEO
 - Selecting the correct template
 - Passing a single data object into `Builder`
@@ -104,7 +106,11 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   };
 }
 
-export default async function Page({ params }: { params: { slug?: string[] } }) {
+export default async function Page({
+  params,
+}: {
+  params: { slug?: string[] };
+}) {
   const { pageType, params: routeParams } = parseRoute(params.slug || []);
 
   let template;
@@ -194,11 +200,7 @@ Layout components receive rendered page sections through `children` and wrap the
 import type { LayoutProps } from '@shopana/storefront-sdk/core';
 
 export default function MainLayout({ children }: LayoutProps) {
-  return (
-    <main>
-      {children}
-    </main>
-  );
+  return <main>{children}</main>;
 }
 ```
 
@@ -217,10 +219,11 @@ To make sections feel close to Shopify Liquid, page data is loaded once at the p
 The goal is to let a section call hooks such as `useProduct()` or `useCollection()` without refetching client data. These hooks read already loaded page data from context.
 
 Technical details:
-- **Data Loading:** Relay loads data on the server.
-- **Mutations:** GraphQL mutations are executed through Relay.
+
+- **Data Loading:** request-scoped Apollo Client loads data on the server.
+- **Mutations:** generated GraphQL mutations are executed through Apollo Client.
 - **Error Handling:** global error boundary with custom UI and Sentry logging.
-- **Caching:** standard Relay behavior.
+- **Caching:** normalized Apollo cache with shared server/browser type policies.
 
 The builder wraps section rendering in a provider with page type and data:
 
@@ -243,6 +246,7 @@ export function useProduct() {
 ```
 
 The internal Server SDK is used only inside package-owned RSC pages to build `ProductTemplateData`, `CollectionTemplateData`, and other page data types. Package consumers only work with:
+
 - `data` props in sections and blocks
 - Client SDK hooks such as `useProduct`, `useCollection`, and `useCart`
 
@@ -290,6 +294,7 @@ src/
 ```
 
 External exports:
+
 - Core exports from `@shopana/storefront-sdk/core`: `Builder`, `TemplateDataContext`, section/template/page types
 - SDK exports from `@shopana/storefront-sdk/sdk`: `ShopProvider`, `useShop`, `ShopConfig`, entity types, page data types, and client hooks
 
@@ -331,6 +336,7 @@ Component hierarchy:
 4. **Templates** - configuration that maps page types to components and data
 
 Key points:
+
 - Users do not write the Server SDK or the router for `/[[...slug]]`; they are encapsulated in the framework.
 - Users create blocks, sections, layouts, and templates.
 - Users may add custom routes in `app/**` as long as they do not collide with reserved framework routes.
@@ -340,8 +346,9 @@ Key points:
 ### 5.1 Technical Implementation
 
 Selected decisions:
-- **Data Loading:** Relay loads data on the server without custom caching.
-- **Mutations:** GraphQL mutations are executed through Relay.
+
+- **Data Loading:** Apollo Client loads data on the server with request-scoped caching.
+- **Mutations:** generated GraphQL mutations are executed through Apollo Client.
 - **Error Handling:** global error boundary with custom UI and Sentry logging.
 - **Entity Types:** use types from the existing `packages/entity` package.
 
@@ -355,8 +362,9 @@ Selected decisions:
     "next": "^14.0.0 || ^15.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "@shopana/entity": "^1.0.0",
-    "relay-runtime": "^15.0.0"
+    "@apollo/client": "^4.0.0",
+    "@apollo/client-integration-nextjs": "^0.14.0",
+    "graphql": "^16.0.0"
   },
   "devDependencies": {
     "next": "^15.0.0",
@@ -366,7 +374,6 @@ Selected decisions:
     "@types/react-dom": "^18.0.0",
     "typescript": "^5.0.0",
     "@shopana/entity": "^1.0.0",
-    "relay-runtime": "^15.0.0",
     "@sentry/nextjs": "^7.0.0"
   }
 }
@@ -375,6 +382,7 @@ Selected decisions:
 ### 5.3 Core Types
 
 Public types available through `@shopana/storefront-sdk/core`:
+
 - `PageType`
 - `BlockProps`
 - `SectionProps`
@@ -459,18 +467,19 @@ Template imports all components
 
 ### 6.1 Implemented Technical Decisions
 
-| Component | Implementation | Notes |
-| --- | --- | --- |
-| Data Loading | Relay | Used for server-side data loading |
-| Mutations | GraphQL mutations through Relay | Same approach as the current project |
-| Error Handling | Global error boundary + Sentry | Custom UI and logging |
-| Entity Types | `packages/entity` | Ready-made Product, Collection, and Cart types |
-| Routing | Next.js App Router | `[[...slug]]` for reserved pages |
-| State Management | React Context + Relay | No additional state library required for page data |
+| Component        | Implementation                             | Notes                                                 |
+| ---------------- | ------------------------------------------ | ----------------------------------------------------- |
+| Data Loading     | Apollo Client                              | Request-scoped server loading and browser hydration   |
+| Mutations        | Generated GraphQL mutations through Apollo | Normalized cache updates with domain strategies       |
+| Error Handling   | Global error boundary + Sentry             | Custom UI and logging                                 |
+| Entity Types     | `packages/entity`                          | Ready-made Product, Collection, and Cart types        |
+| Routing          | Next.js App Router                         | `[[...slug]]` for reserved pages                      |
+| State Management | React Context + Apollo Client              | Zustand remains responsible for cart/session UI state |
 
 ### 6.2 Reserved Routes
 
 Reserved framework routes:
+
 - `/` -> `index` (home)
 - `/products/[handle]` -> `product`
 - `/collections/[handle]` -> `collection`
@@ -485,6 +494,7 @@ Reserved framework routes:
 ### 6.3 Required User Files
 
 The user must create these files in `/templates/*.ts`:
+
 - `index.ts` (home)
 - `product.ts`
 - `collection.ts`

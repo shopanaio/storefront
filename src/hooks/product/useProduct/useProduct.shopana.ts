@@ -1,13 +1,12 @@
-import { useLazyLoadQuery } from "react-relay";
-import ProductQuery from "@src/hooks/product/ProductQuery";
-import { ProductQueryType } from "@src/hooks/product/ProductQuery";
-import { mapApiProductToProduct } from "@src/hooks/product/mapApiProductToProduct";
+import { useLazyLoadQuery } from '@shopana/storefront-sdk/graphql/apollo';
+import ProductQuery from '@src/hooks/product/ProductQuery';
+import { mapApiProductToProduct } from '@src/hooks/product/mapApiProductToProduct';
 
 const useProduct = (handle: string) => {
-  const data = useLazyLoadQuery<ProductQueryType>(
+  const data = useLazyLoadQuery(
     ProductQuery,
     { handle },
-    { fetchPolicy: "store-or-network" }
+    { fetchPolicy: 'store-or-network' }
   );
 
   const apiProduct = data?.product ?? null;

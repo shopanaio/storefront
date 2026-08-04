@@ -1,33 +1,4 @@
-import { graphql } from 'relay-runtime';
-
-export const ProductComponentConfigurationFragment = graphql`
-  fragment ProductComponentConfigurationFragment on ProductVariant
-  @inline
-  @argumentDefinitions(
-    selections: { type: "[ProductComponentSelectionInput!]" }
-  ) {
-    componentConfiguration(selections: $selections) {
-      id
-      displayStyle
-      componentsSubtotal {
-        amount
-        currencyCode
-      }
-      totalPrice {
-        amount
-        currencyCode
-      }
-      groups {
-        ...ProductComponentGroupFragment
-      }
-    }
-  }
-`;
-
-export {
-  default as ProductComponentConfigurationFragmentNode,
-} from './__generated__/ProductComponentConfigurationFragment.graphql';
-export type {
-  ProductComponentConfigurationFragment$data,
-  ProductComponentConfigurationFragment$key,
-} from './__generated__/ProductComponentConfigurationFragment.graphql';
+import { SdkProductComponentConfigurationFragmentDoc } from '../../../../../graphql/apollo/generated/operations';
+export const ProductComponentConfigurationFragment =
+  SdkProductComponentConfigurationFragmentDoc;
+export type { SdkProductComponentConfigurationFragment as ProductComponentConfigurationFragmentData } from '../../../../../graphql/apollo/generated/operations';

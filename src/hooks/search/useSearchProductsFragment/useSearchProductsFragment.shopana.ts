@@ -1,10 +1,7 @@
-import SearchProductsFragment from "@src/hooks/search/SearchProductsFragment";
-import { SearchProductsFragment$key } from "@src/hooks/search/SearchProductsFragment/__generated__/SearchProductsFragment.graphql";
-import { useFragment } from "react-relay";
-
-
-const useSearchProductsFragment = (data: SearchProductsFragment$key) => {
-  return useFragment(SearchProductsFragment, data.products);
+import SearchProductsFragment from '@src/hooks/search/SearchProductsFragment';
+import type { StorefrontSearchProductsFragment } from '../../../../codegen/apollo/storefront-operations';
+import { useFragment } from '@shopana/storefront-sdk/graphql/apollo';
+const useSearchProductsFragment = (data: StorefrontSearchProductsFragment) => {
+  return useFragment(SearchProductsFragment, data);
 };
-
 export default useSearchProductsFragment;

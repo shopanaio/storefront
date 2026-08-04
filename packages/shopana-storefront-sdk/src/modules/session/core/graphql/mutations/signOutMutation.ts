@@ -1,10 +1,6 @@
-import { graphql } from 'react-relay';
+import { SdkSignOutMutationDocument } from '../../../../../graphql/apollo/generated/operations';
 
 /**
  * GraphQL mutation for signing out
  */
-export const signOutMutation = graphql`
-  mutation signOutMutation {
-    signOut
-  }
-`;
+export const signOutMutation = SdkSignOutMutationDocument;

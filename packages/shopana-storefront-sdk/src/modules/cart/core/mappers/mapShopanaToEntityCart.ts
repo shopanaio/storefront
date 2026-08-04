@@ -1,42 +1,36 @@
 import type { model } from '../../../../model/namespace';
-import type { CartFragment_cart$data } from '../graphql/fragments/__generated__/CartFragment_cart.graphql';
-import type { CartLineFragment_line$data } from '../graphql/fragments/__generated__/CartLineFragment_line.graphql';
-
-export type DenormalizedShopanaCart = Omit<CartFragment_cart$data, 'lines'> & {
-  readonly lines: ReadonlyArray<CartLineFragment_line$data>;
+import type {
+  SdkCartFragment_CartFragment,
+  SdkCartLineFragment_LineFragment,
+} from '../../../../graphql/apollo/generated/operations';
+export type DenormalizedShopanaCart = Omit<SdkCartFragment_CartFragment, 'lines'> & {
+  readonly lines: ReadonlyArray<SdkCartLineFragment_LineFragment>;
 };
-
-type ApiMoney = CartLineFragment_line$data['cost']['unitPrice'];
-
+type ApiMoney = SdkCartLineFragment_LineFragment['cost']['unitPrice'];
 const toAmount = (amount: unknown): number => {
   const value = Number(amount ?? 0);
   return Number.isFinite(value) ? value : 0;
 };
-
 const toMoney = (money: ApiMoney | null | undefined): model.Money => ({
   amount: toAmount(money?.amount),
   currencyCode: money?.currencyCode ?? 'USD',
 });
-
 const toDate = (value: unknown): Date => {
   const date = new Date(String(value ?? ''));
   return Number.isNaN(date.getTime()) ? new Date(0) : date;
 };
-
 const emptyTags = (): model.TagConnection => ({
   edges: [],
   pageInfo: { hasNextPage: false, hasPreviousPage: false },
   totalCount: 0,
 });
-
 const createProductReference = (
-  product: CartLineFragment_line$data['purchasable']['product'],
+  product: SdkCartLineFragment_LineFragment['purchasable']['product'],
   fallbackId: string
 ): model.Product | null => {
   if (!product) {
     return null;
   }
-
   return {
     __typename: 'Product',
     id: product.id ?? fallbackId,
@@ -60,16 +54,17 @@ const createProductReference = (
     variants: [],
   };
 };
-
-const mapLine = (
-  line: CartLineFragment_line$data
-): model.CartLine => {
+const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
   const apiPurchasable = line.purchasable;
   const id = apiPurchasable.id ?? line.purchasableId;
-  const media = apiPurchasable.cover?.image?.url
+  const cover =
+    apiPurchasable.cover?.__typename === 'MediaImage'
+      ? apiPurchasable.cover
+      : null;
+  const media = cover?.image?.url
     ? {
-        id: apiPurchasable.cover.id,
-        url: String(apiPurchasable.cover.image.url),
+        id: cover.id,
+        url: String(cover.image.url),
       }
     : line.image?.image?.url
       ? {
@@ -77,7 +72,6 @@ const mapLine = (
           url: String(line.image.image.url),
         }
       : null;
-
   const purchasable: model.ProductVariant = {
     __typename: 'ProductVariant',
     id,
@@ -108,7 +102,6 @@ const mapLine = (
     updatedAt: '',
     product: createProductReference(apiPurchasable.product, id),
   };
-
   return {
     id: line.id,
     quantity: line.quantity,
@@ -124,7 +117,6 @@ const mapLine = (
     },
   };
 };
-
 /** Maps the current Checkout GraphQL fragment to the public cart entity. */
 export function mapShopanaCheckoutToEntityCart(
   checkout: DenormalizedShopanaCart

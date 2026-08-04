@@ -1,26 +1,23 @@
-import type { SearchQuery$data } from './graphql/queries/__generated__/SearchQuery.graphql';
-import type { SearchProductsFragment$data } from './graphql/fragments/__generated__/SearchProductsFragment.graphql';
-import type { SearchProductCardFragment$data } from './graphql/fragments/__generated__/SearchProductCardFragment.graphql';
-
-export type SearchQueryResponse = SearchQuery$data;
-export type SearchProductsData = SearchProductsFragment$data;
-export type SearchProductCardData = SearchProductCardFragment$data;
-
+import type {
+  SdkSearchProductCardFragment,
+  SdkSearchProductsFragment,
+  SdkSearchQuery,
+} from '../../../graphql/apollo/generated/operations';
+export type SearchQueryResponse = SdkSearchQuery;
+export type SearchProductsData = SdkSearchProductsFragment;
+export type SearchProductCardData = SdkSearchProductCardFragment;
 export interface SearchMoney {
   amount: string;
   currencyCode: string;
 }
-
 export interface SearchImage {
   id: string;
   url: string;
 }
-
 export interface SearchProductRating {
   rating: number;
   count: number;
 }
-
 export interface SearchFilterValue {
   id: string;
   iid: string;
@@ -30,7 +27,6 @@ export interface SearchFilterValue {
   input: unknown;
   selected: boolean;
 }
-
 export interface SearchFilter {
   id: string;
   iid: string;
@@ -43,7 +39,6 @@ export interface SearchFilter {
   maxRate?: number | null;
   values?: SearchFilterValue[] | null;
 }
-
 export interface SearchProductSwatch {
   id: string;
   color?: string | null;
@@ -51,14 +46,12 @@ export interface SearchProductSwatch {
   image?: SearchImage | null;
   displayType?: string | null;
 }
-
 export interface SearchProductOptionValue {
   id: string;
   title: string;
   handle: string;
   swatch?: SearchProductSwatch | null;
 }
-
 export interface SearchProductOption {
   id: string;
   handle: string;
@@ -66,7 +59,6 @@ export interface SearchProductOption {
   displayType?: string | null;
   values: SearchProductOptionValue[];
 }
-
 export interface SearchProduct {
   id: string;
   title: string;
@@ -89,25 +81,21 @@ export interface SearchProduct {
   options: SearchProductOption[];
   selectedOptions?: string[] | null;
 }
-
 export interface SearchPageInfo {
   hasNextPage: boolean;
   endCursor?: string | null;
 }
-
 export interface SearchResults {
   totalCount: number;
   filters: SearchFilter[];
   pageInfo: SearchPageInfo;
   products: SearchProduct[];
 }
-
 export interface SearchTemplateData {
   pageType: 'search';
   raw: SearchQueryResponse;
   query: string;
   results: SearchResults | null;
 }
-
-export type { SearchProductsFragment$key } from './graphql/fragments/__generated__/SearchProductsFragment.graphql';
-export type { SearchProductCardFragment$key } from './graphql/fragments/__generated__/SearchProductCardFragment.graphql';
+export type SearchProductsFragmentReference = SdkSearchProductsFragment;
+export type SearchProductCardFragmentReference = SdkSearchProductCardFragment;

@@ -3,14 +3,14 @@
 import { createStyles } from 'antd-style';
 import React from 'react';
 import type { model } from '@shopana/storefront-sdk';
-import type { Reviews$key } from '@shopana/storefront-sdk/queries/Reviews';
+import type { ReviewsData } from '@shopana/storefront-sdk/queries/Reviews';
 import { ProductMain } from '../ProductMain';
 import { ProductDetails } from '../ProductDetails';
 
 interface Prop {
   title: string;
   product: model.Product;
-  productReviewsRef: Reviews$key | null;
+  productReviewsRef: ReviewsData | null;
   onChangeVariant: (handle: string) => void;
   currentVariant: model.ProductVariant;
 }

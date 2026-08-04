@@ -1,30 +1,30 @@
-import { graphql } from "react-relay";
-import { useMutation } from "react-relay/hooks";
+import { StorefrontUseVoteReviewHelpfulMutationDocument } from '../../../codegen/apollo/storefront-operations';
+import type { StorefrontUseVoteReviewHelpfulMutation } from '../../../codegen/apollo/storefront-operations';
+import { useMutation } from '@shopana/storefront-sdk/graphql/apollo';
 
-const useVoteReviewHelpfulMutation = graphql`
-  mutation useVoteReviewHelpfulMutation($input: ReviewContentVoteSetInput!) {
-    reviewContentVoteSet(input: $input) {
-      content {
-        id
-        metrics { likeCount dislikeCount }
-        viewerEngagement { vote hasReported }
-      }
-      vote { id type }
-      errors: userErrors { code field message }
-    }
-  }
-`;
+const useVoteReviewHelpfulMutation =
+  StorefrontUseVoteReviewHelpfulMutationDocument;
 
 export const useVoteReviewHelpful = () => {
-  const [commit, isInFlight] = useMutation(useVoteReviewHelpfulMutation as any);
+  const [commit, isInFlight] = useMutation(useVoteReviewHelpfulMutation);
 
   const voteReviewHelpful = (
     input: { reviewId: string; helpful: boolean },
-    onCompleted?: (response: any, errors: any) => void,
+    onCompleted?: (
+      response: StorefrontUseVoteReviewHelpfulMutation,
+      errors: readonly unknown[] | null
+    ) => void,
     onError?: (error: Error) => void
   ) => {
     commit({
-      variables: { input },
+      // The mutation returns the Review id plus metrics/viewerEngagement, so
+      // Apollo updates the normalized Review entity without a manual updater.
+      variables: {
+        input: {
+          contentId: input.reviewId,
+          type: input.helpful ? 'LIKE' : 'DISLIKE',
+        },
+      },
       onCompleted,
       onError,
     });

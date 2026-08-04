@@ -1,30 +1,29 @@
-import { loadSerializableQuery } from '../../../../graphql/relay/loadSerializableQuery';
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
-import { createFetchGraphQL } from '../../../../graphql/relay/Environment';
-import type { RelayEnvironmentConfig } from '../../../../graphql/relay/types';
-import SearchQueryNode, {
-  SearchQuery as SearchQueryType,
-  ListingFilterInput,
-  ListingSort,
-} from '../../core/graphql/queries/__generated__/SearchQuery.graphql';
-
+import {
+  loadSerializableQuery,
+  type SerializableApolloQuery,
+} from '../../../../graphql/apollo/loadSerializableQuery';
+import { getApolloRequestClient } from '../../../../next/apollo/server';
+import type { ApolloEnvironmentConfig } from '../../../../graphql/apollo/types';
+import {
+  SdkSearchQueryDocument,
+  type SdkSearchQuery,
+  type SdkSearchQueryVariables,
+  type ListingFilterInput,
+  type ListingSort,
+} from '../../../../graphql/apollo/generated/operations';
 export type SearchSort = ListingSort;
 export type SearchFilterInput = ListingFilterInput;
-
 export interface LoadSearchServerQueryOptions {
-  environmentConfig: RelayEnvironmentConfig;
+  environmentConfig: ApolloEnvironmentConfig;
   query: string;
   first?: number;
   after?: string | null;
   sort?: SearchSort;
   filters?: SearchFilterInput[];
 }
-
 export async function loadSearchServerQuery(
-  options: LoadSearchServerQueryOptions,
-): Promise<
-  SerializablePreloadedQuery<typeof SearchQueryNode, SearchQueryType>
-> {
+  options: LoadSearchServerQueryOptions
+): Promise<SerializableApolloQuery<SdkSearchQuery, SdkSearchQueryVariables>> {
   const {
     environmentConfig,
     query,
@@ -33,30 +32,13 @@ export async function loadSearchServerQuery(
     sort = 'RELEVANCE',
     filters = [],
   } = options;
-
-  const { headers } = await import('next/headers');
-  const cookie = (await headers()).get('cookie') ?? undefined;
-
-  const networkFetch = createFetchGraphQL({
-    graphqlUrl: environmentConfig.graphqlUrl,
-    apiKeyHeader: environmentConfig.apiKeyHeader,
-    apiKey: environmentConfig.apiKey,
-    accessTokenCookieName: environmentConfig.accessTokenCookieName,
-    serverCookies: cookie,
-  });
-
-  const preloadedQuery = await loadSerializableQuery<
-    typeof SearchQueryNode,
-    SearchQueryType
-  >(networkFetch, SearchQueryNode.params, {
+  const client = await getApolloRequestClient(environmentConfig);
+  return loadSerializableQuery(client, SdkSearchQueryDocument, {
     query: query.trim(),
     first,
     after,
     sort,
     filters,
-  }, cookie);
-
-  return preloadedQuery;
+  });
 }
-
-export type { SearchQueryType };
+export type { SdkSearchQuery as SearchQueryType };

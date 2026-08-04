@@ -6,10 +6,14 @@ import { useRef } from 'react';
 import type { Swiper as SwiperType } from 'swiper';
 import { useRoutes } from '@src/hooks/useRoutes';
 import { useCategory } from '@src/hooks/useCategory';
-import { usePaginationFragment } from 'react-relay';
-import Listing from '@shopana/storefront-sdk/queries/Listing';
-import { SectionTitle, SliderNavButtons, ViewAllButton, SwiperContainer, UniversalSlider } from '@src/templates/shared/atoms';
-import { ListingProductCardRelay } from '@src/templates/collection/blocks/ProductCard';
+import {
+  SectionTitle,
+  SliderNavButtons,
+  ViewAllButton,
+  SwiperContainer,
+  UniversalSlider,
+} from '@src/templates/shared/atoms';
+import { ListingProductCard } from '@src/templates/collection/blocks/ProductCard';
 
 interface HomeSlideshowSectionSettings {
   categoryHandle: string;
@@ -24,7 +28,7 @@ export default function HomeSlideshowSection({
 
   const { category } = useCategory(settings.categoryHandle, 12);
 
-  const { data } = usePaginationFragment(Listing, category);
+  const data = category;
 
   const products = data?.listing?.edges?.map((edge) => edge.node) ?? [];
 
@@ -36,7 +40,9 @@ export default function HomeSlideshowSection({
             swiperRef={swiperRef}
             itemsLength={products.length}
           />
-          <ViewAllButton href={routes.collection.path(category?.handle ?? '')} />
+          <ViewAllButton
+            href={routes.collection.path(category?.handle ?? '')}
+          />
         </Flex>
       </SectionTitle>
       <SwiperContainer itemsLength={products.length}>
@@ -45,7 +51,7 @@ export default function HomeSlideshowSection({
           items={products}
           swiperRef={swiperRef}
           renderItem={(product: any) => (
-            <ListingProductCardRelay $productRef={product} />
+            <ListingProductCard productRef={product} />
           )}
         />
       </SwiperContainer>

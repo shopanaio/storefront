@@ -1,22 +1,22 @@
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { updateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/updateCartLineQuantityMutation.graphql';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
 import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
-
 const useUpdateCartLineQuantity = () => {
   const cartId = useCartIdOnly();
   const cartVersion = useCartVersionOnly();
   const actions = useCartActions();
-  const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
-    updateCartLineQuantityMutation
-  );
-
+  const [commit, isInFlight] = useMutation(updateCartLineQuantityMutation);
   const updateQuantity = async (
-    { cartItemId, quantity }: { cartItemId: string; quantity: number },
+    {
+      cartItemId,
+      quantity,
+    }: {
+      cartItemId: string;
+      quantity: number;
+    },
     options?: {
       onSuccess?: () => void;
       onError?: () => void;
@@ -53,17 +53,13 @@ const useUpdateCartLineQuantity = () => {
             revert();
             options?.onError?.();
             return reject(errors);
-          } else if (
-            response.checkoutLinesUpdate.errors.length > 0
-          ) {
+          } else if (response.checkoutLinesUpdate.errors.length > 0) {
             revert();
             options?.onError?.();
             return reject(response.checkoutLinesUpdate.errors);
           } else {
             options?.onSuccess?.();
-            return resolve(
-              response.checkoutLinesUpdate.checkout
-            );
+            return resolve(response.checkoutLinesUpdate.checkout);
           }
         },
         onError: (err) => {
@@ -74,8 +70,6 @@ const useUpdateCartLineQuantity = () => {
       });
     });
   };
-
   return { updateQuantity, loading: isInFlight };
 };
-
 export default useUpdateCartLineQuantity;

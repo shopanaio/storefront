@@ -1,4 +1,4 @@
-import { CodegenConfig } from '@graphql-codegen/cli';
+import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const scalars = {
   ID: { input: 'string', output: 'string' },
@@ -21,10 +21,10 @@ const scalars = {
 
 const config: CodegenConfig = {
   overwrite: true,
-  documents: [],
+  ignoreNoDocuments: true,
   generates: {
     'codegen/schema-client.ts': {
-      schema: ['schema.shopana.graphql', 'relay-schema-extensions/*.graphql'],
+      schema: ['schema.shopana.graphql', 'graphql-schema-extensions/*.graphql'],
       plugins: ['typescript', 'typescript-operations'],
       config: {
         typesPrefix: 'Api',
@@ -35,6 +35,40 @@ const config: CodegenConfig = {
         },
       },
     },
+    'codegen/apollo/storefront-operations.ts': {
+      schema: 'schema.shopana.graphql',
+      documents: ['src/**/*.apollo.graphql'],
+      plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
+      config: {
+        arrayInputCoercion: false,
+        avoidOptionals: false,
+        dedupeOperationSuffix: true,
+        enumsAsTypes: true,
+        immutableTypes: true,
+        nonOptionalTypename: true,
+        scalars,
+        useTypeImports: true,
+      },
+    },
+    'packages/shopana-storefront-sdk/src/graphql/apollo/generated/operations.ts':
+      {
+        schema: [
+          'schema.shopana.graphql',
+          'graphql-schema-extensions/auth.graphql',
+        ],
+        documents: ['packages/shopana-storefront-sdk/src/**/*.apollo.graphql'],
+        plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
+        config: {
+          arrayInputCoercion: false,
+          avoidOptionals: false,
+          dedupeOperationSuffix: true,
+          enumsAsTypes: true,
+          immutableTypes: true,
+          nonOptionalTypename: true,
+          scalars,
+          useTypeImports: true,
+        },
+      },
   },
 };
 

@@ -1,0 +1,28 @@
+mutation StorefrontUseReportReviewAbuseMutation(
+  $reviewId: ID!
+  $reason: ReviewContentReportReason!
+  $details: String
+) {
+  reviewContentReportCreate(
+    input: { contentId: $reviewId, reason: $reason, details: $details }
+  ) {
+    content {
+      id
+      viewerEngagement {
+        vote
+        hasReported
+      }
+    }
+    report {
+      id
+      reason
+      status
+      createdAt
+    }
+    errors: userErrors {
+      code
+      field
+      message
+    }
+  }
+}

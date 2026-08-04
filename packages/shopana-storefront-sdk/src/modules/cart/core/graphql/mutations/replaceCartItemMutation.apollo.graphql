@@ -1,0 +1,13 @@
+mutation SdkReplaceCartItemMutation($input: CheckoutLinesReplaceInput!) {
+  checkoutLinesReplace(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

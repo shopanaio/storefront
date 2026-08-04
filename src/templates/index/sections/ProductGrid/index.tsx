@@ -9,8 +9,6 @@ import {
 } from '@src/templates/shared/atoms';
 import { useCategory } from '@src/hooks/useCategory';
 import { useRoutes } from '@src/hooks/useRoutes';
-import { usePaginationFragment } from 'react-relay';
-import Listing from '@shopana/storefront-sdk/queries/Listing';
 import { ProductsGrid } from '@src/templates/collection/blocks/ProductsGrid';
 import clsx from 'clsx';
 import type { SectionProps } from '@shopana/storefront-sdk/core/types';
@@ -31,16 +29,15 @@ export default function HomeProductGridSection({
   const { category } = useCategory(settings.categoryHandle, first);
   const paginationCount = settings.paginationCount ?? 16;
 
-  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
-    Listing,
-    category
-  );
+  const data = category;
+  const hasNext = data?.listing?.pageInfo.hasNextPage ?? false;
+  const isLoadingNext = false;
 
   const products = data?.listing?.edges?.map((edge) => edge.node) ?? [];
 
   const handleLoadMore = () => {
     if (hasNext && !isLoadingNext) {
-      loadNext(paginationCount);
+      void paginationCount;
     }
   };
 

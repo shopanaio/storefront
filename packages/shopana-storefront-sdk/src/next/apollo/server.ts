@@ -16,6 +16,41 @@ export type ApolloServerClientOptions = Omit<
   'serverCookies' | 'initialState'
 >;
 
+const requestClientRegistrations = new Map<
+  string,
+  ReturnType<typeof registerApolloClient>
+>();
+
+function environmentKey(config: ApolloEnvironmentConfig): string {
+  return JSON.stringify([
+    config.graphqlUrl,
+    config.apiKeyHeader,
+    config.apiKey,
+    config.accessTokenCookieName ?? null,
+  ]);
+}
+
+function getDefaultRegistration(environmentConfig: ApolloEnvironmentConfig) {
+  const key = environmentKey(environmentConfig);
+  const existing = requestClientRegistrations.get(key);
+  if (existing) return existing;
+
+  const registration = registerApolloClient(async () => {
+    const { headers } = await import('next/headers');
+    const serverCookies = (await headers()).get('cookie') ?? undefined;
+    return createApolloClient(environmentConfig, { serverCookies });
+  });
+  requestClientRegistrations.set(key, registration);
+  return registration;
+}
+
+/** Returns the shared Apollo Client for the current Next.js server request. */
+export function getApolloRequestClient(
+  environmentConfig: ApolloEnvironmentConfig
+) {
+  return getDefaultRegistration(environmentConfig).getClient();
+}
+
 /**
  * Registers a request-scoped Apollo client for React Server Components.
  * Call once in a server-only module and export query/getClient/PreloadQuery.
@@ -24,6 +59,10 @@ export function createApolloNextClient(
   environmentConfig: ApolloEnvironmentConfig,
   clientOptions: ApolloServerClientOptions = {}
 ) {
+  if (Object.keys(clientOptions).length === 0) {
+    return getDefaultRegistration(environmentConfig);
+  }
+
   return registerApolloClient(async () => {
     const { headers } = await import('next/headers');
     const serverCookies = (await headers()).get('cookie') ?? undefined;

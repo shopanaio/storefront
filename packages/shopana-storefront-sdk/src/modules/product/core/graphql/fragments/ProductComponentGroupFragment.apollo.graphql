@@ -1,0 +1,12 @@
+fragment SdkProductComponentGroupFragment on ProductComponentGroup {
+  __typename
+  id
+  title
+  required
+  isRequired: required
+  minSelection
+  maxSelection
+  items {
+    ...SdkProductComponentItemFragment
+  }
+}

@@ -1,0 +1,10 @@
+query SdkUseGetSessionQuery {
+  session {
+    user {
+      id
+      iid
+      email
+    }
+    accessToken
+  }
+}

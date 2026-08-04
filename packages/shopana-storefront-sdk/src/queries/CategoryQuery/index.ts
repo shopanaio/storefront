@@ -1,3 +1,5 @@
-export { default } from "./CategoryQuery";
-export { default as CategoryQueryNode } from "./__generated__/CategoryQuery.graphql";
-export * from "./__generated__/CategoryQuery.graphql";
+export { default } from './CategoryQuery';
+export type {
+  SdkCategoryQuery as CategoryQueryData,
+  SdkCategoryQueryVariables as CategoryQueryVariables,
+} from '../../graphql/apollo/generated/operations';

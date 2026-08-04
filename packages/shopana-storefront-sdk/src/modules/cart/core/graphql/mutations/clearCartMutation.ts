@@ -1,21 +1,7 @@
-import { graphql } from 'react-relay';
+import { SdkClearCartMutationDocument } from '../../../../../graphql/apollo/generated/operations';
 import '../fragments/CartFragment';
 
 /**
  * Mutation for clearing all items from cart
  */
-export const clearCartMutation = graphql`
-  mutation clearCartMutation($input: CheckoutLinesClearInput!) {
-    checkoutLinesClear(input: $input) {
-      checkout {
-        ...CartFragment_cart
-      }
-      errors: userErrors {
-        code
-        field
-        message
-        retryable
-      }
-    }
-  }
-`;
+export const clearCartMutation = SdkClearCartMutationDocument;

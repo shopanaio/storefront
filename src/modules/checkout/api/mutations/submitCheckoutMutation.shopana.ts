@@ -1,32 +1,3 @@
-import { graphql } from "react-relay";
+import { StorefrontSubmitCheckoutMutationDocument } from '../../../../../codegen/apollo/storefront-operations';
 
-export const submitCheckoutMutation = graphql`
-  mutation submitCheckoutMutation($input: PlaceOrderInput!) {
-    placeOrder(input: $input) {
-      orderId
-      placementId
-      checkoutId
-      checkoutVersion
-      resultRevision
-      status
-      paymentCollectionId
-      paymentSessionId
-      paymentOperationId
-      customerAction {
-        type
-        url
-      }
-      paymentFailure {
-        code
-        message
-        retryable
-      }
-      errors: userErrors {
-        code
-        field
-        message
-        retryable
-      }
-    }
-  }
-`;
+export const submitCheckoutMutation = StorefrontSubmitCheckoutMutationDocument;

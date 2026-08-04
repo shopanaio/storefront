@@ -1,0 +1,32 @@
+fragment StorefrontSearchProductsFragment on ProductConnection {
+  __typename
+  totalCount
+  sort
+  availableSorts
+  filters {
+    id
+    handle: id
+    label
+    title: label
+    type
+    values {
+      id
+      handle: id
+      label
+      title: label
+      count
+      selected
+      input
+    }
+  }
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+  edges {
+    cursor
+    node {
+      ...StorefrontUseListingProductCardFragment_product
+    }
+  }
+}

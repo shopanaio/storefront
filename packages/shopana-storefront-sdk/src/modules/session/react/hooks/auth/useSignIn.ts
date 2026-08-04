@@ -1,13 +1,10 @@
 'use client';
-
-import { useMutation } from 'react-relay/hooks';
-import type { signInMutation as SignInMutationType } from '../../../core/graphql/mutations/__generated__/signInMutation.graphql';
+import { useMutation } from '../../../../../graphql/apollo/hooks/useMutation';
 import { signInMutation } from '../../../core/graphql/mutations/signInMutation';
-
 /**
  * Hook to sign in a user with email and password
  *
- * @returns Relay mutation tuple [commit, isInFlight]
+ * @returns Mutation tuple [commit, isInFlight]
  *
  * @example
  * ```tsx
@@ -28,7 +25,6 @@ import { signInMutation } from '../../../core/graphql/mutations/signInMutation';
  * ```
  */
 export const useSignIn = () => {
-  return useMutation<SignInMutationType>(signInMutation);
+  return useMutation(signInMutation);
 };
-
 export default useSignIn;

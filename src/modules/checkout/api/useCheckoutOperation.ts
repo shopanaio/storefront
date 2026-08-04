@@ -1,6 +1,6 @@
-import { useMutation } from 'react-relay';
+import { useMutation } from '@shopana/storefront-sdk/graphql/apollo';
 import { toast } from '@src/ui-kit/Toast/Toast';
-import { GraphQLTaggedNode, MutationParameters } from 'relay-runtime';
+import type { OperationVariables, TypedDocumentNode } from '@apollo/client';
 import { useCallback, useRef, useEffect } from 'react';
 import { debounce, type DebouncedFunc } from 'lodash';
 import {
@@ -89,8 +89,11 @@ export interface CheckoutOperationOptions {
  * await commit({ variables: { input } });
  * ```
  */
-export function useCheckoutOperation<TMutation extends MutationParameters>(
-  mutation: GraphQLTaggedNode,
+export function useCheckoutOperation<
+  TData extends object,
+  TVariables extends OperationVariables,
+>(
+  mutation: TypedDocumentNode<TData, TVariables>,
   options: CheckoutOperationOptions = {}
 ) {
   const {
@@ -103,7 +106,7 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
     onEnd,
   } = options;
 
-  const [commitMutation, isInFlight] = useMutation<TMutation>(mutation);
+  const [commitMutation, isInFlight] = useMutation(mutation);
 
   // Track inflight timestamp for race protection
   const inflightTimestampRef = useRef<number | null>(null);
@@ -111,7 +114,9 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
   const pendingFnRef = useRef<(() => void) | null>(null);
 
   // Create debounced executor
-  const debouncedExecutorRef = useRef<DebouncedFunc<() => void> | undefined>(undefined);
+  const debouncedExecutorRef = useRef<DebouncedFunc<() => void> | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     // Initialize debounced executor
@@ -139,7 +144,7 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
    * Execute operation with inflight guard and lifecycle callbacks
    */
   const runWithInflight = useCallback(
-    async (operation: () => Promise<TMutation['response']>): Promise<TMutation['response']> => {
+    async (operation: () => Promise<TData>): Promise<TData> => {
       const ts = Date.now();
       inflightTimestampRef.current = ts;
 
@@ -164,7 +169,8 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
             | undefined;
           const message =
             typeof anyErr?.message === 'string' ? anyErr?.message : undefined;
-          const code = typeof anyErr?.code === 'string' ? anyErr?.code : undefined;
+          const code =
+            typeof anyErr?.code === 'string' ? anyErr?.code : undefined;
 
           await emitCheckoutEvent(CheckoutEvent.OperationError, {
             key: operationKey,
@@ -198,7 +204,7 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
    * Commit mutation with promise API
    */
   const commitPromise = useCallback(
-    (variables: TMutation['variables']): Promise<TMutation['response']> => {
+    (variables: TVariables): Promise<TData> => {
       return new Promise((resolve, reject) => {
         commitMutation({
           variables,
@@ -234,7 +240,7 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
    * Main commit function with inflight protection
    */
   const commit = useCallback(
-    (variables: TMutation['variables']): Promise<TMutation['response']> => {
+    (variables: TVariables): Promise<TData> => {
       return runWithInflight(() => commitPromise(variables));
     },
     [runWithInflight, commitPromise]
@@ -244,7 +250,7 @@ export function useCheckoutOperation<TMutation extends MutationParameters>(
    * Scheduled commit with debouncing
    */
   const commitScheduled = useCallback(
-    (variables: TMutation['variables']): void => {
+    (variables: TVariables): void => {
       pendingFnRef.current = () => {
         void commit(variables);
       };

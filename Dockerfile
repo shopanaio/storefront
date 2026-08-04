@@ -49,7 +49,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build brand-sdk first (other brands use src via alias), then run root build
-# Root build: storefront-sdk -> relay -> widgets -> next build
+# Root build: storefront-sdk -> widgets -> next build
 RUN yarn workspace @shopana/brand-sdk build && yarn build
 
 # ---------- runner ----------
@@ -71,9 +71,6 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/relay.shopana.json ./relay.shopana.json
-
-
 # Default Next.js port; Traefik will route to this
 ENV PORT=3000
 EXPOSE 3000

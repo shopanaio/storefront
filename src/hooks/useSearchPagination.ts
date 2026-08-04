@@ -1,7 +1,7 @@
-import { useLazyLoadQuery } from "react-relay";
-import { ListingSort } from "@codegen/schema-client";
+import { useLazyLoadQuery } from '@shopana/storefront-sdk/graphql/apollo';
+import { ListingSort } from '@codegen/schema-client';
 
-import SearchQuery from "@src/hooks/search/SearchQuery/SearchQuery.shopana";
+import SearchQuery from '@src/hooks/search/SearchQuery/SearchQuery.shopana';
 
 interface ExtendedFilterInput {
   handle: string;
@@ -16,8 +16,13 @@ interface UseSearchPaginationParams {
   filters: ExtendedFilterInput[];
 }
 
-export const useSearchPagination = ({ query, after, sort, filters }: UseSearchPaginationParams) => {
-  const data = useLazyLoadQuery<any>(
+export const useSearchPagination = ({
+  query,
+  after,
+  sort,
+  filters,
+}: UseSearchPaginationParams) => {
+  const data = useLazyLoadQuery(
     SearchQuery,
     {
       query,
@@ -27,13 +32,13 @@ export const useSearchPagination = ({ query, after, sort, filters }: UseSearchPa
       filters,
     },
     {
-      fetchPolicy: "network-only",
+      fetchPolicy: 'network-only',
       fetchKey: `${query}-${sort}-${JSON.stringify(filters)}-${after}`,
     }
   );
 
   return {
-    products: data?.search?.products ?? null,
+    products: data.searchProducts,
     loading: false,
     error: null,
   };

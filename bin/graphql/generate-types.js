@@ -1,10 +1,15 @@
-/* eslint-disable */
-import { exec } from "child_process";
+import { exec } from 'child_process';
 
 export const generate = () =>
-  exec("npx graphql-codegen", (error) => {
-    if (error) {
-      console.error(`exec error: ${error}`);
-      return;
-    }
+  new Promise((resolve, reject) => {
+    const child = exec('npx graphql-codegen', (error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+
+    child.stdout?.pipe(process.stdout);
+    child.stderr?.pipe(process.stderr);
   });

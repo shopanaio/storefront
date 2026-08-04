@@ -1,69 +1,32 @@
 'use client';
 
-import { useLazyLoadQuery, usePreloadedQuery } from 'react-relay/hooks';
-import { graphql } from 'relay-runtime';
-import type { PreloadedQuery, GraphQLTaggedNode } from 'react-relay/hooks';
+import { useLazyLoadQuery } from '../../../../graphql/apollo/hooks/useLazyLoadQuery';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
+import {
+  SdkUseGetSessionQueryDocument,
+  type SdkUseGetSessionQuery,
+  type SdkUseGetSessionQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 
-/**
- * GraphQL query for getting session data
- */
-export const useGetSessionQuery: GraphQLTaggedNode = graphql`
-  query useGetSessionQuery {
-    session {
-      user {
-        id
-        iid
-        email
-      }
-      accessToken
-    }
-  }
-`;
+export const useGetSessionQuery = SdkUseGetSessionQueryDocument;
 
-/**
- * Hook to get session data with lazy loading (client-side)
- *
- * @param fetchKey - Optional fetch key to force refetch
- * @returns Session query data
- *
- * @example
- * ```tsx
- * const sessionData = useGetSession();
- * const user = sessionData.session?.user;
- * ```
- */
-export const useGetSession = (fetchKey: number = 0) => {
-  return useLazyLoadQuery(
+export const useGetSession = (_fetchKey: number = 0) =>
+  useLazyLoadQuery(
     useGetSessionQuery,
     {},
     {
       fetchPolicy: 'network-only',
-      networkCacheConfig: {
-        force: true,
-      },
-      fetchKey,
+      fetchKey: _fetchKey,
     }
   );
-};
 
-/**
- * Hook to use preloaded session query (for SSR)
- *
- * @param preloadedQuery - Preloaded query from server
- * @returns Session query data
- *
- * @example
- * ```tsx
- * const sessionData = useGetSessionPreloaded(preloadedQuery);
- * ```
- */
 export const useGetSessionPreloaded = (
-  preloadedQuery: PreloadedQuery<any>
-) => {
-  return usePreloadedQuery(useGetSessionQuery, preloadedQuery);
-};
+  preloadedQuery: SerializableApolloQuery<
+    SdkUseGetSessionQuery,
+    SdkUseGetSessionQueryVariables
+  >
+) => preloadedQuery.data;
 
-export default {
-  useGetSession,
-  useGetSessionPreloaded,
-};
+const sessionHooks = { useGetSession, useGetSessionPreloaded };
+
+export default sessionHooks;

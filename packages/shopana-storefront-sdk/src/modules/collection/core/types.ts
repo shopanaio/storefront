@@ -1,26 +1,23 @@
-import type { CollectionQuery$data } from './graphql/queries/__generated__/CollectionQuery.graphql';
-import type { CollectionListingFragment$data } from './graphql/fragments/__generated__/CollectionListingFragment.graphql';
-import type { CollectionProductCardFragment$data } from './graphql/fragments/__generated__/CollectionProductCardFragment.graphql';
-
-export type CollectionQueryResponse = CollectionQuery$data;
-export type CollectionListingData = CollectionListingFragment$data;
-export type CollectionProductCardData = CollectionProductCardFragment$data;
-
+import type {
+  SdkCollectionListingFragment,
+  SdkCollectionProductCardFragment,
+  SdkCollectionQuery,
+} from '../../../graphql/apollo/generated/operations';
+export type CollectionQueryResponse = SdkCollectionQuery;
+export type CollectionListingData = SdkCollectionListingFragment;
+export type CollectionProductCardData = SdkCollectionProductCardFragment;
 export interface CollectionMoney {
   amount: string;
   currencyCode: string;
 }
-
 export interface CollectionImage {
   id: string;
   url: string;
 }
-
 export interface CollectionProductRating {
   rating: number;
   count: number;
 }
-
 export interface CollectionFilterValue {
   id: string;
   iid: string;
@@ -30,7 +27,6 @@ export interface CollectionFilterValue {
   input: unknown;
   selected: boolean;
 }
-
 export interface CollectionFilter {
   id: string;
   iid: string;
@@ -43,7 +39,6 @@ export interface CollectionFilter {
   maxRate?: number | null;
   values?: CollectionFilterValue[] | null;
 }
-
 export interface CollectionProductSwatch {
   id: string;
   color?: string | null;
@@ -51,14 +46,12 @@ export interface CollectionProductSwatch {
   image?: CollectionImage | null;
   displayType?: string | null;
 }
-
 export interface CollectionProductOptionValue {
   id: string;
   title: string;
   handle: string;
   swatch?: CollectionProductSwatch | null;
 }
-
 export interface CollectionProductOption {
   id: string;
   handle: string;
@@ -66,7 +59,6 @@ export interface CollectionProductOption {
   displayType?: string | null;
   values: CollectionProductOptionValue[];
 }
-
 export interface CollectionProduct {
   id: string;
   title: string;
@@ -89,19 +81,16 @@ export interface CollectionProduct {
   options: CollectionProductOption[];
   selectedOptions?: string[] | null;
 }
-
 export interface CollectionPageInfo {
   hasNextPage: boolean;
   endCursor?: string | null;
 }
-
 export interface CollectionListing {
   totalCount: number;
   filters: CollectionFilter[];
   pageInfo: CollectionPageInfo;
   products: CollectionProduct[];
 }
-
 export interface Collection {
   id: string;
   title: string;
@@ -109,12 +98,11 @@ export interface Collection {
   description?: string | null;
   listing: CollectionListing | null;
 }
-
 export interface CollectionTemplateData {
   pageType: 'collection';
   raw: CollectionQueryResponse;
   collection: Collection | null;
 }
-
-export type { CollectionListingFragment$key } from './graphql/fragments/__generated__/CollectionListingFragment.graphql';
-export type { CollectionProductCardFragment$key } from './graphql/fragments/__generated__/CollectionProductCardFragment.graphql';
+export type CollectionListingFragmentReference = SdkCollectionListingFragment;
+export type CollectionProductCardFragmentReference =
+  SdkCollectionProductCardFragment;

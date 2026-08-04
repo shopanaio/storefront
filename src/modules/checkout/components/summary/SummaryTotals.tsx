@@ -3,7 +3,6 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { Money } from '@src/ui-kit/Price/Money';
 import type { Checkout } from '@src/modules/checkout/types/entity';
-import { ShippingPaymentModel } from '@codegen/schema-client';
 
 const { Text } = Typography;
 
@@ -21,7 +20,7 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   // Check if shipping is paid separately (CARRIER_DIRECT)
   const isShippingPaidSeparately =
     checkout?.deliveryGroups?.[0]?.estimatedCost?.paymentModel ===
-    ShippingPaymentModel.CarrierDirect;
+    'CARRIER_DIRECT';
 
   const getShippingValue = () => {
     if (isShippingPaidSeparately) {

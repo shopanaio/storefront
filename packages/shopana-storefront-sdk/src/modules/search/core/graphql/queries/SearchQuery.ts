@@ -1,18 +1,10 @@
-import { graphql } from 'relay-runtime';
-
-export const SearchQuery = graphql`
-  query SearchQuery(
-    $query: String!
-    $first: Int = 12
-    $after: Cursor
-    $sort: ListingSort = RELEVANCE
-    $filters: [ListingFilterInput!] = []
-  ) {
-    searchProducts(query: $query, first: $first, after: $after, sort: $sort, filters: $filters) {
-      ...SearchProductsFragment
-    }
-  }
-`;
-
-export { default as SearchQueryNode } from './__generated__/SearchQuery.graphql';
-export type { SearchQuery as SearchQueryType } from './__generated__/SearchQuery.graphql';
+import { SdkSearchQueryDocument } from '../../../../../graphql/apollo/generated/operations';
+import type {
+  SdkSearchQuery,
+  SdkSearchQueryVariables,
+} from '../../../../../graphql/apollo/generated/operations';
+export const SearchQuery = SdkSearchQueryDocument;
+export interface SearchQueryType {
+  response: SdkSearchQuery;
+  variables: SdkSearchQueryVariables;
+}

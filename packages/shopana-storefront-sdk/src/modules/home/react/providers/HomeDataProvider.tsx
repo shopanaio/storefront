@@ -1,48 +1,33 @@
 'use client';
-
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { usePreloadedQuery, useRelayEnvironment, readInlineData } from 'react-relay';
-import useSerializablePreloadedQuery from '../../../../next/relay/useSerializablePreloadedQuery';
-import type { SerializablePreloadedQuery } from '../../../../graphql/relay/loadSerializableQuery';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
 import { HomeDataContext } from '../context/HomeDataContext';
 import type {
   HomeCategory,
   HomeProduct,
   HomeTemplateData,
 } from '../../core/types';
-import HomePageQueryNode, {
-  HomePageQuery,
-} from '../../core/graphql/queries/__generated__/HomePageQuery.graphql';
-import CategoryFragmentNode, {
-  CategoryFragment_category$key,
-  CategoryFragment_category$data,
-} from '../../core/graphql/fragments/__generated__/CategoryFragment_category.graphql';
-
+import type {
+  SdkCategoryFragment_CategoryFragment,
+  SdkHomePageQuery,
+  SdkHomePageQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
 interface HomeDataProviderProps {
   children: ReactNode;
-  preloadedQuery: SerializablePreloadedQuery<
-    typeof HomePageQueryNode,
-    HomePageQuery
+  preloadedQuery: SerializableApolloQuery<
+    SdkHomePageQuery,
+    SdkHomePageQueryVariables
   >;
 }
-
-function transformCategory(categoryRef: CategoryFragment_category$key | null | undefined): HomeCategory | null {
+function transformCategory(
+  categoryRef: SdkCategoryFragment_CategoryFragment | null | undefined
+): HomeCategory | null {
   if (!categoryRef) {
     return null;
   }
-
-  const category = readInlineData(
-    CategoryFragmentNode,
-    categoryRef,
-  ) as CategoryFragment_category$data | null;
-
-  if (!category) {
-    return null;
-  }
-
+  const category = categoryRef;
   const listingEdges = category.listing?.edges;
-
   const mappedProducts: Array<HomeProduct | null> =
     listingEdges?.map((edge) => {
       const node = edge?.node;
@@ -50,7 +35,6 @@ function transformCategory(categoryRef: CategoryFragment_category$key | null | u
       if (!node || !variant?.price) {
         return null;
       }
-
       return {
         id: variant.id,
         title: variant.title,
@@ -65,7 +49,9 @@ function transformCategory(categoryRef: CategoryFragment_category$key | null | u
               currencyCode: variant.compareAtPrice.currencyCode,
             }
           : null,
-        image: node.featuredMedia?.image?.url
+        image:
+          node.featuredMedia?.__typename === 'MediaImage' &&
+          node.featuredMedia.image?.url
           ? { url: String(node.featuredMedia.image.url) }
           : null,
         product: {
@@ -75,11 +61,9 @@ function transformCategory(categoryRef: CategoryFragment_category$key | null | u
         },
       };
     }) ?? [];
-
   const products: HomeProduct[] = mappedProducts.filter(
-    (product: HomeProduct | null): product is HomeProduct => Boolean(product),
+    (product: HomeProduct | null): product is HomeProduct => Boolean(product)
   );
-
   return {
     id: category.id,
     title: category.title,
@@ -87,8 +71,7 @@ function transformCategory(categoryRef: CategoryFragment_category$key | null | u
     products,
   };
 }
-
-function transformQueryData(data: HomePageQuery['response']): HomeTemplateData {
+function transformQueryData(data: SdkHomePageQuery): HomeTemplateData {
   return {
     pageType: 'home',
     raw: data,
@@ -104,33 +87,20 @@ function transformQueryData(data: HomePageQuery['response']): HomeTemplateData {
             children:
               data.homeAndGarden.children?.edges
                 ?.map((edge) => transformCategory(edge.node))
-                .filter(
-                  (category): category is HomeCategory => Boolean(category),
+                .filter((category): category is HomeCategory =>
+                  Boolean(category)
                 ) ?? [],
           }
         : null,
     },
   };
 }
-
 export function HomeDataProvider({
   children,
   preloadedQuery,
 }: HomeDataProviderProps) {
-  const environment = useRelayEnvironment();
-
-  const queryReference = useSerializablePreloadedQuery(
-    environment,
-    preloadedQuery,
-  );
-
-  const rawData = usePreloadedQuery<HomePageQuery>(
-    HomePageQueryNode,
-    queryReference,
-  );
-
+  const rawData = preloadedQuery.data;
   const data = useMemo(() => transformQueryData(rawData), [rawData]);
-
   return (
     <HomeDataContext.Provider value={{ data }}>
       {children}

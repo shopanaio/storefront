@@ -1,8 +1,6 @@
 // Export from SDK
-export { ProductQuery, ProductQueryNode } from "@shopana/storefront-sdk/modules/product/core/graphql/queries/ProductQuery";
-export type { ProductQueryType } from "@shopana/storefront-sdk/modules/product/core/graphql/queries/ProductQuery";
-export type { ProductQuery$data, ProductQuery$variables } from "@shopana/storefront-sdk/modules/product/core/graphql/queries/__generated__/ProductQuery.graphql";
-
+export { ProductQuery } from '@shopana/storefront-sdk/modules/product/core/graphql/queries/ProductQuery';
+export type { ProductQueryType } from '@shopana/storefront-sdk/modules/product/core/graphql/queries/ProductQuery';
 // Export default for backward compatibility
-import { ProductQuery } from "@shopana/storefront-sdk/modules/product/core/graphql/queries/ProductQuery";
+import { ProductQuery } from '@shopana/storefront-sdk/modules/product/core/graphql/queries/ProductQuery';
 export default ProductQuery;

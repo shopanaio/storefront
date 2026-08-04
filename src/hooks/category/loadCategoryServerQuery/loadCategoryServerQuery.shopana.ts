@@ -1,13 +1,16 @@
-
-import loadSerializableQuery from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
-import type { SerializablePreloadedQuery } from "@shopana/storefront-sdk/next/relay/loadSerializableQuery";
-import { environmentConfig } from "@src/config/environment.config";
 import {
-  CategoryQueryNode,
-  CategoryQuery,
-} from "@shopana/storefront-sdk/queries/CategoryQuery";
-import { ListingSort } from "@codegen/schema-client";
-import { PAGINATION_PAGE_SIZE } from "@src/config";
+  loadSerializableQuery,
+  type SerializableApolloQuery,
+} from '@shopana/storefront-sdk/graphql/apollo';
+import { getApolloRequestClient } from '@shopana/storefront-sdk/next/apollo/server';
+import { environmentConfig } from '@src/config/environment.config';
+import {
+  SdkCategoryQueryDocument,
+  type SdkCategoryQuery,
+  type SdkCategoryQueryVariables,
+} from '@shopana/storefront-sdk/graphql/apollo/generated/operations';
+import { ListingSort } from '@codegen/schema-client';
+import { PAGINATION_PAGE_SIZE } from '@src/config';
 
 interface LoadCategoryServerQueryParams {
   handle: string;
@@ -22,23 +25,15 @@ const loadCategoryServerQuery = async ({
   sort = ListingSort.MostRelevant,
   filters = [],
 }: LoadCategoryServerQueryParams): Promise<
-  SerializablePreloadedQuery<any, any>
+  SerializableApolloQuery<SdkCategoryQuery, SdkCategoryQueryVariables>
 > => {
-  const preloadedQuery = await loadSerializableQuery<
-    typeof CategoryQueryNode,
-    CategoryQuery
-  >(
-    environmentConfig,
-    CategoryQueryNode.params,
-    {
-      handle,
-      first,
-      sort,
-      filters,
-    }
-  );
-
-  return preloadedQuery;
+  const client = await getApolloRequestClient(environmentConfig);
+  return loadSerializableQuery(client, SdkCategoryQueryDocument, {
+    handle,
+    first,
+    sort: sort as never,
+    filters,
+  });
 };
 
 export default loadCategoryServerQuery;

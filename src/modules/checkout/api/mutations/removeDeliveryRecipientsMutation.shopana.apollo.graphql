@@ -1,0 +1,15 @@
+mutation StorefrontRemoveDeliveryRecipientsMutation(
+  $input: CheckoutDeliveryRecipientsRemoveInput!
+) {
+  checkoutDeliveryRecipientsRemove(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

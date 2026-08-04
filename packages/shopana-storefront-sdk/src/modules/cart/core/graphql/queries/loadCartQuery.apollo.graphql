@@ -1,0 +1,5 @@
+query SdkLoadCartQuery($checkoutId: ID!) {
+  checkout(id: $checkoutId) {
+    ...SdkCartFragment_cart
+  }
+}

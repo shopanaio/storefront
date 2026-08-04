@@ -1,5 +1,5 @@
 export { createApolloClient } from './Environment';
-export { createApolloCache } from './cache';
+export { createApolloCache, mergeApolloCacheStates } from './cache';
 export {
   loadSerializableQuery,
   type SerializableApolloQuery,
@@ -8,5 +8,22 @@ export type {
   ApolloEnvironmentConfig,
   CreateApolloClientOptions,
 } from './types';
-
-export { relayStylePagination } from '@apollo/client/utilities';
+export { useFragment } from './hooks/useFragment';
+export { useLazyLoadQuery } from './hooks/useLazyLoadQuery';
+export { useMutation } from './hooks/useMutation';
+export { usePaginationQuery } from './hooks/usePaginationQuery';
+export { usePreloadedQuery } from './hooks/usePreloadedQuery';
+export { fetchQuery } from './hooks/fetchQuery';
+export { definePaginationQuery } from './pagination/definePaginationQuery';
+export { cursorConnectionPolicy } from './pagination/cursorPagination';
+export {
+  CategoryPagination,
+  CollectionPagination,
+  ProductReviewsPagination,
+  SearchPagination,
+} from './pagination/descriptors';
+export type {
+  CursorConnection,
+  CursorPageInfo,
+  PaginationQueryDescriptor,
+} from './pagination/types';

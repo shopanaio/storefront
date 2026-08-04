@@ -1,21 +1,16 @@
-"use client";
+'use client';
 
-import { GreetingData } from "../interface";
-import { graphql } from "relay-runtime";
+import { StorefrontUseGreetingTestQueryDocument } from '../../../../codegen/apollo/storefront-operations';
 
-// Test (stub) query for Relay integration and schema validation
-export const ProviderGreetingTestQuery = graphql`
-  query useGreetingTestQuery {
-    product: productByHandle(handle: "example") {
-      id
-    }
-  }
-`;
+import { GreetingData } from '../interface';
+
+// Test (stub) query for GraphQL integration and schema validation
+export const ProviderGreetingTestQuery = StorefrontUseGreetingTestQueryDocument;
 
 const useGreeting = (): GreetingData => {
   // Mock data for Shopana provider
   return {
-    title: "Hello from Shopana 🎁",
+    title: 'Hello from Shopana 🎁',
   };
 };
 

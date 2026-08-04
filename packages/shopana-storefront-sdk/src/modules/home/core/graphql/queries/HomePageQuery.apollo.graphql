@@ -1,0 +1,26 @@
+query SdkHomePageQuery {
+  electronics: categoryByHandle(handle: "electronics") {
+    title: name
+    ...SdkCategoryFragment_category
+  }
+  toys: categoryByHandle(handle: "toys-kids") {
+    title: name
+    ...SdkCategoryFragment_category
+  }
+  sport: categoryByHandle(handle: "sport-i-otdyh") {
+    title: name
+    ...SdkCategoryFragment_category
+  }
+  homeAndGarden: categoryByHandle(handle: "home-garden") {
+    id
+    title: name
+    handle
+    children(first: 10) {
+      edges {
+        node {
+          ...SdkCategoryFragment_category
+        }
+      }
+    }
+  }
+}

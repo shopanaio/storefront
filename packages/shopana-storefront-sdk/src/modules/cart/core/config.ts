@@ -1,8 +1,7 @@
 import type {
   CurrencyCode,
   LocaleCode,
-} from './graphql/mutations/__generated__/createCartMutation.graphql';
-
+} from '../../../graphql/apollo/generated/operations';
 /**
  * Cart module configuration interface
  * Provides default settings for currency, locale, and cookie management
@@ -13,25 +12,21 @@ export interface CartConfig {
    * @example 'USD', 'EUR', 'GBP'
    */
   defaultCurrency: CurrencyCode;
-
   /**
    * Default locale code
    * @example 'en', 'en-US', 'ru-RU'
    */
   defaultLocale: LocaleCode;
-
   /**
    * Canonical sales channel used for checkout pricing and eligibility.
    * @example 'online-store'
    */
   channelCode: string;
-
   /**
    * Cookie name for storing cart ID
    * @default 'cartId'
    */
   cookieName?: string;
-
   /**
    * Cookie options for cart ID storage
    */
@@ -41,13 +36,11 @@ export interface CartConfig {
      * @default true
      */
     secure?: boolean;
-
     /**
      * SameSite cookie attribute
      * @default 'strict'
      */
     sameSite?: 'strict' | 'lax' | 'none';
-
     /**
      * Maximum age in seconds
      * @default 2592000 (30 days)
@@ -55,7 +48,6 @@ export interface CartConfig {
     maxAge?: number;
   };
 }
-
 /**
  * Default cart configuration
  */
@@ -67,7 +59,6 @@ export const DEFAULT_CART_CONFIG: Partial<CartConfig> = {
     maxAge: 3600 * 24 * 30, // 30 days
   },
 };
-
 /**
  * Merge user config with defaults
  */

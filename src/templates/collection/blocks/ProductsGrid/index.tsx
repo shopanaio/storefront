@@ -1,26 +1,22 @@
 'use client';
-
 import { Empty } from 'antd';
 import { createStyles } from 'antd-style';
-import { ListingProductCardRelay } from '@src/templates/collection/blocks/ProductCard';
+import { ListingProductCard } from '@src/templates/collection/blocks/ProductCard';
 import clsx from 'clsx';
 import type { SearchProduct } from '@shopana/storefront-sdk/modules/search/core/types';
-import type { useListingProductCardFragment_product$key } from '@src/templates/collection/relay/__generated__/useListingProductCardFragment_product.graphql';
-
+import type { StorefrontUseListingProductCardFragment_ProductFragment } from '../../../../../codegen/apollo/storefront-operations';
 interface ListingProps {
   products: readonly (
     | SearchProduct
-    | useListingProductCardFragment_product$key
+    | StorefrontUseListingProductCardFragment_ProductFragment
   )[];
   className?: string;
 }
-
 export const ProductsGrid: React.FC<ListingProps> = ({
   products,
   className,
 }) => {
   const { styles } = useStyles();
-
   return (
     <div className={clsx(styles.productList, className)}>
       {products.length === 0 ? (
@@ -28,14 +24,11 @@ export const ProductsGrid: React.FC<ListingProps> = ({
       ) : (
         products.map((product, index) =>
           'price' in product && 'product' in product ? (
-            <ListingProductCardRelay
-              key={product.id}
-              product={product}
-            />
+            <ListingProductCard key={product.id} product={product} />
           ) : (
-            <ListingProductCardRelay
-              key={index}
-              $productRef={product}
+            <ListingProductCard
+              key={product.id ?? index}
+              productRef={product}
             />
           )
         )
@@ -43,7 +36,6 @@ export const ProductsGrid: React.FC<ListingProps> = ({
     </div>
   );
 };
-
 const useStyles = createStyles(({ token, css }) => {
   return {
     productList: css`

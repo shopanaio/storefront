@@ -1,14 +1,4 @@
-import { graphql } from "react-relay";
+import { StorefrontUpdateDeliveryRecipientsMutationDocument } from '../../../../../codegen/apollo/storefront-operations';
 
-export const updateDeliveryRecipientsMutation = graphql`
-  mutation updateDeliveryRecipientsMutation(
-    $input: CheckoutDeliveryRecipientsUpdateInput!
-  ) {
-    checkoutDeliveryRecipientsUpdate(input: $input) {
-      checkout {
-        ...useCheckoutFragment
-      }
-      errors: userErrors { code field message retryable }
-    }
-  }
-`;
+export const updateDeliveryRecipientsMutation =
+  StorefrontUpdateDeliveryRecipientsMutationDocument;

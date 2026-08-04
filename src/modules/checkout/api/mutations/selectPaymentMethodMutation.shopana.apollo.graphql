@@ -1,0 +1,15 @@
+mutation StorefrontSelectPaymentMethodMutation(
+  $input: CheckoutPaymentMethodUpdateInput!
+) {
+  checkoutPaymentMethodUpdate(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

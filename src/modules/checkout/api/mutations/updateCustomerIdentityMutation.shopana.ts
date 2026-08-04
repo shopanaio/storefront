@@ -1,14 +1,4 @@
-import { graphql } from "react-relay";
+import { StorefrontUpdateCustomerIdentityMutationDocument } from '../../../../../codegen/apollo/storefront-operations';
 
-export const updateCustomerIdentityMutation = graphql`
-  mutation updateCustomerIdentityMutation(
-    $input: CheckoutCustomerIdentityUpdateInput!
-  ) {
-    checkoutCustomerIdentityUpdate(input: $input) {
-      checkout {
-        ...useCheckoutFragment
-      }
-      errors: userErrors { code field message retryable }
-    }
-  }
-`;
+export const updateCustomerIdentityMutation =
+  StorefrontUpdateCustomerIdentityMutationDocument;
