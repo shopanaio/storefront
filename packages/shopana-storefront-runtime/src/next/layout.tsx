@@ -4,13 +4,13 @@
  * from the consuming storefront's source tree.
  */
 import type { ReactNode } from 'react';
-import type { PageType } from '@shopana/storefront-sdk/core/types';
-import { parseRoute } from '@shopana/storefront-sdk/utils/routeParser';
 import { getRequestContext } from '@shopana/storefront/next/headers';
+import { resolveRuntimeRoute, type RuntimePageType } from './route';
 
 interface LayoutProps {
   children: ReactNode;
   params: Promise<{
+    locale?: string;
     slug?: string[];
   }>;
 }
@@ -20,7 +20,11 @@ interface PageLayoutComponent {
 }
 
 export interface CreateRuntimeLayoutOptions {
-  loadLayout: (pageType: PageType) => Promise<PageLayoutComponent | null>;
+  modulesContext?: ReturnType<typeof require.context>;
+  loadLayout: (
+    pageType: RuntimePageType,
+    context: { isModule: boolean; moduleSlug?: string }
+  ) => Promise<PageLayoutComponent | null>;
 }
 
 /**
@@ -38,15 +42,21 @@ export interface CreateRuntimeLayoutOptions {
  */
 export function createRuntimeLayout(options: CreateRuntimeLayoutOptions) {
   const layoutLoader = options.loadLayout;
+  const modulesContext = options.modulesContext;
 
-  async function Layout({ children }: LayoutProps) {
-    // Get URL context from middleware headers
+  if (modulesContext) {
+    modulesContext.keys().forEach((key) => modulesContext(key));
+  }
+
+  async function Layout({ children, params }: LayoutProps) {
+    const { locale } = await params;
     const requestContext = await getRequestContext();
-
-    // Parse route from pathname to get pageType
-    const { pageType } = parseRoute(requestContext.pathname);
-    // Load layout dynamically based on pageType
-    const LayoutComponent = await layoutLoader(pageType);
+    const resolution = resolveRuntimeRoute(requestContext.pathname, locale);
+    const LayoutComponent = await layoutLoader(resolution.pageType, {
+      isModule: resolution.kind === 'module',
+      moduleSlug:
+        resolution.kind === 'module' ? resolution.match.record.slug : undefined,
+    });
 
     // If no layout found, render children without wrapper
     if (!LayoutComponent) {

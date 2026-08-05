@@ -11,7 +11,6 @@ import type {
   TemplateParams,
 } from '@shopana/storefront-sdk/core/types';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
-import { parseRoute } from '@shopana/storefront-sdk/utils/routeParser';
 import { notFound } from 'next/navigation';
 import type { SerializableApolloQuery } from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
 import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
@@ -38,10 +37,10 @@ import {
   type SDKRequestContext,
 } from '@shopana/storefront/next/headers';
 import {
-  moduleRegistry,
   type DynamicModulePageProps,
   type ModuleExport,
 } from '@shopana/storefront-sdk/registry';
+import { resolveRuntimeRoute } from './route';
 
 type SlugParam = string[] | undefined;
 
@@ -163,6 +162,16 @@ async function buildPageMetadata(ctx: TemplateParams): Promise<Metadata> {
   };
 }
 
+function buildModuleMetadata(slug: string): Metadata {
+  const title = slug
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+  return { title: title || 'Page' };
+}
+
 function PageWrapper({
   data,
   children,
@@ -263,22 +272,28 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
   }
 
   async function generateMetadata({
+    params,
     searchParams,
   }: {
-    params: Promise<{ slug?: SlugParam }>;
+    params: Promise<{ locale?: string; slug?: SlugParam }>;
     searchParams?: Promise<Record<string, string | string[] | undefined>>;
   }): Promise<Metadata> {
+    const resolvedParams = await params;
     const resolvedSearchParams = await searchParams;
 
-    // Get URL context from middleware headers
     const requestContext = await getRequestContext();
-    const { pageType, params: routeParams } = parseRoute(
-      requestContext.pathname
+    const resolution = resolveRuntimeRoute(
+      requestContext.pathname,
+      resolvedParams.locale
     );
 
+    if (resolution.kind === 'module') {
+      return buildModuleMetadata(resolution.match.record.slug);
+    }
+
     return buildPageMetadata({
-      pageType,
-      params: routeParams,
+      pageType: resolution.route.pageType,
+      params: resolution.route.params,
       searchParams: resolvedSearchParams,
     });
   }
@@ -291,19 +306,13 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     const requestContext = await getRequestContext();
     const pathname = requestContext.pathname;
 
-    // Strip locale prefix if present (use params.locale from Next.js)
     const locale = params.locale;
-    const pathnameWithoutLocale =
-      locale && pathname.startsWith(`/${locale}`)
-        ? pathname.slice(locale.length + 1) || '/'
-        : pathname;
-
-    // Try to match pathname against registered page modules
-    const matchResult = moduleRegistry.matchPath<
+    const resolution = resolveRuntimeRoute<
       ModuleExport<DynamicModulePageProps>
-    >('page', pathnameWithoutLocale);
+    >(pathname, locale);
 
-    if (matchResult) {
+    if (resolution.kind === 'module') {
+      const matchResult = resolution.match;
       const rawSearchParams = await props.searchParams;
       // Convert to plain object to avoid "Classes or null prototypes are not supported" error
       const searchParams = rawSearchParams ? { ...rawSearchParams } : {};
@@ -323,8 +332,7 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     // Fall back to SDK page handler
     const resolvedSearchParams = await props.searchParams;
 
-    // Parse route from pathname (requestContext already fetched above)
-    const { pageType, params: routeParams } = parseRoute(pathname);
+    const { pageType, params: routeParams } = resolution.route;
 
     // Handle 404
     if (pageType === '404') {

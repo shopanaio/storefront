@@ -1,8 +1,13 @@
 import { createRuntimeLayout } from '@shopana/storefront/next/layout';
 
 const { Layout } = createRuntimeLayout({
-  loadLayout: async (pageType) => {
-    if (pageType === '404') return null;
+  modulesContext: require.context(
+    '../../../../src/modules',
+    true,
+    /register\.(t|j)sx?$/
+  ),
+  loadLayout: async (pageType, { isModule }) => {
+    if (pageType === '404' && !isModule) return null;
     return (await import('@src/layouts/theme')).default;
   },
 });
