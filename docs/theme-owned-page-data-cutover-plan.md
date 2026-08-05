@@ -8,7 +8,8 @@ API-to-view-model mapping, metadata, page data types, and page providers from
 
 The boundaries after the cutover are:
 
-- the theme owns what a page queries and how the result is interpreted;
+- the theme owns what a page queries, how the result is interpreted, and how
+  raw URL search parameters map to page, filter, sort, and pagination state;
 - the SDK owns Apollo infrastructure, including client creation, cache
   extraction, hydration primitives, generic pagination helpers, and the
   Shopana-schema cache policies shared by every theme;
@@ -33,6 +34,8 @@ export interface RuntimePageServices {
     document: TypedDocumentNode<TData, TVariables>,
     variables: TVariables
   ): Promise<SerializableApolloQuery<TData, TVariables>>;
+
+  extractCacheState(): Promise<NormalizedCacheObject>;
 }
 ```
 
@@ -45,11 +48,27 @@ The service, not the theme:
 1. obtains the request-scoped Apollo client;
 2. applies request cookies and Apollo environment configuration;
 3. executes the typed document;
-4. returns `data`, `variables`, and normalized `cacheState`.
+4. returns `data`, `variables`, and normalized `cacheState`;
+5. can extract one final cumulative state after parallel queries complete.
 
 The theme supplies the document and variables and maps the returned data. A
 raw server Apollo client and `environmentConfig` must not appear in theme page
 definitions.
+
+`cacheState` is an extraction of the shared request-scoped Apollo client, not
+an isolated diff produced by one operation. It can therefore contain cart,
+session, or earlier page-query records in addition to records written by the
+current query. This is intentional: the browser hydrator restores one
+normalized request snapshot and Apollo deduplicates shared records by cache
+identity. Do not describe or test `cacheState` as containing only page-owned
+records.
+
+When a definition runs several queries in parallel, it must not merge the
+individual cumulative states: array order does not describe query completion
+order, so an older extraction could overwrite a newer field. Await every query
+and then call `context.services.extractCacheState()` once. This returns the
+final state of the same request-scoped client without exposing that client to
+the theme.
 
 ## 2. Runtime page contracts
 
@@ -100,6 +119,12 @@ export interface RuntimePageDefinition<
 }
 ```
 
+`searchParams` is a raw transport record. The runtime preserves scalar values,
+repeated values, and absence, but does not assign domain meaning to any key.
+Each theme page definition owns parsing, validation, defaults, and
+normalization into its typed page-query variables. The SDK does not read URL
+search parameters.
+
 Use a separate non-recursive 404 contract:
 
 ```ts
@@ -117,6 +142,20 @@ export interface RuntimeNotFoundDefinition<TData> {
 }
 ```
 
+All `TData` values cross a React Server Component boundary. They must consist
+only of plain serializable values: `null`, `undefined`, string, number,
+boolean, arrays, plain objects, generated GraphQL result objects, fragment
+references, and normalized Apollo cache records. Functions, symbols, bigint
+values, class instances, React elements, Apollo clients, GraphQL documents,
+and cyclic objects are forbidden.
+
+Add a runtime `assertSerializablePageData()` check before ready data is passed
+to either Provider or Builder in development. A violation throws
+`RuntimeInvariantError` with the page type and the failing value path. The
+generic type remains unconstrained because a recursive index-signature
+constraint would reject otherwise valid generated GraphQL result types;
+serializability is a documented runtime contract.
+
 The 404 definition cannot return `not-found`, because its renderer must never
 recursively call Next `notFound()`.
 
@@ -131,6 +170,43 @@ Do not expose a public `RuntimePageDefinition<unknown>` registry constraint:
 `TData` occurs in both input and output positions and cannot safely be erased
 to `unknown`. Let `defineRuntimePages()` infer the concrete module map and
 perform any necessary type erasure privately inside the runtime.
+
+The public registry constraint uses a branded page identity rather than
+`RuntimePageDefinition<unknown>`:
+
+```ts
+declare const runtimeDefinitionBrand: unique symbol;
+
+export interface RuntimeDefinitionIdentity<TPageType extends PageType> {
+  readonly pageType: TPageType;
+  readonly [runtimeDefinitionBrand]: true;
+}
+
+type RuntimePageModule<TKey extends PageType> = {
+  default: RuntimeDefinitionIdentity<TKey>;
+};
+
+type RuntimePageModuleMap = {
+  [TKey in PageType]: () => Promise<RuntimePageModule<TKey>>;
+};
+
+export function defineRuntimePages<
+  const TModules extends RuntimePageModuleMap,
+>(
+  modules: TModules &
+    Record<Exclude<keyof TModules, PageType>, never>
+): TModules;
+```
+
+`defineRuntimePage()` and `defineRuntimeNotFound()` add the brand while
+preserving their complete inferred definitions. The runtime may erase `TData`
+only after loading a module, inside one private generic adapter that keeps
+`loadData`, metadata, Provider, and template operations together. The erased
+definition must never be exported.
+
+Add compile-time fixtures that must fail for a missing key, an extra key, a
+mismatched `pageType`, an invalid default export, and a Provider or template
+whose data type differs from `loadData()`.
 
 ## 3. Lazy theme registry
 
@@ -181,6 +257,28 @@ src/runtime/pages/
 ```
 
 ## 4. Error and metadata semantics
+
+Define and export one runtime error type:
+
+```ts
+export type RuntimeInvariantCode =
+  | 'MISSING_PAGE_DEFINITION'
+  | 'INVALID_PAGE_MODULE'
+  | 'PAGE_TYPE_MISMATCH'
+  | 'NON_SERIALIZABLE_PAGE_DATA';
+
+export class RuntimeInvariantError extends Error {
+  readonly code: RuntimeInvariantCode;
+  readonly pageType?: PageType;
+  readonly registryKey?: string;
+  readonly valuePath?: string;
+}
+```
+
+Messages include the stable code and resolved registry key. Dynamic-import,
+query, mapping, metadata, and template failures propagate unchanged; only a
+successfully imported value that violates the registry contract becomes an
+invariant error.
 
 | Situation | Behavior |
 | --- | --- |
@@ -364,7 +462,6 @@ return {
   status: 'ready',
   data: {
     hydration: {
-      key: createPageHydrationKey(context),
       state: preloaded.cacheState,
     },
     product: mapProduct(preloaded.data.product),
@@ -376,9 +473,10 @@ return {
 When a page has several fixed connections, prefer one page operation that
 loads the initial slice of every connection actually rendered by that page. If
 they cannot reasonably be loaded by one operation, execute the real theme
-queries in parallel and merge their returned cache states once before creating
-the single page hydration payload. Never expose or create an additional Apollo
-client in the theme.
+queries in parallel, await all of them, and call
+`context.services.extractCacheState()` once before creating the single page
+hydration payload. Never expose or create an additional Apollo client in the
+theme.
 
 Pages that need no query explicitly return ready theme-owned data such as
 `null`. The absence of a query remains a theme decision.
@@ -389,7 +487,6 @@ The SDK provides an infrastructure-only client component:
 
 ```tsx
 <ApolloCacheHydrator
-  hydrationKey={data.hydration.key}
   state={data.hydration.state}
 >
   {children}
@@ -397,27 +494,29 @@ The SDK provides an infrastructure-only client component:
 ```
 
 The raw server Apollo client is never serialized. Only one merged normalized
-state is transported per page, regardless of how many paginated connections it
+request state is transported by the page, regardless of how many paginated
+connections it contains or which earlier request-scoped records it also
 contains.
 
-The hydrator contract must guarantee:
+The hydrator has a deliberately narrow contract for this cutover:
 
-1. child hooks never observe the cache before the page snapshot is applied;
-2. all initial connections are restored before their hooks render;
-3. one `hydrationKey` is applied at most once to a browser Apollo client;
-4. ordinary rerenders cannot reapply an old snapshot;
-5. a different navigation key applies its new snapshot;
-6. replay of an older key cannot overwrite cache changes made after a newer
-   navigation;
-7. current browser cache records are retained when absent from the incoming
-   snapshot;
-8. cache merge precedence is documented before relying on
-   `mergeApolloCacheStates()`.
+1. it applies the incoming page snapshot once when that page Provider mounts;
+2. child Apollo hooks do not run before the snapshot is applied;
+3. all initial connections are restored together;
+4. ordinary rerenders of the mounted Provider do not restore the snapshot
+   again;
+5. browser cache records absent from the incoming snapshot are retained.
 
-Do not define correctness only as `restore(merge(current, incoming))`: the
-current merge helper gives later arguments field precedence and by itself does
-not prevent a stale snapshot from overwriting newer browser fields. Track
-applied/navigation keys explicitly and reject stale replays before restoring.
+Implement the restore as one merge of the current browser cache followed by
+the incoming page state, so incoming fields take precedence on the initial
+mount. The hydrator must not create another Apollo client.
+
+This cutover guarantees hydration for the initial server-rendered page only.
+It does not introduce navigation sequence numbers, stale-snapshot ordering, or
+snapshot replay handling. Client navigation may use the normal Apollo query
+lifecycle. If navigation-time server snapshot hydration is added later, it
+requires a separate ordered navigation contract rather than an opaque page
+key.
 
 Theme providers apply hydration once around every connection consumer:
 
@@ -425,7 +524,6 @@ Theme providers apply hydration once around every connection consumer:
 function ProductPageProvider({ data, children }) {
   return (
     <ApolloCacheHydrator
-      hydrationKey={data.hydration.key}
       state={data.hydration.state}
     >
       {children}
@@ -439,8 +537,9 @@ browser Apollo cache; the individual hooks remain isolated by their operations,
 variables, normalized parents, and field policies.
 
 This is required for `useFragment`, pagination, `fetchMore`, and normalized
-entity reuse. Root `AppProvider.apolloInitialState` remains responsible for
-cart/session state loaded before nested page execution.
+entity reuse. Root `AppProvider` continues to initiate cart/session loading;
+those normalized records may also be present in the cumulative request
+snapshot transported by the page Provider.
 
 Both the request-scoped server client and the browser client must use the same
 SDK-owned `createApolloCache()` factory. A theme does not provide, override, or
@@ -521,8 +620,10 @@ Apollo cache identity, not the operation name, connects SSR data with the
 client pagination query.
 
 Canonical initial variables are mandatory. Server and client use the same
-representation of `after: null`, default sort, normalized filters, locale, and
-handle. Do not use `undefined` in one place and `null` in the other.
+theme-owned normalization for `after: null`, default sort, filters, search
+terms, and handles. Do not use `undefined` in one place and `null` in the
+other. Parsing URL values into that canonical representation belongs to the
+theme, not the runtime or SDK.
 
 ### Cache policies and `fetchMore`
 
@@ -570,12 +671,56 @@ policy appends edges, deduplicates normalized nodes, and replaces `pageInfo`
 with the latest response. A sort/filter refetch resets `after` to `null`;
 semantic `keyArgs` prevent it from appending into a different logical list.
 
+### Active pagination variables
+
+Moving the descriptors is not sufficient: update the generic
+`usePaginationQuery()` lifecycle as part of this cutover.
+
+- keep an `activeVariablesRef` containing the variables of the logical list
+  currently being read;
+- when input variables change, replace `activeVariablesRef`, clear the
+  connection's in-flight guard, and let Apollo read the new cache identity;
+- when `refetch(partialVariables)` is called, merge the partial values into
+  the active variables, force `after: null`, store that complete canonical
+  variables object before starting the request, and use it for subsequent
+  `loadNext()` calls;
+- `loadNext()` must derive its variables from `activeVariablesRef`, never from
+  stale initial props;
+- identify semantic variable changes with an SDK-owned
+  `stableSerializeOperationVariables()` helper rather than ordinary
+  `JSON.stringify()` key order; it sorts object keys recursively while
+  preserving array order, scalar types, and explicit `null` values;
+- associate each in-flight request with the variables generation that started
+  it, so completion of an older request cannot clear or replace the guard for
+  a newer logical list.
+
+The hook does not own filter UI or URL state. It owns only the active GraphQL
+variables required to make `refetch()` followed by `loadNext()` internally
+consistent. A failed refetch exposes the Apollo error and keeps the attempted
+active variables; the consumer may retry or supply different input variables.
+
 ### Optional URL synchronization
 
 Apollo owns the execution state of embedded paginations, so cursors do not need
 to be in the URL. Filters and sort may be mirrored into search params when they
-must be shareable or restorable. Changing one list's URL-visible state resets
-only that descriptor and must not reset the other connections.
+must be shareable or restorable. The theme exclusively owns both directions of
+that mapping:
+
+- parsing raw `searchParams` into typed filter, sort, search, and pagination
+  state;
+- validating unknown, malformed, scalar, and repeated values;
+- applying theme defaults and producing canonical GraphQL variables;
+- serializing theme state back into URL search parameters when synchronization
+  is enabled.
+
+The generic SDK pagination hook receives only a typed descriptor and typed
+variables. It must not import Next navigation APIs, access `window.location`,
+construct `URLSearchParams`, recognize theme query-parameter names, or mutate
+the URL. The runtime only transports raw search parameters unchanged and uses
+their stable serialization to share Page and metadata execution.
+
+Changing one list's URL-visible state resets only that theme descriptor and
+must not reset the other connections.
 
 SEO-visible primary listings may additionally expose canonical navigation
 links. That concern stays separate from internal Apollo `fetchMore` and must not
@@ -743,6 +888,28 @@ The resulting ownership is:
 - deleted page and category operations disappear from SDK output through
   codegen.
 
+Use a workspace-owned orchestration entry point with these ordered stages:
+
+1. fetch the Shopana schema once into the workspace-level
+   `schema.shopana.graphql` artifact;
+2. run `packages/shopana-storefront-sdk/codegen.ts` against that exact file;
+3. run `packages/brand-bite-crunch/codegen.ts` against the same file;
+4. run unrelated checkout codegen separately, without refetching or replacing
+   the Shopana schema artifact.
+
+The root `codegen` script invokes this orchestrator. The theme's config keeps
+its schema-client output and theme operation output, but it no longer owns
+Shopana schema acquisition. The SDK config emits only SDK-owned generated
+types and operations. Resolve input and output paths from each config file's
+directory so running the root command cannot redirect generated files into the
+workspace root.
+
+Remove the current implicit coupling in which the active theme's
+`codegen/scripts/codegen.js` fetches the Shopana schema and then generates all
+artifacts from the theme working directory. A theme-only codegen entry point,
+if retained for local work, consumes the already acquired workspace schema and
+generates only theme-owned outputs.
+
 If codegen dependencies or scripts must be added to the SDK package, update its
 package manifest through the normal package workflow. Do not silently write an
 SDK artifact as an incidental side effect of a theme-only codegen command.
@@ -803,7 +970,39 @@ createRuntimeNotFound({
 Adapters contain no template switch, concrete query import, raw Apollo client,
 or compatibility fallback.
 
-## 16. Verification and definition of done
+## 16. Dependency-ordered implementation sequence
+
+The result is still one commit, but implement and review the working tree in
+this order:
+
+1. inventory current page queries, transitive fragments, descriptors, hooks,
+   exports, generated adapters, and module-route behavior;
+2. add runtime contracts, branded registry helpers, invariant errors, stable
+   record serialization, serializable-data validation, and compile-time
+   registry fixtures;
+3. establish workspace-owned schema acquisition and separate SDK/theme codegen
+   targets, then generate both outputs from the same schema artifact;
+4. add theme page operations, minimal pagination operations, shared fragments,
+   canonical variable parsers, view models, and descriptors;
+5. update generic SDK infrastructure: active pagination variables, in-flight
+   generations, cache policies, cache-state merge documentation, and the
+   initial-mount hydrator;
+6. implement every theme page definition and Provider, including query-free
+   pages and the non-recursive 404 definition;
+7. replace reserved runtime execution, metadata, generated adapters, and 404
+   rendering while preserving the module branch unchanged;
+8. migrate every theme consumer and pagination/refetch call site;
+9. only after no consumer remains, delete SDK page queries, models, providers,
+   hooks, descriptors, exports, and obsolete documentation;
+10. regenerate adapters and GraphQL outputs, run the allowed verification
+    matrix, inspect the final dependency direction, and create the one commit.
+
+Do not delete an SDK fragment or generated type during an earlier stage merely
+because its intended replacement exists; delete it only after the non-generated
+consumer inventory is empty. Do not introduce compatibility exports between
+stages.
+
+## 17. Verification and definition of done
 
 Static acceptance criteria:
 
@@ -816,7 +1015,13 @@ Static acceptance criteria:
 - the registry contains every reserved `PageType` exactly once;
 - every lazy module has a valid matching default definition;
 - metadata and Page share one request-scoped `loadData()` result;
+- definitions with parallel queries extract one final shared-client state after
+  all queries complete and do not merge cumulative per-query snapshots;
+- ready page data is plain RSC-serializable data and development validation
+  rejects the first non-serializable value with its path;
 - theme and SDK generated files contain only their owned operations;
+- workspace codegen fetches one Shopana schema artifact and supplies that exact
+  artifact to both the SDK and active-theme configs;
 - no moved theme document references an SDK-only fragment;
 - every client pagination descriptor uses a minimal theme pagination operation,
   not a full page operation;
@@ -826,6 +1031,13 @@ Static acceptance criteria:
   `createApolloCache()` policies;
 - the theme defines no Shopana `typePolicies` and does not configure an Apollo
   client;
+- every URL-backed filter, sort, search, or pagination value is parsed and
+  serialized by theme code;
+- SDK pagination code does not read, interpret, or mutate URL state;
+- `refetch()` stores its complete canonical variables and the following
+  `loadNext()` uses those variables rather than the initial props;
+- an older in-flight pagination request cannot clear the guard for a newer
+  semantic variables generation;
 - SDK pagination source imports no `Sdk*QueryDocument`, concrete generated page
   API type, or theme pagination descriptor.
 
@@ -839,12 +1051,13 @@ Runtime acceptance matrix:
 - collection pagination continuing from the initial connection;
 - search pagination;
 - box-builder category pagination through its independent query;
-- every real connection rendered together hydrating from one page snapshot;
+- every real connection rendered together hydrating from one request snapshot;
 - loading the next page of one connection without network requests, loading
   state changes, or edge mutations in another connection;
 - independent sort/filter refetch resetting only its own connection;
+- pagination after a sort/filter refetch continuing with the new sort/filter
+  variables;
 - duplicate `fetchMore` calls not duplicating normalized edges;
-- client navigation between two hydrated pages without stale cache replay;
 - client cache change followed by an ordinary rerender without rollback;
 - metadata built from the same loaded page data;
 - a page without custom metadata returning empty metadata;
