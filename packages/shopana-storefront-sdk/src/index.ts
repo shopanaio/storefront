@@ -6,5 +6,37 @@ export { model } from './model/namespace';
 export { App } from './App';
 export { AppProvider } from './AppProvider';
 
+export type {
+  AspectRatioSettingDefinition,
+  BlockSettingDefinition,
+  BlockSettingsSchema,
+  CheckboxSettingDefinition,
+  ColorBackgroundSettingDefinition,
+  ColorSettingDefinition,
+  ColorSchemeSettingDefinition,
+  EmptyBlockSettings,
+  EmptySectionSettings,
+  EntityPickerEntity,
+  EntityPickerSettingDefinition,
+  FontPickerSettingDefinition,
+  IconPickerSettingDefinition,
+  ImagePickerSettingDefinition,
+  NumberSettingDefinition,
+  RadioSettingDefinition,
+  RangeSettingDefinition,
+  SectionSettingDefinition,
+  SectionSettingsSchema,
+  SelectSettingDefinition,
+  SettingOption,
+  SettingDefinitionBase,
+  SettingVisibility,
+  SidebarSettingDefinition,
+  TextAlignmentSettingDefinition,
+  TextareaSettingDefinition,
+  TextSettingDefinition,
+  UrlSettingDefinition,
+  VideoPickerSettingDefinition,
+} from './core/settings';
+
 // Public Apollo environment configuration.
 export type { ApolloEnvironmentConfig } from './graphql/apollo/types';

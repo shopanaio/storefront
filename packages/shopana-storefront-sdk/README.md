@@ -16,6 +16,76 @@ providers, URL parameter semantics, or concrete pagination descriptors. Those
 belong to the active theme and are supplied to the generic SDK APIs through
 typed GraphQL documents.
 
+## Section settings
+
+`SectionConfig<TSettings>` accepts a strictly typed editor `schema`. A control
+ID must be a key of `TSettings`, and its value type must match the control. For
+example, `checkbox` can target only a boolean setting and `range` only a number.
+
+Entity pickers use `type: 'entity_picker'`, declare one of the supported entity
+types (`category`, `product`, `article`, `blog`, or `page`), and persist only the
+selected entity handle. Hydrated API entities never become part of a template.
+
+```ts
+interface Settings {
+  categoryHandle: string;
+  showPagination: boolean;
+}
+
+const section = {
+  component: ProductSection,
+  settings: {
+    categoryHandle: 'electronics',
+    showPagination: true,
+  },
+  schema: {
+    name: 'Products',
+    settings: [
+      {
+        type: 'entity_picker',
+        entity: 'category',
+        id: 'categoryHandle',
+        label: 'Category',
+      },
+      {
+        type: 'checkbox',
+        id: 'showPagination',
+        label: 'Show pagination',
+      },
+    ],
+  },
+} satisfies SectionConfig<Settings>;
+```
+
+Blocks use the same control union and type guarantees:
+
+```ts
+interface ButtonBlockSettings {
+  label: string;
+  style: 'primary' | 'secondary';
+}
+
+const buttonBlock = {
+  component: ButtonBlock,
+  settings: { label: 'Shop now', style: 'primary' },
+  schema: {
+    name: 'Button',
+    settings: [
+      { type: 'text', id: 'label', label: 'Label' },
+      {
+        type: 'select',
+        id: 'style',
+        label: 'Style',
+        options: [
+          { value: 'primary', label: 'Primary' },
+          { value: 'secondary', label: 'Secondary' },
+        ],
+      },
+    ],
+  },
+} satisfies BlockConfig<ButtonBlockSettings>;
+```
+
 ## Apollo pagination
 
 Create a descriptor next to the theme operation:
