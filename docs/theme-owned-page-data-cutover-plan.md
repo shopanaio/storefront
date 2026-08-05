@@ -4,7 +4,7 @@
 
 Move ownership of page GraphQL documents, variables, pagination descriptors,
 API-to-view-model mapping, metadata, page data types, and page providers from
-`@shopana/storefront` and `@shopana/storefront-sdk` into Bite & Crunch.
+`@shopana/storefront` and `@shopana/storefront-sdk` into the active theme.
 
 The boundaries after the cutover are:
 
@@ -142,7 +142,7 @@ export default defineRuntimePage({
 });
 ```
 
-The complete Bite & Crunch registry is:
+The complete theme registry is:
 
 ```ts
 export const runtimePages = defineRuntimePages({
@@ -302,10 +302,10 @@ src/runtime/pages/search/SearchPageQuery.graphql
 
 Use these names:
 
-- `BiteCrunchHomePageQuery`;
-- `BiteCrunchProductPageQuery`;
-- `BiteCrunchCollectionPageQuery`;
-- `BiteCrunchSearchPageQuery`.
+- `HomePageQuery`;
+- `ProductPageQuery`;
+- `CollectionPageQuery`;
+- `SearchPageQuery`.
 
 Create independent minimal client-pagination operations:
 
@@ -318,10 +318,10 @@ src/graphql/pagination/SearchPaginationQuery.graphql
 
 Use these names:
 
-- `BiteCrunchCategoryPaginationQuery`;
-- `BiteCrunchCollectionPaginationQuery`;
-- `BiteCrunchProductReviewsPaginationQuery`;
-- `BiteCrunchSearchPaginationQuery`.
+- `CategoryPaginationQuery`;
+- `CollectionPaginationQuery`;
+- `ProductReviewsPaginationQuery`;
+- `SearchPaginationQuery`.
 
 Do not use a full page query as a `fetchMore` document. Loading another page of
 one connection must not refetch unrelated page data or other connections.
@@ -346,7 +346,7 @@ Each queried page definition:
 
 ```ts
 const preloaded = await context.services.loadQuery(
-  BiteCrunchProductPageQueryDocument,
+  ProductPageQueryDocument,
   {
     handle: context.routeParams.handle!,
     reviewsFirst: PRODUCT_REVIEWS_PAGE_SIZE,
@@ -373,12 +373,11 @@ return {
 ```
 
 When a page has several fixed connections, prefer one page operation that
-loads the initial slice of all of them. For example, a page with products,
-reviews, and recommendations produces one cache snapshot containing all three
-initial connections. If they cannot reasonably be loaded by one operation,
-execute theme queries in parallel and merge their returned cache states once
-before creating the single page hydration payload. Never expose or create an
-additional Apollo client in the theme.
+loads the initial slice of every connection actually rendered by that page. If
+they cannot reasonably be loaded by one operation, execute the real theme
+queries in parallel and merge their returned cache states once before creating
+the single page hydration payload. Never expose or create an additional Apollo
+client in the theme.
 
 Pages that need no query explicitly return ready theme-owned data such as
 `null`. The absence of a query remains a theme decision.
@@ -462,16 +461,16 @@ Mappings:
 
 | Descriptor | Theme operation |
 | --- | --- |
-| `CategoryPagination` | `BiteCrunchCategoryPaginationQueryDocument` |
-| `CollectionPagination` | `BiteCrunchCollectionPaginationQueryDocument` |
-| `ProductReviewsPagination` | `BiteCrunchProductReviewsPaginationQueryDocument` |
-| `SearchPagination` | `BiteCrunchSearchPaginationQueryDocument` |
+| `CategoryPagination` | `CategoryPaginationQueryDocument` |
+| `CollectionPagination` | `CollectionPaginationQueryDocument` |
+| `ProductReviewsPagination` | `ProductReviewsPaginationQueryDocument` |
+| `SearchPagination` | `SearchPaginationQueryDocument` |
 
 ### One lifecycle per connection
 
 One connection has exactly one descriptor, one variables shape, one cache
-identity, and one hook lifecycle. Three simultaneous paginations therefore use
-three independent hooks:
+identity, and one hook lifecycle. If several real connections are rendered on
+the same page, each one uses its own independent hook:
 
 ```ts
 const products = usePaginationQuery(CollectionPagination, {
@@ -488,20 +487,7 @@ const reviews = usePaginationQuery(ProductReviewsPagination, {
   after: null,
   sort: reviewSort,
 });
-
-const recommendations = usePaginationQuery(
-  ProductRecommendationsPagination,
-  {
-    handle,
-    first: RECOMMENDATIONS_PAGE_SIZE,
-    after: null,
-  }
-);
 ```
-
-`ProductRecommendationsPagination` above illustrates a third connection; add
-its theme operation and descriptor only when that connection exists in the
-actual page.
 
 Apollo does not need a shared page cursor or Hydrogen-style URL namespace. The
 equivalent isolation comes from:
@@ -511,7 +497,7 @@ equivalent isolation comes from:
 - semantic variables included by the field policy's `keyArgs`;
 - a separate hook instance and in-flight request guard.
 
-Loading products must not refetch reviews or recommendations, rerun the server
+Loading one connection must not refetch another connection, rerun the server
 page definition, or replace another connection's loading or error state.
 
 ### Continue from the SSR cache
@@ -537,6 +523,9 @@ Connection policies exclude cursor/window arguments such as `first`, `last`,
 `after`, and `before` from cache identity and include variables that define a
 different logical list:
 
+The schema-specific registrations belong to the theme; the SDK exposes only
+the generic `cursorConnectionPolicy()` factory.
+
 ```ts
 Category: {
   fields: {
@@ -546,7 +535,6 @@ Category: {
 Product: {
   fields: {
     reviews: cursorConnectionPolicy(['sort', 'filters']),
-    recommendations: cursorConnectionPolicy(['strategy']),
   },
 },
 Query: {
@@ -585,7 +573,84 @@ Keep only generic SDK pagination infrastructure:
 - `definePaginationQuery`;
 - `usePaginationQuery`;
 - generic pagination types;
-- shared Apollo cache policies.
+- the generic `cursorConnectionPolicy` factory.
+
+### Final SDK pagination boundary
+
+After the cutover, the SDK must not import or export any concrete pagination
+query, generated page API type, connection accessor, or variables mapper. The
+theme supplies all API knowledge through a typed descriptor:
+
+```ts
+// Theme-owned code
+export const ProductReviewsPagination = definePaginationQuery({
+  query: ProductReviewsPaginationQueryDocument,
+  getConnection: (data) => data.product?.reviews,
+  getNextVariables: ({ variables, count, endCursor }) => ({
+    ...variables,
+    first: count,
+    after: endCursor,
+  }),
+});
+```
+
+The SDK contract remains fully generic:
+
+```ts
+export interface PaginationQueryDescriptor<
+  TData,
+  TVariables extends OperationVariables,
+  TConnection extends CursorConnection,
+> {
+  query: TypedDocumentNode<TData, TVariables>;
+  getConnection(data: TData): TConnection | null | undefined;
+  getNextVariables(
+    context: PaginationContext<TVariables>
+  ): TVariables;
+}
+
+export function usePaginationQuery<
+  TData,
+  TVariables extends OperationVariables,
+  TConnection extends CursorConnection,
+>(
+  descriptor: PaginationQueryDescriptor<
+    TData,
+    TVariables,
+    TConnection
+  >,
+  variables: TVariables
+) {
+  // Generic useQuery/fetchMore lifecycle only.
+}
+```
+
+The SDK learns `TData`, `TVariables`, and `TConnection` structurally from the
+descriptor at the call site. It does not reference their generated names and
+does not know which API entity or field is being paginated.
+
+Delete from the SDK:
+
+- imports of `SdkCategoryQueryDocument`, `SdkCollectionQueryDocument`,
+  `SdkProductQueryDocument`, and `SdkSearchQueryDocument` from pagination code;
+- concrete `CategoryPagination`, `CollectionPagination`,
+  `ProductReviewsPagination`, and `SearchPagination` definitions and exports;
+- generated page/category query types that remain only because of those
+  descriptors;
+- pagination-specific wrapper files that re-export concrete SDK operations.
+
+The final dependency direction is strictly one-way:
+
+```text
+theme GraphQL document
+  -> theme codegen types
+  -> theme pagination descriptor
+  -> generic SDK usePaginationQuery
+  -> Apollo useQuery/fetchMore
+```
+
+The SDK must never import the theme descriptor. Theme components import the
+generic SDK hook and pass their own descriptor into it.
 
 ## 11. Move page models and consumers into the theme
 
@@ -600,7 +665,7 @@ Remove SDK page-specific providers, contexts, and hooks:
 Theme components consume typed Builder data:
 
 ```ts
-const { data } = useTemplateData<BiteCrunchProductPageData>();
+const { data } = useTemplateData<ProductPageData>();
 ```
 
 Move or replace:
@@ -640,7 +705,7 @@ Before deletion, inventory outside generated files:
 
 ## 13. Separate SDK and theme code generation
 
-Do not make the SDK generated output conceptually owned by Bite & Crunch.
+Do not make the SDK generated output conceptually owned by a theme package.
 Introduce an SDK-owned codegen target and make the workspace codegen command
 orchestrate both SDK and theme generation from the same freshly fetched Shopana
 schema.
@@ -649,8 +714,8 @@ The resulting ownership is:
 
 - SDK config scans only `packages/shopana-storefront-sdk/src/**/*.graphql` and
   writes the SDK generated operations file;
-- Bite & Crunch config scans only `packages/brand-bite-crunch/src/**/*.graphql`
-  and writes its theme generated operations file;
+- the active theme config scans only its own `src/**/*.graphql` documents and
+  writes its theme generated operations file;
 - schema acquisition happens once at workspace orchestration level, or the
   exact same schema artifact is explicitly supplied to both configs;
 - generated files are never manually edited;
@@ -734,7 +799,10 @@ Static acceptance criteria:
 - no moved theme document references an SDK-only fragment;
 - every client pagination descriptor uses a minimal theme pagination operation,
   not a full page operation;
-- every paginated field has an explicit cache policy with reviewed `keyArgs`.
+- every paginated field has an explicit theme-owned cache registration with
+  reviewed `keyArgs`;
+- SDK pagination source imports no `Sdk*QueryDocument`, concrete generated page
+  API type, or theme pagination descriptor.
 
 Runtime acceptance matrix:
 
@@ -746,9 +814,9 @@ Runtime acceptance matrix:
 - collection pagination continuing from the initial connection;
 - search pagination;
 - box-builder category pagination through its independent query;
-- three simultaneous connections hydrating from one page snapshot;
+- every real connection rendered together hydrating from one page snapshot;
 - loading the next page of one connection without network requests, loading
-  state changes, or edge mutations in the other two;
+  state changes, or edge mutations in another connection;
 - independent sort/filter refetch resetting only its own connection;
 - duplicate `fetchMore` calls not duplicating normalized edges;
 - client navigation between two hydrated pages without stale cache replay;
