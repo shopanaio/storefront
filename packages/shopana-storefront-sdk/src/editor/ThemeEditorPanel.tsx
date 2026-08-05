@@ -1,10 +1,9 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import {
   Alert,
   Button,
-  Collapse,
   ColorPicker,
   Divider,
   Drawer,
@@ -20,11 +19,8 @@ import {
   Typography,
 } from 'antd';
 import type { SectionSettingDefinition } from '../core/settings';
-import type {
-  RegisteredEditorBlock,
-  RegisteredEditorSection,
-  ThemeEditorScope,
-} from './store';
+import type { PageType } from '../core/types';
+import type { ThemeEditorScope } from './store';
 import {
   useThemeEditorAvailable,
   useThemeEditorStore,
@@ -34,12 +30,12 @@ const floatingButtonStyle: CSSProperties = {
   position: 'fixed',
   top: '50%',
   zIndex: 1101,
-  width: 38,
-  height: 56,
+  width: 30,
+  height: 44,
   padding: 0,
-  borderRadius: '10px 0 0 10px',
+  borderRadius: '8px 0 0 8px',
   transform: 'translateY(-50%)',
-  transition: 'right 0.2s ease',
+  transition: 'right 0.3s ease',
   boxShadow: '0 6px 24px rgba(0, 0, 0, 0.18)',
 };
 
@@ -83,9 +79,20 @@ function SchemaFields({
 
     if (definition.type === 'header') {
       return (
-        <Typography.Title key={`header-${index}`} level={5}>
-          {definition.content}
-        </Typography.Title>
+        <div key={`header-${index}`}>
+          <Divider
+            style={{
+              margin: index === 0 ? '0 0 16px' : '28px 0 16px',
+              borderBlockStartColor: 'rgba(5, 5, 5, 0.14)',
+            }}
+          />
+          <Typography.Title
+            level={5}
+            style={{ margin: '0 0 18px', textAlign: 'left' }}
+          >
+            {definition.content}
+          </Typography.Title>
+        </div>
       );
     }
     if (definition.type === 'paragraph') {
@@ -259,129 +266,328 @@ function SchemaFields({
   });
 }
 
-interface ObjectFieldsProps {
-  value: Record<string, unknown>;
-  path?: string[];
-  onChange: (path: string[], value: unknown) => void;
+const PAGE_TYPES: PageType[] = [
+  'home',
+  'product',
+  'collection',
+  'search',
+  'blog',
+  'article',
+  'page',
+  'cart',
+  'list-collections',
+  '404',
+];
+
+type EditorRoute =
+  | { type: 'root'; title: string }
+  | { type: 'global'; title: string; path: string[] }
+  | { type: 'scope'; title: string; scope: ThemeEditorScope }
+  | {
+      type: 'section';
+      title: string;
+      scope: ThemeEditorScope;
+      sectionId: string;
+    }
+  | {
+      type: 'block';
+      title: string;
+      scope: ThemeEditorScope;
+      sectionId: string;
+      blockId: string;
+    };
+
+const rootRoute: EditorRoute = { type: 'root', title: 'Theme editor' };
+
+function NavigationRow({
+  title,
+  description,
+  active,
+  onClick,
+}: {
+  title: string;
+  description?: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="text"
+      block
+      onClick={onClick}
+      style={{
+        height: 'auto',
+        minHeight: 54,
+        padding: '11px 12px',
+        marginBottom: 6,
+        border: '1px solid rgba(5, 5, 5, 0.08)',
+        textAlign: 'left',
+        justifyContent: 'flex-start',
+      }}
+    >
+      <Flex
+        align="center"
+        justify="space-between"
+        gap={12}
+        style={{ width: '100%' }}
+      >
+        <span style={{ minWidth: 0 }}>
+          <Typography.Text strong>{title}</Typography.Text>
+          {active ? (
+            <Typography.Text type="secondary"> · Current</Typography.Text>
+          ) : null}
+          {description ? (
+            <Typography.Text
+              type="secondary"
+              style={{ display: 'block', marginTop: 2 }}
+            >
+              {description}
+            </Typography.Text>
+          ) : null}
+        </span>
+        <span aria-hidden="true" style={{ flex: '0 0 auto', fontSize: 20 }}>
+          ›
+        </span>
+      </Flex>
+    </Button>
+  );
 }
 
-function ObjectFields({ value, path = [], onChange }: ObjectFieldsProps) {
-  const leaves: ReactNode[] = [];
-  const groups: Array<{ key: string; value: Record<string, unknown> }> = [];
+function getObjectAtPath(
+  root: Record<string, unknown>,
+  path: string[]
+): Record<string, unknown> {
+  return path.reduce<Record<string, unknown>>((current, part) => {
+    const next = current[part];
+    return next && typeof next === 'object' && !Array.isArray(next)
+      ? (next as Record<string, unknown>)
+      : {};
+  }, root);
+}
 
-  Object.entries(value).forEach(([key, fieldValue]) => {
-    if (
-      fieldValue &&
-      typeof fieldValue === 'object' &&
-      !Array.isArray(fieldValue)
-    ) {
-      groups.push({ key, value: fieldValue as Record<string, unknown> });
-      return;
-    }
-
-    const fieldPath = [...path, key];
-    const label = titleFromKey(key);
-    let control: ReactNode;
-
-    if (typeof fieldValue === 'boolean') {
-      control = (
-        <Switch
-          checked={fieldValue}
-          onChange={(next) => onChange(fieldPath, next)}
-        />
-      );
-    } else if (typeof fieldValue === 'number') {
-      control = (
-        <InputNumber
-          value={fieldValue}
-          style={{ width: '100%' }}
-          onChange={(next) => onChange(fieldPath, next)}
-        />
-      );
-    } else if (
-      key === 'defaultScheme' &&
-      value.schemes &&
-      typeof value.schemes === 'object'
-    ) {
-      control = (
-        <Select
-          value={String(fieldValue ?? '')}
-          options={Object.keys(value.schemes as Record<string, unknown>).map(
-            (scheme) => ({
-              value: scheme,
-              label: titleFromKey(scheme),
-            })
-          )}
-          style={{ width: '100%' }}
-          onChange={(next) => onChange(fieldPath, next)}
-        />
-      );
-    } else if (
-      typeof fieldValue === 'string' &&
-      /^(#|rgb\(|rgba\(|hsl\(|hsla\()/.test(fieldValue)
-    ) {
-      control = (
-        <ColorPicker
-          value={fieldValue}
-          showText
-          onChange={(_, css) => onChange(fieldPath, css)}
-        />
-      );
-    } else {
-      control = (
-        <Input
-          value={String(fieldValue ?? '')}
-          onChange={(event) => onChange(fieldPath, event.target.value)}
-        />
-      );
-    }
-
-    leaves.push(
-      <div key={key} style={fieldStyle}>
-        <Typography.Text style={labelStyle}>{label}</Typography.Text>
-        {control}
-      </div>
-    );
-  });
+function GlobalSettingsLevel({
+  path,
+  onOpenGroup,
+}: {
+  path: string[];
+  onOpenGroup: (key: string) => void;
+}) {
+  const generalSettings = useThemeEditorStore((state) => state.generalSettings);
+  const update = useThemeEditorStore((state) => state.updateGeneralSetting);
+  const reset = useThemeEditorStore((state) => state.resetGeneralSettings);
+  const value = getObjectAtPath(generalSettings, path);
+  const entries = Object.entries(value);
+  const groups = entries.filter(
+    ([, fieldValue]) =>
+      fieldValue && typeof fieldValue === 'object' && !Array.isArray(fieldValue)
+  );
+  const leaves = entries.filter(
+    ([, fieldValue]) =>
+      !fieldValue || typeof fieldValue !== 'object' || Array.isArray(fieldValue)
+  );
 
   return (
     <>
-      {leaves}
-      {groups.length ? (
-        <Collapse
-          size="small"
-          items={groups.map((group) => ({
-            key: group.key,
-            label: titleFromKey(group.key),
-            children: (
-              <ObjectFields
-                value={group.value}
-                path={[...path, group.key]}
-                onChange={onChange}
-              />
-            ),
-          }))}
+      {groups.map(([key, fieldValue]) => (
+        <NavigationRow
+          key={key}
+          title={titleFromKey(key)}
+          description={`${Object.keys(fieldValue as Record<string, unknown>).length} settings`}
+          onClick={() => onOpenGroup(key)}
         />
+      ))}
+      {groups.length && leaves.length ? <Divider /> : null}
+      {leaves.map(([key, fieldValue]) => {
+        const fieldPath = [...path, key];
+        let control: ReactNode;
+
+        if (typeof fieldValue === 'boolean') {
+          control = (
+            <Switch
+              checked={fieldValue}
+              onChange={(next) => update(fieldPath, next)}
+            />
+          );
+        } else if (typeof fieldValue === 'number') {
+          control = (
+            <InputNumber
+              value={fieldValue}
+              style={{ width: '100%' }}
+              onChange={(next) => update(fieldPath, next)}
+            />
+          );
+        } else if (
+          key === 'defaultScheme' &&
+          value.schemes &&
+          typeof value.schemes === 'object'
+        ) {
+          control = (
+            <Select
+              value={String(fieldValue ?? '')}
+              options={Object.keys(
+                value.schemes as Record<string, unknown>
+              ).map((scheme) => ({
+                value: scheme,
+                label: titleFromKey(scheme),
+              }))}
+              style={{ width: '100%' }}
+              onChange={(next) => update(fieldPath, next)}
+            />
+          );
+        } else if (
+          typeof fieldValue === 'string' &&
+          /^(#|rgb\(|rgba\(|hsl\(|hsla\()/.test(fieldValue)
+        ) {
+          control = (
+            <ColorPicker
+              value={fieldValue}
+              showText
+              onChange={(_, css) => update(fieldPath, css)}
+            />
+          );
+        } else {
+          control = (
+            <Input
+              value={String(fieldValue ?? '')}
+              onChange={(event) => update(fieldPath, event.target.value)}
+            />
+          );
+        }
+
+        return (
+          <div key={key} style={fieldStyle}>
+            <Typography.Text style={labelStyle}>
+              {titleFromKey(key)}
+            </Typography.Text>
+            {control}
+          </div>
+        );
+      })}
+      {!path.length ? (
+        <Button type="link" size="small" onClick={reset}>
+          Reset global settings
+        </Button>
       ) : null}
     </>
   );
 }
 
-function BlockEditor({
+function ScopeLevel({
+  scope,
+  onOpenSection,
+}: {
+  scope: ThemeEditorScope;
+  onOpenSection: (sectionId: string, title: string) => void;
+}) {
+  const registeredScope = useThemeEditorStore((state) => state.scopes[scope]);
+
+  if (!registeredScope?.sectionOrder.length) {
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description="No editable sections registered"
+      />
+    );
+  }
+
+  return registeredScope.sectionOrder.map((sectionId) => {
+    const section = registeredScope.sections[sectionId];
+    const settingsCount = section?.schema?.settings.length ?? 0;
+    const blocksCount = section?.blockOrder.length ?? 0;
+    return (
+      <NavigationRow
+        key={sectionId}
+        title={section?.name ?? titleFromKey(sectionId)}
+        description={`${settingsCount} settings · ${blocksCount} blocks`}
+        onClick={() =>
+          onOpenSection(sectionId, section?.name ?? titleFromKey(sectionId))
+        }
+      />
+    );
+  });
+}
+
+function SectionLevel({
   scope,
   sectionId,
-  block,
-  generalSettings,
+  onOpenBlock,
 }: {
   scope: ThemeEditorScope;
   sectionId: string;
-  block: RegisteredEditorBlock;
-  generalSettings: Record<string, unknown>;
+  onOpenBlock: (blockId: string, title: string) => void;
 }) {
+  const section = useThemeEditorStore(
+    (state) => state.scopes[scope]?.sections[sectionId]
+  );
+  const generalSettings = useThemeEditorStore((state) => state.generalSettings);
+  const update = useThemeEditorStore((state) => state.updateSectionSetting);
+  const reset = useThemeEditorStore((state) => state.resetSection);
+
+  if (!section) return <Empty description="Section is not registered" />;
+
+  return (
+    <>
+      {section.schema?.settings.length ? (
+        <SchemaFields
+          definitions={section.schema.settings}
+          settings={section.settings}
+          generalSettings={generalSettings}
+          onChange={(id, value) => update(scope, sectionId, id, value)}
+        />
+      ) : (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="No section settings"
+        />
+      )}
+      {section.schema?.settings.length ? (
+        <Button
+          type="link"
+          size="small"
+          onClick={() => reset(scope, sectionId)}
+        >
+          Reset section
+        </Button>
+      ) : null}
+      {section.blockOrder.length ? (
+        <>
+          <Divider titlePlacement="start">Blocks</Divider>
+          {section.blockOrder.map((blockId) => {
+            const block = section.blocks[blockId];
+            return (
+              <NavigationRow
+                key={blockId}
+                title={block?.name ?? titleFromKey(blockId)}
+                description={`${block?.schema?.settings.length ?? 0} settings`}
+                onClick={() =>
+                  onOpenBlock(blockId, block?.name ?? titleFromKey(blockId))
+                }
+              />
+            );
+          })}
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function BlockLevel({
+  scope,
+  sectionId,
+  blockId,
+}: {
+  scope: ThemeEditorScope;
+  sectionId: string;
+  blockId: string;
+}) {
+  const block = useThemeEditorStore(
+    (state) => state.scopes[scope]?.sections[sectionId]?.blocks[blockId]
+  );
+  const generalSettings = useThemeEditorStore((state) => state.generalSettings);
   const update = useThemeEditorStore((state) => state.updateBlockSetting);
   const reset = useThemeEditorStore((state) => state.resetBlock);
 
-  if (!block.schema?.settings.length) {
+  if (!block?.schema?.settings.length) {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -396,12 +602,12 @@ function BlockEditor({
         definitions={block.schema.settings}
         settings={block.settings}
         generalSettings={generalSettings}
-        onChange={(id, value) => update(scope, sectionId, block.id, id, value)}
+        onChange={(id, value) => update(scope, sectionId, blockId, id, value)}
       />
       <Button
         type="link"
         size="small"
-        onClick={() => reset(scope, sectionId, block.id)}
+        onClick={() => reset(scope, sectionId, blockId)}
       >
         Reset block
       </Button>
@@ -409,102 +615,58 @@ function BlockEditor({
   );
 }
 
-function SectionEditor({
-  scope,
-  section,
-  generalSettings,
+function RootLevel({
+  currentPageType,
+  onNavigate,
 }: {
-  scope: ThemeEditorScope;
-  section: RegisteredEditorSection;
-  generalSettings: Record<string, unknown>;
+  currentPageType?: PageType;
+  onNavigate: (route: EditorRoute) => void;
 }) {
-  const update = useThemeEditorStore((state) => state.updateSectionSetting);
-  const reset = useThemeEditorStore((state) => state.resetSection);
-  const hasSettings = Boolean(section.schema?.settings.length);
+  const scopes = useThemeEditorStore((state) => state.scopes);
 
   return (
     <>
-      {hasSettings ? (
-        <SchemaFields
-          definitions={section.schema!.settings}
-          settings={section.settings}
-          generalSettings={generalSettings}
-          onChange={(id, value) => update(scope, section.id, id, value)}
-        />
-      ) : (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No section settings"
-        />
-      )}
-      {hasSettings ? (
-        <Button
-          type="link"
-          size="small"
-          onClick={() => reset(scope, section.id)}
-        >
-          Reset section
-        </Button>
-      ) : null}
-      {section.blockOrder.length ? (
-        <Divider titlePlacement="start">Blocks</Divider>
-      ) : null}
-      {section.blockOrder.length ? (
-        <Collapse
-          size="small"
-          items={section.blockOrder.map((blockId) => ({
-            key: blockId,
-            label: section.blocks[blockId]?.name ?? blockId,
-            children: section.blocks[blockId] ? (
-              <BlockEditor
-                scope={scope}
-                sectionId={section.id}
-                block={section.blocks[blockId]}
-                generalSettings={generalSettings}
-              />
-            ) : null,
-          }))}
-        />
-      ) : null}
-    </>
-  );
-}
-
-function ScopeEditor({
-  scope,
-  generalSettings,
-}: {
-  scope: ThemeEditorScope;
-  generalSettings: Record<string, unknown>;
-}) {
-  const registeredScope = useThemeEditorStore((state) => state.scopes[scope]);
-
-  if (!registeredScope?.sectionOrder.length) {
-    return (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="No editable sections"
+      <NavigationRow
+        title="Global settings"
+        description="Colors, typography and shared theme values"
+        onClick={() =>
+          onNavigate({ type: 'global', title: 'Global settings', path: [] })
+        }
       />
-    );
-  }
-
-  return (
-    <Collapse
-      items={registeredScope.sectionOrder.map((sectionId) => {
-        const section = registeredScope.sections[sectionId];
-        return {
-          key: sectionId,
-          label: section?.name ?? sectionId,
-          children: section ? (
-            <SectionEditor
-              scope={scope}
-              section={section}
-              generalSettings={generalSettings}
-            />
-          ) : null,
-        };
-      })}
-    />
+      <NavigationRow
+        title="Layout"
+        description="Header, footer and shared sections"
+        onClick={() =>
+          onNavigate({ type: 'scope', title: 'Layout', scope: 'theme' })
+        }
+      />
+      <Divider style={{ margin: '28px 0 18px' }} />
+      <Typography.Title
+        level={5}
+        style={{ margin: '0 0 14px', textAlign: 'left' }}
+      >
+        Pages
+      </Typography.Title>
+      {PAGE_TYPES.map((pageType) => (
+        <NavigationRow
+          key={pageType}
+          title={titleFromKey(pageType)}
+          description={
+            scopes[pageType]?.sectionOrder.length
+              ? `${scopes[pageType]!.sectionOrder.length} sections`
+              : 'Open this page to register its sections'
+          }
+          active={pageType === currentPageType}
+          onClick={() =>
+            onNavigate({
+              type: 'scope',
+              title: `${titleFromKey(pageType)} page`,
+              scope: pageType,
+            })
+          }
+        />
+      ))}
+    </>
   );
 }
 
@@ -512,14 +674,90 @@ export function ThemeEditorPanel() {
   const available = useThemeEditorAvailable();
   const open = useThemeEditorStore((state) => state.open);
   const setOpen = useThemeEditorStore((state) => state.setOpen);
-  const generalSettings = useThemeEditorStore((state) => state.generalSettings);
   const currentPageType = useThemeEditorStore((state) => state.currentPageType);
-  const updateGeneral = useThemeEditorStore(
-    (state) => state.updateGeneralSetting
-  );
-  const resetGeneral = useThemeEditorStore(
-    (state) => state.resetGeneralSettings
-  );
+  const [history, setHistory] = useState<EditorRoute[]>([rootRoute]);
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
+  const route = history[history.length - 1];
+
+  const navigate = (nextRoute: EditorRoute) => {
+    setDirection('forward');
+    setHistory((current) => [...current, nextRoute]);
+  };
+  const goBack = () => {
+    setDirection('back');
+    setHistory((current) =>
+      current.length > 1 ? current.slice(0, -1) : current
+    );
+  };
+
+  const routeKey =
+    route.type === 'global'
+      ? `${route.type}:${route.path.join('.')}`
+      : route.type === 'scope'
+        ? `${route.type}:${route.scope}`
+        : route.type === 'section'
+          ? `${route.type}:${route.scope}:${route.sectionId}`
+          : route.type === 'block'
+            ? `${route.type}:${route.scope}:${route.sectionId}:${route.blockId}`
+            : route.type;
+
+  let content: ReactNode;
+  if (route.type === 'root') {
+    content = (
+      <RootLevel currentPageType={currentPageType} onNavigate={navigate} />
+    );
+  } else if (route.type === 'global') {
+    content = (
+      <GlobalSettingsLevel
+        path={route.path}
+        onOpenGroup={(key) =>
+          navigate({
+            type: 'global',
+            title: titleFromKey(key),
+            path: [...route.path, key],
+          })
+        }
+      />
+    );
+  } else if (route.type === 'scope') {
+    content = (
+      <ScopeLevel
+        scope={route.scope}
+        onOpenSection={(sectionId, title) =>
+          navigate({
+            type: 'section',
+            title,
+            scope: route.scope,
+            sectionId,
+          })
+        }
+      />
+    );
+  } else if (route.type === 'section') {
+    content = (
+      <SectionLevel
+        scope={route.scope}
+        sectionId={route.sectionId}
+        onOpenBlock={(blockId, title) =>
+          navigate({
+            type: 'block',
+            title,
+            scope: route.scope,
+            sectionId: route.sectionId,
+            blockId,
+          })
+        }
+      />
+    );
+  } else {
+    content = (
+      <BlockLevel
+        scope={route.scope}
+        sectionId={route.sectionId}
+        blockId={route.blockId}
+      />
+    );
+  }
 
   if (!available) return null;
 
@@ -531,63 +769,54 @@ export function ThemeEditorPanel() {
         style={{ ...floatingButtonStyle, right: open ? 380 : 0 }}
         onClick={() => setOpen(!open)}
       >
-        <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1 }}>
+        <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>
           {open ? '›' : '‹'}
         </span>
       </Button>
       <Drawer
-        title="Theme settings"
+        title={
+          <Flex align="center" gap={8}>
+            {history.length > 1 ? (
+              <Button
+                type="text"
+                aria-label="Back"
+                onClick={goBack}
+                style={{ marginLeft: -10, fontSize: 22 }}
+              >
+                ‹
+              </Button>
+            ) : null}
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              {route.title}
+            </Typography.Title>
+          </Flex>
+        }
         placement="right"
         width={380}
         open={open}
         mask={false}
+        closable={{ placement: 'end' }}
         onClose={() => setOpen(false)}
         styles={{ body: { padding: 16 } }}
       >
-        <Collapse
-          defaultActiveKey={['page']}
-          items={[
-            {
-              key: 'global',
-              label: 'Global settings',
-              children: (
-                <>
-                  <ObjectFields
-                    value={generalSettings}
-                    onChange={updateGeneral}
-                  />
-                  <Button type="link" size="small" onClick={resetGeneral}>
-                    Reset global settings
-                  </Button>
-                </>
-              ),
-            },
-            {
-              key: 'theme',
-              label: 'Theme sections',
-              children: (
-                <ScopeEditor scope="theme" generalSettings={generalSettings} />
-              ),
-            },
-            {
-              key: 'page',
-              label: currentPageType
-                ? `${titleFromKey(currentPageType)} page`
-                : 'Current page',
-              children: currentPageType ? (
-                <ScopeEditor
-                  scope={currentPageType}
-                  generalSettings={generalSettings}
-                />
-              ) : (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Page is loading"
-                />
-              ),
-            },
-          ]}
-        />
+        <style>{`
+          @keyframes shopana-editor-forward {
+            from { opacity: 0; transform: translateX(22px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes shopana-editor-back {
+            from { opacity: 0; transform: translateX(-22px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+        `}</style>
+        <div
+          key={routeKey}
+          style={{
+            animation: `shopana-editor-${direction} 180ms ease-out`,
+          }}
+        >
+          {content}
+        </div>
       </Drawer>
     </>
   );
