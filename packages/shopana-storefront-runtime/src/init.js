@@ -116,17 +116,47 @@ async function writeOverrideWrapper(rootDir, runtimeDir, override) {
   if (override.kind === 'nextConfig') {
     contents = `export { default } from '${specifier}';\n`;
   } else if (override.kind === 'routing') {
-    const parameters = override.file.endsWith('.ts')
-      ? ': Parameters<typeof rootOverride>'
-      : '';
-    contents = [
-      `import rootOverride from '${specifier}';`,
-      `export * from '${specifier}';`,
-      `export default function routing(...args${parameters}) {`,
+    const exportName = override.file.startsWith('proxy.')
+      ? 'proxy'
+      : 'middleware';
+    const isTypeScript = override.file.endsWith('.ts');
+    const lines = [];
+
+    if (isTypeScript) {
+      lines.push(`import type { NextMiddleware } from 'next/server';`);
+    }
+
+    lines.push(
+      `import * as rootRoutingModule from '${specifier}';`,
+      `export * from '${specifier}';`
+    );
+
+    if (isTypeScript) {
+      lines.push(
+        'const routingModule = rootRoutingModule as {',
+        '  default?: NextMiddleware;',
+        `  ${exportName}?: NextMiddleware;`,
+        '};',
+        `const rootOverride = routingModule.${exportName} ?? routingModule.default;`
+      );
+    } else {
+      lines.push(
+        `const rootOverride = rootRoutingModule.${exportName} ?? rootRoutingModule.default;`
+      );
+    }
+
+    lines.push(
+      "if (typeof rootOverride !== 'function') {",
+      `  throw new TypeError('${override.file} must export a default function or a named ${exportName} function');`,
+      '}',
+      isTypeScript
+        ? 'export default function routing(...args: Parameters<typeof rootOverride>) {'
+        : 'export default function routing(...args) {',
       '  return rootOverride(...args);',
       '}',
-      '',
-    ].join('\n');
+      ''
+    );
+    contents = lines.join('\n');
   } else {
     contents = `export * from '${specifier}';\n`;
   }
