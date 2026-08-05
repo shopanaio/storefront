@@ -27,9 +27,12 @@
     "./next/navigation": "./src/next/navigation.ts",
     "./next/not-found": "./src/next/not-found.tsx",
     "./next/page": "./src/next/page.tsx",
+    "./next/page-definition": "./src/next/page-definition.ts",
     "./package.json": "./package.json"
   },
   "peerDependencies": {
+    "@apollo/client": "^4.0.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@shopana/storefront-sdk": "^0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

@@ -16,12 +16,7 @@ export { usePreloadedQuery } from './hooks/usePreloadedQuery';
 export { fetchQuery } from './hooks/fetchQuery';
 export { definePaginationQuery } from './pagination/definePaginationQuery';
 export { cursorConnectionPolicy } from './pagination/cursorPagination';
-export {
-  CategoryPagination,
-  CollectionPagination,
-  ProductReviewsPagination,
-  SearchPagination,
-} from './pagination/descriptors';
+export { stableSerializeOperationVariables } from './pagination/stableSerializeOperationVariables';
 export type {
   CursorConnection,
   CursorPageInfo,

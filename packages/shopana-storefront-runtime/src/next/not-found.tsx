@@ -1,73 +1,40 @@
-/**
- * This file is exported as source (.tsx) via package.json exports.
- * The generated adapter supplies the project 404 template.
- */
-import type { ReactNode } from 'react';
-import type { PageTemplate } from '@shopana/storefront-sdk/core/types';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
-
-/**
- * Default fallback component when no template is available.
- */
-function DefaultNotFound(): ReactNode {
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: '16px',
-      }}
-    >
-      <h1>404 - Page Not Found</h1>
-      <p>The page you are looking for does not exist.</p>
-    </div>
-  );
-}
+import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
+import { getRequestContext } from '@shopana/storefront/next/headers';
+import {
+  assertSerializablePageData,
+  type RuntimePageModuleMap,
+} from './page-definition';
+import { loadNotFoundDefinition } from './page-registry';
+import { createRuntimePageServices } from './page-services';
 
 export interface CreateRuntimeNotFoundOptions {
-  loadTemplate: () => Promise<PageTemplate | null>;
-
-  /**
-   * Optional: Custom fallback component when template fails to load.
-   */
-  fallback?: () => ReactNode;
+  environmentConfig: ApolloEnvironmentConfig;
+  pages: RuntimePageModuleMap;
 }
 
-/**
- * Factory function to create SDK not-found page exports with configuration.
- *
- * @example
- * ```tsx
- * // app/[locale]/not-found.tsx
- * import { createRuntimeNotFound } from '@shopana/storefront/next/not-found';
- *
- * const { NotFound } = createRuntimeNotFound({ loadTemplate });
- *
- * export default NotFound;
- * ```
- */
 export function createRuntimeNotFound(options: CreateRuntimeNotFoundOptions) {
-  const templateLoader = options.loadTemplate;
-  const FallbackComponent = options.fallback ?? DefaultNotFound;
+  const { environmentConfig, pages } = options;
+  const services = createRuntimePageServices(environmentConfig);
 
   async function NotFound() {
-    const template = await templateLoader();
+    const request = await getRequestContext();
+    const definition = await loadNotFoundDefinition(pages);
+    const data = await definition.loadData({
+      pageType: '404',
+      request,
+      services,
+    });
 
-    if (!template) {
-      return <FallbackComponent />;
+    if (process.env.NODE_ENV !== 'production') {
+      assertSerializablePageData('404', data);
     }
 
-    return (
-      <Builder
-        template={template}
-        data={null}
-        pageType="404"
-        fallback={<div>Loading...</div>}
-      />
-    );
+    const template = await definition.loadTemplate();
+    const content = <Builder template={template} data={data} pageType="404" />;
+    const Provider = definition.Provider;
+
+    return Provider ? <Provider data={data}>{content}</Provider> : content;
   }
 
   return { NotFound };

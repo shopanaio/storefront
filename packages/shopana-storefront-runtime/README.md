@@ -8,6 +8,7 @@ The package owns the framework route implementations and the `init` generator.
 The consuming storefront keeps its customizable code under `src/`:
 
 - `src/runtime/layout.tsx` and `src/runtime/middleware.ts` provide app-level integration;
+- `src/runtime/pages` contains the complete lazy reserved-page registry and definitions;
 - `src/layouts` contains page layouts;
 - `src/templates` contains page templates;
 - `src/modules/**/register.ts` contains dynamic module registrations.
@@ -49,3 +50,10 @@ import { useRouter } from '@shopana/storefront/next/navigation';
 The existing `next/headers`, `next/middleware`, `next/page`, `next/layout`, and
 `next/not-found` exports remain available. `next/headers` and `next/middleware`
 also expose the corresponding public Next.js primitives.
+
+Reserved page definitions use the contracts from
+`@shopana/storefront/next/page-definition`. Each lazy module has a required
+default definition with a matching `pageType`. Definitions own data loading,
+mapping, metadata, Providers, and typed template loading. The runtime supplies
+only request context plus generic query services and validates page data before
+it crosses the RSC boundary in development.

@@ -8,6 +8,3 @@ export { AppProvider } from './AppProvider';
 
 // Public Apollo environment configuration.
 export type { ApolloEnvironmentConfig } from './graphql/apollo/types';
-
-// Re-export queries
-export * from './queries';

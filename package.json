@@ -12,7 +12,7 @@
     "dev": "yarn workspace @shopana/brand-bite-crunch dev",
     "build": "yarn workspace @shopana/brand-bite-crunch build",
     "start": "yarn workspace @shopana/brand-bite-crunch start",
-    "codegen": "yarn workspace @shopana/brand-bite-crunch codegen",
+    "codegen": "node ./scripts/codegen.mjs",
     "widgets:build": "yarn workspace @shopana/brand-bite-crunch widgets:build",
     "widgets:watch": "yarn workspace @shopana/brand-bite-crunch widgets:watch",
     "storybook": "yarn workspace @shopana/brand-bite-crunch storybook",

@@ -1,7 +1,10 @@
 import { createRuntimeNotFound } from '@shopana/storefront/next/not-found';
+import { environmentConfig } from '@src/config/environment.config';
+import { runtimePages } from '@src/runtime/pages';
 
 const { NotFound } = createRuntimeNotFound({
-  loadTemplate: async () => (await import('@src/templates/404/index')).default,
+  environmentConfig,
+  pages: runtimePages,
 });
 
 export default NotFound;

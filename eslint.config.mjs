@@ -29,7 +29,12 @@ export default defineConfig([
             },
             { name: 'relay-runtime', message: 'Relay has been removed.' },
           ],
-          patterns: ['relay-runtime/*'],
+          patterns: [
+            {
+              group: ['relay-runtime/*'],
+              message: 'Relay has been removed.',
+            },
+          ],
         },
       ],
       'no-restricted-syntax': [
@@ -51,10 +56,7 @@ export default defineConfig([
       parser: graphqlEslint.parser,
       parserOptions: {
         graphQLConfig: {
-          schema: [
-            'packages/brand-bite-crunch/schema.shopana.graphql',
-            'graphql-schema-extensions/auth.graphql',
-          ],
+          schema: 'schema.shopana.graphql',
           documents: [
             'packages/brand-bite-crunch/src/**/*.graphql',
             'packages/checkout/src/**/*.graphql',
@@ -115,7 +117,10 @@ export default defineConfig([
             { name: 'relay-runtime', message: 'Relay has been removed.' },
           ],
           patterns: [
-            'relay-runtime/*',
+            {
+              group: ['relay-runtime/*'],
+              message: 'Relay has been removed.',
+            },
             {
               group: ['next/*'],
               message:

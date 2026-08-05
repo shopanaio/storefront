@@ -60,6 +60,7 @@ src/relay/queries/__generated__
 
 .env
 tsconfig.tsbuildinfo
+schema.shopana.graphql
 
 public/embed/
 

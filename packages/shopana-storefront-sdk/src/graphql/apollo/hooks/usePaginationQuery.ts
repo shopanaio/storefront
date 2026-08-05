@@ -5,6 +5,12 @@ import type {
   CursorConnection,
   PaginationQueryDescriptor,
 } from '../pagination/types';
+import { stableSerializeOperationVariables } from '../pagination/stableSerializeOperationVariables';
+
+interface InFlightRequest {
+  generation: number;
+  promise: Promise<unknown>;
+}
 
 export function usePaginationQuery<
   TData,
@@ -16,58 +22,100 @@ export function usePaginationQuery<
 ) {
   const result = useQuery(descriptor.query, {
     variables,
+    fetchPolicy: 'cache-first',
     notifyOnNetworkStatusChange: true,
   });
-  const activeLoad = useRef<Promise<unknown> | null>(null);
-  const variablesRef = useRef(variables);
+  const variablesKey = stableSerializeOperationVariables(variables);
+  const inputVariablesKeyRef = useRef(variablesKey);
+  const activeVariablesRef = useRef(variables);
+  const variablesGenerationRef = useRef(0);
+  const activeRequestRef = useRef<InFlightRequest | null>(null);
   const connection = result.data ? descriptor.getConnection(result.data) : null;
-  const variablesKey = JSON.stringify(variables);
   const fetchMore = result.fetchMore;
   const apolloRefetch = result.refetch;
   const hasNext = connection?.pageInfo.hasNextPage ?? false;
   const endCursor = connection?.pageInfo.endCursor ?? null;
 
   useEffect(() => {
-    variablesRef.current = variables;
-  }, [variables]);
+    if (inputVariablesKeyRef.current === variablesKey) {
+      return;
+    }
 
-  useEffect(() => {
-    activeLoad.current = null;
-  }, [variablesKey]);
+    inputVariablesKeyRef.current = variablesKey;
+    const activeVariablesKey = stableSerializeOperationVariables(
+      activeVariablesRef.current
+    );
+
+    activeVariablesRef.current = variables;
+    if (activeVariablesKey !== variablesKey) {
+      variablesGenerationRef.current += 1;
+      activeRequestRef.current = null;
+    }
+  }, [variables, variablesKey]);
+
+  const trackRequest = useCallback(
+    <T>(request: Promise<T>, generation: number): Promise<T> => {
+      const tracked: InFlightRequest = { generation, promise: request };
+      activeRequestRef.current = tracked;
+
+      void request.then(
+        () => {
+          if (
+            activeRequestRef.current === tracked &&
+            variablesGenerationRef.current === generation
+          ) {
+            activeRequestRef.current = null;
+          }
+        },
+        () => {
+          if (
+            activeRequestRef.current === tracked &&
+            variablesGenerationRef.current === generation
+          ) {
+            activeRequestRef.current = null;
+          }
+        }
+      );
+
+      return request;
+    },
+    []
+  );
 
   const loadNext = useCallback(
     (count: number) => {
       if (!hasNext) return Promise.resolve();
-      if (activeLoad.current) return activeLoad.current;
+      if (activeRequestRef.current) {
+        return activeRequestRef.current.promise;
+      }
 
+      const generation = variablesGenerationRef.current;
       const nextVariables = descriptor.getNextVariables({
-        variables: variablesRef.current,
+        variables: activeVariablesRef.current,
         count,
         endCursor,
       });
-      const request = fetchMore({ variables: nextVariables });
-      activeLoad.current = request;
-      void request.then(
-        () => {
-          if (activeLoad.current === request) activeLoad.current = null;
-        },
-        () => {
-          if (activeLoad.current === request) activeLoad.current = null;
-        }
-      );
-      return request;
+      return trackRequest(fetchMore({ variables: nextVariables }), generation);
     },
-    [descriptor, endCursor, fetchMore, hasNext]
+    [descriptor, endCursor, fetchMore, hasNext, trackRequest]
   );
 
   const refetch = useCallback(
-    (nextVariables: Partial<TVariables> = {}) =>
-      apolloRefetch({
-        ...variablesRef.current,
-        ...nextVariables,
+    (partialVariables: Partial<TVariables> = {}) => {
+      const nextVariables = {
+        ...activeVariablesRef.current,
+        ...partialVariables,
         after: null,
-      } as unknown as TVariables),
-    [apolloRefetch]
+      } as TVariables;
+      const generation = variablesGenerationRef.current + 1;
+
+      variablesGenerationRef.current = generation;
+      activeVariablesRef.current = nextVariables;
+      activeRequestRef.current = null;
+
+      return trackRequest(apolloRefetch(nextVariables), generation);
+    },
+    [apolloRefetch, trackRequest]
   );
 
   return {

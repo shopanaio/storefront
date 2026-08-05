@@ -65,8 +65,9 @@ export function createApolloCache(
 }
 
 /**
- * Combines independently extracted request-scoped caches without losing fields
- * stored on shared records such as ROOT_QUERY.
+ * Merges normalized snapshots record-by-record. Page definitions that execute
+ * parallel operations must instead extract once from their shared request
+ * client after every operation settles.
  */
 export function mergeApolloCacheStates(
   ...states: Array<NormalizedCacheObject | null | undefined>
