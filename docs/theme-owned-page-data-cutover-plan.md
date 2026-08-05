@@ -9,8 +9,9 @@ API-to-view-model mapping, metadata, page data types, and page providers from
 The boundaries after the cutover are:
 
 - the theme owns what a page queries and how the result is interpreted;
-- the SDK owns generic Apollo infrastructure, including client creation, cache
-  extraction, hydration primitives, and generic pagination helpers;
+- the SDK owns Apollo infrastructure, including client creation, cache
+  extraction, hydration primitives, generic pagination helpers, and the
+  Shopana-schema cache policies shared by every theme;
 - the runtime resolves routes, creates request-scoped services, loads a theme
   definition, coordinates data and metadata, and renders the template;
 - the theme never creates, configures, or receives a raw server
@@ -441,6 +442,12 @@ This is required for `useFragment`, pagination, `fetchMore`, and normalized
 entity reuse. Root `AppProvider.apolloInitialState` remains responsible for
 cart/session state loaded before nested page execution.
 
+Both the request-scoped server client and the browser client must use the same
+SDK-owned `createApolloCache()` factory. A theme does not provide, override, or
+register Shopana `typePolicies`. This guarantees that a connection written by
+an initial theme page query has the same cache field identity when the browser
+reads it through a separate theme pagination operation.
+
 ## 10. Theme-owned Apollo pagination
 
 Delete SDK-owned `graphql/apollo/pagination/descriptors.ts` and add:
@@ -521,20 +528,23 @@ handle. Do not use `undefined` in one place and `null` in the other.
 
 Connection policies exclude cursor/window arguments such as `first`, `last`,
 `after`, and `before` from cache identity and include variables that define a
-different logical list:
+different logical list.
 
-The schema-specific registrations belong to the theme; the SDK exposes only
-the generic `cursorConnectionPolicy()` factory.
+The concrete Shopana schema registrations remain SDK-owned. They describe the
+stable cache semantics of the Shopana API, not the presentation or data model
+of an individual theme. The SDK owns both the generic
+`cursorConnectionPolicy()` factory and its registration for the shared
+Shopana connection fields:
 
 ```ts
 Category: {
   fields: {
-    listing: cursorConnectionPolicy(['sort', 'filters']),
+    products: cursorConnectionPolicy(['sort', 'filters']),
   },
 },
 Product: {
   fields: {
-    reviews: cursorConnectionPolicy(['sort', 'filters']),
+    reviews: cursorConnectionPolicy(['sort']),
   },
 },
 Query: {
@@ -544,9 +554,16 @@ Query: {
 },
 ```
 
-Use the actual schema field names. Parent entity identity separates connections
-belonging to different products or categories. Root connections include every
-parent-identifying argument in `keyArgs`.
+Registrations use actual schema field names, never operation aliases such as
+`listing`. Parent entity identity separates connections belonging to different
+products or categories. Root connections include every parent-identifying
+argument in `keyArgs`.
+
+Theme page and pagination operations may choose aliases and own their variables,
+but their semantic variables must remain compatible with these SDK policies.
+Adding a new paginated Shopana field or changing which arguments identify a
+logical list requires an explicit SDK cache-policy change reviewed together
+with the consuming theme operations.
 
 `fetchMore` changes only the cursor window for its descriptor. The connection
 policy appends edges, deduplicates normalized nodes, and replaces `pageInfo`
@@ -568,18 +585,20 @@ Migrate every consumer, including collection sections and blocks, box-builder
 category activity, product reviews, search listing, and all associated
 refetch/fetch-more hooks.
 
-Keep only generic SDK pagination infrastructure:
+Keep the following SDK pagination and cache infrastructure:
 
 - `definePaginationQuery`;
 - `usePaginationQuery`;
 - generic pagination types;
-- the generic `cursorConnectionPolicy` factory.
+- the generic `cursorConnectionPolicy` factory;
+- concrete Shopana schema cache registrations in `createApolloCache()`.
 
 ### Final SDK pagination boundary
 
 After the cutover, the SDK must not import or export any concrete pagination
 query, generated page API type, connection accessor, or variables mapper. The
-theme supplies all API knowledge through a typed descriptor:
+theme supplies operation-specific API knowledge through a typed descriptor;
+the SDK retains only the stable Shopana field-level cache semantics:
 
 ```ts
 // Theme-owned code
@@ -627,7 +646,9 @@ export function usePaginationQuery<
 
 The SDK learns `TData`, `TVariables`, and `TConnection` structurally from the
 descriptor at the call site. It does not reference their generated names and
-does not know which API entity or field is being paginated.
+does not know how a theme accesses the connection from a query result. Its
+cache layer may know the Shopana schema type and field names required to give
+that connection stable normalized-cache semantics.
 
 Delete from the SDK:
 
@@ -799,8 +820,12 @@ Static acceptance criteria:
 - no moved theme document references an SDK-only fragment;
 - every client pagination descriptor uses a minimal theme pagination operation,
   not a full page operation;
-- every paginated field has an explicit theme-owned cache registration with
-  reviewed `keyArgs`;
+- every paginated Shopana field has an explicit SDK-owned cache registration
+  with reviewed `keyArgs`;
+- request-scoped server clients and the browser client use the same SDK-owned
+  `createApolloCache()` policies;
+- the theme defines no Shopana `typePolicies` and does not configure an Apollo
+  client;
 - SDK pagination source imports no `Sdk*QueryDocument`, concrete generated page
   API type, or theme pagination descriptor.
 
