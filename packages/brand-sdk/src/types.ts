@@ -24,6 +24,7 @@ export interface ColorScheme {
     gradient?: string;
   };
   text: string;
+  accent: string;
   links: string;
   icons: string;
   primaryButton: {
