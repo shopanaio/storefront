@@ -5,6 +5,15 @@ export { model } from './model/namespace';
 // Re-export main AppProvider
 export { App } from './App';
 export { AppProvider } from './AppProvider';
+export {
+  ThemeEditorLayout,
+  useThemeEditorAvailable,
+  useThemeEditorGeneralSettings,
+  useThemeEditorStore,
+} from './editor/ThemeEditorLayout';
+export { ThemeEditorApp } from './editor/ThemeEditorApp';
+export { ThemeEditorPanel } from './editor/ThemeEditorPanel';
+export type { ThemeEditorScope } from './editor/store';
 
 export type {
   AspectRatioSettingDefinition,
