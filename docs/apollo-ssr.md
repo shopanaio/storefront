@@ -12,14 +12,16 @@ the GraphQL results are not serialized a second time in React props.
 GraphQL documents live in external `*.graphql` files. Components import
 generated `TypedDocumentNode` values and generated operation/fragment types:
 
-- storefront documents generate `codegen/apollo/storefront-operations.ts`;
+- theme documents generate
+  `packages/brand-bite-crunch/codegen/apollo/storefront-operations.ts`;
+- checkout documents generate `packages/checkout/src/graphql/operations.ts`;
 - SDK documents generate
   `packages/shopana-storefront-sdk/src/graphql/apollo/generated/operations.ts`.
 
 Run the single project workflow after changing schema or documents:
 
 ```bash
-CMS=shopana npm run codegen
+CMS=shopana yarn codegen
 ```
 
 The shared `createApolloCache` owns normalization and cursor connection merge

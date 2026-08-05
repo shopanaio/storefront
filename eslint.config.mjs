@@ -43,7 +43,8 @@ export default defineConfig([
   },
   {
     files: [
-      'src/**/*.graphql',
+      'packages/brand-bite-crunch/src/**/*.graphql',
+      'packages/checkout/src/**/*.graphql',
       'packages/shopana-storefront-sdk/src/**/*.graphql',
     ],
     languageOptions: {
@@ -51,11 +52,12 @@ export default defineConfig([
       parserOptions: {
         graphQLConfig: {
           schema: [
-            'schema.shopana.graphql',
+            'packages/brand-bite-crunch/schema.shopana.graphql',
             'graphql-schema-extensions/auth.graphql',
           ],
           documents: [
-            'src/**/*.graphql',
+            'packages/brand-bite-crunch/src/**/*.graphql',
+            'packages/checkout/src/**/*.graphql',
             'packages/shopana-storefront-sdk/src/**/*.graphql',
           ],
         },
@@ -88,7 +90,10 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/**/*.{js,jsx,ts,tsx,mjs,cjs}'],
+    files: [
+      'packages/brand-bite-crunch/src/**/*.{js,jsx,ts,tsx,mjs,cjs}',
+      'packages/checkout/src/**/*.{js,jsx,ts,tsx,mjs,cjs}',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',

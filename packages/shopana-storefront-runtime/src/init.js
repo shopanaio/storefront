@@ -100,13 +100,12 @@ async function writeOverrideWrapper(rootDir, runtimeDir, override) {
   if (override.kind === 'nextConfig') {
     contents = `export { default } from '${specifier}';\n`;
   } else if (override.kind === 'routing') {
-    const defaultExpression = override.file.endsWith('.ts')
-      ? '(rootOverride as { default?: unknown }).default'
-      : 'rootOverride.default';
     contents = [
-      `import * as rootOverride from '${specifier}';`,
+      `import rootOverride from '${specifier}';`,
       `export * from '${specifier}';`,
-      `export default ${defaultExpression};`,
+      'export default function routing(...args) {',
+      '  return rootOverride(...args);',
+      '}',
       '',
     ].join('\n');
   } else {

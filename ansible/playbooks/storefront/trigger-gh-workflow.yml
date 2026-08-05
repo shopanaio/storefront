@@ -6,7 +6,6 @@
 #     -e gh_ref=main \
 #     -e workflow_file=.github/workflows/storefront-build.yml \
 #     -e image_tag=v1.2.3 \
-#     -e BRAND=xyz \
 #     -e CMS=shopana \
 #     -e SHOPANA_GRAPHQL_URL=https://sandbox.shopana.io/api/client/graphql/query \
 #     -e PORT=3000 \
@@ -31,7 +30,6 @@
           - gh_ref is defined and gh_ref | length > 0
           - workflow_file is defined and workflow_file | length > 0
           - image_tag is defined and image_tag | length > 0
-          - BRAND is defined and BRAND | length > 0
           - CMS is defined and CMS | length > 0
           - SHOPANA_GRAPHQL_URL is defined and SHOPANA_GRAPHQL_URL | length > 0
           - PORT is defined and (PORT | int) > 0
@@ -39,7 +37,7 @@
         fail_msg: >-
           Missing required vars. Provide with -e. Required:
           gh_repo_owner, gh_repo_name, gh_ref, workflow_file,
-          image_tag, BRAND, CMS, SHOPANA_GRAPHQL_URL, PORT, SHOPANA_API_KEY
+          image_tag, CMS, SHOPANA_GRAPHQL_URL, PORT, SHOPANA_API_KEY
 
     - name: Check gh CLI installed
       ansible.builtin.command:
@@ -72,8 +70,6 @@
           - "{{ gh_ref }}"
           - -f
           - "image_tag={{ image_tag }}"
-          - -f
-          - "brand={{ BRAND }}"
           - -f
           - "cms={{ CMS }}"
           - -f

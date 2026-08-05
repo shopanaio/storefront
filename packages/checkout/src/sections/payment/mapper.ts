@@ -1,0 +1,44 @@
+import type { Checkout } from '#checkout/types/entity';
+import type { PaymentFormData, PaymentMethod } from './types';
+
+/**
+ * Maps Checkout.Checkout entity to PaymentFormData
+ * Extracts payment methods and selected payment method
+ */
+export function mapCheckoutToPaymentFormData(
+  checkout: Checkout.Checkout | null
+): PaymentFormData | null {
+  if (!checkout) {
+    return null;
+  }
+
+  const { payment } = checkout;
+
+  if (!payment || payment.paymentMethods.length === 0) {
+    return null;
+  }
+
+  const paymentMethods: PaymentMethod[] = payment.paymentMethods.map(
+    (method) => ({
+      handle: method.handle,
+      code: method.code,
+      provider: method.provider.code,
+      data: method.data,
+    })
+  );
+
+  const selectedPaymentMethod: PaymentMethod | null =
+    payment.selectedPaymentMethod
+      ? {
+          handle: payment.selectedPaymentMethod.handle,
+          code: payment.selectedPaymentMethod.code,
+          provider: payment.selectedPaymentMethod.provider.code,
+          data: payment.selectedPaymentMethod.data,
+        }
+      : null;
+
+  return {
+    paymentMethods,
+    selectedPaymentMethod,
+  };
+}

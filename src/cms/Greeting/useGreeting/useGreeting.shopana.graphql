@@ -1,5 +1,0 @@
-query StorefrontUseGreetingTestQuery {
-  product: productByHandle(handle: "example") {
-    id
-  }
-}

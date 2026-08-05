@@ -3,24 +3,7 @@
     "baseUrl": "..",
     "paths": {
       "@src/*": ["./src/*"],
-      "@codegen/*": ["./codegen/*"],
-      "@checkout/*": ["./src/modules/checkout/*"],
-      "shopana-utils": ["./packages/shopana-utils/dist/index.js"],
-      "shopana-utils/*": ["./packages/shopana-utils/dist/*"],
-      "@shopana/brand": ["./packages/brand-bite-crunch/src"],
-      "@shopana/brand/*": ["./packages/brand-bite-crunch/src/*"],
-      "@shopana/storefront-sdk": [
-        "./packages/shopana-storefront-sdk/dist/index.js"
-      ],
-      "@shopana/storefront-sdk/*": [
-        "./packages/shopana-storefront-sdk/dist/*"
-      ],
-      "@shopana/storefront": [
-        "./packages/shopana-storefront-runtime/src/init.js"
-      ],
-      "@shopana/storefront/*": [
-        "./packages/shopana-storefront-runtime/src/*"
-      ]
+      "@codegen/*": ["./codegen/*"]
     },
     "target": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -45,14 +28,11 @@
     "../src/**/*.ts",
     "../src/**/*.tsx",
     "../codegen/**/*.ts",
-    "../codegen/**/*.tsx",
-    "../packages/**/*.ts",
-    "../packages/**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts"
   ],
-  "exclude": ["../node_modules", "../packages/**/node_modules"]
+  "exclude": ["../node_modules"]
 }

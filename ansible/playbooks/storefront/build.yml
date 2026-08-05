@@ -17,31 +17,12 @@
 
     # Build-time arguments (can be overridden via -e)
     storefront_build_cms: "{{ CMS }}"
-    storefront_build_brand: "{{ BRAND }}"
     storefront_build_graphql_url: "{{ SHOPANA_GRAPHQL_URL }}"
     storefront_build_api_key: "{{ SHOPANA_API_KEY }}"
     storefront_build_app_url: "{{ NEXT_PUBLIC_APP_URL }}"
     storefront_build_port: "{{ PORT }}"
 
   tasks:
-    - name: Validate brand package exists when BRAND is set
-      block:
-        - name: Compute brand package path
-          ansible.builtin.set_fact:
-            storefront_brand_dir: "{{ root_dir }}/packages/brand-{{ storefront_build_brand | default('default') }}"
-
-        - name: Check brand package
-          ansible.builtin.stat:
-            path: "{{ storefront_brand_dir }}"
-          register: brand_dir
-
-        - name: Fail if brand package missing
-          ansible.builtin.fail:
-            msg: >-
-              Brand package not found: {{ storefront_brand_dir }}.
-              Ensure the brand package exists (e.g., git submodule) or set BRAND=default.
-          when: not brand_dir.stat.exists
-
     - name: Ensure required variables are provided
       ansible.builtin.assert:
         that:
@@ -83,7 +64,6 @@
               - "  Platform: {{ docker_platform }}"
               - "  Build Context: {{ root_dir }}"
               - "  CMS: {{ storefront_build_cms }}"
-              - "  BRAND: {{ storefront_build_brand }}"
               - "  GRAPHQL_URL: {{ storefront_build_graphql_url }}"
               - "  NEXT_PUBLIC_APP_URL: {{ storefront_build_app_url }}"
 
@@ -93,7 +73,6 @@
               docker build
               --platform {{ docker_platform }}
               --build-arg CMS={{ storefront_build_cms }}
-              --build-arg BRAND={{ storefront_build_brand }}
               --build-arg SHOPANA_GRAPHQL_URL={{ storefront_build_graphql_url }}
               {{ '--build-arg NEXT_PUBLIC_APP_URL=' + storefront_build_app_url if storefront_build_app_url | length > 0 else '' }}
               --build-arg PORT={{ storefront_build_port }}
