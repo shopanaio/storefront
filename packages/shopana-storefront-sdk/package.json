@@ -14,13 +14,15 @@
     "./next/apollo/client": "./dist/next/apollo/client.js",
     "./next/apollo/server": "./dist/next/apollo/server.js",
     "./next/apollo/loadSerializableQuery": "./dist/next/apollo/loadSerializableQuery.js",
-    "./registry": "./src/registry/index.ts",
+    "./registry": "./dist/registry/index.js",
     "./package.json": "./package.json",
     ".": "./dist/index.js",
     "./*": "./dist/*"
   },
   "scripts": {
+    "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
+    "prepack": "yarn build",
     "dev": "tsc -p tsconfig.json --watch",
     "clean": "rimraf dist",
     "test": "vitest run",

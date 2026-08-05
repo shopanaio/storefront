@@ -34,13 +34,8 @@ export const useSignInHandler = (): SignInHandler => {
       refreshSession: () => void,
       t: (key: string) => string
     ) => {
-      console.log("Processing sign-in response");
-
       if (response?.passwordSignIn?.session) {
         const session = response.passwordSignIn.session;
-        console.log("Session received:", session);
-        console.log("User:", session.user);
-        console.log("Access token:", session.accessToken);
 
         // Set token in cookie
         if (session.accessToken) {
@@ -56,8 +51,6 @@ export const useSignInHandler = (): SignInHandler => {
             iid: session.user.iid,
           },
         });
-
-        console.log("Sign-in successful! Session established.");
 
         // Update session and close modal
         refreshSession();

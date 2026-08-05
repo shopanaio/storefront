@@ -33,13 +33,8 @@ export const useSignUpHandler = (): SignUpHandler => {
       refreshSession: () => void,
       t: (key: string) => string
     ) => {
-      console.log("Processing sign-up response");
-
       if (response?.passwordSignUp?.session) {
         const session = response.passwordSignUp.session;
-        console.log("Session received:", session);
-        console.log("User:", session.user);
-        console.log("Access token:", session.accessToken);
 
         // Set token in cookie
         if (session.accessToken) {
@@ -51,8 +46,6 @@ export const useSignUpHandler = (): SignUpHandler => {
           user: session.user,
           token: session.accessToken,
         });
-
-        console.log("Registration successful! Session established.");
 
         // First update session, then close modal
         refreshSession();
