@@ -25,7 +25,9 @@ storefront-runtime start
 
 It creates `.runtime`, including the Next `app` routes and adapters that import
 the storefront structures above. `.runtime` is generated output and should not
-be edited or committed.
+be edited or committed. A custom `runtimeDir` passed to `initRuntime()` must
+resolve to a child directory of the storefront root; the root itself and paths
+outside it are rejected before generated files are removed.
 
 The generator accepts only these optional files at the storefront root:
 

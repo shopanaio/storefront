@@ -3,6 +3,7 @@ import {
   cp,
   mkdir,
   readFile,
+  realpath,
   rm,
   symlink,
   writeFile,
@@ -73,6 +74,21 @@ async function exists(filePath) {
   }
 }
 
+function assertRuntimeDirectoryIsChild(rootDir, runtimeDir) {
+  const relativeRuntimeDir = path.relative(rootDir, runtimeDir);
+
+  if (
+    !relativeRuntimeDir ||
+    relativeRuntimeDir === '..' ||
+    relativeRuntimeDir.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeRuntimeDir)
+  ) {
+    throw new Error(
+      `Runtime directory must be a child of the storefront root: ${runtimeDir}`
+    );
+  }
+}
+
 async function writeGeneratedFile(runtimeDir, relativePath, templatePath) {
   const source = path.join(
     packageDir,
@@ -100,10 +116,13 @@ async function writeOverrideWrapper(rootDir, runtimeDir, override) {
   if (override.kind === 'nextConfig') {
     contents = `export { default } from '${specifier}';\n`;
   } else if (override.kind === 'routing') {
+    const parameters = override.file.endsWith('.ts')
+      ? ': Parameters<typeof rootOverride>'
+      : '';
     contents = [
       `import rootOverride from '${specifier}';`,
       `export * from '${specifier}';`,
-      'export default function routing(...args) {',
+      `export default function routing(...args${parameters}) {`,
       '  return rootOverride(...args);',
       '}',
       '',
@@ -167,9 +186,15 @@ async function linkPublicDirectory(rootDir, runtimeDir) {
 export async function initRuntime(options = {}) {
   const rootDir = path.resolve(options.rootDir ?? process.cwd());
   const runtimeDir = path.resolve(rootDir, options.runtimeDir ?? '.runtime');
+  assertRuntimeDirectoryIsChild(rootDir, runtimeDir);
+
   const overrides = await detectOverrides(rootDir);
 
   await mkdir(runtimeDir, { recursive: true });
+  assertRuntimeDirectoryIsChild(
+    await realpath(rootDir),
+    await realpath(runtimeDir)
+  );
   await Promise.all(
     [...generatorOwnedPaths, ...obsoleteGeneratedPaths].map((relativePath) =>
       rm(path.join(runtimeDir, relativePath), { force: true, recursive: true })
