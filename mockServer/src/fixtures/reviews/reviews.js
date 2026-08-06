@@ -23,16 +23,24 @@ const reviewDefinitions = [
   ["self-cleaning-litter-box", 0, 1, 5, "A huge daily time-saver", "It runs quietly, controls odor well, and both cats adjusted within a week.", true, 19, "2026-07-26T09:05:00.000Z"],
   ["silicone-lick-mat", 1, null, 4, "Great calming activity", "It grips the tile well and keeps my dog occupied during grooming.", false, 5, "2026-07-14T18:45:00.000Z"],
   ["waterproof-car-seat-cover", 0, 2, 5, "Lives in the car now", "It covers the full back seat and muddy water wipes away easily.", true, 10, "2026-06-30T12:20:00.000Z"],
+  ["chicken-cat-kibble", 0, 0, 5, "Gentle on a sensitive stomach", "The gravy texture is easy to serve, and my cat has had no digestive issues since switching.", true, 24, "2026-08-01T10:20:00.000Z", { digestibility: 3 }],
+  ["chicken-cat-kibble", 1, 1, 5, "Clean bowl every time", "Good ingredients, plenty of moisture, and a soft consistency my senior cat can manage.", true, 17, "2026-07-31T12:40:00.000Z", { ingredients: 3 }],
+  ["chicken-cat-kibble", 2, 2, 4, "Great everyday wet food", "The portions are convenient and the nutritional balance works well for our two cats.", true, 11, "2026-07-29T08:15:00.000Z", { "nutritional-value": 3 }],
+  ["chicken-cat-kibble", 3, null, 5, "Picky-cat approved", "Smooth pieces in gravy with a fresh smell. Even our picky cat comes running at mealtime.", false, 8, "2026-07-27T17:05:00.000Z", { "texture-consistency": 3 }],
+  ["chicken-cat-kibble", 0, 3, 4, "Nice texture and easy portions", "The pouch opens cleanly and the texture stays consistent from one serving to the next.", true, 13, "2026-07-23T19:25:00.000Z"],
+  ["chicken-cat-kibble", 1, 0, 5, "Perfect portion for one meal", "The pouch is a convenient size, smells fresh, and leaves no leftovers in the bowl.", true, 15, "2026-07-21T11:35:00.000Z"],
+  ["chicken-cat-kibble", 2, 2, 4, "Good moisture and consistency", "There is plenty of gravy and the pieces stay soft without turning into paste.", true, 9, "2026-07-19T14:50:00.000Z"],
 ];
 
 export const reviews = reviewDefinitions.map((definition, index) => {
-  const [productHandle, variantIndex, customerIndex, rating, title, body, verified, likes, createdAt] = definition;
+  const [productHandle, variantIndex, customerIndex, rating, title, body, verified, likes, createdAt, criterionRatings = {}] = definition;
   const product = products.find(({ handle }) => handle === productHandle);
   const variant = productVariants.find(({ id }) => id === gid("ProductVariant", `${productHandle}-${variantIndex + 1}`));
   const customer = customerIndex === null ? null : customers[customerIndex];
   const id = gid("Review", index + 1);
   const hasOfficialReply = [0, 6, 11, 12].includes(index);
-  const hasMedia = [6, 11, 13].includes(index);
+  const hasMedia = [2, 6, 11, 13, 18, 19, 20, 21, 22, 23, 24].includes(index);
+  const applicableCriteria = reviewRatingCriteria.filter((criterion) => criterion.appliesToAllProducts || criterion.assignments.some(({ targetId, targetType }) => (targetType === "PRODUCT" ? targetId === product.id : product.categoryIds.includes(targetId))));
 
   return {
     id,
@@ -63,9 +71,9 @@ export const reviews = reviewDefinitions.map((definition, index) => {
     productId: product.id,
     variantId: variant.id,
     rating,
-    ratings: reviewRatingCriteria.slice(0, 2).map((criterion, criterionIndex) => ({
+    ratings: applicableCriteria.map((criterion, criterionIndex) => ({
       criterionId: criterion.id,
-      value: Math.max(1, rating - (criterionIndex === 1 && index % 4 === 0 ? 1 : 0)),
+      value: criterionRatings[criterion.code] ?? Math.max(1, rating - (criterionIndex === 1 && index % 4 === 0 ? 1 : 0)),
       createdAt,
       updatedAt: createdAt,
     })),

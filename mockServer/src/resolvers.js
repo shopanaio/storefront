@@ -98,7 +98,9 @@ const questionsForProduct = (store, productId) => store.state.productQuestions
 
 const ratingCriteriaForProduct = (store, product) => store.state.reviewRatingCriteria.filter((criterion) =>
   criterion.isActive && (criterion.appliesToAllProducts
-    || criterion.assignments.some(({ targetId }) => product.categoryIds.includes(targetId))));
+    || criterion.assignments.some(({ targetId, targetType }) => targetType === "PRODUCT"
+      ? targetId === product.id
+      : product.categoryIds.includes(targetId))));
 
 const reviewSummary = (store, product) => {
   const reviews = reviewsForProduct(store, product.id);

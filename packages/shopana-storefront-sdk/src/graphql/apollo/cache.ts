@@ -21,7 +21,12 @@ export function createApolloCache(
     },
     Product: {
       fields: {
-        reviews: cursorConnectionPolicy(['sort']),
+        reviews: cursorConnectionPolicy([
+          'sort',
+          'rating',
+          'verifiedOnly',
+          'withMediaOnly',
+        ]),
       },
     },
     Query: {
