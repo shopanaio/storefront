@@ -6,10 +6,10 @@ by the business domains exposed by `schema.graphql`.
 The included `Northstar Supply` dataset represents a complete medium demo
 store rather than a minimal happy path. It contains:
 
-- 16 hierarchical categories, 250 products, and 519 inventory-tracked variants;
+- 16 hierarchical categories, 260 products, and 635 inventory-tracked variants;
 - 50 component-enabled products with one shared configuration across every
   variant of the same product (50 configurations and 300 component items);
-- 272 local media records, three markets, seven content pages, and two menus;
+- 282 local media records, three markets, seven content pages, and two menus;
 - five customer profiles and three checkout scenarios;
 - eight orders across processing, delivery, cancellation, payment-failure, and
   refund states, plus two return requests;

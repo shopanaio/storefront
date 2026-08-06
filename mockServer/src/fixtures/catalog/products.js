@@ -19,6 +19,245 @@ const sizeVariants = (sku, price, sizes, compareAtPrice = null) =>
     quantity: 7 + ((index * 5 + sku.length) % 16),
   }));
 
+const foodVariants = (sku, flavors, packs) =>
+  flavors.flatMap((flavor, flavorIndex) =>
+    packs.map((pack, packIndex) => ({
+      name: `${flavor} / ${pack.name}`,
+      optionValues: {
+        Flavor: flavor,
+        Packaging: pack.name,
+      },
+      sku: `${sku}-${String(flavorIndex + 1).padStart(2, "0")}-${String(packIndex + 1).padStart(2, "0")}`,
+      price: Number((pack.price + flavorIndex * (pack.flavorSurcharge ?? 0)).toFixed(2)),
+      compareAtPrice: pack.compareAtPrice ?? null,
+      quantity: 8 + ((flavorIndex * 11 + packIndex * 7 + sku.length) % 25),
+      weight: { value: pack.weightKg, unit: "kg" },
+    })),
+  );
+
+const foodProductConfigurations = {
+  "salmon-dog-kibble": {
+    title: "Royal Canin Medium Adult Dry Dog Food",
+    vendor: "Royal Canin",
+    description: "Complete Royal Canin dry food for medium adult dogs, offered in several recipes and practical bag sizes.",
+    tags: ["royal-canin", "dog-food", "dry-food", "adult-dogs", "bestseller"],
+    options: [
+      {
+        name: "Flavor",
+        displayType: "BUTTONS",
+        values: ["Salmon & Brown Rice", "Chicken & Oat", "Lamb & Oat"],
+      },
+      {
+        name: "Packaging",
+        displayType: "BUTTONS",
+        values: ["Trial bag · 1 kg", "Bag · 4 kg", "Large bag · 12 kg"],
+      },
+    ],
+    variants: foodVariants(
+      "RC-MEDIUM",
+      ["Salmon & Brown Rice", "Chicken & Oat", "Lamb & Oat"],
+      [
+        { name: "Trial bag · 1 kg", price: 8.49, flavorSurcharge: 0.3, weightKg: 1 },
+        { name: "Bag · 4 kg", price: 29.99, flavorSurcharge: 1, weightKg: 4 },
+        { name: "Large bag · 12 kg", price: 74.99, flavorSurcharge: 2, compareAtPrice: 82.99, weightKg: 12 },
+      ],
+    ),
+  },
+  "chicken-cat-kibble": {
+    title: "Royal Canin Adult Cat Wet Food Pouches",
+    vendor: "Royal Canin",
+    description: "Complete Royal Canin wet cat food in 85 g pouches, available singly or in pantry-friendly multipacks.",
+    tags: ["royal-canin", "cat-food", "wet-food", "adult-cats", "bestseller"],
+    options: [
+      {
+        name: "Flavor",
+        displayType: "BUTTONS",
+        values: ["Chicken in Gravy", "Salmon in Gravy", "Tuna in Gravy", "Variety Pack"],
+      },
+      {
+        name: "Packaging",
+        displayType: "BUTTONS",
+        values: ["1 pouch · 85 g", "Box · 12 × 85 g", "Case · 24 × 85 g"],
+      },
+    ],
+    variants: foodVariants(
+      "RC-CAT-WET",
+      ["Chicken in Gravy", "Salmon in Gravy", "Tuna in Gravy", "Variety Pack"],
+      [
+        { name: "1 pouch · 85 g", price: 1.39, flavorSurcharge: 0.1, weightKg: 0.085 },
+        { name: "Box · 12 × 85 g", price: 14.99, flavorSurcharge: 0.5, weightKg: 1.02 },
+        { name: "Case · 24 × 85 g", price: 27.49, flavorSurcharge: 1, compareAtPrice: 31.99, weightKg: 2.04 },
+      ],
+    ),
+  },
+};
+
+const foodProductDefinition = ({
+  handle,
+  title,
+  categoryHandles,
+  vendor,
+  description,
+  tags,
+  sku,
+  flavors,
+  packs,
+}) => ({
+  handle,
+  title,
+  categoryHandles,
+  primaryCategoryHandle: categoryHandles.includes("cat-food") ? "cat-food" : "dog-food",
+  vendor,
+  description,
+  tags: [vendor.toLowerCase().replaceAll(" ", "-"), ...tags],
+  options: [
+    { name: "Flavor", displayType: "BUTTONS", values: flavors },
+    { name: "Packaging", displayType: "BUTTONS", values: packs.map(({ name }) => name) },
+  ],
+  variants: foodVariants(sku, flavors, packs),
+});
+
+const dryDogPacks = [
+  { name: "Trial bag · 1 kg", price: 10.99, flavorSurcharge: 0.4, weightKg: 1 },
+  { name: "Bag · 4 kg", price: 34.99, flavorSurcharge: 1, weightKg: 4 },
+  { name: "Large bag · 12 kg", price: 84.99, flavorSurcharge: 2, compareAtPrice: 92.99, weightKg: 12 },
+];
+
+const dryCatPacks = [
+  { name: "Trial bag · 750 g", price: 8.99, flavorSurcharge: 0.3, weightKg: 0.75 },
+  { name: "Bag · 3 kg", price: 27.99, flavorSurcharge: 0.8, weightKg: 3 },
+  { name: "Large bag · 7 kg", price: 54.99, flavorSurcharge: 1.5, compareAtPrice: 61.99, weightKg: 7 },
+];
+
+const wetCatPacks = [
+  { name: "1 pouch · 85 g", price: 1.29, flavorSurcharge: 0.08, weightKg: 0.085 },
+  { name: "Box · 12 × 85 g", price: 13.99, flavorSurcharge: 0.4, weightKg: 1.02 },
+  { name: "Case · 24 × 85 g", price: 25.99, flavorSurcharge: 0.8, compareAtPrice: 29.99, weightKg: 2.04 },
+];
+
+const wetDogPacks = [
+  { name: "1 pouch · 100 g", price: 1.39, flavorSurcharge: 0.08, weightKg: 0.1 },
+  { name: "Box · 12 × 100 g", price: 14.99, flavorSurcharge: 0.4, weightKg: 1.2 },
+  { name: "Case · 24 × 100 g", price: 27.99, flavorSurcharge: 0.8, compareAtPrice: 32.99, weightKg: 2.4 },
+];
+
+const brandedFoodDefinitions = [
+  foodProductDefinition({
+    handle: "sheba-perfect-portions-cat-wet-food",
+    title: "Sheba Perfect Portions Adult Cat Wet Food",
+    categoryHandles: ["cats", "cat-food", "new-arrivals"],
+    vendor: "Sheba",
+    description: "Portion-sized wet cat food trays with classic meat and fish recipes.",
+    tags: ["cat-food", "wet-food", "trays", "adult-cats"],
+    sku: "SHB-PP",
+    flavors: ["Chicken Entrée", "Salmon Entrée", "Tuna Entrée", "Variety Pack"],
+    packs: [
+      { name: "1 twin tray · 75 g", price: 1.49, flavorSurcharge: 0.1, weightKg: 0.075 },
+      { name: "Box · 12 × 75 g", price: 15.99, flavorSurcharge: 0.5, weightKg: 0.9 },
+      { name: "Case · 24 × 75 g", price: 29.49, flavorSurcharge: 1, compareAtPrice: 33.99, weightKg: 1.8 },
+    ],
+  }),
+  foodProductDefinition({
+    handle: "purina-pro-plan-adult-dog-dry-food",
+    title: "Purina Pro Plan Adult Dry Dog Food",
+    categoryHandles: ["dogs", "dog-food", "new-arrivals"],
+    vendor: "Purina Pro Plan",
+    description: "High-protein adult dog food recipes with rice or oatmeal.",
+    tags: ["dog-food", "dry-food", "adult-dogs"],
+    sku: "PPP-DOG",
+    flavors: ["Chicken & Rice", "Salmon & Rice", "Lamb & Oatmeal"],
+    packs: dryDogPacks,
+  }),
+  foodProductDefinition({
+    handle: "purina-one-adult-cat-dry-food",
+    title: "Purina ONE Adult Dry Cat Food",
+    categoryHandles: ["cats", "cat-food"],
+    vendor: "Purina ONE",
+    description: "Complete dry nutrition for adult cats in everyday and bulk bag sizes.",
+    tags: ["cat-food", "dry-food", "adult-cats"],
+    sku: "PON-CAT",
+    flavors: ["Chicken & Rice", "Salmon & Rice", "Turkey"],
+    packs: dryCatPacks,
+  }),
+  foodProductDefinition({
+    handle: "hills-science-plan-adult-dog-dry-food",
+    title: "Hill's Science Plan Adult Dry Dog Food",
+    categoryHandles: ["dogs", "dog-food"],
+    vendor: "Hill's Science Plan",
+    description: "Balanced adult dog food offered in several protein recipes and bag sizes.",
+    tags: ["dog-food", "dry-food", "adult-dogs"],
+    sku: "HSP-DOG",
+    flavors: ["Chicken & Barley", "Lamb & Brown Rice", "Salmon & Brown Rice"],
+    packs: dryDogPacks,
+  }),
+  foodProductDefinition({
+    handle: "whiskas-adult-cat-pouches",
+    title: "Whiskas Adult Cat Food Pouches",
+    categoryHandles: ["cats", "cat-food"],
+    vendor: "Whiskas",
+    description: "Adult wet cat food in gravy, sold as a single pouch or multipack.",
+    tags: ["cat-food", "wet-food", "pouches", "adult-cats"],
+    sku: "WHK-WET",
+    flavors: ["Chicken in Gravy", "Beef in Gravy", "Salmon in Gravy", "Variety Pack"],
+    packs: wetCatPacks,
+  }),
+  foodProductDefinition({
+    handle: "brit-care-cat-pouches",
+    title: "Brit Care Adult Cat Food Pouches",
+    categoryHandles: ["cats", "cat-food", "new-arrivals"],
+    vendor: "Brit Care",
+    description: "Complete wet food pouches with meat, fish, and vegetable recipe combinations.",
+    tags: ["cat-food", "wet-food", "pouches", "grain-free"],
+    sku: "BRC-CAT",
+    flavors: ["Chicken & Cheese", "Turkey & Salmon", "Duck & Carrot", "Variety Pack"],
+    packs: wetCatPacks,
+  }),
+  foodProductDefinition({
+    handle: "club-4-paws-adult-dog-pouches",
+    title: "Club 4 Paws Adult Dog Food Pouches",
+    categoryHandles: ["dogs", "dog-food"],
+    vendor: "Club 4 Paws",
+    description: "Portioned wet dog food in gravy for everyday adult feeding.",
+    tags: ["dog-food", "wet-food", "pouches", "adult-dogs"],
+    sku: "C4P-DOG",
+    flavors: ["Chicken in Gravy", "Turkey in Gravy", "Beef in Gravy", "Variety Pack"],
+    packs: wetDogPacks,
+  }),
+  foodProductDefinition({
+    handle: "acana-adult-dog-dry-food",
+    title: "Acana Adult Dry Dog Food",
+    categoryHandles: ["dogs", "dog-food"],
+    vendor: "Acana",
+    description: "Protein-rich adult dog kibble in poultry, meat, and fish recipes.",
+    tags: ["dog-food", "dry-food", "high-protein"],
+    sku: "ACN-DOG",
+    flavors: ["Free-Run Poultry", "Red Meat", "Wild Fish"],
+    packs: dryDogPacks,
+  }),
+  foodProductDefinition({
+    handle: "josera-adult-cat-dry-food",
+    title: "Josera Adult Dry Cat Food",
+    categoryHandles: ["cats", "cat-food"],
+    vendor: "Josera",
+    description: "Complete adult cat kibble in poultry and fish recipes.",
+    tags: ["cat-food", "dry-food", "adult-cats"],
+    sku: "JSR-CAT",
+    flavors: ["Chicken", "Salmon", "Duck"],
+    packs: dryCatPacks,
+  }),
+  foodProductDefinition({
+    handle: "royal-canin-mini-adult-dry-dog-food",
+    title: "Royal Canin Mini Adult Dry Dog Food",
+    categoryHandles: ["dogs", "dog-food"],
+    vendor: "Royal Canin",
+    description: "Complete dry food for small adult dogs in practical bag sizes.",
+    tags: ["dog-food", "dry-food", "small-breed", "adult-dogs"],
+    sku: "RC-MINI",
+    flavors: ["Chicken", "Lamb & Rice", "Salmon"],
+    packs: dryDogPacks,
+  }),
+];
+
 const coreProductSeeds = [
   {
     handle: "essential-cotton-tee",
@@ -344,6 +583,8 @@ const petCoreCatalog = [
 
 const coreProductDefinitions = coreProductSeeds.map((seed, index) => {
   const [handle, title, categoryHandles, vendor, description, tags, optionName, optionDisplayType, sku, variantNames] = petCoreCatalog[index];
+  const foodConfiguration = foodProductConfigurations[handle];
+
   return {
     ...seed,
     handle,
@@ -355,7 +596,8 @@ const coreProductDefinitions = coreProductSeeds.map((seed, index) => {
     tags,
     optionName,
     optionDisplayType,
-    variants: seed.variants.map((variant, variantIndex) => ({
+    ...(foodConfiguration ?? {}),
+    variants: foodConfiguration?.variants ?? seed.variants.map((variant, variantIndex) => ({
       ...variant,
       name: variantNames[variantIndex],
       sku: `${sku}-${String(variantIndex + 1).padStart(2, "0")}`,
@@ -584,17 +826,29 @@ const supplementalProductDefinitions = supplementalCollections.flatMap((collecti
 
 export const productDefinitions = [
   ...coreProductDefinitions,
+  ...brandedFoodDefinitions,
   ...supplementalProductDefinitions,
 ];
 
 const publishedAt = "2026-03-15T09:00:00.000Z";
+
+const optionValueHandle = (value) => value
+  .toLowerCase()
+  .replaceAll("&", "and")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/(^-|-$)/g, "");
+
+const productOptions = (product) => product.options ?? [{
+  name: product.optionName,
+  displayType: product.optionDisplayType,
+  values: product.variants.map(({ name, color }) => ({ name, color })),
+}];
 
 export const products = productDefinitions.map((product, productIndex) => {
   const prices = product.variants.map(({ price }) => price);
   const compareAtPrices = product.variants
     .map(({ compareAtPrice }) => compareAtPrice)
     .filter((price) => price !== null);
-  const optionHandle = product.optionName.toLowerCase().replaceAll(" ", "-");
 
   return {
     id: gid("Product", product.handle),
@@ -622,22 +876,34 @@ export const products = productDefinitions.map((product, productIndex) => {
       product.primaryCategoryHandle ?? product.categoryHandles[product.categoryHandles.length > 1 ? 1 : 0],
     ),
     categoryIds: product.categoryHandles.map((handle) => gid("Category", handle)),
-    options: [{
-      id: gid("ProductOption", `${product.handle}-${optionHandle}`),
-      handle: optionHandle,
-      name: product.optionName,
-      displayType: product.optionDisplayType,
-      position: 0,
-      optionValues: product.variants.map((variant, position) => ({
-        id: gid("ProductOptionValue", `${product.handle}-${variant.name.toLowerCase().replaceAll(" ", "-")}`),
-        handle: variant.name.toLowerCase().replaceAll(" ", "-"),
-        name: variant.name,
-        position,
-        swatch: variant.color
-          ? { type: "COLOR", color: variant.color, secondaryColor: null, imageId: null, metadata: null }
-          : null,
-      })),
-    }],
+    options: productOptions(product).map((option, optionPosition) => {
+      const optionHandle = optionValueHandle(option.name);
+      const values = option.values.map((value) => typeof value === "string" ? { name: value } : value);
+
+      return {
+        id: gid("ProductOption", `${product.handle}-${optionHandle}`),
+        handle: optionHandle,
+        name: option.name,
+        displayType: option.displayType,
+        position: optionPosition,
+        optionValues: values.map((value, position) => {
+          const valueHandle = optionValueHandle(value.name);
+          const valueId = product.options
+            ? `${product.handle}-${optionHandle}-${valueHandle}`
+            : `${product.handle}-${valueHandle}`;
+
+          return {
+            id: gid("ProductOptionValue", valueId),
+            handle: valueHandle,
+            name: value.name,
+            position,
+            swatch: value.color
+              ? { type: "COLOR", color: value.color, secondaryColor: null, imageId: null, metadata: null }
+              : null,
+          };
+        }),
+      };
+    }),
     features: [],
     featureGroups: [],
     mediaIds: [gid("MediaImage", `product-${product.handle}`)],
