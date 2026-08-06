@@ -2,6 +2,7 @@ import { clone, inferTypeName } from "./helpers.js";
 
 const collectionEntries = (state) => [
   ["Category", state.categories],
+  ["Facet", state.facets],
   ["Product", state.products],
   ["ProductVariant", state.productVariants],
   ["ProductComponentConfiguration", state.productComponentConfigurations],

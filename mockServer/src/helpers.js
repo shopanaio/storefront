@@ -102,7 +102,7 @@ const productMatchesFacet = (product, facetFilter) => {
   const value = normalizeText(facetFilter?.value);
 
   if (["tag", "tags"].includes(facet)) {
-    return product.tags.some((tag) => [normalizeText(tag.id), normalizeText(tag.handle)].includes(value));
+    return product.tags.some((tag) => [tag.id, tag.handle, tag.name].some((candidate) => normalizeText(candidate) === value));
   }
   if (["category", "categories"].includes(facet)) {
     return product.categoryIds.some((id) => normalizeText(id) === value || normalizeText(id.split("/").at(-1)) === value);
@@ -111,29 +111,59 @@ const productMatchesFacet = (product, facetFilter) => {
     return [product.vendor?.id, product.vendor?.name].some((candidate) => normalizeText(candidate) === value);
   }
 
+  const option = product.options?.find(({ handle, name }) => [handle, name].some((candidate) => normalizeText(candidate) === facet));
+  if (option) {
+    return option.optionValues.some((optionValue) =>
+      [optionValue.id, optionValue.handle, optionValue.name].some((candidate) => normalizeText(candidate) === value));
+  }
+
+  const feature = product.features?.find(({ handle, name }) => [handle, name].some((candidate) => normalizeText(candidate) === facet));
+  if (feature) {
+    return feature.values.some((featureValue) =>
+      [featureValue.id, featureValue.handle, featureValue.name].some((candidate) => normalizeText(candidate) === value));
+  }
+
+  return false;
+};
+
+const filterKey = (filter) => {
+  if (filter.facet) return `facet:${normalizeText(filter.facet.facet)}`;
+  if (filter.vendorId) return "vendor";
+  if (filter.availability) return "availability";
+  if (filter.price) return "price";
+  return "unknown";
+};
+
+const productMatchesFilter = (product, filter, variantsById) => {
+  if (filter.facet && !productMatchesFacet(product, filter.facet)) return false;
+  if (filter.vendorId && product.vendor?.id !== filter.vendorId) return false;
+
+  const variants = (product.variantIds ?? []).map((id) => variantsById.get(id)).filter(Boolean);
+  if (filter.availability === "AVAILABLE" && !variants.some((variant) => variant.availableForSale)) return false;
+  if (filter.availability === "UNAVAILABLE" && !variants.some((variant) => !variant.availableForSale)) return false;
+
+  if (filter.price) {
+    const matchesPrice = variants.some((variant) => {
+      const amount = Number(variant.price?.amount);
+      return (filter.price.min === null || filter.price.min === undefined || amount >= Number(filter.price.min))
+        && (filter.price.max === null || filter.price.max === undefined || amount <= Number(filter.price.max));
+    });
+    if (!matchesPrice) return false;
+  }
+
   return true;
 };
 
-export const filterProducts = (products, filters = [], variantsById) =>
-  products.filter((product) => filters.every((filter) => {
-    if (filter.facet && !productMatchesFacet(product, filter.facet)) return false;
-    if (filter.vendorId && product.vendor?.id !== filter.vendorId) return false;
+export const filterProducts = (products, filters = [], variantsById) => {
+  const groupedFilters = new Map();
+  for (const filter of filters) {
+    const key = filterKey(filter);
+    groupedFilters.set(key, [...(groupedFilters.get(key) ?? []), filter]);
+  }
 
-    const variants = (product.variantIds ?? []).map((id) => variantsById.get(id)).filter(Boolean);
-    if (filter.availability === "AVAILABLE" && !variants.some((variant) => variant.availableForSale)) return false;
-    if (filter.availability === "UNAVAILABLE" && !variants.some((variant) => !variant.availableForSale)) return false;
-
-    if (filter.price) {
-      const matchesPrice = variants.some((variant) => {
-        const amount = Number(variant.price?.amount);
-        return (filter.price.min === null || filter.price.min === undefined || amount >= Number(filter.price.min))
-          && (filter.price.max === null || filter.price.max === undefined || amount <= Number(filter.price.max));
-      });
-      if (!matchesPrice) return false;
-    }
-
-    return true;
-  }));
+  return products.filter((product) => [...groupedFilters.values()].every((group) =>
+    group.some((filter) => productMatchesFilter(product, filter, variantsById))));
+};
 
 export const searchProducts = (products, query) => {
   const normalized = normalizeText(query);
@@ -262,41 +292,107 @@ export const createCheckoutLine = ({ checkoutKey, position, variant, quantity, a
   };
 };
 
-export const buildListingFilters = (products, allProducts, inputFilters = []) => {
-  const selectedTags = new Set(inputFilters.filter(({ facet }) => ["tag", "tags"].includes(normalizeText(facet?.facet)))
-    .map(({ facet }) => normalizeText(facet.value)));
-  const tags = new Map();
-  for (const product of allProducts) {
-    for (const tag of product.tags) tags.set(tag.handle, tag);
-  }
+const withoutFilter = (filters, key) => filters.filter((filter) => filterKey(filter) !== key);
 
-  const tagFacet = {
-    id: gid("Facet", "tag"),
-    facetType: "TAG",
-    slug: "tag",
-    label: "Tags",
-    uiType: "CHECKBOX",
-    selectionMode: "MULTI",
+const optionSwatch = (facet, value) => value.swatch ? {
+  id: gid("FacetSwatch", `${facet.slug}-${value.handle}`),
+  swatchType: value.swatch.type,
+  colorOne: value.swatch.color ?? null,
+  colorTwo: value.swatch.secondaryColor ?? null,
+  metadata: value.swatch.metadata ?? null,
+} : null;
+
+const facetValuesForProduct = (product, facet) => {
+  if (facet.facetType === "TAG") {
+    return product.tags.map((tag) => ({ id: tag.id, handle: tag.handle, label: tag.name, swatch: null }));
+  }
+  if (facet.facetType === "OPTION") {
+    const option = product.options.find(({ handle }) => normalizeText(handle) === normalizeText(facet.slug));
+    return option?.optionValues.map((value) => ({
+      id: value.id,
+      handle: value.handle,
+      label: value.name,
+      swatch: optionSwatch(facet, value),
+    })) ?? [];
+  }
+  if (facet.facetType === "FEATURE") {
+    const feature = product.features.find(({ handle }) => normalizeText(handle) === normalizeText(facet.slug));
+    return feature?.values.map((value) => ({
+      id: value.id,
+      handle: value.handle,
+      label: value.name,
+      swatch: null,
+    })) ?? [];
+  }
+  return [];
+};
+
+const buildFacetFilter = (facet, scopeProducts, inputFilters, variantsById) => {
+  const values = new Map();
+  for (const product of scopeProducts) {
+    for (const value of facetValuesForProduct(product, facet)) values.set(value.handle, value);
+  }
+  if (!values.size) return null;
+
+  const key = `facet:${normalizeText(facet.slug)}`;
+  const isolatedFilters = withoutFilter(inputFilters, key);
+  const selectedValues = new Set(inputFilters
+    .filter((filter) => filterKey(filter) === key)
+    .map(({ facet: selectedFacet }) => normalizeText(selectedFacet.value)));
+
+  return {
+    id: facet.slug,
+    label: facet.label,
+    type: "LIST",
+    facet,
+    presentation: facet.presentation ?? "TEXT",
+    selectionMode: facet.selectionMode,
+    priceRange: null,
+    values: [...values.values()]
+      .sort((left, right) => left.label.localeCompare(right.label, "en"))
+      .map((value, sortIndex) => {
+        const input = { facet: { facet: facet.slug, value: value.handle } };
+        return {
+          id: `${facet.slug}:${value.handle}`,
+          label: value.label,
+          count: filterProducts(scopeProducts, [...isolatedFilters, input], variantsById).length,
+          selected: selectedValues.has(normalizeText(value.handle)) || selectedValues.has(normalizeText(value.id)),
+          input,
+          facetValue: {
+            id: gid("FacetValue", `${facet.slug}-${value.handle}`),
+            facet,
+            kind: "SOURCE",
+            handle: value.handle,
+            label: value.label,
+            swatch: value.swatch,
+            sortIndex,
+          },
+          swatch: value.swatch,
+        };
+      }),
   };
-  const availabilityFacet = {
-    id: gid("Facet", "availability"),
-    facetType: "IN_STOCK",
-    slug: "availability",
-    label: "Availability",
-    uiType: "BOOLEAN",
-    selectionMode: "SINGLE",
-  };
-  const prices = products.flatMap((product) => [
+};
+
+export const buildListingFilters = (scopeProducts, inputFilters = [], variantsById, facets = []) => {
+  const availabilityFilters = withoutFilter(inputFilters, "availability");
+  const priceFilters = withoutFilter(inputFilters, "price");
+  const priceProducts = filterProducts(scopeProducts, priceFilters, variantsById);
+  const prices = priceProducts.flatMap((product) => [
     Number(product.priceRange?.minVariantPrice?.amount ?? 0),
     Number(product.priceRange?.maxVariantPrice?.amount ?? 0),
   ]);
+  const selectedPrice = inputFilters.find(({ price }) => price)?.price;
+  const configuredFacets = facets.length ? facets : [{
+    id: gid("Facet", "tag"), facetType: "TAG", slug: "tag", label: "Tags",
+    uiType: "CHECKBOX", selectionMode: "MULTI", presentation: "TEXT",
+  }];
 
   return [
     {
       id: "availability",
-      label: "In stock",
+      label: "Availability",
       type: "BOOLEAN",
-      facet: availabilityFacet,
+      facet: null,
       presentation: "TEXT",
       selectionMode: "SINGLE",
       priceRange: null,
@@ -304,57 +400,36 @@ export const buildListingFilters = (products, allProducts, inputFilters = []) =>
         {
           id: "availability:available",
           label: "Available",
-          count: products.filter(({ availableForSale }) => availableForSale).length,
+          count: filterProducts(scopeProducts, [...availabilityFilters, { availability: "AVAILABLE" }], variantsById).length,
           selected: inputFilters.some(({ availability }) => availability === "AVAILABLE"),
           input: { availability: "AVAILABLE" },
           facetValue: null,
           swatch: null,
         },
+        {
+          id: "availability:unavailable",
+          label: "Unavailable",
+          count: filterProducts(scopeProducts, [...availabilityFilters, { availability: "UNAVAILABLE" }], variantsById).length,
+          selected: inputFilters.some(({ availability }) => availability === "UNAVAILABLE"),
+          input: { availability: "UNAVAILABLE" },
+          facetValue: null,
+          swatch: null,
+        },
       ],
     },
-    {
-      id: "tag",
-      label: "Tags",
-      type: "LIST",
-      facet: tagFacet,
-      presentation: "TEXT",
-      selectionMode: "MULTI",
-      priceRange: null,
-      values: [...tags.values()].sort((a, b) => a.name.localeCompare(b.name)).map((tag) => ({
-        id: `tag:${tag.handle}`,
-        label: tag.name,
-        count: products.filter((product) => product.tags.some(({ id }) => id === tag.id)).length,
-        selected: selectedTags.has(normalizeText(tag.handle)) || selectedTags.has(normalizeText(tag.id)),
-        input: { facet: { facet: "tag", value: tag.handle } },
-        facetValue: {
-          id: gid("FacetValue", `tag-${tag.handle}`),
-          facet: tagFacet,
-          kind: "SOURCE",
-          handle: tag.handle,
-          label: tag.name,
-          swatch: null,
-          sortIndex: 0,
-        },
-        swatch: null,
-      })),
-    },
+    ...configuredFacets.map((facet) => buildFacetFilter(facet, scopeProducts, inputFilters, variantsById)).filter(Boolean),
     {
       id: "price",
       label: "Price",
       type: "PRICE_RANGE",
-      facet: {
-        id: gid("Facet", "price"), facetType: "PRICE", slug: "price", label: "Price",
-        uiType: "RANGE", selectionMode: "SINGLE",
-      },
+      facet: null,
       presentation: "TEXT",
       selectionMode: "SINGLE",
       priceRange: {
         min: money(prices.length ? Math.min(...prices) : 0),
         max: money(prices.length ? Math.max(...prices) : 0),
-        selectedMin: inputFilters.find(({ price }) => price)?.price?.min != null
-          ? money(inputFilters.find(({ price }) => price).price.min) : null,
-        selectedMax: inputFilters.find(({ price }) => price)?.price?.max != null
-          ? money(inputFilters.find(({ price }) => price).price.max) : null,
+        selectedMin: selectedPrice?.min != null ? money(selectedPrice.min) : null,
+        selectedMax: selectedPrice?.max != null ? money(selectedPrice.max) : null,
       },
       values: [],
     },

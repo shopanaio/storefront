@@ -236,6 +236,7 @@ const productConnection = (store, source, args = {}, options = {}) => {
   let products = source;
   let relevance = new Map();
   if (options.query) ({ products, relevance } = searchProducts(products, options.query));
+  const scopeProducts = products;
   products = filterProducts(products, inputFilters, variantsById);
   const sort = args.sort ?? (options.query ? "RELEVANCE" : "NEWEST");
   products = sortProducts(products, sort, variantsById, relevance);
@@ -245,7 +246,7 @@ const productConnection = (store, source, args = {}, options = {}) => {
     "NEWEST", "CREATED_AT", "TITLE_ASC", "TITLE_DESC", "PRICE_ASC", "PRICE_DESC",
   ];
   return connection(products, args, {
-    filters: buildListingFilters(products, source, inputFilters),
+    filters: buildListingFilters(scopeProducts, inputFilters, variantsById, store.state.facets),
     sort,
     availableSorts,
   });
