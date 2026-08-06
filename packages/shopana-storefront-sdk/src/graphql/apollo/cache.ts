@@ -21,6 +21,7 @@ export function createApolloCache(
     },
     Product: {
       fields: {
+        questions: cursorConnectionPolicy(['sort']),
         reviews: cursorConnectionPolicy([
           'sort',
           'rating',

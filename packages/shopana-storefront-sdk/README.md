@@ -114,6 +114,7 @@ list.
 The SDK cache registers connection semantics using real Shopana schema fields:
 
 - `Category.products`, keyed by `sort` and `filters`;
+- `Product.questions`, keyed by `sort`;
 - `Product.reviews`, keyed by `sort`;
 - `Query.searchProducts`, keyed by `query`, `sort`, and `filters`.
 
