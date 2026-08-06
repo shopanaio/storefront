@@ -47,7 +47,7 @@ const createProductReference = (
     id,
     handle: product.handle,
     title: product.title,
-    description: '',
+    description: null,
     excerpt: '',
     category: null,
     options: [],

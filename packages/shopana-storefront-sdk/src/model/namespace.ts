@@ -7,6 +7,9 @@ import type * as MediaTypes from './Media';
 // Money
 import type * as MoneyTypes from './Money';
 
+// Rich text
+import type * as RichTextTypes from './RichText';
+
 // Tag
 import type * as TagTypes from './Tag';
 
@@ -64,6 +67,9 @@ export namespace model {
   // Money
   export type Money = MoneyTypes.Money;
 
+  // Rich text
+  export type RichText = RichTextTypes.RichText;
+
   // Tag
   export type Tag = TagTypes.Tag;
   export type TagConnection = TagTypes.TagConnection;
@@ -113,6 +119,7 @@ export namespace model {
 
   // Product Feature
   export type ProductFeatureValue = ProductFeatureTypes.ProductFeatureValue;
+  export type ProductFeatureGroup = ProductFeatureTypes.ProductFeatureGroup;
   export type ProductFeature = ProductFeatureTypes.ProductFeature;
 
   // Product Swatch

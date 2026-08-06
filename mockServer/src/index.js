@@ -6,4 +6,5 @@ export {
   money,
   postalAddress,
   richText,
+  richTextDocument,
 } from "./fixture-helpers.js";

@@ -6,6 +6,7 @@ import type { ProductOption } from './ProductOption';
 import type { ProductFeature } from './ProductFeature';
 import type { ProductRating } from './ProductRating';
 import type { ReviewConnection } from '../Review';
+import type { RichText } from '../RichText';
 
 /**
  * ProductFull interface - represents a complete product with all data
@@ -24,7 +25,7 @@ export interface Product {
   title: string;
 
   /** Full product description */
-  description: string;
+  description: RichText | null;
 
   /** Short description or product annotation */
   excerpt: string;

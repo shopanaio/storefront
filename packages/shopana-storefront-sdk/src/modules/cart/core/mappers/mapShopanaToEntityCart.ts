@@ -36,7 +36,7 @@ const createProductReference = (
     id: product.id ?? fallbackId,
     handle: product.handle,
     title: product.title,
-    description: '',
+    description: null,
     excerpt: '',
     category: null,
     options: [],
