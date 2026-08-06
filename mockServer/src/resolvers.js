@@ -82,6 +82,8 @@ const findParentItem = (menus, childId) => {
   return visit(menus.flatMap(({ items }) => items));
 };
 
+const roundRating = (value) => Math.round(value * 10) / 10;
+
 const ratingBreakdown = (reviews) => ({
   rating1Count: reviews.filter(({ rating }) => rating === 1).length,
   rating2Count: reviews.filter(({ rating }) => rating === 2).length,
@@ -105,14 +107,16 @@ const ratingCriteriaForProduct = (store, product) => store.state.reviewRatingCri
 const reviewSummary = (store, product) => {
   const reviews = reviewsForProduct(store, product.id);
   const averageRating = reviews.length
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    ? roundRating(reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length)
     : 0;
   const criteria = ratingCriteriaForProduct(store, product).map((criterion) => {
     const values = reviews.flatMap((review) => review.ratings.filter(({ criterionId }) => criterionId === criterion.id));
     return {
       criterion,
       reviewCount: values.length,
-      averageRating: values.length ? values.reduce((sum, rating) => sum + rating.value, 0) / values.length : 0,
+      averageRating: values.length
+        ? roundRating(values.reduce((sum, rating) => sum + rating.value, 0) / values.length)
+        : 0,
       ratingBreakdown: ratingBreakdown(values.map(({ value }) => ({ rating: value }))),
       updatedAt: reviews[0]?.updatedAt ?? FIXTURE_NOW,
     };

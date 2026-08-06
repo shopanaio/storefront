@@ -9,7 +9,7 @@ export const reviewStoreConfiguration = {
   customerAnswersEnabled: true,
   verifiedPurchaseRequired: false,
   reviewModerationMode: "POSTMODERATION",
-  questionModerationMode: "PREMODERATION",
+  questionModerationMode: "POSTMODERATION",
   answerModerationMode: "PREMODERATION",
   reviewDuplicatePolicy: "ONE_PER_ORDER_LINE",
   reviewRequestsEnabled: true,

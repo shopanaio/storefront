@@ -86,6 +86,19 @@ const reviewMediaFromInput = (store, review, mediaInput) => {
 
 const contentOwnerKey = (context) => context.customer?.id ?? "anonymous-viewer";
 
+const validateGuestAuthor = (context, submission) => {
+  if (context.customer) return [];
+
+  const errors = [];
+  if (!submission.author?.displayName?.trim()) {
+    errors.push(reviewError("GUEST_AUTHOR_REQUIRED", "Guest display name is required.", ["content", "author", "displayName"]));
+  }
+  if (!submission.author?.email?.trim()) {
+    errors.push(reviewError("GUEST_AUTHOR_REQUIRED", "Guest email is required.", ["content", "author", "email"]));
+  }
+  return errors;
+};
+
 const validateRatingsAndMedia = (store, ratings, media) => {
   const errors = [];
   if (ratings?.some(({ criterionId }) => store.get(criterionId)?.__typename !== "ReviewRatingCriterion")) {
@@ -111,8 +124,12 @@ export const reviewMutations = (store) => ({
       errors.push(reviewError("VARIANT_NOT_FOUND", "The product variant does not exist.", ["variantId"]));
     }
     if (input.rating < 1 || input.rating > 5) errors.push(reviewError("INVALID_RATING", "Rating must be between 1 and 5.", ["rating"]));
-    if (!context.customer && !store.state.reviewStoreConfiguration.guestReviewsEnabled) {
-      errors.push(reviewError("AUTHENTICATION_REQUIRED", "Guest reviews are disabled."));
+    if (!context.customer) {
+      if (!store.state.reviewStoreConfiguration.guestReviewsEnabled) {
+        errors.push(reviewError("AUTHENTICATION_REQUIRED", "Guest reviews are disabled."));
+      } else {
+        errors.push(...validateGuestAuthor(context, input.content));
+      }
     }
     errors.push(...validateRatingsAndMedia(store, input.ratings, input.media));
     if (errors.length) return { review: null, userErrors: errors };
@@ -188,12 +205,16 @@ export const reviewMutations = (store) => ({
     if (input.variantId && (variant?.__typename !== "ProductVariant" || variant.productId !== input.productId)) {
       errors.push(reviewError("VARIANT_NOT_FOUND", "The product variant does not exist.", ["variantId"]));
     }
-    if (!context.customer && !store.state.reviewStoreConfiguration.guestQuestionsEnabled) {
-      errors.push(reviewError("AUTHENTICATION_REQUIRED", "Guest questions are disabled."));
+    if (!context.customer) {
+      if (!store.state.reviewStoreConfiguration.guestQuestionsEnabled) {
+        errors.push(reviewError("AUTHENTICATION_REQUIRED", "Guest questions are disabled."));
+      } else {
+        errors.push(...validateGuestAuthor(context, input.content));
+      }
     }
     if (errors.length) return { productQuestion: null, userErrors: errors };
     const question = {
-      ...contentBase(store, "PRODUCT_QUESTION", input.content, context.customer, "PENDING"),
+      ...contentBase(store, "PRODUCT_QUESTION", input.content, context.customer, "PUBLISHED"),
       id: gid("ProductQuestion", `runtime-${store.next("product-question")}`),
       productId: input.productId,
       variantId: input.variantId ?? null,
