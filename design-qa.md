@@ -33,8 +33,8 @@ Unavailable for the same reason. Modal dimensions, image crop, typography, grid 
 - The review modal now renders the same `ProductRateItem` used by the page review list, including both helpful votes, report abuse, authentication gating, verified-purchase information, date, title, and expandable review content.
 - The forced modal minimum height and bottom-pushed navigation were removed; review width is capped at 920px and the image is capped at a 320px square.
 - Custom `paddingXL` overrides for modal header/body were removed; the gallery now uses the same default Ant Design modal spacing as the project's existing rate, auth, and persisted-cart modals.
-- Mock data provides eight reviews and eight linked review-media records for `chicken-cat-kibble`.
-- The page Swiper displays all eight customer photos at desktop widths, six at 992–1199px, and remains horizontally scrollable at smaller breakpoints.
+- Mock data provides 17 reviews and 43 linked review-media records for `chicken-cat-kibble`.
+- The page Swiper displays up to eight customer photos at once at desktop widths, six at 992–1199px, and remains horizontally scrollable at smaller breakpoints.
 - Build, tests, and TypeScript compilation were not run per project instructions.
 
 ## Primary interactions and console

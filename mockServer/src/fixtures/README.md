@@ -9,12 +9,13 @@ store rather than a minimal happy path. It contains:
 - 16 hierarchical categories, 260 products, and 635 inventory-tracked variants;
 - 50 component-enabled products with one shared configuration across every
   variant of the same product (50 configurations and 300 component items);
-- 282 local media records, three markets, seven content pages, and two menus;
+- 329 local media records, three markets, seven content pages, and two menus;
 - five customer profiles and three checkout scenarios;
 - eight orders across processing, delivery, cancellation, payment-failure, and
   refund states, plus two return requests;
-- 18 reviews with three customer media uploads, four merchant replies, eight
-  questions, six answers, five review requests, and three rating criteria.
+- 34 reviews with 50 customer media uploads across 20 reviews, 14 merchant
+  replies, 16 questions, 25 answers, five review requests, and three rating
+  criteria.
 
 ## Conventions
 

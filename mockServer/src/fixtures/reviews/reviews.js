@@ -3,6 +3,7 @@ import { productVariants } from "../catalog/product-variants.js";
 import { customers } from "../customers/customers.js";
 import { contentMetrics, emptyViewerState, gid } from "../shared.js";
 import { reviewRatingCriteria } from "./rating-criteria.js";
+import { reviewMediaDefinitions } from "./review-media-definitions.js";
 
 const reviewDefinitions = [
   ["salmon-dog-kibble", 1, 0, 5, "My dog cleans the bowl", "The kibble size is just right and the gradual transition was easy on his stomach.", true, 18, "2026-07-25T14:10:00.000Z"],
@@ -30,7 +31,18 @@ const reviewDefinitions = [
   ["chicken-cat-kibble", 0, 3, 4, "Nice texture and easy portions", "The pouch opens cleanly and the texture stays consistent from one serving to the next.", true, 13, "2026-07-23T19:25:00.000Z"],
   ["chicken-cat-kibble", 1, 0, 5, "Perfect portion for one meal", "The pouch is a convenient size, smells fresh, and leaves no leftovers in the bowl.", true, 15, "2026-07-21T11:35:00.000Z"],
   ["chicken-cat-kibble", 2, 2, 4, "Good moisture and consistency", "There is plenty of gravy and the pieces stay soft without turning into paste.", true, 9, "2026-07-19T14:50:00.000Z"],
+  ["chicken-cat-kibble", 3, 4, 5, "Even better than expected", "The aroma got an immediate response, and the soft pieces were easy for my cat to finish.", true, 20, "2026-07-17T09:10:00.000Z"],
+  ["chicken-cat-kibble", 0, 1, 5, "Both cats agree on dinner", "It is rare for both cats to enjoy the same recipe, but every bowl has been completely clean.", true, 22, "2026-07-15T18:30:00.000Z"],
+  ["chicken-cat-kibble", 1, null, 4, "Convenient for weekends away", "The pouches travel well and make it simple to keep portions consistent away from home.", false, 6, "2026-07-13T12:25:00.000Z"],
+  ["chicken-cat-kibble", 2, 3, 5, "Easy for my older cat", "I can mash the pieces with a fork, and the extra gravy helps my senior cat eat comfortably.", true, 18, "2026-07-11T07:45:00.000Z"],
+  ["chicken-cat-kibble", 3, 0, 5, "Healthy coat and steady appetite", "After a month her coat looks glossy, her digestion is settled, and she still gets excited for every meal.", true, 29, "2026-07-08T16:20:00.000Z"],
+  ["chicken-cat-kibble", 0, null, 4, "Clear feeding guide", "The package guidance made portions easy to calculate, though I would like a larger multipack.", false, 7, "2026-07-06T10:05:00.000Z"],
+  ["chicken-cat-kibble", 1, 2, 5, "Reliable breakfast favorite", "We have served it every morning for three weeks and enthusiasm has not faded at all.", true, 16, "2026-07-04T08:35:00.000Z"],
+  ["chicken-cat-kibble", 2, 4, 4, "Smooth transition from dry food", "Mixing a little more each day worked perfectly and there was no stomach upset during the change.", true, 12, "2026-07-02T14:15:00.000Z"],
+  ["chicken-cat-kibble", 3, 1, 5, "Great for flavor rotation", "This chicken pouch works nicely in our weekly rotation and keeps our cat interested in mealtimes.", true, 19, "2026-06-28T19:40:00.000Z"],
 ];
+
+const mediaCountByReviewIndex = new Map(reviewMediaDefinitions.map(([reviewIndex, captions]) => [reviewIndex, captions.length]));
 
 export const reviews = reviewDefinitions.map((definition, index) => {
   const [productHandle, variantIndex, customerIndex, rating, title, body, verified, likes, createdAt, criterionRatings = {}] = definition;
@@ -38,8 +50,8 @@ export const reviews = reviewDefinitions.map((definition, index) => {
   const variant = productVariants.find(({ id }) => id === gid("ProductVariant", `${productHandle}-${variantIndex + 1}`));
   const customer = customerIndex === null ? null : customers[customerIndex];
   const id = gid("Review", index + 1);
-  const hasOfficialReply = [0, 6, 11, 12].includes(index);
-  const hasMedia = [2, 6, 11, 13, 18, 19, 20, 21, 22, 23, 24].includes(index);
+  const hasOfficialReply = [0, 2, 6, 11, 12, 18, 20, 23, 25, 26, 28, 29, 31, 33].includes(index);
+  const mediaCount = mediaCountByReviewIndex.get(index) ?? 0;
   const applicableCriteria = reviewRatingCriteria.filter((criterion) => criterion.appliesToAllProducts || criterion.assignments.some(({ targetId, targetType }) => (targetType === "PRODUCT" ? targetId === product.id : product.categoryIds.includes(targetId))));
 
   return {
@@ -61,7 +73,7 @@ export const reviews = reviewDefinitions.map((definition, index) => {
     metrics: contentMetrics({
       likeCount: likes,
       dislikeCount: index % 6 === 0 ? 1 : 0,
-      mediaCount: hasMedia ? 1 : 0,
+      mediaCount,
       childCount: hasOfficialReply ? 1 : 0,
       officialChildCount: hasOfficialReply ? 1 : 0,
       lastChildAt: hasOfficialReply ? new Date(Date.parse(createdAt) + 86_400_000).toISOString() : null,
@@ -81,7 +93,7 @@ export const reviews = reviewDefinitions.map((definition, index) => {
     isVerifiedPurchase: verified,
     isIncentivized: false,
     incentiveDisclosure: null,
-    mediaIds: hasMedia ? [gid("ReviewMedia", index + 1)] : [],
+    mediaIds: Array.from({ length: mediaCount }, (_, mediaIndex) => gid("ReviewMedia", `${index + 1}-${mediaIndex + 1}`)),
     replyIds: hasOfficialReply ? [gid("ReviewReply", index + 1)] : [],
   };
 });

@@ -1,5 +1,6 @@
 import { categories } from "../catalog/categories.js";
 import { products } from "../catalog/products.js";
+import { reviewMediaDefinitions } from "../reviews/review-media-definitions.js";
 import { gid } from "../shared.js";
 
 const imageFixture = ({ handle, alt, kind, width = 1200, height = 1200 }) => ({
@@ -28,17 +29,11 @@ const imageFixture = ({ handle, alt, kind, width = 1200, height = 1200 }) => ({
 export const images = [
   ...products.map(({ handle, title }) => imageFixture({ handle, alt: title, kind: "product" })),
   ...categories.map(({ handle, name }) => imageFixture({ handle, alt: name, kind: "category", width: 1600, height: 900 })),
-  imageFixture({ handle: "3", alt: "Chicken in gravy shared by a customer", kind: "review" }),
-  imageFixture({ handle: "7", alt: "Soft leather dog collar shared by a customer", kind: "review" }),
-  imageFixture({ handle: "12", alt: "Smart pet feeder in a bright kitchen", kind: "review" }),
-  imageFixture({ handle: "14", alt: "GPS pet tracker shared by a customer", kind: "review" }),
-  imageFixture({ handle: "19", alt: "Empty cat bowl after a serving", kind: "review" }),
-  imageFixture({ handle: "20", alt: "Wet cat food ready to serve", kind: "review" }),
-  imageFixture({ handle: "21", alt: "Senior cat enjoying wet food", kind: "review" }),
-  imageFixture({ handle: "22", alt: "Cat waiting for wet food", kind: "review" }),
-  imageFixture({ handle: "23", alt: "Wet food texture shared by a customer", kind: "review" }),
-  imageFixture({ handle: "24", alt: "Single wet food portion in a clean bowl", kind: "review" }),
-  imageFixture({ handle: "25", alt: "Soft wet food pieces in gravy", kind: "review" }),
+  ...reviewMediaDefinitions.flatMap(([reviewIndex, captions]) => captions.map((caption, mediaIndex) => imageFixture({
+    handle: `${reviewIndex + 1}-${mediaIndex + 1}`,
+    alt: caption,
+    kind: "review",
+  }))),
   imageFixture({ handle: "logo", alt: "Paw & Whisker", kind: "brand", width: 640, height: 180 }),
   imageFixture({ handle: "square-logo", alt: "Paw & Whisker paw monogram", kind: "brand", width: 512, height: 512 }),
   imageFixture({ handle: "cover", alt: "Paw & Whisker pet essentials collection", kind: "brand", width: 1920, height: 1080 }),
