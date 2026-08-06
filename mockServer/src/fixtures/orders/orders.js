@@ -9,45 +9,45 @@ const orderSpecs = [
   {
     number: "1001", customerIndex: 0, currencyCode: "USD", countryCode: "US",
     status: "CLOSED", fulfillmentStatus: "FULFILLED", deliveryStatus: "DELIVERED", paymentStatus: "PAID",
-    placedAt: "2026-04-12T15:20:00.000Z", items: [["essential-cotton-tee", 0, 2], ["market-canvas-tote", 1, 1]],
+    placedAt: "2026-04-12T15:20:00.000Z", items: [["salmon-dog-kibble", 0, 2], ["waste-bag-dispenser", 1, 1]],
   },
   {
     number: "1002", customerIndex: 2, currencyCode: "GBP", countryCode: "GB",
     status: "ACTIVE", fulfillmentStatus: "FULFILLED", deliveryStatus: "IN_TRANSIT", paymentStatus: "PAID",
-    placedAt: "2026-07-29T09:10:00.000Z", items: [["weatherproof-field-jacket", 2, 1], ["insulated-travel-bottle", 0, 1]],
+    placedAt: "2026-07-29T09:10:00.000Z", items: [["orthopedic-dog-bed", 2, 1], ["portable-pet-water-bottle", 0, 1]],
   },
   {
     number: "1003", customerIndex: 1, currencyCode: "USD", countryCode: "US",
     status: "ACTIVE", fulfillmentStatus: "UNFULFILLED", deliveryStatus: "NOT_SHIPPED", paymentStatus: "PAID",
-    placedAt: "2026-08-02T19:45:00.000Z", items: [["low-profile-mechanical-keyboard", 0, 1], ["adjustable-desk-lamp", 1, 1]],
+    placedAt: "2026-08-02T19:45:00.000Z", items: [["self-cleaning-litter-box", 0, 1], ["automatic-water-fountain", 1, 1]],
   },
   {
     number: "1004", customerIndex: 3, currencyCode: "EUR", countryCode: "DE",
     status: "CANCELLED", fulfillmentStatus: "CANCELLED", deliveryStatus: "CANCELLED", paymentStatus: "REFUNDED",
     placedAt: "2026-06-18T11:30:00.000Z", closedAt: "2026-06-18T13:05:00.000Z",
-    items: [["portable-table-lamp", 2, 1], ["washed-linen-throw", 0, 1]],
+    items: [["smart-pet-feeder", 2, 1], ["washable-pet-blanket", 0, 1]],
   },
   {
     number: "1005", customerIndex: 0, currencyCode: "USD", countryCode: "US",
     status: "CLOSED", fulfillmentStatus: "FULFILLED", deliveryStatus: "DELIVERED", paymentStatus: "PARTIALLY_REFUNDED",
     placedAt: "2026-05-20T16:50:00.000Z", closedAt: "2026-06-02T10:00:00.000Z",
-    items: [["studio-wireless-headphones", 1, 1], ["mini-bluetooth-speaker", 0, 1]],
+    items: [["gps-pet-tracker", 1, 1], ["interactive-treat-camera", 0, 1]],
   },
   {
     number: "1006", customerIndex: 2, currencyCode: "GBP", countryCode: "GB",
     status: "ACTIVE", fulfillmentStatus: "ON_HOLD", deliveryStatus: "NOT_SHIPPED", paymentStatus: "FAILED",
-    placedAt: "2026-08-01T08:25:00.000Z", items: [["commuter-backpack", 0, 1], ["minimalist-field-watch", 1, 1]],
+    placedAt: "2026-08-01T08:25:00.000Z", items: [["pet-travel-carrier", 0, 1], ["retractable-dog-leash", 1, 1]],
   },
   {
     number: "1007", customerIndex: 1, currencyCode: "USD", countryCode: "US",
     status: "ACTIVE", fulfillmentStatus: "FULFILLED", deliveryStatus: "DELIVERED", paymentStatus: "PAID",
-    placedAt: "2026-07-04T13:15:00.000Z", items: [["relaxed-linen-shirt", 2, 1], ["silver-hoop-earrings", 0, 1]],
+    placedAt: "2026-07-04T13:15:00.000Z", items: [["chicken-cat-kibble", 2, 1], ["engraved-pet-id-tag", 0, 1]],
   },
   {
     number: "1008", customerIndex: 0, currencyCode: "USD", countryCode: "US",
     status: "ACTIVE", fulfillmentStatus: "SCHEDULED", deliveryStatus: "NOT_SHIPPED", paymentStatus: "PAID",
-    placedAt: "2026-08-03T08:20:00.000Z", promo: { code: "WELCOME10", value: 10 },
-    items: [["essential-cotton-tee", 1, 2], ["studio-wireless-headphones", 0, 1], ["market-canvas-tote", 0, 1]],
+    placedAt: "2026-08-03T08:20:00.000Z", promo: { code: "PETS10", value: 10 },
+    items: [["salmon-dog-kibble", 1, 2], ["gps-pet-tracker", 0, 1], ["waste-bag-dispenser", 0, 1]],
   },
 ];
 
@@ -142,18 +142,18 @@ export const orders = orderSpecs.map((spec) => {
         shipments: [{
           id: gid("OrderShipment", spec.number),
           status: delivered ? "DELIVERED" : "IN_TRANSIT",
-          carrierCode: "northstar-parcel",
-          carrierName: "Northstar Parcel",
+          carrierCode: "paw-parcel",
+          carrierName: "Paw Parcel",
           serviceCode: "standard",
           tracking: [{
             number: `NST${spec.number}2026`,
             url: `https://example.com/track/NST${spec.number}2026`,
-            company: "Northstar Parcel",
+            company: "Paw Parcel",
           }],
           events: [
             {
               id: gid("OrderTrackingEvent", `${spec.number}-1`), status: "LABEL_CREATED",
-              message: "Shipping label created", location: "Northstar fulfillment center", happenedAt: spec.placedAt,
+              message: "Shipping label created", location: "Paw & Whisker fulfillment center", happenedAt: spec.placedAt,
             },
             ...(shipped ? [{
               id: gid("OrderTrackingEvent", `${spec.number}-2`), status: "IN_TRANSIT",
@@ -247,7 +247,7 @@ export const orders = orderSpecs.map((spec) => {
         firstName: customer.firstName, middleName: null, lastName: customer.lastName,
         email: customer.emailAddress.emailAddress, phone: customer.phoneNumber?.phoneNumber ?? null,
       },
-      method: { code: "standard", providerCode: "northstar-parcel", type: "SHIPPING", paymentModel: "MERCHANT_COLLECTED" },
+      method: { code: "standard", providerCode: "paw-parcel", type: "SHIPPING", paymentModel: "MERCHANT_COLLECTED" },
       createdAt: spec.placedAt,
       updatedAt,
     }],

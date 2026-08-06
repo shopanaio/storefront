@@ -10,7 +10,7 @@ const page = (handle, title, body, publishedAt, templateSuffix = null) => ({
     title,
     body: richText(body),
     seo: {
-      title: `${title} | Northstar Supply`,
+      title: `${title} | Paw & Whisker`,
       description: body,
       openGraph: {
         title,
@@ -24,33 +24,33 @@ const page = (handle, title, body, publishedAt, templateSuffix = null) => ({
 export const pages = [
   page(
     "about",
-    "About Northstar",
-    "Northstar Supply brings together useful, well-made goods from responsible independent makers and our own everyday essentials collection.",
+    "About Paw & Whisker",
+    "Paw & Whisker brings together trusted nutrition, enriching toys, comfortable gear, and practical care essentials for pets and their people.",
     "2026-01-10T09:00:00.000Z",
     "story",
   ),
   page(
     "shipping-returns",
     "Shipping & returns",
-    "Standard delivery takes three to five business days. Unused items may be returned in their original condition within 30 days of delivery.",
+    "Standard delivery takes three to five business days. Unopened food and unused pet gear may be returned in their original condition within 30 days of delivery.",
     "2026-01-10T09:10:00.000Z",
   ),
   page(
     "contact",
     "Contact us",
-    "Our customer-care team is available Monday through Friday, 9:00–17:00 Eastern Time at support@northstar.example.",
+    "Our pet-care team is available Monday through Friday, 9:00–17:00 Eastern Time at care@pawandwhisker.example.",
     "2026-01-10T09:20:00.000Z",
   ),
   page(
     "size-guide",
-    "Size guide",
-    "Use the garment measurements on each product page and compare them with a similar item you already own for the most reliable fit.",
+    "Pet size guide",
+    "Measure your pet’s neck, chest, back length, and weight, then compare those measurements with the chart on each collar, harness, bed, or carrier page.",
     "2026-01-10T09:30:00.000Z",
   ),
   page(
     "care-guide",
-    "Product care",
-    "Thoughtful care extends product life. Wash garments cool, air dry when possible, and follow the material-specific instructions on every product page.",
+    "Pet care guide",
+    "Introduce new food gradually, wash bowls daily, inspect walking gear regularly, and follow the product-specific safety and cleaning instructions on every page.",
     "2026-01-10T09:40:00.000Z",
   ),
   page(

@@ -29,7 +29,7 @@ const criterion = (code, title, description, sortIndex, appliesToAllProducts, ca
 });
 
 export const reviewRatingCriteria = [
-  criterion("quality", "Quality", "Materials, construction, and finish.", 0, true),
-  criterion("value", "Value", "Overall value relative to price.", 1, true),
-  criterion("fit", "Fit", "How accurately the item fits compared with expectations.", 2, false, ["women-clothing", "men-clothing"]),
+  criterion("quality", "Quality", "Ingredients, materials, construction, and finish.", 0, true),
+  criterion("value", "Value", "Overall value for the pet and their person.", 1, true),
+  criterion("fit", "Pet fit", "How accurately the item fits compared with the size guide.", 2, false, ["dogs", "cats", "collars-leashes", "travel"]),
 ];

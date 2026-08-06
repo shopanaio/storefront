@@ -29,24 +29,25 @@ export const navigationMenus = [
     handle: mainMenuHandle,
     items: [
       item(mainMenuHandle, "new-arrivals", "New arrivals", categoryTarget("new-arrivals")),
-      item(mainMenuHandle, "women", "Women", categoryTarget("women"), [
-        item(mainMenuHandle, "women-clothing", "Clothing", categoryTarget("women-clothing")),
+      item(mainMenuHandle, "dogs", "Dogs", categoryTarget("dogs"), [
+        item(mainMenuHandle, "dog-food", "Food & treats", categoryTarget("dog-food")),
       ]),
-      item(mainMenuHandle, "men", "Men", categoryTarget("men"), [
-        item(mainMenuHandle, "men-clothing", "Clothing", categoryTarget("men-clothing")),
+      item(mainMenuHandle, "cats", "Cats", categoryTarget("cats"), [
+        item(mainMenuHandle, "cat-food", "Food & treats", categoryTarget("cat-food")),
       ]),
-      item(mainMenuHandle, "accessories", "Accessories", categoryTarget("accessories"), [
-        item(mainMenuHandle, "bags", "Bags", categoryTarget("bags")),
-        item(mainMenuHandle, "jewelry", "Jewelry & watches", categoryTarget("jewelry")),
+      item(mainMenuHandle, "walking", "Walking", categoryTarget("walking"), [
+        item(mainMenuHandle, "collars-leashes", "Collars & leashes", categoryTarget("collars-leashes")),
+        item(mainMenuHandle, "identification", "Pet identification", categoryTarget("identification")),
       ]),
-      item(mainMenuHandle, "home-living", "Home & living", categoryTarget("home-living"), [
-        item(mainMenuHandle, "kitchen-dining", "Kitchen & dining", categoryTarget("kitchen-dining")),
-        item(mainMenuHandle, "decor", "Décor", categoryTarget("decor")),
+      item(mainMenuHandle, "feeding", "Feeding", categoryTarget("feeding"), [
+        item(mainMenuHandle, "bowls-feeders", "Bowls & feeders", categoryTarget("bowls-feeders")),
+        item(mainMenuHandle, "beds-comfort", "Beds & comfort", categoryTarget("beds-comfort")),
       ]),
-      item(mainMenuHandle, "electronics", "Electronics", categoryTarget("electronics"), [
-        item(mainMenuHandle, "audio", "Audio", categoryTarget("audio")),
-        item(mainMenuHandle, "workspace", "Workspace", categoryTarget("workspace")),
+      item(mainMenuHandle, "smart-pet", "Smart pet", categoryTarget("smart-pet"), [
+        item(mainMenuHandle, "trackers-cameras", "Trackers & cameras", categoryTarget("trackers-cameras")),
+        item(mainMenuHandle, "automatic-care", "Automatic care", categoryTarget("automatic-care")),
       ]),
+      item(mainMenuHandle, "travel", "Travel", categoryTarget("travel")),
       item(mainMenuHandle, "sale", "Sale", categoryTarget("sale")),
     ],
   },
@@ -57,8 +58,8 @@ export const navigationMenus = [
       item(footerMenuHandle, "about", "About", pageTarget("about")),
       item(footerMenuHandle, "contact", "Contact", pageTarget("contact")),
       item(footerMenuHandle, "shipping-returns", "Shipping & returns", pageTarget("shipping-returns")),
-      item(footerMenuHandle, "size-guide", "Size guide", pageTarget("size-guide")),
-      item(footerMenuHandle, "care-guide", "Product care", pageTarget("care-guide")),
+      item(footerMenuHandle, "size-guide", "Pet size guide", pageTarget("size-guide")),
+      item(footerMenuHandle, "care-guide", "Pet care guide", pageTarget("care-guide")),
       item(footerMenuHandle, "privacy", "Privacy", pageTarget("privacy")),
       item(footerMenuHandle, "terms", "Terms", pageTarget("terms")),
     ],

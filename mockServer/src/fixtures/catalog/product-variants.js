@@ -49,8 +49,8 @@ export const productVariants = productDefinitions.flatMap((product) => {
         currentlyNotInStock: variant.quantity === 0,
       },
       requiresShipping: true,
-      weight: { value: product.handle.includes("jacket") ? 1.2 : 0.5, unit: "kg" },
-      dimensions: { width: 30, height: 10, length: 40, unit: "cm" },
+      weight: { value: product.categoryHandles.includes("travel") ? 1.2 : 0.5, unit: "kg" },
+      dimensions: { width: 30, height: 12, length: 40, unit: "cm" },
       mediaIds: [gid("MediaImage", `product-${product.handle}`)],
       featuredMediaId: gid("MediaImage", `product-${product.handle}`),
       componentConfigurationId: product.hasComponents

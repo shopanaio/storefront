@@ -16,13 +16,13 @@ const deliveryOptions = [
     handle: "standard", code: "standard", title: "Standard delivery", description: "Arrives in 3–5 business days",
     deliveryMethodType: "SHIPPING", cost: money(8), estimatedMinDeliveryAt: "2026-08-06T18:00:00.000Z",
     estimatedMaxDeliveryAt: "2026-08-10T18:00:00.000Z", phoneRequired: false,
-    customerInputContract: null, publicData: { carrier: "Northstar Parcel" }, carrierCode: "northstar-parcel",
+    customerInputContract: null, publicData: { carrier: "Paw Parcel" }, carrierCode: "paw-parcel",
   },
   {
     handle: "express", code: "express", title: "Express delivery", description: "Arrives in 1–2 business days",
     deliveryMethodType: "SHIPPING", cost: money(18), estimatedMinDeliveryAt: "2026-08-04T18:00:00.000Z",
     estimatedMaxDeliveryAt: "2026-08-05T18:00:00.000Z", phoneRequired: true,
-    customerInputContract: null, publicData: { carrier: "Northstar Express" }, carrierCode: "northstar-express",
+    customerInputContract: null, publicData: { carrier: "Paw Express" }, carrierCode: "paw-express",
   },
 ];
 
@@ -144,13 +144,13 @@ const createCheckout = ({
 export const checkouts = [
   createCheckout({
     key: "alex-active", customer: customers[0], email: "alex.morgan@example.com", valid: true,
-    itemSelections: [["essential-cotton-tee", 1, 2], ["studio-wireless-headphones", 0, 1], ["market-canvas-tote", 0, 1]],
-    promo: { code: "WELCOME10", value: 10 }, selectedDelivery: "standard", selectedPayment: "card",
+    itemSelections: [["salmon-dog-kibble", 1, 2], ["gps-pet-tracker", 0, 1], ["waste-bag-dispenser", 0, 1]],
+    promo: { code: "PETS10", value: 10 }, selectedDelivery: "standard", selectedPayment: "card",
     createdAt: "2026-08-01T14:20:00.000Z", updatedAt: "2026-08-03T08:15:00.000Z",
   }),
   createCheckout({
     key: "guest-incomplete", customer: null, email: "guest@example.com", valid: false,
-    itemSelections: [["portable-table-lamp", 1, 1], ["stoneware-mug-set", 0, 1]],
+    itemSelections: [["smart-pet-feeder", 1, 1], ["ceramic-pet-bowl-set", 0, 1]],
     issues: [{
       code: "DELIVERY_ADDRESS_REQUIRED", message: "Add a delivery address to continue.", severity: "ERROR",
       effect: "STOP", field: ["deliveryGroups", "deliveryAddress"], lineId: null, retryable: false,
@@ -160,7 +160,7 @@ export const checkouts = [
   }),
   createCheckout({
     key: "gift-order", customer: customers[1], email: "jamie.chen@example.com", valid: true,
-    itemSelections: [["cedar-amber-candle", 1, 2], ["silver-hoop-earrings", 0, 1]],
+    itemSelections: [["odor-neutralizing-candle", 1, 2], ["engraved-pet-id-tag", 0, 1]],
     promo: null, selectedDelivery: "express", selectedPayment: "paypal",
     createdAt: "2026-08-03T07:30:00.000Z", updatedAt: "2026-08-03T09:10:00.000Z",
   }),

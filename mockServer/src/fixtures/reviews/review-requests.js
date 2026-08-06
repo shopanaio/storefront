@@ -5,11 +5,11 @@ import { gid } from "../shared.js";
 import { reviews } from "./reviews.js";
 
 const definitions = [
-  [0, "studio-wireless-headphones", 0, "SUBMITTED", "2026-07-15T09:00:00.000Z", 13],
-  [1, "low-profile-mechanical-keyboard", 0, "SCHEDULED", "2026-08-09T09:00:00.000Z", null],
-  [2, "weatherproof-field-jacket", 2, "OPENED", "2026-08-02T09:00:00.000Z", null],
-  [3, "portable-table-lamp", 2, "EXPIRED", "2026-06-25T09:00:00.000Z", null],
-  [0, "market-canvas-tote", 1, "DELIVERED", "2026-04-20T09:00:00.000Z", null],
+  [0, "gps-pet-tracker", 0, "SUBMITTED", "2026-07-15T09:00:00.000Z", 13],
+  [1, "self-cleaning-litter-box", 0, "SCHEDULED", "2026-08-09T09:00:00.000Z", null],
+  [2, "orthopedic-dog-bed", 2, "OPENED", "2026-08-02T09:00:00.000Z", null],
+  [3, "smart-pet-feeder", 2, "EXPIRED", "2026-06-25T09:00:00.000Z", null],
+  [0, "waste-bag-dispenser", 1, "DELIVERED", "2026-04-20T09:00:00.000Z", null],
 ];
 
 const eventTypesByStatus = {

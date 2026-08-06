@@ -19,12 +19,12 @@ const sizeVariants = (sku, price, sizes, compareAtPrice = null) =>
     quantity: 7 + ((index * 5 + sku.length) % 16),
   }));
 
-const coreProductDefinitions = [
+const coreProductSeeds = [
   {
     handle: "essential-cotton-tee",
     title: "Essential Cotton Tee",
     categoryHandles: ["women", "women-clothing", "new-arrivals"],
-    vendor: "Northstar Basics",
+    vendor: "Paw & Whisker",
     description: "A softly structured everyday tee made from heavyweight organic cotton.",
     tags: ["organic", "bestseller", "everyday"],
     optionName: "Color",
@@ -69,7 +69,7 @@ const coreProductDefinitions = [
     handle: "classic-oxford-shirt",
     title: "Classic Oxford Shirt",
     categoryHandles: ["men", "men-clothing", "new-arrivals"],
-    vendor: "Northstar Basics",
+    vendor: "Paw & Whisker",
     description: "A durable cotton Oxford shirt cut for a relaxed but tidy silhouette.",
     tags: ["cotton", "workwear", "classic"],
     optionName: "Size",
@@ -80,7 +80,7 @@ const coreProductDefinitions = [
     handle: "everyday-loopback-hoodie",
     title: "Everyday Loopback Hoodie",
     categoryHandles: ["men", "men-clothing"],
-    vendor: "Northstar Basics",
+    vendor: "Paw & Whisker",
     description: "A substantial loopback-cotton hoodie with clean details and a relaxed fit.",
     tags: ["cotton", "weekend", "unisex"],
     optionName: "Color",
@@ -124,7 +124,7 @@ const coreProductDefinitions = [
     handle: "market-canvas-tote",
     title: "Market Canvas Tote",
     categoryHandles: ["accessories", "bags"],
-    vendor: "Northstar Basics",
+    vendor: "Paw & Whisker",
     description: "An oversized recycled-canvas carryall with reinforced handles and an inner pocket.",
     tags: ["recycled", "everyday", "giftable"],
     optionName: "Color",
@@ -313,15 +313,65 @@ const coreProductDefinitions = [
   },
 ];
 
+const petCoreCatalog = [
+  ["salmon-dog-kibble", "Wild Salmon Dog Kibble", ["dogs", "dog-food", "new-arrivals"], "Good Hound Kitchen", "Protein-rich salmon recipe with brown rice and prebiotics for adult dogs.", ["dog-food", "salmon", "bestseller"], "Bag size", "BUTTONS", "GHK-SAL", ["2 lb", "12 lb", "24 lb"]],
+  ["chicken-cat-kibble", "Indoor Chicken Cat Kibble", ["cats", "cat-food", "new-arrivals"], "Whisker Pantry", "Balanced chicken recipe with fiber support for healthy indoor cats.", ["cat-food", "chicken", "indoor-cats"], "Bag size", "BUTTONS", "WHP-CHK", ["3 lb", "7 lb", "14 lb", "20 lb"]],
+  ["calming-dog-bed", "Cloud Calming Dog Bed", ["dogs", "beds-comfort"], "Nuzzle & Nap", "A plush donut bed with supportive filling for dogs who love to curl up.", ["dog-bed", "calming", "washable"], "Size", "BUTTONS", "NNP-CLD", ["Small", "Medium", "Large", "XL"]],
+  ["cat-window-perch", "Sunny Window Cat Perch", ["cats", "beds-comfort"], "Nuzzle & Nap", "A sturdy cushioned perch that gives cats a comfortable front-row window seat.", ["cat-bed", "window-perch", "bestseller"], "Width", "DROPDOWN", "NNP-WIN", ["18 in", "22 in", "26 in", "30 in", "34 in"]],
+  ["dental-dog-chews", "Daily Dental Dog Chews", ["dogs", "dog-food", "new-arrivals"], "Good Hound Kitchen", "Ridged daily chews that help freshen breath and reduce plaque buildup.", ["dog-treats", "dental-care", "grain-free"], "Dog size", "BUTTONS", "GHK-DEN", ["Small", "Medium", "Large", "XL"]],
+  ["freeze-dried-cat-treats", "Freeze-Dried Chicken Cat Treats", ["cats", "cat-food"], "Whisker Pantry", "Single-ingredient chicken bites with a light crunch cats love.", ["cat-treats", "freeze-dried", "single-ingredient"], "Pack", "BUTTONS", "WHP-FDC", ["1.5 oz", "3 oz", "6 oz"]],
+  ["dog-raincoat", "Trailproof Dog Raincoat", ["dogs", "travel"], "Roam Pet Gear", "A lightweight waterproof dog coat with reflective trim and an adjustable fit.", ["dog-apparel", "waterproof", "reflective"], "Size", "BUTTONS", "RPG-RAN", ["Small", "Medium", "Large", "XL"]],
+  ["orthopedic-dog-bed", "Orthopedic Memory Foam Dog Bed", ["dogs", "beds-comfort", "travel", "sale"], "Nuzzle & Nap", "A supportive memory-foam bed with a washable cover and low step-in edge.", ["dog-bed", "orthopedic", "senior-dogs"], "Size", "BUTTONS", "NNP-ORT", ["Small", "Medium", "Large", "XL"]],
+  ["leather-dog-collar", "Soft Leather Dog Collar", ["walking", "collars-leashes", "new-arrivals"], "Roam Pet Gear", "A supple vegetable-tanned leather collar with solid brass hardware.", ["dog-collar", "leather", "handmade"], "Color", "SWATCH", "RPG-LTH", ["Cognac", "Black"]],
+  ["waste-bag-dispenser", "Recycled Waste Bag Dispenser", ["walking", "collars-leashes"], "Paw & Whisker", "A compact recycled-canvas dispenser that clips securely to any leash.", ["dog-walking", "recycled", "everyday"], "Color", "SWATCH", "PAW-WBD", ["Natural", "Olive"]],
+  ["pet-travel-carrier", "Airflow Pet Travel Carrier", ["travel", "walking", "new-arrivals"], "Roam Pet Gear", "A structured airline-friendly carrier with mesh panels and a washable base.", ["pet-carrier", "travel", "airline-friendly"], "Color", "SWATCH", "RPG-CAR", ["Graphite", "Forest"]],
+  ["retractable-dog-leash", "Comfort Grip Retractable Leash", ["walking", "collars-leashes"], "Roam Pet Gear", "A smooth five-meter retractable lead with a reliable one-touch brake.", ["dog-leash", "walking", "reflective"], "Tape", "DROPDOWN", "RPG-RET", ["Tan", "Black"]],
+  ["engraved-pet-id-tag", "Engraved Pet ID Tag", ["walking", "identification"], "Homeward Tags", "A lightweight stainless-steel tag personalized with your pet’s details.", ["pet-id", "personalized", "durable"], "Size", "BUTTONS", "HWT-IDT", ["Small", "Medium"]],
+  ["cat-breakaway-collar", "Reflective Breakaway Cat Collar", ["cats", "walking", "identification", "new-arrivals"], "Homeward Tags", "A soft reflective cat collar with a safety-release buckle and quiet bell.", ["cat-collar", "breakaway", "reflective"], "Color", "SWATCH", "HWT-CAT", ["Tortoise", "Black", "Moss"]],
+  ["ceramic-pet-bowl-set", "Ceramic Pet Bowl Set", ["feeding", "bowls-feeders"], "Kindred Bowl Co.", "Two weighty hand-glazed bowls for food and water with non-slip bases.", ["pet-bowls", "ceramic", "dishwasher-safe"], "Glaze", "SWATCH", "KBC-SET", ["Oat", "Slate"]],
+  ["slow-feeder-bowl", "Acacia Slow Feeder Bowl", ["feeding", "bowls-feeders"], "Kindred Bowl Co.", "A naturally finished feeder with raised channels that encourage slower eating.", ["slow-feeder", "wood", "dog-bowl"], "Size", "BUTTONS", "KBC-SLO", ["Medium", "Large"]],
+  ["portable-pet-water-bottle", "Portable Pet Water Bottle", ["feeding", "bowls-feeders", "travel"], "Roam Pet Gear", "A leakproof bottle with an integrated drinking trough for walks and trips.", ["hydration", "travel", "reusable"], "Color", "SWATCH", "RPG-WTR", ["Sea", "Sand", "Ink"]],
+  ["washable-pet-blanket", "Washable Pet Blanket", ["feeding", "beds-comfort", "sale"], "Nuzzle & Nap", "A soft double-sided blanket that protects furniture and washes easily.", ["pet-blanket", "washable", "cozy"], "Color", "SWATCH", "NNP-BLK", ["Flax", "Rust"]],
+  ["smart-pet-feeder", "Smart Portion Pet Feeder", ["feeding", "bowls-feeders", "smart-pet", "automatic-care"], "Petlink Labs", "A Wi-Fi feeder with scheduled portions, backup power, and app alerts.", ["smart-feeder", "automatic", "bestseller"], "Color", "SWATCH", "PLL-FDR", ["Chalk", "Ochre", "Charcoal"]],
+  ["odor-neutralizing-candle", "Pet-Safe Odor Neutralizing Candle", ["feeding", "beds-comfort"], "Fresh Den", "A pet-safe soy candle formulated to neutralize odors with a soft cedar scent.", ["pet-safe", "odor-control", "soy-wax"], "Size", "BUTTONS", "FRD-CND", ["8 oz", "12 oz"]],
+  ["gps-pet-tracker", "GPS Pet Tracker", ["smart-pet", "trackers-cameras", "new-arrivals"], "Petlink Labs", "A waterproof real-time tracker with safe-zone alerts and activity insights.", ["gps", "pet-safety", "waterproof"], "Color", "SWATCH", "PLL-GPS", ["Midnight", "Stone"]],
+  ["interactive-treat-camera", "Interactive Pet Treat Camera", ["smart-pet", "trackers-cameras"], "Petlink Labs", "A wide-angle pet camera with two-way audio and remote treat tossing.", ["pet-camera", "treat-tossing", "wifi"], "Color", "SWATCH", "PLL-CAM", ["Cobalt", "Coral", "Black"]],
+  ["self-cleaning-litter-box", "Self-Cleaning Litter Box", ["cats", "smart-pet", "automatic-care"], "Clean Paws Tech", "A quiet automatic litter box with odor control and safety sensors.", ["cat-litter", "automatic", "odor-control"], "Model", "BUTTONS", "CPT-LIT", ["Standard", "Connect"]],
+  ["automatic-water-fountain", "Automatic Pet Water Fountain", ["feeding", "bowls-feeders", "smart-pet", "automatic-care"], "Clean Paws Tech", "A quiet filtered fountain that keeps water fresh and easy to access.", ["pet-fountain", "filtered", "quiet"], "Color", "SWATCH", "CPT-FNT", ["Black", "White"]],
+  ["silicone-lick-mat", "Silicone Enrichment Lick Mat", ["dogs", "cats", "feeding", "new-arrivals"], "Bright Tail Play", "A textured food-grade silicone mat for treats, calming, and slow feeding.", ["enrichment", "slow-feeding", "dishwasher-safe"], "Color", "SWATCH", "BTP-LCK", ["Juniper", "Terracotta"]],
+  ["waterproof-car-seat-cover", "Waterproof Pet Car Seat Cover", ["travel", "sale"], "Roam Pet Gear", "A quilted non-slip back-seat protector with seat-belt openings and side flaps.", ["car-travel", "waterproof", "washable"], "Color", "SWATCH", "RPG-CVR", ["Meadow", "Sunset"]],
+];
+
+const coreProductDefinitions = coreProductSeeds.map((seed, index) => {
+  const [handle, title, categoryHandles, vendor, description, tags, optionName, optionDisplayType, sku, variantNames] = petCoreCatalog[index];
+  return {
+    ...seed,
+    handle,
+    title,
+    categoryHandles,
+    primaryCategoryHandle: categoryHandles[categoryHandles.length > 1 ? 1 : 0],
+    vendor,
+    description,
+    tags,
+    optionName,
+    optionDisplayType,
+    variants: seed.variants.map((variant, variantIndex) => ({
+      ...variant,
+      name: variantNames[variantIndex],
+      sku: `${sku}-${String(variantIndex + 1).padStart(2, "0")}`,
+    })),
+  };
+});
+
 const supplementalCollections = [
-  { handle: "alpine", name: "Alpine", colors: [["Glacier", "#DDE7E7"], ["Pine", "#39564A"]] },
-  { handle: "coastal", name: "Coastal", colors: [["Seafoam", "#91B8AF"], ["Navy", "#26364A"]] },
-  { handle: "desert", name: "Desert", colors: [["Sand", "#CDBA9C"], ["Terracotta", "#B7644D"]] },
-  { handle: "forest", name: "Forest", colors: [["Moss", "#69745B"], ["Bark", "#684D3C"]] },
-  { handle: "harbor", name: "Harbor", colors: [["Fog", "#BCC2BE"], ["Ink", "#252D35"]] },
-  { handle: "meadow", name: "Meadow", colors: [["Sage", "#82967C"], ["Poppy", "#C85E4B"]] },
-  { handle: "studio", name: "Studio", colors: [["Chalk", "#E6E1D7"], ["Graphite", "#42474A"]] },
-  { handle: "trail", name: "Trail", colors: [["Stone", "#918B80"], ["Ember", "#A9533E"]] },
+  { handle: "puppy", name: "Puppy", colors: [["Sky", "#DDE7E7"], ["Pine", "#39564A"]] },
+  { handle: "kitten", name: "Kitten", colors: [["Mint", "#91B8AF"], ["Navy", "#26364A"]] },
+  { handle: "active", name: "Active Pet", colors: [["Sand", "#CDBA9C"], ["Coral", "#B7644D"]] },
+  { handle: "senior", name: "Senior Pet", colors: [["Moss", "#69745B"], ["Bark", "#684D3C"]] },
+  { handle: "indoor", name: "Indoor Pet", colors: [["Fog", "#BCC2BE"], ["Ink", "#252D35"]] },
+  { handle: "adventure", name: "Adventure Pet", colors: [["Sage", "#82967C"], ["Poppy", "#C85E4B"]] },
+  { handle: "minimal", name: "Modern Pet", colors: [["Chalk", "#E6E1D7"], ["Graphite", "#42474A"]] },
+  { handle: "natural", name: "Natural Pet", colors: [["Stone", "#918B80"], ["Ember", "#A9533E"]] },
 ];
 
 const supplementalProductTemplates = [
@@ -337,7 +387,7 @@ const supplementalProductTemplates = [
   },
   {
     handle: "ribbed-tank-top", title: "Ribbed Tank Top", categoryHandles: ["women", "women-clothing"],
-    primaryCategoryHandle: "women-clothing", vendor: "Northstar Basics", price: 34, sized: true,
+    primaryCategoryHandle: "women-clothing", vendor: "Paw & Whisker", price: 34, sized: true,
     description: "A close-fitting ribbed tank made for layering or wearing on its own.", tags: ["women", "layering"],
   },
   {
@@ -352,12 +402,12 @@ const supplementalProductTemplates = [
   },
   {
     handle: "merino-crewneck", title: "Merino Crewneck", categoryHandles: ["men", "men-clothing"],
-    primaryCategoryHandle: "men-clothing", vendor: "Northstar Basics", price: 98, sized: true,
+    primaryCategoryHandle: "men-clothing", vendor: "Paw & Whisker", price: 98, sized: true,
     description: "A fine-gauge merino sweater that regulates temperature across seasons.", tags: ["men", "merino"],
   },
   {
     handle: "tapered-chino", title: "Tapered Chino", categoryHandles: ["men", "men-clothing"],
-    primaryCategoryHandle: "men-clothing", vendor: "Northstar Basics", price: 82, sized: true,
+    primaryCategoryHandle: "men-clothing", vendor: "Paw & Whisker", price: 82, sized: true,
     description: "Stretch-cotton chinos with a clean taper and comfortable mid rise.", tags: ["men", "workwear"],
   },
   {
@@ -467,10 +517,46 @@ const supplementalProductTemplates = [
   },
 ];
 
+const petSupplementalCatalog = [
+  ["lamb-dog-kibble", "Lamb & Oat Dog Kibble", ["dogs", "dog-food"], "dog-food", "Good Hound Kitchen", "A gentle lamb recipe with whole oats for everyday canine nutrition.", ["dog-food", "lamb"]],
+  ["turkey-dog-stew", "Turkey & Pumpkin Dog Stew", ["dogs", "dog-food"], "dog-food", "Good Hound Kitchen", "A hearty wet-food recipe with turkey, pumpkin, and garden vegetables.", ["dog-food", "wet-food"]],
+  ["peanut-butter-training-treats", "Peanut Butter Training Treats", ["dogs", "dog-food"], "dog-food", "Good Hound Kitchen", "Small soft-baked rewards sized for positive training sessions.", ["dog-treats", "training"]],
+  ["beef-bully-sticks", "Natural Beef Bully Sticks", ["dogs", "dog-food"], "dog-food", "Good Hound Kitchen", "Single-ingredient long-lasting chews for supervised enjoyment.", ["dog-chews", "natural"]],
+  ["salmon-cat-pate", "Salmon Cat Pâté", ["cats", "cat-food"], "cat-food", "Whisker Pantry", "Smooth salmon pâté with added taurine and plenty of moisture.", ["cat-food", "wet-food"]],
+  ["tuna-cat-broth", "Tuna Hydration Broth", ["cats", "cat-food"], "cat-food", "Whisker Pantry", "A savory broth topper that adds flavor and moisture to meals.", ["cat-food", "hydration"]],
+  ["chicken-cat-bites", "Chicken Cat Treat Bites", ["cats", "cat-food"], "cat-food", "Whisker Pantry", "Tender bite-size chicken treats for play, bonding, and rewards.", ["cat-treats", "chicken"]],
+  ["hairball-support-chews", "Hairball Support Chews", ["cats", "cat-food"], "cat-food", "Whisker Pantry", "Soft daily chews with fiber to support healthy digestion.", ["cat-care", "digestive-support"]],
+  ["padded-dog-harness", "Padded Everyday Dog Harness", ["walking", "collars-leashes", "travel"], "collars-leashes", "Roam Pet Gear", "An adjustable no-chafe harness with front and back lead attachments.", ["dog-harness", "walking"]],
+  ["rope-dog-leash", "Soft Rope Dog Leash", ["walking", "collars-leashes"], "collars-leashes", "Roam Pet Gear", "A comfortable climbing-rope lead with a locking carabiner.", ["dog-leash", "durable"]],
+  ["hands-free-dog-leash", "Hands-Free Dog Leash", ["walking", "collars-leashes"], "collars-leashes", "Roam Pet Gear", "An adjustable waist leash with a shock-absorbing section for active walks.", ["dog-leash", "running"]],
+  ["round-pet-id-tag", "Round Pet ID Tag", ["walking", "identification"], "identification", "Homeward Tags", "A classic engraved tag with room for a name and two phone numbers.", ["pet-id", "personalized"]],
+  ["qr-pet-id-tag", "QR Smart Pet ID Tag", ["walking", "identification"], "identification", "Homeward Tags", "A scannable tag linked to an updateable pet profile and emergency contacts.", ["pet-id", "smart-tag"]],
+  ["silicone-tag-silencer", "Silicone Tag Silencer", ["walking", "identification"], "identification", "Homeward Tags", "A flexible tag frame that reduces jingling and protects engraving.", ["pet-id", "quiet"]],
+  ["stainless-pet-bowl-set", "Stainless Pet Bowl Set", ["feeding", "bowls-feeders"], "bowls-feeders", "Kindred Bowl Co.", "Two durable stainless bowls with removable non-slip silicone bases.", ["pet-bowls", "stainless-steel"]],
+  ["elevated-pet-feeder", "Elevated Pet Feeder", ["feeding", "bowls-feeders"], "bowls-feeders", "Kindred Bowl Co.", "A stable raised stand with two dishwasher-safe bowls.", ["pet-feeder", "elevated"]],
+  ["puzzle-slow-feeder", "Puzzle Slow Feeder", ["feeding", "bowls-feeders"], "bowls-feeders", "Bright Tail Play", "A maze-style bowl that adds enrichment and encourages slower meals.", ["slow-feeder", "enrichment"]],
+  ["travel-food-container", "Travel Food Container", ["feeding", "bowls-feeders", "travel"], "bowls-feeders", "Roam Pet Gear", "A sealed food container with a built-in measuring cup for trips.", ["pet-travel", "food-storage"]],
+  ["bolster-pet-bed", "Washable Bolster Pet Bed", ["feeding", "beds-comfort"], "beds-comfort", "Nuzzle & Nap", "A supportive bolster bed with a removable machine-washable cover.", ["pet-bed", "washable"]],
+  ["cave-cat-bed", "Cozy Cave Cat Bed", ["cats", "beds-comfort"], "beds-comfort", "Nuzzle & Nap", "A soft felted hideaway for cats who prefer warm enclosed naps.", ["cat-bed", "cozy"]],
+  ["smart-collar-tracker", "Smart Collar Activity Tracker", ["smart-pet", "trackers-cameras"], "trackers-cameras", "Petlink Labs", "A lightweight tracker for daily activity, rest, and location history.", ["pet-tracker", "activity"]],
+  ["wifi-pet-camera", "Wi-Fi Pet Camera", ["smart-pet", "trackers-cameras"], "trackers-cameras", "Petlink Labs", "A compact camera with night vision, motion alerts, and two-way audio.", ["pet-camera", "wifi"]],
+  ["microchip-pet-feeder", "Microchip Pet Feeder", ["feeding", "smart-pet", "automatic-care"], "automatic-care", "Clean Paws Tech", "A selective feeder that opens only for the assigned microchipped pet.", ["smart-feeder", "multi-pet"]],
+  ["automatic-treat-dispenser", "Automatic Treat Dispenser", ["smart-pet", "automatic-care"], "automatic-care", "Petlink Labs", "A scheduled treat dispenser with portion controls and app notifications.", ["treat-dispenser", "automatic"]],
+  ["litter-odor-monitor", "Smart Litter Odor Monitor", ["cats", "smart-pet", "automatic-care"], "automatic-care", "Clean Paws Tech", "A compact monitor that tracks litter-box conditions and sends care reminders.", ["cat-care", "smart-home"]],
+  ["folding-pet-crate", "Folding Pet Travel Crate", ["travel"], "travel", "Roam Pet Gear", "A sturdy collapsible crate with ventilation panels and a washable mat.", ["pet-crate", "travel"]],
+  ["airline-pet-carrier", "Airline Pet Carrier", ["travel", "walking", "collars-leashes"], "travel", "Roam Pet Gear", "A lightweight under-seat carrier with generous ventilation and secure openings.", ["pet-carrier", "airline-friendly"]],
+  ["portable-dog-ramp", "Portable Dog Ramp", ["travel", "dogs"], "travel", "Roam Pet Gear", "A grippy folding ramp that helps pets enter cars with less joint strain.", ["dog-ramp", "senior-dogs"]],
+];
+
+const petSupplementalProductTemplates = supplementalProductTemplates.map((seed, index) => {
+  const [handle, title, categoryHandles, primaryCategoryHandle, vendor, description, tags] = petSupplementalCatalog[index];
+  return { ...seed, handle, title, categoryHandles, primaryCategoryHandle, vendor, description, tags };
+});
+
 const supplementalProductDefinitions = supplementalCollections.flatMap((collection, collectionIndex) =>
-  supplementalProductTemplates.map((template, templateIndex) => {
-    const sequence = collectionIndex * supplementalProductTemplates.length + templateIndex + 1;
-    const sku = `NSD-${String(sequence).padStart(3, "0")}`;
+  petSupplementalProductTemplates.map((template, templateIndex) => {
+    const sequence = collectionIndex * petSupplementalProductTemplates.length + templateIndex + 1;
+    const sku = `PAW-${String(sequence).padStart(3, "0")}`;
     const price = template.price + collectionIndex * 2;
     const onSale = sequence % 11 === 0;
     const promotionalCategories = [
@@ -517,7 +603,7 @@ export const products = productDefinitions.map((product, productIndex) => {
     description: richText(product.description),
     excerpt: richText(product.description),
     seo: {
-      title: `${product.title} | Northstar Supply`,
+      title: `${product.title} | Paw & Whisker`,
       description: product.description,
       openGraph: {
         title: product.title,

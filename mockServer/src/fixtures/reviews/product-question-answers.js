@@ -2,12 +2,12 @@ import { contentMetrics, emptyViewerState, gid } from "../shared.js";
 import { productQuestions } from "./product-questions.js";
 
 const answerBodies = [
-  "The tee is pre-washed and should have minimal shrinkage when washed cool and air dried. Choose your usual size.",
-  "The Cloud linen is lightly opaque. Most customers wear it on its own, though darker undergarments may show in bright light.",
-  "Yes. The suspended sleeve fits most 16-inch laptops up to 36 × 25 cm.",
-  "Yes, both glazes are dishwasher and microwave safe for everyday use.",
-  "A full charge takes approximately three hours with the included USB-C cable.",
-  "Yes. Multipoint pairing supports two active devices and lets you switch audio automatically.",
+  "The salmon recipe is designed to be gentle, but transition over seven to ten days and consult your veterinarian for specific sensitivities.",
+  "It is formulated for adult indoor cats. For a senior cat, ask your veterinarian whether its calorie and mineral profile fits her needs.",
+  "Its dimensions meet many in-cabin guidelines, but airline rules vary. Confirm the exact allowance before traveling.",
+  "Yes, both glazed ceramic bowls are dishwasher safe for everyday cleaning.",
+  "Yes. Backup batteries keep scheduled portions running during a short outage, while app features require Wi-Fi.",
+  "Live location typically updates within seconds where cellular coverage is available; dense terrain can reduce accuracy.",
 ];
 
 export const productQuestionAnswers = productQuestions
@@ -20,7 +20,7 @@ export const productQuestionAnswers = productQuestions
       title: null,
       body: answerBodies[index],
       locale: "en",
-      author: { type: "STAFF", customerId: null, displayName: "Northstar Product Team" },
+      author: { type: "STAFF", customerId: null, displayName: "Paw & Whisker Pet Team" },
       status: "PUBLISHED",
       revision: 1,
       publishedAt: createdAt,

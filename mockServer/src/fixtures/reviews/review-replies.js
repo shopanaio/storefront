@@ -2,10 +2,10 @@ import { contentMetrics, emptyViewerState, gid } from "../shared.js";
 import { reviews } from "./reviews.js";
 
 const definitions = [
-  [0, "Thank you, Alex. We are glad the fabric and shape are working well for you."],
-  [6, "Thanks for the thoughtful review. Vegetable-tanned leather will develop an even richer patina with use."],
-  [11, "We love hearing that the lamp has become part of your evenings. Thank you for sharing."],
-  [12, "Thank you for the feedback. For a stronger scent throw, we recommend the 12 oz size in a smaller room."],
+  [0, "Thank you, Alex. We are glad your dog is enjoying the salmon recipe and the transition went smoothly."],
+  [6, "Thanks for the thoughtful review. The vegetable-tanned leather will soften further and develop a rich patina with walks."],
+  [11, "We love hearing that the feeder is keeping mealtimes dependable. Thank you for sharing."],
+  [12, "Thank you for the feedback. We designed the pet-safe fragrance to stay gentle, and we appreciate your note on odor control."],
 ];
 
 export const reviewReplies = definitions.map(([reviewIndex, body], index) => {
@@ -17,7 +17,7 @@ export const reviewReplies = definitions.map(([reviewIndex, body], index) => {
     title: null,
     body,
     locale: "en",
-    author: { type: "SELLER", customerId: null, displayName: "Northstar Supply" },
+    author: { type: "SELLER", customerId: null, displayName: "Paw & Whisker" },
     status: "PUBLISHED",
     revision: 1,
     publishedAt: createdAt,

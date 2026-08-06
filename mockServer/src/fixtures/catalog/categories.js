@@ -1,22 +1,22 @@
 import { FIXTURE_NOW, gid, richText } from "../shared.js";
 
 export const categoryDefinitions = [
-  ["new-arrivals", "New arrivals", null, "The latest additions to the Northstar collection."],
-  ["women", "Women", null, "Modern wardrobe essentials designed for everyday life."],
-  ["women-clothing", "Women’s clothing", "women", "Comfortable layers and elevated basics."],
-  ["men", "Men", null, "Versatile menswear made for work, weekends, and travel."],
-  ["men-clothing", "Men’s clothing", "men", "Reliable shirts, outerwear, and everyday staples."],
-  ["accessories", "Accessories", null, "Finishing touches and practical carry goods."],
-  ["bags", "Bags", "accessories", "Totes, backpacks, and crossbody bags for daily use."],
-  ["jewelry", "Jewelry & watches", "accessories", "Minimal jewelry and timepieces."],
-  ["home-living", "Home & living", null, "Useful, beautiful objects for comfortable spaces."],
-  ["kitchen-dining", "Kitchen & dining", "home-living", "Tableware and tools for the everyday kitchen."],
-  ["decor", "Décor", "home-living", "Warm lighting, textiles, and accents for every room."],
-  ["electronics", "Electronics", null, "Thoughtful technology for home, work, and travel."],
-  ["audio", "Audio", "electronics", "Headphones and speakers with clear, balanced sound."],
-  ["workspace", "Workspace", "electronics", "Tools that make a desk calmer and more productive."],
-  ["outdoors", "Outdoors", null, "Durable essentials for movement and weekends away."],
-  ["sale", "Sale", null, "Last-chance favorites at reduced prices."],
+  ["new-arrivals", "New arrivals", null, "Fresh food, gear, toys, and care essentials for happy pets."],
+  ["dogs", "Dogs", null, "Everyday essentials selected for dogs of every size and life stage."],
+  ["dog-food", "Dog food & treats", "dogs", "Complete meals, training treats, and long-lasting chews."],
+  ["cats", "Cats", null, "Food, comfort, play, and enrichment for curious cats."],
+  ["cat-food", "Cat food & treats", "cats", "Nutritious recipes and irresistible treats for cats."],
+  ["walking", "Walking", null, "Comfortable, dependable gear for safe daily adventures."],
+  ["collars-leashes", "Collars & leashes", "walking", "Collars, harnesses, leads, and walk-time accessories."],
+  ["identification", "Pet identification", "walking", "Tags and smart identification to help pets get home safely."],
+  ["feeding", "Feeding", null, "Practical solutions for healthier, calmer mealtimes."],
+  ["bowls-feeders", "Bowls & feeders", "feeding", "Bowls, fountains, feeders, and hydration essentials."],
+  ["beds-comfort", "Beds & comfort", "feeding", "Cozy beds, blankets, and peaceful spaces for better rest."],
+  ["smart-pet", "Smart pet", null, "Helpful technology for care, safety, and connection."],
+  ["trackers-cameras", "Trackers & cameras", "smart-pet", "Stay connected with GPS trackers, cameras, and monitors."],
+  ["automatic-care", "Automatic care", "smart-pet", "Time-saving feeders, fountains, and litter solutions."],
+  ["travel", "Travel", null, "Carriers, car protection, and portable gear for trips together."],
+  ["sale", "Sale", null, "Pet favorites and seasonal essentials at reduced prices."],
 ];
 
 const publishedAt = "2026-01-10T09:00:00.000Z";
@@ -28,7 +28,7 @@ export const categories = categoryDefinitions.map(([handle, name, parentHandle, 
   description: richText(summary),
   excerpt: richText(summary),
   seo: {
-    title: `${name} | Northstar Supply`,
+    title: `${name} | Paw & Whisker`,
     description: summary,
     openGraph: {
       title: name,

@@ -3,14 +3,14 @@ import { productVariants } from "./product-variants.js";
 import { gid } from "../shared.js";
 
 const componentTargetHandles = [
-  "market-canvas-tote",
-  "insulated-travel-bottle",
-  "cedar-amber-candle",
-  "mini-bluetooth-speaker",
-  "silver-hoop-earrings",
-  "portable-table-lamp",
-  "natural-rubber-yoga-mat",
-  "packable-picnic-blanket",
+  "waste-bag-dispenser",
+  "portable-pet-water-bottle",
+  "odor-neutralizing-candle",
+  "interactive-treat-camera",
+  "engraved-pet-id-tag",
+  "smart-pet-feeder",
+  "silicone-lick-mat",
+  "waterproof-car-seat-cover",
 ];
 
 const targetProducts = componentTargetHandles.map((handle) =>
@@ -46,7 +46,7 @@ export const productComponentConfigurations = componentProducts.map((product, pr
     groups: [
       {
         id: gid("ProductComponentGroup", `${product.handle}-essentials`),
-        title: "Choose an essential",
+        title: "Choose a pet essential",
         required: true,
         minSelection: 1,
         maxSelection: 1,
@@ -61,7 +61,7 @@ export const productComponentConfigurations = componentProducts.map((product, pr
       },
       {
         id: gid("ProductComponentGroup", `${product.handle}-extras`),
-        title: "Optional extras",
+        title: "Add enrichment & care",
         required: false,
         minSelection: 0,
         maxSelection: 2,

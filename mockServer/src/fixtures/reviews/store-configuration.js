@@ -1,7 +1,7 @@
 import { FIXTURE_NOW, gid } from "../shared.js";
 
 export const reviewStoreConfiguration = {
-  id: gid("ReviewStoreConfiguration", "northstar-supply"),
+  id: gid("ReviewStoreConfiguration", "paw-and-whisker"),
   reviewsEnabled: true,
   questionsEnabled: true,
   guestReviewsEnabled: true,
