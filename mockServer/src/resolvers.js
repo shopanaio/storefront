@@ -8,7 +8,7 @@ import {
   isUnionType,
 } from "graphql";
 
-import { FIXTURE_NOW, gid, money } from "./fixtures/shared.js";
+import { gid, money } from "./fixture-helpers.js";
 import {
   buildListingFilters,
   connection,
@@ -118,7 +118,7 @@ const reviewSummary = (store, product) => {
         ? roundRating(values.reduce((sum, rating) => sum + rating.value, 0) / values.length)
         : 0,
       ratingBreakdown: ratingBreakdown(values.map(({ value }) => ({ rating: value }))),
-      updatedAt: reviews[0]?.updatedAt ?? FIXTURE_NOW,
+      updatedAt: reviews[0]?.updatedAt ?? store.initialNow,
     };
   });
   const byNewest = sortReviews(reviews);
@@ -131,7 +131,7 @@ const reviewSummary = (store, product) => {
     ratingBreakdown: ratingBreakdown(reviews),
     criteria,
     lastReviewedAt: byNewest[0]?.createdAt ?? null,
-    updatedAt: byNewest[0]?.updatedAt ?? FIXTURE_NOW,
+    updatedAt: byNewest[0]?.updatedAt ?? store.initialNow,
   };
 };
 
@@ -150,7 +150,7 @@ const questionSummary = (store, product) => {
     officialAnswerCount: answers.filter(({ isOfficial }) => isOfficial).length,
     lastQuestionAt: newestQuestion?.createdAt ?? null,
     lastAnsweredAt: newestAnswer?.createdAt ?? null,
-    updatedAt: newestAnswer?.updatedAt ?? newestQuestion?.updatedAt ?? FIXTURE_NOW,
+    updatedAt: newestAnswer?.updatedAt ?? newestQuestion?.updatedAt ?? store.initialNow,
   };
 };
 

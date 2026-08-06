@@ -1,5 +1,3 @@
-export const FIXTURE_NOW = "2026-08-03T12:00:00.000Z";
-
 export const gid = (type, value) => `gid://shopana/${type}/${value}`;
 
 export const money = (amount, currencyCode = "USD") => ({
@@ -29,7 +27,7 @@ export const contentMetrics = (overrides = {}) => ({
   officialChildCount: 0,
   acceptedChildCount: 0,
   lastChildAt: null,
-  updatedAt: FIXTURE_NOW,
+  updatedAt: null,
   ...overrides,
 });
 

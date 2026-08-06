@@ -1,4 +1,4 @@
-import { contentMetrics, emptyViewerState, gid } from "../fixtures/shared.js";
+import { contentMetrics, emptyViewerState, gid } from "../fixture-helpers.js";
 import { reviewError } from "../helpers.js";
 
 const contentCollections = (store) => [

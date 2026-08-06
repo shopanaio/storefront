@@ -1,4 +1,4 @@
-import { gid, money } from "../fixtures/shared.js";
+import { gid, money } from "../fixture-helpers.js";
 import {
   checkoutError,
   createCheckoutLine,
@@ -409,4 +409,3 @@ const updateRecipients = (checkout, updates) => {
   }
   return errors;
 };
-

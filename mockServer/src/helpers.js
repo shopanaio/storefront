@@ -1,4 +1,4 @@
-import { gid, money, postalAddress } from "./fixtures/shared.js";
+import { gid, money, postalAddress } from "./fixture-helpers.js";
 
 const CURSOR_PREFIX = "shopana-mock:";
 

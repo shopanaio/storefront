@@ -1,14 +1,3 @@
-import {
-  catalogFixtures,
-  checkoutFixtures,
-  customerFixtures,
-  mediaFixtures,
-  onlineStoreFixtures,
-  orderFixtures,
-  projectFixtures,
-  reviewFixtures,
-} from "./fixtures/index.js";
-import { FIXTURE_NOW } from "./fixtures/shared.js";
 import { clone, inferTypeName } from "./helpers.js";
 
 const collectionEntries = (state) => [
@@ -37,38 +26,19 @@ const collectionEntries = (state) => [
 ];
 
 export class MockStore {
-  constructor() {
-    this.state = {
-      categories: clone(catalogFixtures.categories),
-      products: clone(catalogFixtures.products),
-      productVariants: clone(catalogFixtures.productVariants),
-      productComponentConfigurations: clone(catalogFixtures.productComponentConfigurations),
-      checkouts: clone(checkoutFixtures.checkouts),
-      checkoutPlacements: clone(checkoutFixtures.checkoutPlacements),
-      customers: clone(customerFixtures.customers),
-      images: clone(mediaFixtures.images),
-      navigationMenus: clone(onlineStoreFixtures.navigationMenus),
-      pages: clone(onlineStoreFixtures.pages),
-      orders: clone(orderFixtures.orders),
-      orderReturnRequests: clone(orderFixtures.orderReturnRequests),
-      localization: clone(projectFixtures.localization),
-      markets: clone(projectFixtures.markets),
-      store: clone(projectFixtures.store),
-      reviewStoreConfiguration: clone(reviewFixtures.reviewStoreConfiguration),
-      reviews: clone(reviewFixtures.reviews),
-      productQuestions: clone(reviewFixtures.productQuestions),
-      productQuestionAnswers: clone(reviewFixtures.productQuestionAnswers),
-      reviewMedia: clone(reviewFixtures.reviewMedia),
-      reviewReplies: clone(reviewFixtures.reviewReplies),
-      reviewRequests: clone(reviewFixtures.reviewRequests),
-      reviewRatingCriteria: clone(reviewFixtures.reviewRatingCriteria),
-      productQuestionSubscriptions: [],
-      reviewContentVotes: [],
-      reviewContentReports: [],
-    };
+  constructor({ data, now }) {
+    if (!data || typeof data !== "object") {
+      throw new TypeError("Mock fixtures must provide a data object.");
+    }
+    if (!Number.isFinite(Date.parse(now))) {
+      throw new TypeError("Mock fixtures must provide a valid ISO timestamp in now.");
+    }
+
+    this.state = clone(data);
+    this.initialNow = now;
     this.idempotency = new Map();
     this.counters = new Map();
-    this.clock = Date.parse(FIXTURE_NOW);
+    this.clock = Date.parse(now);
     this.entityIndex = new Map();
     this.reindex();
   }
@@ -171,4 +141,4 @@ export class MockStore {
   }
 }
 
-export const createMockStore = () => new MockStore();
+export const createMockStore = (fixtures) => new MockStore(fixtures);

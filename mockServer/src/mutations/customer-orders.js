@@ -1,4 +1,4 @@
-import { gid, money } from "../fixtures/shared.js";
+import { gid, money } from "../fixture-helpers.js";
 import { customerError, formatAddress, orderError } from "../helpers.js";
 import { createCheckout, refreshCheckout } from "./checkout.js";
 
@@ -395,4 +395,3 @@ export const customerOrderMutations = (store) => ({
   ...customerMutations(store),
   ...orderMutations(store),
 });
-

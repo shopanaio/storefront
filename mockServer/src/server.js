@@ -10,17 +10,6 @@ import { createMockStore } from "./mock-store.js";
 import { applyResolvers, createContext } from "./resolvers.js";
 
 const schemaPath = fileURLToPath(new URL("../schema.graphql", import.meta.url));
-const publicPath = fileURLToPath(new URL("../public", import.meta.url));
-const typeDefs = await readFile(schemaPath, "utf8");
-const store = createMockStore();
-const schema = applyResolvers(buildSchema(typeDefs), store);
-
-const yoga = createYoga({
-  schema,
-  graphqlEndpoint: "/graphql",
-  graphiql: true,
-  context: createContext(store),
-});
 
 const contentTypes = {
   ".gif": "image/gif",
@@ -31,31 +20,66 @@ const contentTypes = {
   ".webp": "image/webp",
 };
 
-const server = createServer(async (request, response) => {
-  const pathname = new URL(request.url ?? "/", "http://mock.local").pathname;
-  if (pathname.startsWith("/images/")) {
-    const assetPath = resolve(publicPath, `.${pathname}`);
-    if (!assetPath.startsWith(`${publicPath}/`)) {
-      response.writeHead(403).end("Forbidden");
+const listen = (server, { host, port }) => new Promise((resolveListen, reject) => {
+  const onError = (error) => {
+    server.off("listening", onListening);
+    reject(error);
+  };
+  const onListening = () => {
+    server.off("error", onError);
+    resolveListen();
+  };
+
+  server.once("error", onError);
+  server.once("listening", onListening);
+  server.listen(port, host);
+});
+
+const close = (server) => new Promise((resolveClose, reject) => {
+  server.close((error) => error ? reject(error) : resolveClose());
+});
+
+export const createMockServer = async ({ fixtures, publicPath }) => {
+  if (!publicPath) throw new TypeError("Mock server requires a publicPath.");
+
+  const resolvedPublicPath = resolve(publicPath);
+  const typeDefs = await readFile(schemaPath, "utf8");
+  const store = createMockStore(fixtures);
+  const schema = applyResolvers(buildSchema(typeDefs), store);
+  const yoga = createYoga({
+    schema,
+    graphqlEndpoint: "/graphql",
+    graphiql: true,
+    context: createContext(store),
+  });
+
+  const httpServer = createServer(async (request, response) => {
+    const pathname = new URL(request.url ?? "/", "http://mock.local").pathname;
+    if (pathname.startsWith("/images/")) {
+      const assetPath = resolve(resolvedPublicPath, `.${pathname}`);
+      if (!assetPath.startsWith(`${resolvedPublicPath}/`)) {
+        response.writeHead(403).end("Forbidden");
+        return;
+      }
+      try {
+        const asset = await readFile(assetPath);
+        response.writeHead(200, {
+          "cache-control": "public, max-age=3600",
+          "content-type": contentTypes[extname(assetPath)] ?? "application/octet-stream",
+        });
+        response.end(asset);
+      } catch {
+        response.writeHead(404).end("Not found");
+      }
       return;
     }
-    try {
-      const asset = await readFile(assetPath);
-      response.writeHead(200, {
-        "cache-control": "public, max-age=3600",
-        "content-type": contentTypes[extname(assetPath)] ?? "application/octet-stream",
-      });
-      response.end(asset);
-    } catch {
-      response.writeHead(404).end("Not found");
-    }
-    return;
-  }
-  yoga(request, response);
-});
-const port = Number.parseInt(process.env.PORT ?? "4100", 10);
-const host = process.env.HOST ?? "127.0.0.1";
+    yoga(request, response);
+  });
 
-server.listen(port, host, () => {
-  console.log(`Mock GraphQL server is running at http://${host}:${port}/graphql`);
-});
+  return {
+    httpServer,
+    store,
+    listen: (options) => listen(httpServer, options),
+    close: () => close(httpServer),
+  };
+};

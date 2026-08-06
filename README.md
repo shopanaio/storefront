@@ -11,12 +11,12 @@ Next.js app.
 - `@shopana/checkout` — independent checkout flow and registration API.
 - `@shopana/brand-sdk` — common theme contract.
 - `@shopana/brand-bite-crunch` — full Bite & Crunch storefront application.
+- `@shopana/mock-server` — shared GraphQL mock engine with theme-injected data.
 
 ## Setup
 
 ```bash
 yarn install
-yarn --cwd mockServer install
 cp packages/brand-bite-crunch/.env.sample packages/brand-bite-crunch/.env
 ```
 
@@ -54,6 +54,6 @@ in `src/modules/checkout/register.ts`.
 ## Adding another theme
 
 Create a complete runnable theme package with its own `src`, `public`,
-`codegen`, scripts, Storybook config, `next.config.js`, and runtime commands.
+`codegen`, `mock/fixtures`, scripts, Storybook config, `next.config.js`, and runtime commands.
 Theme selection is made by the workspace/build target; there is no dynamic
 brand environment variable or fallback brand package.
