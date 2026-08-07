@@ -6,12 +6,12 @@ import type {
   SdkCreateCartMutation,
 } from '../../../../graphql/apollo/generated/operations';
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
-import { useCartConfig, useCartContext } from '../context/CartContext';
+import { useCartConfig, useCartSetters } from '../context/CartContext';
 import type { CreateCartInput } from '../../core/types';
 import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 type CreatedCheckout = SdkCreateCartMutation['checkoutCreate']['checkout'];
 const useCreateCart = () => {
-  const { setId, setCartKey } = useCartContext();
+  const { setId, setCartKey } = useCartSetters();
   const { channelCode } = useCartConfig();
   const [commit, isInFlight] = useMutation(createCartMutation);
   const createCart = (

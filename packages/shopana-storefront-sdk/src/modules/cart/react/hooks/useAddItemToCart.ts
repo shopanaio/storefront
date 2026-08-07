@@ -1,15 +1,17 @@
 'use client';
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
-import { useCartActions, useCartConfig } from '../context/CartContext';
+import {
+  useCartActions,
+  useCartConfig,
+  useCartStoreApi,
+} from '../context/CartContext';
 import useCreateCart from './useCreateCart';
-import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import type { AddToCartInput } from '../../core/types';
 import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
-  const cartId = useCartIdOnly();
-  const cartVersion = useCartVersionOnly();
+  const cartStore = useCartStoreApi();
   const actions = useCartActions();
   const { defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation(addToCartMutation);
@@ -24,6 +26,8 @@ const useAddItemToCart = () => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
+      const cartId = cartStore.cart?.id ?? null;
+      const cartVersion = cartStore.cart?.version ?? null;
       if (!cartId) {
         return createCart(
           {

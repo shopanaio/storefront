@@ -64,6 +64,15 @@ export interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
+type StableCartContextValue = Pick<
+  CartContextValue,
+  'store' | 'useStore' | 'config' | 'cartIdUtils' | 'setCartKey' | 'setId'
+>;
+
+const StableCartContext = createContext<StableCartContextValue | undefined>(
+  undefined
+);
+
 export interface CartContextProviderProps {
   children: React.ReactNode;
   store: CartStore;
@@ -132,7 +141,31 @@ export function CartContextProvider({
     ]
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  const stableValue = useMemo<StableCartContextValue>(
+    () => ({
+      store,
+      useStore,
+      config,
+      cartIdUtils,
+      setCartKey,
+      setId,
+    }),
+    [store, useStore, config, cartIdUtils, setCartKey, setId]
+  );
+
+  return (
+    <StableCartContext.Provider value={stableValue}>
+      <CartContext.Provider value={value}>{children}</CartContext.Provider>
+    </StableCartContext.Provider>
+  );
+}
+
+function useStableCartContext(): StableCartContextValue {
+  const context = useContext(StableCartContext);
+  if (!context) {
+    throw new Error('Cart hooks must be used within CartProvider');
+  }
+  return context;
 }
 
 /**
@@ -169,8 +202,20 @@ export function useCartContext(): CartContextValue {
  * @throws Error if used outside CartProvider
  */
 export function useCartStore() {
-  const { useStore } = useCartContext();
+  const { useStore } = useStableCartContext();
   return useStore;
+}
+
+/** Returns the stable cart store object without subscribing to cart state. */
+export function useCartStoreApi(): CartStore {
+  const { store } = useStableCartContext();
+  return store;
+}
+
+/** Returns stable cart setters without subscribing to cart metadata. */
+export function useCartSetters() {
+  const { setCartKey, setId } = useStableCartContext();
+  return { setCartKey, setId };
 }
 
 /**
@@ -188,7 +233,7 @@ export function useCartStore() {
  * @throws Error if used outside CartProvider
  */
 export function useCartActions(): CartActions {
-  const { store } = useCartContext();
+  const { store } = useStableCartContext();
   return store as CartActions;
 }
 
@@ -198,7 +243,7 @@ export function useCartActions(): CartActions {
  * @throws Error if used outside CartProvider
  */
 export function useCartConfig(): Required<CartConfig> {
-  const { config } = useCartContext();
+  const { config } = useStableCartContext();
   return config;
 }
 
@@ -208,6 +253,6 @@ export function useCartConfig(): Required<CartConfig> {
  * @throws Error if used outside CartProvider
  */
 export function useCartIdUtils(): ReturnType<typeof createCartIdUtils> {
-  const { cartIdUtils } = useCartContext();
+  const { cartIdUtils } = useStableCartContext();
   return cartIdUtils;
 }
