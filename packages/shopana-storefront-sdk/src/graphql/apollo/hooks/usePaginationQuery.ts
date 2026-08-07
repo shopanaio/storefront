@@ -122,6 +122,7 @@ export function usePaginationQuery<
     data: result.data,
     error: result.error,
     hasNext,
+    isLoading: result.loading,
     isLoadingNext: result.networkStatus === NetworkStatus.fetchMore,
     loadNext,
     refetch,
