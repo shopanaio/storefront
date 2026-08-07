@@ -10,9 +10,7 @@ type BooleanSettingKey<T> = {
   [K in StringKeyOf<T>]: SettingValue<T[K]> extends boolean ? K : never;
 }[StringKeyOf<T>];
 type SelectSettingKey<T> = {
-  [K in StringKeyOf<T>]: SettingValue<T[K]> extends string | number
-    ? K
-    : never;
+  [K in StringKeyOf<T>]: SettingValue<T[K]> extends string | number ? K : never;
 }[StringKeyOf<T>];
 
 export type SettingVisibility<TSettings extends object> = {
@@ -87,9 +85,7 @@ type ChoiceSettingDefinition<
     options: readonly SettingOption<
       Extract<SettingValue<TSettings[K]>, string | number>
     >[];
-    presentation?: TType extends 'select'
-      ? 'dropdown' | 'segmented'
-      : never;
+    presentation?: TType extends 'select' ? 'dropdown' | 'segmented' : never;
   };
 }[SelectSettingKey<TSettings>];
 
@@ -128,15 +124,31 @@ export type EntityPickerEntity =
   | 'product'
   | 'article'
   | 'blog'
-  | 'page';
+  | 'page'
+  | 'navigation_menu'
+  | 'navigation_menu_item';
 
-/** Stores the selected entity's stable handle, never a hydrated entity. */
+export type EntityPickerValueField = 'handle' | 'id';
+
+type EntityPickerSelection =
+  | {
+      entity: 'navigation_menu_item';
+      valueField: 'id';
+      /** Limits navigation-item choices to one navigation menu. */
+      navigationMenuId?: string;
+    }
+  | {
+      entity: Exclude<EntityPickerEntity, 'navigation_menu_item'>;
+      valueField?: EntityPickerValueField;
+      navigationMenuId?: never;
+    };
+
+/** Stores one stable entity field, never a hydrated entity. */
 export type EntityPickerSettingDefinition<TSettings extends object> = {
   [K in StringSettingKey<TSettings>]: SettingDefinitionBase<TSettings, K> & {
     type: 'entity_picker';
-    entity: EntityPickerEntity;
     default?: SettingValue<TSettings[K]>;
-  };
+  } & EntityPickerSelection;
 }[StringSettingKey<TSettings>];
 
 export type SidebarSettingDefinition =

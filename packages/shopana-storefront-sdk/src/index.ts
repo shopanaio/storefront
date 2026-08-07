@@ -27,6 +27,7 @@ export type {
   EmptySectionSettings,
   EntityPickerEntity,
   EntityPickerSettingDefinition,
+  EntityPickerValueField,
   FontPickerSettingDefinition,
   IconPickerSettingDefinition,
   ImagePickerSettingDefinition,

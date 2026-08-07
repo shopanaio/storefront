@@ -22,9 +22,12 @@ typed GraphQL documents.
 ID must be a key of `TSettings`, and its value type must match the control. For
 example, `checkbox` can target only a boolean setting and `range` only a number.
 
-Entity pickers use `type: 'entity_picker'`, declare one of the supported entity
-types (`category`, `product`, `article`, `blog`, or `page`), and persist only the
-selected entity handle. Hydrated API entities never become part of a template.
+Entity pickers use `type: 'entity_picker'`, declare a supported entity type, and
+persist only the selected entity's stable `handle` or `id`. Hydrated API
+entities never become part of a template. Category, product, article, blog, and
+page pickers use handles by default. Navigation menus and navigation items can
+opt into Relay IDs with `valueField: 'id'`; a navigation-item picker can also be
+limited to a menu with `navigationMenuId`.
 
 ```ts
 interface Settings {
@@ -55,6 +58,19 @@ const section = {
     ],
   },
 } satisfies SectionConfig<Settings>;
+```
+
+A navigation-item relation is stored as an ID and may be scoped to one menu:
+
+```ts
+{
+  type: 'entity_picker',
+  entity: 'navigation_menu_item',
+  valueField: 'id',
+  navigationMenuId: 'gid://shopana/OnlineStoreNavigationMenu/main-menu',
+  id: 'navigationItemId',
+  label: 'Navigation item',
+}
 ```
 
 Blocks use the same control union and type guarantees:
