@@ -26,8 +26,8 @@ Entity pickers use `type: 'entity_picker'`, declare a supported entity type, and
 persist only the selected entity's stable `handle` or `id`. Hydrated API
 entities never become part of a template. Category, product, article, blog, and
 page pickers use handles by default. Navigation menus and navigation items can
-opt into Relay IDs with `valueField: 'id'`; a navigation-item picker can also be
-limited to a menu with `navigationMenuId`.
+store either handles or Relay IDs through `valueField`; a navigation-item picker
+can also be limited to a menu with `navigationMenuId`.
 
 ```ts
 interface Settings {
@@ -60,15 +60,16 @@ const section = {
 } satisfies SectionConfig<Settings>;
 ```
 
-A navigation-item relation is stored as an ID and may be scoped to one menu:
+A navigation-item relation may store its menu-local handle and be scoped to one
+menu:
 
 ```ts
 {
   type: 'entity_picker',
   entity: 'navigation_menu_item',
-  valueField: 'id',
+  valueField: 'handle',
   navigationMenuId: 'gid://shopana/OnlineStoreNavigationMenu/main-menu',
-  id: 'navigationItemId',
+  id: 'navigationItemHandle',
   label: 'Navigation item',
 }
 ```

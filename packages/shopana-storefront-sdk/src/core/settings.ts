@@ -133,7 +133,7 @@ export type EntityPickerValueField = 'handle' | 'id';
 type EntityPickerSelection =
   | {
       entity: 'navigation_menu_item';
-      valueField: 'id';
+      valueField: EntityPickerValueField;
       /** Limits navigation-item choices to one navigation menu. */
       navigationMenuId?: string;
     }

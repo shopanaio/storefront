@@ -401,6 +401,10 @@ type OnlineStoreNavigationMenuItem implements Node @join__type(graph: APPS_ONLIN
   The globally unique Relay ID of the item.
   """
   id: ID!
+  """
+  Stable handle used to match theme block settings within the menu.
+  """
+  handle: String!
   menu: OnlineStoreNavigationMenu!
   parent: OnlineStoreNavigationMenuItem
   """

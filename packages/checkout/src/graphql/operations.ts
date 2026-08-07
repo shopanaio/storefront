@@ -3300,6 +3300,8 @@ export type OnlineStoreNavigationMenuItem = Node & {
   readonly __typename: 'OnlineStoreNavigationMenuItem';
   /** Direct children in merchant-defined order. */
   readonly children: OnlineStoreNavigationMenuItemConnection;
+  /** Stable handle used to match theme block settings within the menu. */
+  readonly handle: Scalars['String']['output'];
   /** The globally unique Relay ID of the item. */
   readonly id: Scalars['ID']['output'];
   /**
