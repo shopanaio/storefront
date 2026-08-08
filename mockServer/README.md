@@ -21,8 +21,11 @@ const server = await createMockServer({
   publicPath: "/absolute/path/to/theme/public",
 });
 
-await server.listen({ host: "127.0.0.1", port: 4100 });
+await server.listen({ port: 4100 });
 ```
+
+The server listens on `0.0.0.0` by default. Pass `host` explicitly to restrict
+it to a specific interface.
 
 `createMockServer` returns the Node HTTP server, the cloned mutable store, and
 promise-based `listen` and `close` methods. Each server instance clones the

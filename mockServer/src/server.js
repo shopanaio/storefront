@@ -20,7 +20,7 @@ const contentTypes = {
   ".webp": "image/webp",
 };
 
-const listen = (server, { host, port }) => new Promise((resolveListen, reject) => {
+const listen = (server, { host = "0.0.0.0", port }) => new Promise((resolveListen, reject) => {
   const onError = (error) => {
     server.off("listening", onListening);
     reject(error);
