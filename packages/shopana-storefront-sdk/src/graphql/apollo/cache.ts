@@ -21,7 +21,9 @@ export function createApolloCache(
     },
     Product: {
       fields: {
+        frequentlyBoughtTogether: cursorConnectionPolicy([]),
         questions: cursorConnectionPolicy(['sort']),
+        relatedProducts: cursorConnectionPolicy([]),
         reviews: cursorConnectionPolicy([
           'sort',
           'rating',

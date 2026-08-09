@@ -4268,6 +4268,15 @@ export type Product = Node & {
   readonly featureGroups: ReadonlyArray<ProductFeatureGroup>;
   readonly featuredMedia?: Maybe<Media>;
   readonly features: ReadonlyArray<ProductFeature>;
+  /**
+   * Products that customers frequently bought together with this product.
+   *
+   * Results come from confirmed sales aggregated into the currently published
+   * FREQUENTLY_BOUGHT_TOGETHER ranking snapshot. This field does not imply a
+   * bundle, discount, price guarantee, compatibility claim, or cart mutation.
+   * Clients choose concrete variants and use Checkout APIs for add-to-cart.
+   */
+  readonly frequentlyBoughtTogether: ProductRecommendationConnection;
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
   readonly media: ProductMediaConnection;
@@ -4279,6 +4288,15 @@ export type Product = Node & {
   readonly questionSummary: ProductQuestionSummary;
   /** Published questions for this product. */
   readonly questions: ProductQuestionConnection;
+  /**
+   * Merchant-curated and automatically ranked products related to this product.
+   *
+   * Results come from the currently published PRODUCT_RELATED ranking snapshot.
+   * The connection is already ordered for presentation, so clients should render
+   * the returned order unchanged. An empty connection is a valid, cacheable
+   * result and does not trigger a synchronous recommendation calculation.
+   */
+  readonly relatedProducts: ProductRecommendationConnection;
   /** Rating criteria applicable to this product in display order. */
   readonly reviewRatingCriteria: ReviewRatingCriterionConnection;
   /** Published review aggregates for this product. */
@@ -4307,6 +4325,13 @@ export type ProductCategoriesArgs = {
 
 
 /** A published item offered for sale in the storefront catalog. */
+export type ProductFrequentlyBoughtTogetherArgs = {
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+/** A published item offered for sale in the storefront catalog. */
 export type ProductMediaArgs = {
   after?: InputMaybe<Scalars['Cursor']['input']>;
   before?: InputMaybe<Scalars['Cursor']['input']>;
@@ -4323,6 +4348,13 @@ export type ProductQuestionsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<ProductQuestionSort>;
+};
+
+
+/** A published item offered for sale in the storefront catalog. */
+export type ProductRelatedProductsArgs = {
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -4546,6 +4578,58 @@ export type ProductPriceRange = {
   readonly maxVariantPrice: Money;
   readonly minVariantPrice: Money;
 };
+
+/**
+ * One ranked recommendation and the public provenance needed by storefront
+ * presentation and analytics. Internal scores and ranking features are not part
+ * of the storefront contract.
+ */
+export type ProductRecommendation = {
+  readonly __typename: 'ProductRecommendation';
+  /** Current federated Product presentation resolved by Catalog. */
+  readonly product: Product;
+  /** Primary source that contributed this recommendation. */
+  readonly source: ProductRecommendationSource;
+};
+
+/**
+ * A forward-only Relay connection over one immutable recommendation snapshot.
+ *
+ * The cursor pins the snapshot generation, so pagination never combines ranks
+ * from two different recommendation builds. Products that are no longer
+ * storefront-eligible are omitted at read time without changing the snapshot.
+ */
+export type ProductRecommendationConnection = Connection & {
+  readonly __typename: 'ProductRecommendationConnection';
+  /** Recommendation edges in their published display order. */
+  readonly edges: ReadonlyArray<ProductRecommendationEdge>;
+  /** Recommendations contained in the returned edges. */
+  readonly nodes: ReadonlyArray<ProductRecommendation>;
+  /** Information to aid in forward pagination. */
+  readonly pageInfo: PageInfo;
+  /** Number of currently storefront-eligible items in the resolved snapshot. */
+  readonly totalCount: Scalars['Int']['output'];
+};
+
+export type ProductRecommendationEdge = {
+  readonly __typename: 'ProductRecommendationEdge';
+  /** Opaque cursor tied to the snapshot generation and published rank. */
+  readonly cursor: Scalars['Cursor']['output'];
+  /** The recommendation at the end of the edge. */
+  readonly node: ProductRecommendation;
+};
+
+export type ProductRecommendationSource =
+  /** Similarity calculated from product content or taxonomy. */
+  | 'CONTENT_SIMILARITY'
+  /** Configured cold-start fallback source. */
+  | 'FALLBACK'
+  /** Association calculated from confirmed sales. */
+  | 'FREQUENTLY_BOUGHT_TOGETHER'
+  /** Explicit merchant recommendation. */
+  | 'MANUAL'
+  /** Store or category popularity signal. */
+  | 'POPULARITY';
 
 export type ProductQuestion = Node & ReviewContent & {
   readonly __typename: 'ProductQuestion';

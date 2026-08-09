@@ -37,6 +37,7 @@ export class MockStore {
 
     this.state = clone(data);
     this.state.productComparisons ??= [];
+    this.state.productRecommendations ??= [];
     for (const customer of this.state.customers ?? []) {
       customer.comparisonVariantIds ??= [];
       customer.comparisonRevision ??= 0;

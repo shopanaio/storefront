@@ -10,6 +10,7 @@ interface EdgeLike {
 
 interface ConnectionLike {
   readonly edges?: readonly EdgeLike[] | null;
+  readonly nodes?: readonly EdgeLike['node'][] | null;
   readonly pageInfo?: unknown;
   readonly [key: string]: unknown;
 }
@@ -46,7 +47,12 @@ export function cursorConnectionPolicy(
         }
       }
 
-      return { ...existing, ...incoming, edges };
+      return {
+        ...existing,
+        ...incoming,
+        edges,
+        nodes: edges.map(({ node }) => node).filter((node) => node != null),
+      };
     },
   };
 }

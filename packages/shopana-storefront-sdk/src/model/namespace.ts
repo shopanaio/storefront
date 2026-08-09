@@ -50,6 +50,9 @@ import type * as ProductRatingTypes from './Product/ProductRating';
 // Product
 import type * as ProductTypes from './Product/product';
 
+// Product Recommendation
+import type * as ProductRecommendationTypes from './Product/ProductRecommendation';
+
 /**
  * Model namespace containing all model types
  * Usage: import { model } from '@shopana/storefront-sdk'
@@ -132,4 +135,11 @@ export namespace model {
 
   // Product
   export type Product = ProductTypes.Product;
+
+  // Product Recommendation
+  export type ProductRecommendationSource = ProductRecommendationTypes.ProductRecommendationSource;
+  export type ProductRecommendation = ProductRecommendationTypes.ProductRecommendation;
+  export type ProductRecommendationEdge = ProductRecommendationTypes.ProductRecommendationEdge;
+  export type ProductRecommendationConnection = ProductRecommendationTypes.ProductRecommendationConnection;
+  export type ProductRecommendationPagination = ProductRecommendationTypes.ProductRecommendationPagination;
 }

@@ -235,6 +235,21 @@ const validateFirst = (first) => {
   }
 };
 
+const recommendationsForProduct = (store, product, fieldName, args) => {
+  validateFirst(args.first);
+  const fixture = store.state.productRecommendations.find(
+    (candidate) => candidate.productId === product.id,
+  );
+  const recommendations = (fixture?.[fieldName] ?? []).flatMap((recommendation) => {
+    const recommendedProduct = store.get(recommendation.productId);
+    return recommendedProduct?.__typename === "Product"
+      ? [{ product: recommendedProduct, source: recommendation.source }]
+      : [];
+  });
+
+  return connection(recommendations, args);
+};
+
 const productConnection = (store, source, args = {}, options = {}) => {
   validateFirst(args.first);
   const inputFilters = args.filters ?? [];
@@ -310,6 +325,10 @@ const specialFields = (store) => ({
   "Product.variants": (product, args) => connection(product.variantIds.map((id) => store.get(id)).filter(Boolean), args),
   "Product.variantBySelectedOptions": (product, { selectedOptions }) => selectedVariant(store, product, selectedOptions),
   "Product.selectedOrFirstAvailableVariant": (product, { selectedOptions }) => selectedVariant(store, product, selectedOptions, true),
+  "Product.relatedProducts": (product, args) =>
+    recommendationsForProduct(store, product, "relatedProducts", args),
+  "Product.frequentlyBoughtTogether": (product, args) =>
+    recommendationsForProduct(store, product, "frequentlyBoughtTogether", args),
   "Product.reviews": (product, args) => {
     let reviews = reviewsForProduct(store, product.id);
     if (args.rating) reviews = reviews.filter(({ rating }) => rating === args.rating);

@@ -53,6 +53,13 @@ specific products. Customer records may persist `comparisonVariantIds` and
 `comparisonRevision`. The engine prepares product-page and customer comparison
 matrices and implements the add, remove, and category-clear mutations.
 
+Product recommendation fixtures are supplied as `data.productRecommendations`.
+Each record identifies its source `productId` and contains ordered
+`relatedProducts` and `frequentlyBoughtTogether` arrays. Recommendation entries
+contain a `productId` and a `ProductRecommendationSource` value. Missing target
+products are omitted when the connection is resolved, and both fields support
+forward pagination through `first` and `after`.
+
 ## Engine boundaries
 
 - `src/server.js` creates the GraphQL and HTTP servers from injected data.
