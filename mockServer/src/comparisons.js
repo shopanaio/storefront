@@ -21,15 +21,17 @@ export const productComparison = (store, product, customer) => {
   const config = comparisonConfig(store, product.primaryCategoryId);
   if (!config) return null;
 
-  const configured = resolvedVariants(store, config.variantIds);
-  const currentVariant = resolvedVariants(store, product.variantIds)
-    .find(({ availableForSale }) => availableForSale)
-    ?? resolvedVariants(store, product.variantIds)[0];
-  const includesCurrentProduct = configured.some(({ productId }) => productId === product.id);
-  const variants = [
-    ...(!includesCurrentProduct && currentVariant ? [currentVariant] : []),
-    ...configured,
-  ].slice(0, config.maxColumns ?? configured.length);
+  const configuredByProduct = new Map(
+    resolvedVariants(store, config.variantIds).map((variant) => [variant.productId, variant]),
+  );
+  const categoryProducts = store.state.products.filter((candidate) =>
+    candidate.primaryCategoryId === config.categoryId);
+  const variants = categoryProducts.map((candidate) => {
+    const availableVariants = resolvedVariants(store, candidate.variantIds);
+    return configuredByProduct.get(candidate.id)
+      ?? availableVariants.find(({ availableForSale }) => availableForSale)
+      ?? availableVariants[0];
+  }).filter(Boolean);
 
   return comparisonModel(
     config.categoryId,
