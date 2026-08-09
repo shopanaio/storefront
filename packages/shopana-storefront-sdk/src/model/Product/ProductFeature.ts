@@ -34,6 +34,8 @@ export interface ProductFeature {
   handle: string;
   /** Display title */
   title: string;
+  /** Whether the feature should be highlighted in product previews */
+  featured: boolean;
   /** Presentation group containing this feature */
   group: ProductFeatureGroup | null;
   /** Available values for this feature */
