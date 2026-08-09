@@ -45,6 +45,12 @@ The request headers `x-mock-customer-id` and `x-mock-anonymous` control the
 fixture customer used for the request. Checkout, customer, order, review, and
 question mutations update only the in-memory store until the process restarts.
 
+Product comparison fixtures are supplied as `data.productComparisons`, with a
+`categoryId`, presentation `title`, server-ordered `variantIds`, and optional
+`maxColumns`. Customer records may persist `comparisonVariantIds` and
+`comparisonRevision`. The engine prepares product-page and customer comparison
+matrices and implements the add, remove, and category-clear mutations.
+
 ## Engine boundaries
 
 - `src/server.js` creates the GraphQL and HTTP servers from injected data.

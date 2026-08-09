@@ -36,6 +36,11 @@ export class MockStore {
     }
 
     this.state = clone(data);
+    this.state.productComparisons ??= [];
+    for (const customer of this.state.customers ?? []) {
+      customer.comparisonVariantIds ??= [];
+      customer.comparisonRevision ??= 0;
+    }
     this.initialNow = now;
     this.idempotency = new Map();
     this.counters = new Map();

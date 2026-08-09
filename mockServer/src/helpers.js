@@ -233,7 +233,12 @@ export const orderError = (code, message, field = null, retryable = false) => ({
 });
 
 export const reviewError = (code, message, field = null) => ({ code, message, field });
-export const customerError = (code, message, field = null) => ({ code, message, field });
+export const customerError = (code, message, field = null, retryable = false) => ({
+  code,
+  message,
+  field,
+  retryable,
+});
 
 const COUNTRY_NAMES = {
   US: "United States",

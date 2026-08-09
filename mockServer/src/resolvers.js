@@ -10,6 +10,11 @@ import {
 
 import { gid, money } from "./fixture-helpers.js";
 import {
+  comparisonColumns,
+  customerProductComparisons,
+  productComparison,
+} from "./comparisons.js";
+import {
   buildListingFilters,
   connection,
   filterProducts,
@@ -20,6 +25,7 @@ import {
   sortReviews,
 } from "./helpers.js";
 import { checkoutMutations } from "./mutations/checkout.js";
+import { comparisonMutations } from "./mutations/comparisons.js";
 import { customerOrderMutations } from "./mutations/customer-orders.js";
 import { reviewMutations } from "./mutations/reviews.js";
 
@@ -297,6 +303,7 @@ const specialFields = (store) => ({
   },
 
   "Product.primaryCategory": (product) => store.get(product.primaryCategoryId),
+  "Product.comparison": (product, _args, context) => productComparison(store, product, context.customer),
   "Product.categories": (product, args) => connection(product.categoryIds.map((id) => store.get(id)).filter(Boolean), args),
   "Product.media": (product, args) => connection(product.mediaIds.map((id) => store.get(id)).filter(Boolean), args),
   "Product.featuredMedia": (product) => store.get(product.featuredMediaId),
@@ -341,6 +348,7 @@ const specialFields = (store) => ({
   "CheckoutDeliveryGroup.checkoutLines": (group) => group.checkoutLineIds.map((id) => store.get(id)).filter(Boolean),
 
   "Customer.defaultAddress": (customer) => store.get(customer.defaultAddressId),
+  "Customer.productComparisons": (customer) => customerProductComparisons(store, customer),
   "Customer.orders": (customer, args) => {
     let orders = customer.orderIds.map((id) => store.get(id)).filter(Boolean);
     if (args.statuses?.length) orders = orders.filter(({ status }) => args.statuses.includes(status));
@@ -352,6 +360,9 @@ const specialFields = (store) => ({
     question.author.customerId === customer.id), args.sort), args),
   "Customer.reviewRequests": (customer, args) => connection(store.state.reviewRequests.filter((request) =>
     request.customerId === customer.id), args),
+
+  "ProductComparison.category": (comparison) => store.get(comparison.categoryId),
+  "ProductComparison.columns": (comparison, args) => comparisonColumns(store, comparison, args),
 
   "OrderCustomerIdentity.customer": (identity) => store.get(identity.customerId),
   "OrderDeliveryGroup.lines": (group) => group.lineIds.map((id) => store.get(id)).filter(Boolean),
@@ -477,6 +488,7 @@ const mutationResolvers = (store) => ({
   _listing: () => true,
   _media: () => true,
   ...checkoutMutations(store),
+  ...comparisonMutations(store),
   ...customerOrderMutations(store),
   ...reviewMutations(store),
 });
