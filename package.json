@@ -14,6 +14,7 @@
     "build": "yarn workspace @shopana/brand-bite-crunch build",
     "start": "yarn workspace @shopana/brand-bite-crunch start",
     "codegen": "node ./scripts/codegen.mjs",
+    "codegen:openapi": "node ./scripts/codegen-openapi.mjs",
     "widgets:build": "yarn workspace @shopana/brand-bite-crunch widgets:build",
     "widgets:watch": "yarn workspace @shopana/brand-bite-crunch widgets:watch",
     "storybook": "yarn workspace @shopana/brand-bite-crunch storybook",
@@ -31,6 +32,7 @@
     "eslint-plugin-css": "^0.11.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "graphql": "^16.10.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.7.1",
     "typescript": "^5.8.3"
   },

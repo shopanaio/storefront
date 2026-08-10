@@ -8,6 +8,7 @@ import { createYoga } from "graphql-yoga";
 
 import { createMockStore } from "./mock-store.js";
 import { applyResolvers, createContext } from "./resolvers.js";
+import { createApplicationAuthRoutes } from "./application-auth-routes.js";
 
 const schemaPath = fileURLToPath(new URL("../schema.graphql", import.meta.url));
 
@@ -52,9 +53,11 @@ export const createMockServer = async ({ fixtures, publicPath }) => {
     graphiql: true,
     context: createContext(store),
   });
+  const applicationAuthRoutes = createApplicationAuthRoutes();
 
   const httpServer = createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://mock.local").pathname;
+    if (await applicationAuthRoutes(request, response, pathname)) return;
     if (pathname.startsWith("/images/")) {
       const assetPath = resolve(resolvedPublicPath, `.${pathname}`);
       if (!assetPath.startsWith(`${resolvedPublicPath}/`)) {

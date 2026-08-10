@@ -50,3 +50,10 @@ export type {
 
 // Public Apollo environment configuration.
 export type { ApolloEnvironmentConfig } from './graphql/apollo/types';
+
+// Public application authentication OpenAPI contract.
+export type {
+  components as ApplicationAuthComponents,
+  operations as ApplicationAuthOperations,
+  paths as ApplicationAuthPaths,
+} from './openapi/application-auth';

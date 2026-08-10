@@ -93,6 +93,7 @@ if (process.argv.includes('--use-existing-schema')) {
 } else {
   await fetchShopanaSchema();
 }
+await run(process.execPath, ['scripts/codegen-openapi.mjs']);
 await run(
   process.execPath,
   ['codegen/scripts/validate-apollo-documents.js'],

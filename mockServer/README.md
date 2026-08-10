@@ -24,6 +24,14 @@ const server = await createMockServer({
 await server.listen({ port: 4100 });
 ```
 
+Open `/auth` on the same host to use the application-auth test page. The mock
+implements the OpenAPI email/password sign-up, sign-in, sign-out, session list,
+and single-session revocation routes under
+`/auth/applications/{applicationId}`. Users and sessions are isolated per
+application ID and kept only in memory until the server restarts. OAuth, OTP,
+email delivery, policy enforcement, rate limiting, and other production IAM
+features are intentionally not emulated.
+
 The server listens on `0.0.0.0` by default. Pass `host` explicitly to restrict
 it to a specific interface.
 
