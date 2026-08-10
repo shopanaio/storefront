@@ -1,3 +1,4 @@
+import { gid } from "./fixture-helpers.js";
 import { clone, inferTypeName } from "./helpers.js";
 
 const collectionEntries = (state) => [
@@ -36,9 +37,16 @@ export class MockStore {
     }
 
     this.state = clone(data);
+    this.state.customers ??= [];
     this.state.productComparisons ??= [];
     this.state.productRecommendations ??= [];
     for (const customer of this.state.customers ?? []) {
+      customer.revision ??= 1;
+      customer.accountStatus ??= "REGISTERED";
+      customer.createdAt ??= now;
+      customer.updatedAt ??= now;
+      if (customer.emailAddress) customer.emailAddress.verified ??= true;
+      if (customer.phoneNumber) customer.phoneNumber.verified ??= true;
       customer.comparisonVariantIds ??= [];
       customer.comparisonRevision ??= 0;
     }
@@ -112,12 +120,56 @@ export class MockStore {
   currentCustomer(request) {
     if (request?.headers.get("x-mock-anonymous") === "true") return null;
     const requested = request?.headers.get("x-mock-customer-id");
-    if (!requested) return this.state.customers[0] ?? null;
+    if (!requested) return null;
 
     return this.state.customers.find((customer) =>
       customer.id === requested
       || customer.id.endsWith(`/${requested}`)
       || customer.emailAddress?.emailAddress === requested) ?? null;
+  }
+
+  customerByEmail(email) {
+    const normalized = email.trim().toLowerCase();
+    return this.state.customers.find(
+      (customer) =>
+        customer.emailAddress?.emailAddress?.trim().toLowerCase() === normalized
+    ) ?? null;
+  }
+
+  provisionCustomer(applicationUser) {
+    const existing = this.customerByEmail(applicationUser.email);
+    if (existing) return existing;
+
+    const firstName = applicationUser.firstName
+      ?? applicationUser.name.trim().split(/\s+/u)[0]
+      ?? "Mock";
+    const lastName = applicationUser.lastName
+      ?? applicationUser.name.trim().split(/\s+/u).slice(1).join(" ")
+      ?? "";
+    const customer = {
+      id: gid("Customer", applicationUser.id),
+      revision: 1,
+      accountStatus: "REGISTERED",
+      firstName,
+      lastName,
+      displayName: [firstName, lastName].filter(Boolean).join(" "),
+      emailAddress: {
+        emailAddress: applicationUser.email,
+        verified: applicationUser.emailVerified,
+        marketingConsent: null,
+      },
+      phoneNumber: null,
+      addresses: [],
+      defaultAddressId: null,
+      comparisonRevision: 0,
+      comparisonVariantIds: [],
+      orderIds: [],
+      createdAt: applicationUser.createdAt,
+      updatedAt: applicationUser.updatedAt,
+    };
+    this.state.customers.push(customer);
+    this.reindex();
+    return customer;
   }
 
   ownerCustomerId(entity) {

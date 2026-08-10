@@ -42,15 +42,13 @@ export function createApolloClient(
       [config.apiKeyHeader]: config.apiKey,
     };
 
-    if (config.accessTokenCookieName) {
-      const accessToken = getCookieValue(
-        config.accessTokenCookieName,
-        options.serverCookies
-      );
+    const accessToken = getCookieValue(
+      config.applicationAuth.accessTokenCookieName,
+      options.serverCookies
+    );
 
-      if (accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`;
-      }
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
     }
 
     return { headers };

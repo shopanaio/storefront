@@ -6,6 +6,7 @@
 
 // Core types
 export * from './core/types';
+export * from './core/ApplicationAuthClient';
 
 // Store
 export * from './store/SessionStore';
@@ -15,4 +16,7 @@ export { createSessionStore } from './store/createSessionStore';
 export * from './react';
 
 // Next.js loaders
-export { loadSessionServerQuery, type LoadSessionServerQueryOptions } from './next/loaders/loadSessionServerQuery';
+export {
+  loadSessionServerQuery,
+  type LoadSessionServerQueryOptions,
+} from './next/loaders/loadSessionServerQuery';

@@ -8,7 +8,7 @@ import {
   isUnionType,
 } from "graphql";
 
-import { gid, money } from "./fixture-helpers.js";
+import { money } from "./fixture-helpers.js";
 import {
   comparisonColumns,
   customerProductComparisons,
@@ -568,8 +568,16 @@ export const applyResolvers = (schema, store) => {
   return schema;
 };
 
-export const createContext = (store) => async ({ request }) => ({
-  request,
-  store,
-  customer: store.currentCustomer(request),
-});
+export const createContext = (store, applicationAuthStore) => async ({ request }) => {
+  const authorization = request.headers.get("authorization")?.trim();
+  const bearerToken = authorization?.startsWith("Bearer ")
+    ? authorization.slice(7).trim()
+    : null;
+  const customer = authorization
+    ? bearerToken
+      ? applicationAuthStore.resolveCustomer(bearerToken)
+      : null
+    : store.currentCustomer(request);
+
+  return { request, store, customer };
+};

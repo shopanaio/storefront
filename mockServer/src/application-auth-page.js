@@ -29,23 +29,29 @@ export const applicationAuthPage = `<!doctype html>
     <label>Application ID
       <input id="applicationId" value="00000000-0000-4000-8000-000000000001">
     </label>
+    <label>OAuth client ID <input id="clientId" value="mock-storefront"></label>
+    <label>OAuth resource <input id="resource" value="urn:shopana:application:00000000-0000-4000-8000-000000000001"></label>
   </section>
   <div class="grid">
     <section>
       <h2>Account</h2>
       <label>Name <input id="name" value="Mock User"></label>
-      <label>Email <input id="email" type="email" value="user@example.com"></label>
+      <label>Email <input id="email" type="email" value="alex.morgan@example.com"></label>
       <label>Password <input id="password" type="password" value="password123"></label>
       <label><span><input id="rememberMe" type="checkbox" checked style="width:auto"> Remember me</span></label>
       <div class="actions">
         <button id="signup">Sign up</button>
         <button id="signin" class="secondary">Sign in</button>
+        <button id="authorize" class="secondary">Get OAuth token</button>
         <button id="logout" class="danger">Log out</button>
       </div>
     </section>
     <section>
       <h2>Sessions</h2>
-      <button id="sessions">Refresh sessions</button>
+      <div class="actions">
+        <button id="sessions">Refresh sessions</button>
+        <button id="customer" class="secondary">Load GraphQL customer</button>
+      </div>
       <div id="sessionList"></div>
     </section>
   </div>
@@ -55,6 +61,8 @@ export const applicationAuthPage = `<!doctype html>
 <script>
   const byId = (id) => document.getElementById(id);
   const result = byId('result');
+  let currentAccessToken = sessionStorage.getItem('mock.oauth.accessToken');
+  let currentRefreshToken = sessionStorage.getItem('mock.oauth.refreshToken');
   const base = () => '/auth/applications/' + encodeURIComponent(byId('applicationId').value.trim());
   const account = () => ({
     email: byId('email').value,
@@ -106,11 +114,108 @@ export const applicationAuthPage = `<!doctype html>
   byId('signin').addEventListener('click', () => request('/sign-in/email', {
     method: 'POST', body: JSON.stringify(account()),
   }));
+  byId('authorize').addEventListener('click', startAuthorization);
   byId('logout').addEventListener('click', async () => {
+    for (const token of [currentAccessToken, currentRefreshToken].filter(Boolean)) {
+      await fetch(base() + '/oauth2/revoke', {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: byId('clientId').value, token }),
+      });
+    }
     await request('/sign-out', { method: 'POST', body: '{}' });
+    currentAccessToken = null;
+    currentRefreshToken = null;
+    sessionStorage.removeItem('mock.oauth.accessToken');
+    sessionStorage.removeItem('mock.oauth.refreshToken');
     byId('sessionList').replaceChildren();
   });
   byId('sessions').addEventListener('click', refreshSessions);
+  byId('customer').addEventListener('click', async () => {
+    if (!currentAccessToken) {
+      result.textContent = 'Sign in first to obtain a customer Bearer token.';
+      return;
+    }
+    try {
+      const response = await fetch('/graphql', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer ' + currentAccessToken,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ query: 'query MockCustomerSession { customer { id displayName emailAddress { emailAddress } } }' }),
+      });
+      const body = await response.json();
+      result.textContent = response.status + ' ' + response.statusText + '\\n' + JSON.stringify(body, null, 2);
+    } catch (error) {
+      result.textContent = String(error);
+    }
+  });
+
+  async function startAuthorization() {
+    const verifierBytes = crypto.getRandomValues(new Uint8Array(64));
+    const verifier = toBase64Url(verifierBytes);
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    const state = crypto.randomUUID();
+    const nonce = crypto.randomUUID();
+    sessionStorage.setItem('mock.oauth.transaction', JSON.stringify({ verifier, state, nonce }));
+    const query = new URLSearchParams({
+      response_type: 'code',
+      client_id: byId('clientId').value,
+      redirect_uri: location.origin + '/auth',
+      scope: 'openid profile email offline_access',
+      state,
+      nonce,
+      code_challenge: toBase64Url(new Uint8Array(digest)),
+      code_challenge_method: 'S256',
+      resource: byId('resource').value,
+    });
+    location.assign(base() + '/oauth2/authorize?' + query);
+  }
+
+  function toBase64Url(bytes) {
+    let value = '';
+    bytes.forEach((byte) => { value += String.fromCharCode(byte); });
+    return btoa(value).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+  }
+
+  async function completeAuthorization() {
+    const query = new URLSearchParams(location.search);
+    if (!query.has('code') && !query.has('error')) return;
+    const transaction = JSON.parse(sessionStorage.getItem('mock.oauth.transaction') || 'null');
+    if (!transaction || query.get('state') !== transaction.state) {
+      result.textContent = 'Invalid OAuth state';
+      return;
+    }
+    if (query.has('error')) {
+      result.textContent = query.get('error');
+      return;
+    }
+    const response = await fetch(base() + '/oauth2/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: query.get('code'),
+        client_id: byId('clientId').value,
+        redirect_uri: location.origin + '/auth',
+        code_verifier: transaction.verifier,
+        resource: byId('resource').value,
+      }),
+    });
+    const body = await response.json();
+    if (response.ok) {
+      currentAccessToken = body.access_token;
+      currentRefreshToken = body.refresh_token;
+      sessionStorage.setItem('mock.oauth.accessToken', currentAccessToken);
+      sessionStorage.setItem('mock.oauth.refreshToken', currentRefreshToken);
+    }
+    sessionStorage.removeItem('mock.oauth.transaction');
+    history.replaceState(null, '', '/auth');
+    result.textContent = response.status + ' ' + response.statusText + '\\n' + JSON.stringify(body, null, 2);
+  }
+
+  completeAuthorization();
 </script>
 </body>
 </html>`;

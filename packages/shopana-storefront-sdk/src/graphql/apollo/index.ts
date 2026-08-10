@@ -6,6 +6,8 @@ export {
 } from './loadSerializableQuery';
 export type {
   ApolloEnvironmentConfig,
+  ApplicationAuthConfig,
+  ApplicationAuthScope,
   CreateApolloClientOptions,
 } from './types';
 export { useFragment } from './hooks/useFragment';

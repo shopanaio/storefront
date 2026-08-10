@@ -1,27 +1,20 @@
 'use client';
-import { useMutation } from '../../../../../graphql/apollo/hooks/useMutation';
-import { signOutMutation } from '../../../core/graphql/mutations/signOutMutation';
-/**
- * Hook to sign out the current user
- *
- * @returns Mutation tuple [commit, isInFlight]
- *
- * @example
- * ```tsx
- * const [signOut, isLoading] = useSignOut();
- *
- * const handleSignOut = () => {
- *   signOut({
- *     variables: {},
- *     onCompleted: () => {
- *       // Sign out successful
- *       // Clear session store, redirect to home, etc.
- *     }
- *   });
- * };
- * ```
- */
-export const useSignOut = () => {
-  return useMutation(signOutMutation);
-};
+
+import { useCallback } from 'react';
+import { useSessionContext } from '../../context/SessionContext';
+import { useAuthAction } from './useAuthAction';
+
+export function useSignOut() {
+  const { authClient, store } = useSessionContext();
+  const action = useCallback(async () => {
+    try {
+      await authClient.signOut();
+    } finally {
+      store.getState().setSession(null);
+    }
+  }, [authClient, store]);
+  const { execute: signOut, ...state } = useAuthAction(action);
+  return { signOut, ...state };
+}
+
 export default useSignOut;

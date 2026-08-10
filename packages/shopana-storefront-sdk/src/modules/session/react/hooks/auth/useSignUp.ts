@@ -1,35 +1,22 @@
 'use client';
-import { useMutation } from '../../../../../graphql/apollo/hooks/useMutation';
-import { signUpMutation } from '../../../core/graphql/mutations/signUpMutation';
-/**
- * Hook to sign up a new user with email and password
- *
- * @returns Mutation tuple [commit, isInFlight]
- *
- * @example
- * ```tsx
- * const [signUp, isLoading] = useSignUp();
- *
- * const handleSignUp = () => {
- *   signUp({
- *     variables: {
- *       input: {
- *         email: 'user@example.com',
- *         password: 'password123',
- *         firstName: 'John',
- *         lastName: 'Doe'
- *       }
- *     },
- *     onCompleted: (data) => {
- *       if (data.passwordSignUp.session) {
- *         // Sign up successful
- *       }
- *     }
- *   });
- * };
- * ```
- */
-export const useSignUp = () => {
-  return useMutation(signUpMutation);
-};
+
+import { useCallback } from 'react';
+import type { SignUpInput } from '../../../core/types';
+import type { AuthorizationOptions } from '../../../core/ApplicationAuthClient';
+import { useSessionContext } from '../../context/SessionContext';
+import { useAuthAction } from './useAuthAction';
+
+export function useSignUp() {
+  const { authClient } = useSessionContext();
+  const action = useCallback(
+    async (input: SignUpInput, options?: AuthorizationOptions) => {
+      await authClient.signUpWithPassword(input);
+      return authClient.authorize(options);
+    },
+    [authClient]
+  );
+  const { execute: signUp, ...state } = useAuthAction(action);
+  return { signUp, ...state };
+}
+
 export default useSignUp;

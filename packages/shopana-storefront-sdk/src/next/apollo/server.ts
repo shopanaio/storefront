@@ -26,7 +26,7 @@ function environmentKey(config: ApolloEnvironmentConfig): string {
     config.graphqlUrl,
     config.apiKeyHeader,
     config.apiKey,
-    config.accessTokenCookieName ?? null,
+    config.applicationAuth,
   ]);
 }
 

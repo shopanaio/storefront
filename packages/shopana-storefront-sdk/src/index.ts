@@ -49,7 +49,16 @@ export type {
 } from './core/settings';
 
 // Public Apollo environment configuration.
-export type { ApolloEnvironmentConfig } from './graphql/apollo/types';
+export type {
+  ApolloEnvironmentConfig,
+  ApplicationAuthConfig,
+  ApplicationAuthScope,
+} from './graphql/apollo/types';
+
+export {
+  ApplicationAuthClient,
+  ApplicationAuthError,
+} from './modules/session/core/ApplicationAuthClient';
 
 // Public application authentication OpenAPI contract.
 export type {

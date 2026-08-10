@@ -72,7 +72,7 @@ export async function AppProvider({
   const client = await getApolloRequestClient(environmentConfig);
 
   // Both root queries share the client registered for this server request.
-  const [preloadedCartQuery] = await Promise.all([
+  const [preloadedCartQuery, initialSession] = await Promise.all([
     loadCartServerQuery({
       environmentConfig,
       cartConfig,
@@ -81,7 +81,7 @@ export async function AppProvider({
     }),
     loadSessionServerQuery({
       environmentConfig,
-      client,
+      serverCookies,
     }),
   ]);
 
@@ -97,6 +97,7 @@ export async function AppProvider({
       shopConfig={shopConfig}
       cartConfig={cartConfig}
       initialCartId={preloadedCartQuery?.variables.checkoutId}
+      initialSession={initialSession}
     >
       {children}
     </App>

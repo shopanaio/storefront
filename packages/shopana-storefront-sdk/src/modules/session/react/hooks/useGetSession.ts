@@ -1,32 +1,20 @@
 'use client';
 
-import { useLazyLoadQuery } from '../../../../graphql/apollo/hooks/useLazyLoadQuery';
-import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
-import {
-  SdkUseGetSessionQueryDocument,
-  type SdkUseGetSessionQuery,
-  type SdkUseGetSessionQueryVariables,
-} from '../../../../graphql/apollo/generated/operations';
+import { useCallback } from 'react';
+import { useSessionContext } from '../context/SessionContext';
+import { useAuthAction } from './auth/useAuthAction';
 
-export const useGetSessionQuery = SdkUseGetSessionQueryDocument;
+export function useGetSession() {
+  const { authClient, store, useStore } = useSessionContext();
+  const session = useStore((state) => state.session);
+  const action = useCallback(async () => {
+    const value =
+      (await authClient.getSession()) ?? (await authClient.refresh());
+    store.getState().setSession(value);
+    return value;
+  }, [authClient, store]);
+  const { execute: refreshSession, ...state } = useAuthAction(action);
+  return { session, refreshSession, ...state };
+}
 
-export const useGetSession = (_fetchKey: number = 0) =>
-  useLazyLoadQuery(
-    useGetSessionQuery,
-    {},
-    {
-      fetchPolicy: 'network-only',
-      fetchKey: _fetchKey,
-    }
-  );
-
-export const useGetSessionPreloaded = (
-  preloadedQuery: SerializableApolloQuery<
-    SdkUseGetSessionQuery,
-    SdkUseGetSessionQueryVariables
-  >
-) => preloadedQuery.data;
-
-const sessionHooks = { useGetSession, useGetSessionPreloaded };
-
-export default sessionHooks;
+export default useGetSession;

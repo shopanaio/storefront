@@ -10,11 +10,6 @@ const workspaceDir = path.resolve(
 );
 const themeDir = path.join(workspaceDir, 'packages', 'brand-bite-crunch');
 const schemaFile = path.join(workspaceDir, 'schema.shopana.graphql');
-const schemaExtensionFile = path.join(
-  workspaceDir,
-  'graphql-schema-extensions',
-  'auth.graphql'
-);
 
 try {
   process.loadEnvFile(path.join(themeDir, '.env'));
@@ -74,24 +69,26 @@ async function fetchShopanaSchema() {
     );
   }
 
-  const extension = await readFile(schemaExtensionFile, 'utf8');
   await writeFile(
     schemaFile,
-    `${printSchema(buildClientSchema({ __schema: payload.data.__schema }))}\n${extension}`
+    `${printSchema(buildClientSchema({ __schema: payload.data.__schema }))}\n`
   );
 }
 
 if (process.argv.includes('--use-existing-schema')) {
-  const [existingSchema, extension] = await Promise.all([
-    readFile(path.join(themeDir, 'schema.shopana.graphql'), 'utf8'),
-    readFile(schemaExtensionFile, 'utf8'),
-  ]);
-  await writeFile(schemaFile, `${existingSchema.trimEnd()}\n${extension}`);
+  const existingSchema = await readFile(
+    path.join(themeDir, 'schema.shopana.graphql'),
+    'utf8'
+  );
+  await writeFile(schemaFile, `${existingSchema.trimEnd()}\n`);
   console.warn(
     'Using the existing Shopana schema artifact; no schema request was made.'
   );
 } else {
   await fetchShopanaSchema();
+}
+if (process.argv.includes('--schema-only')) {
+  process.exit(0);
 }
 await run(process.execPath, ['scripts/codegen-openapi.mjs']);
 await run(

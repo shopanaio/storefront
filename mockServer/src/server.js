@@ -9,6 +9,7 @@ import { createYoga } from "graphql-yoga";
 import { createMockStore } from "./mock-store.js";
 import { applyResolvers, createContext } from "./resolvers.js";
 import { createApplicationAuthRoutes } from "./application-auth-routes.js";
+import { createApplicationAuthStore } from "./application-auth-store.js";
 
 const schemaPath = fileURLToPath(new URL("../schema.graphql", import.meta.url));
 
@@ -40,24 +41,53 @@ const close = (server) => new Promise((resolveClose, reject) => {
   server.close((error) => error ? reject(error) : resolveClose());
 });
 
+const rejectInvalidCustomerBearer = (request, response, applicationAuthStore) => {
+  const authorization = request.headers.authorization;
+  if (authorization === undefined) return false;
+  const token = typeof authorization === "string" && authorization.startsWith("Bearer ")
+    ? authorization.slice(7).trim()
+    : "";
+  if (token && applicationAuthStore.resolveCustomer(token)) return false;
+
+  response.writeHead(401, {
+    "cache-control": "no-store",
+    "content-type": "application/json; charset=utf-8",
+  });
+  response.end(JSON.stringify({
+    data: null,
+    errors: [{
+      message: "STOREFRONT_CUSTOMER_INVALID",
+      extensions: { code: "STOREFRONT_CUSTOMER_INVALID" },
+    }],
+  }));
+  return true;
+};
+
 export const createMockServer = async ({ fixtures, publicPath }) => {
   if (!publicPath) throw new TypeError("Mock server requires a publicPath.");
 
   const resolvedPublicPath = resolve(publicPath);
   const typeDefs = await readFile(schemaPath, "utf8");
   const store = createMockStore(fixtures);
+  const applicationAuthStore = createApplicationAuthStore({
+    customerStore: store,
+  });
   const schema = applyResolvers(buildSchema(typeDefs), store);
   const yoga = createYoga({
     schema,
     graphqlEndpoint: "/graphql",
     graphiql: true,
-    context: createContext(store),
+    context: createContext(store, applicationAuthStore),
   });
-  const applicationAuthRoutes = createApplicationAuthRoutes();
+  const applicationAuthRoutes = createApplicationAuthRoutes(applicationAuthStore);
 
   const httpServer = createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://mock.local").pathname;
     if (await applicationAuthRoutes(request, response, pathname)) return;
+    if (
+      pathname === "/graphql"
+      && rejectInvalidCustomerBearer(request, response, applicationAuthStore)
+    ) return;
     if (pathname.startsWith("/images/")) {
       const assetPath = resolve(resolvedPublicPath, `.${pathname}`);
       if (!assetPath.startsWith(`${resolvedPublicPath}/`)) {
@@ -80,6 +110,7 @@ export const createMockServer = async ({ fixtures, publicPath }) => {
   });
 
   return {
+    applicationAuthStore,
     httpServer,
     store,
     listen: (options) => listen(httpServer, options),

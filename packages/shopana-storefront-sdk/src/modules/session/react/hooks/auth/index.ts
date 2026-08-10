@@ -1,7 +1,7 @@
 /**
  * Auth Hooks
  *
- * GraphQL mutation hooks for authentication and session management
+ * IAM REST/OAuth hooks for authentication and session management
  */
 
 // Sign In / Sign Up / Sign Out
@@ -10,9 +10,12 @@ export { useSignUp, default as useSignUpDefault } from './useSignUp';
 export { useSignOut, default as useSignOutDefault } from './useSignOut';
 
 // Password Recovery
-export { useForgotPassword, default as useForgotPasswordDefault } from './useForgotPassword';
-export { useResetPassword, default as useResetPasswordDefault } from './useResetPassword';
-
-// Response Handlers
-export { useSignInHandler, default as useSignInHandlerDefault, type SessionData as SignInSessionData, type SignInHandler } from './useSignInHandler';
-export { useSignUpHandler, default as useSignUpHandlerDefault, type SessionData as SignUpSessionData, type SignUpHandler } from './useSignUpHandler';
+export {
+  useForgotPassword,
+  default as useForgotPasswordDefault,
+} from './useForgotPassword';
+export {
+  useResetPassword,
+  default as useResetPasswordDefault,
+} from './useResetPassword';
+export { useApplicationSessions } from './useApplicationSessions';

@@ -13,10 +13,8 @@ import { SessionProvider } from './modules/session/react/context/SessionContext'
 import { createSessionStoreZustand } from './modules/session/react/store/SessionStoreZustand';
 import { ApolloAppProvider } from './next/apollo/ApolloProvider';
 import type { ApolloEnvironmentConfig } from './graphql/apollo/types';
-import {
-  SdkLoadCartQueryDocument,
-  SdkLoadSessionQueryDocument,
-} from './graphql/apollo/generated/operations';
+import { SdkLoadCartQueryDocument } from './graphql/apollo/generated/operations';
+import type { Session } from './modules/session/core/types';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -25,41 +23,41 @@ interface AppProvidersProps {
   shopConfig: ShopConfig;
   cartConfig: CartConfig;
   initialCartId?: string;
+  initialSession?: Session | null;
 }
 
 const HydratedAppProviders: React.FC<
-  Omit<AppProvidersProps, 'environmentConfig' | 'apolloInitialState'>
-> = ({ children, shopConfig, cartConfig, initialCartId }) => {
+  Omit<AppProvidersProps, 'apolloInitialState'>
+> = ({
+  children,
+  environmentConfig,
+  shopConfig,
+  cartConfig,
+  initialCartId,
+  initialSession,
+}) => {
   const cartQuery = useQuery(SdkLoadCartQueryDocument, {
     variables: { checkoutId: initialCartId ?? '' },
     fetchPolicy: 'cache-only',
     skip: !initialCartId,
   });
-  const sessionQuery = useQuery(SdkLoadSessionQueryDocument, {
-    fetchPolicy: 'cache-only',
-  });
   const initialCheckout = cartQuery.data?.checkout ?? null;
   const initialCart = initialCheckout
     ? mapShopanaCheckoutToEntityCart(initialCheckout)
     : null;
-  const initialSession = sessionQuery.data?.session ?? null;
   const [cartStoreInstance] = React.useState(() =>
     createCartStoreZustand(initialCart)
   );
   const [sessionStoreInstance] = React.useState(() =>
-    createSessionStoreZustand(
-      initialSession
-        ? {
-            user: initialSession.user,
-            token: initialSession.accessToken ?? undefined,
-          }
-        : null
-    )
+    createSessionStoreZustand(initialSession)
   );
 
   return (
     <ShopProvider config={shopConfig}>
-      <SessionProvider store={sessionStoreInstance}>
+      <SessionProvider
+        store={sessionStoreInstance}
+        authConfig={environmentConfig.applicationAuth}
+      >
         <CartProvider
           store={cartStoreInstance}
           config={cartConfig}
@@ -86,7 +84,7 @@ export function App({
       environmentConfig={environmentConfig}
       initialState={apolloInitialState}
     >
-      <HydratedAppProviders {...props} />
+      <HydratedAppProviders {...props} environmentConfig={environmentConfig} />
     </ApolloAppProvider>
   );
 }

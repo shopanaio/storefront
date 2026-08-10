@@ -12,7 +12,27 @@ export interface ApolloEnvironmentConfig {
   graphqlUrl: string;
   apiKeyHeader: string;
   apiKey: string;
-  accessTokenCookieName?: string;
+  applicationAuth: ApplicationAuthConfig;
+}
+
+export type ApplicationAuthScope =
+  | 'openid'
+  | 'profile'
+  | 'email'
+  | 'offline_access';
+
+/** Serializable configuration for the public IAM OAuth client. */
+export interface ApplicationAuthConfig {
+  /** IAM origin, for example https://iam.example.com. */
+  iamUrl: string;
+  applicationId: string;
+  clientId: string;
+  /** Exact immutable Storefront API resource/audience. */
+  resource: string;
+  redirectUri: string;
+  postLogoutRedirectUri?: string;
+  scopes?: readonly ApplicationAuthScope[];
+  accessTokenCookieName: string;
 }
 
 /**
