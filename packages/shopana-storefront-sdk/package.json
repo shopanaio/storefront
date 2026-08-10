@@ -15,6 +15,7 @@
     "./next/apollo/server": "./dist/next/apollo/server.js",
     "./next/apollo/loadSerializableQuery": "./dist/next/apollo/loadSerializableQuery.js",
     "./registry": "./dist/registry/index.js",
+    "./modules/account/react": "./dist/modules/account/react/index.js",
     "./package.json": "./package.json",
     ".": "./dist/index.js",
     "./*": "./dist/*"
