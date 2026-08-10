@@ -1,4 +1,5 @@
 import { applicationAuthPage } from './application-auth-page.js';
+import { oauthAuthorizationPage } from './oauth-authorization-page.js';
 
 const routePattern =
   /^\/auth\/applications\/([a-zA-Z0-9-]+)\/(sign-up\/email|sign-in\/email|sign-out|request-password-reset|reset-password|list-sessions|revoke-session|oauth2\/authorize|oauth2\/token|oauth2\/userinfo|oauth2\/revoke)$/;
@@ -130,6 +131,14 @@ export const createApplicationAuthRoutes = (store) => {
         const input = Object.fromEntries(url.searchParams);
         const redirect = new URL(input.redirect_uri);
         const result = store.authorize(applicationId, currentToken, input);
+        if (result.error === 'login_required' && input.prompt !== 'none') {
+          response.writeHead(200, {
+            'cache-control': 'no-store',
+            'content-type': 'text/html; charset=utf-8',
+          });
+          response.end(oauthAuthorizationPage);
+          return true;
+        }
         if (result.error) {
           redirect.searchParams.set('error', result.error);
         } else {

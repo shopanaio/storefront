@@ -6,7 +6,7 @@ import { useSessionContext } from '../../context/SessionContext';
 import { useAuthAction } from './useAuthAction';
 
 export function useApplicationSessions() {
-  const { authClient } = useSessionContext();
+  const { authClient, store } = useSessionContext();
   const [sessions, setSessions] = useState<readonly ApplicationSession[]>([]);
   const loadAction = useCallback(async () => {
     const value = await authClient.listSessions();
@@ -20,9 +20,20 @@ export function useApplicationSessions() {
         setSessions((value) =>
           value.filter((session) => session.token !== token)
         );
+      if (revoked) {
+        try {
+          const currentSession = await authClient.getSession();
+          if (!currentSession) {
+            authClient.clearTokens();
+            store.getState().setSession(null);
+          }
+        } catch {
+          // Revocation succeeded; retain local state on an unrelated network error.
+        }
+      }
       return revoked;
     },
-    [authClient]
+    [authClient, store]
   );
   const load = useAuthAction(loadAction);
   const revoke = useAuthAction(revokeAction);

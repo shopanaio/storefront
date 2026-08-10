@@ -7,6 +7,7 @@ import type { Session } from '../core/types';
 export interface SessionStore {
   // State
   session: Session | null;
+  status: 'loading' | 'authenticated' | 'anonymous';
 
   // Actions
   setSession(session: Session | null): void;
@@ -17,7 +18,7 @@ export interface SessionStore {
 /**
  * Session actions type - only methods, no state
  */
-export type SessionActions = Omit<SessionStore, 'session'>;
+export type SessionActions = Omit<SessionStore, 'session' | 'status'>;
 
 /**
  * Store implementation interface for dependency injection

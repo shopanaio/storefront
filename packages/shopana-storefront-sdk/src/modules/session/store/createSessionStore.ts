@@ -6,6 +6,7 @@ import type { Session } from '../core/types';
  */
 export const defaultSessionState: SessionStore = {
   session: null,
+  status: 'loading',
   setSession: () => {},
   refreshSession: () => {},
   setRefreshSession: () => {},
@@ -26,6 +27,7 @@ export function createSessionStore(
   const initialState: SessionStore = {
     ...defaultSessionState,
     session: initialSession || null,
+    status: initialSession ? 'authenticated' : 'loading',
   };
 
   // Set initial state
@@ -36,6 +38,7 @@ export function createSessionStore(
     storeImpl.setState((state) => ({
       ...state,
       session,
+      status: session ? 'authenticated' : 'anonymous',
     }));
   };
 
@@ -57,6 +60,9 @@ export function createSessionStore(
   return {
     get session() {
       return storeImpl.getState().session;
+    },
+    get status() {
+      return storeImpl.getState().status;
     },
     setSession,
     refreshSession,

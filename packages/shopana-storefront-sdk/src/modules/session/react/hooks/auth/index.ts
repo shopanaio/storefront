@@ -19,3 +19,4 @@ export {
   default as useResetPasswordDefault,
 } from './useResetPassword';
 export { useApplicationSessions } from './useApplicationSessions';
+export { useOAuthAuthorization } from './useOAuthAuthorization';

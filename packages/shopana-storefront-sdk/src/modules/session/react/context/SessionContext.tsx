@@ -139,8 +139,12 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
       .completeAuthorizationCallback()
       .then((session) => {
         setSession(session);
-        const target = safeReturnTo(returnTo) ?? cleanCallbackUrl();
-        window.history.replaceState(null, '', target);
+        const target = safeReturnTo(returnTo);
+        if (target) {
+          window.location.replace(target);
+        } else {
+          window.history.replaceState(null, '', cleanCallbackUrl());
+        }
       })
       .catch(() => {
         setSession(null);
@@ -243,4 +247,9 @@ export const useUser = () => {
 export const useIsAuthenticated = (): boolean => {
   const useStore = useSessionStore();
   return useStore((state) => !!state.session?.user);
+};
+
+export const useSessionStatus = () => {
+  const useStore = useSessionStore();
+  return useStore((state) => state.status);
 };

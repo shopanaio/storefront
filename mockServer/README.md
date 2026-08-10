@@ -33,6 +33,11 @@ application ID and kept only in memory until the server restarts. OTP, email
 delivery, policy enforcement, rate limiting, and other production IAM features
 are intentionally not emulated.
 
+When an authorization request has no active application session, the mock IAM
+renders its own email/password sign-in and sign-up page and then resumes the
+original authorization request. `prompt=none` retains standard non-interactive
+behavior and returns `login_required` to the redirect URI.
+
 The production storefront exchanges an OAuth access token for trusted customer
 context before GraphQL execution. The mock keeps the same client-facing
 boundary: an IAM application session authorizes the OAuth code flow, PKCE S256

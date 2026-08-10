@@ -64,6 +64,7 @@ export class ApplicationAuthClient {
   private refreshPromise: Promise<Session | null> | null = null;
 
   constructor(readonly config: ApplicationAuthConfig) {
+    assertApplicationAuthConfig(config);
     this.applicationBaseUrl = `${config.iamUrl.replace(/\/$/, '')}/auth/applications/${encodeURIComponent(config.applicationId)}`;
   }
 
@@ -386,6 +387,25 @@ export class ApplicationAuthClient {
   }
   private get idTokenKey(): string {
     return `${this.storagePrefix}.idToken`;
+  }
+}
+
+function assertApplicationAuthConfig(
+  config: ApplicationAuthConfig
+): asserts config is ApplicationAuthConfig {
+  const required: readonly (keyof ApplicationAuthConfig)[] = [
+    'iamUrl',
+    'applicationId',
+    'clientId',
+    'resource',
+    'redirectUri',
+    'accessTokenCookieName',
+  ];
+  const missing = required.filter((key) => !config?.[key]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Application auth configuration is missing: ${missing.join(', ')}`
+    );
   }
 }
 
