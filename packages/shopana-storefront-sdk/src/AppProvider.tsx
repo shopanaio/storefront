@@ -9,6 +9,7 @@ import { loadSessionServerQuery } from './modules/session/next/loaders/loadSessi
 import { setEnvironmentConfig } from './config';
 import { mergeApolloCacheStates } from './graphql/apollo/cache';
 import { getApolloRequestClient } from './next/apollo/server';
+import type { LocalizationConfig } from './modules/localization/core/types';
 
 export interface AppProviderProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export interface AppProviderProps {
    * Shop configuration (currency, locale, features)
    */
   shopConfig: ShopConfig;
+  localizationConfig: LocalizationConfig;
   /**
    * Cart configuration
    */
@@ -64,6 +66,7 @@ export async function AppProvider({
   environmentConfig,
   apolloInitialState,
   shopConfig,
+  localizationConfig,
   cartConfig,
 }: AppProviderProps) {
   setEnvironmentConfig(environmentConfig);
@@ -95,6 +98,7 @@ export async function AppProvider({
       environmentConfig={environmentConfig}
       apolloInitialState={initialState}
       shopConfig={shopConfig}
+      localizationConfig={localizationConfig}
       cartConfig={cartConfig}
       initialCartId={preloadedCartQuery?.variables.checkoutId}
       initialSession={initialSession}

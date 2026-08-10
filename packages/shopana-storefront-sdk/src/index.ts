@@ -5,6 +5,12 @@ export { model } from './model/namespace';
 // Re-export main AppProvider
 export { App } from './App';
 export { AppProvider } from './AppProvider';
+export { useLocalization } from './modules/localization/react';
+export type {
+  LocalizationConfig,
+  LocalizationState,
+  LocalePrefixMode,
+} from './modules/localization/core/types';
 export {
   ThemeEditorLayout,
   useThemeEditorAvailable,

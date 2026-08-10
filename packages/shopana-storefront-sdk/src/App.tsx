@@ -15,12 +15,15 @@ import { ApolloAppProvider } from './next/apollo/ApolloProvider';
 import type { ApolloEnvironmentConfig } from './graphql/apollo/types';
 import { SdkLoadCartQueryDocument } from './graphql/apollo/generated/operations';
 import type { Session } from './modules/session/core/types';
+import { LocalizationProvider } from './modules/localization/react';
+import type { LocalizationConfig } from './modules/localization/core/types';
 
 interface AppProvidersProps {
   children: React.ReactNode;
   environmentConfig: ApolloEnvironmentConfig;
   apolloInitialState?: NormalizedCacheObject;
   shopConfig: ShopConfig;
+  localizationConfig: LocalizationConfig;
   cartConfig: CartConfig;
   initialCartId?: string;
   initialSession?: Session | null;
@@ -32,6 +35,7 @@ const HydratedAppProviders: React.FC<
   children,
   environmentConfig,
   shopConfig,
+  localizationConfig,
   cartConfig,
   initialCartId,
   initialSession,
@@ -53,20 +57,26 @@ const HydratedAppProviders: React.FC<
   );
 
   return (
-    <ShopProvider config={shopConfig}>
-      <SessionProvider
-        store={sessionStoreInstance}
-        authConfig={environmentConfig.applicationAuth}
-      >
-        <CartProvider
-          store={cartStoreInstance}
-          config={cartConfig}
-          initialCart={initialCheckout}
+    <LocalizationProvider
+      config={localizationConfig}
+      currentLocale={shopConfig.locale}
+      availableLocales={shopConfig.availableLocales}
+    >
+      <ShopProvider config={shopConfig}>
+        <SessionProvider
+          store={sessionStoreInstance}
+          authConfig={environmentConfig.applicationAuth}
         >
-          {children}
-        </CartProvider>
-      </SessionProvider>
-    </ShopProvider>
+          <CartProvider
+            store={cartStoreInstance}
+            config={cartConfig}
+            initialCart={initialCheckout}
+          >
+            {children}
+          </CartProvider>
+        </SessionProvider>
+      </ShopProvider>
+    </LocalizationProvider>
   );
 };
 
