@@ -82,7 +82,9 @@ export const createMockServer = async ({ fixtures, publicPath }) => {
   const applicationAuthRoutes = createApplicationAuthRoutes(applicationAuthStore);
 
   const httpServer = createServer(async (request, response) => {
-    const pathname = new URL(request.url ?? "/", "http://mock.local").pathname;
+    const pathname = decodeURIComponent(
+      new URL(request.url ?? "/", "http://mock.local").pathname,
+    );
     if (await applicationAuthRoutes(request, response, pathname)) return;
     if (
       pathname === "/graphql"
