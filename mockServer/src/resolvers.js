@@ -169,6 +169,63 @@ const selectedVariant = (store, product, selectedOptions = [], availableFallback
   return selected ?? (availableFallback ? variants.find(({ availableForSale }) => availableForSale) ?? variants[0] : null) ?? null;
 };
 
+const loyaltyBonusForPrice = (price, rateBasisPoints) => money(
+  Number(price?.amount ?? 0) * rateBasisPoints / 10_000,
+  price?.currencyCode ?? "USD",
+);
+
+const loyaltyPresentation = (store, subject) => {
+  const program = store.state.loyaltyProgram;
+  if (!program || program.status !== "ACTIVE") return null;
+  const variants = subject.__typename === "Product"
+    ? subject.variantIds.map((id) => store.get(id)).filter(Boolean)
+    : [subject];
+  if (!variants.length) return null;
+  const bonuses = variants.map(({ price }) => loyaltyBonusForPrice(
+    price,
+    program.earnRateBasisPoints,
+  ));
+  const currencyCode = bonuses[0].currencyCode;
+  const minimum = money(Math.min(...bonuses.map(({ amount }) => Number(amount))), currencyCode);
+  const maximum = money(Math.max(...bonuses.map(({ amount }) => Number(amount))), currencyCode);
+  const copy = {
+    __typename: "LoyaltyOpportunityCopy",
+    headline: `${maximum.amount} ${currencyCode} на бонусний рахунок`,
+    description: "10% від вартості товару буде зараховано після виконання замовлення.",
+    badge: `+${maximum.amount} ${currencyCode}`,
+    accessibilityLabel: `${maximum.amount} ${currencyCode} буде зараховано на бонусний рахунок`,
+    terms: [],
+  };
+  const opportunity = {
+    __typename: "LoyaltyOpportunity",
+    key: `mock-purchase-points:${subject.id}`,
+    type: "PURCHASE",
+    state: "AVAILABLE",
+    reward: {
+      __typename: "LoyaltyMoneyRewardPresentation",
+      kind: program.rewardKind,
+      copy,
+      amount: { __typename: "LoyaltyMoneyRange", minimum, maximum },
+      accuracy: "EXACT",
+    },
+    presentation: copy,
+    remainingUses: null,
+    validUntil: null,
+  };
+
+  return {
+    __typename: "ProductLoyaltyPresentation",
+    primaryOpportunity: opportunity,
+    purchaseOpportunity: opportunity,
+    reviewOpportunity: null,
+    purchaseOpportunities: [opportunity],
+    engagementOpportunities: [],
+    evaluatedAt: store.initialNow,
+    validUntil: null,
+    revision: `mock-loyalty:${subject.id}`,
+  };
+};
+
 const resolvedComponentConfiguration = (store, parentVariant, selections) => {
   const fixture = store.get(parentVariant.componentConfigurationId);
   if (!fixture) return null;
@@ -325,6 +382,7 @@ const specialFields = (store) => ({
   "Product.variants": (product, args) => connection(product.variantIds.map((id) => store.get(id)).filter(Boolean), args),
   "Product.variantBySelectedOptions": (product, { selectedOptions }) => selectedVariant(store, product, selectedOptions),
   "Product.selectedOrFirstAvailableVariant": (product, { selectedOptions }) => selectedVariant(store, product, selectedOptions, true),
+  "Product.loyalty": (product) => loyaltyPresentation(store, product),
   "Product.relatedProducts": (product, args) =>
     recommendationsForProduct(store, product, "relatedProducts", args),
   "Product.frequentlyBoughtTogether": (product, args) =>
@@ -352,6 +410,7 @@ const specialFields = (store) => ({
   "ProductVariant.featuredMedia": (variant) => store.get(variant.featuredMediaId),
   "ProductVariant.componentConfiguration": (variant, { selections }) =>
     resolvedComponentConfiguration(store, variant, selections),
+  "ProductVariant.loyalty": (variant) => loyaltyPresentation(store, variant),
   "ProductVariant.reviews": (variant, args) => connection(sortReviews(store.state.reviews.filter((review) =>
     review.variantId === variant.id && review.status === "PUBLISHED"), args.sort), args),
   "ProductVariant.questions": (variant, args) => connection(sortQuestions(store.state.productQuestions.filter((question) =>

@@ -66,6 +66,9 @@ export interface ProductVariant {
   /** Item availability information */
   stockStatus: StockStatus;
 
+  /** Store credit credited for purchasing one unit of this variant */
+  loyaltyBonus?: Money;
+
   /** Variant creation date and time */
   createdAt: string;
 
