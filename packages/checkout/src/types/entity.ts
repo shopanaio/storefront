@@ -14,8 +14,7 @@ export namespace Checkout {
   export interface Checkout {
     /** A globally-unique ID. */
     id: string;
-    /** Optimistic concurrency version required by checkout mutations. */
-    version: number;
+
     /** Revision of the latest completed checkout calculation. */
     resultRevision: string;
     /** When this checkout was first created. */

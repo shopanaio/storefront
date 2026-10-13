@@ -4,7 +4,6 @@ fragment StorefrontUseCheckoutFragment on Checkout {
   channelCode
   localeCode
   currencyCode
-  version
   resultRevision
   valid
   issues {

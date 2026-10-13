@@ -2,11 +2,10 @@
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
 import { useCartActions } from '../context/CartContext';
-import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
-import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
+import { useCartIdOnly } from './useCartSelectors';
 const useUpdateCartLineQuantity = () => {
   const cartId = useCartIdOnly();
-  const cartVersion = useCartVersionOnly();
+
   const actions = useCartActions();
   const [commit, isInFlight] = useMutation(updateCartLineQuantityMutation);
   const updateQuantity = async (
@@ -27,9 +26,6 @@ const useUpdateCartLineQuantity = () => {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
-    if (cartVersion == null) {
-      throw new Error('Cart version is unavailable');
-    }
     const { revert } = checkoutLinesUpdate({
       lines: [{ lineId: cartItemId, quantity }],
     });
@@ -38,8 +34,6 @@ const useUpdateCartLineQuantity = () => {
         variables: {
           input: {
             checkoutId: cartId,
-            expectedCheckoutVersion: cartVersion,
-            idempotencyKey: createCheckoutIdempotencyKey(),
             lines: [
               {
                 lineId: cartItemId,

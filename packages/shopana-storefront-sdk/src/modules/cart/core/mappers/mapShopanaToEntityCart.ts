@@ -123,7 +123,6 @@ export function mapShopanaCheckoutToEntityCart(
 ): model.Cart {
   return {
     id: checkout.id,
-    version: checkout.version,
     createdAt: toDate(checkout.createdAt),
     updatedAt: toDate(checkout.updatedAt),
     totalQuantity: checkout.totalQuantity,

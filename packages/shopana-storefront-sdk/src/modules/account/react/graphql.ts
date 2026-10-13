@@ -20,7 +20,6 @@ export interface AccountProductActionsQueryData {
       };
     } | null;
     readonly productComparisons: {
-      readonly revision: number;
       readonly nodes: readonly {
         readonly columns: {
           readonly nodes: readonly {
@@ -75,7 +74,6 @@ type ComparisonMutationData<TField extends string> = {
 interface ComparisonMutationVariables {
   readonly input: {
     readonly variantId: string;
-    readonly expectedRevision: number;
     readonly idempotencyKey: string;
   };
 }
@@ -115,7 +113,6 @@ export const accountProductActionsQuery = gql`
         }
       }
       productComparisons {
-        revision
         nodes {
           columns(first: 100) {
             nodes {

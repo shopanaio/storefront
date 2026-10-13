@@ -105,8 +105,7 @@ export function useAccountProductActions({
   ]);
 
   const toggleComparison = React.useCallback(async () => {
-    const expectedRevision = customer?.productComparisons.revision;
-    if (expectedRevision == null) {
+    if (!customer) {
       throw new Error('Product comparisons are not loaded');
     }
 
@@ -115,7 +114,6 @@ export function useAccountProductActions({
         variables: {
           input: {
             variantId,
-            expectedRevision,
             idempotencyKey: crypto.randomUUID(),
           },
         },
@@ -126,7 +124,6 @@ export function useAccountProductActions({
         variables: {
           input: {
             variantId,
-            expectedRevision,
             idempotencyKey: crypto.randomUUID(),
           },
         },
@@ -136,7 +133,7 @@ export function useAccountProductActions({
     await refresh();
   }, [
     addComparisonVariant,
-    customer?.productComparisons.revision,
+    customer,
     isCompared,
     refresh,
     removeComparisonVariant,

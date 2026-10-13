@@ -13,7 +13,6 @@ query SdkAccountProductActionsQuery {
       }
     }
     productComparisons {
-      revision
       nodes {
         columns(first: 100) {
           nodes {

@@ -131,8 +131,6 @@ export function useCreateCheckoutApi(): CheckoutApi {
       }
       return {
         checkoutId: checkout.id,
-        expectedCheckoutVersion: checkout.version,
-        idempotencyKey: createCheckoutIdempotencyKey(),
       };
     };
     return {
@@ -203,7 +201,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
           input: {
             ...input,
             ...mutationContext(),
-            expectedResultRevision: checkout?.resultRevision ?? '',
+            idempotencyKey: createCheckoutIdempotencyKey(),
           },
         });
       },

@@ -3,7 +3,6 @@ mutation StorefrontSubmitCheckoutMutation($input: PlaceOrderInput!) {
     orderId
     placementId
     checkoutId
-    checkoutVersion
     resultRevision
     status
     paymentCollectionId

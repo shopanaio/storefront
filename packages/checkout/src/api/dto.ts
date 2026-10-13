@@ -14,10 +14,7 @@ import type {
   CheckoutPromoCodeRemoveInput,
   PlaceOrderInput,
 } from '#checkout/graphql/operations';
-type MutationContextFields =
-  | 'checkoutId'
-  | 'expectedCheckoutVersion'
-  | 'idempotencyKey';
+type MutationContextFields = 'checkoutId';
 export interface DeliveryMethodUpdateDto extends Omit<
   CheckoutDeliveryMethodUpdateInput,
   MutationContextFields
@@ -68,5 +65,5 @@ export interface DeliveryRecipientsRemoveDto extends Omit<
 > {}
 export interface CheckoutSubmitDto extends Omit<
   PlaceOrderInput,
-  MutationContextFields | 'expectedResultRevision'
+  MutationContextFields | 'idempotencyKey'
 > {}

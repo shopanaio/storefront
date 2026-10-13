@@ -26,12 +26,11 @@
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 import { useCartActions } from '../context/CartContext';
-import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
+import { useCartIdOnly } from './useCartSelectors';
 import { ReplaceCartItemInput } from '../../core/types';
-import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useReplaceCartItem = () => {
   const cartId = useCartIdOnly();
-  const cartVersion = useCartVersionOnly();
+
   const actions = useCartActions();
   const [commit, isInFlight] = useMutation(replaceCartItemMutation);
   const replaceCartItem = async (
@@ -46,9 +45,6 @@ const useReplaceCartItem = () => {
     if (!cartId) {
       console.warn('[useReplaceCartItem] No cart to replace items in');
       return null;
-    }
-    if (cartVersion == null) {
-      throw new Error('Cart version is unavailable');
     }
     return new Promise((resolve, reject) => {
       const { revert } = checkoutLinesReplace({
@@ -65,8 +61,6 @@ const useReplaceCartItem = () => {
         variables: {
           input: {
             checkoutId: cartId,
-            expectedCheckoutVersion: cartVersion,
-            idempotencyKey: createCheckoutIdempotencyKey(),
             lines: [
               {
                 lineId: lineId,

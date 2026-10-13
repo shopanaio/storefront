@@ -8,7 +8,6 @@ import {
 } from '../context/CartContext';
 import useCreateCart from './useCreateCart';
 import type { AddToCartInput } from '../../core/types';
-import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
   const cartStore = useCartStoreApi();
@@ -27,7 +26,7 @@ const useAddItemToCart = () => {
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
       const cartId = cartStore.cart?.id ?? null;
-      const cartVersion = cartStore.cart?.version ?? null;
+
       if (!cartId) {
         return createCart(
           {
@@ -45,9 +44,6 @@ const useAddItemToCart = () => {
           },
           options
         );
-      }
-      if (cartVersion == null) {
-        throw new Error('Cart version is unavailable');
       }
       const { revert } = checkoutLinesAdd({
         lines: [
@@ -70,8 +66,6 @@ const useAddItemToCart = () => {
           variables: {
             input: {
               checkoutId: cartId,
-              expectedCheckoutVersion: cartVersion,
-              idempotencyKey: createCheckoutIdempotencyKey(),
               lines: [
                 {
                   purchasableId,

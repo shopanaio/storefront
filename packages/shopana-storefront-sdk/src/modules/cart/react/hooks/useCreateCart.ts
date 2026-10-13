@@ -8,7 +8,6 @@ import type {
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
 import { useCartConfig, useCartSetters } from '../context/CartContext';
 import type { CreateCartInput } from '../../core/types';
-import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 type CreatedCheckout = SdkCreateCartMutation['checkoutCreate']['checkout'];
 const useCreateCart = () => {
   const { setId, setCartKey } = useCartSetters();
@@ -28,7 +27,6 @@ const useCreateCart = () => {
             channelCode,
             currencyCode: input.currencyCode as CurrencyCode,
             localeCode: input.localeCode as LocaleCode,
-            idempotencyKey: createCheckoutIdempotencyKey(),
             tags: input.tags,
             items: input.items.map((item) => ({
               purchasableId: item.purchasableId,

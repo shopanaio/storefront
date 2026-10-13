@@ -6,7 +6,6 @@ import { createCartStore } from './createCartStore';
 function createCart(): model.Cart {
   return {
     id: 'cart-1',
-    version: 1,
     createdAt: new Date(0),
     updatedAt: new Date(0),
     totalQuantity: 1,

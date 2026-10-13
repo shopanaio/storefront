@@ -2,12 +2,11 @@
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
 import { useCartContext, useCartActions } from '../context/CartContext';
-import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
+import { useCartIdOnly } from './useCartSelectors';
 import { ClearCartInput, UseClearCartReturn } from '../../core/types';
-import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useClearCart = (): UseClearCartReturn => {
   const cartId = useCartIdOnly();
-  const cartVersion = useCartVersionOnly();
+
   const { setCartKey, setId } = useCartContext();
   const actions = useCartActions();
   const [commitClearCart, isInFlight] = useMutation(clearCartMutation);
@@ -25,9 +24,6 @@ const useClearCart = (): UseClearCartReturn => {
         console.warn('[useClearCart] No cart to clear');
         return null;
       }
-      if (cartVersion == null) {
-        throw new Error('Cart version is unavailable');
-      }
       return new Promise((resolve, reject) => {
         const { checkoutClear } = actions;
         const { revert } = checkoutClear();
@@ -35,8 +31,6 @@ const useClearCart = (): UseClearCartReturn => {
           variables: {
             input: {
               checkoutId: currentCartId,
-              expectedCheckoutVersion: cartVersion,
-              idempotencyKey: createCheckoutIdempotencyKey(),
             },
           },
           onCompleted: (response, errors) => {

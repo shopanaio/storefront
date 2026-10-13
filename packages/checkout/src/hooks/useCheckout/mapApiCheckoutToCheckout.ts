@@ -245,7 +245,6 @@ export function mapApiCheckoutToCheckout(
     apiCheckout.payment.selectedPaymentMethod.method;
   return {
     id: apiCheckout.id,
-    version: apiCheckout.version,
     resultRevision: apiCheckout.resultRevision,
     createdAt: toDate(apiCheckout.createdAt),
     updatedAt: toDate(apiCheckout.updatedAt),
