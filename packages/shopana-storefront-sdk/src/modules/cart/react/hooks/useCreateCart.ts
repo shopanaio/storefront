@@ -1,56 +1,76 @@
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { createCartMutation as CreateCartMutationType, CheckoutCreateInput } from '../../core/graphql/mutations/__generated__/createCartMutation.graphql';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
+import type {
+  CurrencyCode,
+  LocaleCode,
+  SdkCreateCartMutation,
+} from '../../../../graphql/apollo/generated/operations';
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
-import { useCartContext } from '../context/CartContext';
-
+import { useCartConfig, useCartSetters } from '../context/CartContext';
+import type { CreateCartInput } from '../../core/types';
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
+type CreatedCheckout = SdkCreateCartMutation['checkoutCreate']['checkout'];
 const useCreateCart = () => {
-  const { setId, setCartKey } = useCartContext();
-  const [commit, isInFlight] = useMutation<CreateCartMutationType>(
-    createCartMutation
-  );
-
+  const { setId, setCartKey } = useCartSetters();
+  const { channelCode } = useCartConfig();
+  const [commit, isInFlight] = useMutation(createCartMutation);
   const createCart = (
-    input: CheckoutCreateInput,
+    input: CreateCartInput,
     options?: {
       onSuccess?: () => void;
       onError?: () => void;
     }
-  ): Promise<
-    CreateCartMutationType['response']['checkoutMutation']['checkoutCreate']
-  > => {
+  ): Promise<CreatedCheckout> => {
     return new Promise((resolve, reject) => {
       commit({
         variables: {
-          input,
+          input: {
+            channelCode,
+            currencyCode: input.currencyCode as CurrencyCode,
+            localeCode: input.localeCode as LocaleCode,
+            idempotencyKey: createCheckoutIdempotencyKey(),
+            tags: input.tags,
+            items: input.items.map((item) => ({
+              purchasableId: item.purchasableId,
+              quantity: item.quantity,
+              tagSlug: item.tagSlug,
+              children: item.children?.map((child) => ({
+                componentItemId: child.componentItemId,
+                purchasableId: child.purchasableId,
+                quantity: child.quantity,
+                attributes: child.attributes,
+              })),
+            })),
+          },
         },
         onCompleted: (response, errors) => {
           if (errors && errors.length > 0) {
             options?.onError?.();
             return reject(errors);
-          } else {
-            const checkout = response?.checkoutMutation?.checkoutCreate;
-            if (!checkout?.id) {
-              alert('No cart ID found in response');
-            }
-            if (checkout) {
-              setId(checkout.id);
-              setCartKey(checkout);
-            }
-            options?.onSuccess?.();
-            return resolve(checkout);
           }
+          if (response.checkoutCreate.errors.length > 0) {
+            options?.onError?.();
+            return reject(response.checkoutCreate.errors);
+          }
+          const checkout = response.checkoutCreate.checkout;
+          if (!checkout) {
+            options?.onError?.();
+            return reject(
+              new Error('No cart found in checkoutCreate response')
+            );
+          }
+          setId(checkout.id);
+          setCartKey(checkout);
+          options?.onSuccess?.();
+          return resolve(checkout);
         },
-        onError: (err) => {
+        onError: (error) => {
           options?.onError?.();
-          reject(err);
+          reject(error);
         },
       });
     });
   };
-
   return { createCart, isLoading: isInFlight };
 };
-
 export default useCreateCart;

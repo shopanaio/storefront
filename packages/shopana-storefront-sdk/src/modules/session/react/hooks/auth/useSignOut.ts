@@ -1,31 +1,31 @@
 'use client';
 
-import { useMutation } from 'react-relay/hooks';
-import type { signOutMutation as SignOutMutationType } from '../../../core/graphql/mutations/__generated__/signOutMutation.graphql';
-import { signOutMutation } from '../../../core/graphql/mutations/signOutMutation';
+import { useCallback } from 'react';
+import { useSessionContext } from '../../context/SessionContext';
+import { useAuthAction } from './useAuthAction';
 
-/**
- * Hook to sign out the current user
- *
- * @returns Relay mutation tuple [commit, isInFlight]
- *
- * @example
- * ```tsx
- * const [signOut, isLoading] = useSignOut();
- *
- * const handleSignOut = () => {
- *   signOut({
- *     variables: {},
- *     onCompleted: () => {
- *       // Sign out successful
- *       // Clear session store, redirect to home, etc.
- *     }
- *   });
- * };
- * ```
- */
-export const useSignOut = () => {
-  return useMutation<SignOutMutationType>(signOutMutation);
-};
+export interface SignOutOptions {
+  redirectTo?: string;
+}
+
+export function useSignOut() {
+  const { authClient, store } = useSessionContext();
+  const action = useCallback(
+    async ({ redirectTo }: SignOutOptions = {}) => {
+      try {
+        await authClient.signOut();
+      } finally {
+        if (redirectTo) {
+          window.location.replace(redirectTo);
+        } else {
+          store.getState().setSession(null);
+        }
+      }
+    },
+    [authClient, store]
+  );
+  const { execute: signOut, ...state } = useAuthAction(action);
+  return { signOut, ...state };
+}
 
 export default useSignOut;

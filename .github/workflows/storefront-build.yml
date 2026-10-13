@@ -10,10 +10,6 @@ on:
         description: Image tag to publish (e.g., 1.2.3 or sandbox-123)
         required: true
         type: string
-      brand:
-        description: Brand suffix (e.g., default, xyz)
-        required: true
-        type: string
       cms:
         description: CMS provider
         required: true
@@ -78,7 +74,6 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" ]]; then
             VERSION=$(echo "${{ github.ref_name }}" | sed 's|releases/||')
             echo "image_tag=${VERSION}" >> $GITHUB_OUTPUT
-            echo "brand=${{ vars.BRAND || 'xyz' }}" >> $GITHUB_OUTPUT
             echo "cms=${{ vars.CMS || 'shopana' }}" >> $GITHUB_OUTPUT
             echo "shopana_graphql_url=${{ vars.SHOPANA_GRAPHQL_URL || 'https://sandbox.shopana.io/api/client/graphql/query' }}" >> $GITHUB_OUTPUT
             echo "next_public_app_url=${{ vars.NEXT_PUBLIC_APP_URL || 'https://bento.shopana.io' }}" >> $GITHUB_OUTPUT
@@ -87,7 +82,6 @@ jobs:
             echo "shopana_api_key=${{ secrets.SHOPANA_API_KEY }}" >> $GITHUB_OUTPUT
           else
             echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
-            echo "brand=${{ inputs.brand }}" >> $GITHUB_OUTPUT
             echo "cms=${{ inputs.cms }}" >> $GITHUB_OUTPUT
             echo "shopana_graphql_url=${{ inputs.shopana_graphql_url }}" >> $GITHUB_OUTPUT
             echo "next_public_app_url=${{ inputs.next_public_app_url }}" >> $GITHUB_OUTPUT
@@ -96,19 +90,11 @@ jobs:
             echo "shopana_api_key=${{ inputs.shopana_api_key }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Validate inputs and brand path
+      - name: Validate inputs
         run: |
           set -euo pipefail
           if [[ -z "${{ steps.vars.outputs.image_tag }}" ]]; then
             echo "image_tag is required" >&2
-            exit 1
-          fi
-          # Ensure brand package exists when brand provided
-          BRAND_DIR="packages/brand-${{ steps.vars.outputs.brand }}"
-          if [[ ! -d "$BRAND_DIR" ]]; then
-            echo "Brand package not found: $BRAND_DIR" >&2
-            echo "Configured in .gitmodules:" >&2
-            sed -n '1,200p' .gitmodules || true
             exit 1
           fi
 
@@ -146,7 +132,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             CMS=${{ steps.vars.outputs.cms }}
-            BRAND=${{ steps.vars.outputs.brand }}
             SHOPANA_GRAPHQL_URL=${{ steps.vars.outputs.shopana_graphql_url }}
             NEXT_PUBLIC_APP_URL=${{ steps.vars.outputs.next_public_app_url }}
             PORT=${{ steps.vars.outputs.port }}
@@ -167,7 +152,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             CMS=${{ steps.vars.outputs.cms }}
-            BRAND=${{ steps.vars.outputs.brand }}
             SHOPANA_GRAPHQL_URL=${{ steps.vars.outputs.shopana_graphql_url }}
             NEXT_PUBLIC_APP_URL=${{ steps.vars.outputs.next_public_app_url }}
             PORT=${{ steps.vars.outputs.port }}

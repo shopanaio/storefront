@@ -5,20 +5,22 @@ import type {
   SectionCollection,
 } from './types';
 import { TemplateDataProvider } from './TemplateDataContext';
-import { Section } from './Section';
+import { Section, type SectionEditorBlockConfig } from './Section';
 
-function resolveBlocks(
-  sectionConfig: SectionConfig<any, any>,
-): BlockInstance[] | undefined {
-  if (!sectionConfig.blocks) return undefined;
+function resolveBlocks(sectionConfig: SectionConfig<any, any>): {
+  blocks?: BlockInstance[];
+  editorBlocks?: SectionEditorBlockConfig[];
+} {
+  if (!sectionConfig.blocks) return {};
 
   const collection = sectionConfig.blocks;
 
   if (!Array.isArray(collection.order)) {
-    return undefined;
+    return {};
   }
 
   const blocks: BlockInstance[] = [];
+  const editorBlocks: SectionEditorBlockConfig[] = [];
 
   for (const blockId of collection.order) {
     const blockConfig = collection[blockId];
@@ -30,14 +32,23 @@ function resolveBlocks(
       component: blockConfig.component,
       settings: blockConfig.settings,
     });
+    editorBlocks.push({
+      id: blockId,
+      settings: blockConfig.settings,
+      schema: blockConfig.schema,
+    });
   }
 
-  return blocks.length ? blocks : undefined;
+  return {
+    blocks: blocks.length ? blocks : undefined,
+    editorBlocks: editorBlocks.length ? editorBlocks : undefined,
+  };
 }
 
 function resolveSections<TData>(
   sections: SectionCollection<TData>,
   data: TData,
+  pageType: PageBuilderProps<TData>['pageType']
 ) {
   if (!Array.isArray(sections.order)) {
     return [];
@@ -51,7 +62,7 @@ function resolveSections<TData>(
         return null;
       }
 
-      const blocks = resolveBlocks(sectionConfig);
+      const { blocks, editorBlocks } = resolveBlocks(sectionConfig);
 
       return (
         <Section
@@ -61,6 +72,9 @@ function resolveSections<TData>(
           blocks={blocks}
           data={data}
           component={sectionConfig.component}
+          schema={sectionConfig.schema}
+          editorScope={pageType}
+          editorBlocks={editorBlocks}
         />
       );
     })
@@ -73,7 +87,7 @@ export function Builder<TData>({
   pageType,
   fallback,
 }: PageBuilderProps<TData>) {
-  const sections = resolveSections(template.sections, data);
+  const sections = resolveSections(template.sections, data, pageType);
 
   if (!sections.length && fallback) {
     return <>{fallback}</>;
@@ -85,4 +99,3 @@ export function Builder<TData>({
     </TemplateDataProvider>
   );
 }
-

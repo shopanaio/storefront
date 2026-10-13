@@ -1,20 +1,15 @@
-"use client";
-
-import { useMutation } from 'react-relay';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
-
 import { useCartActions } from '../context/CartContext';
-import { useCartIdOnly } from './useCartSelectors';
+import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import { RemoveFromCartInput } from '../../core/types';
-
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useRemoveItemFromCart = () => {
   const cartId = useCartIdOnly();
+  const cartVersion = useCartVersionOnly();
   const actions = useCartActions();
-
-  const [commitRemoveLine, isInFlight] = useMutation<any>(
-    removeFromCartMutation
-  );
-
+  const [commitRemoveLine, isInFlight] = useMutation(removeFromCartMutation);
   return {
     removeFromCart: async (
       input: RemoveFromCartInput,
@@ -22,13 +17,15 @@ const useRemoveItemFromCart = () => {
         onSuccess?: () => void;
         onError?: () => void;
       }
-    ): Promise<any> => {
+    ): Promise<unknown> => {
       // If no cart in cookie or context — just exit
       if (!cartId) {
         console.warn('[useRemoveItemFromCart] No cart to remove from');
         return null;
       }
-
+      if (cartVersion == null) {
+        throw new Error('Cart version is unavailable');
+      }
       return new Promise((resolve, reject) => {
         const { checkoutLinesDelete } = actions;
         const { revert } = checkoutLinesDelete({ lineIds: [input.lineId] });
@@ -36,6 +33,8 @@ const useRemoveItemFromCart = () => {
           variables: {
             input: {
               checkoutId: cartId,
+              expectedCheckoutVersion: cartVersion,
+              idempotencyKey: createCheckoutIdempotencyKey(),
               lineIds: [input.lineId],
             },
           },
@@ -44,15 +43,10 @@ const useRemoveItemFromCart = () => {
               revert();
               options?.onError?.();
               return reject(errors);
-            } else if (
-              response?.checkoutMutation?.checkoutLinesDelete?.errors &&
-              response.checkoutMutation.checkoutLinesDelete.errors.length > 0
-            ) {
+            } else if (response.checkoutLinesDelete.errors.length > 0) {
               revert();
               options?.onError?.();
-              return reject(
-                response.checkoutMutation.checkoutLinesDelete.errors
-              );
+              return reject(response.checkoutLinesDelete.errors);
             } else {
               options?.onSuccess?.();
               return resolve(response);
@@ -69,5 +63,4 @@ const useRemoveItemFromCart = () => {
     loading: isInFlight,
   };
 };
-
 export default useRemoveItemFromCart;

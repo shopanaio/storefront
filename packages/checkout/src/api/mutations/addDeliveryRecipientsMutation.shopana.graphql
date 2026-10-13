@@ -1,0 +1,15 @@
+mutation StorefrontAddDeliveryRecipientsMutation(
+  $input: CheckoutDeliveryRecipientsAddInput!
+) {
+  checkoutDeliveryRecipientsAdd(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

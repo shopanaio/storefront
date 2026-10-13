@@ -1,213 +1,45 @@
-# Brand Configuration System
+# Theme package contract
 
-This document describes the brand configuration system that allows dynamic brand switching at build time.
+The storefront is composed as a complete theme workspace. Bite & Crunch is the
+current runnable theme: `@shopana/brand-bite-crunch`.
 
-## Overview
+A theme package owns:
 
-The storefront supports multiple brand configurations through a package-based approach. Each brand has its own package with custom logo, colors, and theme settings.
+- application source (`src`), layouts, templates, UI kit and integrations;
+- static assets (`public`);
+- GraphQL documents and generated theme operations (`codegen`);
+- Storybook and widget scripts;
+- the root `next.config.js` override;
+- its generated `.runtime` directory.
 
-## Available Brands
+The workspace root chooses a theme by delegating to its package name. Runtime
+brand switching and compatibility aliases are intentionally unsupported.
 
-- **default** - Shopana default branding (default)
+## Required scripts
 
-## Switching Brands
+Every runnable theme exposes `runtime:init`, `dev`, `build`, `start`, `codegen`,
+`widgets:build`, and `storybook`.
 
-Set the `BRAND` environment variable when building or running the application:
+## Runtime integration
 
-```bash
-# Build with default branding (or omit BRAND variable)
-BRAND=default yarn build
-yarn build
-```
-
-## How It Works
-
-### 1. Brand Packages
-
-Each brand has its own package in `packages/brand-{name}/`:
-
-```
-packages/
-├── brand-default/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── Logo.tsx
-│   │   ├── config.ts
-│   │   └── index.ts
-│   ├── package.json
-│   └── tsconfig.json
-```
-
-### 2. Dynamic Aliasing
-
-The webpack configuration in `next.config.js` dynamically resolves the `@shopana/brand` alias based on the `BRAND` environment variable:
-
-```javascript
-const brand = process.env.BRAND || 'default';
-config.resolve.alias = {
-  ...config.resolve.alias,
-  '@shopana/brand': path.resolve(`packages/brand-${brand}/src`),
-};
-```
-
-### 3. Main Configuration
-
-The main brand configuration file (`src/brand.config.ts`) re-exports from the dynamically resolved brand package:
-
-```typescript
-export { brandConfig } from '@shopana/brand';
-export type { BrandConfig, LogoProps } from '@shopana/brand';
-```
-
-### 4. Usage in Components
-
-Components use the brand configuration through hooks:
-
-```tsx
-import { useLogo } from '@src/hooks/useLogo';
-
-const MyComponent = () => {
-  const Logo = useLogo();
-  return <Logo size={40} theme="light" />;
-};
-```
-
-### 5. Theme Integration
-
-The brand configuration is integrated into the theme system (`src/components/Theme/Theme.tsx`):
-
-```tsx
-import { brandConfig } from '@src/brand.config';
-
-// Theme configuration
-token: {
-  fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif;',
-  ...(brandConfig.theme.colorPrimary && {
-    colorPrimary: brandConfig.theme.colorPrimary,
-  }),
-}
-```
-
-## Creating a New Brand
-
-1. **Create a new brand package:**
+The runtime CLI is executed with the theme package as its working directory:
 
 ```bash
-mkdir -p packages/brand-mybrand/src/components
+yarn workspace @shopana/brand-bite-crunch runtime:init
 ```
 
-2. **Add package.json:**
+This creates `packages/brand-bite-crunch/.runtime`; `@src` and `@codegen`
+resolve against that same package.
 
-```json
-{
-  "name": "@shopana/brand-mybrand",
-  "version": "1.0.0",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts"
-}
-```
+## Checkout integration
 
-3. **Create your logo component:**
+Themes implement `CheckoutThemeAdapter`, bind it in a theme-owned checkout page,
+and pass that page loader to `registerCheckoutModule`. The checkout package does
+not import theme source or theme aliases.
 
-```tsx
-// packages/brand-mybrand/src/components/Logo.tsx
-export interface MyBrandLogoProps {
-  noText?: boolean;
-  theme?: 'dark' | 'light';
-  size: number;
-  color?: string;
-}
+## Creating a theme
 
-export const MyBrandLogo = ({ size, color = '#000' }: MyBrandLogoProps) => {
-  // Your SVG logo here
-  return <svg>...</svg>;
-};
-```
-
-4. **Create brand configuration:**
-
-```tsx
-// packages/brand-mybrand/src/config.ts
-import { ComponentType } from 'react';
-import { MyBrandLogo } from './components/Logo';
-
-export interface LogoProps {
-  noText?: boolean;
-  theme?: 'dark' | 'light';
-  size: number;
-  color?: string;
-}
-
-export interface BrandConfig {
-  components: {
-    logo: ComponentType<LogoProps>;
-  };
-  theme: {
-    colorPrimary?: string;
-  };
-}
-
-export const brandConfig: BrandConfig = {
-  components: {
-    logo: MyBrandLogo,
-  },
-  theme: {
-    colorPrimary: '#ff0000', // Your brand color
-  },
-};
-```
-
-5. **Export everything:**
-
-```tsx
-// packages/brand-mybrand/src/index.ts
-export { MyBrandLogo } from './components/Logo';
-export type { MyBrandLogoProps } from './components/Logo';
-export { brandConfig } from './config';
-export type { BrandConfig, LogoProps } from './config';
-```
-
-6. **Build with your brand:**
-
-```bash
-BRAND=mybrand yarn build
-```
-
-## Technical Details
-
-- **Build-time resolution**: Brand selection happens at build time through webpack aliases
-- **Type safety**: All brand packages share the same `BrandConfig` interface for type consistency
-- **Zero runtime overhead**: No runtime brand switching logic, everything is resolved at build time
-- **TypeScript support**: Full TypeScript support with proper type inference
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BRAND` | Brand package to use | `default` |
-
-## Troubleshooting
-
-### TypeScript errors after switching brands
-
-Run TypeScript in watch mode or restart your IDE:
-
-```bash
-yarn tsc --watch
-```
-
-### Brand not switching in development
-
-Restart the development server after changing the `BRAND` environment variable:
-
-```bash
-BRAND=default yarn dev
-```
-
-### Logo not displaying
-
-Check that:
-1. The brand package exists in `packages/brand-{name}/`
-2. The logo component is properly exported from `src/index.ts`
-3. The component implements the correct props interface
+Copy the complete theme package contract, assign a new workspace package name,
+provide its config and composition adapters, and point deployment/root delegate
+scripts at that workspace. Do not add a logo-only package or a runtime fallback
+branch.

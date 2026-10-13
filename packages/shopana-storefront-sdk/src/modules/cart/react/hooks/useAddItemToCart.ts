@@ -1,23 +1,20 @@
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { addToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/addToCartMutation.graphql';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
-
-import { useCartActions, useCartConfig } from '../context/CartContext';
+import {
+  useCartActions,
+  useCartConfig,
+  useCartStoreApi,
+} from '../context/CartContext';
 import useCreateCart from './useCreateCart';
-import { useCartIdOnly } from './useCartSelectors';
-import { AddToCartInput } from '../../core/types';
-
+import type { AddToCartInput } from '../../core/types';
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useAddItemToCart = () => {
   const { createCart } = useCreateCart();
-  const cartId = useCartIdOnly();
+  const cartStore = useCartStoreApi();
   const actions = useCartActions();
-  const { defaultCurrency, defaultLocale } = useCartConfig();
-  const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
-    addToCartMutation
-  );
-
+  const { defaultLocale } = useCartConfig();
+  const [commitAddLine, isInFlight] = useMutation(addToCartMutation);
   return {
     addToCart: async (
       input: AddToCartInput,
@@ -29,18 +26,19 @@ const useAddItemToCart = () => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
-
-      // If no cart — create new one
+      const cartId = cartStore.cart?.id ?? null;
+      const cartVersion = cartStore.cart?.version ?? null;
       if (!cartId) {
-        return await createCart(
+        return createCart(
           {
-            currencyCode: purchasableSnapshot.price.currencyCode as any,
+            currencyCode: purchasableSnapshot.price.currencyCode,
             localeCode: defaultLocale,
             items: [
               {
                 purchasableId,
                 quantity,
                 tagSlug: input.tagSlug,
+                children: input.children,
               },
             ],
             tags: input.tags,
@@ -48,14 +46,15 @@ const useAddItemToCart = () => {
           options
         );
       }
-
-      // If cart exists — add product through mutation
-
+      if (cartVersion == null) {
+        throw new Error('Cart version is unavailable');
+      }
       const { revert } = checkoutLinesAdd({
         lines: [
           {
-            purchasableId: purchasableId,
-            quantity: quantity,
+            purchasableId,
+            quantity,
+            children: input.children,
           },
         ],
         pricing: {
@@ -66,45 +65,46 @@ const useAddItemToCart = () => {
           },
         },
       });
-
       return new Promise((resolve, reject) => {
         commitAddLine({
           variables: {
             input: {
               checkoutId: cartId,
+              expectedCheckoutVersion: cartVersion,
+              idempotencyKey: createCheckoutIdempotencyKey(),
               lines: [
                 {
-                  purchasableId: input.purchasableId,
-                  quantity: input.quantity,
+                  purchasableId,
+                  quantity,
                   tagSlug: input.tagSlug,
+                  children: input.children?.map((child) => ({
+                    componentItemId: child.componentItemId,
+                    purchasableId: child.purchasableId,
+                    quantity: child.quantity,
+                    attributes: child.attributes,
+                  })),
                 },
               ],
             },
           },
-          // no Relay optimistic updater — Zustand обеспечивает мгновенный UI
           onCompleted: (response, errors) => {
             if (errors && errors.length > 0) {
               revert();
               onError?.();
               return reject(errors);
-            } else if (
-              response?.checkoutMutation?.checkoutLinesAdd?.errors &&
-              response.checkoutMutation.checkoutLinesAdd.errors.length > 0
-            ) {
+            }
+            if (response.checkoutLinesAdd.errors.length > 0) {
               revert();
               onError?.();
-              return reject(response.checkoutMutation.checkoutLinesAdd.errors);
-            } else {
-              onSuccess?.();
-              return resolve(
-                response?.checkoutMutation?.checkoutLinesAdd?.checkout
-              );
+              return reject(response.checkoutLinesAdd.errors);
             }
+            onSuccess?.();
+            return resolve(response.checkoutLinesAdd.checkout);
           },
-          onError: (err) => {
+          onError: (error) => {
             revert();
             onError?.();
-            reject(err);
+            reject(error);
           },
         });
       });
@@ -112,5 +112,4 @@ const useAddItemToCart = () => {
     isInFlight,
   };
 };
-
 export default useAddItemToCart;

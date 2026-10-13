@@ -5,7 +5,7 @@ import { model } from '../../../model/namespace';
  */
 export interface Session {
   user: model.User | null;
-  token?: string;
+  accessToken: string;
   expiresAt?: string;
 }
 
@@ -15,6 +15,7 @@ export interface Session {
 export interface SignInInput {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 /**
@@ -23,8 +24,11 @@ export interface SignInInput {
 export interface SignUpInput {
   email: string;
   password: string;
+  name: string;
   firstName?: string;
   lastName?: string;
+  image?: string;
+  rememberMe?: boolean;
 }
 
 /**
@@ -32,20 +36,13 @@ export interface SignUpInput {
  */
 export interface ForgotPasswordInput {
   email: string;
+  redirectTo?: string;
 }
 
 /**
  * Input for password reset
  */
 export interface ResetPasswordInput {
-  resetToken: string;
+  token: string;
   newPassword: string;
-}
-
-/**
- * Options for mutation callbacks
- */
-export interface MutationOptions {
-  onSuccess?: () => void;
-  onError?: (error?: any) => void;
 }

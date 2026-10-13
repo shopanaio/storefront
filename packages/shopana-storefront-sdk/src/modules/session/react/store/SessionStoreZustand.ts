@@ -9,6 +9,7 @@ import type { UseBoundStore, StoreApi } from 'zustand';
  */
 export const defaultSessionState: Partial<SessionStore> = {
   session: null,
+  status: 'loading',
   refreshSession: () => {},
 };
 
@@ -21,7 +22,9 @@ export const defaultSessionState: Partial<SessionStore> = {
 export const createSessionStoreVanilla = (initialSession?: Session | null) => {
   return createStore<SessionStore>()((set) => ({
     session: initialSession || null,
-    setSession: (session) => set({ session }),
+    status: initialSession ? 'authenticated' : 'loading',
+    setSession: (session) =>
+      set({ session, status: session ? 'authenticated' : 'anonymous' }),
     refreshSession: () => {},
     setRefreshSession: (fn) => set({ refreshSession: fn }),
   }));
@@ -41,7 +44,9 @@ export interface SessionStoreZustand {
  * @param initialSession - Optional initial session state
  * @returns Object with store and useStore hook
  */
-export const createSessionStoreZustand = (initialSession?: Session | null): SessionStoreZustand => {
+export const createSessionStoreZustand = (
+  initialSession?: Session | null
+): SessionStoreZustand => {
   const store = createSessionStoreVanilla(initialSession);
 
   // Create a Zustand hook using create() from the vanilla store
@@ -64,7 +69,9 @@ export const createSessionStoreZustand = (initialSession?: Session | null): Sess
  */
 export const useSession = create<SessionStore>()((set) => ({
   session: null,
-  setSession: (session) => set({ session }),
+  status: 'loading',
+  setSession: (session) =>
+    set({ session, status: session ? 'authenticated' : 'anonymous' }),
   refreshSession: () => {},
   setRefreshSession: (fn) => set({ refreshSession: fn }),
 }));

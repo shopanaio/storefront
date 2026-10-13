@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile
       args:
         CMS: shopana
-        BRAND: xyz
         SHOPANA_GRAPHQL_URL: ${SHOPANA_GRAPHQL_URL:-https://sandbox.shopana.io/api/client/graphql/query}
         SHOPANA_API_KEY: ${SHOPANA_API_KEY:-}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}

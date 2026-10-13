@@ -1,34 +1,18 @@
 'use client';
 
-import { useMutation } from 'react-relay/hooks';
-import type { forgotPasswordMutation as ForgotPasswordMutationType } from '../../../core/graphql/mutations/__generated__/forgotPasswordMutation.graphql';
-import { forgotPasswordMutation } from '../../../core/graphql/mutations/forgotPasswordMutation';
+import { useCallback } from 'react';
+import type { ForgotPasswordInput } from '../../../core/types';
+import { useSessionContext } from '../../context/SessionContext';
+import { useAuthAction } from './useAuthAction';
 
-/**
- * Hook to request password recovery/reset
- *
- * @returns Relay mutation tuple [commit, isInFlight]
- *
- * @example
- * ```tsx
- * const [forgotPassword, isLoading] = useForgotPassword();
- *
- * const handleForgotPassword = () => {
- *   forgotPassword({
- *     variables: {
- *       input: { email: 'user@example.com' }
- *     },
- *     onCompleted: (data) => {
- *       if (data.requestPasswordRecovery.success) {
- *         // Recovery email sent
- *       }
- *     }
- *   });
- * };
- * ```
- */
-export const useForgotPassword = () => {
-  return useMutation<ForgotPasswordMutationType>(forgotPasswordMutation);
-};
+export function useForgotPassword() {
+  const { authClient } = useSessionContext();
+  const action = useCallback(
+    (input: ForgotPasswordInput) => authClient.requestPasswordReset(input),
+    [authClient]
+  );
+  const { execute: requestPasswordReset, ...state } = useAuthAction(action);
+  return { requestPasswordReset, ...state };
+}
 
 export default useForgotPassword;

@@ -1,0 +1,15 @@
+mutation StorefrontRemovePromoCodeMutation(
+  $input: CheckoutPromoCodeRemoveInput!
+) {
+  checkoutPromoCodeRemove(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

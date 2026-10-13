@@ -12,6 +12,7 @@ export {
   useSession,
   useUser,
   useIsAuthenticated,
+  useSessionStatus,
   type SessionProviderProps,
   type SessionContextValue,
 } from './context/SessionContext';

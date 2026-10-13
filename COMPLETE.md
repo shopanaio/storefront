@@ -1,50 +1,49 @@
-# Главная страница
+# Home Page
 
-[x] Отрендерить разные секции и протестировать
-[x] Исправить слайдеры
-[ ] Сделать на мобильном swiper -> scroll containers
+[x] Render different sections and test them
+[x] Fix sliders
+[ ] On mobile, replace swiper with scroll containers
 
-# Страница продукта
+# Product Page
 
-[ ] Протестировать варианты
-[ ] Протестировать боксы
-[ ] Сделать добавление в корзину бокса
-[ ] Отзывы / Пагинация Сортировка
-[ ] Добавление отзыва
-[ ] Описание продукта отрендерить
-[ ] Сделать нап планшете 1/5 слайда
+[ ] Test variants
+[ ] Test boxes
+[ ] Add box add-to-cart flow
+[ ] Reviews / pagination / sorting
+[ ] Add review
+[ ] Render product description
+[ ] Show 1.5 slides on tablet
 
-# Корзина
+# Cart
 
-[ ] Отображение бокса
+[ ] Box display
 
 # Wishlist
 
-[ ] Сверстать
+[ ] Implement layout
 
-# Авторизация
+# Authentication
 
-[ ] Регистрация/Логин/Сброс восстановление
+[ ] Registration / login / password reset / password recovery
 
-# Категория
+# Category
 
-[ ] Фильтры/Пагинация/Сортировка
-[x] Оставить только price & availability фильтры
-[x] Сделать чтобы сортировка сразу применялась и закрывала drawer
-[ ] Сортировка сортирует неправильно
-[ ] Баг с мерцанием drawer
-[ ] Картинки из апи приходят неправильно отсортированы
+[ ] Filters / pagination / sorting
+[x] Keep only price and availability filters
+[x] Make sorting apply immediately and close the drawer
+[ ] Sorting is incorrect
+[ ] Drawer flickering bug
+[ ] Images from the API arrive in the wrong order
 
-# Поиск
+# Search
 
-[ ] Фильтры/Пагинация/Сортировка
+[ ] Filters / pagination / sorting
 
 # Checkout
 
-[ ] Протестироваь с тегами
-[ ] Протестировать с бандлами
+[ ] Test with tags
+[ ] Test with bundles
 
+# Google Analytics / Rollbar
 
-# Google analitycs / Rollbar
-
-# Заказы пользователя/Signout
+# User Orders / Sign Out

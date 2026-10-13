@@ -1,9 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import type { SessionStore } from '../../store/SessionStore';
 import type { SessionStoreZustand } from '../store/SessionStoreZustand';
 import type { UseBoundStore, StoreApi } from 'zustand';
+import type { ApplicationAuthConfig } from '../../../../graphql/apollo/types';
+import { ApplicationAuthClient } from '../../core/ApplicationAuthClient';
 
 /**
  * Session context value providing store and utilities
@@ -12,21 +19,25 @@ export interface SessionContextValue {
   /**
    * Session store instance (Zustand vanilla store)
    */
-  store: SessionStore;
+  store: StoreApi<SessionStore>;
 
   /**
    * Zustand hook for accessing state with selectors
    * Use this in React components: useSessionStore(s => s.session)
    */
   useStore: UseBoundStore<StoreApi<SessionStore>>;
+  authClient: ApplicationAuthClient;
 }
 
-const SessionContext = createContext<SessionContextValue | undefined>(undefined);
+const SessionContext = createContext<SessionContextValue | undefined>(
+  undefined
+);
 
 export interface SessionContextProviderProps {
   children: ReactNode;
   store: StoreApi<SessionStore>;
   useStore: UseBoundStore<StoreApi<SessionStore>>;
+  authClient: ApplicationAuthClient;
 }
 
 /**
@@ -39,16 +50,20 @@ export function SessionContextProvider({
   children,
   store,
   useStore,
+  authClient,
 }: SessionContextProviderProps) {
   const value = useMemo<SessionContextValue>(
     () => ({
-      store: store as any as SessionStore,
+      store,
       useStore,
+      authClient,
     }),
-    [store, useStore]
+    [store, useStore, authClient]
   );
 
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
 }
 
 /**
@@ -60,6 +75,7 @@ export interface SessionProviderProps {
    * Session store - should be SessionStoreZustand object from createSessionStoreZustand()
    */
   store: SessionStoreZustand;
+  authConfig: ApplicationAuthConfig;
 }
 
 /**
@@ -86,6 +102,7 @@ export interface SessionProviderProps {
 export const SessionProvider: React.FC<SessionProviderProps> = ({
   children,
   store: storeProp,
+  authConfig,
 }) => {
   // Extract store and useStore from prop
   const { storeObject, useStoreHook } = useMemo(() => {
@@ -94,13 +111,73 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
       useStoreHook: storeProp.useStore,
     };
   }, [storeProp]);
+  const authClient = useMemo(
+    () => new ApplicationAuthClient(authConfig),
+    [authConfig]
+  );
+
+  React.useEffect(() => {
+    const setSession = storeObject.getState().setSession;
+    const refresh = async () => {
+      const session =
+        (await authClient.getSession()) ?? (await authClient.refresh());
+      setSession(session);
+    };
+    storeObject.getState().setRefreshSession(() => {
+      void refresh();
+    });
+
+    const query = new URLSearchParams(window.location.search);
+    if (!query.has('code') && !query.has('error')) {
+      if (!storeObject.getState().session) {
+        void refresh().catch(() => setSession(null));
+      }
+      return;
+    }
+    const returnTo = authClient.callbackReturnTo;
+    void authClient
+      .completeAuthorizationCallback()
+      .then((session) => {
+        setSession(session);
+        const target = safeReturnTo(returnTo);
+        if (target) {
+          window.location.replace(target);
+        } else {
+          window.history.replaceState(null, '', cleanCallbackUrl());
+        }
+      })
+      .catch(() => {
+        setSession(null);
+        window.history.replaceState(null, '', cleanCallbackUrl());
+      });
+  }, [authClient, storeObject]);
 
   return (
-    <SessionContextProvider store={storeObject} useStore={useStoreHook}>
+    <SessionContextProvider
+      store={storeObject}
+      useStore={useStoreHook}
+      authClient={authClient}
+    >
       {children}
     </SessionContextProvider>
   );
 };
+
+function cleanCallbackUrl(): string {
+  const url = new URL(window.location.href);
+  ['code', 'state', 'error', 'error_description', 'error_uri'].forEach((key) =>
+    url.searchParams.delete(key)
+  );
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function safeReturnTo(value?: string): string | null {
+  if (!value) return null;
+  const url = new URL(value, window.location.origin);
+  return url.origin === window.location.origin
+    ? `${url.pathname}${url.search}${url.hash}`
+    : null;
+}
 
 /**
  * Hook to access full session context
@@ -170,4 +247,9 @@ export const useUser = () => {
 export const useIsAuthenticated = (): boolean => {
   const useStore = useSessionStore();
   return useStore((state) => !!state.session?.user);
+};
+
+export const useSessionStatus = () => {
+  const useStore = useSessionStore();
+  return useStore((state) => state.status);
 };

@@ -1,6 +1,3 @@
-[submodule "src/modules/storefront-box-builder-module"]
-	path = src/modules/storefront-box-builder-module
-	url = git@github.com:shopanaio/storefront-box-builder-module.git
-[submodule "packages/brand-xyz"]
-	path = packages/brand-xyz
-	url = git@github.com:shopanaio/storefront-brand-piknik.git
+[submodule "packages/brand-bite-crunch"]
+	path = packages/brand-bite-crunch
+	url = git@github.com:shopanaio/storefront-brand-bite-and-crunch.git

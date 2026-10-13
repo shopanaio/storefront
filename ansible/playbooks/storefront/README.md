@@ -27,10 +27,9 @@ Option A — via Ansible playbook (recommended):
 # Build and push latest
 ansible-playbook ansible/playbooks/storefront/build.yml
 
-# With specific tag and brand
+# With a specific tag
 ansible-playbook ansible/playbooks/storefront/build.yml \
-  -e "image_tag=v1.0.0" \
-  -e "BRAND=mybrand"
+  -e "image_tag=v1.0.0"
 
 # Override GraphQL URL/API Key (if needed)
 ansible-playbook ansible/playbooks/storefront/build.yml \
@@ -44,7 +43,6 @@ Option B — manual docker build:
 cd /Users/phl/Projects/shopana-io/services
 docker build -t ghcr.io/${SHOPANA_GHCR_OWNER}/storefront:latest \
   --build-arg CMS=shopana \
-  --build-arg BRAND=default \
   --build-arg SHOPANA_GRAPHQL_URL=/api/client/graphql/query \
   --build-arg SHOPANA_API_KEY="${SHOPANA_API_KEY:-}" \
   storefront
@@ -80,7 +78,6 @@ ansible-playbook ansible/playbooks/storefront/trigger-gh-workflow.yml \
   -e gh_ref=main \
   -e workflow_file=.github/workflows/storefront-build.yml \
   -e image_tag=v1.2.3 \
-  -e BRAND=xyz \
   -e CMS=shopana \
   -e SHOPANA_GRAPHQL_URL=https://sandbox.shopana.io/api/client/graphql/query \
   -e PORT=3000 \

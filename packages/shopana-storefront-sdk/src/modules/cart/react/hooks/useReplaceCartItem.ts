@@ -22,24 +22,18 @@
  * );
  * ```
  */
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { replaceCartItemMutation as ReplaceCartItemMutationType } from '../../core/graphql/mutations/__generated__/replaceCartItemMutation.graphql';
+'use client';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
-
-import { useCartActions, useCartConfig } from '../context/CartContext';
-import { useCartIdOnly } from './useCartSelectors';
+import { useCartActions } from '../context/CartContext';
+import { useCartIdOnly, useCartVersionOnly } from './useCartSelectors';
 import { ReplaceCartItemInput } from '../../core/types';
-
+import { createCheckoutIdempotencyKey } from '../../core/utils/idempotencyKey';
 const useReplaceCartItem = () => {
   const cartId = useCartIdOnly();
+  const cartVersion = useCartVersionOnly();
   const actions = useCartActions();
-  const { defaultCurrency } = useCartConfig();
-  const [commit, isInFlight] = useMutation<ReplaceCartItemMutationType>(
-    replaceCartItemMutation
-  );
-
+  const [commit, isInFlight] = useMutation(replaceCartItemMutation);
   const replaceCartItem = async (
     input: ReplaceCartItemInput,
     options?: {
@@ -53,7 +47,9 @@ const useReplaceCartItem = () => {
       console.warn('[useReplaceCartItem] No cart to replace items in');
       return null;
     }
-
+    if (cartVersion == null) {
+      throw new Error('Cart version is unavailable');
+    }
     return new Promise((resolve, reject) => {
       const { revert } = checkoutLinesReplace({
         lines: [{ lineId, purchasableId, quantity }],
@@ -65,11 +61,12 @@ const useReplaceCartItem = () => {
           },
         },
       });
-
       commit({
         variables: {
           input: {
             checkoutId: cartId,
+            expectedCheckoutVersion: cartVersion,
+            idempotencyKey: createCheckoutIdempotencyKey(),
             lines: [
               {
                 lineId: lineId,
@@ -86,20 +83,13 @@ const useReplaceCartItem = () => {
             revert();
             options?.onError?.();
             return reject(errors);
-          } else if (
-            response?.checkoutMutation?.checkoutLinesReplace?.errors &&
-            response.checkoutMutation.checkoutLinesReplace.errors.length > 0
-          ) {
+          } else if (response.checkoutLinesReplace.errors.length > 0) {
             revert();
             options?.onError?.();
-            return reject(
-              response.checkoutMutation.checkoutLinesReplace.errors
-            );
+            return reject(response.checkoutLinesReplace.errors);
           } else {
             options?.onSuccess?.();
-            return resolve(
-              response?.checkoutMutation?.checkoutLinesReplace?.checkout
-            );
+            return resolve(response.checkoutLinesReplace.checkout);
           }
         },
         onError: (err) => {
@@ -110,8 +100,6 @@ const useReplaceCartItem = () => {
       });
     });
   };
-
   return { replaceCartItem, loading: isInFlight };
 };
-
 export default useReplaceCartItem;

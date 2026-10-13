@@ -1,0 +1,58 @@
+fragment SdkCartFragment_cart on Checkout {
+  __typename
+  id
+  channelCode
+  localeCode
+  currencyCode
+  version
+  resultRevision
+  valid
+  issues {
+    code
+    message
+    severity
+    effect
+    field
+    lineId
+    retryable
+  }
+  createdAt
+  updatedAt
+  totalQuantity
+  cost {
+    subtotalAmount {
+      currencyCode
+      amount
+    }
+    totalDiscountAmount {
+      currencyCode
+      amount
+    }
+    totalTaxAmount {
+      currencyCode
+      amount
+    }
+    totalAmount {
+      currencyCode
+      amount
+    }
+    totalShippingAmount {
+      currencyCode
+      amount
+    }
+  }
+  customerNote
+  notifications {
+    code
+    severity
+    isDismissed
+  }
+  tags {
+    id
+    slug
+    unique
+  }
+  lines {
+    ...SdkCartLineFragment_line
+  }
+}

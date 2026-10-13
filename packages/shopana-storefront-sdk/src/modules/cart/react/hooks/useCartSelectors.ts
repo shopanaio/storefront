@@ -15,6 +15,12 @@ export function useCartIdOnly() {
   return useStore((s) => s.cart?.id ?? null);
 }
 
+/** Checkout version paired with the ID for optimistic concurrency mutations. */
+export function useCartVersionOnly(): number | null {
+  const useStore = useCartStore();
+  return useStore((state) => state.cart?.version ?? null);
+}
+
 /**
  * Lightweight hook that returns only the cart data (without loading/error states)
  * Use this instead of useCart when you don't need loading/error states

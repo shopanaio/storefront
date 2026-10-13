@@ -1,2 +1,9 @@
-export { BrandProvider, useBrand } from './context';
-export type { BrandConfig, LogoProps } from './types';
+export { BrandProvider, useBrand, useColorScheme } from './context';
+export type {
+  BrandConfig,
+  ColorPalette,
+  ColorScheme,
+  ColorSettings,
+  GeneralSettings,
+  LogoProps,
+} from './types';
