@@ -6,6 +6,12 @@ import { createCartStore } from './createCartStore';
 function createCart(): model.Cart {
   return {
     id: 'cart-1',
+    status: 'READY',
+    expiresAt: new Date('2026-08-04'),
+    resultRevision: 'r1',
+    valid: true,
+    loyaltyRedemption: null,
+    loyaltyRewardEntitlementId: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
     totalQuantity: 1,
@@ -45,8 +51,7 @@ describe('createCartStore', () => {
     const store = createCartStore({
       getState: () => state,
       setState: (nextState) => {
-        state =
-          typeof nextState === 'function' ? nextState(state) : nextState;
+        state = typeof nextState === 'function' ? nextState(state) : nextState;
       },
       subscribe: () => () => {},
     });

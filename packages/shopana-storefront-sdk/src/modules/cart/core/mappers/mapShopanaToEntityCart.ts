@@ -3,7 +3,10 @@ import type {
   SdkCartFragment_CartFragment,
   SdkCartLineFragment_LineFragment,
 } from '../../../../graphql/apollo/generated/operations';
-export type DenormalizedShopanaCart = Omit<SdkCartFragment_CartFragment, 'lines'> & {
+export type DenormalizedShopanaCart = Omit<
+  SdkCartFragment_CartFragment,
+  'lines'
+> & {
   readonly lines: ReadonlyArray<SdkCartLineFragment_LineFragment>;
 };
 type ApiMoney = SdkCartLineFragment_LineFragment['cost']['unitPrice'];
@@ -123,6 +126,22 @@ export function mapShopanaCheckoutToEntityCart(
 ): model.Cart {
   return {
     id: checkout.id,
+    status: checkout.status,
+    expiresAt: toDate(checkout.expiresAt),
+    resultRevision: checkout.resultRevision,
+    valid: checkout.valid,
+    loyaltyRewardEntitlementId: checkout.loyaltyRewardEntitlementId ?? null,
+    loyaltyRedemption: checkout.loyaltyRedemption
+      ? {
+          ...checkout.loyaltyRedemption,
+          requestedPoints: checkout.loyaltyRedemption.requestedPoints ?? null,
+          discount: toMoney(checkout.loyaltyRedemption.discount),
+          payableAfterLoyalty: toMoney(
+            checkout.loyaltyRedemption.payableAfterLoyalty
+          ),
+          expiresAt: toDate(checkout.loyaltyRedemption.expiresAt),
+        }
+      : null,
     createdAt: toDate(checkout.createdAt),
     updatedAt: toDate(checkout.updatedAt),
     totalQuantity: checkout.totalQuantity,

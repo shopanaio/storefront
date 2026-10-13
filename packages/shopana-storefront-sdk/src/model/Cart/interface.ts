@@ -1,5 +1,5 @@
-import type { Money } from "../Money";
-import type { ProductVariant } from "../Product/variant";
+import type { Money } from '../Money';
+import type { ProductVariant } from '../Product/variant';
 
 export type CartPurchasable = ProductVariant;
 
@@ -16,8 +16,29 @@ export interface CartLine {
   };
 }
 
+export interface CheckoutLoyaltyRedemption {
+  quoteId: string;
+  revision: string;
+  accountId: string;
+  programId: string;
+  programCode: string;
+  programVersion: number;
+  requestedPoints: number | null;
+  redeemablePoints: number;
+  availablePoints: number;
+  discount: Money;
+  payableAfterLoyalty: Money;
+  expiresAt: Date;
+}
+
 export interface Cart {
   id: string;
+  status: import('../../graphql/apollo/generated/operations').CheckoutLifecycleStatus;
+  expiresAt: Date;
+  resultRevision: string;
+  valid: boolean;
+  loyaltyRedemption: CheckoutLoyaltyRedemption | null;
+  loyaltyRewardEntitlementId: string | null;
 
   createdAt: Date;
   updatedAt: Date;

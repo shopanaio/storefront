@@ -102,6 +102,10 @@ export namespace model {
   export type CartPurchasable = CartTypes.CartPurchasable;
   export type CartLine = CartTypes.CartLine;
   export type Cart = CartTypes.Cart;
+  export type CheckoutLoyaltyRedemption = CartTypes.CheckoutLoyaltyRedemption;
+  export type Collection = import('../modules/storefront').Collection;
+  export type CheckoutPlacement = import('../modules/storefront').CheckoutPlacement;
+  export type ImageTransformInput = import('../modules/storefront').ImageTransformInput;
 
   // Product Variant
   export type StockStatus = VariantTypes.StockStatus;
@@ -119,6 +123,7 @@ export namespace model {
   export type ProductOptionDisplayType = ProductOptionTypes.ProductOptionDisplayType;
   export type ProductOptionValue = ProductOptionTypes.ProductOptionValue;
   export type ProductOption = ProductOptionTypes.ProductOption;
+  export type ProductOptionType = ProductOptionTypes.ProductOptionType;
 
   // Product Feature
   export type ProductFeatureValue = ProductFeatureTypes.ProductFeatureValue;

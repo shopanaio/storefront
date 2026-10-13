@@ -14,6 +14,11 @@ export function createApolloCache(
   overrides: InMemoryCacheConfig = {}
 ): InMemoryCache {
   const baseTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
+    Collection: {
+      fields: {
+        products: cursorConnectionPolicy(['query', 'sort', 'filters']),
+      },
+    },
     Category: {
       fields: {
         products: cursorConnectionPolicy(['sort', 'filters']),
@@ -44,6 +49,14 @@ export function createApolloCache(
     typePolicies: {
       ...baseTypePolicies,
       ...overrides.typePolicies,
+      Collection: {
+        ...baseTypePolicies.Collection,
+        ...overrides.typePolicies?.Collection,
+        fields: {
+          ...baseTypePolicies.Collection?.fields,
+          ...overrides.typePolicies?.Collection?.fields,
+        },
+      },
       Category: {
         ...baseTypePolicies.Category,
         ...overrides.typePolicies?.Category,

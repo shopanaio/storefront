@@ -72,3 +72,6 @@ export type {
   operations as ApplicationAuthOperations,
   paths as ApplicationAuthPaths,
 } from './openapi/application-auth';
+
+export { createStorefrontApi, StorefrontMutationError } from './modules/storefront';
+export type { StorefrontApi } from './modules/storefront';

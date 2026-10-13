@@ -6,6 +6,29 @@ fragment SdkCartFragment_cart on Checkout {
   currencyCode
   resultRevision
   valid
+  status
+  expiresAt
+  loyaltyRewardEntitlementId
+  loyaltyRedemption {
+    quoteId
+    revision
+    accountId
+    programId
+    programCode
+    programVersion
+    requestedPoints
+    redeemablePoints
+    availablePoints
+    discount {
+      amount
+      currencyCode
+    }
+    payableAfterLoyalty {
+      amount
+      currencyCode
+    }
+    expiresAt
+  }
   issues {
     code
     message

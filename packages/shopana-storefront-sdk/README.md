@@ -160,3 +160,62 @@ SDK GraphQL documents live only under `packages/shopana-storefront-sdk/src`.
 The workspace `codegen` command acquires one root `schema.shopana.graphql`
 artifact, then generates SDK and active-theme operations independently from
 that same artifact. Generated files are never edited manually.
+
+## Current Storefront schema API
+
+`createStorefrontApi(client)` is available from the package root and
+`@shopana/storefront-sdk/modules/storefront`. It uses the caller's Apollo client,
+authentication and normalized cache. In React, use `useStorefrontApi()` from
+`@shopana/storefront-sdk/modules/storefront/react`.
+
+```ts
+const api = createStorefrontApi(client);
+const collection = await api.loadCollectionByHandle({ handle: 'summer' });
+const products = await api.loadCollectionProducts({
+  id: collection!.id,
+  first: 20,
+  sort: 'NEWEST',
+});
+const options = await api.loadProductOptions({ id: productId });
+const image = await api.loadImage({
+  id: mediaId,
+  transform: {
+    fit: 'CONTAIN',
+    gravity: 'CENTER',
+    quality: 80,
+    preferredContentType: 'AVIF',
+  },
+});
+```
+
+Collection products support cursors, search, filters and sorting. Subsequent
+pages are fetched from the server and merged into the collection's cached
+connection; search/filter/sort combinations have separate cache entries.
+Collection media supports both pagination directions and nullable media nodes.
+`loadProductOptions` maps options to the domain model, including nullable
+`ProductOption.type` and swatches. The API also exposes page descriptions and
+excerpts, review-media revisions, and comparison cells with their original
+feature or selected-option objects.
+
+The cart model and shared cart fragment include `status`, `expiresAt`, `valid`,
+`resultRevision`, `loyaltyRedemption` and `loyaltyRewardEntitlementId`. Cart and
+loyalty timestamps map to `Date`; loyalty money maps to numeric domain money.
+`useCartStatus`, `useCartExpiresAt` and `useCartLoyaltyRedemption` are available
+from the cart selectors module.
+
+`updateLoyaltyRedemption` and `removeLoyaltyRedemption` accept the schema inputs,
+including points and reward-entitlement selection. Their React counterpart,
+`useLoyaltyRedemption` from the cart hooks module, obtains the active cart ID and
+updates the cart context after successful mutations. Business errors throw
+`StorefrontMutationError` with the original `userErrors`.
+
+`placeOrder` requires a caller-generated idempotency key. Preserve this key when
+retrying the same attempt. `loadCheckoutPlacement` refreshes placement status
+from the server, including `placementState` and the full customer action.
+`handlePlaceOrderCustomerAction(action, handlers)` dispatches `CLIENT_SDK`,
+`REDIRECT` or `INSTRUCTIONS` to app-supplied handlers. The app owns payment SDK
+integration, navigation and instructions presentation.
+
+Internal localization `source*` fields are inaccessible and are not selected by
+SDK operations. Theme integration is a separate step; these APIs do not change
+a theme's queries or UI.
