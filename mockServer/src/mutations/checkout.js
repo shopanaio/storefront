@@ -15,31 +15,23 @@ const guardCheckout = (store, input) => {
   if (!checkout) {
     return { error: checkoutError("CHECKOUT_NOT_FOUND", "The checkout does not exist.", ["checkoutId"]) };
   }
-  if (checkout.version !== input.expectedCheckoutVersion) {
-    return {
-      error: checkoutError(
-        "VERSION_CONFLICT",
-        `Expected checkout version ${input.expectedCheckoutVersion}, but the current version is ${checkout.version}.`,
-        ["expectedCheckoutVersion"],
-        true,
-      ),
-    };
+  if (Date.parse(checkout.expiresAt) <= store.clock && ["OPEN", "READY"].includes(checkout.status)) {
+    checkout.status = "EXPIRED";
   }
   return { checkout };
 };
 
-const withCheckout = (store, scope, input, update) => store.replay(
-  `${scope}:${input.checkoutId}`,
-  input.idempotencyKey,
-  () => {
-    const { checkout, error } = guardCheckout(store, input);
-    if (error) return failed(error);
-    const updateErrors = update(checkout) ?? [];
-    if (updateErrors.length) return failed(...updateErrors);
-    refreshCheckout(store, checkout);
-    return successful(store.touchCheckout(checkout));
-  },
-);
+const withCheckout = (store, input, update) => {
+  const { checkout, error } = guardCheckout(store, input);
+  if (error) return failed(error);
+  if (["PLACED", "EXPIRED", "ABANDONED"].includes(checkout.status)) {
+    return failed(checkoutError("CHECKOUT_NOT_OPEN", "The checkout is no longer editable.", ["checkoutId"]));
+  }
+  const updateErrors = update(checkout) ?? [];
+  if (updateErrors.length) return failed(...updateErrors);
+  refreshCheckout(store, checkout);
+  return successful(store.touchCheckout(checkout));
+};
 
 const updateMoneyCurrency = (value, currencyCode, visited = new WeakSet()) => {
   if (!value || typeof value !== "object" || visited.has(value)) return;
@@ -128,12 +120,20 @@ export const refreshCheckout = (store, checkout) => {
     totalShippingAmount: money(shipping, checkout.currencyCode),
     totalAmount: money(total, checkout.currencyCode),
   };
-  checkout.payment.payableAmount = money(total, checkout.currencyCode);
+  if (checkout.loyaltyRedemption) {
+    const redemption = checkout.loyaltyRedemption;
+    const pointValue = store.state.loyaltyProgram?.pointValue ?? 0.01;
+    redemption.redeemablePoints = Math.min(redemption.redeemablePoints, Math.floor(total / pointValue));
+    redemption.discount = money(redemption.redeemablePoints * pointValue, checkout.currencyCode);
+    redemption.payableAfterLoyalty = money(Math.max(0, total - Number(redemption.discount.amount)), checkout.currencyCode);
+  }
+  checkout.payment.payableAmount = checkout.loyaltyRedemption?.payableAfterLoyalty ?? money(total, checkout.currencyCode);
   checkout.valid = checkout.lines.length > 0 && !checkout.issues.some(({ effect }) => effect === "STOP");
+  if (["OPEN", "READY"].includes(checkout.status)) checkout.status = checkout.valid ? "READY" : "OPEN";
   return checkout;
 };
 
-export const createCheckout = (store, input) => store.replay("checkoutCreate", input.idempotencyKey, () => {
+export const createCheckout = (store, input) => {
   const key = `runtime-${store.next("checkout")}`;
   const now = store.now();
   const checkout = {
@@ -141,7 +141,10 @@ export const createCheckout = (store, input) => store.replay("checkoutCreate", i
     channelCode: input.channelCode,
     localeCode: input.localeCode,
     currencyCode: input.currencyCode,
-    version: 1,
+    status: "OPEN",
+    expiresAt: new Date(Date.parse(now) + 24 * 3_600_000).toISOString(),
+    loyaltyRedemption: null,
+    loyaltyRewardEntitlementId: null,
     resultRevision: `checkout-${key}-r1`,
     valid: true,
     issues: [],
@@ -183,12 +186,56 @@ export const createCheckout = (store, input) => store.replay("checkoutCreate", i
   refreshCheckout(store, checkout);
   store.reindex();
   return successful(checkout);
-});
+};
 
 export const checkoutMutations = (store) => ({
   checkoutCreate: (_, { input }) => createCheckout(store, input),
 
-  checkoutLinesAdd: (_, { input }) => withCheckout(store, "checkoutLinesAdd", input, (checkout) => {
+  checkoutLoyaltyRedemptionUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
+    const program = store.state.loyaltyProgram;
+    if (!program || (input.programId && input.programId !== program.id)) {
+      return [checkoutError("LOYALTY_PROGRAM_NOT_FOUND", "The loyalty program is unavailable.", ["programId"])];
+    }
+    if (!checkout.customerIdentity.customerId) {
+      return [checkoutError("CUSTOMER_REQUIRED", "Loyalty redemption requires a customer.")];
+    }
+    if (input.rewardEntitlementId) {
+      return [checkoutError("LOYALTY_REWARD_NOT_FOUND", "The reward entitlement is unavailable.", ["rewardEntitlementId"])];
+    }
+    if (input.requestedPoints != null && Number(input.requestedPoints) < 0) {
+      return [checkoutError("INVALID_POINTS", "Requested points must not be negative.", ["requestedPoints"])];
+    }
+    const availablePoints = program.availablePoints ?? 0;
+    const total = Number(checkout.cost.totalAmount.amount);
+    const pointValue = program.pointValue ?? 0.01;
+    const redeemablePoints = input.redeemPoints === false ? 0 : Math.min(
+      Number(input.requestedPoints ?? availablePoints), availablePoints, Math.floor(total / pointValue),
+    );
+    const discount = redeemablePoints * pointValue;
+    checkout.loyaltyRedemption = {
+      quoteId: `mock-loyalty-${store.next("loyalty-quote")}`,
+      revision: checkout.resultRevision,
+      accountId: gid("LoyaltyAccount", checkout.customerIdentity.customerId.split("/").at(-1)),
+      programId: program.id,
+      programCode: program.code ?? "mock-loyalty",
+      programVersion: program.version ?? 1,
+      requestedPoints: input.requestedPoints ?? null,
+      redeemablePoints,
+      availablePoints,
+      discount: money(discount, checkout.currencyCode),
+      payableAfterLoyalty: money(Math.max(0, total - discount), checkout.currencyCode),
+      expiresAt: checkout.expiresAt,
+    };
+    return [];
+  }),
+
+  checkoutLoyaltyRedemptionRemove: (_, { input }) => withCheckout(store, input, (checkout) => {
+    checkout.loyaltyRedemption = null;
+    checkout.loyaltyRewardEntitlementId = null;
+    return [];
+  }),
+
+  checkoutLinesAdd: (_, { input }) => withCheckout(store, input, (checkout) => {
     const additions = input.lines.map((line) => createLine(store, checkout, line));
     if (additions.some((line) => !line)) {
       return [checkoutError("PURCHASABLE_NOT_FOUND", "A purchasable item does not exist.", ["lines"] )];
@@ -204,7 +251,7 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutLinesUpdate: (_, { input }) => withCheckout(store, "checkoutLinesUpdate", input, (checkout) => {
+  checkoutLinesUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     const errors = [];
     for (const update of input.lines) {
       const line = checkout.lines.find(({ id }) => id === update.lineId);
@@ -215,7 +262,7 @@ export const checkoutMutations = (store) => ({
     return errors;
   }),
 
-  checkoutLinesReplace: (_, { input }) => withCheckout(store, "checkoutLinesReplace", input, (checkout) => {
+  checkoutLinesReplace: (_, { input }) => withCheckout(store, input, (checkout) => {
     const errors = [];
     for (const replacement of input.lines) {
       const index = checkout.lines.findIndex(({ id }) => id === replacement.lineId);
@@ -237,7 +284,7 @@ export const checkoutMutations = (store) => ({
     return errors;
   }),
 
-  checkoutLinesDelete: (_, { input }) => withCheckout(store, "checkoutLinesDelete", input, (checkout) => {
+  checkoutLinesDelete: (_, { input }) => withCheckout(store, input, (checkout) => {
     const found = new Set(checkout.lines.map(({ id }) => id));
     const missing = input.lineIds.filter((id) => !found.has(id));
     if (missing.length) return [checkoutError("LINE_NOT_FOUND", `Unknown checkout line: ${missing[0]}.`, ["lineIds"])];
@@ -248,43 +295,43 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutLinesClear: (_, { input }) => withCheckout(store, "checkoutLinesClear", input, (checkout) => {
+  checkoutLinesClear: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.lines = [];
     checkout.deliveryGroups = [];
     return [];
   }),
 
-  checkoutCustomerIdentityUpdate: (_, { input }) => withCheckout(store, "checkoutCustomerIdentityUpdate", input, (checkout) => {
+  checkoutCustomerIdentityUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     for (const field of ["email", "phone", "countryCode", "firstName", "lastName", "middleName"]) {
       if (Object.hasOwn(input, field)) checkout.customerIdentity[field] = input[field];
     }
     return [];
   }),
 
-  checkoutCustomerNoteUpdate: (_, { input }) => withCheckout(store, "checkoutCustomerNoteUpdate", input, (checkout) => {
+  checkoutCustomerNoteUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.customerNote = input.note?.trim() || null;
     return [];
   }),
 
-  checkoutLanguageCodeUpdate: (_, { input }) => withCheckout(store, "checkoutLanguageCodeUpdate", input, (checkout) => {
+  checkoutLanguageCodeUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.localeCode = input.localeCode;
     return [];
   }),
 
-  checkoutCurrencyCodeUpdate: (_, { input }) => withCheckout(store, "checkoutCurrencyCodeUpdate", input, (checkout) => {
+  checkoutCurrencyCodeUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.currencyCode = input.currencyCode;
     updateMoneyCurrency(checkout, input.currencyCode);
     return [];
   }),
 
-  checkoutBillingAddressUpdate: (_, { input }) => withCheckout(store, "checkoutBillingAddressUpdate", input, (checkout) => {
+  checkoutBillingAddressUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.billingAddress = input.billingAddress
       ? { ...formatAddress(null, input.billingAddress), data: input.billingAddress.data ?? null }
       : null;
     return [];
   }),
 
-  checkoutDeliveryAddressesAdd: (_, { input }) => withCheckout(store, "checkoutDeliveryAddressesAdd", input, (checkout) => {
+  checkoutDeliveryAddressesAdd: (_, { input }) => withCheckout(store, input, (checkout) => {
     const lineIds = new Set(checkout.lines.map(({ id }) => id));
     if (input.addresses.some(({ checkoutLineIds }) => checkoutLineIds.some((id) => !lineIds.has(id)))) {
       return [checkoutError("LINE_NOT_FOUND", "A delivery destination refers to an unknown line.", ["addresses", "checkoutLineIds"])];
@@ -304,7 +351,7 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutDeliveryAddressesUpdate: (_, { input }) => withCheckout(store, "checkoutDeliveryAddressesUpdate", input, (checkout) => {
+  checkoutDeliveryAddressesUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     const groups = new Map(checkout.deliveryGroups.map((group) => [group.deliveryAddress?.id, group]));
     const errors = [];
     for (const update of input.updates) {
@@ -315,12 +362,12 @@ export const checkoutMutations = (store) => ({
     return errors;
   }),
 
-  checkoutDeliveryAddressesRemove: (_, { input }) => withCheckout(store, "checkoutDeliveryAddressesRemove", input, (checkout) => {
+  checkoutDeliveryAddressesRemove: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.deliveryGroups = checkout.deliveryGroups.filter(({ deliveryAddress }) => !input.addressIds.includes(deliveryAddress?.id));
     return [];
   }),
 
-  checkoutDeliveryMethodUpdate: (_, { input }) => withCheckout(store, "checkoutDeliveryMethodUpdate", input, (checkout) => {
+  checkoutDeliveryMethodUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     const group = checkout.deliveryGroups.find(({ id }) => id === input.deliveryGroupId);
     if (!group) return [checkoutError("DELIVERY_GROUP_NOT_FOUND", "The delivery group does not exist.", ["deliveryGroupId"])];
     const option = group.options.find(({ handle }) => handle === input.optionHandle);
@@ -331,20 +378,20 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutDeliveryRecipientsAdd: (_, { input }) => withCheckout(store, "checkoutDeliveryRecipientsAdd", input, (checkout) =>
+  checkoutDeliveryRecipientsAdd: (_, { input }) => withCheckout(store, input, (checkout) =>
     updateRecipients(checkout, input.recipients)),
 
-  checkoutDeliveryRecipientsUpdate: (_, { input }) => withCheckout(store, "checkoutDeliveryRecipientsUpdate", input, (checkout) =>
+  checkoutDeliveryRecipientsUpdate: (_, { input }) => withCheckout(store, input, (checkout) =>
     updateRecipients(checkout, input.updates)),
 
-  checkoutDeliveryRecipientsRemove: (_, { input }) => withCheckout(store, "checkoutDeliveryRecipientsRemove", input, (checkout) => {
+  checkoutDeliveryRecipientsRemove: (_, { input }) => withCheckout(store, input, (checkout) => {
     for (const group of checkout.deliveryGroups) {
       if (input.deliveryGroupIds.includes(group.id)) group.recipient = null;
     }
     return [];
   }),
 
-  checkoutPromoCodeAdd: (_, { input }) => withCheckout(store, "checkoutPromoCodeAdd", input, (checkout) => {
+  checkoutPromoCodeAdd: (_, { input }) => withCheckout(store, input, (checkout) => {
     const code = input.code.trim().toUpperCase();
     if (checkout.appliedPromoCodes.some((promo) => promo.code === code)) return [];
     const numeric = Number.parseInt(code.match(/\d+/u)?.[0] ?? "10", 10);
@@ -359,12 +406,12 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutPromoCodeRemove: (_, { input }) => withCheckout(store, "checkoutPromoCodeRemove", input, (checkout) => {
+  checkoutPromoCodeRemove: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.appliedPromoCodes = checkout.appliedPromoCodes.filter(({ code }) => code !== input.code.trim().toUpperCase());
     return [];
   }),
 
-  checkoutTagCreate: (_, { input }) => withCheckout(store, "checkoutTagCreate", input, (checkout) => {
+  checkoutTagCreate: (_, { input }) => withCheckout(store, input, (checkout) => {
     if (checkout.tags.some(({ slug }) => slug === input.tag.slug)) {
       return [checkoutError("TAG_ALREADY_EXISTS", "A checkout tag with this slug already exists.", ["tag", "slug"])];
     }
@@ -375,7 +422,7 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutTagUpdate: (_, { input }) => withCheckout(store, "checkoutTagUpdate", input, (checkout) => {
+  checkoutTagUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     const tag = checkout.tags.find(({ id }) => id === input.tagId);
     if (!tag) return [checkoutError("TAG_NOT_FOUND", "The checkout tag does not exist.", ["tagId"])];
     if (input.slug !== null && input.slug !== undefined) tag.slug = input.slug;
@@ -384,13 +431,13 @@ export const checkoutMutations = (store) => ({
     return [];
   }),
 
-  checkoutTagDelete: (_, { input }) => withCheckout(store, "checkoutTagDelete", input, (checkout) => {
+  checkoutTagDelete: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.tags = checkout.tags.filter(({ id }) => id !== input.tagId);
     for (const line of checkout.lines) if (line.tag?.id === input.tagId) line.tag = null;
     return [];
   }),
 
-  checkoutPaymentMethodUpdate: (_, { input }) => withCheckout(store, "checkoutPaymentMethodUpdate", input, (checkout) => {
+  checkoutPaymentMethodUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     const method = checkout.payment.methods.find(({ handle }) => handle === input.methodHandle);
     if (!method) return [checkoutError("PAYMENT_METHOD_NOT_FOUND", "The payment method is not available.", ["methodHandle"])];
     checkout.payment.selection = {

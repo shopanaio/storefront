@@ -210,11 +210,8 @@ const placeOrder = (store, input, context) => store.replay("placeOrder", input.i
   const userErrors = [];
   if (!checkout) userErrors.push(orderError("CHECKOUT_NOT_FOUND", "The checkout does not exist.", ["checkoutId"]));
   else {
-    if (checkout.version !== input.expectedCheckoutVersion) {
-      userErrors.push(orderError("VERSION_CONFLICT", "The checkout version is stale.", ["expectedCheckoutVersion"], true));
-    }
-    if (checkout.resultRevision !== input.expectedResultRevision) {
-      userErrors.push(orderError("REVISION_CONFLICT", "The checkout result revision is stale.", ["expectedResultRevision"], true));
+    if (["PLACED", "EXPIRED", "ABANDONED"].includes(checkout.status) || Date.parse(checkout.expiresAt) <= store.clock) {
+      userErrors.push(orderError("CHECKOUT_NOT_OPEN", "The checkout is no longer available for placement."));
     }
     if (!checkout.valid) userErrors.push(orderError("CHECKOUT_INVALID", "Resolve checkout issues before placing the order."));
     if (!checkout.payment.selection.method) userErrors.push(orderError("PAYMENT_METHOD_REQUIRED", "Select a payment method."));
@@ -231,7 +228,7 @@ const placeOrder = (store, input, context) => store.replay("placeOrder", input.i
   const placement = {
     placementId,
     checkoutId: checkout.id,
-    checkoutVersion: checkout.version,
+    placementState: onlineRedirect ? "PAYMENT_CREATED" : "PLACED",
     resultRevision: checkout.resultRevision,
     orderId: order?.id ?? null,
     status: onlineRedirect ? "REQUIRES_ACTION" : "PAID",
@@ -249,6 +246,8 @@ const placeOrder = (store, input, context) => store.replay("placeOrder", input.i
     paymentFailure: null,
     userErrors: [],
   };
+  checkout.status = "PLACED";
+  checkout.updatedAt = store.now();
   store.state.checkoutPlacements.push(placement);
   store.reindex();
   return placement;
@@ -298,7 +297,6 @@ const orderMutations = (store) => ({
       return { checkout: null, skippedLines, userErrors: [orderError("NO_PURCHASABLE_LINES", "No order lines can be reordered.")] };
     }
     const result = createCheckout(store, {
-      idempotencyKey: `reorder-${input.idempotencyKey}`,
       channelCode: order.channelCode ?? "online-store",
       localeCode: order.localeCode ?? "en",
       currencyCode: order.currencyCode,
@@ -351,9 +349,6 @@ const orderMutations = (store) => ({
     const request = store.state.orderReturnRequests.find(({ id }) => id === input.returnRequestId);
     const order = request && findOwnedOrder(store, context.customer, request.orderId);
     if (!request || !order) return orderFailure(["returnRequest"], orderError("RETURN_REQUEST_NOT_FOUND", "The return request is unavailable."));
-    if (request.revision !== input.expectedRevision) {
-      return orderFailure(["returnRequest"], orderError("VERSION_CONFLICT", "The return request has changed.", ["expectedRevision"], true));
-    }
     if (!request.canCancel) return orderFailure(["returnRequest"], orderError("RETURN_CANNOT_BE_CANCELLED", "The return request cannot be cancelled."));
     request.status = "CANCELLED";
     request.canCancel = false;

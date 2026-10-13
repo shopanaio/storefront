@@ -82,6 +82,16 @@ first available variant. Optional `variantIds` override that selection for
 specific products. Customer records may persist `comparisonVariantIds` and
 `comparisonRevision`. The engine prepares product-page and customer comparison
 matrices and implements the add, remove, and category-clear mutations.
+The selection revision is returned by comparison mutation payloads. Comparison
+matrices expose original `feature` or `selectedOption` objects in each value cell.
+
+Checkout mutations accept the current schema inputs without version or
+idempotency fields. Checkouts expose `status`, `expiresAt`, and `resultRevision`;
+terminal or expired checkouts cannot be edited or placed. Place-order attempts
+retain their schema-defined idempotency key. Loyalty point redemption uses the
+fixture program's optional `availablePoints` (default 0) and `pointValue`
+(default 0.01); reward entitlements are not simulated. Collections are supplied
+as `data.collections`, with `productIds` and `mediaIds` for their connections.
 
 Product recommendation fixtures are supplied as `data.productRecommendations`.
 Each record identifies its source `productId` and contains ordered

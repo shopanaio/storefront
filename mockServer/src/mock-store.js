@@ -3,6 +3,7 @@ import { clone, inferTypeName } from "./helpers.js";
 
 const collectionEntries = (state) => [
   ["Category", state.categories],
+  ["Collection", state.collections],
   ["Facet", state.facets],
   ["Product", state.products],
   ["ProductVariant", state.productVariants],
@@ -38,6 +39,7 @@ export class MockStore {
 
     this.state = clone(data);
     this.state.customers ??= [];
+    this.state.collections ??= [];
     this.state.productComparisons ??= [];
     this.state.productRecommendations ??= [];
     for (const customer of this.state.customers ?? []) {
@@ -184,15 +186,15 @@ export class MockStore {
   }
 
   touchCheckout(checkout) {
-    checkout.version += 1;
-    checkout.resultRevision = `checkout-${checkout.id.split("/").at(-1)}-r${checkout.version}`;
     checkout.updatedAt = this.now();
+    checkout.resultRevision = `checkout-${checkout.id.split("/").at(-1)}-${Date.parse(checkout.updatedAt)}`;
+    if (checkout.loyaltyRedemption) checkout.loyaltyRedemption.revision = checkout.resultRevision;
     this.reindex();
     return checkout;
   }
 
   touchContent(content) {
-    content.revision += 1;
+    if (Object.hasOwn(content, "revision")) content.revision += 1;
     content.updatedAt = this.now();
     content.metrics.updatedAt = content.updatedAt;
     this.reindex();

@@ -2,13 +2,6 @@ import { customerError } from "../helpers.js";
 
 const failure = (...userErrors) => ({ customer: null, revision: null, userErrors });
 
-const conflict = () => customerError(
-  "REVISION_CONFLICT",
-  "The comparison selection has changed.",
-  ["expectedRevision"],
-  true,
-);
-
 const withComparison = (store, scope, input, context, operation) => store.replay(
   `${scope}:${context.customer?.id ?? "anonymous"}`,
   input.idempotencyKey,
@@ -17,7 +10,6 @@ const withComparison = (store, scope, input, context, operation) => store.replay
     if (!customer) {
       return failure(customerError("AUTHENTICATION_REQUIRED", "A customer session is required."));
     }
-    if (customer.comparisonRevision !== input.expectedRevision) return failure(conflict());
 
     const userErrors = operation(customer);
     if (userErrors.length) return failure(...userErrors);

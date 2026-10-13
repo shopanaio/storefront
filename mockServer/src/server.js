@@ -14,6 +14,7 @@ import { createApplicationAuthStore } from "./application-auth-store.js";
 const schemaPath = fileURLToPath(new URL("../schema.graphql", import.meta.url));
 
 const contentTypes = {
+  ".avif": "image/avif",
   ".gif": "image/gif",
   ".jpeg": "image/jpeg",
   ".jpg": "image/jpeg",

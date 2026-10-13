@@ -44,13 +44,10 @@ const contentBase = (store, kind, submission, customer, status) => {
   };
 };
 
-const ownershipError = (store, context, id, expectedRevision) => {
+const ownershipError = (store, context, id) => {
   const content = findContent(store, id);
   if (!content || !store.owns(context.customer, content)) {
     return { error: reviewError("CONTENT_NOT_FOUND", "The review content is unavailable.", ["id"]) };
-  }
-  if (content.revision !== expectedRevision) {
-    return { error: reviewError("REVISION_CONFLICT", "The review content has changed.", ["expectedRevision"]) };
   }
   return { content };
 };
@@ -71,6 +68,7 @@ const reviewMediaFromInput = (store, review, mediaInput) => {
     return {
       id: previous?.id ?? gid("ReviewMedia", `runtime-${store.next("review-media")}`),
       reviewId: review.id,
+      revision: (previous?.revision ?? 0) + 1,
       mediaId: input.mediaId,
       sortIndex: input.sortIndex ?? index,
       caption: input.caption ?? null,
@@ -169,7 +167,7 @@ export const reviewMutations = (store) => ({
   }),
 
   reviewUpdate: (_, { input }, context) => {
-    const { content: review, error } = ownershipError(store, context, input.reviewId, input.expectedRevision);
+    const { content: review, error } = ownershipError(store, context, input.reviewId);
     if (error || review?.__typename !== "Review") return { review: null, userErrors: [error ?? reviewError("REVIEW_NOT_FOUND", "The review is unavailable.")] };
     const validationErrors = validateRatingsAndMedia(store, input.ratings, input.media);
     if (validationErrors.length) return { review: null, userErrors: validationErrors };
@@ -188,7 +186,7 @@ export const reviewMutations = (store) => ({
   },
 
   reviewDelete: (_, { input }, context) => {
-    const { content: review, error } = ownershipError(store, context, input.id, input.expectedRevision);
+    const { content: review, error } = ownershipError(store, context, input.id);
     if (error || review?.__typename !== "Review") return { deletedReviewId: null, userErrors: [error ?? reviewError("REVIEW_NOT_FOUND", "The review is unavailable.")] };
     store.state.reviews = store.state.reviews.filter(({ id }) => id !== review.id);
     store.state.reviewMedia = store.state.reviewMedia.filter(({ reviewId }) => reviewId !== review.id);
@@ -227,7 +225,7 @@ export const reviewMutations = (store) => ({
   }),
 
   productQuestionUpdate: (_, { input }, context) => {
-    const { content: question, error } = ownershipError(store, context, input.productQuestionId, input.expectedRevision);
+    const { content: question, error } = ownershipError(store, context, input.productQuestionId);
     if (error || question?.__typename !== "ProductQuestion") {
       return { productQuestion: null, userErrors: [error ?? reviewError("QUESTION_NOT_FOUND", "The question is unavailable.")] };
     }
@@ -236,7 +234,7 @@ export const reviewMutations = (store) => ({
   },
 
   productQuestionDelete: (_, { input }, context) => {
-    const { content: question, error } = ownershipError(store, context, input.id, input.expectedRevision);
+    const { content: question, error } = ownershipError(store, context, input.id);
     if (error || question?.__typename !== "ProductQuestion") {
       return { deletedProductQuestionId: null, userErrors: [error ?? reviewError("QUESTION_NOT_FOUND", "The question is unavailable.")] };
     }
@@ -251,7 +249,6 @@ export const reviewMutations = (store) => ({
     const errors = [];
     if (question?.__typename !== "ProductQuestion") errors.push(reviewError("QUESTION_NOT_FOUND", "The question is unavailable.", ["productQuestionId"]));
     if (!context.customer) errors.push(reviewError("AUTHENTICATION_REQUIRED", "A customer session is required."));
-    if (question && question.revision !== input.expectedRevision) errors.push(reviewError("REVISION_CONFLICT", "The question has changed.", ["expectedRevision"]));
     if (errors.length) return { productQuestion: null, answer: null, userErrors: errors };
     const answer = {
       ...contentBase(store, "QUESTION_ANSWER", input.content, context.customer, "PENDING"),
@@ -271,7 +268,7 @@ export const reviewMutations = (store) => ({
   }),
 
   productQuestionAnswerUpdate: (_, { input }, context) => {
-    const { content: answer, error } = ownershipError(store, context, input.answerId, input.expectedRevision);
+    const { content: answer, error } = ownershipError(store, context, input.answerId);
     if (error || answer?.__typename !== "ProductQuestionAnswer") {
       return { answer: null, userErrors: [error ?? reviewError("ANSWER_NOT_FOUND", "The answer is unavailable.")] };
     }
@@ -280,7 +277,7 @@ export const reviewMutations = (store) => ({
   },
 
   productQuestionAnswerDelete: (_, { input }, context) => {
-    const { content: answer, error } = ownershipError(store, context, input.id, input.expectedRevision);
+    const { content: answer, error } = ownershipError(store, context, input.id);
     if (error || answer?.__typename !== "ProductQuestionAnswer") {
       return { deletedAnswerId: null, userErrors: [error ?? reviewError("ANSWER_NOT_FOUND", "The answer is unavailable.")] };
     }

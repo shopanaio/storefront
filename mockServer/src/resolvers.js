@@ -353,6 +353,13 @@ const absoluteAssetUrl = (value, request) => {
   return new URL(value, request.url).href;
 };
 
+const localizedContent = (store, entity, locale) => {
+  const requestedLocale = locale ?? store.state.localization.language.code;
+  if (!store.state.localization.availableLanguages.some(({ code }) => code === requestedLocale)) return null;
+  if (entity.content?.locale === requestedLocale) return entity.content;
+  return entity.translations?.find((translation) => translation.locale === requestedLocale) ?? null;
+};
+
 const specialFields = (store) => ({
   "Image.url": (image, _args, context) => absoluteAssetUrl(image.url, context.request),
   "OrderLine.imageUrl": (line, _args, context) => absoluteAssetUrl(line.imageUrl, context.request),
@@ -360,6 +367,13 @@ const specialFields = (store) => ({
   "OnlineStoreNavigationMenuItem.menu": (item) => findContaining(store.state.navigationMenus, item.id, "items"),
   "OnlineStoreNavigationMenuItem.parent": (item) => findParentItem(store.state.navigationMenus, item.id),
   "OnlineStoreNavigationMenuItem.children": (item, args) => connection(item.children, args),
+  "OnlineStoreNavigationMenuItem.label": (item, { locale }) => {
+    const requestedLocale = locale ?? store.state.localization.language.code;
+    if (!store.state.localization.availableLanguages.some(({ code }) => code === requestedLocale)) return null;
+    return requestedLocale === item.sourceLocale ? item.sourceLabel
+      : item.translations?.find((translation) => translation.locale === requestedLocale)?.label ?? null;
+  },
+  "OnlineStorePage.content": (page, { locale }) => localizedContent(store, page, locale),
   "OnlineStoreNavigationTarget.resource": (target) => store.get(target.resourceId),
   "OnlineStoreOpenGraphMetadata.image": (metadata) => store.get(metadata.imageId),
   "OpenGraphMetadata.image": (metadata) => store.get(metadata.imageId),
@@ -373,6 +387,11 @@ const specialFields = (store) => ({
     const products = store.state.products.filter(({ categoryIds }) => categoryIds.includes(category.id));
     return productConnection(store, products, args, { category: true, query: args.query });
   },
+
+  "Collection.media": (collection, args) => connection((collection.mediaIds ?? []).map((id) => store.get(id)), args),
+  "Collection.featuredMedia": (collection) => store.get(collection.featuredMediaId),
+  "Collection.products": (collection, args) => productConnection(store,
+    (collection.productIds ?? []).map((id) => store.get(id)).filter(Boolean), args),
 
   "Product.primaryCategory": (product) => store.get(product.primaryCategoryId),
   "Product.comparison": (product, _args, context) => productComparison(store, product, context.customer),
@@ -521,6 +540,8 @@ const queryResolvers = (store) => ({
   productVariant: (_, { id }) => store.get(id)?.__typename === "ProductVariant" ? store.get(id) : null,
   category: (_, { id }) => store.get(id)?.__typename === "Category" ? store.get(id) : null,
   categoryByHandle: (_, { handle }) => store.byHandle("Category", handle),
+  collection: (_, { id }) => store.get(id)?.__typename === "Collection" ? store.get(id) : null,
+  collectionByHandle: (_, { handle }) => store.byHandle("Collection", handle),
   categories: (_, args) => connection(store.state.categories, args),
   checkout: (_, { id }) => store.get(id)?.__typename === "Checkout" ? store.get(id) : null,
   checkoutPlacement: (_, { id }) => store.state.checkoutPlacements.find((placement) =>

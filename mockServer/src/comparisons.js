@@ -64,15 +64,14 @@ export const customerProductComparisons = (store, customer) => {
   });
 
   return {
-    revision: customer.comparisonRevision,
     nodes,
     totalCount: nodes.length,
     itemCount: variants.length,
   };
 };
 
-const valueCell = (displayValue) => ({ status: "VALUE", displayValue });
-const missingCell = () => ({ status: "MISSING", displayValue: "—" });
+const valueCell = (source) => ({ status: "VALUE", feature: null, selectedOption: null, ...source });
+const missingCell = () => ({ status: "MISSING", feature: null, selectedOption: null });
 
 const buildRows = (store, variants) => {
   const groups = new Map();
@@ -106,20 +105,18 @@ const buildRows = (store, variants) => {
         if (group.options) {
           const selection = variant.selectedOptions?.find((candidate) =>
             (candidate.option?.handle ?? candidate.name) === rowHandle);
-          return selection ? valueCell(selection.value) : missingCell();
+          return selection ? valueCell({ selectedOption: selection }) : missingCell();
         }
 
         const product = store.get(variant.productId);
         const feature = product.features?.find(({ handle }) => handle === rowHandle);
-        const displayValue = feature?.values?.map(({ name: valueName }) => valueName).join(", ");
-        return displayValue ? valueCell(displayValue) : missingCell();
+        return feature?.values?.length ? valueCell({ feature }) : missingCell();
       });
 
       return {
         key: `comparison-row:${groupHandle}:${rowHandle}`,
         name,
         description: null,
-        hasDifferences: new Set(cells.map(({ status, displayValue }) => `${status}:${displayValue}`)).size > 1,
         cells,
       };
     }),
