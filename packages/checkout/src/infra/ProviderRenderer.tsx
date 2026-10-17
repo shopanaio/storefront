@@ -9,6 +9,7 @@ import {
   ProviderProps,
 } from '#checkout/vendors/types';
 import { CheckoutMethodPanel } from '#checkout/components/common/CheckoutMethodPanel';
+import { warnMissingPaymentModule } from '#checkout/infra/warnMissingPaymentModule';
 
 const GenericDeliveryProvider = ({
   availableMethods,
@@ -75,12 +76,48 @@ export const ProviderRenderer = ({
   const activeApi =
     api?.provider === provider && api.moduleType === moduleType ? api : null;
   const { Component, config } = activeApi || {};
+  const { availableMethods } = componentProps;
+
+  /**
+   * A payment method is shown only when its provider module declares it (R3).
+   * Methods without a UI module stay hidden and are reported in dev.
+   */
+  const renderableMethods = useMemo(
+    () =>
+      moduleType === ProviderModuleType.Payment && config
+        ? availableMethods.filter((method) =>
+            config.methods.some((m) => m.code === method.code)
+          )
+        : availableMethods,
+    [moduleType, config, availableMethods]
+  );
+
+  useEffect(() => {
+    if (moduleType !== ProviderModuleType.Payment) {
+      return;
+    }
+
+    if (!loader) {
+      availableMethods.forEach((method) =>
+        warnMissingPaymentModule(provider, method.code, 'provider')
+      );
+      return;
+    }
+
+    if (config) {
+      availableMethods
+        .filter((method) => !renderableMethods.includes(method))
+        .forEach((method) =>
+          warnMissingPaymentModule(provider, method.code, 'method')
+        );
+    }
+  }, [moduleType, loader, config, availableMethods, renderableMethods, provider]);
 
   if (!Component || !config) {
     if (!loader && moduleType === ProviderModuleType.Delivery) {
       return (
         <GenericDeliveryProvider
-          availableMethods={componentProps.availableMethods}
+          availableMethods={availableMethods}
           selectedMethod={componentProps.selectedMethod}
           onSelectMethod={onSelectMethod}
         />
@@ -93,6 +130,7 @@ export const ProviderRenderer = ({
   return (
     <Component
       {...componentProps}
+      availableMethods={renderableMethods}
       provider={provider}
       config={config}
       onSelectMethod={onSelectMethod}

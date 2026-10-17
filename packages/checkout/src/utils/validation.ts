@@ -40,6 +40,8 @@ export interface ProviderMethodBase {
  *
  * It ensures that a value is selected, and if the corresponding provider method
  * defines its own data schema, validates the attached `data` against it.
+ * With `requireMethodModule`, a selected method that no provider module declares
+ * is invalid (such a method is hidden, so the customer has to pick another one).
  *
  * Note: This test is async due to provider config resolution.
  */
@@ -49,17 +51,21 @@ export function buildSelectedProviderMethodSchema<
 >(params: {
   moduleType: ProviderModuleType;
   baseSchema: S;
+  requireMethodModule?: boolean;
   messages?: {
     required?: string;
     notSelected?: string;
     invalid?: string;
+    unavailable?: string;
   };
 }): S {
-  const { moduleType, baseSchema, messages } = params;
+  const { moduleType, baseSchema, requireMethodModule = false, messages } =
+    params;
 
   const requiredMsg = messages?.required ?? 'A method must be selected';
   const notSelectedMsg = messages?.notSelected ?? 'A method must be selected';
   const invalidMsg = messages?.invalid ?? 'Invalid method data';
+  const unavailableMsg = messages?.unavailable ?? 'The method is unavailable';
 
   const enhanced = baseSchema
     .required(requiredMsg)
@@ -76,6 +82,9 @@ export function buildSelectedProviderMethodSchema<
         const config = await resolveProviderConfig(moduleType, provider);
 
         const methodConfig = config?.methods.find((m) => m.code === code);
+        if (!methodConfig && requireMethodModule) {
+          return this.createError({ message: unavailableMsg });
+        }
         if (!methodConfig?.schema) {
           return true;
         }

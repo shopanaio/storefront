@@ -2,19 +2,18 @@
 
 import { useTranslations } from 'next-intl';
 import { CheckoutMethodPanel } from '#checkout/components/common/CheckoutMethodPanel';
-import { BTLogo } from '../Logo';
 import { ProviderMethodComponentProps } from '#checkout/vendors/types';
+import { LiqPayLogo } from '../Logo';
 
 /**
- * Bank Transfer payment method component.
- * Includes CheckoutMethodPanel without additional form.
- * Automatically validates as valid when activated (no form required).
+ * LiqPay payment method: card, Apple Pay and Google Pay on the LiqPay page.
+ * Has no form; the selection alone makes the payment section valid.
  */
-export function BankTransferPaymentMethod({
+export function LiqPayPaymentMethod({
   isActive,
   onActive,
 }: ProviderMethodComponentProps) {
-  const t = useTranslations('Modules.bankTransfer');
+  const t = useTranslations('Modules.liqpay');
 
   return (
     <CheckoutMethodPanel
@@ -22,7 +21,7 @@ export function BankTransferPaymentMethod({
       description={t('payment.description')}
       isActive={isActive}
       onActive={onActive}
-      brand={<BTLogo size={24} />}
+      brand={<LiqPayLogo size={24} />}
       component={null}
     />
   );

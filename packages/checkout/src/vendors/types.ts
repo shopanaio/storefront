@@ -18,14 +18,7 @@ export interface ProviderMethodConfig {
   /** Optional yup schema for this method's data validation */
   schema?: AnySchema;
   /** Full method component that includes CheckoutMethodPanel */
-  Component: FC<{
-    isActive: boolean;
-    onActive: () => void;
-    data?: unknown;
-    onSubmit?: (data: unknown) => void;
-    /** Delivery address for delivery methods (only for delivery providers) */
-    deliveryAddress?: unknown;
-  }>;
+  Component: FC<ProviderMethodComponentProps>;
   /** Initial values for this method (if any) */
   initialValues?: unknown;
 }

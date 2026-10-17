@@ -76,13 +76,22 @@ Sections live under `sections/*` and include:
 ## Provider Plugin System (shipping/payment)
 
 - Types and contracts: `vendors/types.ts` — `ProviderModuleType` (payment/delivery), `ProviderConfig`, `ProviderMethodConfig`, `ProviderModuleApi`, and component props.
-- Module registry: `modules/registry.ts` — minimal typed registry with `register(type, slug, loader)` and `resolve(type, slug)`.
-- Providers autoload: `vendors/autoload.ts` — recursively loads all `register.*` in `vendors/*`.
+- Module registry: `@shopana/storefront-sdk/registry` — modules register by `type` and `slug`; the slug is the provider code from the API (`providerCode`).
+- Providers autoload: `index.ts` — `require.context` loads every `vendors/*/register.*`.
 - Provider render: `infra/ProviderRenderer.tsx` — resolves a provider by `moduleType` and `provider` from the registry, loads the module asynchronously, and renders it, passing `onSelectMethod`, `onUpdateMethodData`, and `deliveryAddress`.
-- Config resolve: `infra/resolveProviderConfig.ts` — extracts synchronously available provider `config` (if present) for validation.
-- Provider examples:
-  - `vendors/novaposta/*` — shipping (warehouse/courier) and cash-on-delivery payment.
-  - `vendors/bank_transfer/*` — bank transfer payment.
+- Config resolve: `infra/resolveProviderConfig.ts` — loads the provider `config` for validation.
+- Provider modules:
+  - `vendors/liqpay/*` — payment module `liqpay`, method `liqpay` (flow `ONLINE`, no customer input).
+  - `vendors/novaposta/*` — shipping (warehouse/courier) and payment module `nova-poshta`, method `nova-poshta-cod` (cash on delivery; the API offers it only with Nova Poshta delivery).
+  - `vendors/shared/createPaymentProvider.tsx` — provider-level component shared by payment modules.
+
+### Payment methods
+
+- Every payment method has its own UI module: the module is found by the method `providerCode`, the method component by its `code`.
+- Methods are rendered in API order (`sections/payment/components/Component.tsx`), one `ProviderRenderer` per method.
+- A method without a module (no provider module, or the module does not declare the method code) is hidden; outside production a `console.warn` names it once (`infra/warnMissingPaymentModule.ts`).
+- Validation (`sections/payment/schema.ts`): a selected method is required, and it must have a UI module; the method data is validated only when the method config declares a `schema`.
+- When the API resets the selection (`selection.status = RESET`), the section shows `resetReason.message` as is and asks to choose a method again.
 
 ## Submit Flow
 
@@ -104,8 +113,9 @@ Sections live under `sections/*` and include:
 
 ## Adding a New Provider
 
-- In `vendors/<provider>/register.ts` register modules for the required `ProviderModuleType` (payment/delivery) via `registerModule`.
+- In `vendors/<provider>/register.ts` register modules for the required `ProviderModuleType` (payment/delivery) via `registerModule`, with the API provider code as `slug`.
 - Export `default` from `module.payment.ts` / `module.shipping.ts` in `ProviderModuleApi` shape with `config` and `Component`.
+- A payment module declares one method config per API method `code`; use `createPaymentProvider` for its `Component`.
 - Provide Yup `schema` for methods if method-level data must be validated.
 - Method components must follow `vendors/types.ts` contracts.
 

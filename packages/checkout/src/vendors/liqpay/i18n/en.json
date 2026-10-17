@@ -1,0 +1,6 @@
+{
+  "payment": {
+    "name": "Card payment online",
+    "description": "Visa, Mastercard, Apple Pay or Google Pay via LiqPay"
+  }
+}

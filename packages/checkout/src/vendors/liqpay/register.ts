@@ -2,10 +2,10 @@ import { ProviderModuleType } from '#checkout/vendors/types';
 import { registerModule } from '@shopana/storefront-sdk/registry';
 
 /**
- * Registers the bank_transfer payment provider module.
+ * Registers the LiqPay payment module under the app provider code.
  */
 registerModule({
   type: ProviderModuleType.Payment,
-  slug: 'bank_transfer',
+  slug: 'liqpay',
   loader: async () => (await import('./module.payment')).default,
 });

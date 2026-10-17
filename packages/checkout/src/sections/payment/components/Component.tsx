@@ -1,17 +1,19 @@
 'use client';
 
-import { Flex } from 'antd';
+import { Alert, Flex } from 'antd';
 import { createStyles } from 'antd-style';
+import { useTranslations } from 'next-intl';
 import { ProviderRenderer } from '#checkout/infra/ProviderRenderer';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { PaymentFormData, PaymentMethod } from '../types';
-import { ProviderModuleType } from '#checkout/vendors/types';
+import { ProviderMethod, ProviderModuleType } from '#checkout/vendors/types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 
 /**
  * View component for the payment section.
  *
- * Pure controlled UI component that renders the payment form.
+ * Renders payment methods in API order, each through the UI module of its
+ * provider; a method without a module is hidden (see ProviderRenderer).
  * Manages local state for optimistic UI updates while API requests are in progress.
  */
 export interface PaymentSectionViewProps {
@@ -21,7 +23,8 @@ export interface PaymentSectionViewProps {
 
 export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
   const { styles } = useStyles();
-  const { paymentMethods, selectedPaymentMethod } = data ?? {};
+  const t = useTranslations('Checkout');
+  const { paymentMethods = [], selectedPaymentMethod, resetReason } = data ?? {};
   const { selectPaymentMethod } = useCheckoutApi();
 
   /**
@@ -42,8 +45,11 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
    * Handle payment method selection with optimistic update
    */
   const handleSelectMethod = useCallback(
-    async (method: { handle: string; code: string; data: unknown; provider: string }) => {
-      // Find full method object from paymentMethods
+    async (selected: ProviderMethod) => {
+      const method = paymentMethods.find((m) => m.handle === selected.handle);
+      if (!method) {
+        return;
+      }
 
       // Optimistically update local state for immediate UI feedback
       setLocalSelectedMethod(method);
@@ -52,7 +58,7 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
         // Call API to persist the selection
         await selectPaymentMethod({
           methodHandle: method.handle,
-          customerInput: method.data,
+          customerInput: selected.data as object | undefined,
         });
       } catch (error) {
         // On error, revert to previous state
@@ -63,38 +69,23 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
     [selectPaymentMethod, selectedPaymentMethod, paymentMethods]
   );
 
-  /**
-   * Group methods by provider with metadata
-   */
-  const methodsByProvider = useMemo(() => {
-    /** Return empty object if no payment methods */
-    if (!paymentMethods?.length) {
-      return {};
-    }
-
-    const grouped = paymentMethods.reduce<
-      Record<string, Array<{ handle: string; code: string; data: unknown; provider: string }>>
-    >((acc, method) => {
-      const { provider, handle, code, data } = method;
-      if (!acc[provider]) {
-        acc[provider] = [];
-      }
-      acc[provider].push({ handle, code, data, provider });
-      return acc;
-    }, {});
-
-    return grouped;
-  }, [paymentMethods]);
-
   return (
     <Flex vertical gap={12} className={styles.container}>
-      {Object.entries(methodsByProvider).map(([provider, methods]) => (
+      {resetReason && !localSelectedMethod && (
+        <Alert
+          type="warning"
+          showIcon
+          message={resetReason.message}
+          description={t('payment-selection-reset')}
+        />
+      )}
+      {paymentMethods.map((method) => (
         <ProviderRenderer
-          key={provider}
+          key={method.handle}
           moduleType={ProviderModuleType.Payment}
-          provider={provider}
-          availableMethods={methods}
-          selectedMethod={localSelectedMethod ?? null}
+          provider={method.provider}
+          availableMethods={[method]}
+          selectedMethod={localSelectedMethod}
           onSelectMethod={handleSelectMethod}
         />
       ))}
