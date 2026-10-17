@@ -50,6 +50,9 @@ fragment SdkCartLineFragment_line on CheckoutLine {
       isAvailable: availableForSale
       currentlyNotInStock
       quantityAvailable
+      inventoryItem {
+        inventoryPolicy
+      }
       selectedOptions {
         name
         value

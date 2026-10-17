@@ -11,6 +11,7 @@ import type {
 } from './types';
 
 const IS_SERVER = typeof window === 'undefined';
+const VISITOR_COOKIE_NAME = 'shopana_storefront_visitor_id';
 
 function getCookieValue(
   cookieName: string,
@@ -46,6 +47,13 @@ export function createApolloClient(
       config.applicationAuth.accessTokenCookieName,
       options.serverCookies
     );
+
+    let visitorId = getCookieValue(VISITOR_COOKIE_NAME, options.serverCookies);
+    if (!visitorId && !IS_SERVER) {
+      visitorId = crypto.randomUUID();
+      document.cookie = `${VISITOR_COOKIE_NAME}=${visitorId}; Path=/; SameSite=Lax; Max-Age=2592000${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+    }
+    if (visitorId) headers['x-shopana-storefront-visitor-id'] = visitorId;
 
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;

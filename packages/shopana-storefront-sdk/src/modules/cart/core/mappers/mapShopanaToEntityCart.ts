@@ -80,7 +80,13 @@ const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
     id,
     iid: id,
     handle: apiPurchasable.handle ?? '',
-    title: apiPurchasable.title ?? '',
+    title:
+      apiPurchasable.title &&
+      apiPurchasable.title !== apiPurchasable.product?.title
+        ? apiPurchasable.title
+        : (apiPurchasable.selectedOptions
+            ?.map((selection) => selection.value)
+            .join(' / ') ?? ''),
     description: '',
     excerpt: '',
     selectedOptions:
@@ -100,7 +106,13 @@ const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
       totalCount: media ? 1 : 0,
     },
     sku: null,
-    stockStatus: { isAvailable: apiPurchasable.isAvailable ?? true },
+    stockStatus: {
+      isAvailable: apiPurchasable.isAvailable ?? true,
+      maxQuantity:
+        apiPurchasable.inventoryItem?.inventoryPolicy === 'DENY'
+          ? apiPurchasable.quantityAvailable
+          : null,
+    },
     createdAt: '',
     updatedAt: '',
     product: createProductReference(apiPurchasable.product, id),

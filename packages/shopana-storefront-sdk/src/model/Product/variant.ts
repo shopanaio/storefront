@@ -10,6 +10,8 @@ import type { ProductGroup } from './ProductGroup';
 export interface StockStatus {
   /** Whether the item is available for purchase */
   isAvailable: boolean;
+  /** Maximum purchasable quantity under DENY inventory policy; null means no limit. */
+  maxQuantity?: number | null;
 }
 
 /**

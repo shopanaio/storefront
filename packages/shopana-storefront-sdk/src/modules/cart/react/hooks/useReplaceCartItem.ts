@@ -1,3 +1,6 @@
+'use client';
+import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import { useCartStoreApi, useCartSetters } from '../context/CartContext';
 /**
  * Hook for replacing cart items in Shopana checkout.
  *
@@ -22,13 +25,14 @@
  * );
  * ```
  */
-'use client';
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
 import { ReplaceCartItemInput } from '../../core/types';
 const useReplaceCartItem = () => {
+  const { setCartKey, enqueueMutation, getConfirmedLineId } = useCartSetters();
+  const cartStore = useCartStoreApi();
   const cartId = useCartIdOnly();
 
   const actions = useCartActions();
@@ -46,9 +50,18 @@ const useReplaceCartItem = () => {
       console.warn('[useReplaceCartItem] No cart to replace items in');
       return null;
     }
-    return new Promise((resolve, reject) => {
-      const { revert } = checkoutLinesReplace({
-        lines: [{ lineId, purchasableId, quantity }],
+    const sourcePurchasableId = cartStore.cart?.lines.find(
+      (line) => line.id === lineId
+    )?.purchasableId;
+    const optimisticEdit = () => {
+      const optimisticLineId = resolveCartLineId(
+        cartStore.cart,
+        lineId,
+        sourcePurchasableId
+      );
+      if (!optimisticLineId) return;
+      checkoutLinesReplace({
+        lines: [{ lineId: optimisticLineId, purchasableId, quantity }],
         pricing: {
           [purchasableId]: {
             unitPrice: purchasableSnapshot.price.amount,
@@ -57,42 +70,46 @@ const useReplaceCartItem = () => {
           },
         },
       });
-      commit({
-        variables: {
-          input: {
-            checkoutId: cartId,
-            lines: [
-              {
-                lineId: lineId,
-                purchasableId: purchasableId,
-                ...(quantity !== undefined && {
-                  quantity: quantity,
-                }),
+    };
+    return enqueueMutation(
+      () =>
+        new Promise((resolve, reject) => {
+          commit({
+            variables: {
+              input: {
+                checkoutId: cartId,
+                lines: [
+                  {
+                    lineId: getConfirmedLineId(lineId, sourcePurchasableId),
+                    purchasableId: purchasableId,
+                    ...(quantity !== undefined && {
+                      quantity: quantity,
+                    }),
+                  },
+                ],
               },
-            ],
-          },
-        },
-        onCompleted: (response, errors) => {
-          if (errors && errors.length > 0) {
-            revert();
-            options?.onError?.();
-            return reject(errors);
-          } else if (response.checkoutLinesReplace.errors.length > 0) {
-            revert();
-            options?.onError?.();
-            return reject(response.checkoutLinesReplace.errors);
-          } else {
-            options?.onSuccess?.();
-            return resolve(response.checkoutLinesReplace.checkout);
-          }
-        },
-        onError: (err) => {
-          revert();
-          options?.onError?.();
-          return reject(err);
-        },
-      });
-    });
+            },
+            onCompleted: (response, errors) => {
+              if (errors && errors.length > 0) {
+                options?.onError?.();
+                return reject(errors);
+              } else if (response.checkoutLinesReplace.errors.length > 0) {
+                options?.onError?.();
+                return reject(response.checkoutLinesReplace.errors);
+              } else {
+                setCartKey(response.checkoutLinesReplace.checkout);
+                options?.onSuccess?.();
+                return resolve(response.checkoutLinesReplace.checkout);
+              }
+            },
+            onError: (err) => {
+              options?.onError?.();
+              return reject(err);
+            },
+          });
+        }),
+      optimisticEdit
+    );
   };
   return { replaceCartItem, loading: isInFlight };
 };

@@ -40,6 +40,14 @@ export interface CartContextValue {
    * Set normalized cart data
    */
   setCartKey: (key: any | null) => void;
+  enqueueMutation: <T>(
+    operation: () => Promise<T>,
+    optimisticEdit?: () => void
+  ) => Promise<T>;
+  getConfirmedLineId: (
+    lineId: string,
+    purchasableId: string | undefined
+  ) => string;
 
   /**
    * Current cart ID
@@ -66,7 +74,14 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 type StableCartContextValue = Pick<
   CartContextValue,
-  'store' | 'useStore' | 'config' | 'cartIdUtils' | 'setCartKey' | 'setId'
+  | 'store'
+  | 'useStore'
+  | 'config'
+  | 'cartIdUtils'
+  | 'setCartKey'
+  | 'setId'
+  | 'enqueueMutation'
+  | 'getConfirmedLineId'
 >;
 
 const StableCartContext = createContext<StableCartContextValue | undefined>(
@@ -80,6 +95,14 @@ export interface CartContextProviderProps {
   config: Required<CartConfig>;
   cartKey: any | null;
   setCartKey: (key: any | null) => void;
+  enqueueMutation: <T>(
+    operation: () => Promise<T>,
+    optimisticEdit?: () => void
+  ) => Promise<T>;
+  getConfirmedLineId: (
+    lineId: string,
+    purchasableId: string | undefined
+  ) => string;
   cartId: string | null;
   setId: (id: string | null) => void;
   isCartLoading: boolean;
@@ -99,6 +122,8 @@ export function CartContextProvider({
   config,
   cartKey,
   setCartKey,
+  enqueueMutation,
+  getConfirmedLineId,
   cartId,
   setId,
   isCartLoading,
@@ -122,6 +147,8 @@ export function CartContextProvider({
       cartIdUtils,
       cartKey,
       setCartKey,
+      enqueueMutation,
+      getConfirmedLineId,
       cartId,
       setId,
       isCartLoading,
@@ -134,6 +161,8 @@ export function CartContextProvider({
       cartIdUtils,
       cartKey,
       setCartKey,
+      enqueueMutation,
+      getConfirmedLineId,
       cartId,
       setId,
       isCartLoading,
@@ -148,9 +177,20 @@ export function CartContextProvider({
       config,
       cartIdUtils,
       setCartKey,
+      enqueueMutation,
+      getConfirmedLineId,
       setId,
     }),
-    [store, useStore, config, cartIdUtils, setCartKey, setId]
+    [
+      store,
+      useStore,
+      config,
+      cartIdUtils,
+      setCartKey,
+      setId,
+      enqueueMutation,
+      getConfirmedLineId,
+    ]
   );
 
   return (
@@ -214,8 +254,9 @@ export function useCartStoreApi(): CartStore {
 
 /** Returns stable cart setters without subscribing to cart metadata. */
 export function useCartSetters() {
-  const { setCartKey, setId } = useStableCartContext();
-  return { setCartKey, setId };
+  const { setCartKey, setId, enqueueMutation, getConfirmedLineId } =
+    useStableCartContext();
+  return { setCartKey, setId, enqueueMutation, getConfirmedLineId };
 }
 
 /**

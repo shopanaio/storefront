@@ -1,11 +1,19 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from 'react';
 import { useQuery } from '@apollo/client/react';
 import { CartContextProvider } from '../context/CartContext';
 import type { CartStore } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartConfig } from '../../core/config';
+import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import { createCartMutationQueue } from '../../core/utils/mutationQueue';
 import { createCartIdUtils } from '../../core/utils/cartId';
 import type { CartStoreZustand } from '../store/CartStoreZustand';
 import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
@@ -70,6 +78,28 @@ export const CartProvider: React.FC<CartProviderProps> = ({
   const [cartId, setCartId] = useState<string | null>(
     initialCheckout?.id ?? null
   );
+  const confirmed = useRef({
+    checkout: initialCheckout,
+    cart: storeObject.cart,
+  });
+  const reconcileMutations = useCallback(
+    (optimisticEdits: ReadonlyArray<() => void>) => {
+      setCartKey(confirmed.current.checkout);
+      storeObject.setCart(confirmed.current.cart);
+      for (const edit of optimisticEdits) edit();
+    },
+    [storeObject]
+  );
+  // The queue stores this callback and invokes it after each mutation settles.
+  // eslint-disable-next-line react-hooks/refs
+  const [mutationQueue] = useState(() =>
+    createCartMutationQueue(reconcileMutations)
+  );
+  const enqueueMutation = useCallback(
+    <T,>(operation: () => Promise<T>, optimisticEdit?: () => void) =>
+      mutationQueue.run(operation, optimisticEdit),
+    [mutationQueue]
+  );
   const cookieCartId = cartId ?? cartIdUtils.getCartIdFromCookie();
   const shouldLoad =
     !initialCheckout && !storeObject.cart && Boolean(cookieCartId);
@@ -82,14 +112,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     const checkout = query.data?.checkout ?? initialCheckout;
     if (checkout) {
       // Keep the public mutable cart-key contract synchronized with Apollo results.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCartKey(checkout);
-      setCartId(checkout.id);
-      storeObject.setCart(mapShopanaCheckoutToEntityCart(checkout));
+      if (mutationQueue.pending === 0) {
+        const cart = mapShopanaCheckoutToEntityCart(checkout);
+        confirmed.current = { checkout, cart };
+        setCartKey(checkout);
+        setCartId(checkout.id);
+        storeObject.setCart(cart);
+      }
     } else if (!shouldLoad && !storeObject.cart) {
       storeObject.setCart(null);
     } else if (!query.loading && shouldLoad && !query.data?.checkout) {
       cartIdUtils.removeCartIdCookie();
+      confirmed.current = { checkout: null, cart: null };
       setCartId(null);
       setCartKey(null);
       storeObject.setCart(null);
@@ -101,7 +135,32 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     query.loading,
     shouldLoad,
     storeObject,
+    mutationQueue,
   ]);
+
+  const handleSetCartKey = useCallback(
+    (checkout: SdkCartFragment_CartFragment | null) => {
+      const cart = checkout ? mapShopanaCheckoutToEntityCart(checkout) : null;
+      confirmed.current = { checkout, cart };
+      if (mutationQueue.pending > 0) return;
+      setCartKey(checkout);
+      storeObject.setCart(cart);
+    },
+    [storeObject, mutationQueue]
+  );
+
+  const getConfirmedLineId = useCallback(
+    (lineId: string, purchasableId: string | undefined) => {
+      const id = resolveCartLineId(
+        confirmed.current.cart,
+        lineId,
+        purchasableId
+      );
+      if (!id) throw new Error('Cart line is unavailable');
+      return id;
+    },
+    []
+  );
 
   const handleSetCartId = useCallback(
     (id: string | null) => {
@@ -118,7 +177,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       useStore={useStoreHook}
       config={config}
       cartKey={cartKey}
-      setCartKey={setCartKey}
+      setCartKey={handleSetCartKey}
+      enqueueMutation={enqueueMutation}
+      getConfirmedLineId={getConfirmedLineId}
       cartId={cartId}
       setId={handleSetCartId}
       isCartLoading={query.loading}

@@ -1,4 +1,5 @@
 'use client';
+import { useCartSetters } from '../context/CartContext';
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
 import {
@@ -9,6 +10,7 @@ import {
 import useCreateCart from './useCreateCart';
 import type { AddToCartInput } from '../../core/types';
 const useAddItemToCart = () => {
+  const { setCartKey, enqueueMutation } = useCartSetters();
   const { createCart } = useCreateCart();
   const cartStore = useCartStoreApi();
   const actions = useCartActions();
@@ -45,63 +47,66 @@ const useAddItemToCart = () => {
           options
         );
       }
-      const { revert } = checkoutLinesAdd({
-        lines: [
-          {
-            purchasableId,
-            quantity,
-            children: input.children,
-          },
-        ],
-        pricing: {
-          [purchasableId]: {
-            unitPrice: purchasableSnapshot.price.amount,
-            compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode: purchasableSnapshot.price.currencyCode,
-          },
-        },
-      });
-      return new Promise((resolve, reject) => {
-        commitAddLine({
-          variables: {
-            input: {
-              checkoutId: cartId,
-              lines: [
-                {
-                  purchasableId,
-                  quantity,
-                  tagSlug: input.tagSlug,
-                  children: input.children?.map((child) => ({
-                    componentItemId: child.componentItemId,
-                    purchasableId: child.purchasableId,
-                    quantity: child.quantity,
-                    attributes: child.attributes,
-                  })),
-                },
-              ],
+      const optimisticEdit = () =>
+        checkoutLinesAdd({
+          lines: [
+            {
+              purchasableId,
+              quantity,
+              children: input.children,
+            },
+          ],
+          pricing: {
+            [purchasableId]: {
+              unitPrice: purchasableSnapshot.price.amount,
+              compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
+              currencyCode: purchasableSnapshot.price.currencyCode,
             },
           },
-          onCompleted: (response, errors) => {
-            if (errors && errors.length > 0) {
-              revert();
-              onError?.();
-              return reject(errors);
-            }
-            if (response.checkoutLinesAdd.errors.length > 0) {
-              revert();
-              onError?.();
-              return reject(response.checkoutLinesAdd.errors);
-            }
-            onSuccess?.();
-            return resolve(response.checkoutLinesAdd.checkout);
-          },
-          onError: (error) => {
-            revert();
-            onError?.();
-            reject(error);
-          },
         });
-      });
+      return enqueueMutation(
+        () =>
+          new Promise((resolve, reject) => {
+            commitAddLine({
+              variables: {
+                input: {
+                  checkoutId: cartId,
+                  lines: [
+                    {
+                      purchasableId,
+                      quantity,
+                      tagSlug: input.tagSlug,
+                      children: input.children?.map((child) => ({
+                        componentItemId: child.componentItemId,
+                        purchasableId: child.purchasableId,
+                        quantity: child.quantity,
+                        attributes: child.attributes,
+                      })),
+                    },
+                  ],
+                },
+              },
+              onCompleted: (response, errors) => {
+                if (errors && errors.length > 0) {
+                  onError?.();
+                  return reject(errors);
+                }
+                if (response.checkoutLinesAdd.errors.length > 0) {
+                  onError?.();
+                  return reject(response.checkoutLinesAdd.errors);
+                }
+                setCartKey(response.checkoutLinesAdd.checkout);
+                onSuccess?.();
+                return resolve(response.checkoutLinesAdd.checkout);
+              },
+              onError: (error) => {
+                onError?.();
+                reject(error);
+              },
+            });
+          }),
+        optimisticEdit
+      );
     },
     isInFlight,
   };

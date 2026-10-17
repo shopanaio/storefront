@@ -136,6 +136,8 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
     [data?.deliveryGroupId, updateDeliveryRecipients]
   );
 
+  if (!data) return null;
+
   return (
     <Flex vertical gap={12} className={styles.container}>
       <Flex className={styles.switchLabel}>

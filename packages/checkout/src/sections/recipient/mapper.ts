@@ -22,6 +22,7 @@ export function mapCheckoutToRecipientFormData(
   }
 
   const firstDeliveryGroup = checkout.deliveryGroups[0];
+  if (!firstDeliveryGroup) return null;
   const recipient = firstDeliveryGroup?.recipient;
 
   // No recipient in DB = recipient is the customer (self=true)
