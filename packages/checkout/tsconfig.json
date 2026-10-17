@@ -15,7 +15,7 @@
     "paths": {
       "#checkout/*": ["./src/*"]
     },
-    "types": ["node", "webpack-env"]
+    "types": ["node", "webpack-env", "vitest/globals"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules"]

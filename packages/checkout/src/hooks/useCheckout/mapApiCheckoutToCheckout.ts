@@ -1,12 +1,19 @@
 import type { Checkout } from '#checkout/types/entity';
 import type { model } from '@shopana/storefront-sdk';
-import type { StorefrontUseCheckoutFragment } from '#checkout/graphql/operations';
+import type {
+  StorefrontCheckoutDeliveryOptionFragment,
+  StorefrontCheckoutLineFieldsFragment,
+  StorefrontCheckoutMoneyFragment,
+  StorefrontCheckoutPaymentMethodFragment,
+  StorefrontCheckoutSelectionResetReasonFragment,
+  StorefrontUseCheckoutFragment,
+} from '#checkout/graphql/operations';
 type ApiCheckout = StorefrontUseCheckoutFragment;
-type ApiMoney = ApiCheckout['cost']['totalAmount'];
-type ApiLine = ApiCheckout['lines'][number];
+type ApiLine = StorefrontCheckoutLineFieldsFragment & {
+  readonly children?: readonly ApiLine[];
+};
 type ApiDeliveryGroup = ApiCheckout['deliveryGroups'][number];
-type ApiDeliveryMethod = ApiDeliveryGroup['deliveryMethods'][number];
-type ApiPaymentMethod = ApiCheckout['payment']['paymentMethods'][number];
+type ApiDeliveryAddress = NonNullable<ApiDeliveryGroup['deliveryAddress']>;
 const GENERIC_DELIVERY_PROVIDER = 'generic';
 const toAmount = (amount: unknown): number => {
   const value = Number(amount ?? 0);
@@ -16,9 +23,15 @@ const toDate = (value: unknown): Date => {
   const date = new Date(String(value ?? ''));
   return Number.isNaN(date.getTime()) ? new Date(0) : date;
 };
-const mapMoney = (money: ApiMoney | null | undefined): model.Money => ({
-  amount: toAmount(money?.amount),
-  currencyCode: money?.currencyCode ?? 'UAH',
+const toOptionalDate = (value: string | null | undefined): Date | null =>
+  value ? toDate(value) : null;
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+const mapMoney = (money: StorefrontCheckoutMoneyFragment): model.Money => ({
+  amount: toAmount(money.amount),
+  currencyCode: money.currencyCode,
 });
 const emptyRating = (id: string): model.ProductRating => ({
   id,
@@ -102,48 +115,6 @@ const mapLineCost = (cost: ApiLine['cost']): Checkout.LineCost => ({
   discountAmount: mapMoney(cost.discountAmount),
   taxAmount: mapMoney(cost.taxAmount),
 });
-const mapChildLine = (
-  child: ApiLine['children'][number],
-  currencyCode: string
-): Checkout.Line => {
-  const zero = { amount: 0, currencyCode };
-  const purchasableId = child.id;
-  return {
-    id: child.id,
-    quantity: child.quantity,
-    cost: {
-      compareAtUnitPrice: zero,
-      subtotalAmount: zero,
-      totalAmount: zero,
-      unitPrice: zero,
-    },
-    purchasableId,
-    title: '',
-    purchasable: {
-      __typename: 'ProductVariant',
-      id: purchasableId,
-      iid: purchasableId,
-      handle: '',
-      title: '',
-      description: '',
-      excerpt: '',
-      selectedOptions: [],
-      price: zero,
-      compareAtPrice: null,
-      cover: null,
-      gallery: {
-        edges: [],
-        pageInfo: { hasNextPage: false, hasPreviousPage: false },
-        totalCount: 0,
-      },
-      sku: null,
-      stockStatus: { isAvailable: true },
-      createdAt: '',
-      updatedAt: '',
-      product: null,
-    },
-  };
-};
 const mapLine = (line: ApiLine): Checkout.Line => {
   const image = line.image?.image?.url
     ? {
@@ -151,101 +122,152 @@ const mapLine = (line: ApiLine): Checkout.Line => {
         url: String(line.image.image.url),
       }
     : null;
-  const currencyCode = line.cost.totalAmount.currencyCode;
   return {
     id: line.id,
     quantity: line.quantity,
+    title: line.title,
+    sku: line.sku ?? null,
     cost: mapLineCost(line.cost),
+    originalPrice: mapMoney(line.originalPrice),
+    priceConfig: line.priceConfig
+      ? {
+          type: line.priceConfig.type,
+          amount: line.priceConfig.amount ?? null,
+          percent: line.priceConfig.percent ?? null,
+        }
+      : null,
     imageSrc: image?.url ?? null,
     purchasable: mapLinePurchasable(line, image),
     purchasableId: line.purchasableId,
-    purchasableSnapshot: line.attributes,
-    sku: line.sku,
-    title: line.title,
-    children: line.children.map((child) => mapChildLine(child, currencyCode)),
+    purchase: { type: line.purchase.type },
+    attributes: toRecord(line.attributes),
+    tag: line.tag
+      ? { id: line.tag.id, slug: line.tag.slug, unique: line.tag.unique }
+      : null,
+    componentItemId: line.componentItemId ?? null,
+    children: (line.children ?? []).map(mapLine),
   };
 };
+const mapResetReason = (
+  reason: StorefrontCheckoutSelectionResetReasonFragment | null | undefined
+): Checkout.SelectionResetReason | null =>
+  reason ? { code: reason.code, message: reason.message } : null;
 const mapDeliveryMethod = (
-  method: ApiDeliveryMethod
+  method: StorefrontCheckoutDeliveryOptionFragment
 ): Checkout.DeliveryMethod => ({
   handle: method.handle,
   code: method.code,
   title: method.title,
-  description: method.description,
-  deliveryMethodType:
-    method.deliveryMethodType === 'SHIPPING' ? 'SHIPPING' : 'PICKUP',
+  description: method.description ?? null,
+  deliveryMethodType: method.deliveryMethodType,
+  carrierCode: method.carrierCode ?? null,
   provider: {
-    code: method.providerCode?.trim() || GENERIC_DELIVERY_PROVIDER,
+    code: method.carrierCode?.trim() || GENERIC_DELIVERY_PROVIDER,
   },
-  publicData: method.data,
+  cost: mapMoney(method.cost),
+  estimatedMinDeliveryAt: toOptionalDate(method.estimatedMinDeliveryAt),
+  estimatedMaxDeliveryAt: toOptionalDate(method.estimatedMaxDeliveryAt),
+  phoneRequired: method.phoneRequired,
+  customerInputContract: method.customerInputContract ?? null,
+  publicData: method.publicData,
 });
-const mapSelectedDeliveryMethod = (
-  selection: ApiDeliveryGroup['selectedDeliveryMethod']
-): Checkout.DeliveryMethod | null =>
-  selection.option ? mapDeliveryMethod(selection.option) : null;
+const mapDeliveryAddress = (
+  address: ApiDeliveryAddress
+): Checkout.DeliveryAddress => ({
+  id: address.id ?? null,
+  address1: address.address1 ?? null,
+  address2: address.address2 ?? null,
+  city: address.city ?? null,
+  countryCode: address.countryCode ?? null,
+  data: address.data ?? null,
+  postalCode: address.postalCode ?? null,
+  provinceCode: address.provinceCode ?? null,
+  name: address.name,
+  phone: address.phone ?? null,
+  country: address.country ?? null,
+  province: address.province ?? null,
+  formatted: [...address.formatted],
+  formattedArea: address.formattedArea ?? null,
+});
 const mapDeliveryGroup = (
   group: ApiDeliveryGroup,
   linesById: ReadonlyMap<string, Checkout.Line>
-): Checkout.DeliveryGroup => {
-  const selectedDeliveryMethod = mapSelectedDeliveryMethod(
-    group.selectedDeliveryMethod
-  );
-  return {
-    id: group.id,
-    checkoutLines: group.checkoutLines
-      .map((line) => linesById.get(line.id) ?? null)
-      .filter((line): line is Checkout.Line => line !== null),
-    deliveryAddress: group.deliveryAddress
-      ? {
-          id: group.deliveryAddress.id,
-          address1: group.deliveryAddress.address1,
-          address2: group.deliveryAddress.address2,
-          city: group.deliveryAddress.city,
-          countryCode: group.deliveryAddress.countryCode,
-          data: group.deliveryAddress.data,
-          postalCode: group.deliveryAddress.postalCode,
-          provinceCode: group.deliveryAddress.provinceCode,
-        }
+): Checkout.DeliveryGroup => ({
+  id: group.id,
+  checkoutLines: group.checkoutLines
+    .map((line) => linesById.get(line.id) ?? null)
+    .filter((line): line is Checkout.Line => line !== null),
+  deliveryAddress: group.deliveryAddress
+    ? mapDeliveryAddress(group.deliveryAddress)
+    : null,
+  deliveryMethods: group.options.map(mapDeliveryMethod),
+  recipient: group.recipient
+    ? {
+        email: group.recipient.email ?? null,
+        firstName: group.recipient.firstName ?? null,
+        lastName: group.recipient.lastName ?? null,
+        middleName: group.recipient.middleName ?? null,
+        phone: group.recipient.phone ?? null,
+      }
+    : null,
+  selection: {
+    status: group.selection.status,
+    option: group.selection.option
+      ? mapDeliveryMethod(group.selection.option)
       : null,
-    deliveryMethods: group.deliveryMethods.map(mapDeliveryMethod),
-    estimatedCost: group.selectedDeliveryMethod.option
-      ? {
-          amount: mapMoney(group.selectedDeliveryMethod.option.cost),
-          paymentModel: 'MERCHANT_COLLECTED',
-        }
-      : null,
-    recipient: group.recipient
-      ? {
-          email: group.recipient.email,
-          firstName: group.recipient.firstName,
-          lastName: group.recipient.lastName,
-          middleName: group.recipient.middleName,
-          phone: group.recipient.phone,
-        }
-      : null,
-    selectedDeliveryMethod,
-  };
-};
+    previousOptionHandle: group.selection.previousOptionHandle ?? null,
+    resetReason: mapResetReason(group.selection.resetReason),
+  },
+});
 const mapPaymentMethod = (
-  method: ApiPaymentMethod
+  method: StorefrontCheckoutPaymentMethodFragment
 ): Checkout.PaymentMethod => ({
   handle: method.handle,
   code: method.code,
+  title: method.title,
   provider: { code: method.providerCode },
   flow: method.flow,
-  data: undefined,
 });
+/**
+ * Collects lines and bundle components by id, because delivery groups may
+ * reference either.
+ */
+const indexLines = (
+  lines: readonly Checkout.Line[],
+  index = new Map<string, Checkout.Line>()
+): Map<string, Checkout.Line> => {
+  for (const line of lines) {
+    index.set(line.id, line);
+    indexLines(line.children, index);
+  }
+  return index;
+};
 /** Maps the checkout fragment from the current schema to the UI entity. */
 export function mapApiCheckoutToCheckout(
   apiCheckout: Readonly<ApiCheckout>
 ): Checkout.Checkout {
   const lines = apiCheckout.lines.map(mapLine);
-  const linesById = new Map(lines.map((line) => [line.id, line]));
-  const selectedPaymentMethod =
-    apiCheckout.payment.selectedPaymentMethod.method;
+  const linesById = indexLines(lines);
+  const { customer } = apiCheckout.customerIdentity;
+  const customerEmail = customer?.emailAddress?.emailAddress ?? null;
   return {
     id: apiCheckout.id,
+    channelCode: apiCheckout.channelCode,
+    localeCode: apiCheckout.localeCode,
+    currencyCode: apiCheckout.currencyCode,
     resultRevision: apiCheckout.resultRevision,
+    status: apiCheckout.status,
+    expiresAt: toDate(apiCheckout.expiresAt),
+    valid: apiCheckout.valid,
+    issues: apiCheckout.issues.map((issue) => ({
+      code: issue.code,
+      message: issue.message,
+      severity: issue.severity,
+      effect: issue.effect,
+      field: [...issue.field],
+      lineId: issue.lineId ?? null,
+      retryable: issue.retryable,
+    })),
     createdAt: toDate(apiCheckout.createdAt),
     updatedAt: toDate(apiCheckout.updatedAt),
     totalQuantity: apiCheckout.totalQuantity,
@@ -265,32 +287,40 @@ export function mapApiCheckoutToCheckout(
       provider: promoCode.provider,
     })),
     customerIdentity: {
-      countryCode: apiCheckout.customerIdentity.countryCode,
-      email:
-        apiCheckout.customerIdentity.email ??
-        apiCheckout.customerIdentity.customer?.emailAddress?.emailAddress ??
-        null,
+      countryCode: apiCheckout.customerIdentity.countryCode ?? null,
+      customer: customer
+        ? {
+            id: customer.id,
+            displayName: customer.displayName,
+            firstName: customer.firstName ?? null,
+            lastName: customer.lastName ?? null,
+            email: customerEmail,
+          }
+        : null,
+      email: apiCheckout.customerIdentity.email ?? customerEmail,
       firstName:
-        apiCheckout.customerIdentity.firstName ??
-        apiCheckout.customerIdentity.customer?.firstName ??
-        null,
+        apiCheckout.customerIdentity.firstName ?? customer?.firstName ?? null,
       lastName:
-        apiCheckout.customerIdentity.lastName ??
-        apiCheckout.customerIdentity.customer?.lastName ??
-        null,
-      middleName: apiCheckout.customerIdentity.middleName,
-      phone: apiCheckout.customerIdentity.phone,
+        apiCheckout.customerIdentity.lastName ?? customer?.lastName ?? null,
+      middleName: apiCheckout.customerIdentity.middleName ?? null,
+      phone: apiCheckout.customerIdentity.phone ?? null,
     },
-    customerNote: apiCheckout.customerNote,
+    customerNote: apiCheckout.customerNote ?? null,
     deliveryGroups: apiCheckout.deliveryGroups.map((group) =>
       mapDeliveryGroup(group, linesById)
     ),
     payment: {
       payableAmount: mapMoney(apiCheckout.payment.payableAmount),
-      paymentMethods: apiCheckout.payment.paymentMethods.map(mapPaymentMethod),
-      selectedPaymentMethod: selectedPaymentMethod
-        ? mapPaymentMethod(selectedPaymentMethod)
-        : null,
+      paymentMethods: apiCheckout.payment.methods.map(mapPaymentMethod),
+      selection: {
+        status: apiCheckout.payment.selection.status,
+        method: apiCheckout.payment.selection.method
+          ? mapPaymentMethod(apiCheckout.payment.selection.method)
+          : null,
+        previousMethodHandle:
+          apiCheckout.payment.selection.previousMethodHandle ?? null,
+        resetReason: mapResetReason(apiCheckout.payment.selection.resetReason),
+      },
     },
     notifications: apiCheckout.notifications.map((notification) => ({
       id: notification.id,

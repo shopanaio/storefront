@@ -23,19 +23,19 @@ export function mapCheckoutToPaymentFormData(
       handle: method.handle,
       code: method.code,
       provider: method.provider.code,
-      data: method.data,
+      data: undefined,
     })
   );
 
-  const selectedPaymentMethod: PaymentMethod | null =
-    payment.selectedPaymentMethod
-      ? {
-          handle: payment.selectedPaymentMethod.handle,
-          code: payment.selectedPaymentMethod.code,
-          provider: payment.selectedPaymentMethod.provider.code,
-          data: payment.selectedPaymentMethod.data,
-        }
-      : null;
+  const selectedMethod = payment.selection.method;
+  const selectedPaymentMethod: PaymentMethod | null = selectedMethod
+    ? {
+        handle: selectedMethod.handle,
+        code: selectedMethod.code,
+        provider: selectedMethod.provider.code,
+        data: undefined,
+      }
+    : null;
 
   return {
     paymentMethods,

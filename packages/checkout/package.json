@@ -14,7 +14,9 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "@apollo/client": "^4.0.0",
@@ -41,5 +43,11 @@
     "react-use": "^17.6.0",
     "yup": "^1.7.1",
     "zustand": "^5.0.6"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.5"
   }
 }

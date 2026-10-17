@@ -17,15 +17,7 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
-  // Check if shipping is paid separately (CARRIER_DIRECT)
-  const isShippingPaidSeparately =
-    checkout?.deliveryGroups?.[0]?.estimatedCost?.paymentModel ===
-    'CARRIER_DIRECT';
-
   const getShippingValue = () => {
-    if (isShippingPaidSeparately) {
-      return t('shipping-paid-separately');
-    }
     if (checkout?.cost?.totalShippingAmount) {
       return <Money money={checkout.cost.totalShippingAmount} />;
     }
@@ -41,8 +33,7 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
 
   const hasTax = () => {
     return (
-      checkout?.cost?.totalTaxAmount &&
-      checkout.cost.totalTaxAmount.amount > 0
+      checkout?.cost?.totalTaxAmount && checkout.cost.totalTaxAmount.amount > 0
     );
   };
 

@@ -31,18 +31,18 @@ export function mapCheckoutToDeliveryFormData(
       })
     );
 
-    const selectedDeliveryMethod: DeliveryMethod | null =
-      group.selectedDeliveryMethod
-        ? {
-            handle: group.selectedDeliveryMethod.handle,
-            code: group.selectedDeliveryMethod.code,
-            title: group.selectedDeliveryMethod.title,
-            description: group.selectedDeliveryMethod.description,
-            provider: group.selectedDeliveryMethod.provider.code,
-            data: undefined,
-            publicData: group.selectedDeliveryMethod.publicData,
-          }
-        : null;
+    const selectedOption = group.selection.option;
+    const selectedDeliveryMethod: DeliveryMethod | null = selectedOption
+      ? {
+          handle: selectedOption.handle,
+          code: selectedOption.code,
+          title: selectedOption.title,
+          description: selectedOption.description,
+          provider: selectedOption.provider.code,
+          data: undefined,
+          publicData: selectedOption.publicData,
+        }
+      : null;
 
     // Extract address data from delivery group
     const address: DeliveryAddress = group.deliveryAddress

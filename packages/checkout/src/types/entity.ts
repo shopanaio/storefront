@@ -14,9 +14,22 @@ export namespace Checkout {
   export interface Checkout {
     /** A globally-unique ID. */
     id: string;
-
+    /** Sales channel the checkout belongs to. */
+    channelCode: string;
+    /** Locale the checkout was created with. */
+    localeCode: string;
+    /** Currency of every amount in the checkout. */
+    currencyCode: string;
     /** Revision of the latest completed checkout calculation. */
     resultRevision: string;
+    /** Lifecycle status; an order can be placed only from `READY`. */
+    status: LifecycleStatus;
+    /** When the checkout stops accepting `placeOrder`. */
+    expiresAt: Date;
+    /** Whether the latest calculation has no blocking issues. */
+    valid: boolean;
+    /** Issues produced by the latest calculation. */
+    issues: Issue[];
     /** When this checkout was first created. */
     createdAt: Date;
     /** When this checkout was last updated. */
@@ -25,14 +38,14 @@ export namespace Checkout {
     totalQuantity: number;
     /** All cost calculations for the checkout. */
     cost: Cost;
-    /** List of items in the checkout. */
+    /** Root items in the checkout; bundle components are in `children`. */
     lines: Line[];
     /** Applied promo codes for the checkout. */
     appliedPromoCodes: PromoCode[];
     /** Customer identity associated with the checkout. */
     customerIdentity: CustomerIdentity;
     /** Customer note or special instructions for the checkout. */
-    customerNote?: string | null;
+    customerNote: string | null;
     /** Delivery groups. */
     deliveryGroups: DeliveryGroup[];
     /** Payment aggregate for this checkout. */
@@ -41,25 +54,101 @@ export namespace Checkout {
     notifications: Notification[];
   }
 
+  export type LifecycleStatus =
+    | 'OPEN'
+    | 'READY'
+    | 'PLACED'
+    | 'EXPIRED'
+    | 'ABANDONED';
+
+  /** Issue produced by a checkout calculation. */
+  export interface Issue {
+    code: string;
+    /** Message from the API, shown as is. */
+    message: string;
+    severity: IssueSeverity;
+    /** `STOP` blocks placing the order. */
+    effect: IssueEffect;
+    /** Path of the input field the issue refers to. */
+    field: string[];
+    lineId: string | null;
+    retryable: boolean;
+  }
+
+  export type IssueSeverity = 'WARNING' | 'ERROR';
+
+  export type IssueEffect = 'CONTINUE' | 'STOP';
+
   export interface Line {
     id: string;
     quantity: number;
-    /** Children lines (for bundles). */
-    children?: Array<Line | null>;
+    /** Title of the purchasable. */
+    title: string;
+    /** SKU of the purchasable. */
+    sku: string | null;
     /** Cost calculations for this checkout item. */
     cost: LineCost;
-    /** Image URL of the purchasable (optional). */
-    imageSrc?: string | null;
+    /** Price of the purchasable before bundle price adjustments. */
+    originalPrice: model.Money;
+    /** Price adjustment of a bundle component. */
+    priceConfig: LinePriceConfig | null;
+    /** Image URL of the purchasable. */
+    imageSrc: string | null;
     /** Purchasable entity - full product data. */
     purchasable: Purchasable;
     /** ID of the purchasable. */
     purchasableId: string;
-    /** Purchasable snapshot data at the time of adding to checkout. */
-    purchasableSnapshot?: unknown;
-    /** SKU of the purchasable. */
-    sku?: string | null;
-    /** Title of the purchasable. */
-    title: string;
+    /** How the line is purchased. */
+    purchase: LinePurchase;
+    /** Line attributes passed when the line was added. */
+    attributes: Record<string, unknown>;
+    /** Tag the line was added under. */
+    tag: LineTag | null;
+    /** Bundle component this line fulfils. */
+    componentItemId: string | null;
+    /** Bundle components. */
+    children: Line[];
+  }
+
+  /**
+   * Detailed breakdown of costs for a checkout line item
+   */
+  export interface LineCost {
+    compareAtUnitPrice: model.Money;
+    discountAmount: model.Money;
+    subtotalAmount: model.Money;
+    taxAmount: model.Money;
+    totalAmount: model.Money;
+    unitPrice: model.Money;
+  }
+
+  export interface LinePriceConfig {
+    type: LinePriceType;
+    /** Amount in minor units for amount-based adjustments. */
+    amount: number | null;
+    /** Percentage for percent-based adjustments. */
+    percent: number | null;
+  }
+
+  export type LinePriceType =
+    | 'FREE'
+    | 'BASE'
+    | 'DISCOUNT_AMOUNT'
+    | 'DISCOUNT_PERCENT'
+    | 'MARKUP_AMOUNT'
+    | 'MARKUP_PERCENT'
+    | 'OVERRIDE';
+
+  export interface LinePurchase {
+    type: LinePurchaseType;
+  }
+
+  export type LinePurchaseType = 'ONE_TIME';
+
+  export interface LineTag {
+    id: string;
+    slug: string;
+    unique: boolean;
   }
 
   /**
@@ -73,23 +162,10 @@ export namespace Checkout {
     totalTaxAmount: model.Money;
   }
 
-  /**
-   * Detailed breakdown of costs for a checkout line item
-   */
-  export interface LineCost {
-    compareAtUnitPrice: model.Money;
-    discountAmount?: model.Money;
-    subtotalAmount: model.Money;
-    taxAmount?: model.Money;
-    totalAmount: model.Money;
-    unitPrice: model.Money;
-  }
-
   /** Applied promo code for a checkout. */
   export interface PromoCode {
     appliedAt: Date;
     code: string;
-    conditions?: unknown;
     discountType: string;
     provider: string;
     value: number;
@@ -97,12 +173,22 @@ export namespace Checkout {
 
   /** Customer identity associated with the checkout. */
   export interface CustomerIdentity {
-    countryCode?: string | null;
-    email?: string | null;
-    firstName?: string | null;
-    lastName?: string | null;
-    middleName?: string | null;
-    phone?: string | null;
+    countryCode: string | null;
+    /** Signed-in customer, if any. */
+    customer: Customer | null;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    middleName: string | null;
+    phone: string | null;
+  }
+
+  export interface Customer {
+    id: string;
+    displayName: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
   }
 
   /** Delivery group for one or more checkout lines. */
@@ -112,27 +198,32 @@ export namespace Checkout {
     /** Checkout lines associated with the delivery group. */
     checkoutLines: Line[];
     /** Delivery address associated with the delivery group. */
-    deliveryAddress?: DeliveryAddress | null;
-    /** Delivery methods associated with the delivery group. */
+    deliveryAddress: DeliveryAddress | null;
+    /** Delivery methods available for the delivery group, in API order. */
     deliveryMethods: DeliveryMethod[];
-    /** Estimated cost of the delivery group. */
-    estimatedCost?: DeliveryCost | null;
     /** Recipient associated with the delivery group. */
-    recipient?: Recipient | null;
-    /** Selected delivery method associated with the delivery group. */
-    selectedDeliveryMethod?: DeliveryMethod | null;
+    recipient: Recipient | null;
+    /** Delivery method selection of the delivery group. */
+    selection: DeliveryMethodSelection;
   }
 
   /** Delivery address associated with a checkout. */
   export interface DeliveryAddress {
-    address1?: string | null;
-    address2?: string | null;
-    city?: string | null;
-    countryCode?: string | null;
-    data?: unknown;
     id: string | null;
-    postalCode?: string | null;
-    provinceCode?: string | null;
+    address1: string | null;
+    address2: string | null;
+    city: string | null;
+    countryCode: string | null;
+    /** Carrier-scoped address metadata. */
+    data: unknown;
+    postalCode: string | null;
+    provinceCode: string | null;
+    name: string;
+    phone: string | null;
+    country: string | null;
+    province: string | null;
+    formatted: string[];
+    formattedArea: string | null;
   }
 
   /** Delivery method available for a checkout. */
@@ -140,46 +231,66 @@ export namespace Checkout {
     handle: string;
     code: string;
     title: string;
-    description?: string | null;
+    description: string | null;
+    /** Merchant-configured method type. */
     deliveryMethodType: DeliveryMethodType;
+    /** Carrier code as returned by the API. */
+    carrierCode: string | null;
+    /** Provider module that renders the method. */
     provider: DeliveryProvider;
+    cost: model.Money;
+    estimatedMinDeliveryAt: Date | null;
+    estimatedMaxDeliveryAt: Date | null;
+    phoneRequired: boolean;
+    /** JSON Schema of the customer input the method accepts. */
+    customerInputContract: unknown;
     /** Public provider metadata returned by the checkout API. */
-    publicData?: unknown;
+    publicData: unknown;
   }
 
-  export type DeliveryMethodType = 'PICKUP' | 'SHIPPING';
+  export type DeliveryMethodType =
+    | 'LOCAL'
+    | 'NONE'
+    | 'PICK_UP'
+    | 'PICKUP_POINT'
+    | 'RETAIL'
+    | 'SHIPPING';
 
   /** Provider data associated with the delivery method. */
   export interface DeliveryProvider {
     code: string;
   }
 
-  /** Delivery cost with payment model */
-  export interface DeliveryCost {
-    amount: model.Money;
-    paymentModel: ShippingPaymentModel;
+  export type SelectionStatus = 'NONE' | 'SELECTED' | 'RESET';
+
+  /** Why the API dropped a previous selection. */
+  export interface SelectionResetReason {
+    code: string;
+    /** Message from the API, shown as is. */
+    message: string;
   }
 
-  export type ShippingPaymentModel =
-    | 'MERCHANT_COLLECTED'
-    | 'CARRIER_DIRECT'
-    | string;
+  export interface DeliveryMethodSelection {
+    status: SelectionStatus;
+    option: DeliveryMethod | null;
+    previousOptionHandle: string | null;
+    resetReason: SelectionResetReason | null;
+  }
 
   /** Payment aggregate for a checkout. */
   export interface Payment {
     payableAmount: model.Money;
+    /** Payment methods in API order. */
     paymentMethods: PaymentMethod[];
-    selectedPaymentMethod?: PaymentMethod | null;
+    selection: PaymentMethodSelection;
   }
 
   /** Payment method available/selected for checkout. */
   export interface PaymentMethod {
     handle: string;
     code: string;
-    constraints?: PaymentMethodConstraints | null;
+    title: string;
     flow: PaymentFlow;
-    /** User-provided data for this payment method */
-    data?: unknown;
     provider: PaymentProvider;
   }
 
@@ -188,12 +299,14 @@ export namespace Checkout {
     code: string;
   }
 
-  /** Constraints for payment method availability. */
-  export interface PaymentMethodConstraints {
-    shippingMethods: string[];
-  }
+  export type PaymentFlow = 'ONLINE' | 'OFFLINE' | 'ON_DELIVERY';
 
-  export type PaymentFlow = 'ONLINE' | 'ON_DELIVERY' | string;
+  export interface PaymentMethodSelection {
+    status: SelectionStatus;
+    method: PaymentMethod | null;
+    previousMethodHandle: string | null;
+    resetReason: SelectionResetReason | null;
+  }
 
   /** A non-blocking warning generated by checkout operations. */
   export interface Notification {
@@ -207,17 +320,16 @@ export namespace Checkout {
     | 'ITEM_UNAVAILABLE'
     | 'NOT_ENOUGH_STOCK'
     | 'OUT_OF_STOCK'
-    | 'PRICE_CHANGED'
-    | string;
+    | 'PRICE_CHANGED';
 
-  export type NotificationSeverity = 'INFO' | 'WARNING' | string;
+  export type NotificationSeverity = 'INFO' | 'WARNING';
 
   /** Recipient details for the delivery group. */
   export interface Recipient {
-    email?: string | null;
-    firstName?: string | null;
-    lastName?: string | null;
-    middleName?: string | null;
-    phone?: string | null;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    middleName: string | null;
+    phone: string | null;
   }
 }

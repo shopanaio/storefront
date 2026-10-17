@@ -1,3 +1,103 @@
+fragment StorefrontCheckoutMoney on Money {
+  amount
+  currencyCode
+}
+
+fragment StorefrontCheckoutLineFields on CheckoutLine {
+  id
+  title
+  sku
+  quantity
+  cost {
+    unitPrice {
+      ...StorefrontCheckoutMoney
+    }
+    compareAtUnitPrice {
+      ...StorefrontCheckoutMoney
+    }
+    subtotalAmount {
+      ...StorefrontCheckoutMoney
+    }
+    totalAmount {
+      ...StorefrontCheckoutMoney
+    }
+    discountAmount {
+      ...StorefrontCheckoutMoney
+    }
+    taxAmount {
+      ...StorefrontCheckoutMoney
+    }
+  }
+  originalPrice {
+    ...StorefrontCheckoutMoney
+  }
+  priceConfig {
+    type
+    amount
+    percent
+  }
+  image {
+    id
+    image {
+      url
+    }
+  }
+  purchasable {
+    ... on ProductVariant {
+      id
+      handle
+      sku
+      title
+      product {
+        id
+        title
+        handle
+      }
+    }
+  }
+  purchasableId
+  purchase {
+    type
+  }
+  attributes
+  tag {
+    id
+    slug
+    unique
+  }
+  componentItemId
+}
+
+fragment StorefrontCheckoutDeliveryOption on CheckoutDeliveryOption {
+  handle
+  code
+  title
+  description
+  deliveryMethodType
+  carrierCode
+  publicData
+  cost {
+    ...StorefrontCheckoutMoney
+  }
+  estimatedMinDeliveryAt
+  estimatedMaxDeliveryAt
+  phoneRequired
+  customerInputContract
+}
+
+fragment StorefrontCheckoutPaymentMethod on CheckoutPaymentMethod {
+  handle
+  code
+  title
+  providerCode
+  flow
+}
+
+fragment StorefrontCheckoutSelectionResetReason on CheckoutSelectionResetReason {
+  code
+  message
+}
+
 fragment StorefrontUseCheckoutFragment on Checkout {
   __typename
   id
@@ -5,6 +105,8 @@ fragment StorefrontUseCheckoutFragment on Checkout {
   localeCode
   currencyCode
   resultRevision
+  status
+  expiresAt
   valid
   issues {
     code
@@ -20,87 +122,28 @@ fragment StorefrontUseCheckoutFragment on Checkout {
   totalQuantity
   cost {
     subtotalAmount {
-      amount
-      currencyCode
+      ...StorefrontCheckoutMoney
     }
     totalAmount {
-      amount
-      currencyCode
+      ...StorefrontCheckoutMoney
     }
     totalDiscountAmount {
-      amount
-      currencyCode
+      ...StorefrontCheckoutMoney
     }
     totalShippingAmount {
-      amount
-      currencyCode
+      ...StorefrontCheckoutMoney
     }
     totalTaxAmount {
-      amount
-      currencyCode
+      ...StorefrontCheckoutMoney
     }
   }
   lines {
-    id
-    quantity
-    cost {
-      unitPrice {
-        amount
-        currencyCode
-      }
-      compareAtUnitPrice {
-        amount
-        currencyCode
-      }
-      subtotalAmount {
-        amount
-        currencyCode
-      }
-      totalAmount {
-        amount
-        currencyCode
-      }
-      discountAmount {
-        amount
-        currencyCode
-      }
-      taxAmount {
-        amount
-        currencyCode
-      }
-    }
-    image {
-      id
-      image {
-        url
-        width
-        height
-        altText
-      }
-    }
-    purchasable {
-      ... on ProductVariant {
-        id
-        handle
-        sku
-        title
-        product {
-          id
-          title
-          handle
-        }
-      }
-    }
-    purchasableId
-    attributes
-    purchase {
-      type
-    }
-    sku
-    title
+    ...StorefrontCheckoutLineFields
     children {
-      id
-      quantity
+      ...StorefrontCheckoutLineFields
+      children {
+        ...StorefrontCheckoutLineFields
+      }
     }
   }
   appliedPromoCodes {
@@ -143,28 +186,14 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       postalCode: zip
       provinceCode
       name
-      company
       phone
       country
       province
       formatted
       formattedArea
     }
-    deliveryMethods: options {
-      handle
-      code
-      title
-      description
-      deliveryMethodType
-      providerCode: carrierCode
-      data: publicData
-      cost {
-        amount
-        currencyCode
-      }
-      estimatedMinDeliveryAt
-      estimatedMaxDeliveryAt
-      phoneRequired
+    options {
+      ...StorefrontCheckoutDeliveryOption
     }
     recipient {
       email
@@ -173,53 +202,32 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       middleName
       phone
     }
-    selectedDeliveryMethod: selection {
+    selection {
       status
       previousOptionHandle
       resetReason {
-        code
-        message
+        ...StorefrontCheckoutSelectionResetReason
       }
       option {
-        handle
-        code
-        title
-        description
-        deliveryMethodType
-        providerCode: carrierCode
-        data: publicData
-        cost {
-          amount
-          currencyCode
-        }
+        ...StorefrontCheckoutDeliveryOption
       }
     }
   }
   payment {
     payableAmount {
-      amount
-      currencyCode
+      ...StorefrontCheckoutMoney
     }
-    paymentMethods: methods {
-      handle
-      code
-      title
-      providerCode
-      flow
+    methods {
+      ...StorefrontCheckoutPaymentMethod
     }
-    selectedPaymentMethod: selection {
+    selection {
       status
       previousMethodHandle
       resetReason {
-        code
-        message
+        ...StorefrontCheckoutSelectionResetReason
       }
       method {
-        handle
-        code
-        title
-        providerCode
-        flow
+        ...StorefrontCheckoutPaymentMethod
       }
     }
   }
