@@ -43,7 +43,7 @@ export const useValidationAlert = () => {
   };
 
   useEffect(() => {
-    const offCompleted = onCheckoutEvent(CheckoutEvent.SubmitCompleted, () => {
+    const offStarted = onCheckoutEvent(CheckoutEvent.PlacementStarted, () => {
       setValidationError(null);
     });
 
@@ -58,7 +58,7 @@ export const useValidationAlert = () => {
     );
 
     return () => {
-      offCompleted();
+      offStarted();
       offBlocked();
     };
   }, [t]);

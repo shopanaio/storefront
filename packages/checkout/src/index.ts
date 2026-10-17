@@ -1,5 +1,7 @@
 import dynamic from '@shopana/storefront/next/dynamic';
 
+export { usePlacedOrderNumber } from './hooks/usePlacedOrderNumber';
+
 export const Checkout = dynamic(
   () => import('./components/Checkout').then((m) => m.Checkout),
   { ssr: false }
@@ -12,6 +14,11 @@ export const CheckoutSkeleton = dynamic(
 
 export const CheckoutPage = dynamic(
   () => import('./page/client').then((m) => m.CheckoutPageClient),
+  { ssr: false }
+);
+
+export const CheckoutReturnPage = dynamic(
+  () => import('./page/return').then((m) => m.CheckoutReturnPageClient),
   { ssr: false }
 );
 

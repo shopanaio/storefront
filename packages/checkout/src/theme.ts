@@ -6,6 +6,18 @@ export interface CheckoutThemeAdapter {
   Auth: ComponentType<{ className?: string }>;
   CartDrawer: ComponentType;
   useHomePath: () => string;
+  /**
+   * Locale-aware path of the checkout return page (`/checkout/return` module). The payment
+   * provider sends the buyer there after paying.
+   */
+  useCheckoutReturnPath: () => string;
+  /** Locale-aware path of the checkout page, used to go back from the return page. */
+  useCheckoutPath: () => string;
+  /**
+   * Path of the placed order page, when the theme has one (decision 1.4). Returning `null`
+   * hides the link on the result screen.
+   */
+  useOrderPath?: (orderId: string) => string | null;
   useOpenCart: () => () => void;
 }
 

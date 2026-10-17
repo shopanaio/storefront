@@ -3,6 +3,7 @@
 import { Button } from 'antd';
 import { useTranslations } from 'next-intl';
 import { useHasActiveOperations } from '#checkout/state/selectors';
+import { useIsPlacementBusy } from '#checkout/state/placement/placementStore';
 
 export interface SubmitButtonProps {
   /**
@@ -15,11 +16,12 @@ export interface SubmitButtonProps {
 /**
  * Submit button for the checkout form. Uses large primary AntD button
  * and localized label from Checkout namespace.
- * Disabled when there are active operations (mutations in-flight).
+ * Loading while mutations are in flight; disabled for the whole placement attempt (1.12).
  */
 export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
   const t = useTranslations('Checkout');
   const hasActiveOperations = useHasActiveOperations();
+  const placementBusy = useIsPlacementBusy();
 
   return (
     <Button
@@ -28,7 +30,8 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       size="large"
       htmlType="submit"
       onClick={onClick}
-      loading={hasActiveOperations}
+      loading={hasActiveOperations || placementBusy}
+      disabled={placementBusy}
     >
       {t('confirm-order')}
     </Button>

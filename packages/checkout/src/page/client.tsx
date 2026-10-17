@@ -4,36 +4,42 @@ import { useRouter } from '@shopana/storefront/next/navigation';
 import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
+import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
+import { useIsPlacementBusy } from '#checkout/state/placement/placementStore';
 
 const features = {
   auth: true,
 };
 
 /**
- * Client page for the Checkout module. Redirects to the localized home page
- * if the checkout is not found once checkout loading is completed.
+ * Client page for the Checkout module. Redirects to the localized home page when there is no
+ * cart, unless a placement attempt is running or its result is shown.
  */
 export const CheckoutPageClient = ({ theme }: { theme: CheckoutThemeAdapter }) => {
   const { cartId, loaded } = useCartId();
   const router = useRouter();
   const homePath = theme.useHomePath();
   const cleanup = useDefaultCartCleanup();
+  const placementBusy = useIsPlacementBusy();
   const Brand = theme.Brand;
 
   useEffect(() => {
-    if (loaded && !cartId) {
+    if (loaded && !cartId && !placementBusy) {
       router.replace(homePath);
     }
-  }, [loaded, cartId, router, homePath]);
+  }, [loaded, cartId, placementBusy, router, homePath]);
 
-  const handleConfirm = useCallback(() => {
-    cleanup(cartId);
-  }, [cleanup, cartId]);
+  const handleOrderAccepted = useCallback(
+    ({ checkoutId }: OrderAcceptedEvent) => {
+      cleanup(checkoutId);
+    },
+    [cleanup]
+  );
 
   return (
     <Checkout
       cartId={cartId}
-      onConfirm={handleConfirm}
+      onOrderAccepted={handleOrderAccepted}
       brand={<Brand />}
       features={features}
       theme={theme}

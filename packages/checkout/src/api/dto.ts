@@ -63,7 +63,8 @@ export interface DeliveryRecipientsRemoveDto extends Omit<
   CheckoutDeliveryRecipientsRemoveInput,
   MutationContextFields
 > {}
-export interface CheckoutSubmitDto extends Omit<
-  PlaceOrderInput,
-  MutationContextFields | 'idempotencyKey'
-> {}
+/**
+ * Carries its own `checkoutId`: a placement attempt is resent from the journal even when the
+ * checkout itself can no longer be loaded.
+ */
+export type CheckoutSubmitDto = PlaceOrderInput;

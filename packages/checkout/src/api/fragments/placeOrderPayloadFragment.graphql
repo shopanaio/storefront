@@ -1,0 +1,34 @@
+fragment StorefrontPlaceOrderPayloadFragment on PlaceOrderPayload {
+  placementId
+  placementState
+  checkoutId
+  resultRevision
+  orderId
+  status
+  paymentCollectionId
+  paymentSessionId
+  paymentOperationId
+  customerAction {
+    type
+    url
+    title
+    instructions
+    expiresAt
+    sdk
+    params
+    data
+  }
+  paymentFailure {
+    category
+    code
+    message
+    retryable
+    providerCode
+  }
+  userErrors {
+    code
+    field
+    message
+    retryable
+  }
+}

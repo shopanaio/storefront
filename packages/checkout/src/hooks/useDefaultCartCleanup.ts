@@ -18,12 +18,12 @@ import {
 export function useDefaultCartCleanup() {
   const client = useApolloClient();
   const { setCartKey, setId } = useCartContext();
-  const { removeCartId } = useCartIdUtils();
+  const { removeCartIdCookie } = useCartIdUtils();
 
   const cleanup = useCallback(
     (checkoutId: string | null) => {
       // Remove cart cookie via SDK utils
-      removeCartId();
+      removeCartIdCookie();
 
       // Clear cart context
       setCartKey(null);
@@ -37,7 +37,7 @@ export function useDefaultCartCleanup() {
         client.cache.gc();
       }
     },
-    [client, setCartKey, setId, removeCartId]
+    [client, setCartKey, setId, removeCartIdCookie]
   );
 
   return cleanup;

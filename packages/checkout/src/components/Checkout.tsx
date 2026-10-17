@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { CheckoutApiProvider } from '#checkout/context/CheckoutApiContext';
@@ -10,10 +11,21 @@ import { CheckoutController } from '#checkout/components/CheckoutController';
 import { CheckoutDataContextProvider } from '#checkout/context/CheckoutDataContext';
 import { CheckoutThemeProvider } from '#checkout/theme';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
+import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
+import {
+  usePlacementPhase,
+  usePlacementStore,
+} from '#checkout/state/placement/placementStore';
+import { CheckoutResult } from '#checkout/components/result/CheckoutResult';
+import { PaymentPendingScreen } from '#checkout/components/result/PaymentPendingScreen';
 
 export interface CheckoutProps {
   cartId: string | null;
-  onConfirm: () => void;
+  /**
+   * Called once the order is placed and accepted (decision 1.6): the host clears the cart here.
+   * The checkout then shows its result screen unless the host navigates away.
+   */
+  onOrderAccepted: (event: OrderAcceptedEvent) => void;
   brand?: React.ReactNode;
   /**
    * Optional feature flags controlling Checkout UI behavior.
@@ -34,14 +46,53 @@ export interface CheckoutProps {
  */
 export const Checkout = ({
   cartId,
-  onConfirm,
+  onOrderAccepted,
   brand,
   features,
   theme,
 }: CheckoutProps) => {
+  const resetPlacement = usePlacementStore((s) => s.reset);
+
+  // The placement phase outlives cart cleanup, so it is reset only when the checkout unmounts.
+  useEffect(() => resetPlacement, [resetPlacement]);
+
+  return (
+    <CheckoutThemeProvider theme={theme}>
+      <CheckoutDataContextProvider checkoutId={cartId}>
+        <CheckoutApiProvider>
+          <CheckoutController
+            checkoutId={cartId}
+            onOrderAccepted={onOrderAccepted}
+          />
+          <CheckoutBody brand={brand} features={features} />
+        </CheckoutApiProvider>
+      </CheckoutDataContextProvider>
+    </CheckoutThemeProvider>
+  );
+};
+
+const CheckoutBody = ({
+  brand,
+  features,
+}: Pick<CheckoutProps, 'brand' | 'features'>) => {
   const t = useTranslations('Checkout');
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
   const { validationError, onClearError } = useValidationAlert();
+  const phase = usePlacementPhase();
+
+  if (phase.name === 'accepted') {
+    return (
+      <CheckoutResult orderId={phase.orderId} status={phase.status} brand={brand} />
+    );
+  }
+  if (phase.name === 'awaiting-payment' || phase.name === 'redirecting') {
+    return (
+      <PaymentPendingScreen
+        redirecting={phase.name === 'redirecting'}
+        brand={brand}
+      />
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,21 +100,16 @@ export const Checkout = ({
   };
 
   return (
-    <CheckoutThemeProvider theme={theme}>
-      <CheckoutDataContextProvider checkoutId={cartId}>
-        <CheckoutApiProvider>
-          <CheckoutController onConfirm={onConfirm} />
-          <CheckoutProgressBar />
-          <CheckoutView
-            brand={brand}
-            features={features}
-            validationError={validationError}
-            onClearError={onClearError}
-            onSubmit={handleSubmit}
-            t={t}
-          />
-        </CheckoutApiProvider>
-      </CheckoutDataContextProvider>
-    </CheckoutThemeProvider>
+    <>
+      <CheckoutProgressBar />
+      <CheckoutView
+        brand={brand}
+        features={features}
+        validationError={validationError}
+        onClearError={onClearError}
+        onSubmit={handleSubmit}
+        t={t}
+      />
+    </>
   );
 };

@@ -36,6 +36,12 @@ export interface CheckoutOperationOptions {
    */
   errorMessage?: string;
   /**
+   * Reject when the payload carries user errors. Disable for operations whose payload stays
+   * meaningful next to its errors (placeOrder returns the placement together with them).
+   * @default true
+   */
+  rejectOnUserErrors?: boolean;
+  /**
    * Debounce delay in milliseconds
    * @default 150
    */
@@ -99,6 +105,7 @@ export function useCheckoutOperation<
   const {
     showErrorToast = true,
     errorMessage = 'Operation failed',
+    rejectOnUserErrors = true,
     debounceMs = 150,
     operationKey,
     sectionId,
@@ -215,7 +222,9 @@ export function useCheckoutOperation<
               }
               return reject(errors);
             }
-            const userErrors = getCheckoutUserErrors(response);
+            const userErrors = rejectOnUserErrors
+              ? getCheckoutUserErrors(response)
+              : [];
             if (userErrors.length > 0) {
               if (showErrorToast) {
                 toast.error(errorMessage);
@@ -233,7 +242,7 @@ export function useCheckoutOperation<
         });
       });
     },
-    [commitMutation, showErrorToast, errorMessage]
+    [commitMutation, showErrorToast, errorMessage, rejectOnUserErrors]
   );
 
   /**

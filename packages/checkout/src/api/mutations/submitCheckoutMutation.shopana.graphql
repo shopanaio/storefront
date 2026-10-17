@@ -1,27 +1,5 @@
 mutation StorefrontSubmitCheckoutMutation($input: PlaceOrderInput!) {
   placeOrder(input: $input) {
-    orderId
-    placementId
-    checkoutId
-    resultRevision
-    status
-    paymentCollectionId
-    paymentSessionId
-    paymentOperationId
-    customerAction {
-      type
-      url
-    }
-    paymentFailure {
-      code
-      message
-      retryable
-    }
-    errors: userErrors {
-      code
-      field
-      message
-      retryable
-    }
+    ...StorefrontPlaceOrderPayloadFragment
   }
 }

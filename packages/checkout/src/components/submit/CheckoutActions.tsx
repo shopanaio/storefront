@@ -1,9 +1,9 @@
 'use client';
 
-import { Alert, Button, Flex } from 'antd';
+import { Alert, Flex } from 'antd';
 import { SubmitButton } from './SubmitButton';
 import { TermsNotice } from '../notices/TermsNotice';
-import { TbX } from 'react-icons/tb';
+import { PlacementNotice } from '#checkout/components/result/PlacementNotice';
 
 interface CheckoutActionsProps {
   /** Validation error message to display */
@@ -40,6 +40,7 @@ export const CheckoutActions = ({
           onClose={onClearError}
         />
       )}
+      <PlacementNotice />
       <SubmitButton />
       <TermsNotice />
     </Flex>

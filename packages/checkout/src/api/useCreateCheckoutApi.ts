@@ -17,7 +17,13 @@ import { removePromoCodeMutation } from '#checkout/api/mutations/removePromoCode
 import { updateCustomerNoteMutation } from '#checkout/api/mutations/updateCustomerNoteMutation.shopana';
 import { submitCheckoutMutation } from '#checkout/api/mutations/submitCheckoutMutation.shopana';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
-import { createCheckoutIdempotencyKey } from '@shopana/storefront-sdk/modules/cart/core/utils/idempotencyKey';
+import { CombinedGraphQLErrors } from '@apollo/client';
+import {
+  graphQLErrorPlacement,
+  isDefiniteRejection,
+  mapPlacementPayload,
+  PlacementUnconfirmedError,
+} from '#checkout/state/placement/outcome';
 export function useCreateCheckoutApi(): CheckoutApi {
   const { checkout = null } = useCheckoutData() || {};
   const { commit: commitSelectDelivery } = useCheckoutOperation(
@@ -96,8 +102,9 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitSubmitCheckout } = useCheckoutOperation(
     submitCheckoutMutation,
     {
-      errorMessage: 'Failed to submit checkout',
       operationKey: OperationKey.SubmitCheckout,
+      showErrorToast: false,
+      rejectOnUserErrors: false,
     }
   );
   const { commit: commitAddRecipients } = useCheckoutOperation(
@@ -197,13 +204,20 @@ export function useCreateCheckoutApi(): CheckoutApi {
         });
       },
       submitCheckout: async (input) => {
-        await commitSubmitCheckout({
-          input: {
-            ...input,
-            ...mutationContext(),
-            idempotencyKey: createCheckoutIdempotencyKey(),
-          },
-        });
+        try {
+          const response = await commitSubmitCheckout({ input });
+          return mapPlacementPayload(response.placeOrder);
+        } catch (error) {
+          if (CombinedGraphQLErrors.is(error)) {
+            // Only an error raised before placeOrder ran closes the attempt; any other error may
+            // follow a placed order, so the attempt keeps its key for a safe retry.
+            if (isDefiniteRejection(error.errors)) {
+              return graphQLErrorPlacement(input.checkoutId, error.errors);
+            }
+            throw new PlacementUnconfirmedError();
+          }
+          throw error;
+        }
       },
     };
   }, [

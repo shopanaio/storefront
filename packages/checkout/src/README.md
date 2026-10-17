@@ -19,8 +19,8 @@ The module page entry is `page/page.tsx`, client is `page/client.tsx`; public ex
 
 Key components:
 
-- `components/Checkout.tsx`: Checkout container. Mounts data (`CheckoutDataContextProvider`) and API (`CheckoutApiProvider`) contexts, wires the controller (`CheckoutController`), renders progress and the view (`CheckoutView`). Handles submit via `useCheckoutStore().requestSubmit()` and shows validation alerts via `useValidationAlert`.
-- `components/CheckoutController.tsx`: subscribes to `SubmitCompleted` and calls `onConfirm`. Hooks in `useOperationTracker` and `useSubmitHandler`.
+- `components/Checkout.tsx`: Checkout container. Mounts data (`CheckoutDataContextProvider`) and API (`CheckoutApiProvider`) contexts, wires the controller (`CheckoutController`), and renders by placement phase: the result screen (`components/result/CheckoutResult.tsx`), the waiting screen (`components/result/PaymentPendingScreen.tsx`), or progress and the view (`CheckoutView`). Handles submit via `useCheckoutStore().requestSubmit()` and shows validation alerts via `useValidationAlert`.
+- `components/CheckoutController.tsx`: hooks in `useOperationTracker` and `usePlacementController`, calls `onOrderAccepted` on `OrderAccepted`, and hosts a client SDK module for `CLIENT_SDK` actions.
 - `components/CheckoutView.tsx`: render-only component. Renders sections using `infra/SectionRenderer` wrapped with `components/common/CheckoutSection`. Left column — sections, right — `summary`.
 - `infra/SectionRenderer.tsx`: renders a section by `SectionId` using `sections/sections.tsx`.
 - `components/section/SectionContainer.tsx` and `components/section/makeSection.tsx`: polymorphic section containers. Register the section in the store, validate data via Yup schema, publish validity state, and pass `invalidate` to the View.
@@ -49,11 +49,11 @@ Sections live under `sections/*` and include:
   - Actions: register/unregister section, mark valid/invalid, busy, required, `requestSubmit()`.
   - `requestSubmit()` computes missing required sections (`computeMissingRequiredSections`) and emits `SubmitBlocked` or `SubmitReady` to the `checkoutBus`.
 - Event bus: `state/checkoutBus.ts` (Emittery)
-  - Typed events: section lifecycle, validity, method selection, submit lifecycle (`SubmitRequested/Blocked/Ready/Completed`), operation statuses (`OperationStart/End/Error`).
+  - Typed events: section lifecycle, validity, method selection, submit lifecycle (`SubmitRequested/Blocked/Ready`), placement (`PlacementStarted`, `OrderAccepted`), operation statuses (`OperationStart/End/Error`).
   - Operation keys — `OperationKey` for unified mutation tracking.
 - State hooks:
   - `state/hooks/useSectionController.ts`: registers a section in the store, syncs busy via operation events, publishes valid/invalid/reset.
-  - `state/hooks/useSubmitHandler.ts`: listens to `SubmitReady`, calls `api.submitCheckout`, then emits `SubmitCompleted`.
+  - `state/placement/usePlacementController.ts`: listens to `SubmitReady` and drives order placement (see Order Placement).
   - `hooks/useValidationAlert.ts`: listens to submit blocks and builds a message listing required sections.
 
 ## API Layer
@@ -97,13 +97,31 @@ Sections live under `sections/*` and include:
 
 1. User clicks Submit → `Checkout.tsx` calls store `requestSubmit()`.
 2. `checkoutStore.requestSubmit()` checks required sections. If missing — emits `SubmitBlocked` with a list; otherwise — `SubmitReady` with the sections payload.
-3. `useSubmitHandler` listens to `SubmitReady`, calls `api.submitCheckout()`, and then emits `SubmitCompleted`.
-4. `CheckoutController` listens to `SubmitCompleted` and calls `onConfirm` (redirect/navigation).
+3. `usePlacementController` listens to `SubmitReady` and places the order (below). The button stays disabled for the whole attempt; a second tab relies on `CHECKOUT_ALREADY_PLACED` and placement recovery.
+4. When the order is accepted, `OrderAccepted` reaches the host through `onOrderAccepted`, where the cart is cleared; the checkout shows its result screen.
+
+## Order Placement
+
+Files: `state/placement/*`, `components/result/*`, `page/return.tsx`.
+
+- `api.submitCheckout` sends `placeOrder` and resolves with the placement result (`PlacementResult`), user errors included. The mutation and `checkoutPlacement` share `api/fragments/placeOrderPayloadFragment.graphql`.
+- Attempt journal (`attemptJournal.ts`): one record per checkout in `localStorage` (`shopana:checkout:placement-attempt:<checkoutId>`) with the idempotency key, return URL, `resultRevision`, payment flow, state (`created | sent | resolved | failed`) and the placement. The key is reused after a lost answer (`sent`), and replaced after a payment failure (regardless of `retryable`), a `resultRevision` change before payment, or `IDEMPOTENCY_KEY_PARAMETER_MISMATCH` (one automatic retry). The record is removed on a final outcome and after 24 hours; expired records of other checkouts are dropped when an attempt begins. The return URL is built once and resent byte-for-byte. Without working `localStorage` the journal keeps the attempt in memory for the page session. An attempt is resent and read from the journal alone, without loading the checkout; answers that arrive after the checkout unmounts or after the cart switched to another checkout are dropped, so the attempt stays `sent` and is resent with the same key on the next visit. A GraphQL error is an answer: the attempt is closed with that error code instead of being resent.
+- Outcome (`outcome.ts`, `resolvePlacementOutcome`), by `status`, customer action and the method flow:
+  - `PAID`, `AUTHORIZED`, `PAYMENT_NOT_REQUIRED`, `PAYMENT_PENDING` for `OFFLINE`/`ON_DELIVERY`, `REQUIRES_ACTION` + `INSTRUCTIONS` → accepted: result screen, cart cleared;
+  - `REQUIRES_ACTION` + `REDIRECT` → redirect to the provider;
+  - `REQUIRES_ACTION` + `CLIENT_SDK` → the module registered as `ProviderModuleType.PaymentSdk` under the action `sdk`; none → "payment method unavailable";
+  - `REQUIRES_CONFIRMATION`, `PAYMENT_PENDING` for `ONLINE`, or a placement still running → poll `checkoutPlacement` (2 → 30 s backoff, no limit). `REQUIRES_CONFIRMATION` gets real handling with the Stripe app;
+  - `PAYMENT_FAILED` → stay in checkout with the cart intact; the next submit pays again with a new key;
+  - placement user errors (`CHECKOUT_ALREADY_PLACED`, `CHECKOUT_PLACEMENT_*`) → recover from the known placement. Texts are chosen by `code` on the frontend (`components/result/placementMessages.ts`); the API message is never shown, `paymentFailure.message` only as a detail.
+- Recovery (`recovery.ts`) is the only module that knows how a placement is found: the return URL (`/checkout/return?checkout=<id>` now; `placement` and `token` after B4) and `checkoutPlacement(id)`. After B4 only this module changes. The return page removes the token from the address bar right after reading it.
+- Reload: an unanswered request (`sent`) is resent with the same key once the checkout has loaded, only if its `resultRevision` is unchanged (otherwise the next press takes a new key); a placement in progress is polled; a resumed or unpaid redirect is offered as "continue payment" instead of leaving the page. The waiting screen has a way out: the placement goes on and is read again on the next visit.
+- Return page (`page/return.tsx`, module `checkout-return` at `/checkout/return`): reads the placement from the URL or the journal, follows it to its outcome, and clears the cart only when it belongs to the placed checkout; the host's optional `onOrderAccepted` then clears its own cart state (the theme's box builder).
+- Theme adapter: `useCheckoutPath`, `useCheckoutReturnPath`, and optional `useOrderPath` for the placed order page.
 
 ## Configuration
 
 - `config.ts` — country configuration (`UA`/`INTL`) that can control visibility and localization.
-- `page/*` — routing integration, redirect when `cartId` is absent, brand injection.
+- `page/*` — routing integration, redirect when `cartId` is absent (not while a placement runs or its result is shown), the return page, brand injection.
 
 ## Adding a New Section
 

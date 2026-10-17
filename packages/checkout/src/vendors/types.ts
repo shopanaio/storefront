@@ -1,5 +1,6 @@
 import { ComponentType, FC } from 'react';
 import type { AnySchema } from 'yup';
+import type { PlacementCustomerAction } from '#checkout/state/placement/types';
 
 /**
  * Supported module types for the plugin system.
@@ -7,6 +8,8 @@ import type { AnySchema } from 'yup';
 export enum ProviderModuleType {
   Payment = 'payment',
   Delivery = 'delivery',
+  /** Client SDK that completes a `CLIENT_SDK` customer action; the slug is the action `sdk`. */
+  PaymentSdk = 'payment-sdk',
 }
 
 /**
@@ -75,4 +78,22 @@ export interface ProviderModuleApi {
   moduleType: ProviderModuleType;
   config: ProviderConfig;
   Component: ComponentType<ProviderComponentProps>;
+}
+
+/**
+ * Props of a client SDK component. It takes over the `CLIENT_SDK` customer action and reports
+ * back; the checkout then reads the placement until the server settles the payment.
+ */
+export interface PaymentSdkComponentProps {
+  action: PlacementCustomerAction;
+  /** The SDK finished its part (the payment may still be pending on the server). */
+  onComplete: () => void;
+  /** The buyer closed the SDK or it failed; the checkout reads the placement to find out why. */
+  onCancel: () => void;
+}
+
+/** Module registered under `ProviderModuleType.PaymentSdk`. No implementation ships yet (1.10). */
+export interface PaymentSdkModuleApi {
+  sdk: string;
+  Component: ComponentType<PaymentSdkComponentProps>;
 }

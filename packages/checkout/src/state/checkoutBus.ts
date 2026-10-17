@@ -5,6 +5,7 @@
  */
 import Emittery from 'emittery';
 import { SectionEntry, SectionId } from '#checkout/state/interface';
+import type { PlacementStatus } from '#checkout/state/placement/types';
 
 /**
  * Operation keys for tracking inflight operations.
@@ -56,14 +57,25 @@ export enum CheckoutEvent {
   SubmitBlocked = 'submit/blocked',
   /** Emitted when all sections are valid and checkout is ready to submit */
   SubmitReady = 'submit/ready',
-  /** Emitted when checkout submission has completed successfully */
-  SubmitCompleted = 'submit/completed',
+  /** Emitted when a placeOrder attempt is sent */
+  PlacementStarted = 'placement/started',
+  /** Emitted when the order is placed and accepted; the cart may be cleared (decision 1.6) */
+  OrderAccepted = 'placement/order-accepted',
   /** Emitted when an async operation starts (for UI busy indicators) */
   OperationStart = 'operation/start',
   /** Emitted when an async operation completes successfully */
   OperationEnd = 'operation/end',
   /** Emitted when an async operation fails with error details */
   OperationError = 'operation/error',
+}
+
+/**
+ * Accepted order, passed to the host so that it clears the cart.
+ */
+export interface OrderAcceptedEvent {
+  checkoutId: string;
+  orderId: string | null;
+  status: PlacementStatus;
 }
 
 /**
@@ -114,7 +126,8 @@ export type CheckoutEvents = {
   [CheckoutEvent.SubmitReady]: {
     payload: CheckoutPayload;
   };
-  [CheckoutEvent.SubmitCompleted]: object;
+  [CheckoutEvent.PlacementStarted]: object;
+  [CheckoutEvent.OrderAccepted]: OrderAcceptedEvent;
 
   /** Operation lifecycle events for UI busy indicators. */
   [CheckoutEvent.OperationStart]: {

@@ -1,0 +1,229 @@
+import type { StorefrontPlaceOrderPayloadFragment } from '#checkout/graphql/operations';
+import type {
+  PaymentFlow,
+  PlacementLocator,
+  PlacementOutcome,
+  PlacementResult,
+} from '#checkout/state/placement/types';
+
+/**
+ * Codes that mean a placement already exists for this checkout or its workflow is still running.
+ * The answer is read from the placement itself; the API message is a generic text and is not shown.
+ */
+export const RECOVERABLE_PLACEMENT_CODES: ReadonlySet<string> = new Set([
+  'CHECKOUT_ALREADY_PLACED',
+  'CHECKOUT_PLACEMENT_FAILED',
+  'CHECKOUT_PLACEMENT_SNAPSHOT_STALE',
+  'CHECKOUT_PLACEMENT_WORKFLOW_MISMATCH',
+  'CHECKOUT_PLACEMENT_RECOVERY_CONFLICT',
+]);
+
+/** The key was used before with a different request; a new key is required. */
+export const IDEMPOTENCY_MISMATCH_CODE = 'IDEMPOTENCY_KEY_PARAMETER_MISMATCH';
+
+/** Frontend-only code: the API answered with a client SDK nobody registered. */
+export const CLIENT_SDK_UNAVAILABLE_CODE = 'CLIENT_SDK_UNAVAILABLE';
+
+/** Frontend-only code: the request did not reach the API or its answer was lost. */
+export const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
+
+/**
+ * Frontend-only code: the API answered with an error that does not prove the order was not
+ * placed (an internal error may come after the workflow ran). The key is kept for a safe retry.
+ */
+export const PLACEMENT_UNCONFIRMED_CODE = 'PLACEMENT_UNCONFIRMED';
+
+/**
+ * GraphQL error codes raised before `placeOrder` runs: parsing, validation, authentication and
+ * the storefront permission check. Only these close the attempt.
+ */
+export const DEFINITE_REJECTION_CODES: ReadonlySet<string> = new Set([
+  'GRAPHQL_PARSE_FAILED',
+  'GRAPHQL_VALIDATION_FAILED',
+  'BAD_USER_INPUT',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+]);
+
+type GraphQLErrorLike = { message: string; extensions?: Record<string, unknown> };
+
+/** Whether every GraphQL error proves that `placeOrder` did not run. */
+export function isDefiniteRejection(errors: ReadonlyArray<GraphQLErrorLike>): boolean {
+  return (
+    errors.length > 0 &&
+    errors.every((error) => {
+      const code = error.extensions?.code;
+      return typeof code === 'string' && DEFINITE_REJECTION_CODES.has(code);
+    })
+  );
+}
+
+/** Thrown by `submitCheckout` when the outcome of the request is unknown; the key is kept. */
+export class PlacementUnconfirmedError extends Error {
+  constructor() {
+    super('The placeOrder outcome is unknown.');
+    this.name = 'PlacementUnconfirmedError';
+  }
+}
+
+export function mapPlacementPayload(
+  payload: StorefrontPlaceOrderPayloadFragment
+): PlacementResult {
+  return {
+    placementId: payload.placementId ?? null,
+    placementToken: null,
+    placementState: payload.placementState ?? null,
+    checkoutId: payload.checkoutId ?? null,
+    resultRevision: payload.resultRevision ?? null,
+    orderId: payload.orderId ?? null,
+    status: payload.status ?? null,
+    customerAction: payload.customerAction
+      ? {
+          type: payload.customerAction.type,
+          url: payload.customerAction.url ?? null,
+          title: payload.customerAction.title ?? null,
+          instructions: payload.customerAction.instructions ?? null,
+          expiresAt: payload.customerAction.expiresAt ?? null,
+          sdk: payload.customerAction.sdk ?? null,
+          params: payload.customerAction.params ?? null,
+          data: payload.customerAction.data ?? null,
+        }
+      : null,
+    paymentFailure: payload.paymentFailure
+      ? {
+          category: payload.paymentFailure.category,
+          code: payload.paymentFailure.code,
+          message: payload.paymentFailure.message,
+          retryable: payload.paymentFailure.retryable,
+          providerCode: payload.paymentFailure.providerCode ?? null,
+        }
+      : null,
+    userErrors: payload.userErrors.map((error) => ({
+      code: error.code,
+      field: [...(error.field ?? [])],
+      message: error.message,
+      retryable: error.retryable,
+    })),
+  };
+}
+
+/**
+ * Placement result for a `placeOrder` request the API refused before running it
+ * (`isDefiniteRejection`). The attempt is closed instead of being resent.
+ */
+export function graphQLErrorPlacement(
+  checkoutId: string,
+  errors: ReadonlyArray<GraphQLErrorLike>
+): PlacementResult {
+  const code = errors[0]?.extensions?.code;
+  return {
+    placementId: null,
+    placementToken: null,
+    placementState: null,
+    checkoutId,
+    resultRevision: null,
+    orderId: null,
+    status: null,
+    customerAction: null,
+    paymentFailure: null,
+    userErrors: [
+      {
+        code: typeof code === 'string' ? code : 'CHECKOUT_PLACEMENT_FAILED',
+        field: [],
+        message: errors[0]?.message ?? '',
+        retryable: false,
+      },
+    ],
+  };
+}
+
+export function placementLocatorOf(
+  result: PlacementResult
+): PlacementLocator | null {
+  return result.placementId
+    ? { placementId: result.placementId, placementToken: result.placementToken }
+    : null;
+}
+
+/**
+ * Decides what to do with a placement result (plan, stage 1, task 4).
+ *
+ * `flow` is the flow of the payment method the attempt was placed with; `fallback` is the
+ * placement known from the attempt journal, used when the API rejects a repeated placement
+ * without naming it.
+ */
+export function resolvePlacementOutcome(
+  result: PlacementResult,
+  flow: PaymentFlow | null,
+  fallback: PlacementLocator | null = null
+): PlacementOutcome {
+  const locator = placementLocatorOf(result) ?? fallback;
+
+  switch (result.status) {
+    case 'PAID':
+    case 'AUTHORIZED':
+    case 'PAYMENT_NOT_REQUIRED':
+      return { kind: 'accepted', orderId: result.orderId, status: result.status };
+    case 'PAYMENT_PENDING':
+      if (flow === 'OFFLINE' || flow === 'ON_DELIVERY') {
+        return { kind: 'accepted', orderId: result.orderId, status: result.status };
+      }
+      return awaitingOrRejected(locator);
+    case 'REQUIRES_ACTION': {
+      const action = result.customerAction;
+      if (action?.type === 'REDIRECT' && action.url) {
+        return { kind: 'redirect', url: action.url };
+      }
+      if (action?.type === 'CLIENT_SDK') {
+        return { kind: 'client-sdk', action };
+      }
+      if (action?.type === 'INSTRUCTIONS') {
+        // Decision 1.11: the order is placed at once; the instructions are not shown.
+        return { kind: 'accepted', orderId: result.orderId, status: result.status };
+      }
+      // The action expired or the session no longer awaits it: the server settles the payment.
+      return awaitingOrRejected(locator);
+    }
+    case 'REQUIRES_CONFIRMATION':
+      // Decision 1.1: handled as a pending payment until the Stripe app brings real confirmation.
+      return awaitingOrRejected(locator);
+    case 'PAYMENT_FAILED':
+      return { kind: 'payment-failed', failure: result.paymentFailure };
+    default:
+      break;
+  }
+
+  const error = result.userErrors[0] ?? null;
+  if (result.placementState === 'FAILED') {
+    return {
+      kind: 'rejected',
+      code: error?.code ?? 'CHECKOUT_PLACEMENT_FAILED',
+      retryable: false,
+    };
+  }
+  if (locator && (!error || RECOVERABLE_PLACEMENT_CODES.has(error.code))) {
+    // The placement exists and its workflow has not produced a result yet.
+    return { kind: 'awaiting-payment', locator };
+  }
+  return {
+    kind: 'rejected',
+    code: error?.code ?? 'CHECKOUT_PLACEMENT_FAILED',
+    retryable: error?.retryable ?? false,
+  };
+}
+
+function awaitingOrRejected(locator: PlacementLocator | null): PlacementOutcome {
+  return locator
+    ? { kind: 'awaiting-payment', locator }
+    : { kind: 'rejected', code: 'CHECKOUT_PLACEMENT_FAILED', retryable: false };
+}
+
+/** Whether polling `checkoutPlacement` should stop on this outcome. */
+export function isSettledOutcome(outcome: PlacementOutcome): boolean {
+  return outcome.kind !== 'awaiting-payment';
+}
+
+/** Polling delay for the given attempt: 2 → 4 → 8 → 16 → 30 s, then 30 s without a limit (1.9). */
+export function placementPollDelay(attempt: number): number {
+  return Math.min(2000 * 2 ** Math.max(0, attempt), 30000);
+}

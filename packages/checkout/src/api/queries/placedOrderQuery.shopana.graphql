@@ -1,0 +1,6 @@
+query StorefrontPlacedOrderQuery($orderId: ID!) {
+  order(id: $orderId) {
+    id
+    number
+  }
+}
