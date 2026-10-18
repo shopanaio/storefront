@@ -9,8 +9,9 @@ import { toDeliveryAddress } from '#checkout/sections/delivery/mapper';
 export const DEFAULT_DELIVERY_COUNTRY = 'UA';
 
 /**
- * Maps Checkout.Checkout entity to AddressFormData
- * Extracts delivery address from the first delivery group if available
+ * Maps Checkout.Checkout entity to AddressFormData. The address is the same in every group;
+ * the first saved one is shown. Updates go to the address of every group, and lines of
+ * groups without one get it added.
  */
 export function mapCheckoutToAddressFormData(
   checkout: Checkout.Checkout | null
@@ -19,13 +20,25 @@ export function mapCheckoutToAddressFormData(
     return null;
   }
 
-  const firstDeliveryGroup = checkout.deliveryGroups[0];
-  const address = toDeliveryAddress(firstDeliveryGroup?.deliveryAddress ?? null);
+  const groups = checkout.deliveryGroups;
+  const saved = groups.find((group) => group.deliveryAddress)?.deliveryAddress ?? null;
+  const address = toDeliveryAddress(saved);
+  const addressIds = [
+    ...new Set(
+      groups.flatMap((group) =>
+        group.deliveryAddress?.id ? [group.deliveryAddress.id] : []
+      )
+    ),
+  ];
+  const unaddressed = groups.filter((group) => !group.deliveryAddress?.id);
+  const unaddressedLineIds =
+    groups.length > 0
+      ? unaddressed.flatMap((group) => group.checkoutLines.map((line) => line.id))
+      : checkout.lines.map((line) => line.id);
 
   return {
-    addressId: address?.addressId ?? null,
-    checkoutLineIds:
-      firstDeliveryGroup?.checkoutLines.map((line) => line.id) ?? [],
+    addressIds,
+    unaddressedLineIds,
     countryCode: address?.countryCode ?? DEFAULT_DELIVERY_COUNTRY,
     address,
   };

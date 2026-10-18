@@ -75,43 +75,52 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
       const newSelf = !checked;
       setIsRecipientSelf(newSelf);
 
-      if (!data?.deliveryGroupId) return;
+      const deliveryGroupIds = data?.deliveryGroupIds ?? [];
+      if (!deliveryGroupIds.length) return;
 
       if (newSelf) {
         // Switching to self (recipient = customer) -> remove recipient from DB
+        const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
         await removeDeliveryRecipients({
-          deliveryGroupIds: [data.deliveryGroupId],
+          deliveryGroupIds: deliveryGroupIds.filter((id) => !missing.has(id)),
         });
       } else {
         // Switching to another person -> create empty recipient in DB
         // This will invalidate the section until user fills the form
+        const missing = new Set(data?.groupIdsWithoutRecipient ?? deliveryGroupIds);
         await addDeliveryRecipients({
-          recipients: [
-            {
-              deliveryGroupId: data.deliveryGroupId,
+          recipients: deliveryGroupIds
+            .filter((id) => missing.has(id))
+            .map((deliveryGroupId) => ({
+              deliveryGroupId,
               recipient: {
                 firstName: '',
                 lastName: '',
                 middleName: '',
                 phone: '',
               },
-            },
-          ],
+            })),
         });
       }
     },
-    [data?.deliveryGroupId, removeDeliveryRecipients, addDeliveryRecipients]
+    [
+      data?.deliveryGroupIds,
+      data?.groupIdsWithoutRecipient,
+      removeDeliveryRecipients,
+      addDeliveryRecipients,
+    ]
   );
 
   /**
    * Handles contact form submission for recipient.
    *
-   * Always updates the recipient since it was already created empty
+   * Always updates the recipient of every group since it was already created empty
    * when user switched to self=false.
    */
   const handleContactSubmit = useCallback(
     async (contactData: ContactForm) => {
-      if (!data?.deliveryGroupId) {
+      const deliveryGroupIds = data?.deliveryGroupIds ?? [];
+      if (!deliveryGroupIds.length) {
         console.error('No delivery group ID available');
         return;
       }
@@ -123,17 +132,34 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
         phone: contactData.phone,
       };
 
-      // Update recipient in DB (it was created empty on switch)
-      await updateDeliveryRecipients({
-        updates: [
-          {
-            deliveryGroupId: data.deliveryGroupId,
+      // Update recipient in DB (it was created empty on switch); a group split off since
+      // then gets it added. One mutation after the other: concurrent ones on the same
+      // checkout conflict (`CHECKOUT_VERSION_CONFLICT`).
+      const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
+      const saved = deliveryGroupIds.filter((id) => !missing.has(id));
+      if (saved.length > 0) {
+        await updateDeliveryRecipients({
+          updates: saved.map((deliveryGroupId) => ({
+            deliveryGroupId,
             recipient: recipientData,
-          },
-        ],
-      });
+          })),
+        });
+      }
+      if (missing.size > 0) {
+        await addDeliveryRecipients({
+          recipients: [...missing].map((deliveryGroupId) => ({
+            deliveryGroupId,
+            recipient: recipientData,
+          })),
+        });
+      }
     },
-    [data?.deliveryGroupId, updateDeliveryRecipients]
+    [
+      data?.deliveryGroupIds,
+      data?.groupIdsWithoutRecipient,
+      updateDeliveryRecipients,
+      addDeliveryRecipients,
+    ]
   );
 
   if (!data) return null;

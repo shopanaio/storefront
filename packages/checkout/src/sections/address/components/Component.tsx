@@ -13,24 +13,20 @@ import {
   type AddressModuleApi,
   type AddressModuleValue,
 } from '#checkout/vendors/types';
+import { ADDRESS_SECTION_ANCHOR } from '../anchor';
 
 export interface AddressSectionViewProps {
   /** Current form data */
   data: AddressFormData | null;
 }
 
-/**
- * Address as the checkout API takes it today. B9 renames `zip` to `postalCode` and makes
- * `address1` optional; until then the backend rejects an address without `address1`.
- */
+/** Address as the checkout API takes it: neutral fields and carrier hints in `data`. */
 const toApiAddress = ({
-  postalCode,
   countryCode,
   ...address
 }: AddressModuleValue): CheckoutDeliveryAddressInput => ({
   ...address,
   countryCode: countryCode as CountryCode,
-  ...(postalCode ? { zip: postalCode } : {}),
 });
 
 /**
@@ -39,7 +35,8 @@ const toApiAddress = ({
  */
 export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
   const { updateDeliveryAddresses, addDeliveryAddresses } = useCheckoutApi();
-  const addressId = data?.addressId;
+  const addressIds = data?.addressIds;
+  const unaddressedLineIds = data?.unaddressedLineIds;
   const countryCode = data?.countryCode ?? null;
   const { found, api } = useRegisteredModule<AddressModuleApi>(
     ProviderModuleType.Address,
@@ -54,27 +51,31 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
     }
   }, [countryCode, found]);
 
+  /**
+   * The address goes to every delivery group: updated where saved, added where not. The
+   * two mutations run one after the other: concurrent ones on the same checkout conflict
+   * (`CHECKOUT_VERSION_CONFLICT`). A failure is already shown by the checkout API.
+   */
   const onSubmit = useCallback(
     (value: AddressModuleValue) => {
       const address = toApiAddress(value);
 
-      if (!addressId) {
-        addDeliveryAddresses({
-          addresses: [
-            {
-              address,
-              checkoutLineIds: data?.checkoutLineIds ?? [],
-            },
-          ],
-        });
-        return;
-      }
-
-      updateDeliveryAddresses({
-        updates: [{ addressId, address }],
+      void (async () => {
+        if (addressIds?.length) {
+          await updateDeliveryAddresses({
+            updates: addressIds.map((addressId) => ({ addressId, address })),
+          });
+        }
+        if (unaddressedLineIds?.length || !addressIds?.length) {
+          await addDeliveryAddresses({
+            addresses: [{ address, checkoutLineIds: unaddressedLineIds ?? [] }],
+          });
+        }
+      })().catch((error) => {
+        console.error('Failed to save the delivery address:', error);
       });
     },
-    [updateDeliveryAddresses, addressId, addDeliveryAddresses, data?.checkoutLineIds]
+    [updateDeliveryAddresses, addDeliveryAddresses, addressIds, unaddressedLineIds]
   );
 
   if (!api) {
@@ -82,7 +83,11 @@ export const AddressSectionView = ({ data }: AddressSectionViewProps) => {
   }
 
   const { Component } = api;
-  return <Component address={data?.address ?? null} onSubmit={onSubmit} />;
+  return (
+    <div id={ADDRESS_SECTION_ANCHOR}>
+      <Component address={data?.address ?? null} onSubmit={onSubmit} />
+    </div>
+  );
 };
 
 export default AddressSectionView;

@@ -9,7 +9,7 @@ import type { RecipientFormData } from './types';
  */
 export const recipientFormSchema = yup.object<RecipientFormData>().shape({
   self: yup.boolean().required(),
-  deliveryGroupId: yup.string().required(),
+  deliveryGroupIds: yup.array().of(yup.string().required()).min(1).required(),
   firstName: yup.string().when('self', {
     is: false,
     then: (schema) =>

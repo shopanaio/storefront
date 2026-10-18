@@ -239,6 +239,8 @@ export namespace Checkout {
     /** Provider module that renders the method. */
     provider: DeliveryProvider;
     cost: model.Money;
+    /** Who collects the delivery charge; a `CARRIER_DIRECT` charge is not in the order total. */
+    paymentModel: ShippingPaymentModel;
     estimatedMinDeliveryAt: Date | null;
     estimatedMaxDeliveryAt: Date | null;
     phoneRequired: boolean;
@@ -255,6 +257,8 @@ export namespace Checkout {
     | 'PICKUP_POINT'
     | 'RETAIL'
     | 'SHIPPING';
+
+  export type ShippingPaymentModel = 'MERCHANT_COLLECTED' | 'CARRIER_DIRECT';
 
   /** Provider data associated with the delivery method. */
   export interface DeliveryProvider {

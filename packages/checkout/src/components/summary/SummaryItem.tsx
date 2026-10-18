@@ -5,15 +5,19 @@ import { Thumbnail } from '#checkout/ui/Thumbnail';
 import type { Checkout } from '#checkout/types/entity';
 import { Money } from '#checkout/ui/Money';
 import { composeProductTitle } from '#checkout/ui/composeProductTitle';
+import { useTranslations } from 'next-intl';
 
 const { Text } = Typography;
 
 interface Prop {
   line: Checkout.Line;
+  /** The line cannot be delivered to the address (R7). */
+  undeliverable?: boolean;
 }
 
-export const SummaryItem = ({ line }: Prop) => {
+export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
   const { styles } = useStyles();
+  const t = useTranslations('Checkout');
 
   const title = composeProductTitle({
     productTitle: line.purchasable?.product?.title,
@@ -38,7 +42,14 @@ export const SummaryItem = ({ line }: Prop) => {
             width={100}
           />
         </Badge>
-        <Text className={styles.productName}>{title}</Text>
+        <Flex vertical>
+          <Text className={styles.productName}>{title}</Text>
+          {undeliverable && (
+            <Text type="danger" className={styles.note}>
+              {t('line-undeliverable')}
+            </Text>
+          )}
+        </Flex>
       </Flex>
       <Money strong as={Text} money={line.cost.totalAmount} />
     </Flex>
@@ -67,5 +78,8 @@ const useStyles = createStyles(({ token, css }) => ({
     font-size: ${token.fontSize}px;
     font-weight: 500;
     width: 200px;
+  `,
+  note: css`
+    font-size: ${token.fontSizeSM}px;
   `,
 }));

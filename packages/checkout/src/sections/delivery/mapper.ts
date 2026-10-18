@@ -11,6 +11,11 @@ const toDeliveryMethod = (method: Checkout.DeliveryMethod): DeliveryMethod => ({
   title: method.title,
   description: method.description,
   provider: method.provider.code,
+  carrierCode: method.carrierCode,
+  cost: method.cost,
+  paymentModel: method.paymentModel,
+  estimatedMinDeliveryAt: method.estimatedMinDeliveryAt,
+  estimatedMaxDeliveryAt: method.estimatedMaxDeliveryAt,
   data: undefined,
   customerInputContract: method.customerInputContract,
   publicData: method.publicData,
@@ -51,6 +56,7 @@ export function mapCheckoutToDeliveryFormData(
 
     formData[group.id] = {
       id: group.id,
+      lines: group.checkoutLines,
       deliveryMethods: group.deliveryMethods.map(toDeliveryMethod),
       selectedDeliveryMethod: selectedOption
         ? toDeliveryMethod(selectedOption)

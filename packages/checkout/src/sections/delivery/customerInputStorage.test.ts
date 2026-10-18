@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   addressScope,
+  pruneCustomerInputs,
   readCustomerInputs,
   useCustomerInputStore,
 } from './customerInputStorage';
@@ -75,5 +76,33 @@ describe('customer input storage', () => {
     expect(readCustomerInputs('g1', scope)).toEqual({
       h1: { input: { a: 2 }, synced: true },
     });
+  });
+
+  it('drops the inputs of groups the checkout no longer has', () => {
+    remember('g1', addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
+    remember('g2', addressScope(kyiv), 'h2', { input: { b: 2 }, synced: true });
+
+    pruneCustomerInputs(['g2']);
+
+    expect(readCustomerInputs('g1', addressScope(kyiv))).toEqual({});
+    expect(readCustomerInputs('g2', addressScope(kyiv))).toEqual({
+      h2: { input: { b: 2 }, synced: true },
+    });
+    expect(
+      window.localStorage.getItem('checkout-delivery-customer-input:g1')
+    ).toBeNull();
+  });
+
+  it('keeps the inputs of groups another tab saved and drops abandoned ones', () => {
+    const key = (id: string) => `checkout-delivery-customer-input:${id}`;
+    const stored = (savedAt: number) =>
+      JSON.stringify({ scope: addressScope(kyiv), inputs: {}, savedAt });
+    window.localStorage.setItem(key('other-tab'), stored(Date.now()));
+    window.localStorage.setItem(key('abandoned'), stored(Date.now() - 31 * 24 * 3600 * 1000));
+
+    pruneCustomerInputs(['g3']);
+
+    expect(window.localStorage.getItem(key('other-tab'))).not.toBeNull();
+    expect(window.localStorage.getItem(key('abandoned'))).toBeNull();
   });
 });

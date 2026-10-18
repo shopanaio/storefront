@@ -1,3 +1,4 @@
+import type { model } from '@shopana/storefront-sdk';
 import type { Checkout } from '#checkout/types/entity';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 
@@ -7,6 +8,13 @@ export interface DeliveryMethod {
   title: string;
   description?: string | null;
   provider: string;
+  /** Carrier code from the API; `null` for options rendered generically. */
+  carrierCode: string | null;
+  /** Charge of the option; known once the API accepted the selection with its input. */
+  cost: model.Money;
+  paymentModel: Checkout.ShippingPaymentModel;
+  estimatedMinDeliveryAt: Date | null;
+  estimatedMaxDeliveryAt: Date | null;
   /** Locally persisted private input sent back through customerInput. */
   data: unknown;
   /** Module-owned display state persisted with the input. */
@@ -29,6 +37,8 @@ export type DeliveryAddress = ProviderDeliveryAddress;
  */
 export interface DeliveryGroup {
   id: string;
+  /** Lines the group ships, as the API split them. */
+  lines: Checkout.Line[];
   deliveryMethods: DeliveryMethod[];
   selectedDeliveryMethod: DeliveryMethod | null;
   address: DeliveryAddress | null;

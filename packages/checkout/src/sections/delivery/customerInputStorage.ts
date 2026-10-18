@@ -15,6 +15,8 @@ interface StoredGroupInputs {
   /** Address the inputs were entered for; see `addressScope`. */
   scope: string;
   inputs: CustomerInputsByHandle;
+  /** When the inputs were last saved (ms), for dropping abandoned ones. */
+  savedAt?: number;
 }
 
 const STORAGE_PREFIX = 'checkout-delivery-customer-input';
@@ -23,6 +25,15 @@ const storageKey = (deliveryGroupId: string) =>
   `${STORAGE_PREFIX}:${deliveryGroupId}`;
 
 const EMPTY: CustomerInputsByHandle = {};
+
+/** Inputs nobody touched for this long belong to an abandoned checkout. */
+const ABANDONED_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Groups this tab has shown or saved inputs for. Only these are dropped once they are gone:
+ * a group this tab never saw may belong to a newer state of the checkout in another tab.
+ */
+const known = new Set<string>();
 
 /**
  * Identity of the address the customer input belongs to: country, city and carrier
@@ -109,7 +120,8 @@ export const useCustomerInputStore = create<CustomerInputStore>((set, get) => ({
     } else {
       inputs[handle] = stored;
     }
-    const next: StoredGroupInputs = { scope, inputs };
+    const next: StoredGroupInputs = { scope, inputs, savedAt: Date.now() };
+    known.add(deliveryGroupId);
     persist(deliveryGroupId, next);
     loaded.set(deliveryGroupId, next);
     set({ groups: { ...get().groups, [deliveryGroupId]: next } });
@@ -146,6 +158,55 @@ export function readCustomerInputs(
   }
   const stored = groupOf(groups, deliveryGroupId);
   return stored?.scope === scope ? stored.inputs : EMPTY;
+}
+
+/**
+ * Drops the inputs of groups the checkout no longer has. A group id is a hash of the group,
+ * so a new split of the lines leaves the inputs of the old groups behind. Only groups this
+ * tab knew are dropped, so a tab with an older state of the checkout never removes the
+ * inputs of groups another tab already works with; inputs abandoned long ago go as well.
+ */
+export function pruneCustomerInputs(deliveryGroupIds: readonly string[]) {
+  const ids = new Set(deliveryGroupIds);
+  const gone = new Set([...known].filter((id) => !ids.has(id)));
+  if (typeof window !== 'undefined') {
+    const prefix = `${STORAGE_PREFIX}:`;
+    const now = Date.now();
+    for (const name of ['localStorage', 'sessionStorage'] as const) {
+      try {
+        const storage = window[name];
+        const stale: string[] = [];
+        for (let index = 0; index < storage.length; index += 1) {
+          const key = storage.key(index);
+          if (!key?.startsWith(prefix)) {
+            continue;
+          }
+          const id = key.slice(prefix.length);
+          if (ids.has(id)) {
+            continue;
+          }
+          const savedAt = parse(storage.getItem(key))?.savedAt;
+          if (gone.has(id) || savedAt === undefined || now - savedAt > ABANDONED_AFTER_MS) {
+            stale.push(key);
+          }
+        }
+        stale.forEach((key) => storage.removeItem(key));
+      } catch {
+        // Storage can be unavailable; nothing to clean then.
+      }
+    }
+  }
+  for (const id of gone) {
+    known.delete(id);
+    loaded.delete(id);
+  }
+  ids.forEach((id) => known.add(id));
+  const { groups } = useCustomerInputStore.getState();
+  if (Object.keys(groups).some((id) => gone.has(id))) {
+    useCustomerInputStore.setState({
+      groups: Object.fromEntries(Object.entries(groups).filter(([id]) => !gone.has(id))),
+    });
+  }
 }
 
 /**

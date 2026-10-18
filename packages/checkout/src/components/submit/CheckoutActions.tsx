@@ -4,6 +4,8 @@ import { Alert, Flex } from 'antd';
 import { SubmitButton } from './SubmitButton';
 import { TermsNotice } from '../notices/TermsNotice';
 import { PlacementNotice } from '#checkout/components/result/PlacementNotice';
+import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
+import { useTranslations } from 'next-intl';
 
 interface CheckoutActionsProps {
   /** Validation error message to display */
@@ -20,6 +22,8 @@ export const CheckoutActions = ({
   validationError,
   onClearError,
 }: CheckoutActionsProps) => {
+  const t = useTranslations('Checkout');
+  const blocked = useUndeliverableLines().length > 0;
   return (
     <Flex
       vertical
@@ -41,6 +45,9 @@ export const CheckoutActions = ({
         />
       )}
       <PlacementNotice />
+      {blocked && (
+        <Alert type="warning" showIcon message={t('undeliverable-blocks-order')} />
+      )}
       <SubmitButton />
       <TermsNotice />
     </Flex>

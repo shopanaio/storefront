@@ -21,15 +21,22 @@ export function mapCheckoutToRecipientFormData(
     return null;
   }
 
-  const firstDeliveryGroup = checkout.deliveryGroups[0];
-  if (!firstDeliveryGroup) return null;
-  const recipient = firstDeliveryGroup?.recipient;
+  // One recipient for every group: the first group that has one stands for all of them, so
+  // a group listed first without it (split off later) does not hide it.
+  const groups = checkout.deliveryGroups;
+  if (!groups.length) return null;
+  const recipient = groups.find((group) => group.recipient)?.recipient ?? null;
+  const deliveryGroupIds = groups.map((group) => group.id);
+  const groupIdsWithoutRecipient = groups
+    .filter((group) => !group.recipient)
+    .map((group) => group.id);
 
   // No recipient in DB = recipient is the customer (self=true)
   if (!recipient) {
     return {
       self: true,
-      deliveryGroupId: firstDeliveryGroup.id,
+      deliveryGroupIds,
+      groupIdsWithoutRecipient,
     };
   }
 
@@ -37,7 +44,8 @@ export function mapCheckoutToRecipientFormData(
   // Even if fields are empty (newly created), map them as is
   return {
     self: false,
-    deliveryGroupId: firstDeliveryGroup.id,
+    deliveryGroupIds,
+    groupIdsWithoutRecipient,
     firstName: recipient.firstName ?? '',
     lastName: recipient.lastName ?? '',
     middleName: recipient.middleName ?? '',

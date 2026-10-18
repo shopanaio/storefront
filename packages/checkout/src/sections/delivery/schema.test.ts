@@ -27,6 +27,11 @@ const option = (data: unknown, customerInputContract: unknown = contract): Deliv
   code: 'warehouse-warehouse',
   title: 'warehouse-warehouse',
   provider: 'nova-poshta',
+  carrierCode: 'nova-poshta',
+  cost: { amount: 80, currencyCode: 'UAH' },
+  paymentModel: 'MERCHANT_COLLECTED',
+  estimatedMinDeliveryAt: null,
+  estimatedMaxDeliveryAt: null,
   data,
   customerInputContract,
   publicData: {},
@@ -35,6 +40,7 @@ const option = (data: unknown, customerInputContract: unknown = contract): Deliv
 const form = (selected: DeliveryMethod | null): DeliveryFormData => ({
   g1: {
     id: 'g1',
+    lines: [],
     deliveryMethods: [option(undefined)],
     selectedDeliveryMethod: selected,
     address: null,
@@ -75,7 +81,7 @@ describe('deliveryFormSchema with stored customer input', () => {
       addressId: 'a1',
       countryCode: 'UA',
       city: 'Київ',
-      data: { settlementRef: SETTLEMENT },
+      data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
     };
     const fromApi: DeliveryFormData = {
       g1: { ...form(option(undefined)).g1, address },

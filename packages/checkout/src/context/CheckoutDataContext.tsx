@@ -14,6 +14,8 @@ export interface CheckoutDataContextValue {
   loading: boolean;
   loaded: boolean;
   error: Error | null;
+  /** Reads the checkout again, e.g. after the cart changed outside the checkout API. */
+  refetch: () => Promise<unknown>;
 }
 
 interface CheckoutDataInternalContextValue {
@@ -21,6 +23,7 @@ interface CheckoutDataInternalContextValue {
   loading: boolean;
   loaded: boolean;
   error: Error | null;
+  refetch: () => Promise<unknown>;
 }
 
 const CheckoutDataContext = createContext<
@@ -45,6 +48,7 @@ export const CheckoutDataContextProvider: React.FC<{
         loading: query.loading,
         loaded: !query.loading,
         error: query.error ?? null,
+        refetch: query.refetch,
       }}
     >
       {children}
@@ -69,5 +73,6 @@ export function useCheckoutData(): CheckoutDataContextValue {
     loading: context.loading,
     loaded: context.loaded,
     error: context.error,
+    refetch: context.refetch,
   };
 }

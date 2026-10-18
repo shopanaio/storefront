@@ -5,24 +5,26 @@ import type { Settlement } from './types';
 export const NOVA_POSHTA = 'nova-poshta';
 
 /**
- * Nova Poshta hint of a delivery address: the settlement picked in the directory.
- *
- * Current backend contract: `address.data.settlementRef` (delivery reads it as
- * `providerData.settlementRef`). B7 moves it to `address.data.carriers["nova-poshta"]`;
- * only this file changes then.
+ * Nova Poshta hint of a delivery address: the settlement picked in the directory, in the
+ * carrier's own space `address.data.carriers["nova-poshta"]` (R8, B7). A new city replaces
+ * the whole `data`, so hints of every carrier are dropped with it.
  */
 export function settlementAddressData(settlement: Settlement) {
-  return { settlementRef: settlement.ref };
+  return { carriers: { [NOVA_POSHTA]: { settlementRef: settlement.ref } } };
 }
 
 /** Settlement ref of the address hint, or `null` when the address has none. */
 export function readSettlementRef(
   address: ProviderDeliveryAddress | null | undefined
 ): string | null {
-  const data = address?.data;
-  if (!data || typeof data !== 'object') {
+  const carriers = (address?.data as { carriers?: unknown } | null | undefined)?.carriers;
+  const hint =
+    carriers && typeof carriers === 'object'
+      ? (carriers as Record<string, unknown>)[NOVA_POSHTA]
+      : null;
+  if (!hint || typeof hint !== 'object') {
     return null;
   }
-  const ref = (data as { settlementRef?: unknown }).settlementRef;
+  const ref = (hint as { settlementRef?: unknown }).settlementRef;
   return typeof ref === 'string' && ref.length > 0 ? ref : null;
 }

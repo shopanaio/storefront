@@ -79,6 +79,7 @@ fragment StorefrontCheckoutDeliveryOption on CheckoutDeliveryOption {
   cost {
     ...StorefrontCheckoutMoney
   }
+  paymentModel
   estimatedMinDeliveryAt
   estimatedMaxDeliveryAt
   phoneRequired
@@ -183,7 +184,7 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       city
       countryCode
       data
-      postalCode: zip
+      postalCode
       provinceCode
       name
       phone

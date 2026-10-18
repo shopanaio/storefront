@@ -3,6 +3,11 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { Money } from '#checkout/ui/Money';
 import type { Checkout } from '#checkout/types/entity';
+import { useShippingQuote } from '#checkout/sections/delivery/useShippingQuote';
+import {
+  useEstimateLabel,
+  useShippingPriceLabel,
+} from '#checkout/sections/delivery/components/ShipmentQuote';
 
 const { Text } = Typography;
 
@@ -17,12 +22,16 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
-  const getShippingValue = () => {
-    if (checkout?.cost?.totalShippingAmount) {
-      return <Money money={checkout.cost.totalShippingAmount} />;
-    }
-    return '';
-  };
+  const priceLabel = useShippingPriceLabel();
+  const estimateLabel = useEstimateLabel();
+  /**
+   * Shipping of the selected options of every shipment (R9): the amount the merchant
+   * collects, "free" or the carrier's rates. Unknown until every shipment has its option
+   * and its input is saved, as in the delivery section.
+   */
+  const quote = useShippingQuote(checkout);
+  const shippingValue = quote ? priceLabel(quote.price) : t('shipping-not-selected');
+  const arrivesBy = quote ? estimateLabel(null, quote.estimatedMaxDeliveryAt) : null;
 
   const hasDiscount = () => {
     return (
@@ -47,8 +56,15 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
       </Flex>
       <Flex justify="space-between">
         <Text className={styles.lineLabel}>{t('shipping')}</Text>
-        <Text className={styles.lineValue}>{getShippingValue()}</Text>
+        <Text className={styles.lineValue} type={quote ? undefined : 'secondary'}>
+          {shippingValue}
+        </Text>
       </Flex>
+      {arrivesBy && (
+        <Text type="secondary" className={styles.note}>
+          {t('delivery-arrives-by', { date: arrivesBy })}
+        </Text>
+      )}
       {hasDiscount() && (
         <Flex justify="space-between">
           <Text className={styles.lineLabel}>{t('discount')}</Text>
@@ -84,6 +100,10 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   lineValue: css`
     font-size: ${token.fontSize}px;
+  `,
+  note: css`
+    font-size: ${token.fontSizeSM}px;
+    margin-top: -${token.marginXS}px;
   `,
   totalLabel: css`
     font-size: ${token.fontSizeXL}px;

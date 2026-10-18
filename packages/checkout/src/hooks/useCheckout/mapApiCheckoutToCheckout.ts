@@ -165,6 +165,7 @@ const mapDeliveryMethod = (
     code: method.carrierCode?.trim() || GENERIC_DELIVERY_PROVIDER,
   },
   cost: mapMoney(method.cost),
+  paymentModel: method.paymentModel,
   estimatedMinDeliveryAt: toOptionalDate(method.estimatedMinDeliveryAt),
   estimatedMaxDeliveryAt: toOptionalDate(method.estimatedMaxDeliveryAt),
   phoneRequired: method.phoneRequired,

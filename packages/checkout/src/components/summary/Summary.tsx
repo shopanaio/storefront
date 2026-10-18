@@ -11,6 +11,7 @@ import type { Checkout } from '#checkout/types/entity';
 import { SectionTitle } from '#checkout/components/common/SectionTitle';
 import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { SectionId } from '#checkout/state/interface';
+import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 
 interface Prop {
   checkout: Checkout.Checkout;
@@ -25,6 +26,7 @@ export const Summary = ({ checkout }: Prop) => {
   const openCartDrawer = useOpenCart();
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const undeliverable = new Set(useUndeliverableLines().map((line) => line.id));
   const lines = checkout?.lines ?? [];
   const visibleLines = isExpanded ? lines : lines.slice(0, 5);
   const hasHidden = lines.length > 5;
@@ -45,7 +47,11 @@ export const Summary = ({ checkout }: Prop) => {
       </Flex>
       <Flex vertical gap={8}>
         {visibleLines.map((line) => (
-          <SummaryItem key={line.id} line={line} />
+          <SummaryItem
+            key={line.id}
+            line={line}
+            undeliverable={undeliverable.has(line.id)}
+          />
         ))}
         {hasHidden ? (
           <div>

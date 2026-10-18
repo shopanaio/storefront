@@ -18,6 +18,8 @@ import { ContactFormData } from "#checkout/sections/contact/types";
 export interface RecipientFormData extends Partial<ContactFormData> {
   /** Whether the recipient is the customer themselves (derived from DB) */
   self: boolean;
-  /** ID of the delivery group this recipient belongs to */
-  deliveryGroupId: string;
+  /** Delivery groups the recipient is saved for: one recipient receives every shipment. */
+  deliveryGroupIds: string[];
+  /** Groups without the recipient: all of them when self=true, or a shipment split off later. */
+  groupIdsWithoutRecipient: string[];
 }

@@ -11,6 +11,14 @@ type MoneyAsProps<P extends ElementType> = { as: P } & Omit<
   'children'
 >;
 
+/** Amount in the currency format of the locale, without trailing zeros of whole amounts. */
+export const formatMoney = (locale: string, money: model.Money): string =>
+  new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: money.currencyCode,
+    trailingZeroDisplay: 'stripIfInteger',
+  }).format(money.amount);
+
 export function Money(props: MoneyBaseProps): string;
 export function Money<P extends ElementType>(
   props: MoneyBaseProps & MoneyAsProps<P>
@@ -23,11 +31,7 @@ export function Money<P extends ElementType = 'span'>(
   const { money, as, ...rest } = props as MoneyBaseProps & {
     as?: ElementType;
   } & Record<string, unknown>;
-  const localizedString = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: money.currencyCode,
-    trailingZeroDisplay: 'stripIfInteger',
-  }).format(money.amount);
+  const localizedString = formatMoney(locale, money);
 
   return as ? createElement(as, rest, localizedString) : localizedString;
 }

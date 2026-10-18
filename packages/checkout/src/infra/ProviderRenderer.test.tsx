@@ -131,7 +131,7 @@ const renderDelivery = (provider: string, methods: ProviderMethod[]) =>
             addressId: 'a1',
             countryCode: 'UA',
             city: 'Київ',
-            data: { settlementRef: SETTLEMENT },
+            data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
           }}
         />
       </NextIntlClientProvider>
