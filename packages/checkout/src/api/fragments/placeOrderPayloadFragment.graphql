@@ -1,9 +1,11 @@
 fragment StorefrontPlaceOrderPayloadFragment on PlaceOrderPayload {
   placementId
+  placementToken
   placementState
   checkoutId
   resultRevision
   orderId
+  orderNumber
   status
   paymentCollectionId
   paymentSessionId

@@ -4,6 +4,7 @@ import { Alert, Flex } from 'antd';
 import { SubmitButton } from './SubmitButton';
 import { TermsNotice } from '../notices/TermsNotice';
 import { PlacementNotice } from '#checkout/components/result/PlacementNotice';
+import { IssueNotices } from '#checkout/components/notices/IssueNotices';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { useTranslations } from 'next-intl';
 
@@ -45,6 +46,7 @@ export const CheckoutActions = ({
         />
       )}
       <PlacementNotice />
+      <IssueNotices />
       {blocked && (
         <Alert type="warning" showIcon message={t('undeliverable-blocks-order')} />
       )}

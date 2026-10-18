@@ -19,12 +19,14 @@ import type {
 /**
  * Placement recovery layer (plan, section 2).
  *
- * Everything that knows how a placement is found and read lives here, so that the switch to the
- * placement token (B4) changes only this module: the return URL template, the URL parameters,
- * and the read operation.
+ * Everything that knows how a placement is found and read lives here: the return URL template,
+ * the URL parameters, and the read operation.
  */
 
-/** Return URL query parameters. `placement` and `token` are filled in by the backend after B4. */
+/**
+ * Return URL query parameters. `placement` and `token` are placeholders the backend fills in
+ * once the placement exists (B4); `checkout` names the attempt journal of this browser.
+ */
 export const RETURN_PARAM_CHECKOUT = 'checkout';
 export const RETURN_PARAM_PLACEMENT = 'placement';
 export const RETURN_PARAM_TOKEN = 'token';
@@ -36,27 +38,43 @@ export interface ReturnParams {
   locator: PlacementLocator | null;
 }
 
+/** Placeholders the backend substitutes; they must stay unencoded, as whole parameter values. */
+export const PLACEMENT_ID_PLACEHOLDER = '{placementId}';
+export const PLACEMENT_TOKEN_PLACEHOLDER = '{placementToken}';
+
 /**
- * Builds the return URL once per attempt; it is stored in the journal and resent byte-for-byte.
- * Until B4 it names the checkout, whose attempt journal holds the placement.
+ * Builds the return URL template once per attempt; it is stored in the journal and resent
+ * byte-for-byte, because the template is part of the idempotency request hash. The backend puts
+ * the placement id and token into it, so the return page works in any browser or device.
  */
 export function buildReturnUrl(origin: string, returnPath: string, checkoutId: string): string {
   const url = new URL(returnPath, origin);
   url.search = '';
   url.hash = '';
   url.searchParams.set(RETURN_PARAM_CHECKOUT, checkoutId);
-  return url.toString();
+  return (
+    `${url.toString()}&${RETURN_PARAM_PLACEMENT}=${PLACEMENT_ID_PLACEHOLDER}` +
+    `&${RETURN_PARAM_TOKEN}=${PLACEMENT_TOKEN_PLACEHOLDER}`
+  );
 }
 
 export function readReturnParams(search: string): ReturnParams {
   const params = new URLSearchParams(search);
-  const placementId = params.get(RETURN_PARAM_PLACEMENT);
+  const placementId = filled(params.get(RETURN_PARAM_PLACEMENT), PLACEMENT_ID_PLACEHOLDER);
   return {
     checkoutId: params.get(RETURN_PARAM_CHECKOUT),
     locator: placementId
-      ? { placementId, placementToken: params.get(RETURN_PARAM_TOKEN) }
+      ? {
+          placementId,
+          placementToken: filled(params.get(RETURN_PARAM_TOKEN), PLACEMENT_TOKEN_PLACEHOLDER),
+        }
       : null,
   };
+}
+
+/** A parameter the backend left unsubstituted counts as missing. */
+function filled(value: string | null, placeholder: string): string | null {
+  return value && value !== placeholder ? value : null;
 }
 
 /** Removes the placement token from the address bar right after it was read (section 2.7). */
@@ -67,28 +85,50 @@ export function stripReturnToken(location: Location, history: History): void {
   history.replaceState(history.state, '', url.toString());
 }
 
-/** The URL wins over the journal: it works in any tab and on any device after B4. */
+/**
+ * The URL wins over the journal: it works in any tab and on any device. After a reload the URL
+ * no longer has the token (section 2.7); the journal of this browser still has it for the same
+ * placement.
+ */
 export function resolveRecoveryLocator(
   params: ReturnParams,
   attempt: PlacementAttempt | null
 ): PlacementLocator | null {
-  return params.locator ?? attemptLocator(attempt);
+  const journal = attemptLocator(attempt);
+  if (!params.locator) return journal;
+  if (!params.locator.placementToken && journal?.placementId === params.locator.placementId) {
+    return { ...params.locator, placementToken: journal.placementToken };
+  }
+  return params.locator;
 }
 
 /**
- * Reads a placement through `checkoutPlacement(id)`. The token is not sent yet: the current API
- * reads placements of the same visitor only (B4 adds `checkoutPlacement(id, token)`).
+ * Reads a placement through `checkoutPlacement`. The buyer who placed it reads it without the
+ * token first: only that read returns the customer action (a redirect to continue, a client
+ * SDK). When the buyer read finds nothing or is not allowed (another browser or device, no
+ * `CHECKOUT_READ`), the token reads the status alone.
  */
 export function useReadPlacement(): ReadPlacement {
   const client = useApolloClient();
   return useCallback(
     async (locator: PlacementLocator) => {
-      const { data } = await client.query({
-        query: checkoutPlacementQuery,
-        variables: { placementId: locator.placementId },
-        fetchPolicy: 'network-only',
-      });
-      const payload = data?.checkoutPlacement;
+      const read = async (token: string | null) => {
+        const { data } = await client.query({
+          query: checkoutPlacementQuery,
+          variables: { placementId: locator.placementId, token },
+          fetchPolicy: 'network-only',
+        });
+        return data?.checkoutPlacement ?? null;
+      };
+      let payload: Awaited<ReturnType<typeof read>> = null;
+      try {
+        payload = await read(null);
+      } catch (error) {
+        if (!locator.placementToken) throw error;
+      }
+      if (!payload && locator.placementToken) {
+        payload = await read(locator.placementToken);
+      }
       if (!payload) return null;
       const result = mapPlacementPayload(payload);
       return {

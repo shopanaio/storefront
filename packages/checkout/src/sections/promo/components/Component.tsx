@@ -1,22 +1,24 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
-import { TbTicket, TbX, TbDiscount, TbCircleCheckFilled } from 'react-icons/tb';
+import { TbTicket, TbX } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
+import { useCheckoutTheme } from '#checkout/theme';
 import { useConfirm } from '#checkout/ui/useConfirm';
+import { SectionIssues } from '#checkout/components/notices/SectionIssues';
+import { SectionId } from '#checkout/state/interface';
+import {
+  isPromoApplied,
+  promoErrorCode,
+  promoErrorMessageKey,
+  promoNotAppliedMessageKey,
+} from '../promoErrors';
 
-/**
- * View component for the checkout promo section.
- *
- * Pure controlled UI component that renders the promo form.
- * Receives generic form data and extracts needed fields (code).
- * Does not manage its own state - all state is controlled via props.
- */
 export interface PromoSectionViewProps {
   /** Current form data */
   data: PromoFormData | null;
@@ -24,144 +26,149 @@ export interface PromoSectionViewProps {
   invalidate: () => void;
 }
 
-export const PromoSectionView = ({
-  data,
-  invalidate,
-}: PromoSectionViewProps) => {
+/**
+ * Promo codes (stage 6): the field to add one more code and the list of applied codes, each
+ * removable on its own. A code the checkout does not apply is reported by the field and taken
+ * back out of the checkout, so it does not linger unapplied. Loyalty gets its place right
+ * after the codes through the theme (`LoyaltySlot`); it is not implemented here (6.2).
+ */
+export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const { addPromoCode, removePromoCode } = useCheckoutApi();
+  const { LoyaltySlot } = useCheckoutTheme();
   const confirm = useConfirm();
+  const codes = useMemo(() => data?.codes ?? [], [data?.codes]);
 
-  const [code, setCode] = useState(data?.code ?? '');
-  const [isApplied, setIsApplied] = useState(Boolean(data?.code));
+  const [code, setCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
 
-  // Sync local state when data changes
-  useEffect(() => {
-    const newCode = data?.code ?? '';
-    setCode(newCode);
-    setIsApplied(Boolean(newCode));
-  }, [data?.code]);
-
-  const handleApply = useCallback(() => {
-    if (code.trim()) {
-      addPromoCode({ code: code.trim() });
+  const handleApply = useCallback(async () => {
+    const value = code.trim();
+    if (!value || applying) return;
+    if (isPromoApplied(codes.map((item) => item.code), value)) {
+      setCode('');
+      return;
     }
-  }, [code, addPromoCode]);
+    setApplying(true);
+    setError(null);
+    try {
+      const applied = await addPromoCode({ code: value });
+      if (isPromoApplied(applied, value)) {
+        setCode('');
+      } else {
+        setError(t(promoNotAppliedMessageKey(applied.length)));
+        await removePromoCode({ code: value }).catch(() => undefined);
+      }
+    } catch (failure) {
+      setError(t(promoErrorMessageKey(promoErrorCode(failure))));
+    } finally {
+      setApplying(false);
+    }
+  }, [code, codes, applying, addPromoCode, removePromoCode, t]);
 
-  const handleRemove = useCallback(async () => {
-    if (data?.code) {
-      const promoCode = data.code;
-
+  const handleRemove = useCallback(
+    async (promoCode: string) => {
       const ok = await confirm({
         icon: null,
         title: t('remove-promo-confirm-title'),
         content: (
-          <Flex gap={8} align="center">
-            <Typography.Text>
-              {t.rich('remove-promo-confirm-content', {
-                promoCode,
-                strong: (chunks) => <strong>{chunks}</strong>,
-              })}
-            </Typography.Text>
-          </Flex>
+          <Typography.Text>
+            {t.rich('remove-promo-confirm-content', {
+              promoCode,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
+          </Typography.Text>
         ),
         okText: t('remove-promo-confirm-ok'),
         cancelText: t('remove-promo-confirm-cancel'),
       });
-      if (ok) {
-        removePromoCode({ code: promoCode });
+      if (!ok) return;
+      setError(null);
+      try {
+        await removePromoCode({ code: promoCode });
+      } catch (failure) {
+        setError(t(promoErrorMessageKey(promoErrorCode(failure))));
       }
-    }
-  }, [data?.code, removePromoCode, t, confirm]);
+    },
+    [removePromoCode, t, confirm]
+  );
 
   return (
-    <Flex vertical gap={8} className={styles.container}>
+    <Flex vertical gap={8}>
       <Typography.Text strong type="secondary" className={styles.label}>
         {t('have-coupon-question')}
       </Typography.Text>
-      {!isApplied ? (
-        <FloatingLabelInput
-          label={t('coupon-code')}
-          value={code}
-          prefix={<TbTicket size={20} />}
-          onChange={(e) => setCode((e.target as HTMLInputElement).value)}
-          onPressEnter={(e) => {
-            e.preventDefault();
-            if (code.trim()) {
-              handleApply();
-            }
-          }}
-          suffix={
-            <Button
-              disabled={!code.trim()}
-              onClick={(e) => {
-                e.preventDefault();
-                handleApply();
-              }}
-            >
-              {t('apply')}
-            </Button>
-          }
-        />
-      ) : null}
-      {isApplied && code ? (
-        <div className={styles.appliedPromoCard}>
-          <Flex
-            align="center"
-            justify="space-between"
-            gap={12}
-            className={styles.promoContent}
+      <FloatingLabelInput
+        label={t('coupon-code')}
+        value={code}
+        error={error ?? undefined}
+        prefix={<TbTicket size={20} />}
+        onChange={(e) => {
+          setCode((e.target as HTMLInputElement).value);
+          setError(null);
+        }}
+        onPressEnter={(e) => {
+          e.preventDefault();
+          void handleApply();
+        }}
+        suffix={
+          <Button
+            disabled={!code.trim()}
+            loading={applying}
+            onClick={(e) => {
+              e.preventDefault();
+              void handleApply();
+            }}
           >
-            <Typography.Text strong className={styles.promoCode}>
-              {code}
-            </Typography.Text>
-            <Button
-              variant="text"
-              color="green"
-              size="small"
-              icon={<TbCircleCheckFilled size={18} />}
-              onClick={handleRemove}
-              className={styles.removeButton}
-              aria-label={t('remove')}
-            >
-              {t('promo-applied')}
-            </Button>
-          </Flex>
-        </div>
+            {t('apply')}
+          </Button>
+        }
+      />
+      {codes.length > 0 ? (
+        <Flex wrap gap={8} role="list" aria-label={t('promo-applied-codes')}>
+          {codes.map(({ code: applied }) => (
+            <Flex key={applied} role="listitem" align="center" gap={4} className={styles.tag}>
+              <Typography.Text strong className={styles.code}>
+                {applied}
+              </Typography.Text>
+              <Button
+                type="text"
+                size="small"
+                icon={<TbX size={16} />}
+                onClick={() => void handleRemove(applied)}
+                aria-label={t('remove-promo', { promoCode: applied })}
+                className={styles.removeButton}
+              />
+            </Flex>
+          ))}
+        </Flex>
       ) : null}
+      <SectionIssues sections={[SectionId.Promo]} />
+      {LoyaltySlot ? <LoyaltySlot /> : null}
     </Flex>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => ({
-  container: css``,
   label: css`
     font-size: ${token.fontSize}px;
   `,
-  appliedPromoCard: css`
+  tag: css`
     background: ${token.colorBgContainer};
     border: 1px solid ${token.colorBorder};
-    border-radius: ${token.borderRadiusLG}px;
-    padding: ${token.paddingSM}px ${token.padding}px;
-    transition: all 0.3s ease;
-    min-height: 50px;
+    border-radius: ${token.borderRadius}px;
+    padding: ${token.paddingXXS}px ${token.paddingXXS}px ${token.paddingXXS}px ${token.paddingSM}px;
   `,
-  promoContent: css`
-    width: 100%;
-  `,
-  promoCode: css`
-    font-size: ${token.fontSize}px;
-    color: ${token.colorText};
+  code: css`
     text-transform: uppercase;
     letter-spacing: 0.5px;
   `,
   removeButton: css`
     color: ${token.colorTextSecondary};
-    flex-shrink: 0;
     &:hover {
       color: ${token.colorError};
-      background: ${token.colorErrorBg};
     }
   `,
 }));

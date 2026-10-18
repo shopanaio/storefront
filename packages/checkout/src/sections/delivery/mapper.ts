@@ -30,6 +30,10 @@ export const toDeliveryAddress = (
         addressId: address.id,
         countryCode: address.countryCode,
         city: address.city,
+        address1: address.address1,
+        address2: address.address2,
+        postalCode: address.postalCode,
+        provinceCode: address.provinceCode,
         data: address.data,
       }
     : null;

@@ -26,7 +26,12 @@ export type PlacementPhase =
   | { name: 'payment-incomplete'; url: string }
   | { name: 'payment-failed'; failure: PlacementPaymentFailure | null }
   | { name: 'rejected'; code: string }
-  | { name: 'accepted'; orderId: string | null; status: PlacementStatus };
+  | {
+      name: 'accepted';
+      orderId: string | null;
+      orderNumber: string | null;
+      status: PlacementStatus;
+    };
 
 interface PlacementStoreState {
   phase: PlacementPhase;

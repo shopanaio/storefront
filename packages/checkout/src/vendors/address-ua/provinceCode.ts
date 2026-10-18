@@ -1,39 +1,42 @@
 import type { Settlement } from '#checkout/vendors/nova-poshta/types';
 
-/** ISO 3166-2:UA codes of the oblasts by the name Nova Poshta gives in `area`. */
+/**
+ * ISO 3166-2:UA codes of the oblasts, without the country prefix as the storefront address
+ * format lists them (B6), by the name Nova Poshta gives in `area`.
+ */
 const OBLASTS: Record<string, string> = {
-  вінницька: 'UA-05',
-  волинська: 'UA-07',
-  луганська: 'UA-09',
-  дніпропетровська: 'UA-12',
-  донецька: 'UA-14',
-  житомирська: 'UA-18',
-  закарпатська: 'UA-21',
-  запорізька: 'UA-23',
-  'івано-франківська': 'UA-26',
-  київська: 'UA-32',
-  кіровоградська: 'UA-35',
-  львівська: 'UA-46',
-  миколаївська: 'UA-48',
-  одеська: 'UA-51',
-  полтавська: 'UA-53',
-  рівненська: 'UA-56',
-  сумська: 'UA-59',
-  тернопільська: 'UA-61',
-  харківська: 'UA-63',
-  херсонська: 'UA-65',
-  хмельницька: 'UA-68',
-  черкаська: 'UA-71',
-  чернівецька: 'UA-74',
-  чернігівська: 'UA-77',
-  'автономна республіка крим': 'UA-43',
-  крим: 'UA-43',
+  вінницька: '05',
+  волинська: '07',
+  луганська: '09',
+  дніпропетровська: '12',
+  донецька: '14',
+  житомирська: '18',
+  закарпатська: '21',
+  запорізька: '23',
+  'івано-франківська': '26',
+  київська: '32',
+  кіровоградська: '35',
+  львівська: '46',
+  миколаївська: '48',
+  одеська: '51',
+  полтавська: '53',
+  рівненська: '56',
+  сумська: '59',
+  тернопільська: '61',
+  харківська: '63',
+  херсонська: '65',
+  хмельницька: '68',
+  черкаська: '71',
+  чернівецька: '74',
+  чернігівська: '77',
+  'автономна республіка крим': '43',
+  крим: '43',
 };
 
 /** Cities with special status have codes of their own, apart from their oblast. */
 const CITIES: Record<string, string> = {
-  київ: 'UA-30',
-  севастополь: 'UA-40',
+  київ: '30',
+  севастополь: '40',
 };
 
 const normalize = (value: string) =>
@@ -47,8 +50,8 @@ const isCity = (settlementType: string | null | undefined) =>
   /^(м\.?|місто)$/u.test(settlementType?.trim().toLowerCase() ?? '');
 
 /**
- * Province code (ISO 3166-2:UA) of a Nova Poshta settlement, or `null` when its area is
- * unknown. The city of Kyiv is `UA-30`; a village named Kyiv keeps its oblast.
+ * Province code (ISO 3166-2:UA without `UA-`) of a Nova Poshta settlement, or `null` when its
+ * area is unknown. The city of Kyiv is `30`; a village named Kyiv keeps its oblast.
  */
 export function settlementProvinceCode(
   settlement: Pick<Settlement, 'name' | 'area' | 'settlementType'>

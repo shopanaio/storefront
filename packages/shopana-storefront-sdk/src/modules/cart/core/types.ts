@@ -119,6 +119,10 @@ export interface CreateCartInput {
   items: {
     purchasableId: string;
     quantity: number;
+    /** How the line is purchased; the API default applies when missing. */
+    purchase?: { type: string };
+    /** Line attributes, passed to the API as they are. */
+    attributes?: unknown;
     tagSlug?: string;
     children?: AddToCartChildInput[];
   }[];

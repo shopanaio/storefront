@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useOperationTracker } from '#checkout/state/hooks/useOperationTracker';
 import { usePlacementController } from '#checkout/state/placement/usePlacementController';
 import { usePlacementPhase } from '#checkout/state/placement/placementStore';
+import { useCheckoutLifecycle } from '#checkout/state/useCheckoutLifecycle';
 import { onCheckoutEvent, CheckoutEvent } from '#checkout/state/checkoutBus';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
 import { PaymentSdkHost } from '#checkout/components/result/PaymentSdkHost';
@@ -22,6 +23,8 @@ export function CheckoutController({
   useOperationTracker();
   // Handle the placement lifecycle
   const { settleClientSdk } = usePlacementController(checkoutId);
+  // Follow the checkout status: placed elsewhere, expired, abandoned
+  useCheckoutLifecycle(checkoutId);
   const phase = usePlacementPhase();
 
   // Only an accepted order lets the host clear the cart (decision 1.6)

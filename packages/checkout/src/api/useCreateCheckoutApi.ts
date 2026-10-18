@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { CheckoutApi } from '#checkout/api/interface';
 import { useCheckoutOperation } from '#checkout/api/useCheckoutOperation';
 import { OperationKey } from '#checkout/state/checkoutBus';
@@ -25,11 +26,12 @@ import {
   PlacementUnconfirmedError,
 } from '#checkout/state/placement/outcome';
 export function useCreateCheckoutApi(): CheckoutApi {
+  const t = useTranslations('Checkout');
   const { checkout = null } = useCheckoutData() || {};
   const { commit: commitSelectDelivery } = useCheckoutOperation(
     selectDeliveryMethodMutation,
     {
-      errorMessage: 'Failed to select delivery method',
+      errorMessage: t('error-select-delivery'),
       operationKey: OperationKey.SelectDeliveryMethod,
       sectionId: SectionId.Delivery,
     }
@@ -47,7 +49,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitSelectPayment } = useCheckoutOperation(
     selectPaymentMethodMutation,
     {
-      errorMessage: 'Failed to select payment method',
+      errorMessage: t('error-select-payment'),
       operationKey: OperationKey.SelectPaymentMethod,
       sectionId: SectionId.Payment,
     }
@@ -55,7 +57,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitUpdateIdentity } = useCheckoutOperation(
     updateCustomerIdentityMutation,
     {
-      errorMessage: 'Failed to update customer identity',
+      errorMessage: t('error-update-contact'),
       operationKey: OperationKey.UpdateCustomerIdentity,
       sectionId: SectionId.Contact,
     }
@@ -63,7 +65,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitAddAddresses } = useCheckoutOperation(
     addDeliveryAddressesMutation,
     {
-      errorMessage: 'Failed to add delivery addresses',
+      errorMessage: t('error-save-address'),
       operationKey: OperationKey.AddDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -71,7 +73,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitUpdateAddresses } = useCheckoutOperation(
     updateDeliveryAddressesMutation,
     {
-      errorMessage: 'Failed to update delivery addresses',
+      errorMessage: t('error-save-address'),
       operationKey: OperationKey.UpdateDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -79,7 +81,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitRemoveAddresses } = useCheckoutOperation(
     removeDeliveryAddressesMutation,
     {
-      errorMessage: 'Failed to remove delivery addresses',
+      errorMessage: t('error-remove-address'),
       operationKey: OperationKey.RemoveDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -87,7 +89,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitAddPromo } = useCheckoutOperation(
     addPromoCodeMutation,
     {
-      errorMessage: 'Failed to add promo code',
+      // The promo section shows the error next to the field.
+      showErrorToast: false,
       operationKey: OperationKey.AddPromoCode,
       sectionId: SectionId.Promo,
     }
@@ -95,7 +98,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitRemovePromo } = useCheckoutOperation(
     removePromoCodeMutation,
     {
-      errorMessage: 'Failed to remove promo code',
+      showErrorToast: false,
       operationKey: OperationKey.RemovePromoCode,
       sectionId: SectionId.Promo,
     }
@@ -103,7 +106,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitUpdateNote } = useCheckoutOperation(
     updateCustomerNoteMutation,
     {
-      errorMessage: 'Failed to update customer note',
+      errorMessage: t('error-update-note'),
       operationKey: OperationKey.UpdateCustomerNote,
       debounceMs: 250,
       sectionId: SectionId.Comment,
@@ -120,7 +123,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitAddRecipients } = useCheckoutOperation(
     addDeliveryRecipientsMutation,
     {
-      errorMessage: 'Failed to add delivery recipients',
+      errorMessage: t('error-save-recipient'),
       operationKey: OperationKey.AddDeliveryRecipients,
       sectionId: SectionId.Recipient,
     }
@@ -128,7 +131,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitUpdateRecipients } = useCheckoutOperation(
     updateDeliveryRecipientsMutation,
     {
-      errorMessage: 'Failed to update delivery recipients',
+      errorMessage: t('error-save-recipient'),
       operationKey: OperationKey.UpdateDeliveryRecipients,
       sectionId: SectionId.Recipient,
     }
@@ -136,7 +139,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitRemoveRecipients } = useCheckoutOperation(
     removeDeliveryRecipientsMutation,
     {
-      errorMessage: 'Failed to remove delivery recipients',
+      errorMessage: t('error-remove-recipient'),
       operationKey: OperationKey.RemoveDeliveryRecipients,
       sectionId: SectionId.Recipient,
     }
@@ -203,7 +206,10 @@ export function useCreateCheckoutApi(): CheckoutApi {
         await commitUpdateNote({ input: { ...input, ...mutationContext() } });
       },
       addPromoCode: async (input) => {
-        await commitAddPromo({ input: { ...input, ...mutationContext() } });
+        const response = await commitAddPromo({ input: { ...input, ...mutationContext() } });
+        return (response.checkoutPromoCodeAdd.checkout?.appliedPromoCodes ?? []).map(
+          ({ code }) => code
+        );
       },
       removePromoCode: async (input) => {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });

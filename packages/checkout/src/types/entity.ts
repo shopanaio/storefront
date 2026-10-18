@@ -100,8 +100,8 @@ export namespace Checkout {
     purchasableId: string;
     /** How the line is purchased. */
     purchase: LinePurchase;
-    /** Line attributes passed when the line was added. */
-    attributes: Record<string, unknown>;
+    /** Line attributes passed when the line was added, as the API returns them (JSON). */
+    attributes: unknown;
     /** Tag the line was added under. */
     tag: LineTag | null;
     /** Bundle component this line fulfils. */

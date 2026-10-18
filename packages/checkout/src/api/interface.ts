@@ -29,7 +29,11 @@ export interface CheckoutApi {
   updateDeliveryRecipients: (input: DeliveryRecipientsUpdateDto) => Promise<void>;
   removeDeliveryRecipients: (input: DeliveryRecipientsRemoveDto) => Promise<void>;
   updateCustomerNote: (input: CustomerNoteUpdateDto) => Promise<void>;
-  addPromoCode: (input: PromoCodeAddDto) => Promise<void>;
+  /**
+   * Adds a promo code. Resolves with the codes the checkout applies afterwards: a code the
+   * pricing does not accept is kept out of them without an error.
+   */
+  addPromoCode: (input: PromoCodeAddDto) => Promise<string[]>;
   removePromoCode: (input: PromoCodeRemoveDto) => Promise<void>;
   /**
    * Places the order. Resolves with the placement result, including user errors and GraphQL

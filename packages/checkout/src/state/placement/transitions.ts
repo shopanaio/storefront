@@ -16,7 +16,12 @@ export function phaseForOutcome(
 ): PlacementPhase {
   switch (outcome.kind) {
     case 'accepted':
-      return { name: 'accepted', orderId: outcome.orderId, status: outcome.status };
+      return {
+        name: 'accepted',
+        orderId: outcome.orderId,
+        orderNumber: outcome.orderNumber,
+        status: outcome.status,
+      };
     case 'redirect':
       return context === 'submit'
         ? { name: 'redirecting', url: outcome.url }

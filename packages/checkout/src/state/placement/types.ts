@@ -38,21 +38,23 @@ export interface PlacementUserError {
 export interface PlacementResult {
   placementId: string | null;
   /**
-   * Capability token for reading the placement without checkout access (B4).
-   * Always `null` until the API returns it.
+   * Capability token for reading the placement without checkout access (B4). Only the buyer
+   * who placed the checkout receives it; a read by the token returns `null`.
    */
   placementToken: string | null;
   placementState: CheckoutPlacementState | null;
   checkoutId: string | null;
   resultRevision: string | null;
   orderId: string | null;
+  /** Human-readable number of the placed order. */
+  orderNumber: string | null;
   status: PlacementStatus | null;
   customerAction: PlacementCustomerAction | null;
   paymentFailure: PlacementPaymentFailure | null;
   userErrors: PlacementUserError[];
 }
 
-/** Where a placement can be read from: the attempt journal before B4, the return URL after it. */
+/** Where a placement can be read from: the attempt journal or the return URL. */
 export interface PlacementLocator {
   placementId: string;
   placementToken: string | null;
@@ -70,7 +72,12 @@ export type PaymentFlow = Checkout.PaymentFlow;
  * - `rejected`: the placement did not happen; show the error by code.
  */
 export type PlacementOutcome =
-  | { kind: 'accepted'; orderId: string | null; status: PlacementStatus }
+  | {
+      kind: 'accepted';
+      orderId: string | null;
+      orderNumber: string | null;
+      status: PlacementStatus;
+    }
   | { kind: 'redirect'; url: string }
   | { kind: 'client-sdk'; action: PlacementCustomerAction }
   | { kind: 'awaiting-payment'; locator: PlacementLocator }

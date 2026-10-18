@@ -14,6 +14,7 @@ function result(patch: Partial<PlacementResult> = {}): PlacementResult {
     checkoutId: 'checkout-1',
     resultRevision: 'rev-1',
     orderId: 'order-1',
+    orderNumber: null,
     status: null,
     customerAction: null,
     paymentFailure: null,
@@ -39,6 +40,7 @@ describe('resolvePlacementOutcome', () => {
       expect(resolvePlacementOutcome(result({ status }), 'ONLINE')).toEqual({
         kind: 'accepted',
         orderId: 'order-1',
+        orderNumber: null,
         status,
       });
     }
@@ -100,7 +102,12 @@ describe('resolvePlacementOutcome', () => {
         }),
         'OFFLINE'
       )
-    ).toEqual({ kind: 'accepted', orderId: 'order-1', status: 'REQUIRES_ACTION' });
+    ).toEqual({
+      kind: 'accepted',
+      orderId: 'order-1',
+      orderNumber: null,
+      status: 'REQUIRES_ACTION',
+    });
   });
 
   it('waits when the customer action is gone', () => {

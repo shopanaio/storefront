@@ -77,6 +77,7 @@ export enum CheckoutEvent {
 export interface OrderAcceptedEvent {
   checkoutId: string;
   orderId: string | null;
+  orderNumber: string | null;
   status: PlacementStatus;
 }
 

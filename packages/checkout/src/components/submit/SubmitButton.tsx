@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useHasActiveOperations } from '#checkout/state/selectors';
 import { useIsPlacementBusy } from '#checkout/state/placement/placementStore';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
+import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
 
 export interface SubmitButtonProps {
   /**
@@ -17,14 +18,17 @@ export interface SubmitButtonProps {
 /**
  * Submit button for the checkout form. Uses large primary AntD button
  * and localized label from Checkout namespace.
- * Loading while mutations are in flight; disabled for the whole placement attempt (1.12)
- * and while some lines cannot be delivered to the address (R7).
+ * Loading while mutations are in flight; disabled for the whole placement attempt (1.12),
+ * while some lines cannot be delivered to the address (R7), and once the checkout expired
+ * (it is being replaced, R5). A checkout that is not ready yet keeps the button pressable, so
+ * that pressing it tells the buyer what is missing; it is not placed until it is READY.
  */
 export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
   const t = useTranslations('Checkout');
   const hasActiveOperations = useHasActiveOperations();
   const placementBusy = useIsPlacementBusy();
   const blocked = useUndeliverableLines().length > 0;
+  const expired = useCheckoutReadiness()?.expired ?? false;
 
   return (
     <Button
@@ -34,7 +38,7 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       htmlType="submit"
       onClick={onClick}
       loading={hasActiveOperations || placementBusy}
-      disabled={placementBusy || blocked}
+      disabled={placementBusy || blocked || expired}
     >
       {t('confirm-order')}
     </Button>

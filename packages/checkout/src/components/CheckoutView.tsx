@@ -7,6 +7,8 @@ import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
 import { CheckoutAuth } from './CheckoutAuth';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
+import { RenewalNotice } from './notices/RenewalNotice';
+import { SectionIssues } from './notices/SectionIssues';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { SectionId } from '#checkout/state/interface';
 
@@ -43,6 +45,7 @@ export const CheckoutView = ({
           <div className={styles.main}>
             <Flex className={styles.left}>
               {brand}
+              <RenewalNotice />
               <CheckoutSection
                 title={t('contact')}
                 headerAction={
@@ -52,23 +55,28 @@ export const CheckoutView = ({
                 }
               >
                 <SectionRenderer slug={SectionId.Contact} />
+                <SectionIssues sections={[SectionId.Contact]} />
               </CheckoutSection>
 
               <CheckoutSection title={t('delivery')}>
                 <SectionRenderer slug={SectionId.Address} />
                 <SectionRenderer slug={SectionId.Delivery} />
+                <SectionIssues sections={[SectionId.Address, SectionId.Delivery]} />
               </CheckoutSection>
 
               <CheckoutSection>
                 <SectionRenderer slug={SectionId.Recipient} />
+                <SectionIssues sections={[SectionId.Recipient]} />
               </CheckoutSection>
 
               <CheckoutSection title={t('payment')}>
                 <SectionRenderer slug={SectionId.Payment} />
+                <SectionIssues sections={[SectionId.Payment]} />
               </CheckoutSection>
 
               <CheckoutSection>
                 <SectionRenderer slug={SectionId.Comment} />
+                <SectionIssues sections={[SectionId.Comment]} />
               </CheckoutSection>
 
               <div className={styles.actionsLeft}>

@@ -22,6 +22,7 @@ const result: PlacementResult = {
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
+  orderNumber: null,
   status: 'PAID',
   customerAction: null,
   paymentFailure: null,
@@ -59,6 +60,7 @@ describe('recordOutcome', () => {
     recordOutcome(journal, begin(journal), result, {
       kind: 'accepted',
       orderId: 'order-1',
+      orderNumber: null,
       status: 'PAID',
     });
     expect(journal.read('checkout-1')).toBeNull();

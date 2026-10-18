@@ -25,10 +25,6 @@ const toDate = (value: unknown): Date => {
 };
 const toOptionalDate = (value: string | null | undefined): Date | null =>
   value ? toDate(value) : null;
-const toRecord = (value: unknown): Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
 const mapMoney = (money: StorefrontCheckoutMoneyFragment): model.Money => ({
   amount: toAmount(money.amount),
   currencyCode: money.currencyCode,
@@ -140,7 +136,7 @@ const mapLine = (line: ApiLine): Checkout.Line => {
     purchasable: mapLinePurchasable(line, image),
     purchasableId: line.purchasableId,
     purchase: { type: line.purchase.type },
-    attributes: toRecord(line.attributes),
+    attributes: line.attributes ?? null,
     tag: line.tag
       ? { id: line.tag.id, slug: line.tag.slug, unique: line.tag.unique }
       : null,

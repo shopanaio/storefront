@@ -11,7 +11,12 @@ const group = (
   deliveryAddress: Checkout.DeliveryAddress | null
 ) => ({ id, checkoutLines: lines, deliveryAddress }) as unknown as Checkout.DeliveryGroup;
 const checkout = (deliveryGroups: Checkout.DeliveryGroup[], lines: Checkout.Line[] = []) =>
-  ({ lines, deliveryGroups }) as unknown as Checkout.Checkout;
+  ({
+    lines,
+    deliveryGroups,
+    localeCode: 'uk',
+    customerIdentity: { countryCode: null },
+  }) as unknown as Checkout.Checkout;
 
 describe('mapCheckoutToAddressFormData', () => {
   it('updates the address of every group and adds it for lines without one', () => {
@@ -26,6 +31,7 @@ describe('mapCheckoutToAddressFormData', () => {
     expect(data?.addressIds).toEqual(['a1', 'a2']);
     expect(data?.unaddressedLineIds).toEqual(['l3', 'l4']);
     expect(data?.address?.addressId).toBe('a1');
+    expect(data?.localeCode).toBe('uk');
   });
 
   it('adds the address for every line before the checkout has groups', () => {

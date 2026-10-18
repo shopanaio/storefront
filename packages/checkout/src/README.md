@@ -99,7 +99,7 @@ Sections live under `sections/*` and include:
 
 1. User clicks Submit → `Checkout.tsx` calls store `requestSubmit()`.
 2. `checkoutStore.requestSubmit()` checks required sections. If missing — emits `SubmitBlocked` with a list; otherwise — `SubmitReady` with the sections payload.
-3. `usePlacementController` listens to `SubmitReady` and places the order (below). The button stays disabled for the whole attempt; a second tab relies on `CHECKOUT_ALREADY_PLACED` and placement recovery.
+3. `usePlacementController` listens to `SubmitReady` and places the order (below) only when the checkout is ready (`state/readiness.ts`): `status = READY`, `valid`, before `expiresAt`, no issue with `effect = STOP`. An unanswered attempt (`sent`) of the same snapshot is resent with its key whatever the checkout shows, since the key returns the placement it may have made. Otherwise, once the buyer pressed the button, a blocking issue is shown in its section (`components/notices/SectionIssues.tsx`, section by `field`, `state/issueSections.ts`), and the notices above the button (`components/notices/IssueNotices.tsx`) show the issues of lines and of the whole checkout and name the sections with issues; warnings are shown there all the time. Issue texts come from the API as they are. The button stays disabled for the whole attempt and once the checkout expired; a second tab relies on `CHECKOUT_ALREADY_PLACED` and placement recovery.
 4. When the order is accepted, `OrderAccepted` reaches the host through `onOrderAccepted`, where the cart is cleared; the checkout shows its result screen.
 
 ## Order Placement
@@ -115,10 +115,30 @@ Files: `state/placement/*`, `components/result/*`, `page/return.tsx`.
   - `REQUIRES_CONFIRMATION`, `PAYMENT_PENDING` for `ONLINE`, or a placement still running → poll `checkoutPlacement` (2 → 30 s backoff, no limit). `REQUIRES_CONFIRMATION` gets real handling with the Stripe app;
   - `PAYMENT_FAILED` → stay in checkout with the cart intact; the next submit pays again with a new key;
   - placement user errors (`CHECKOUT_ALREADY_PLACED`, `CHECKOUT_PLACEMENT_*`) → recover from the known placement. Texts are chosen by `code` on the frontend (`components/result/placementMessages.ts`); the API message is never shown, `paymentFailure.message` only as a detail.
-- Recovery (`recovery.ts`) is the only module that knows how a placement is found: the return URL (`/checkout/return?checkout=<id>` now; `placement` and `token` after B4) and `checkoutPlacement(id)`. After B4 only this module changes. The return page removes the token from the address bar right after reading it.
+- Recovery (`recovery.ts`) is the only module that knows how a placement is found. The return URL is a template, `/checkout/return?checkout=<id>&placement={placementId}&token={placementToken}`: the backend fills in the placement id and its access token (B4), so the return page works in any browser or device. Reads go through `checkoutPlacement(id)` as the buyer first (only that read returns the customer action) and through `checkoutPlacement(id, token)` when the buyer read finds nothing or is refused. The return page removes the token from the address bar right after reading it; after a reload the token of the same placement comes from the attempt journal. The result screen shows `orderNumber` from the placement.
 - Reload: an unanswered request (`sent`) is resent with the same key once the checkout has loaded, only if its `resultRevision` is unchanged (otherwise the next press takes a new key); a placement in progress is polled; a resumed or unpaid redirect is offered as "continue payment" instead of leaving the page. The waiting screen has a way out: the placement goes on and is read again on the next visit.
 - Return page (`page/return.tsx`, module `checkout-return` at `/checkout/return`): reads the placement from the URL or the journal, follows it to its outcome, and clears the cart only when it belongs to the placed checkout; the host's optional `onOrderAccepted` then clears its own cart state (the theme's box builder).
 - Theme adapter: `useCheckoutPath`, `useCheckoutReturnPath`, and optional `useOrderPath` for the placed order page.
+
+## Lifecycle
+
+Files: `state/useCheckoutLifecycle.ts`, `state/renewal.ts`, `hooks/useCheckoutNotFound.ts`.
+
+- `PLACED` is handled like `CHECKOUT_ALREADY_PLACED`: the placement of this browser is followed, otherwise the buyer is told the order was already placed.
+- `EXPIRED` or `ABANDONED` from the server, or a mutation rejected with `CHECKOUT_EXPIRED`/`CHECKOUT_ABANDONED`: a new checkout with the same lines (purchase, attributes, tags, components) replaces it once (R5); contacts and promo codes are not carried over. When `expiresAt` passes by the browser clock, the checkout is read again and replaced only `EXPIRY_GRACE_MS` (2 min) later if the server still keeps it open. Nothing is replaced while a placement attempt of this browser (`sent` or `resolved`) owns the checkout. `RenewalNotice` tells the buyer, or offers a retry when creating it failed.
+- A load error shows a message with "Try again"; a checkout that is not found sends the buyer home with the cart open, unless this browser has a placement attempt for it.
+
+## Delivery Address
+
+Files: `sections/address/**`, `hooks/useDeliveryCountries.ts`.
+
+- Countries come from `checkoutDeliveryCountries(localeCode)` (B6). The selector is shown only for more than one country; the form country is the saved one, then the customer's, then the first, counting only countries the store delivers to. Without any country the section says delivery is unavailable.
+- A country with a module registered as `ProviderModuleType.Address` (slug = country code) uses it: Ukraine keeps its city-first form. Any other country gets `InternationalAddressForm`, laid out by the country address format (rows, required fields, province list, postal code pattern); name and phone stay in the recipient section.
+- The address carries neutral fields only (`countryCode`, `city`, `address1`, `address2`, `provinceCode` without the country prefix, `postalCode`) and carrier hints in `data.carriers[carrierCode]`.
+
+## Promo Codes
+
+Files: `sections/promo/**`. Every applied code is listed and removable on its own. A code the API accepts but the pricing does not apply is reported by the field and removed again; with other codes applied, the message says it may not combine with them. Errors are shown by code next to the field. The theme's optional `LoyaltySlot` renders right after the codes.
 
 ## Configuration
 

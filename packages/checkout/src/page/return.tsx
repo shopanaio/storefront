@@ -27,8 +27,8 @@ type ReturnView = PlacementPhase | { name: 'loading' };
 
 /**
  * Return page of the payment provider (`/checkout/return`, plan section 2): reads the placement
- * named by the URL (after B4) or by the attempt journal (before B4), removes the token from the
- * address bar, and follows the placement to its outcome.
+ * named by the URL (placement id and token) or by the attempt journal, removes the token from
+ * the address bar, and follows the placement to its outcome.
  */
 export interface CheckoutReturnPageProps {
   theme: CheckoutThemeAdapter;
@@ -98,13 +98,15 @@ const CheckoutReturn = ({
           recordOutcome(journal, attempt, result, outcome);
         }
         if (outcome.kind === 'accepted') {
-          const checkoutId = attempt?.checkoutId ?? result.checkoutId;
+          // A read by the token alone does not name the checkout; the URL does.
+          const checkoutId = attempt?.checkoutId ?? result.checkoutId ?? params.checkoutId;
           // Only the cart this order was placed from is cleared (decision 1.6).
           if (checkoutId && checkoutId === latest.current.cartId) {
             latest.current.cleanup(checkoutId);
             latest.current.onOrderAccepted?.({
               checkoutId,
               orderId: outcome.orderId,
+              orderNumber: outcome.orderNumber,
               status: outcome.status,
             });
           }
@@ -136,7 +138,14 @@ const CheckoutReturn = ({
 
   switch (view.name) {
     case 'accepted':
-      return <CheckoutResult orderId={view.orderId} status={view.status} brand={brand} />;
+      return (
+        <CheckoutResult
+          orderId={view.orderId}
+          orderNumber={view.orderNumber}
+          status={view.status}
+          brand={brand}
+        />
+      );
     case 'payment-failed':
       return (
         <PlacementScreen brand={brand}>

@@ -1,11 +1,10 @@
 import * as yup from 'yup';
 import type { PromoFormData } from './types';
 
-/**
- * Yup validation schema for PromoFormData
- * Promo is optional, but if code is provided, it must not be empty
- */
+/** Promo codes are optional; the section is valid with any list of applied codes. */
 export const promoFormSchema = yup.object<PromoFormData>().shape({
-  code: yup.string().trim().min(1, 'Promo code cannot be empty').default(''),
-  provider: yup.string().default(''),
+  codes: yup
+    .array()
+    .of(yup.object({ code: yup.string().required(), provider: yup.string().default('') }))
+    .default([]),
 });

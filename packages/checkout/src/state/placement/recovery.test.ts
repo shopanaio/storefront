@@ -1,3 +1,4 @@
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildReturnUrl,
@@ -5,9 +6,13 @@ import {
   readReturnParams,
   resolveRecoveryLocator,
   stripReturnToken,
+  useReadPlacement,
 } from '#checkout/state/placement/recovery';
 import type { PlacementAttempt } from '#checkout/state/placement/attemptJournal';
 import type { PlacementResult } from '#checkout/state/placement/types';
+
+const apollo = vi.hoisted(() => ({ query: vi.fn() }));
+vi.mock('@apollo/client/react', () => ({ useApolloClient: () => apollo }));
 
 const base: PlacementResult = {
   placementId: 'placement-1',
@@ -16,6 +21,7 @@ const base: PlacementResult = {
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
+  orderNumber: null,
   status: 'PAYMENT_PENDING',
   customerAction: null,
   paymentFailure: null,
@@ -38,10 +44,19 @@ const attempt: PlacementAttempt = {
 };
 
 describe('return URL', () => {
-  it('names the checkout on the theme return path', () => {
+  it('names the checkout and leaves the placement placeholders unencoded', () => {
     expect(
       buildReturnUrl('https://shop.example', '/uk/checkout/return', 'Z2lkOi8v/1')
-    ).toBe('https://shop.example/uk/checkout/return?checkout=Z2lkOi8v%2F1');
+    ).toBe(
+      'https://shop.example/uk/checkout/return?checkout=Z2lkOi8v%2F1' +
+        '&placement={placementId}&token={placementToken}'
+    );
+  });
+
+  it('ignores placeholders the backend did not fill in', () => {
+    expect(
+      readReturnParams('?checkout=c-1&placement={placementId}&token={placementToken}')
+    ).toEqual({ checkoutId: 'c-1', locator: null });
   });
 
   it('reads the placement from the URL first', () => {
@@ -56,7 +71,17 @@ describe('return URL', () => {
     });
   });
 
-  it('falls back to the journal before B4', () => {
+  it('takes the token from the journal after the URL lost it on reload', () => {
+    const withToken = { ...attempt, placementToken: 't-journal' };
+    expect(
+      resolveRecoveryLocator(readReturnParams('?checkout=checkout-1&placement=from-journal'), withToken)
+    ).toEqual({ placementId: 'from-journal', placementToken: 't-journal' });
+    expect(
+      resolveRecoveryLocator(readReturnParams('?checkout=checkout-1&placement=other'), withToken)
+    ).toEqual({ placementId: 'other', placementToken: null });
+  });
+
+  it('falls back to the journal without placement parameters', () => {
     expect(resolveRecoveryLocator(readReturnParams('?checkout=checkout-1'), attempt)).toEqual({
       placementId: 'from-journal',
       placementToken: null,
@@ -128,5 +153,49 @@ describe('pollPlacement', () => {
       wait: async () => undefined,
     });
     expect(read).toHaveBeenCalledOnce();
+  });
+});
+
+describe('useReadPlacement', () => {
+  const payload = {
+    placementId: 'placement-1',
+    placementToken: null,
+    placementState: 'PLACED',
+    checkoutId: null,
+    resultRevision: null,
+    orderId: 'order-1',
+    orderNumber: '1001',
+    status: 'PAID',
+    customerAction: null,
+    paymentFailure: null,
+    userErrors: [],
+  };
+  const tokens = () => apollo.query.mock.calls.map(([options]) => options.variables.token);
+
+  it('reads as the buyer first and keeps the token of the locator', async () => {
+    apollo.query.mockReset().mockResolvedValue({ data: { checkoutPlacement: payload } });
+    const { result } = renderHook(() => useReadPlacement());
+    const placement = await result.current({ placementId: 'placement-1', placementToken: 't-1' });
+    expect(tokens()).toEqual([null]);
+    expect(placement).toMatchObject({ orderNumber: '1001', placementToken: 't-1' });
+  });
+
+  it('falls back to the token when the buyer read finds nothing or is refused', async () => {
+    apollo.query
+      .mockReset()
+      .mockRejectedValueOnce(new Error('FORBIDDEN'))
+      .mockResolvedValueOnce({ data: { checkoutPlacement: payload } });
+    const { result } = renderHook(() => useReadPlacement());
+    await result.current({ placementId: 'placement-1', placementToken: 't-1' });
+    expect(tokens()).toEqual([null, 't-1']);
+  });
+
+  it('reports a missing placement without a token', async () => {
+    apollo.query.mockReset().mockResolvedValue({ data: { checkoutPlacement: null } });
+    const { result } = renderHook(() => useReadPlacement());
+    await expect(
+      result.current({ placementId: 'placement-1', placementToken: null })
+    ).resolves.toBeNull();
+    expect(tokens()).toEqual([null]);
   });
 });

@@ -42,6 +42,7 @@ const placement: PlacementResult = {
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
+  orderNumber: null,
   status: 'REQUIRES_ACTION',
   customerAction: null,
   paymentFailure: null,

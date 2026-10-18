@@ -4,7 +4,7 @@ import { usePlacementController } from '#checkout/state/placement/usePlacementCo
 import { usePlacementStore } from '#checkout/state/placement/placementStore';
 import { attemptStorageKey } from '#checkout/state/placement/attemptJournal';
 import type { PlacementAttempt } from '#checkout/state/placement/attemptJournal';
-import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
+import { CheckoutEvent, emitCheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
 import type { PlacementResult } from '#checkout/state/placement/types';
 import {
   graphQLErrorPlacement,
@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   submitCheckout: vi.fn(),
   readPlacement: vi.fn(),
   checkoutData: {
-    checkout: null as { id: string; resultRevision: string } | null,
+    checkout: null as ({ id: string; resultRevision: string } & Record<string, unknown>) | null,
     loaded: true,
   },
 }));
@@ -57,6 +57,7 @@ const paid: PlacementResult = {
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
+  orderNumber: null,
   status: 'PAID',
   customerAction: null,
   paymentFailure: null,
@@ -110,6 +111,7 @@ describe('usePlacementController', () => {
       expect(usePlacementStore.getState().phase).toEqual({
         name: 'accepted',
         orderId: 'order-1',
+        orderNumber: null,
         status: 'PAID',
       })
     );
@@ -121,6 +123,7 @@ describe('usePlacementController', () => {
     expect(accepted).toHaveBeenCalledWith({
       checkoutId: 'checkout-1',
       orderId: 'order-1',
+      orderNumber: null,
       status: 'PAID',
     });
     expect(storedAttempt()).toBeNull();
@@ -249,5 +252,73 @@ describe('usePlacementController', () => {
       })
     );
     expect(storedAttempt()).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+  });
+
+  describe('a lost answer when the checkout is no longer ready', () => {
+    const placedCheckout = (resultRevision: string) => ({
+      id: 'checkout-1',
+      resultRevision,
+      status: 'PLACED',
+      valid: true,
+      expiresAt: new Date(Date.now() + 60_000),
+      issues: [],
+      payment: { selection: { method: { flow: 'ONLINE' } } },
+    });
+
+    it('resends the unanswered attempt on submit with its key', async () => {
+      mocks.submitCheckout.mockResolvedValue(paid);
+      // Loaded with the same snapshot: the reload resends it first and the order is accepted.
+      mocks.checkoutData = { checkout: placedCheckout('rev-1'), loaded: true };
+      renderHook(() => usePlacementController('checkout-1'));
+      await waitFor(() =>
+        expect(usePlacementStore.getState().phase).toMatchObject({ name: 'accepted' })
+      );
+      mocks.submitCheckout.mockClear();
+      usePlacementStore.getState().reset();
+      storeAttempt(sentAttempt);
+
+      await act(async () => {
+        await emitCheckoutEvent(CheckoutEvent.SubmitReady, { payload: {} });
+      });
+
+      await waitFor(() =>
+        expect(mocks.submitCheckout).toHaveBeenCalledWith({
+          checkoutId: 'checkout-1',
+          idempotencyKey: 'key-1',
+          returnUrl: sentAttempt.returnUrl,
+        })
+      );
+    });
+
+    it('does not place a changed snapshot that is not ready', async () => {
+      mocks.checkoutData = { checkout: placedCheckout('rev-2'), loaded: true };
+      renderHook(() => usePlacementController('checkout-1'));
+
+      await act(async () => {
+        await emitCheckoutEvent(CheckoutEvent.SubmitReady, { payload: {} });
+      });
+
+      expect(mocks.submitCheckout).not.toHaveBeenCalled();
+    });
+
+    it('follows CHECKOUT_ALREADY_PLACED by resending the unanswered attempt', async () => {
+      mocks.submitCheckout.mockResolvedValue(paid);
+      // Still loading: the reload resend waits for the checkout.
+      mocks.checkoutData = { checkout: null, loaded: false };
+      renderHook(() => usePlacementController('checkout-1'));
+      expect(mocks.submitCheckout).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await emitCheckoutEvent(CheckoutEvent.CheckoutClosed, { code: 'CHECKOUT_ALREADY_PLACED' });
+      });
+
+      await waitFor(() =>
+        expect(usePlacementStore.getState().phase).toMatchObject({ name: 'accepted' })
+      );
+      expect(mocks.submitCheckout).toHaveBeenCalledTimes(1);
+      expect(mocks.submitCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: 'key-1' })
+      );
+    });
   });
 });

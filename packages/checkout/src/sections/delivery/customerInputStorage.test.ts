@@ -9,6 +9,10 @@ import {
 const kyiv = {
   addressId: 'a1',
   countryCode: 'UA',
+  address1: null,
+  address2: null,
+  postalCode: null,
+  provinceCode: null,
   city: 'Київ',
   data: { settlementRef: 'kyiv' },
 };

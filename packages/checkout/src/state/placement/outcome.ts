@@ -4,6 +4,7 @@ import type {
   PlacementLocator,
   PlacementOutcome,
   PlacementResult,
+  PlacementStatus,
 } from '#checkout/state/placement/types';
 
 /**
@@ -71,11 +72,12 @@ export function mapPlacementPayload(
 ): PlacementResult {
   return {
     placementId: payload.placementId ?? null,
-    placementToken: null,
+    placementToken: payload.placementToken ?? null,
     placementState: payload.placementState ?? null,
     checkoutId: payload.checkoutId ?? null,
     resultRevision: payload.resultRevision ?? null,
     orderId: payload.orderId ?? null,
+    orderNumber: payload.orderNumber ?? null,
     status: payload.status ?? null,
     customerAction: payload.customerAction
       ? {
@@ -123,6 +125,7 @@ export function graphQLErrorPlacement(
     checkoutId,
     resultRevision: null,
     orderId: null,
+    orderNumber: null,
     status: null,
     customerAction: null,
     paymentFailure: null,
@@ -163,10 +166,10 @@ export function resolvePlacementOutcome(
     case 'PAID':
     case 'AUTHORIZED':
     case 'PAYMENT_NOT_REQUIRED':
-      return { kind: 'accepted', orderId: result.orderId, status: result.status };
+      return accepted(result, result.status);
     case 'PAYMENT_PENDING':
       if (flow === 'OFFLINE' || flow === 'ON_DELIVERY') {
-        return { kind: 'accepted', orderId: result.orderId, status: result.status };
+        return accepted(result, result.status);
       }
       return awaitingOrRejected(locator);
     case 'REQUIRES_ACTION': {
@@ -179,7 +182,7 @@ export function resolvePlacementOutcome(
       }
       if (action?.type === 'INSTRUCTIONS') {
         // Decision 1.11: the order is placed at once; the instructions are not shown.
-        return { kind: 'accepted', orderId: result.orderId, status: result.status };
+        return accepted(result, result.status);
       }
       // The action expired or the session no longer awaits it: the server settles the payment.
       return awaitingOrRejected(locator);
@@ -210,6 +213,10 @@ export function resolvePlacementOutcome(
     code: error?.code ?? 'CHECKOUT_PLACEMENT_FAILED',
     retryable: error?.retryable ?? false,
   };
+}
+
+function accepted(result: PlacementResult, status: PlacementStatus): PlacementOutcome {
+  return { kind: 'accepted', orderId: result.orderId, orderNumber: result.orderNumber, status };
 }
 
 function awaitingOrRejected(locator: PlacementLocator | null): PlacementOutcome {

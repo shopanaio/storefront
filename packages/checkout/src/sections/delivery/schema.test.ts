@@ -80,6 +80,10 @@ describe('deliveryFormSchema with stored customer input', () => {
     const address = {
       addressId: 'a1',
       countryCode: 'UA',
+      address1: null,
+      address2: null,
+      postalCode: null,
+      provinceCode: null,
       city: 'Київ',
       data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
     };

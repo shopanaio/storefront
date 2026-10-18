@@ -33,6 +33,7 @@ import {
   recordOutcome,
 } from '#checkout/state/placement/transitions';
 import type { PlacementContext } from '#checkout/state/placement/transitions';
+import { checkoutReadiness } from '#checkout/state/readiness';
 import type {
   PlacementLocator,
   PlacementOutcome,
@@ -102,6 +103,7 @@ export function usePlacementController(checkoutId: string | null) {
         void emitCheckoutEvent(CheckoutEvent.OrderAccepted, {
           checkoutId: attempt.checkoutId,
           orderId: outcome.orderId,
+          orderNumber: outcome.orderNumber,
           status: outcome.status,
         });
       }
@@ -209,6 +211,14 @@ export function usePlacementController(checkoutId: string | null) {
         poll(current, locator, 'submit');
         return;
       }
+      // The backend places only a READY, valid checkout before it expires; the notices above
+      // the button say what is missing (stage 5). An unanswered request for this snapshot is
+      // resent with its key whatever the checkout shows: the key returns the placement it made.
+      const resend =
+        current?.state === 'sent' && current.resultRevision === checkout.resultRevision;
+      if (!resend && !checkoutReadiness(checkout, Date.now()).canPlace) {
+        return;
+      }
       const attempt = journal.begin({
         checkoutId: checkout.id,
         resultRevision: checkout.resultRevision,
@@ -223,23 +233,36 @@ export function usePlacementController(checkoutId: string | null) {
     return () => off();
   }, [checkout, poll, returnPath, send]);
 
-  // A mutation found the checkout closed. A placement of this checkout is followed to its
-  // result; without one, the customer is told the checkout can no longer be placed.
+  // The checkout is already placed. A placement of this checkout is followed to its result; an
+  // unanswered request of this browser is resent with its key, since the placement may be its
+  // own; otherwise the customer is told the order was already placed. An expired or abandoned
+  // checkout is replaced by the lifecycle controller instead (R5).
   useEffect(() => {
     const off = onCheckoutEvent(CheckoutEvent.CheckoutClosed, ({ code }) => {
-      if (!checkoutId || isPlacementBusy(usePlacementStore.getState().phase)) {
+      if (
+        code !== 'CHECKOUT_ALREADY_PLACED' ||
+        !checkoutId ||
+        isPlacementBusy(usePlacementStore.getState().phase)
+      ) {
         return;
       }
       const current = journalRef.current.read(checkoutId);
       const locator = attemptLocator(current);
-      if (code === 'CHECKOUT_ALREADY_PLACED' && current && locator) {
+      if (current && locator) {
         poll(current, locator, 'recover');
+        return;
+      }
+      if (
+        current?.state === 'sent' &&
+        (!checkout || checkout.resultRevision === current.resultRevision)
+      ) {
+        void send(current, 'recover');
         return;
       }
       setPhase({ name: 'rejected', code });
     });
     return () => off();
-  }, [checkoutId, poll, setPhase]);
+  }, [checkout, checkoutId, poll, send, setPhase]);
 
   // Reload: resume an unanswered request with the same key, or read the placement in progress.
   // Both work from the journal alone: the checkout may be unreadable once it became an order

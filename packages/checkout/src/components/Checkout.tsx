@@ -18,6 +18,9 @@ import {
 } from '#checkout/state/placement/placementStore';
 import { CheckoutResult } from '#checkout/components/result/CheckoutResult';
 import { PaymentPendingScreen } from '#checkout/components/result/PaymentPendingScreen';
+import { CheckoutLoadError } from '#checkout/components/CheckoutLoadError';
+import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { useCheckoutNotFound } from '#checkout/hooks/useCheckoutNotFound';
 
 export interface CheckoutProps {
   cartId: string | null;
@@ -64,7 +67,7 @@ export const Checkout = ({
             checkoutId={cartId}
             onOrderAccepted={onOrderAccepted}
           />
-          <CheckoutBody brand={brand} features={features} />
+          <CheckoutBody checkoutId={cartId} brand={brand} features={features} />
         </CheckoutApiProvider>
       </CheckoutDataContextProvider>
     </CheckoutThemeProvider>
@@ -72,17 +75,25 @@ export const Checkout = ({
 };
 
 const CheckoutBody = ({
+  checkoutId,
   brand,
   features,
-}: Pick<CheckoutProps, 'brand' | 'features'>) => {
+}: Pick<CheckoutProps, 'brand' | 'features'> & { checkoutId: string | null }) => {
   const t = useTranslations('Checkout');
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
   const { validationError, onClearError } = useValidationAlert();
   const phase = usePlacementPhase();
+  const { checkout, error, refetch } = useCheckoutData();
+  const notFound = useCheckoutNotFound(checkoutId);
 
   if (phase.name === 'accepted') {
     return (
-      <CheckoutResult orderId={phase.orderId} status={phase.status} brand={brand} />
+      <CheckoutResult
+        orderId={phase.orderId}
+        orderNumber={phase.orderNumber}
+        status={phase.status}
+        brand={brand}
+      />
     );
   }
   if (phase.name === 'awaiting-payment' || phase.name === 'redirecting') {
@@ -92,6 +103,10 @@ const CheckoutBody = ({
         brand={brand}
       />
     );
+  }
+
+  if (error && !checkout && !notFound && phase.name === 'idle') {
+    return <CheckoutLoadError brand={brand} onRetry={() => void refetch()} />;
   }
 
   const handleSubmit = (e: React.FormEvent) => {

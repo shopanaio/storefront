@@ -1,5 +1,6 @@
 import { ComponentType, FC } from 'react';
 import type { PlacementCustomerAction } from '#checkout/state/placement/types';
+import type { DeliveryCountry } from '#checkout/sections/address/countries';
 
 /**
  * Supported module types for the plugin system.
@@ -72,6 +73,11 @@ export interface ProviderDeliveryAddress {
   addressId: string | null;
   countryCode: string | null;
   city: string | null;
+  address1: string | null;
+  address2: string | null;
+  postalCode: string | null;
+  /** ISO 3166-2 subdivision code without the country prefix. */
+  provinceCode: string | null;
   /** Carrier hints of the address; each carrier reads only its own. */
   data: unknown;
 }
@@ -133,13 +139,17 @@ export interface AddressModuleValue {
   address1?: string | null;
   address2?: string | null;
   postalCode?: string | null;
+  /** ISO 3166-2 subdivision code without the country prefix, as the address format lists it. */
   provinceCode?: string | null;
   /** Carrier hints, e.g. the Nova Poshta settlement of the picked city. */
   data?: Record<string, unknown>;
 }
 
 export interface AddressModuleProps {
+  /** Saved address; `null` until one is saved or when it belongs to another country. */
   address: ProviderDeliveryAddress | null;
+  /** Country of the form with its address format (B6). */
+  country: DeliveryCountry;
   onSubmit: (address: AddressModuleValue) => void;
 }
 

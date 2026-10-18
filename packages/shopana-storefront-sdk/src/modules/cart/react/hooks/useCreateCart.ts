@@ -1,6 +1,7 @@
 'use client';
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import type {
+  CheckoutLinePurchaseType,
   CurrencyCode,
   LocaleCode,
   SdkCreateCartMutation,
@@ -31,6 +32,10 @@ const useCreateCart = () => {
             items: input.items.map((item) => ({
               purchasableId: item.purchasableId,
               quantity: item.quantity,
+              purchase: item.purchase
+                ? { type: item.purchase.type as CheckoutLinePurchaseType }
+                : undefined,
+              attributes: item.attributes as object | undefined,
               tagSlug: item.tagSlug,
               children: item.children?.map((child) => ({
                 componentItemId: child.componentItemId,

@@ -12,12 +12,14 @@ import type { PlacementStatus } from '#checkout/state/placement/types';
 
 export interface CheckoutResultProps {
   orderId: string | null;
+  /** Number from the placement; when missing it is read from the order. */
+  orderNumber: string | null;
   status: PlacementStatus;
   brand?: ReactNode;
 }
 
 /** Result screen of an accepted order (decision 1.5): order number, payment status, next steps. */
-export const CheckoutResult = ({ orderId, status, brand }: CheckoutResultProps) => {
+export const CheckoutResult = ({ orderId, orderNumber, status, brand }: CheckoutResultProps) => {
   const t = useTranslations('Checkout');
   const router = useRouter();
   const theme = useCheckoutTheme();
@@ -25,7 +27,9 @@ export const CheckoutResult = ({ orderId, status, brand }: CheckoutResultProps) 
   const useOrderPath = theme.useOrderPath ?? noOrderPath;
   const themeOrderPath = useOrderPath(orderId ?? '');
   const orderPath = orderId ? themeOrderPath : null;
-  const { number, loading } = usePlacedOrderNumber(orderId);
+  const placed = usePlacedOrderNumber(orderNumber ? null : orderId);
+  const number = orderNumber ?? (placed.number !== null ? String(placed.number) : null);
+  const loading = !orderNumber && placed.loading;
 
   return (
     <PlacementScreen brand={brand}>
@@ -37,7 +41,7 @@ export const CheckoutResult = ({ orderId, status, brand }: CheckoutResultProps) 
             {loading ? (
               <Skeleton.Input active size="small" />
             ) : number !== null ? (
-              <strong>{t('order-number', { number: String(number) })}</strong>
+              <strong>{t('order-number', { number })}</strong>
             ) : null}
             <span>{t(paymentStatusMessageKey(status))}</span>
           </Flex>
