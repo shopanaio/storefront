@@ -11,6 +11,7 @@ function result(patch: Partial<PlacementResult> = {}): PlacementResult {
     placementId: 'placement-1',
     placementToken: null,
     placementState: 'PLACED',
+    paymentFlow: null,
     checkoutId: 'checkout-1',
     resultRevision: 'rev-1',
     orderId: 'order-1',
@@ -46,11 +47,27 @@ describe('resolvePlacementOutcome', () => {
     }
   );
 
+  it('accepts COD on a return page without the attempt journal', () => {
+    expect(
+      resolvePlacementOutcome(
+        result({ status: 'PAYMENT_PENDING', paymentFlow: 'ON_DELIVERY' }),
+        null
+      ).kind
+    ).toBe('accepted');
+    expect(
+      resolvePlacementOutcome(
+        result({ status: 'PAYMENT_PENDING', paymentFlow: 'ONLINE' }),
+        'ON_DELIVERY'
+      ).kind
+    ).toBe('awaiting-payment');
+  });
+
   it.each(['OFFLINE', 'ON_DELIVERY'] as const)(
     'accepts a pending payment of a %s method',
     (flow) => {
       expect(
-        resolvePlacementOutcome(result({ status: 'PAYMENT_PENDING' }), flow).kind
+        resolvePlacementOutcome(result({ status: 'PAYMENT_PENDING' }), flow)
+          .kind
       ).toBe('accepted');
     }
   );
@@ -66,8 +83,10 @@ describe('resolvePlacementOutcome', () => {
 
   it('waits on REQUIRES_CONFIRMATION', () => {
     expect(
-      resolvePlacementOutcome(result({ status: 'REQUIRES_CONFIRMATION' }), 'ONLINE')
-        .kind
+      resolvePlacementOutcome(
+        result({ status: 'REQUIRES_CONFIRMATION' }),
+        'ONLINE'
+      ).kind
     ).toBe('awaiting-payment');
   });
 
@@ -76,7 +95,11 @@ describe('resolvePlacementOutcome', () => {
       resolvePlacementOutcome(
         result({
           status: 'REQUIRES_ACTION',
-          customerAction: { ...action, type: 'REDIRECT', url: 'https://pay.example/1' },
+          customerAction: {
+            ...action,
+            type: 'REDIRECT',
+            url: 'https://pay.example/1',
+          },
         }),
         'ONLINE'
       )
@@ -136,7 +159,8 @@ describe('resolvePlacementOutcome', () => {
 
   it('waits when the customer action is gone', () => {
     expect(
-      resolvePlacementOutcome(result({ status: 'REQUIRES_ACTION' }), 'ONLINE').kind
+      resolvePlacementOutcome(result({ status: 'REQUIRES_ACTION' }), 'ONLINE')
+        .kind
     ).toBe('awaiting-payment');
   });
 
@@ -193,7 +217,11 @@ describe('resolvePlacementOutcome', () => {
   it('rejects a failed placement without a result', () => {
     expect(
       resolvePlacementOutcome(result({ placementState: 'FAILED' }), 'ONLINE')
-    ).toEqual({ kind: 'rejected', code: 'CHECKOUT_PLACEMENT_FAILED', retryable: false });
+    ).toEqual({
+      kind: 'rejected',
+      code: 'CHECKOUT_PLACEMENT_FAILED',
+      retryable: false,
+    });
   });
 
   it('rejects by the user error code', () => {
@@ -231,7 +259,9 @@ describe('placementPollDelay', () => {
 
 describe('isDefiniteRejection', () => {
   it('accepts only errors raised before placeOrder runs', () => {
-    expect(isDefiniteRejection([{ message: 'x', extensions: { code: 'FORBIDDEN' } }])).toBe(true);
+    expect(
+      isDefiniteRejection([{ message: 'x', extensions: { code: 'FORBIDDEN' } }])
+    ).toBe(true);
     expect(
       isDefiniteRejection([
         { message: 'x', extensions: { code: 'FORBIDDEN' } },

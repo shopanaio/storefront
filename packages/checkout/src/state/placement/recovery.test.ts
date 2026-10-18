@@ -19,6 +19,7 @@ const base: PlacementResult = {
   placementId: 'placement-1',
   placementToken: null,
   placementState: 'PLACED',
+  paymentFlow: null,
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
@@ -47,7 +48,11 @@ const attempt: PlacementAttempt = {
 describe('return URL', () => {
   it('names the checkout and leaves the placement placeholders unencoded', () => {
     expect(
-      buildReturnUrl('https://shop.example', '/uk/checkout/return', 'Z2lkOi8v/1')
+      buildReturnUrl(
+        'https://shop.example',
+        '/uk/checkout/return',
+        'Z2lkOi8v/1'
+      )
     ).toBe(
       'https://shop.example/uk/checkout/return?checkout=Z2lkOi8v%2F1' +
         '&placement={placementId}&token={placementToken}'
@@ -62,12 +67,16 @@ describe('return URL', () => {
 
   it('ignores placeholders the backend did not fill in', () => {
     expect(
-      readReturnParams('?checkout=c-1&placement={placementId}&token={placementToken}')
+      readReturnParams(
+        '?checkout=c-1&placement={placementId}&token={placementToken}'
+      )
     ).toEqual({ checkoutId: 'c-1', locator: null });
   });
 
   it('reads the placement from the URL first', () => {
-    const params = readReturnParams('?checkout=checkout-1&placement=p-9&token=t-9');
+    const params = readReturnParams(
+      '?checkout=checkout-1&placement=p-9&token=t-9'
+    );
     expect(params).toEqual({
       checkoutId: 'checkout-1',
       locator: { placementId: 'p-9', placementToken: 't-9' },
@@ -81,15 +90,23 @@ describe('return URL', () => {
   it('takes the token from the journal after the URL lost it on reload', () => {
     const withToken = { ...attempt, placementToken: 't-journal' };
     expect(
-      resolveRecoveryLocator(readReturnParams('?checkout=checkout-1&placement=from-journal'), withToken)
+      resolveRecoveryLocator(
+        readReturnParams('?checkout=checkout-1&placement=from-journal'),
+        withToken
+      )
     ).toEqual({ placementId: 'from-journal', placementToken: 't-journal' });
     expect(
-      resolveRecoveryLocator(readReturnParams('?checkout=checkout-1&placement=other'), withToken)
+      resolveRecoveryLocator(
+        readReturnParams('?checkout=checkout-1&placement=other'),
+        withToken
+      )
     ).toEqual({ placementId: 'other', placementToken: null });
   });
 
   it('falls back to the journal without placement parameters', () => {
-    expect(resolveRecoveryLocator(readReturnParams('?checkout=checkout-1'), attempt)).toEqual({
+    expect(
+      resolveRecoveryLocator(readReturnParams('?checkout=checkout-1'), attempt)
+    ).toEqual({
       placementId: 'from-journal',
       placementToken: null,
     });
@@ -98,7 +115,9 @@ describe('return URL', () => {
   it('removes the token from the address bar', () => {
     const replaceState = vi.fn();
     stripReturnToken(
-      { href: 'https://shop.example/checkout/return?placement=p&token=secret' } as Location,
+      {
+        href: 'https://shop.example/checkout/return?placement=p&token=secret',
+      } as Location,
       { state: null, replaceState } as unknown as History
     );
     expect(replaceState).toHaveBeenCalledWith(
@@ -131,6 +150,29 @@ describe('pollPlacement', () => {
     });
     expect(outcomes).toEqual(['awaiting-payment', 'accepted']);
     expect(waits).toEqual([2000, 4000]);
+  });
+
+  it('keeps following an outstanding redirect after the buyer returns before its callback', async () => {
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ...base,
+        status: 'REQUIRES_ACTION',
+        customerAction: { type: 'REDIRECT', url: 'https://pay.example' },
+      })
+      .mockResolvedValueOnce(base)
+      .mockResolvedValueOnce({ ...base, status: 'PAID' });
+    const outcomes: string[] = [];
+    await pollPlacement({
+      read,
+      locator,
+      flow: 'ONLINE',
+      signal: new AbortController().signal,
+      onResult: (_result, outcome) => outcomes.push(outcome.kind),
+      onMissing: vi.fn(),
+      wait: async () => undefined,
+    });
+    expect(outcomes).toEqual(['redirect', 'awaiting-payment', 'accepted']);
   });
 
   it('stops when the placement cannot be read', async () => {
@@ -168,6 +210,7 @@ describe('useReadPlacement', () => {
     placementId: 'placement-1',
     placementToken: null,
     placementState: 'PLACED',
+    paymentFlow: null,
     checkoutId: null,
     resultRevision: null,
     orderId: 'order-1',
@@ -177,14 +220,23 @@ describe('useReadPlacement', () => {
     paymentFailure: null,
     userErrors: [],
   };
-  const tokens = () => apollo.query.mock.calls.map(([options]) => options.variables.token);
+  const tokens = () =>
+    apollo.query.mock.calls.map(([options]) => options.variables.token);
 
   it('reads as the buyer first and keeps the token of the locator', async () => {
-    apollo.query.mockReset().mockResolvedValue({ data: { checkoutPlacement: payload } });
+    apollo.query
+      .mockReset()
+      .mockResolvedValue({ data: { checkoutPlacement: payload } });
     const { result } = renderHook(() => useReadPlacement());
-    const placement = await result.current({ placementId: 'placement-1', placementToken: 't-1' });
+    const placement = await result.current({
+      placementId: 'placement-1',
+      placementToken: 't-1',
+    });
     expect(tokens()).toEqual([null]);
-    expect(placement).toMatchObject({ orderNumber: '1001', placementToken: 't-1' });
+    expect(placement).toMatchObject({
+      orderNumber: '1001',
+      placementToken: 't-1',
+    });
   });
 
   it('falls back to the token when the buyer read finds nothing or is refused', async () => {
@@ -198,7 +250,9 @@ describe('useReadPlacement', () => {
   });
 
   it('reports a missing placement without a token', async () => {
-    apollo.query.mockReset().mockResolvedValue({ data: { checkoutPlacement: null } });
+    apollo.query
+      .mockReset()
+      .mockResolvedValue({ data: { checkoutPlacement: null } });
     const { result } = renderHook(() => useReadPlacement());
     await expect(
       result.current({ placementId: 'placement-1', placementToken: null })

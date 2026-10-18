@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { AttemptJournal } from '#checkout/state/placement/attemptJournal';
 import type { AttemptJournalStorage } from '#checkout/state/placement/attemptJournal';
-import { phaseForOutcome, recordOutcome } from '#checkout/state/placement/transitions';
+import {
+  phaseForOutcome,
+  recordOutcome,
+} from '#checkout/state/placement/transitions';
 import type { PlacementResult } from '#checkout/state/placement/types';
 
 function memoryJournal() {
@@ -12,13 +15,18 @@ function memoryJournal() {
     removeItem: (key) => void items.delete(key),
   };
   let keys = 0;
-  return new AttemptJournal(storage, () => 1, () => `key-${++keys}`);
+  return new AttemptJournal(
+    storage,
+    () => 1,
+    () => `key-${++keys}`
+  );
 }
 
 const result: PlacementResult = {
   placementId: 'placement-1',
   placementToken: null,
   placementState: 'PLACED',
+  paymentFlow: null,
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
@@ -73,7 +81,10 @@ describe('recordOutcome', () => {
       code: 'CHECKOUT_PIPELINE_DEADLINE_EXCEEDED',
       retryable: true,
     });
-    expect(journal.read('checkout-1')).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+    expect(journal.read('checkout-1')).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'sent',
+    });
   });
 
   it('clears the attempt of a final rejection', () => {
@@ -88,19 +99,29 @@ describe('recordOutcome', () => {
 
   it('marks a failed payment so the retry takes a new key', () => {
     const journal = memoryJournal();
-    recordOutcome(journal, begin(journal), { ...result, status: 'PAYMENT_FAILED' }, {
-      kind: 'payment-failed',
-      failure: null,
-    });
+    recordOutcome(
+      journal,
+      begin(journal),
+      { ...result, status: 'PAYMENT_FAILED' },
+      {
+        kind: 'payment-failed',
+        failure: null,
+      }
+    );
     expect(journal.read('checkout-1')).toMatchObject({ state: 'failed' });
   });
 
   it('keeps a placement in progress for recovery', () => {
     const journal = memoryJournal();
-    recordOutcome(journal, begin(journal), { ...result, status: 'REQUIRES_ACTION' }, {
-      kind: 'redirect',
-      url: 'https://pay.example',
-    });
+    recordOutcome(
+      journal,
+      begin(journal),
+      { ...result, status: 'REQUIRES_ACTION' },
+      {
+        kind: 'redirect',
+        url: 'https://pay.example',
+      }
+    );
     expect(journal.read('checkout-1')).toMatchObject({
       state: 'resolved',
       placementId: 'placement-1',

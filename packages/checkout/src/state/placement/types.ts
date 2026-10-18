@@ -49,6 +49,7 @@ export interface PlacementResult {
   /** Human-readable number of the placed order. */
   orderNumber: string | null;
   status: PlacementStatus | null;
+  paymentFlow: PaymentFlow | null;
   customerAction: PlacementCustomerAction | null;
   paymentFailure: PlacementPaymentFailure | null;
   userErrors: PlacementUserError[];

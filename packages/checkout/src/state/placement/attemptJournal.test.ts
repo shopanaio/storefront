@@ -39,6 +39,7 @@ const placement: PlacementResult = {
   placementId: 'placement-1',
   placementToken: null,
   placementState: 'PLACED',
+  paymentFlow: null,
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
@@ -68,7 +69,10 @@ describe('AttemptJournal', () => {
 
   it('persists the attempt in storage', () => {
     const attempt = journal.begin(input);
-    expect(attempt).toMatchObject({ idempotencyKey: 'key-1', state: 'created' });
+    expect(attempt).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'created',
+    });
     expect(JSON.parse(storage.getItem(KEY_1)!)).toMatchObject({
       checkoutId: 'checkout-1',
       idempotencyKey: 'key-1',
@@ -77,7 +81,10 @@ describe('AttemptJournal', () => {
 
   it('reuses the key and return URL of an unanswered request', () => {
     journal.markSent(journal.begin(input));
-    const retry = journal.begin({ ...input, returnUrl: 'https://other.example/' });
+    const retry = journal.begin({
+      ...input,
+      returnUrl: 'https://other.example/',
+    });
     expect(retry).toMatchObject({
       idempotencyKey: 'key-1',
       state: 'sent',
@@ -87,9 +94,9 @@ describe('AttemptJournal', () => {
 
   it('issues a new key when the snapshot changed before payment', () => {
     journal.markSent(journal.begin(input));
-    expect(journal.begin({ ...input, resultRevision: 'rev-2' }).idempotencyKey).toBe(
-      'key-2'
-    );
+    expect(
+      journal.begin({ ...input, resultRevision: 'rev-2' }).idempotencyKey
+    ).toBe('key-2');
   });
 
   it('issues a new key after a failed payment', () => {
@@ -121,8 +128,13 @@ describe('AttemptJournal', () => {
   it('keeps the attempts of different checkouts apart', () => {
     journal.markSent(journal.begin(input));
     journal.begin({ ...input, checkoutId: 'checkout-2' });
-    expect(journal.read('checkout-2')).toMatchObject({ idempotencyKey: 'key-2' });
-    expect(journal.read('checkout-1')).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+    expect(journal.read('checkout-2')).toMatchObject({
+      idempotencyKey: 'key-2',
+    });
+    expect(journal.read('checkout-1')).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'sent',
+    });
     journal.clear('checkout-2');
     expect(journal.read('checkout-1')).not.toBeNull();
   });
@@ -149,9 +161,16 @@ describe('AttemptJournal', () => {
   });
 
   it('keeps the attempt in memory without storage', () => {
-    const memoryless = new AttemptJournal(null, () => now, () => `key-${++keys}`);
+    const memoryless = new AttemptJournal(
+      null,
+      () => now,
+      () => `key-${++keys}`
+    );
     memoryless.markSent(memoryless.begin(input));
-    expect(memoryless.begin(input)).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+    expect(memoryless.begin(input)).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'sent',
+    });
     memoryless.clear('checkout-1');
     expect(memoryless.read('checkout-1')).toBeNull();
   });
@@ -168,7 +187,11 @@ describe('AttemptJournal', () => {
         throw new Error('blocked');
       },
     };
-    const fallback = new AttemptJournal(failing, () => now, () => `key-${++keys}`);
+    const fallback = new AttemptJournal(
+      failing,
+      () => now,
+      () => `key-${++keys}`
+    );
     const attempt = fallback.markSent(fallback.begin(input));
     fallback.markResolved(attempt, placement);
     expect(fallback.read('checkout-1')).toMatchObject({

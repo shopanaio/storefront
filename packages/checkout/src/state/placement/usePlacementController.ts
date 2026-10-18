@@ -61,7 +61,8 @@ export function usePlacementController(checkoutId: string | null) {
   const resumedRef = useRef<string | null>(null);
   const activeCheckoutRef = useRef<string | null>(null);
   const isActive = useCallback(
-    (attempt: PlacementAttempt) => activeCheckoutRef.current === attempt.checkoutId,
+    (attempt: PlacementAttempt) =>
+      activeCheckoutRef.current === attempt.checkoutId,
     []
   );
 
@@ -130,9 +131,7 @@ export function usePlacementController(checkoutId: string | null) {
         flow: attempt.paymentFlow,
         signal: controller.signal,
         onResult: (result, outcome) => {
-          if (outcome.kind !== 'awaiting-payment') {
-            follow(attempt, result, outcome, context);
-          }
+          follow(attempt, result, outcome, context);
         },
         onMissing: () => {
           if (!isActive(attempt)) return;
@@ -205,7 +204,8 @@ export function usePlacementController(checkoutId: string | null) {
       }
       const journal = journalRef.current;
       const current = journal.read(checkout.id);
-      const locator = current?.state === 'resolved' ? attemptLocator(current) : null;
+      const locator =
+        current?.state === 'resolved' ? attemptLocator(current) : null;
       if (current && locator) {
         // Pressing the button again continues the payment of the existing placement.
         poll(current, locator, 'submit');
@@ -215,7 +215,8 @@ export function usePlacementController(checkoutId: string | null) {
       // the button say what is missing (stage 5). An unanswered request for this snapshot is
       // resent with its key whatever the checkout shows: the key returns the placement it made.
       const resend =
-        current?.state === 'sent' && current.resultRevision === checkout.resultRevision;
+        current?.state === 'sent' &&
+        current.resultRevision === checkout.resultRevision;
       if (!resend && !checkoutReadiness(checkout, Date.now()).canPlace) {
         return;
       }
@@ -281,7 +282,9 @@ export function usePlacementController(checkoutId: string | null) {
   // "continue payment" instead of sending the buyer away unasked.
   // `undefined` while the checkout of `checkoutId` is loading; `null` when it is unreadable.
   const loadedCheckout =
-    checkoutLoaded && (!checkout || checkout.id === checkoutId) ? checkout : undefined;
+    checkoutLoaded && (!checkout || checkout.id === checkoutId)
+      ? checkout
+      : undefined;
   useEffect(() => {
     if (!checkoutId || resumedRef.current === checkoutId) return;
     const current = journalRef.current.read(checkoutId);
@@ -304,7 +307,11 @@ export function usePlacementController(checkoutId: string | null) {
     // returned through `CHECKOUT_ALREADY_PLACED`.
     if (loadedCheckout === undefined) return;
     resumedRef.current = checkoutId;
-    if (loadedCheckout && loadedCheckout.resultRevision !== current.resultRevision) return;
+    if (
+      loadedCheckout &&
+      loadedCheckout.resultRevision !== current.resultRevision
+    )
+      return;
     void send(current, 'recover');
   }, [checkoutId, loadedCheckout, poll, send]);
 

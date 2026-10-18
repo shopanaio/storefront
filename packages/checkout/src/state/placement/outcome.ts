@@ -46,10 +46,15 @@ export const DEFINITE_REJECTION_CODES: ReadonlySet<string> = new Set([
   'FORBIDDEN',
 ]);
 
-type GraphQLErrorLike = { message: string; extensions?: Record<string, unknown> };
+type GraphQLErrorLike = {
+  message: string;
+  extensions?: Record<string, unknown>;
+};
 
 /** Whether every GraphQL error proves that `placeOrder` did not run. */
-export function isDefiniteRejection(errors: ReadonlyArray<GraphQLErrorLike>): boolean {
+export function isDefiniteRejection(
+  errors: ReadonlyArray<GraphQLErrorLike>
+): boolean {
   return (
     errors.length > 0 &&
     errors.every((error) => {
@@ -79,6 +84,7 @@ export function mapPlacementPayload(
     orderId: payload.orderId ?? null,
     orderNumber: payload.orderNumber ?? null,
     status: payload.status ?? null,
+    paymentFlow: payload.paymentFlow ?? null,
     customerAction: payload.customerAction
       ? {
           type: payload.customerAction.type,
@@ -127,6 +133,7 @@ export function graphQLErrorPlacement(
     orderId: null,
     orderNumber: null,
     status: null,
+    paymentFlow: null,
     customerAction: null,
     paymentFailure: null,
     userErrors: [
@@ -160,6 +167,7 @@ export function resolvePlacementOutcome(
   flow: PaymentFlow | null,
   fallback: PlacementLocator | null = null
 ): PlacementOutcome {
+  flow = result.paymentFlow ?? flow;
   const locator = placementLocatorOf(result) ?? fallback;
 
   switch (result.status) {
@@ -180,7 +188,10 @@ export function resolvePlacementOutcome(
       if (action?.type === 'CLIENT_SDK') {
         return { kind: 'client-sdk', action };
       }
-      if (action?.type === 'INSTRUCTIONS' && (flow === 'OFFLINE' || flow === null)) {
+      if (
+        action?.type === 'INSTRUCTIONS' &&
+        (flow === 'OFFLINE' || flow === null)
+      ) {
         // Decision 1.11: for an OFFLINE method the order is placed at once; the instructions
         // are not shown. A read without the journal (another browser) does not know the flow
         // and trusts the action. Instructions of an online method wait for the payment.
@@ -217,11 +228,21 @@ export function resolvePlacementOutcome(
   };
 }
 
-function accepted(result: PlacementResult, status: PlacementStatus): PlacementOutcome {
-  return { kind: 'accepted', orderId: result.orderId, orderNumber: result.orderNumber, status };
+function accepted(
+  result: PlacementResult,
+  status: PlacementStatus
+): PlacementOutcome {
+  return {
+    kind: 'accepted',
+    orderId: result.orderId,
+    orderNumber: result.orderNumber,
+    status,
+  };
 }
 
-function awaitingOrRejected(locator: PlacementLocator | null): PlacementOutcome {
+function awaitingOrRejected(
+  locator: PlacementLocator | null
+): PlacementOutcome {
   return locator
     ? { kind: 'awaiting-payment', locator }
     : { kind: 'rejected', code: 'CHECKOUT_PLACEMENT_FAILED', retryable: false };
@@ -229,7 +250,11 @@ function awaitingOrRejected(locator: PlacementLocator | null): PlacementOutcome 
 
 /** Whether polling `checkoutPlacement` should stop on this outcome. */
 export function isSettledOutcome(outcome: PlacementOutcome): boolean {
-  return outcome.kind !== 'awaiting-payment';
+  return (
+    outcome.kind === 'accepted' ||
+    outcome.kind === 'payment-failed' ||
+    outcome.kind === 'rejected'
+  );
 }
 
 /** Polling delay for the given attempt: 2 → 4 → 8 → 16 → 30 s, then 30 s without a limit (1.9). */

@@ -4,7 +4,11 @@ import { usePlacementController } from '#checkout/state/placement/usePlacementCo
 import { usePlacementStore } from '#checkout/state/placement/placementStore';
 import { attemptStorageKey } from '#checkout/state/placement/attemptJournal';
 import type { PlacementAttempt } from '#checkout/state/placement/attemptJournal';
-import { CheckoutEvent, emitCheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
+import {
+  CheckoutEvent,
+  emitCheckoutEvent,
+  onCheckoutEvent,
+} from '#checkout/state/checkoutBus';
 import type { PlacementResult } from '#checkout/state/placement/types';
 import {
   graphQLErrorPlacement,
@@ -15,7 +19,9 @@ const mocks = vi.hoisted(() => ({
   submitCheckout: vi.fn(),
   readPlacement: vi.fn(),
   checkoutData: {
-    checkout: null as ({ id: string; resultRevision: string } & Record<string, unknown>) | null,
+    checkout: null as
+      | ({ id: string; resultRevision: string } & Record<string, unknown>)
+      | null,
     loaded: true,
   },
 }));
@@ -31,7 +37,9 @@ vi.mock('#checkout/theme', () => ({
   useCheckoutTheme: () => ({ useCheckoutReturnPath: () => '/checkout/return' }),
 }));
 vi.mock('#checkout/state/placement/recovery', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('#checkout/state/placement/recovery')>()),
+  ...(await importOriginal<
+    typeof import('#checkout/state/placement/recovery')
+  >()),
   useReadPlacement: () => mocks.readPlacement,
 }));
 
@@ -54,6 +62,7 @@ const paid: PlacementResult = {
   placementId: 'placement-1',
   placementToken: null,
   placementState: 'PLACED',
+  paymentFlow: null,
   checkoutId: 'checkout-1',
   resultRevision: 'rev-1',
   orderId: 'order-1',
@@ -80,7 +89,10 @@ const redirect: PlacementResult = {
 };
 
 function storeAttempt(attempt: PlacementAttempt) {
-  window.localStorage.setItem(attemptStorageKey(attempt.checkoutId), JSON.stringify(attempt));
+  window.localStorage.setItem(
+    attemptStorageKey(attempt.checkoutId),
+    JSON.stringify(attempt)
+  );
 }
 
 function storedAttempt(checkoutId = 'checkout-1'): PlacementAttempt | null {
@@ -150,7 +162,10 @@ describe('usePlacementController', () => {
 
     expect(usePlacementStore.getState().phase).toEqual({ name: 'idle' });
     expect(accepted).not.toHaveBeenCalled();
-    expect(storedAttempt()).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+    expect(storedAttempt()).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'sent',
+    });
     off();
   });
 
@@ -178,7 +193,10 @@ describe('usePlacementController', () => {
     expect(usePlacementStore.getState().phase).toEqual({ name: 'idle' });
     expect(accepted).not.toHaveBeenCalled();
     // The previous checkout keeps its attempt: it is resent with the same key when reopened.
-    expect(storedAttempt()).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+    expect(storedAttempt()).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'sent',
+    });
     off();
   });
 
@@ -235,7 +253,10 @@ describe('usePlacementController', () => {
     renderHook(() => usePlacementController('checkout-1'));
 
     await waitFor(() =>
-      expect(usePlacementStore.getState().phase).toEqual({ name: 'rejected', code: 'FORBIDDEN' })
+      expect(usePlacementStore.getState().phase).toEqual({
+        name: 'rejected',
+        code: 'FORBIDDEN',
+      })
     );
     expect(storedAttempt()).toBeNull();
   });
@@ -251,7 +272,10 @@ describe('usePlacementController', () => {
         code: 'PLACEMENT_UNCONFIRMED',
       })
     );
-    expect(storedAttempt()).toMatchObject({ idempotencyKey: 'key-1', state: 'sent' });
+    expect(storedAttempt()).toMatchObject({
+      idempotencyKey: 'key-1',
+      state: 'sent',
+    });
   });
 
   describe('a lost answer when the checkout is no longer ready', () => {
@@ -271,7 +295,9 @@ describe('usePlacementController', () => {
       mocks.checkoutData = { checkout: placedCheckout('rev-1'), loaded: true };
       renderHook(() => usePlacementController('checkout-1'));
       await waitFor(() =>
-        expect(usePlacementStore.getState().phase).toMatchObject({ name: 'accepted' })
+        expect(usePlacementStore.getState().phase).toMatchObject({
+          name: 'accepted',
+        })
       );
       mocks.submitCheckout.mockClear();
       usePlacementStore.getState().reset();
@@ -309,11 +335,15 @@ describe('usePlacementController', () => {
       expect(mocks.submitCheckout).not.toHaveBeenCalled();
 
       await act(async () => {
-        await emitCheckoutEvent(CheckoutEvent.CheckoutClosed, { code: 'CHECKOUT_ALREADY_PLACED' });
+        await emitCheckoutEvent(CheckoutEvent.CheckoutClosed, {
+          code: 'CHECKOUT_ALREADY_PLACED',
+        });
       });
 
       await waitFor(() =>
-        expect(usePlacementStore.getState().phase).toMatchObject({ name: 'accepted' })
+        expect(usePlacementStore.getState().phase).toMatchObject({
+          name: 'accepted',
+        })
       );
       expect(mocks.submitCheckout).toHaveBeenCalledTimes(1);
       expect(mocks.submitCheckout).toHaveBeenCalledWith(
