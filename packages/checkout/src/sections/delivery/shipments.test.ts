@@ -54,16 +54,16 @@ const fedex = (handle: string) =>
 describe('shipments', () => {
   it('offers the methods every shipment has, in the order of the first', () => {
     const groups = [
-      group('g1', [fedex('f1'), method('a1', 'warehouse-warehouse'), method('a2', 'postomat')]),
-      group('g2', [method('b1', 'postomat'), method('b2', 'warehouse-warehouse')]),
+      group('g1', [fedex('f1'), method('a1', 'warehouse'), method('a2', 'postomat')]),
+      group('g2', [method('b1', 'postomat'), method('b2', 'warehouse')]),
     ];
 
     expect(commonMethods(groups).map((m) => m.handle)).toEqual(['a1', 'a2']);
   });
 
   it('treats a method as selected only when every shipment has it', () => {
-    const a = method('a1', 'warehouse-warehouse');
-    const b = method('b1', 'warehouse-warehouse');
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'warehouse');
 
     expect(commonSelectionKey([group('g1', [a], a), group('g2', [b], b)])).toBe(
       methodKey(a)
@@ -72,8 +72,8 @@ describe('shipments', () => {
   });
 
   it('shows the selection by shipment when the shipments have different methods', () => {
-    const a = method('a1', 'warehouse-warehouse');
-    const b = method('b1', 'warehouse-warehouse');
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'warehouse');
     const f = fedex('f1');
 
     expect(selectionsDiffer([group('g1', [a], a), group('g2', [b])])).toBe(false);
@@ -85,8 +85,8 @@ describe('shipments', () => {
   });
 
   it('shows the selection by shipment when the same method goes to different branches', () => {
-    const a = method('a1', 'warehouse-warehouse');
-    const b = method('b1', 'warehouse-warehouse');
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'warehouse');
     const branch = (ref: string) => ({ type: 'WAREHOUSE', warehouseRef: ref });
 
     expect(
@@ -106,7 +106,7 @@ describe('shipments', () => {
   });
 
   it('knows the price only once the API accepted the input', () => {
-    const a = method('a1', 'warehouse-warehouse');
+    const a = method('a1', 'warehouse');
     expect(quotedMethod(group('g1', [a], a))).toBe(a);
     expect(quotedMethod(group('g1', [a], { ...a, synced: false }))).toBeNull();
     expect(quotedMethod(group('g1', [a]))).toBeNull();
@@ -118,7 +118,7 @@ describe('shipments', () => {
       required: ['warehouseRef'],
       properties: { warehouseRef: { type: 'string' } },
     };
-    const a = method('a1', 'warehouse-warehouse', { customerInputContract: contract });
+    const a = method('a1', 'warehouse', { customerInputContract: contract });
 
     expect(quotedMethod(group('g1', [a], a))).toBeNull();
     const withBranch = { ...a, data: { warehouseRef: 'w1' }, synced: true };

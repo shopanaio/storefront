@@ -145,9 +145,9 @@ const renderDelivery = (provider: string, methods: ProviderMethod[]) =>
 describe('ProviderRenderer (delivery)', () => {
   it('renders each Nova Poshta service with the form of its receiving type', async () => {
     renderDelivery('nova-poshta', [
-      deliveryOption('h1', 'warehouse-warehouse', 'nova-poshta', npContract()),
+      deliveryOption('h1', 'warehouse', 'nova-poshta', npContract()),
       deliveryOption('h2', 'postomat', 'nova-poshta', npContract()),
-      deliveryOption('h3', 'warehouse-doors', 'nova-poshta', npContract()),
+      deliveryOption('h3', 'doors', 'nova-poshta', npContract()),
     ]);
 
     expect(await screen.findByText('Відділення Нової Пошти')).toBeTruthy();
@@ -155,21 +155,9 @@ describe('ProviderRenderer (delivery)', () => {
     expect(screen.getByText("Кур'єр Нової Пошти")).toBeTruthy();
   });
 
-  it('names services that differ only on the sender side apart', async () => {
-    renderDelivery('nova-poshta', [
-      deliveryOption('h1', 'warehouse-warehouse', 'nova-poshta', npContract()),
-      deliveryOption('h2', 'doors-warehouse', 'nova-poshta', npContract()),
-    ]);
-
-    expect(await screen.findByText('Відділення Нової Пошти')).toBeTruthy();
-    expect(
-      screen.getByText("Відділення Нової Пошти (кур'єр забирає у продавця)")
-    ).toBeTruthy();
-  });
-
   it('hides a service whose contract has no branch for its receiving type', async () => {
     renderDelivery('nova-poshta', [
-      deliveryOption('h1', 'warehouse-warehouse', 'nova-poshta', npContract(['WAREHOUSE'])),
+      deliveryOption('h1', 'warehouse', 'nova-poshta', npContract(['WAREHOUSE'])),
       deliveryOption('h2', 'postomat', 'nova-poshta', npContract(['WAREHOUSE'])),
     ]);
 

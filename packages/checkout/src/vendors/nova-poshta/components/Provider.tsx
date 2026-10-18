@@ -39,6 +39,7 @@ export function NPProvider({
               customerInputContract={method.customerInputContract}
               title={method.title}
               description={method.description}
+              publicData={method.publicData}
               onSubmit={(data, view) =>
                 onUpdateMethodData?.(method.handle, data, view)
               }

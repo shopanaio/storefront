@@ -6,15 +6,10 @@ import type {
   ServiceCode,
 } from './types';
 
-/**
- * Receiving type of each service, as the app derives it from the service code:
- * `postomat` is a postomat, `*-doors` is courier delivery, the rest is a branch.
- */
+/** Receiving type of each service: the `type` of its customer input. */
 export const SERVICE_RECEIVING_TYPE: Record<ServiceCode, ReceivingType> = {
-  'warehouse-warehouse': 'WAREHOUSE',
-  'doors-warehouse': 'WAREHOUSE',
-  'warehouse-doors': 'DOOR',
-  'doors-doors': 'DOOR',
+  warehouse: 'WAREHOUSE',
+  doors: 'DOOR',
   postomat: 'POSTOMAT',
 };
 

@@ -1,12 +1,12 @@
 {
   "shipping": {
     "services": {
-      "warehouse-warehouse": "Nova Poshta branch",
-      "doors-warehouse": "Nova Poshta branch (courier pickup from the seller)",
-      "warehouse-doors": "Nova Poshta courier",
-      "doors-doors": "Nova Poshta courier (courier pickup from the seller)",
+      "warehouse": "Nova Poshta branch",
+      "doors": "Nova Poshta courier",
       "postomat": "Nova Poshta parcel locker"
-    }
+    },
+    "estimate": "About {amount}, paid to the carrier on receipt",
+    "estimate_pending": "The carrier rate is being calculated"
   },
   "payment": {
     "cod": "Cash on delivery",

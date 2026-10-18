@@ -1,7 +1,8 @@
 'use client';
 
 import type { FC } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatMoney } from '#checkout/ui/Money';
 import { CheckoutMethodPanel } from '#checkout/components/common/CheckoutMethodPanel';
 import { contractBranch } from '#checkout/utils/jsonSchema';
 import type { ProviderMethodComponentProps } from '#checkout/vendors/types';
@@ -11,14 +12,41 @@ import { NPLogo } from '../Logo';
 import { SERVICE_RECEIVING_TYPE } from '../../customerInput';
 import type { ServiceCode } from '../../types';
 
+interface NovaPoshtaPublicData {
+  payer?: 'Sender' | 'Recipient';
+  estimatedCost?: { amountMinor: string; currencyCode: string } | null;
+}
+
+/**
+ * What the customer pays the carrier. The checkout never collects the Nova Poshta fee: when
+ * the recipient pays, the carrier price is an estimate paid on receipt and may still be
+ * unknown; when the merchant pays, there is nothing to say here.
+ */
+function useCarrierEstimate(publicData: unknown): string | null {
+  const t = useTranslations('Modules.novaPoshta');
+  const locale = useLocale();
+  const data = (publicData ?? {}) as NovaPoshtaPublicData;
+  if (data.payer !== 'Recipient') {
+    return null;
+  }
+  const cost = data.estimatedCost;
+  return cost
+    ? t('shipping.estimate', {
+        amount: formatMoney(locale, {
+          amount: Number(cost.amountMinor) / 100,
+          currencyCode: cost.currencyCode,
+        } as Parameters<typeof formatMoney>[1]),
+      })
+    : t('shipping.estimate_pending');
+}
+
 /**
  * Method component of a Nova Poshta service. The form follows the receiving type of the
  * service: a branch or a postomat from the directory, or a courier address. The option is
  * hidden when its contract has no branch for that type.
  *
- * Services differ by how the parcel leaves the seller too (`doors-warehouse` next to
- * `warehouse-warehouse`), so each service has its own name. A title the API gives in
- * words wins; today the app returns the service code there.
+ * A title the API gives in words wins; today the app returns the service code there. The
+ * description is the carrier price estimate, never a price of the order.
  */
 export function createShippingMethod(code: ServiceCode): FC<ProviderMethodComponentProps> {
   const type = SERVICE_RECEIVING_TYPE[code];
@@ -26,14 +54,15 @@ export function createShippingMethod(code: ServiceCode): FC<ProviderMethodCompon
     title,
     isActive,
     onActive,
-    description,
     customerInputContract,
     data,
     view,
     onSubmit,
     deliveryAddress,
+    publicData,
   }: ProviderMethodComponentProps) {
     const t = useTranslations('Modules.novaPoshta');
+    const estimate = useCarrierEstimate(publicData);
 
     if (!contractBranch(customerInputContract, type)) {
       return null;
@@ -42,7 +71,7 @@ export function createShippingMethod(code: ServiceCode): FC<ProviderMethodCompon
     return (
       <CheckoutMethodPanel
         title={title && title !== code ? title : t(`shipping.services.${code}`)}
-        description={description ?? null}
+        description={estimate}
         isActive={isActive}
         onActive={onActive}
         brand={<NPLogo size={24} />}

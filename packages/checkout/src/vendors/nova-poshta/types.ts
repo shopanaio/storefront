@@ -16,13 +16,11 @@ export type Street = StorefrontNovaPoshtaStreetFragment;
 /** Receiving type of a service; the `type` of the customer input. */
 export type ReceivingType = 'WAREHOUSE' | 'POSTOMAT' | 'DOOR';
 
-/** Delivery services of the app; option `code` in the checkout API. */
-export type ServiceCode =
-  | 'warehouse-warehouse'
-  | 'warehouse-doors'
-  | 'doors-warehouse'
-  | 'doors-doors'
-  | 'postomat';
+/**
+ * Delivery services of the app; option `code` in the checkout API. A service is how the
+ * customer receives the parcel; how it leaves the seller is a setting of the merchant.
+ */
+export type ServiceCode = 'warehouse' | 'doors' | 'postomat';
 
 export interface PointInput {
   type: 'WAREHOUSE' | 'POSTOMAT';

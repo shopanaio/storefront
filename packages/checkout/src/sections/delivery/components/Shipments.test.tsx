@@ -74,8 +74,8 @@ describe('Shipments', () => {
   });
 
   it('shares one list when every shipment has the same method and input', () => {
-    const a = method('a1', 'warehouse-warehouse', branch('5'));
-    const b = method('b1', 'warehouse-warehouse', branch('5'));
+    const a = method('a1', 'warehouse', branch('5'));
+    const b = method('b1', 'warehouse', branch('5'));
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
     expect(screen.getByTestId('shared-list')).toBeTruthy();
@@ -83,8 +83,8 @@ describe('Shipments', () => {
   });
 
   it('shows the shipments one by one when the same method goes to different branches', () => {
-    const a = method('a1', 'warehouse-warehouse', branch('5'));
-    const b = method('b1', 'warehouse-warehouse', branch('7'));
+    const a = method('a1', 'warehouse', branch('5'));
+    const b = method('b1', 'warehouse', branch('7'));
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
     expect(screen.queryByTestId('shared-list')).toBeNull();
@@ -92,8 +92,8 @@ describe('Shipments', () => {
   });
 
   it('applies the first shipment to all of them on "one method for all"', () => {
-    const a = method('a1', 'warehouse-warehouse', branch('5'));
-    const b = method('b1', 'warehouse-warehouse', branch('7'));
+    const a = method('a1', 'warehouse', branch('5'));
+    const b = method('b1', 'warehouse', branch('7'));
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
     fireEvent.click(screen.getByText('Checkout.delivery-same-for-all-shipments'));
@@ -101,7 +101,7 @@ describe('Shipments', () => {
     // The shared list stays while it applies the method, even though the groups differ.
     const shared = lists.at(-1)!;
     expect(shared.groups).toHaveLength(2);
-    expect(shared.initialSelectKey).toBe('nova-poshta\nwarehouse-warehouse');
+    expect(shared.initialSelectKey).toBe('nova-poshta\nwarehouse');
     act(() => shared.onSelectingChange?.(true));
     expect(screen.getByTestId('shared-list')).toBeTruthy();
 

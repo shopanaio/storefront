@@ -60,7 +60,7 @@ const deliveryOption = (
 ): ApiDeliveryOption => ({
   __typename: 'CheckoutDeliveryOption',
   handle: 'np-warehouse',
-  code: 'warehouse-warehouse',
+  code: 'warehouse',
   title: 'Nova Poshta warehouse',
   description: null,
   deliveryMethodType: 'PICKUP_POINT',
@@ -228,7 +228,7 @@ describe('mapApiCheckoutToCheckout', () => {
     expect(group.deliveryMethods).toEqual([
       {
         handle: 'np-warehouse',
-        code: 'warehouse-warehouse',
+        code: 'warehouse',
         title: 'Nova Poshta warehouse',
         description: null,
         deliveryMethodType: 'PICKUP_POINT',

@@ -102,6 +102,8 @@ export interface ProviderMethodComponentProps {
   /** Title of the option from the API. */
   title?: string;
   description?: string | null;
+  /** Read-only metadata of the option from the provider. */
+  publicData?: unknown;
 }
 
 export interface ProviderModuleApi {

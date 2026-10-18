@@ -24,8 +24,8 @@ const contract = {
 
 const option = (data: unknown, customerInputContract: unknown = contract): DeliveryMethod => ({
   handle: 'h-np',
-  code: 'warehouse-warehouse',
-  title: 'warehouse-warehouse',
+  code: 'warehouse',
+  title: 'warehouse',
   provider: 'nova-poshta',
   carrierCode: 'nova-poshta',
   cost: { amount: 80, currencyCode: 'UAH' },
