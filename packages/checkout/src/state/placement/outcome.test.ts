@@ -110,6 +110,30 @@ describe('resolvePlacementOutcome', () => {
     });
   });
 
+  it('accepts INSTRUCTIONS when the flow is unknown', () => {
+    expect(
+      resolvePlacementOutcome(
+        result({
+          status: 'REQUIRES_ACTION',
+          customerAction: { ...action, type: 'INSTRUCTIONS' },
+        }),
+        null
+      ).kind
+    ).toBe('accepted');
+  });
+
+  it('does not accept INSTRUCTIONS of an online method', () => {
+    expect(
+      resolvePlacementOutcome(
+        result({
+          status: 'REQUIRES_ACTION',
+          customerAction: { ...action, type: 'INSTRUCTIONS' },
+        }),
+        'ONLINE'
+      ).kind
+    ).not.toBe('accepted');
+  });
+
   it('waits when the customer action is gone', () => {
     expect(
       resolvePlacementOutcome(result({ status: 'REQUIRES_ACTION' }), 'ONLINE').kind

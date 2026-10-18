@@ -219,19 +219,28 @@ export function usePlacementController(checkoutId: string | null) {
       if (!resend && !checkoutReadiness(checkout, Date.now()).canPlace) {
         return;
       }
+      let returnUrl: string;
+      try {
+        returnUrl =
+          current?.state === 'sent' || current?.state === 'created'
+            ? current.returnUrl
+            : buildReturnUrl(window.location.origin, returnPath, checkout.id);
+      } catch (error) {
+        // The return URL is over the provider limit: nothing is placed.
+        console.error(error);
+        setPhase({ name: 'rejected', code: 'PLACE_ORDER_RETURN_URL_TOO_LONG' });
+        return;
+      }
       const attempt = journal.begin({
         checkoutId: checkout.id,
         resultRevision: checkout.resultRevision,
         paymentFlow: checkout.payment.selection.method?.flow ?? null,
-        returnUrl:
-          current?.state === 'sent' || current?.state === 'created'
-            ? current.returnUrl
-            : buildReturnUrl(window.location.origin, returnPath, checkout.id),
+        returnUrl,
       });
       await send(attempt, 'submit');
     });
     return () => off();
-  }, [checkout, poll, returnPath, send]);
+  }, [checkout, poll, returnPath, send, setPhase]);
 
   // The checkout is already placed. A placement of this checkout is followed to its result; an
   // unanswered request of this browser is resent with its key, since the placement may be its
@@ -248,7 +257,9 @@ export function usePlacementController(checkoutId: string | null) {
       }
       const current = journalRef.current.read(checkoutId);
       const locator = attemptLocator(current);
-      if (current && locator) {
+      // A failed attempt did not place the checkout (a failed payment leaves it open): the
+      // order came from another placement, which this browser does not know.
+      if (current && locator && current.state !== 'failed') {
         poll(current, locator, 'recover');
         return;
       }

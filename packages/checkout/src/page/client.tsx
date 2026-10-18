@@ -15,7 +15,14 @@ const features = {
  * Client page for the Checkout module. Redirects to the localized home page when there is no
  * cart, unless a placement attempt is running or its result is shown.
  */
-export const CheckoutPageClient = ({ theme }: { theme: CheckoutThemeAdapter }) => {
+export const CheckoutPageClient = ({
+  theme,
+  onOrderAccepted,
+}: {
+  theme: CheckoutThemeAdapter;
+  /** Called after the cart is cleared for an accepted order, as on the return page. */
+  onOrderAccepted?: (event: OrderAcceptedEvent) => void;
+}) => {
   const { cartId, loaded } = useCartId();
   const router = useRouter();
   const homePath = theme.useHomePath();
@@ -30,10 +37,11 @@ export const CheckoutPageClient = ({ theme }: { theme: CheckoutThemeAdapter }) =
   }, [loaded, cartId, placementBusy, router, homePath]);
 
   const handleOrderAccepted = useCallback(
-    ({ checkoutId }: OrderAcceptedEvent) => {
-      cleanup(checkoutId);
+    (event: OrderAcceptedEvent) => {
+      cleanup(event.checkoutId);
+      onOrderAccepted?.(event);
     },
-    [cleanup]
+    [cleanup, onOrderAccepted]
   );
 
   return (

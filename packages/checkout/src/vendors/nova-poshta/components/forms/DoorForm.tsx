@@ -103,7 +103,7 @@ function CourierFields({
         settlementRef={settlementRef}
       />
       {disabled && (
-        <Alert message={t('city_required_warning')} type="warning" showIcon />
+        <Alert title={t('city_required_warning')} type="warning" showIcon />
       )}
       <Flex gap={12}>
         <FloatingLabelInput

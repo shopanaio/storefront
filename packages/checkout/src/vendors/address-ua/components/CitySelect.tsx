@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useSettlementSearch } from '#checkout/vendors/nova-poshta/api/directory';
 import { popularCities } from '#checkout/vendors/nova-poshta/popularCities';
 import type { Settlement } from '#checkout/vendors/nova-poshta/types';
-import { useSearchInput } from '#checkout/hooks/useDebouncedValue';
+import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import { DirectoryNotice } from '#checkout/vendors/nova-poshta/components/DirectoryNotice';
 import { CityOption } from './CityOption';
 import { TbX } from 'react-icons/tb';

@@ -103,6 +103,19 @@ describe('validateCustomerInput', () => {
       { path: 'pickupPointId', keyword: 'minLength' },
     ]);
   });
+
+  it('reads a pattern that is valid only without the unicode flag', () => {
+    const contract = {
+      schema: {
+        type: 'object',
+        properties: { code: { type: 'string', pattern: '^[\\w\\-]+$' } },
+      },
+    };
+    expect(validateCustomerInput(contract, { code: 'a-1' })).toEqual([]);
+    expect(validateCustomerInput(contract, { code: 'a 1' })).toEqual([
+      { path: 'code', keyword: 'pattern' },
+    ]);
+  });
 });
 
 describe('contract helpers', () => {

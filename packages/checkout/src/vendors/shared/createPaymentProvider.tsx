@@ -43,6 +43,8 @@ export function createPaymentProvider({
                 isActive={selectedMethod?.handle === method.handle}
                 onActive={() => onSelectMethod?.({ ...method, provider })}
                 data={method.data}
+                title={method.title}
+                description={method.description}
                 onSubmit={(data) => onUpdateMethodData?.(method.handle, data)}
               />
             );

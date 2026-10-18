@@ -51,6 +51,24 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
+ * RegExp of a JSON Schema `pattern`. JSON Schema patterns are ECMA-262 with the `u` flag, but
+ * contracts also use patterns that are valid only without it (for example `[\w\-]`): those
+ * are read without the flag instead of failing the whole validation. A pattern invalid either
+ * way accepts any value; the API validates the input again.
+ */
+function patternOf(pattern: string): RegExp {
+  try {
+    return new RegExp(pattern, 'u');
+  } catch {
+    try {
+      return new RegExp(pattern);
+    } catch {
+      return /(?:)/;
+    }
+  }
+}
+
+/**
  * The schema of a contract. The API returns `{ schemaDialect, schema }`; a bare schema is
  * accepted as well. Returns `null` when the option takes no customer input.
  */
@@ -174,7 +192,7 @@ function validateAt(
     if (schema.maxLength !== undefined && length > schema.maxLength) {
       fail('maxLength');
     }
-    if (schema.pattern !== undefined && !new RegExp(schema.pattern, 'u').test(value)) {
+    if (schema.pattern !== undefined && !patternOf(schema.pattern).test(value)) {
       fail('pattern');
     }
     if (schema.format === 'uuid' && !UUID.test(value)) {

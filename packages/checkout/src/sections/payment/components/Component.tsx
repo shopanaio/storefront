@@ -75,7 +75,7 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
         <Alert
           type="warning"
           showIcon
-          message={resetReason.message}
+          title={resetReason.message}
           description={t('payment-selection-reset')}
         />
       )}

@@ -58,9 +58,12 @@ export const ContactSelect = ({
   const { control, reset, watch, formState } = methods;
   const { errors } = formState;
 
+  // Compared by value: the parent passes a new object on every checkout read, and a reset
+  // on each of them would wipe what the buyer is typing in the open drawer.
+  const dataKey = JSON.stringify(data ?? defaultValues);
   useEffect(() => {
-    reset(data ?? defaultValues);
-  }, [data, reset]);
+    reset(JSON.parse(dataKey) as ContactForm);
+  }, [dataKey, reset]);
 
   const { firstName, lastName, middleName, phone } = watch();
 

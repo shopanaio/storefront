@@ -112,7 +112,7 @@ export const Shipments = ({
               ) : (
                 group.resetReason &&
                 !group.selectedDeliveryMethod && (
-                  <Alert type="warning" showIcon message={group.resetReason.message} />
+                  <Alert type="warning" showIcon title={group.resetReason.message} />
                 )
               )}
             </Flex>

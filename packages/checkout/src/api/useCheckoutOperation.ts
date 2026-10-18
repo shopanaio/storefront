@@ -155,10 +155,14 @@ export function useCheckoutOperation<
     async (operation: () => Promise<TData>): Promise<TData> => {
       const ts = Date.now();
       inflightTimestampRef.current = ts;
+      // Every emitted OperationStart must be paired with exactly one OperationEnd,
+      // otherwise the active operations counter never returns to zero.
+      let started = false;
 
       try {
         // Emit OperationStart event
         if (operationKey) {
+          started = true;
           await emitCheckoutEvent(CheckoutEvent.OperationStart, {
             key: operationKey,
             sectionId,
@@ -190,17 +194,16 @@ export function useCheckoutOperation<
         }
         throw error;
       } finally {
+        if (started && operationKey) {
+          await emitCheckoutEvent(CheckoutEvent.OperationEnd, {
+            key: operationKey,
+            sectionId,
+          });
+        }
+
         // Only clear inflight and call onEnd if this is still the latest operation
         if (inflightTimestampRef.current === ts) {
           inflightTimestampRef.current = null;
-
-          // Emit OperationEnd event
-          if (operationKey) {
-            await emitCheckoutEvent(CheckoutEvent.OperationEnd, {
-              key: operationKey,
-              sectionId,
-            });
-          }
           onEnd?.();
         }
       }
@@ -244,6 +247,13 @@ export function useCheckoutOperation<
             }
             reject(error);
           },
+        }).then((data) => {
+          // A response with neither data nor an error calls no callback: settle the promise
+          // anyway, or the operation (and `placeOrder`) would stay in flight forever.
+          // After a callback already settled it this has no effect.
+          if (!data) {
+            reject(new Error('The mutation returned no data.'));
+          }
         });
       });
     },

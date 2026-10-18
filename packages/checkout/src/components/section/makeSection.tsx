@@ -21,10 +21,11 @@ export function makeSection<
   id: K;
   /** Whether the section is required; defaults to true */
   required?: boolean;
-  /** View component receiving { data, invalidate } */
+  /** View component receiving { data, invalidate, holdInvalid } */
   Component: ComponentType<{
     data: TData | null;
     invalidate: () => void;
+    holdInvalid?: (held: boolean) => void;
   }>;
   /** Selector to read current value for the View from the checkout data */
   selector: (checkout: Checkout.Checkout | null) => TData | null;

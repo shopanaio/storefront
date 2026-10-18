@@ -18,7 +18,7 @@ export const RenewalNotice = () => {
         showIcon
         closable
         onClose={() => setState('idle')}
-        message={t('checkout-renewed-title')}
+        title={t('checkout-renewed-title')}
         description={t('checkout-renewed-description')}
       />
     );
@@ -28,7 +28,7 @@ export const RenewalNotice = () => {
       <Alert
         type="error"
         showIcon
-        message={t('checkout-renew-failed')}
+        title={t('checkout-renew-failed')}
         action={
           retry ? (
             <Button size="small" onClick={retry}>

@@ -47,19 +47,19 @@ export const IssueNotices = () => {
           key={`${issue.code}-${issue.lineId ?? issue.field.join('.')}-${index}`}
           type={issue.severity === 'ERROR' ? 'error' : 'warning'}
           showIcon
-          message={issue.message}
+          title={issue.message}
         />
       ))}
       {sections.length > 0 ? (
         <Alert
           type="error"
           showIcon
-          message={t('issues-in-sections', {
+          title={t('issues-in-sections', {
             sections: sections.map((section) => t(section)).join(', '),
           })}
         />
       ) : null}
-      {notReady ? <Alert type="info" showIcon message={t('checkout-not-ready')} /> : null}
+      {notReady ? <Alert type="info" showIcon title={t('checkout-not-ready')} /> : null}
     </Flex>
   );
 };

@@ -49,7 +49,7 @@ export function PointForm({
         settlementRef={settlementRef}
       />
       {!settlementRef && (
-        <Alert message={t('city_required_warning')} type="warning" showIcon />
+        <Alert title={t('city_required_warning')} type="warning" showIcon />
       )}
     </Flex>
   );

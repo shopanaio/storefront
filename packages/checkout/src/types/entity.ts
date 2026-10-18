@@ -24,8 +24,11 @@ export namespace Checkout {
     resultRevision: string;
     /** Lifecycle status; an order can be placed only from `READY`. */
     status: LifecycleStatus;
-    /** When the checkout stops accepting `placeOrder`. */
-    expiresAt: Date;
+    /**
+     * When the checkout stops accepting `placeOrder`; `null` when the API sent no valid date,
+     * so the browser does not expire it and the server status decides.
+     */
+    expiresAt: Date | null;
     /** Whether the latest calculation has no blocking issues. */
     valid: boolean;
     /** Issues produced by the latest calculation. */
@@ -243,6 +246,11 @@ export namespace Checkout {
     paymentModel: ShippingPaymentModel;
     estimatedMinDeliveryAt: Date | null;
     estimatedMaxDeliveryAt: Date | null;
+    /**
+     * Whether the carrier needs the phone of the recipient (stage 4, item 5). The checkout asks
+     * for the contact phone, and for the recipient phone of another person, with every method,
+     * so this flag does not change the forms today; it is kept for methods that will not.
+     */
     phoneRequired: boolean;
     /** JSON Schema of the customer input the method accepts. */
     customerInputContract: unknown;

@@ -35,7 +35,7 @@ export const CheckoutActions = ({
     >
       {validationError && (
         <Alert
-          message={validationError}
+          title={validationError}
           type="error"
           showIcon
           closable
@@ -48,7 +48,7 @@ export const CheckoutActions = ({
       <PlacementNotice />
       <IssueNotices />
       {blocked && (
-        <Alert type="warning" showIcon message={t('undeliverable-blocks-order')} />
+        <Alert type="warning" showIcon title={t('undeliverable-blocks-order')} />
       )}
       <SubmitButton />
       <TermsNotice />

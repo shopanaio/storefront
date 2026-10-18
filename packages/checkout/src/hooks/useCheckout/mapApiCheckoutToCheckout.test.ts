@@ -192,6 +192,9 @@ describe('mapApiCheckoutToCheckout', () => {
 
     expect(checkout.status).toBe('READY');
     expect(checkout.expiresAt).toEqual(new Date('2026-10-18T12:00:00.000Z'));
+    expect(
+      mapApiCheckoutToCheckout(createApiCheckout({ expiresAt: 'not a date' })).expiresAt
+    ).toBeNull();
     expect(checkout.valid).toBe(false);
     expect(checkout.channelCode).toBe('web');
     expect(checkout.localeCode).toBe('uk');

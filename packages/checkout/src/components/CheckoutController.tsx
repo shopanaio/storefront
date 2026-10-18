@@ -11,6 +11,7 @@ import { useCheckoutLifecycle } from '#checkout/state/useCheckoutLifecycle';
 import { onCheckoutEvent, CheckoutEvent } from '#checkout/state/checkoutBus';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
 import { PaymentSdkHost } from '#checkout/components/result/PaymentSdkHost';
+import { clearCustomerInputs } from '#checkout/sections/delivery/customerInputStorage';
 
 export function CheckoutController({
   checkoutId,
@@ -29,7 +30,11 @@ export function CheckoutController({
 
   // Only an accepted order lets the host clear the cart (decision 1.6)
   useEffect(() => {
-    const off = onCheckoutEvent(CheckoutEvent.OrderAccepted, onOrderAccepted);
+    const off = onCheckoutEvent(CheckoutEvent.OrderAccepted, (event) => {
+      // The stored delivery input belongs to the placed checkout, whatever the host does
+      clearCustomerInputs();
+      return onOrderAccepted(event);
+    });
     return () => off();
   }, [onOrderAccepted]);
 

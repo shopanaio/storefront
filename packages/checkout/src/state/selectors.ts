@@ -6,6 +6,7 @@ import {
   isSectionValid,
   computeMissingRequiredSections,
 } from '#checkout/state/checkoutStore';
+import { useShallow } from 'zustand/react/shallow';
 import { SectionEntry, SectionId } from '#checkout/state/interface';
 
 /**
@@ -21,7 +22,7 @@ export function useIsSectionValid(sectionKey: SectionId): boolean {
  * Returns list of missing required sections considering delivery groups and providers state.
  */
 export function useMissingRequiredSections(): Array<SectionId> {
-  return useCheckoutStore((state) => computeMissingRequiredSections(state));
+  return useCheckoutStore(useShallow((state) => computeMissingRequiredSections(state)));
 }
 
 /**

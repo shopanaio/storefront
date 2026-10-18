@@ -180,8 +180,10 @@ export function resolvePlacementOutcome(
       if (action?.type === 'CLIENT_SDK') {
         return { kind: 'client-sdk', action };
       }
-      if (action?.type === 'INSTRUCTIONS') {
-        // Decision 1.11: the order is placed at once; the instructions are not shown.
+      if (action?.type === 'INSTRUCTIONS' && (flow === 'OFFLINE' || flow === null)) {
+        // Decision 1.11: for an OFFLINE method the order is placed at once; the instructions
+        // are not shown. A read without the journal (another browser) does not know the flow
+        // and trusts the action. Instructions of an online method wait for the payment.
         return accepted(result, result.status);
       }
       // The action expired or the session no longer awaits it: the server settles the payment.

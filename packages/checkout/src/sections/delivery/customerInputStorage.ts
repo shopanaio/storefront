@@ -26,8 +26,11 @@ const storageKey = (deliveryGroupId: string) =>
 
 const EMPTY: CustomerInputsByHandle = {};
 
-/** Inputs nobody touched for this long belong to an abandoned checkout. */
-const ABANDONED_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
+/**
+ * Inputs nobody touched for this long belong to an abandoned checkout. They hold
+ * personal data (addresses, branches), so they are not kept longer than a checkout lives.
+ */
+const ABANDONED_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Groups this tab has shown or saved inputs for. Only these are dropped once they are gone:
@@ -55,18 +58,15 @@ const parse = (value: string | null): StoredGroupInputs | null => {
 
 /**
  * Inputs are kept in localStorage, shared by the tabs of the browser: the selection on the
- * server is shared by them as well. Inputs of an earlier version live in sessionStorage
- * and are still read.
+ * server is shared by them as well. They are removed once the order is accepted
+ * (`clearCustomerInputs`) or abandoned (`pruneCustomerInputs`).
  */
 function load(deliveryGroupId: string): StoredGroupInputs | null {
   if (typeof window === 'undefined') {
     return null;
   }
   try {
-    const key = storageKey(deliveryGroupId);
-    return parse(
-      window.localStorage.getItem(key) ?? window.sessionStorage.getItem(key)
-    );
+    return parse(window.localStorage.getItem(storageKey(deliveryGroupId)));
   } catch {
     return null;
   }
@@ -207,6 +207,35 @@ export function pruneCustomerInputs(deliveryGroupIds: readonly string[]) {
       groups: Object.fromEntries(Object.entries(groups).filter(([id]) => !gone.has(id))),
     });
   }
+}
+
+/**
+ * Removes every stored customer input. Called once an order is accepted: the inputs
+ * belong to the placed checkout and hold personal data nobody needs any more.
+ * Keys of an earlier version kept in sessionStorage are removed as well.
+ */
+export function clearCustomerInputs() {
+  if (typeof window !== 'undefined') {
+    const prefix = `${STORAGE_PREFIX}:`;
+    for (const name of ['localStorage', 'sessionStorage'] as const) {
+      try {
+        const storage = window[name];
+        const keys: string[] = [];
+        for (let index = 0; index < storage.length; index += 1) {
+          const key = storage.key(index);
+          if (key?.startsWith(prefix)) {
+            keys.push(key);
+          }
+        }
+        keys.forEach((key) => storage.removeItem(key));
+      } catch {
+        // Storage can be unavailable; nothing to clean then.
+      }
+    }
+  }
+  known.clear();
+  loaded.clear();
+  useCustomerInputStore.setState({ groups: {} });
 }
 
 /**

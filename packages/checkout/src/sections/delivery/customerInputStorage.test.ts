@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   addressScope,
+  clearCustomerInputs,
   pruneCustomerInputs,
   readCustomerInputs,
   useCustomerInputStore,
@@ -102,11 +103,26 @@ describe('customer input storage', () => {
     const stored = (savedAt: number) =>
       JSON.stringify({ scope: addressScope(kyiv), inputs: {}, savedAt });
     window.localStorage.setItem(key('other-tab'), stored(Date.now()));
-    window.localStorage.setItem(key('abandoned'), stored(Date.now() - 31 * 24 * 3600 * 1000));
+    window.localStorage.setItem(key('abandoned'), stored(Date.now() - 8 * 24 * 3600 * 1000));
 
     pruneCustomerInputs(['g3']);
 
     expect(window.localStorage.getItem(key('other-tab'))).not.toBeNull();
     expect(window.localStorage.getItem(key('abandoned'))).toBeNull();
+  });
+
+  it('removes every input once the order is accepted', () => {
+    remember('g1', addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
+    window.sessionStorage.setItem('checkout-delivery-customer-input:old', '{}');
+
+    clearCustomerInputs();
+
+    expect(readCustomerInputs('g1', addressScope(kyiv))).toEqual({});
+    expect(
+      window.localStorage.getItem('checkout-delivery-customer-input:g1')
+    ).toBeNull();
+    expect(
+      window.sessionStorage.getItem('checkout-delivery-customer-input:old')
+    ).toBeNull();
   });
 });

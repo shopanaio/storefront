@@ -58,7 +58,7 @@ export const UndeliverableLines = () => {
     <Alert
       type="error"
       showIcon
-      message={t('undeliverable-title')}
+      title={t('undeliverable-title')}
       description={
         <Flex vertical gap={12}>
           <ShipmentLines lines={lines} />

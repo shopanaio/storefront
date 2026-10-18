@@ -18,17 +18,9 @@ export interface CheckoutDataContextValue {
   refetch: () => Promise<unknown>;
 }
 
-interface CheckoutDataInternalContextValue {
-  checkout: StorefrontUseCheckoutFragment | null;
-  loading: boolean;
-  loaded: boolean;
-  error: Error | null;
-  refetch: () => Promise<unknown>;
-}
-
-const CheckoutDataContext = createContext<
-  CheckoutDataInternalContextValue | undefined
->(undefined);
+const CheckoutDataContext = createContext<CheckoutDataContextValue | undefined>(
+  undefined
+);
 
 export const CheckoutDataContextProvider: React.FC<{
   children: React.ReactNode;
@@ -39,20 +31,27 @@ export const CheckoutDataContextProvider: React.FC<{
     skip: !checkoutId,
     fetchPolicy: 'network-only',
   });
-  const checkout = query.data?.checkout ?? null;
+  const apiCheckout: StorefrontUseCheckoutFragment | null = query.data?.checkout ?? null;
+  // Mapped once for every consumer; the value changes only with the query state.
+  const checkout = useMemo(
+    () => (apiCheckout ? mapApiCheckoutToCheckout(apiCheckout) : null),
+    [apiCheckout]
+  );
+  const error = query.error ?? null;
+  const value = useMemo<CheckoutDataContextValue>(
+    () => ({
+      checkout,
+      cart: checkout,
+      loading: query.loading,
+      loaded: !query.loading,
+      error,
+      refetch: query.refetch,
+    }),
+    [checkout, query.loading, error, query.refetch]
+  );
 
   return (
-    <CheckoutDataContext.Provider
-      value={{
-        checkout,
-        loading: query.loading,
-        loaded: !query.loading,
-        error: query.error ?? null,
-        refetch: query.refetch,
-      }}
-    >
-      {children}
-    </CheckoutDataContext.Provider>
+    <CheckoutDataContext.Provider value={value}>{children}</CheckoutDataContext.Provider>
   );
 };
 
@@ -61,18 +60,5 @@ export function useCheckoutData(): CheckoutDataContextValue {
   if (!context) {
     throw new Error('useCheckoutData must be used within CheckoutDataProvider');
   }
-  const checkout = useMemo(
-    () =>
-      context.checkout ? mapApiCheckoutToCheckout(context.checkout) : null,
-    [context.checkout]
-  );
-
-  return {
-    checkout,
-    cart: checkout,
-    loading: context.loading,
-    loaded: context.loaded,
-    error: context.error,
-    refetch: context.refetch,
-  };
+  return context;
 }

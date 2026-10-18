@@ -1,3 +1,4 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -51,6 +52,12 @@ describe('return URL', () => {
       'https://shop.example/uk/checkout/return?checkout=Z2lkOi8v%2F1' +
         '&placement={placementId}&token={placementToken}'
     );
+  });
+
+  it('refuses a return URL over the provider limit', () => {
+    expect(() =>
+      buildReturnUrl('https://shop.example', `/${'a'.repeat(500)}`, 'c-1')
+    ).toThrow();
   });
 
   it('ignores placeholders the backend did not fill in', () => {
@@ -197,5 +204,26 @@ describe('useReadPlacement', () => {
       result.current({ placementId: 'placement-1', placementToken: null })
     ).resolves.toBeNull();
     expect(tokens()).toEqual([null]);
+  });
+
+  it('reports a placement the API will never return as missing', async () => {
+    apollo.query.mockReset().mockRejectedValue(
+      new CombinedGraphQLErrors({
+        errors: [{ message: 'Not found', extensions: { code: 'NOT_FOUND' } }],
+      })
+    );
+    const { result } = renderHook(() => useReadPlacement());
+    await expect(
+      result.current({ placementId: 'placement-1', placementToken: 't-1' })
+    ).resolves.toBeNull();
+    expect(tokens()).toEqual([null, 't-1']);
+  });
+
+  it('keeps retrying a read that failed for another reason', async () => {
+    apollo.query.mockReset().mockRejectedValue(new Error('Network'));
+    const { result } = renderHook(() => useReadPlacement());
+    await expect(
+      result.current({ placementId: 'placement-1', placementToken: null })
+    ).rejects.toThrow('Network');
   });
 });

@@ -4,6 +4,8 @@ import { Alert, Button } from 'antd';
 import { useTranslations } from 'next-intl';
 import { usePlacementPhase, usePlacementStore } from '#checkout/state/placement/placementStore';
 import { placementErrorMessageKey } from '#checkout/components/result/placementMessages';
+import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 
 /**
  * Placement problems that leave the checkout editable, shown above the submit button:
@@ -14,6 +16,8 @@ export const PlacementNotice = () => {
   const t = useTranslations('Checkout');
   const phase = usePlacementPhase();
   const reset = usePlacementStore((state) => state.reset);
+  const { checkout } = useCheckoutData();
+  const cleanup = useDefaultCartCleanup();
 
   switch (phase.name) {
     case 'payment-failed':
@@ -23,7 +27,7 @@ export const PlacementNotice = () => {
           showIcon
           closable
           onClose={reset}
-          message={t('payment-failed')}
+          title={t('payment-failed')}
           description={phase.failure?.message || undefined}
         />
       );
@@ -32,7 +36,7 @@ export const PlacementNotice = () => {
         <Alert
           type="warning"
           showIcon
-          message={t('payment-incomplete')}
+          title={t('payment-incomplete')}
           action={
             <Button size="small" type="primary" href={phase.url}>
               {t('continue-payment')}
@@ -41,13 +45,29 @@ export const PlacementNotice = () => {
         />
       );
     case 'rejected':
+      if (phase.code === 'CHECKOUT_ALREADY_PLACED') {
+        // Placed elsewhere (another tab or device): this cart can no longer be used, and a
+        // reload shows the same. The buyer leaves it; the page then goes home without a cart.
+        return (
+          <Alert
+            type="warning"
+            showIcon
+            title={t(placementErrorMessageKey(phase.code))}
+            action={
+              <Button size="small" type="primary" onClick={() => cleanup(checkout?.id ?? null)}>
+                {t('go-home')}
+              </Button>
+            }
+          />
+        );
+      }
       return (
         <Alert
           type="error"
           showIcon
           closable
           onClose={reset}
-          message={t(placementErrorMessageKey(phase.code))}
+          title={t(placementErrorMessageKey(phase.code))}
         />
       );
     default:

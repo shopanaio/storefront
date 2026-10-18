@@ -424,7 +424,7 @@ export const DeliveryMethodList = ({
         <Alert
           type="warning"
           showIcon
-          message={resetReason.message}
+          title={resetReason.message}
           description={t(
             resetKey ? 'delivery-selection-reset-fix' : 'delivery-selection-reset'
           )}
@@ -434,12 +434,12 @@ export const DeliveryMethodList = ({
         <Alert
           type="error"
           showIcon
-          message={rejectedMessages.join(' ')}
+          title={rejectedMessages.join(' ')}
           description={t('delivery-input-rejected')}
         />
       )}
       {failureCount > 0 && !rejectedMessages && (
-        <Alert type="warning" showIcon message={t('delivery-input-retrying')} />
+        <Alert type="warning" showIcon title={t('delivery-input-retrying')} />
       )}
       {Object.entries(providerMethodsRecord).map(([provider, providerMethods]) => (
         <ProviderRenderer

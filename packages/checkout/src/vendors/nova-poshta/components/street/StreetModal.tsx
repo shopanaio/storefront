@@ -7,7 +7,7 @@ import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
 import { DrawerBase } from '#checkout/ui/DrawerBase';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
-import { useSearchInput } from '#checkout/hooks/useDebouncedValue';
+import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import type { Street } from '../../types';
 import { useIsMobile } from '#checkout/ui/useIsMobile';
 

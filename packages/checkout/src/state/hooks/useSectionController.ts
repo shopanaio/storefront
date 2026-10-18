@@ -39,12 +39,16 @@ export function useSectionController(
     const store = useCheckoutStore.getState();
     store.registerSection(id, required);
 
-    // Subscribe to operation lifecycle to reflect busy state
+    // Subscribe to operation lifecycle to reflect busy state.
+    // Operations of one section can overlap, so busy is cleared only when the last one ends.
+    // SectionContainer re-validates the section once it is no longer busy.
+    let activeOperations = 0;
     const offStart = onCheckoutEvent(
       CheckoutEvent.OperationStart,
       ({ sectionId: sid }) => {
         if (sid === id) {
-          useCheckoutStore.getState().sectionInvalid(sid)
+          activeOperations += 1;
+          useCheckoutStore.getState().sectionInvalid(sid);
           useCheckoutStore.getState().setSectionBusy(id, true);
         }
       }
@@ -53,7 +57,10 @@ export function useSectionController(
       CheckoutEvent.OperationEnd,
       ({ sectionId: sid }) => {
         if (sid === id) {
-          useCheckoutStore.getState().setSectionBusy(id, false);
+          activeOperations = Math.max(0, activeOperations - 1);
+          if (activeOperations === 0) {
+            useCheckoutStore.getState().setSectionBusy(id, false);
+          }
         }
       }
     );

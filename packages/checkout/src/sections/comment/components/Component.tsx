@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
@@ -25,11 +25,25 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
   const t = useTranslations('Checkout');
 
   const { updateCustomerNote } = useCheckoutApi();
+  /** The note typed but not yet returned by the API; `null` when nothing is pending. */
+  const typedRef = useRef<string | null>(null);
   const debouncedUpdate = useMemo(() => {
     return debounce((nextNote: string) => {
-      updateCustomerNote({ note: nextNote });
+      updateCustomerNote({ note: nextNote })
+        .catch(() => {
+          // The checkout API already showed the failure; the typed note stays on screen.
+        })
+        .finally(() => {
+          // Saved (or failed) and nothing typed since: the API value is shown again.
+          if (typedRef.current === nextNote) {
+            typedRef.current = null;
+          }
+        });
     }, 500);
   }, [updateCustomerNote]);
+
+  // A note typed right before leaving the page is still saved.
+  useEffect(() => () => void debouncedUpdate.flush(), [debouncedUpdate]);
 
   const [note, setNote] = useState(data?.note ?? '');
   const [isOpen, setIsOpen] = useState(Boolean(data?.note));
@@ -37,15 +51,23 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const nextNote = e.target.value;
+      typedRef.current = nextNote;
       setNote(nextNote);
       debouncedUpdate(nextNote);
     },
     [debouncedUpdate]
   );
 
-  // Sync local state when data changes
+  // Sync local state when data changes. The answer to an earlier save must not overwrite
+  // what the buyer is typing now: while a typed note is pending, only its own value clears it.
   useEffect(() => {
     const newComment = data?.note ?? '';
+    if (typedRef.current !== null) {
+      if (typedRef.current === newComment) {
+        typedRef.current = null;
+      }
+      return;
+    }
     setNote(newComment);
     if (newComment) {
       setIsOpen(true);
@@ -69,6 +91,8 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
             rows={4}
             maxLength={255}
             onChange={handleChange}
+            // Leaving the field (e.g. to press "place order") saves the note at once.
+            onBlur={() => debouncedUpdate.flush()}
           />
         </div>
       ) : (

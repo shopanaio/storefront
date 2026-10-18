@@ -26,7 +26,7 @@ export const SectionIssues = ({ sections }: { sections: SectionId[] }) => {
           key={`${issue.code}-${issue.field.join('.')}-${index}`}
           type={issue.severity === 'ERROR' ? 'error' : 'warning'}
           showIcon
-          message={issue.message}
+          title={issue.message}
         />
       ))}
     </Flex>

@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { checkoutPlacementQuery } from '#checkout/api/queries/checkoutPlacementQuery.shopana';
+import { CombinedGraphQLErrors } from '@apollo/client';
 import {
+  isDefiniteRejection,
   isSettledOutcome,
   mapPlacementPayload,
   placementPollDelay,
@@ -38,6 +40,9 @@ export interface ReturnParams {
   locator: PlacementLocator | null;
 }
 
+/** Longest return URL the payment providers take (LiqPay `result_url`). */
+export const RETURN_URL_MAX_LENGTH = 510;
+
 /** Placeholders the backend substitutes; they must stay unencoded, as whole parameter values. */
 export const PLACEMENT_ID_PLACEHOLDER = '{placementId}';
 export const PLACEMENT_TOKEN_PLACEHOLDER = '{placementToken}';
@@ -52,9 +57,37 @@ export function buildReturnUrl(origin: string, returnPath: string, checkoutId: s
   url.search = '';
   url.hash = '';
   url.searchParams.set(RETURN_PARAM_CHECKOUT, checkoutId);
-  return (
+  const returnUrl =
     `${url.toString()}&${RETURN_PARAM_PLACEMENT}=${PLACEMENT_ID_PLACEHOLDER}` +
-    `&${RETURN_PARAM_TOKEN}=${PLACEMENT_TOKEN_PLACEHOLDER}`
+    `&${RETURN_PARAM_TOKEN}=${PLACEMENT_TOKEN_PLACEHOLDER}`;
+  if (returnUrl.length > RETURN_URL_MAX_LENGTH) {
+    // A provider would reject the payment after the order is placed; fail before placing it.
+    throw new Error(
+      `The checkout return URL is ${returnUrl.length} characters long, over ${RETURN_URL_MAX_LENGTH}.`
+    );
+  }
+  return returnUrl;
+}
+
+/**
+ * Codes of a placement read that will not change on retry: no such placement, no access, or
+ * a request the API rejected before running it.
+ */
+const PLACEMENT_MISSING_CODES: ReadonlySet<string> = new Set([
+  'NOT_FOUND',
+  'CHECKOUT_PLACEMENT_NOT_FOUND',
+]);
+
+/** Whether a read error proves the placement cannot be read: polling it again is useless. */
+function isFinalReadError(error: unknown): boolean {
+  if (!CombinedGraphQLErrors.is(error)) return false;
+  return (
+    isDefiniteRejection(error.errors) ||
+    (error.errors.length > 0 &&
+      error.errors.every((item) => {
+        const code = item.extensions?.code;
+        return typeof code === 'string' && PLACEMENT_MISSING_CODES.has(code);
+      }))
   );
 }
 
@@ -120,14 +153,24 @@ export function useReadPlacement(): ReadPlacement {
         });
         return data?.checkoutPlacement ?? null;
       };
+      // A final error (no such placement, no access) reads as `null`, so polling stops;
+      // network and server errors are thrown and retried.
+      const readOrMissing = async (token: string | null) => {
+        try {
+          return await read(token);
+        } catch (error) {
+          if (isFinalReadError(error)) return null;
+          throw error;
+        }
+      };
       let payload: Awaited<ReturnType<typeof read>> = null;
       try {
-        payload = await read(null);
+        payload = await readOrMissing(null);
       } catch (error) {
         if (!locator.placementToken) throw error;
       }
       if (!payload && locator.placementToken) {
-        payload = await read(locator.placementToken);
+        payload = await readOrMissing(locator.placementToken);
       }
       if (!payload) return null;
       const result = mapPlacementPayload(payload);

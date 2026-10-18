@@ -90,6 +90,9 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
       renew(current);
       return;
     }
+    if (!current.expiresAt) {
+      return;
+    }
     const expiry = current.expiresAt.getTime();
     if (graceNow >= expiry + EXPIRY_GRACE_MS) {
       renew(current);

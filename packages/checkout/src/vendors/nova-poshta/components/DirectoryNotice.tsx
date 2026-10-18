@@ -25,7 +25,7 @@ export function DirectoryNotice({
       <Alert
         type={error === 'invalid' ? 'info' : 'warning'}
         showIcon
-        message={t(`errors.${error}`)}
+        title={t(`errors.${error}`)}
         action={
           error === 'invalid' ? null : (
             <Button size="small" onClick={onRetry}>

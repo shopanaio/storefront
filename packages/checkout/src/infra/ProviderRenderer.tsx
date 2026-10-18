@@ -80,17 +80,25 @@ export const ProviderRenderer = ({
 
     let cancelled = false;
     const load = async () => {
-      if (!cancelled) {
+      try {
         const api = await loader();
-        setApi(api);
+        if (!cancelled) {
+          setApi(api);
+        }
+      } catch (error) {
+        // A module chunk that fails to load hides its methods instead of breaking the section.
+        console.error(`Failed to load the ${moduleType} module "${provider}":`, error);
+        if (!cancelled) {
+          setApi(null);
+        }
       }
     };
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
-  }, [loader]);
+  }, [loader, moduleType, provider]);
 
   const activeApi =
     api?.provider === provider && api.moduleType === moduleType ? api : null;

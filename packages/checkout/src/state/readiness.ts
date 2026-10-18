@@ -18,7 +18,7 @@ export function isCheckoutExpired(checkout: Checkout.Checkout, now: number): boo
   return (
     checkout.status === 'EXPIRED' ||
     checkout.status === 'ABANDONED' ||
-    checkout.expiresAt.getTime() <= now
+    (checkout.expiresAt !== null && checkout.expiresAt.getTime() <= now)
   );
 }
 

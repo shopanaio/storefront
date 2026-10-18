@@ -1,7 +1,7 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSectionController } from '#checkout/state/hooks/useSectionController';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { SectionId } from '#checkout/state/interface';
@@ -31,6 +31,11 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
   Component: ComponentType<{
     data: TData | null;
     invalidate: () => void;
+    /**
+     * Keeps the section invalid whatever its data, while the view knows the data is not what
+     * the buyer is entering (e.g. an address of another country); `false` validates it again.
+     */
+    holdInvalid?: (held: boolean) => void;
   }>;
   /**
    * Selector to read current value for the View from the checkout data (e.g., form data).
@@ -59,7 +64,7 @@ export function SectionContainer<K extends SectionId, TData extends object>({
   useData: useSectionData = useSelectedData,
   schema,
 }: SectionContainerProp<K, TData>) {
-  const { publishValid, publishInvalid } = useSectionController(id, {
+  const { busy, publishValid, publishInvalid } = useSectionController(id, {
     required,
   });
   const { checkout } = useCheckoutData();
@@ -77,9 +82,22 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     return selector(checkout);
   }, [selector, checkout]);
   const data = useSectionData(selected);
+  // Set by the view through `holdInvalid`.
+  const [held, setHeld] = useState(false);
 
-  // Automatically validate data from selector
+  // Automatically validate data from selector.
+  // While an operation of the section is running the section stays invalid
+  // (set on OperationStart); it is re-validated when the section stops being busy,
+  // including after a failed operation that did not change the data.
   useEffect(() => {
+    if (busy) {
+      return;
+    }
+    if (held && requiredFromStore) {
+      publishInvalid({});
+      return;
+    }
+
     /**
      * If the section is not required or has no schema or data,
      * we consider the section as valid.
@@ -92,17 +110,24 @@ export function SectionContainer<K extends SectionId, TData extends object>({
       return;
     }
 
+    let cancelled = false;
     schema
       .validate(data, { abortEarly: false })
-      .then(publishValid)
+      .then(() => {
+        if (!cancelled) publishValid();
+      })
       .catch((error) => {
-        publishInvalid(extractYupErrors(error));
+        if (!cancelled) publishInvalid(extractYupErrors(error));
       });
-  }, [data, schema, publishValid, publishInvalid, requiredFromStore]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [busy, held, data, schema, publishValid, publishInvalid, requiredFromStore]);
 
   const invalidate = useCallback(() => {
     publishInvalid({});
   }, [publishInvalid]);
 
-  return <Component data={data} invalidate={invalidate} />;
+  return <Component data={data} invalidate={invalidate} holdInvalid={setHeld} />;
 }

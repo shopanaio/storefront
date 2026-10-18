@@ -4,7 +4,7 @@ import { Flex, Switch, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { ContactSelect } from '#checkout/components/contact/ContactSelect';
 import { useTranslations } from 'next-intl';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { RecipientFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import type { ContactForm } from '#checkout/components/contact/ContactSelect';
@@ -78,29 +78,35 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
       const deliveryGroupIds = data?.deliveryGroupIds ?? [];
       if (!deliveryGroupIds.length) return;
 
-      if (newSelf) {
-        // Switching to self (recipient = customer) -> remove recipient from DB
-        const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
-        await removeDeliveryRecipients({
-          deliveryGroupIds: deliveryGroupIds.filter((id) => !missing.has(id)),
-        });
-      } else {
-        // Switching to another person -> create empty recipient in DB
-        // This will invalidate the section until user fills the form
-        const missing = new Set(data?.groupIdsWithoutRecipient ?? deliveryGroupIds);
-        await addDeliveryRecipients({
-          recipients: deliveryGroupIds
-            .filter((id) => missing.has(id))
-            .map((deliveryGroupId) => ({
-              deliveryGroupId,
-              recipient: {
-                firstName: '',
-                lastName: '',
-                middleName: '',
-                phone: '',
-              },
-            })),
-        });
+      try {
+        if (newSelf) {
+          // Switching to self (recipient = customer) -> remove recipient from DB
+          const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
+          await removeDeliveryRecipients({
+            deliveryGroupIds: deliveryGroupIds.filter((id) => !missing.has(id)),
+          });
+        } else {
+          // Switching to another person -> create empty recipient in DB
+          // This will invalidate the section until user fills the form
+          const missing = new Set(data?.groupIdsWithoutRecipient ?? deliveryGroupIds);
+          await addDeliveryRecipients({
+            recipients: deliveryGroupIds
+              .filter((id) => missing.has(id))
+              .map((deliveryGroupId) => ({
+                deliveryGroupId,
+                recipient: {
+                  firstName: '',
+                  lastName: '',
+                  middleName: '',
+                  phone: '',
+                },
+              })),
+          });
+        }
+      } catch (error) {
+        // The checkout API already showed the failure; the switch goes back to what is saved.
+        console.error('Failed to switch the recipient:', error);
+        setIsRecipientSelf(!newSelf);
       }
     },
     [
@@ -137,21 +143,26 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
       // checkout conflict (`CHECKOUT_VERSION_CONFLICT`).
       const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
       const saved = deliveryGroupIds.filter((id) => !missing.has(id));
-      if (saved.length > 0) {
-        await updateDeliveryRecipients({
-          updates: saved.map((deliveryGroupId) => ({
-            deliveryGroupId,
-            recipient: recipientData,
-          })),
-        });
-      }
-      if (missing.size > 0) {
-        await addDeliveryRecipients({
-          recipients: [...missing].map((deliveryGroupId) => ({
-            deliveryGroupId,
-            recipient: recipientData,
-          })),
-        });
+      try {
+        if (saved.length > 0) {
+          await updateDeliveryRecipients({
+            updates: saved.map((deliveryGroupId) => ({
+              deliveryGroupId,
+              recipient: recipientData,
+            })),
+          });
+        }
+        if (missing.size > 0) {
+          await addDeliveryRecipients({
+            recipients: [...missing].map((deliveryGroupId) => ({
+              deliveryGroupId,
+              recipient: recipientData,
+            })),
+          });
+        }
+      } catch (error) {
+        // The checkout API already showed the failure.
+        console.error('Failed to save the recipient:', error);
       }
     },
     [
@@ -160,6 +171,19 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
       updateDeliveryRecipients,
       addDeliveryRecipients,
     ]
+  );
+
+  const contact = useMemo<ContactForm | null>(
+    () =>
+      data
+        ? {
+            firstName: data.firstName ?? '',
+            lastName: data.lastName ?? '',
+            middleName: data.middleName ?? '',
+            phone: data.phone ?? '',
+          }
+        : null,
+    [data]
   );
 
   if (!data) return null;
@@ -179,16 +203,7 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
 
       {!isRecipientSelf ? (
         <ContactSelect
-          data={
-            data
-              ? {
-                  firstName: data.firstName ?? '',
-                  lastName: data.lastName ?? '',
-                  middleName: data.middleName ?? '',
-                  phone: data.phone ?? '',
-                }
-              : null
-          }
+          data={contact}
           title={t('recipient')}
           onSubmit={handleContactSubmit}
         />

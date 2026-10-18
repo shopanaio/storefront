@@ -25,6 +25,11 @@ const toDate = (value: unknown): Date => {
 };
 const toOptionalDate = (value: string | null | undefined): Date | null =>
   value ? toDate(value) : null;
+/** A date the client acts on: an invalid value is unknown, not the epoch. */
+const toValidDate = (value: unknown): Date | null => {
+  const date = new Date(String(value ?? ''));
+  return value && !Number.isNaN(date.getTime()) ? date : null;
+};
 const mapMoney = (money: StorefrontCheckoutMoneyFragment): model.Money => ({
   amount: toAmount(money.amount),
   currencyCode: money.currencyCode,
@@ -254,7 +259,7 @@ export function mapApiCheckoutToCheckout(
     currencyCode: apiCheckout.currencyCode,
     resultRevision: apiCheckout.resultRevision,
     status: apiCheckout.status,
-    expiresAt: toDate(apiCheckout.expiresAt),
+    expiresAt: toValidDate(apiCheckout.expiresAt),
     valid: apiCheckout.valid,
     issues: apiCheckout.issues.map((issue) => ({
       code: issue.code,
