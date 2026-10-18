@@ -2,12 +2,12 @@ import { notification } from 'antd';
 
 export const toast = {
   error(message: string) {
-    notification.error({ message });
+    notification.error({ title: message });
   },
   success(message: string) {
-    notification.success({ message });
+    notification.success({ title: message });
   },
   info(message: string) {
-    notification.info({ message });
+    notification.info({ title: message });
   },
 };

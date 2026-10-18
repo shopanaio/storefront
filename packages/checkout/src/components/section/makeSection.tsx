@@ -4,7 +4,7 @@ import type { ComponentType, FC } from 'react';
 import { SectionContainer } from './SectionContainer';
 import { SectionId } from '#checkout/state/interface';
 import type { Checkout } from '#checkout/types/entity';
-import type { AnySchema } from 'yup';
+import type { AnySchema, Lazy } from 'yup';
 
 /**
  * Build a typed section container bound to a specific section id and view.
@@ -21,15 +21,17 @@ export function makeSection<
   id: K;
   /** Whether the section is required; defaults to true */
   required?: boolean;
-  /** View component receiving { value, onValid, onInvalid } */
+  /** View component receiving { data, invalidate } */
   Component: ComponentType<{
     data: TData | null;
-    onChange: (fieldName: string, fieldValue: unknown) => void;
+    invalidate: () => void;
   }>;
   /** Selector to read current value for the View from the checkout data */
   selector: (checkout: Checkout.Checkout | null) => TData | null;
+  /** Optional hook completing the selected data with client-side state */
+  useData?: (data: TData | null) => TData | null;
   /** Optional Yup validation schema for the section data */
-  schema: AnySchema;
+  schema: AnySchema | Lazy<unknown>;
   /** Optional display name for React DevTools */
   displayName: string;
 }): FC {
@@ -38,6 +40,7 @@ export function makeSection<
     required = true,
     Component,
     selector,
+    useData,
     schema,
     displayName,
   } = config;
@@ -49,6 +52,7 @@ export function makeSection<
         required={required}
         Component={Component}
         selector={selector}
+        useData={useData}
         schema={schema}
       />
     );

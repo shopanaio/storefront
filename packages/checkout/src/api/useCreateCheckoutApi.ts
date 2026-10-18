@@ -34,6 +34,16 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Delivery,
     }
   );
+  // Saves of the delivery customer input retry in the background; the delivery section
+  // shows their failures itself instead of a toast on every retry.
+  const { commit: commitUpdateDelivery } = useCheckoutOperation(
+    selectDeliveryMethodMutation,
+    {
+      showErrorToast: false,
+      operationKey: OperationKey.SelectDeliveryMethod,
+      sectionId: SectionId.Delivery,
+    }
+  );
   const { commit: commitSelectPayment } = useCheckoutOperation(
     selectPaymentMethodMutation,
     {
@@ -199,7 +209,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });
       },
       updateShippingMethod: async (input) => {
-        await commitSelectDelivery({
+        await commitUpdateDelivery({
           input: { ...input, ...mutationContext() },
         });
       },
@@ -223,6 +233,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   }, [
     checkout,
     commitSelectDelivery,
+    commitUpdateDelivery,
     commitSelectPayment,
     commitUpdateIdentity,
     commitAddAddresses,

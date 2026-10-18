@@ -12,8 +12,11 @@ const deliveryMethodSchema = yup.object<DeliveryMethod>().shape({
   title: yup.string().required('Delivery method title is required'),
   description: yup.string().nullable().optional(),
   provider: yup.string().required('Delivery provider is required'),
-  data: yup.mixed(),
-  publicData: yup.mixed(),
+  data: yup.mixed().nullable(),
+  view: yup.mixed().nullable(),
+  synced: yup.boolean().optional(),
+  customerInputContract: yup.mixed().nullable(),
+  publicData: yup.mixed().nullable(),
 });
 
 /**
@@ -29,12 +32,18 @@ const deliveryGroupSchema = yup.object<DeliveryGroup>().shape({
   selectedDeliveryMethod: buildSelectedProviderMethodSchema({
     moduleType: ProviderModuleType.Delivery,
     baseSchema: deliveryMethodSchema,
+    validateCustomerInput: true,
     messages: {
       required: 'A delivery method must be selected',
       notSelected: 'A delivery method must be selected',
-      invalid: 'Invalid delivery method data',
+      invalid: 'Complete the delivery details',
     },
-  }),
+  }).test(
+    'is-saved',
+    'Saving the delivery details',
+    // An edited input blocks the order until the API has accepted it.
+    (method) => !method || method.synced !== false
+  ),
 });
 
 /**

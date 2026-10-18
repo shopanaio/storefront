@@ -8,6 +8,7 @@ import {
   CheckoutEvent,
   OperationKey,
 } from '#checkout/state/checkoutBus';
+import { closedCheckoutCode } from '#checkout/state/closedCheckout';
 import type { SectionId } from '#checkout/state/interface';
 
 function getCheckoutUserErrors(response: object): unknown[] {
@@ -226,7 +227,11 @@ export function useCheckoutOperation<
               ? getCheckoutUserErrors(response)
               : [];
             if (userErrors.length > 0) {
-              if (showErrorToast) {
+              const closed = closedCheckoutCode(userErrors);
+              if (closed) {
+                // A closed checkout is handled once for the whole checkout, not per mutation.
+                void emitCheckoutEvent(CheckoutEvent.CheckoutClosed, { code: closed });
+              } else if (showErrorToast) {
                 toast.error(errorMessage);
               }
               return reject(userErrors);

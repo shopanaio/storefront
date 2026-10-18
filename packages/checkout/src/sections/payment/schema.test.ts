@@ -1,5 +1,5 @@
 import '#checkout/vendors/liqpay/register';
-import '#checkout/vendors/novaposta/register';
+import '#checkout/vendors/nova-poshta/register';
 import type { PaymentFormData, PaymentMethod } from './types';
 import { paymentFormSchema } from './schema';
 

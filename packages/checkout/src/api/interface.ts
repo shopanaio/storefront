@@ -19,6 +19,7 @@ export interface CheckoutApi {
   selectDeliveryMethod: (input: DeliveryMethodUpdateDto) => Promise<void>;
   selectPaymentMethod: (input: PaymentMethodUpdateDto) => Promise<void>;
   updatePaymentMethod: (input: PaymentMethodUpdateDto) => Promise<void>;
+  /** Saves the customer input of a delivery option; reports failures only by rejecting. */
   updateShippingMethod: (input: DeliveryMethodUpdateDto) => Promise<void>;
   updateCustomerIdentity: (input: CustomerIdentityUpdateDto) => Promise<void>;
   addDeliveryAddresses: (input: DeliveryAddressesAddDto) => Promise<void>;

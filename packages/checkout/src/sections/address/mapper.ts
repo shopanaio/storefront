@@ -1,6 +1,12 @@
 import type { Checkout } from '#checkout/types/entity';
 import type { AddressFormData } from './types';
-import type { City } from '#checkout/vendors/novaposta/types';
+import { toDeliveryAddress } from '#checkout/sections/delivery/mapper';
+
+/**
+ * Country of a new address. The storefront API does not list delivery countries yet
+ * (B6), so the only supported country is the default one and no selector is shown.
+ */
+export const DEFAULT_DELIVERY_COUNTRY = 'UA';
 
 /**
  * Maps Checkout.Checkout entity to AddressFormData
@@ -14,25 +20,13 @@ export function mapCheckoutToAddressFormData(
   }
 
   const firstDeliveryGroup = checkout.deliveryGroups[0];
-  if (!firstDeliveryGroup?.deliveryAddress) {
-    return {
-      addressId: null,
-      checkoutLineIds: firstDeliveryGroup?.checkoutLines.map((line) => line.id) ?? [],
-      city: null,
-    };
-  }
-
-  const { deliveryAddress } = firstDeliveryGroup;
-
-  // Parse city data from deliveryAddress.data
-  const city: City | null = deliveryAddress.data
-    ? // @ts-expect-error TODO: fix type
-      (deliveryAddress?.data?.city as City)
-    : null;
+  const address = toDeliveryAddress(firstDeliveryGroup?.deliveryAddress ?? null);
 
   return {
-    addressId: deliveryAddress.id,
-    checkoutLineIds: firstDeliveryGroup.checkoutLines.map((line) => line.id),
-    city,
+    addressId: address?.addressId ?? null,
+    checkoutLineIds:
+      firstDeliveryGroup?.checkoutLines.map((line) => line.id) ?? [],
+    countryCode: address?.countryCode ?? DEFAULT_DELIVERY_COUNTRY,
+    address,
   };
 }

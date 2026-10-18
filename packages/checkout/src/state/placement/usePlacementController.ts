@@ -223,6 +223,24 @@ export function usePlacementController(checkoutId: string | null) {
     return () => off();
   }, [checkout, poll, returnPath, send]);
 
+  // A mutation found the checkout closed. A placement of this checkout is followed to its
+  // result; without one, the customer is told the checkout can no longer be placed.
+  useEffect(() => {
+    const off = onCheckoutEvent(CheckoutEvent.CheckoutClosed, ({ code }) => {
+      if (!checkoutId || isPlacementBusy(usePlacementStore.getState().phase)) {
+        return;
+      }
+      const current = journalRef.current.read(checkoutId);
+      const locator = attemptLocator(current);
+      if (code === 'CHECKOUT_ALREADY_PLACED' && current && locator) {
+        poll(current, locator, 'recover');
+        return;
+      }
+      setPhase({ name: 'rejected', code });
+    });
+    return () => off();
+  }, [checkoutId, poll, setPhase]);
+
   // Reload: resume an unanswered request with the same key, or read the placement in progress.
   // Both work from the journal alone: the checkout may be unreadable once it became an order
   // (decision 1.2). A resumed answer is followed as a recovery: a pending redirect is offered as

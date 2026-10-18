@@ -1,5 +1,4 @@
 import { ComponentType, FC } from 'react';
-import type { AnySchema } from 'yup';
 import type { PlacementCustomerAction } from '#checkout/state/placement/types';
 
 /**
@@ -10,20 +9,18 @@ export enum ProviderModuleType {
   Delivery = 'delivery',
   /** Client SDK that completes a `CLIENT_SDK` customer action; the slug is the action `sdk`. */
   PaymentSdk = 'payment-sdk',
+  /** Delivery address form of a country; the slug is the ISO 3166-1 alpha-2 country code. */
+  Address = 'address',
 }
 
 /**
  * Configuration for a single provider method (shipping or payment).
  */
 export interface ProviderMethodConfig {
-  /** Unique code identifier used internally */
+  /** Method code as the API returns it (a delivery service code or a payment method code). */
   code: string;
-  /** Optional yup schema for this method's data validation */
-  schema?: AnySchema;
   /** Full method component that includes CheckoutMethodPanel */
   Component: FC<ProviderMethodComponentProps>;
-  /** Initial values for this method (if any) */
-  initialValues?: unknown;
 }
 
 /**
@@ -40,7 +37,12 @@ export interface ProviderConfig {
 export interface ProviderMethod {
   handle: string;
   code: string;
+  /** Customer input of the method, exactly as it is sent to the API. */
   data: unknown;
+  /** Module-owned display state kept next to the input (labels of the picked refs). */
+  view?: unknown;
+  /** JSON Schema of the customer input (delivery options only). */
+  customerInputContract?: unknown;
   publicData?: unknown;
   title?: string;
   description?: string | null;
@@ -54,10 +56,24 @@ export interface ProviderProps {
   selectedMethod: ProviderMethod | null;
   /** Callback for when a method is selected (optional for backward compatibility) */
   onSelectMethod?: (method: ProviderMethod) => void;
-  /** Callback for when selected method data is updated (optional, mainly for delivery) */
-  onUpdateMethodData?: (data: unknown) => void;
+  /**
+   * Called with a new customer input of the method `handle` and its display state, on every
+   * change. The input belongs to that method even if another one is selected meanwhile.
+   */
+  onUpdateMethodData?: (handle: string, data: unknown, view?: unknown) => void;
   /** Delivery address for delivery providers (only for delivery module type) */
-  deliveryAddress?: unknown;
+  deliveryAddress?: ProviderDeliveryAddress | null;
+}
+
+/**
+ * Delivery address as a delivery module sees it: neutral fields plus carrier-scoped `data`.
+ */
+export interface ProviderDeliveryAddress {
+  addressId: string | null;
+  countryCode: string | null;
+  city: string | null;
+  /** Carrier hints of the address; each carrier reads only its own. */
+  data: unknown;
 }
 
 export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'> & {
@@ -65,12 +81,21 @@ export type ProviderComponentProps = Omit<ProviderProps, 'moduleType'> & {
 };
 
 export interface ProviderMethodComponentProps {
+  /** Customer input last submitted for the method. */
   data: unknown;
-  onSubmit: (data: unknown) => void;
+  /** Display state submitted with that input. */
+  view?: unknown;
+  /** JSON Schema of the customer input (delivery options only). */
+  customerInputContract?: unknown;
+  /** Submits a new customer input with the display state needed to show it again. */
+  onSubmit: (data: unknown, view?: unknown) => void;
   isActive: boolean;
   onActive: () => void;
   /** Delivery address for delivery methods (only for delivery providers) */
-  deliveryAddress?: unknown;
+  deliveryAddress?: ProviderDeliveryAddress | null;
+  /** Title of the option from the API. */
+  title?: string;
+  description?: string | null;
 }
 
 export interface ProviderModuleApi {
@@ -96,4 +121,30 @@ export interface PaymentSdkComponentProps {
 export interface PaymentSdkModuleApi {
   sdk: string;
   Component: ComponentType<PaymentSdkComponentProps>;
+}
+
+/**
+ * Address as an address module submits it. Only neutral fields: carrier data (branch,
+ * postomat, street of a carrier) belongs to the delivery method's customer input.
+ */
+export interface AddressModuleValue {
+  countryCode: string;
+  city: string;
+  address1?: string | null;
+  address2?: string | null;
+  postalCode?: string | null;
+  provinceCode?: string | null;
+  /** Carrier hints, e.g. the Nova Poshta settlement of the picked city. */
+  data?: Record<string, unknown>;
+}
+
+export interface AddressModuleProps {
+  address: ProviderDeliveryAddress | null;
+  onSubmit: (address: AddressModuleValue) => void;
+}
+
+/** Module registered under `ProviderModuleType.Address` with the country code as slug. */
+export interface AddressModuleApi {
+  country: string;
+  Component: ComponentType<AddressModuleProps>;
 }

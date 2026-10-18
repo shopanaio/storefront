@@ -67,6 +67,8 @@ export enum CheckoutEvent {
   OperationEnd = 'operation/end',
   /** Emitted when an async operation fails with error details */
   OperationError = 'operation/error',
+  /** Emitted when a mutation finds the checkout closed: placed, abandoned or expired */
+  CheckoutClosed = 'checkout/closed',
 }
 
 /**
@@ -128,6 +130,8 @@ export type CheckoutEvents = {
   };
   [CheckoutEvent.PlacementStarted]: object;
   [CheckoutEvent.OrderAccepted]: OrderAcceptedEvent;
+  /** `code` is one of `CLOSED_CHECKOUT_CODES`. */
+  [CheckoutEvent.CheckoutClosed]: { code: string };
 
   /** Operation lifecycle events for UI busy indicators. */
   [CheckoutEvent.OperationStart]: {

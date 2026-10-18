@@ -2,6 +2,7 @@ import type { ValidationError } from 'yup';
 import * as yup from 'yup';
 import { resolveProviderConfig } from '#checkout/infra/resolveProviderConfig';
 import { ProviderModuleType } from '#checkout/vendors/types';
+import { validateCustomerInput } from '#checkout/utils/jsonSchema';
 
 /**
  * Extracts validation errors from a Yup ValidationError
@@ -32,16 +33,17 @@ export interface ProviderMethodBase {
   code: string;
   provider: string;
   data: unknown;
+  customerInputContract?: unknown;
 }
 
 /**
  * Builds a reusable Yup schema for validating a selected provider method field
  * (e.g., selectedPaymentMethod or selectedDeliveryMethod).
  *
- * It ensures that a value is selected, and if the corresponding provider method
- * defines its own data schema, validates the attached `data` against it.
- * With `requireMethodModule`, a selected method that no provider module declares
- * is invalid (such a method is hidden, so the customer has to pick another one).
+ * It ensures that a value is selected. With `validateCustomerInput`, the attached `data`
+ * must satisfy the method's `customerInputContract` from the API. With
+ * `requireMethodModule`, a selected method that no provider module declares is invalid
+ * (such a method is hidden, so the customer has to pick another one).
  *
  * Note: This test is async due to provider config resolution.
  */
@@ -52,6 +54,7 @@ export function buildSelectedProviderMethodSchema<
   moduleType: ProviderModuleType;
   baseSchema: S;
   requireMethodModule?: boolean;
+  validateCustomerInput?: boolean;
   messages?: {
     required?: string;
     notSelected?: string;
@@ -59,8 +62,13 @@ export function buildSelectedProviderMethodSchema<
     unavailable?: string;
   };
 }): S {
-  const { moduleType, baseSchema, requireMethodModule = false, messages } =
-    params;
+  const {
+    moduleType,
+    baseSchema,
+    requireMethodModule = false,
+    validateCustomerInput: checkInput = false,
+    messages,
+  } = params;
 
   const requiredMsg = messages?.required ?? 'A method must be selected';
   const notSelectedMsg = messages?.notSelected ?? 'A method must be selected';
@@ -78,23 +86,24 @@ export function buildSelectedProviderMethodSchema<
           return false;
         }
 
-        const { code, provider, data } = selectedMethod as T;
-        const config = await resolveProviderConfig(moduleType, provider);
+        const { code, provider, data, customerInputContract } =
+          selectedMethod as T;
 
-        const methodConfig = config?.methods.find((m) => m.code === code);
-        if (!methodConfig && requireMethodModule) {
-          return this.createError({ message: unavailableMsg });
-        }
-        if (!methodConfig?.schema) {
-          return true;
+        if (requireMethodModule) {
+          const config = await resolveProviderConfig(moduleType, provider);
+          if (!config?.methods.some((m) => m.code === code)) {
+            return this.createError({ message: unavailableMsg });
+          }
         }
 
-        try {
-          methodConfig.schema.validateSync(data, { abortEarly: false });
-          return true;
-        } catch (e) {
-          return this.createError({ message: (e as Error).message });
+        if (
+          checkInput &&
+          validateCustomerInput(customerInputContract, data).length > 0
+        ) {
+          return this.createError({ message: invalidMsg });
         }
+
+        return true;
       }
     );
 

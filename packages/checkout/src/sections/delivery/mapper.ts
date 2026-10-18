@@ -5,9 +5,35 @@ import type {
   DeliveryAddress,
 } from './types';
 
+const toDeliveryMethod = (method: Checkout.DeliveryMethod): DeliveryMethod => ({
+  handle: method.handle,
+  code: method.code,
+  title: method.title,
+  description: method.description,
+  provider: method.provider.code,
+  data: undefined,
+  customerInputContract: method.customerInputContract,
+  publicData: method.publicData,
+});
+
+/** Neutral view of a group address; carrier modules read their own hints from `data`. */
+export const toDeliveryAddress = (
+  address: Checkout.DeliveryAddress | null
+): DeliveryAddress | null =>
+  address
+    ? {
+        addressId: address.id,
+        countryCode: address.countryCode,
+        city: address.city,
+        data: address.data,
+      }
+    : null;
+
 /**
  * Maps Checkout.Checkout entity to DeliveryFormData
- * Extracts delivery groups, their selected delivery methods, and address data
+ * Extracts delivery groups, their selected delivery methods, and address data. A selection
+ * the API reset (carrier refused the input, option expired) keeps its reason and the option
+ * it dropped, so the section can tell the customer and reopen that option.
  */
 export function mapCheckoutToDeliveryFormData(
   checkout: Checkout.Checkout | null
@@ -19,50 +45,19 @@ export function mapCheckoutToDeliveryFormData(
   const formData: DeliveryFormData = {};
 
   for (const group of checkout.deliveryGroups) {
-    const deliveryMethods: DeliveryMethod[] = group.deliveryMethods.map(
-      (method) => ({
-        handle: method.handle,
-        code: method.code,
-        title: method.title,
-        description: method.description,
-        provider: method.provider.code,
-        data: undefined,
-        publicData: method.publicData,
-      })
-    );
-
-    const selectedOption = group.selection.option;
-    const selectedDeliveryMethod: DeliveryMethod | null = selectedOption
-      ? {
-          handle: selectedOption.handle,
-          code: selectedOption.code,
-          title: selectedOption.title,
-          description: selectedOption.description,
-          provider: selectedOption.provider.code,
-          data: undefined,
-          publicData: selectedOption.publicData,
-        }
-      : null;
-
-    // Extract address data from delivery group
-    const address: DeliveryAddress = group.deliveryAddress
-      ? {
-          addressId: group.deliveryAddress.id,
-          city: group.deliveryAddress.data
-            ? // @ts-expect-error TODO: fix type
-              (group.deliveryAddress.data.city as City)
-            : null,
-        }
-      : {
-          addressId: null,
-          city: null,
-        };
+    const { option: selectedOption, status, resetReason, previousOptionHandle } =
+      group.selection;
+    const reset = status === 'RESET';
 
     formData[group.id] = {
       id: group.id,
-      deliveryMethods,
-      selectedDeliveryMethod,
-      address,
+      deliveryMethods: group.deliveryMethods.map(toDeliveryMethod),
+      selectedDeliveryMethod: selectedOption
+        ? toDeliveryMethod(selectedOption)
+        : null,
+      address: toDeliveryAddress(group.deliveryAddress),
+      resetReason: reset ? resetReason : null,
+      previousOptionHandle: reset ? previousOptionHandle : null,
     };
   }
 

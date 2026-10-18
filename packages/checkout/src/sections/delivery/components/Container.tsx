@@ -5,6 +5,7 @@ import type { DeliveryFormData } from '../types';
 import { SectionId } from '#checkout/state/interface';
 import { mapCheckoutToDeliveryFormData } from '../mapper';
 import { deliveryFormSchema } from '../schema';
+import { useDeliveryFormData } from '../withCustomerInputs';
 
 /**
  * Delivery section component created with makeSection.
@@ -15,6 +16,7 @@ export const DeliverySection = makeSection<DeliveryFormData>({
   required: true,
   Component,
   selector: mapCheckoutToDeliveryFormData,
+  useData: useDeliveryFormData,
   schema: deliveryFormSchema,
   displayName: 'DeliverySection',
 });

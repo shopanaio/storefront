@@ -6,7 +6,7 @@ import { useSectionController } from '#checkout/state/hooks/useSectionController
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { SectionId } from '#checkout/state/interface';
 import type { Checkout } from '#checkout/types/entity';
-import type { AnySchema } from 'yup';
+import type { AnySchema, Lazy } from 'yup';
 import { extractYupErrors } from '#checkout/utils/validation';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 
@@ -38,17 +38,25 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
    */
   selector?: (checkout: Checkout.Checkout | null) => TData | null;
   /**
+   * Hook that completes the selected data with client-side state the API does not return
+   * (e.g. delivery customer input). The result is both rendered and validated.
+   */
+  useData?: (data: TData | null) => TData | null;
+  /**
    * Yup validation schema for the section data.
    * Data will be validated automatically on mount and when data changes.
    */
-  schema: AnySchema;
+  schema: AnySchema | Lazy<unknown>;
 }
+
+const useSelectedData = <TData,>(data: TData | null) => data;
 
 export function SectionContainer<K extends SectionId, TData extends object>({
   id,
   required,
   Component,
   selector,
+  useData: useSectionData = useSelectedData,
   schema,
 }: SectionContainerProp<K, TData>) {
   const { publishValid, publishInvalid } = useSectionController(id, {
@@ -61,13 +69,14 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     (state) => state.sections[id]?.required ?? required
   );
 
-  const data = useMemo(() => {
+  const selected = useMemo(() => {
     if (!selector) {
       return null;
     }
 
     return selector(checkout);
   }, [selector, checkout]);
+  const data = useSectionData(selected);
 
   // Automatically validate data from selector
   useEffect(() => {

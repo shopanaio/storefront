@@ -10,14 +10,22 @@ import {
 } from '#checkout/vendors/types';
 import { CheckoutMethodPanel } from '#checkout/components/common/CheckoutMethodPanel';
 import { warnMissingPaymentModule } from '#checkout/infra/warnMissingPaymentModule';
+import { GenericCustomerInputForm } from '#checkout/infra/GenericCustomerInputForm';
+import { contractNeedsForm } from '#checkout/infra/customerInputForm';
 
 const GenericDeliveryProvider = ({
   availableMethods,
   selectedMethod,
   onSelectMethod,
+  onUpdateMethodData,
+  deliveryAddress,
 }: Pick<
   ProviderProps,
-  'availableMethods' | 'selectedMethod' | 'onSelectMethod'
+  | 'availableMethods'
+  | 'selectedMethod'
+  | 'onSelectMethod'
+  | 'onUpdateMethodData'
+  | 'deliveryAddress'
 >) => (
   <Flex vertical gap={12}>
     {availableMethods.map((method: ProviderMethod) => (
@@ -27,7 +35,18 @@ const GenericDeliveryProvider = ({
         description={method.description ?? null}
         isActive={selectedMethod?.handle === method.handle}
         onActive={() => onSelectMethod?.(method)}
-        component={null}
+        component={
+          contractNeedsForm(method.customerInputContract)
+            ? GenericCustomerInputForm
+            : null
+        }
+        componentProps={{
+          contract: method.customerInputContract,
+          data: method.data,
+          resetKey: JSON.stringify(deliveryAddress ?? null),
+          onSubmit: (data: unknown) =>
+            onUpdateMethodData?.(method.handle, data),
+        }}
       />
     ))}
   </Flex>
@@ -120,6 +139,8 @@ export const ProviderRenderer = ({
           availableMethods={availableMethods}
           selectedMethod={componentProps.selectedMethod}
           onSelectMethod={onSelectMethod}
+          onUpdateMethodData={onUpdateMethodData}
+          deliveryAddress={componentProps.deliveryAddress}
         />
       );
     }

@@ -28,6 +28,10 @@ export function placementErrorMessageKey(code: string): string {
     return 'placement-error-payment-unavailable';
   }
   if (code === 'CHECKOUT_PLACEMENT_NOT_FOUND') return 'placement-error-not-found';
+  if (code === 'CHECKOUT_ALREADY_PLACED') return 'placement-error-already-placed';
+  if (code === 'CHECKOUT_ABANDONED' || code === 'CHECKOUT_EXPIRED') {
+    return 'placement-error-closed';
+  }
   return 'placement-error-generic';
 }
 

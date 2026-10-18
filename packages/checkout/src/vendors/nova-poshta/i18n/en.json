@@ -1,0 +1,49 @@
+{
+  "shipping": {
+    "services": {
+      "warehouse-warehouse": "Nova Poshta branch",
+      "doors-warehouse": "Nova Poshta branch (courier pickup from the seller)",
+      "warehouse-doors": "Nova Poshta courier",
+      "doors-doors": "Nova Poshta courier (courier pickup from the seller)",
+      "postomat": "Nova Poshta parcel locker"
+    }
+  },
+  "payment": {
+    "cod": "Cash on delivery",
+    "cod_description": "Pay when you receive the order"
+  },
+  "form": {
+    "city_required_warning": "Please select a city first",
+    "WAREHOUSE": "Branch",
+    "POSTOMAT": "Parcel locker",
+    "search_point": "Number or address",
+    "street": "Street",
+    "search_street": "Street name",
+    "building": "Building",
+    "apartment": "Apartment",
+    "comment": "Note for the courier",
+    "loading": "Loading…",
+    "empty": "Nothing found",
+    "load_more": "Show more",
+    "point_closed": "Not accepting parcels right now"
+  },
+  "errors": {
+    "unavailable": "The Nova Poshta directory is temporarily unavailable",
+    "invalid": "Refine the search",
+    "failed": "Could not load the data",
+    "retry": "Retry"
+  },
+  "schedule": {
+    "days": {
+      "Monday": "Mon",
+      "Tuesday": "Tue",
+      "Wednesday": "Wed",
+      "Thursday": "Thu",
+      "Friday": "Fri",
+      "Saturday": "Sat",
+      "Sunday": "Sun"
+    },
+    "not_specified": "Schedule not specified"
+  },
+  "pickup_from_here": "Pick up here"
+}

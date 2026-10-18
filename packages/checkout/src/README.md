@@ -79,10 +79,12 @@ Sections live under `sections/*` and include:
 - Module registry: `@shopana/storefront-sdk/registry` — modules register by `type` and `slug`; the slug is the provider code from the API (`providerCode`).
 - Providers autoload: `index.ts` — `require.context` loads every `vendors/*/register.*`.
 - Provider render: `infra/ProviderRenderer.tsx` — resolves a provider by `moduleType` and `provider` from the registry, loads the module asynchronously, and renders it, passing `onSelectMethod`, `onUpdateMethodData`, and `deliveryAddress`.
-- Config resolve: `infra/resolveProviderConfig.ts` — loads the provider `config` for validation.
+- Config resolve: `infra/resolveProviderConfig.ts` — loads the provider `config` to check that a payment method has a module.
 - Provider modules:
   - `vendors/liqpay/*` — payment module `liqpay`, method `liqpay` (flow `ONLINE`, no customer input).
-  - `vendors/novaposta/*` — shipping (warehouse/courier) and payment module `nova-poshta`, method `nova-poshta-cod` (cash on delivery; the API offers it only with Nova Poshta delivery).
+  - `vendors/nova-poshta/*` — delivery and payment modules `nova-poshta`. Delivery: one method per service (`warehouse-warehouse`, `doors-warehouse` → branch; `postomat` → postomat; `warehouse-doors`, `doors-doors` → courier), customer input `{ type, settlementRef, warehouseRef }` or `{ type: 'DOOR', settlementRef, streetRef, streetName, building, apartment?, comment? }`. The directory (settlements, branches/postomats, streets) is read through the storefront queries of the Nova Poshta app (`novaPoshtaSettlements`, `novaPoshtaWarehouses`, `novaPoshtaSettlementStreets`), never from the carrier API directly. Payment: method `nova-poshta-cod` (cash on delivery; the API offers it only with Nova Poshta delivery).
+  - `vendors/address-ua/*` — address module of Ukraine (`ProviderModuleType.Address`, slug `UA`): city first, from the Nova Poshta directory; the address keeps neutral fields plus the settlement hint.
+  - Delivery options without a module render through the generic form built from `customerInputContract`; customer input is validated against that contract (`utils/jsonSchema.ts`) and sent only when it satisfies it.
   - `vendors/shared/createPaymentProvider.tsx` — provider-level component shared by payment modules.
 
 ### Payment methods
@@ -90,7 +92,7 @@ Sections live under `sections/*` and include:
 - Every payment method has its own UI module: the module is found by the method `providerCode`, the method component by its `code`.
 - Methods are rendered in API order (`sections/payment/components/Component.tsx`), one `ProviderRenderer` per method.
 - A method without a module (no provider module, or the module does not declare the method code) is hidden; outside production a `console.warn` names it once (`infra/warnMissingPaymentModule.ts`).
-- Validation (`sections/payment/schema.ts`): a selected method is required, and it must have a UI module; the method data is validated only when the method config declares a `schema`.
+- Validation (`sections/payment/schema.ts`): a selected method is required, and it must have a UI module.
 - When the API resets the selection (`selection.status = RESET`), the section shows `resetReason.message` as is and asks to choose a method again.
 
 ## Submit Flow

@@ -2,12 +2,13 @@ import * as yup from 'yup';
 import type { AddressFormData } from './types';
 
 /**
- * Yup validation schema for AddressFormData
+ * Yup validation schema for AddressFormData: the group needs a saved address with a city.
  */
 export const addressFormSchema = yup.object<AddressFormData>().shape({
-  city: yup
-    .object()
+  address: yup
+    .object({
+      city: yup.string().nullable().required('City is required'),
+    })
     .nullable()
-    .required('City is required')
-    .test('is-city-selected', 'City is required', (value) => value !== null),
+    .required('City is required'),
 });
