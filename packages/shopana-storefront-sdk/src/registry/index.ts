@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { match, type MatchFunction, type ParamData } from 'path-to-regexp';
 
 // Re-export ParamData for module authors
@@ -43,6 +43,10 @@ export interface ModuleConfig<T = unknown> {
    * Lazy loader that returns the module payload.
    */
   loader: AsyncModuleLoader<T>;
+  /** Page layout owned by the module instead of the storefront layout. */
+  layoutLoader?: AsyncModuleLoader<{
+    default: ComponentType<{ children: ReactNode }>;
+  }>;
 }
 
 /**
@@ -120,14 +124,21 @@ export class ModuleRegistry {
    * @param config Module configuration object.
    */
   register<T = unknown>(config: ModuleConfig<T>): void {
-    const { type, slug, path, loader } = config;
+    const { type, slug, path, loader, layoutLoader } = config;
     let bySlug = this.typeToSlugToRecord.get(type);
     if (!bySlug) {
       bySlug = new Map();
       this.typeToSlugToRecord.set(type, bySlug);
     }
     const matcher = path ? match(path, { decode: decodeURIComponent }) : null;
-    const record: RegisteredModuleRecord<T> = { type, slug, path, loader, matcher };
+    const record: RegisteredModuleRecord<T> = {
+      type,
+      slug,
+      path,
+      loader,
+      layoutLoader,
+      matcher,
+    };
     bySlug.set(slug, record);
   }
 

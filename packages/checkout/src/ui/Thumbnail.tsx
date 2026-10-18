@@ -2,7 +2,6 @@
 
 import { Button } from 'antd';
 import { createStyles } from 'antd-style';
-import clsx from 'clsx';
 
 export interface ThumbnailProps {
   src?: string | null;
@@ -12,9 +11,9 @@ export interface ThumbnailProps {
 }
 
 export function Thumbnail({ src, alt = '', className, width }: ThumbnailProps) {
-  const { styles } = useStyles();
+  const { styles, cx } = useStyles();
   return (
-    <Button className={clsx(styles.root, className)} type="default">
+    <Button className={cx(styles.root, className)} type="default">
       {src ? (
         <img src={src} alt={alt} width={width} className={styles.image} />
       ) : null}
@@ -24,16 +23,18 @@ export function Thumbnail({ src, alt = '', className, width }: ThumbnailProps) {
 
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
-    padding: 2px;
+    padding: 4px;
     overflow: hidden;
     min-height: 48px;
+    height: unset;
+    flex-shrink: 0;
     aspect-ratio: 1;
     border-radius: ${token.borderRadius}px;
   `,
   image: css`
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: inherit;
   `,
 }));

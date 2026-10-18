@@ -133,6 +133,7 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 100dvh;
 
       ${mq.lg} {
         display: grid;

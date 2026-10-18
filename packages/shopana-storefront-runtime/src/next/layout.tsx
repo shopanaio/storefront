@@ -52,6 +52,12 @@ export function createRuntimeLayout(options: CreateRuntimeLayoutOptions) {
     const { locale } = await params;
     const requestContext = await getRequestContext();
     const resolution = resolveRuntimeRoute(requestContext.pathname, locale);
+    if (resolution.kind === 'module' && resolution.match.record.layoutLoader) {
+      const { default: ModuleLayout } =
+        await resolution.match.record.layoutLoader();
+      return <ModuleLayout>{children}</ModuleLayout>;
+    }
+
     const LayoutComponent = await layoutLoader(resolution.pageType, {
       isModule: resolution.kind === 'module',
       moduleSlug:

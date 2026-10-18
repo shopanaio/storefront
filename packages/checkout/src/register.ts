@@ -17,11 +17,13 @@ export function registerCheckoutModule({
     slug: 'checkout',
     path: '/checkout',
     loader,
+    layoutLoader: () => import('./components/CheckoutLayout'),
   });
   registerModule({
     type: 'page',
     slug: 'checkout-return',
     path: '/checkout/return',
     loader: returnLoader,
+    layoutLoader: () => import('./components/CheckoutLayout'),
   });
 }

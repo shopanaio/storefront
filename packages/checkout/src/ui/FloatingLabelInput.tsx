@@ -25,7 +25,7 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
     { label, value, wrapperClassName, error, onFocus, onBlur, ...inputProps },
     ref
   ) => {
-    const { styles } = useStyles();
+    const { styles, cx } = useStyles();
     const inputRef = useRef<InputRef>(null);
     const [focused, setFocused] = useState(false);
     const [uncontrolledHasValue, setUncontrolledHasValue] = useState(
@@ -37,11 +37,15 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
 
     useImperativeHandle(ref, () => inputRef.current!);
     useEffect(() => {
-      if (!controlled) setUncontrolledHasValue(Boolean(inputProps.defaultValue));
+      if (!controlled)
+        setUncontrolledHasValue(Boolean(inputProps.defaultValue));
     }, [controlled, inputProps.defaultValue]);
 
-    const hasValue = controlled ? Boolean(String(value ?? '')) : uncontrolledHasValue;
+    const hasValue = controlled
+      ? Boolean(String(value ?? ''))
+      : uncontrolledHasValue;
     const floating = focused || hasValue;
+    const status = error ? 'error' : inputProps.status;
 
     return (
       <div className={clsx(styles.container, wrapperClassName)}>
@@ -50,13 +54,28 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
           {...inputProps}
           id={id}
           value={value}
-          status={error ? 'error' : inputProps.status}
+          status={status}
           prefix={
-            <span className={styles.prefix}>
-              {inputProps.prefix}
+            <span
+              className={cx(
+                styles.prefix,
+                Boolean(inputProps.prefix) && styles.prefixWithContent
+              )}
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {inputProps.prefix ? (
+                <span className={styles.prefixContent}>
+                  {inputProps.prefix}
+                </span>
+              ) : null}
               <label
                 htmlFor={id}
-                className={clsx(styles.label, floating && styles.floating)}
+                className={cx(
+                  styles.label,
+                  floating && styles.floating,
+                  focused && !status && styles.focused,
+                  (status || inputProps.disabled) && styles.status
+                )}
               >
                 {label}
               </label>
@@ -71,11 +90,21 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
             onBlur?.(event);
           }}
           onChange={(event) => {
-            if (!controlled) setUncontrolledHasValue(Boolean(event.target.value));
+            if (!controlled)
+              setUncontrolledHasValue(Boolean(event.target.value));
             inputProps.onChange?.(event);
           }}
+          styles={(info) => ({
+            input: { paddingTop: 12, height: 50, lineHeight: 1 },
+            root: { paddingTop: 0, paddingBottom: 0, height: 50 },
+            ...(typeof inputProps.styles === 'function'
+              ? inputProps.styles(info)
+              : inputProps.styles),
+          })}
         />
-        {error ? <Typography.Text type="danger">{error}</Typography.Text> : null}
+        {error ? (
+          <Typography.Text type="danger">{error}</Typography.Text>
+        ) : null}
       </div>
     );
   }
@@ -89,11 +118,27 @@ const useStyles = createStyles(({ css, token }) => ({
     width: 100%;
     flex-direction: column;
     gap: 2px;
+
+    .ant-input-prefix {
+      position: relative;
+      z-index: 2;
+      margin-inline-end: 0;
+    }
   `,
   prefix: css`
     position: relative;
     display: inline-flex;
     align-items: center;
+    width: 0;
+    overflow: visible;
+  `,
+  prefixWithContent: css`
+    width: auto;
+  `,
+  prefixContent: css`
+    display: inline-flex;
+    align-items: center;
+    padding-right: ${token.paddingXS}px;
   `,
   label: css`
     position: absolute;
@@ -102,10 +147,19 @@ const useStyles = createStyles(({ css, token }) => ({
     transform: translateY(-50%);
     white-space: nowrap;
     color: ${token.colorTextSecondary};
+    font-size: 14px;
+    cursor: text;
+    user-select: none;
     transition: all 0.2s ease;
   `,
   floating: css`
     transform: translateY(calc(-50% - 10px));
     font-size: ${token.fontSizeSM}px;
+  `,
+  focused: css`
+    color: ${token.colorPrimary};
+  `,
+  status: css`
+    color: currentColor;
   `,
 }));
