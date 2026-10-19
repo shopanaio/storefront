@@ -13,7 +13,7 @@ describe('closedCheckoutCode', () => {
   it('ignores other user errors and transport errors', () => {
     expect(
       closedCheckoutCode([
-        { code: 'CHECKOUT_VERSION_CONFLICT', message: 'Changed', retryable: true },
+        { code: 'CHECKOUT_BUSY', message: 'Busy', retryable: true },
       ])
     ).toBeNull();
     expect(closedCheckoutCode(new Error('Failed to fetch'))).toBeNull();

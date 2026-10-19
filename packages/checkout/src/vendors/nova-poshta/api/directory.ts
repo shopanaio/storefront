@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StorefrontNovaPoshtaSettlementStreetsQueryDocument,
   StorefrontNovaPoshtaSettlementsQueryDocument,
+  StorefrontNovaPoshtaWarehouseQueryDocument,
   StorefrontNovaPoshtaWarehousesQueryDocument,
 } from '#checkout/graphql/operations';
 import type { Street, Warehouse } from '../types';
@@ -79,6 +80,19 @@ export function useStreetSearch(settlementRef: string | null, text: string) {
     error: directoryError(result.error),
     retry: () => void result.refetch(),
   };
+}
+
+/**
+ * Branch or postomat by its ref, for a point picked earlier whose display state this browser
+ * does not have: the checkout returns only `warehouseRef`. `null` while loading, when the
+ * carrier does not know the point, or on a failure.
+ */
+export function useWarehouse(ref: string | null) {
+  const result = useQuery(StorefrontNovaPoshtaWarehouseQueryDocument, {
+    variables: { ref: ref ?? '' },
+    skip: !ref,
+  });
+  return (ref ? result.data?.novaPoshtaWarehouses.items[0] : null) ?? null;
 }
 
 interface WarehouseListState {

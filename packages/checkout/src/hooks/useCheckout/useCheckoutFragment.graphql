@@ -147,8 +147,11 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       }
     }
   }
-  appliedPromoCodes {
+  promoCodes {
     code
+    status
+    reason
+    message
     appliedAt
     discountType
     value
@@ -174,6 +177,7 @@ fragment StorefrontUseCheckoutFragment on Checkout {
   customerNote
   deliveryGroups {
     id
+    replacesGroupIds
     checkoutLines {
       id
     }
@@ -212,6 +216,7 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       option {
         ...StorefrontCheckoutDeliveryOption
       }
+      customerInput
     }
   }
   payment {

@@ -81,3 +81,11 @@ query StorefrontNovaPoshtaSettlementStreetsQuery(
     }
   }
 }
+
+query StorefrontNovaPoshtaWarehouseQuery($ref: ID!) {
+  novaPoshtaWarehouses(ref: $ref, limit: 1) {
+    items {
+      ...StorefrontNovaPoshtaWarehouse
+    }
+  }
+}

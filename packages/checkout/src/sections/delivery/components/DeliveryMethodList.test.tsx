@@ -59,20 +59,23 @@ const group = (
   selected: DeliveryMethod | null = null
 ): DeliveryGroup => ({
   id,
+  replacesGroupIds: [],
   lines: [],
   deliveryMethods: methods,
   selectedDeliveryMethod: selected,
   address: null,
   resetReason: null,
   previousOptionHandle: null,
+  savedInput: null,
 });
 
-const renderList = (groups: DeliveryGroup[]) =>
-  render(
-    <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
-      <DeliveryMethodList groups={groups} methods={groups[0].deliveryMethods} address={null} />
-    </NextIntlClientProvider>
-  );
+const list = (groups: DeliveryGroup[]) => (
+  <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
+    <DeliveryMethodList groups={groups} methods={groups[0].deliveryMethods} address={null} />
+  </NextIntlClientProvider>
+);
+
+const renderList = (groups: DeliveryGroup[]) => render(list(groups));
 
 describe('DeliveryMethodList', () => {
   beforeAll(() => {
@@ -133,10 +136,36 @@ describe('DeliveryMethodList', () => {
     );
   });
 
+  it('SC-wdj1: retries the shipment that was not saved after its id changed', async () => {
+    api.selectDeliveryMethod.mockImplementation(async ({ deliveryGroupId }) => {
+      if (deliveryGroupId === 'g2') {
+        throw new Error('network');
+      }
+    });
+    const view = renderList([group('g1', [method('a1')]), group('g2', [method('b1')])]);
+
+    fireEvent.click(screen.getByText('select a1'));
+    expect(
+      await screen.findByText('Checkout.delivery-shipments-not-saved')
+    ).toBeTruthy();
+
+    // The lines of the second shipment changed: the API renamed the group.
+    view.rerender(
+      list([group('g1', [method('a1')]), { ...group('g3', [method('c1')]), replacesGroupIds: ['g2'] }])
+    );
+    fireEvent.click(screen.getByText('Checkout.retry'));
+
+    await waitFor(() =>
+      expect(api.selectDeliveryMethod).toHaveBeenLastCalledWith(
+        expect.objectContaining({ deliveryGroupId: 'g3', optionHandle: 'c1' })
+      )
+    );
+  });
+
   it('SC-mqce: a rejected delivery input shows why, can be saved again and unblocks once saved', async () => {
     const input = { warehouseRef: 'w-5' };
     act(() =>
-      useCustomerInputStore.getState().remember('g1', '', 'a1', { input, synced: false })
+      useCustomerInputStore.getState().remember({ id: 'g1' }, '', 'a1', { input, synced: false })
     );
     const selected = method('a1', { data: input, synced: false });
     api.updateShippingMethod
@@ -145,12 +174,12 @@ describe('DeliveryMethodList', () => {
     renderList([group('g1', [selected], selected)]);
 
     expect(await screen.findByText('Branch is closed')).toBeTruthy();
-    expect(readCustomerInputs('g1', '').a1.synced).toBe(false);
+    expect(readCustomerInputs({ id: 'g1' }, '').a1.synced).toBe(false);
 
     fireEvent.click(screen.getByText('Checkout.save'));
 
     await waitFor(() => expect(api.updateShippingMethod).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(readCustomerInputs('g1', '').a1.synced).toBe(true));
+    await waitFor(() => expect(readCustomerInputs({ id: 'g1' }, '').a1.synced).toBe(true));
     expect(screen.queryByText('Branch is closed')).toBeNull();
   });
 });

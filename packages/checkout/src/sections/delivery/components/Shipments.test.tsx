@@ -35,12 +35,14 @@ const method = (handle: string, code: string, data?: unknown): DeliveryMethod =>
 
 const group = (id: string, methods: DeliveryMethod[], selected: DeliveryMethod | null) => ({
   id,
+  replacesGroupIds: [],
   lines: [],
   deliveryMethods: methods,
   selectedDeliveryMethod: selected,
   address: null,
   resetReason: null,
   previousOptionHandle: null,
+  savedInput: null,
 });
 
 const branch = (ref: string) => ({ type: 'WAREHOUSE', warehouseRef: ref });

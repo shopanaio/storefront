@@ -83,6 +83,12 @@ function persist(deliveryGroupId: string, stored: StoredGroupInputs) {
   }
 }
 
+/** A delivery group as the stored inputs know it: its id and the ids it replaced. */
+export interface InputGroup {
+  id: string;
+  replacesGroupIds?: readonly string[];
+}
+
 /** Groups read from localStorage, so repeated reads return the same object. */
 const loaded = new Map<string, StoredGroupInputs | null>();
 
@@ -91,30 +97,34 @@ interface CustomerInputStore {
   groups: Record<string, StoredGroupInputs | null>;
   /** Stores (or with `undefined` removes) the input of an option for the given address. */
   remember: (
-    deliveryGroupId: string,
+    group: InputGroup,
     scope: string,
     handle: string,
     stored: StoredCustomerInput | undefined
   ) => void;
   /** Marks the stored input as saved, unless it changed since `input` was sent. */
   markSynced: (
-    deliveryGroupId: string,
+    group: InputGroup,
     scope: string,
     handle: string,
     input: unknown
   ) => void;
 }
 
-const sameInput = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+export const sameInput = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * Customer input entered in the delivery section. The API does not return it, so it is
- * kept here (and in localStorage) for the form and for the section validation.
+ * Customer input entered in the delivery section, kept in localStorage as well. The checkout
+ * returns the input saved for the selected method (`selection.customerInput`) and the server
+ * wins once it holds another input; the stored input keeps what the buyer typed until the API
+ * accepted it, the input of methods that are not selected, and the display state of the
+ * module (the picked branch), which the API does not return.
  */
 export const useCustomerInputStore = create<CustomerInputStore>((set, get) => ({
   groups: {},
-  remember: (deliveryGroupId, scope, handle, stored) => {
-    const inputs = { ...readCustomerInputs(deliveryGroupId, scope) };
+  remember: (group, scope, handle, stored) => {
+    const deliveryGroupId = group.id;
+    const inputs = { ...readCustomerInputs(group, scope) };
     if (stored === undefined) {
       delete inputs[handle];
     } else {
@@ -126,10 +136,10 @@ export const useCustomerInputStore = create<CustomerInputStore>((set, get) => ({
     loaded.set(deliveryGroupId, next);
     set({ groups: { ...get().groups, [deliveryGroupId]: next } });
   },
-  markSynced: (deliveryGroupId, scope, handle, input) => {
-    const stored = readCustomerInputs(deliveryGroupId, scope)[handle];
+  markSynced: (group, scope, handle, input) => {
+    const stored = readCustomerInputs(group, scope)[handle];
     if (stored && !stored.synced && sameInput(stored.input, input)) {
-      get().remember(deliveryGroupId, scope, handle, { ...stored, synced: true });
+      get().remember(group, scope, handle, { ...stored, synced: true });
     }
   },
 }));
@@ -147,22 +157,31 @@ function groupOf(
   return loaded.get(deliveryGroupId) ?? null;
 }
 
-/** Inputs of a group entered for the given address scope. */
+/**
+ * Inputs of a group entered for the given address scope. A group gets a new id when its lines
+ * change; the inputs typed under an id it replaced still belong to it.
+ */
 export function readCustomerInputs(
-  deliveryGroupId: string | undefined,
+  group: InputGroup | undefined,
   scope: string,
   groups: CustomerInputStore['groups'] = useCustomerInputStore.getState().groups
 ): CustomerInputsByHandle {
-  if (!deliveryGroupId) {
+  if (!group) {
     return EMPTY;
   }
-  const stored = groupOf(groups, deliveryGroupId);
-  return stored?.scope === scope ? stored.inputs : EMPTY;
+  for (const id of [group.id, ...(group.replacesGroupIds ?? [])]) {
+    const stored = groupOf(groups, id);
+    if (stored) {
+      return stored.scope === scope ? stored.inputs : EMPTY;
+    }
+  }
+  return EMPTY;
 }
 
 /**
- * Drops the inputs of groups the checkout no longer has. A group id is a hash of the group,
- * so a new split of the lines leaves the inputs of the old groups behind. Only groups this
+ * Drops the inputs of groups the checkout no longer has, `deliveryGroupIds` being the ids of
+ * its groups and the ids they replaced. A new split of the lines leaves the inputs of the old
+ * groups behind. Only groups this
  * tab knew are dropped, so a tab with an older state of the checkout never removes the
  * inputs of groups another tab already works with; inputs abandoned long ago go as well.
  */

@@ -29,26 +29,26 @@ describe('customer input storage', () => {
   });
 
   it('keeps inputs for the same address, also after a reload', () => {
-    remember('g1', addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
-    expect(readCustomerInputs('g1', addressScope(kyiv))).toEqual({
+    remember({ id: 'g1' }, addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
+    expect(readCustomerInputs({ id: 'g1' }, addressScope(kyiv))).toEqual({
       h1: { input: { a: 1 }, synced: true },
     });
 
     useCustomerInputStore.setState({ groups: {} });
-    expect(readCustomerInputs('g1', addressScope(kyiv))).toEqual({
+    expect(readCustomerInputs({ id: 'g1' }, addressScope(kyiv))).toEqual({
       h1: { input: { a: 1 }, synced: true },
     });
   });
 
   it('drops inputs entered for another settlement or country', () => {
-    remember('g1', addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
-    expect(readCustomerInputs('g1', addressScope(lviv))).toEqual({});
+    remember({ id: 'g1' }, addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
+    expect(readCustomerInputs({ id: 'g1' }, addressScope(lviv))).toEqual({});
     expect(
-      readCustomerInputs('g1', addressScope({ ...kyiv, countryCode: 'PL' }))
+      readCustomerInputs({ id: 'g1' }, addressScope({ ...kyiv, countryCode: 'PL' }))
     ).toEqual({});
 
-    remember('g1', addressScope(lviv), 'h2', { input: { b: 2 }, synced: true });
-    expect(readCustomerInputs('g1', addressScope(lviv))).toEqual({
+    remember({ id: 'g1' }, addressScope(lviv), 'h2', { input: { b: 2 }, synced: true });
+    expect(readCustomerInputs({ id: 'g1' }, addressScope(lviv))).toEqual({
       h2: { input: { b: 2 }, synced: true },
     });
   });
@@ -56,19 +56,19 @@ describe('customer input storage', () => {
   it('marks an input saved only if it did not change after it was sent', () => {
     const scope = addressScope(kyiv);
     const { markSynced } = useCustomerInputStore.getState();
-    remember('g1', scope, 'h1', { input: { building: '1' }, synced: false });
-    remember('g1', scope, 'h1', { input: { building: '12' }, synced: false });
+    remember({ id: 'g1' }, scope, 'h1', { input: { building: '1' }, synced: false });
+    remember({ id: 'g1' }, scope, 'h1', { input: { building: '12' }, synced: false });
 
-    markSynced('g1', scope, 'h1', { building: '1' });
-    expect(readCustomerInputs('g1', scope).h1.synced).toBe(false);
+    markSynced({ id: 'g1' }, scope, 'h1', { building: '1' });
+    expect(readCustomerInputs({ id: 'g1' }, scope).h1.synced).toBe(false);
 
-    markSynced('g1', scope, 'h1', { building: '12' });
-    expect(readCustomerInputs('g1', scope).h1.synced).toBe(true);
+    markSynced({ id: 'g1' }, scope, 'h1', { building: '12' });
+    expect(readCustomerInputs({ id: 'g1' }, scope).h1.synced).toBe(true);
   });
 
   it('follows an input another tab saved', () => {
     const scope = addressScope(kyiv);
-    remember('g1', scope, 'h1', { input: { a: 1 }, synced: true });
+    remember({ id: 'g1' }, scope, 'h1', { input: { a: 1 }, synced: true });
 
     const other = JSON.stringify({ scope, inputs: { h1: { input: { a: 2 }, synced: true } } });
     window.dispatchEvent(
@@ -78,19 +78,19 @@ describe('customer input storage', () => {
       })
     );
 
-    expect(readCustomerInputs('g1', scope)).toEqual({
+    expect(readCustomerInputs({ id: 'g1' }, scope)).toEqual({
       h1: { input: { a: 2 }, synced: true },
     });
   });
 
   it('drops the inputs of groups the checkout no longer has', () => {
-    remember('g1', addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
-    remember('g2', addressScope(kyiv), 'h2', { input: { b: 2 }, synced: true });
+    remember({ id: 'g1' }, addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
+    remember({ id: 'g2' }, addressScope(kyiv), 'h2', { input: { b: 2 }, synced: true });
 
     pruneCustomerInputs(['g2']);
 
-    expect(readCustomerInputs('g1', addressScope(kyiv))).toEqual({});
-    expect(readCustomerInputs('g2', addressScope(kyiv))).toEqual({
+    expect(readCustomerInputs({ id: 'g1' }, addressScope(kyiv))).toEqual({});
+    expect(readCustomerInputs({ id: 'g2' }, addressScope(kyiv))).toEqual({
       h2: { input: { b: 2 }, synced: true },
     });
     expect(
@@ -112,17 +112,34 @@ describe('customer input storage', () => {
   });
 
   it('removes every input once the order is accepted', () => {
-    remember('g1', addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
+    remember({ id: 'g1' }, addressScope(kyiv), 'h1', { input: { a: 1 }, synced: true });
     window.sessionStorage.setItem('checkout-delivery-customer-input:old', '{}');
 
     clearCustomerInputs();
 
-    expect(readCustomerInputs('g1', addressScope(kyiv))).toEqual({});
+    expect(readCustomerInputs({ id: 'g1' }, addressScope(kyiv))).toEqual({});
     expect(
       window.localStorage.getItem('checkout-delivery-customer-input:g1')
     ).toBeNull();
     expect(
       window.sessionStorage.getItem('checkout-delivery-customer-input:old')
     ).toBeNull();
+  });
+
+  it('keeps the inputs of a group whose id changed with its lines', () => {
+    const scope = addressScope(kyiv);
+    remember({ id: 'g1' }, scope, 'h1', { input: { a: 1 }, synced: false });
+    const regrouped = { id: 'g2', replacesGroupIds: ['g1'] };
+
+    expect(readCustomerInputs(regrouped, scope)).toEqual({
+      h1: { input: { a: 1 }, synced: false },
+    });
+
+    remember(regrouped, scope, 'h2', { input: { b: 2 }, synced: false });
+    useCustomerInputStore.setState({ groups: {} });
+    expect(readCustomerInputs(regrouped, scope)).toEqual({
+      h1: { input: { a: 1 }, synced: false },
+      h2: { input: { b: 2 }, synced: false },
+    });
   });
 });

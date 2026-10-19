@@ -1,31 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { CombinedGraphQLErrors } from '@apollo/client';
-import {
-  isPromoApplied,
-  promoErrorCode,
-  promoErrorMessageKey,
-  promoNotAppliedMessageKey,
-} from './promoErrors';
+import { isPromoEntered, promoErrorCode, promoErrorMessageKey } from './promoErrors';
 import { mapCheckoutToPromoFormData } from './mapper';
 import type { Checkout } from '#checkout/types/entity';
 
 describe('promo codes', () => {
-  it('lists every applied code', () => {
+  it('lists every entered code with its state', () => {
     const checkout = {
-      appliedPromoCodes: [
-        { code: 'SALE', provider: 'DISCOUNT' },
-        { code: 'FREESHIP', provider: 'DISCOUNT' },
+      promoCodes: [
+        { code: 'SALE', status: 'APPLIED', message: null },
+        { code: 'FREESHIP', status: 'PENDING', message: 'Choose a delivery method' },
       ],
     } as Checkout.Checkout;
-    expect(mapCheckoutToPromoFormData(checkout)?.codes.map(({ code }) => code)).toEqual([
-      'SALE',
-      'FREESHIP',
+    expect(mapCheckoutToPromoFormData(checkout)?.codes).toEqual([
+      { code: 'SALE', status: 'APPLIED', message: null },
+      { code: 'FREESHIP', status: 'PENDING', message: 'Choose a delivery method' },
     ]);
   });
 
   it('compares codes the way the API stores them', () => {
-    expect(isPromoApplied(['SALE'], ' sale ')).toBe(true);
-    expect(isPromoApplied(['SALE'], 'other')).toBe(false);
+    expect(isPromoEntered(['SALE'], ' sale ')).toBe(true);
+    expect(isPromoEntered(['SALE'], 'other')).toBe(false);
   });
 
   it('reads the error code from user errors and GraphQL errors', () => {
@@ -42,10 +37,5 @@ describe('promo codes', () => {
   it('chooses the text by code', () => {
     expect(promoErrorMessageKey('CHECKOUT_DISCOUNT_CODE_INVALID')).toBe('promo-error-invalid');
     expect(promoErrorMessageKey(null)).toBe('promo-error-generic');
-  });
-
-  it('says a code may not combine when other codes are applied', () => {
-    expect(promoNotAppliedMessageKey(0)).toBe('promo-error-invalid');
-    expect(promoNotAppliedMessageKey(1)).toBe('promo-error-not-combinable');
   });
 });

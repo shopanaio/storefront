@@ -33,7 +33,9 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
   // Every group has the same address; the first one stands for all of them.
   const address = groups[0]?.address ?? null;
 
-  const groupIds = groups.map((group) => group.id).join('\n');
+  const groupIds = groups
+    .flatMap((group) => [group.id, ...group.replacesGroupIds])
+    .join('\n');
   useEffect(() => {
     if (groupIds) {
       pruneCustomerInputs(groupIds.split('\n'));

@@ -22,6 +22,13 @@ export const RECOVERABLE_PLACEMENT_CODES: ReadonlySet<string> = new Set([
 /** The key was used before with a different request; a new key is required. */
 export const IDEMPOTENCY_MISMATCH_CODE = 'IDEMPOTENCY_KEY_PARAMETER_MISMATCH';
 
+/**
+ * The checkout was recalculated before the placement and a delivery or payment choice went
+ * stale: no placement was made, and the checkout stays open with the reset choice, its reason
+ * and the new price (BR-1vtb). The buyer chooses again; the checkout is not renewed.
+ */
+export const STALE_SELECTION_CODE = 'CHECKOUT_OPEN';
+
 /** Frontend-only code: the API answered with a client SDK nobody registered. */
 export const CLIENT_SDK_UNAVAILABLE_CODE = 'CLIENT_SDK_UNAVAILABLE';
 

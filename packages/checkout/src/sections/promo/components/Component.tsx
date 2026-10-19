@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
+import clsx from 'clsx';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import { TbTicket, TbX } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
@@ -13,12 +14,7 @@ import { useCheckoutTheme } from '#checkout/theme';
 import { useConfirm } from '#checkout/ui/useConfirm';
 import { SectionIssues } from '#checkout/components/notices/SectionIssues';
 import { SectionId } from '#checkout/state/interface';
-import {
-  isPromoApplied,
-  promoErrorCode,
-  promoErrorMessageKey,
-  promoNotAppliedMessageKey,
-} from '../promoErrors';
+import { isPromoEntered, promoErrorCode, promoErrorMessageKey } from '../promoErrors';
 
 export interface PromoSectionViewProps {
   /** Current form data */
@@ -28,10 +24,11 @@ export interface PromoSectionViewProps {
 }
 
 /**
- * Promo codes (stage 6): the field to add one more code and the list of applied codes, each
- * removable on its own. A code the checkout does not apply is reported by the field and taken
- * back out of the checkout, so it does not linger unapplied. Loyalty gets its place right
- * after the codes through the theme (`LoyaltySlot`); it is not implemented here (6.2).
+ * Promo codes (stage 6): the field to add one more code and the list of entered codes, each
+ * removable on its own. Only the buyer removes a code (BR-tvyl): a code the checkout does not
+ * apply stays listed with the reason from the API, and one waiting for a condition (a chosen
+ * delivery) is shown as pending. Loyalty gets its place right after the codes through the
+ * theme (`LoyaltySlot`); it is not implemented here (6.2).
  */
 export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const { styles } = useStyles();
@@ -49,26 +46,22 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const handleApply = useCallback(async () => {
     const value = code.trim();
     if (!value || applying) return;
-    if (isPromoApplied(codes.map((item) => item.code), value)) {
+    if (isPromoEntered(codes.map((item) => item.code), value)) {
       setCode('');
       return;
     }
     setApplying(true);
     setError(null);
     try {
-      const applied = await addPromoCode({ code: value });
-      if (isPromoApplied(applied, value)) {
-        setCode('');
-      } else {
-        setError(t(promoNotAppliedMessageKey(applied.length)));
-        await removePromoCode({ code: value }).catch(() => undefined);
-      }
+      // The code is listed with its state, applied or not; the field is free for the next one.
+      await addPromoCode({ code: value });
+      setCode('');
     } catch (failure) {
       setError(t(promoErrorMessageKey(promoErrorCode(failure))));
     } finally {
       setApplying(false);
     }
-  }, [code, codes, applying, addPromoCode, removePromoCode, setCode, t]);
+  }, [code, codes, applying, addPromoCode, setCode, t]);
 
   const handleRemove = useCallback(
     async (promoCode: string) => {
@@ -129,20 +122,31 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
         }
       />
       {codes.length > 0 ? (
-        <Flex wrap gap={8} role="list" aria-label={t('promo-applied-codes')}>
-          {codes.map(({ code: applied }) => (
-            <Flex key={applied} role="listitem" align="center" gap={4} className={styles.tag}>
-              <Typography.Text strong className={styles.code}>
-                {applied}
-              </Typography.Text>
-              <Button
-                type="text"
-                size="small"
-                icon={<TbX size={16} />}
-                onClick={() => void handleRemove(applied)}
-                aria-label={t('remove-promo', { promoCode: applied })}
-                className={styles.removeButton}
-              />
+        <Flex vertical gap={8} role="list" aria-label={t('promo-entered-codes')}>
+          {codes.map(({ code: entered, status, message }) => (
+            <Flex key={entered} role="listitem" vertical gap={2}>
+              <Flex
+                align="center"
+                gap={4}
+                className={clsx(styles.tag, status !== 'APPLIED' && styles.notApplied)}
+              >
+                <Typography.Text strong className={styles.code}>
+                  {entered}
+                </Typography.Text>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<TbX size={16} />}
+                  onClick={() => void handleRemove(entered)}
+                  aria-label={t('remove-promo', { promoCode: entered })}
+                  className={styles.removeButton}
+                />
+              </Flex>
+              {status !== 'APPLIED' && (
+                <Typography.Text type={status === 'REJECTED' ? 'warning' : 'secondary'}>
+                  {message ?? t(status === 'PENDING' ? 'promo-pending' : 'promo-rejected')}
+                </Typography.Text>
+              )}
             </Flex>
           ))}
         </Flex>
@@ -158,10 +162,14 @@ const useStyles = createStyles(({ token, css }) => ({
     font-size: ${token.fontSize}px;
   `,
   tag: css`
+    align-self: flex-start;
     background: ${token.colorBgContainer};
     border: 1px solid ${token.colorBorder};
     border-radius: ${token.borderRadius}px;
     padding: ${token.paddingXXS}px ${token.paddingXXS}px ${token.paddingXXS}px ${token.paddingSM}px;
+  `,
+  notApplied: css`
+    border-style: dashed;
   `,
   code: css`
     text-transform: uppercase;

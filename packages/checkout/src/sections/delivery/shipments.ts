@@ -10,6 +10,15 @@ import type { DeliveryGroup, DeliveryMethod } from './types';
 export const methodKey = (method: Pick<DeliveryMethod, 'provider' | 'code'>) =>
   `${method.provider}\n${method.code}`;
 
+/**
+ * Whether `id` names the group: its own id or one it replaced. A group gets a new id when its
+ * lines change, and the API applies a mutation naming a replaced id to this group.
+ */
+export const isGroupOf = (
+  group: Pick<DeliveryGroup, 'id' | 'replacesGroupIds'>,
+  id: string
+): boolean => group.id === id || group.replacesGroupIds.includes(id);
+
 /** Option of the group for the method `key`. */
 export const methodOfGroup = (
   group: DeliveryGroup,

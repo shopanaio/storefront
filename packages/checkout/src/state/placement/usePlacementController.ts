@@ -18,6 +18,7 @@ import {
   PLACEMENT_UNCONFIRMED_CODE,
   PlacementUnconfirmedError,
   resolvePlacementOutcome,
+  STALE_SELECTION_CODE,
 } from '#checkout/state/placement/outcome';
 import {
   isPlacementBusy,
@@ -51,7 +52,7 @@ import type {
  * checkout is opened again.
  */
 export function usePlacementController(checkoutId: string | null) {
-  const { checkout, loaded: checkoutLoaded } = useCheckoutData();
+  const { checkout, loaded: checkoutLoaded, refetch: refetchCheckout } = useCheckoutData();
   const { submitCheckout } = useCheckoutApi();
   const readPlacement = useReadPlacement();
   const returnPath = useCheckoutTheme().useCheckoutReturnPath();
@@ -111,8 +112,12 @@ export function usePlacementController(checkoutId: string | null) {
       if (outcome.kind === 'redirect' && context === 'submit') {
         window.location.assign(outcome.url);
       }
+      if (outcome.kind === 'rejected' && outcome.code === STALE_SELECTION_CODE) {
+        // The sections show the reset choice with its reason and the new price (6.2).
+        void refetchCheckout().catch(() => undefined);
+      }
     },
-    [isActive, setPhase]
+    [isActive, setPhase, refetchCheckout]
   );
 
   const poll = useCallback(

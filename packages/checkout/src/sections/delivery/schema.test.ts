@@ -40,12 +40,14 @@ const option = (data: unknown, customerInputContract: unknown = contract): Deliv
 const form = (selected: DeliveryMethod | null): DeliveryFormData => ({
   g1: {
     id: 'g1',
+    replacesGroupIds: [],
     lines: [],
     deliveryMethods: [option(undefined)],
     selectedDeliveryMethod: selected,
     address: null,
     resetReason: null,
     previousOptionHandle: null,
+    savedInput: null,
   },
 });
 
@@ -73,31 +75,63 @@ describe('deliveryFormSchema', () => {
   });
 });
 
-describe('deliveryFormSchema with stored customer input', () => {
-  it('validates the input saved for the selected option, not the bare API option', async () => {
+describe('deliveryFormSchema with the customer input of the checkout', () => {
+  const address = {
+    addressId: 'a1',
+    countryCode: 'UA',
+    address1: null,
+    address2: null,
+    postalCode: null,
+    provinceCode: null,
+    city: 'Київ',
+    data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
+  };
+  const input = { type: 'WAREHOUSE', settlementRef: SETTLEMENT, warehouseRef: WAREHOUSE };
+
+  it('SC-ytuv: shows the branch the checkout saved, with nothing kept in the browser', async () => {
+    const { mergeCustomerInputs } = await import('./withCustomerInputs');
+    const fromApi: DeliveryFormData = {
+      g1: { ...form(option(undefined)).g1, address, savedInput: input },
+    };
+
+    const merged = mergeCustomerInputs(fromApi, {});
+    expect(merged?.g1.selectedDeliveryMethod).toMatchObject({ data: input, synced: true });
+    await expect(validate(merged!)).resolves.toBeTruthy();
+  });
+
+  it('SC-sf3h: keeps the input typed for a group whose id changed with its lines', async () => {
     const { mergeCustomerInputs } = await import('./withCustomerInputs');
     const { addressScope } = await import('./customerInputStorage');
-    const address = {
-      addressId: 'a1',
-      countryCode: 'UA',
-      address1: null,
-      address2: null,
-      postalCode: null,
-      provinceCode: null,
-      city: 'Київ',
-      data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
+    const regrouped: DeliveryFormData = {
+      g2: { ...form(option(undefined)).g1, id: 'g2', replacesGroupIds: ['g1'], address },
     };
-    const fromApi: DeliveryFormData = {
-      g1: { ...form(option(undefined)).g1, address },
-    };
-    const input = { type: 'WAREHOUSE', settlementRef: SETTLEMENT, warehouseRef: WAREHOUSE };
 
-    await expect(validate(fromApi)).rejects.toThrow();
-    const merged = mergeCustomerInputs(fromApi, {
-      g1: { scope: addressScope(address), inputs: { 'h-np': { input, synced: true } } },
+    const merged = mergeCustomerInputs(regrouped, {
+      g1: { scope: addressScope(address), inputs: { 'h-np': { input, synced: false } } },
     });
-    expect(merged?.g1.selectedDeliveryMethod?.data).toEqual(input);
-    await expect(validate(merged!)).resolves.toBeTruthy();
+    expect(merged?.g2.selectedDeliveryMethod).toMatchObject({ data: input, synced: false });
+  });
+
+  it('keeps an unsaved edit over the saved input, and follows a newer saved input', async () => {
+    const { mergeCustomerInputs } = await import('./withCustomerInputs');
+    const { addressScope } = await import('./customerInputStorage');
+    const other = { ...input, warehouseRef: '20000000-0000-4000-8000-000000000002' };
+    const fromApi: DeliveryFormData = {
+      g1: { ...form(option(undefined)).g1, address, savedInput: other },
+    };
+    const drafts = (synced: boolean) => ({
+      g1: { scope: addressScope(address), inputs: { 'h-np': { input, synced } } },
+    });
+
+    // Typed here and not saved yet: the buyer's input stays (BR-q7dr).
+    expect(mergeCustomerInputs(fromApi, drafts(false))?.g1.selectedDeliveryMethod?.data).toEqual(
+      input
+    );
+    // Saved here, then another tab saved another branch: the checkout shows that one.
+    expect(mergeCustomerInputs(fromApi, drafts(true))?.g1.selectedDeliveryMethod).toMatchObject({
+      data: other,
+      synced: true,
+    });
   });
 });
 

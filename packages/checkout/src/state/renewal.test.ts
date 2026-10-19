@@ -19,7 +19,7 @@ describe('renewalInput', () => {
     const checkout = {
       currencyCode: 'UAH',
       localeCode: 'uk',
-      appliedPromoCodes: [{ code: 'SALE' }],
+      promoCodes: [{ code: 'SALE', status: 'APPLIED' }],
       lines: [
         line({
           purchasableId: 'box',

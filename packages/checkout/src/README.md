@@ -67,7 +67,7 @@ Sections live under `sections/*` and include:
   - Each write names the resource it changes: `contact`, `payment`, `note`, `address`, `recipient`, `delivery:<groupId>`. Promo codes, address removal and submit have no key.
   - `saveDeliveryAddress` and `saveDeliveryRecipient` are one queued task each: when the task starts it reads the checkout from the Apollo cache and sends the add, update or remove mutations that the current groups need (`addressMutations`, `recipientMutations`).
   - `submitCheckout` first sends input a section holds back (`state/pendingInputs.ts`, the order note), then waits until every queued write settled, then places the order.
-- Mutation queue: every checkout and cart write goes through the one queue of the SDK cart (`createCartMutationQueue`, `enqueueMutation` of `useCartSetters`), one at a time in the order asked for. A waiting write of the same resource is replaced by the latest one and every caller gets its result; `waitForMutations()` resolves once everything queued before it settled. The client sends no version and does not retry on conflicts; sections keep no queues of their own.
+- Mutation queue: every checkout and cart write goes through the one queue of the SDK cart (`createCartMutationQueue`, `enqueueMutation` of `useCartSetters`), one at a time in the order asked for. A waiting write of the same resource is replaced by the latest one and every caller gets its result; `waitForMutations()` resolves once everything queued before it settled. The client sends no version and does not retry: the server applies a write to the latest checkout itself and answers `CHECKOUT_BUSY` (retryable) only when it could not; sections keep no queues of their own.
 - Mutation wrapper: `api/useCheckoutOperation.ts`
   - Wraps the typed Apollo mutation adapter with: promise-based API, debounce, `OperationStart/End/Error` events, and optional error toasts.
   - `commit(variables, { key })` joins the queue at once; `send` runs unqueued, only inside a queued task; `commitScheduled` is debounced.
@@ -106,7 +106,8 @@ Sections live under `sections/*` and include:
 1. User clicks Submit → `Checkout.tsx` calls store `requestSubmit()`.
 2. `checkoutStore.requestSubmit()` checks required sections. If missing — emits `SubmitBlocked` with a list; otherwise — `SubmitReady` with the sections payload.
 3. `usePlacementController` listens to `SubmitReady` and places the order (below) only when the checkout is ready (`state/readiness.ts`): `status = READY`, `valid`, before `expiresAt`, no issue with `effect = STOP`. An unanswered attempt (`sent`) of the same snapshot is resent with its key whatever the checkout shows, since the key returns the placement it may have made. Otherwise, once the buyer pressed the button, a blocking issue is shown in its section (`components/notices/SectionIssues.tsx`, section by `field`, `state/issueSections.ts`), and the notices above the button (`components/notices/IssueNotices.tsx`) show the issues of lines and of the whole checkout and name the sections with issues; warnings are shown there all the time. Issue texts come from the API as they are. The button stays disabled for the whole attempt and once the checkout expired; a second tab relies on `CHECKOUT_ALREADY_PLACED` and placement recovery.
-4. When the order is accepted, `OrderAccepted` reaches the host through `onOrderAccepted`, where the cart is cleared; the checkout shows its result screen.
+4. When `placeOrder` answers `CHECKOUT_OPEN`, the checkout was recalculated and a delivery or payment choice went stale: no placement was made, the checkout is read again and its sections show the reset choice with its reason and the new price. The buyer chooses again; the checkout is not renewed.
+5. When the order is accepted, `OrderAccepted` reaches the host through `onOrderAccepted`, where the cart is cleared; the checkout shows its result screen.
 
 ## Order Placement
 
@@ -148,13 +149,15 @@ Files: `sections/address/**`, `hooks/useDeliveryCountries.ts`.
 Files: `sections/delivery/**`.
 
 - A click on the selected method sends nothing (`CheckoutMethodPanel`).
+- The customer input comes from the checkout: the API returns the input saved for the selected (or reset) method of each group (`selection.customerInput`) and keeps the input of every method on the server, so selecting a method without input keeps what was saved for it. The input typed in the section is kept in `localStorage` too (`customerInputStorage.ts`), together with the display state of the module (the picked branch), which the API does not return: an unsaved input wins over the saved one, a saved one gives way to a newer input saved elsewhere. The stored input is dropped once its group is gone, after 7 days, and when the order is accepted. Without the stored display state (another browser, cleared storage) the Nova Poshta module reads the picked point by its ref (`novaPoshtaWarehouses(ref:)`).
+- A group gets a new id when its lines change; the API applies a write that names a replaced id (`replacesGroupIds`) to the new group, and the stored input and the failed shipments of the old id follow it.
 - The customer input of each method is saved once typing pauses; a failure is retried with backoff, a rejection for good shows its reason and a button to save again. The order stays blocked until the input is saved.
 - Several shipments: the method is selected in each group; a group whose selection failed is named, and "Try again" selects the method only there.
 - The courier form keeps building, apartment and comment typed before the street as a draft (never sent), so they survive a remount. The generic form starts over only when the destination (country, city, carrier data) changes.
 
 ## Promo Codes
 
-Files: `sections/promo/**`. The text typed in the field is kept in a store (`draft.ts`), so it survives a remount of the section. Every applied code is listed and removable on its own. A code the API accepts but the pricing does not apply is reported by the field and removed again; with other codes applied, the message says it may not combine with them. Errors are shown by code next to the field. The theme's optional `LoyaltySlot` renders right after the codes.
+Files: `sections/promo/**`. The text typed in the field is kept in a store (`draft.ts`), so it survives a remount of the section. Every entered code is listed (`promoCodes`) and removable on its own; only the buyer removes a code. A code the pricing does not apply is listed with the API message as `REJECTED`, and one waiting for a condition (a delivery code before the delivery is chosen) as `PENDING`; it applies again once the condition is met. A code the API refuses is reported by code next to the field. The theme's optional `LoyaltySlot` renders right after the codes.
 
 ## Configuration
 

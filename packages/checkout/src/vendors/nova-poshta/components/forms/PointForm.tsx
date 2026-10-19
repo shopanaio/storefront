@@ -3,6 +3,7 @@
 import { Alert, Flex } from 'antd';
 import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
+import { useWarehouse } from '../../api/directory';
 import { readSettlementRef } from '../../address';
 import { pointInput, readInput } from '../../customerInput';
 import type { PointInput, PointView, Warehouse } from '../../types';
@@ -27,6 +28,18 @@ export function PointForm({
   const t = useTranslations('Modules.novaPoshta.form');
   const settlementRef = readSettlementRef(deliveryAddress);
   const input = readInput(data, type, settlementRef);
+  const stored = input ? ((view as PointView | undefined) ?? null) : null;
+  // Picked in another browser or before the storage was cleared: the point is read by its ref.
+  const found = useWarehouse(input && !stored ? (input as PointInput).warehouseRef : null);
+  const point: PointView | null =
+    stored ??
+    (found
+      ? {
+          number: found.number,
+          shortAddress: found.shortAddress,
+          schedule: found.schedule,
+        }
+      : null);
 
   const handleChangeWarehouse = (warehouse: Warehouse) => {
     if (!settlementRef) {
@@ -44,7 +57,7 @@ export function PointForm({
     <Flex vertical gap={12}>
       <WarehouseModal
         kind={type}
-        point={input ? ((view as PointView | undefined) ?? null) : null}
+        point={point}
         changeWarehouse={handleChangeWarehouse}
         settlementRef={settlementRef}
       />

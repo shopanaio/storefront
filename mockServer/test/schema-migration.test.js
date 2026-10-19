@@ -103,5 +103,19 @@ test("removed fields are rejected by GraphQL validation", () => {
     '{ customer { productComparisons { revision } } }',
     '{ onlineStorePageByHandle(handle: "test") { content { body { text } } } }',
     'mutation { checkoutCustomerNoteUpdate(input: { checkoutId: "test", note: "test", expectedCheckoutVersion: 1 }) { userErrors { code } } }',
+    '{ checkout(id: "test") { appliedPromoCodes { code } } }',
   ]) assert.ok(validate(schema, parse(source)).length > 0, source);
+});
+
+test("promo codes are listed with their state", async () => {
+  const { run } = setup();
+  const checkout = await newCheckout(run);
+  const result = await run(`mutation($input: CheckoutPromoCodeAddInput!) {
+    checkoutPromoCodeAdd(input: $input) {
+      checkout { promoCodes { code status reason message } } userErrors { code }
+    }
+  }`, { input: { checkoutId: checkout.id, code: "save10" } });
+  assert.deepEqual(result.checkoutPromoCodeAdd.checkout.promoCodes.map((promo) => ({ ...promo })), [
+    { code: "SAVE10", status: "APPLIED", reason: null, message: null },
+  ]);
 });

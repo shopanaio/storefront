@@ -40,12 +40,14 @@ const group = (
   selected: DeliveryMethod | null = null
 ): DeliveryGroup => ({
   id,
+  replacesGroupIds: [],
   lines: [],
   deliveryMethods,
   selectedDeliveryMethod: selected,
   address: null,
   resetReason: null,
   previousOptionHandle: null,
+  savedInput: null,
 });
 
 const fedex = (handle: string) =>

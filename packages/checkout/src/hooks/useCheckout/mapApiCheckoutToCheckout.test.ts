@@ -82,6 +82,7 @@ const deliveryGroup = (
 ): ApiDeliveryGroup => ({
   __typename: 'CheckoutDeliveryGroup',
   id: 'group-1',
+  replacesGroupIds: [],
   checkoutLines: [{ __typename: 'CheckoutLine', id: 'line-1' }],
   deliveryAddress: null,
   options: [deliveryOption()],
@@ -92,6 +93,7 @@ const deliveryGroup = (
     previousOptionHandle: null,
     resetReason: null,
     option: null,
+    customerInput: null,
   },
   ...overrides,
 });
@@ -130,7 +132,7 @@ const createApiCheckout = (
     totalTaxAmount: money('0'),
   },
   lines: [{ ...lineFields('line-1', '500'), children: [] }],
-  appliedPromoCodes: [],
+  promoCodes: [],
   customerIdentity: {
     __typename: 'CheckoutCustomerIdentity',
     countryCode: null,
@@ -323,6 +325,7 @@ describe('mapApiCheckoutToCheckout', () => {
       option: null,
       previousOptionHandle: null,
       resetReason: null,
+      customerInput: null,
     });
   });
 
@@ -341,6 +344,7 @@ describe('mapApiCheckoutToCheckout', () => {
                 message: 'Courier delivery is no longer available',
               },
               option: null,
+              customerInput: null,
             },
           }),
         ],
@@ -371,6 +375,7 @@ describe('mapApiCheckoutToCheckout', () => {
         code: 'OPTION_UNAVAILABLE',
         message: 'Courier delivery is no longer available',
       },
+      customerInput: null,
     });
     expect(checkout.payment.selection).toEqual({
       status: 'RESET',
@@ -381,6 +386,86 @@ describe('mapApiCheckoutToCheckout', () => {
         message: 'Cash on delivery is unavailable',
       },
     });
+  });
+
+  it('maps the saved delivery input and the replaced group ids', () => {
+    const input = { type: 'WAREHOUSE', settlementRef: 's-1', warehouseRef: 'w-1' };
+    const checkout = mapApiCheckoutToCheckout(
+      createApiCheckout({
+        deliveryGroups: [
+          deliveryGroup({
+            id: 'group-2',
+            replacesGroupIds: ['group-1'],
+            selection: {
+              __typename: 'CheckoutDeliveryOptionSelection',
+              status: 'SELECTED',
+              previousOptionHandle: null,
+              resetReason: null,
+              option: deliveryOption(),
+              customerInput: input,
+            },
+          }),
+        ],
+      })
+    );
+
+    const [group] = checkout.deliveryGroups;
+    expect(group.replacesGroupIds).toEqual(['group-1']);
+    expect(group.selection.customerInput).toEqual(input);
+  });
+
+  it('maps every promo code with its state', () => {
+    const checkout = mapApiCheckoutToCheckout(
+      createApiCheckout({
+        promoCodes: [
+          {
+            __typename: 'CheckoutPromoCode',
+            code: 'SALE',
+            status: 'APPLIED',
+            reason: null,
+            message: null,
+            appliedAt: '2026-10-19T10:00:00.000Z',
+            discountType: 'PERCENTAGE',
+            value: 10,
+            provider: 'discounts',
+          },
+          {
+            __typename: 'CheckoutPromoCode',
+            code: 'FREESHIP',
+            status: 'PENDING',
+            reason: 'AWAITING_DELIVERY',
+            message: 'Choose a delivery method',
+            appliedAt: null,
+            discountType: null,
+            value: null,
+            provider: null,
+          },
+        ],
+      })
+    );
+
+    expect(checkout.promoCodes).toEqual([
+      {
+        code: 'SALE',
+        status: 'APPLIED',
+        reason: null,
+        message: null,
+        appliedAt: new Date('2026-10-19T10:00:00.000Z'),
+        discountType: 'PERCENTAGE',
+        value: 10,
+        provider: 'discounts',
+      },
+      {
+        code: 'FREESHIP',
+        status: 'PENDING',
+        reason: 'AWAITING_DELIVERY',
+        message: 'Choose a delivery method',
+        appliedAt: null,
+        discountType: null,
+        value: null,
+        provider: null,
+      },
+    ]);
   });
 
   it('maps payment methods with title and flow in API order', () => {

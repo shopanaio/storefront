@@ -103,7 +103,7 @@ export const refreshCheckout = (store, checkout) => {
 
   const subtotal = checkout.lines.reduce((sum, line) => sum + Number(line.cost.subtotalAmount.amount), 0);
   const catalogDiscount = checkout.lines.reduce((sum, line) => sum + Number(line.cost.discountAmount.amount), 0);
-  const promoDiscount = checkout.appliedPromoCodes.reduce((sum, promo) =>
+  const promoDiscount = checkout.promoCodes.filter(({ status }) => status === "APPLIED").reduce((sum, promo) =>
     sum + (String(promo.discountType).toLowerCase().includes("percent")
       ? subtotal * Number(promo.value) / 100
       : Number(promo.value)), 0);
@@ -165,7 +165,7 @@ export const createCheckout = (store, input) => {
     lines: [],
     notifications: [],
     deliveryGroups: [],
-    appliedPromoCodes: [],
+    promoCodes: [],
     tags: (input.tags ?? []).map((tag) => ({
       id: gid("CheckoutTag", `${key}-${store.next("checkout-tag")}`),
       ...tag,
@@ -341,11 +341,14 @@ export const checkoutMutations = (store) => ({
       const id = gid("CheckoutDeliveryGroup", `runtime-${number}`);
       checkout.deliveryGroups.push({
         id,
+        replacesGroupIds: [],
         checkoutLineIds: destination.checkoutLineIds,
         deliveryAddress: { ...formatAddress(gid("CheckoutDeliveryAddress", `runtime-${number}`), destination.address), data: destination.address.data ?? null },
         recipient: null,
         options: structuredClone(getDeliveryOptions(store)),
-        selection: { status: "NONE", option: null, previousOptionHandle: null, resetReason: null },
+        selection: { status: "NONE", option: null, previousOptionHandle: null, resetReason: null, customerInput: null },
+        // Customer input saved per option handle; the selected option's input is returned.
+        deliveryInputs: {},
       });
     }
     return [];
@@ -356,8 +359,17 @@ export const checkoutMutations = (store) => ({
     const errors = [];
     for (const update of input.updates) {
       const group = groups.get(update.addressId);
-      if (!group) errors.push(checkoutError("DELIVERY_ADDRESS_NOT_FOUND", "The delivery address does not exist.", ["updates", "addressId"]));
-      else group.deliveryAddress = { ...formatAddress(update.addressId, update.address), data: update.address.data ?? null };
+      if (!group) {
+        errors.push(checkoutError("DELIVERY_ADDRESS_NOT_FOUND", "The delivery address does not exist.", ["updates", "addressId"]));
+        continue;
+      }
+      const previous = group.deliveryAddress;
+      group.deliveryAddress = { ...formatAddress(update.addressId, update.address), data: update.address.data ?? null };
+      // A new country, province or city drops the delivery input saved for the old one.
+      if (["countryCode", "provinceCode", "city"].some((field) => previous?.[field] !== group.deliveryAddress[field])) {
+        group.deliveryInputs = {};
+        group.selection.customerInput = null;
+      }
     }
     return errors;
   }),
@@ -372,9 +384,23 @@ export const checkoutMutations = (store) => ({
     if (!group) return [checkoutError("DELIVERY_GROUP_NOT_FOUND", "The delivery group does not exist.", ["deliveryGroupId"])];
     const option = group.options.find(({ handle }) => handle === input.optionHandle);
     if (!option) return [checkoutError("DELIVERY_OPTION_NOT_FOUND", "The delivery option is not available.", ["optionHandle"])];
+    group.deliveryInputs ??= {};
+    // Omitted or null input keeps the input saved for the option.
+    if (input.customerInput !== undefined && input.customerInput !== null) {
+      group.deliveryInputs[option.handle] = input.customerInput;
+    }
     group.selection = {
       status: "SELECTED", option, previousOptionHandle: group.selection.option?.handle ?? null, resetReason: null,
+      customerInput: group.deliveryInputs[option.handle] ?? null,
     };
+    return [];
+  }),
+
+  checkoutDeliveryCustomerInputClear: (_, { input }) => withCheckout(store, input, (checkout) => {
+    const group = checkout.deliveryGroups.find(({ id }) => id === input.deliveryGroupId);
+    if (!group) return [checkoutError("DELIVERY_GROUP_NOT_FOUND", "The delivery group does not exist.", ["deliveryGroupId"])];
+    if (group.deliveryInputs) delete group.deliveryInputs[input.optionHandle];
+    if (group.selection.option?.handle === input.optionHandle) group.selection.customerInput = null;
     return [];
   }),
 
@@ -393,10 +419,13 @@ export const checkoutMutations = (store) => ({
 
   checkoutPromoCodeAdd: (_, { input }) => withCheckout(store, input, (checkout) => {
     const code = input.code.trim().toUpperCase();
-    if (checkout.appliedPromoCodes.some((promo) => promo.code === code)) return [];
+    if (checkout.promoCodes.some((promo) => promo.code === code)) return [];
     const numeric = Number.parseInt(code.match(/\d+/u)?.[0] ?? "10", 10);
-    checkout.appliedPromoCodes.push({
+    checkout.promoCodes.push({
       code,
+      status: "APPLIED",
+      reason: null,
+      message: null,
       appliedAt: store.now(),
       discountType: "percentage",
       value: Math.min(Math.max(numeric, 1), 50),
@@ -407,7 +436,7 @@ export const checkoutMutations = (store) => ({
   }),
 
   checkoutPromoCodeRemove: (_, { input }) => withCheckout(store, input, (checkout) => {
-    checkout.appliedPromoCodes = checkout.appliedPromoCodes.filter(({ code }) => code !== input.code.trim().toUpperCase());
+    checkout.promoCodes = checkout.promoCodes.filter(({ code }) => code !== input.code.trim().toUpperCase());
     return [];
   }),
 

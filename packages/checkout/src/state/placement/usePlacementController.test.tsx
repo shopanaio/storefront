@@ -18,6 +18,7 @@ import {
 const mocks = vi.hoisted(() => ({
   submitCheckout: vi.fn(),
   readPlacement: vi.fn(),
+  refetch: vi.fn(),
   checkoutData: {
     checkout: null as
       | ({ id: string; resultRevision: string } & Record<string, unknown>)
@@ -31,7 +32,7 @@ vi.mock('#checkout/context/CheckoutApiContext', () => ({
 }));
 // By default the checkout is unreadable, as after it became an order (decision 1.2).
 vi.mock('#checkout/context/CheckoutDataContext', () => ({
-  useCheckoutData: () => mocks.checkoutData,
+  useCheckoutData: () => ({ refetch: mocks.refetch, ...mocks.checkoutData }),
 }));
 vi.mock('#checkout/theme', () => ({
   useCheckoutTheme: () => ({ useCheckoutReturnPath: () => '/checkout/return' }),
@@ -259,6 +260,37 @@ describe('usePlacementController', () => {
       })
     );
     expect(storedAttempt()).toBeNull();
+  });
+
+  it('SC-mdfw: a choice gone stale keeps the checkout open and reads it again', async () => {
+    mocks.refetch.mockResolvedValue(undefined);
+    mocks.submitCheckout.mockResolvedValue({
+      ...paid,
+      placementId: null,
+      placementState: null,
+      orderId: null,
+      status: null,
+      userErrors: [
+        {
+          code: 'CHECKOUT_OPEN',
+          field: ['input', 'checkoutId'],
+          message: 'The checkout changed.',
+          retryable: false,
+        },
+      ],
+    });
+
+    renderHook(() => usePlacementController('checkout-1'));
+
+    await waitFor(() =>
+      expect(usePlacementStore.getState().phase).toEqual({
+        name: 'rejected',
+        code: 'CHECKOUT_OPEN',
+      })
+    );
+    // No placement was made: the next press takes a new key with the new choice.
+    expect(storedAttempt()).toBeNull();
+    expect(mocks.refetch).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the key when the outcome of the request is unknown', async () => {

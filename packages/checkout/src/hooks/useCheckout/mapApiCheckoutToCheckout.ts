@@ -196,6 +196,7 @@ const mapDeliveryGroup = (
   linesById: ReadonlyMap<string, Checkout.Line>
 ): Checkout.DeliveryGroup => ({
   id: group.id,
+  replacesGroupIds: [...group.replacesGroupIds],
   checkoutLines: group.checkoutLines
     .map((line) => linesById.get(line.id) ?? null)
     .filter((line): line is Checkout.Line => line !== null),
@@ -219,6 +220,7 @@ const mapDeliveryGroup = (
       : null,
     previousOptionHandle: group.selection.previousOptionHandle ?? null,
     resetReason: mapResetReason(group.selection.resetReason),
+    customerInput: group.selection.customerInput ?? null,
   },
 });
 const mapPaymentMethod = (
@@ -281,12 +283,15 @@ export function mapApiCheckoutToCheckout(
       totalTaxAmount: mapMoney(apiCheckout.cost.totalTaxAmount),
     },
     lines,
-    appliedPromoCodes: apiCheckout.appliedPromoCodes.map((promoCode) => ({
+    promoCodes: apiCheckout.promoCodes.map((promoCode) => ({
       code: promoCode.code,
-      appliedAt: toDate(promoCode.appliedAt),
-      discountType: promoCode.discountType,
-      value: promoCode.value,
-      provider: promoCode.provider,
+      status: promoCode.status,
+      reason: promoCode.reason ?? null,
+      message: promoCode.message ?? null,
+      appliedAt: promoCode.appliedAt ? toDate(promoCode.appliedAt) : null,
+      discountType: promoCode.discountType ?? null,
+      value: promoCode.value ?? null,
+      provider: promoCode.provider ?? null,
     })),
     customerIdentity: {
       countryCode: apiCheckout.customerIdentity.countryCode ?? null,

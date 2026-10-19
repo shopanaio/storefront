@@ -15,11 +15,11 @@ export interface DeliveryMethod {
   paymentModel: Checkout.ShippingPaymentModel;
   estimatedMinDeliveryAt: Date | null;
   estimatedMaxDeliveryAt: Date | null;
-  /** Locally persisted private input sent back through customerInput. */
+  /** Customer input of the option: the one typed and not saved yet, else the one the API saved. */
   data: unknown;
-  /** Module-owned display state persisted with the input. */
+  /** Module-owned display state, kept in localStorage with the input. */
   view?: unknown;
-  /** False while the stored input still has to be saved through the API. */
+  /** False while the input still has to be saved through the API. */
   synced?: boolean;
   /** JSON Schema of the customer input from the API. */
   customerInputContract: unknown;
@@ -37,6 +37,8 @@ export type DeliveryAddress = ProviderDeliveryAddress;
  */
 export interface DeliveryGroup {
   id: string;
+  /** Earlier ids of the group, newest first; input stored under them belongs to it. */
+  replacesGroupIds: string[];
   /** Lines the group ships, as the API split them. */
   lines: Checkout.Line[];
   deliveryMethods: DeliveryMethod[];
@@ -46,6 +48,8 @@ export interface DeliveryGroup {
   resetReason: Checkout.SelectionResetReason | null;
   /** Option the API dropped with the reset; `null` unless the selection was reset. */
   previousOptionHandle: string | null;
+  /** Customer input the API saved for the selected (or reset) option. */
+  savedInput: unknown;
 }
 
 /**

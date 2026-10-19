@@ -25,6 +25,7 @@ import { definitiveRejection } from '../saveError';
 import { closedCheckoutCode } from '#checkout/state/closedCheckout';
 import {
   commonSelectionKey,
+  isGroupOf,
   methodKey,
   methodOfGroup,
   quotedMethod,
@@ -145,7 +146,7 @@ export const DeliveryMethodList = ({
       failedSelect
         ? groups.filter(
             (group) =>
-              failedSelect.groupIds.includes(group.id) &&
+              failedSelect.groupIds.some((id) => isGroupOf(group, id)) &&
               (!group.selectedDeliveryMethod ||
                 methodKey(group.selectedDeliveryMethod) !== failedSelect.key)
           )
@@ -226,7 +227,7 @@ export const DeliveryMethodList = ({
 
       // The input entered for the method in the first group that has one.
       const storedOf = (target: Target) =>
-        readCustomerInputs(target.group.id, target.scope)[target.method.handle];
+        readCustomerInputs(target.group, target.scope)[target.method.handle];
       const first = selected.find((target) => storedOf(target)) ?? selected[0];
       const leadStored = storedOf(first);
       // The input goes to every group before any request, so the groups never show
@@ -238,7 +239,7 @@ export const DeliveryMethodList = ({
           return stored ? stored.input : method.data;
         }
         if (JSON.stringify(stored?.input) !== JSON.stringify(leadStored.input)) {
-          remember(group.id, scope, method.handle, { ...leadStored, synced: false });
+          remember(group, scope, method.handle, { ...leadStored, synced: false });
         }
         return leadStored.input;
       });
@@ -255,7 +256,7 @@ export const DeliveryMethodList = ({
             customerInput,
           });
           if (customerInput !== undefined) {
-            markSynced(group.id, scope, method.handle, customerInput);
+            markSynced(group, scope, method.handle, customerInput);
           }
         })
       );
@@ -297,10 +298,9 @@ export const DeliveryMethodList = ({
     if (!failedKey) {
       return;
     }
-    const ids = new Set(unsavedGroups.map((group) => group.id));
     void selectIn(
       failedKey,
-      targetsOf(failedKey).filter((target) => ids.has(target.group.id))
+      targetsOf(failedKey).filter((target) => unsavedGroups.includes(target.group))
     );
   };
 
@@ -345,12 +345,9 @@ export const DeliveryMethodList = ({
         return;
       }
       for (const { group, method: groupMethod, scope } of targetsOf(methodKey(method))) {
-        remember(
-          group.id,
-          scope,
-          groupMethod.handle,
-          input === undefined ? undefined : { input, view, synced: false }
-        );
+        // An emptied form stays a draft too: dropping it would bring back the input the API
+        // saved, which the form no longer shows.
+        remember(group, scope, groupMethod.handle, { input, view, synced: false });
       }
     },
     [methods, targetsOf, remember]
@@ -365,7 +362,7 @@ export const DeliveryMethodList = ({
     const { targets, rejectedKeyOf } = latest.current;
     for (const target of targets) {
       const { group, method, scope, reselecting } = target;
-      const stored = readCustomerInputs(group.id, scope)[method.handle];
+      const stored = readCustomerInputs(group, scope)[method.handle];
       const input = apiCustomerInput(method, stored ? stored.input : method.data);
       if (
         input === undefined ||
@@ -379,7 +376,7 @@ export const DeliveryMethodList = ({
         deliveryGroupId: group.id,
         customerInput: input,
       });
-      markSynced(group.id, scope, method.handle, input);
+      markSynced(group, scope, method.handle, input);
     }
   }, [updateShippingMethod, markSynced, recordSent]);
 

@@ -4,6 +4,7 @@ import {
   IDEMPOTENCY_MISMATCH_CODE,
   NETWORK_ERROR_CODE,
   PLACEMENT_UNCONFIRMED_CODE,
+  STALE_SELECTION_CODE,
 } from '#checkout/state/placement/outcome';
 
 /**
@@ -16,7 +17,7 @@ export function placementErrorMessageKey(code: string): string {
   if (
     code === IDEMPOTENCY_MISMATCH_CODE ||
     code === 'CHECKOUT_PLACEMENT_SNAPSHOT_STALE' ||
-    code === 'CHECKOUT_VERSION_CONFLICT'
+    code === STALE_SELECTION_CODE
   ) {
     return 'placement-error-changed';
   }

@@ -168,7 +168,8 @@ const createOrderFromCheckout = (store, checkout, customer) => {
     cost: structuredClone(checkout.cost),
     totalQuantity: checkout.totalQuantity,
     lines,
-    appliedPromoCodes: structuredClone(checkout.appliedPromoCodes),
+    appliedPromoCodes: structuredClone(checkout.promoCodes.filter(({ status }) => status === "APPLIED"))
+      .map(({ status, reason, message, ...promo }) => promo),
     deliveryGroups,
     fulfillments: [],
     payment: {

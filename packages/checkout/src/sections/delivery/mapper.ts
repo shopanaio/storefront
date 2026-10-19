@@ -42,7 +42,9 @@ export const toDeliveryAddress = (
  * Maps Checkout.Checkout entity to DeliveryFormData
  * Extracts delivery groups, their selected delivery methods, and address data. A selection
  * the API reset (carrier refused the input, option expired) keeps its reason and the option
- * it dropped, so the section can tell the customer and reopen that option.
+ * it dropped, so the section can tell the customer and reopen that option. The customer input
+ * the API saved for that option comes along (`savedInput`); `withCustomerInputs` puts it on
+ * the option.
  */
 export function mapCheckoutToDeliveryFormData(
   checkout: Checkout.Checkout | null
@@ -54,12 +56,18 @@ export function mapCheckoutToDeliveryFormData(
   const formData: DeliveryFormData = {};
 
   for (const group of checkout.deliveryGroups) {
-    const { option: selectedOption, status, resetReason, previousOptionHandle } =
-      group.selection;
+    const {
+      option: selectedOption,
+      status,
+      resetReason,
+      previousOptionHandle,
+      customerInput,
+    } = group.selection;
     const reset = status === 'RESET';
 
     formData[group.id] = {
       id: group.id,
+      replacesGroupIds: group.replacesGroupIds,
       lines: group.checkoutLines,
       deliveryMethods: group.deliveryMethods.map(toDeliveryMethod),
       selectedDeliveryMethod: selectedOption
@@ -68,6 +76,7 @@ export function mapCheckoutToDeliveryFormData(
       address: toDeliveryAddress(group.deliveryAddress),
       resetReason: reset ? resetReason : null,
       previousOptionHandle: reset ? previousOptionHandle : null,
+      savedInput: customerInput ?? null,
     };
   }
 

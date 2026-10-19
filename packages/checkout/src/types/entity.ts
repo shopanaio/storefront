@@ -43,8 +43,8 @@ export namespace Checkout {
     cost: Cost;
     /** Root items in the checkout; bundle components are in `children`. */
     lines: Line[];
-    /** Applied promo codes for the checkout. */
-    appliedPromoCodes: PromoCode[];
+    /** Every promo code the buyer entered, in entry order, with its state. */
+    promoCodes: PromoCode[];
     /** Customer identity associated with the checkout. */
     customerIdentity: CustomerIdentity;
     /** Customer note or special instructions for the checkout. */
@@ -165,14 +165,25 @@ export namespace Checkout {
     totalTaxAmount: model.Money;
   }
 
-  /** Applied promo code for a checkout. */
+  /**
+   * A promo code the buyer entered. It stays in the checkout until the buyer removes it; a
+   * pending or rejected code applies again once its condition is met.
+   */
   export interface PromoCode {
-    appliedAt: Date;
     code: string;
-    discountType: string;
-    provider: string;
-    value: number;
+    status: PromoCodeStatus;
+    /** Why the code is not applied (`AWAITING_DELIVERY`, a rejection reason); null if applied. */
+    reason: string | null;
+    /** Message from the API about the reason, shown as is; null if applied. */
+    message: string | null;
+    /** The fields below are set only for an applied code. */
+    appliedAt: Date | null;
+    discountType: string | null;
+    provider: string | null;
+    value: number | null;
   }
+
+  export type PromoCodeStatus = 'APPLIED' | 'PENDING' | 'REJECTED';
 
   /** Customer identity associated with the checkout. */
   export interface CustomerIdentity {
@@ -198,6 +209,11 @@ export namespace Checkout {
   export interface DeliveryGroup {
     /** Unique identifier for the delivery group. */
     id: string;
+    /**
+     * Earlier identifiers of the group, newest first: the id changes with the lines, and a
+     * mutation naming a replaced id applies to this group.
+     */
+    replacesGroupIds: string[];
     /** Checkout lines associated with the delivery group. */
     checkoutLines: Line[];
     /** Delivery address associated with the delivery group. */
@@ -287,6 +303,11 @@ export namespace Checkout {
     option: DeliveryMethod | null;
     previousOptionHandle: string | null;
     resetReason: SelectionResetReason | null;
+    /**
+     * Customer input the API saved for the selected (or reset) method of the group, such as
+     * the branch; the method keeps it until it is cleared or the destination changes.
+     */
+    customerInput: unknown;
   }
 
   /** Payment aggregate for a checkout. */

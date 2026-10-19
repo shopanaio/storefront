@@ -267,10 +267,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
         );
       },
       addPromoCode: async (input) => {
-        const response = await commitAddPromo({ input: { ...input, ...mutationContext() } });
-        return (response.checkoutPromoCodeAdd.checkout?.appliedPromoCodes ?? []).map(
-          ({ code }) => code
-        );
+        await commitAddPromo({ input: { ...input, ...mutationContext() } });
       },
       removePromoCode: async (input) => {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });

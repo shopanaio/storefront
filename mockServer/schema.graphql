@@ -617,6 +617,10 @@ type Mutation @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: CHECKOU
   """
   checkoutDeliveryMethodUpdate(input: CheckoutDeliveryMethodUpdateInput!) : CheckoutMutationPayload! @join__field(graph: CHECKOUT_STOREFRONT) 
   """
+  Forgets the delivery data saved for one delivery method of a group.
+  """
+  checkoutDeliveryCustomerInputClear(input: CheckoutDeliveryCustomerInputClearInput!) : CheckoutMutationPayload! @join__field(graph: CHECKOUT_STOREFRONT) 
+  """
   Adds recipients to delivery groups.
   """
   checkoutDeliveryRecipientsAdd(input: CheckoutDeliveryRecipientsAddInput!) : CheckoutMutationPayload! @join__field(graph: CHECKOUT_STOREFRONT) 
@@ -1974,9 +1978,10 @@ type Checkout implements Node @join__type(graph: CHECKOUT_STOREFRONT, key: "id")
   """
   deliveryGroups: [CheckoutDeliveryGroup!]! @join__field(graph: CHECKOUT_STOREFRONT) 
   """
-  Applied promo codes for the checkout.
+  Every promo code the buyer entered, in entry order, with its state. A code stays here until the
+  buyer removes it, and a pending or rejected code applies again once its condition is met.
   """
-  appliedPromoCodes: [CheckoutPromoCode!]! @join__field(graph: CHECKOUT_STOREFRONT) 
+  promoCodes: [CheckoutPromoCode!]! @join__field(graph: CHECKOUT_STOREFRONT) 
   """
   Tags that can be used to organize checkout lines.
   """
@@ -2131,31 +2136,62 @@ type CheckoutNotification @join__type(graph: CHECKOUT_STOREFRONT)  {
 }
 
 """
-Applied promo code for a checkout.
+State of an entered promo code.
+"""
+enum CheckoutPromoCodeStatus @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  The code's discount is applied.
+  """
+  APPLIED @join__enumValue(graph: CHECKOUT_STOREFRONT) 
+  """
+  The code waits for a condition that cannot be checked yet, such as a chosen delivery option.
+  """
+  PENDING @join__enumValue(graph: CHECKOUT_STOREFRONT) 
+  """
+  The code is not applied; reason says why.
+  """
+  REJECTED @join__enumValue(graph: CHECKOUT_STOREFRONT) 
+}
+
+"""
+A promo code entered for a checkout.
 """
 type CheckoutPromoCode @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
-  Promo code text.
+  Promo code text as the buyer entered it.
   """
   code: String!
   """
-  When this promo code was applied.
+  Whether the code is applied, pending or rejected.
   """
-  appliedAt: DateTime!
+  status: CheckoutPromoCodeStatus!
   """
-  Discount type (percentage).
+  Why the code is not applied: AWAITING_DELIVERY for a pending code, or the rejection reason
+  (for example MINIMUM_REQUIREMENT_NOT_MET). Null for an applied code.
   """
-  discountType: String!
+  reason: String
   """
-  Discount value (percentage as number).
+  Buyer-facing explanation of the reason. Null for an applied code.
   """
-  value: Int!
+  message: String
   """
-  Discount provider.
+  When the applied code was last confirmed. Null unless applied.
   """
-  provider: String!
+  appliedAt: DateTime
   """
-  Discount conditions.
+  Discount type of the applied code. Null unless applied.
+  """
+  discountType: String
+  """
+  Discount amount in minor units of the applied code. Null unless applied.
+  """
+  value: Int
+  """
+  Discount provider of the applied code. Null unless applied.
+  """
+  provider: String
+  """
+  Discount conditions of the applied code.
   """
   conditions: JSON
 }
@@ -2173,6 +2209,11 @@ type CheckoutDeliveryGroup @join__type(graph: CHECKOUT_STOREFRONT)  {
   Unique identifier for the delivery group.
   """
   id: ID!
+  """
+  Earlier identifiers of this group, newest first. A group gets a new identifier when its lines
+  change; mutations naming a replaced identifier apply to this group.
+  """
+  replacesGroupIds: [ID!]!
   """
   Checkout lines associated with the delivery group.
   """
@@ -2235,6 +2276,11 @@ type CheckoutDeliveryOptionSelection @join__type(graph: CHECKOUT_STOREFRONT)  {
   option: CheckoutDeliveryOption
   previousOptionHandle: String
   resetReason: CheckoutSelectionResetReason
+  """
+  Delivery data the buyer saved for the selected (or reset) method of this group, for example
+  the chosen branch. Returned only to whoever may read this checkout.
+  """
+  customerInput: JSON
 }
 
 """
@@ -7953,10 +7999,28 @@ input CheckoutDeliveryMethodUpdateInput @join__type(graph: CHECKOUT_STOREFRONT) 
   """
   optionHandle: String!
   """
-  Arbitrary customer-provided data for the selected delivery method.
-  It remains private selection intent and is never returned by Storefront API.
+  Customer-provided data for the selected delivery method. Omitted or null keeps the data
+  already saved for this method; use checkoutDeliveryCustomerInputClear to forget it.
   """
   customerInput: JSON
+}
+
+"""
+Input data for forgetting the delivery data saved for one delivery method of a group.
+"""
+input CheckoutDeliveryCustomerInputClearInput @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  Identifier of the checkout on which the operation is performed.
+  """
+  checkoutId: ID!
+  """
+  Identifier of the delivery group whose saved data is cleared.
+  """
+  deliveryGroupId: ID!
+  """
+  Handle of the delivery option whose method's saved data is cleared.
+  """
+  optionHandle: String!
 }
 
 input CheckoutDeliveryDestinationInput @join__type(graph: CHECKOUT_STOREFRONT)  {
