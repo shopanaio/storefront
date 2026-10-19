@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Checkout } from '#checkout/types/entity';
-import { mapCheckoutToRecipientFormData } from './mapper';
+import { mapCheckoutToRecipientFormData, recipientMutations } from './mapper';
 
 const person = {
   firstName: 'Олена',
@@ -38,5 +38,35 @@ describe('mapCheckoutToRecipientFormData', () => {
 
   it('has no data before the checkout has groups', () => {
     expect(mapCheckoutToRecipientFormData(checkout([]))).toBeNull();
+  });
+});
+
+describe('recipientMutations', () => {
+  const recipient = { firstName: 'Олена', lastName: 'Коваль', phone: '+380501112233' };
+
+  it('SC-5qfk: updates the recipient the previous save created instead of creating it again', () => {
+    expect(
+      recipientMutations({ deliveryGroupIds: ['g1'], groupIdsWithoutRecipient: [] }, recipient)
+    ).toEqual({
+      remove: null,
+      update: { updates: [{ deliveryGroupId: 'g1', recipient }] },
+      add: null,
+    });
+  });
+
+  it('adds the recipient to a group split off later', () => {
+    expect(
+      recipientMutations({ deliveryGroupIds: ['g1', 'g2'], groupIdsWithoutRecipient: ['g2'] }, recipient)
+    ).toEqual({
+      remove: null,
+      update: { updates: [{ deliveryGroupId: 'g1', recipient }] },
+      add: { recipients: [{ deliveryGroupId: 'g2', recipient }] },
+    });
+  });
+
+  it('removes the recipient only from the groups that have it', () => {
+    expect(
+      recipientMutations({ deliveryGroupIds: ['g1', 'g2'], groupIdsWithoutRecipient: ['g2'] }, null)
+    ).toEqual({ remove: { deliveryGroupIds: ['g1'] }, update: null, add: null });
   });
 });

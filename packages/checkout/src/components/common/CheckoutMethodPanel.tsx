@@ -31,7 +31,12 @@ export const CheckoutMethodPanel = ({
   return (
     <Collapse
       activeKey={isActive ? codeRef.current : ''}
-      onChange={onActive}
+      // A click on the active method changes nothing, so nothing is sent again (SC-83ef).
+      onChange={() => {
+        if (!isActive) {
+          onActive();
+        }
+      }}
       ghost
       bordered
       classNames={{

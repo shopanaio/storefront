@@ -1,4 +1,5 @@
 import { useMutation } from '@shopana/storefront-sdk/graphql/apollo';
+import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 import { toast } from '#checkout/ui/toast';
 import type { OperationVariables, TypedDocumentNode } from '@apollo/client';
 import { useCallback, useRef, useEffect } from 'react';
@@ -21,6 +22,14 @@ function getCheckoutUserErrors(response: object): unknown[] {
   }
 
   return [];
+}
+
+export interface CommitOptions {
+  /**
+   * Resource the mutation writes, e.g. `payment` or `delivery:<groupId>`. Mutations of one
+   * resource waiting in the queue are merged into the latest.
+   */
+  key?: string;
 }
 
 /**
@@ -71,6 +80,7 @@ export interface CheckoutOperationOptions {
  *
  * Features:
  * - Promisified mutation API
+ * - One queue with the cart for every write, in order, merging waiting writes of a resource
  * - Debounced execution to prevent excessive calls
  * - In-flight guard with race protection via timestamps
  * - Lifecycle hooks (onStart, onEnd) for UI busy state
@@ -260,13 +270,29 @@ export function useCheckoutOperation<
     [commitMutation, showErrorToast, errorMessage, rejectOnUserErrors]
   );
 
+  const { enqueueMutation } = useCartSetters();
+
   /**
-   * Main commit function with inflight protection
+   * Sends the mutation after every write of the cart and the checkout queued before it
+   * (R-6). A mutation with the same `key` still waiting is replaced by this one: only the
+   * latest value of a resource is sent, and both callers get its result.
    */
   const commit = useCallback(
-    (variables: TVariables): Promise<TData> => {
-      return runWithInflight(() => commitPromise(variables));
+    (variables: TVariables, { key }: CommitOptions = {}): Promise<TData> => {
+      // Joins the queue right away, so writes keep the order they were asked in.
+      const queued = enqueueMutation(() => commitPromise(variables), { key });
+      queued.catch(() => undefined);
+      return runWithInflight(() => queued);
     },
+    [runWithInflight, commitPromise, enqueueMutation]
+  );
+
+  /**
+   * Sends the mutation at once, outside the queue. Only for a task that already runs in the
+   * queue and sends several mutations one after the other.
+   */
+  const send = useCallback(
+    (variables: TVariables): Promise<TData> => runWithInflight(() => commitPromise(variables)),
     [runWithInflight, commitPromise]
   );
 
@@ -285,6 +311,7 @@ export function useCheckoutOperation<
 
   return {
     commit,
+    send,
     commitScheduled,
     isInFlight,
   };

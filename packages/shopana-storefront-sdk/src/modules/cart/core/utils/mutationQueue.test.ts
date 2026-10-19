@@ -44,4 +44,73 @@ describe('cart mutation queue', () => {
     expect(queue.pending).toBe(0);
     expect(idle).toHaveBeenCalledTimes(2);
   });
+
+  it('sends only the latest value of a resource that is still waiting', async () => {
+    const queue = createCartMutationQueue(vi.fn());
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const sent: string[] = [];
+    const first = queue.run(async () => {
+      await held;
+      sent.push('address');
+      return 'address';
+    });
+    const older = queue.run(async () => {
+      sent.push('cash');
+      return 'cash';
+    }, { key: 'payment' });
+    const other = queue.run(async () => {
+      sent.push('note');
+      return 'note';
+    }, { key: 'note' });
+    const latest = queue.run(async () => {
+      sent.push('card');
+      return 'card';
+    }, { key: 'payment' });
+    release();
+    expect(await Promise.all([first, older, other, latest])).toEqual([
+      'address',
+      'card',
+      'note',
+      'card',
+    ]);
+    // The payment keeps its place in the queue and goes with the latest value.
+    expect(sent).toEqual(['address', 'card', 'note']);
+  });
+
+  it('does not replace a mutation of the same resource that already started', async () => {
+    const queue = createCartMutationQueue(vi.fn());
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const sent: string[] = [];
+    const first = queue.run(async () => {
+      await held;
+      sent.push('cash');
+    }, { key: 'payment' });
+    const second = queue.run(async () => {
+      sent.push('card');
+    }, { key: 'payment' });
+    release();
+    await Promise.all([first, second]);
+    expect(sent).toEqual(['cash', 'card']);
+  });
+
+  it('waits for every mutation queued before idle', async () => {
+    const queue = createCartMutationQueue(vi.fn());
+    const sent: string[] = [];
+    void queue.run(async () => {
+      await Promise.resolve();
+      sent.push('note');
+    });
+    void queue.run(async () => {
+      throw new Error('network failure');
+    }).catch(() => undefined);
+    await queue.idle();
+    expect(sent).toEqual(['note']);
+    expect(queue.pending).toBe(0);
+  });
 });

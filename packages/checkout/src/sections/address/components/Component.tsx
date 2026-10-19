@@ -11,6 +11,7 @@ import type {
   CheckoutDeliveryAddressInput,
   CountryCode,
 } from '#checkout/graphql/operations';
+import { closedCheckoutCode } from '#checkout/state/closedCheckout';
 import {
   ProviderModuleType,
   type AddressModuleApi,
@@ -66,21 +67,39 @@ const fallbackCountry = (code: string): DeliveryCountry => ({
  */
 export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProps) => {
   const t = useTranslations('Checkout');
-  const { updateDeliveryAddresses, addDeliveryAddresses } = useCheckoutApi();
-  const addressIds = data?.addressIds;
-  const unaddressedLineIds = data?.unaddressedLineIds;
+  const { saveDeliveryAddress } = useCheckoutApi();
   const savedAddress = data?.address ?? null;
   const savedCountryCode = savedAddress?.countryCode ?? null;
-  const { countries, loading, error, refetch } = useDeliveryCountries(data?.localeCode ?? null);
+  const loaded = useDeliveryCountries(data?.localeCode ?? null);
+  const { error, refetch } = loaded;
+  // While the list is read again (another locale) the form keeps the list it was laid out
+  // by: a skeleton in its place would drop what the buyer typed (BR-q7dr).
+  const [lastCountries, setLastCountries] = useState(loaded.countries);
+  if (loaded.countries.length > 0 && loaded.countries !== lastCountries) {
+    setLastCountries(loaded.countries);
+  }
+  const reloading = loaded.loading && lastCountries.length > 0;
+  const countries = reloading ? lastCountries : loaded.countries;
+  const loading = loaded.loading && !reloading;
   // A country picked in the selector; it holds while the saved address stays as it was.
   const [picked, setPicked] = useState<{ code: string; over: string | null } | null>(null);
   const pickedCountryCode = picked && picked.over === savedCountryCode ? picked.code : null;
+  // The country the form opened with stays while nothing is saved: the buyer country set
+  // implicitly later (by a contact save) does not swap the form under the buyer (BR-q7dr).
+  const [openedWith, setOpenedWith] = useState<string | null>(null);
   // Without the list of countries the section falls back to the Ukrainian form (see above).
   const noCountries = !loading && countries.length === 0;
   const countryCode = noCountries
     ? FALLBACK_COUNTRY_CODE
     : (pickedCountryCode ??
-      pickDeliveryCountry(countries, savedCountryCode, data?.customerCountryCode ?? null));
+      pickDeliveryCountry(
+        countries,
+        savedCountryCode,
+        openedWith ?? data?.customerCountryCode ?? null
+      ));
+  if (!openedWith && !noCountries && countryCode) {
+    setOpenedWith(countryCode);
+  }
   const country = noCountries
     ? fallbackCountry(FALLBACK_COUNTRY_CODE)
     : (countries.find(({ code }) => code === countryCode) ?? null);
@@ -97,75 +116,39 @@ export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProp
     holdInvalid?.(countryMismatch);
   }, [countryMismatch, holdInvalid]);
 
-  /** Latest saved state and API, read when a queued save starts, not when it was asked for. */
-  const latest = useRef({
-    addressIds,
-    unaddressedLineIds,
-    updateDeliveryAddresses,
-    addDeliveryAddresses,
-  });
-  useEffect(() => {
-    latest.current = {
-      addressIds,
-      unaddressedLineIds,
-      updateDeliveryAddresses,
-      addDeliveryAddresses,
-    };
-  });
-
-  /** Saves run one at a time; only the latest address waiting for its turn is sent. */
-  const queue = useRef<Promise<void>>(Promise.resolve());
-  const pending = useRef<AddressModuleValue | null>(null);
-  /** The address being saved now: blurring another field must not send it again. */
-  const sending = useRef<string | null>(null);
+  /** The last save failed; the form keeps what the buyer entered and says so (SC-nker). */
+  const [saveFailed, setSaveFailed] = useState(false);
 
   /**
-   * The address goes to every delivery group: updated where saved, added where not. All
-   * mutations run one after the other: concurrent ones on the same checkout conflict, and an
-   * address added by one save must be updated, not added again, by the next one.
-   * A failure is already shown by the checkout API.
+   * The address goes to every delivery group. Saves wait in the checkout mutation queue, and a
+   * save still waiting there is replaced by the latest address.
    */
-  const onSubmit = useCallback((value: AddressModuleValue) => {
-    if (pending.current === null && sending.current === JSON.stringify(value)) {
-      return;
-    }
-    const waiting = pending.current !== null;
-    pending.current = value;
-    if (waiting) {
-      return;
-    }
-
-    queue.current = queue.current
-      .then(async () => {
-        // Let React commit the checkout the previous save returned, so the ids are fresh.
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        const next = pending.current;
-        pending.current = null;
-        if (!next) {
-          return;
-        }
-        sending.current = JSON.stringify(next);
-        try {
-          const address = toApiAddress(next);
-          const { addressIds: ids, unaddressedLineIds: lineIds } = latest.current;
-          if (ids?.length) {
-            await latest.current.updateDeliveryAddresses({
-              updates: ids.map((addressId) => ({ addressId, address })),
-            });
+  /** The address being saved: leaving another field must not send it again. */
+  const saving = useRef<string | null>(null);
+  const onSubmit = useCallback(
+    (value: AddressModuleValue) => {
+      const key = JSON.stringify(value);
+      if (saving.current === key) {
+        return;
+      }
+      saving.current = key;
+      saveDeliveryAddress(toApiAddress(value))
+        .then(
+          () => setSaveFailed(false),
+          (failure: unknown) => {
+            console.error('Failed to save the delivery address:', failure);
+            // A closed checkout is handled for the whole checkout, not by the section.
+            setSaveFailed(!closedCheckoutCode(failure));
           }
-          if (lineIds?.length || !ids?.length) {
-            await latest.current.addDeliveryAddresses({
-              addresses: [{ address, checkoutLineIds: lineIds ?? [] }],
-            });
+        )
+        .finally(() => {
+          if (saving.current === key) {
+            saving.current = null;
           }
-        } finally {
-          sending.current = null;
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to save the delivery address:', error);
-      });
-  }, []);
+        });
+    },
+    [saveDeliveryAddress]
+  );
 
   if (error && countries.length === 0 && !found) {
     return (
@@ -206,11 +189,15 @@ export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProp
         />
       ) : null}
       <Form
-        key={country.code}
         address={savedAddress && savedCountryCode === country.code ? savedAddress : null}
         country={country}
         onSubmit={onSubmit}
       />
+      {saveFailed ? (
+        <Typography.Text type="danger" role="alert">
+          {t('error-save-address')}
+        </Typography.Text>
+      ) : null}
     </Flex>
   );
 };

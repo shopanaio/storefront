@@ -105,7 +105,7 @@ const useAddItemToCart = () => {
               },
             });
           }),
-        optimisticEdit
+        { optimisticEdit }
       );
     },
     isInFlight,

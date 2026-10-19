@@ -1,4 +1,10 @@
 import type { Checkout } from '#checkout/types/entity';
+import type {
+  DeliveryRecipientsAddDto,
+  DeliveryRecipientsRemoveDto,
+  DeliveryRecipientsUpdateDto,
+} from '#checkout/api/dto';
+import type { CheckoutRecipientInput } from '#checkout/graphql/operations';
 import type { RecipientFormData } from './types';
 
 /**
@@ -50,5 +56,42 @@ export function mapCheckoutToRecipientFormData(
     lastName: recipient.lastName ?? '',
     middleName: recipient.middleName ?? '',
     phone: recipient.phone ?? '',
+  };
+}
+
+/** Mutations that make every delivery group have the recipient, or none. */
+export interface RecipientMutations {
+  remove: DeliveryRecipientsRemoveDto | null;
+  update: DeliveryRecipientsUpdateDto | null;
+  add: DeliveryRecipientsAddDto | null;
+}
+
+/**
+ * One recipient receives every shipment: updated where a group has it, added where not;
+ * `null` removes it from every group that has it. Built from the checkout as it is when the
+ * save starts, so a recipient added by the previous save is updated, not added again.
+ */
+export function recipientMutations(
+  data: Pick<RecipientFormData, 'deliveryGroupIds' | 'groupIdsWithoutRecipient'>,
+  recipient: CheckoutRecipientInput | null
+): RecipientMutations {
+  const missing = new Set(data.groupIdsWithoutRecipient);
+  const saved = data.deliveryGroupIds.filter((id) => !missing.has(id));
+  const added = data.deliveryGroupIds.filter((id) => missing.has(id));
+  if (!recipient) {
+    return {
+      remove: saved.length ? { deliveryGroupIds: saved } : null,
+      update: null,
+      add: null,
+    };
+  }
+  return {
+    remove: null,
+    update: saved.length
+      ? { updates: saved.map((deliveryGroupId) => ({ deliveryGroupId, recipient })) }
+      : null,
+    add: added.length
+      ? { recipients: added.map((deliveryGroupId) => ({ deliveryGroupId, recipient })) }
+      : null,
   };
 }

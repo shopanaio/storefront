@@ -38,6 +38,13 @@ export interface DoorInput {
   comment?: string;
 }
 
+/**
+ * Courier input before a street is picked. The contract does not accept it, so it is never
+ * sent; it is kept so the building, apartment and comment survive a remount of the form.
+ */
+export type DoorDraft = Omit<DoorInput, 'streetRef' | 'streetName'> &
+  Partial<Pick<DoorInput, 'streetRef' | 'streetName'>>;
+
 export type CustomerInput = PointInput | DoorInput;
 
 /** Display state of a picked branch or postomat, kept next to the input. */

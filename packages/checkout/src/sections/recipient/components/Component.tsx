@@ -23,159 +23,48 @@ import { SectionId } from '#checkout/state/interface';
 export interface RecipientSectionViewProps {
   /** Current form data */
   data: RecipientFormData | null;
+  /** Keeps the section invalid while set */
+  holdInvalid?: (held: boolean) => void;
 }
 
-export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
+const EMPTY_RECIPIENT = { firstName: '', lastName: '', middleName: '', phone: '' };
+
+export const RecipientSectionView = ({ data, holdInvalid }: RecipientSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const {
-    addDeliveryRecipients,
-    updateDeliveryRecipients,
-    removeDeliveryRecipients,
-  } = useCheckoutApi();
-
-  const [isRecipientSelf, setIsRecipientSelf] = useState(data?.self ?? true);
-
-  useEffect(() => {
-    setIsRecipientSelf(data?.self ?? true);
-  }, [data?.self]);
+  const { saveDeliveryRecipient } = useCheckoutApi();
 
   /**
-   * Update section 'required' flag based on 'self' value.
+   * The switch as the buyer set it (BR-yanp). Until the buyer touches it, it follows the
+   * checkout; afterwards a regrouping of the delivery, which may leave groups without the
+   * recipient, does not move it.
+   */
+  const [chosenSelf, setChosenSelf] = useState<boolean | null>(null);
+  const isRecipientSelf = chosenSelf ?? data?.self ?? true;
+
+  /**
+   * Update section 'required' flag based on the switch.
    * - self=true (I am recipient): required=false (uses customerIdentity)
    * - self=false (another person): required=true (must fill recipient form)
    *
    * If data is null, section is not required (initial state before any data).
    */
   useEffect(() => {
-    if (!data) {
-      // No data yet, section not required
-      useCheckoutStore.getState().setSectionRequired(SectionId.Recipient, false);
-      return;
-    }
+    useCheckoutStore
+      .getState()
+      .setSectionRequired(SectionId.Recipient, Boolean(data) && !isRecipientSelf);
+  }, [data, isRecipientSelf]);
 
-    // self=false means another person is recipient, so validation is required
-    const required = data.self === false;
-    useCheckoutStore.getState().setSectionRequired(SectionId.Recipient, required);
-  }, [data?.self]);
+  // Another person receives the order, but the checkout has no recipient yet: the order must
+  // not go to the customer meanwhile.
+  const missingRecipient = Boolean(data) && !isRecipientSelf && data?.self === true;
+  useEffect(() => {
+    holdInvalid?.(missingRecipient);
+  }, [missingRecipient, holdInvalid]);
 
-  /**
-   * Handles switch toggle between self and another person.
-   *
-   * When switching to self=true:
-   * - Removes recipient from DB -> recipient becomes NULL
-   * - Customer identity will be used as recipient
-   *
-   * When switching to self=false:
-   * - Creates empty recipient in DB -> form becomes invalid
-   * - User must fill the form to make section valid
-   */
-  const handleSwitchChange = useCallback(
-    async (checked: boolean) => {
-      const newSelf = !checked;
-      setIsRecipientSelf(newSelf);
-
-      const deliveryGroupIds = data?.deliveryGroupIds ?? [];
-      if (!deliveryGroupIds.length) return;
-
-      try {
-        if (newSelf) {
-          // Switching to self (recipient = customer) -> remove recipient from DB
-          const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
-          await removeDeliveryRecipients({
-            deliveryGroupIds: deliveryGroupIds.filter((id) => !missing.has(id)),
-          });
-        } else {
-          // Switching to another person -> create empty recipient in DB
-          // This will invalidate the section until user fills the form
-          const missing = new Set(data?.groupIdsWithoutRecipient ?? deliveryGroupIds);
-          await addDeliveryRecipients({
-            recipients: deliveryGroupIds
-              .filter((id) => missing.has(id))
-              .map((deliveryGroupId) => ({
-                deliveryGroupId,
-                recipient: {
-                  firstName: '',
-                  lastName: '',
-                  middleName: '',
-                  phone: '',
-                },
-              })),
-          });
-        }
-      } catch (error) {
-        // The checkout API already showed the failure; the switch goes back to what is saved.
-        console.error('Failed to switch the recipient:', error);
-        setIsRecipientSelf(!newSelf);
-      }
-    },
-    [
-      data?.deliveryGroupIds,
-      data?.groupIdsWithoutRecipient,
-      removeDeliveryRecipients,
-      addDeliveryRecipients,
-    ]
-  );
-
-  /**
-   * Handles contact form submission for recipient.
-   *
-   * Always updates the recipient of every group since it was already created empty
-   * when user switched to self=false.
-   */
-  const handleContactSubmit = useCallback(
-    async (contactData: ContactForm) => {
-      const deliveryGroupIds = data?.deliveryGroupIds ?? [];
-      if (!deliveryGroupIds.length) {
-        console.error('No delivery group ID available');
-        return;
-      }
-
-      const recipientData = {
-        firstName: contactData.firstName,
-        lastName: contactData.lastName,
-        middleName: contactData.middleName,
-        phone: contactData.phone,
-      };
-
-      // Update recipient in DB (it was created empty on switch); a group split off since
-      // then gets it added. One mutation after the other: concurrent ones on the same
-      // checkout conflict (`CHECKOUT_VERSION_CONFLICT`).
-      const missing = new Set(data?.groupIdsWithoutRecipient ?? []);
-      const saved = deliveryGroupIds.filter((id) => !missing.has(id));
-      try {
-        if (saved.length > 0) {
-          await updateDeliveryRecipients({
-            updates: saved.map((deliveryGroupId) => ({
-              deliveryGroupId,
-              recipient: recipientData,
-            })),
-          });
-        }
-        if (missing.size > 0) {
-          await addDeliveryRecipients({
-            recipients: [...missing].map((deliveryGroupId) => ({
-              deliveryGroupId,
-              recipient: recipientData,
-            })),
-          });
-        }
-      } catch (error) {
-        // The checkout API already showed the failure.
-        console.error('Failed to save the recipient:', error);
-      }
-    },
-    [
-      data?.deliveryGroupIds,
-      data?.groupIdsWithoutRecipient,
-      updateDeliveryRecipients,
-      addDeliveryRecipients,
-    ]
-  );
-
-  const contact = useMemo<ContactForm | null>(
+  const savedRecipient = useMemo(
     () =>
-      data
+      data && !data.self
         ? {
             firstName: data.firstName ?? '',
             lastName: data.lastName ?? '',
@@ -184,6 +73,74 @@ export const RecipientSectionView = ({ data }: RecipientSectionViewProps) => {
           }
         : null,
     [data]
+  );
+
+  /** The recipient the buyer saved last: groups that lose it on a regrouping get it back. */
+  const [knownRecipient, setKnownRecipient] = useState(savedRecipient);
+  if (savedRecipient && JSON.stringify(savedRecipient) !== JSON.stringify(knownRecipient)) {
+    setKnownRecipient(savedRecipient);
+  }
+
+  /**
+   * Groups without the recipient while another person receives the order (a shipment split
+   * off, or the delivery regrouped): they get the saved recipient, or an empty one that keeps
+   * the section invalid until the buyer fills it. A save of the buyer waiting in the queue
+   * replaces this one.
+   */
+  const missingGroups = !isRecipientSelf ? (data?.groupIdsWithoutRecipient ?? []).join(',') : '';
+  useEffect(() => {
+    if (!missingGroups) return;
+    saveDeliveryRecipient(knownRecipient ?? EMPTY_RECIPIENT).catch((error: unknown) => {
+      console.error('Failed to add the recipient to the delivery groups:', error);
+    });
+    // Runs for a new set of groups without the recipient, not for every recipient change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missingGroups, saveDeliveryRecipient]);
+
+  /**
+   * Handles switch toggle between self and another person.
+   *
+   * When switching to self=true the recipient is removed and the customer identity is used.
+   * When switching to self=false the groups get it through the effect above (empty at first),
+   * which keeps the section invalid until the buyer fills the form.
+   */
+  const handleSwitchChange = useCallback(
+    async (checked: boolean) => {
+      const newSelf = !checked;
+      setChosenSelf(newSelf);
+      if (!newSelf || !data?.deliveryGroupIds.length) return;
+      try {
+        await saveDeliveryRecipient(null);
+      } catch (error) {
+        // The checkout API already showed the failure; the switch stays as the buyer set it.
+        console.error('Failed to remove the recipient:', error);
+      }
+    },
+    [data?.deliveryGroupIds.length, saveDeliveryRecipient]
+  );
+
+  /**
+   * Saves the recipient of every group: updated where the group has it, added where not, by
+   * the checkout as it is when the save starts (a recipient still being created is updated,
+   * not created twice). The drawer closes once it is saved.
+   */
+  const handleContactSubmit = useCallback(
+    (contactData: ContactForm) => {
+      const recipient = {
+        firstName: contactData.firstName,
+        lastName: contactData.lastName,
+        middleName: contactData.middleName,
+        phone: contactData.phone,
+      };
+      setKnownRecipient(recipient);
+      return saveDeliveryRecipient(recipient);
+    },
+    [saveDeliveryRecipient]
+  );
+
+  const contact = useMemo<ContactForm | null>(
+    () => (data ? (savedRecipient ?? knownRecipient ?? EMPTY_RECIPIENT) : null),
+    [data, savedRecipient, knownRecipient]
   );
 
   if (!data) return null;

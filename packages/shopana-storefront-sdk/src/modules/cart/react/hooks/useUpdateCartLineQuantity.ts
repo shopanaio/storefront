@@ -75,7 +75,7 @@ const useUpdateCartLineQuantity = () => {
             },
           });
         }),
-      optimisticEdit
+      { optimisticEdit }
     );
   };
   return { updateQuantity, loading: isInFlight };

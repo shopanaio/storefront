@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { TypedDocumentNode } from '@apollo/client';
+import { CombinedGraphQLErrors, type TypedDocumentNode } from '@apollo/client';
 import type { SdkCartFragment_CartFragment } from '../../../../graphql/apollo/generated/operations';
 import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 import type { CartConfig } from '../../core/config';
@@ -16,7 +16,14 @@ import useClearCart from '../hooks/useClearCart';
 import useUpdateCartLineQuantity from '../hooks/useUpdateCartLineQuantity';
 import { CartProvider } from './CartProvider';
 
-const { requests } = vi.hoisted(() => ({
+const { requests, cartQuery } = vi.hoisted(() => ({
+  cartQuery: {
+    current: { loading: false, data: undefined } as {
+      loading: boolean;
+      data: unknown;
+      error?: unknown;
+    },
+  },
   requests: [] as Array<{
     document: TypedDocumentNode;
     variables: {
@@ -28,7 +35,7 @@ const { requests } = vi.hoisted(() => ({
 }));
 
 vi.mock('@apollo/client/react', () => ({
-  useQuery: () => ({ loading: false, data: undefined }),
+  useQuery: () => cartQuery.current,
   useMutation: (document: TypedDocumentNode) => [
     ({ variables }: { variables: (typeof requests)[number]['variables'] }) =>
       new Promise((resolve, reject) => {
@@ -144,6 +151,7 @@ function mount(initialCheckout?: SdkCartFragment_CartFragment) {
 
 afterEach(() => {
   cleanup();
+  cartQuery.current = { loading: false, data: undefined };
   requests.length = 0;
   document.cookie = 'review-test-cart=; Path=/; Max-Age=0';
 });
@@ -499,5 +507,42 @@ describe('queued optimistic edits', () => {
     });
     expect(requests).toHaveLength(1);
     expect(store.cart?.lines.map((line) => line.id)).toEqual(['line-1']);
+  });
+});
+
+describe('loading the cart from the cookie', () => {
+  function mountFromCookie() {
+    document.cookie = 'review-test-cart=cart-1; Path=/';
+    const store = createCartStoreZustand(null);
+    return renderHook(() => useCartContext(), {
+      wrapper: ({ children }) => (
+        <CartProvider store={store} config={config}>
+          {children}
+        </CartProvider>
+      ),
+    });
+  }
+
+  it('SC-iv69: keeps the cart and its cookie when loading fails with a network error', () => {
+    cartQuery.current = {
+      loading: false,
+      data: undefined,
+      error: new Error('Failed to fetch'),
+    };
+    const { result } = mountFromCookie();
+    expect(document.cookie).toContain('review-test-cart=cart-1');
+    expect(result.current.cartId).toBeNull();
+  });
+
+  it('SC-iv69: drops the cart cookie only when the server says the cart does not exist', () => {
+    cartQuery.current = {
+      loading: false,
+      data: undefined,
+      error: new CombinedGraphQLErrors({
+        errors: [{ message: 'Not found', extensions: { code: 'NOT_FOUND' } }],
+      }),
+    };
+    mountFromCookie();
+    expect(document.cookie).not.toContain('review-test-cart=cart-1');
   });
 });

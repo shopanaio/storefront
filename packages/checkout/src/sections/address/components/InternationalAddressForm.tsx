@@ -96,14 +96,25 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
   );
   const [values, setValues] = useState<Values>(saved);
   const [touched, setTouched] = useState<Partial<Record<AddressField, boolean>>>({});
-  // A newly saved address replaces what the form shows (the parent remounts it per country).
+  /** Fields the buyer changed since the last save was sent; the server does not overwrite them. */
+  const [edited, setEdited] = useState<Partial<Record<AddressField, boolean>>>({});
+  // A newly saved address fills the fields the buyer has not changed since the last save
+  // (BR-q7dr); what the buyer types meanwhile and the marks of visited fields stay. No saved
+  // address (another country picked) keeps the form as it is, so matching fields carry over.
   // Compared by value: the saved address is a new object after every checkout read.
   const savedKey = JSON.stringify(saved);
   const [shownKey, setShownKey] = useState(savedKey);
   if (shownKey !== savedKey) {
     setShownKey(savedKey);
-    setValues(saved);
-    setTouched({});
+    if (address) {
+      setValues((current) => {
+        const next = { ...current };
+        for (const field of Object.keys(saved) as AddressField[]) {
+          if (!edited[field]) next[field] = saved[field];
+        }
+        return next;
+      });
+    }
   }
 
   const errors = addressErrors(format, values);
@@ -123,6 +134,7 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
     const value = toAddressValue(country.code, format, next);
     const current = toAddressValue(country.code, format, saved);
     if (address && JSON.stringify(value) === JSON.stringify(current)) return;
+    setEdited({});
     onSubmit(value);
   };
 
@@ -175,6 +187,7 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
             onChange={(value?: string) => {
               const next = { ...values, PROVINCE: value ?? '' };
               setValues(next);
+              setEdited((state) => ({ ...state, PROVINCE: true }));
               leave(field, next);
             }}
           />
@@ -190,7 +203,10 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
         value={values[field]}
         error={errorText(field)}
         autoComplete={AUTOCOMPLETE[field]}
-        onChange={(event) => setValues({ ...values, [field]: event.target.value })}
+        onChange={(event) => {
+          setValues({ ...values, [field]: event.target.value });
+          setEdited((state) => ({ ...state, [field]: true }));
+        }}
         onBlur={() => leave(field)}
       />
     );

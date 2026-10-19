@@ -7,7 +7,7 @@ import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 import { StreetModal } from '../street/StreetModal';
 import { readSettlementRef } from '../../address';
-import { doorInput, readInput } from '../../customerInput';
+import { doorDraft, doorInput, readInput } from '../../customerInput';
 import type { DoorView, Street } from '../../types';
 
 interface DoorFormProps {
@@ -27,13 +27,14 @@ interface DoorFields {
 const fieldsOf = (data: unknown, view: unknown, settlementRef: string | null): DoorFields => {
   const input = readInput(data, 'DOOR', settlementRef);
   return {
-    street: input
-      ? {
-          ref: input.streetRef,
-          name: input.streetName,
-          present: (view as DoorView | undefined)?.streetPresent ?? input.streetName,
-        }
-      : null,
+    street:
+      input?.streetRef && input.streetName
+        ? {
+            ref: input.streetRef,
+            name: input.streetName,
+            present: (view as DoorView | undefined)?.streetPresent ?? input.streetName,
+          }
+        : null,
     building: input?.building ?? '',
     apartment: input?.apartment ?? '',
     comment: input?.comment ?? '',
@@ -42,8 +43,9 @@ const fieldsOf = (data: unknown, view: unknown, settlementRef: string | null): D
 
 /**
  * Courier delivery: a street from the carrier directory, building, optional apartment and
- * a note for the courier. Once a street is picked every change is submitted; the checkout
- * saves the input when it satisfies the contract (building filled in) and typing pauses.
+ * a note for the courier. Every change is submitted; before a street is picked it is kept
+ * as a draft, so it survives a remount. The checkout saves the input when it satisfies the
+ * contract (street and building filled in) and typing pauses.
  */
 export function DoorForm({ deliveryAddress, ...props }: DoorFormProps) {
   const settlementRef = readSettlementRef(deliveryAddress);
@@ -65,7 +67,12 @@ function CourierFields({
   );
 
   const submit = (next: DoorFields) => {
-    if (!settlementRef || !next.street) {
+    if (!settlementRef) {
+      return;
+    }
+    if (!next.street) {
+      // Kept as the draft of the form until a street is picked (SC-fobt).
+      onSubmit(doorDraft({ settlementRef, ...next }));
       return;
     }
     const streetView: DoorView = { streetPresent: next.street.present };

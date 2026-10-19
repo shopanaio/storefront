@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EXPIRY_GRACE_MS, useCheckoutLifecycle } from '#checkout/state/useCheckoutLifecycle';
+import { useCheckoutLifecycle } from '#checkout/state/useCheckoutLifecycle';
 import { useRenewalStore } from '#checkout/state/renewal';
 import { usePlacementStore } from '#checkout/state/placement/placementStore';
 import { attemptStorageKey } from '#checkout/state/placement/attemptJournal';
@@ -55,7 +55,7 @@ describe('useCheckoutLifecycle', () => {
     expect(useRenewalStore.getState().state).toBe('renewed');
   });
 
-  it('reads the checkout again at expiresAt and replaces it only after the grace period', async () => {
+  it('SC-3ffz: reads the checkout again at expiresAt and keeps it while the server keeps it open', async () => {
     mocks.checkout = checkout();
     renderHook(() => useCheckoutLifecycle('checkout-1'));
 
@@ -63,12 +63,12 @@ describe('useCheckoutLifecycle', () => {
       vi.advanceTimersByTime(60_000);
     });
     expect(mocks.refetch).toHaveBeenCalledTimes(1);
-    expect(mocks.createCart).not.toHaveBeenCalled();
 
+    // The browser clock runs an hour ahead; the server still keeps the checkout open.
     await act(async () => {
-      vi.advanceTimersByTime(EXPIRY_GRACE_MS);
+      vi.advanceTimersByTime(60 * 60 * 1000);
     });
-    expect(mocks.createCart).toHaveBeenCalledTimes(1);
+    expect(mocks.createCart).not.toHaveBeenCalled();
   });
 
   it('replaces the checkout when a mutation finds it expired', async () => {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { MockedProvider } from '@apollo/client/testing/react';
 import '#checkout/vendors/liqpay/register';
@@ -118,29 +118,39 @@ const deliveryOption = (
   customerInputContract,
 });
 
+const deliveryAddress = (address1: string | null = null) => ({
+  addressId: 'a1',
+  countryCode: 'UA',
+  address1,
+  address2: null,
+  postalCode: null,
+  provinceCode: null,
+  city: 'Київ',
+  data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
+});
+
+const deliveryRenderer = (
+  provider: string,
+  methods: ProviderMethod[],
+  address = deliveryAddress(),
+  selectedMethod: ProviderMethod | null = null
+) => (
+  <MockedProvider mocks={[]}>
+    <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
+      <ProviderRenderer
+        moduleType={ProviderModuleType.Delivery}
+        provider={provider}
+        availableMethods={methods}
+        selectedMethod={selectedMethod}
+        onUpdateMethodData={() => {}}
+        deliveryAddress={address}
+      />
+    </NextIntlClientProvider>
+  </MockedProvider>
+);
+
 const renderDelivery = (provider: string, methods: ProviderMethod[]) =>
-  render(
-    <MockedProvider mocks={[]}>
-      <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
-        <ProviderRenderer
-          moduleType={ProviderModuleType.Delivery}
-          provider={provider}
-          availableMethods={methods}
-          selectedMethod={null}
-          deliveryAddress={{
-            addressId: 'a1',
-            countryCode: 'UA',
-            address1: null,
-            address2: null,
-            postalCode: null,
-            provinceCode: null,
-            city: 'Київ',
-            data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
-          }}
-        />
-      </NextIntlClientProvider>
-    </MockedProvider>
-  );
+  render(deliveryRenderer(provider, methods));
 
 describe('ProviderRenderer (delivery)', () => {
   it('renders each Nova Poshta service with the form of its receiving type', async () => {
@@ -197,5 +207,23 @@ describe('ProviderRenderer (delivery)', () => {
 
     expect(await screen.findByText('UPS_STANDARD')).toBeTruthy();
     expect(screen.getByText('Checkout.delivery-form-unsupported')).toBeTruthy();
+  });
+
+  it('SC-u1rm: the generic form keeps what was typed when the address changes elsewhere', async () => {
+    const fedex = deliveryOption('h-fx', 'FEDEX_GROUND', 'test-fedex', {
+      schema: {
+        type: 'object',
+        properties: { deliveryInstructions: { type: 'string', maxLength: 500 } },
+        additionalProperties: false,
+      },
+    });
+    const { rerender } = render(deliveryRenderer('test-fedex', [fedex], deliveryAddress(), fedex));
+    await screen.findByText('Delivery instructions');
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Ring twice' } });
+
+    rerender(deliveryRenderer('test-fedex', [fedex], deliveryAddress('Main st 1'), fedex));
+
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('Ring twice');
   });
 });

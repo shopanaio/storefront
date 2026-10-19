@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Checkout } from '#checkout/types/entity';
-import { mapCheckoutToAddressFormData } from './mapper';
+import { addressMutations, mapCheckoutToAddressFormData } from './mapper';
 
 const line = (id: string) => ({ id }) as Checkout.Line;
 const address = (id: string) =>
@@ -49,5 +49,30 @@ describe('mapCheckoutToAddressFormData', () => {
 
     expect(data?.address?.addressId).toBe('a2');
     expect(data?.unaddressedLineIds).toEqual(['l1']);
+  });
+});
+
+describe('addressMutations', () => {
+  const value = { countryCode: 'UA', city: 'Львів' } as const;
+
+  it('adds the first address to every line', () => {
+    expect(addressMutations({ addressIds: [], unaddressedLineIds: ['l1'] }, value)).toEqual({
+      update: null,
+      add: { addresses: [{ address: value, checkoutLineIds: ['l1'] }] },
+    });
+  });
+
+  it('updates a saved address instead of adding it again', () => {
+    expect(addressMutations({ addressIds: ['a1'], unaddressedLineIds: [] }, value)).toEqual({
+      update: { updates: [{ addressId: 'a1', address: value }] },
+      add: null,
+    });
+  });
+
+  it('updates the saved address and adds it to the lines of a group split off later', () => {
+    expect(addressMutations({ addressIds: ['a1'], unaddressedLineIds: ['l2'] }, value)).toEqual({
+      update: { updates: [{ addressId: 'a1', address: value }] },
+      add: { addresses: [{ address: value, checkoutLineIds: ['l2'] }] },
+    });
   });
 });

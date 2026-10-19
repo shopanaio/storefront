@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 import { useQuery } from '@apollo/client/react';
 import type { Checkout } from '#checkout/types/entity';
 import { mapApiCheckoutToCheckout } from '#checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
@@ -22,6 +23,19 @@ const CheckoutDataContext = createContext<CheckoutDataContextValue | undefined>(
   undefined
 );
 
+/** Whether `next` is a snapshot of the same checkout taken before `shown`. */
+function isOlderSnapshot(
+  next: StorefrontUseCheckoutFragment | null,
+  shown: StorefrontUseCheckoutFragment | null
+): boolean {
+  return Boolean(
+    next &&
+      shown &&
+      next.id === shown.id &&
+      Date.parse(next.updatedAt) < Date.parse(shown.updatedAt)
+  );
+}
+
 export const CheckoutDataContextProvider: React.FC<{
   children: React.ReactNode;
   checkoutId: string | null;
@@ -31,7 +45,28 @@ export const CheckoutDataContextProvider: React.FC<{
     skip: !checkoutId,
     fetchPolicy: 'network-only',
   });
-  const apiCheckout: StorefrontUseCheckoutFragment | null = query.data?.checkout ?? null;
+  const received: StorefrontUseCheckoutFragment | null = query.data?.checkout ?? null;
+  // An answer that left the checkout earlier than the one shown (a read sent before the last
+  // write, or a write of another tab) does not replace it. Display only: nothing is sent.
+  const [shown, setShown] = useState(received);
+  const apiCheckout = isOlderSnapshot(received, shown) ? shown : received;
+  if (apiCheckout !== shown) {
+    setShown(apiCheckout);
+  }
+
+  // A cart change made outside the checkout (the cart drawer) changes the delivery groups and
+  // the selections; they are read again right after it, in the queue of writes (BR-tpm1).
+  const { enqueueMutation, subscribeCartUpdates } = useCartSetters();
+  const { refetch } = query;
+  useEffect(
+    () =>
+      subscribeCartUpdates((cart) => {
+        if (checkoutId && cart?.id === checkoutId) {
+          void enqueueMutation(() => refetch()).catch(() => undefined);
+        }
+      }),
+    [checkoutId, enqueueMutation, refetch, subscribeCartUpdates]
+  );
   // Mapped once for every consumer; the value changes only with the query state.
   const checkout = useMemo(
     () => (apiCheckout ? mapApiCheckoutToCheckout(apiCheckout) : null),

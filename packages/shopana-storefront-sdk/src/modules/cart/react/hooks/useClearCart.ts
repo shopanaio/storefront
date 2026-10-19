@@ -56,8 +56,10 @@ const useClearCart = (): UseClearCartReturn => {
               },
             });
           }),
-        () => {
-          actions.checkoutClear();
+        {
+          optimisticEdit: () => {
+            actions.checkoutClear();
+          },
         }
       );
     },

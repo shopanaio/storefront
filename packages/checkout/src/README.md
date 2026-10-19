@@ -39,6 +39,8 @@ Sections live under `sections/*` and include:
   - Loads checkout with `StorefrontLoadCheckoutQueryDocument` and Apollo `useQuery`.
   - Converts generated Apollo data to domain `Checkout.Checkout` via `mapApiCheckoutToCheckout`.
   - Provides `checkout`, `loading/loaded`, and errors.
+  - Shows a snapshot only when it is not older (`updatedAt`) than the one on screen, so an answer from another tab never replaces a newer state; Apollo's cache itself is not changed.
+  - Reads the checkout again through the mutation queue when the cart drawer changed the lines of this checkout (`subscribeCartUpdates`).
 - `context/CheckoutApiContext.tsx`:
   - Builds `CheckoutApi` via `api/useCreateCheckoutApi` and exposes it through `useCheckoutApi`.
 
@@ -58,13 +60,17 @@ Sections live under `sections/*` and include:
 
 ## API Layer
 
-- API contract: `api/interface.ts` — set of methods for atomic operations (select payment/shipping, addresses, recipients, promo codes, note, submit).
+- API contract: `api/interface.ts` — set of methods for atomic operations (select payment/shipping, save the delivery address and recipient, promo codes, note, submit).
 - API factory implementation: `api/useCreateCheckoutApi.ts`
   - Uses `useCheckoutOperation` for each operation with `OperationKey` and `sectionId`.
   - Automatically injects `checkoutId` from `CheckoutDataContext` into all calls.
+  - Each write names the resource it changes: `contact`, `payment`, `note`, `address`, `recipient`, `delivery:<groupId>`. Promo codes, address removal and submit have no key.
+  - `saveDeliveryAddress` and `saveDeliveryRecipient` are one queued task each: when the task starts it reads the checkout from the Apollo cache and sends the add, update or remove mutations that the current groups need (`addressMutations`, `recipientMutations`).
+  - `submitCheckout` first sends input a section holds back (`state/pendingInputs.ts`, the order note), then waits until every queued write settled, then places the order.
+- Mutation queue: every checkout and cart write goes through the one queue of the SDK cart (`createCartMutationQueue`, `enqueueMutation` of `useCartSetters`), one at a time in the order asked for. A waiting write of the same resource is replaced by the latest one and every caller gets its result; `waitForMutations()` resolves once everything queued before it settled. The client sends no version and does not retry on conflicts; sections keep no queues of their own.
 - Mutation wrapper: `api/useCheckoutOperation.ts`
-  - Wraps the typed Apollo mutation adapter with: promise-based API, debounce, race protection, `OperationStart/End/Error` events, and optional error toasts.
-  - Supports `commit` and `commitScheduled`.
+  - Wraps the typed Apollo mutation adapter with: promise-based API, debounce, `OperationStart/End/Error` events, and optional error toasts.
+  - `commit(variables, { key })` joins the queue at once; `send` runs unqueued, only inside a queued task; `commitScheduled` is debounced.
 
 ## Validation
 
@@ -125,7 +131,7 @@ Files: `state/placement/*`, `components/result/*`, `page/return.tsx`.
 Files: `state/useCheckoutLifecycle.ts`, `state/renewal.ts`, `hooks/useCheckoutNotFound.ts`.
 
 - `PLACED` is handled like `CHECKOUT_ALREADY_PLACED`: the placement of this browser is followed, otherwise the buyer is told the order was already placed.
-- `EXPIRED` or `ABANDONED` from the server, or a mutation rejected with `CHECKOUT_EXPIRED`/`CHECKOUT_ABANDONED`: a new checkout with the same lines (purchase, attributes, tags, components) replaces it once (R5); contacts and promo codes are not carried over. When `expiresAt` passes by the browser clock, the checkout is read again and replaced only `EXPIRY_GRACE_MS` (2 min) later if the server still keeps it open. Nothing is replaced while a placement attempt of this browser (`sent` or `resolved`) owns the checkout. `RenewalNotice` tells the buyer, or offers a retry when creating it failed.
+- `EXPIRED` or `ABANDONED` from the server, or a mutation rejected with `CHECKOUT_EXPIRED`/`CHECKOUT_ABANDONED`: a new checkout with the same lines (purchase, attributes, tags, components) replaces it once (R5); contacts and promo codes are not carried over. When `expiresAt` passes by the browser clock, the checkout is read again once; it is replaced only when the server answers that it is closed, never by the browser clock alone. Nothing is replaced while a placement attempt of this browser (`sent` or `resolved`) owns the checkout. `RenewalNotice` tells the buyer, or offers a retry when creating it failed.
 - A load error shows a message with "Try again"; a checkout that is not found sends the buyer home with the cart open, unless this browser has a placement attempt for it.
 
 ## Delivery Address
@@ -135,10 +141,20 @@ Files: `sections/address/**`, `hooks/useDeliveryCountries.ts`.
 - Countries come from `checkoutDeliveryCountries(localeCode)` (B6). The selector is shown only for more than one country; the form country is the saved one, then the customer's, then the first, counting only countries the store delivers to. Without any country the section says delivery is unavailable.
 - A country with a module registered as `ProviderModuleType.Address` (slug = country code) uses it: Ukraine keeps its city-first form. Any other country gets `InternationalAddressForm`, laid out by the country address format (rows, required fields, province list, postal code pattern); name and phone stay in the recipient section.
 - The address carries neutral fields only (`countryCode`, `city`, `address1`, `address2`, `provinceCode` without the country prefix, `postalCode`) and carrier hints in `data.carriers[carrierCode]`.
+- A field the buyer edited keeps its value until it is saved; a server answer fills only untouched fields. A failed save keeps the input and says so next to the form. Picking the same city again saves nothing.
+
+## Delivery
+
+Files: `sections/delivery/**`.
+
+- A click on the selected method sends nothing (`CheckoutMethodPanel`).
+- The customer input of each method is saved once typing pauses; a failure is retried with backoff, a rejection for good shows its reason and a button to save again. The order stays blocked until the input is saved.
+- Several shipments: the method is selected in each group; a group whose selection failed is named, and "Try again" selects the method only there.
+- The courier form keeps building, apartment and comment typed before the street as a draft (never sent), so they survive a remount. The generic form starts over only when the destination (country, city, carrier data) changes.
 
 ## Promo Codes
 
-Files: `sections/promo/**`. Every applied code is listed and removable on its own. A code the API accepts but the pricing does not apply is reported by the field and removed again; with other codes applied, the message says it may not combine with them. Errors are shown by code next to the field. The theme's optional `LoyaltySlot` renders right after the codes.
+Files: `sections/promo/**`. The text typed in the field is kept in a store (`draft.ts`), so it survives a remount of the section. Every applied code is listed and removable on its own. A code the API accepts but the pricing does not apply is reported by the field and removed again; with other codes applied, the message says it may not combine with them. Errors are shown by code next to the field. The theme's optional `LoyaltySlot` renders right after the codes.
 
 ## Configuration
 
@@ -162,7 +178,8 @@ Files: `sections/promo/**`. Every applied code is listed and removable on its ow
 ## Principles and Invariants
 
 - Section containers do not render UI — they only register, validate, and publish state. Rendering happens in the View.
-- All mutations are wrapped with `useCheckoutOperation` specifying `OperationKey` and optionally `sectionId`.
+- All mutations are wrapped with `useCheckoutOperation` specifying `OperationKey` and optionally `sectionId`, and go through the one mutation queue of the SDK cart.
+- Input the buyer typed is never overwritten by a server answer before it is saved; a contact drawer closes only after a successful save.
 - Validation is powered by Yup; convert errors into `Record<string,string>`.
 - `checkoutBus` is the single coordination point between UI/store/API.
 

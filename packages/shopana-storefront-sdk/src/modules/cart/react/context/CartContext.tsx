@@ -5,6 +5,8 @@ import type { CartStore, CartActions } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartIdUtils } from '../../core/utils/cartId';
 import type { UseBoundStore, StoreApi } from 'zustand';
+import type { MutationQueueOptions } from '../../core/utils/mutationQueue';
+import type { SdkCartFragment_CartFragment } from '../../../../graphql/apollo/generated/operations';
 
 /**
  * Cart context value providing store, config, and utilities
@@ -40,10 +42,23 @@ export interface CartContextValue {
    * Set normalized cart data
    */
   setCartKey: (key: any | null) => void;
+  /**
+   * Runs a write of the cart or its checkout after the writes queued before it; a waiting
+   * write with the same `key` is replaced by this one.
+   */
   enqueueMutation: <T>(
     operation: () => Promise<T>,
-    optimisticEdit?: () => void
+    options?: MutationQueueOptions
   ) => Promise<T>;
+  /** Resolves once every write queued so far has settled. */
+  waitForMutations: () => Promise<void>;
+  /**
+   * Calls `listener` with the checkout each confirmed cart write returns (lines added,
+   * changed or removed). Returns the unsubscribe function.
+   */
+  subscribeCartUpdates: (
+    listener: (checkout: SdkCartFragment_CartFragment | null) => void
+  ) => () => void;
   getConfirmedLineId: (
     lineId: string,
     purchasableId: string | undefined
@@ -81,6 +96,8 @@ type StableCartContextValue = Pick<
   | 'setCartKey'
   | 'setId'
   | 'enqueueMutation'
+  | 'waitForMutations'
+  | 'subscribeCartUpdates'
   | 'getConfirmedLineId'
 >;
 
@@ -95,10 +112,23 @@ export interface CartContextProviderProps {
   config: Required<CartConfig>;
   cartKey: any | null;
   setCartKey: (key: any | null) => void;
+  /**
+   * Runs a write of the cart or its checkout after the writes queued before it; a waiting
+   * write with the same `key` is replaced by this one.
+   */
   enqueueMutation: <T>(
     operation: () => Promise<T>,
-    optimisticEdit?: () => void
+    options?: MutationQueueOptions
   ) => Promise<T>;
+  /** Resolves once every write queued so far has settled. */
+  waitForMutations: () => Promise<void>;
+  /**
+   * Calls `listener` with the checkout each confirmed cart write returns (lines added,
+   * changed or removed). Returns the unsubscribe function.
+   */
+  subscribeCartUpdates: (
+    listener: (checkout: SdkCartFragment_CartFragment | null) => void
+  ) => () => void;
   getConfirmedLineId: (
     lineId: string,
     purchasableId: string | undefined
@@ -123,6 +153,8 @@ export function CartContextProvider({
   cartKey,
   setCartKey,
   enqueueMutation,
+  waitForMutations,
+  subscribeCartUpdates,
   getConfirmedLineId,
   cartId,
   setId,
@@ -148,6 +180,8 @@ export function CartContextProvider({
       cartKey,
       setCartKey,
       enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
       getConfirmedLineId,
       cartId,
       setId,
@@ -162,6 +196,8 @@ export function CartContextProvider({
       cartKey,
       setCartKey,
       enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
       getConfirmedLineId,
       cartId,
       setId,
@@ -178,6 +214,8 @@ export function CartContextProvider({
       cartIdUtils,
       setCartKey,
       enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
       getConfirmedLineId,
       setId,
     }),
@@ -189,6 +227,8 @@ export function CartContextProvider({
       setCartKey,
       setId,
       enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
       getConfirmedLineId,
     ]
   );
@@ -254,9 +294,22 @@ export function useCartStoreApi(): CartStore {
 
 /** Returns stable cart setters without subscribing to cart metadata. */
 export function useCartSetters() {
-  const { setCartKey, setId, enqueueMutation, getConfirmedLineId } =
-    useStableCartContext();
-  return { setCartKey, setId, enqueueMutation, getConfirmedLineId };
+  const {
+    setCartKey,
+    setId,
+    enqueueMutation,
+    waitForMutations,
+    subscribeCartUpdates,
+    getConfirmedLineId,
+  } = useStableCartContext();
+  return {
+    setCartKey,
+    setId,
+    enqueueMutation,
+    waitForMutations,
+    subscribeCartUpdates,
+    getConfirmedLineId,
+  };
 }
 
 /**

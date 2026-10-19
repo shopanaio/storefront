@@ -27,7 +27,8 @@ export type ContactForm = {
 
 export interface ContactSelectProps {
   data: ContactForm | null;
-  onSubmit: (dto: ContactForm) => void;
+  /** Saves the contact; the drawer closes once it resolves and stays open when it fails. */
+  onSubmit: (dto: ContactForm) => Promise<void> | void;
   title: ReactNode;
 }
 
@@ -58,11 +59,12 @@ export const ContactSelect = ({
   const { control, reset, watch, formState } = methods;
   const { errors } = formState;
 
-  // Compared by value: the parent passes a new object on every checkout read, and a reset
-  // on each of them would wipe what the buyer is typing in the open drawer.
+  // Compared by value: the parent passes a new object on every checkout read. A saved value
+  // fills only the fields the buyer has not changed since the last save, so an answer (a
+  // normalized phone) never wipes what the buyer is typing in the open drawer (BR-q7dr).
   const dataKey = JSON.stringify(data ?? defaultValues);
   useEffect(() => {
-    reset(JSON.parse(dataKey) as ContactForm);
+    reset(JSON.parse(dataKey) as ContactForm, { keepDirtyValues: true });
   }, [dataKey, reset]);
 
   const { firstName, lastName, middleName, phone } = watch();
@@ -88,9 +90,19 @@ export const ContactSelect = ({
     return formatPhoneNumberIntl(phone) || phone;
   }, [phone]);
 
-  const onDrawerSubmit = methods.handleSubmit((data) => {
-    onSubmit(data);
-    setOpen(false);
+  const [saving, setSaving] = useState(false);
+  const onDrawerSubmit = methods.handleSubmit(async (values) => {
+    // What is sent becomes the saved state of the form: fields changed after it stay dirty.
+    reset(values);
+    setSaving(true);
+    try {
+      await onSubmit(values);
+      setOpen(false);
+    } catch {
+      // The failure is shown by the checkout API; the drawer keeps the input for a retry.
+    } finally {
+      setSaving(false);
+    }
   });
 
   const ArrowIcon = hasValue ? PiArrowCircleRightDuotone : PiArrowCircleRight;
@@ -226,7 +238,9 @@ export const ContactSelect = ({
               error={errors.phone?.message}
               autoComplete="tel"
             />
-            <StickyButton onClick={onDrawerSubmit}>{t('save')}</StickyButton>
+            <StickyButton onClick={onDrawerSubmit} loading={saving}>
+              {t('save')}
+            </StickyButton>
           </Flex>
         </FormProvider>
       </DrawerBase>

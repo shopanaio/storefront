@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useCreateCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useCreateCart';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useNow } from '#checkout/hooks/useNow';
@@ -7,12 +7,6 @@ import { createAttemptJournal } from '#checkout/state/placement/attemptJournal';
 import { isPlacementBusy, usePlacementStore } from '#checkout/state/placement/placementStore';
 import { renewalInput, useRenewalStore } from '#checkout/state/renewal';
 import type { Checkout } from '#checkout/types/entity';
-
-/**
- * How long after `expiresAt` by the browser clock the checkout is replaced when the server has
- * not reported it expired yet: the browser clock may run ahead of the server one.
- */
-export const EXPIRY_GRACE_MS = 2 * 60 * 1000;
 
 /** Closed by the server: a checkout in this status can only be replaced. */
 const isClosedByServer = (checkout: Checkout.Checkout) =>
@@ -34,8 +28,8 @@ const hasLiveAttempt = (checkoutId: string) => {
  *   placement of this browser or tells the buyer the order was already placed;
  * - `EXPIRED` or `ABANDONED` from the server, or a mutation rejected as expired or abandoned:
  *   a new checkout with the same lines replaces it (R5), once per checkout;
- * - `expiresAt` passed by the browser clock: the checkout is read again, and it is replaced
- *   only `EXPIRY_GRACE_MS` later if the server still keeps it open.
+ * - `expiresAt` passed by the browser clock: the checkout is read again, and only the server
+ *   answer decides (BR-tpm1): the browser clock may run ahead of the server one.
  * Nothing is replaced while a placement attempt of this browser owns the checkout.
  */
 export function useCheckoutLifecycle(checkoutId: string | null) {
@@ -45,12 +39,7 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
   const setRetry = useRenewalStore((state) => state.setRetry);
   const current = checkout && checkout.id === checkoutId ? checkout : null;
   const expiresAt = current?.expiresAt ?? null;
-  const graceEndsAt = useMemo(
-    () => (expiresAt ? new Date(expiresAt.getTime() + EXPIRY_GRACE_MS) : null),
-    [expiresAt]
-  );
   const now = useNow(expiresAt);
-  const graceNow = useNow(graceEndsAt);
   const handledRef = useRef<string | null>(null);
   const refetchedRef = useRef<string | null>(null);
 
@@ -93,15 +82,12 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
     if (!current.expiresAt) {
       return;
     }
-    const expiry = current.expiresAt.getTime();
-    if (graceNow >= expiry + EXPIRY_GRACE_MS) {
-      renew(current);
-    } else if (now >= expiry && refetchedRef.current !== current.id) {
+    if (now >= current.expiresAt.getTime() && refetchedRef.current !== current.id) {
       // The server may have closed it already, or may still keep it open.
       refetchedRef.current = current.id;
       void refetch();
     }
-  }, [current, now, graceNow, renew, refetch]);
+  }, [current, now, renew, refetch]);
 
   useEffect(() => {
     const off = onCheckoutEvent(CheckoutEvent.CheckoutClosed, ({ code }) => {

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import useRemoveItemFromCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useRemoveItemFromCart';
+import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { undeliverableLines } from '#checkout/sections/delivery/shipments';
 import type { Checkout } from '#checkout/types/entity';
@@ -17,12 +18,12 @@ export function useUndeliverableLines(): Checkout.Line[] {
 
 /**
  * Removes lines from the cart. The removal goes through the cart, so the cart drawer and
- * counters follow it; the checkout is read again afterwards, as the delivery groups are
- * recalculated without the lines.
+ * counters follow it; the checkout reads itself again after every cart change (see
+ * `CheckoutDataContextProvider`), and the removal ends once that read is done.
  */
 export function useRemoveCartLines() {
   const { removeFromCart } = useRemoveItemFromCart();
-  const { refetch } = useCheckoutData();
+  const { waitForMutations } = useCartSetters();
   const [removing, setRemoving] = useState(false);
 
   const remove = useCallback(
@@ -33,11 +34,11 @@ export function useRemoveCartLines() {
           await removeFromCart({ lineId: line.id });
         }
       } finally {
-        await refetch().catch(() => {});
+        await waitForMutations().catch(() => {});
         setRemoving(false);
       }
     },
-    [removeFromCart, refetch]
+    [removeFromCart, waitForMutations]
   );
 
   return { remove, removing };

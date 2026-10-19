@@ -7,6 +7,7 @@ import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import { TbTicket, TbX } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
+import { usePromoDraft } from '../draft';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutTheme } from '#checkout/theme';
 import { useConfirm } from '#checkout/ui/useConfirm';
@@ -40,7 +41,8 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const confirm = useConfirm();
   const codes = useMemo(() => data?.codes ?? [], [data?.codes]);
 
-  const [code, setCode] = useState('');
+  const code = usePromoDraft((state) => state.code);
+  const setCode = usePromoDraft((state) => state.setCode);
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
 
@@ -66,7 +68,7 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
     } finally {
       setApplying(false);
     }
-  }, [code, codes, applying, addPromoCode, removePromoCode, t]);
+  }, [code, codes, applying, addPromoCode, removePromoCode, setCode, t]);
 
   const handleRemove = useCallback(
     async (promoCode: string) => {

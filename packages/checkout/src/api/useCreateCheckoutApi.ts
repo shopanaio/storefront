@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { useApolloClient } from '@apollo/client/react';
+import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 import { CheckoutApi } from '#checkout/api/interface';
 import { useCheckoutOperation } from '#checkout/api/useCheckoutOperation';
 import { OperationKey } from '#checkout/state/checkoutBus';
@@ -18,6 +20,18 @@ import { removePromoCodeMutation } from '#checkout/api/mutations/removePromoCode
 import { updateCustomerNoteMutation } from '#checkout/api/mutations/updateCustomerNoteMutation.shopana';
 import { submitCheckoutMutation } from '#checkout/api/mutations/submitCheckoutMutation.shopana';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { StorefrontLoadCheckoutQueryDocument } from '#checkout/graphql/operations';
+import { mapApiCheckoutToCheckout } from '#checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
+import {
+  addressMutations,
+  mapCheckoutToAddressFormData,
+} from '#checkout/sections/address/mapper';
+import {
+  mapCheckoutToRecipientFormData,
+  recipientMutations,
+} from '#checkout/sections/recipient/mapper';
+import { flushPendingInputs } from '#checkout/state/pendingInputs';
+import type { Checkout } from '#checkout/types/entity';
 import { CombinedGraphQLErrors } from '@apollo/client';
 import {
   graphQLErrorPlacement,
@@ -28,6 +42,13 @@ import {
 export function useCreateCheckoutApi(): CheckoutApi {
   const t = useTranslations('Checkout');
   const { checkout = null } = useCheckoutData() || {};
+  const client = useApolloClient();
+  const { enqueueMutation, waitForMutations } = useCartSetters();
+  /** Checkout of the latest render, for tasks that start later in the queue. */
+  const latestCheckout = useRef(checkout);
+  useEffect(() => {
+    latestCheckout.current = checkout;
+  });
   const { commit: commitSelectDelivery } = useCheckoutOperation(
     selectDeliveryMethodMutation,
     {
@@ -62,7 +83,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Contact,
     }
   );
-  const { commit: commitAddAddresses } = useCheckoutOperation(
+  const { send: sendAddAddresses } = useCheckoutOperation(
     addDeliveryAddressesMutation,
     {
       errorMessage: t('error-save-address'),
@@ -70,7 +91,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Address,
     }
   );
-  const { commit: commitUpdateAddresses } = useCheckoutOperation(
+  const { send: sendUpdateAddresses } = useCheckoutOperation(
     updateDeliveryAddressesMutation,
     {
       errorMessage: t('error-save-address'),
@@ -120,7 +141,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       rejectOnUserErrors: false,
     }
   );
-  const { commit: commitAddRecipients } = useCheckoutOperation(
+  const { send: sendAddRecipients } = useCheckoutOperation(
     addDeliveryRecipientsMutation,
     {
       errorMessage: t('error-save-recipient'),
@@ -128,7 +149,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Recipient,
     }
   );
-  const { commit: commitUpdateRecipients } = useCheckoutOperation(
+  const { send: sendUpdateRecipients } = useCheckoutOperation(
     updateDeliveryRecipientsMutation,
     {
       errorMessage: t('error-save-recipient'),
@@ -136,7 +157,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Recipient,
     }
   );
-  const { commit: commitRemoveRecipients } = useCheckoutOperation(
+  const { send: sendRemoveRecipients } = useCheckoutOperation(
     removeDeliveryRecipientsMutation,
     {
       errorMessage: t('error-remove-recipient'),
@@ -153,57 +174,97 @@ export function useCreateCheckoutApi(): CheckoutApi {
         checkoutId: checkout.id,
       };
     };
+    /**
+     * The checkout as the last answer left it. A task that waited in the queue reads it when it
+     * starts: the answer of the write before it is in the Apollo cache already, while the
+     * rendered checkout may not have caught up yet.
+     */
+    const currentCheckout = (): Checkout.Checkout => {
+      const { checkoutId } = mutationContext();
+      const data = client.readQuery({
+        query: StorefrontLoadCheckoutQueryDocument,
+        variables: { checkoutId },
+      });
+      const current = data?.checkout
+        ? mapApiCheckoutToCheckout(data.checkout)
+        : latestCheckout.current;
+      if (!current) {
+        throw new Error('Checkout is unavailable');
+      }
+      return current;
+    };
     return {
       selectDeliveryMethod: async (input) => {
-        await commitSelectDelivery({
-          input: { ...input, ...mutationContext() },
-        });
+        await commitSelectDelivery(
+          { input: { ...input, ...mutationContext() } },
+          { key: `delivery:${input.deliveryGroupId}` }
+        );
       },
       selectPaymentMethod: async (input) => {
-        await commitSelectPayment({
-          input: { ...input, ...mutationContext() },
-        });
+        await commitSelectPayment(
+          { input: { ...input, ...mutationContext() } },
+          { key: 'payment' }
+        );
       },
       updatePaymentMethod: async (input) => {
-        await commitSelectPayment({
-          input: { ...input, ...mutationContext() },
-        });
+        await commitSelectPayment(
+          { input: { ...input, ...mutationContext() } },
+          { key: 'payment' }
+        );
       },
       updateCustomerIdentity: async (input) => {
-        await commitUpdateIdentity({
-          input: { ...input, ...mutationContext() },
-        });
+        await commitUpdateIdentity(
+          { input: { ...input, ...mutationContext() } },
+          { key: 'contact' }
+        );
       },
-      addDeliveryAddresses: async (input) => {
-        await commitAddAddresses({ input: { ...input, ...mutationContext() } });
-      },
-      updateDeliveryAddresses: async (input) => {
-        await commitUpdateAddresses({
-          input: { ...input, ...mutationContext() },
-        });
+      saveDeliveryAddress: async (address) => {
+        await enqueueMutation(
+          async () => {
+            const data = mapCheckoutToAddressFormData(currentCheckout());
+            if (!data) return;
+            const { update, add } = addressMutations(data, address);
+            const context = mutationContext();
+            if (update) {
+              await sendUpdateAddresses({ input: { ...update, ...context } });
+            }
+            if (add) {
+              await sendAddAddresses({ input: { ...add, ...context } });
+            }
+          },
+          { key: 'address' }
+        );
       },
       removeDeliveryAddresses: async (input) => {
         await commitRemoveAddresses({
           input: { ...input, ...mutationContext() },
         });
       },
-      addDeliveryRecipients: async (input) => {
-        await commitAddRecipients({
-          input: { ...input, ...mutationContext() },
-        });
-      },
-      updateDeliveryRecipients: async (input) => {
-        await commitUpdateRecipients({
-          input: { ...input, ...mutationContext() },
-        });
-      },
-      removeDeliveryRecipients: async (input) => {
-        await commitRemoveRecipients({
-          input: { ...input, ...mutationContext() },
-        });
+      saveDeliveryRecipient: async (recipient) => {
+        await enqueueMutation(
+          async () => {
+            const data = mapCheckoutToRecipientFormData(currentCheckout());
+            if (!data) return;
+            const { remove, update, add } = recipientMutations(data, recipient);
+            const context = mutationContext();
+            if (remove) {
+              await sendRemoveRecipients({ input: { ...remove, ...context } });
+            }
+            if (update) {
+              await sendUpdateRecipients({ input: { ...update, ...context } });
+            }
+            if (add) {
+              await sendAddRecipients({ input: { ...add, ...context } });
+            }
+          },
+          { key: 'recipient' }
+        );
       },
       updateCustomerNote: async (input) => {
-        await commitUpdateNote({ input: { ...input, ...mutationContext() } });
+        await commitUpdateNote(
+          { input: { ...input, ...mutationContext() } },
+          { key: 'note' }
+        );
       },
       addPromoCode: async (input) => {
         const response = await commitAddPromo({ input: { ...input, ...mutationContext() } });
@@ -215,11 +276,16 @@ export function useCreateCheckoutApi(): CheckoutApi {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });
       },
       updateShippingMethod: async (input) => {
-        await commitUpdateDelivery({
-          input: { ...input, ...mutationContext() },
-        });
+        await commitUpdateDelivery(
+          { input: { ...input, ...mutationContext() } },
+          { key: `delivery:${input.deliveryGroupId}` }
+        );
       },
       submitCheckout: async (input) => {
+        // The order goes with everything the buyer entered: a note waiting for a pause in
+        // typing is sent now, and placeOrder waits for every write queued before it.
+        flushPendingInputs();
+        await waitForMutations();
         try {
           const response = await commitSubmitCheckout({ input });
           return mapPlacementPayload(response.placeOrder);
@@ -238,16 +304,19 @@ export function useCreateCheckoutApi(): CheckoutApi {
     };
   }, [
     checkout,
+    client,
+    enqueueMutation,
+    waitForMutations,
     commitSelectDelivery,
     commitUpdateDelivery,
     commitSelectPayment,
     commitUpdateIdentity,
-    commitAddAddresses,
-    commitUpdateAddresses,
+    sendAddAddresses,
+    sendUpdateAddresses,
     commitRemoveAddresses,
-    commitAddRecipients,
-    commitUpdateRecipients,
-    commitRemoveRecipients,
+    sendAddRecipients,
+    sendUpdateRecipients,
+    sendRemoveRecipients,
     commitUpdateNote,
     commitAddPromo,
     commitRemovePromo,

@@ -105,7 +105,7 @@ describe('Shipments', () => {
     act(() => shared.onSelectingChange?.(true));
     expect(screen.getByTestId('shared-list')).toBeTruthy();
 
-    // The selection failed in one group: the shipments still differ and are shown one by one.
+    // The selection ended and the shipments still differ: they are shown one by one.
     act(() => shared.onSelectingChange?.(false));
     expect(screen.queryByTestId('shared-list')).toBeNull();
     expect(screen.getAllByTestId('shipment-list')).toHaveLength(2);

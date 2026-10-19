@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { Alert, Button, Flex } from 'antd';
 import { useTranslations } from 'next-intl';
 import { ProviderRenderer } from '#checkout/infra/ProviderRenderer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -134,7 +134,26 @@ export const DeliveryMethodList = ({
 
   /** Method picked by the customer while the API requests are in flight. */
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const selectedKey = pendingKey ?? serverKey ?? resetKey;
+  /** Method whose selection failed in some groups; a retry selects it only in those. */
+  const [failedSelect, setFailedSelect] = useState<{
+    key: string;
+    groupIds: string[];
+  } | null>(null);
+  /** Groups that still lack the method whose selection failed in them. */
+  const unsavedGroups = useMemo(
+    () =>
+      failedSelect
+        ? groups.filter(
+            (group) =>
+              failedSelect.groupIds.includes(group.id) &&
+              (!group.selectedDeliveryMethod ||
+                methodKey(group.selectedDeliveryMethod) !== failedSelect.key)
+          )
+        : [],
+    [groups, failedSelect]
+  );
+  const failedKey = unsavedGroups.length && failedSelect ? failedSelect.key : null;
+  const selectedKey = pendingKey ?? failedKey ?? serverKey ?? resetKey;
   const [lead] = groups;
   const selectedMethod = useMemo(
     () =>
@@ -185,27 +204,81 @@ export const DeliveryMethodList = ({
     [sentInputs]
   );
 
-  /**
-   * Delivery mutations run one at a time, in order: a save started earlier can never land
-   * after a later save or selection. Each task reads the latest state when it starts.
-   */
-  const queue = useRef<Promise<void>>(Promise.resolve());
-  const enqueue = useCallback((task: () => Promise<void>) => {
-    const run = queue.current.then(task);
-    queue.current = run.catch(() => {});
-    return run;
-  }, []);
-
-  /** Latest selection and API, for tasks that start after this render. */
-  const latest = useRef({ targets, rejectedKeyOf, updateShippingMethod });
+  /** Latest selection, for a save that starts after this render. */
+  const latest = useRef({ targets, rejectedKeyOf });
   useEffect(() => {
-    latest.current = { targets, rejectedKeyOf, updateShippingMethod };
+    latest.current = { targets, rejectedKeyOf };
   });
+  /** Number of the latest selection; an earlier one that settles later changes nothing. */
+  const latestSelect = useRef(0);
 
   /**
-   * Selects the method in every group. The input entered for it in the first group that has
-   * one goes to all of them: the same method takes the same input in each shipment.
+   * Selects the method in the given groups. The input entered for it in the first group that
+   * has one goes to all of them: the same method takes the same input in each shipment.
+   * The requests join the checkout mutation queue in group order; a group that fails is
+   * reported on its own and a retry selects the method only there (SC-wdj1).
    */
+  const selectIn = useCallback(
+    async (key: string, selected: Target[]) => {
+      const run = ++latestSelect.current;
+      setPendingKey(key);
+      setFailedSelect(null);
+
+      // The input entered for the method in the first group that has one.
+      const storedOf = (target: Target) =>
+        readCustomerInputs(target.group.id, target.scope)[target.method.handle];
+      const first = selected.find((target) => storedOf(target)) ?? selected[0];
+      const leadStored = storedOf(first);
+      // The input goes to every group before any request, so the groups never show
+      // different input for the same method while the selection is applied.
+      const inputs = selected.map((target) => {
+        const { group, method, scope } = target;
+        const stored = storedOf(target);
+        if (target === first || !leadStored) {
+          return stored ? stored.input : method.data;
+        }
+        if (JSON.stringify(stored?.input) !== JSON.stringify(leadStored.input)) {
+          remember(group.id, scope, method.handle, { ...leadStored, synced: false });
+        }
+        return leadStored.input;
+      });
+      const results = await Promise.allSettled(
+        selected.map(async (target, index) => {
+          const { group, method, scope } = target;
+          const customerInput = apiCustomerInput(method, inputs[index]);
+          if (customerInput !== undefined) {
+            recordSent(target, customerInput);
+          }
+          await selectDeliveryMethod({
+            optionHandle: method.handle,
+            deliveryGroupId: group.id,
+            customerInput,
+          });
+          if (customerInput !== undefined) {
+            markSynced(group.id, scope, method.handle, customerInput);
+          }
+        })
+      );
+      const failed = selected.filter((target, index) => {
+        const result = results[index];
+        if (result.status === 'fulfilled') {
+          return false;
+        }
+        console.error('Failed to select delivery method:', result.reason);
+        // A closed checkout is not retried; the checkout itself tells the customer why.
+        return !closedCheckoutCode(result.reason);
+      });
+      if (run !== latestSelect.current) {
+        return;
+      }
+      setFailedSelect(
+        failed.length ? { key, groupIds: failed.map((target) => target.group.id) } : null
+      );
+      setPendingKey(null);
+    },
+    [selectDeliveryMethod, remember, markSynced, recordSent]
+  );
+
   const handleSelectMethod = useCallback(
     async (method: ProviderMethod) => {
       const key = methodKey(method);
@@ -214,55 +287,28 @@ export const DeliveryMethodList = ({
         console.error('Delivery method or group not found:', method);
         return;
       }
-
-      setPendingKey(key);
-      try {
-        await enqueue(async () => {
-          // The input entered for the method in the first group that has one.
-          const storedOf = (target: Target) =>
-            readCustomerInputs(target.group.id, target.scope)[target.method.handle];
-          const first = selected.find((target) => storedOf(target)) ?? selected[0];
-          const leadStored = storedOf(first);
-          // The input goes to every group before any request, so the groups never show
-          // different input for the same method while the selection is applied.
-          const inputs = selected.map((target) => {
-            const { group, method, scope } = target;
-            const stored = storedOf(target);
-            if (target === first || !leadStored) {
-              return stored ? stored.input : method.data;
-            }
-            if (JSON.stringify(stored?.input) !== JSON.stringify(leadStored.input)) {
-              remember(group.id, scope, method.handle, { ...leadStored, synced: false });
-            }
-            return leadStored.input;
-          });
-          for (const [index, target] of selected.entries()) {
-            const { group, method, scope } = target;
-            const customerInput = apiCustomerInput(method, inputs[index]);
-            if (customerInput !== undefined) {
-              recordSent(target, customerInput);
-            }
-            await selectDeliveryMethod({
-              optionHandle: method.handle,
-              deliveryGroupId: group.id,
-              customerInput,
-            });
-            if (customerInput !== undefined) {
-              markSynced(group.id, scope, method.handle, customerInput);
-            }
-          }
-        });
-      } catch (error) {
-        console.error('Failed to select delivery method:', error);
-      } finally {
-        setPendingKey(null);
-      }
+      await selectIn(key, selected);
     },
-    [targetsOf, selectDeliveryMethod, remember, markSynced, recordSent, enqueue]
+    [targetsOf, selectIn]
   );
 
-  /** The parent learns when a selection starts and ends, not about the first render. */
-  const selecting = pendingKey !== null;
+  /** Selects the failed method again, only in the groups where it was not saved. */
+  const retryFailedSelect = () => {
+    if (!failedKey) {
+      return;
+    }
+    const ids = new Set(unsavedGroups.map((group) => group.id));
+    void selectIn(
+      failedKey,
+      targetsOf(failedKey).filter((target) => ids.has(target.group.id))
+    );
+  };
+
+  /**
+   * The parent learns when a selection starts and ends, not about the first render. A
+   * selection that failed in some groups is still being applied until it is retried.
+   */
+  const selecting = pendingKey !== null || failedKey !== null;
   const wasSelecting = useRef(false);
   useEffect(() => {
     if (wasSelecting.current !== selecting) {
@@ -316,7 +362,7 @@ export const DeliveryMethodList = ({
    * otherwise a later save follows. For the reset option the save selects it again.
    */
   const saveSelectedInput = useCallback(async () => {
-    const { targets, rejectedKeyOf, updateShippingMethod } = latest.current;
+    const { targets, rejectedKeyOf } = latest.current;
     for (const target of targets) {
       const { group, method, scope, reselecting } = target;
       const stored = readCustomerInputs(group.id, scope)[method.handle];
@@ -335,7 +381,7 @@ export const DeliveryMethodList = ({
       });
       markSynced(group.id, scope, method.handle, input);
     }
-  }, [markSynced, recordSent]);
+  }, [updateShippingMethod, markSynced, recordSent]);
 
   /**
    * Saves the unsaved input of the selected method once typing pauses. Incomplete input
@@ -378,7 +424,7 @@ export const DeliveryMethodList = ({
         ? SAVE_DELAY_MS
         : Math.min(RETRY_BASE_MS * 2 ** (failureCount - 1), RETRY_MAX_MS);
     const timer = setTimeout(() => {
-      enqueue(saveSelectedInput).catch((error) => {
+      saveSelectedInput().catch((error) => {
         // The input stays unsaved and keeps the order blocked until a save succeeds.
         console.error('Failed to update delivery method data:', error);
         setFailures({
@@ -390,7 +436,7 @@ export const DeliveryMethodList = ({
       });
     }, delay);
     return () => clearTimeout(timer);
-  }, [unsavedKey, pendingKey, stopped, failureCount, enqueue, saveSelectedInput]);
+  }, [unsavedKey, pendingKey, stopped, failureCount, saveSelectedInput]);
 
   const providerMethodsRecord = useMemo(
     () =>
@@ -436,6 +482,32 @@ export const DeliveryMethodList = ({
           showIcon
           title={rejectedMessages.join(' ')}
           description={t('delivery-input-rejected')}
+          // The customer may save the same input again (SC-mqce).
+          action={
+            <Button size="small" onClick={() => setFailures(null)}>
+              {t('save')}
+            </Button>
+          }
+        />
+      )}
+      {failedKey && !pendingKey && (
+        <Alert
+          type="error"
+          showIcon
+          title={
+            groups.length > 1
+              ? t('delivery-shipments-not-saved', {
+                  shipments: unsavedGroups
+                    .map((group) => groups.indexOf(group) + 1)
+                    .join(', '),
+                })
+              : t('delivery-not-saved')
+          }
+          action={
+            <Button size="small" onClick={retryFailedSelect}>
+              {t('retry')}
+            </Button>
+          }
         />
       )}
       {failureCount > 0 && !rejectedMessages && (

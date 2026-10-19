@@ -21,8 +21,8 @@ interface GenericCustomerInputFormProps {
   data: unknown;
   onSubmit: (data: unknown) => void;
   /**
-   * Identity of the address the input belongs to. A new address starts the form over and
-   * drops a pending submit of the old values.
+   * Destination the input belongs to (country, city and carrier data of the address). A new
+   * destination starts the form over; other edits of the address keep what was typed.
    */
   resetKey: string;
 }

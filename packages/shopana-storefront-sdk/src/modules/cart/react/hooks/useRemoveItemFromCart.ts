@@ -66,7 +66,7 @@ const useRemoveItemFromCart = () => {
               },
             });
           }),
-        optimisticEdit
+        { optimisticEdit }
       );
     },
     loading: isInFlight,

@@ -53,7 +53,10 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
   }, [isCityModalVisible, cityName, setSearchValue]);
 
   const handleSelectCity = (item: Settlement) => {
-    onSubmit(item);
+    // The same city again changes nothing: no save and no delivery reload (SC-fobt).
+    if (item.ref !== city?.settlementRef) {
+      onSubmit(item);
+    }
     setIsCityModalVisible(false);
   };
 

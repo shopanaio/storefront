@@ -12,8 +12,7 @@ const mocks = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
   api: {
-    addDeliveryAddresses: vi.fn(),
-    updateDeliveryAddresses: vi.fn(),
+    saveDeliveryAddress: vi.fn(),
   },
 }));
 
@@ -56,6 +55,7 @@ const messages = {
     city: 'City',
     'required-field': 'Required',
     'country-region': 'Country',
+    'error-save-address': "Couldn't save the delivery address",
   },
 };
 
@@ -93,13 +93,12 @@ describe('AddressSectionView', () => {
 
   beforeEach(() => {
     mocks.countries = { countries: [gb, de], loading: false, error: null, refetch: vi.fn() };
-    mocks.api.addDeliveryAddresses.mockReset().mockResolvedValue(undefined);
-    mocks.api.updateDeliveryAddresses.mockReset().mockResolvedValue(undefined);
+    mocks.api.saveDeliveryAddress.mockReset().mockResolvedValue(undefined);
   });
 
   // Ожидаемое поведение: повторная загрузка списка стран (например, после смены языка) не
   // стирает то, что покупатель уже ввёл в несохранённые поля адреса.
-  it('[A6] keeps the unsaved address fields while the list of countries loads again', async () => {
+  it('SC-s8ak: keeps the unsaved address fields while the list of countries loads again', async () => {
     const { rerender } = render(view(data()));
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: '10 Downing St' } });
 
@@ -115,7 +114,7 @@ describe('AddressSectionView', () => {
 
   // Ожидаемое поведение: страна, в которой покупатель уже начал вводить адрес, не меняется
   // неявно (из customerIdentity.countryCode), и введённое не пропадает.
-  it('[A6] keeps the form the buyer is typing in when the buyer country changes implicitly', async () => {
+  it('SC-s8ak: keeps the form the buyer is typing in when the buyer country changes implicitly', async () => {
     const { rerender } = render(view(data({ customerCountryCode: 'GB' })));
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: '10 Downing St' } });
     fireEvent.change(screen.getByLabelText('City'), { target: { value: 'London' } });
@@ -128,16 +127,8 @@ describe('AddressSectionView', () => {
     expect(screen.getByLabelText('City')).toHaveValue('London');
   });
 
-  // Ожидаемое поведение (G1): если сохранение адреса отклонено конфликтом версий
-  // (CHECKOUT_VERSION_CONFLICT от параллельной мутации другой секции), адрес не теряется:
-  // он отправляется ещё раз и доходит до сервера.
-  it('[G1] saves the address again when the save loses a version conflict to another section', async () => {
-    const conflict = Object.assign(new Error('Checkout was changed'), {
-      code: 'CHECKOUT_VERSION_CONFLICT',
-    });
-    mocks.api.addDeliveryAddresses
-      .mockRejectedValueOnce([conflict])
-      .mockResolvedValue(undefined);
+  it('SC-nker: shows a failed address save and keeps the address in the form', async () => {
+    mocks.api.saveDeliveryAddress.mockRejectedValueOnce(new Error('Failed to fetch'));
     const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(view(data()));
 
@@ -145,20 +136,33 @@ describe('AddressSectionView', () => {
     fireEvent.change(screen.getByLabelText('City'), { target: { value: 'London' } });
     fireEvent.change(screen.getByLabelText('Postcode'), { target: { value: 'SW1A 2AA' } });
     fireEvent.blur(screen.getByLabelText('Postcode'));
+    await act(async () => undefined);
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    });
+    expect(mocks.api.saveDeliveryAddress).toHaveBeenCalledWith(
+      expect.objectContaining({ countryCode: 'GB', address1: '10 Downing St', city: 'London' })
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't save the delivery address");
+    expect(screen.getByLabelText('Address')).toHaveValue('10 Downing St');
+    expect(screen.getByLabelText('Postcode')).toHaveValue('SW1A 2AA');
 
-    expect(mocks.api.addDeliveryAddresses).toHaveBeenCalledTimes(2);
-    expect(mocks.api.addDeliveryAddresses).toHaveBeenLastCalledWith({
-      addresses: [
-        {
-          address: expect.objectContaining({ address1: '10 Downing St', city: 'London' }),
-          checkoutLineIds: ['line-1'],
-        },
-      ],
-    });
+    // Saving again succeeds and the message goes away.
+    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Westminster' } });
+    fireEvent.blur(screen.getByLabelText('City'));
+    await act(async () => undefined);
+    expect(screen.queryByRole('alert')).toBeNull();
     errorLog.mockRestore();
+  });
+
+  it('SC-s8ak: an explicit change of the country carries the matching fields over', async () => {
+    render(view(data()));
+    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Unter den Linden 1' } });
+    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Berlin' } });
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Country' }));
+    fireEvent.click(await screen.findByTitle('Germany'));
+    await act(async () => undefined);
+
+    expect(screen.getByLabelText('Address')).toHaveValue('Unter den Linden 1');
+    expect(screen.getByLabelText('City')).toHaveValue('Berlin');
   });
 });

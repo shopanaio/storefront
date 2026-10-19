@@ -1,5 +1,6 @@
 import type {
   CustomerInput,
+  DoorDraft,
   DoorInput,
   PointInput,
   ReceivingType,
@@ -47,17 +48,36 @@ export function doorInput(fields: {
   };
 }
 
-/** Stored input of the given type for the given settlement, or `null`. */
+/** Courier fields typed before a street is picked, kept as the draft of the form. */
+export function doorDraft(fields: {
+  settlementRef: string;
+  building: string;
+  apartment: string;
+  comment: string;
+}): DoorDraft {
+  return {
+    type: 'DOOR',
+    settlementRef: fields.settlementRef,
+    building: fields.building,
+    ...(fields.apartment ? { apartment: fields.apartment } : {}),
+    ...(fields.comment ? { comment: fields.comment } : {}),
+  };
+}
+
+/**
+ * Stored input of the given type for the given settlement, or `null`. A courier input may
+ * be a draft without a street.
+ */
 export function readInput<T extends CustomerInput['type']>(
   data: unknown,
   type: T,
   settlementRef: string | null
-): Extract<CustomerInput, { type: T }> | null {
+): (T extends 'DOOR' ? DoorDraft : Extract<CustomerInput, { type: T }>) | null {
   if (!data || typeof data !== 'object') {
     return null;
   }
   const input = data as CustomerInput;
   return input.type === type && input.settlementRef === settlementRef
-    ? (input as Extract<CustomerInput, { type: T }>)
+    ? (input as T extends 'DOOR' ? DoorDraft : Extract<CustomerInput, { type: T }>)
     : null;
 }

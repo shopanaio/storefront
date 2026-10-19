@@ -7,6 +7,11 @@ import { useTranslations } from 'next-intl';
 import type { CommentFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { debounce } from 'lodash';
+import { registerPendingInput } from '#checkout/state/pendingInputs';
+
+/** Retries of a failed save: 2 s, 4 s, 8 s … up to 30 s. */
+const RETRY_BASE_MS = 2_000;
+const RETRY_MAX_MS = 30_000;
 
 /**
  * View component for the checkout note section.
@@ -27,23 +32,54 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
   const { updateCustomerNote } = useCheckoutApi();
   /** The note typed but not yet returned by the API; `null` when nothing is pending. */
   const typedRef = useRef<string | null>(null);
+  /** Failed saves of the typed note in a row, for the retry delay. */
+  const failures = useRef(0);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The latest API: a retry after the checkout was renewed goes to the new checkout. */
+  const latestUpdate = useRef(updateCustomerNote);
+  useEffect(() => {
+    latestUpdate.current = updateCustomerNote;
+  });
+
   const debouncedUpdate = useMemo(() => {
-    return debounce((nextNote: string) => {
-      updateCustomerNote({ note: nextNote })
-        .catch(() => {
-          // The checkout API already showed the failure; the typed note stays on screen.
-        })
-        .finally(() => {
-          // Saved (or failed) and nothing typed since: the API value is shown again.
+    const save = (nextNote: string) => {
+      latestUpdate.current({ note: nextNote }).then(
+        () => {
+          failures.current = 0;
+          // Saved and nothing typed since: the API value is shown again.
           if (typedRef.current === nextNote) {
             typedRef.current = null;
           }
-        });
-    }, 500);
-  }, [updateCustomerNote]);
+        },
+        () => {
+          // The failure is shown by the checkout API. The typed note stays on screen and is
+          // saved again until it gets through, or until the buyer types on (BR-yanp).
+          if (typedRef.current !== nextNote) return;
+          failures.current += 1;
+          const delay = Math.min(
+            RETRY_BASE_MS * 2 ** (failures.current - 1),
+            RETRY_MAX_MS
+          );
+          retryTimer.current = setTimeout(() => {
+            if (typedRef.current === nextNote) debounced(nextNote);
+          }, delay);
+        }
+      );
+    };
+    const debounced = debounce(save, 500);
+    return debounced;
+  }, []);
 
   // A note typed right before leaving the page is still saved.
-  useEffect(() => () => void debouncedUpdate.flush(), [debouncedUpdate]);
+  useEffect(
+    () => () => {
+      debouncedUpdate.flush();
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    },
+    [debouncedUpdate]
+  );
+  // Placing the order sends the note being typed at once.
+  useEffect(() => registerPendingInput(() => debouncedUpdate.flush()), [debouncedUpdate]);
 
   const [note, setNote] = useState(data?.note ?? '');
   const [isOpen, setIsOpen] = useState(Boolean(data?.note));
@@ -52,6 +88,8 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const nextNote = e.target.value;
       typedRef.current = nextNote;
+      failures.current = 0;
+      if (retryTimer.current) clearTimeout(retryTimer.current);
       setNote(nextNote);
       debouncedUpdate(nextNote);
     },

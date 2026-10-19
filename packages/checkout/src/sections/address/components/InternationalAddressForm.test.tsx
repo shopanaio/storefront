@@ -85,7 +85,7 @@ describe('InternationalAddressForm', () => {
     // Address, city and postcode; the apartment is optional.
     expect(screen.getAllByText('Required')).toHaveLength(3);
   });
-  it('[A5] keeps the field being typed when the answer to the previous save arrives', () => {
+  it('SC-rexu: keeps the field being typed when the answer to the previous save arrives', () => {
     const saved = (address1: string) =>
       ({
         addressId: 'address-1',

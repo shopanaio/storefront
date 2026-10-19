@@ -8,12 +8,16 @@ import React, {
   useRef,
 } from 'react';
 import { useQuery } from '@apollo/client/react';
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { CartContextProvider } from '../context/CartContext';
 import type { CartStore } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartConfig } from '../../core/config';
 import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
-import { createCartMutationQueue } from '../../core/utils/mutationQueue';
+import {
+  createCartMutationQueue,
+  type MutationQueueOptions,
+} from '../../core/utils/mutationQueue';
 import { createCartIdUtils } from '../../core/utils/cartId';
 import type { CartStoreZustand } from '../store/CartStoreZustand';
 import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
@@ -35,6 +39,20 @@ export interface CartProviderProps {
     SdkLoadCartQuery,
     SdkLoadCartQueryVariables
   > | null;
+}
+
+/**
+ * Whether the server says the cart does not exist: no checkout for the id, or a `NOT_FOUND`
+ * error. A network or any other error says nothing about the cart.
+ */
+function isCartMissing(data: SdkLoadCartQuery | undefined, error: unknown): boolean {
+  if (error) {
+    return (
+      CombinedGraphQLErrors.is(error) &&
+      error.errors.some((item) => item.extensions?.code === 'NOT_FOUND')
+    );
+  }
+  return data !== undefined && !data.checkout;
 }
 
 function isCartStoreZustand(
@@ -96,9 +114,22 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     createCartMutationQueue(reconcileMutations)
   );
   const enqueueMutation = useCallback(
-    <T,>(operation: () => Promise<T>, optimisticEdit?: () => void) =>
-      mutationQueue.run(operation, optimisticEdit),
+    <T,>(operation: () => Promise<T>, options?: MutationQueueOptions) =>
+      mutationQueue.run(operation, options),
     [mutationQueue]
+  );
+  const waitForMutations = useCallback(() => mutationQueue.idle(), [mutationQueue]);
+  const cartUpdateListeners = useRef(
+    new Set<(checkout: SdkCartFragment_CartFragment | null) => void>()
+  );
+  const subscribeCartUpdates = useCallback(
+    (listener: (checkout: SdkCartFragment_CartFragment | null) => void) => {
+      cartUpdateListeners.current.add(listener);
+      return () => {
+        cartUpdateListeners.current.delete(listener);
+      };
+    },
+    []
   );
   const cookieCartId = cartId ?? cartIdUtils.getCartIdFromCookie();
   const shouldLoad =
@@ -121,7 +152,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       }
     } else if (!shouldLoad && !storeObject.cart) {
       storeObject.setCart(null);
-    } else if (!query.loading && shouldLoad && !query.data?.checkout) {
+    } else if (!query.loading && shouldLoad && isCartMissing(query.data, query.error)) {
+      // Only the server saying the cart does not exist drops it: a failed request keeps
+      // the cart and its cookie, so a retry loads it again.
       cartIdUtils.removeCartIdCookie();
       confirmed.current = { checkout: null, cart: null };
       setCartId(null);
@@ -132,6 +165,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     cartIdUtils,
     initialCheckout,
     query.data,
+    query.error,
     query.loading,
     shouldLoad,
     storeObject,
@@ -142,6 +176,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     (checkout: SdkCartFragment_CartFragment | null) => {
       const cart = checkout ? mapShopanaCheckoutToEntityCart(checkout) : null;
       confirmed.current = { checkout, cart };
+      cartUpdateListeners.current.forEach((listener) => listener(checkout));
       if (mutationQueue.pending > 0) return;
       setCartKey(checkout);
       storeObject.setCart(cart);
@@ -179,6 +214,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       cartKey={cartKey}
       setCartKey={handleSetCartKey}
       enqueueMutation={enqueueMutation}
+      waitForMutations={waitForMutations}
+      subscribeCartUpdates={subscribeCartUpdates}
       getConfirmedLineId={getConfirmedLineId}
       cartId={cartId}
       setId={handleSetCartId}

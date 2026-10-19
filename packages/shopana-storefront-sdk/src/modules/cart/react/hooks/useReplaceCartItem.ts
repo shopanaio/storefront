@@ -108,7 +108,7 @@ const useReplaceCartItem = () => {
             },
           });
         }),
-      optimisticEdit
+      { optimisticEdit }
     );
   };
   return { replaceCartItem, loading: isInFlight };

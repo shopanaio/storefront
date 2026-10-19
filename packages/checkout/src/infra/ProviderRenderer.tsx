@@ -12,6 +12,7 @@ import { CheckoutMethodPanel } from '#checkout/components/common/CheckoutMethodP
 import { warnMissingPaymentModule } from '#checkout/infra/warnMissingPaymentModule';
 import { GenericCustomerInputForm } from '#checkout/infra/GenericCustomerInputForm';
 import { contractNeedsForm } from '#checkout/infra/customerInputForm';
+import { addressScope } from '#checkout/sections/delivery/customerInputStorage';
 
 const GenericDeliveryProvider = ({
   availableMethods,
@@ -43,7 +44,7 @@ const GenericDeliveryProvider = ({
         componentProps={{
           contract: method.customerInputContract,
           data: method.data,
-          resetKey: JSON.stringify(deliveryAddress ?? null),
+          resetKey: addressScope(deliveryAddress ?? null),
           onSubmit: (data: unknown) =>
             onUpdateMethodData?.(method.handle, data),
         }}
