@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { CheckoutEvent, emitCheckoutEvent } from '#checkout/state/checkoutBus';
 import { NextIntlClientProvider } from 'next-intl';
+import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 import type { DeliveryCountry } from '../countries';
 import { InternationalAddressForm } from './InternationalAddressForm';
 
@@ -83,5 +84,39 @@ describe('InternationalAddressForm', () => {
     });
     // Address, city and postcode; the apartment is optional.
     expect(screen.getAllByText('Required')).toHaveLength(3);
+  });
+  it('[A5] keeps the field being typed when the answer to the previous save arrives', () => {
+    const saved = (address1: string) =>
+      ({
+        addressId: 'address-1',
+        countryCode: 'GB',
+        city: 'London',
+        address1,
+        address2: null,
+        provinceCode: null,
+        postalCode: 'SW1A 2AA',
+        data: {},
+      }) as unknown as ProviderDeliveryAddress;
+    const onSubmit = vi.fn();
+    const view = (address: ProviderDeliveryAddress) => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <InternationalAddressForm address={address} country={gb} onSubmit={onSubmit} />
+      </NextIntlClientProvider>
+    );
+    const { rerender } = render(view(saved('10 Downing St')));
+
+    // The buyer changes the street and leaves the field: the address is being saved.
+    type('Address', '11 Downing St');
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    // Meanwhile they type the apartment and have not left the field yet.
+    fireEvent.change(screen.getByLabelText('Apartment (optional)'), {
+      target: { value: 'Flat 2' },
+    });
+
+    // The answer to the street save comes back with the new street.
+    rerender(view(saved('11 Downing St')));
+
+    expect(screen.getByLabelText('Apartment (optional)')).toHaveValue('Flat 2');
+    expect(screen.getByLabelText('Address')).toHaveValue('11 Downing St');
   });
 });

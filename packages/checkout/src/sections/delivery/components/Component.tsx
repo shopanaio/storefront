@@ -4,7 +4,9 @@ import { Flex } from 'antd';
 import { useEffect, useMemo } from 'react';
 import type { DeliveryFormData } from '../types';
 import { pruneCustomerInputs } from '../customerInputStorage';
+import { useAddressLoading } from '../useAddressLoading';
 import { DeliveryMethodList } from './DeliveryMethodList';
+import { DeliveryMethodsSkeleton } from './DeliveryMethodsSkeleton';
 import { Shipments } from './Shipments';
 import { UndeliverableLines } from './UndeliverableLines';
 
@@ -37,6 +39,11 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
       pruneCustomerInputs(groupIds.split('\n'));
     }
   }, [groupIds]);
+
+  const addressLoading = useAddressLoading();
+  if (addressLoading) {
+    return <DeliveryMethodsSkeleton />;
+  }
 
   return (
     <Flex vertical gap={12}>
