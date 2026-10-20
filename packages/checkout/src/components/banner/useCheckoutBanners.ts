@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
 import { useSubmitAttempted } from '#checkout/hooks/useSubmitAttempted';
@@ -19,6 +19,15 @@ import {
 import { collectBanners } from '#checkout/state/banners/banners';
 import type { BannerItem } from '#checkout/state/banners/banners';
 import { useCheckoutTheme } from '#checkout/theme';
+import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
+import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
+import {
+  useLoyaltyIntent,
+  useLoyaltyWrites,
+} from '#checkout/sections/loyalty/selection';
+import { usePointsLabel } from '#checkout/sections/loyalty/format';
+import { formatMoney } from '#checkout/ui/Money';
+import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
 import {
   focusAnchor,
   sectionAnchor,
@@ -48,6 +57,32 @@ export function useCheckoutBanners(): BannerItem[] {
   const openCart = theme.useOpenCart();
   const checkoutId = checkout?.id ?? null;
   const notifications = checkout?.notifications;
+  const locale = useLocale();
+  const pointsLabel = usePointsLabel();
+  const api = useCheckoutApi();
+  const { onSignIn } = useCheckoutAuth();
+  const loyaltyBusy = useLoyaltyWrites((state) => state.running > 0);
+  const loyaltyIntent = useLoyaltyIntent((state) =>
+    checkoutId ? (state.sources[checkoutId] ?? null) : null
+  );
+  const redemption = checkout?.loyaltyRedemption ?? null;
+  const loyalty = useMemo(
+    () => ({
+      redemption,
+      intent: loyaltyIntent,
+      reducedTo: redemption
+        ? redemption.source === 'POINTS' && redemption.points !== null
+          ? pointsLabel(redemption.points)
+          : formatMoney(locale, redemption.discount)
+        : null,
+      busy: loyaltyBusy,
+    }),
+    [redemption, loyaltyIntent, pointsLabel, locale, loyaltyBusy]
+  );
+  const rewardId = checkout?.loyaltyRewardId ?? null;
+  const { account: loyaltyAccount } = useLoyaltyAccount();
+  const rewardVoucher =
+    loyaltyAccount?.rewards.find((reward) => reward.id === rewardId)?.voucherCode ?? null;
 
   // A failed removal of lines that cannot be delivered ends with them (another address).
   useEffect(() => {
@@ -67,6 +102,7 @@ export function useCheckoutBanners(): BannerItem[] {
           saveErrors,
           notifications: notifications ?? [],
           dismissed,
+          loyalty,
         },
         {
           retryRenewal,
@@ -80,6 +116,17 @@ export function useCheckoutBanners(): BannerItem[] {
           focusSection: (section) => focusAnchor(sectionAnchor(section)),
           focusSummary: () => focusAnchor(SUMMARY_ANCHOR, { focus: false }),
           dismiss,
+          // A failed write is reported by its own banner; the action needs no handling here.
+          dropRedemption: () => void api.setLoyaltyRedemption(null).catch(() => undefined),
+          dropReward: () =>
+            void api
+              .setLoyaltyReward(
+                null,
+                rewardId ? { id: rewardId, voucherCode: rewardVoucher } : null
+              )
+              .catch(() => undefined),
+          refreshLoyalty: () => void api.refreshLoyalty().catch(() => undefined),
+          signIn: onSignIn,
         },
         t
       ),
@@ -102,6 +149,11 @@ export function useCheckoutBanners(): BannerItem[] {
       checkoutId,
       openCart,
       dismiss,
+      loyalty,
+      api,
+      rewardId,
+      rewardVoucher,
+      onSignIn,
       t,
     ]
   );

@@ -13,6 +13,7 @@ export enum SectionId {
   Delivery = 'delivery',
   Payment = 'payment',
   Promo = 'promo',
+  Loyalty = 'loyalty',
   Comment = 'comment',
 }
 

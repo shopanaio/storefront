@@ -10,8 +10,42 @@ import type { UseBoundStore, StoreApi } from 'zustand';
 export const defaultSessionState: Partial<SessionStore> = {
   session: null,
   status: 'loading',
+  expired: false,
+  signInPending: false,
   refreshSession: () => {},
 };
+
+type SessionStoreSet = (
+  partial: Partial<SessionStore> | ((state: SessionStore) => Partial<SessionStore>)
+) => void;
+
+function sessionStoreState(
+  set: SessionStoreSet,
+  initialSession?: Session | null
+): SessionStore {
+  return {
+    session: initialSession || null,
+    status: initialSession ? 'authenticated' : 'loading',
+    expired: false,
+    signInPending: false,
+    setSession: (session) =>
+      set((state) => ({
+        session,
+        status: session ? 'authenticated' : 'anonymous',
+        expired: session ? false : state.expired,
+      })),
+    expireSession: () =>
+      set({
+        session: null,
+        status: 'anonymous',
+        expired: true,
+        signInPending: false,
+      }),
+    setSignInPending: (signInPending) => set({ signInPending }),
+    refreshSession: () => {},
+    setRefreshSession: (fn) => set({ refreshSession: fn }),
+  };
+}
 
 /**
  * Creates a Zustand vanilla session store instance
@@ -20,14 +54,9 @@ export const defaultSessionState: Partial<SessionStore> = {
  * @returns Zustand store instance
  */
 export const createSessionStoreVanilla = (initialSession?: Session | null) => {
-  return createStore<SessionStore>()((set) => ({
-    session: initialSession || null,
-    status: initialSession ? 'authenticated' : 'loading',
-    setSession: (session) =>
-      set({ session, status: session ? 'authenticated' : 'anonymous' }),
-    refreshSession: () => {},
-    setRefreshSession: (fn) => set({ refreshSession: fn }),
-  }));
+  return createStore<SessionStore>()((set) =>
+    sessionStoreState(set, initialSession)
+  );
 };
 
 /**
@@ -67,11 +96,6 @@ export const createSessionStoreZustand = (
  * Global session store instance (client-side only)
  * This is a singleton for use outside of React context
  */
-export const useSession = create<SessionStore>()((set) => ({
-  session: null,
-  status: 'loading',
-  setSession: (session) =>
-    set({ session, status: session ? 'authenticated' : 'anonymous' }),
-  refreshSession: () => {},
-  setRefreshSession: (fn) => set({ refreshSession: fn }),
-}));
+export const useSession = create<SessionStore>()((set) =>
+  sessionStoreState(set)
+);

@@ -1,6 +1,8 @@
 import type { PlacementStatus } from '#checkout/state/placement/types';
 import {
+  CLAIM_REQUIRED_CODE,
   CLIENT_SDK_UNAVAILABLE_CODE,
+  GUEST_NOT_ALLOWED_CODE,
   IDEMPOTENCY_MISMATCH_CODE,
   INPUT_UNSAVED_CODE,
   NETWORK_ERROR_CODE,
@@ -30,6 +32,8 @@ export function placementErrorMessageKey(code: string): string {
   ) {
     return 'placement-error-payment-unavailable';
   }
+  if (code === CLAIM_REQUIRED_CODE) return 'prices-updated';
+  if (code === GUEST_NOT_ALLOWED_CODE) return 'sign-in-required';
   if (code === 'CHECKOUT_PLACEMENT_NOT_FOUND')
     return 'placement-error-not-found';
   if (code === 'CHECKOUT_ALREADY_PLACED')
@@ -37,6 +41,8 @@ export function placementErrorMessageKey(code: string): string {
   if (code === 'CHECKOUT_ABANDONED' || code === 'CHECKOUT_EXPIRED') {
     return 'placement-error-closed';
   }
+  // The loyalty reservation failed: the balance or the quote changed since the checkout read it.
+  if (code.startsWith('LOYALTY_')) return 'placement-error-loyalty';
   return 'placement-error-generic';
 }
 

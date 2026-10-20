@@ -5,7 +5,10 @@ import { fileURLToPath } from 'node:url';
 const packageDir = path.dirname(fileURLToPath(import.meta.url));
 const workspaceDir = path.resolve(packageDir, '../..');
 const scalars = {
-  BigInt: { input: 'number', output: 'number' },
+  // The API serializes integers that may exceed 2^53 (points, order numbers) as strings.
+  BigInt: { input: 'string', output: 'string' },
+  UnsignedInt64: { input: 'string', output: 'string' },
+  Decimal: { input: 'string', output: 'string' },
   Cursor: { input: 'string', output: 'string' },
   DateTime: { input: 'string', output: 'string' },
   Email: { input: 'string', output: 'string' },

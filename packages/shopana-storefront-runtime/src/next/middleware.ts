@@ -118,7 +118,7 @@ export function createRuntimeMiddleware(options?: {
 }
 
 /**
- * Default matcher that excludes framework, API, and embedded-app routes.
+ * Default matcher that excludes framework, API, session (`/auth/*`) and embedded-app routes.
  */
 export const defaultMatcher =
-  '/((?!api|trpc|_next|_vercel|embed|.*\\.(?:avif|css|gif|ico|jpeg|jpg|js|json|map|mjs|mp4|pdf|png|svg|txt|webmanifest|webp|woff|woff2|xml)$).*)';
+  '/((?!api|auth/|trpc|_next|_vercel|embed|.*\\.(?:avif|css|gif|ico|jpeg|jpg|js|json|map|mjs|mp4|pdf|png|svg|txt|webmanifest|webp|woff|woff2|xml)$).*)';

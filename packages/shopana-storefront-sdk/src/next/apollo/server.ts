@@ -6,6 +6,7 @@ import type {
 import { registerApolloClient } from '@apollo/client-integration-nextjs';
 import { createApolloClient } from '../../graphql/apollo/Environment';
 import { loadSerializableQuery } from '../../graphql/apollo/loadSerializableQuery';
+import { readServerAuthState } from '../../modules/session/server';
 import type {
   ApolloEnvironmentConfig,
   CreateApolloClientOptions,
@@ -13,8 +14,18 @@ import type {
 
 export type ApolloServerClientOptions = Omit<
   CreateApolloClientOptions,
-  'serverCookies' | 'initialState'
+  'serverCookies' | 'initialState' | 'accessToken'
 >;
+
+/** Cookies and the session access token of the current server request. */
+async function readRequestAuth(): Promise<
+  Pick<CreateApolloClientOptions, 'serverCookies' | 'accessToken'>
+> {
+  const { headers } = await import('next/headers');
+  const serverCookies = (await headers()).get('cookie') ?? undefined;
+  const { accessToken } = await readServerAuthState(serverCookies);
+  return { serverCookies, accessToken };
+}
 
 const requestClientRegistrations = new Map<
   string,
@@ -26,7 +37,6 @@ function environmentKey(config: ApolloEnvironmentConfig): string {
     config.graphqlUrl,
     config.apiKeyHeader,
     config.apiKey,
-    config.applicationAuth,
   ]);
 }
 
@@ -35,11 +45,9 @@ function getDefaultRegistration(environmentConfig: ApolloEnvironmentConfig) {
   const existing = requestClientRegistrations.get(key);
   if (existing) return existing;
 
-  const registration = registerApolloClient(async () => {
-    const { headers } = await import('next/headers');
-    const serverCookies = (await headers()).get('cookie') ?? undefined;
-    return createApolloClient(environmentConfig, { serverCookies });
-  });
+  const registration = registerApolloClient(async () =>
+    createApolloClient(environmentConfig, await readRequestAuth())
+  );
   requestClientRegistrations.set(key, registration);
   return registration;
 }
@@ -63,15 +71,12 @@ export function createApolloNextClient(
     return getDefaultRegistration(environmentConfig);
   }
 
-  return registerApolloClient(async () => {
-    const { headers } = await import('next/headers');
-    const serverCookies = (await headers()).get('cookie') ?? undefined;
-
-    return createApolloClient(environmentConfig, {
+  return registerApolloClient(async () =>
+    createApolloClient(environmentConfig, {
       ...clientOptions,
-      serverCookies,
-    });
-  });
+      ...(await readRequestAuth()),
+    })
+  );
 }
 
 /**

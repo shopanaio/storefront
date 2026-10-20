@@ -6,6 +6,7 @@ import { useQuery } from '@apollo/client/react';
 import { ShopProvider } from './shop/ShopContext';
 import type { ShopConfig } from './shop/types';
 import { CartProvider } from './modules/cart/react/providers/CartProvider';
+import { AccountCartSync } from './modules/cart/react/providers/AccountCartSync';
 import { createCartStoreZustand } from './modules/cart/react/store/CartStoreZustand';
 import type { CartConfig } from './modules/cart/core/config';
 import { mapShopanaCheckoutToEntityCart } from './modules/cart/core/mappers/mapShopanaToEntityCart';
@@ -65,7 +66,8 @@ const HydratedAppProviders: React.FC<
       <ShopProvider config={shopConfig}>
         <SessionProvider
           store={sessionStoreInstance}
-          authConfig={environmentConfig.applicationAuth}
+          applicationAuth={environmentConfig.applicationAuth}
+          cartCookieName={cartConfig.cookieName}
         >
           <CartProvider
             store={cartStoreInstance}
@@ -73,6 +75,7 @@ const HydratedAppProviders: React.FC<
             initialCart={initialCheckout}
           >
             {children}
+            <AccountCartSync />
           </CartProvider>
         </SessionProvider>
       </ShopProvider>

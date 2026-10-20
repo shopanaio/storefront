@@ -2,5 +2,20 @@ query StorefrontPlacedOrderQuery($orderId: ID!) {
   order(id: $orderId) {
     id
     number
+    loyaltyRedemption {
+      source
+      points
+      amount {
+        ...StorefrontCheckoutMoney
+      }
+    }
+    loyaltyEarning {
+      points
+      amount {
+        ...StorefrontCheckoutMoney
+      }
+      status
+      availableAt
+    }
   }
 }

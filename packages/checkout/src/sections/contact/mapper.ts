@@ -19,5 +19,6 @@ export function mapCheckoutToContactFormData(
     lastName: customerIdentity.lastName ?? '',
     middleName: customerIdentity.middleName ?? '',
     phone: customerIdentity.phone ?? '',
+    email: customerIdentity.email ?? '',
   };
 }

@@ -18,6 +18,7 @@
       "import": "./src/init.js",
       "default": "./src/init.js"
     },
+    "./next/auth": "./src/next/auth.ts",
     "./next/headers": "./src/next/headers.ts",
     "./next/dynamic": "./src/next/dynamic.ts",
     "./next/image": "./src/next/image.ts",

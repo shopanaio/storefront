@@ -12,6 +12,7 @@ import {
 } from '../../../../graphql/apollo/generated/operations';
 import type { ApolloClient } from '@apollo/client';
 import { getApolloRequestClient } from '../../../../next/apollo/server';
+import { readServerAuthState } from '../../../session/server';
 export interface LoadCartServerQueryOptions {
   /**
    * Apollo environment configuration (GraphQL URL, API key, etc.)
@@ -63,6 +64,11 @@ export async function loadCartServerQuery(
   });
   const cartId = cartIdUtils.getCartIdFromCookie(cookie);
   if (!cartId) {
+    return null;
+  }
+  // An account cart read without the expired access token answers "no checkout" and would
+  // drop the cart cookie; the browser reads it once the session server refreshed the token.
+  if ((await readServerAuthState(cookie)).refreshPending) {
     return null;
   }
   // Create networkFetch from environment config

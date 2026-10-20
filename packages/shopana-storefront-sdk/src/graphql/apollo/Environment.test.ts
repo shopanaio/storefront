@@ -15,10 +15,6 @@ const config: ApolloEnvironmentConfig = {
   applicationAuth: {
     iamUrl: 'https://iam.example.test',
     applicationId: 'test',
-    clientId: 'test',
-    resource: 'https://api.example.test',
-    redirectUri: 'https://shop.example.test/callback',
-    accessTokenCookieName: 'test_access_token',
   },
 };
 
@@ -80,4 +76,61 @@ it('keeps the same visitor when a new browser client and an SSR client load the 
   });
   expect(headers[2]['x-shopana-storefront-visitor-id']).toBe(visitorId);
   serverClient.stop();
+});
+
+it('refreshes the session once and repeats a request the gateway rejected for its token (S6)', async () => {
+  document.cookie = 'shopana_signed_in=1; Path=/';
+  const session = (accessToken: string) => ({
+    session: {
+      user: { id: 'user-1', email: 'buyer@example.test' },
+      accessToken,
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+    },
+  });
+  const sessionCalls: string[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: string, init: RequestInit = {}) => {
+      sessionCalls.push(`${init.method ?? 'GET'} ${input}`);
+      return Response.json(
+        session(input === '/auth/refresh' ? 'fresh-token' : 'stale-token')
+      );
+    })
+  );
+  const authorizations: string[] = [];
+  const gateway = new ApolloLink(
+    (operation) =>
+      new Observable((observer) => {
+        const authorization = operation.getContext().headers.Authorization;
+        authorizations.push(authorization);
+        observer.next(
+          authorization === 'Bearer stale-token'
+            ? {
+                errors: [
+                  {
+                    message: 'invalid customer',
+                    extensions: { code: 'STOREFRONT_CUSTOMER_INVALID' },
+                  },
+                ],
+              }
+            : { data: { ping: 'pong' } }
+        );
+        observer.complete();
+      })
+  );
+  const { createApolloClient } = await import('./Environment');
+  const client = createApolloClient(config, { links: [gateway] });
+  const result = await client.query({
+    query: gql`
+      {
+        ping
+      }
+    `,
+    fetchPolicy: 'network-only',
+  });
+  expect(result.data).toEqual({ ping: 'pong' });
+  expect(authorizations).toEqual(['Bearer stale-token', 'Bearer fresh-token']);
+  expect(sessionCalls).toEqual(['GET /auth/token', 'POST /auth/refresh']);
+  client.stop();
+  document.cookie = 'shopana_signed_in=; Path=/; Max-Age=0';
 });

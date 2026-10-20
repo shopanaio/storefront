@@ -10,7 +10,8 @@ import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
 import { usePromoDraft } from '../draft';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
-import { useCheckoutTheme } from '#checkout/theme';
+import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
 import { useConfirm } from '#checkout/ui/useConfirm';
 import { SectionIssues } from '#checkout/components/notices/SectionIssues';
 import { SectionId } from '#checkout/state/interface';
@@ -27,14 +28,17 @@ export interface PromoSectionViewProps {
  * Promo codes (stage 6): the field to add one more code and the list of entered codes, each
  * removable on its own. Only the buyer removes a code (BR-tvyl): a code the checkout does not
  * apply stays listed with the reason from the API, and one waiting for a condition (a chosen
- * delivery) is shown as pending. Loyalty gets its place right after the codes through the
- * theme (`LoyaltySlot`); it is not implemented here (6.2).
+ * delivery) is shown as pending. The code of a loyalty voucher is marked as a reward.
  */
 export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const { addPromoCode, removePromoCode } = useCheckoutApi();
-  const { LoyaltySlot } = useCheckoutTheme();
+  const { checkout } = useCheckoutData();
+  const { account } = useLoyaltyAccount();
+  const rewardCode =
+    account?.rewards.find((reward) => reward.id === checkout?.loyaltyRewardId)?.voucherCode ??
+    null;
   const confirm = useConfirm();
   const codes = useMemo(() => data?.codes ?? [], [data?.codes]);
 
@@ -133,6 +137,9 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
                 <Typography.Text strong className={styles.code}>
                   {entered}
                 </Typography.Text>
+                {rewardCode && isPromoEntered([rewardCode], entered) ? (
+                  <span className={styles.rewardPill}>{t('loyalty-reward-code')}</span>
+                ) : null}
                 <Button
                   type="text"
                   size="small"
@@ -152,7 +159,6 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
         </Flex>
       ) : null}
       <SectionIssues sections={[SectionId.Promo]} />
-      {LoyaltySlot ? <LoyaltySlot /> : null}
     </Flex>
   );
 };
@@ -174,6 +180,17 @@ const useStyles = createStyles(({ token, css }) => ({
   code: css`
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  `,
+  rewardPill: css`
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: ${token.colorPrimaryBg};
+    color: ${token.colorPrimary};
+    font-size: ${token.fontSizeSM}px;
+    font-weight: 500;
   `,
   removeButton: css`
     color: ${token.colorTextSecondary};

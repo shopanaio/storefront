@@ -8,6 +8,7 @@ import { PaymentSection } from './payment/components/Container';
 import { RecipientSection } from './recipient/components/Container';
 import { CommentSection } from './comment/components/Container';
 import { PromoSection } from './promo/components/Container';
+import { LoyaltySection } from './loyalty/components/Container';
 import { SectionId } from '#checkout/state/interface';
 
 export interface SectionConfig {
@@ -56,5 +57,10 @@ export const sections: Record<SectionId, SectionConfig> = {
     slug: SectionId.Promo,
     titleKey: 'promo',
     Component: PromoSection,
+  },
+  [SectionId.Loyalty]: {
+    slug: SectionId.Loyalty,
+    titleKey: 'loyalty-title',
+    Component: LoyaltySection,
   },
 };

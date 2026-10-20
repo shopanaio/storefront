@@ -23,6 +23,8 @@ export type ContactForm = {
   lastName: string;
   middleName: string;
   phone: string;
+  /** Asked only with `withEmail`: a guest's email; a signed-in buyer's comes from the account. */
+  email?: string;
 };
 
 export interface ContactSelectProps {
@@ -30,6 +32,8 @@ export interface ContactSelectProps {
   /** Saves the contact; the drawer closes once it resolves and stays open when it fails. */
   onSubmit: (dto: ContactForm) => Promise<void> | void;
   title: ReactNode;
+  /** Adds the email field (a guest buyer, design F2). */
+  withEmail?: boolean;
 }
 
 const defaultValues: ContactForm = {
@@ -37,7 +41,10 @@ const defaultValues: ContactForm = {
   lastName: '',
   middleName: '',
   phone: '',
+  email: '',
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * ContactSelect renders a CitySelect-like button. On click, a drawer opens
@@ -48,6 +55,7 @@ export const ContactSelect = ({
   title,
   data,
   onSubmit,
+  withEmail = false,
 }: ContactSelectProps) => {
   const { styles } = useStyles();
   const isMobile = useIsMobile();
@@ -62,7 +70,7 @@ export const ContactSelect = ({
   // Compared by value: the parent passes a new object on every checkout read. A saved value
   // fills only the fields the buyer has not changed since the last save, so an answer (a
   // normalized phone) never wipes what the buyer is typing in the open drawer (BR-q7dr).
-  const dataKey = JSON.stringify(data ?? defaultValues);
+  const dataKey = JSON.stringify({ ...defaultValues, ...data });
   useEffect(() => {
     reset(JSON.parse(dataKey) as ContactForm, { keepDirtyValues: true });
   }, [dataKey, reset]);
@@ -241,6 +249,27 @@ export const ContactSelect = ({
               error={errors.phone?.message}
               autoComplete="tel"
             />
+            {withEmail ? (
+              <Controller
+                name="email"
+                control={control}
+                rules={{
+                  pattern: { value: EMAIL_PATTERN, message: t('email-invalid-format') },
+                }}
+                render={({ field }) => (
+                  <FloatingLabelInput
+                    label={t('email')}
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    status={errors.email ? 'error' : undefined}
+                    error={errors.email?.message}
+                    autoComplete="email"
+                    type="email"
+                  />
+                )}
+              />
+            ) : null}
             <StickyButton onClick={onDrawerSubmit} loading={saving}>
               {t('save')}
             </StickyButton>

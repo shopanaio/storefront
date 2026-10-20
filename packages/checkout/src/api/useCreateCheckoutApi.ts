@@ -23,6 +23,18 @@ import { addPromoCodeMutation } from '#checkout/api/mutations/addPromoCodeMutati
 import { removePromoCodeMutation } from '#checkout/api/mutations/removePromoCodeMutation.shopana';
 import { updateCustomerNoteMutation } from '#checkout/api/mutations/updateCustomerNoteMutation.shopana';
 import { submitCheckoutMutation } from '#checkout/api/mutations/submitCheckoutMutation.shopana';
+import { updateLoyaltyRedemptionMutation } from '#checkout/api/mutations/updateLoyaltyRedemptionMutation.shopana';
+import { removeLoyaltyRedemptionMutation } from '#checkout/api/mutations/removeLoyaltyRedemptionMutation.shopana';
+import { loyaltyAccountQuery } from '#checkout/api/queries/loyaltyAccountQuery.shopana';
+import {
+  currentSelection,
+  quoteNeedsRenewal,
+  selectionInput,
+  useLoyaltyIntent,
+  useLoyaltyWrites,
+  type LoyaltySelection,
+} from '#checkout/sections/loyalty/selection';
+import { isPromoEntered } from '#checkout/sections/promo/promoErrors';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { StorefrontLoadCheckoutQueryDocument } from '#checkout/graphql/operations';
 import { mapApiCheckoutToCheckout } from '#checkout/hooks/useCheckout/mapApiCheckoutToCheckout';
@@ -128,7 +140,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Address,
     }
   );
-  const { commit: commitAddPromo } = useCheckoutOperation(
+  const { commit: commitAddPromo, send: sendAddPromo } = useCheckoutOperation(
     addPromoCodeMutation,
     {
       // The promo section shows the error next to the field.
@@ -137,12 +149,32 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Promo,
     }
   );
-  const { commit: commitRemovePromo } = useCheckoutOperation(
+  const { commit: commitRemovePromo, send: sendRemovePromo } = useCheckoutOperation(
     removePromoCodeMutation,
     {
       reportError: false,
       operationKey: OperationKey.RemovePromoCode,
       sectionId: SectionId.Promo,
+    }
+  );
+  // The loyalty selection is written in the queue: each write reads the selection the last answer
+  // left and changes only its own part. A failure is reported in the checkout banner.
+  const { send: sendUpdateLoyalty } = useCheckoutOperation(
+    updateLoyaltyRedemptionMutation,
+    {
+      errorMessage: t('loyalty-error-save'),
+      closableError: true,
+      operationKey: OperationKey.UpdateLoyalty,
+      sectionId: SectionId.Loyalty,
+    }
+  );
+  const { send: sendRemoveLoyalty } = useCheckoutOperation(
+    removeLoyaltyRedemptionMutation,
+    {
+      errorMessage: t('loyalty-error-save'),
+      closableError: true,
+      operationKey: OperationKey.UpdateLoyalty,
+      sectionId: SectionId.Loyalty,
     }
   );
   const { commit: commitUpdateNote } = useCheckoutOperation(
@@ -245,6 +277,30 @@ export function useCreateCheckoutApi(): CheckoutApi {
         if (!isMutationSuperseded(error)) keys.add(key);
         throw error;
       }
+    };
+    /** Writes the loyalty selection as `change` makes it from the current one. */
+    const writeLoyalty = async (
+      change: (selection: LoyaltySelection) => LoyaltySelection
+    ) => {
+      const current = currentSelection(currentCheckout());
+      const next = change(current);
+      const input = selectionInput(next);
+      const context = mutationContext();
+      useLoyaltyIntent
+        .getState()
+        .setSource(context.checkoutId, next.redemption?.source ?? null);
+      const { track } = useLoyaltyWrites.getState();
+      if (input) {
+        await track(sendUpdateLoyalty({ input: { ...input, ...context } }));
+      } else if (current.redemption || current.rewardId) {
+        await track(sendRemoveLoyalty({ input: context }));
+      }
+    };
+    /** The account shows which rewards are left: read it again after a reward changes. */
+    const refetchLoyaltyAccount = () => {
+      void client
+        .refetchQueries({ include: [loyaltyAccountQuery] })
+        .catch(() => undefined);
     };
     return {
       // A save replaced in the queue by a newer one rejects with `MutationSupersededError`:
@@ -352,6 +408,62 @@ export function useCreateCheckoutApi(): CheckoutApi {
       removePromoCode: async (input) => {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });
       },
+      setLoyaltyRedemption: async (request) => {
+        await followSuperseded(
+          enqueueMutation(
+            () => writeLoyalty((selection) => ({ ...selection, redemption: request })),
+            { key: 'loyalty-redemption' }
+          )
+        );
+      },
+      setLoyaltyReward: async (reward, replaced = null) => {
+        try {
+          await followSuperseded(
+            enqueueMutation(
+              async () => {
+                const checkout = currentCheckout();
+                const entered = checkout.promoCodes.map((item) => item.code);
+                const context = mutationContext();
+                // A voucher is a promo code: Pricing applies its discount once the code is
+                // entered, and the reward reserves it for this order.
+                if (reward?.voucherCode && !isPromoEntered(entered, reward.voucherCode)) {
+                  await sendAddPromo({
+                    input: { code: reward.voucherCode, ...context },
+                  });
+                }
+                await writeLoyalty((selection) => ({
+                  ...selection,
+                  rewardId: reward?.id ?? null,
+                }));
+                // The voucher of the reward given up leaves the promo codes with it.
+                const previousCode = replaced?.voucherCode ?? null;
+                if (
+                  replaced &&
+                  replaced.id !== reward?.id &&
+                  previousCode &&
+                  isPromoEntered(entered, previousCode)
+                ) {
+                  await sendRemovePromo({ input: { code: previousCode, ...context } });
+                }
+              },
+              { key: 'loyalty-reward' }
+            )
+          );
+        } finally {
+          refetchLoyaltyAccount();
+        }
+      },
+      refreshLoyalty: async () => {
+        try {
+          await followSuperseded(
+            enqueueMutation(() => writeLoyalty((selection) => selection), {
+              key: 'loyalty-redemption',
+            })
+          );
+        } finally {
+          refetchLoyaltyAccount();
+        }
+      },
       // The saved input of the selected option is its own resource: a waiting save of it never
       // replaces an explicit selection, which goes after it in the queue (BR-q2xm).
       updateShippingMethod: async (input) => {
@@ -369,6 +481,14 @@ export function useCreateCheckoutApi(): CheckoutApi {
         // write queued before it.
         await Promise.allSettled(flushPendingInputs());
         await waitForMutations();
+        // The loyalty quote lives a limited time and placeOrder reserves exactly it: a quote
+        // about to expire is renewed with the same selection first.
+        const quote = currentCheckout().loyaltyRedemption;
+        if (quote && quoteNeedsRenewal(quote.expiresAt, Date.now())) {
+          await enqueueMutation(() => writeLoyalty((selection) => selection), {
+            key: 'loyalty-redemption',
+          }).catch(() => undefined);
+        }
         if (unsavedKeys().size > 0) {
           // A value the buyer sees was not saved: the order would go without it.
           return graphQLErrorPlacement(input.checkoutId, [
@@ -408,7 +528,11 @@ export function useCreateCheckoutApi(): CheckoutApi {
     sendRemoveRecipients,
     commitUpdateNote,
     commitAddPromo,
+    sendAddPromo,
     commitRemovePromo,
+    sendRemovePromo,
+    sendUpdateLoyalty,
+    sendRemoveLoyalty,
     commitSubmitCheckout,
   ]);
 }

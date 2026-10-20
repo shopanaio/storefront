@@ -107,6 +107,7 @@ fragment StorefrontUseCheckoutFragment on Checkout {
   currencyCode
   resultRevision
   status
+  guestCheckoutAllowed
   expiresAt
   valid
   issues {
@@ -136,6 +137,37 @@ fragment StorefrontUseCheckoutFragment on Checkout {
     }
     totalTaxAmount {
       ...StorefrontCheckoutMoney
+    }
+    loyaltyAmount {
+      ...StorefrontCheckoutMoney
+    }
+  }
+  loyaltyRedemption {
+    source
+    requestedPoints
+    requestedAmount {
+      ...StorefrontCheckoutMoney
+    }
+    points
+    availablePoints
+    availableAmount {
+      ...StorefrontCheckoutMoney
+    }
+    discount {
+      ...StorefrontCheckoutMoney
+    }
+    expiresAt
+  }
+  loyaltyRewardId
+  loyaltyEarning {
+    state
+    points
+    amount {
+      ...StorefrontCheckoutMoney
+    }
+    presentation {
+      headline
+      description
     }
   }
   lines {

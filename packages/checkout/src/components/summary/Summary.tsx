@@ -67,6 +67,7 @@ export const Summary = ({ checkout }: Prop) => {
         ) : null}
       </Flex>
       <SectionRenderer slug={SectionId.Promo} />
+      <SectionRenderer slug={SectionId.Loyalty} />
       <SummaryTotals checkout={checkout} />
       <CartDrawer />
     </>

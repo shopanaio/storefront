@@ -20,3 +20,4 @@ export {
 } from './useResetPassword';
 export { useApplicationSessions } from './useApplicationSessions';
 export { useOAuthAuthorization } from './useOAuthAuthorization';
+export { useIamClient } from './useIamClient';

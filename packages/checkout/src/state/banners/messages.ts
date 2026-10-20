@@ -12,7 +12,7 @@ const ISSUE_KEYS: Record<string, string> = {
   DELIVERY_OPTION_REQUIRED: 'issue-delivery-option-required',
   DELIVERY_OPTION_INVALID: 'issue-delivery-option-invalid',
   LOYALTY_REDEMPTION_UNAVAILABLE: 'issue-loyalty-redemption-unavailable',
-  LOYALTY_POINTS_REDUCED: 'issue-loyalty-points-reduced',
+  LOYALTY_REDEMPTION_REDUCED: 'issue-loyalty-redemption-reduced',
   PAYMENT_METHODS_UNAVAILABLE: 'issue-payment-methods-unavailable',
   PAYMENT_METHOD_REQUIRED: 'issue-payment-method-required',
   PAYMENT_METHOD_INVALID: 'issue-payment-method-invalid',

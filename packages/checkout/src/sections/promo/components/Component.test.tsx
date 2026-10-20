@@ -10,7 +10,12 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('#checkout/context/CheckoutApiContext', () => ({ useCheckoutApi: () => api }));
-vi.mock('#checkout/theme', () => ({ useCheckoutTheme: () => ({ LoyaltySlot: null }) }));
+vi.mock('#checkout/context/CheckoutDataContext', () => ({
+  useCheckoutData: () => ({ checkout: null }),
+}));
+vi.mock('#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount', () => ({
+  useLoyaltyAccount: () => ({ account: null }),
+}));
 vi.mock('#checkout/ui/useConfirm', () => ({ useConfirm: () => vi.fn() }));
 vi.mock('#checkout/components/notices/SectionIssues', () => ({ SectionIssues: () => null }));
 

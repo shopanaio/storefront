@@ -29,6 +29,16 @@ export const IDEMPOTENCY_MISMATCH_CODE = 'IDEMPOTENCY_KEY_PARAMETER_MISMATCH';
  */
 export const STALE_SELECTION_CODE = 'CHECKOUT_OPEN';
 
+/**
+ * A buyer signed in, but this guest checkout was not claimed by the account yet (B6). The order
+ * is not placed as a guest: the account claims the checkout, its prices are read again and the
+ * buyer places the order from the account checkout.
+ */
+export const CLAIM_REQUIRED_CODE = 'CHECKOUT_CLAIM_REQUIRED';
+
+/** The store requires an account (S7): the guest signs in before placing the order. */
+export const GUEST_NOT_ALLOWED_CODE = 'CHECKOUT_GUEST_NOT_ALLOWED';
+
 /** Frontend-only code: the API answered with a client SDK nobody registered. */
 export const CLIENT_SDK_UNAVAILABLE_CODE = 'CLIENT_SDK_UNAVAILABLE';
 

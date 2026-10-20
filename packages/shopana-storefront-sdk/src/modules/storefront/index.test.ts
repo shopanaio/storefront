@@ -45,7 +45,7 @@ const checkout = {
     totalTaxAmount: money,
     totalShippingAmount: money,
   },
-  loyaltyRewardEntitlementId: 'reward-1',
+  loyaltyRewardId: 'reward-1',
   loyaltyRedemption: {
     quoteId: 'quote-1',
     revision: 'r2',
@@ -53,9 +53,12 @@ const checkout = {
     programId: 'program-1',
     programCode: 'bonus',
     programVersion: 1,
+    source: 'POINTS',
     requestedPoints: 50,
-    redeemablePoints: 50,
+    requestedAmount: null,
+    points: 50,
     availablePoints: 100,
+    availableAmount: { amount: '1.00', currencyCode: 'USD' },
     discount: { amount: '0.50', currencyCode: 'USD' },
     payableAfterLoyalty: { amount: '9.50', currencyCode: 'USD' },
     expiresAt: '2026-08-04T12:00:00Z',
@@ -73,7 +76,7 @@ function setup() {
     checkout: {
       ...checkout,
       loyaltyRedemption: null,
-      loyaltyRewardEntitlementId: null,
+      loyaltyRewardId: null,
     },
     userErrors: [],
   });
@@ -98,14 +101,15 @@ describe('Storefront API', () => {
     const { api, client } = setup();
     const raw = await api.updateLoyaltyRedemption({
       checkoutId: checkout.id,
-      requestedPoints: 50,
-      rewardEntitlementId: 'reward-1',
+      source: 'POINTS',
+      points: 50,
+      rewardId: 'reward-1',
     });
     const cart = mapShopanaCheckoutToEntityCart(raw!);
     expect(cart.status).toBe('READY');
     expect(cart.expiresAt).toEqual(new Date(checkout.expiresAt));
     expect(cart.resultRevision).toBe('r2');
-    expect(cart.loyaltyRewardEntitlementId).toBe('reward-1');
+    expect(cart.loyaltyRewardId).toBe('reward-1');
     expect(cart.loyaltyRedemption?.discount.amount).toBe(0.5);
     expect(cart.loyaltyRedemption?.payableAfterLoyalty.amount).toBe(9.5);
     expect(cart.loyaltyRedemption?.expiresAt).toBeInstanceOf(Date);
@@ -116,7 +120,7 @@ describe('Storefront API', () => {
       fragmentName: 'SdkCartFragment_cart',
     });
     expect(cached?.loyaltyRedemption).toBeNull();
-    expect(cached?.loyaltyRewardEntitlementId).toBeNull();
+    expect(cached?.loyaltyRewardId).toBeNull();
   });
   it('rejects mutation business errors', async () => {
     const { api, mutation } = setup();

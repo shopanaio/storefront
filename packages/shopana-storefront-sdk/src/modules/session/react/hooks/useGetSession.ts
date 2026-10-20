@@ -4,15 +4,11 @@ import { useCallback } from 'react';
 import { useSessionContext } from '../context/SessionContext';
 import { useAuthAction } from './auth/useAuthAction';
 
+/** The current session and a way to read it again from the session server. */
 export function useGetSession() {
-  const { authClient, store, useStore } = useSessionContext();
+  const { sessionClient, useStore } = useSessionContext();
   const session = useStore((state) => state.session);
-  const action = useCallback(async () => {
-    const value =
-      (await authClient.getSession()) ?? (await authClient.refresh());
-    store.getState().setSession(value);
-    return value;
-  }, [authClient, store]);
+  const action = useCallback(() => sessionClient.load(), [sessionClient]);
   const { execute: refreshSession, ...state } = useAuthAction(action);
   return { session, refreshSession, ...state };
 }

@@ -82,10 +82,7 @@ export async function AppProvider({
       client,
       serverCookies,
     }),
-    loadSessionServerQuery({
-      environmentConfig,
-      serverCookies,
-    }),
+    loadSessionServerQuery({ serverCookies }),
   ]);
 
   const initialState = mergeApolloCacheStates(

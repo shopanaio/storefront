@@ -1848,9 +1848,13 @@ type CheckoutCost @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   subtotalAmount: Money!
   """
-  Total reduction from promotions and an applied loyalty redemption.
+  Total reduction from promotions on items and delivery; loyalty is in `loyaltyAmount`.
   """
   totalDiscountAmount: Money!
+  """
+  Amount paid with loyalty points or store credit; zero without a redemption.
+  """
+  loyaltyAmount: Money!
   """
   Total tax amount applied to the checkout.
   """
@@ -1995,9 +1999,16 @@ type Checkout implements Node @join__type(graph: CHECKOUT_STOREFRONT, key: "id")
   """
   loyaltyRedemption: CheckoutLoyaltyRedemption @join__field(graph: CHECKOUT_STOREFRONT) 
   """
-  Reward entitlement selected and validated for this checkout.
+  Loyalty reward selected and validated for this checkout. Uses the same global ID as
+  `Customer.loyaltyAccount.availableRewards`.
   """
-  loyaltyRewardEntitlementId: ID @join__field(graph: CHECKOUT_STOREFRONT) 
+  loyaltyRewardId: ID @join__field(graph: CHECKOUT_STOREFRONT) 
+  """
+  Points and cashback that placing this order is expected to earn, by the same calculation as the
+  order earning. Null without an active program, when nothing is earned, or when Loyalty did not
+  answer; the estimate never blocks placement.
+  """
+  loyaltyEarning: CheckoutLoyaltyEarning @join__field(graph: CHECKOUT_STOREFRONT) 
 }
 
 type CheckoutLoyaltyRedemption @join__type(graph: CHECKOUT_STOREFRONT)  {
@@ -2007,9 +2018,27 @@ type CheckoutLoyaltyRedemption @join__type(graph: CHECKOUT_STOREFRONT)  {
   programId: ID!
   programCode: String!
   programVersion: Int!
+  source: LoyaltyRedemptionSource!
+  """
+  Points the buyer asked for; null for STORE_CREDIT or when the maximum was requested.
+  """
   requestedPoints: BigInt
-  redeemablePoints: BigInt!
-  availablePoints: BigInt!
+  """
+  Store credit the buyer asked for; null for POINTS or when the maximum was requested.
+  """
+  requestedAmount: Money
+  """
+  Points spent by this redemption; null for STORE_CREDIT.
+  """
+  points: BigInt
+  """
+  Available points; null for STORE_CREDIT.
+  """
+  availablePoints: BigInt
+  """
+  Available balance of the selected source in money.
+  """
+  availableAmount: Money!
   discount: Money!
   payableAfterLoyalty: Money!
   expiresAt: DateTime!
@@ -3412,6 +3441,16 @@ type LoyaltyAccount @join__type(graph: LOYALTY_STOREFRONT)  {
   reservations, releases, merges, and activation events are not returned.
   """
   transactions(first: Int = 20, after: Cursor) : LoyaltyTransactionConnection!
+  """
+  Sources the customer can pay with in checkout: enabled in the effective program version and
+  with a positive balance, ordered POINTS then STORE_CREDIT. The per-order bound here is the
+  program limit; the bound for a specific cart comes from the checkout quote.
+  """
+  redemptionSources: [LoyaltyRedemptionSourceOption!]!
+  """
+  The customer's store credit in the program currency. Null when no store credit was issued.
+  """
+  storeCredit: LoyaltyStoreCredit
 }
 
 """
@@ -3425,7 +3464,8 @@ type LoyaltyBalance @join__type(graph: LOYALTY_STOREFRONT)  {
 }
 
 """
-The customer's current tier membership.
+The customer's current tier. Without a membership this is the program's base tier
+(lowest rank) when the program version defines one.
 """
 type LoyaltyTier @join__type(graph: LOYALTY_STOREFRONT)  {
   code: String!
@@ -3433,6 +3473,15 @@ type LoyaltyTier @join__type(graph: LOYALTY_STOREFRONT)  {
   rank: Int!
   effectiveFrom: DateTime!
   effectiveTo: DateTime
+  """
+  Multiplier applied to purchase points, in basis points (`15000` = ×1.5).
+  """
+  earnMultiplierBps: Int!
+  """
+  Server-calculated progress to the next tier by rank. Null on the top tier or when the
+  qualification cannot be expressed as a remaining amount.
+  """
+  progress: LoyaltyTierProgress
 }
 
 """
@@ -3731,7 +3780,14 @@ All monetary calculations captured when the order was placed.
 """
 type OrderCost @join__type(graph: ORDERS_STOREFRONT)  {
   subtotalAmount: Money!
+  """
+  Promotion discounts on items and delivery; loyalty is in `loyaltyAmount`.
+  """
   totalDiscountAmount: Money!
+  """
+  Amount paid with loyalty points or store credit; zero without a redemption.
+  """
+  loyaltyAmount: Money!
   totalTaxAmount: Money!
   totalShippingAmount: Money!
   totalAmount: Money!
@@ -3956,41 +4012,50 @@ type OrderPayment @join__type(graph: ORDERS_STOREFRONT)  {
 """
 A customer-visible order in the active storefront context.
 """
-type Order implements Node @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
+type Order implements Node @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: ORDERS_STOREFRONT, key: "id")  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
   id: ID!
-  status: OrderStatus!
-  fulfillmentStatus: OrderFulfillmentStatus!
-  deliveryStatus: OrderDeliveryStatus!
+  """
+  Loyalty earned by this order. Visible only to the customer who owns the earning account; null
+  before the order is eligible for earning or when it earned nothing.
+  """
+  loyaltyEarning: OrderLoyaltyEarning @join__field(graph: LOYALTY_STOREFRONT) 
+  status: OrderStatus! @join__field(graph: ORDERS_STOREFRONT) 
+  fulfillmentStatus: OrderFulfillmentStatus! @join__field(graph: ORDERS_STOREFRONT) 
+  deliveryStatus: OrderDeliveryStatus! @join__field(graph: ORDERS_STOREFRONT) 
   """
   Human-readable order number unique within the store.
   """
-  number: BigInt!
-  channelCode: String
-  localeCode: LocaleCode
-  currencyCode: CurrencyCode!
-  customerIdentity: OrderCustomerIdentity!
-  customerNote: String
-  cost: OrderCost!
-  totalQuantity: Int!
-  lines: [OrderLine!]!
-  appliedPromoCodes: [OrderPromoCode!]!
-  deliveryGroups: [OrderDeliveryGroup!]!
-  fulfillments: [OrderFulfillment!]!
-  payment: OrderPayment!
-  paymentMethod: OrderPaymentMethod @deprecated(reason: "Use payment.method.") 
+  number: BigInt! @join__field(graph: ORDERS_STOREFRONT) 
+  channelCode: String @join__field(graph: ORDERS_STOREFRONT) 
+  localeCode: LocaleCode @join__field(graph: ORDERS_STOREFRONT) 
+  currencyCode: CurrencyCode! @join__field(graph: ORDERS_STOREFRONT) 
+  customerIdentity: OrderCustomerIdentity! @join__field(graph: ORDERS_STOREFRONT) 
+  customerNote: String @join__field(graph: ORDERS_STOREFRONT) 
+  cost: OrderCost! @join__field(graph: ORDERS_STOREFRONT) 
+  """
+  Loyalty tender applied at checkout; null for orders without a redemption.
+  """
+  loyaltyRedemption: OrderLoyaltyRedemption @join__field(graph: ORDERS_STOREFRONT) 
+  totalQuantity: Int! @join__field(graph: ORDERS_STOREFRONT) 
+  lines: [OrderLine!]! @join__field(graph: ORDERS_STOREFRONT) 
+  appliedPromoCodes: [OrderPromoCode!]! @join__field(graph: ORDERS_STOREFRONT) 
+  deliveryGroups: [OrderDeliveryGroup!]! @join__field(graph: ORDERS_STOREFRONT) 
+  fulfillments: [OrderFulfillment!]! @join__field(graph: ORDERS_STOREFRONT) 
+  payment: OrderPayment! @join__field(graph: ORDERS_STOREFRONT) 
+  paymentMethod: OrderPaymentMethod @join__field(graph: ORDERS_STOREFRONT)  @deprecated(reason: "Use payment.method.") 
   """
   Server-evaluated post-order actions available to the current customer.
   """
-  selfService: OrderSelfService!
+  selfService: OrderSelfService! @join__field(graph: ORDERS_STOREFRONT) 
   """
   Return requests created for this order, newest first.
   """
-  returnRequests(first: Int = 20, after: Cursor) : OrderReturnRequestConnection!
-  placedAt: DateTime
-  closedAt: DateTime
-  expiresAt: DateTime
-  createdAt: DateTime!
-  updatedAt: DateTime!
+  returnRequests(first: Int = 20, after: Cursor) : OrderReturnRequestConnection! @join__field(graph: ORDERS_STOREFRONT) 
+  placedAt: DateTime @join__field(graph: ORDERS_STOREFRONT) 
+  closedAt: DateTime @join__field(graph: ORDERS_STOREFRONT) 
+  expiresAt: DateTime @join__field(graph: ORDERS_STOREFRONT) 
+  createdAt: DateTime! @join__field(graph: ORDERS_STOREFRONT) 
+  updatedAt: DateTime! @join__field(graph: ORDERS_STOREFRONT) 
 }
 
 type OrderLineCost @join__type(graph: ORDERS_STOREFRONT)  {
@@ -7624,15 +7689,23 @@ input CheckoutCreateInput @join__type(graph: CHECKOUT_STOREFRONT)  {
 input CheckoutLoyaltyRedemptionUpdateInput @join__type(graph: CHECKOUT_STOREFRONT)  {
   checkoutId: ID!
   """
-  Whether points should be redeemed in addition to a selected reward.
+  Source the buyer pays with. Selecting a source replaces the previous one; null keeps only
+  the reward.
   """
-  redeemPoints: Boolean! = true
-  requestedPoints: BigInt
-  programId: ID
+  source: LoyaltyRedemptionSource
   """
-  Issued loyalty reward entitlement to reserve for this checkout.
+  Points to redeem with POINTS; null redeems the most the order allows.
   """
-  rewardEntitlementId: ID
+  points: BigInt
+  """
+  Store credit amount with STORE_CREDIT in the checkout currency; null uses the most the order
+  allows.
+  """
+  amount: Decimal
+  """
+  Loyalty reward from `Customer.loyaltyAccount.availableRewards` to reserve for this checkout.
+  """
+  rewardId: ID
 }
 
 input CheckoutLoyaltyRedemptionRemoveInput @join__type(graph: CHECKOUT_STOREFRONT)  {
@@ -8817,4 +8890,172 @@ input ReviewUpdateInput @join__type(graph: REVIEWS_STOREFRONT)  {
   Complete media replacement when supplied. An empty list removes media.
   """
   media: [ReviewMediaCreateInput!]
+}
+# Account-owned checkout (IAM and checkout: guest and sign-in).
+type CheckoutSettings {
+  guestCheckoutEnabled: Boolean!
+}
+
+input CheckoutClaimInput {
+  checkoutId: ID!
+}
+
+type CheckoutClaimPayload {
+  checkout: Checkout
+  mergedFromCheckoutId: ID
+  userErrors: [CheckoutUserError!]!
+}
+
+extend type Query {
+  checkoutSettings: CheckoutSettings!
+}
+
+extend type Mutation {
+  checkoutClaim(input: CheckoutClaimInput!): CheckoutClaimPayload!
+}
+
+extend type Checkout {
+  guestCheckoutAllowed: Boolean!
+}
+
+extend type Customer {
+  checkout: Checkout
+}
+
+type CheckoutLoyaltyEarningPresentation @join__type(graph: CHECKOUT_STOREFRONT)  {
+  headline: String!
+  description: String
+}
+
+type CheckoutLoyaltyEarning @join__type(graph: CHECKOUT_STOREFRONT)  {
+  state: CheckoutLoyaltyEarningState!
+  """
+  Purchase points plus rule awards in points.
+  """
+  points: BigInt!
+  """
+  Cashback credited to the store credit balance; null without a monetary award.
+  """
+  amount: Money
+  presentation: CheckoutLoyaltyEarningPresentation!
+}
+
+enum CheckoutLoyaltyEarningState @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  The signed-in buyer earns this amount.
+  """
+  AVAILABLE @join__enumValue(graph: CHECKOUT_STOREFRONT) 
+  """
+  A guest would earn this amount after signing in; the tier multiplier is not applied.
+  """
+  AUTHENTICATION_REQUIRED @join__enumValue(graph: CHECKOUT_STOREFRONT) 
+}
+
+enum LoyaltyRedemptionSource @join__type(graph: CHECKOUT_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  POINTS @join__enumValue(graph: CHECKOUT_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT) 
+  STORE_CREDIT @join__enumValue(graph: CHECKOUT_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT) 
+}
+
+type LoyaltyRedemptionSourceOption @join__type(graph: LOYALTY_STOREFRONT)  {
+  source: LoyaltyRedemptionSource!
+  """
+  Available points; null for STORE_CREDIT.
+  """
+  availablePoints: UnsignedInt64
+  """
+  Available balance in money; points are converted at the program redemption rate.
+  """
+  availableAmount: Money!
+  minimum: LoyaltyRedemptionBound!
+  """
+  Program limit per order; null without a limit.
+  """
+  maximumPerOrder: LoyaltyRedemptionBound
+}
+
+type LoyaltyRedemptionBound @join__type(graph: LOYALTY_STOREFRONT)  {
+  """
+  Bound in points; null for STORE_CREDIT.
+  """
+  points: UnsignedInt64
+  amount: Money!
+}
+
+type LoyaltyStoreCredit @join__type(graph: LOYALTY_STOREFRONT)  {
+  availableAmount: Money!
+  pendingAmount: Money!
+  """
+  The nearest store credit expirations, ordered by expiresAt ascending, at most 20 entries.
+  """
+  upcomingExpirations: [LoyaltyStoreCreditExpiration!]!
+}
+
+type LoyaltyStoreCreditExpiration @join__type(graph: LOYALTY_STOREFRONT)  {
+  amount: Money!
+  expiresAt: DateTime!
+}
+
+type LoyaltyTierProgress @join__type(graph: LOYALTY_STOREFRONT)  {
+  nextTier: LoyaltyNextTier!
+  """
+  Localized text such as `1 200 UAH more to reach Gold`.
+  """
+  presentation: LoyaltyOpportunityCopy!
+}
+
+type LoyaltyNextTier @join__type(graph: LOYALTY_STOREFRONT)  {
+  code: String!
+  name: String!
+  rank: Int!
+}
+
+"""
+What an order earned in the loyalty program.
+"""
+type OrderLoyaltyEarning @join__type(graph: LOYALTY_STOREFRONT)  {
+  """
+  Purchase points plus rule awards in points.
+  """
+  points: UnsignedInt64!
+  """
+  Cashback credited to the store credit balance; null without a monetary award.
+  """
+  amount: Money
+  status: OrderLoyaltyEarningStatus!
+  """
+  When the purchase points become available; null without purchase points.
+  """
+  availableAt: DateTime
+}
+
+enum OrderLoyaltyEarningStatus @join__type(graph: LOYALTY_STOREFRONT)  {
+  """
+  Points are awarded and wait for the program activation delay.
+  """
+  PENDING @join__enumValue(graph: LOYALTY_STOREFRONT) 
+  """
+  Points can be spent.
+  """
+  AVAILABLE @join__enumValue(graph: LOYALTY_STOREFRONT) 
+  """
+  The purchase points were taken back by refunds or cancellation.
+  """
+  REVERSED @join__enumValue(graph: LOYALTY_STOREFRONT) 
+}
+
+"""
+Loyalty tender of an order placed from checkout.
+"""
+type OrderLoyaltyRedemption @join__type(graph: ORDERS_STOREFRONT)  {
+  source: OrderLoyaltyRedemptionSource!
+  """
+  Points spent; null for STORE_CREDIT.
+  """
+  points: BigInt
+  amount: Money!
+}
+
+enum OrderLoyaltyRedemptionSource @join__type(graph: ORDERS_STOREFRONT)  {
+  POINTS @join__enumValue(graph: ORDERS_STOREFRONT) 
+  STORE_CREDIT @join__enumValue(graph: ORDERS_STOREFRONT) 
 }

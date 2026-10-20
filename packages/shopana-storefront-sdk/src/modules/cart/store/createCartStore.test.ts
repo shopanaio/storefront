@@ -11,7 +11,7 @@ function createCart(): model.Cart {
     resultRevision: 'r1',
     valid: true,
     loyaltyRedemption: null,
-    loyaltyRewardEntitlementId: null,
+    loyaltyRewardId: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
     totalQuantity: 1,

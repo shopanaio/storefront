@@ -12,4 +12,5 @@ export const contactFormSchema = yup.object<ContactFormData>().shape({
     .string()
     .required('Phone is required')
     .matches(/^\+?[0-9\s()-]+$/, 'Invalid phone number format'),
+  email: yup.string().email('Invalid email format').default(''),
 });

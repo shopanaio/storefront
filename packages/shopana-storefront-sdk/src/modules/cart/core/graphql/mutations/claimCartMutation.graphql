@@ -1,0 +1,15 @@
+mutation SdkClaimCartMutation($input: CheckoutClaimInput!) {
+  checkoutClaim(input: $input) {
+    checkout {
+      id
+      ...SdkCartFragment_cart
+    }
+    mergedFromCheckoutId
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useOperationTracker } from '#checkout/state/hooks/useOperationTracker';
 import { usePlacementController } from '#checkout/state/placement/usePlacementController';
 import { usePlacementPhase } from '#checkout/state/placement/placementStore';
+import { useAccountRecovery } from '#checkout/state/placement/useAccountRecovery';
 import { useCheckoutLifecycle } from '#checkout/state/useCheckoutLifecycle';
 import { onCheckoutEvent, CheckoutEvent } from '#checkout/state/checkoutBus';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
@@ -26,6 +27,8 @@ export function CheckoutController({
   const { settleClientSdk } = usePlacementController(checkoutId);
   // Follow the checkout status: placed elsewhere, expired, abandoned
   useCheckoutLifecycle(checkoutId);
+  // A placement refused for the account state: claim the checkout, or ask to sign in
+  useAccountRecovery();
   const phase = usePlacementPhase();
 
   // Only an accepted order lets the host clear the cart (decision 1.6)

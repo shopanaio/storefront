@@ -232,6 +232,35 @@ const mapPaymentMethod = (
   provider: { code: method.providerCode },
   flow: method.flow,
 });
+const mapLoyaltyRedemption = (
+  redemption: ApiCheckout['loyaltyRedemption']
+): Checkout.LoyaltyRedemption | null =>
+  redemption
+    ? {
+        source: redemption.source,
+        requestedPoints: redemption.requestedPoints ?? null,
+        requestedAmount: redemption.requestedAmount
+          ? mapMoney(redemption.requestedAmount)
+          : null,
+        points: redemption.points ?? null,
+        availablePoints: redemption.availablePoints ?? null,
+        availableAmount: mapMoney(redemption.availableAmount),
+        discount: mapMoney(redemption.discount),
+        expiresAt: toValidDate(redemption.expiresAt),
+      }
+    : null;
+const mapLoyaltyEarning = (
+  earning: ApiCheckout['loyaltyEarning']
+): Checkout.LoyaltyEarning | null =>
+  earning
+    ? {
+        state: earning.state,
+        points: earning.points,
+        amount: earning.amount ? mapMoney(earning.amount) : null,
+        headline: earning.presentation.headline,
+        description: earning.presentation.description ?? null,
+      }
+    : null;
 /**
  * Collects lines and bundle components by id, because delivery groups may
  * reference either.
@@ -261,6 +290,7 @@ export function mapApiCheckoutToCheckout(
     currencyCode: apiCheckout.currencyCode,
     resultRevision: apiCheckout.resultRevision,
     status: apiCheckout.status,
+    guestCheckoutAllowed: apiCheckout.guestCheckoutAllowed,
     expiresAt: toValidDate(apiCheckout.expiresAt),
     valid: apiCheckout.valid,
     issues: apiCheckout.issues.map((issue) => ({
@@ -281,6 +311,7 @@ export function mapApiCheckoutToCheckout(
       totalDiscountAmount: mapMoney(apiCheckout.cost.totalDiscountAmount),
       totalShippingAmount: mapMoney(apiCheckout.cost.totalShippingAmount),
       totalTaxAmount: mapMoney(apiCheckout.cost.totalTaxAmount),
+      loyaltyAmount: mapMoney(apiCheckout.cost.loyaltyAmount),
     },
     lines,
     promoCodes: apiCheckout.promoCodes.map((promoCode) => ({
@@ -329,6 +360,9 @@ export function mapApiCheckoutToCheckout(
         resetReason: mapResetReason(apiCheckout.payment.selection.resetReason),
       },
     },
+    loyaltyRedemption: mapLoyaltyRedemption(apiCheckout.loyaltyRedemption),
+    loyaltyRewardId: apiCheckout.loyaltyRewardId ?? null,
+    loyaltyEarning: mapLoyaltyEarning(apiCheckout.loyaltyEarning),
     notifications: apiCheckout.notifications.map((notification) => ({
       id: notification.id,
       code: notification.code,

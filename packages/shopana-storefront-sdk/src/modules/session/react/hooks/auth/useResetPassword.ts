@@ -2,14 +2,14 @@
 
 import { useCallback } from 'react';
 import type { ResetPasswordInput } from '../../../core/types';
-import { useSessionContext } from '../../context/SessionContext';
+import { useIamClient } from './useIamClient';
 import { useAuthAction } from './useAuthAction';
 
 export function useResetPassword() {
-  const { authClient } = useSessionContext();
+  const iamClient = useIamClient();
   const action = useCallback(
-    (input: ResetPasswordInput) => authClient.resetPassword(input),
-    [authClient]
+    (input: ResetPasswordInput) => iamClient.resetPassword(input),
+    [iamClient]
   );
   const { execute: resetPassword, ...state } = useAuthAction(action);
   return { resetPassword, ...state };

@@ -37,6 +37,27 @@ const readInput = async (request) => {
   return Object.fromEntries(new URLSearchParams(body));
 };
 
+/**
+ * OAuth client input of the token and revoke endpoints. A confidential client (the storefront
+ * session server) authenticates with `client_secret_basic`; the mock accepts any secret.
+ */
+const readClientInput = async (request) => {
+  const input = await readInput(request);
+  const authorization = request.headers.authorization;
+  if (typeof authorization !== 'string' || !authorization.startsWith('Basic ')) {
+    return input;
+  }
+  const decoded = Buffer.from(authorization.slice(6).trim(), 'base64').toString();
+  const separator = decoded.indexOf(':');
+  const clientId = decodeURIComponent(
+    (separator < 0 ? decoded : decoded.slice(0, separator)).replace(/\+/g, ' ')
+  );
+  if (input.client_id && input.client_id !== clientId) {
+    return { ...input, client_id: undefined, invalid_client: true };
+  }
+  return { ...input, client_id: clientId };
+};
+
 const sendJson = (response, status, body, headers = {}) => {
   response.writeHead(status, {
     'cache-control': 'no-store',
@@ -154,7 +175,11 @@ export const createApplicationAuthRoutes = (store) => {
       }
 
       if (operation === 'oauth2/token' && request.method === 'POST') {
-        const input = await readInput(request);
+        const input = await readClientInput(request);
+        if (input.invalid_client) {
+          sendJson(response, 401, { error: 'invalid_client' });
+          return true;
+        }
         const result =
           input.grant_type === 'refresh_token'
             ? store.refreshOAuthToken(applicationId, input)
@@ -181,7 +206,7 @@ export const createApplicationAuthRoutes = (store) => {
       }
 
       if (operation === 'oauth2/revoke' && request.method === 'POST') {
-        const input = await readInput(request);
+        const input = await readClientInput(request);
         if (input.token) store.revokeOAuthToken(input.token);
         sendJson(response, 200, {});
         return true;

@@ -23,6 +23,7 @@ export enum OperationKey {
   RemoveDeliveryRecipients = 'removeDeliveryRecipients',
   AddPromoCode = 'addPromoCode',
   RemovePromoCode = 'removePromoCode',
+  UpdateLoyalty = 'updateLoyalty',
   UpdateCustomerNote = 'updateCustomerNote',
   SubmitCheckout = 'submitCheckout',
 }

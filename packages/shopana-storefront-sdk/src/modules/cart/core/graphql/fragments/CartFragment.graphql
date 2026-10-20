@@ -8,7 +8,7 @@ fragment SdkCartFragment_cart on Checkout {
   valid
   status
   expiresAt
-  loyaltyRewardEntitlementId
+  loyaltyRewardId
   loyaltyRedemption {
     quoteId
     revision
@@ -16,9 +16,18 @@ fragment SdkCartFragment_cart on Checkout {
     programId
     programCode
     programVersion
+    source
     requestedPoints
-    redeemablePoints
+    requestedAmount {
+      amount
+      currencyCode
+    }
+    points
     availablePoints
+    availableAmount {
+      amount
+      currencyCode
+    }
     discount {
       amount
       currencyCode

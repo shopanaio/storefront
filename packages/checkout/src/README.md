@@ -165,7 +165,18 @@ Files: `sections/delivery/**`.
 
 ## Promo Codes
 
-Files: `sections/promo/**`. The text typed in the field is kept in a store (`draft.ts`), so it survives a remount of the section. Every entered code is listed (`promoCodes`) and removable on its own; only the buyer removes a code. A code the pricing does not apply is listed with the API message as `REJECTED`, and one waiting for a condition (a delivery code before the delivery is chosen) as `PENDING`; it applies again once the condition is met. A code the API refuses is reported by code next to the field. The theme's optional `LoyaltySlot` renders right after the codes.
+Files: `sections/promo/**`. The text typed in the field is kept in a store (`draft.ts`), so it survives a remount of the section. Every entered code is listed (`promoCodes`) and removable on its own; only the buyer removes a code. A code the pricing does not apply is listed with the API message as `REJECTED`, and one waiting for a condition (a delivery code before the delivery is chosen) as `PENDING`; it applies again once the condition is met. A code the API refuses is reported by code next to the field. The code of a loyalty voucher is marked as a reward; the loyalty block (`sections/loyalty/**`) follows the codes.
+
+## Loyalty
+
+Files: `sections/loyalty/**`, `hooks/useLoyaltyAccount/**`. One program per store (Smile.io / LoyaltyLion model): the block "Бонуси" sits under the promo codes and shows the account balance and tier, paying part of the order with points or store credit (one source per order), and the rewards (one per order). The account is read apart from the checkout (`Customer.loyaltyAccount`), so a checkout write does not ask the loyalty service; it is read again after a reward changes.
+
+- One mutation writes both choices, so each write reads the selection the last answer left and changes only its part (`selection.ts`). Source writes and reward writes wait in the queue under their own keys. A voucher's code is entered with the reward and removed with it.
+- The maximum is applied first; the buyer may enter an amount, checked against the bounds the API gives (`bounds.ts`); nothing is calculated on the client.
+- A quote that expires within a minute is renewed with the same selection before `placeOrder`.
+- Loyalty issues (`field[0] = loyaltyRedemption`) belong to `SectionId.Loyalty` and have their own banners (`issues.ts`, `collectBanners`), shown at once rather than after "place order"; the block itself shows only state.
+- Totals: "Знижка" is promotions and rewards; what is paid with loyalty is `cost.loyaltyAmount`; the estimate under the total is the server's text (`loyaltyEarning`), with sign-in for a guest. The result screen shows what the order spent and earns (`Order.loyaltyRedemption`, `Order.loyaltyEarning`).
+- The brand names its points in its messages (`loyalty-points`); the checkout does not know the name.
 
 ## Configuration
 

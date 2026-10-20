@@ -1,39 +1,34 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import type { ApplicationSession } from '../../../core/ApplicationAuthClient';
+import type { ApplicationSession } from '../../../core/IamApplicationClient';
 import { useSessionContext } from '../../context/SessionContext';
+import { useIamClient } from './useIamClient';
 import { useAuthAction } from './useAuthAction';
 
 export function useApplicationSessions() {
-  const { authClient, store } = useSessionContext();
+  const { sessionClient } = useSessionContext();
+  const iamClient = useIamClient();
   const [sessions, setSessions] = useState<readonly ApplicationSession[]>([]);
   const loadAction = useCallback(async () => {
-    const value = await authClient.listSessions();
+    const value = await iamClient.listSessions();
     setSessions(value);
     return value;
-  }, [authClient]);
+  }, [iamClient]);
   const revokeAction = useCallback(
     async (token: string) => {
-      const revoked = await authClient.revokeSession(token);
-      if (revoked)
+      const revoked = await iamClient.revokeSession(token);
+      if (revoked) {
         setSessions((value) =>
           value.filter((session) => session.token !== token)
         );
-      if (revoked) {
-        try {
-          const currentSession = await authClient.getSession();
-          if (!currentSession) {
-            authClient.clearTokens();
-            store.getState().setSession(null);
-          }
-        } catch {
-          // Revocation succeeded; retain local state on an unrelated network error.
-        }
+        // Revoking the current IAM session ends this storefront session too; the session
+        // server finds out on refresh and the session store follows.
+        await sessionClient.refresh().catch(() => undefined);
       }
       return revoked;
     },
-    [authClient, store]
+    [iamClient, sessionClient]
   );
   const load = useAuthAction(loadAction);
   const revoke = useAuthAction(revokeAction);

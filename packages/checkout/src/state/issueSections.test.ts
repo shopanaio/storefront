@@ -7,7 +7,7 @@ const at = (field: string[], lineId: string | null = null) => issueSection({ fie
 describe('issueSection', () => {
   it('maps the field path of an issue to its section', () => {
     expect(at(['cartIntent', 'discountCodes', '0'])).toBe(SectionId.Promo);
-    expect(at(['loyaltyRedemption', 'requestedPoints'])).toBe(SectionId.Promo);
+    expect(at(['loyaltyRedemption', 'points'])).toBe(SectionId.Loyalty);
     expect(at(['payment'])).toBe(SectionId.Payment);
     expect(at(['customerIdentity', 'email'])).toBe(SectionId.Contact);
     expect(at(['customerNote'])).toBe(SectionId.Comment);

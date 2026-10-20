@@ -1,9 +1,24 @@
 import { createContext, createElement, useContext } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
+/** What the checkout passes to the theme's sign-in control. */
+export interface CheckoutAuthProps {
+  className?: string;
+  status: 'loading' | 'authenticated' | 'anonymous';
+  /** The signed-in buyer, shown as "signed in as". */
+  user: { email: string; firstName?: string; lastName?: string } | null;
+  /** A sign-in or sign-out is in progress. */
+  pending: boolean;
+  /** Saves the pending input of the checkout, then leaves for the sign-in. */
+  onSignIn: () => void;
+  onSignOut: () => void;
+}
+
 export interface CheckoutThemeAdapter {
   Brand: ComponentType;
-  Auth: ComponentType<{ className?: string }>;
+  Auth: ComponentType<CheckoutAuthProps>;
+  /** Whether the store has customer accounts; the checkout offers sign-in only then. */
+  customerAccountsEnabled: boolean;
   CartDrawer: ComponentType;
   useHomePath: () => string;
   /**
@@ -19,11 +34,6 @@ export interface CheckoutThemeAdapter {
    */
   useOrderPath?: (orderId: string) => string | null;
   useOpenCart: () => () => void;
-  /**
-   * Place for loyalty next to the promo codes (decision 6.2). The checkout renders it as is;
-   * full loyalty support is a separate task.
-   */
-  LoyaltySlot?: ComponentType;
 }
 
 const CheckoutThemeContext = createContext<CheckoutThemeAdapter | null>(null);

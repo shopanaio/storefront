@@ -12,7 +12,8 @@ export interface ApolloEnvironmentConfig {
   graphqlUrl: string;
   apiKeyHeader: string;
   apiKey: string;
-  applicationAuth: ApplicationAuthConfig;
+  /** Absent when the store has no customer accounts. */
+  applicationAuth?: ApplicationAuthConfig;
 }
 
 export type ApplicationAuthScope =
@@ -21,18 +22,14 @@ export type ApplicationAuthScope =
   | 'email'
   | 'offline_access';
 
-/** Serializable configuration for the public IAM OAuth client. */
+/**
+ * Public IAM application of the store, used by the browser for the IAM session endpoints.
+ * The OAuth client, its secret and the tokens belong to the storefront session server.
+ */
 export interface ApplicationAuthConfig {
   /** IAM origin, for example https://iam.example.com. */
   iamUrl: string;
   applicationId: string;
-  clientId: string;
-  /** Exact immutable Storefront API resource/audience. */
-  resource: string;
-  redirectUri: string;
-  postLogoutRedirectUri?: string;
-  scopes?: readonly ApplicationAuthScope[];
-  accessTokenCookieName: string;
 }
 
 /**
@@ -41,6 +38,11 @@ export interface ApplicationAuthConfig {
  */
 export interface CreateApolloClientOptions {
   serverCookies?: string;
+  /**
+   * Access token of the server request (SSR and RSC), read from the session cookie. The
+   * browser client takes its token from the session client instead.
+   */
+  accessToken?: string | null;
   initialState?: NormalizedCacheObject;
   cacheConfig?: InMemoryCacheConfig;
   links?: readonly ApolloLink[];

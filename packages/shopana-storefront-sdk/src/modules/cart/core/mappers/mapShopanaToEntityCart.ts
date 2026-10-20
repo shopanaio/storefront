@@ -142,11 +142,17 @@ export function mapShopanaCheckoutToEntityCart(
     expiresAt: toDate(checkout.expiresAt),
     resultRevision: checkout.resultRevision,
     valid: checkout.valid,
-    loyaltyRewardEntitlementId: checkout.loyaltyRewardEntitlementId ?? null,
+    loyaltyRewardId: checkout.loyaltyRewardId ?? null,
     loyaltyRedemption: checkout.loyaltyRedemption
       ? {
           ...checkout.loyaltyRedemption,
           requestedPoints: checkout.loyaltyRedemption.requestedPoints ?? null,
+          requestedAmount: checkout.loyaltyRedemption.requestedAmount
+            ? toMoney(checkout.loyaltyRedemption.requestedAmount)
+            : null,
+          points: checkout.loyaltyRedemption.points ?? null,
+          availablePoints: checkout.loyaltyRedemption.availablePoints ?? null,
+          availableAmount: toMoney(checkout.loyaltyRedemption.availableAmount),
           discount: toMoney(checkout.loyaltyRedemption.discount),
           payableAfterLoyalty: toMoney(
             checkout.loyaltyRedemption.payableAfterLoyalty

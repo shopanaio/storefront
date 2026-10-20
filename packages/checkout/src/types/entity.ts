@@ -25,6 +25,11 @@ export namespace Checkout {
     /** Lifecycle status; an order can be placed only from `READY`. */
     status: LifecycleStatus;
     /**
+     * Whether the current buyer may fill in and place this checkout. False for a guest while
+     * the store requires an account (S7): the buyer signs in first.
+     */
+    guestCheckoutAllowed: boolean;
+    /**
      * When the checkout stops accepting `placeOrder`; `null` when the API sent no valid date,
      * so the browser does not expire it and the server status decides.
      */
@@ -53,8 +58,112 @@ export namespace Checkout {
     deliveryGroups: DeliveryGroup[];
     /** Payment aggregate for this checkout. */
     payment: Payment;
+    /**
+     * Loyalty points or store credit the buyer pays with, as the latest calculation applied
+     * them; `null` when none is selected or the selection could not be applied.
+     */
+    loyaltyRedemption: LoyaltyRedemption | null;
+    /** Reward from `LoyaltyAccount.rewards` selected for this checkout. */
+    loyaltyRewardId: string | null;
+    /** What placing the order is expected to earn; `null` when nothing or unknown. */
+    loyaltyEarning: LoyaltyEarning | null;
     /** Notifications for the user regarding the checkout. */
     notifications: Notification[];
+  }
+
+  export type LoyaltySource = 'POINTS' | 'STORE_CREDIT';
+
+  /**
+   * Points and integer amounts of the loyalty program are strings: the API sends them so, and
+   * they may exceed the safe integer range.
+   */
+  export interface LoyaltyRedemption {
+    source: LoyaltySource;
+    /** Points the buyer asked for; `null` for store credit or the maximum. */
+    requestedPoints: string | null;
+    /** Store credit the buyer asked for; `null` for points or the maximum. */
+    requestedAmount: model.Money | null;
+    /** Points spent; `null` for store credit. */
+    points: string | null;
+    /** Available points; `null` for store credit. */
+    availablePoints: string | null;
+    /** Available balance of the source in money. */
+    availableAmount: model.Money;
+    /** Amount paid with the source. */
+    discount: model.Money;
+    /** When the quote stops being valid; the checkout renews it before placing the order. */
+    expiresAt: Date | null;
+  }
+
+  export interface LoyaltyEarning {
+    /** `AUTHENTICATION_REQUIRED`: a guest would earn it after signing in. */
+    state: 'AVAILABLE' | 'AUTHENTICATION_REQUIRED';
+    points: string;
+    /** Cashback to the store credit balance. */
+    amount: model.Money | null;
+    /** Server-authored text, shown as is. */
+    headline: string;
+    description: string | null;
+  }
+
+  /** The signed-in customer's account in the store's loyalty program. */
+  export interface LoyaltyAccount {
+    id: string;
+    status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED';
+    availablePoints: string;
+    pendingPoints: string;
+    tier: LoyaltyTier | null;
+    /** The nearest points expiration. */
+    nextExpiration: { points: string; expiresAt: Date } | null;
+    /** Sources the customer can pay with, in API order; empty when none has a balance. */
+    sources: LoyaltySourceOption[];
+    /** Rewards the customer can use now, in API order. */
+    rewards: LoyaltyReward[];
+  }
+
+  export interface LoyaltyTier {
+    name: string;
+    /** Multiplier of purchase points in basis points (`15000` = ×1.5). */
+    earnMultiplierBps: number;
+    /** Server-authored progress to the next tier; `null` on the top tier. */
+    progress: string | null;
+  }
+
+  export interface LoyaltySourceOption {
+    source: LoyaltySource;
+    availablePoints: string | null;
+    availableAmount: model.Money;
+    minimum: LoyaltyBound;
+    /** Program limit per order; `null` without one. */
+    maximumPerOrder: LoyaltyBound | null;
+  }
+
+  export interface LoyaltyBound {
+    /** `null` for store credit. */
+    points: string | null;
+    amount: model.Money;
+  }
+
+  export type LoyaltyRewardKind =
+    | 'POINTS'
+    | 'CASHBACK'
+    | 'STORE_CREDIT'
+    | 'VOUCHER'
+    | 'FIXED_DISCOUNT'
+    | 'PERCENTAGE_DISCOUNT'
+    | 'FREE_SHIPPING'
+    | 'FREE_PRODUCT'
+    | 'MEMBER_BENEFIT';
+
+  export interface LoyaltyReward {
+    id: string;
+    kind: LoyaltyRewardKind;
+    /** Server-authored text, shown as is. */
+    headline: string;
+    description: string | null;
+    validUntil: Date | null;
+    /** Promo code of a voucher; the checkout enters it together with the reward. */
+    voucherCode: string | null;
   }
 
   export type LifecycleStatus =
@@ -163,6 +272,8 @@ export namespace Checkout {
     totalDiscountAmount: model.Money;
     totalShippingAmount: model.Money;
     totalTaxAmount: model.Money;
+    /** Paid with loyalty points or store credit; not part of `totalDiscountAmount`. */
+    loyaltyAmount: model.Money;
   }
 
   /**

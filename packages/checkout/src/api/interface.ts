@@ -10,6 +10,10 @@ import {
 } from '#checkout/api/dto';
 import type { PlacementResult } from '#checkout/state/placement/types';
 import type {
+  RedemptionRequest,
+  RewardChoice,
+} from '#checkout/sections/loyalty/selection';
+import type {
   CheckoutDeliveryAddressInput,
   CheckoutRecipientInput,
 } from '#checkout/graphql/operations';
@@ -39,6 +43,21 @@ export interface CheckoutApi {
    */
   addPromoCode: (input: PromoCodeAddDto) => Promise<void>;
   removePromoCode: (input: PromoCodeRemoveDto) => Promise<void>;
+  /**
+   * Chooses the source the buyer pays with (`null`: none), keeping the chosen reward. The
+   * latest choice waiting in the queue replaces the earlier ones.
+   */
+  setLoyaltyRedemption: (request: RedemptionRequest | null) => Promise<void>;
+  /**
+   * Chooses the reward of the order (`null`: none), keeping the chosen source. A voucher's code
+   * is entered with it; the code of the `replaced` reward is removed.
+   */
+  setLoyaltyReward: (
+    reward: RewardChoice | null,
+    replaced?: RewardChoice | null
+  ) => Promise<void>;
+  /** Sends the loyalty selection again, e.g. after the loyalty service did not answer. */
+  refreshLoyalty: () => Promise<void>;
   /**
    * Places the order after the held-back input and every queued write. Resolves with the placement result, including user errors and GraphQL
    * errors; rejects only when the request failed or its answer was lost.

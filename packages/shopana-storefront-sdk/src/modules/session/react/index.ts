@@ -13,6 +13,8 @@ export {
   useUser,
   useIsAuthenticated,
   useSessionStatus,
+  useSessionExpired,
+  useSignInPending,
   type SessionProviderProps,
   type SessionContextValue,
 } from './context/SessionContext';

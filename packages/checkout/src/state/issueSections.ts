@@ -1,7 +1,8 @@
 import { SectionId } from '#checkout/state/interface';
 import type { Checkout } from '#checkout/types/entity';
 
-const PROMO = new Set(['discountcodes', 'promocodes', 'appliedpromocodes', 'loyaltyredemption']);
+const PROMO = new Set(['discountcodes', 'promocodes', 'appliedpromocodes']);
+const LOYALTY = new Set(['loyaltyredemption', 'loyaltyreward', 'loyaltywallet']);
 const PAYMENT = new Set(['payment', 'paymentmethod', 'payments']);
 const CONTACT = new Set(['customer', 'customeridentity', 'contact', 'email', 'phone']);
 const COMMENT = new Set(['customernote', 'note']);
@@ -22,6 +23,7 @@ export function issueSection(issue: Pick<Checkout.Issue, 'field' | 'lineId'>): S
   const head = parts[0];
   if (!head) return null;
   if (PROMO.has(head)) return SectionId.Promo;
+  if (LOYALTY.has(head)) return SectionId.Loyalty;
   if (PAYMENT.has(head)) return SectionId.Payment;
   if (CONTACT.has(head)) return SectionId.Contact;
   if (COMMENT.has(head)) return SectionId.Comment;

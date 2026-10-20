@@ -1,21 +1,16 @@
-import type { ApolloEnvironmentConfig } from '../../../../graphql/apollo/types';
-import { ApplicationAuthClient } from '../../core/ApplicationAuthClient';
+import { readServerAuthState } from '../../server';
 import type { Session } from '../../core/types';
 
 export interface LoadSessionServerQueryOptions {
-  environmentConfig: ApolloEnvironmentConfig;
   serverCookies?: string;
 }
 
-/** Loads the OpenID user from IAM using the OAuth access token cookie. */
+/** Reads the signed-in user of this request from the encrypted session cookie. */
 export async function loadSessionServerQuery({
-  environmentConfig,
   serverCookies,
 }: LoadSessionServerQueryOptions): Promise<Session | null> {
   try {
-    return await new ApplicationAuthClient(
-      environmentConfig.applicationAuth
-    ).getSession(serverCookies);
+    return (await readServerAuthState(serverCookies)).session;
   } catch {
     return null;
   }

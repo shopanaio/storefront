@@ -1,0 +1,15 @@
+mutation StorefrontRemoveLoyaltyRedemptionMutation(
+  $input: CheckoutLoyaltyRedemptionRemoveInput!
+) {
+  checkoutLoyaltyRedemptionRemove(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

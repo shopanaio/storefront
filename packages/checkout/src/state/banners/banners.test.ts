@@ -34,6 +34,7 @@ const input = (overrides: Partial<BannerInput> = {}): BannerInput => ({
   saveErrors: [],
   notifications: [],
   dismissed: new Set(),
+  loyalty: { redemption: null, intent: null, reducedTo: null, busy: false },
   ...overrides,
 });
 
@@ -48,6 +49,10 @@ const handlers = (): BannerHandlers => ({
   focusSection: vi.fn(),
   focusSummary: vi.fn(),
   dismiss: vi.fn(),
+  dropRedemption: vi.fn(),
+  dropReward: vi.fn(),
+  refreshLoyalty: vi.fn(),
+  signIn: vi.fn(),
 });
 
 const collect = (overrides: Partial<BannerInput> = {}, h = handlers()) =>
@@ -177,7 +182,7 @@ describe('collectBanners', () => {
         blocking: [issue({ code: 'APP_LINE_RULE', lineId: 'line-1' })],
         notices: [
           issue({
-            code: 'LOYALTY_POINTS_REDUCED',
+            code: 'LOYALTY_REDEMPTION_REDUCED',
             effect: 'CONTINUE',
             severity: 'WARNING',
           }),
@@ -187,7 +192,7 @@ describe('collectBanners', () => {
 
     expect(banners.map((banner) => banner.title)).toEqual([
       'issue-check-order',
-      'issue-loyalty-points-reduced',
+      'issue-loyalty-redemption-reduced',
     ]);
   });
 
@@ -359,7 +364,7 @@ describe('collectBanners', () => {
 
   it('keeps a closed warning closed when another one goes', () => {
     const loyalty = issue({
-      code: 'LOYALTY_POINTS_REDUCED',
+      code: 'LOYALTY_REDEMPTION_REDUCED',
       effect: 'CONTINUE',
       severity: 'WARNING',
       field: ['loyaltyPoints'],
@@ -384,5 +389,210 @@ describe('collectBanners', () => {
         dismissed: new Set([closed.id]),
       })
     ).toEqual([]);
+  });
+
+  describe('loyalty', () => {
+    const redemption: Checkout.LoyaltyRedemption = {
+      source: 'POINTS',
+      requestedPoints: '900',
+      requestedAmount: null,
+      points: '350',
+      availablePoints: '1240',
+      availableAmount: { amount: 124, currencyCode: 'UAH' },
+      discount: { amount: 35, currencyCode: 'UAH' },
+      expiresAt: null,
+    };
+    const loyaltyInput = (
+      notices: Checkout.Issue[],
+      blocking: Checkout.Issue[] = [],
+      loyalty: Partial<BannerInput['loyalty']> = {}
+    ) =>
+      input({
+        readiness: { canPlace: blocking.length === 0, expired: false, blocking, notices },
+        loyalty: {
+          redemption: null,
+          intent: null,
+          reducedTo: null,
+          busy: false,
+          ...loyalty,
+        },
+      });
+
+    it('says what a reduced redemption became and leads to the block', () => {
+      const h = handlers();
+      const [banner] = collectBanners(
+        loyaltyInput(
+          [
+            issue({
+              code: 'LOYALTY_REDEMPTION_REDUCED',
+              effect: 'CONTINUE',
+              severity: 'WARNING',
+              field: ['loyaltyRedemption', 'points'],
+            }),
+          ],
+          [],
+          { redemption, reducedTo: '350 points' }
+        ),
+        h,
+        t
+      );
+
+      expect(banner).toMatchObject({
+        priority: BannerPriority.Change,
+        tone: 'warning',
+        title: 'loyalty-banner-reduced {"amount":"350 points"}',
+        action: { label: 'loyalty-banner-go' },
+      });
+      expect(banner.onDismiss).toBeDefined();
+      banner.action?.onClick?.();
+      expect(h.focusSection).toHaveBeenCalledWith(SectionId.Loyalty);
+    });
+
+    it('says the order is too small when the reduction dropped the redemption', () => {
+      const [banner] = collectBanners(
+        loyaltyInput([
+          issue({
+            code: 'LOYALTY_REDEMPTION_REDUCED',
+            effect: 'CONTINUE',
+            severity: 'WARNING',
+            field: ['loyaltyRedemption', 'points'],
+          }),
+        ]),
+        handlers(),
+        t
+      );
+
+      expect(banner.title).toBe('loyalty-banner-order-too-small');
+      expect(banner.action).toBeUndefined();
+    });
+
+    it('offers to send the selection again when the loyalty service did not answer', () => {
+      const h = handlers();
+      const [banner] = collectBanners(
+        loyaltyInput([
+          issue({
+            code: 'CHECKOUT_LOYALTY_UNAVAILABLE',
+            effect: 'CONTINUE',
+            severity: 'WARNING',
+            retryable: true,
+            field: ['loyaltyRedemption'],
+          }),
+        ]),
+        h,
+        t
+      );
+
+      expect(banner.title).toBe('loyalty-banner-unavailable');
+      banner.action?.onClick?.();
+      expect(h.refreshLoyalty).toHaveBeenCalled();
+    });
+
+    it('blocks at once, before the buyer presses the button, with a way out', () => {
+      const h = handlers();
+      const banners = collectBanners(
+        loyaltyInput(
+          [],
+          [issue({ code: 'NO_AVAILABLE_POINTS', field: ['loyaltyRedemption'] })],
+          { intent: 'POINTS', busy: true }
+        ),
+        h,
+        t
+      );
+
+      expect(banners).toHaveLength(1);
+      expect(banners[0]).toMatchObject({
+        priority: BannerPriority.Blocking,
+        tone: 'action',
+        title: 'loyalty-banner-points-insufficient',
+        action: { label: 'loyalty-banner-without-points', loading: true },
+      });
+      expect(banners[0].onDismiss).toBeUndefined();
+      banners[0].action?.onClick?.();
+      expect(h.dropRedemption).toHaveBeenCalled();
+    });
+
+    it('names store credit for a source chosen last as store credit', () => {
+      const [banner] = collectBanners(
+        loyaltyInput(
+          [],
+          [issue({ code: 'REQUEST_EXCEEDS_AVAILABLE_AMOUNT', field: ['loyaltyRedemption'] })],
+          { intent: 'STORE_CREDIT' }
+        ),
+        handlers(),
+        t
+      );
+
+      expect(banner).toMatchObject({
+        title: 'loyalty-banner-store-credit-failed',
+        action: { label: 'loyalty-banner-without-store-credit' },
+      });
+    });
+
+    it('tells a reward that does not work for this order from one that is gone', () => {
+      const h = handlers();
+      const banners = collectBanners(
+        loyaltyInput(
+          [],
+          [
+            issue({ code: 'REWARD_DISCOUNT_NOT_APPLIED', field: ['loyaltyRedemption'] }),
+            issue({ code: 'ENTITLEMENT_NOT_AVAILABLE', field: ['loyaltyRedemption'] }),
+          ]
+        ),
+        h,
+        t
+      );
+
+      expect(banners.map((banner) => banner.title)).toEqual([
+        'loyalty-banner-reward-inactive',
+        'loyalty-banner-reward-unavailable',
+      ]);
+      banners[0].action?.onClick?.();
+      expect(h.dropReward).toHaveBeenCalled();
+    });
+
+    it('asks a guest to sign in', () => {
+      const h = handlers();
+      const [banner] = collectBanners(
+        loyaltyInput([], [issue({ code: 'CUSTOMER_REQUIRED', field: ['loyaltyRedemption'] })]),
+        h,
+        t
+      );
+
+      expect(banner.title).toBe('loyalty-banner-sign-in');
+      banner.action?.onClick?.();
+      expect(h.signIn).toHaveBeenCalled();
+    });
+
+    it('keeps loyalty out of the section summary after the button was pressed', () => {
+      const banners = collect({
+        attempted: true,
+        readiness: {
+          canPlace: false,
+          expired: false,
+          blocking: [issue({ code: 'BELOW_MINIMUM_REDEMPTION', field: ['loyaltyRedemption'] })],
+          notices: [],
+        },
+      });
+
+      expect(banners.map((banner) => banner.title)).toEqual([
+        'loyalty-banner-points-below-minimum',
+      ]);
+    });
+
+    it('offers to refresh after a rejected loyalty reservation', () => {
+      const h = handlers();
+      const [banner] = collect(
+        { placement: { name: 'rejected', code: 'LOYALTY_INSUFFICIENT_AVAILABLE_POINTS' } },
+        h
+      );
+
+      expect(banner).toMatchObject({
+        priority: BannerPriority.Rejected,
+        title: 'placement-error-loyalty',
+        action: { label: 'loyalty-banner-refresh' },
+      });
+      banner.action?.onClick?.();
+      expect(h.refreshLoyalty).toHaveBeenCalled();
+    });
   });
 });

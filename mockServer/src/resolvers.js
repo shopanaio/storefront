@@ -1,3 +1,4 @@
+import { loyaltyAccount } from "./loyalty.js";
 import {
   GraphQLError,
   getNamedType,
@@ -24,7 +25,12 @@ import {
   sortQuestions,
   sortReviews,
 } from "./helpers.js";
-import { checkoutMutations } from "./mutations/checkout.js";
+import {
+  accountCheckout,
+  canAccessCheckout,
+  checkoutMutations,
+  guestCheckoutEnabled,
+} from "./mutations/checkout.js";
 import { comparisonMutations } from "./mutations/comparisons.js";
 import { customerOrderMutations } from "./mutations/customer-orders.js";
 import { reviewMutations } from "./mutations/reviews.js";
@@ -439,12 +445,16 @@ const specialFields = (store) => ({
   "SelectedOption.optionValue": (selection) => store.get(selection.optionValue?.id) ?? selection.optionValue,
 
   "CheckoutCustomerIdentity.customer": (identity) => store.get(identity.customerId),
+  "Checkout.guestCheckoutAllowed": (_checkout, _args, context) => Boolean(context.customer) || guestCheckoutEnabled(),
+  "Customer.checkout": (customer, _args, context) =>
+    context.customer?.id === customer.id ? accountCheckout(store, customer) : null,
   "CheckoutLine.image": (line) => store.get(line.imageId),
   "CheckoutLine.parent": (line) => store.get(line.parentId),
   "CheckoutLine.purchasable": (line) => store.get(line.purchasableId),
   "CheckoutDeliveryGroup.checkoutLines": (group) => group.checkoutLineIds.map((id) => store.get(id)).filter(Boolean),
 
   "Customer.defaultAddress": (customer) => store.get(customer.defaultAddressId),
+  "Customer.loyaltyAccount": (customer) => loyaltyAccount(store, customer),
   "Customer.productComparisons": (customer) => customerProductComparisons(store, customer),
   "Customer.orders": (customer, args) => {
     let orders = customer.orderIds.map((id) => store.get(id)).filter(Boolean);
@@ -543,7 +553,11 @@ const queryResolvers = (store) => ({
   collection: (_, { id }) => store.get(id)?.__typename === "Collection" ? store.get(id) : null,
   collectionByHandle: (_, { handle }) => store.byHandle("Collection", handle),
   categories: (_, args) => connection(store.state.categories, args),
-  checkout: (_, { id }) => store.get(id)?.__typename === "Checkout" ? store.get(id) : null,
+  checkout: (_, { id }, context) => {
+    const checkout = store.get(id);
+    return checkout?.__typename === "Checkout" && canAccessCheckout(checkout, context.customer) ? checkout : null;
+  },
+  checkoutSettings: () => ({ guestCheckoutEnabled: guestCheckoutEnabled() }),
   checkoutPlacement: (_, { id }) => store.state.checkoutPlacements.find((placement) =>
     placement.placementId === id || placement.checkoutId === id) ?? null,
   customer: (_, __, context) => context.customer,

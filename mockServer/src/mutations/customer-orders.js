@@ -1,3 +1,4 @@
+import { commitOrderLoyalty } from "../loyalty.js";
 import { gid, money } from "../fixture-helpers.js";
 import { customerError, formatAddress, orderError } from "../helpers.js";
 import { createCheckout, refreshCheckout } from "./checkout.js";
@@ -166,6 +167,7 @@ const createOrderFromCheckout = (store, checkout, customer) => {
     customerIdentity: { ...checkout.customerIdentity, customerId: customer?.id ?? checkout.customerIdentity.customerId },
     customerNote: checkout.customerNote,
     cost: structuredClone(checkout.cost),
+    ...commitOrderLoyalty(store, checkout),
     totalQuantity: checkout.totalQuantity,
     lines,
     appliedPromoCodes: structuredClone(checkout.promoCodes.filter(({ status }) => status === "APPLIED"))

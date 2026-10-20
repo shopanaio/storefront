@@ -7,6 +7,7 @@ import {
   LuCircleAlert,
   LuCircleCheck,
   LuInfo,
+  LuLoaderCircle,
   LuTriangleAlert,
   LuX,
 } from 'react-icons/lu';
@@ -19,6 +20,8 @@ export interface BannerAction {
   /** A link when set, a button otherwise. */
   href?: string;
   onClick?: () => void;
+  /** The step is running: the button waits for it and cannot be pressed again. */
+  loading?: boolean;
 }
 
 export interface CheckoutBannerProps {
@@ -110,9 +113,18 @@ export const CheckoutBanner = ({
           ) : (
             <button
               type="button"
-              className={styles.action}
+              className={clsx(styles.action, action.loading && styles.actionLoading)}
               onClick={action.onClick}
+              disabled={action.loading}
+              aria-busy={action.loading || undefined}
             >
+              {action.loading ? (
+                <LuLoaderCircle
+                  size={14}
+                  aria-hidden="true"
+                  className={styles.spinner}
+                />
+              ) : null}
               {action.label}
             </button>
           )
@@ -184,6 +196,21 @@ const useStyles = createStyles(({ css }) => ({
     height: 19px;
     /* 16px from the title once the action's touch padding is taken off. */
     margin-left: 24px;
+  `,
+  actionLoading: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    opacity: 0.65;
+  `,
+  spinner: css`
+    animation: checkout-banner-spin 1s linear infinite;
+    @keyframes checkout-banner-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   `,
   action: css`
     /* 44px touch target around one line of text. */

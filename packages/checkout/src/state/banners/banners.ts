@@ -7,6 +7,13 @@ import { issueSection } from '#checkout/state/issueSections';
 import { placementErrorMessageKey } from '#checkout/components/result/placementMessages';
 import type { Checkout } from '#checkout/types/entity';
 import { issueMessage, issueText, visibleBlockingIssues } from './messages';
+import {
+  classifyLoyaltyIssue,
+  isLoyaltyIssue,
+  issueSource,
+  redemptionIssueMessageKey,
+  type LoyaltyIssue,
+} from '#checkout/sections/loyalty/issues';
 import type { SaveError } from './bannerStore';
 
 /**
@@ -60,6 +67,17 @@ export interface BannerInput {
   notifications: Checkout.Notification[];
   /** Ids of the banners the buyer closed. */
   dismissed: ReadonlySet<string>;
+  loyalty: LoyaltyBannerInput;
+}
+
+export interface LoyaltyBannerInput {
+  redemption: Checkout.LoyaltyRedemption | null;
+  /** Source the buyer chose last, for an issue whose redemption the API dropped. */
+  intent: Checkout.LoyaltySource | null;
+  /** What the redemption was reduced to, ready to show ("350 балів", "₴80"). */
+  reducedTo: string | null;
+  /** A loyalty write is running: the banner action waits for it. */
+  busy: boolean;
 }
 
 export interface BannerHandlers {
@@ -76,6 +94,13 @@ export interface BannerHandlers {
   focusSection: (section: SectionId) => void;
   focusSummary: () => void;
   dismiss: (id: string) => void;
+  /** Stops paying with points or store credit, keeping the reward. */
+  dropRedemption: () => void;
+  /** Gives up the reward, keeping the points or store credit. */
+  dropReward: () => void;
+  /** Sends the loyalty selection again and reads the account again. */
+  refreshLoyalty: () => void;
+  signIn: () => void;
 }
 
 type Translate = (
@@ -92,6 +117,7 @@ const SECTION_ORDER: SectionId[] = [
   SectionId.Payment,
   SectionId.Comment,
   SectionId.Promo,
+  SectionId.Loyalty,
 ];
 
 const STOCK_CODES = new Set<Checkout.NotificationCode>([
@@ -118,7 +144,7 @@ export function collectBanners(
     onClick: handlers.retryPlacement,
   };
   const goTo = (section: SectionId): BannerAction => ({
-    label: t('banner-go-to'),
+    label: t(section === SectionId.Loyalty ? 'loyalty-banner-go' : 'banner-go-to'),
     onClick: () => handlers.focusSection(section),
   });
   const review: BannerAction = {
@@ -209,6 +235,8 @@ export function collectBanners(
         };
       } else if (key === 'placement-error-not-found') {
         action = undefined;
+      } else if (key === 'placement-error-loyalty') {
+        action = { label: t('loyalty-banner-refresh'), onClick: handlers.refreshLoyalty };
       }
       items.push({
         id,
@@ -236,11 +264,26 @@ export function collectBanners(
         },
       });
     }
+    // Loyalty says what is wrong at once, whether the buyer pressed the button or not: the
+    // buyer caused it, and without the banner would only see the discount go.
+    collectLoyaltyBanners(
+      [...readiness.blocking, ...readiness.notices]
+        .filter(isLoyaltyIssue)
+        .map((issue) => classifyLoyaltyIssue(issue, input.loyalty.redemption)),
+      input.loyalty,
+      handlers,
+      t,
+      items,
+      dismissible,
+      goTo
+    );
     if (input.attempted) {
-      const blocking = visibleBlockingIssues(
+      const allBlocking = visibleBlockingIssues(
         readiness.blocking,
         input.undeliverableCount
       );
+      // Loyalty issues have their own banners above.
+      const blocking = allBlocking.filter((issue) => !isLoyaltyIssue(issue));
       const sections = SECTION_ORDER.filter(
         (section) =>
           input.missingSections.includes(section) ||
@@ -288,7 +331,7 @@ export function collectBanners(
       if (
         placing &&
         !readiness.canPlace &&
-        blocking.length === 0 &&
+        allBlocking.length === 0 &&
         input.missingSections.length === 0 &&
         input.undeliverableCount === 0
       ) {
@@ -345,8 +388,11 @@ export function collectBanners(
   if (readiness && !readiness.expired) {
     const seen = new Set<string>();
     readiness.notices
-      // Promo code warnings are shown under the code itself.
-      .filter((issue) => issueSection(issue) !== SectionId.Promo)
+      // Promo code warnings are shown under the code itself; loyalty ones have their banners.
+      .filter((issue) => {
+        const section = issueSection(issue);
+        return section !== SectionId.Promo && section !== SectionId.Loyalty;
+      })
       .forEach((issue) => {
         // By what the issue is about, not its place in the list: a closed warning stays closed
         // when another one goes.
@@ -368,4 +414,110 @@ export function collectBanners(
     .map((item, index) => ({ item, index }))
     .sort((a, b) => a.item.priority - b.item.priority || a.index - b.index)
     .map(({ item }) => item);
+}
+
+/** Banners of the loyalty selection, one per kind of issue. */
+function collectLoyaltyBanners(
+  issues: LoyaltyIssue[],
+  loyalty: LoyaltyBannerInput,
+  handlers: BannerHandlers,
+  t: Translate,
+  items: BannerItem[],
+  dismissible: (item: Omit<BannerItem, 'onDismiss'>) => void,
+  goTo: (section: SectionId) => BannerAction
+): void {
+  const seen = new Set<string>();
+  const withoutRedemption = (source: Checkout.LoyaltySource): BannerAction => ({
+    label: t(
+      source === 'STORE_CREDIT'
+        ? 'loyalty-banner-without-store-credit'
+        : 'loyalty-banner-without-points'
+    ),
+    onClick: handlers.dropRedemption,
+    loading: loyalty.busy,
+  });
+  const withoutReward: BannerAction = {
+    label: t('loyalty-banner-without-reward'),
+    onClick: handlers.dropReward,
+    loading: loyalty.busy,
+  };
+  for (const { kind, issue, blocking } of issues) {
+    const id = `loyalty:${kind}:${issue.code}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const source =
+      loyalty.redemption?.source ?? issueSource(issue, loyalty.intent);
+    switch (kind) {
+      case 'reduced':
+        dismissible({
+          id,
+          priority: BannerPriority.Change,
+          tone: 'warning',
+          title: loyalty.reducedTo
+            ? t('loyalty-banner-reduced', { amount: loyalty.reducedTo })
+            : t('loyalty-banner-reduced-generic'),
+          action: goTo(SectionId.Loyalty),
+        });
+        break;
+      case 'dropped':
+        dismissible({
+          id,
+          priority: BannerPriority.Change,
+          tone: 'warning',
+          title: t('loyalty-banner-order-too-small'),
+        });
+        break;
+      case 'retry':
+        dismissible({
+          id,
+          priority: BannerPriority.Change,
+          tone: 'warning',
+          title: t('loyalty-banner-unavailable'),
+          action: {
+            label: t('banner-retry'),
+            onClick: handlers.refreshLoyalty,
+            loading: loyalty.busy,
+          },
+        });
+        break;
+      case 'signIn':
+        items.push({
+          id,
+          priority: BannerPriority.Blocking,
+          tone: 'action',
+          title: t('loyalty-banner-sign-in'),
+          action: { label: t('loyalty-sign-in'), onClick: handlers.signIn },
+        });
+        break;
+      case 'reward':
+      case 'rewardInactive': {
+        const item = {
+          id,
+          priority: blocking ? BannerPriority.Blocking : BannerPriority.Change,
+          tone: blocking ? ('action' as const) : ('warning' as const),
+          title: t(
+            kind === 'rewardInactive'
+              ? 'loyalty-banner-reward-inactive'
+              : 'loyalty-banner-reward-unavailable'
+          ),
+          action: withoutReward,
+        };
+        if (blocking) items.push(item);
+        else dismissible(item);
+        break;
+      }
+      case 'redemption': {
+        const item = {
+          id,
+          priority: blocking ? BannerPriority.Blocking : BannerPriority.Change,
+          tone: blocking ? ('action' as const) : ('warning' as const),
+          title: t(redemptionIssueMessageKey(issue, source)),
+          action: withoutRedemption(source),
+        };
+        if (blocking) items.push(item);
+        else dismissible(item);
+        break;
+      }
+    }
+  }
 }

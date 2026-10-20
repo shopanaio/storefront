@@ -62,9 +62,14 @@ export type {
 } from './graphql/apollo/types';
 
 export {
-  ApplicationAuthClient,
+  IamApplicationClient,
   ApplicationAuthError,
-} from './modules/session/core/ApplicationAuthClient';
+} from './modules/session/core/IamApplicationClient';
+export {
+  StorefrontSessionClient,
+  StorefrontSessionError,
+  storefrontSession,
+} from './modules/session/core/StorefrontSessionClient';
 
 // Public application authentication OpenAPI contract.
 export type {

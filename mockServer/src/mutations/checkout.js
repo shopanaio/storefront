@@ -1,5 +1,11 @@
 import { gid, money } from "../fixture-helpers.js";
 import {
+  applyLoyaltyReward,
+  estimateLoyaltyEarning,
+  quoteLoyaltyRedemption,
+  updateLoyaltyIntent,
+} from "../loyalty.js";
+import {
   checkoutError,
   createCheckoutLine,
   formatAddress,
@@ -109,31 +115,37 @@ export const refreshCheckout = (store, checkout) => {
       : Number(promo.value)), 0);
   const shipping = checkout.deliveryGroups.reduce((sum, group) =>
     sum + Number(group.selection?.option?.cost?.amount ?? 0), 0);
-  const tax = Math.max(0, subtotal - promoDiscount) * 0.08;
-  const total = Math.max(0, subtotal - promoDiscount + tax + shipping);
+  const rewardDiscount = applyLoyaltyReward(store, checkout, { shipping });
+  const tax = Math.max(0, subtotal - promoDiscount - rewardDiscount) * 0.08;
+  const totalBeforeLoyalty = Math.max(0, subtotal - promoDiscount - rewardDiscount + tax + shipping);
+  // Loyalty pays after Pricing: it is a tender, not a discount (A6).
+  const loyaltyAmount = quoteLoyaltyRedemption(store, checkout, totalBeforeLoyalty);
+  const total = Math.max(0, totalBeforeLoyalty - loyaltyAmount);
 
   checkout.totalQuantity = checkout.lines.reduce((sum, line) => sum + line.quantity, 0);
   checkout.cost = {
     subtotalAmount: money(subtotal, checkout.currencyCode),
-    totalDiscountAmount: money(catalogDiscount + promoDiscount, checkout.currencyCode),
+    totalDiscountAmount: money(catalogDiscount + promoDiscount + rewardDiscount, checkout.currencyCode),
     totalTaxAmount: money(tax, checkout.currencyCode),
     totalShippingAmount: money(shipping, checkout.currencyCode),
     totalAmount: money(total, checkout.currencyCode),
+    loyaltyAmount: money(loyaltyAmount, checkout.currencyCode),
   };
-  if (checkout.loyaltyRedemption) {
-    const redemption = checkout.loyaltyRedemption;
-    const pointValue = store.state.loyaltyProgram?.pointValue ?? 0.01;
-    redemption.redeemablePoints = Math.min(redemption.redeemablePoints, Math.floor(total / pointValue));
-    redemption.discount = money(redemption.redeemablePoints * pointValue, checkout.currencyCode);
-    redemption.payableAfterLoyalty = money(Math.max(0, total - Number(redemption.discount.amount)), checkout.currencyCode);
-  }
-  checkout.payment.payableAmount = checkout.loyaltyRedemption?.payableAfterLoyalty ?? money(total, checkout.currencyCode);
+  checkout.loyaltyEarning = estimateLoyaltyEarning(store, checkout, total);
+  checkout.payment.payableAmount = money(total, checkout.currencyCode);
   checkout.valid = checkout.lines.length > 0 && !checkout.issues.some(({ effect }) => effect === "STOP");
   if (["OPEN", "READY"].includes(checkout.status)) checkout.status = checkout.valid ? "READY" : "OPEN";
   return checkout;
 };
 
-export const createCheckout = (store, input) => {
+export const createCheckout = (store, input, customer = null) => {
+  // S3: a signed-in buyer with an account cart adds to it instead of opening a second one.
+  const existingCart = accountCheckout(store, customer);
+  if (existingCart) {
+    return checkoutMutations(store).checkoutLinesAdd(null, {
+      input: { checkoutId: existingCart.id, lines: input.items },
+    });
+  }
   const key = `runtime-${store.next("checkout")}`;
   const now = store.now();
   const checkout = {
@@ -143,8 +155,10 @@ export const createCheckout = (store, input) => {
     currencyCode: input.currencyCode,
     status: "OPEN",
     expiresAt: new Date(Date.parse(now) + 24 * 3_600_000).toISOString(),
+    loyaltyIntent: null,
     loyaltyRedemption: null,
-    loyaltyRewardEntitlementId: null,
+    loyaltyRewardId: null,
+    loyaltyEarning: null,
     resultRevision: `checkout-${key}-r1`,
     valid: true,
     issues: [],
@@ -153,7 +167,7 @@ export const createCheckout = (store, input) => {
     cost: {
       subtotalAmount: money(0, input.currencyCode), totalDiscountAmount: money(0, input.currencyCode),
       totalTaxAmount: money(0, input.currencyCode), totalShippingAmount: money(0, input.currencyCode),
-      totalAmount: money(0, input.currencyCode),
+      totalAmount: money(0, input.currencyCode), loyaltyAmount: money(0, input.currencyCode),
     },
     customerIdentity: {
       countryCode: null, customerId: null, email: null, phone: null,
@@ -182,6 +196,10 @@ export const createCheckout = (store, input) => {
   if (checkout.lines.length !== input.items.length) {
     return failed(checkoutError("PURCHASABLE_NOT_FOUND", "One or more purchasable items do not exist.", ["items"]));
   }
+  if (customer) {
+    checkout.ownerCustomerId = customer.id;
+    checkout.customerIdentity.customerId = customer.id;
+  }
   store.state.checkouts.push(checkout);
   refreshCheckout(store, checkout);
   store.reindex();
@@ -189,49 +207,16 @@ export const createCheckout = (store, input) => {
 };
 
 export const checkoutMutations = (store) => ({
-  checkoutCreate: (_, { input }) => createCheckout(store, input),
+  checkoutCreate: (_, { input }, context) => createCheckout(store, input, context?.customer),
+  ...checkoutClaimMutation(store),
 
   checkoutLoyaltyRedemptionUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
-    const program = store.state.loyaltyProgram;
-    if (!program || (input.programId && input.programId !== program.id)) {
-      return [checkoutError("LOYALTY_PROGRAM_NOT_FOUND", "The loyalty program is unavailable.", ["programId"])];
-    }
-    if (!checkout.customerIdentity.customerId) {
-      return [checkoutError("CUSTOMER_REQUIRED", "Loyalty redemption requires a customer.")];
-    }
-    if (input.rewardEntitlementId) {
-      return [checkoutError("LOYALTY_REWARD_NOT_FOUND", "The reward entitlement is unavailable.", ["rewardEntitlementId"])];
-    }
-    if (input.requestedPoints != null && Number(input.requestedPoints) < 0) {
-      return [checkoutError("INVALID_POINTS", "Requested points must not be negative.", ["requestedPoints"])];
-    }
-    const availablePoints = program.availablePoints ?? 0;
-    const total = Number(checkout.cost.totalAmount.amount);
-    const pointValue = program.pointValue ?? 0.01;
-    const redeemablePoints = input.redeemPoints === false ? 0 : Math.min(
-      Number(input.requestedPoints ?? availablePoints), availablePoints, Math.floor(total / pointValue),
-    );
-    const discount = redeemablePoints * pointValue;
-    checkout.loyaltyRedemption = {
-      quoteId: `mock-loyalty-${store.next("loyalty-quote")}`,
-      revision: checkout.resultRevision,
-      accountId: gid("LoyaltyAccount", checkout.customerIdentity.customerId.split("/").at(-1)),
-      programId: program.id,
-      programCode: program.code ?? "mock-loyalty",
-      programVersion: program.version ?? 1,
-      requestedPoints: input.requestedPoints ?? null,
-      redeemablePoints,
-      availablePoints,
-      discount: money(discount, checkout.currencyCode),
-      payableAfterLoyalty: money(Math.max(0, total - discount), checkout.currencyCode),
-      expiresAt: checkout.expiresAt,
-    };
-    return [];
+    const error = updateLoyaltyIntent(checkout, input, checkoutError);
+    return error ? [error] : [];
   }),
 
   checkoutLoyaltyRedemptionRemove: (_, { input }) => withCheckout(store, input, (checkout) => {
-    checkout.loyaltyRedemption = null;
-    checkout.loyaltyRewardEntitlementId = null;
+    checkout.loyaltyIntent = null;
     return [];
   }),
 
@@ -485,3 +470,79 @@ const updateRecipients = (checkout, updates) => {
   }
   return errors;
 };
+
+/** S7 switch of the mock store: `MOCK_GUEST_CHECKOUT=false` requires signing in to check out. */
+export const guestCheckoutEnabled = () => process.env.MOCK_GUEST_CHECKOUT !== "false";
+
+/** D2: an account checkout is visible only to its account; a guest checkout to anyone here. */
+export const canAccessCheckout = (checkout, customer) =>
+  !checkout.ownerCustomerId || checkout.ownerCustomerId === customer?.id;
+
+/** D5: the one open cart of the account. */
+export const accountCheckout = (store, customer) => customer
+  ? store.state.checkouts.find((checkout) =>
+    checkout.ownerCustomerId === customer.id && ["OPEN", "READY"].includes(checkout.status)) ?? null
+  : null;
+
+const claimFailed = (code, message) => ({
+  checkout: null,
+  mergedFromCheckoutId: null,
+  userErrors: [checkoutError(code, message, ["checkoutId"])],
+});
+
+/** D9: the profile fills only the contacts the buyer left empty. */
+const fillEmptyContacts = (identity, values) => {
+  for (const [field, value] of Object.entries(values)) {
+    if (value && !identity[field]) identity[field] = value;
+  }
+};
+
+const profileContacts = (customer) => ({
+  email: customer.emailAddress?.emailAddress ?? null,
+  phone: customer.phoneNumber?.phoneNumber ?? null,
+  firstName: customer.firstName ?? null,
+  lastName: customer.lastName ?? null,
+});
+
+export const checkoutClaimMutation = (store) => ({
+  checkoutClaim: (_, { input }, context) => {
+    const customer = context.customer;
+    if (!customer) return claimFailed("CUSTOMER_REQUIRED", "Signing in is required.");
+    const { checkout: guest, error } = guardCheckout(store, input);
+    if (error || !canAccessCheckout(guest, customer)) {
+      return claimFailed("CHECKOUT_NOT_FOUND", "The checkout does not exist.");
+    }
+    if (guest.ownerCustomerId === customer.id) {
+      return { checkout: guest, mergedFromCheckoutId: null, userErrors: [] };
+    }
+    if (!["OPEN", "READY"].includes(guest.status)) {
+      return claimFailed("CHECKOUT_NOT_OPEN", "The checkout is no longer editable.");
+    }
+
+    const target = accountCheckout(store, customer);
+    if (!target) {
+      // S1: the guest checkout passes to the account.
+      guest.ownerCustomerId = customer.id;
+      guest.customerIdentity.customerId = customer.id;
+      fillEmptyContacts(guest.customerIdentity, profileContacts(customer));
+      refreshCheckout(store, guest);
+      return { checkout: store.touchCheckout(guest), mergedFromCheckoutId: null, userErrors: [] };
+    }
+
+    // S2 / D7: the guest lines and input join the account cart; the guest checkout closes.
+    for (const line of guest.lines) {
+      const same = target.lines.find((existing) =>
+        existing.purchasableId === line.purchasableId
+        && JSON.stringify(existing.attributes ?? null) === JSON.stringify(line.attributes ?? null));
+      if (same) same.quantity += line.quantity;
+      else target.lines.push(line);
+    }
+    fillEmptyContacts(target.customerIdentity, guest.customerIdentity);
+    fillEmptyContacts(target.customerIdentity, profileContacts(customer));
+    if (!target.customerNote) target.customerNote = guest.customerNote;
+    guest.status = "ABANDONED";
+    refreshCheckout(store, target);
+    store.reindex();
+    return { checkout: store.touchCheckout(target), mergedFromCheckoutId: guest.id, userErrors: [] };
+  },
+});

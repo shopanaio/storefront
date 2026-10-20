@@ -40,6 +40,20 @@ An override fully replaces its runtime default. The generated wrapper imports
 the root file, so imports written relative to that file continue to resolve from
 the storefront root. Conflicting variants fail generation with a diagnostic.
 
+The generated app also mounts the customer session handlers (BFF) at
+`/auth/[action]`: `login`, `callback`, `token`, `refresh` and `logout`. The
+storefront is a confidential IAM OAuth client: the code is exchanged on the
+server with the client secret, and the tokens stay in encrypted HttpOnly
+cookies. The handlers read the server environment:
+
+- `NEXT_PUBLIC_IAM_URL`, `NEXT_PUBLIC_IAM_APPLICATION_ID` (also used by the browser);
+- `IAM_OAUTH_CLIENT_ID`, `IAM_OAUTH_CLIENT_SECRET`, `IAM_OAUTH_RESOURCE`;
+- `IAM_OAUTH_REDIRECT_URI`, the registered `{origin}/auth/callback`;
+- `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI` (optional; sign-out then ends the IAM session);
+- `STOREFRONT_SESSION_SECRET`, at least 32 characters, the cookie encryption key.
+
+The default middleware matcher leaves `/auth/*` to these handlers.
+
 Storefront source should consume framework APIs through the runtime facade:
 
 ```tsx

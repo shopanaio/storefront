@@ -1,19 +1,17 @@
 import { Checkout } from '#checkout/components/Checkout';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from '@shopana/storefront/next/navigation';
 import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
 import { useIsPlacementBusy } from '#checkout/state/placement/placementStore';
-
-const features = {
-  auth: true,
-};
+import { useSessionExpired } from '@shopana/storefront-sdk/modules/session/react';
 
 /**
  * Client page for the Checkout module. Redirects to the localized home page when there is no
- * cart, unless a placement attempt is running or its result is shown.
+ * cart, unless a placement attempt is running or its result is shown, or the session expired
+ * (S6): the account cart is then waiting behind a new sign-in.
  */
 export const CheckoutPageClient = ({
   theme,
@@ -28,13 +26,18 @@ export const CheckoutPageClient = ({
   const homePath = theme.useHomePath();
   const cleanup = useDefaultCartCleanup();
   const placementBusy = useIsPlacementBusy();
+  const sessionExpired = useSessionExpired();
   const Brand = theme.Brand;
+  const features = useMemo(
+    () => ({ auth: theme.customerAccountsEnabled }),
+    [theme.customerAccountsEnabled]
+  );
 
   useEffect(() => {
-    if (loaded && !cartId && !placementBusy) {
+    if (loaded && !cartId && !placementBusy && !sessionExpired) {
       router.replace(homePath);
     }
-  }, [loaded, cartId, placementBusy, router, homePath]);
+  }, [loaded, cartId, placementBusy, sessionExpired, router, homePath]);
 
   const handleOrderAccepted = useCallback(
     (event: OrderAcceptedEvent) => {

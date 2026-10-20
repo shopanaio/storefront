@@ -21,6 +21,11 @@ import { CheckoutLoadError } from '#checkout/components/CheckoutLoadError';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutNotFound } from '#checkout/hooks/useCheckoutNotFound';
 import { useBannerStore } from '#checkout/state/banners/bannerStore';
+import { CheckoutSignInRequired } from '#checkout/components/CheckoutSignInRequired';
+import {
+  useSessionExpired,
+  useSessionStatus,
+} from '@shopana/storefront-sdk/modules/session/react';
 
 export interface CheckoutProps {
   cartId: string | null;
@@ -87,6 +92,8 @@ const CheckoutBody = ({
   const phase = usePlacementPhase();
   const { checkout, error, refetch } = useCheckoutData();
   const notFound = useCheckoutNotFound(checkoutId);
+  const sessionStatus = useSessionStatus();
+  const sessionExpired = useSessionExpired();
 
   if (phase.name === 'accepted') {
     return (
@@ -105,6 +112,23 @@ const CheckoutBody = ({
         brand={brand}
       />
     );
+  }
+
+  if (
+    phase.name === 'idle' &&
+    sessionExpired &&
+    !checkout &&
+    (notFound || !checkoutId)
+  ) {
+    return <CheckoutSignInRequired brand={brand} reason="expired" />;
+  }
+  if (
+    phase.name === 'idle' &&
+    checkout &&
+    !checkout.guestCheckoutAllowed &&
+    sessionStatus !== 'authenticated'
+  ) {
+    return <CheckoutSignInRequired brand={brand} reason="required" />;
   }
 
   if (error && !checkout && !notFound && phase.name === 'idle') {
