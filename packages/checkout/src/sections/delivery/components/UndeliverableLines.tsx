@@ -1,24 +1,25 @@
 'use client';
 
-import { Alert, Button, Flex } from 'antd';
+import { Button, Flex } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import {
   useRemoveCartLines,
   useUndeliverableLines,
 } from '#checkout/hooks/useUndeliverableLines';
 import { useConfirm } from '#checkout/ui/useConfirm';
-import { toast } from '#checkout/ui/toast';
-import { ADDRESS_SECTION_ANCHOR } from '#checkout/sections/address/anchor';
+import {
+  clearSaveError,
+  reportSaveError,
+} from '#checkout/state/banners/bannerStore';
+import { SectionId } from '#checkout/state/interface';
+import { focusAnchor, sectionAnchor } from '#checkout/ui/focusAnchor';
 import { ShipmentLines } from './ShipmentLines';
 
 /** Brings the address form into view, so the customer can change the address. */
-const focusAddress = () => {
-  const section = document.getElementById(ADDRESS_SECTION_ANCHOR);
-  section?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  section?.querySelector<HTMLElement>('input, button, [tabindex]')?.focus({
-    preventScroll: true,
-  });
-};
+const focusAddress = () => focusAnchor(sectionAnchor(SectionId.Address));
+
+const REMOVE_ERROR_KEY = 'remove-undeliverable-lines';
 
 /**
  * Lines that cannot be delivered to the address (R7). They block the whole order; the
@@ -48,28 +49,28 @@ export const UndeliverableLines = () => {
     }
     try {
       await remove(lines);
+      clearSaveError(REMOVE_ERROR_KEY);
     } catch (error) {
       console.error('Failed to remove undeliverable lines:', error);
-      toast.error(t('undeliverable-remove-failed'));
+      reportSaveError({
+        key: REMOVE_ERROR_KEY,
+        message: t('undeliverable-remove-failed'),
+        sectionId: SectionId.Delivery,
+      });
     }
   };
 
   return (
-    <Alert
-      type="error"
-      showIcon
-      title={t('undeliverable-title')}
-      description={
-        <Flex vertical gap={12}>
-          <ShipmentLines lines={lines} />
-          <Flex gap={8} wrap>
-            <Button onClick={focusAddress}>{t('undeliverable-change-address')}</Button>
-            <Button danger loading={removing} onClick={handleRemove}>
-              {t('undeliverable-remove')}
-            </Button>
-          </Flex>
+    <CheckoutBanner tone="action" title={t('undeliverable-title')}>
+      <Flex vertical gap={12}>
+        <ShipmentLines lines={lines} />
+        <Flex gap={8} wrap>
+          <Button onClick={focusAddress}>{t('undeliverable-change-address')}</Button>
+          <Button danger loading={removing} onClick={handleRemove}>
+            {t('undeliverable-remove')}
+          </Button>
         </Flex>
-      }
-    />
+      </Flex>
+    </CheckoutBanner>
   );
 };

@@ -19,9 +19,18 @@ The module page entry is `page/page.tsx`, client is `page/client.tsx`; public ex
 
 Key components:
 
-- `components/Checkout.tsx`: Checkout container. Mounts data (`CheckoutDataContextProvider`) and API (`CheckoutApiProvider`) contexts, wires the controller (`CheckoutController`), and renders by placement phase: the result screen (`components/result/CheckoutResult.tsx`), the waiting screen (`components/result/PaymentPendingScreen.tsx`), or progress and the view (`CheckoutView`). Handles submit via `useCheckoutStore().requestSubmit()` and shows validation alerts via `useValidationAlert`.
+- `components/Checkout.tsx`: Checkout container. Mounts data (`CheckoutDataContextProvider`) and API (`CheckoutApiProvider`) contexts, wires the controller (`CheckoutController`), and renders by placement phase: the result screen (`components/result/CheckoutResult.tsx`), the waiting screen (`components/result/PaymentPendingScreen.tsx`), or progress and the view (`CheckoutView`). Handles submit via `useCheckoutStore().requestSubmit()`.
 - `components/CheckoutController.tsx`: hooks in `useOperationTracker` and `usePlacementController`, calls `onOrderAccepted` on `OrderAccepted`, and hosts a client SDK module for `CLIENT_SDK` actions.
 - `components/CheckoutView.tsx`: render-only component. Renders sections using `infra/SectionRenderer` wrapped with `components/common/CheckoutSection`. Left column — sections, right — `summary`.
+- `components/submit/CheckoutActions.tsx`: the checkout banner (`components/banner/BannerSlot.tsx`) above the submit button. On mobile both stay in a panel at the bottom of the screen; on desktop they stay at the end of the form, and the banner slot keeps the height of one line even when empty, so the form does not move.
+
+## Banners
+
+The checkout has its own banner (`ui/banner/CheckoutBanner.tsx`) instead of antd `Alert`/`notification`: a 1px border, radius 12, an icon without a circle, a bold title with the text under it, one action as a text link on the right. Tones (`ui/banner/tones.ts`): `critical` (failed: payment, placement, a save), `warning` (the order changed on its own), `action` (the buyer has to choose or fill something in), `success`. Their colors are CSS custom properties `--checkout-banner-<tone>-<background|border|text|accent>`, declared on the checkout root, so a theme can override them in CSS. A critical banner cannot be closed: it stays until its problem is solved.
+
+Messages of the whole checkout share one banner above the submit button (`state/banners/banners.ts`, `collectBanners`): the most important is shown in one line, the others behind its counter. Order: the checkout is closed (placed elsewhere, expired, being replaced) → the payment or placement failed → something blocks the order (unfilled sections and blocking issues, after the buyer pressed the button; lines that cannot be delivered) → a save failed → the order changed (stock and price notifications, warnings of the calculation). A section shows its own problem in place as a quiet line (`components/notices/SectionIssues.tsx`) or a banner of its own (a reset selection, an unsaved delivery input).
+
+Texts are the checkout's own, never the API's English: issues by `code` (`state/banners/messages.ts`, `issueText`; an unknown code names the section to check), reset selections by reason code (`resetReasonMessageKey`), placement errors by code (`components/result/placementMessages.ts`). Failed saves of the buyer's input are kept in `state/banners/bannerStore.ts` per operation until it succeeds; there are no toasts in the checkout.
 - `infra/SectionRenderer.tsx`: renders a section by `SectionId` using `sections/sections.tsx`.
 - `components/section/SectionContainer.tsx` and `components/section/makeSection.tsx`: polymorphic section containers. Register the section in the store, validate data via Yup schema, publish validity state, and pass `invalidate` to the View.
 
@@ -56,7 +65,6 @@ Sections live under `sections/*` and include:
 - State hooks:
   - `state/hooks/useSectionController.ts`: registers a section in the store, syncs busy via operation events, publishes valid/invalid/reset.
   - `state/placement/usePlacementController.ts`: listens to `SubmitReady` and drives order placement (see Order Placement).
-  - `hooks/useValidationAlert.ts`: listens to submit blocks and builds a message listing required sections.
 
 ## API Layer
 
@@ -69,7 +77,7 @@ Sections live under `sections/*` and include:
   - `submitCheckout` first sends input a section holds back (`state/pendingInputs.ts`: the order note waiting for a pause in typing or for its retry) and waits for those saves, then waits until every queued write settled. If the latest save of the address, contact, note or recipient failed, the order is not sent (`CHECKOUT_INPUT_UNSAVED`): it would go without what the buyer sees on screen.
 - Mutation queue: every checkout and cart write goes through the one queue of the SDK cart (`createCartMutationQueue`, `enqueueMutation` of `useCartSetters`), one at a time in the order asked for. A waiting write of the same resource is replaced by the latest one; the replaced call is rejected with `MutationSupersededError`, and `followSuperseded` lets a caller settle as the write that carried its resource instead (`commit` does that unless called with `superseded: 'reject'`, which the delivery section uses). A reconciliation that throws after a write does not stop the queue. `waitForMutations()` resolves once everything queued before it settled. The client sends no version and does not retry: the server applies a write to the latest checkout itself and answers `CHECKOUT_BUSY` (retryable) only when it could not; sections keep no queues of their own.
 - Mutation wrapper: `api/useCheckoutOperation.ts`
-  - Wraps the typed Apollo mutation adapter with: promise-based API, debounce, `OperationStart/End/Error` events, and optional error toasts.
+  - Wraps the typed Apollo mutation adapter with: promise-based API, debounce, `OperationStart/End/Error` events, and an optional failure report in the checkout banner (`reportError`).
   - `commit(variables, { key })` joins the queue at once; `send` runs unqueued, only inside a queued task; `commitScheduled` is debounced.
 
 ## Validation
@@ -105,7 +113,7 @@ Sections live under `sections/*` and include:
 
 1. User clicks Submit → `Checkout.tsx` calls store `requestSubmit()`.
 2. `checkoutStore.requestSubmit()` checks required sections. If missing — emits `SubmitBlocked` with a list; otherwise — `SubmitReady` with the sections payload.
-3. `usePlacementController` listens to `SubmitReady` and places the order (below) only when the checkout is ready (`state/readiness.ts`): `status = READY`, `valid`, before `expiresAt`, no issue with `effect = STOP`. An unanswered attempt (`sent`) of the same snapshot is resent with its key whatever the checkout shows, since the key returns the placement it may have made. Otherwise, once the buyer pressed the button, a blocking issue is shown in its section (`components/notices/SectionIssues.tsx`, section by `field`, `state/issueSections.ts`), and the notices above the button (`components/notices/IssueNotices.tsx`) show the issues of lines and of the whole checkout and name the sections with issues; warnings are shown there all the time. Issue texts come from the API as they are. The button stays disabled for the whole attempt and once the checkout expired; a second tab relies on `CHECKOUT_ALREADY_PLACED` and placement recovery.
+3. `usePlacementController` listens to `SubmitReady` and places the order (below) only when the checkout is ready (`state/readiness.ts`): `status = READY`, `valid`, before `expiresAt`, no issue with `effect = STOP`. An unanswered attempt (`sent`) of the same snapshot is resent with its key whatever the checkout shows, since the key returns the placement it may have made. Otherwise, once the buyer pressed the button, a blocking issue is shown in its section (`components/notices/SectionIssues.tsx`, section by `field`, `state/issueSections.ts`), and the checkout banner (see Banners) names the sections to fill and shows the issues of lines and of the whole checkout; warnings are shown there all the time. The button stays disabled for the whole attempt and once the checkout expired; a second tab relies on `CHECKOUT_ALREADY_PLACED` and placement recovery.
 4. When `placeOrder` answers `CHECKOUT_OPEN`, the checkout was recalculated and a delivery or payment choice went stale: no placement was made, the checkout is read again and its sections show the reset choice with its reason and the new price. The buyer chooses again; the checkout is not renewed.
 5. When the order is accepted, `OrderAccepted` reaches the host through `onOrderAccepted`, where the cart is cleared; the checkout shows its result screen.
 
@@ -132,7 +140,7 @@ Files: `state/placement/*`, `components/result/*`, `page/return.tsx`.
 Files: `state/useCheckoutLifecycle.ts`, `state/renewal.ts`, `hooks/useCheckoutNotFound.ts`.
 
 - `PLACED` is handled like `CHECKOUT_ALREADY_PLACED`: the placement of this browser is followed, otherwise the buyer is told the order was already placed.
-- `EXPIRED` or `ABANDONED` from the server, or a mutation rejected with `CHECKOUT_EXPIRED`/`CHECKOUT_ABANDONED`: a new checkout with the same lines (purchase, attributes, tags, components) replaces it once (R5); contacts and promo codes are not carried over. When `expiresAt` passes by the browser clock, the checkout is read again once; it is replaced only when the server answers that it is closed, never by the browser clock alone. Nothing is replaced while a placement attempt of this browser (`sent` or `resolved`) owns the checkout. `RenewalNotice` tells the buyer, or offers a retry when creating it failed.
+- `EXPIRED` or `ABANDONED` from the server, or a mutation rejected with `CHECKOUT_EXPIRED`/`CHECKOUT_ABANDONED`: a new checkout with the same lines (purchase, attributes, tags, components) replaces it once (R5); contacts and promo codes are not carried over. When `expiresAt` passes by the browser clock, the checkout is read again once; it is replaced only when the server answers that it is closed, never by the browser clock alone. Nothing is replaced while a placement attempt of this browser (`sent` or `resolved`) owns the checkout. The checkout banner tells the buyer, or offers a retry when creating it failed.
 - A load error shows a message with "Try again"; a checkout that is not found sends the buyer home with the cart open, unless this browser has a placement attempt for it.
 
 ## Delivery Address

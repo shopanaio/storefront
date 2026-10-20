@@ -142,7 +142,7 @@ describe('DeliveryMethodList', () => {
       )
     ).toEqual(['g1', 'g2']);
 
-    fireEvent.click(screen.getByText('Checkout.retry'));
+    fireEvent.click(screen.getByText('Checkout.banner-retry'));
 
     await waitFor(() =>
       expect(api.selectDeliveryMethod).toHaveBeenCalledTimes(3)
@@ -181,7 +181,7 @@ describe('DeliveryMethodList', () => {
         { ...group('g3', [method('c1')]), replacesGroupIds: ['g2'] },
       ])
     );
-    fireEvent.click(screen.getByText('Checkout.retry'));
+    fireEvent.click(screen.getByText('Checkout.banner-retry'));
 
     await waitFor(() =>
       expect(api.selectDeliveryMethod).toHaveBeenLastCalledWith(
@@ -190,7 +190,7 @@ describe('DeliveryMethodList', () => {
     );
   });
 
-  it('SC-mqce: a rejected delivery input shows why, can be saved again and unblocks once saved', async () => {
+  it('SC-mqce: a rejected delivery input is reported, can be saved again and unblocks once saved', async () => {
     const input = { warehouseRef: 'w-5' };
     act(() =>
       useCustomerInputStore
@@ -205,7 +205,11 @@ describe('DeliveryMethodList', () => {
       .mockResolvedValueOnce(undefined);
     renderList([group('g1', [selected], selected)]);
 
-    expect(await screen.findByText('Branch is closed')).toBeTruthy();
+    // The API text is English; the buyer sees the checkout's own message.
+    expect(
+      await screen.findByText('Checkout.delivery-input-rejected-title')
+    ).toBeTruthy();
+    expect(screen.queryByText('Branch is closed')).toBeNull();
     expect(
       readCustomerInputs({ id: 'g1' }, '')[methodKey(method('a1'))].synced
     ).toBe(false);
@@ -220,7 +224,9 @@ describe('DeliveryMethodList', () => {
         readCustomerInputs({ id: 'g1' }, '')[methodKey(method('a1'))].synced
       ).toBe(true)
     );
-    expect(screen.queryByText('Branch is closed')).toBeNull();
+    expect(
+      screen.queryByText('Checkout.delivery-input-rejected-title')
+    ).toBeNull();
   });
 
   it('SC-v8kd: a background save of the input does not overwrite a method the buyer picks meanwhile', async () => {
@@ -284,7 +290,7 @@ describe('DeliveryMethodList', () => {
       expect(api.selectDeliveryMethod).toHaveBeenCalledTimes(1)
     );
     expect(screen.queryByText('Checkout.delivery-not-saved')).toBeNull();
-    expect(screen.queryByText('Checkout.retry')).toBeNull();
+    expect(screen.queryByText('Checkout.banner-retry')).toBeNull();
   });
 
   it('M-6: says why a selection refused for changed shipments is not retried', async () => {
@@ -302,6 +308,6 @@ describe('DeliveryMethodList', () => {
     expect(
       await screen.findByText('Checkout.delivery-group-changed')
     ).toBeTruthy();
-    expect(screen.queryByText('Checkout.retry')).toBeNull();
+    expect(screen.queryByText('Checkout.banner-retry')).toBeNull();
   });
 });

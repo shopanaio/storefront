@@ -1,6 +1,9 @@
 'use client';
 
-import { Alert, Button, Flex } from 'antd';
+import { Flex } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { SectionId } from '#checkout/state/interface';
+import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { useTranslations } from 'next-intl';
 import { ProviderRenderer } from '#checkout/infra/ProviderRenderer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -552,10 +555,9 @@ export const DeliveryMethodList = ({
   return (
     <Flex vertical gap={12}>
       {resetReason && !serverKey && !pendingKey && (
-        <Alert
-          type="warning"
-          showIcon
-          title={resetReason.message}
+        <CheckoutBanner
+          tone="action"
+          title={t(resetReasonMessageKey(resetReason, SectionId.Delivery))}
           description={t(
             resetKey
               ? 'delivery-selection-reset-fix'
@@ -564,26 +566,20 @@ export const DeliveryMethodList = ({
         />
       )}
       {rejectedMessages && rejectedMessages.length > 0 && (
-        <Alert
-          type="error"
-          showIcon
-          title={rejectedMessages.join(' ')}
+        <CheckoutBanner
+          tone="critical"
+          title={t('delivery-input-rejected-title')}
           description={t('delivery-input-rejected')}
           // The customer may save the same input again (SC-mqce).
-          action={
-            <Button size="small" onClick={() => setFailures(null)}>
-              {t('save')}
-            </Button>
-          }
+          action={{ label: t('save'), onClick: () => setFailures(null) }}
         />
       )}
       {groupChangedKey && !pendingKey && serverKey !== groupChangedKey && (
-        <Alert type="warning" showIcon title={t('delivery-group-changed')} />
+        <CheckoutBanner tone="warning" title={t('delivery-group-changed')} />
       )}
       {failedKey && !pendingKey && (
-        <Alert
-          type="error"
-          showIcon
+        <CheckoutBanner
+          tone="critical"
           title={
             groups.length > 1
               ? t('delivery-shipments-not-saved', {
@@ -593,15 +589,11 @@ export const DeliveryMethodList = ({
                 })
               : t('delivery-not-saved')
           }
-          action={
-            <Button size="small" onClick={retryFailedSelect}>
-              {t('retry')}
-            </Button>
-          }
+          action={{ label: t('banner-retry'), onClick: retryFailedSelect }}
         />
       )}
       {failureCount > 0 && !rejectedMessages && (
-        <Alert type="warning" showIcon title={t('delivery-input-retrying')} />
+        <CheckoutBanner tone="warning" title={t('delivery-input-retrying')} />
       )}
       {Object.entries(providerMethodsRecord).map(
         ([provider, providerMethods]) => (

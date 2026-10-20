@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { CheckoutApiProvider } from '#checkout/context/CheckoutApiContext';
-import { useValidationAlert } from '#checkout/hooks/useValidationAlert';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { CheckoutView } from './CheckoutView';
 import { CheckoutController } from '#checkout/components/CheckoutController';
@@ -21,6 +20,7 @@ import { PaymentPendingScreen } from '#checkout/components/result/PaymentPending
 import { CheckoutLoadError } from '#checkout/components/CheckoutLoadError';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutNotFound } from '#checkout/hooks/useCheckoutNotFound';
+import { useBannerStore } from '#checkout/state/banners/bannerStore';
 
 export interface CheckoutProps {
   cartId: string | null;
@@ -55,9 +55,11 @@ export const Checkout = ({
   theme,
 }: CheckoutProps) => {
   const resetPlacement = usePlacementStore((s) => s.reset);
+  const resetBanners = useBannerStore((s) => s.reset);
 
   // The placement phase outlives cart cleanup, so it is reset only when the checkout unmounts.
   useEffect(() => resetPlacement, [resetPlacement]);
+  useEffect(() => resetBanners, [resetBanners]);
 
   return (
     <CheckoutThemeProvider theme={theme}>
@@ -81,7 +83,6 @@ const CheckoutBody = ({
 }: Pick<CheckoutProps, 'brand' | 'features'> & { checkoutId: string | null }) => {
   const t = useTranslations('Checkout');
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
-  const { validationError, onClearError } = useValidationAlert();
   const phase = usePlacementPhase();
   const { checkout, error, refetch } = useCheckoutData();
   const notFound = useCheckoutNotFound(checkoutId);
@@ -120,8 +121,6 @@ const CheckoutBody = ({
       <CheckoutView
         brand={brand}
         features={features}
-        validationError={validationError}
-        onClearError={onClearError}
         onSubmit={handleSubmit}
         t={t}
       />

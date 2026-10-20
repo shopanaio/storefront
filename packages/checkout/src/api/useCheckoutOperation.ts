@@ -4,7 +4,7 @@ import {
   followSuperseded,
   isMutationSuperseded,
 } from '@shopana/storefront-sdk/modules/cart/core/utils/mutationQueue';
-import { toast } from '#checkout/ui/toast';
+import { clearSaveError, reportSaveError } from '#checkout/state/banners/bannerStore';
 import type { OperationVariables, TypedDocumentNode } from '@apollo/client';
 import { useCallback, useRef, useEffect } from 'react';
 import { debounce, type DebouncedFunc } from 'lodash';
@@ -47,12 +47,13 @@ export interface CommitOptions {
  */
 export interface CheckoutOperationOptions {
   /**
-   * Show error toast on mutation failure
+   * Report a failure in the checkout banner, until the operation succeeds again. Off for
+   * operations whose section shows the failure itself.
    * @default true
    */
-  showErrorToast?: boolean;
+  reportError?: boolean;
   /**
-   * Custom error message to display in toast
+   * Message of the reported failure
    */
   errorMessage?: string;
   /**
@@ -94,7 +95,7 @@ export interface CheckoutOperationOptions {
  * - Debounced execution to prevent excessive calls
  * - In-flight guard with race protection via timestamps
  * - Lifecycle hooks (onStart, onEnd) for UI busy state
- * - Optional error toast notifications
+ * - Optional failure report in the checkout banner
  *
  * @template TMutation - The mutation type
  * @param mutation - The GraphQL mutation
@@ -124,7 +125,7 @@ export function useCheckoutOperation<
   options: CheckoutOperationOptions = {}
 ) {
   const {
-    showErrorToast = true,
+    reportError = true,
     errorMessage = 'Operation failed',
     rejectOnUserErrors = true,
     debounceMs = 150,
@@ -135,6 +136,8 @@ export function useCheckoutOperation<
   } = options;
 
   const [commitMutation, isInFlight] = useMutation(mutation);
+  // Reported failures are kept per operation; a later success of it clears its failure.
+  const errorKey = operationKey ?? errorMessage;
 
   // Track inflight timestamp for race protection
   const inflightTimestampRef = useRef<number | null>(null);
@@ -236,14 +239,21 @@ export function useCheckoutOperation<
    */
   const commitPromise = useCallback(
     (variables: TVariables): Promise<TData> => {
+      const fail = () => {
+        if (reportError) {
+          reportSaveError({
+            key: errorKey,
+            message: errorMessage,
+            sectionId: sectionId ?? null,
+          });
+        }
+      };
       return new Promise((resolve, reject) => {
         commitMutation({
           variables,
           onCompleted: (response, errors) => {
             if (errors && errors.length) {
-              if (showErrorToast) {
-                toast.error(errorMessage);
-              }
+              fail();
               return reject(errors);
             }
             const userErrors = rejectOnUserErrors
@@ -256,17 +266,16 @@ export function useCheckoutOperation<
                 void emitCheckoutEvent(CheckoutEvent.CheckoutClosed, {
                   code: closed,
                 });
-              } else if (showErrorToast) {
-                toast.error(errorMessage);
+              } else {
+                fail();
               }
               return reject(userErrors);
             }
+            if (reportError) clearSaveError(errorKey);
             resolve(response);
           },
           onError: (error) => {
-            if (showErrorToast) {
-              toast.error(errorMessage);
-            }
+            fail();
             reject(error);
           },
         }).then((data) => {
@@ -279,7 +288,7 @@ export function useCheckoutOperation<
         });
       });
     },
-    [commitMutation, showErrorToast, errorMessage, rejectOnUserErrors]
+    [commitMutation, reportError, errorKey, errorMessage, sectionId, rejectOnUserErrors]
   );
 
   const { enqueueMutation } = useCartSetters();

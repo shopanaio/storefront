@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Button, Typography } from 'antd';
+import { Typography } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import type { DirectoryError } from '../api/directory';
 
@@ -22,16 +23,13 @@ export function DirectoryNotice({
 
   if (error) {
     return (
-      <Alert
-        type={error === 'invalid' ? 'info' : 'warning'}
-        showIcon
+      <CheckoutBanner
+        tone={error === 'invalid' ? 'action' : 'warning'}
         title={t(`errors.${error}`)}
         action={
-          error === 'invalid' ? null : (
-            <Button size="small" onClick={onRetry}>
-              {t('errors.retry')}
-            </Button>
-          )
+          error === 'invalid'
+            ? undefined
+            : { label: t('errors.retry'), onClick: onRetry }
         }
       />
     );

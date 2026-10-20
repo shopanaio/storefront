@@ -7,10 +7,11 @@ import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
 import { CheckoutAuth } from './CheckoutAuth';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
-import { RenewalNotice } from './notices/RenewalNotice';
 import { SectionIssues } from './notices/SectionIssues';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { SectionId } from '#checkout/state/interface';
+import { bannerToneDeclarations } from '#checkout/ui/banner/tones';
+import { sectionAnchor, SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
 
 interface CheckoutViewProps {
   brand?: React.ReactNode;
@@ -18,8 +19,6 @@ interface CheckoutViewProps {
     auth?: boolean;
     country?: 'UA' | 'INTL';
   };
-  validationError: string | null;
-  onClearError: () => void;
   onSubmit: (e: React.FormEvent) => void;
   t: (key: string) => string;
 }
@@ -30,8 +29,6 @@ interface CheckoutViewProps {
 export const CheckoutView = ({
   brand,
   features,
-  validationError,
-  onClearError,
   onSubmit,
   t,
 }: CheckoutViewProps) => {
@@ -45,8 +42,8 @@ export const CheckoutView = ({
           <div className={styles.main}>
             <Flex className={styles.left}>
               {brand}
-              <RenewalNotice />
               <CheckoutSection
+                id={sectionAnchor(SectionId.Contact)}
                 title={t('contact')}
                 headerAction={
                   features?.auth ? (
@@ -58,42 +55,44 @@ export const CheckoutView = ({
                 <SectionIssues sections={[SectionId.Contact]} />
               </CheckoutSection>
 
-              <CheckoutSection title={t('delivery')}>
+              <CheckoutSection
+                id={sectionAnchor(SectionId.Delivery)}
+                title={t('delivery')}
+              >
                 <SectionRenderer slug={SectionId.Address} />
                 <SectionRenderer slug={SectionId.Delivery} />
                 <SectionIssues sections={[SectionId.Address, SectionId.Delivery]} />
               </CheckoutSection>
 
-              <CheckoutSection>
+              <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
                 <SectionRenderer slug={SectionId.Recipient} />
                 <SectionIssues sections={[SectionId.Recipient]} />
               </CheckoutSection>
 
-              <CheckoutSection title={t('payment')}>
+              <CheckoutSection
+                id={sectionAnchor(SectionId.Payment)}
+                title={t('payment')}
+              >
                 <SectionRenderer slug={SectionId.Payment} />
                 <SectionIssues sections={[SectionId.Payment]} />
               </CheckoutSection>
 
-              <CheckoutSection>
+              <CheckoutSection id={sectionAnchor(SectionId.Comment)}>
                 <SectionRenderer slug={SectionId.Comment} />
                 <SectionIssues sections={[SectionId.Comment]} />
               </CheckoutSection>
 
               <div className={styles.actionsLeft}>
-                <CheckoutActions
-                  validationError={validationError}
-                  onClearError={onClearError}
-                />
+                <CheckoutActions />
               </div>
             </Flex>
             <Flex className={styles.rightContainer}>
               <Flex vertical gap={12} className={styles.right}>
-                {checkout ? <Summary checkout={checkout} /> : null}
+                <div id={SUMMARY_ANCHOR} className={styles.summary}>
+                  {checkout ? <Summary checkout={checkout} /> : null}
+                </div>
                 <div className={styles.actionsRight}>
-                  <CheckoutActions
-                    validationError={validationError}
-                    onClearError={onClearError}
-                  />
+                  <CheckoutActions />
                 </div>
               </Flex>
             </Flex>
@@ -110,6 +109,7 @@ const useStyles = createStyles(({ token, css }) => {
     wrapper: css`
       position: relative;
       width: 100%;
+      ${bannerToneDeclarations()}
     `,
     container: css`
       display: flex;
@@ -178,6 +178,12 @@ const useStyles = createStyles(({ token, css }) => {
       ${mq.lg} {
         display: none;
       }
+    `,
+
+    summary: css`
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     `,
 
     logInButton: css`

@@ -1,6 +1,9 @@
 'use client';
 
-import { Alert, Button, Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { SectionId } from '#checkout/state/interface';
+import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
@@ -112,7 +115,10 @@ export const Shipments = ({
               ) : (
                 group.resetReason &&
                 !group.selectedDeliveryMethod && (
-                  <Alert type="warning" showIcon title={group.resetReason.message} />
+                  <CheckoutBanner
+                    tone="action"
+                    title={t(resetReasonMessageKey(group.resetReason, SectionId.Delivery))}
+                  />
                 )
               )}
             </Flex>

@@ -68,17 +68,18 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitSelectDelivery } = useCheckoutOperation(
     selectDeliveryMethodMutation,
     {
-      errorMessage: t('error-select-delivery'),
+      // The delivery section shows a failed selection with its retry.
+      reportError: false,
       operationKey: OperationKey.SelectDeliveryMethod,
       sectionId: SectionId.Delivery,
     }
   );
   // Saves of the delivery customer input retry in the background; the delivery section
-  // shows their failures itself instead of a toast on every retry.
+  // shows their failures itself.
   const { commit: commitUpdateDelivery } = useCheckoutOperation(
     selectDeliveryMethodMutation,
     {
-      showErrorToast: false,
+      reportError: false,
       operationKey: OperationKey.SelectDeliveryMethod,
       sectionId: SectionId.Delivery,
     }
@@ -103,7 +104,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     addDeliveryAddressesMutation,
     {
       // The address section shows the failure under the form.
-      showErrorToast: false,
+      reportError: false,
       operationKey: OperationKey.AddDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -112,7 +113,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     updateDeliveryAddressesMutation,
     {
       // The address section shows the failure under the form.
-      showErrorToast: false,
+      reportError: false,
       operationKey: OperationKey.UpdateDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -129,7 +130,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     addPromoCodeMutation,
     {
       // The promo section shows the error next to the field.
-      showErrorToast: false,
+      reportError: false,
       operationKey: OperationKey.AddPromoCode,
       sectionId: SectionId.Promo,
     }
@@ -137,7 +138,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { commit: commitRemovePromo } = useCheckoutOperation(
     removePromoCodeMutation,
     {
-      showErrorToast: false,
+      reportError: false,
       operationKey: OperationKey.RemovePromoCode,
       sectionId: SectionId.Promo,
     }
@@ -155,7 +156,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     submitCheckoutMutation,
     {
       operationKey: OperationKey.SubmitCheckout,
-      showErrorToast: false,
+      reportError: false,
       rejectOnUserErrors: false,
     }
   );

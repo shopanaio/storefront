@@ -1,6 +1,9 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { Flex } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { SectionId } from '#checkout/state/interface';
+import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { ProviderRenderer } from '#checkout/infra/ProviderRenderer';
@@ -74,10 +77,9 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
   return (
     <Flex vertical gap={12} className={styles.container}>
       {resetReason && !localSelectedMethod && (
-        <Alert
-          type="warning"
-          showIcon
-          title={resetReason.message}
+        <CheckoutBanner
+          tone="action"
+          title={t(resetReasonMessageKey(resetReason, SectionId.Payment))}
           description={t('payment-selection-reset')}
         />
       )}

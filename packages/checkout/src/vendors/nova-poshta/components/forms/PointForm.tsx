@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { Flex } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 import { useWarehouse } from '../../api/directory';
@@ -62,7 +63,7 @@ export function PointForm({
         settlementRef={settlementRef}
       />
       {!settlementRef && (
-        <Alert title={t('city_required_warning')} type="warning" showIcon />
+        <CheckoutBanner tone="action" title={t('city_required_warning')} />
       )}
     </Flex>
   );

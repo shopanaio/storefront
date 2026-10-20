@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { Flex } from 'antd';
+import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
@@ -110,7 +111,7 @@ function CourierFields({
         settlementRef={settlementRef}
       />
       {disabled && (
-        <Alert title={t('city_required_warning')} type="warning" showIcon />
+        <CheckoutBanner tone="action" title={t('city_required_warning')} />
       )}
       <Flex gap={12}>
         <FloatingLabelInput

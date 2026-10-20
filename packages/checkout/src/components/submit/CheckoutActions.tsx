@@ -1,57 +1,78 @@
 'use client';
 
-import { Alert, Flex } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { createStyles } from 'antd-style';
 import { SubmitButton } from './SubmitButton';
 import { TermsNotice } from '../notices/TermsNotice';
-import { PlacementNotice } from '#checkout/components/result/PlacementNotice';
-import { IssueNotices } from '#checkout/components/notices/IssueNotices';
-import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
-import { useTranslations } from 'next-intl';
-
-interface CheckoutActionsProps {
-  /** Validation error message to display */
-  validationError: string | null;
-  /** Callback to clear validation error */
-  onClearError: () => void;
-}
+import { BannerSlot } from '#checkout/components/banner/BannerSlot';
+import { mq } from '#checkout/ui/breakpoints';
 
 /**
- * Checkout actions section containing submit button, terms notice, and validation error display.
- * Handles form submission and error display in a consistent layout.
+ * Submit button with the checkout banner above it and the terms under it. On mobile the banner
+ * and the button stay in a panel at the bottom of the screen; on desktop they stay in place at
+ * the end of the form.
  */
-export const CheckoutActions = ({
-  validationError,
-  onClearError,
-}: CheckoutActionsProps) => {
-  const t = useTranslations('Checkout');
-  const blocked = useUndeliverableLines().length > 0;
+export const CheckoutActions = () => {
+  const { styles } = useStyles();
+  const dockRef = useRef<HTMLDivElement>(null);
+  const [dockHeight, setDockHeight] = useState(0);
+
+  // The page ends with room for the panel, so it never covers the last fields.
+  useEffect(() => {
+    const dock = dockRef.current;
+    if (!dock || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => setDockHeight(dock.offsetHeight));
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <Flex
-      vertical
-      gap={12}
-      style={{
-        width: '100%',
-      }}
-    >
-      {validationError && (
-        <Alert
-          title={validationError}
-          type="error"
-          showIcon
-          closable
-          style={{
-            minHeight: 50,
-          }}
-          onClose={onClearError}
-        />
-      )}
-      <PlacementNotice />
-      <IssueNotices />
-      {blocked && (
-        <Alert type="warning" showIcon title={t('undeliverable-blocks-order')} />
-      )}
-      <SubmitButton />
+    <div className={styles.actions}>
+      <div ref={dockRef} className={styles.dock}>
+        <BannerSlot />
+        <SubmitButton />
+      </div>
       <TermsNotice />
-    </Flex>
+      <div
+        className={styles.spacer}
+        style={{ height: dockHeight }}
+        aria-hidden="true"
+      />
+    </div>
   );
 };
+
+const useStyles = createStyles(({ css, token }) => ({
+  actions: css`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  `,
+  dock: css`
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Under the loading skeleton (10). */
+    z-index: 9;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px ${token.padding}px calc(20px + env(safe-area-inset-bottom));
+    background: ${token.colorBgContainer};
+    border-top: 1px solid ${token.colorBorderSecondary};
+
+    ${mq.lg} {
+      position: static;
+      padding: 0;
+      background: none;
+      border-top: 0;
+    }
+  `,
+  spacer: css`
+    ${mq.lg} {
+      display: none;
+    }
+  `,
+}));
