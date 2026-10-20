@@ -1,4 +1,5 @@
 import { createCheckoutIdempotencyKey } from '@shopana/storefront-sdk/modules/cart/core/utils/idempotencyKey';
+import type { MoneyInput } from '#checkout/graphql/operations';
 import type {
   PaymentFlow,
   PlacementLocator,
@@ -27,6 +28,11 @@ export interface PlacementAttempt {
   idempotencyKey: string;
   /** Sent byte-for-byte equal between retries: it is part of the request hash. */
   returnUrl: string;
+  /**
+   * The total the buyer confirmed by pressing the button (BR-q2tm). It is part of the request
+   * hash too; the API places nothing when the recalculated checkout pays another amount.
+   */
+  expectedTotal: MoneyInput;
   resultRevision: string;
   paymentFlow: PaymentFlow | null;
   state: AttemptState;
@@ -60,6 +66,7 @@ export interface BeginAttemptInput {
   resultRevision: string;
   paymentFlow: PaymentFlow | null;
   returnUrl: string;
+  expectedTotal: MoneyInput;
 }
 
 export class AttemptJournal {
@@ -110,6 +117,7 @@ export class AttemptJournal {
       checkoutId: input.checkoutId,
       idempotencyKey: this.createKey(),
       returnUrl: input.returnUrl,
+      expectedTotal: input.expectedTotal,
       resultRevision: input.resultRevision,
       paymentFlow: input.paymentFlow,
       state: 'created',
@@ -255,10 +263,17 @@ function isPlacementAttempt(value: unknown): value is PlacementAttempt {
     typeof record.checkoutId === 'string' &&
     typeof record.idempotencyKey === 'string' &&
     typeof record.returnUrl === 'string' &&
+    isMoneyInput(record.expectedTotal) &&
     typeof record.resultRevision === 'string' &&
     typeof record.state === 'string' &&
     typeof record.createdAt === 'number'
   );
+}
+
+function isMoneyInput(value: unknown): value is MoneyInput {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.amount === 'string' && typeof record.currencyCode === 'string';
 }
 
 function browserStorage(): AttemptJournalStorage | null {

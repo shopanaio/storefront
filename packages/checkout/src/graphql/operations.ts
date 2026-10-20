@@ -3781,6 +3781,17 @@ export type Money = {
 };
 
 /**
+ * A monetary amount and its currency. Supply amount as an exact decimal string in major currency
+ * units.
+ */
+export type MoneyInput = {
+  /** Exact decimal amount serialized as a string. */
+  readonly amount: Scalars['Decimal']['input'];
+  /** ISO 4217 currency code. */
+  readonly currencyCode: CurrencyCode;
+};
+
+/**
  * Catalog storefront mutations are intentionally empty. Catalog authoring belongs
  * to the Admin API; buyer-side mutations are owned by cart and checkout services.
  */
@@ -5576,6 +5587,12 @@ export type PlaceOrderCustomerActionType =
 export type PlaceOrderInput = {
   /** Checkout identifier. */
   readonly checkoutId: Scalars['ID']['input'];
+  /**
+   * Amount the buyer confirmed: the checkout `cost.totalAmount` shown when the order is placed.
+   * The checkout is recalculated before the placement; when it then pays a different amount,
+   * nothing is placed and `CHECKOUT_TOTAL_CHANGED` asks the buyer to review the new total.
+   */
+  readonly expectedTotal: MoneyInput;
   /**
    * Client-generated key identifying this payment/order attempt. Reuse the same
    * key with identical input when retrying after a timeout or connection failure.

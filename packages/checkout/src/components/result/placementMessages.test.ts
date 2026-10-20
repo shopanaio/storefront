@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { LOYALTY_QUOTE_CHANGED_CODE } from '#checkout/state/placement/outcome';
+import {
+  LOYALTY_QUOTE_CHANGED_CODE,
+  TOTAL_CHANGED_CODE,
+} from '#checkout/state/placement/outcome';
 import { placementErrorMessageKey } from './placementMessages';
 
 describe('placementErrorMessageKey', () => {
@@ -12,5 +15,9 @@ describe('placementErrorMessageKey', () => {
 
   it('S7: asks the buyer to review the totals when the renewed quote changed', () => {
     expect(placementErrorMessageKey(LOYALTY_QUOTE_CHANGED_CODE)).toBe('placement-error-changed');
+  });
+
+  it('SC-q2tn: asks the buyer to review the order when its total changed', () => {
+    expect(placementErrorMessageKey(TOTAL_CHANGED_CODE)).toBe('placement-error-changed');
   });
 });

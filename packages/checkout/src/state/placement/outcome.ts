@@ -30,6 +30,13 @@ export const IDEMPOTENCY_MISMATCH_CODE = 'IDEMPOTENCY_KEY_PARAMETER_MISMATCH';
 export const STALE_SELECTION_CODE = 'CHECKOUT_OPEN';
 
 /**
+ * The checkout recalculated before the placement pays another total than the buyer confirmed:
+ * no placement was made, and the checkout stays open with the new totals (BR-q2tm). The buyer
+ * reviews them and confirms again; the next press sends the new total with a new key.
+ */
+export const TOTAL_CHANGED_CODE = 'CHECKOUT_TOTAL_CHANGED';
+
+/**
  * A buyer signed in, but this guest checkout was not claimed by the account yet (B6). The order
  * is not placed as a guest: the account claims the checkout, its prices are read again and the
  * buyer places the order from the account checkout.

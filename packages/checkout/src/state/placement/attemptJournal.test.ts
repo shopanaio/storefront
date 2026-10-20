@@ -33,6 +33,7 @@ const input = {
   resultRevision: 'rev-1',
   paymentFlow: 'ONLINE' as const,
   returnUrl: 'https://shop.example/uk/checkout/return?checkout=checkout-1',
+  expectedTotal: { amount: '1000', currencyCode: 'UAH' as const },
 };
 
 const placement: PlacementResult = {
@@ -90,6 +91,26 @@ describe('AttemptJournal', () => {
       state: 'sent',
       returnUrl: input.returnUrl,
     });
+  });
+
+  it('BR-q2tm: resends the total the buyer confirmed with the key', () => {
+    journal.markSent(journal.begin(input));
+    const retry = journal.begin({
+      ...input,
+      expectedTotal: { amount: '1200', currencyCode: 'UAH' },
+    });
+    expect(retry).toMatchObject({
+      idempotencyKey: 'key-1',
+      expectedTotal: input.expectedTotal,
+    });
+  });
+
+  it('drops a stored attempt without the confirmed total', () => {
+    const { expectedTotal: _expectedTotal, ...legacy } = journal.markSent(
+      journal.begin(input)
+    );
+    storage.setItem(KEY_1, JSON.stringify(legacy));
+    expect(new AttemptJournal(storage, () => now).read('checkout-1')).toBeNull();
   });
 
   it('issues a new key when the snapshot changed before payment', () => {

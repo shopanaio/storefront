@@ -44,6 +44,7 @@ function begin(journal: AttemptJournal) {
       resultRevision: 'rev-1',
       paymentFlow: 'ONLINE',
       returnUrl: 'https://shop.example/checkout/return?checkout=checkout-1',
+      expectedTotal: { amount: '1000', currencyCode: 'UAH' },
     })
   );
 }

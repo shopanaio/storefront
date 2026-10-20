@@ -20,6 +20,7 @@ import {
   PlacementUnconfirmedError,
   resolvePlacementOutcome,
   STALE_SELECTION_CODE,
+  TOTAL_CHANGED_CODE,
 } from '#checkout/state/placement/outcome';
 import {
   isPlacementBusy,
@@ -41,6 +42,7 @@ import type {
   PlacementOutcome,
   PlacementResult,
 } from '#checkout/state/placement/types';
+import type { CurrencyCode } from '#checkout/graphql/operations';
 
 /**
  * Drives order placement in the checkout (plan, stage 1): sends `placeOrder` with the journal's
@@ -134,8 +136,13 @@ export function usePlacementController(checkoutId: string | null) {
       if (outcome.kind === 'redirect' && context === 'submit') {
         window.location.assign(outcome.url);
       }
-      if (outcome.kind === 'rejected' && outcome.code === STALE_SELECTION_CODE) {
-        // The sections show the reset choice with its reason and the new price (6.2).
+      if (
+        outcome.kind === 'rejected' &&
+        (outcome.code === STALE_SELECTION_CODE ||
+          outcome.code === TOTAL_CHANGED_CODE)
+      ) {
+        // The sections show the reset choice with its reason and the new price (6.2), the
+        // summary the new total the buyer confirms with the next press (BR-q2tm).
         void refetchCheckout().catch(() => undefined);
       }
     },
@@ -183,6 +190,7 @@ export function usePlacementController(checkoutId: string | null) {
           result = await submitCheckout({
             checkoutId: attempt.checkoutId,
             idempotencyKey: attempt.idempotencyKey,
+            expectedTotal: attempt.expectedTotal,
             returnUrl: attempt.returnUrl,
           });
         } catch (error) {
@@ -259,11 +267,18 @@ export function usePlacementController(checkoutId: string | null) {
         setPhase({ name: 'rejected', code: 'PLACE_ORDER_RETURN_URL_TOO_LONG' });
         return;
       }
+      // BR-q2tm: the order is placed only for the total the buyer sees now.
+      const shownTotal = checkout.cost.totalAmount;
       const attempt = journal.begin({
         checkoutId: checkout.id,
         resultRevision: checkout.resultRevision,
         paymentFlow: checkout.payment.selection.method?.flow ?? null,
         returnUrl,
+        expectedTotal: {
+          amount: String(shownTotal.amount),
+          // The checkout's own currency, read from the API as `CurrencyCode`.
+          currencyCode: shownTotal.currencyCode as CurrencyCode,
+        },
       });
       await send(attempt, 'submit');
     });

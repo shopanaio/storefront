@@ -88,6 +88,7 @@ const placed = {
 const submitInput = {
   checkoutId: 'c1',
   idempotencyKey: 'k1',
+  expectedTotal: { amount: '1000', currencyCode: 'UAH' as const },
   returnUrl: 'https://shop/r',
 };
 const placeOrderCalls = () =>

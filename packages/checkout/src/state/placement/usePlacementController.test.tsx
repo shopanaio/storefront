@@ -52,6 +52,7 @@ const sentAttempt: PlacementAttempt = {
   checkoutId: 'checkout-1',
   idempotencyKey: 'key-1',
   returnUrl: 'https://shop.example/checkout/return?checkout=checkout-1',
+  expectedTotal: { amount: '1000', currencyCode: 'UAH' },
   resultRevision: 'rev-1',
   paymentFlow: 'ONLINE',
   state: 'sent',
@@ -139,6 +140,7 @@ describe('usePlacementController', () => {
     expect(mocks.submitCheckout).toHaveBeenCalledWith({
       checkoutId: 'checkout-1',
       idempotencyKey: 'key-1',
+      expectedTotal: sentAttempt.expectedTotal,
       returnUrl: sentAttempt.returnUrl,
     });
     expect(accepted).toHaveBeenCalledWith({
@@ -301,6 +303,69 @@ describe('usePlacementController', () => {
     expect(mocks.refetch).toHaveBeenCalledTimes(1);
   });
 
+  it('SC-q2tn: a changed total keeps the checkout open and reads it again', async () => {
+    mocks.refetch.mockResolvedValue(undefined);
+    mocks.submitCheckout.mockResolvedValue({
+      ...paid,
+      placementId: null,
+      placementState: null,
+      orderId: null,
+      status: null,
+      userErrors: [
+        {
+          code: 'CHECKOUT_TOTAL_CHANGED',
+          field: ['input', 'expectedTotal'],
+          message: 'The checkout total changed.',
+          retryable: false,
+        },
+      ],
+    });
+
+    renderHook(() => usePlacementController('checkout-1'));
+
+    await waitFor(() =>
+      expect(usePlacementStore.getState().phase).toEqual({
+        name: 'rejected',
+        code: 'CHECKOUT_TOTAL_CHANGED',
+      })
+    );
+    // Nothing was placed: the next press sends the new total with a new key.
+    expect(storedAttempt()).toBeNull();
+    expect(mocks.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('BR-q2tm: a new attempt sends the total the buyer sees', async () => {
+    window.localStorage.clear();
+    mocks.submitCheckout.mockResolvedValue(paid);
+    mocks.checkoutData = {
+      checkout: {
+        id: 'checkout-1',
+        resultRevision: 'rev-3',
+        status: 'READY',
+        valid: true,
+        expiresAt: new Date(Date.now() + 60_000),
+        issues: [],
+        payment: { selection: { method: { flow: 'ONLINE' } } },
+        cost: { totalAmount: { amount: 1200.5, currencyCode: 'UAH' } },
+      },
+      loaded: true,
+    };
+    renderHook(() => usePlacementController('checkout-1'));
+
+    await act(async () => {
+      await emitCheckoutEvent(CheckoutEvent.SubmitReady, { payload: {} });
+    });
+
+    await waitFor(() =>
+      expect(mocks.submitCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({
+          checkoutId: 'checkout-1',
+          expectedTotal: { amount: '1200.5', currencyCode: 'UAH' },
+        })
+      )
+    );
+  });
+
   it('keeps the key when the outcome of the request is unknown', async () => {
     mocks.submitCheckout.mockRejectedValue(new PlacementUnconfirmedError());
 
@@ -327,6 +392,7 @@ describe('usePlacementController', () => {
       expiresAt: new Date(Date.now() + 60_000),
       issues: [],
       payment: { selection: { method: { flow: 'ONLINE' } } },
+      cost: { totalAmount: { amount: 1000, currencyCode: 'UAH' } },
     });
 
     it('passes the earning estimate of the checkout to the result screen', async () => {
@@ -373,6 +439,7 @@ describe('usePlacementController', () => {
         expect(mocks.submitCheckout).toHaveBeenCalledWith({
           checkoutId: 'checkout-1',
           idempotencyKey: 'key-1',
+          expectedTotal: sentAttempt.expectedTotal,
           returnUrl: sentAttempt.returnUrl,
         })
       );
