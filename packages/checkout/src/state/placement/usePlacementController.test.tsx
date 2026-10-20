@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   submitCheckout: vi.fn(),
   readPlacement: vi.fn(),
   refetch: vi.fn(),
+  refetchLoyaltyAccount: vi.fn(),
   checkoutData: {
     checkout: null as
       | ({ id: string; resultRevision: string } & Record<string, unknown>)
@@ -33,6 +34,9 @@ vi.mock('#checkout/context/CheckoutApiContext', () => ({
 // By default the checkout is unreadable, as after it became an order (decision 1.2).
 vi.mock('#checkout/context/CheckoutDataContext', () => ({
   useCheckoutData: () => ({ refetch: mocks.refetch, ...mocks.checkoutData }),
+}));
+vi.mock('#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount', () => ({
+  useRefetchLoyaltyAccount: () => mocks.refetchLoyaltyAccount,
 }));
 vi.mock('#checkout/theme', () => ({
   useCheckoutTheme: () => ({ useCheckoutReturnPath: () => '/checkout/return' }),
@@ -126,8 +130,12 @@ describe('usePlacementController', () => {
         orderId: 'order-1',
         orderNumber: null,
         status: 'PAID',
+        paymentFlow: 'ONLINE',
+        earningEstimate: null,
       })
     );
+    // The placement spent the balance: the account is read again.
+    expect(mocks.refetchLoyaltyAccount).toHaveBeenCalled();
     expect(mocks.submitCheckout).toHaveBeenCalledWith({
       checkoutId: 'checkout-1',
       idempotencyKey: 'key-1',
@@ -319,6 +327,28 @@ describe('usePlacementController', () => {
       expiresAt: new Date(Date.now() + 60_000),
       issues: [],
       payment: { selection: { method: { flow: 'ONLINE' } } },
+    });
+
+    it('passes the earning estimate of the checkout to the result screen', async () => {
+      mocks.submitCheckout.mockResolvedValue(paid);
+      const earning = {
+        state: 'AVAILABLE',
+        points: '150',
+        amount: null,
+        headline: 'We will add +150 points',
+        description: null,
+      };
+      mocks.checkoutData = {
+        checkout: { ...placedCheckout('rev-1'), loyaltyEarning: earning },
+        loaded: true,
+      };
+      renderHook(() => usePlacementController('checkout-1'));
+      await waitFor(() =>
+        expect(usePlacementStore.getState().phase).toMatchObject({
+          name: 'accepted',
+          earningEstimate: earning,
+        })
+      );
     });
 
     it('resends the unanswered attempt on submit with its key', async () => {

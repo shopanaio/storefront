@@ -21,6 +21,8 @@ export function phaseForOutcome(
         orderId: outcome.orderId,
         orderNumber: outcome.orderNumber,
         status: outcome.status,
+        paymentFlow: outcome.paymentFlow,
+        earningEstimate: null,
       };
     case 'redirect':
       return context === 'submit'

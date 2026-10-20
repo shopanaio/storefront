@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { loyaltyAccountQuery } from '#checkout/api/queries/loyaltyAccountQuery.shopana';
@@ -45,9 +45,9 @@ export function useLoyaltyAccount(): LoyaltyAccountState {
 /** Reads the loyalty account again from outside a component (after a write or a placement). */
 export function useRefetchLoyaltyAccount(): () => void {
   const client = useApolloClient();
-  return () => {
+  return useCallback(() => {
     void client
       .refetchQueries({ include: [loyaltyAccountQuery] })
       .catch(() => undefined);
-  };
+  }, [client]);
 }

@@ -4,20 +4,7 @@
  * IAM REST/OAuth hooks for authentication and session management
  */
 
-// Sign In / Sign Up / Sign Out
-export { useSignIn, default as useSignInDefault } from './useSignIn';
-export { useSignUp, default as useSignUpDefault } from './useSignUp';
 export { useSignOut, default as useSignOutDefault } from './useSignOut';
-
-// Password Recovery
-export {
-  useForgotPassword,
-  default as useForgotPasswordDefault,
-} from './useForgotPassword';
-export {
-  useResetPassword,
-  default as useResetPasswordDefault,
-} from './useResetPassword';
 export { useApplicationSessions } from './useApplicationSessions';
 export { useOAuthAuthorization } from './useOAuthAuthorization';
 export { useIamClient } from './useIamClient';

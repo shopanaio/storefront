@@ -1,14 +1,6 @@
 import type { components } from '../../../openapi/application-auth';
 import type { ApplicationAuthConfig } from '../../../graphql/apollo/types';
-import type {
-  ForgotPasswordInput,
-  ResetPasswordInput,
-  SignInInput,
-  SignUpInput,
-} from './types';
 
-type AuthenticationResponse =
-  components['schemas']['ApplicationAuthenticationResponse'];
 type ApplicationSession = components['schemas']['ApplicationSession'];
 
 export class ApplicationAuthError extends Error {
@@ -24,8 +16,7 @@ export class ApplicationAuthError extends Error {
 
 /**
  * Browser calls to the IAM application endpoints that work with the IAM session cookie
- * (password sign-in and sign-up, password reset, IAM sessions). OAuth tokens are not handled
- * here: the storefront session server owns them.
+ * (IAM sessions). OAuth tokens are not handled here: the storefront session server owns them.
  */
 export class IamApplicationClient {
   readonly applicationBaseUrl: string;
@@ -37,34 +28,6 @@ export class IamApplicationClient {
       );
     }
     this.applicationBaseUrl = `${config.iamUrl.replace(/\/$/, '')}/auth/applications/${encodeURIComponent(config.applicationId)}`;
-  }
-
-  signInWithPassword(input: SignInInput): Promise<AuthenticationResponse> {
-    return this.json<AuthenticationResponse>('/sign-in/email', {
-      method: 'POST',
-      body: JSON.stringify({ ...input, rememberMe: input.rememberMe ?? true }),
-    });
-  }
-
-  signUpWithPassword(input: SignUpInput): Promise<AuthenticationResponse> {
-    return this.json<AuthenticationResponse>('/sign-up/email', {
-      method: 'POST',
-      body: JSON.stringify({ ...input, rememberMe: input.rememberMe ?? true }),
-    });
-  }
-
-  async requestPasswordReset(input: ForgotPasswordInput): Promise<void> {
-    await this.json('/request-password-reset', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  }
-
-  async resetPassword(input: ResetPasswordInput): Promise<void> {
-    await this.json('/reset-password', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
   }
 
   listSessions(): Promise<readonly ApplicationSession[]> {
@@ -106,4 +69,4 @@ export class IamApplicationClient {
   }
 }
 
-export type { ApplicationSession, AuthenticationResponse };
+export type { ApplicationSession };

@@ -2,6 +2,7 @@ import { gid, money } from "../fixture-helpers.js";
 import {
   applyLoyaltyReward,
   estimateLoyaltyEarning,
+  loyaltySelection,
   quoteLoyaltyRedemption,
   updateLoyaltyIntent,
 } from "../loyalty.js";
@@ -131,6 +132,7 @@ export const refreshCheckout = (store, checkout) => {
     totalAmount: money(total, checkout.currencyCode),
     loyaltyAmount: money(loyaltyAmount, checkout.currencyCode),
   };
+  checkout.loyaltySelection = loyaltySelection(checkout);
   checkout.loyaltyEarning = estimateLoyaltyEarning(store, checkout, total);
   checkout.payment.payableAmount = money(total, checkout.currencyCode);
   checkout.valid = checkout.lines.length > 0 && !checkout.issues.some(({ effect }) => effect === "STOP");
@@ -158,6 +160,7 @@ export const createCheckout = (store, input, customer = null) => {
     loyaltyIntent: null,
     loyaltyRedemption: null,
     loyaltyRewardId: null,
+    loyaltySelection: null,
     loyaltyEarning: null,
     resultRevision: `checkout-${key}-r1`,
     valid: true,

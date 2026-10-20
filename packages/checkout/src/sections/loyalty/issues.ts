@@ -28,7 +28,7 @@ export interface LoyaltyIssue {
   blocking: boolean;
 }
 
-const SIGN_IN_CODES = new Set(['CUSTOMER_REQUIRED', 'LOYALTY_CUSTOMER_REQUIRED']);
+const SIGN_IN_CODES = new Set(['CUSTOMER_REQUIRED']);
 const REWARD_CODE = /ENTITLEMENT|REWARD/;
 
 /** Whether the issue is about the loyalty selection (its `field` names it). */
@@ -85,11 +85,11 @@ export function redemptionIssueMessageKey(
   }
 }
 
-/** Source a redemption issue is about: the issue field names it; the buyer's last choice decides. */
+/** Source a redemption issue is about: the saved selection decides, else the issue field. */
 export function issueSource(
   issue: Pick<Checkout.Issue, 'field'>,
-  intent: Checkout.LoyaltySource | null
+  selected: Checkout.LoyaltySource | null
 ): Checkout.LoyaltySource {
-  if (intent) return intent;
+  if (selected) return selected;
   return issue.field[1] === 'amount' ? 'STORE_CREDIT' : 'POINTS';
 }

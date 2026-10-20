@@ -152,6 +152,7 @@ const CheckoutReturn = ({
           orderId={view.orderId}
           orderNumber={view.orderNumber}
           status={view.status}
+          paymentFlow={view.paymentFlow}
           brand={brand}
         />
       );

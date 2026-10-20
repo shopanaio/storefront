@@ -30,9 +30,10 @@ import {
   currentSelection,
   quoteNeedsRenewal,
   selectionInput,
-  useLoyaltyIntent,
   useLoyaltyWrites,
   type LoyaltySelection,
+  type RedemptionRequest,
+  type RewardChoice,
 } from '#checkout/sections/loyalty/selection';
 import { isPromoEntered } from '#checkout/sections/promo/promoErrors';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
@@ -52,10 +53,25 @@ import { CombinedGraphQLErrors } from '@apollo/client';
 import {
   graphQLErrorPlacement,
   INPUT_UNSAVED_CODE,
+  LOYALTY_QUOTE_CHANGED_CODE,
   isDefiniteRejection,
   mapPlacementPayload,
   PlacementUnconfirmedError,
 } from '#checkout/state/placement/outcome';
+/** Queue key of the buyer's loyalty choices: a waiting choice is merged into the newer one. */
+export const LOYALTY_WRITE_KEY = 'loyalty';
+/** Queue key of resending the saved choice: it never replaces a waiting choice of the buyer. */
+export const LOYALTY_REFRESH_KEY = 'loyalty-refresh';
+
+/**
+ * Loyalty choices waiting in the queue, merged: `undefined` leaves that part as the checkout
+ * holds it. `replaced` is the reward the first waiting choice gave up.
+ */
+interface PendingLoyalty {
+  redemption?: RedemptionRequest | null;
+  reward?: { reward: RewardChoice | null; replaced: RewardChoice | null };
+}
+
 export function useCreateCheckoutApi(): CheckoutApi {
   const t = useTranslations('Checkout');
   const { checkout = null } = useCheckoutData() || {};
@@ -70,6 +86,10 @@ export function useCreateCheckoutApi(): CheckoutApi {
    * Resources whose latest save failed while the buyer's value stays on screen (address,
    * contact, note, recipient). The order is not placed until each is saved (BR-awbl).
    */
+  const pendingLoyalty = useRef<{ checkoutId: string | null; changes: PendingLoyalty }>({
+    checkoutId: null,
+    changes: {},
+  });
   const unsavedWrites = useRef<{
     checkoutId: string | null;
     keys: Set<string>;
@@ -278,24 +298,98 @@ export function useCreateCheckoutApi(): CheckoutApi {
         throw error;
       }
     };
-    /** Writes the loyalty selection as `change` makes it from the current one. */
+    /**
+     * Writes the loyalty selection as `change` makes it from the saved one. Nothing chosen removes
+     * the selection; the removal is sent whatever the checkout shows, since it is idempotent.
+     */
     const writeLoyalty = async (
       change: (selection: LoyaltySelection) => LoyaltySelection
     ) => {
-      const current = currentSelection(currentCheckout());
-      const next = change(current);
+      const next = change(currentSelection(currentCheckout()));
       const input = selectionInput(next);
       const context = mutationContext();
-      useLoyaltyIntent
-        .getState()
-        .setSource(context.checkoutId, next.redemption?.source ?? null);
       const { track } = useLoyaltyWrites.getState();
       if (input) {
         await track(sendUpdateLoyalty({ input: { ...input, ...context } }));
-      } else if (current.redemption || current.rewardId) {
+      } else {
         await track(sendRemoveLoyalty({ input: context }));
       }
     };
+    /** Loyalty choices of this checkout waiting in the queue. */
+    const pendingChanges = (): PendingLoyalty => {
+      const checkoutId = checkout?.id ?? null;
+      if (pendingLoyalty.current.checkoutId !== checkoutId) {
+        pendingLoyalty.current = { checkoutId, changes: {} };
+      }
+      return pendingLoyalty.current.changes;
+    };
+    /**
+     * Writes the buyer's loyalty choices waiting in the queue as one write. A choice that waits
+     * is replaced in the queue by the newer one and is sent with it, so a reward chosen while
+     * the source was being saved is not lost.
+     */
+    const writeLoyaltyChoices = async () => {
+      const changes = { ...pendingChanges() };
+      pendingLoyalty.current.changes = {};
+      const checkout = currentCheckout();
+      const entered = checkout.promoCodes.map((item) => item.code);
+      const context = mutationContext();
+      const reward = changes.reward;
+      // A voucher is a promo code: Pricing applies its discount once the code is entered, and
+      // the reward reserves it for this order.
+      const voucherCode = reward?.reward?.voucherCode ?? null;
+      const addedCode =
+        voucherCode && !isPromoEntered(entered, voucherCode) ? voucherCode : null;
+      if (addedCode) {
+        await sendAddPromo({ input: { code: addedCode, ...context } });
+      }
+      try {
+        await writeLoyalty((selection) => ({
+          redemption:
+            changes.redemption !== undefined ? changes.redemption : selection.redemption,
+          rewardId: reward ? (reward.reward?.id ?? null) : selection.rewardId,
+        }));
+      } catch (error) {
+        // The reward was not saved: its code leaves the promo codes again.
+        if (addedCode) {
+          await sendRemovePromo({ input: { code: addedCode, ...context } }).catch(
+            () => undefined
+          );
+        }
+        throw error;
+      }
+      // The voucher of the reward given up leaves the promo codes with it.
+      const previousCode = reward?.replaced?.voucherCode ?? null;
+      if (
+        reward?.replaced &&
+        reward.replaced.id !== reward.reward?.id &&
+        previousCode &&
+        isPromoEntered(entered, previousCode)
+      ) {
+        await sendRemovePromo({ input: { code: previousCode, ...context } });
+      }
+    };
+    /** Queues a choice of the buyer, merged with the one still waiting. */
+    const chooseLoyalty = (change: PendingLoyalty) => {
+      const changes = pendingChanges();
+      if (change.redemption !== undefined) changes.redemption = change.redemption;
+      if (change.reward) {
+        changes.reward = {
+          reward: change.reward.reward,
+          replaced: changes.reward ? changes.reward.replaced : change.reward.replaced,
+        };
+      }
+      return followSuperseded(
+        enqueueMutation(writeLoyaltyChoices, { key: LOYALTY_WRITE_KEY })
+      );
+    };
+    /** Sends the saved selection again: a new quote with the same choice. */
+    const resendLoyalty = () =>
+      followSuperseded(
+        enqueueMutation(() => writeLoyalty((selection) => selection), {
+          key: LOYALTY_REFRESH_KEY,
+        })
+      );
     /** The account shows which rewards are left: read it again after a reward changes. */
     const refetchLoyaltyAccount = () => {
       void client
@@ -409,57 +503,18 @@ export function useCreateCheckoutApi(): CheckoutApi {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });
       },
       setLoyaltyRedemption: async (request) => {
-        await followSuperseded(
-          enqueueMutation(
-            () => writeLoyalty((selection) => ({ ...selection, redemption: request })),
-            { key: 'loyalty-redemption' }
-          )
-        );
+        await chooseLoyalty({ redemption: request });
       },
       setLoyaltyReward: async (reward, replaced = null) => {
         try {
-          await followSuperseded(
-            enqueueMutation(
-              async () => {
-                const checkout = currentCheckout();
-                const entered = checkout.promoCodes.map((item) => item.code);
-                const context = mutationContext();
-                // A voucher is a promo code: Pricing applies its discount once the code is
-                // entered, and the reward reserves it for this order.
-                if (reward?.voucherCode && !isPromoEntered(entered, reward.voucherCode)) {
-                  await sendAddPromo({
-                    input: { code: reward.voucherCode, ...context },
-                  });
-                }
-                await writeLoyalty((selection) => ({
-                  ...selection,
-                  rewardId: reward?.id ?? null,
-                }));
-                // The voucher of the reward given up leaves the promo codes with it.
-                const previousCode = replaced?.voucherCode ?? null;
-                if (
-                  replaced &&
-                  replaced.id !== reward?.id &&
-                  previousCode &&
-                  isPromoEntered(entered, previousCode)
-                ) {
-                  await sendRemovePromo({ input: { code: previousCode, ...context } });
-                }
-              },
-              { key: 'loyalty-reward' }
-            )
-          );
+          await chooseLoyalty({ reward: { reward, replaced } });
         } finally {
           refetchLoyaltyAccount();
         }
       },
       refreshLoyalty: async () => {
         try {
-          await followSuperseded(
-            enqueueMutation(() => writeLoyalty((selection) => selection), {
-              key: 'loyalty-redemption',
-            })
-          );
+          await resendLoyalty();
         } finally {
           refetchLoyaltyAccount();
         }
@@ -483,11 +538,17 @@ export function useCreateCheckoutApi(): CheckoutApi {
         await waitForMutations();
         // The loyalty quote lives a limited time and placeOrder reserves exactly it: a quote
         // about to expire is renewed with the same selection first.
+        // A renewed quote that pays a different amount changes the total the buyer confirmed:
+        // the order is not placed, the buyer reviews the totals.
         const quote = currentCheckout().loyaltyRedemption;
         if (quote && quoteNeedsRenewal(quote.expiresAt, Date.now())) {
-          await enqueueMutation(() => writeLoyalty((selection) => selection), {
-            key: 'loyalty-redemption',
-          }).catch(() => undefined);
+          await resendLoyalty().catch(() => undefined);
+          const renewed = currentCheckout().loyaltyRedemption;
+          if ((renewed?.discount.amount ?? 0) !== quote.discount.amount) {
+            return graphQLErrorPlacement(input.checkoutId, [
+              { message: '', extensions: { code: LOYALTY_QUOTE_CHANGED_CODE } },
+            ]);
+          }
         }
         if (unsavedKeys().size > 0) {
           // A value the buyer sees was not saved: the order would go without it.

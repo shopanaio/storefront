@@ -8,6 +8,6 @@ export function mapCheckoutToLoyaltyFormData(
   return {
     signedIn: checkout.customerIdentity.customer !== null,
     redemption: checkout.loyaltyRedemption,
-    rewardId: checkout.loyaltyRewardId,
+    selection: checkout.loyaltySelection,
   };
 }

@@ -58,6 +58,12 @@ export const PLACEMENT_UNCONFIRMED_CODE = 'PLACEMENT_UNCONFIRMED';
 export const INPUT_UNSAVED_CODE = 'CHECKOUT_INPUT_UNSAVED';
 
 /**
+ * Frontend-only code: the loyalty quote renewed before placing pays a different amount, so
+ * `placeOrder` was not sent and the buyer reviews the totals.
+ */
+export const LOYALTY_QUOTE_CHANGED_CODE = 'CHECKOUT_LOYALTY_QUOTE_CHANGED';
+
+/**
  * GraphQL error codes raised before `placeOrder` runs: parsing, validation, authentication and
  * the storefront permission check. Only these close the attempt.
  */
@@ -197,10 +203,10 @@ export function resolvePlacementOutcome(
     case 'PAID':
     case 'AUTHORIZED':
     case 'PAYMENT_NOT_REQUIRED':
-      return accepted(result, result.status);
+      return accepted(result, result.status, flow);
     case 'PAYMENT_PENDING':
       if (flow === 'OFFLINE' || flow === 'ON_DELIVERY') {
-        return accepted(result, result.status);
+        return accepted(result, result.status, flow);
       }
       return awaitingOrRejected(locator);
     case 'REQUIRES_ACTION': {
@@ -218,7 +224,7 @@ export function resolvePlacementOutcome(
         // Decision 1.11: for an OFFLINE method the order is placed at once; the instructions
         // are not shown. A read without the journal (another browser) does not know the flow
         // and trusts the action. Instructions of an online method wait for the payment.
-        return accepted(result, result.status);
+        return accepted(result, result.status, flow);
       }
       // The action expired or the session no longer awaits it: the server settles the payment.
       return awaitingOrRejected(locator);
@@ -253,13 +259,15 @@ export function resolvePlacementOutcome(
 
 function accepted(
   result: PlacementResult,
-  status: PlacementStatus
+  status: PlacementStatus,
+  paymentFlow: PaymentFlow | null
 ): PlacementOutcome {
   return {
     kind: 'accepted',
     orderId: result.orderId,
     orderNumber: result.orderNumber,
     status,
+    paymentFlow,
   };
 }
 

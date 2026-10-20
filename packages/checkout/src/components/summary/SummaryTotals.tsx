@@ -3,9 +3,9 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { Money } from '#checkout/ui/Money';
 import type { Checkout } from '#checkout/types/entity';
-import { TbCoin } from 'react-icons/tb';
 import { useCheckoutTheme } from '#checkout/theme';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
+import { LoyaltyIcon } from '#checkout/sections/loyalty/components/LoyaltyIcon';
 import { useShippingQuote } from '#checkout/sections/delivery/useShippingQuote';
 import {
   useEstimateLabel,
@@ -118,34 +118,49 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
 
 /**
  * What the order earns, in the server's words ("Нарахуємо +236 балів"). A guest is invited to
- * sign in for it when the store has accounts.
+ * sign in for it in a highlighted box; without customer accounts a guest cannot earn, so nothing
+ * is shown.
  */
-const LoyaltyEarningLine = ({ earning }: { earning: Checkout.LoyaltyEarning }) => {
+export const LoyaltyEarningLine = ({ earning }: { earning: Checkout.LoyaltyEarning }) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const { customerAccountsEnabled } = useCheckoutTheme();
   const auth = useCheckoutAuth();
-  const invite =
-    earning.state === 'AUTHENTICATION_REQUIRED' &&
-    customerAccountsEnabled &&
-    auth.status === 'anonymous';
+  if (earning.state === 'AUTHENTICATION_REQUIRED') {
+    if (!customerAccountsEnabled) return null;
+    return (
+      <Flex align="flex-start" gap={10} className={styles.invite}>
+        <LoyaltyIcon size={20} />
+        <Flex vertical gap={2}>
+          <Text strong className={styles.earningText}>
+            {earning.headline}
+          </Text>
+          {earning.description ? (
+            <Text type="secondary" className={styles.earningText}>
+              {earning.description}
+            </Text>
+          ) : null}
+          {auth.status === 'anonymous' ? (
+            <Button
+              type="link"
+              size="small"
+              className={styles.signIn}
+              loading={auth.pending}
+              onClick={auth.onSignIn}
+            >
+              {t('loyalty-earning-sign-in')}
+            </Button>
+          ) : null}
+        </Flex>
+      </Flex>
+    );
+  }
   return (
     <Flex align="center" gap={6} wrap className={styles.earning}>
-      <TbCoin size={14} aria-hidden="true" className={styles.earningIcon} />
+      <LoyaltyIcon size={14} />
       <Text type="secondary" className={styles.earningText}>
         {earning.headline}
       </Text>
-      {invite ? (
-        <Button
-          type="link"
-          size="small"
-          className={styles.signIn}
-          loading={auth.pending}
-          onClick={auth.onSignIn}
-        >
-          {t('loyalty-sign-in')}
-        </Button>
-      ) : null}
     </Flex>
   );
 };
@@ -167,11 +182,14 @@ const useStyles = createStyles(({ css, token }) => ({
   earningText: css`
     font-size: ${token.fontSizeSM}px;
   `,
-  earningIcon: css`
-    flex: none;
-    color: ${token.colorPrimary};
+  invite: css`
+    padding: ${token.paddingSM}px ${token.padding}px;
+    border: 1px solid ${token.colorPrimaryBorder};
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorPrimaryBg};
   `,
   signIn: css`
+    align-self: flex-start;
     height: auto;
     padding: 0;
     text-decoration: underline;

@@ -78,6 +78,8 @@ export type PlacementOutcome =
       orderId: string | null;
       orderNumber: string | null;
       status: PlacementStatus;
+      /** Flow of the payment: a cash on delivery order spends loyalty once it is accepted. */
+      paymentFlow: PaymentFlow | null;
     }
   | { kind: 'redirect'; url: string }
   | { kind: 'client-sdk'; action: PlacementCustomerAction }

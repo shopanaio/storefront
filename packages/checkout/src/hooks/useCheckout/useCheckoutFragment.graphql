@@ -159,6 +159,14 @@ fragment StorefrontUseCheckoutFragment on Checkout {
     expiresAt
   }
   loyaltyRewardId
+  loyaltySelection {
+    source
+    points
+    amount {
+      ...StorefrontCheckoutMoney
+    }
+    rewardId
+  }
   loyaltyEarning {
     state
     points

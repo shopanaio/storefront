@@ -10,8 +10,7 @@ import { SectionId } from '#checkout/state/interface';
 import { sectionAnchor } from '#checkout/ui/focusAnchor';
 import type { Checkout } from '#checkout/types/entity';
 import type { LoyaltyFormData } from '../types';
-import { issueSource, loyaltyIssues } from '../issues';
-import { useLoyaltyIntent } from '../selection';
+import { loyaltyIssues } from '../issues';
 import { LoyaltyHeader } from './LoyaltyHeader';
 import { RedemptionPart } from './RedemptionPart';
 import { RewardsPart } from './RewardsPart';
@@ -54,17 +53,17 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
   const headingId = useId();
   const { checkout } = useCheckoutData();
   const { account, loading, failed, refetch } = useLoyaltyAccount();
-  const intent = useLoyaltyIntent((state) =>
-    checkout ? (state.sources[checkout.id] ?? null) : null
-  );
   if (!checkout || !data?.signedIn) return null;
 
   const issues = loyaltyIssues(checkout);
-  const redemptionIssue = issues.find((item) => item.kind === 'redemption') ?? null;
   const rewardIssue =
     issues.find((item) => item.kind === 'reward' || item.kind === 'rewardInactive') ?? null;
-  const failedSource =
-    !data.redemption && redemptionIssue ? issueSource(redemptionIssue.issue, intent) : null;
+  // The order fell below the minimum: the source is kept and applies again once the order grows.
+  const orderTooSmall = issues.some((item) => item.kind === 'dropped');
+  // A saved source the calculation did not apply; the checkout issue says why, in the banner.
+  const selectedSource = data.selection?.source ?? null;
+  const failedSource = !data.redemption && !orderTooSmall ? selectedSource : null;
+  const rewardId = data.selection?.rewardId ?? null;
   const active = account?.status === 'ACTIVE' ? account : null;
   const options = sourceOptions(active, data.redemption);
   const showRedemption = options.length > 0 || failedSource !== null;
@@ -92,7 +91,7 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
         </button>
       </Flex>
     );
-  } else if (!active && !data.redemption && !data.rewardId) {
+  } else if (!active && !data.redemption && !data.selection) {
     return null;
   } else {
     body = (
@@ -104,7 +103,7 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
               options={options}
               redemption={data.redemption}
               failedSource={failedSource}
-              orderTooSmall={issues.some((item) => item.kind === 'dropped')}
+              orderTooSmall={orderTooSmall}
               currencyCode={checkout.currencyCode}
             />
           ) : null}
@@ -112,7 +111,7 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
         {active ? (
           <RewardsPart
             rewards={active.rewards}
-            appliedId={data.rewardId}
+            appliedId={rewardId}
             appliedProblem={
               rewardIssue
                 ? rewardIssue.kind === 'rewardInactive'

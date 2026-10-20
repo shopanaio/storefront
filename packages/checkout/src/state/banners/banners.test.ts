@@ -34,7 +34,7 @@ const input = (overrides: Partial<BannerInput> = {}): BannerInput => ({
   saveErrors: [],
   notifications: [],
   dismissed: new Set(),
-  loyalty: { redemption: null, intent: null, reducedTo: null, busy: false },
+  loyalty: { redemption: null, selectedSource: null, reducedTo: null, busy: false },
   ...overrides,
 });
 
@@ -411,7 +411,7 @@ describe('collectBanners', () => {
         readiness: { canPlace: blocking.length === 0, expired: false, blocking, notices },
         loyalty: {
           redemption: null,
-          intent: null,
+          selectedSource: null,
           reducedTo: null,
           busy: false,
           ...loyalty,
@@ -493,7 +493,7 @@ describe('collectBanners', () => {
         loyaltyInput(
           [],
           [issue({ code: 'NO_AVAILABLE_POINTS', field: ['loyaltyRedemption'] })],
-          { intent: 'POINTS', busy: true }
+          { selectedSource: 'POINTS', busy: true }
         ),
         h,
         t
@@ -516,7 +516,7 @@ describe('collectBanners', () => {
         loyaltyInput(
           [],
           [issue({ code: 'REQUEST_EXCEEDS_AVAILABLE_AMOUNT', field: ['loyaltyRedemption'] })],
-          { intent: 'STORE_CREDIT' }
+          { selectedSource: 'STORE_CREDIT' }
         ),
         handlers(),
         t

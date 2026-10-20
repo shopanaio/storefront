@@ -135,6 +135,7 @@ const createApiCheckout = (
   },
   loyaltyRedemption: null,
   loyaltyRewardId: null,
+  loyaltySelection: null,
   loyaltyEarning: null,
   lines: [{ ...lineFields('line-1', '500'), children: [] }],
   promoCodes: [],
@@ -686,5 +687,28 @@ describe('mapApiCheckoutToCheckout', () => {
       middleName: null,
       phone: '+380000000000',
     });
+  });
+
+  it('maps the saved loyalty selection apart from the applied redemption', () => {
+    const checkout = mapApiCheckoutToCheckout(
+      createApiCheckout({
+        loyaltySelection: {
+          __typename: 'CheckoutLoyaltySelection',
+          source: 'STORE_CREDIT',
+          points: null,
+          amount: { __typename: 'Money', amount: '250', currencyCode: 'UAH' },
+          rewardId: 'reward-1',
+        },
+      } as Partial<ApiCheckout>)
+    );
+
+    expect(checkout.loyaltyRedemption).toBeNull();
+    expect(checkout.loyaltySelection).toEqual({
+      source: 'STORE_CREDIT',
+      points: null,
+      amount: { amount: 250, currencyCode: 'UAH' },
+      rewardId: 'reward-1',
+    });
+    expect(mapApiCheckoutToCheckout(createApiCheckout()).loyaltySelection).toBeNull();
   });
 });

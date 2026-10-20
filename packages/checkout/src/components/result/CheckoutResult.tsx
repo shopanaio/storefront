@@ -13,13 +13,19 @@ import { usePointsLabel } from '#checkout/sections/loyalty/format';
 import { useCheckoutTheme } from '#checkout/theme';
 import { PlacementScreen } from '#checkout/components/result/PlacementScreen';
 import { paymentStatusMessageKey } from '#checkout/components/result/placementMessages';
-import type { PlacementStatus } from '#checkout/state/placement/types';
+import type { PaymentFlow, PlacementStatus } from '#checkout/state/placement/types';
+import type { Checkout } from '#checkout/types/entity';
+import { LoyaltyIcon } from '#checkout/sections/loyalty/components/LoyaltyIcon';
 
 export interface CheckoutResultProps {
   orderId: string | null;
   /** Number from the placement; when missing it is read from the order. */
   orderNumber: string | null;
   status: PlacementStatus;
+  /** Flow of the payment; `null` when unknown. */
+  paymentFlow?: PaymentFlow | null;
+  /** The checkout's estimate of the earning, shown until the order's earning is readable. */
+  earningEstimate?: Checkout.LoyaltyEarning | null;
   brand?: ReactNode;
 }
 
@@ -27,7 +33,14 @@ export interface CheckoutResultProps {
  * Result screen of an accepted order (decision 1.5): order number, payment status, what was paid
  * with loyalty and what the order earns, next steps.
  */
-export const CheckoutResult = ({ orderId, orderNumber, status, brand }: CheckoutResultProps) => {
+export const CheckoutResult = ({
+  orderId,
+  orderNumber,
+  status,
+  paymentFlow = null,
+  earningEstimate = null,
+  brand,
+}: CheckoutResultProps) => {
   const t = useTranslations('Checkout');
   const router = useRouter();
   const theme = useCheckoutTheme();
@@ -52,9 +65,11 @@ export const CheckoutResult = ({ orderId, orderNumber, status, brand }: Checkout
               <strong>{t('order-number', { number })}</strong>
             ) : null}
             <span>{t(paymentStatusMessageKey(status))}</span>
-            {placed.loyalty ? (
-              <LoyaltyResult loyalty={placed.loyalty} status={status} />
-            ) : null}
+            <LoyaltyResult
+              loyalty={placed.loyalty}
+              settled={loyaltySpent(status, paymentFlow)}
+              estimate={earningEstimate}
+            />
           </Flex>
         }
         extra={
@@ -78,21 +93,35 @@ export const CheckoutResult = ({ orderId, orderNumber, status, brand }: Checkout
   );
 };
 
-/** Statuses after which the loyalty tender is spent; before them it is only reserved. */
-const SETTLED: PlacementStatus[] = ['PAID', 'AUTHORIZED', 'PAYMENT_NOT_REQUIRED'];
+/**
+ * Whether placing the order spent the loyalty tender: placement commits it once the payment is
+ * authorized or captured, when nothing is to be paid, and when cash on delivery is accepted.
+ * Before that it is only reserved.
+ */
+export function loyaltySpent(status: PlacementStatus, paymentFlow: PaymentFlow | null): boolean {
+  if (status === 'PAID' || status === 'AUTHORIZED' || status === 'PAYMENT_NOT_REQUIRED') {
+    return true;
+  }
+  return status === 'PAYMENT_PENDING' && paymentFlow === 'ON_DELIVERY';
+}
 
 const LoyaltyResult = ({
   loyalty,
-  status,
+  settled,
+  estimate,
 }: {
-  loyalty: PlacedOrderLoyalty;
-  status: PlacementStatus;
+  loyalty: PlacedOrderLoyalty | null;
+  settled: boolean;
+  estimate: Checkout.LoyaltyEarning | null;
 }) => {
   const t = useTranslations('Checkout');
   const locale = useLocale();
   const points = usePointsLabel();
-  const { redemption, earning } = loyalty;
-  const settled = SETTLED.includes(status);
+  const redemption = loyalty?.redemption ?? null;
+  const earning = loyalty?.earning ?? null;
+  // Until Loyalty records the order's earning, the checkout's estimate stands in for it.
+  const estimated = !earning && estimate?.state === 'AVAILABLE' ? estimate : null;
+  if (!redemption && !earning && !estimated) return null;
   return (
     <Flex vertical gap={4} align="center">
       {redemption ? (
@@ -130,6 +159,12 @@ const LoyaltyResult = ({
             <span>{t('result-loyalty-earned-pending')}</span>
           ) : null}
         </>
+      ) : null}
+      {estimated ? (
+        <Flex align="center" gap={6}>
+          <LoyaltyIcon size={16} />
+          <span>{estimated.headline}</span>
+        </Flex>
       ) : null}
     </Flex>
   );

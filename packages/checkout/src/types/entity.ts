@@ -63,8 +63,13 @@ export namespace Checkout {
      * them; `null` when none is selected or the selection could not be applied.
      */
     loyaltyRedemption: LoyaltyRedemption | null;
-    /** Reward from `LoyaltyAccount.rewards` selected for this checkout. */
+    /** Reward from `LoyaltyAccount.rewards` the latest calculation applied. */
     loyaltyRewardId: string | null;
+    /**
+     * The loyalty choice the buyer saved, kept when the calculation could not apply it (the
+     * loyalty service did not answer, the order fell below the minimum); `null` when none.
+     */
+    loyaltySelection: LoyaltySelection | null;
     /** What placing the order is expected to earn; `null` when nothing or unknown. */
     loyaltyEarning: LoyaltyEarning | null;
     /** Notifications for the user regarding the checkout. */
@@ -95,6 +100,15 @@ export namespace Checkout {
     expiresAt: Date | null;
   }
 
+  /** What the buyer asked for: `null` points and amount mean the most the order allows. */
+  export interface LoyaltySelection {
+    /** `null` when only a reward is chosen. */
+    source: LoyaltySource | null;
+    points: string | null;
+    amount: model.Money | null;
+    rewardId: string | null;
+  }
+
   export interface LoyaltyEarning {
     /** `AUTHENTICATION_REQUIRED`: a guest would earn it after signing in. */
     state: 'AVAILABLE' | 'AUTHENTICATION_REQUIRED';
@@ -115,10 +129,19 @@ export namespace Checkout {
     tier: LoyaltyTier | null;
     /** The nearest points expiration. */
     nextExpiration: { points: string; expiresAt: Date } | null;
+    /** Store credit of the program currency; `null` when none was ever issued. */
+    storeCredit: LoyaltyStoreCredit | null;
     /** Sources the customer can pay with, in API order; empty when none has a balance. */
     sources: LoyaltySourceOption[];
     /** Rewards the customer can use now, in API order. */
     rewards: LoyaltyReward[];
+  }
+
+  export interface LoyaltyStoreCredit {
+    availableAmount: model.Money;
+    pendingAmount: model.Money;
+    /** The nearest store credit expiration. */
+    nextExpiration: { amount: model.Money; expiresAt: Date } | null;
   }
 
   export interface LoyaltyTier {

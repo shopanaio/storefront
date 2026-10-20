@@ -30,6 +30,20 @@ const mapBound = (
   amount: mapMoney(bound.amount),
 });
 
+const mapStoreCredit = (
+  credit: ApiAccount['storeCredit']
+): Checkout.LoyaltyStoreCredit | null => {
+  if (!credit) return null;
+  const expiration = credit.upcomingExpirations[0];
+  const expiresAt = toDate(expiration?.expiresAt);
+  return {
+    availableAmount: mapMoney(credit.availableAmount),
+    pendingAmount: mapMoney(credit.pendingAmount),
+    nextExpiration:
+      expiration && expiresAt ? { amount: mapMoney(expiration.amount), expiresAt } : null,
+  };
+};
+
 /** Maps the loyalty account of the signed-in customer to the checkout entity. */
 export function mapLoyaltyAccount(account: ApiAccount): Checkout.LoyaltyAccount {
   const expiration = account.upcomingExpirations[0];
@@ -50,6 +64,7 @@ export function mapLoyaltyAccount(account: ApiAccount): Checkout.LoyaltyAccount 
       expiration && expiresAt
         ? { points: expiration.points, expiresAt }
         : null,
+    storeCredit: mapStoreCredit(account.storeCredit),
     sources: account.redemptionSources.map((option) => ({
       source: option.source,
       availablePoints: option.availablePoints ?? null,

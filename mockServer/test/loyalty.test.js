@@ -49,6 +49,7 @@ const CHECKOUT = `
   cost { totalAmount { amount } loyaltyAmount { amount } totalDiscountAmount { amount } }
   loyaltyRedemption { source requestedPoints points discount { amount } }
   loyaltyRewardId
+  loyaltySelection { source points amount { amount } rewardId }
   loyaltyEarning { state points presentation { headline } }
   issues { code effect field }
 `;
@@ -72,6 +73,7 @@ test("the account lists its sources, tier and rewards", async () => {
   const { run } = setup();
   const data = await run(`{ customer { loyaltyAccount {
     balance { availablePoints }
+    storeCredit { availableAmount { amount } pendingAmount { amount } upcomingExpirations { amount { amount } expiresAt } }
     tier { name earnMultiplierBps }
     redemptionSources { source availablePoints availableAmount { amount } minimum { points } }
     availableRewards { nodes { id presentation { headline } reward { kind } } }
@@ -81,6 +83,7 @@ test("the account lists its sources, tier and rewards", async () => {
   assert.equal(account.tier.earnMultiplierBps, 15_000);
   assert.deepEqual(account.redemptionSources.map(({ source }) => source), ["POINTS", "STORE_CREDIT"]);
   assert.equal(account.availableRewards.nodes[0].reward.kind, "FREE_SHIPPING");
+  assert.equal(account.storeCredit.availableAmount.amount, "240.00");
 });
 
 test("points pay part of the total; a request above the balance is refused", async () => {
@@ -96,6 +99,10 @@ test("points pay part of the total; a request above the balance is refused", asy
 
   const tooMany = await update(run, { checkoutId: checkout.id, source: "POINTS", points: "2000" });
   assert.equal(tooMany.checkout.loyaltyRedemption, null);
+  // The choice stays saved although the calculation refused it.
+  assert.deepEqual({ ...tooMany.checkout.loyaltySelection }, {
+    source: "POINTS", points: "2000", amount: null, rewardId: null,
+  });
   assert.deepEqual(tooMany.checkout.issues.map(({ code, effect }) => [code, effect]), [
     ["REQUEST_EXCEEDS_AVAILABLE_POINTS", "STOP"],
   ]);
@@ -112,6 +119,7 @@ test("store credit replaces points in one write, and a reward keeps the source",
   const credit = await update(run, { checkoutId: checkout.id, source: "STORE_CREDIT", amount: "80" });
   assert.equal(credit.checkout.loyaltyRedemption.source, "STORE_CREDIT");
   assert.equal(credit.checkout.cost.loyaltyAmount.amount, "80.00");
+  assert.equal(credit.checkout.loyaltySelection.amount.amount, "80.00");
 
   const reward = await update(run, {
     checkoutId: checkout.id, source: "STORE_CREDIT", amount: "80", rewardId: gid("LoyaltyAvailableReward", "ship"),

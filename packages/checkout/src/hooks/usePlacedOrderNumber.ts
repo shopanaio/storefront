@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import type { model } from '@shopana/storefront-sdk';
 import { placedOrderQuery } from '#checkout/api/queries/placedOrderQuery.shopana';
@@ -45,21 +46,36 @@ function mapLoyalty(order: ApiOrder): PlacedOrderLoyalty {
   };
 }
 
+/** Loyalty records the earning of an order after it is placed: it is read once more then. */
+export const EARNING_REFETCH_DELAY_MS = 4_000;
+
 /**
  * Human-readable number and loyalty of a placed order; `null` until loaded or when the order is
- * unreadable.
+ * unreadable. A failing loyalty field does not hide the number. Right after placement the order
+ * has no earning yet: it is read once more a moment later.
  */
 export function usePlacedOrderNumber(orderId: string | null): {
   number: string | null;
   loyalty: PlacedOrderLoyalty | null;
   loading: boolean;
 } {
-  const { data, loading } = useQuery(placedOrderQuery, {
+  const { data, loading, refetch } = useQuery(placedOrderQuery, {
     variables: { orderId: orderId ?? '' },
     skip: !orderId,
     fetchPolicy: 'network-only',
+    errorPolicy: 'all',
   });
   const order = data?.order ?? null;
+  const awaitingEarning = order !== null && !order.loyaltyEarning;
+  useEffect(() => {
+    if (!awaitingEarning) return;
+    const timer = setTimeout(() => {
+      void refetch().catch(() => undefined);
+    }, EARNING_REFETCH_DELAY_MS);
+    return () => clearTimeout(timer);
+    // Once per order: a second empty answer means the order earns nothing (yet).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
   return {
     number: order?.number ?? null,
     loyalty: order ? mapLoyalty(order) : null,

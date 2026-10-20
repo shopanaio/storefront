@@ -22,7 +22,6 @@ import { useCheckoutTheme } from '#checkout/theme';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
 import {
-  useLoyaltyIntent,
   useLoyaltyWrites,
 } from '#checkout/sections/loyalty/selection';
 import { usePointsLabel } from '#checkout/sections/loyalty/format';
@@ -62,14 +61,12 @@ export function useCheckoutBanners(): BannerItem[] {
   const api = useCheckoutApi();
   const { onSignIn } = useCheckoutAuth();
   const loyaltyBusy = useLoyaltyWrites((state) => state.running > 0);
-  const loyaltyIntent = useLoyaltyIntent((state) =>
-    checkoutId ? (state.sources[checkoutId] ?? null) : null
-  );
   const redemption = checkout?.loyaltyRedemption ?? null;
+  const selectedSource = checkout?.loyaltySelection?.source ?? null;
   const loyalty = useMemo(
     () => ({
       redemption,
-      intent: loyaltyIntent,
+      selectedSource,
       reducedTo: redemption
         ? redemption.source === 'POINTS' && redemption.points !== null
           ? pointsLabel(redemption.points)
@@ -77,9 +74,10 @@ export function useCheckoutBanners(): BannerItem[] {
         : null,
       busy: loyaltyBusy,
     }),
-    [redemption, loyaltyIntent, pointsLabel, locale, loyaltyBusy]
+    [redemption, selectedSource, pointsLabel, locale, loyaltyBusy]
   );
-  const rewardId = checkout?.loyaltyRewardId ?? null;
+  // The reward the buyer chose, also when it could not be applied: giving it up removes it.
+  const rewardId = checkout?.loyaltySelection?.rewardId ?? null;
   const { account: loyaltyAccount } = useLoyaltyAccount();
   const rewardVoucher =
     loyaltyAccount?.rewards.find((reward) => reward.id === rewardId)?.voucherCode ?? null;

@@ -70,6 +70,7 @@ describe('recordOutcome', () => {
       orderId: 'order-1',
       orderNumber: null,
       status: 'PAID',
+      paymentFlow: null,
     });
     expect(journal.read('checkout-1')).toBeNull();
   });

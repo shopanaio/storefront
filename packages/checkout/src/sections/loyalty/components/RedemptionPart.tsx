@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { Button, Flex, Radio, Switch, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useLocale, useTranslations } from 'next-intl';
@@ -27,7 +27,10 @@ interface RedemptionPartProps {
   redemption: Checkout.LoyaltyRedemption | null;
   /** Source chosen but not applied: the checkout issue says why, in the banner. */
   failedSource: Checkout.LoyaltySource | null;
-  /** The order total fell below the program minimum, nothing is redeemed. */
+  /**
+   * The order total fell below the program minimum: nothing is redeemed and no source can be
+   * chosen until the order grows; the saved source applies again then.
+   */
   orderTooSmall: boolean;
   currencyCode: string;
 }
@@ -49,8 +52,12 @@ export const RedemptionPart = ({
   const { setLoyaltyRedemption } = useCheckoutApi();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const selected = redemption?.source ?? failedSource;
+  const selected = orderTooSmall ? null : (redemption?.source ?? failedSource);
   const switchId = useId();
+  // The amount field belongs to one source: another source starts without it.
+  useEffect(() => {
+    setEditing(false);
+  }, [selected]);
 
   const choose = useCallback(
     async (request: RedemptionRequest | null) => {
@@ -100,6 +107,7 @@ export const RedemptionPart = ({
             id={switchId}
             checked={on}
             loading={busy}
+            disabled={orderTooSmall}
             onChange={(checked) =>
               void (checked ? chooseMaximum(option.source) : choose(null))
             }
@@ -130,7 +138,11 @@ export const RedemptionPart = ({
           const on = selected === option.source;
           return (
             <div key={option.source} className={styles.option} data-selected={on || undefined}>
-              <Radio value={option.source} className={styles.radio}>
+              <Radio
+                value={option.source}
+                disabled={orderTooSmall}
+                className={styles.radio}
+              >
                 <Flex vertical>
                   <span>
                     {t(

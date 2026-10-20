@@ -25,6 +25,20 @@ query StorefrontLoyaltyAccountQuery {
         points
         expiresAt
       }
+      storeCredit {
+        availableAmount {
+          ...StorefrontCheckoutMoney
+        }
+        pendingAmount {
+          ...StorefrontCheckoutMoney
+        }
+        upcomingExpirations {
+          amount {
+            ...StorefrontCheckoutMoney
+          }
+          expiresAt
+        }
+      }
       redemptionSources {
         source
         availablePoints

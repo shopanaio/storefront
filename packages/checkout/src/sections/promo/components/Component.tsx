@@ -33,12 +33,12 @@ export interface PromoSectionViewProps {
 export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const { addPromoCode, removePromoCode } = useCheckoutApi();
+  const { addPromoCode, removePromoCode, setLoyaltyReward } = useCheckoutApi();
   const { checkout } = useCheckoutData();
   const { account } = useLoyaltyAccount();
+  const rewardId = checkout?.loyaltySelection?.rewardId ?? null;
   const rewardCode =
-    account?.rewards.find((reward) => reward.id === checkout?.loyaltyRewardId)?.voucherCode ??
-    null;
+    account?.rewards.find((reward) => reward.id === rewardId)?.voucherCode ?? null;
   const confirm = useConfirm();
   const codes = useMemo(() => data?.codes ?? [], [data?.codes]);
 
@@ -86,12 +86,17 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
       if (!ok) return;
       setError(null);
       try {
-        await removePromoCode({ code: promoCode });
+        if (rewardId && rewardCode && isPromoEntered([rewardCode], promoCode)) {
+          // The code of the chosen reward goes with the reward: both are given up together.
+          await setLoyaltyReward(null, { id: rewardId, voucherCode: rewardCode });
+        } else {
+          await removePromoCode({ code: promoCode });
+        }
       } catch (failure) {
         setError(t(promoErrorMessageKey(promoErrorCode(failure))));
       }
     },
-    [removePromoCode, t, confirm]
+    [removePromoCode, setLoyaltyReward, rewardId, rewardCode, t, confirm]
   );
 
   return (

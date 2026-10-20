@@ -249,6 +249,17 @@ const mapLoyaltyRedemption = (
         expiresAt: toValidDate(redemption.expiresAt),
       }
     : null;
+const mapLoyaltySelection = (
+  selection: ApiCheckout['loyaltySelection']
+): Checkout.LoyaltySelection | null =>
+  selection
+    ? {
+        source: selection.source ?? null,
+        points: selection.points ?? null,
+        amount: selection.amount ? mapMoney(selection.amount) : null,
+        rewardId: selection.rewardId ?? null,
+      }
+    : null;
 const mapLoyaltyEarning = (
   earning: ApiCheckout['loyaltyEarning']
 ): Checkout.LoyaltyEarning | null =>
@@ -362,6 +373,7 @@ export function mapApiCheckoutToCheckout(
     },
     loyaltyRedemption: mapLoyaltyRedemption(apiCheckout.loyaltyRedemption),
     loyaltyRewardId: apiCheckout.loyaltyRewardId ?? null,
+    loyaltySelection: mapLoyaltySelection(apiCheckout.loyaltySelection),
     loyaltyEarning: mapLoyaltyEarning(apiCheckout.loyaltyEarning),
     notifications: apiCheckout.notifications.map((notification) => ({
       id: notification.id,

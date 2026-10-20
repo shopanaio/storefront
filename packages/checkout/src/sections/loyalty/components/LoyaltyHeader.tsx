@@ -3,36 +3,64 @@
 import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useLocale, useTranslations } from 'next-intl';
-import { TbClockHour4, TbCoin, TbCrown } from 'react-icons/tb';
+import { TbClockHour4, TbCrown } from 'react-icons/tb';
 import type { Checkout } from '#checkout/types/entity';
+import { formatMoney } from '#checkout/ui/Money';
 import { formatMultiplier, formatShortDate, usePointsLabel } from '../format';
+import { LoyaltyIcon } from './LoyaltyIcon';
 
 interface LoyaltyHeaderProps {
   account: Checkout.LoyaltyAccount;
 }
 
 /**
- * Balance of the account with its tier: the multiplier of purchase points, the server's text
- * about the next tier, the nearest expiration and the points still pending.
+ * Whether the account works with points: it has or expects some, can pay with them, or has no
+ * store credit either (a new account of a points program).
+ */
+export function showsPoints(account: Checkout.LoyaltyAccount): boolean {
+  return (
+    account.storeCredit === null ||
+    BigInt(account.availablePoints) > 0n ||
+    BigInt(account.pendingPoints) > 0n ||
+    account.nextExpiration !== null ||
+    account.sources.some((option) => option.source === 'POINTS')
+  );
+}
+
+/**
+ * Balance of the account with its tier: points and store credit, each when the account works
+ * with it, the multiplier of purchase points, the server's text about the next tier, the nearest
+ * expirations and what is still pending.
  */
 export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
   const t = useTranslations('Checkout');
   const locale = useLocale();
   const { styles } = useStyles();
   const points = usePointsLabel();
-  const { tier, nextExpiration } = account;
+  const { tier, nextExpiration, storeCredit } = account;
+  const withPoints = showsPoints(account);
+  const money = (amount: Checkout.LoyaltyStoreCredit['availableAmount']) =>
+    formatMoney(locale, amount);
+  const balances = [
+    withPoints ? points(account.availablePoints) : null,
+    storeCredit
+      ? t('loyalty-store-credit-balance', { amount: money(storeCredit.availableAmount) })
+      : null,
+  ].filter((part): part is string => part !== null);
   const empty =
     BigInt(account.availablePoints) === 0n &&
+    (storeCredit?.availableAmount.amount ?? 0) === 0 &&
     account.sources.length === 0 &&
     account.rewards.length === 0;
   const pending = BigInt(account.pendingPoints) > 0n;
+  const pendingCredit = (storeCredit?.pendingAmount.amount ?? 0) > 0;
 
   return (
     <Flex vertical gap={8} className={styles.root}>
       <Flex align="center" justify="space-between" gap={12} wrap>
         <Flex align="center" gap={8}>
-          <TbCoin size={20} className={styles.icon} aria-hidden="true" />
-          <span className={styles.balance}>{points(account.availablePoints)}</span>
+          <LoyaltyIcon size={20} />
+          <span className={styles.balance}>{balances.join(' · ')}</span>
         </Flex>
         {tier ? (
           <span className={styles.pill}>
@@ -60,12 +88,28 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
           </Flex>
         </Typography.Text>
       ) : null}
+      {storeCredit?.nextExpiration ? (
+        <Typography.Text type="secondary" className={styles.note}>
+          <Flex align="center" gap={6}>
+            <TbClockHour4 size={14} className={styles.expiring} aria-hidden="true" />
+            {t('loyalty-store-credit-expiring', {
+              amount: money(storeCredit.nextExpiration.amount),
+              date: formatShortDate(locale, storeCredit.nextExpiration.expiresAt),
+            })}
+          </Flex>
+        </Typography.Text>
+      ) : null}
+      {pendingCredit && storeCredit ? (
+        <Typography.Text type="secondary" className={styles.note}>
+          {t('loyalty-store-credit-pending', { amount: money(storeCredit.pendingAmount) })}
+        </Typography.Text>
+      ) : null}
       {pending ? (
         <Typography.Text type="secondary" className={styles.note}>
           {t('loyalty-pending', { points: points(account.pendingPoints) })}
         </Typography.Text>
       ) : null}
-      {empty ? (
+      {empty && withPoints ? (
         <Typography.Text type="secondary" className={styles.note}>
           {t('loyalty-empty-hint')}
         </Typography.Text>
@@ -77,10 +121,6 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
     padding: ${token.paddingSM}px ${token.padding}px;
-  `,
-  icon: css`
-    flex: none;
-    color: ${token.colorPrimary};
   `,
   balance: css`
     font-size: ${token.fontSizeLG}px;

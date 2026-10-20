@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutTheme } from '#checkout/theme';
+import { useRefetchLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
 import {
   CheckoutEvent,
   emitCheckoutEvent,
@@ -57,6 +58,12 @@ export function usePlacementController(checkoutId: string | null) {
   const readPlacement = useReadPlacement();
   const returnPath = useCheckoutTheme().useCheckoutReturnPath();
   const setPhase = usePlacementStore((state) => state.setPhase);
+  const refetchLoyaltyAccount = useRefetchLoyaltyAccount();
+  /** The checkout of the latest render: its earning estimate goes to the result screen. */
+  const checkoutRef = useRef(checkout);
+  useEffect(() => {
+    if (checkout) checkoutRef.current = checkout;
+  });
   const journalRef = useRef(createAttemptJournal());
   const pollRef = useRef<AbortController | null>(null);
   const resumedRef = useRef<string | null>(null);
@@ -100,7 +107,22 @@ export function usePlacementController(checkoutId: string | null) {
     ) => {
       if (!isActive(attempt)) return;
       recordOutcome(journalRef.current, attempt, result, outcome);
-      setPhase(phaseForOutcome(outcome, context));
+      const phase = phaseForOutcome(outcome, context);
+      if (phase.name === 'accepted') {
+        // The order's earning is read once Loyalty records it; until then the checkout's
+        // estimate is shown.
+        const shown = checkoutRef.current;
+        phase.earningEstimate =
+          shown?.id === attempt.checkoutId ? shown.loyaltyEarning : null;
+      }
+      setPhase(phase);
+      // A placement spends or reserves the balance, and a loyalty rejection means it changed.
+      if (
+        outcome.kind === 'accepted' ||
+        (outcome.kind === 'rejected' && outcome.code.startsWith('LOYALTY_'))
+      ) {
+        refetchLoyaltyAccount();
+      }
       if (outcome.kind === 'accepted') {
         void emitCheckoutEvent(CheckoutEvent.OrderAccepted, {
           checkoutId: attempt.checkoutId,
@@ -117,7 +139,7 @@ export function usePlacementController(checkoutId: string | null) {
         void refetchCheckout().catch(() => undefined);
       }
     },
-    [isActive, setPhase, refetchCheckout]
+    [isActive, setPhase, refetchCheckout, refetchLoyaltyAccount]
   );
 
   const poll = useCallback(

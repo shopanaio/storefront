@@ -48,6 +48,7 @@ describe('loyalty selection', () => {
     const checkout = {
       loyaltyRedemption: redemption({ requestedPoints: '300' }),
       loyaltyRewardId: 'reward-1',
+      loyaltySelection: { source: 'POINTS', points: '300', amount: null, rewardId: 'reward-1' },
     } as Checkout.Checkout;
     const selection = currentSelection(checkout);
 
@@ -61,6 +62,26 @@ describe('loyalty selection', () => {
       amount: null,
       rewardId: 'reward-1',
     });
+  });
+
+  it('K2: reads the saved choice, also when the calculation did not apply it', () => {
+    const checkout = {
+      loyaltyRedemption: null,
+      loyaltyRewardId: null,
+      loyaltySelection: {
+        source: 'STORE_CREDIT',
+        points: null,
+        amount: uah(80.5),
+        rewardId: 'reward-1',
+      },
+    } as Checkout.Checkout;
+    expect(currentSelection(checkout)).toEqual({
+      redemption: { source: 'STORE_CREDIT', amount: '80.5' },
+      rewardId: 'reward-1',
+    });
+    expect(
+      currentSelection({ loyaltySelection: null } as Checkout.Checkout)
+    ).toEqual({ redemption: null, rewardId: null });
   });
 
   it('removes the selection when nothing is chosen', () => {
@@ -133,6 +154,10 @@ describe('loyalty issues', () => {
       'rewardInactive'
     );
     expect(classifyLoyaltyIssue(issue({ code: 'CUSTOMER_REQUIRED' }), null).kind).toBe('signIn');
+    // A placement error, not a checkout issue: it never reaches the loyalty banners.
+    expect(
+      classifyLoyaltyIssue(issue({ code: 'LOYALTY_CUSTOMER_REQUIRED' }), null).kind
+    ).not.toBe('signIn');
     expect(
       classifyLoyaltyIssue(
         issue({ code: 'CHECKOUT_LOYALTY_UNAVAILABLE', effect: 'CONTINUE', retryable: true }),
@@ -141,7 +166,7 @@ describe('loyalty issues', () => {
     ).toBe('retry');
   });
 
-  it('names the source by the last choice, then by the issue field', () => {
+  it('names the source by the saved choice, then by the issue field', () => {
     expect(issueSource({ field: ['loyaltyRedemption', 'amount'] }, null)).toBe('STORE_CREDIT');
     expect(issueSource({ field: ['loyaltyRedemption'] }, 'STORE_CREDIT')).toBe('STORE_CREDIT');
     expect(redemptionIssueMessageKey({ code: 'BELOW_MINIMUM_REDEMPTION' }, 'POINTS')).toBe(

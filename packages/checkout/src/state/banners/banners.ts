@@ -72,8 +72,8 @@ export interface BannerInput {
 
 export interface LoyaltyBannerInput {
   redemption: Checkout.LoyaltyRedemption | null;
-  /** Source the buyer chose last, for an issue whose redemption the API dropped. */
-  intent: Checkout.LoyaltySource | null;
+  /** Source of the saved selection, for an issue whose redemption the API did not apply. */
+  selectedSource: Checkout.LoyaltySource | null;
   /** What the redemption was reduced to, ready to show ("350 балів", "₴80"). */
   reducedTo: string | null;
   /** A loyalty write is running: the banner action waits for it. */
@@ -237,6 +237,8 @@ export function collectBanners(
         action = undefined;
       } else if (key === 'placement-error-loyalty') {
         action = { label: t('loyalty-banner-refresh'), onClick: handlers.refreshLoyalty };
+      } else if (key === 'sign-in-required' || key === 'loyalty-banner-sign-in') {
+        action = { label: t('loyalty-sign-in'), onClick: handlers.signIn };
       }
       items.push({
         id,
@@ -446,7 +448,7 @@ function collectLoyaltyBanners(
     if (seen.has(id)) continue;
     seen.add(id);
     const source =
-      loyalty.redemption?.source ?? issueSource(issue, loyalty.intent);
+      loyalty.redemption?.source ?? issueSource(issue, loyalty.selectedSource);
     switch (kind) {
       case 'reduced':
         dismissible({

@@ -114,7 +114,13 @@ export const loyaltyAccount = (store, customer) => {
     transactions: [],
     redemptionSources: sources.map((source) => sourceOption(value, balance, source, currencyCode)),
     storeCredit: balance.storeCredit > 0
-      ? { availableAmount: money(balance.storeCredit, currencyCode), pendingAmount: money(0, currencyCode), upcomingExpirations: [] }
+      ? {
+          availableAmount: money(balance.storeCredit, currencyCode),
+          pendingAmount: money(balance.pendingStoreCredit ?? 0, currencyCode),
+          upcomingExpirations: (balance.storeCreditExpirations ?? []).map(({ amount, expiresAt }) => ({
+            amount: money(amount, currencyCode), expiresAt,
+          })),
+        }
       : null,
   };
 };
@@ -291,6 +297,18 @@ export const estimateLoyaltyEarning = (store, checkout, payable) => {
         : `Увійдіть і отримайте +${points} балів за це замовлення`,
       description: null,
     },
+  };
+};
+
+/** The saved choice as `Checkout.loyaltySelection` returns it, whether it applied or not. */
+export const loyaltySelection = (checkout) => {
+  const intent = checkout.loyaltyIntent;
+  if (!intent) return null;
+  return {
+    source: intent.source,
+    points: intent.points,
+    amount: intent.amount === null ? null : money(Number(intent.amount), checkout.currencyCode),
+    rewardId: intent.rewardId,
   };
 };
 

@@ -5,6 +5,7 @@ import {
   GUEST_NOT_ALLOWED_CODE,
   IDEMPOTENCY_MISMATCH_CODE,
   INPUT_UNSAVED_CODE,
+  LOYALTY_QUOTE_CHANGED_CODE,
   NETWORK_ERROR_CODE,
   PLACEMENT_UNCONFIRMED_CODE,
   STALE_SELECTION_CODE,
@@ -21,7 +22,8 @@ export function placementErrorMessageKey(code: string): string {
   if (
     code === IDEMPOTENCY_MISMATCH_CODE ||
     code === 'CHECKOUT_PLACEMENT_SNAPSHOT_STALE' ||
-    code === STALE_SELECTION_CODE
+    code === STALE_SELECTION_CODE ||
+    code === LOYALTY_QUOTE_CHANGED_CODE
   ) {
     return 'placement-error-changed';
   }
@@ -34,6 +36,8 @@ export function placementErrorMessageKey(code: string): string {
   }
   if (code === CLAIM_REQUIRED_CODE) return 'prices-updated';
   if (code === GUEST_NOT_ALLOWED_CODE) return 'sign-in-required';
+  // The selection pays with loyalty, which needs an account: the buyer signs in.
+  if (code === 'LOYALTY_CUSTOMER_REQUIRED') return 'loyalty-banner-sign-in';
   if (code === 'CHECKOUT_PLACEMENT_NOT_FOUND')
     return 'placement-error-not-found';
   if (code === 'CHECKOUT_ALREADY_PLACED')

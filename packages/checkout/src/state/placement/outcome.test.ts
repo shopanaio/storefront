@@ -43,6 +43,7 @@ describe('resolvePlacementOutcome', () => {
         orderId: 'order-1',
         orderNumber: null,
         status,
+        paymentFlow: 'ONLINE',
       });
     }
   );
@@ -130,6 +131,7 @@ describe('resolvePlacementOutcome', () => {
       orderId: 'order-1',
       orderNumber: null,
       status: 'REQUIRES_ACTION',
+      paymentFlow: 'OFFLINE',
     });
   });
 

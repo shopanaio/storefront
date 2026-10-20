@@ -101,6 +101,8 @@ const CheckoutBody = ({
         orderId={phase.orderId}
         orderNumber={phase.orderNumber}
         status={phase.status}
+        paymentFlow={phase.paymentFlow}
+        earningEstimate={phase.earningEstimate}
         brand={brand}
       />
     );

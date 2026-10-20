@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import type { Checkout } from '#checkout/types/entity';
 import type {
+  PaymentFlow,
   PlacementCustomerAction,
   PlacementPaymentFailure,
   PlacementStatus,
@@ -31,6 +33,12 @@ export type PlacementPhase =
       orderId: string | null;
       orderNumber: string | null;
       status: PlacementStatus;
+      paymentFlow: PaymentFlow | null;
+      /**
+       * What the checkout estimated the order earns, shown until the order's own earning is
+       * readable; `null` when unknown (e.g. after returning from the payment provider).
+       */
+      earningEstimate: Checkout.LoyaltyEarning | null;
     };
 
 interface PlacementStoreState {
