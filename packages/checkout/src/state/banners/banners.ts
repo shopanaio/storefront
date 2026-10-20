@@ -6,7 +6,7 @@ import type { PlacementPhase } from '#checkout/state/placement/placementStore';
 import { issueSection } from '#checkout/state/issueSections';
 import { placementErrorMessageKey } from '#checkout/components/result/placementMessages';
 import type { Checkout } from '#checkout/types/entity';
-import { issueMessage, issueText } from './messages';
+import { issueMessage, issueText, visibleBlockingIssues } from './messages';
 import type { SaveError } from './bannerStore';
 
 /**
@@ -16,14 +16,19 @@ import type { SaveError } from './bannerStore';
 export enum BannerPriority {
   /** The checkout is placed elsewhere, expired, or being replaced. */
   Closed = 0,
-  /** The payment or the placement of the order failed. */
+  /** The payment failed or waits for the buyer at the provider. */
   Placement = 1,
   /** Something blocks the order: an unfilled section, an issue, lines that cannot be delivered. */
   Blocking = 2,
+  /**
+   * The last placement was rejected. Below the blocking problems: once there are any, they say
+   * what to fix before pressing the button again.
+   */
+  Rejected = 3,
   /** A save of the buyer's input failed. */
-  SaveError = 3,
+  SaveError = 4,
   /** The order changed on its own: stock, prices, warnings of the calculation. */
-  Change = 4,
+  Change = 5,
 }
 
 export interface BannerItem {
@@ -62,6 +67,10 @@ export interface BannerHandlers {
   closeRenewal: () => void;
   /** Presses "place order" again. */
   retryPlacement: () => void;
+  /** Forgets the rejected placement, so its banner goes. */
+  closePlacement: () => void;
+  /** Forgets a failed save the buyer may close. */
+  closeSaveError: (key: string) => void;
   goHome: () => void;
   openCart: () => void;
   focusSection: (section: SectionId) => void;
@@ -173,29 +182,43 @@ export function collectBanners(
     });
   } else if (phase.name === 'rejected') {
     const key = placementErrorMessageKey(phase.code);
-    let action: BannerAction | undefined = retry;
-    let priority = BannerPriority.Placement;
+    const id = `rejected:${phase.code}`;
     if (phase.code === 'CHECKOUT_ALREADY_PLACED') {
-      action = { label: t('go-home'), onClick: handlers.goHome };
-      priority = BannerPriority.Closed;
+      items.push({
+        id,
+        priority: BannerPriority.Closed,
+        tone: 'critical',
+        title: t(key),
+        action: { label: t('go-home'), onClick: handlers.goHome },
+      });
     } else if (CLOSED_CODES.has(phase.code)) {
-      action = { label: t('banner-open-cart'), onClick: handlers.openCart };
-      priority = BannerPriority.Closed;
-    } else if (key === 'placement-error-payment-unavailable') {
-      action = {
-        label: t('banner-choose'),
-        onClick: () => handlers.focusSection(SectionId.Payment),
-      };
-    } else if (key === 'placement-error-not-found') {
-      action = undefined;
+      items.push({
+        id,
+        priority: BannerPriority.Closed,
+        tone: 'critical',
+        title: t(key),
+        action: { label: t('banner-open-cart'), onClick: handlers.openCart },
+      });
+    } else {
+      // The checkout stays editable: the buyer may close it and go on.
+      let action: BannerAction | undefined = retry;
+      if (key === 'placement-error-payment-unavailable') {
+        action = {
+          label: t('banner-choose'),
+          onClick: () => handlers.focusSection(SectionId.Payment),
+        };
+      } else if (key === 'placement-error-not-found') {
+        action = undefined;
+      }
+      items.push({
+        id,
+        priority: BannerPriority.Rejected,
+        tone: 'warning',
+        title: t(key),
+        action,
+        onDismiss: handlers.closePlacement,
+      });
     }
-    items.push({
-      id: `rejected:${phase.code}`,
-      priority,
-      tone: 'critical',
-      title: t(key),
-      action,
-    });
   }
 
   const readiness = input.readiness;
@@ -214,7 +237,10 @@ export function collectBanners(
       });
     }
     if (input.attempted) {
-      const blocking = readiness.blocking;
+      const blocking = visibleBlockingIssues(
+        readiness.blocking,
+        input.undeliverableCount
+      );
       const sections = SECTION_ORDER.filter(
         (section) =>
           input.missingSections.includes(section) ||
@@ -263,7 +289,8 @@ export function collectBanners(
         placing &&
         !readiness.canPlace &&
         blocking.length === 0 &&
-        input.missingSections.length === 0
+        input.missingSections.length === 0 &&
+        input.undeliverableCount === 0
       ) {
         items.push({
           id: 'not-ready',
@@ -280,10 +307,14 @@ export function collectBanners(
     items.push({
       id: `save:${error.key}`,
       priority: BannerPriority.SaveError,
-      tone: 'critical',
+      // A closable failure left nothing unsaved on screen, so it does not block the order.
+      tone: error.closable ? 'warning' : 'critical',
       title: error.message,
       description: t('banner-save-failed-description'),
       action: error.sectionId ? goTo(error.sectionId) : undefined,
+      onDismiss: error.closable
+        ? () => handlers.closeSaveError(error.key)
+        : undefined,
     });
   }
 
@@ -312,12 +343,18 @@ export function collectBanners(
     });
   }
   if (readiness && !readiness.expired) {
+    const seen = new Set<string>();
     readiness.notices
       // Promo code warnings are shown under the code itself.
       .filter((issue) => issueSection(issue) !== SectionId.Promo)
-      .forEach((issue, index) => {
+      .forEach((issue) => {
+        // By what the issue is about, not its place in the list: a closed warning stays closed
+        // when another one goes.
+        const id = `notice:${issue.code}:${issue.lineId ?? issue.field.join('.')}`;
+        if (seen.has(id)) return;
+        seen.add(id);
         dismissible({
-          id: `notice:${issue.code}:${issue.lineId ?? issue.field.join('.')}:${index}`,
+          id,
           priority: BannerPriority.Change,
           tone: 'warning',
           title: issueText(t, issue),

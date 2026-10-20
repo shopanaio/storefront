@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
@@ -8,8 +8,14 @@ import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useMissingRequiredSections } from '#checkout/state/selectors';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { useRenewalStore } from '#checkout/state/renewal';
-import { usePlacementPhase } from '#checkout/state/placement/placementStore';
-import { useBannerStore } from '#checkout/state/banners/bannerStore';
+import {
+  usePlacementPhase,
+  usePlacementStore,
+} from '#checkout/state/placement/placementStore';
+import {
+  UNDELIVERABLE_REMOVE_ERROR_KEY,
+  useBannerStore,
+} from '#checkout/state/banners/bannerStore';
 import { collectBanners } from '#checkout/state/banners/banners';
 import type { BannerItem } from '#checkout/state/banners/banners';
 import { useCheckoutTheme } from '#checkout/theme';
@@ -32,14 +38,21 @@ export function useCheckoutBanners(): BannerItem[] {
   const retryRenewal = useRenewalStore((state) => state.retry);
   const setRenewal = useRenewalStore((state) => state.setState);
   const placement = usePlacementPhase();
+  const resetPlacement = usePlacementStore((state) => state.reset);
   const saveErrors = useBannerStore((state) => state.saveErrors);
   const dismissed = useBannerStore((state) => state.dismissed);
   const dismiss = useBannerStore((state) => state.dismiss);
+  const clearSaveError = useBannerStore((state) => state.clearSaveError);
   const cleanup = useDefaultCartCleanup();
   const theme = useCheckoutTheme();
   const openCart = theme.useOpenCart();
   const checkoutId = checkout?.id ?? null;
   const notifications = checkout?.notifications;
+
+  // A failed removal of lines that cannot be delivered ends with them (another address).
+  useEffect(() => {
+    if (undeliverableCount === 0) clearSaveError(UNDELIVERABLE_REMOVE_ERROR_KEY);
+  }, [undeliverableCount, clearSaveError]);
 
   return useMemo(
     () =>
@@ -59,6 +72,8 @@ export function useCheckoutBanners(): BannerItem[] {
           retryRenewal,
           closeRenewal: () => setRenewal('idle'),
           retryPlacement: requestSubmit,
+          closePlacement: resetPlacement,
+          closeSaveError: clearSaveError,
           // Placed elsewhere: this cart can no longer be used; without it the page goes home.
           goHome: () => cleanup(checkoutId),
           openCart,
@@ -81,6 +96,8 @@ export function useCheckoutBanners(): BannerItem[] {
       retryRenewal,
       setRenewal,
       requestSubmit,
+      resetPlacement,
+      clearSaveError,
       cleanup,
       checkoutId,
       openCart,

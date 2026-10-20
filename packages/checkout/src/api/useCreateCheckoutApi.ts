@@ -88,6 +88,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     selectPaymentMethodMutation,
     {
       errorMessage: t('error-select-payment'),
+      closableError: true,
       operationKey: OperationKey.SelectPaymentMethod,
       sectionId: SectionId.Payment,
     }
@@ -122,6 +123,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     removeDeliveryAddressesMutation,
     {
       errorMessage: t('error-remove-address'),
+      closableError: true,
       operationKey: OperationKey.RemoveDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -180,6 +182,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
     removeDeliveryRecipientsMutation,
     {
       errorMessage: t('error-remove-recipient'),
+      closableError: true,
       operationKey: OperationKey.RemoveDeliveryRecipients,
       sectionId: SectionId.Recipient,
     }

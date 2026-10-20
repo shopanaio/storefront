@@ -57,6 +57,12 @@ export interface CheckoutOperationOptions {
    */
   errorMessage?: string;
   /**
+   * The buyer may close the reported failure: for removals and choices that leave nothing
+   * unsaved on screen, which no later success of the operation may come to clear.
+   * @default false
+   */
+  closableError?: boolean;
+  /**
    * Reject when the payload carries user errors. Disable for operations whose payload stays
    * meaningful next to its errors (placeOrder returns the placement together with them).
    * @default true
@@ -127,6 +133,7 @@ export function useCheckoutOperation<
   const {
     reportError = true,
     errorMessage = 'Operation failed',
+    closableError = false,
     rejectOnUserErrors = true,
     debounceMs = 150,
     operationKey,
@@ -245,6 +252,7 @@ export function useCheckoutOperation<
             key: errorKey,
             message: errorMessage,
             sectionId: sectionId ?? null,
+            closable: closableError,
           });
         }
       };
@@ -288,7 +296,15 @@ export function useCheckoutOperation<
         });
       });
     },
-    [commitMutation, reportError, errorKey, errorMessage, sectionId, rejectOnUserErrors]
+    [
+      commitMutation,
+      reportError,
+      errorKey,
+      errorMessage,
+      closableError,
+      sectionId,
+      rejectOnUserErrors,
+    ]
   );
 
   const { enqueueMutation } = useCartSetters();

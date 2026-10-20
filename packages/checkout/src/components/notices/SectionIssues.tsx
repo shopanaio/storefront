@@ -4,8 +4,12 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
 import { useSubmitAttempted } from '#checkout/hooks/useSubmitAttempted';
+import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { issueSection } from '#checkout/state/issueSections';
-import { issueText } from '#checkout/state/banners/messages';
+import {
+  issueMessage,
+  visibleBlockingIssues,
+} from '#checkout/state/banners/messages';
 import type { SectionId } from '#checkout/state/interface';
 
 /**
@@ -15,25 +19,25 @@ import type { SectionId } from '#checkout/state/interface';
  */
 export const SectionIssues = ({ sections }: { sections: SectionId[] }) => {
   const t = useTranslations('Checkout');
-  const { styles } = useStyles();
+  const { styles, cx } = useStyles();
   const readiness = useCheckoutReadiness();
   const attempted = useSubmitAttempted();
+  const undeliverableCount = useUndeliverableLines().length;
   if (!attempted || !readiness || readiness.expired) return null;
-  const texts = [
-    ...new Set(
-      readiness.blocking
-        .filter((issue) => {
-          const section = issueSection(issue);
-          return section !== null && sections.includes(section);
-        })
-        .map((issue) => issueText(t, issue))
-    ),
-  ];
-  if (texts.length === 0) return null;
+  const items = new Map<string, boolean>();
+  for (const issue of visibleBlockingIssues(readiness.blocking, undeliverableCount)) {
+    const section = issueSection(issue);
+    if (section === null || !sections.includes(section)) continue;
+    const message = issueMessage(issue);
+    // An unknown code would name the very section it is shown in.
+    const text = t(message.section ? 'issue-check-here' : message.key);
+    items.set(text, (items.get(text) ?? false) || issue.severity === 'ERROR');
+  }
+  if (items.size === 0) return null;
   return (
     <ul className={styles.list}>
-      {texts.map((text) => (
-        <li key={text} className={styles.item}>
+      {[...items].map(([text, error]) => (
+        <li key={text} className={cx(styles.item, !error && styles.warning)}>
           {text}
         </li>
       ))}
@@ -67,5 +71,8 @@ const useStyles = createStyles(({ css, token }) => ({
       background: currentColor;
       transform: translateY(-1px);
     }
+  `,
+  warning: css`
+    color: ${token.colorWarningText};
   `,
 }));

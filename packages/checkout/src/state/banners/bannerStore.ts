@@ -7,15 +7,24 @@ export interface SaveError {
   key: string;
   message: string;
   sectionId: SectionId | null;
+  /**
+   * The buyer may close it: a failed removal or choice whose value is no longer on screen, so
+   * no later save of it may come to clear it.
+   */
+  closable?: boolean;
 }
+
+/** Failed removal of the lines that cannot be delivered; it ends once there are none left. */
+export const UNDELIVERABLE_REMOVE_ERROR_KEY = 'remove-undeliverable-lines';
 
 interface BannerStore {
   /**
    * Failed saves of the checkout (contact, recipient, note, payment method…). One error per
    * operation: a retry that fails again replaces it, so background retries do not pile up.
+   * Both lists belong to one checkout and are reset when another one replaces it.
    */
   saveErrors: SaveError[];
-  /** Ids of the banners the buyer closed on this page. */
+  /** Ids of the banners the buyer closed for this checkout. */
   dismissed: ReadonlySet<string>;
   reportSaveError: (error: SaveError) => void;
   clearSaveError: (key: string) => void;

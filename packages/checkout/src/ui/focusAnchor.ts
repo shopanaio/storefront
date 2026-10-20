@@ -12,6 +12,14 @@ export function sectionAnchor(section: SectionId): string {
   return `checkout-section-${section}`;
 }
 
+/**
+ * Fields first: a section header may hold a button of its own (log in), which is not where the
+ * buyer has something to fill in.
+ */
+const FIELDS =
+  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])';
+const CONTROLS = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /** Brings an element into view and, unless `focus` is off, moves the focus to its first control. */
 export function focusAnchor(
   id: string,
@@ -23,8 +31,9 @@ export function focusAnchor(
     block: focus ? 'center' : 'start',
   });
   if (focus) {
-    element
-      ?.querySelector<HTMLElement>('input, button, textarea, [tabindex]')
-      ?.focus({ preventScroll: true });
+    const control =
+      element?.querySelector<HTMLElement>(FIELDS) ??
+      element?.querySelector<HTMLElement>(CONTROLS);
+    control?.focus({ preventScroll: true });
   }
 }

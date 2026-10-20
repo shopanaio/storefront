@@ -59,7 +59,8 @@ export const Checkout = ({
 
   // The placement phase outlives cart cleanup, so it is reset only when the checkout unmounts.
   useEffect(() => resetPlacement, [resetPlacement]);
-  useEffect(() => resetBanners, [resetBanners]);
+  // Failed saves and closed banners belong to one checkout: a renewal or another cart drops them.
+  useEffect(() => resetBanners, [resetBanners, cartId]);
 
   return (
     <CheckoutThemeProvider theme={theme}>

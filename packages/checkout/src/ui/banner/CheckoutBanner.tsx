@@ -10,6 +10,7 @@ import {
   LuTriangleAlert,
   LuX,
 } from 'react-icons/lu';
+import { mq } from '#checkout/ui/breakpoints';
 import type { BannerTone } from './tones';
 import { bannerToneVar } from './tones';
 
@@ -30,7 +31,10 @@ export interface CheckoutBannerProps {
   onDismiss?: () => void;
   /** Accessible name of the close button. */
   dismissLabel?: string;
-  /** One line: the title only; the description and the content are left out. */
+  /**
+   * The title only, the description and the content left out: one line on desktop, up to two
+   * on a phone, where the action leaves the title little room.
+   */
   compact?: boolean;
   /** Next to the action, e.g. the counter of other messages. */
   extra?: ReactNode;
@@ -160,9 +164,16 @@ const useStyles = createStyles(({ css }) => ({
     font-weight: 500;
   `,
   titleCompact: css`
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+
+    ${mq.lg} {
+      display: block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   `,
   side: css`
     grid-column: 3;

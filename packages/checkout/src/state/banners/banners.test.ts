@@ -41,6 +41,8 @@ const handlers = (): BannerHandlers => ({
   retryRenewal: vi.fn(),
   closeRenewal: vi.fn(),
   retryPlacement: vi.fn(),
+  closePlacement: vi.fn(),
+  closeSaveError: vi.fn(),
   goHome: vi.fn(),
   openCart: vi.fn(),
   focusSection: vi.fn(),
@@ -278,5 +280,109 @@ describe('collectBanners', () => {
     expect(banner.onDismiss).toBeUndefined();
     banner.action?.onClick?.();
     expect(h.focusSection).toHaveBeenCalledWith(SectionId.Contact);
+  });
+  it('a rejected placement can be closed and gives way to what blocks the order', () => {
+    const h = handlers();
+    const banners = collect(
+      {
+        attempted: true,
+        placement: { name: 'rejected', code: 'CHECKOUT_NOT_READY_FOR_PLACEMENT' },
+        missingSections: [SectionId.Delivery],
+      },
+      h
+    );
+
+    expect(banners.map((banner) => banner.priority)).toEqual([
+      BannerPriority.Blocking,
+      BannerPriority.Rejected,
+    ]);
+    expect(banners[1]).toMatchObject({
+      tone: 'warning',
+      title: 'placement-error-generic',
+    });
+    banners[1].onDismiss?.();
+    expect(h.closePlacement).toHaveBeenCalled();
+  });
+
+  it('a placement rejected because the checkout is closed stays until the buyer leaves', () => {
+    const [banner] = collect({
+      placement: { name: 'rejected', code: 'CHECKOUT_EXPIRED' },
+    });
+
+    expect(banner).toMatchObject({
+      priority: BannerPriority.Closed,
+      tone: 'critical',
+    });
+    expect(banner.onDismiss).toBeUndefined();
+  });
+
+  it('a failed removal can be closed, since nothing is left unsaved', () => {
+    const h = handlers();
+    const [banner] = collect(
+      {
+        saveErrors: [
+          {
+            key: 'remove-address',
+            message: 'Address not removed',
+            sectionId: SectionId.Address,
+            closable: true,
+          },
+        ],
+      },
+      h
+    );
+
+    expect(banner.tone).toBe('warning');
+    banner.onDismiss?.();
+    expect(h.closeSaveError).toHaveBeenCalledWith('remove-address');
+  });
+
+  it('says once that lines cannot be delivered', () => {
+    const banners = collect({
+      attempted: true,
+      undeliverableCount: 2,
+      readiness: {
+        canPlace: false,
+        expired: false,
+        blocking: [
+          issue({
+            code: 'DELIVERY_OPTIONS_UNAVAILABLE',
+            field: ['deliveryGroups', '1'],
+          }),
+        ],
+        notices: [],
+      },
+    });
+
+    expect(banners.map((banner) => banner.id)).toEqual(['undeliverable']);
+  });
+
+  it('keeps a closed warning closed when another one goes', () => {
+    const loyalty = issue({
+      code: 'LOYALTY_POINTS_REDUCED',
+      effect: 'CONTINUE',
+      severity: 'WARNING',
+      field: ['loyaltyPoints'],
+    });
+    const other = issue({
+      code: 'APP_WARNING',
+      effect: 'CONTINUE',
+      severity: 'WARNING',
+      field: ['attributes'],
+    });
+    const readiness = (notices: Checkout.Issue[]) => ({
+      canPlace: true,
+      expired: false,
+      blocking: [],
+      notices,
+    });
+    const [, closed] = collect({ readiness: readiness([other, loyalty]) });
+
+    expect(
+      collect({
+        readiness: readiness([loyalty]),
+        dismissed: new Set([closed.id]),
+      })
+    ).toEqual([]);
   });
 });

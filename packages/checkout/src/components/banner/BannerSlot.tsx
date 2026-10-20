@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
+import { LuChevronDown } from 'react-icons/lu';
 import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { mq } from '#checkout/ui/breakpoints';
 import { useCheckoutBanners } from './useCheckoutBanners';
@@ -21,31 +22,50 @@ export const BannerSlot = () => {
   const detailed = Boolean(first?.description);
   const open = expanded && (rest.length > 0 || detailed);
 
-  const toggle =
-    rest.length > 0 || detailed ? (
+  let toggle = null;
+  if (open) {
+    toggle = (
       <button
         type="button"
-        className={open || rest.length === 0 ? styles.link : styles.counter}
-        aria-expanded={open}
-        aria-label={
-          open
-            ? t('banner-collapse')
-            : rest.length > 0
-              ? t('banner-show-all', { count: banners.length })
-              : t('banner-details')
-        }
-        onClick={() => setExpanded(!open)}
+        className={styles.link}
+        aria-expanded
+        onClick={() => setExpanded(false)}
       >
-        {open
-          ? t('banner-collapse')
-          : rest.length > 0
-            ? `+${rest.length}`
-            : t('banner-details')}
+        {t('banner-collapse')}
       </button>
-    ) : null;
+    );
+  } else if (rest.length > 0) {
+    toggle = (
+      <button
+        type="button"
+        className={styles.counter}
+        aria-expanded={false}
+        aria-label={t('banner-show-all', { count: banners.length })}
+        onClick={() => setExpanded(true)}
+      >
+        {`+${rest.length}`}
+      </button>
+    );
+  } else if (detailed) {
+    // An icon, not a word: next to the action a word leaves the title no room on a phone.
+    toggle = (
+      <button
+        type="button"
+        className={styles.chevron}
+        aria-expanded={false}
+        aria-label={t('banner-details')}
+        title={t('banner-details')}
+        onClick={() => setExpanded(true)}
+      >
+        <LuChevronDown size={16} strokeWidth={1.75} aria-hidden="true" />
+      </button>
+    );
+  }
 
   return (
-    <div className={cx(styles.slot, !first && styles.empty)}>
+    <div
+      className={cx(styles.slot, open && styles.open, !first && styles.empty)}
+    >
       {first ? (
         open ? (
           banners.map((banner, index) => (
@@ -89,6 +109,17 @@ const useStyles = createStyles(({ css }) => ({
       min-height: 51px;
     }
   `,
+  open: css`
+    /* In the panel fixed to the bottom of a phone: the list scrolls, the button stays seen. */
+    max-height: 60dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    ${mq.lg} {
+      max-height: none;
+      overflow-y: visible;
+    }
+  `,
   empty: css`
     display: none;
 
@@ -109,6 +140,20 @@ const useStyles = createStyles(({ css }) => ({
     font-size: 12px;
     line-height: 17px;
     font-weight: 500;
+    color: var(--banner-text);
+    cursor: pointer;
+  `,
+  chevron: css`
+    /* 44px touch target around the 16px icon, clear of the action next to it. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 44px;
+    margin: -12px 4px -13px -8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--banner-text);
     cursor: pointer;
   `,

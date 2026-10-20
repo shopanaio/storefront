@@ -11,6 +11,7 @@ import { useConfirm } from '#checkout/ui/useConfirm';
 import {
   clearSaveError,
   reportSaveError,
+  UNDELIVERABLE_REMOVE_ERROR_KEY,
 } from '#checkout/state/banners/bannerStore';
 import { SectionId } from '#checkout/state/interface';
 import { focusAnchor, sectionAnchor } from '#checkout/ui/focusAnchor';
@@ -18,8 +19,6 @@ import { ShipmentLines } from './ShipmentLines';
 
 /** Brings the address form into view, so the customer can change the address. */
 const focusAddress = () => focusAnchor(sectionAnchor(SectionId.Address));
-
-const REMOVE_ERROR_KEY = 'remove-undeliverable-lines';
 
 /**
  * Lines that cannot be delivered to the address (R7). They block the whole order; the
@@ -49,13 +48,14 @@ export const UndeliverableLines = () => {
     }
     try {
       await remove(lines);
-      clearSaveError(REMOVE_ERROR_KEY);
+      clearSaveError(UNDELIVERABLE_REMOVE_ERROR_KEY);
     } catch (error) {
       console.error('Failed to remove undeliverable lines:', error);
       reportSaveError({
-        key: REMOVE_ERROR_KEY,
+        key: UNDELIVERABLE_REMOVE_ERROR_KEY,
         message: t('undeliverable-remove-failed'),
         sectionId: SectionId.Delivery,
+        closable: true,
       });
     }
   };

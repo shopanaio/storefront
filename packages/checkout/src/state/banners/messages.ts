@@ -42,6 +42,19 @@ export function issueMessage(
   return { key: 'issue-check-order' };
 }
 
+/**
+ * Blocking issues to show. While some lines cannot be delivered, their own banner and the
+ * delivery section already say so; `DELIVERY_OPTIONS_UNAVAILABLE` would repeat it.
+ */
+export function visibleBlockingIssues(
+  blocking: Checkout.Issue[],
+  undeliverableCount: number
+): Checkout.Issue[] {
+  return undeliverableCount > 0
+    ? blocking.filter((issue) => issue.code !== 'DELIVERY_OPTIONS_UNAVAILABLE')
+    : blocking;
+}
+
 /** Message key of a delivery or payment selection the API reset, by its reason code. */
 export function resetReasonMessageKey(
   reason: Checkout.SelectionResetReason,
