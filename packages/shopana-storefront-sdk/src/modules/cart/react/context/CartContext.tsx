@@ -83,6 +83,15 @@ export interface CartContextValue {
    * Has cart finished loading
    */
   isCartLoaded: boolean;
+
+  /**
+   * Why the cart could not be loaded, when the server did not say it is missing. The cart id
+   * is kept: the cart still exists and a retry loads it.
+   */
+  cartError: unknown;
+
+  /** Loads the cart again after `cartError`. */
+  retryCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -137,6 +146,8 @@ export interface CartContextProviderProps {
   setId: (id: string | null) => void;
   isCartLoading: boolean;
   isCartLoaded: boolean;
+  cartError: unknown;
+  retryCart: () => Promise<void>;
 }
 
 /**
@@ -160,6 +171,8 @@ export function CartContextProvider({
   setId,
   isCartLoading,
   isCartLoaded,
+  cartError,
+  retryCart,
 }: CartContextProviderProps) {
   // Create cart ID utils with config
   const cartIdUtils = useMemo(
@@ -187,6 +200,8 @@ export function CartContextProvider({
       setId,
       isCartLoading,
       isCartLoaded,
+      cartError,
+      retryCart,
     }),
     [
       store,
@@ -203,6 +218,8 @@ export function CartContextProvider({
       setId,
       isCartLoading,
       isCartLoaded,
+      cartError,
+      retryCart,
     ]
   );
 

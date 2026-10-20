@@ -7,6 +7,7 @@ import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToE
 import type { CartConfig } from '../../core/config';
 import { clearCartMutation } from '../../core/graphql/mutations/clearCartMutation';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
+import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
 import { createCartStoreZustand } from '../store/CartStoreZustand';
 import { useCartContext } from '../context/CartContext';
 import useAddItemToCart from '../hooks/useAddItemToCart';
@@ -22,12 +23,17 @@ const { requests, cartQuery } = vi.hoisted(() => ({
       loading: boolean;
       data: unknown;
       error?: unknown;
+      refetch?: () => Promise<unknown>;
     },
   },
   requests: [] as Array<{
     document: TypedDocumentNode;
     variables: {
-      input: { lines?: Array<{ lineId: string }>; lineIds?: string[] };
+      input: {
+        checkoutId?: string;
+        lines?: Array<{ lineId: string }>;
+        lineIds?: string[];
+      };
     };
     resolve: (result: { data: unknown }) => void;
     reject: (error: Error) => void;
@@ -514,24 +520,65 @@ describe('loading the cart from the cookie', () => {
   function mountFromCookie() {
     document.cookie = 'review-test-cart=cart-1; Path=/';
     const store = createCartStoreZustand(null);
-    return renderHook(() => useCartContext(), {
-      wrapper: ({ children }) => (
-        <CartProvider store={store} config={config}>
-          {children}
-        </CartProvider>
-      ),
-    });
+    return renderHook(
+      () => ({ context: useCartContext(), ...useAddItemToCart() }),
+      {
+        wrapper: ({ children }) => (
+          <CartProvider store={store} config={config}>
+            {children}
+          </CartProvider>
+        ),
+      }
+    );
   }
 
-  it('SC-iv69: keeps the cart and its cookie when loading fails with a network error', () => {
+  it('SC-iv69: keeps the cart, its cookie and a retry when loading fails with a network error', async () => {
+    const refetch = vi.fn(async () => undefined);
+    const failure = new Error('Failed to fetch');
+    cartQuery.current = {
+      loading: false,
+      data: undefined,
+      error: failure,
+      refetch,
+    };
+    const { result } = mountFromCookie();
+    expect(document.cookie).toContain('review-test-cart=cart-1');
+    expect(result.current.context.cartId).toBe('cart-1');
+    expect(result.current.context.isCartLoaded).toBe(false);
+    expect(result.current.context.cartError).toBe(failure);
+    await act(async () => {
+      await result.current.context.retryCart();
+    });
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('SC-iv69: adds a line to the cart that failed to load instead of creating a new one', async () => {
     cartQuery.current = {
       loading: false,
       data: undefined,
       error: new Error('Failed to fetch'),
     };
     const { result } = mountFromCookie();
-    expect(document.cookie).toContain('review-test-cart=cart-1');
-    expect(result.current.cartId).toBeNull();
+    let added!: Promise<unknown>;
+    await act(async () => {
+      added = result.current.addToCart({
+        purchasableId: 'variant-1',
+        quantity: 1,
+        purchasableSnapshot: {
+          price: { amount: 10, currencyCode: 'USD' },
+        },
+      } as Parameters<typeof result.current.addToCart>[0]);
+    });
+    expect(requests).toHaveLength(1);
+    expect(requests[0].document).toBe(addToCartMutation);
+    expect(requests[0].variables.input.checkoutId).toBe('cart-1');
+    await act(async () => {
+      requests[0].resolve({
+        data: { checkoutLinesAdd: { checkout: checkout(1), errors: [] } },
+      });
+      await added;
+    });
+    expect(result.current.context.cartId).toBe('cart-1');
   });
 
   it('SC-iv69: drops the cart cookie only when the server says the cart does not exist', () => {
@@ -542,7 +589,9 @@ describe('loading the cart from the cookie', () => {
         errors: [{ message: 'Not found', extensions: { code: 'NOT_FOUND' } }],
       }),
     };
-    mountFromCookie();
+    const { result } = mountFromCookie();
     expect(document.cookie).not.toContain('review-test-cart=cart-1');
+    expect(result.current.context.cartId).toBeNull();
+    expect(result.current.context.cartError).toBeNull();
   });
 });

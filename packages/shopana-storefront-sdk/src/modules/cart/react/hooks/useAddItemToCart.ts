@@ -5,6 +5,7 @@ import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutatio
 import {
   useCartActions,
   useCartConfig,
+  useCartIdUtils,
   useCartStoreApi,
 } from '../context/CartContext';
 import useCreateCart from './useCreateCart';
@@ -13,6 +14,7 @@ const useAddItemToCart = () => {
   const { setCartKey, enqueueMutation } = useCartSetters();
   const { createCart } = useCreateCart();
   const cartStore = useCartStoreApi();
+  const cartIdUtils = useCartIdUtils();
   const actions = useCartActions();
   const { defaultLocale } = useCartConfig();
   const [commitAddLine, isInFlight] = useMutation(addToCartMutation);
@@ -27,7 +29,9 @@ const useAddItemToCart = () => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
-      const cartId = cartStore.cart?.id ?? null;
+      // A cart that is still loading or failed to load keeps its cookie: the line goes there,
+      // and only a shopper without a cart gets a new one.
+      const cartId = cartStore.cart?.id ?? cartIdUtils.getCartIdFromCookie();
 
       if (!cartId) {
         return createCart(

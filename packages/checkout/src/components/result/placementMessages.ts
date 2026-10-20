@@ -2,6 +2,7 @@ import type { PlacementStatus } from '#checkout/state/placement/types';
 import {
   CLIENT_SDK_UNAVAILABLE_CODE,
   IDEMPOTENCY_MISMATCH_CODE,
+  INPUT_UNSAVED_CODE,
   NETWORK_ERROR_CODE,
   PLACEMENT_UNCONFIRMED_CODE,
   STALE_SELECTION_CODE,
@@ -14,6 +15,7 @@ import {
 export function placementErrorMessageKey(code: string): string {
   if (code === NETWORK_ERROR_CODE) return 'placement-error-network';
   if (code === PLACEMENT_UNCONFIRMED_CODE) return 'placement-error-unconfirmed';
+  if (code === INPUT_UNSAVED_CODE) return 'placement-error-unsaved';
   if (
     code === IDEMPOTENCY_MISMATCH_CODE ||
     code === 'CHECKOUT_PLACEMENT_SNAPSHOT_STALE' ||
@@ -28,8 +30,10 @@ export function placementErrorMessageKey(code: string): string {
   ) {
     return 'placement-error-payment-unavailable';
   }
-  if (code === 'CHECKOUT_PLACEMENT_NOT_FOUND') return 'placement-error-not-found';
-  if (code === 'CHECKOUT_ALREADY_PLACED') return 'placement-error-already-placed';
+  if (code === 'CHECKOUT_PLACEMENT_NOT_FOUND')
+    return 'placement-error-not-found';
+  if (code === 'CHECKOUT_ALREADY_PLACED')
+    return 'placement-error-already-placed';
   if (code === 'CHECKOUT_ABANDONED' || code === 'CHECKOUT_EXPIRED') {
     return 'placement-error-closed';
   }

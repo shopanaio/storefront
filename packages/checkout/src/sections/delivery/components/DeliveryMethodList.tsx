@@ -15,10 +15,13 @@ import {
   type ProviderMethod,
 } from '#checkout/vendors/types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
+import { isMutationSuperseded } from '@shopana/storefront-sdk/modules/cart/core/utils/mutationQueue';
 import { validateCustomerInput } from '#checkout/utils/jsonSchema';
 import {
   addressScope,
   readCustomerInputs,
+  sameInput,
+  storedInputOf,
   useCustomerInputStore,
 } from '../customerInputStorage';
 import { definitiveRejection } from '../saveError';
@@ -39,15 +42,29 @@ const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
 
 /** Input sent to the API: only one that satisfies the option's contract. */
-const apiCustomerInput = (method: DeliveryMethod, input: unknown): object | undefined =>
+const apiCustomerInput = (
+  method: DeliveryMethod,
+  input: unknown
+): object | undefined =>
   typeof input === 'object' &&
   input !== null &&
   validateCustomerInput(method.customerInputContract, input).length === 0
     ? input
     : undefined;
 
-const sentKey = (groupId: string, scope: string, handle: string) =>
-  `${groupId}\n${scope}\n${handle}`;
+const sentKey = (groupId: string, scope: string, method: DeliveryMethod) =>
+  `${groupId}\n${scope}\n${methodKey(method)}`;
+
+/** The delivery groups changed while the selection was on the way (BR-escc). */
+const GROUP_CHANGED_CODE = 'CHECKOUT_DELIVERY_GROUP_CHANGED';
+const isGroupChanged = (error: unknown) =>
+  Array.isArray(error) &&
+  error.some(
+    (item) =>
+      typeof item === 'object' &&
+      item !== null &&
+      item.code === GROUP_CHANGED_CODE
+  );
 
 /**
  * Whether an input still has to be saved. Normally that is an input edited since the API
@@ -131,10 +148,18 @@ export const DeliveryMethodList = ({
   const markSynced = useCustomerInputStore((state) => state.markSynced);
 
   const serverKey = useMemo(() => commonSelectionKey(groups), [groups]);
-  const resetKey = useMemo(() => (serverKey ? null : resetKeyOf(groups)), [groups, serverKey]);
+  const resetKey = useMemo(
+    () => (serverKey ? null : resetKeyOf(groups)),
+    [groups, serverKey]
+  );
 
   /** Method picked by the customer while the API requests are in flight. */
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  /**
+   * Method whose selection the API refused because the shipments changed meanwhile. It is
+   * not retried (BR-escc): the section says why and the buyer chooses again.
+   */
+  const [groupChangedKey, setGroupChangedKey] = useState<string | null>(null);
   /** Method whose selection failed in some groups; a retry selects it only in those. */
   const [failedSelect, setFailedSelect] = useState<{
     key: string;
@@ -153,13 +178,15 @@ export const DeliveryMethodList = ({
         : [],
     [groups, failedSelect]
   );
-  const failedKey = unsavedGroups.length && failedSelect ? failedSelect.key : null;
+  const failedKey =
+    unsavedGroups.length && failedSelect ? failedSelect.key : null;
   const selectedKey = pendingKey ?? failedKey ?? serverKey ?? resetKey;
   const [lead] = groups;
   const selectedMethod = useMemo(
     () =>
       methods.find((method) => methodKey(method) === selectedKey) ??
-      (lead?.selectedDeliveryMethod && methodKey(lead.selectedDeliveryMethod) === selectedKey
+      (lead?.selectedDeliveryMethod &&
+      methodKey(lead.selectedDeliveryMethod) === selectedKey
         ? lead.selectedDeliveryMethod
         : null),
     [methods, selectedKey, lead]
@@ -184,7 +211,10 @@ export const DeliveryMethodList = ({
       }),
     [groups]
   );
-  const targets = useMemo(() => targetsOf(selectedKey), [targetsOf, selectedKey]);
+  const targets = useMemo(
+    () => targetsOf(selectedKey),
+    [targetsOf, selectedKey]
+  );
 
   /** Input last sent for each option, by group, address scope and handle. */
   const [sentInputs, setSentInputs] = useState<Record<string, string>>({});
@@ -192,7 +222,8 @@ export const DeliveryMethodList = ({
     (target: Target, input: unknown) =>
       setSentInputs((current) => ({
         ...current,
-        [sentKey(target.group.id, target.scope, target.method.handle)]: JSON.stringify(input),
+        [sentKey(target.group.id, target.scope, target.method)]:
+          JSON.stringify(input),
       })),
     []
   );
@@ -200,7 +231,8 @@ export const DeliveryMethodList = ({
   const rejectedKeyOf = useCallback(
     (target: Target) =>
       target.reselecting
-        ? (sentInputs[sentKey(target.group.id, target.scope, target.method.handle)] ?? null)
+        ? (sentInputs[sentKey(target.group.id, target.scope, target.method)] ??
+          null)
         : null,
     [sentInputs]
   );
@@ -224,10 +256,14 @@ export const DeliveryMethodList = ({
       const run = ++latestSelect.current;
       setPendingKey(key);
       setFailedSelect(null);
+      setGroupChangedKey(null);
 
       // The input entered for the method in the first group that has one.
       const storedOf = (target: Target) =>
-        readCustomerInputs(target.group, target.scope)[target.method.handle];
+        storedInputOf(
+          readCustomerInputs(target.group, target.scope),
+          target.method
+        );
       const first = selected.find((target) => storedOf(target)) ?? selected[0];
       const leadStored = storedOf(first);
       // The input goes to every group before any request, so the groups never show
@@ -238,8 +274,8 @@ export const DeliveryMethodList = ({
         if (target === first || !leadStored) {
           return stored ? stored.input : method.data;
         }
-        if (JSON.stringify(stored?.input) !== JSON.stringify(leadStored.input)) {
-          remember(group, scope, method.handle, { ...leadStored, synced: false });
+        if (!sameInput(stored?.input, leadStored.input)) {
+          remember(group, scope, method, { ...leadStored, synced: false });
         }
         return leadStored.input;
       });
@@ -256,24 +292,38 @@ export const DeliveryMethodList = ({
             customerInput,
           });
           if (customerInput !== undefined) {
-            markSynced(group, scope, method.handle, customerInput);
+            markSynced(group, scope, method, customerInput);
           }
         })
       );
-      const failed = selected.filter((target, index) => {
-        const result = results[index];
-        if (result.status === 'fulfilled') {
-          return false;
-        }
-        console.error('Failed to select delivery method:', result.reason);
-        // A closed checkout is not retried; the checkout itself tells the customer why.
-        return !closedCheckoutCode(result.reason);
-      });
       if (run !== latestSelect.current) {
+        // A newer selection took over; it reports its own outcome.
         return;
       }
+      const reasons = results.flatMap((result) =>
+        result.status === 'rejected' && !isMutationSuperseded(result.reason)
+          ? [result.reason]
+          : []
+      );
+      reasons.forEach((reason) =>
+        console.error('Failed to select delivery method:', reason)
+      );
+      const failed = selected.filter((target, index) => {
+        const result = results[index];
+        return (
+          result.status === 'rejected' &&
+          !isMutationSuperseded(result.reason) &&
+          // A closed checkout is not retried; the checkout itself tells the customer why.
+          !closedCheckoutCode(result.reason) &&
+          // Changed shipments are not retried either: the answer brought the new ones.
+          !isGroupChanged(result.reason)
+        );
+      });
+      setGroupChangedKey(reasons.some(isGroupChanged) ? key : null);
       setFailedSelect(
-        failed.length ? { key, groupIds: failed.map((target) => target.group.id) } : null
+        failed.length
+          ? { key, groupIds: failed.map((target) => target.group.id) }
+          : null
       );
       setPendingKey(null);
     },
@@ -300,7 +350,9 @@ export const DeliveryMethodList = ({
     }
     void selectIn(
       failedKey,
-      targetsOf(failedKey).filter((target) => unsavedGroups.includes(target.group))
+      targetsOf(failedKey).filter((target) =>
+        unsavedGroups.includes(target.group)
+      )
     );
   };
 
@@ -324,7 +376,9 @@ export const DeliveryMethodList = ({
       return;
     }
     initialSelectDone.current = true;
-    const method = methods.find((candidate) => methodKey(candidate) === initialSelectKey);
+    const method = methods.find(
+      (candidate) => methodKey(candidate) === initialSelectKey
+    );
     if (method) {
       void handleSelectMethod(method);
     } else {
@@ -344,10 +398,12 @@ export const DeliveryMethodList = ({
       if (!method) {
         return;
       }
-      for (const { group, method: groupMethod, scope } of targetsOf(methodKey(method))) {
+      for (const { group, method: groupMethod, scope } of targetsOf(
+        methodKey(method)
+      )) {
         // An emptied form stays a draft too: dropping it would bring back the input the API
         // saved, which the form no longer shows.
-        remember(group, scope, groupMethod.handle, { input, view, synced: false });
+        remember(group, scope, groupMethod, { input, view, synced: false });
       }
     },
     [methods, targetsOf, remember]
@@ -357,26 +413,51 @@ export const DeliveryMethodList = ({
    * Saves the input of the selected method in every group where it is unsaved, as it is
    * when the save starts. It is marked saved only if it did not change during the request;
    * otherwise a later save follows. For the reset option the save selects it again.
+   *
+   * A selection the buyer makes meanwhile wins (BR-q2xm): the save stops before sending
+   * anything for an earlier method, and each group is read from the latest render.
    */
   const saveSelectedInput = useCallback(async () => {
-    const { targets, rejectedKeyOf } = latest.current;
-    for (const target of targets) {
+    const run = latestSelect.current;
+    for (let index = 0; ; index += 1) {
+      if (latestSelect.current !== run) {
+        return;
+      }
+      const { targets, rejectedKeyOf } = latest.current;
+      const target = targets[index];
+      if (!target) {
+        return;
+      }
       const { group, method, scope, reselecting } = target;
-      const stored = readCustomerInputs(group, scope)[method.handle];
-      const input = apiCustomerInput(method, stored ? stored.input : method.data);
+      const stored = storedInputOf(readCustomerInputs(group, scope), method);
+      const input = apiCustomerInput(
+        method,
+        stored ? stored.input : method.data
+      );
       if (
         input === undefined ||
-        !needsSave(stored?.synced, JSON.stringify(input), reselecting, rejectedKeyOf(target))
+        !needsSave(
+          stored?.synced,
+          JSON.stringify(input),
+          reselecting,
+          rejectedKeyOf(target)
+        )
       ) {
         continue;
       }
       recordSent(target, input);
-      await updateShippingMethod({
-        optionHandle: method.handle,
-        deliveryGroupId: group.id,
-        customerInput: input,
-      });
-      markSynced(group, scope, method.handle, input);
+      try {
+        await updateShippingMethod({
+          optionHandle: method.handle,
+          deliveryGroupId: group.id,
+          customerInput: input,
+        });
+      } catch (error) {
+        // A newer save of this group's input took the place of this one and follows it.
+        if (isMutationSuperseded(error)) return;
+        throw error;
+      }
+      markSynced(group, scope, method, input);
     }
   }, [updateShippingMethod, markSynced, recordSent]);
 
@@ -391,7 +472,12 @@ export const DeliveryMethodList = ({
         return [];
       }
       const key = JSON.stringify(input);
-      return needsSave(target.method.synced, key, target.reselecting, rejectedKeyOf(target))
+      return needsSave(
+        target.method.synced,
+        key,
+        target.reselecting,
+        rejectedKeyOf(target)
+      )
         ? [[target.group.id, key]]
         : [];
     });
@@ -453,7 +539,9 @@ export const DeliveryMethodList = ({
       return null;
     }
     const quoted = groups.map(quotedMethod);
-    return quoted.every((method) => method !== null) ? (quoted as DeliveryMethod[]) : null;
+    return quoted.every((method) => method !== null)
+      ? (quoted as DeliveryMethod[])
+      : null;
   }, [groups, pendingKey, serverKey]);
   const resetReason = groups.length === 1 ? groups[0].resetReason : null;
 
@@ -469,7 +557,9 @@ export const DeliveryMethodList = ({
           showIcon
           title={resetReason.message}
           description={t(
-            resetKey ? 'delivery-selection-reset-fix' : 'delivery-selection-reset'
+            resetKey
+              ? 'delivery-selection-reset-fix'
+              : 'delivery-selection-reset'
           )}
         />
       )}
@@ -486,6 +576,9 @@ export const DeliveryMethodList = ({
             </Button>
           }
         />
+      )}
+      {groupChangedKey && !pendingKey && serverKey !== groupChangedKey && (
+        <Alert type="warning" showIcon title={t('delivery-group-changed')} />
       )}
       {failedKey && !pendingKey && (
         <Alert
@@ -510,18 +603,20 @@ export const DeliveryMethodList = ({
       {failureCount > 0 && !rejectedMessages && (
         <Alert type="warning" showIcon title={t('delivery-input-retrying')} />
       )}
-      {Object.entries(providerMethodsRecord).map(([provider, providerMethods]) => (
-        <ProviderRenderer
-          key={provider}
-          moduleType={ProviderModuleType.Delivery}
-          provider={provider}
-          availableMethods={providerMethods}
-          selectedMethod={selectedMethod}
-          onSelectMethod={handleSelectMethod}
-          onUpdateMethodData={handleUpdateMethodData}
-          deliveryAddress={address}
-        />
-      ))}
+      {Object.entries(providerMethodsRecord).map(
+        ([provider, providerMethods]) => (
+          <ProviderRenderer
+            key={provider}
+            moduleType={ProviderModuleType.Delivery}
+            provider={provider}
+            availableMethods={providerMethods}
+            selectedMethod={selectedMethod}
+            onSelectMethod={handleSelectMethod}
+            onUpdateMethodData={handleUpdateMethodData}
+            deliveryAddress={address}
+          />
+        )
+      )}
       {quotedMethods && <ShipmentQuote methods={quotedMethods} withLabel />}
     </Flex>
   );

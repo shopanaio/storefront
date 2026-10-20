@@ -15,7 +15,10 @@ import {
   useReadPlacement,
 } from '#checkout/state/placement/recovery';
 import type { ReturnParams } from '#checkout/state/placement/recovery';
-import { phaseForOutcome, recordOutcome } from '#checkout/state/placement/transitions';
+import {
+  phaseForOutcome,
+  recordOutcome,
+} from '#checkout/state/placement/transitions';
 import type { PlacementPhase } from '#checkout/state/placement/placementStore';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
 import { CheckoutResult } from '#checkout/components/result/CheckoutResult';
@@ -39,7 +42,10 @@ export interface CheckoutReturnPageProps {
   onOrderAccepted?: (event: OrderAcceptedEvent) => void;
 }
 
-export const CheckoutReturnPageClient = ({ theme, onOrderAccepted }: CheckoutReturnPageProps) => (
+export const CheckoutReturnPageClient = ({
+  theme,
+  onOrderAccepted,
+}: CheckoutReturnPageProps) => (
   <CheckoutThemeProvider theme={theme}>
     <CheckoutReturn onOrderAccepted={onOrderAccepted} />
   </CheckoutThemeProvider>
@@ -56,7 +62,7 @@ const CheckoutReturn = ({
   const checkoutPath = theme.useCheckoutPath();
   const readPlacement = useReadPlacement();
   const cleanup = useDefaultCartCleanup();
-  const { cartId, loaded } = useCartId();
+  const { cartId, loaded, error: cartError } = useCartId();
   const [view, setView] = useState<ReturnView>({ name: 'loading' });
   const startedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -66,9 +72,11 @@ const CheckoutReturn = ({
     latest.current = { cartId, cleanup, readPlacement, onOrderAccepted };
   });
 
-  // Runs once, when the cart cookie is known; polling stops only when the page unmounts.
+  // Runs once, when the cart cookie is known (a failed cart load keeps it); polling stops only
+  // when the page unmounts.
+  const cartKnown = loaded || Boolean(cartError);
   useEffect(() => {
-    if (!loaded || startedRef.current) return;
+    if (!cartKnown || startedRef.current) return;
     startedRef.current = true;
 
     // Read once: the token is gone from the address bar after the first read.
@@ -99,7 +107,8 @@ const CheckoutReturn = ({
         }
         if (outcome.kind === 'accepted') {
           // A read by the token alone does not name the checkout; the URL does.
-          const checkoutId = attempt?.checkoutId ?? result.checkoutId ?? params.checkoutId;
+          const checkoutId =
+            attempt?.checkoutId ?? result.checkoutId ?? params.checkoutId;
           // Only the cart this order was placed from is cleared (decision 1.6).
           if (checkoutId && checkoutId === latest.current.cartId) {
             latest.current.cleanup(checkoutId);
@@ -118,7 +127,7 @@ const CheckoutReturn = ({
       },
     });
     abortRef.current = controller;
-  }, [loaded]);
+  }, [cartKnown]);
 
   useEffect(
     () => () => {
@@ -154,7 +163,11 @@ const CheckoutReturn = ({
             title={t('payment-failed')}
             subTitle={view.failure?.message || null}
             extra={
-              <Button type="primary" size="large" onClick={() => router.replace(checkoutPath)}>
+              <Button
+                type="primary"
+                size="large"
+                onClick={() => router.replace(checkoutPath)}
+              >
                 {t('retry-payment')}
               </Button>
             }
@@ -202,7 +215,11 @@ const CheckoutReturn = ({
       // The checkout page resumes these from the attempt journal.
       return (
         <PlacementScreen brand={brand}>
-          <Result status="info" title={t('payment-incomplete')} extra={backToCheckout} />
+          <Result
+            status="info"
+            title={t('payment-incomplete')}
+            extra={backToCheckout}
+          />
         </PlacementScreen>
       );
     case 'loading':

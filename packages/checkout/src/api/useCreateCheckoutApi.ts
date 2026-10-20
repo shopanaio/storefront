@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useApolloClient } from '@apollo/client/react';
 import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
+import {
+  followSuperseded,
+  isMutationSuperseded,
+} from '@shopana/storefront-sdk/modules/cart/core/utils/mutationQueue';
 import { CheckoutApi } from '#checkout/api/interface';
 import { useCheckoutOperation } from '#checkout/api/useCheckoutOperation';
 import { OperationKey } from '#checkout/state/checkoutBus';
@@ -35,6 +39,7 @@ import type { Checkout } from '#checkout/types/entity';
 import { CombinedGraphQLErrors } from '@apollo/client';
 import {
   graphQLErrorPlacement,
+  INPUT_UNSAVED_CODE,
   isDefiniteRejection,
   mapPlacementPayload,
   PlacementUnconfirmedError,
@@ -48,6 +53,17 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const latestCheckout = useRef(checkout);
   useEffect(() => {
     latestCheckout.current = checkout;
+  });
+  /**
+   * Resources whose latest save failed while the buyer's value stays on screen (address,
+   * contact, note, recipient). The order is not placed until each is saved (BR-awbl).
+   */
+  const unsavedWrites = useRef<{
+    checkoutId: string | null;
+    keys: Set<string>;
+  }>({
+    checkoutId: null,
+    keys: new Set(),
   });
   const { commit: commitSelectDelivery } = useCheckoutOperation(
     selectDeliveryMethodMutation,
@@ -86,7 +102,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { send: sendAddAddresses } = useCheckoutOperation(
     addDeliveryAddressesMutation,
     {
-      errorMessage: t('error-save-address'),
+      // The address section shows the failure under the form.
+      showErrorToast: false,
       operationKey: OperationKey.AddDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -94,7 +111,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
   const { send: sendUpdateAddresses } = useCheckoutOperation(
     updateDeliveryAddressesMutation,
     {
-      errorMessage: t('error-save-address'),
+      // The address section shows the failure under the form.
+      showErrorToast: false,
       operationKey: OperationKey.UpdateDeliveryAddresses,
       sectionId: SectionId.Address,
     }
@@ -185,19 +203,52 @@ export function useCreateCheckoutApi(): CheckoutApi {
         query: StorefrontLoadCheckoutQueryDocument,
         variables: { checkoutId },
       });
-      const current = data?.checkout
+      const cached = data?.checkout
         ? mapApiCheckoutToCheckout(data.checkout)
-        : latestCheckout.current;
+        : null;
+      const shown =
+        latestCheckout.current?.id === checkoutId
+          ? latestCheckout.current
+          : null;
+      // The cache may hold an older snapshot than the one shown (a late answer of a read sent
+      // before the last write): the newer of the two describes the checkout (SC-4i3a).
+      const current =
+        cached && shown
+          ? cached.updatedAt.getTime() >= shown.updatedAt.getTime()
+            ? cached
+            : shown
+          : (cached ?? shown);
       if (!current) {
         throw new Error('Checkout is unavailable');
       }
       return current;
     };
+    const unsavedKeys = () => {
+      const checkoutId = checkout?.id ?? null;
+      if (unsavedWrites.current.checkoutId !== checkoutId) {
+        unsavedWrites.current = { checkoutId, keys: new Set() };
+      }
+      return unsavedWrites.current.keys;
+    };
+    /** Records whether the latest save of `key` got through. */
+    const tracked = async <T>(key: string, write: Promise<T>): Promise<T> => {
+      const keys = unsavedKeys();
+      try {
+        const value = await write;
+        keys.delete(key);
+        return value;
+      } catch (error) {
+        if (!isMutationSuperseded(error)) keys.add(key);
+        throw error;
+      }
+    };
     return {
+      // A save replaced in the queue by a newer one rejects with `MutationSupersededError`:
+      // the delivery section must not take a value that never went for a saved one (BR-q2xm).
       selectDeliveryMethod: async (input) => {
         await commitSelectDelivery(
           { input: { ...input, ...mutationContext() } },
-          { key: `delivery:${input.deliveryGroupId}` }
+          { key: `delivery:${input.deliveryGroupId}`, superseded: 'reject' }
         );
       },
       selectPaymentMethod: async (input) => {
@@ -213,26 +264,36 @@ export function useCreateCheckoutApi(): CheckoutApi {
         );
       },
       updateCustomerIdentity: async (input) => {
-        await commitUpdateIdentity(
-          { input: { ...input, ...mutationContext() } },
-          { key: 'contact' }
+        await tracked(
+          'contact',
+          commitUpdateIdentity(
+            { input: { ...input, ...mutationContext() } },
+            { key: 'contact' }
+          )
         );
       },
       saveDeliveryAddress: async (address) => {
-        await enqueueMutation(
-          async () => {
-            const data = mapCheckoutToAddressFormData(currentCheckout());
-            if (!data) return;
-            const { update, add } = addressMutations(data, address);
-            const context = mutationContext();
-            if (update) {
-              await sendUpdateAddresses({ input: { ...update, ...context } });
-            }
-            if (add) {
-              await sendAddAddresses({ input: { ...add, ...context } });
-            }
-          },
-          { key: 'address' }
+        await tracked(
+          'address',
+          followSuperseded(
+            enqueueMutation(
+              async () => {
+                const data = mapCheckoutToAddressFormData(currentCheckout());
+                if (!data) return;
+                const { update, add } = addressMutations(data, address);
+                const context = mutationContext();
+                if (update) {
+                  await sendUpdateAddresses({
+                    input: { ...update, ...context },
+                  });
+                }
+                if (add) {
+                  await sendAddAddresses({ input: { ...add, ...context } });
+                }
+              },
+              { key: 'address' }
+            )
+          )
         );
       },
       removeDeliveryAddresses: async (input) => {
@@ -241,29 +302,44 @@ export function useCreateCheckoutApi(): CheckoutApi {
         });
       },
       saveDeliveryRecipient: async (recipient) => {
-        await enqueueMutation(
-          async () => {
-            const data = mapCheckoutToRecipientFormData(currentCheckout());
-            if (!data) return;
-            const { remove, update, add } = recipientMutations(data, recipient);
-            const context = mutationContext();
-            if (remove) {
-              await sendRemoveRecipients({ input: { ...remove, ...context } });
-            }
-            if (update) {
-              await sendUpdateRecipients({ input: { ...update, ...context } });
-            }
-            if (add) {
-              await sendAddRecipients({ input: { ...add, ...context } });
-            }
-          },
-          { key: 'recipient' }
+        await tracked(
+          'recipient',
+          followSuperseded(
+            enqueueMutation(
+              async () => {
+                const data = mapCheckoutToRecipientFormData(currentCheckout());
+                if (!data) return;
+                const { remove, update, add } = recipientMutations(
+                  data,
+                  recipient
+                );
+                const context = mutationContext();
+                if (remove) {
+                  await sendRemoveRecipients({
+                    input: { ...remove, ...context },
+                  });
+                }
+                if (update) {
+                  await sendUpdateRecipients({
+                    input: { ...update, ...context },
+                  });
+                }
+                if (add) {
+                  await sendAddRecipients({ input: { ...add, ...context } });
+                }
+              },
+              { key: 'recipient' }
+            )
+          )
         );
       },
       updateCustomerNote: async (input) => {
-        await commitUpdateNote(
-          { input: { ...input, ...mutationContext() } },
-          { key: 'note' }
+        await tracked(
+          'note',
+          commitUpdateNote(
+            { input: { ...input, ...mutationContext() } },
+            { key: 'note' }
+          )
         );
       },
       addPromoCode: async (input) => {
@@ -272,17 +348,29 @@ export function useCreateCheckoutApi(): CheckoutApi {
       removePromoCode: async (input) => {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });
       },
+      // The saved input of the selected option is its own resource: a waiting save of it never
+      // replaces an explicit selection, which goes after it in the queue (BR-q2xm).
       updateShippingMethod: async (input) => {
         await commitUpdateDelivery(
           { input: { ...input, ...mutationContext() } },
-          { key: `delivery:${input.deliveryGroupId}` }
+          {
+            key: `delivery-input:${input.deliveryGroupId}`,
+            superseded: 'reject',
+          }
         );
       },
       submitCheckout: async (input) => {
-        // The order goes with everything the buyer entered: a note waiting for a pause in
-        // typing is sent now, and placeOrder waits for every write queued before it.
-        flushPendingInputs();
+        // The order goes with everything the buyer entered: input held back (a note waiting
+        // for a pause in typing or for its retry) is sent now, and placeOrder waits for every
+        // write queued before it.
+        await Promise.allSettled(flushPendingInputs());
         await waitForMutations();
+        if (unsavedKeys().size > 0) {
+          // A value the buyer sees was not saved: the order would go without it.
+          return graphQLErrorPlacement(input.checkoutId, [
+            { message: '', extensions: { code: INPUT_UNSAVED_CODE } },
+          ]);
+        }
         try {
           const response = await commitSubmitCheckout({ input });
           return mapPlacementPayload(response.placeOrder);

@@ -1,8 +1,18 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ProviderProps } from '#checkout/vendors/types';
 import type { DeliveryGroup, DeliveryMethod } from '../types';
-import { readCustomerInputs, useCustomerInputStore } from '../customerInputStorage';
+import {
+  readCustomerInputs,
+  useCustomerInputStore,
+} from '../customerInputStorage';
+import { methodKey } from '../shipments';
 import { DeliveryMethodList } from './DeliveryMethodList';
 
 const api = vi.hoisted(() => ({
@@ -71,7 +81,11 @@ const group = (
 
 const list = (groups: DeliveryGroup[]) => (
   <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
-    <DeliveryMethodList groups={groups} methods={groups[0].deliveryMethods} address={null} />
+    <DeliveryMethodList
+      groups={groups}
+      methods={groups[0].deliveryMethods}
+      address={null}
+    />
   </NextIntlClientProvider>
 );
 
@@ -108,7 +122,10 @@ describe('DeliveryMethodList', () => {
 
   it('SC-wdj1: shows the shipment that was not saved and retries only that one', async () => {
     api.selectDeliveryMethod.mockImplementation(async ({ deliveryGroupId }) => {
-      if (deliveryGroupId === 'g2' && api.selectDeliveryMethod.mock.calls.length === 2) {
+      if (
+        deliveryGroupId === 'g2' &&
+        api.selectDeliveryMethod.mock.calls.length === 2
+      ) {
         throw new Error('network');
       }
     });
@@ -119,20 +136,25 @@ describe('DeliveryMethodList', () => {
     expect(
       await screen.findByText('Checkout.delivery-shipments-not-saved')
     ).toBeTruthy();
-    expect(api.selectDeliveryMethod.mock.calls.map(([input]) => input.deliveryGroupId)).toEqual([
-      'g1',
-      'g2',
-    ]);
+    expect(
+      api.selectDeliveryMethod.mock.calls.map(
+        ([input]) => input.deliveryGroupId
+      )
+    ).toEqual(['g1', 'g2']);
 
     fireEvent.click(screen.getByText('Checkout.retry'));
 
-    await waitFor(() => expect(api.selectDeliveryMethod).toHaveBeenCalledTimes(3));
+    await waitFor(() =>
+      expect(api.selectDeliveryMethod).toHaveBeenCalledTimes(3)
+    );
     expect(api.selectDeliveryMethod.mock.calls[2][0]).toMatchObject({
       deliveryGroupId: 'g2',
       optionHandle: 'b1',
     });
     await waitFor(() =>
-      expect(screen.queryByText('Checkout.delivery-shipments-not-saved')).toBeNull()
+      expect(
+        screen.queryByText('Checkout.delivery-shipments-not-saved')
+      ).toBeNull()
     );
   });
 
@@ -142,7 +164,10 @@ describe('DeliveryMethodList', () => {
         throw new Error('network');
       }
     });
-    const view = renderList([group('g1', [method('a1')]), group('g2', [method('b1')])]);
+    const view = renderList([
+      group('g1', [method('a1')]),
+      group('g2', [method('b1')]),
+    ]);
 
     fireEvent.click(screen.getByText('select a1'));
     expect(
@@ -151,7 +176,10 @@ describe('DeliveryMethodList', () => {
 
     // The lines of the second shipment changed: the API renamed the group.
     view.rerender(
-      list([group('g1', [method('a1')]), { ...group('g3', [method('c1')]), replacesGroupIds: ['g2'] }])
+      list([
+        group('g1', [method('a1')]),
+        { ...group('g3', [method('c1')]), replacesGroupIds: ['g2'] },
+      ])
     );
     fireEvent.click(screen.getByText('Checkout.retry'));
 
@@ -165,21 +193,115 @@ describe('DeliveryMethodList', () => {
   it('SC-mqce: a rejected delivery input shows why, can be saved again and unblocks once saved', async () => {
     const input = { warehouseRef: 'w-5' };
     act(() =>
-      useCustomerInputStore.getState().remember({ id: 'g1' }, '', 'a1', { input, synced: false })
+      useCustomerInputStore
+        .getState()
+        .remember({ id: 'g1' }, '', method('a1'), { input, synced: false })
     );
     const selected = method('a1', { data: input, synced: false });
     api.updateShippingMethod
-      .mockRejectedValueOnce([{ message: 'Branch is closed', retryable: false }])
+      .mockRejectedValueOnce([
+        { message: 'Branch is closed', retryable: false },
+      ])
       .mockResolvedValueOnce(undefined);
     renderList([group('g1', [selected], selected)]);
 
     expect(await screen.findByText('Branch is closed')).toBeTruthy();
-    expect(readCustomerInputs({ id: 'g1' }, '').a1.synced).toBe(false);
+    expect(
+      readCustomerInputs({ id: 'g1' }, '')[methodKey(method('a1'))].synced
+    ).toBe(false);
 
     fireEvent.click(screen.getByText('Checkout.save'));
 
-    await waitFor(() => expect(api.updateShippingMethod).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(readCustomerInputs({ id: 'g1' }, '').a1.synced).toBe(true));
+    await waitFor(() =>
+      expect(api.updateShippingMethod).toHaveBeenCalledTimes(2)
+    );
+    await waitFor(() =>
+      expect(
+        readCustomerInputs({ id: 'g1' }, '')[methodKey(method('a1'))].synced
+      ).toBe(true)
+    );
     expect(screen.queryByText('Branch is closed')).toBeNull();
+  });
+
+  it('SC-v8kd: a background save of the input does not overwrite a method the buyer picks meanwhile', async () => {
+    const input = { warehouseRef: 'w-5' };
+    const branch = (handle: string) =>
+      method(handle, { data: input, synced: false });
+    const postomat = (handle: string) =>
+      method(handle, { code: 'postomat', title: 'postomat' });
+    let finishSave!: () => void;
+    api.updateShippingMethod.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSave = resolve;
+        })
+    );
+    api.selectDeliveryMethod.mockResolvedValue(undefined);
+    act(() => {
+      for (const id of ['g1', 'g2']) {
+        useCustomerInputStore
+          .getState()
+          .remember({ id }, '', method('a1'), { input, synced: false });
+      }
+    });
+    renderList([
+      group('g1', [branch('a1'), postomat('b1')], branch('a1')),
+      group('g2', [branch('a2'), postomat('b2')], branch('a2')),
+    ]);
+
+    // The branch of the first shipment is being saved in the background…
+    await waitFor(() =>
+      expect(api.updateShippingMethod).toHaveBeenCalledTimes(1)
+    );
+    expect(api.updateShippingMethod).toHaveBeenLastCalledWith(
+      expect.objectContaining({ deliveryGroupId: 'g1', optionHandle: 'a1' })
+    );
+    // …when the buyer picks the postomat for both shipments.
+    fireEvent.click(screen.getByText('select b1'));
+    await waitFor(() =>
+      expect(api.selectDeliveryMethod).toHaveBeenCalledTimes(2)
+    );
+    await act(async () => finishSave());
+
+    // The save stops: the branch is not sent for the second shipment after the pick.
+    expect(api.updateShippingMethod).toHaveBeenCalledTimes(1);
+    expect(
+      api.selectDeliveryMethod.mock.calls.map(([call]) => call.optionHandle)
+    ).toEqual(['b1', 'b2']);
+  });
+
+  it('does not report a selection replaced by a newer one in the queue as failed', async () => {
+    const { MutationSupersededError } =
+      await import('@shopana/storefront-sdk/modules/cart/core/utils/mutationQueue');
+    api.selectDeliveryMethod.mockRejectedValueOnce(
+      new MutationSupersededError(Promise.resolve())
+    );
+    renderList([group('g1', [method('a1')])]);
+
+    fireEvent.click(screen.getByText('select a1'));
+
+    await waitFor(() =>
+      expect(api.selectDeliveryMethod).toHaveBeenCalledTimes(1)
+    );
+    expect(screen.queryByText('Checkout.delivery-not-saved')).toBeNull();
+    expect(screen.queryByText('Checkout.retry')).toBeNull();
+  });
+
+  it('M-6: says why a selection refused for changed shipments is not retried', async () => {
+    api.selectDeliveryMethod.mockRejectedValueOnce([
+      {
+        code: 'CHECKOUT_DELIVERY_GROUP_CHANGED',
+        message: 'changed',
+        retryable: false,
+      },
+    ]);
+    renderList([group('g1', [method('a1')])]);
+
+    fireEvent.click(screen.getByText('select a1'));
+
+    expect(
+      await screen.findByText('Checkout.delivery-group-changed')
+    ).toBeTruthy();
+    expect(screen.queryByText('Checkout.retry')).toBeNull();
   });
 });

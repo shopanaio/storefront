@@ -65,7 +65,10 @@ const fallbackCountry = (code: string): DeliveryCountry => ({
  * than one country. The form is the address module registered for the country (Ukraine keeps
  * its city-first form); other countries get the form laid out by their address format.
  */
-export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProps) => {
+export const AddressSectionView = ({
+  data,
+  holdInvalid,
+}: AddressSectionViewProps) => {
   const t = useTranslations('Checkout');
   const { saveDeliveryAddress } = useCheckoutApi();
   const savedAddress = data?.address ?? null;
@@ -82,8 +85,12 @@ export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProp
   const countries = reloading ? lastCountries : loaded.countries;
   const loading = loaded.loading && !reloading;
   // A country picked in the selector; it holds while the saved address stays as it was.
-  const [picked, setPicked] = useState<{ code: string; over: string | null } | null>(null);
-  const pickedCountryCode = picked && picked.over === savedCountryCode ? picked.code : null;
+  const [picked, setPicked] = useState<{
+    code: string;
+    over: string | null;
+  } | null>(null);
+  const pickedCountryCode =
+    picked && picked.over === savedCountryCode ? picked.code : null;
   // The country the form opened with stays while nothing is saved: the buyer country set
   // implicitly later (by a contact save) does not swap the form under the buyer (BR-q7dr).
   const [openedWith, setOpenedWith] = useState<string | null>(null);
@@ -111,13 +118,18 @@ export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProp
   // The saved address belongs to another country than the form shows (picked in the selector,
   // or no longer delivered to): the order must not go to it until one is saved for this country.
   const countryMismatch =
-    savedCountryCode !== null && countryCode !== null && savedCountryCode !== countryCode;
-  useEffect(() => {
-    holdInvalid?.(countryMismatch);
-  }, [countryMismatch, holdInvalid]);
+    savedCountryCode !== null &&
+    countryCode !== null &&
+    savedCountryCode !== countryCode;
 
-  /** The last save failed; the form keeps what the buyer entered and says so (SC-nker). */
+  /**
+   * The last save failed; the form keeps what the buyer entered and says so (SC-nker). The
+   * order waits until the address is saved: it would go to the old one (BR-awbl).
+   */
   const [saveFailed, setSaveFailed] = useState(false);
+  useEffect(() => {
+    holdInvalid?.(countryMismatch || saveFailed);
+  }, [countryMismatch, saveFailed, holdInvalid]);
 
   /**
    * The address goes to every delivery group. Saves wait in the checkout mutation queue, and a
@@ -153,7 +165,9 @@ export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProp
   if (error && countries.length === 0 && !found) {
     return (
       <Flex id={ADDRESS_SECTION_ANCHOR} vertical gap={8} align="flex-start">
-        <Typography.Text type="danger">{t('delivery-countries-error')}</Typography.Text>
+        <Typography.Text type="danger">
+          {t('delivery-countries-error')}
+        </Typography.Text>
         <Button onClick={() => void refetch()}>{t('retry')}</Button>
       </Flex>
     );
@@ -184,12 +198,21 @@ export const AddressSectionView = ({ data, holdInvalid }: AddressSectionViewProp
           optionFilterProp="label"
           aria-label={t('country-region')}
           value={country.code}
-          options={countries.map(({ code, name }) => ({ value: code, label: name }))}
-          onChange={(code: string) => setPicked({ code, over: savedCountryCode })}
+          options={countries.map(({ code, name }) => ({
+            value: code,
+            label: name,
+          }))}
+          onChange={(code: string) =>
+            setPicked({ code, over: savedCountryCode })
+          }
         />
       ) : null}
       <Form
-        address={savedAddress && savedCountryCode === country.code ? savedAddress : null}
+        address={
+          savedAddress && savedCountryCode === country.code
+            ? savedAddress
+            : null
+        }
         country={country}
         onSubmit={onSubmit}
       />

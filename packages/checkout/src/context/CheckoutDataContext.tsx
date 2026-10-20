@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
 import { useQuery } from '@apollo/client/react';
 import type { Checkout } from '#checkout/types/entity';
@@ -15,7 +22,11 @@ export interface CheckoutDataContextValue {
   loading: boolean;
   loaded: boolean;
   error: Error | null;
-  /** Reads the checkout again, e.g. after the cart changed outside the checkout API. */
+  /**
+   * Reads the checkout again, e.g. after the cart changed outside the checkout API. The read
+   * waits in the queue of writes, so it never answers with a state older than a write queued
+   * before it (SC-4i3a).
+   */
   refetch: () => Promise<unknown>;
 }
 
@@ -30,9 +41,9 @@ function isOlderSnapshot(
 ): boolean {
   return Boolean(
     next &&
-      shown &&
-      next.id === shown.id &&
-      Date.parse(next.updatedAt) < Date.parse(shown.updatedAt)
+    shown &&
+    next.id === shown.id &&
+    Date.parse(next.updatedAt) < Date.parse(shown.updatedAt)
   );
 }
 
@@ -45,7 +56,8 @@ export const CheckoutDataContextProvider: React.FC<{
     skip: !checkoutId,
     fetchPolicy: 'network-only',
   });
-  const received: StorefrontUseCheckoutFragment | null = query.data?.checkout ?? null;
+  const received: StorefrontUseCheckoutFragment | null =
+    query.data?.checkout ?? null;
   // An answer that left the checkout earlier than the one shown (a read sent before the last
   // write, or a write of another tab) does not replace it. Display only: nothing is sent.
   const [shown, setShown] = useState(received);
@@ -57,15 +69,19 @@ export const CheckoutDataContextProvider: React.FC<{
   // A cart change made outside the checkout (the cart drawer) changes the delivery groups and
   // the selections; they are read again right after it, in the queue of writes (BR-tpm1).
   const { enqueueMutation, subscribeCartUpdates } = useCartSetters();
-  const { refetch } = query;
+  const { refetch: read } = query;
+  const refetch = useCallback(
+    () => enqueueMutation(() => read()),
+    [enqueueMutation, read]
+  );
   useEffect(
     () =>
       subscribeCartUpdates((cart) => {
         if (checkoutId && cart?.id === checkoutId) {
-          void enqueueMutation(() => refetch()).catch(() => undefined);
+          void refetch().catch(() => undefined);
         }
       }),
-    [checkoutId, enqueueMutation, refetch, subscribeCartUpdates]
+    [checkoutId, refetch, subscribeCartUpdates]
   );
   // Mapped once for every consumer; the value changes only with the query state.
   const checkout = useMemo(
@@ -80,13 +96,15 @@ export const CheckoutDataContextProvider: React.FC<{
       loading: query.loading,
       loaded: !query.loading,
       error,
-      refetch: query.refetch,
+      refetch,
     }),
-    [checkout, query.loading, error, query.refetch]
+    [checkout, query.loading, error, refetch]
   );
 
   return (
-    <CheckoutDataContext.Provider value={value}>{children}</CheckoutDataContext.Provider>
+    <CheckoutDataContext.Provider value={value}>
+      {children}
+    </CheckoutDataContext.Provider>
   );
 };
 

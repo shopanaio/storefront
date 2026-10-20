@@ -42,7 +42,7 @@ export type Scalars = {
 };
 
 /**
- * Variant-witness availability used by the canonical listing algebra.
+ * ProductVariant-witness availability used by the canonical listing algebra.
  *
  * A product containing both available and unavailable variants can match both
  * states. Every other active variant filter remains applied to the witness.
@@ -75,15 +75,6 @@ export type Category = Node & {
   readonly products: ProductConnection;
   readonly publishedAt: Scalars['DateTime']['output'];
   readonly seo: Seo;
-  readonly sourceDescription?: Maybe<RichText>;
-  readonly sourceExcerpt?: Maybe<RichText>;
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
-  readonly sourceOgDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceOgImageId?: Maybe<Scalars['ID']['output']>;
-  readonly sourceOgTitle?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoTitle?: Maybe<Scalars['String']['output']>;
   readonly updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -150,8 +141,6 @@ export type CategoryMediaEdge = {
 /** A checkout with multiple items. */
 export type Checkout = Node & {
   readonly __typename: 'Checkout';
-  /** Applied promo codes for the checkout. */
-  readonly appliedPromoCodes: ReadonlyArray<CheckoutPromoCode>;
   /** Billing address used by payment providers and the resulting order. */
   readonly billingAddress?: Maybe<CheckoutBillingAddress>;
   /** Canonical sales channel used by pricing and eligibility rules. */
@@ -189,6 +178,11 @@ export type Checkout = Node & {
   readonly notifications: ReadonlyArray<CheckoutNotification>;
   /** Payment aggregate for this checkout. */
   readonly payment: CheckoutPayment;
+  /**
+   * Every promo code the buyer entered, in entry order, with its state. A code stays here until the
+   * buyer removes it, and a pending or rejected code applies again once its condition is met.
+   */
+  readonly promoCodes: ReadonlyArray<CheckoutPromoCode>;
   /** Revision of the last complete checkout pipeline result. */
   readonly resultRevision: Scalars['String']['output'];
   /** Lifecycle state persisted by checkout, not inferred by the client. */
@@ -203,6 +197,46 @@ export type Checkout = Node & {
   readonly valid: Scalars['Boolean']['output'];
 };
 
+export type CheckoutAddressField =
+  | 'ADDRESS1'
+  | 'ADDRESS2'
+  | 'CITY'
+  | 'FIRST_NAME'
+  | 'LAST_NAME'
+  | 'PHONE'
+  | 'POSTAL_CODE'
+  | 'PROVINCE';
+
+/**
+ * How a delivery address is written in a country. Labels are codes for the storefront
+ * to localize.
+ */
+export type CheckoutAddressFormat = {
+  readonly __typename: 'CheckoutAddressFormat';
+  readonly postalCodeExample?: Maybe<Scalars['String']['output']>;
+  readonly postalCodeLabel?: Maybe<CheckoutPostalCodeLabel>;
+  /** Case-insensitive pattern of a valid postal code, anchored at both ends. */
+  readonly postalCodePattern?: Maybe<Scalars['String']['output']>;
+  /** Label of the PROVINCE field; null when the form has no province. */
+  readonly provinceLabel?: Maybe<CheckoutProvinceLabel>;
+  /**
+   * Provinces to choose from; empty when the province is free text. When delivery zones
+   * cover only some provinces, only those are listed. Names are written as the country's own
+   * addresses write them and are not localized.
+   */
+  readonly provinces: ReadonlyArray<CheckoutAddressProvince>;
+  readonly required: ReadonlyArray<CheckoutAddressField>;
+  /** Rows of the address form in display order; fields of one row share a line. */
+  readonly rows: ReadonlyArray<ReadonlyArray<CheckoutAddressField>>;
+};
+
+export type CheckoutAddressProvince = {
+  readonly __typename: 'CheckoutAddressProvince';
+  /** ISO 3166-2 subdivision code without the country prefix; sent as provinceCode. */
+  readonly code: Scalars['String']['output'];
+  readonly name: Scalars['String']['output'];
+};
+
 /**
  * A normalized international billing address captured independently from
  * delivery destinations. Payment-provider-specific fields belong to data.
@@ -212,7 +246,6 @@ export type CheckoutBillingAddress = {
   readonly address1?: Maybe<Scalars['String']['output']>;
   readonly address2?: Maybe<Scalars['String']['output']>;
   readonly city?: Maybe<Scalars['String']['output']>;
-  readonly company?: Maybe<Scalars['String']['output']>;
   readonly country?: Maybe<Scalars['String']['output']>;
   readonly countryCode?: Maybe<CountryCode>;
   /** Payment-provider-specific billing-address extension data. */
@@ -223,9 +256,9 @@ export type CheckoutBillingAddress = {
   readonly lastName?: Maybe<Scalars['String']['output']>;
   readonly name: Scalars['String']['output'];
   readonly phone?: Maybe<Scalars['String']['output']>;
+  readonly postalCode?: Maybe<Scalars['String']['output']>;
   readonly province?: Maybe<Scalars['String']['output']>;
   readonly provinceCode?: Maybe<Scalars['String']['output']>;
-  readonly zip?: Maybe<Scalars['String']['output']>;
 };
 
 /**
@@ -236,15 +269,14 @@ export type CheckoutBillingAddressInput = {
   readonly address1?: InputMaybe<Scalars['String']['input']>;
   readonly address2?: InputMaybe<Scalars['String']['input']>;
   readonly city?: InputMaybe<Scalars['String']['input']>;
-  readonly company?: InputMaybe<Scalars['String']['input']>;
   readonly countryCode?: InputMaybe<CountryCode>;
   /** Payment-provider-specific billing-address extension data. */
   readonly data?: InputMaybe<Scalars['JSON']['input']>;
   readonly firstName?: InputMaybe<Scalars['String']['input']>;
   readonly lastName?: InputMaybe<Scalars['String']['input']>;
   readonly phone?: InputMaybe<Scalars['String']['input']>;
+  readonly postalCode?: InputMaybe<Scalars['String']['input']>;
   readonly provinceCode?: InputMaybe<Scalars['String']['input']>;
-  readonly zip?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for replacing or clearing the checkout billing address. */
@@ -374,8 +406,6 @@ export type CheckoutDeliveryAddress = {
   readonly address2?: Maybe<Scalars['String']['output']>;
   /** City name. */
   readonly city?: Maybe<Scalars['String']['output']>;
-  /** Company or organization receiving the delivery. */
-  readonly company?: Maybe<Scalars['String']['output']>;
   /** Localized country or territory name. */
   readonly country?: Maybe<Scalars['String']['output']>;
   /** Country code (ISO 3166-1 alpha-2). */
@@ -396,12 +426,12 @@ export type CheckoutDeliveryAddress = {
   readonly name: Scalars['String']['output'];
   /** Contact phone captured with this destination. */
   readonly phone?: Maybe<Scalars['String']['output']>;
+  /** Postal or ZIP code. */
+  readonly postalCode?: Maybe<Scalars['String']['output']>;
   /** Localized region, state, or province name. */
   readonly province?: Maybe<Scalars['String']['output']>;
   /** Province code. */
   readonly provinceCode?: Maybe<Scalars['String']['output']>;
-  /** Postal or ZIP code. */
-  readonly zip?: Maybe<Scalars['String']['output']>;
 };
 
 /**
@@ -418,8 +448,6 @@ export type CheckoutDeliveryAddressInput = {
   readonly address2?: InputMaybe<Scalars['String']['input']>;
   /** City name. */
   readonly city?: InputMaybe<Scalars['String']['input']>;
-  /** Company or organization receiving the delivery. */
-  readonly company?: InputMaybe<Scalars['String']['input']>;
   /** Country code (ISO 3166-1 alpha-2). */
   readonly countryCode?: InputMaybe<CountryCode>;
   /**
@@ -433,10 +461,10 @@ export type CheckoutDeliveryAddressInput = {
   readonly lastName?: InputMaybe<Scalars['String']['input']>;
   /** Phone number for delivery. */
   readonly phone?: InputMaybe<Scalars['String']['input']>;
+  /** Postal or ZIP code. */
+  readonly postalCode?: InputMaybe<Scalars['String']['input']>;
   /** Province code. */
   readonly provinceCode?: InputMaybe<Scalars['String']['input']>;
-  /** Postal or ZIP code. */
-  readonly zip?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Delivery address update element: which address to update and with what data. */
@@ -474,6 +502,25 @@ export type CheckoutDeliveryAddressesUpdateInput = {
   readonly updates: ReadonlyArray<CheckoutDeliveryAddressUpdateInput>;
 };
 
+/** A country the store delivers to. */
+export type CheckoutDeliveryCountry = {
+  readonly __typename: 'CheckoutDeliveryCountry';
+  readonly addressFormat: CheckoutAddressFormat;
+  readonly code: CountryCode;
+  /** Country name localized for the requested locale. */
+  readonly name: Scalars['String']['output'];
+};
+
+/** Input data for forgetting the delivery data saved for one delivery method of a group. */
+export type CheckoutDeliveryCustomerInputClearInput = {
+  /** Identifier of the checkout on which the operation is performed. */
+  readonly checkoutId: Scalars['ID']['input'];
+  /** Identifier of the delivery group whose saved data is cleared. */
+  readonly deliveryGroupId: Scalars['ID']['input'];
+  /** Handle of the delivery option whose method's saved data is cleared. */
+  readonly optionHandle: Scalars['String']['input'];
+};
+
 export type CheckoutDeliveryDestinationInput = {
   readonly address: CheckoutDeliveryAddressInput;
   /** Checkout lines assigned to this destination. */
@@ -492,6 +539,11 @@ export type CheckoutDeliveryGroup = {
   readonly options: ReadonlyArray<CheckoutDeliveryOption>;
   /** Recipient associated with the delivery group. */
   readonly recipient?: Maybe<CheckoutRecipient>;
+  /**
+   * Earlier identifiers of this group, newest first. A group gets a new identifier when its lines
+   * change; mutations naming a replaced identifier apply to this group.
+   */
+  readonly replacesGroupIds: ReadonlyArray<Scalars['ID']['output']>;
   readonly selection: CheckoutDeliveryOptionSelection;
 };
 
@@ -511,8 +563,8 @@ export type CheckoutDeliveryMethodUpdateInput = {
   /** Identifier of the checkout on which the operation is performed. */
   readonly checkoutId: Scalars['ID']['input'];
   /**
-   * Arbitrary customer-provided data for the selected delivery method.
-   * It remains private selection intent and is never returned by Storefront API.
+   * Customer-provided data for the selected delivery method. Omitted or null keeps the data
+   * already saved for this method; use checkoutDeliveryCustomerInputClear to forget it.
    */
   readonly customerInput?: InputMaybe<Scalars['JSON']['input']>;
   /** Identifier of the delivery group for which the delivery method is selected. */
@@ -532,6 +584,7 @@ export type CheckoutDeliveryOption = {
   readonly estimatedMaxDeliveryAt?: Maybe<Scalars['DateTime']['output']>;
   readonly estimatedMinDeliveryAt?: Maybe<Scalars['DateTime']['output']>;
   readonly handle: Scalars['String']['output'];
+  readonly paymentModel: CheckoutShippingPaymentModel;
   readonly phoneRequired: Scalars['Boolean']['output'];
   readonly publicData: Scalars['JSON']['output'];
   readonly title: Scalars['String']['output'];
@@ -539,6 +592,11 @@ export type CheckoutDeliveryOption = {
 
 export type CheckoutDeliveryOptionSelection = {
   readonly __typename: 'CheckoutDeliveryOptionSelection';
+  /**
+   * Delivery data the buyer saved for the selected (or reset) method of this group, for example
+   * the chosen branch. Returned only to whoever may read this checkout.
+   */
+  readonly customerInput?: Maybe<Scalars['JSON']['output']>;
   readonly option?: Maybe<CheckoutDeliveryOption>;
   readonly previousOptionHandle?: Maybe<Scalars['String']['output']>;
   readonly resetReason?: Maybe<CheckoutSelectionResetReason>;
@@ -895,21 +953,35 @@ export type CheckoutPlacementState =
   | 'PLACED'
   | 'RESOURCES_RESERVED';
 
-/** Applied promo code for a checkout. */
+export type CheckoutPostalCodeLabel =
+  | 'POSTAL_CODE'
+  | 'POSTCODE'
+  | 'ZIP_CODE';
+
+/** A promo code entered for a checkout. */
 export type CheckoutPromoCode = {
   readonly __typename: 'CheckoutPromoCode';
-  /** When this promo code was applied. */
-  readonly appliedAt: Scalars['DateTime']['output'];
-  /** Promo code text. */
+  /** When the applied code was last confirmed. Null unless applied. */
+  readonly appliedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Promo code text as the buyer entered it. */
   readonly code: Scalars['String']['output'];
-  /** Discount conditions. */
+  /** Discount conditions of the applied code. */
   readonly conditions?: Maybe<Scalars['JSON']['output']>;
-  /** Discount type (percentage). */
-  readonly discountType: Scalars['String']['output'];
-  /** Discount provider. */
-  readonly provider: Scalars['String']['output'];
-  /** Discount value (percentage as number). */
-  readonly value: Scalars['Int']['output'];
+  /** Discount type of the applied code. Null unless applied. */
+  readonly discountType?: Maybe<Scalars['String']['output']>;
+  /** Buyer-facing explanation of the reason. Null for an applied code. */
+  readonly message?: Maybe<Scalars['String']['output']>;
+  /** Discount provider of the applied code. Null unless applied. */
+  readonly provider?: Maybe<Scalars['String']['output']>;
+  /**
+   * Why the code is not applied: AWAITING_DELIVERY for a pending code, or the rejection reason
+   * (for example MINIMUM_REQUIREMENT_NOT_MET). Null for an applied code.
+   */
+  readonly reason?: Maybe<Scalars['String']['output']>;
+  /** Whether the code is applied, pending or rejected. */
+  readonly status: CheckoutPromoCodeStatus;
+  /** Discount amount in minor units of the applied code. Null unless applied. */
+  readonly value?: Maybe<Scalars['Int']['output']>;
 };
 
 /** Input data for applying a promo code to the checkout. */
@@ -928,6 +1000,22 @@ export type CheckoutPromoCodeRemoveInput = {
   readonly code: Scalars['String']['input'];
 };
 
+/** State of an entered promo code. */
+export type CheckoutPromoCodeStatus =
+  /** The code's discount is applied. */
+  | 'APPLIED'
+  /** The code waits for a condition that cannot be checked yet, such as a chosen delivery option. */
+  | 'PENDING'
+  /** The code is not applied; reason says why. */
+  | 'REJECTED';
+
+export type CheckoutProvinceLabel =
+  | 'COUNTY'
+  | 'OBLAST'
+  | 'PROVINCE'
+  | 'REGION'
+  | 'STATE';
+
 /** Recipient details for the delivery group. */
 export type CheckoutRecipient = {
   readonly __typename: 'CheckoutRecipient';
@@ -943,7 +1031,10 @@ export type CheckoutRecipient = {
   readonly phone?: Maybe<Scalars['String']['output']>;
 };
 
-/** Input fields for recipient details. */
+/**
+ * Input fields for recipient details. A field left out keeps the recipient's current value;
+ * an explicit null or an empty string clears it.
+ */
 export type CheckoutRecipientInput = {
   /** Email of the recipient. */
   readonly email?: InputMaybe<Scalars['Email']['input']>;
@@ -967,6 +1058,16 @@ export type CheckoutSelectionStatus =
   | 'NONE'
   | 'RESET'
   | 'SELECTED';
+
+/** Who collects the delivery fee. */
+export type CheckoutShippingPaymentModel =
+  /**
+   * The recipient pays the carrier directly on delivery; the option costs zero at checkout
+   * and is excluded from totalShippingAmount and the payable amount.
+   */
+  | 'CARRIER_DIRECT'
+  /** The merchant collects the fee as part of the checkout total. */
+  | 'MERCHANT_COLLECTED';
 
 /** A tag that can be attached to checkout lines. */
 export type CheckoutTag = Node & {
@@ -1070,15 +1171,6 @@ export type Collection = Node & {
   readonly products: ProductConnection;
   readonly publishedAt: Scalars['DateTime']['output'];
   readonly seo: Seo;
-  readonly sourceDescription?: Maybe<RichText>;
-  readonly sourceExcerpt?: Maybe<RichText>;
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
-  readonly sourceOgDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceOgImageId?: Maybe<Scalars['ID']['output']>;
-  readonly sourceOgTitle?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoTitle?: Maybe<Scalars['String']['output']>;
   readonly type: CollectionType;
   readonly updatedAt: Scalars['DateTime']['output'];
 };
@@ -2532,8 +2624,6 @@ export type Facet = Node & {
   readonly label: Scalars['String']['output'];
   readonly selectionMode: FacetSelectionMode;
   readonly slug: Scalars['String']['output'];
-  readonly sourceLabel: Scalars['String']['output'];
-  readonly sourceLocale: LocaleCode;
   readonly uiType: FacetUiType;
 };
 
@@ -2584,8 +2674,6 @@ export type FacetValue = Node & {
   readonly kind: FacetValueKind;
   readonly label: Scalars['String']['output'];
   readonly sortIndex: Scalars['Int']['output'];
-  readonly sourceLabel: Scalars['String']['output'];
-  readonly sourceLocale: LocaleCode;
   readonly swatch?: Maybe<FacetSwatch>;
 };
 
@@ -2763,7 +2851,7 @@ export type Language = {
  * One structured listing predicate.
  *
  * Exactly one field must be provided. Different filter kinds are combined with
- * AND. Repeated values of the same filter are combined with OR. Variant facets,
+ * AND. Repeated values of the same filter are combined with OR. ProductVariant facets,
  * price, and availability are evaluated against the same variant.
  */
 export type ListingFilterInput = {
@@ -3537,6 +3625,8 @@ export type Mutation = {
   readonly checkoutDeliveryAddressesRemove: CheckoutMutationPayload;
   /** Updates previously added delivery addresses (e.g., correcting postal code or city). */
   readonly checkoutDeliveryAddressesUpdate: CheckoutMutationPayload;
+  /** Forgets the delivery data saved for one delivery method of a group. */
+  readonly checkoutDeliveryCustomerInputClear: CheckoutMutationPayload;
   /** Selects or changes the delivery method for the entire checkout or specific address. */
   readonly checkoutDeliveryMethodUpdate: CheckoutMutationPayload;
   /** Adds recipients to delivery groups. */
@@ -3755,6 +3845,15 @@ export type MutationCheckoutDeliveryAddressesRemoveArgs = {
  */
 export type MutationCheckoutDeliveryAddressesUpdateArgs = {
   input: CheckoutDeliveryAddressesUpdateInput;
+};
+
+
+/**
+ * Catalog storefront mutations are intentionally empty. Catalog authoring belongs
+ * to the Admin API; buyer-side mutations are owned by cart and checkout services.
+ */
+export type MutationCheckoutDeliveryCustomerInputClearArgs = {
+  input: CheckoutDeliveryCustomerInputClearInput;
 };
 
 
@@ -4273,6 +4372,113 @@ export type NotificationSeverity =
   /** Notification about automatic adjustments (e.g., quantity reduced). */
   | 'WARNING';
 
+export type NovaPoshtaLanguage =
+  | 'RU'
+  | 'UA';
+
+export type NovaPoshtaPointKind =
+  | 'POSTOMAT'
+  | 'WAREHOUSE';
+
+export type NovaPoshtaScheduleDay = {
+  readonly __typename: 'NovaPoshtaScheduleDay';
+  /** English weekday name as the carrier returns it, for example "Monday". */
+  readonly day: Scalars['String']['output'];
+  /** Hours as the carrier returns them, for example "08:00-21:00" or "-". */
+  readonly hours: Scalars['String']['output'];
+};
+
+/** A settlement as Nova Poshta's searchSettlements returns it. */
+export type NovaPoshtaSettlement = {
+  readonly __typename: 'NovaPoshtaSettlement';
+  readonly addressDeliveryAllowed?: Maybe<Scalars['Boolean']['output']>;
+  readonly area?: Maybe<Scalars['String']['output']>;
+  /** Ref of the carrier city that serves the settlement. */
+  readonly cityRef: Scalars['ID']['output'];
+  readonly name: Scalars['String']['output'];
+  /** Full name with area and region, for example "м. Київ, Київська обл.". */
+  readonly present: Scalars['String']['output'];
+  /** Settlement ref; `settlementRef` of the delivery customer input. */
+  readonly ref: Scalars['ID']['output'];
+  readonly region?: Maybe<Scalars['String']['output']>;
+  readonly settlementType?: Maybe<Scalars['String']['output']>;
+  readonly warehouseCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type NovaPoshtaSettlementPage = {
+  readonly __typename: 'NovaPoshtaSettlementPage';
+  /** Whether the next page holds more settlements. */
+  readonly hasNextPage: Scalars['Boolean']['output'];
+  readonly items: ReadonlyArray<NovaPoshtaSettlement>;
+  readonly limit: Scalars['Int']['output'];
+  readonly page: Scalars['Int']['output'];
+  /** Matches across all pages, as the carrier reports it. */
+  readonly totalCount: Scalars['Int']['output'];
+};
+
+/** A street as Nova Poshta's searchSettlementStreets returns it. */
+export type NovaPoshtaSettlementStreet = {
+  readonly __typename: 'NovaPoshtaSettlementStreet';
+  readonly name: Scalars['String']['output'];
+  /** Name with the street type, for example "вул. Хрещатик". */
+  readonly present: Scalars['String']['output'];
+  /** Settlement street ref; `streetRef` of the courier customer input. */
+  readonly ref: Scalars['ID']['output'];
+  readonly settlementRef: Scalars['ID']['output'];
+  readonly streetType?: Maybe<Scalars['String']['output']>;
+};
+
+export type NovaPoshtaSettlementStreetPage = {
+  readonly __typename: 'NovaPoshtaSettlementStreetPage';
+  /** Always false: the carrier has no page parameter for streets. */
+  readonly hasNextPage: Scalars['Boolean']['output'];
+  readonly items: ReadonlyArray<NovaPoshtaSettlementStreet>;
+  readonly limit: Scalars['Int']['output'];
+  readonly page: Scalars['Int']['output'];
+  /** Matches as the carrier reports it; may exceed the returned items. */
+  readonly totalCount: Scalars['Int']['output'];
+};
+
+/** A branch or postomat as Nova Poshta's getWarehouses returns it. */
+export type NovaPoshtaWarehouse = {
+  readonly __typename: 'NovaPoshtaWarehouse';
+  readonly cityName: Scalars['String']['output'];
+  readonly cityRef: Scalars['ID']['output'];
+  readonly description: Scalars['String']['output'];
+  readonly kind: NovaPoshtaPointKind;
+  readonly number: Scalars['String']['output'];
+  /** Point ref; `warehouseRef` of the delivery customer input. */
+  readonly ref: Scalars['ID']['output'];
+  readonly regionCity?: Maybe<Scalars['String']['output']>;
+  /** Opening hours by weekday, in carrier order. */
+  readonly schedule: ReadonlyArray<NovaPoshtaScheduleDay>;
+  /**
+   * Whether the point is working and not denied for selection; only such points pass the
+   * delivery customer input check.
+   */
+  readonly selectable: Scalars['Boolean']['output'];
+  readonly settlementRef: Scalars['ID']['output'];
+  readonly shortAddress: Scalars['String']['output'];
+  /** Carrier status, for example "Working". */
+  readonly status: Scalars['String']['output'];
+  /** Carrier ref of the point type. */
+  readonly typeRef: Scalars['ID']['output'];
+};
+
+export type NovaPoshtaWarehousePage = {
+  readonly __typename: 'NovaPoshtaWarehousePage';
+  /**
+   * Whether the next page holds more points: from `totalCount`, or from a full page when the
+   * carrier does not report it.
+   */
+  readonly hasNextPage: Scalars['Boolean']['output'];
+  readonly items: ReadonlyArray<NovaPoshtaWarehouse>;
+  readonly limit: Scalars['Int']['output'];
+  readonly page: Scalars['Int']['output'];
+  /** Matches across all pages, or null when the carrier does not report it. */
+  readonly totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
 /** A storefront navigation menu owned by the Online Store app. */
 export type OnlineStoreNavigationMenu = Node & {
   readonly __typename: 'OnlineStoreNavigationMenu';
@@ -4327,8 +4533,6 @@ export type OnlineStoreNavigationMenuItem = Node & {
   readonly menu: OnlineStoreNavigationMenu;
   readonly openInNewTab: Scalars['Boolean']['output'];
   readonly parent?: Maybe<OnlineStoreNavigationMenuItem>;
-  readonly sourceLabel: Scalars['String']['output'];
-  readonly sourceLocale: LocaleCode;
   readonly target: OnlineStoreNavigationTarget;
 };
 
@@ -4385,6 +4589,7 @@ export type OnlineStoreNavigationTarget = {
 /** Kinds of destination supported by the Online Store domain model. */
 export type OnlineStoreNavigationTargetType =
   | 'CATEGORY'
+  | 'COLLECTION'
   | 'PAGE'
   | 'PRODUCT'
   | 'URL';
@@ -4414,15 +4619,6 @@ export type OnlineStorePage = Node & {
   readonly id: Scalars['ID']['output'];
   /** The instant at which this page became publicly visible. */
   readonly publishedAt: Scalars['DateTime']['output'];
-  readonly sourceDescription?: Maybe<RichText>;
-  readonly sourceExcerpt?: Maybe<RichText>;
-  readonly sourceLocale: LocaleCode;
-  readonly sourceOgDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceOgImageId?: Maybe<Scalars['ID']['output']>;
-  readonly sourceOgTitle?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoTitle?: Maybe<Scalars['String']['output']>;
-  readonly sourceTitle: Scalars['String']['output'];
   /** Optional storefront template variant selected by the merchant. */
   readonly templateSuffix?: Maybe<Scalars['String']['output']>;
 };
@@ -5140,7 +5336,13 @@ export type PlaceOrderInput = {
    * key with identical input when retrying after a timeout or connection failure.
    */
   readonly idempotencyKey: Scalars['String']['input'];
-  /** HTTPS URL to which an online payment provider may return the customer. */
+  /**
+   * HTTPS URL to which an online payment provider may return the customer.
+   * A query parameter whose whole value is `{placementId}` or `{placementToken}`
+   * receives the placement ID or the placement access token after the placement
+   * is created; the template itself is what idempotency compares, so a retry
+   * sends it unchanged.
+   */
   readonly returnUrl?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -5151,14 +5353,23 @@ export type PlaceOrderPayload = {
   readonly checkoutId?: Maybe<Scalars['ID']['output']>;
   readonly customerAction?: Maybe<PlaceOrderCustomerAction>;
   readonly orderId?: Maybe<Scalars['ID']['output']>;
+  /** Human-readable number of the placed order. */
+  readonly orderNumber?: Maybe<Scalars['String']['output']>;
   readonly paymentCollectionId?: Maybe<Scalars['ID']['output']>;
   readonly paymentFailure?: Maybe<PlaceOrderPaymentFailure>;
+  /** Payment flow captured at placement, including reads without a browser journal. */
+  readonly paymentFlow?: Maybe<PaymentFlow>;
   readonly paymentOperationId?: Maybe<Scalars['ID']['output']>;
   readonly paymentSessionId?: Maybe<Scalars['ID']['output']>;
   /** Durable placement identifier used by Query.checkoutPlacement. */
   readonly placementId?: Maybe<Scalars['ID']['output']>;
   /** Persisted orchestration state used for recovery and reconciliation. */
   readonly placementState?: Maybe<CheckoutPlacementState>;
+  /**
+   * Access token of the placement for Query.checkoutPlacement. Returned only to
+   * the buyer who placed the checkout; it grants reading the placement status.
+   */
+  readonly placementToken?: Maybe<Scalars['String']['output']>;
   /** Checkout.resultRevision captured by this placement. */
   readonly resultRevision?: Maybe<Scalars['String']['output']>;
   readonly status?: Maybe<PlaceOrderStatus>;
@@ -5287,15 +5498,6 @@ export type Product = Node & {
   readonly reviews: ReviewConnection;
   readonly selectedOrFirstAvailableVariant?: Maybe<ProductVariant>;
   readonly seo: Seo;
-  readonly sourceDescription?: Maybe<RichText>;
-  readonly sourceExcerpt?: Maybe<RichText>;
-  readonly sourceLocale: LocaleCode;
-  readonly sourceOgDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceOgImageId?: Maybe<Scalars['ID']['output']>;
-  readonly sourceOgTitle?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoDescription?: Maybe<Scalars['String']['output']>;
-  readonly sourceSeoTitle?: Maybe<Scalars['String']['output']>;
-  readonly sourceTitle: Scalars['String']['output'];
   readonly tags: ReadonlyArray<Tag>;
   readonly title: Scalars['String']['output'];
   readonly totalInventory?: Maybe<Scalars['Int']['output']>;
@@ -5467,7 +5669,7 @@ export type ProductComparisonColumn = {
   /**
    * Media selected by Catalog for the comparison header.
    *
-   * Variant media takes precedence over product media.
+   * ProductVariant media takes precedence over product media.
    */
   readonly featuredMedia?: Maybe<Media>;
   /** Stable column key derived from variant.id. */
@@ -5693,8 +5895,6 @@ export type ProductFeature = Node & {
   readonly id: Scalars['ID']['output'];
   readonly name: Scalars['String']['output'];
   readonly position: Scalars['Int']['output'];
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
   readonly values: ReadonlyArray<ProductFeatureValue>;
 };
 
@@ -5707,8 +5907,6 @@ export type ProductFeatureGroup = Node & {
   readonly id: Scalars['ID']['output'];
   readonly name: Scalars['String']['output'];
   readonly position: Scalars['Int']['output'];
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
 };
 
 /** A localized value assigned to a product specification. */
@@ -5719,8 +5917,6 @@ export type ProductFeatureValue = Node & {
   readonly id: Scalars['ID']['output'];
   readonly name: Scalars['String']['output'];
   readonly position: Scalars['Int']['output'];
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
 };
 
 /**
@@ -5789,8 +5985,6 @@ export type ProductOption = Node & {
   readonly name: Scalars['String']['output'];
   readonly optionValues: ReadonlyArray<ProductOptionValue>;
   readonly position: Scalars['Int']['output'];
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
   readonly type?: Maybe<ProductOptionType>;
 };
 
@@ -5815,8 +6009,6 @@ export type ProductOptionValue = Node & {
   readonly id: Scalars['ID']['output'];
   readonly name: Scalars['String']['output'];
   readonly position: Scalars['Int']['output'];
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
   readonly swatch?: Maybe<ProductOptionValueSwatch>;
 };
 
@@ -6153,9 +6345,7 @@ export type ProductVariant = Node & {
   readonly reviews: ReviewConnection;
   readonly selectedOptions: ReadonlyArray<SelectedOption>;
   readonly sku?: Maybe<Scalars['String']['output']>;
-  readonly sourceLocale: LocaleCode;
-  readonly sourceTitle?: Maybe<Scalars['String']['output']>;
-  readonly title?: Maybe<Scalars['String']['output']>;
+  readonly title: Scalars['String']['output'];
   readonly updatedAt: Scalars['DateTime']['output'];
   readonly weight?: Maybe<Weight>;
 };
@@ -6249,10 +6439,20 @@ export type Query = {
   /** Returns a checkout by its ID. */
   readonly checkout?: Maybe<Checkout>;
   /**
+   * Countries the store delivers to, each with the address form used there. The list comes
+   * from the active delivery zones; a rest-of-world zone adds every other country. Country
+   * names are localized for `localeCode` (a BCP 47 tag; English when missing or invalid).
+   */
+  readonly checkoutDeliveryCountries: ReadonlyArray<CheckoutDeliveryCountry>;
+  /**
    * Returns the latest durable result of a checkout placement.
    *
    * This query is suitable for restoring state after a payment-provider redirect
-   * and for polling asynchronous payment completion.
+   * and for polling asynchronous payment completion. With `token` the placement is
+   * read by its access token alone, from any browser or device and without
+   * checkout read access; such a read never returns the customer action. Without
+   * `token` only the visitor or signed-in customer who placed it reads it. An
+   * inaccessible placement is returned as null.
    */
   readonly checkoutPlacement?: Maybe<PlaceOrderPayload>;
   /** Returns a visible collection by its globally unique Relay ID. */
@@ -6274,6 +6474,22 @@ export type Query = {
   readonly node?: Maybe<Node>;
   /** Returns catalog objects in the same order as the supplied Relay IDs. */
   readonly nodes: ReadonlyArray<Maybe<Node>>;
+  /**
+   * Searches streets of a settlement by name (carrier `searchSettlementStreets`). The carrier
+   * returns one page of up to `limit` streets and has no page parameter.
+   */
+  readonly novaPoshtaSettlementStreets: NovaPoshtaSettlementStreetPage;
+  /**
+   * Searches Nova Poshta settlements by name or postal code (carrier `searchSettlements`).
+   * Read from the carrier on every request; does not depend on a checkout.
+   */
+  readonly novaPoshtaSettlements: NovaPoshtaSettlementPage;
+  /**
+   * Lists Nova Poshta branches and postomats (carrier `getWarehouses`). Every carrier parameter
+   * is available; only the given ones are passed, and no filter is required. Every row of the page
+   * is returned, with `selectable` telling whether the point can be chosen.
+   */
+  readonly novaPoshtaWarehouses: NovaPoshtaWarehousePage;
   /** Returns an Online Store navigation menu by its global Relay ID. */
   readonly onlineStoreNavigationMenu?: Maybe<OnlineStoreNavigationMenu>;
   /** Returns an Online Store navigation menu by its stable handle. */
@@ -6363,8 +6579,15 @@ export type QueryCheckoutArgs = {
 
 
 /** Public Catalog entry points for the active storefront context. */
+export type QueryCheckoutDeliveryCountriesArgs = {
+  localeCode?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/** Public Catalog entry points for the active storefront context. */
 export type QueryCheckoutPlacementArgs = {
   id: Scalars['ID']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -6395,6 +6618,40 @@ export type QueryNodeArgs = {
 /** Public Catalog entry points for the active storefront context. */
 export type QueryNodesArgs = {
   ids: ReadonlyArray<Scalars['ID']['input']>;
+};
+
+
+/** Public Catalog entry points for the active storefront context. */
+export type QueryNovaPoshtaSettlementStreetsArgs = {
+  limit?: Scalars['Int']['input'];
+  query: Scalars['String']['input'];
+  settlementRef: Scalars['ID']['input'];
+};
+
+
+/** Public Catalog entry points for the active storefront context. */
+export type QueryNovaPoshtaSettlementsArgs = {
+  limit?: Scalars['Int']['input'];
+  page?: Scalars['Int']['input'];
+  query: Scalars['String']['input'];
+};
+
+
+/** Public Catalog entry points for the active storefront context. */
+export type QueryNovaPoshtaWarehousesArgs = {
+  bicycleParking?: InputMaybe<Scalars['Boolean']['input']>;
+  cityName?: InputMaybe<Scalars['String']['input']>;
+  cityRef?: InputMaybe<Scalars['ID']['input']>;
+  language?: InputMaybe<NovaPoshtaLanguage>;
+  limit?: Scalars['Int']['input'];
+  number?: InputMaybe<Scalars['String']['input']>;
+  page?: Scalars['Int']['input'];
+  posTerminal?: InputMaybe<Scalars['Boolean']['input']>;
+  postFinance?: InputMaybe<Scalars['Boolean']['input']>;
+  query?: InputMaybe<Scalars['String']['input']>;
+  ref?: InputMaybe<Scalars['ID']['input']>;
+  settlementRef?: InputMaybe<Scalars['ID']['input']>;
+  typeRef?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -7139,7 +7396,6 @@ export type ReviewRatingCriterion = Node & {
   readonly isActive: Scalars['Boolean']['output'];
   readonly isRequired: Scalars['Boolean']['output'];
   readonly sortIndex: Scalars['Int']['output'];
-  readonly sourceLocale: LocaleCode;
   readonly title: Scalars['String']['output'];
   readonly translations: ReadonlyArray<ReviewRatingCriterionTranslation>;
   readonly updatedAt: Scalars['DateTime']['output'];
@@ -7505,8 +7761,6 @@ export type Tag = Node & {
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
   readonly name: Scalars['String']['output'];
-  readonly sourceLocale: LocaleCode;
-  readonly sourceName: Scalars['String']['output'];
 };
 
 /** Represents a generic error in the input of a mutation. */
@@ -7661,12 +7915,12 @@ export type WishlistUpdatePayload = {
 
 export type Join__Graph =
   | 'APPS_HEADLESS_STOREFRONT'
+  | 'APPS_NOVA_POSHTA_STOREFRONT'
   | 'APPS_ONLINE_STORE_STOREFRONT'
   | 'CATALOG_STOREFRONT'
   | 'CHECKOUT_STOREFRONT'
   | 'CUSTOMERS_STOREFRONT'
   | 'LISTING_STOREFRONT'
-  | 'LOCALIZATION_STOREFRONT'
   | 'LOYALTY_STOREFRONT'
   | 'MEDIA_STOREFRONT'
   | 'ORDERS_STOREFRONT'
@@ -7716,14 +7970,14 @@ export type SdkCustomerComparisonVariantRemoveMutationVariables = Exact<{
 
 export type SdkCustomerComparisonVariantRemoveMutation = { readonly __typename: 'Mutation', readonly customerComparisonVariantRemove: { readonly __typename: 'CustomerComparisonMutationPayload', readonly revision?: number | null, readonly errors: ReadonlyArray<{ readonly __typename: 'CustomerUserError', readonly code: string, readonly field?: ReadonlyArray<string> | null, readonly message: string, readonly retryable: boolean }> } };
 
-export type SdkCartFragment_CartFragment = { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkCartFragment_CartFragment = { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
         | { readonly __typename: 'ExternalVideo', readonly id: string }
         | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
         | { readonly __typename: 'Model3d', readonly id: string }
         | { readonly __typename: 'Video', readonly id: string }
        | null, readonly price?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null, readonly compareAtPrice?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null, readonly inventoryItem?: { readonly __typename: 'InventoryItem', readonly inventoryPolicy: ProductVariantInventoryPolicy } | null, readonly selectedOptions: ReadonlyArray<{ readonly __typename: 'SelectedOption', readonly name: string, readonly value: string, readonly option: { readonly __typename: 'ProductOption', readonly id: string, readonly handle: string, readonly name: string }, readonly optionValue: { readonly __typename: 'ProductOptionValue', readonly id: string, readonly handle: string, readonly name: string } }> }, readonly children: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number }>, readonly image?: { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any, readonly width?: number | null, readonly height?: number | null, readonly altText?: string | null } } | null, readonly purchase: { readonly __typename: 'CheckoutLinePurchase', readonly type: CheckoutLinePurchaseType }, readonly tag?: { readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean } | null }> };
 
-export type SdkCartLineFragment_LineFragment = { readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkCartLineFragment_LineFragment = { readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
       | { readonly __typename: 'ExternalVideo', readonly id: string }
       | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
       | { readonly __typename: 'Model3d', readonly id: string }
@@ -7735,7 +7989,7 @@ export type SdkAddToCartMutationVariables = Exact<{
 }>;
 
 
-export type SdkAddToCartMutation = { readonly __typename: 'Mutation', readonly checkoutLinesAdd: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkAddToCartMutation = { readonly __typename: 'Mutation', readonly checkoutLinesAdd: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7747,7 +8001,7 @@ export type SdkClearCartMutationVariables = Exact<{
 }>;
 
 
-export type SdkClearCartMutation = { readonly __typename: 'Mutation', readonly checkoutLinesClear: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkClearCartMutation = { readonly __typename: 'Mutation', readonly checkoutLinesClear: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7759,7 +8013,7 @@ export type SdkCreateCartMutationVariables = Exact<{
 }>;
 
 
-export type SdkCreateCartMutation = { readonly __typename: 'Mutation', readonly checkoutCreate: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkCreateCartMutation = { readonly __typename: 'Mutation', readonly checkoutCreate: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7771,7 +8025,7 @@ export type SdkRemoveFromCartMutationVariables = Exact<{
 }>;
 
 
-export type SdkRemoveFromCartMutation = { readonly __typename: 'Mutation', readonly checkoutLinesDelete: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkRemoveFromCartMutation = { readonly __typename: 'Mutation', readonly checkoutLinesDelete: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7783,7 +8037,7 @@ export type SdkReplaceCartItemMutationVariables = Exact<{
 }>;
 
 
-export type SdkReplaceCartItemMutation = { readonly __typename: 'Mutation', readonly checkoutLinesReplace: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkReplaceCartItemMutation = { readonly __typename: 'Mutation', readonly checkoutLinesReplace: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7795,7 +8049,7 @@ export type SdkUpdateCartLineQuantityMutationVariables = Exact<{
 }>;
 
 
-export type SdkUpdateCartLineQuantityMutation = { readonly __typename: 'Mutation', readonly checkoutLinesUpdate: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkUpdateCartLineQuantityMutation = { readonly __typename: 'Mutation', readonly checkoutLinesUpdate: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7807,7 +8061,7 @@ export type SdkLoadCartQueryVariables = Exact<{
 }>;
 
 
-export type SdkLoadCartQuery = { readonly __typename: 'Query', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkLoadCartQuery = { readonly __typename: 'Query', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
           | { readonly __typename: 'ExternalVideo', readonly id: string }
           | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
           | { readonly __typename: 'Model3d', readonly id: string }
@@ -7835,7 +8089,7 @@ export type SdkLoyaltyRedemptionUpdateMutationVariables = Exact<{
 }>;
 
 
-export type SdkLoyaltyRedemptionUpdateMutation = { readonly __typename: 'Mutation', readonly checkoutLoyaltyRedemptionUpdate: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkLoyaltyRedemptionUpdateMutation = { readonly __typename: 'Mutation', readonly checkoutLoyaltyRedemptionUpdate: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7847,7 +8101,7 @@ export type SdkLoyaltyRedemptionRemoveMutationVariables = Exact<{
 }>;
 
 
-export type SdkLoyaltyRedemptionRemoveMutation = { readonly __typename: 'Mutation', readonly checkoutLoyaltyRedemptionRemove: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title?: string | null, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
+export type SdkLoyaltyRedemptionRemoveMutation = { readonly __typename: 'Mutation', readonly checkoutLoyaltyRedemptionRemove: { readonly __typename: 'CheckoutMutationPayload', readonly checkout?: { readonly __typename: 'Checkout', readonly id: string, readonly channelCode: string, readonly localeCode: LocaleCode, readonly currencyCode: CurrencyCode, readonly resultRevision: string, readonly valid: boolean, readonly status: CheckoutLifecycleStatus, readonly expiresAt: string, readonly loyaltyRewardEntitlementId?: string | null, readonly createdAt: string, readonly updatedAt: string, readonly totalQuantity: number, readonly customerNote?: string | null, readonly loyaltyRedemption?: { readonly __typename: 'CheckoutLoyaltyRedemption', readonly quoteId: string, readonly revision: string, readonly accountId: string, readonly programId: string, readonly programCode: string, readonly programVersion: number, readonly requestedPoints?: number | null, readonly redeemablePoints: number, readonly availablePoints: number, readonly expiresAt: string, readonly discount: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly payableAfterLoyalty: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } } | null, readonly issues: ReadonlyArray<{ readonly __typename: 'CheckoutIssue', readonly code: string, readonly message: string, readonly severity: CheckoutIssueSeverity, readonly effect: CheckoutIssueEffect, readonly field: ReadonlyArray<string>, readonly lineId?: string | null, readonly retryable: boolean }>, readonly cost: { readonly __typename: 'CheckoutCost', readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalDiscountAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalTaxAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalShippingAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly notifications: ReadonlyArray<{ readonly __typename: 'CheckoutNotification', readonly code: CheckoutNotificationCode, readonly severity: NotificationSeverity, readonly isDismissed: boolean }>, readonly tags: ReadonlyArray<{ readonly __typename: 'CheckoutTag', readonly id: string, readonly slug: string, readonly unique: boolean }>, readonly lines: ReadonlyArray<{ readonly __typename: 'CheckoutLine', readonly id: string, readonly quantity: number, readonly purchasableId: string, readonly attributes: object, readonly cost: { readonly __typename: 'CheckoutLineCost', readonly unitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly compareAtUnitPrice: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly subtotalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any }, readonly totalAmount: { readonly __typename: 'Money', readonly currencyCode: CurrencyCode, readonly amount: any } }, readonly purchasable: { readonly __typename: 'ProductVariant', readonly id: string, readonly title: string, readonly handle: string, readonly currentlyNotInStock: boolean, readonly quantityAvailable?: number | null, readonly isAvailable: boolean, readonly product: { readonly __typename: 'Product', readonly id: string, readonly title: string, readonly handle: string }, readonly cover?:
             | { readonly __typename: 'ExternalVideo', readonly id: string }
             | { readonly __typename: 'MediaImage', readonly id: string, readonly image: { readonly __typename: 'Image', readonly url: any } }
             | { readonly __typename: 'Model3d', readonly id: string }
@@ -7912,7 +8166,7 @@ export type SdkCollectionProductsQueryVariables = Exact<{
 }>;
 
 
-export type SdkCollectionProductsQuery = { readonly __typename: 'Query', readonly collection?: { readonly __typename: 'Collection', readonly id: string, readonly products: { readonly __typename: 'ProductConnection', readonly totalCount: number, readonly sort: ListingSort, readonly availableSorts: ReadonlyArray<ListingSort>, readonly edges: ReadonlyArray<{ readonly __typename: 'ProductEdge', readonly cursor: string, readonly node: { readonly __typename: 'Product', readonly id: string, readonly handle: string, readonly title: string, readonly selectedOrFirstAvailableVariant?: { readonly __typename: 'ProductVariant', readonly id: string, readonly handle: string, readonly title?: string | null, readonly availableForSale: boolean, readonly price?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null, readonly compareAtPrice?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null } | null } }>, readonly pageInfo: { readonly __typename: 'PageInfo', readonly hasNextPage: boolean, readonly hasPreviousPage: boolean, readonly startCursor?: string | null, readonly endCursor?: string | null }, readonly filters: ReadonlyArray<{ readonly __typename: 'Filter', readonly id: string, readonly label: string, readonly type: FilterType, readonly presentation?: FilterPresentation | null, readonly selectionMode?: FacetSelectionMode | null, readonly priceRange?: { readonly __typename: 'FilterPriceRange', readonly min: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly max: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly selectedMin?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null, readonly selectedMax?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null } | null, readonly facet?: { readonly __typename: 'Facet', readonly id: string, readonly slug: string, readonly label: string } | null, readonly values: ReadonlyArray<{ readonly __typename: 'FilterValue', readonly id: string, readonly label: string, readonly count: number, readonly selected: boolean, readonly input: object, readonly facetValue?: { readonly __typename: 'FacetValue', readonly id: string, readonly label: string } | null }> }> } } | null };
+export type SdkCollectionProductsQuery = { readonly __typename: 'Query', readonly collection?: { readonly __typename: 'Collection', readonly id: string, readonly products: { readonly __typename: 'ProductConnection', readonly totalCount: number, readonly sort: ListingSort, readonly availableSorts: ReadonlyArray<ListingSort>, readonly edges: ReadonlyArray<{ readonly __typename: 'ProductEdge', readonly cursor: string, readonly node: { readonly __typename: 'Product', readonly id: string, readonly handle: string, readonly title: string, readonly selectedOrFirstAvailableVariant?: { readonly __typename: 'ProductVariant', readonly id: string, readonly handle: string, readonly title: string, readonly availableForSale: boolean, readonly price?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null, readonly compareAtPrice?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null } | null } }>, readonly pageInfo: { readonly __typename: 'PageInfo', readonly hasNextPage: boolean, readonly hasPreviousPage: boolean, readonly startCursor?: string | null, readonly endCursor?: string | null }, readonly filters: ReadonlyArray<{ readonly __typename: 'Filter', readonly id: string, readonly label: string, readonly type: FilterType, readonly presentation?: FilterPresentation | null, readonly selectionMode?: FacetSelectionMode | null, readonly priceRange?: { readonly __typename: 'FilterPriceRange', readonly min: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly max: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode }, readonly selectedMin?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null, readonly selectedMax?: { readonly __typename: 'Money', readonly amount: any, readonly currencyCode: CurrencyCode } | null } | null, readonly facet?: { readonly __typename: 'Facet', readonly id: string, readonly slug: string, readonly label: string } | null, readonly values: ReadonlyArray<{ readonly __typename: 'FilterValue', readonly id: string, readonly label: string, readonly count: number, readonly selected: boolean, readonly input: object, readonly facetValue?: { readonly __typename: 'FacetValue', readonly id: string, readonly label: string } | null }> }> } } | null };
 
 export type SdkCollectionMediaQueryVariables = Exact<{
   id: Scalars['ID']['input'];

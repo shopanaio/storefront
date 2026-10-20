@@ -2,9 +2,16 @@ import { useCallback, useEffect, useRef } from 'react';
 import useCreateCart from '@shopana/storefront-sdk/modules/cart/react/hooks/useCreateCart';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useNow } from '#checkout/hooks/useNow';
-import { CheckoutEvent, emitCheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
+import {
+  CheckoutEvent,
+  emitCheckoutEvent,
+  onCheckoutEvent,
+} from '#checkout/state/checkoutBus';
 import { createAttemptJournal } from '#checkout/state/placement/attemptJournal';
-import { isPlacementBusy, usePlacementStore } from '#checkout/state/placement/placementStore';
+import {
+  isPlacementBusy,
+  usePlacementStore,
+} from '#checkout/state/placement/placementStore';
 import { renewalInput, useRenewalStore } from '#checkout/state/renewal';
 import type { Checkout } from '#checkout/types/entity';
 
@@ -47,7 +54,10 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
   const renewRef = useRef<(source: Checkout.Checkout) => void>(() => undefined);
   const renew = useCallback(
     (source: Checkout.Checkout) => {
-      if (isPlacementBusy(usePlacementStore.getState().phase) || hasLiveAttempt(source.id)) {
+      if (
+        isPlacementBusy(usePlacementStore.getState().phase) ||
+        hasLiveAttempt(source.id)
+      ) {
         return;
       }
       handledRef.current = source.id;
@@ -72,7 +82,9 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
     if (!current || handledRef.current === current.id) return;
     if (current.status === 'PLACED') {
       handledRef.current = current.id;
-      void emitCheckoutEvent(CheckoutEvent.CheckoutClosed, { code: 'CHECKOUT_ALREADY_PLACED' });
+      void emitCheckoutEvent(CheckoutEvent.CheckoutClosed, {
+        code: 'CHECKOUT_ALREADY_PLACED',
+      });
       return;
     }
     if (isClosedByServer(current)) {
@@ -82,10 +94,13 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
     if (!current.expiresAt) {
       return;
     }
-    if (now >= current.expiresAt.getTime() && refetchedRef.current !== current.id) {
+    // Read once per expiry: each change moves `expiresAt`, and a checkout the server kept open
+    // is read again when its new time passes.
+    const expiry = `${current.id}:${current.expiresAt.getTime()}`;
+    if (now >= current.expiresAt.getTime() && refetchedRef.current !== expiry) {
       // The server may have closed it already, or may still keep it open.
-      refetchedRef.current = current.id;
-      void refetch();
+      refetchedRef.current = expiry;
+      void refetch().catch(() => undefined);
     }
   }, [current, now, renew, refetch]);
 

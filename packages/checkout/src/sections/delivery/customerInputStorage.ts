@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { DeliveryAddress } from './types';
+import type { DeliveryAddress, DeliveryMethod } from './types';
+import { methodKey } from './shipments';
 
 /** Customer input of one delivery option with the display state of its module. */
 export interface StoredCustomerInput {
@@ -9,12 +10,25 @@ export interface StoredCustomerInput {
   synced: boolean;
 }
 
-export type CustomerInputsByHandle = Record<string, StoredCustomerInput>;
+/**
+ * Inputs of a group by method (`methodKey`: carrier and service code). The option handle is
+ * not used: it changes with every new quote of the same method (BR-5rgw).
+ */
+export type CustomerInputsByMethod = Record<string, StoredCustomerInput>;
+
+/** The method an input belongs to. */
+export type InputMethod = Pick<DeliveryMethod, 'provider' | 'code'>;
+
+/** Stored input of `method` among the inputs of a group. */
+export const storedInputOf = (
+  inputs: CustomerInputsByMethod,
+  method: InputMethod
+): StoredCustomerInput | undefined => inputs[methodKey(method)];
 
 interface StoredGroupInputs {
   /** Address the inputs were entered for; see `addressScope`. */
   scope: string;
-  inputs: CustomerInputsByHandle;
+  inputs: CustomerInputsByMethod;
   /** When the inputs were last saved (ms), for dropping abandoned ones. */
   savedAt?: number;
 }
@@ -24,7 +38,7 @@ const STORAGE_PREFIX = 'checkout-delivery-customer-input';
 const storageKey = (deliveryGroupId: string) =>
   `${STORAGE_PREFIX}:${deliveryGroupId}`;
 
-const EMPTY: CustomerInputsByHandle = {};
+const EMPTY: CustomerInputsByMethod = {};
 
 /**
  * Inputs nobody touched for this long belong to an abandoned checkout. They hold
@@ -77,7 +91,10 @@ function persist(deliveryGroupId: string, stored: StoredGroupInputs) {
     return;
   }
   try {
-    window.localStorage.setItem(storageKey(deliveryGroupId), JSON.stringify(stored));
+    window.localStorage.setItem(
+      storageKey(deliveryGroupId),
+      JSON.stringify(stored)
+    );
   } catch {
     // Storage can be unavailable or full; the in-memory store still works.
   }
@@ -95,23 +112,40 @@ const loaded = new Map<string, StoredGroupInputs | null>();
 interface CustomerInputStore {
   /** Inputs by delivery group; filled from localStorage on first read. */
   groups: Record<string, StoredGroupInputs | null>;
-  /** Stores (or with `undefined` removes) the input of an option for the given address. */
+  /** Stores (or with `undefined` removes) the input of a method for the given address. */
   remember: (
     group: InputGroup,
     scope: string,
-    handle: string,
+    method: InputMethod,
     stored: StoredCustomerInput | undefined
   ) => void;
   /** Marks the stored input as saved, unless it changed since `input` was sent. */
   markSynced: (
     group: InputGroup,
     scope: string,
-    handle: string,
+    method: InputMethod,
     input: unknown
   ) => void;
 }
 
-export const sameInput = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/** JSON with object keys sorted, so equal values read the same whatever their key order. */
+const canonicalJson = (value: unknown): string =>
+  JSON.stringify(value, (_key, item: unknown) =>
+    item && typeof item === 'object' && !Array.isArray(item)
+      ? Object.fromEntries(
+          Object.entries(item as Record<string, unknown>).sort(([a], [b]) =>
+            a < b ? -1 : a > b ? 1 : 0
+          )
+        )
+      : item
+  );
+
+/**
+ * Whether two inputs are the same value. The API returns the saved input from `jsonb`, which
+ * orders the keys its own way, so the key order does not count.
+ */
+export const sameInput = (a: unknown, b: unknown) =>
+  canonicalJson(a) === canonicalJson(b);
 
 /**
  * Customer input entered in the delivery section, kept in localStorage as well. The checkout
@@ -122,13 +156,14 @@ export const sameInput = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.
  */
 export const useCustomerInputStore = create<CustomerInputStore>((set, get) => ({
   groups: {},
-  remember: (group, scope, handle, stored) => {
+  remember: (group, scope, method, stored) => {
     const deliveryGroupId = group.id;
     const inputs = { ...readCustomerInputs(group, scope) };
+    const key = methodKey(method);
     if (stored === undefined) {
-      delete inputs[handle];
+      delete inputs[key];
     } else {
-      inputs[handle] = stored;
+      inputs[key] = stored;
     }
     const next: StoredGroupInputs = { scope, inputs, savedAt: Date.now() };
     known.add(deliveryGroupId);
@@ -136,10 +171,10 @@ export const useCustomerInputStore = create<CustomerInputStore>((set, get) => ({
     loaded.set(deliveryGroupId, next);
     set({ groups: { ...get().groups, [deliveryGroupId]: next } });
   },
-  markSynced: (group, scope, handle, input) => {
-    const stored = readCustomerInputs(group, scope)[handle];
+  markSynced: (group, scope, method, input) => {
+    const stored = storedInputOf(readCustomerInputs(group, scope), method);
     if (stored && !stored.synced && sameInput(stored.input, input)) {
-      get().remember(group, scope, handle, { ...stored, synced: true });
+      get().remember(group, scope, method, { ...stored, synced: true });
     }
   },
 }));
@@ -158,14 +193,14 @@ function groupOf(
 }
 
 /**
- * Inputs of a group entered for the given address scope. A group gets a new id when its lines
- * change; the inputs typed under an id it replaced still belong to it.
+ * Inputs of a group entered for the given address scope, by method. A group gets a new id when
+ * its lines change; the inputs typed under an id it replaced still belong to it.
  */
 export function readCustomerInputs(
   group: InputGroup | undefined,
   scope: string,
   groups: CustomerInputStore['groups'] = useCustomerInputStore.getState().groups
-): CustomerInputsByHandle {
+): CustomerInputsByMethod {
   if (!group) {
     return EMPTY;
   }
@@ -191,28 +226,30 @@ export function pruneCustomerInputs(deliveryGroupIds: readonly string[]) {
   if (typeof window !== 'undefined') {
     const prefix = `${STORAGE_PREFIX}:`;
     const now = Date.now();
-    for (const name of ['localStorage', 'sessionStorage'] as const) {
-      try {
-        const storage = window[name];
-        const stale: string[] = [];
-        for (let index = 0; index < storage.length; index += 1) {
-          const key = storage.key(index);
-          if (!key?.startsWith(prefix)) {
-            continue;
-          }
-          const id = key.slice(prefix.length);
-          if (ids.has(id)) {
-            continue;
-          }
-          const savedAt = parse(storage.getItem(key))?.savedAt;
-          if (gone.has(id) || savedAt === undefined || now - savedAt > ABANDONED_AFTER_MS) {
-            stale.push(key);
-          }
+    try {
+      const storage = window.localStorage;
+      const stale: string[] = [];
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        if (!key?.startsWith(prefix)) {
+          continue;
         }
-        stale.forEach((key) => storage.removeItem(key));
-      } catch {
-        // Storage can be unavailable; nothing to clean then.
+        const id = key.slice(prefix.length);
+        if (ids.has(id)) {
+          continue;
+        }
+        const savedAt = parse(storage.getItem(key))?.savedAt;
+        if (
+          gone.has(id) ||
+          savedAt === undefined ||
+          now - savedAt > ABANDONED_AFTER_MS
+        ) {
+          stale.push(key);
+        }
       }
+      stale.forEach((key) => storage.removeItem(key));
+    } catch {
+      // Storage can be unavailable; nothing to clean then.
     }
   }
   for (const id of gone) {
@@ -223,7 +260,9 @@ export function pruneCustomerInputs(deliveryGroupIds: readonly string[]) {
   const { groups } = useCustomerInputStore.getState();
   if (Object.keys(groups).some((id) => gone.has(id))) {
     useCustomerInputStore.setState({
-      groups: Object.fromEntries(Object.entries(groups).filter(([id]) => !gone.has(id))),
+      groups: Object.fromEntries(
+        Object.entries(groups).filter(([id]) => !gone.has(id))
+      ),
     });
   }
 }
@@ -231,25 +270,22 @@ export function pruneCustomerInputs(deliveryGroupIds: readonly string[]) {
 /**
  * Removes every stored customer input. Called once an order is accepted: the inputs
  * belong to the placed checkout and hold personal data nobody needs any more.
- * Keys of an earlier version kept in sessionStorage are removed as well.
  */
 export function clearCustomerInputs() {
   if (typeof window !== 'undefined') {
     const prefix = `${STORAGE_PREFIX}:`;
-    for (const name of ['localStorage', 'sessionStorage'] as const) {
-      try {
-        const storage = window[name];
-        const keys: string[] = [];
-        for (let index = 0; index < storage.length; index += 1) {
-          const key = storage.key(index);
-          if (key?.startsWith(prefix)) {
-            keys.push(key);
-          }
+    try {
+      const storage = window.localStorage;
+      const keys: string[] = [];
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        if (key?.startsWith(prefix)) {
+          keys.push(key);
         }
-        keys.forEach((key) => storage.removeItem(key));
-      } catch {
-        // Storage can be unavailable; nothing to clean then.
       }
+      keys.forEach((key) => storage.removeItem(key));
+    } catch {
+      // Storage can be unavailable; nothing to clean then.
     }
   }
   known.clear();

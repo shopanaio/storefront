@@ -6,7 +6,10 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
-import type { AddressModuleProps, AddressModuleValue } from '#checkout/vendors/types';
+import type {
+  AddressModuleProps,
+  AddressModuleValue,
+} from '#checkout/vendors/types';
 import { addressRows, isValidPostalCode } from '../countries';
 import type { AddressField, AddressFormat } from '../countries';
 
@@ -79,7 +82,11 @@ export function toAddressValue(
  * format (B6): rows, required fields, province list, postal code pattern. The address is saved
  * when a field is left and the form is complete; pressing "place order" marks every field.
  */
-export function InternationalAddressForm({ address, country, onSubmit }: AddressModuleProps) {
+export function InternationalAddressForm({
+  address,
+  country,
+  onSubmit,
+}: AddressModuleProps) {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const format = country.addressFormat;
@@ -95,9 +102,13 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
     [address]
   );
   const [values, setValues] = useState<Values>(saved);
-  const [touched, setTouched] = useState<Partial<Record<AddressField, boolean>>>({});
+  const [touched, setTouched] = useState<
+    Partial<Record<AddressField, boolean>>
+  >({});
   /** Fields the buyer changed since the last save was sent; the server does not overwrite them. */
-  const [edited, setEdited] = useState<Partial<Record<AddressField, boolean>>>({});
+  const [edited, setEdited] = useState<Partial<Record<AddressField, boolean>>>(
+    {}
+  );
   // A newly saved address fills the fields the buyer has not changed since the last save
   // (BR-q7dr); what the buyer types meanwhile and the marks of visited fields stay. No saved
   // address (another country picked) keeps the form as it is, so matching fields carry over.
@@ -106,7 +117,10 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
   const [shownKey, setShownKey] = useState(savedKey);
   if (shownKey !== savedKey) {
     setShownKey(savedKey);
-    if (address) {
+    if (!address) {
+      // Another country: nothing saved to protect the typed fields from.
+      setEdited({});
+    } else {
       setValues((current) => {
         const next = { ...current };
         for (const field of Object.keys(saved) as AddressField[]) {
@@ -124,7 +138,13 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
   useEffect(
     () =>
       onCheckoutEvent(CheckoutEvent.SubmitRequested, () =>
-        setTouched(Object.fromEntries(addressRows(format).flat().map((field) => [field, true])))
+        setTouched(
+          Object.fromEntries(
+            addressRows(format)
+              .flat()
+              .map((field) => [field, true])
+          )
+        )
       ),
     [format]
   );
@@ -133,8 +153,9 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
     if (Object.keys(addressErrors(format, next)).length > 0) return;
     const value = toAddressValue(country.code, format, next);
     const current = toAddressValue(country.code, format, saved);
-    if (address && JSON.stringify(value) === JSON.stringify(current)) return;
     setEdited({});
+    // Changed and changed back: nothing to send, and the fields follow the server again.
+    if (address && JSON.stringify(value) === JSON.stringify(current)) return;
     onSubmit(value);
   };
 
@@ -155,17 +176,23 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
         case 'PROVINCE':
           return t(PROVINCE_LABEL_KEYS[format.provinceLabel ?? 'REGION']);
         default:
-          return t(POSTAL_CODE_LABEL_KEYS[format.postalCodeLabel ?? 'POSTAL_CODE']);
+          return t(
+            POSTAL_CODE_LABEL_KEYS[format.postalCodeLabel ?? 'POSTAL_CODE']
+          );
       }
     })();
-    return format.required.includes(field) ? text : t('address-optional', { label: text });
+    return format.required.includes(field)
+      ? text
+      : t('address-optional', { label: text });
   };
 
   const errorText = (field: AddressField): string | undefined => {
     if (!touched[field] || !errors[field]) return undefined;
     if (errors[field] === 'required') return t('required-field');
     return format.postalCodeExample
-      ? t('address-postal-code-invalid-example', { example: format.postalCodeExample })
+      ? t('address-postal-code-invalid-example', {
+          example: format.postalCodeExample,
+        })
       : t('address-postal-code-invalid');
   };
 
@@ -183,7 +210,10 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
             aria-label={label(field)}
             status={error ? 'error' : undefined}
             value={values.PROVINCE || undefined}
-            options={format.provinces.map(({ code, name }) => ({ value: code, label: name }))}
+            options={format.provinces.map(({ code, name }) => ({
+              value: code,
+              label: name,
+            }))}
             onChange={(value?: string) => {
               const next = { ...values, PROVINCE: value ?? '' };
               setValues(next);
@@ -191,7 +221,9 @@ export function InternationalAddressForm({ address, country, onSubmit }: Address
               leave(field, next);
             }}
           />
-          {error ? <Typography.Text type="danger">{error}</Typography.Text> : null}
+          {error ? (
+            <Typography.Text type="danger">{error}</Typography.Text>
+          ) : null}
         </Flex>
       );
     }

@@ -42,8 +42,10 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
   });
 
   const debouncedUpdate = useMemo(() => {
-    const save = (nextNote: string) => {
-      latestUpdate.current({ note: nextNote }).then(
+    /** The save on the way, so that flushing does not send the same note twice. */
+    let inFlight: { note: string; save: Promise<void> } | null = null;
+    const save = (nextNote: string): Promise<void> => {
+      const request = latestUpdate.current({ note: nextNote }).then(
         () => {
           failures.current = 0;
           // Saved and nothing typed since: the API value is shown again.
@@ -51,35 +53,62 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
             typedRef.current = null;
           }
         },
-        () => {
+        (error: unknown) => {
           // The failure is shown by the checkout API. The typed note stays on screen and is
           // saved again until it gets through, or until the buyer types on (BR-yanp).
-          if (typedRef.current !== nextNote) return;
-          failures.current += 1;
-          const delay = Math.min(
-            RETRY_BASE_MS * 2 ** (failures.current - 1),
-            RETRY_MAX_MS
-          );
-          retryTimer.current = setTimeout(() => {
-            if (typedRef.current === nextNote) debounced(nextNote);
-          }, delay);
+          if (typedRef.current === nextNote) {
+            failures.current += 1;
+            const delay = Math.min(
+              RETRY_BASE_MS * 2 ** (failures.current - 1),
+              RETRY_MAX_MS
+            );
+            retryTimer.current = setTimeout(() => {
+              retryTimer.current = null;
+              if (typedRef.current === nextNote) debounced(nextNote);
+            }, delay);
+          }
+          throw error;
         }
       );
+      inFlight = { note: nextNote, save: request };
+      const clear = () => {
+        if (inFlight?.save === request) inFlight = null;
+      };
+      request.then(clear, clear);
+      return request;
     };
-    const debounced = debounce(save, 500);
-    return debounced;
+    const debounced = debounce((nextNote: string) => {
+      save(nextNote).catch(() => undefined);
+    }, 500);
+    /**
+     * Sends the typed note now: the one waiting for a pause in typing or for the retry of a
+     * failed save. Returns the save, or nothing when the note is saved already.
+     */
+    const flushNow = (): Promise<void> | undefined => {
+      debounced.cancel();
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+      const typed = typedRef.current;
+      if (typed === null) return undefined;
+      return inFlight?.note === typed ? inFlight.save : save(typed);
+    };
+    return { schedule: debounced, flushNow };
   }, []);
 
   // A note typed right before leaving the page is still saved.
   useEffect(
     () => () => {
-      debouncedUpdate.flush();
-      if (retryTimer.current) clearTimeout(retryTimer.current);
+      debouncedUpdate.flushNow()?.catch(() => undefined);
     },
     [debouncedUpdate]
   );
-  // Placing the order sends the note being typed at once.
-  useEffect(() => registerPendingInput(() => debouncedUpdate.flush()), [debouncedUpdate]);
+  // Placing the order sends the typed note at once and waits for its save.
+  useEffect(
+    () => registerPendingInput(() => debouncedUpdate.flushNow()),
+    [debouncedUpdate]
+  );
 
   const [note, setNote] = useState(data?.note ?? '');
   const [isOpen, setIsOpen] = useState(Boolean(data?.note));
@@ -89,9 +118,12 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
       const nextNote = e.target.value;
       typedRef.current = nextNote;
       failures.current = 0;
-      if (retryTimer.current) clearTimeout(retryTimer.current);
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
       setNote(nextNote);
-      debouncedUpdate(nextNote);
+      debouncedUpdate.schedule(nextNote);
     },
     [debouncedUpdate]
   );
@@ -130,7 +162,9 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
             maxLength={255}
             onChange={handleChange}
             // Leaving the field (e.g. to press "place order") saves the note at once.
-            onBlur={() => debouncedUpdate.flush()}
+            onBlur={() => {
+              debouncedUpdate.flushNow()?.catch(() => undefined);
+            }}
           />
         </div>
       ) : (

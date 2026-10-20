@@ -45,7 +45,10 @@ export interface CartProviderProps {
  * Whether the server says the cart does not exist: no checkout for the id, or a `NOT_FOUND`
  * error. A network or any other error says nothing about the cart.
  */
-function isCartMissing(data: SdkLoadCartQuery | undefined, error: unknown): boolean {
+function isCartMissing(
+  data: SdkLoadCartQuery | undefined,
+  error: unknown
+): boolean {
   if (error) {
     return (
       CombinedGraphQLErrors.is(error) &&
@@ -118,7 +121,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       mutationQueue.run(operation, options),
     [mutationQueue]
   );
-  const waitForMutations = useCallback(() => mutationQueue.idle(), [mutationQueue]);
+  const waitForMutations = useCallback(
+    () => mutationQueue.idle(),
+    [mutationQueue]
+  );
   const cartUpdateListeners = useRef(
     new Set<(checkout: SdkCartFragment_CartFragment | null) => void>()
   );
@@ -138,6 +144,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     variables: { checkoutId: cookieCartId ?? '' },
     skip: !shouldLoad,
   });
+  // A failed load that does not say the cart is missing keeps the cart id: the cart still
+  // exists, the page shows the error with a retry, and writes go to that cart.
+  const cartError =
+    shouldLoad &&
+    !query.loading &&
+    query.error &&
+    !isCartMissing(query.data, query.error)
+      ? query.error
+      : null;
+  const { refetch } = query;
+  const retryCart = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   useEffect(() => {
     const checkout = query.data?.checkout ?? initialCheckout;
@@ -152,7 +171,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       }
     } else if (!shouldLoad && !storeObject.cart) {
       storeObject.setCart(null);
-    } else if (!query.loading && shouldLoad && isCartMissing(query.data, query.error)) {
+    } else if (
+      !query.loading &&
+      shouldLoad &&
+      isCartMissing(query.data, query.error)
+    ) {
       // Only the server saying the cart does not exist drops it: a failed request keeps
       // the cart and its cookie, so a retry loads it again.
       cartIdUtils.removeCartIdCookie();
@@ -176,6 +199,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     (checkout: SdkCartFragment_CartFragment | null) => {
       const cart = checkout ? mapShopanaCheckoutToEntityCart(checkout) : null;
       confirmed.current = { checkout, cart };
+      if (checkout) setCartId(checkout.id);
       cartUpdateListeners.current.forEach((listener) => listener(checkout));
       if (mutationQueue.pending > 0) return;
       setCartKey(checkout);
@@ -217,10 +241,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       waitForMutations={waitForMutations}
       subscribeCartUpdates={subscribeCartUpdates}
       getConfirmedLineId={getConfirmedLineId}
-      cartId={cartId}
+      cartId={cartId ?? (cartError ? cookieCartId : null)}
       setId={handleSetCartId}
       isCartLoading={query.loading}
-      isCartLoaded={!query.loading}
+      isCartLoaded={!query.loading && !cartError}
+      cartError={cartError}
+      retryCart={retryCart}
     >
       {children}
     </CartContextProvider>

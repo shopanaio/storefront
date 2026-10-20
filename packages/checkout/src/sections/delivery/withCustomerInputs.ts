@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
 import type { DeliveryFormData, DeliveryGroup, DeliveryMethod } from './types';
-import { contractSchema, validateCustomerInput } from '#checkout/utils/jsonSchema';
+import {
+  contractSchema,
+  validateCustomerInput,
+} from '#checkout/utils/jsonSchema';
 import {
   addressScope,
   readCustomerInputs,
   sameInput,
+  storedInputOf,
   useCustomerInputStore,
-  type CustomerInputsByHandle,
+  type CustomerInputsByMethod,
 } from './customerInputStorage';
 
 /**
@@ -31,14 +35,24 @@ const savedHandleOf = (group: DeliveryGroup): string | null =>
  */
 export const withCustomerInput = (
   method: DeliveryMethod,
-  drafts: CustomerInputsByHandle,
+  drafts: CustomerInputsByMethod,
   group: DeliveryGroup
 ): DeliveryMethod => {
-  const draft = drafts[method.handle];
+  const draft = storedInputOf(drafts, method);
   const saved =
-    savedHandleOf(group) === method.handle ? (group.savedInput ?? null) : undefined;
-  if (draft && (!draft.synced || saved === undefined || sameInput(draft.input, saved))) {
-    return { ...method, data: draft.input, view: draft.view, synced: draft.synced };
+    savedHandleOf(group) === method.handle
+      ? (group.savedInput ?? null)
+      : undefined;
+  if (
+    draft &&
+    (!draft.synced || saved === undefined || sameInput(draft.input, saved))
+  ) {
+    return {
+      ...method,
+      data: draft.input,
+      view: draft.view,
+      synced: draft.synced,
+    };
   }
   if (saved !== undefined && saved !== null) {
     return { ...method, data: saved, view: undefined, synced: true };
@@ -59,7 +73,11 @@ export function mergeCustomerInputs(
   }
   return Object.fromEntries(
     Object.entries(data).map(([key, group]) => {
-      const drafts = readCustomerInputs(group, addressScope(group.address), groups);
+      const drafts = readCustomerInputs(
+        group,
+        addressScope(group.address),
+        groups
+      );
       return [
         key,
         {

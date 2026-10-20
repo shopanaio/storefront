@@ -1031,7 +1031,10 @@ export type CheckoutRecipient = {
   readonly phone?: Maybe<Scalars['String']['output']>;
 };
 
-/** Input fields for recipient details. */
+/**
+ * Input fields for recipient details. A field left out keeps the recipient's current value;
+ * an explicit null or an empty string clears it.
+ */
 export type CheckoutRecipientInput = {
   /** Email of the recipient. */
   readonly email?: InputMaybe<Scalars['Email']['input']>;
@@ -5354,6 +5357,7 @@ export type PlaceOrderPayload = {
   readonly orderNumber?: Maybe<Scalars['String']['output']>;
   readonly paymentCollectionId?: Maybe<Scalars['ID']['output']>;
   readonly paymentFailure?: Maybe<PlaceOrderPaymentFailure>;
+  /** Payment flow captured at placement, including reads without a browser journal. */
   readonly paymentFlow?: Maybe<PaymentFlow>;
   readonly paymentOperationId?: Maybe<Scalars['ID']['output']>;
   readonly paymentSessionId?: Maybe<Scalars['ID']['output']>;
@@ -6481,9 +6485,9 @@ export type Query = {
    */
   readonly novaPoshtaSettlements: NovaPoshtaSettlementPage;
   /**
-   * Lists Nova Poshta branches and postomats (carrier `getWarehouses`). Filters and paging are
-   * passed to the carrier; every row of the page is returned, with `selectable` telling whether
-   * the point can be chosen.
+   * Lists Nova Poshta branches and postomats (carrier `getWarehouses`). Every carrier parameter
+   * is available; only the given ones are passed, and no filter is required. Every row of the page
+   * is returned, with `selectable` telling whether the point can be chosen.
    */
   readonly novaPoshtaWarehouses: NovaPoshtaWarehousePage;
   /** Returns an Online Store navigation menu by its global Relay ID. */

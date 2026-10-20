@@ -42,6 +42,12 @@ export const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 export const PLACEMENT_UNCONFIRMED_CODE = 'PLACEMENT_UNCONFIRMED';
 
 /**
+ * Frontend-only code: a value the buyer entered (address, contact, note, recipient) failed to
+ * save, so `placeOrder` was not sent.
+ */
+export const INPUT_UNSAVED_CODE = 'CHECKOUT_INPUT_UNSAVED';
+
+/**
  * GraphQL error codes raised before `placeOrder` runs: parsing, validation, authentication and
  * the storefront permission check. Only these close the attempt.
  */

@@ -27,10 +27,15 @@ vi.mock('#checkout/infra/useRegisteredModule', () => ({
 }));
 
 const format = (required: DeliveryCountry['addressFormat']['required']) => ({
-  rows: [['ADDRESS1'], ['ADDRESS2'], ['CITY'], ['POSTAL_CODE']] as DeliveryCountry['addressFormat']['rows'],
+  rows: [
+    ['ADDRESS1'],
+    ['ADDRESS2'],
+    ['CITY'],
+    ['POSTAL_CODE'],
+  ] as DeliveryCountry['addressFormat']['rows'],
   required,
   provinceLabel: null,
-  postalCodeLabel: 'POSTCODE',
+  postalCodeLabel: 'POSTCODE' as const,
   postalCodePattern: null,
   postalCodeExample: null,
   provinces: [],
@@ -92,7 +97,12 @@ describe('AddressSectionView', () => {
   });
 
   beforeEach(() => {
-    mocks.countries = { countries: [gb, de], loading: false, error: null, refetch: vi.fn() };
+    mocks.countries = {
+      countries: [gb, de],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    };
     mocks.api.saveDeliveryAddress.mockReset().mockResolvedValue(undefined);
   });
 
@@ -100,12 +110,18 @@ describe('AddressSectionView', () => {
   // стирает то, что покупатель уже ввёл в несохранённые поля адреса.
   it('SC-s8ak: keeps the unsaved address fields while the list of countries loads again', async () => {
     const { rerender } = render(view(data()));
-    fireEvent.change(screen.getByLabelText('Address'), { target: { value: '10 Downing St' } });
+    fireEvent.change(screen.getByLabelText('Address'), {
+      target: { value: '10 Downing St' },
+    });
 
     // The country list is read again (new locale): no data until it arrives.
     mocks.countries = { ...mocks.countries, countries: [], loading: true };
     rerender(view(data({ localeCode: 'uk' })));
-    mocks.countries = { ...mocks.countries, countries: [gb, de], loading: false };
+    mocks.countries = {
+      ...mocks.countries,
+      countries: [gb, de],
+      loading: false,
+    };
     rerender(view(data({ localeCode: 'uk' })));
     await act(async () => undefined);
 
@@ -116,8 +132,12 @@ describe('AddressSectionView', () => {
   // неявно (из customerIdentity.countryCode), и введённое не пропадает.
   it('SC-s8ak: keeps the form the buyer is typing in when the buyer country changes implicitly', async () => {
     const { rerender } = render(view(data({ customerCountryCode: 'GB' })));
-    fireEvent.change(screen.getByLabelText('Address'), { target: { value: '10 Downing St' } });
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'London' } });
+    fireEvent.change(screen.getByLabelText('Address'), {
+      target: { value: '10 Downing St' },
+    });
+    fireEvent.change(screen.getByLabelText('City'), {
+      target: { value: 'London' },
+    });
 
     // A contact save elsewhere changes the buyer country; no address is saved yet.
     rerender(view(data({ customerCountryCode: 'DE' })));
@@ -128,25 +148,41 @@ describe('AddressSectionView', () => {
   });
 
   it('SC-nker: shows a failed address save and keeps the address in the form', async () => {
-    mocks.api.saveDeliveryAddress.mockRejectedValueOnce(new Error('Failed to fetch'));
+    mocks.api.saveDeliveryAddress.mockRejectedValueOnce(
+      new Error('Failed to fetch')
+    );
     const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(view(data()));
 
-    fireEvent.change(screen.getByLabelText('Address'), { target: { value: '10 Downing St' } });
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'London' } });
-    fireEvent.change(screen.getByLabelText('Postcode'), { target: { value: 'SW1A 2AA' } });
+    fireEvent.change(screen.getByLabelText('Address'), {
+      target: { value: '10 Downing St' },
+    });
+    fireEvent.change(screen.getByLabelText('City'), {
+      target: { value: 'London' },
+    });
+    fireEvent.change(screen.getByLabelText('Postcode'), {
+      target: { value: 'SW1A 2AA' },
+    });
     fireEvent.blur(screen.getByLabelText('Postcode'));
     await act(async () => undefined);
 
     expect(mocks.api.saveDeliveryAddress).toHaveBeenCalledWith(
-      expect.objectContaining({ countryCode: 'GB', address1: '10 Downing St', city: 'London' })
+      expect.objectContaining({
+        countryCode: 'GB',
+        address1: '10 Downing St',
+        city: 'London',
+      })
     );
-    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't save the delivery address");
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      "Couldn't save the delivery address"
+    );
     expect(screen.getByLabelText('Address')).toHaveValue('10 Downing St');
     expect(screen.getByLabelText('Postcode')).toHaveValue('SW1A 2AA');
 
     // Saving again succeeds and the message goes away.
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Westminster' } });
+    fireEvent.change(screen.getByLabelText('City'), {
+      target: { value: 'Westminster' },
+    });
     fireEvent.blur(screen.getByLabelText('City'));
     await act(async () => undefined);
     expect(screen.queryByRole('alert')).toBeNull();
@@ -155,8 +191,12 @@ describe('AddressSectionView', () => {
 
   it('SC-s8ak: an explicit change of the country carries the matching fields over', async () => {
     render(view(data()));
-    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Unter den Linden 1' } });
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Berlin' } });
+    fireEvent.change(screen.getByLabelText('Address'), {
+      target: { value: 'Unter den Linden 1' },
+    });
+    fireEvent.change(screen.getByLabelText('City'), {
+      target: { value: 'Berlin' },
+    });
 
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Country' }));
     fireEvent.click(await screen.findByTitle('Germany'));

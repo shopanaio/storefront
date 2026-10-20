@@ -1,5 +1,9 @@
 import { useMutation } from '@shopana/storefront-sdk/graphql/apollo';
 import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
+import {
+  followSuperseded,
+  isMutationSuperseded,
+} from '@shopana/storefront-sdk/modules/cart/core/utils/mutationQueue';
 import { toast } from '#checkout/ui/toast';
 import type { OperationVariables, TypedDocumentNode } from '@apollo/client';
 import { useCallback, useRef, useEffect } from 'react';
@@ -30,6 +34,12 @@ export interface CommitOptions {
    * resource waiting in the queue are merged into the latest.
    */
   key?: string;
+  /**
+   * What a call replaced by a newer write of its resource gets: `follow` (default) settles as
+   * that newer write, `reject` rejects with `MutationSupersededError` at once, for a caller
+   * that must know its own value never went.
+   */
+  superseded?: 'follow' | 'reject';
 }
 
 /**
@@ -183,8 +193,8 @@ export function useCheckoutOperation<
         const result = await operation();
         return result;
       } catch (error) {
-        // Emit OperationError event
-        if (operationKey) {
+        // Emit OperationError event; a write replaced by a newer one did not fail.
+        if (operationKey && !isMutationSuperseded(error)) {
           const anyErr = error as
             | { message?: unknown; code?: unknown }
             | null
@@ -243,7 +253,9 @@ export function useCheckoutOperation<
               const closed = closedCheckoutCode(userErrors);
               if (closed) {
                 // A closed checkout is handled once for the whole checkout, not per mutation.
-                void emitCheckoutEvent(CheckoutEvent.CheckoutClosed, { code: closed });
+                void emitCheckoutEvent(CheckoutEvent.CheckoutClosed, {
+                  code: closed,
+                });
               } else if (showErrorToast) {
                 toast.error(errorMessage);
               }
@@ -275,12 +287,17 @@ export function useCheckoutOperation<
   /**
    * Sends the mutation after every write of the cart and the checkout queued before it
    * (R-6). A mutation with the same `key` still waiting is replaced by this one: only the
-   * latest value of a resource is sent, and both callers get its result.
+   * latest value of a resource is sent (see `CommitOptions.superseded`).
    */
   const commit = useCallback(
-    (variables: TVariables, { key }: CommitOptions = {}): Promise<TData> => {
+    (
+      variables: TVariables,
+      { key, superseded = 'follow' }: CommitOptions = {}
+    ): Promise<TData> => {
       // Joins the queue right away, so writes keep the order they were asked in.
-      const queued = enqueueMutation(() => commitPromise(variables), { key });
+      const enqueued = enqueueMutation(() => commitPromise(variables), { key });
+      const queued =
+        superseded === 'follow' ? followSuperseded(enqueued) : enqueued;
       queued.catch(() => undefined);
       return runWithInflight(() => queued);
     },
@@ -292,7 +309,8 @@ export function useCheckoutOperation<
    * queue and sends several mutations one after the other.
    */
   const send = useCallback(
-    (variables: TVariables): Promise<TData> => runWithInflight(() => commitPromise(variables)),
+    (variables: TVariables): Promise<TData> =>
+      runWithInflight(() => commitPromise(variables)),
     [runWithInflight, commitPromise]
   );
 

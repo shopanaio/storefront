@@ -93,6 +93,7 @@ export const ContactSelect = ({
   const [saving, setSaving] = useState(false);
   const onDrawerSubmit = methods.handleSubmit(async (values) => {
     // What is sent becomes the saved state of the form: fields changed after it stay dirty.
+    const before = { ...formState.defaultValues } as ContactForm;
     reset(values);
     setSaving(true);
     try {
@@ -100,6 +101,8 @@ export const ContactSelect = ({
       setOpen(false);
     } catch {
       // The failure is shown by the checkout API; the drawer keeps the input for a retry.
+      // What was not saved stays dirty, so a later answer of the server does not replace it.
+      reset(before, { keepValues: true });
     } finally {
       setSaving(false);
     }
