@@ -12,8 +12,6 @@ const toDeliveryMethod = (method: Checkout.DeliveryMethod): DeliveryMethod => ({
   description: method.description,
   provider: method.provider.code,
   carrierCode: method.carrierCode,
-  cost: method.cost,
-  paymentModel: method.paymentModel,
   estimatedMinDeliveryAt: method.estimatedMinDeliveryAt,
   estimatedMaxDeliveryAt: method.estimatedMaxDeliveryAt,
   data: undefined,
@@ -77,6 +75,7 @@ export function mapCheckoutToDeliveryFormData(
       resetReason: reset ? resetReason : null,
       previousOptionHandle: reset ? previousOptionHandle : null,
       savedInput: customerInput ?? null,
+      shipping: group.shipping,
     };
   }
 

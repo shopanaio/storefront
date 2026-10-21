@@ -68,6 +68,7 @@ const deliveryOption = (
   publicData: { payer: 'Recipient' },
   cost: money('0'),
   paymentModel: 'CARRIER_DIRECT',
+  carrierEstimatedCost: money('95'),
   estimatedMinDeliveryAt: '2026-10-19T00:00:00.000Z',
   estimatedMaxDeliveryAt: null,
   phoneRequired: true,
@@ -95,6 +96,7 @@ const deliveryGroup = (
     option: null,
     customerInput: null,
   },
+  shipping: null,
   ...overrides,
 });
 
@@ -129,6 +131,7 @@ const createApiCheckout = (
     subtotalAmount: money('500'),
     totalAmount: money('580'),
     totalDiscountAmount: money('0'),
+    merchandiseDiscountAmount: money('0'),
     totalShippingAmount: money('80'),
     totalTaxAmount: money('0'),
     loyaltyAmount: money('0'),
@@ -244,6 +247,7 @@ describe('mapApiCheckoutToCheckout', () => {
         provider: { code: 'nova-poshta' },
         cost: { amount: 0, currencyCode: 'UAH' },
         paymentModel: 'CARRIER_DIRECT',
+        carrierEstimatedCost: { amount: 95, currencyCode: 'UAH' },
         estimatedMinDeliveryAt: new Date('2026-10-19T00:00:00.000Z'),
         estimatedMaxDeliveryAt: null,
         phoneRequired: true,
@@ -253,6 +257,40 @@ describe('mapApiCheckoutToCheckout', () => {
         publicData: { payer: 'Recipient' },
       },
     ]);
+  });
+
+  it('maps the shipping the server settled for a group', () => {
+    const [free, unsettled] = mapApiCheckoutToCheckout(
+      createApiCheckout({
+        deliveryGroups: [
+          deliveryGroup({
+            shipping: {
+              __typename: 'CheckoutDeliveryGroupShipping',
+              paymentModel: 'CARRIER_DIRECT',
+              originalPrice: null,
+              payer: 'MERCHANT',
+              total: money('0'),
+              freeShipping: {
+                __typename: 'CheckoutFreeShipping',
+                source: 'LOYALTY_TIER',
+                title: 'Gold',
+                code: null,
+              },
+            },
+          }),
+          deliveryGroup({ id: 'group-2' }),
+        ],
+      })
+    ).deliveryGroups;
+
+    expect(free.shipping).toEqual({
+      paymentModel: 'CARRIER_DIRECT',
+      originalPrice: null,
+      payer: 'MERCHANT',
+      total: { amount: 0, currencyCode: 'UAH' },
+      freeShipping: { source: 'LOYALTY_TIER', title: 'Gold', code: null },
+    });
+    expect(unsettled.shipping).toBeNull();
   });
 
   it('keeps the carrier code empty and renders such options generically', () => {

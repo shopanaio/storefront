@@ -138,12 +138,16 @@ const RewardCard = ({
   const locale = useLocale();
   const { styles, cx } = useStyles();
   const Icon = ICONS[reward.kind] ?? TbGift;
+  // Free shipping is never applied by hand: the server applies it and the shipping line names it.
+  const automatic = reward.kind === 'FREE_SHIPPING';
   const validUntil = reward.validUntil
     ? t('loyalty-reward-valid-until', { date: formatShortDate(locale, reward.validUntil) })
     : null;
   const details = applied
     ? [t('loyalty-reward-applied'), validUntil]
-    : [reward.description, validUntil];
+    : automatic
+      ? [t('loyalty-reward-automatic'), validUntil]
+      : [reward.description, validUntil];
 
   return (
     <div
@@ -183,7 +187,7 @@ const RewardCard = ({
         >
           {t('loyalty-reward-remove')}
         </button>
-      ) : (
+      ) : automatic ? null : (
         <Button loading={pending} disabled={disabled && !pending} onClick={onApply}>
           {t('apply')}
         </Button>

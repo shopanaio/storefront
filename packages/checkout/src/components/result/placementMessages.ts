@@ -10,6 +10,7 @@ import {
   PLACEMENT_UNCONFIRMED_CODE,
   STALE_SELECTION_CODE,
   TOTAL_CHANGED_CODE,
+  SHIPPING_CHANGED_CODE,
 } from '#checkout/state/placement/outcome';
 
 /**
@@ -25,6 +26,7 @@ export function placementErrorMessageKey(code: string): string {
     code === 'CHECKOUT_PLACEMENT_SNAPSHOT_STALE' ||
     code === STALE_SELECTION_CODE ||
     code === TOTAL_CHANGED_CODE ||
+    code === SHIPPING_CHANGED_CODE ||
     code === LOYALTY_QUOTE_CHANGED_CODE
   ) {
     return 'placement-error-changed';

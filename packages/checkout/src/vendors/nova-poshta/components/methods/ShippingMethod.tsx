@@ -20,13 +20,14 @@ interface NovaPoshtaPublicData {
 /**
  * What the customer pays the carrier. The checkout never collects the Nova Poshta fee: when
  * the recipient pays, the carrier price is an estimate paid on receipt and may still be
- * unknown; when the merchant pays, there is nothing to say here.
+ * unknown; when the merchant pays, or free shipping pays the carrier for this option, there is
+ * nothing to say here.
  */
-function useCarrierEstimate(publicData: unknown): string | null {
+function useCarrierEstimate(publicData: unknown, waived: boolean): string | null {
   const t = useTranslations('Modules.novaPoshta');
   const locale = useLocale();
   const data = (publicData ?? {}) as NovaPoshtaPublicData;
-  if (data.payer !== 'Recipient') {
+  if (waived || data.payer !== 'Recipient') {
     return null;
   }
   const cost = data.estimatedCost;
@@ -60,9 +61,10 @@ export function createShippingMethod(code: ServiceCode): FC<ProviderMethodCompon
     onSubmit,
     deliveryAddress,
     publicData,
+    carrierChargeWaived = false,
   }: ProviderMethodComponentProps) {
     const t = useTranslations('Modules.novaPoshta');
-    const estimate = useCarrierEstimate(publicData);
+    const estimate = useCarrierEstimate(publicData, carrierChargeWaived);
 
     if (!contractBranch(customerInputContract, type)) {
       return null;

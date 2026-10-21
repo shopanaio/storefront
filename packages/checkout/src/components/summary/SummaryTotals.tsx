@@ -8,8 +8,9 @@ import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
 import { LoyaltyIcon } from '#checkout/sections/loyalty/components/LoyaltyIcon';
 import { useShippingQuote } from '#checkout/sections/delivery/useShippingQuote';
 import {
+  ShippingPriceValue,
   useEstimateLabel,
-  useShippingPriceLabel,
+  useFreeShippingReason,
 } from '#checkout/sections/delivery/components/ShipmentQuote';
 
 const { Text } = Typography;
@@ -20,30 +21,26 @@ interface SummaryTotalsProps {
 
 /**
  * A component for displaying checkout cost summary including subtotal, shipping, discounts, taxes and total.
- * The discount holds promotions and rewards; what is paid with points or store credit is its own
- * line, and what the order earns is a quiet line under the total.
+ * Shipping is shown after free shipping and shipping discounts, with the price before them struck
+ * through and why it is free; the discount holds what promotions and rewards took off the goods.
+ * What is paid with points or store credit is its own line, and what the order earns is a quiet
+ * line under the total.
  */
 export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
-  const priceLabel = useShippingPriceLabel();
   const estimateLabel = useEstimateLabel();
+  const reasonLabel = useFreeShippingReason();
   /**
-   * Shipping of the selected options of every shipment (R9): the amount the merchant
-   * collects, "free" or the carrier's rates. Unknown until every shipment has its option
-   * and its input is saved, as in the delivery section.
+   * Shipping of the selected options of every shipment (R9), as the server settled it: the
+   * amount charged, "free" or the carrier's rates. Unknown until every shipment has its
+   * option and its input is saved, as in the delivery section.
    */
   const quote = useShippingQuote(checkout);
-  const shippingValue = quote ? priceLabel(quote.price) : t('shipping-not-selected');
   const arrivesBy = quote ? estimateLabel(null, quote.estimatedMaxDeliveryAt) : null;
-
-  const hasDiscount = () => {
-    return (
-      checkout?.cost?.totalDiscountAmount &&
-      checkout.cost.totalDiscountAmount.amount > 0
-    );
-  };
+  const freeReason = quote ? reasonLabel(quote.freeShipping) : null;
+  const discount = checkout.cost.merchandiseDiscountAmount;
 
   const hasTax = () => {
     return (
@@ -62,19 +59,24 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
       <Flex justify="space-between">
         <Text className={styles.lineLabel}>{t('shipping')}</Text>
         <Text className={styles.lineValue} type={quote ? undefined : 'secondary'}>
-          {shippingValue}
+          {quote ? <ShippingPriceValue price={quote.price} /> : t('shipping-not-selected')}
         </Text>
       </Flex>
+      {freeReason && (
+        <Text type="success" className={styles.note}>
+          {freeReason}
+        </Text>
+      )}
       {arrivesBy && (
         <Text type="secondary" className={styles.note}>
           {t('delivery-arrives-by', { date: arrivesBy })}
         </Text>
       )}
-      {hasDiscount() && (
+      {discount.amount > 0 && (
         <Flex justify="space-between">
           <Text className={styles.lineLabel}>{t('discount')}</Text>
           <Text className={styles.lineValue}>
-            -<Money money={checkout.cost.totalDiscountAmount} />
+            -<Money money={discount} />
           </Text>
         </Flex>
       )}

@@ -48,6 +48,8 @@ export interface ProviderMethod {
   title?: string;
   description?: string | null;
   provider: string;
+  /** Free shipping pays the carrier charge of the selected delivery option. */
+  carrierChargeWaived?: boolean;
 }
 
 export interface ProviderProps {
@@ -104,6 +106,11 @@ export interface ProviderMethodComponentProps {
   description?: string | null;
   /** Read-only metadata of the option from the provider. */
   publicData?: unknown;
+  /**
+   * Free shipping pays the carrier charge of the option: the recipient pays nothing on
+   * delivery, so a carrier price note does not apply.
+   */
+  carrierChargeWaived?: boolean;
 }
 
 export interface ProviderModuleApi {

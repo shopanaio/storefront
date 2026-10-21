@@ -46,9 +46,9 @@ const account: Checkout.LoyaltyAccount = {
   ],
   rewards: [
     {
-      id: 'reward-ship',
-      kind: 'FREE_SHIPPING',
-      headline: 'Free delivery',
+      id: 'reward-voucher',
+      kind: 'VOUCHER',
+      headline: '100 UAH voucher',
       description: null,
       validUntil: null,
       voucherCode: null,
@@ -145,7 +145,7 @@ describe('LoyaltySectionView', () => {
     expect(screen.getByText(/Redeemed 500 points/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     expect(api.setLoyaltyReward).toHaveBeenCalledWith(
-      { id: 'reward-ship', voucherCode: null },
+      { id: 'reward-voucher', voucherCode: null },
       null
     );
   });

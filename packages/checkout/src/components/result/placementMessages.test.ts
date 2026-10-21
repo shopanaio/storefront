@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOYALTY_QUOTE_CHANGED_CODE,
+  SHIPPING_CHANGED_CODE,
   TOTAL_CHANGED_CODE,
 } from '#checkout/state/placement/outcome';
 import { placementErrorMessageKey } from './placementMessages';
@@ -19,5 +20,9 @@ describe('placementErrorMessageKey', () => {
 
   it('SC-q2tn: asks the buyer to review the order when its total changed', () => {
     expect(placementErrorMessageKey(TOTAL_CHANGED_CODE)).toBe('placement-error-changed');
+  });
+
+  it('SC-fz14: asks the buyer to review the checkout when free shipping changed', () => {
+    expect(placementErrorMessageKey(SHIPPING_CHANGED_CODE)).toBe('placement-error-changed');
   });
 });

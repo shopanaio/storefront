@@ -35,8 +35,6 @@ const option = (
   title: 'warehouse',
   provider: 'nova-poshta',
   carrierCode: 'nova-poshta',
-  cost: { amount: 80, currencyCode: 'UAH' },
-  paymentModel: 'MERCHANT_COLLECTED',
   estimatedMinDeliveryAt: null,
   estimatedMaxDeliveryAt: null,
   data,
@@ -55,6 +53,7 @@ const form = (selected: DeliveryMethod | null): DeliveryFormData => ({
     resetReason: null,
     previousOptionHandle: null,
     savedInput: null,
+    shipping: null,
   },
 });
 

@@ -53,8 +53,6 @@ const method = (
   title: 'warehouse',
   provider: 'nova-poshta',
   carrierCode: 'nova-poshta',
-  cost: { amount: 80, currencyCode: 'UAH' },
-  paymentModel: 'MERCHANT_COLLECTED',
   estimatedMinDeliveryAt: null,
   estimatedMaxDeliveryAt: null,
   data: undefined,
@@ -77,6 +75,7 @@ const group = (
   resetReason: null,
   previousOptionHandle: null,
   savedInput: null,
+  shipping: null,
 });
 
 const list = (groups: DeliveryGroup[]) => (

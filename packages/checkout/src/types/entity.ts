@@ -292,7 +292,11 @@ export namespace Checkout {
   export interface Cost {
     subtotalAmount: model.Money;
     totalAmount: model.Money;
+    /** Promotions on items and delivery. */
     totalDiscountAmount: model.Money;
+    /** Promotions on items only, for a summary that shows shipping after its discounts. */
+    merchandiseDiscountAmount: model.Money;
+    /** Shipping before shipping discounts; loyalty free shipping is already taken off. */
     totalShippingAmount: model.Money;
     totalTaxAmount: model.Money;
     /** Paid with loyalty points or store credit; not part of `totalDiscountAmount`. */
@@ -358,6 +362,42 @@ export namespace Checkout {
     recipient: Recipient | null;
     /** Delivery method selection of the delivery group. */
     selection: DeliveryMethodSelection;
+    /** Shipping settlement of the selected option; `null` while no option is selected. */
+    shipping: DeliveryGroupShipping | null;
+  }
+
+  /**
+   * What the shipment of a group costs, as the server settled it: the price before free
+   * shipping, who pays the carrier, the amount charged at checkout and why it is free.
+   */
+  export interface DeliveryGroupShipping {
+    paymentModel: ShippingPaymentModel;
+    /**
+     * Price before free shipping: the charge of a `MERCHANT_COLLECTED` option, or the carrier
+     * estimate of a `CARRIER_DIRECT` one; `null` when the carrier price is unknown.
+     */
+    originalPrice: model.Money | null;
+    /** `RECIPIENT`: the carrier charges the recipient on delivery, nothing is charged at checkout. */
+    payer: ShippingPayer;
+    /** Amount charged at checkout for the group. */
+    total: model.Money;
+    freeShipping: FreeShipping | null;
+  }
+
+  export type ShippingPayer = 'MERCHANT' | 'RECIPIENT';
+
+  export type FreeShippingSource =
+    | 'DISCOUNT'
+    | 'LOYALTY_TIER'
+    | 'LOYALTY_REWARD';
+
+  /** Why the shipping of a group is free; the server applies it on its own. */
+  export interface FreeShipping {
+    source: FreeShippingSource;
+    /** Buyer-facing reason: the discount title, the loyalty tier name or the reward name. */
+    title: string;
+    /** Promo code that made shipping free; `null` for an automatic discount or loyalty. */
+    code: string | null;
   }
 
   /** Delivery address associated with a checkout. */
@@ -394,6 +434,8 @@ export namespace Checkout {
     cost: model.Money;
     /** Who collects the delivery charge; a `CARRIER_DIRECT` charge is not in the order total. */
     paymentModel: ShippingPaymentModel;
+    /** Carrier price estimate of a `CARRIER_DIRECT` option; `null` otherwise or when unknown. */
+    carrierEstimatedCost: model.Money | null;
     estimatedMinDeliveryAt: Date | null;
     estimatedMaxDeliveryAt: Date | null;
     /**

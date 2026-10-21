@@ -40,6 +40,7 @@ export function NPProvider({
               title={method.title}
               description={method.description}
               publicData={method.publicData}
+              carrierChargeWaived={method.carrierChargeWaived}
               onSubmit={(data, view) =>
                 onUpdateMethodData?.(method.handle, data, view)
               }

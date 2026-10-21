@@ -1,4 +1,3 @@
-import type { model } from '@shopana/storefront-sdk';
 import type { Checkout } from '#checkout/types/entity';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 
@@ -10,9 +9,6 @@ export interface DeliveryMethod {
   provider: string;
   /** Carrier code from the API; `null` for options rendered generically. */
   carrierCode: string | null;
-  /** Charge of the option; known once the API accepted the selection with its input. */
-  cost: model.Money;
-  paymentModel: Checkout.ShippingPaymentModel;
   estimatedMinDeliveryAt: Date | null;
   estimatedMaxDeliveryAt: Date | null;
   /** Customer input of the option: the one typed and not saved yet, else the one the API saved. */
@@ -25,6 +21,8 @@ export interface DeliveryMethod {
   customerInputContract: unknown;
   /** Read-only metadata returned by the provider through publicData. */
   publicData: unknown;
+  /** Free shipping pays the carrier charge of the selected option: nothing is due on delivery. */
+  carrierChargeWaived?: boolean;
 }
 
 /**
@@ -50,6 +48,11 @@ export interface DeliveryGroup {
   previousOptionHandle: string | null;
   /** Customer input the API saved for the selected (or reset) option. */
   savedInput: unknown;
+  /**
+   * Shipping the server settled for the selected option: what is charged, who pays the
+   * carrier, the price before free shipping and why it is free.
+   */
+  shipping: Checkout.DeliveryGroupShipping | null;
 }
 
 /**

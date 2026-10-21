@@ -21,6 +21,7 @@ import {
   resolvePlacementOutcome,
   STALE_SELECTION_CODE,
   TOTAL_CHANGED_CODE,
+  SHIPPING_CHANGED_CODE,
 } from '#checkout/state/placement/outcome';
 import {
   isPlacementBusy,
@@ -139,7 +140,8 @@ export function usePlacementController(checkoutId: string | null) {
       if (
         outcome.kind === 'rejected' &&
         (outcome.code === STALE_SELECTION_CODE ||
-          outcome.code === TOTAL_CHANGED_CODE)
+          outcome.code === TOTAL_CHANGED_CODE ||
+          outcome.code === SHIPPING_CHANGED_CODE)
       ) {
         // The sections show the reset choice with its reason and the new price (6.2), the
         // summary the new total the buyer confirms with the next press (BR-q2tm).

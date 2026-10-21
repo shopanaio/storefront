@@ -80,6 +80,9 @@ fragment StorefrontCheckoutDeliveryOption on CheckoutDeliveryOption {
     ...StorefrontCheckoutMoney
   }
   paymentModel
+  carrierEstimatedCost {
+    ...StorefrontCheckoutMoney
+  }
   estimatedMinDeliveryAt
   estimatedMaxDeliveryAt
   phoneRequired
@@ -130,6 +133,9 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       ...StorefrontCheckoutMoney
     }
     totalDiscountAmount {
+      ...StorefrontCheckoutMoney
+    }
+    merchandiseDiscountAmount {
       ...StorefrontCheckoutMoney
     }
     totalShippingAmount {
@@ -257,6 +263,21 @@ fragment StorefrontUseCheckoutFragment on Checkout {
         ...StorefrontCheckoutDeliveryOption
       }
       customerInput
+    }
+    shipping {
+      paymentModel
+      originalPrice {
+        ...StorefrontCheckoutMoney
+      }
+      payer
+      total {
+        ...StorefrontCheckoutMoney
+      }
+      freeShipping {
+        source
+        title
+        code
+      }
     }
   }
   payment {

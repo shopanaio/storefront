@@ -24,8 +24,6 @@ const method = (handle: string, code: string, data?: unknown): DeliveryMethod =>
   title: code,
   provider: 'nova-poshta',
   carrierCode: 'nova-poshta',
-  cost: { amount: 80, currencyCode: 'UAH' },
-  paymentModel: 'MERCHANT_COLLECTED',
   estimatedMinDeliveryAt: null,
   estimatedMaxDeliveryAt: null,
   data,
@@ -43,6 +41,7 @@ const group = (id: string, methods: DeliveryMethod[], selected: DeliveryMethod |
   resetReason: null,
   previousOptionHandle: null,
   savedInput: null,
+  shipping: null,
 });
 
 const branch = (ref: string) => ({ type: 'WAREHOUSE', warehouseRef: ref });

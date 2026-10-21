@@ -30,11 +30,13 @@ import {
 import { definitiveRejection } from '../saveError';
 import { closedCheckoutCode } from '#checkout/state/closedCheckout';
 import {
+  carrierChargeWaived,
   commonSelectionKey,
   isGroupOf,
   methodKey,
   methodOfGroup,
-  quotedMethod,
+  quotedShipment,
+  type QuotedShipment,
 } from '../shipments';
 import { ShipmentQuote } from './ShipmentQuote';
 
@@ -524,28 +526,36 @@ export const DeliveryMethodList = ({
     return () => clearTimeout(timer);
   }, [unsavedKey, pendingKey, stopped, failureCount, saveSelectedInput]);
 
-  const providerMethodsRecord = useMemo(
-    () =>
-      methods.reduce<DeliveryProviderMethodsRecord>((acc, method) => {
-        (acc[method.provider] ??= []).push(method);
-        return acc;
-      }, {}),
-    [methods]
-  );
-
   /**
    * Price and dates of the selected method, once the API accepted it in every group the list
-   * covers: the sum of the shipments and the date of the one arriving last (R9).
+   * covers: the shipping the server settled for the shipments and the date of the one
+   * arriving last (R9).
    */
-  const quotedMethods = useMemo(() => {
+  const quotedShipments = useMemo(() => {
     if (pendingKey || !serverKey) {
       return null;
     }
-    const quoted = groups.map(quotedMethod);
-    return quoted.every((method) => method !== null)
-      ? (quoted as DeliveryMethod[])
+    const quoted = groups.map(quotedShipment);
+    return quoted.every((shipment) => shipment !== null)
+      ? (quoted as QuotedShipment[])
       : null;
   }, [groups, pendingKey, serverKey]);
+  /** Free shipping pays the carrier for the selected method: its carrier note is void. */
+  const waivedKey =
+    quotedShipments && carrierChargeWaived(quotedShipments) ? serverKey : null;
+
+  const providerMethodsRecord = useMemo(
+    () =>
+      methods.reduce<DeliveryProviderMethodsRecord>((acc, method) => {
+        (acc[method.provider] ??= []).push(
+          methodKey(method) === waivedKey
+            ? { ...method, carrierChargeWaived: true }
+            : method
+        );
+        return acc;
+      }, {}),
+    [methods, waivedKey]
+  );
   const resetReason = groups.length === 1 ? groups[0].resetReason : null;
 
   if (!groups.length || !methods.length) {
@@ -609,7 +619,7 @@ export const DeliveryMethodList = ({
           />
         )
       )}
-      {quotedMethods && <ShipmentQuote methods={quotedMethods} withLabel />}
+      {quotedShipments && <ShipmentQuote shipments={quotedShipments} withLabel />}
     </Flex>
   );
 };

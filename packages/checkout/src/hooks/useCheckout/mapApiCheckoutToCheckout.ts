@@ -167,6 +167,9 @@ const mapDeliveryMethod = (
   },
   cost: mapMoney(method.cost),
   paymentModel: method.paymentModel,
+  carrierEstimatedCost: method.carrierEstimatedCost
+    ? mapMoney(method.carrierEstimatedCost)
+    : null,
   estimatedMinDeliveryAt: toOptionalDate(method.estimatedMinDeliveryAt),
   estimatedMaxDeliveryAt: toOptionalDate(method.estimatedMaxDeliveryAt),
   phoneRequired: method.phoneRequired,
@@ -222,6 +225,23 @@ const mapDeliveryGroup = (
     resetReason: mapResetReason(group.selection.resetReason),
     customerInput: group.selection.customerInput ?? null,
   },
+  shipping: group.shipping
+    ? {
+        paymentModel: group.shipping.paymentModel,
+        originalPrice: group.shipping.originalPrice
+          ? mapMoney(group.shipping.originalPrice)
+          : null,
+        payer: group.shipping.payer,
+        total: mapMoney(group.shipping.total),
+        freeShipping: group.shipping.freeShipping
+          ? {
+              source: group.shipping.freeShipping.source,
+              title: group.shipping.freeShipping.title,
+              code: group.shipping.freeShipping.code ?? null,
+            }
+          : null,
+      }
+    : null,
 });
 const mapPaymentMethod = (
   method: StorefrontCheckoutPaymentMethodFragment
@@ -320,6 +340,9 @@ export function mapApiCheckoutToCheckout(
       subtotalAmount: mapMoney(apiCheckout.cost.subtotalAmount),
       totalAmount: mapMoney(apiCheckout.cost.totalAmount),
       totalDiscountAmount: mapMoney(apiCheckout.cost.totalDiscountAmount),
+      merchandiseDiscountAmount: mapMoney(
+        apiCheckout.cost.merchandiseDiscountAmount
+      ),
       totalShippingAmount: mapMoney(apiCheckout.cost.totalShippingAmount),
       totalTaxAmount: mapMoney(apiCheckout.cost.totalTaxAmount),
       loyaltyAmount: mapMoney(apiCheckout.cost.loyaltyAmount),

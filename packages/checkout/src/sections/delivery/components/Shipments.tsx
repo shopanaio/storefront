@@ -12,7 +12,7 @@ import {
   commonMethods,
   commonSelectionKey,
   methodKey,
-  quotedMethod,
+  quotedShipment,
   selectionsDiffer,
 } from '../shipments';
 import { DeliveryMethodList } from './DeliveryMethodList';
@@ -91,7 +91,7 @@ export const Shipments = ({
       )}
       <Flex vertical gap={8}>
         {groups.map((group, index) => {
-          const quoted = quotedMethod(group);
+          const quoted = quotedShipment(group);
           return (
             <Flex key={group.id} vertical gap={8} className={styles.shipment}>
               <Flex justify="space-between" align="baseline" gap={8} wrap>
@@ -102,7 +102,7 @@ export const Shipments = ({
                   })}
                 </Text>
                 {!byShipment && quoted && sharedKey ? (
-                  <ShipmentQuote methods={[quoted]} />
+                  <ShipmentQuote shipments={[quoted]} />
                 ) : null}
               </Flex>
               <ShipmentLines lines={group.lines} />

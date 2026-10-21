@@ -37,6 +37,12 @@ export const STALE_SELECTION_CODE = 'CHECKOUT_OPEN';
 export const TOTAL_CHANGED_CODE = 'CHECKOUT_TOTAL_CHANGED';
 
 /**
+ * The recalculated checkout makes other delivery groups free or changes who pays the carrier,
+ * which the total alone may not show: nothing was placed and the buyer reviews the checkout.
+ */
+export const SHIPPING_CHANGED_CODE = 'CHECKOUT_SHIPPING_CHANGED';
+
+/**
  * A buyer signed in, but this guest checkout was not claimed by the account yet (B6). The order
  * is not placed as a guest: the account claims the checkout, its prices are read again and the
  * buyer places the order from the account checkout.
