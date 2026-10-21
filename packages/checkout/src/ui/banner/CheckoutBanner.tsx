@@ -145,7 +145,7 @@ export const CheckoutBanner = ({
   );
 };
 
-const useStyles = createStyles(({ css }) => ({
+const useStyles = createStyles(({ css, token }) => ({
   banner: css`
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -173,7 +173,7 @@ const useStyles = createStyles(({ css }) => ({
     grid-column: 2;
     grid-row: 1;
     min-width: 0;
-    font-weight: 500;
+    font-weight: 600;
   `,
   titleCompact: css`
     display: -webkit-box;
@@ -244,9 +244,11 @@ const useStyles = createStyles(({ css }) => ({
     color: var(--banner-text);
     cursor: pointer;
   `,
+  // Secondary to the title in every tone, so it reads as the explanation of it.
   description: css`
     grid-column: 2 / 4;
     margin: 0;
+    color: ${token.colorTextSecondary};
   `,
   content: css`
     grid-column: 2 / 4;

@@ -15,6 +15,10 @@ interface Prop {
   undeliverable?: boolean;
   /** Framed like the fields of the checkout; a list that divides its items turns it off. */
   bordered?: boolean;
+  /** Shows the cost of the line on the right; a list of lines to act on leaves it out. */
+  priced?: boolean;
+  /** Shows the quantity as a badge on the thumbnail. */
+  counted?: boolean;
   className?: string;
 }
 
@@ -22,6 +26,8 @@ export const SummaryItem = ({
   line,
   undeliverable = false,
   bordered = true,
+  priced = true,
+  counted = true,
   className,
 }: Prop) => {
   const { styles, cx } = useStyles();
@@ -33,6 +39,9 @@ export const SummaryItem = ({
     fallback: line.title,
   });
   const imageUrl = line.imageSrc ?? line.purchasable?.cover?.url;
+  const thumbnail = (
+    <Thumbnail className={styles.thumbnail} src={imageUrl} alt={title} />
+  );
 
   return (
     <Flex
@@ -42,18 +51,18 @@ export const SummaryItem = ({
       gap={16}
     >
       <Flex align="center" gap={16} className={styles.main}>
-        <Badge
-          size="default"
-          count={line.quantity}
-          variant="primary"
-          offset={[-4, 4]}
-        >
-          <Thumbnail
-            className={styles.thumbnail}
-            src={imageUrl}
-            alt={title}
-          />
-        </Badge>
+        {counted ? (
+          <Badge
+            size="default"
+            count={line.quantity}
+            variant="primary"
+            offset={[-4, 4]}
+          >
+            {thumbnail}
+          </Badge>
+        ) : (
+          thumbnail
+        )}
         <Flex vertical className={styles.main}>
           <Text className={styles.productName}>{title}</Text>
           {undeliverable && (
@@ -63,7 +72,9 @@ export const SummaryItem = ({
           )}
         </Flex>
       </Flex>
-      <Money strong as={Text} money={line.cost.totalAmount} className={styles.price} />
+      {priced && (
+        <Money strong as={Text} money={line.cost.totalAmount} className={styles.price} />
+      )}
     </Flex>
   );
 };

@@ -1,24 +1,15 @@
 'use client';
 
-import { Button, Flex } from 'antd';
+import { useState } from 'react';
+import { Button } from 'antd';
+import { createStyles } from 'antd-style';
 import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
-import {
-  useRemoveCartLines,
-  useUndeliverableLines,
-} from '#checkout/hooks/useUndeliverableLines';
-import { useConfirm } from '#checkout/ui/useConfirm';
-import {
-  clearSaveError,
-  reportSaveError,
-  UNDELIVERABLE_REMOVE_ERROR_KEY,
-} from '#checkout/state/banners/bannerStore';
-import { SectionId } from '#checkout/state/interface';
-import { focusAnchor, sectionAnchor } from '#checkout/ui/focusAnchor';
+import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { ShipmentLines } from './ShipmentLines';
 
-/** Brings the address form into view, so the customer can change the address. */
-const focusAddress = () => focusAnchor(sectionAnchor(SectionId.Address));
+/** Lines shown before the rest is folded under "show more". */
+const VISIBLE_LINES = 3;
 
 /**
  * Lines that cannot be delivered to the address (R7). They block the whole order; the
@@ -27,50 +18,50 @@ const focusAddress = () => focusAnchor(sectionAnchor(SectionId.Address));
  */
 export const UndeliverableLines = () => {
   const t = useTranslations('Checkout');
+  const { styles } = useStyles();
   const lines = useUndeliverableLines();
-  const { remove, removing } = useRemoveCartLines();
-  const confirm = useConfirm();
+  const [expanded, setExpanded] = useState(false);
 
   if (!lines.length) {
     return null;
   }
 
-  const handleRemove = async () => {
-    const confirmed = await confirm({
-      title: t('undeliverable-remove-confirm-title'),
-      content: t('undeliverable-remove-confirm', { count: lines.length }),
-      okText: t('undeliverable-remove'),
-      okButtonProps: { danger: true },
-      cancelText: t('undeliverable-remove-cancel'),
-    });
-    if (!confirmed) {
-      return;
-    }
-    try {
-      await remove(lines);
-      clearSaveError(UNDELIVERABLE_REMOVE_ERROR_KEY);
-    } catch (error) {
-      console.error('Failed to remove undeliverable lines:', error);
-      reportSaveError({
-        key: UNDELIVERABLE_REMOVE_ERROR_KEY,
-        message: t('undeliverable-remove-failed'),
-        sectionId: SectionId.Delivery,
-        closable: true,
-      });
-    }
-  };
+  const hidden = expanded ? 0 : Math.max(lines.length - VISIBLE_LINES, 0);
+  const shown = hidden ? lines.slice(0, VISIBLE_LINES) : lines;
 
   return (
-    <CheckoutBanner tone="action" title={t('undeliverable-title')}>
-      <Flex vertical gap={12}>
-        <ShipmentLines lines={lines} />
-        <Flex gap={8} wrap>
-          <Button onClick={focusAddress}>{t('undeliverable-change-address')}</Button>
-          <Button danger loading={removing} onClick={handleRemove}>
-            {t('undeliverable-remove')}
+    <CheckoutBanner
+      tone="action"
+      title={t('undeliverable-title', { count: lines.length })}
+      description={t('undeliverable-hint', { count: lines.length })}
+    >
+      <ShipmentLines
+        lines={shown}
+        priced={false}
+        counted={false}
+        divided={false}
+      />
+      {hidden > 0 && (
+        <div className={styles.more}>
+          <Button
+            type="link"
+            size="small"
+            className={styles.moreButton}
+            onClick={() => setExpanded(true)}
+          >
+            {t('undeliverable-show-more', { count: hidden })}
           </Button>
-        </Flex>
-      </Flex>
+        </div>
+      )}
     </CheckoutBanner>
   );
 };
+
+const useStyles = createStyles(({ css, token }) => ({
+  more: css`
+    margin-top: ${token.paddingXXS}px;
+  `,
+  moreButton: css`
+    padding: 0;
+  `,
+}));
