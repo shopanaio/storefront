@@ -147,7 +147,7 @@ const useStyles = createStyles(({ css, token }) => ({
     transform: translateY(-50%);
     white-space: nowrap;
     color: ${token.colorTextSecondary};
-    font-size: 14px;
+    font-size: ${token.fontSize}px;
     cursor: text;
     user-select: none;
     transition: all 0.2s ease;

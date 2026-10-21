@@ -102,7 +102,7 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
           </Text>
         </Flex>
       )}
-      <Divider style={{ margin: 0 }} />
+      <Divider className={styles.divider} />
       <Flex justify="space-between" align="center">
         <Text strong className={styles.totalLabel}>
           {t('total')}
@@ -168,16 +168,24 @@ export const LoyaltyEarningLine = ({ earning }: { earning: Checkout.LoyaltyEarni
 };
 
 const useStyles = createStyles(({ css, token }) => ({
+  // Every divider of the checkout is colorBorder, the color of its fields and cards.
+  divider: css`
+    &.ant-divider {
+      margin: 0;
+      border-color: ${token.colorBorder};
+    }
+  `,
   // The totals are a block of their own, apart from the promo codes and rewards above.
   root: css`
     padding-top: ${token.padding}px;
     border-top: 1px solid ${token.colorBorder};
   `,
+  // The lines of the totals are a step over the content and under the total.
   lineLabel: css`
-    font-size: ${token.fontSize}px;
+    font-size: ${token.fontSizeLG}px;
   `,
   lineValue: css`
-    font-size: ${token.fontSize}px;
+    font-size: ${token.fontSizeLG}px;
   `,
   note: css`
     font-size: ${token.fontSizeSM}px;

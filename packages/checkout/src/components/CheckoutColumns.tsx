@@ -64,7 +64,7 @@ const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     flex-direction: column;
     gap: ${token.margin}px;
-    border-right: 2px solid ${token.colorBorderSecondary};
+    border-right: 2px solid ${token.colorBorder};
     padding: ${token.padding}px;
 
     ${mq.lg} {

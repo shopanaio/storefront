@@ -57,6 +57,44 @@ export function redemptionBounds(
   };
 }
 
+/** Whether a typed value reaches the upper bound: it is sent as the maximum, not as a number. */
+export function reachesMaximum(
+  source: Checkout.LoyaltySource,
+  value: string,
+  bounds: RedemptionBounds
+): boolean {
+  if (bounds.max === null) return false;
+  return source === 'POINTS'
+    ? BigInt(value) >= BigInt(bounds.max)
+    : Number(value) >= Number(bounds.max);
+}
+
+/**
+ * Whether the applied redemption is the most the buyer can use: the maximum was asked for, the
+ * service lowered the request to the most the order allows, or the request reaches the known
+ * upper bound. "Redeem the maximum" is not offered then.
+ */
+export function isAtMaximum(
+  option: Checkout.LoyaltySourceOption,
+  redemption: Checkout.LoyaltyRedemption
+): boolean {
+  if (redemption.requestedPoints === null && redemption.requestedAmount === null) return true;
+  const { max } = redemptionBounds(option, redemption);
+  if (redemption.source === 'POINTS') {
+    if (redemption.points === null) return false;
+    const applied = BigInt(redemption.points);
+    if (redemption.requestedPoints !== null && applied < BigInt(redemption.requestedPoints)) {
+      return true;
+    }
+    return max !== null && applied >= BigInt(max);
+  }
+  const applied = redemption.discount.amount;
+  if (redemption.requestedAmount !== null && applied < redemption.requestedAmount.amount) {
+    return true;
+  }
+  return max !== null && applied >= Number(max);
+}
+
 export type AmountError =
   | { code: 'invalid' }
   | { code: 'too-small'; min: string }

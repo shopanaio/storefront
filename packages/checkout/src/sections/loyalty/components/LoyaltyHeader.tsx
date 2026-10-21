@@ -3,7 +3,7 @@
 import { Flex, Tooltip, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useLocale, useTranslations } from 'next-intl';
-import { TbClockHour4, TbCrown, TbInfoCircle } from 'react-icons/tb';
+import { TbArrowDown, TbArrowUp, TbCrown, TbInfoCircle } from 'react-icons/tb';
 import type { Checkout } from '#checkout/types/entity';
 import { formatMoney } from '#checkout/ui/Money';
 import { formatMultiplier, formatShortDate, usePointsLabel } from '../format';
@@ -54,6 +54,50 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
     account.rewards.length === 0;
   const pending = BigInt(account.pendingPoints) > 0n;
   const pendingCredit = (storeCredit?.pendingAmount.amount ?? 0) > 0;
+  // What expires and what is still coming, points first, each with its explanation.
+  const changes: StatusPillProps[] = [];
+  if (nextExpiration) {
+    const amount = points(nextExpiration.points);
+    const date = formatShortDate(locale, nextExpiration.expiresAt);
+    changes.push({
+      id: 'points-expiring',
+      tone: 'expiring',
+      amount,
+      text: t('loyalty-expiring', { date }),
+      hint: t('loyalty-expiring-hint', { amount, date }),
+    });
+  }
+  if (storeCredit?.nextExpiration) {
+    const amount = money(storeCredit.nextExpiration.amount);
+    const date = formatShortDate(locale, storeCredit.nextExpiration.expiresAt);
+    changes.push({
+      id: 'credit-expiring',
+      tone: 'expiring',
+      amount,
+      text: t('loyalty-expiring', { date }),
+      hint: t('loyalty-expiring-hint', { amount, date }),
+    });
+  }
+  if (pending) {
+    const amount = points(account.pendingPoints);
+    changes.push({
+      id: 'points-pending',
+      tone: 'pending',
+      amount,
+      text: t('loyalty-pending'),
+      hint: t('loyalty-pending-hint', { amount }),
+    });
+  }
+  if (pendingCredit && storeCredit) {
+    const amount = money(storeCredit.pendingAmount);
+    changes.push({
+      id: 'credit-pending',
+      tone: 'pending',
+      amount,
+      text: t('loyalty-pending'),
+      hint: t('loyalty-pending-hint', { amount }),
+    });
+  }
 
   return (
     <Flex vertical gap={4} className={styles.root}>
@@ -91,37 +135,12 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
           </Tooltip>
         </Flex>
       ) : null}
-      {nextExpiration ? (
-        <Typography.Text type="secondary" className={styles.note}>
-          <Flex align="center" gap={6}>
-            <TbClockHour4 size={14} className={styles.expiring} aria-hidden="true" />
-            {t('loyalty-expiring', {
-              points: points(nextExpiration.points),
-              date: formatShortDate(locale, nextExpiration.expiresAt),
-            })}
-          </Flex>
-        </Typography.Text>
-      ) : null}
-      {storeCredit?.nextExpiration ? (
-        <Typography.Text type="secondary" className={styles.note}>
-          <Flex align="center" gap={6}>
-            <TbClockHour4 size={14} className={styles.expiring} aria-hidden="true" />
-            {t('loyalty-store-credit-expiring', {
-              amount: money(storeCredit.nextExpiration.amount),
-              date: formatShortDate(locale, storeCredit.nextExpiration.expiresAt),
-            })}
-          </Flex>
-        </Typography.Text>
-      ) : null}
-      {pendingCredit && storeCredit ? (
-        <Typography.Text type="secondary" className={styles.note}>
-          {t('loyalty-store-credit-pending', { amount: money(storeCredit.pendingAmount) })}
-        </Typography.Text>
-      ) : null}
-      {pending ? (
-        <Typography.Text type="secondary" className={styles.note}>
-          {t('loyalty-pending', { points: points(account.pendingPoints) })}
-        </Typography.Text>
+      {changes.length > 0 ? (
+        <Flex wrap gap={8} className={styles.changes}>
+          {changes.map(({ id, ...change }) => (
+            <StatusPill key={id} {...change} />
+          ))}
+        </Flex>
       ) : null}
       {empty && withPoints ? (
         <Typography.Text type="secondary" className={styles.note}>
@@ -129,6 +148,34 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
         </Typography.Text>
       ) : null}
     </Flex>
+  );
+};
+
+interface StatusPillProps {
+  id: string;
+  tone: 'expiring' | 'pending';
+  amount: string;
+  text: string;
+  /** What the change means, in a tooltip. */
+  hint: string;
+}
+
+/**
+ * A change of the balance ahead, as a pill: what expires (a warning) and what is still coming
+ * (a gain). The amount leads; the tooltip says what it means.
+ */
+const StatusPill = ({ tone, amount, text, hint }: Omit<StatusPillProps, 'id'>) => {
+  const { styles, cx } = useStyles();
+  // Down for what the balance loses, up for what it gains.
+  const Icon = tone === 'expiring' ? TbArrowDown : TbArrowUp;
+  return (
+    <Tooltip title={hint}>
+      <span className={cx(styles.statusPill, styles[tone])} tabIndex={0} aria-label={hint}>
+        <Icon size={14} className={styles.statusIcon} aria-hidden="true" />
+        <strong>{amount}</strong>
+        <span>{text}</span>
+      </span>
+    </Tooltip>
   );
 };
 
@@ -167,8 +214,29 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextTertiary};
     cursor: help;
   `,
-  expiring: css`
+  changes: css`
+    padding-top: 4px;
+  `,
+  statusPill: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid currentColor;
+    border-radius: 12px;
+    font-size: ${token.fontSizeSM}px;
+    white-space: nowrap;
+    cursor: help;
+  `,
+  statusIcon: css`
     flex: none;
-    color: ${token.colorWarning};
+  `,
+  // The tones of the checkout banners: a warning for what expires, a gain for what is coming.
+  expiring: css`
+    color: var(--checkout-banner-warning-accent, ${token.colorWarningText});
+  `,
+  pending: css`
+    color: var(--checkout-banner-success-accent, ${token.colorSuccessText});
   `,
 }));

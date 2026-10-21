@@ -104,11 +104,14 @@ export const CheckoutView = ({
   );
 };
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, token }) => {
   return {
     wrapper: css`
       position: relative;
       width: 100%;
+      /* Text that sets no size of its own takes the checkout's, not the host page's. */
+      font-size: ${token.fontSize}px;
+      line-height: ${token.lineHeight};
       ${bannerToneDeclarations()}
     `,
     actionsLeft: css`

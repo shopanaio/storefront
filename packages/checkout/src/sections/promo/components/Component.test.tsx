@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { PromoSectionView } from './Component';
 import { usePromoDraft } from '../draft';
@@ -64,7 +64,7 @@ describe('PromoSectionView', () => {
       })
     );
 
-    expect(screen.getByText('SAVE10')).toBeInTheDocument();
+    expect(within(screen.getByRole('list')).getByText('SAVE10')).toBeInTheDocument();
     expect(screen.getByText('Spend $50 more to use it')).toBeInTheDocument();
     expect(api.removePromoCode).not.toHaveBeenCalled();
   });
@@ -84,7 +84,7 @@ describe('PromoSectionView', () => {
   it('SC-2t9f: a delivery code entered before the delivery is shown as pending', () => {
     render(view({ codes: [{ code: 'FREESHIP', status: 'PENDING', message: null }] }));
 
-    expect(screen.getByText('FREESHIP')).toBeInTheDocument();
+    expect(within(screen.getByRole('list')).getByText('FREESHIP')).toBeInTheDocument();
     expect(screen.getByText('Waits for a condition')).toBeInTheDocument();
     expect(api.removePromoCode).not.toHaveBeenCalled();
   });

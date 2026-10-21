@@ -5,7 +5,13 @@ import {
   quoteNeedsRenewal,
   selectionInput,
 } from './selection';
-import { checkRedemptionInput, parseRedemptionInput, redemptionBounds } from './bounds';
+import {
+  checkRedemptionInput,
+  isAtMaximum,
+  parseRedemptionInput,
+  reachesMaximum,
+  redemptionBounds,
+} from './bounds';
 import { classifyLoyaltyIssue, issueSource, redemptionIssueMessageKey } from './issues';
 
 const uah = (amount: number) => ({ amount, currencyCode: 'UAH' });
@@ -132,6 +138,23 @@ describe('redemption bounds', () => {
     });
     expect(parseRedemptionInput('STORE_CREDIT', '80,5')).toBe('80.5');
     expect(checkRedemptionInput('STORE_CREDIT', '80.5', { min: '1', max: '120' })).toBeNull();
+  });
+
+  it('sends an amount at or over the most allowed as the maximum', () => {
+    const bounds = { min: '100', max: '500' };
+    expect(reachesMaximum('POINTS', '500', bounds)).toBe(true);
+    expect(reachesMaximum('POINTS', '2000', bounds)).toBe(true);
+    expect(reachesMaximum('POINTS', '499', bounds)).toBe(false);
+    expect(reachesMaximum('POINTS', '2000', { min: '100', max: null })).toBe(false);
+  });
+
+  it('shows a request that reaches the most allowed as the maximum', () => {
+    expect(isAtMaximum(points, redemption({ requestedPoints: null, points: '350' }))).toBe(true);
+    // The balance is 1 240: asking for all of it is the maximum.
+    expect(isAtMaximum(points, redemption({ requestedPoints: '1240', points: '1240' }))).toBe(true);
+    // The service lowered the request to the most the order allows.
+    expect(isAtMaximum(points, redemption({ requestedPoints: '1000', points: '900' }))).toBe(true);
+    expect(isAtMaximum(points, redemption({ requestedPoints: '500', points: '500' }))).toBe(false);
   });
 });
 

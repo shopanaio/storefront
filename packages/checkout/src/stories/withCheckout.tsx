@@ -44,6 +44,8 @@ export const withCheckout: Decorator<any> = (Story, { parameters }) => (
 
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
+    font-size: ${token.fontSize}px;
+    line-height: ${token.lineHeight};
     ${bannerToneDeclarations()}
   `,
   padded: css`

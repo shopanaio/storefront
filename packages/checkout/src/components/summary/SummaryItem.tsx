@@ -27,8 +27,8 @@ export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
   const imageUrl = line.imageSrc ?? line.purchasable?.cover?.url;
 
   return (
-    <Flex className={styles.item} align="center" justify="space-between">
-      <Flex align="center" gap={16}>
+    <Flex className={styles.item} align="center" justify="space-between" gap={16}>
+      <Flex align="center" gap={16} className={styles.main}>
         <Badge
           size="default"
           count={line.quantity}
@@ -42,7 +42,7 @@ export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
             width={100}
           />
         </Badge>
-        <Flex vertical>
+        <Flex vertical className={styles.main}>
           <Text className={styles.productName}>{title}</Text>
           {undeliverable && (
             <Text type="danger" className={styles.note}>
@@ -51,7 +51,7 @@ export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
           )}
         </Flex>
       </Flex>
-      <Money strong as={Text} money={line.cost.totalAmount} />
+      <Money strong as={Text} money={line.cost.totalAmount} className={styles.price} />
     </Flex>
   );
 };
@@ -79,7 +79,15 @@ const useStyles = createStyles(({ token, css }) => ({
     white-space: normal;
     font-size: ${token.fontSize}px;
     font-weight: 500;
-    width: 200px;
+  `,
+  // The title takes the room up to the price, and is cut only when it does not fit.
+  main: css`
+    flex: 1;
+    min-width: 0;
+  `,
+  price: css`
+    flex: none;
+    white-space: nowrap;
   `,
   note: css`
     font-size: ${token.fontSizeSM}px;

@@ -121,6 +121,7 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
                 failedSource={failedSource}
                 orderTooSmall={orderTooSmall}
                 currencyCode={checkout.currencyCode}
+                balanceShown={active !== null}
               />
             ) : null}
           </div>

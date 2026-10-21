@@ -86,8 +86,8 @@ const view = (data: Parameters<typeof LoyaltySectionView>[0]['data']) => (
         'loyalty-order-too-small': 'The order is too small to redeem',
         'loyalty-points-not-applied': 'Points not applied',
         'loyalty-store-credit-balance': '{amount} store credit',
-        'loyalty-store-credit-expiring': '{amount} expire on {date}',
-        'loyalty-store-credit-pending': '+{amount} pending',
+        'loyalty-expiring': 'until {date}',
+        'loyalty-pending': 'pending',
         'loyalty-redeem-store-credit': 'Pay with store credit',
         apply: 'Apply',
       },
@@ -113,13 +113,14 @@ describe('LoyaltySectionView', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows the balance and tier, and applies the maximum when switched on', () => {
+  it('shows the balance once, with the tier, and applies the maximum when switched on', () => {
     state.checkout = checkout();
     render(view({ signedIn: true, redemption: null, selection: null }));
 
     expect(screen.getByText('1,240 points')).toBeInTheDocument();
     expect(screen.getByText('Gold · ×1.5')).toBeInTheDocument();
-    expect(screen.getByText('Balance: 1,240 points')).toBeInTheDocument();
+    // The header shows the balance; the switch does not repeat it.
+    expect(screen.queryByText('Balance: 1,240 points')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('switch', { name: 'Redeem points' }));
     expect(api.setLoyaltyRedemption).toHaveBeenCalledWith({ source: 'POINTS', points: null });
   });
@@ -215,6 +216,7 @@ describe('LoyaltySectionView', () => {
     render(view({ signedIn: true, redemption: null, selection: null }));
     expect(screen.queryByText(/0 points/)).not.toBeInTheDocument();
     expect(screen.getByText(/120.*store credit/)).toBeInTheDocument();
-    expect(screen.getByText(/20.*expire on 10\/31/)).toBeInTheDocument();
+    expect(screen.getByText(/^UAH\s20$/)).toBeInTheDocument();
+    expect(screen.getByText('until 10/31')).toBeInTheDocument();
   });
 });

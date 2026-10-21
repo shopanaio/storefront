@@ -5,7 +5,7 @@ import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
-import { TbTicket, TbX } from 'react-icons/tb';
+import { TbCheck, TbClockHour4, TbExclamationMark, TbTicket, TbX } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
 import { usePromoDraft } from '../draft';
@@ -131,36 +131,68 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
         }
       />
       {codes.length > 0 ? (
-        <Flex vertical gap={8} role="list" aria-label={t('promo-entered-codes')}>
-          {codes.map(({ code: entered, status, message }) => (
-            <Flex key={entered} role="listitem" vertical gap={2}>
-              <Flex
-                align="center"
-                gap={4}
-                className={clsx(styles.tag, status !== 'APPLIED' && styles.notApplied)}
+        <Flex wrap gap={8} role="list" aria-label={t('promo-entered-codes')}>
+          {codes.map(({ code: entered, status }) => (
+            <Flex
+              key={entered}
+              role="listitem"
+              align="center"
+              gap={8}
+              className={clsx(styles.tag, status !== 'APPLIED' && styles.notApplied)}
+            >
+              <span
+                className={clsx(
+                  styles.statusIcon,
+                  status === 'APPLIED'
+                    ? styles.appliedIcon
+                    : status === 'PENDING'
+                      ? styles.pendingIcon
+                      : styles.rejectedIcon
+                )}
+                aria-hidden="true"
               >
-                <Typography.Text strong className={styles.code}>
-                  {entered}
-                </Typography.Text>
-                {rewardCode && isPromoEntered([rewardCode], entered) ? (
-                  <span className={styles.rewardPill}>{t('loyalty-reward-code')}</span>
-                ) : null}
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<TbX size={16} />}
-                  onClick={() => void handleRemove(entered)}
-                  aria-label={t('remove-promo', { promoCode: entered })}
-                  className={styles.removeButton}
-                />
-              </Flex>
-              {status !== 'APPLIED' && (
-                <Typography.Text type={status === 'REJECTED' ? 'warning' : 'secondary'}>
-                  {message ?? t(status === 'PENDING' ? 'promo-pending' : 'promo-rejected')}
-                </Typography.Text>
-              )}
+                {status === 'APPLIED' ? (
+                  <TbCheck size={14} strokeWidth={3} />
+                ) : status === 'PENDING' ? (
+                  <TbClockHour4 size={14} strokeWidth={2.5} />
+                ) : (
+                  <TbExclamationMark size={14} strokeWidth={3} />
+                )}
+              </span>
+              <Typography.Text strong className={styles.code}>
+                {entered}
+              </Typography.Text>
+              {rewardCode && isPromoEntered([rewardCode], entered) ? (
+                <span className={styles.rewardPill}>{t('loyalty-reward-code')}</span>
+              ) : null}
+              <Button
+                type="text"
+                size="small"
+                icon={<TbX size={16} />}
+                onClick={() => void handleRemove(entered)}
+                aria-label={t('remove-promo', { promoCode: entered })}
+                className={styles.removeButton}
+              />
             </Flex>
           ))}
+        </Flex>
+      ) : null}
+      {/* Why a code is not applied, under all the codes, each reason named by its code. */}
+      {codes.some(({ status }) => status !== 'APPLIED') ? (
+        <Flex vertical gap={2}>
+          {codes
+            .filter(({ status }) => status !== 'APPLIED')
+            .map(({ code: entered, status, message }) => (
+              <Typography.Text
+                key={entered}
+                type={status === 'REJECTED' ? 'warning' : 'secondary'}
+              >
+                <span className={styles.reasonCode}>{entered}</span>{' '}
+                <span>
+                  {message ?? t(status === 'PENDING' ? 'promo-pending' : 'promo-rejected')}
+                </span>
+              </Typography.Text>
+            ))}
         </Flex>
       ) : null}
       <SectionIssues sections={[SectionId.Promo]} />
@@ -173,11 +205,34 @@ const useStyles = createStyles(({ token, css }) => ({
     font-size: ${token.fontSize}px;
   `,
   tag: css`
-    align-self: flex-start;
     background: ${token.colorBgContainer};
     border: 1px solid ${token.colorBorder};
-    border-radius: ${token.borderRadius}px;
-    padding: ${token.paddingXXS}px ${token.paddingXXS}px ${token.paddingXXS}px ${token.paddingSM}px;
+    border-radius: 999px;
+    padding: ${token.paddingXXS}px;
+  `,
+  statusIcon: css`
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: ${token.controlHeightSM}px;
+    height: ${token.controlHeightSM}px;
+    border-radius: 50%;
+    color: ${token.colorTextLightSolid};
+  `,
+  appliedIcon: css`
+    background: ${token.colorSuccess};
+  `,
+  pendingIcon: css`
+    background: ${token.colorTextTertiary};
+  `,
+  rejectedIcon: css`
+    background: ${token.colorWarning};
+  `,
+  reasonCode: css`
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   `,
   notApplied: css`
     border-style: dashed;
@@ -198,6 +253,9 @@ const useStyles = createStyles(({ token, css }) => ({
     font-weight: 500;
   `,
   removeButton: css`
+    width: ${token.controlHeightSM}px;
+    height: ${token.controlHeightSM}px;
+    border-radius: 50%;
     color: ${token.colorTextSecondary};
     &:hover {
       color: ${token.colorError};

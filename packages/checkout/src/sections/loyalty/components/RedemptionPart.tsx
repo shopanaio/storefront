@@ -14,7 +14,9 @@ import type { RedemptionRequest } from '../selection';
 import { usePointsLabel } from '../format';
 import {
   checkRedemptionInput,
+  isAtMaximum,
   parseRedemptionInput,
+  reachesMaximum,
   redemptionBounds,
   type AmountError,
 } from '../bounds';
@@ -33,6 +35,11 @@ interface RedemptionPartProps {
    */
   orderTooSmall: boolean;
   currencyCode: string;
+  /**
+   * The balance is shown above, in the header of the account: the sources do not repeat it.
+   * Without the header (an account no longer active) each source says its balance.
+   */
+  balanceShown: boolean;
 }
 
 /**
@@ -46,6 +53,7 @@ export const RedemptionPart = ({
   failedSource,
   orderTooSmall,
   currencyCode,
+  balanceShown,
 }: RedemptionPartProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
@@ -116,7 +124,11 @@ export const RedemptionPart = ({
         {on ? (
           details(option)
         ) : (
-          <OptionSummary option={option} orderTooSmall={orderTooSmall} />
+          <OptionSummary
+            option={option}
+            orderTooSmall={orderTooSmall}
+            balanceShown={balanceShown}
+          />
         )}
       </Flex>
     );
@@ -152,7 +164,12 @@ export const RedemptionPart = ({
                     )}
                   </span>
                   {on ? null : (
-                    <OptionSummary option={option} orderTooSmall={orderTooSmall} short />
+                    <OptionSummary
+                      option={option}
+                      orderTooSmall={orderTooSmall}
+                      balanceShown={balanceShown}
+                      short
+                    />
                   )}
                 </Flex>
               </Radio>
@@ -174,10 +191,12 @@ export const RedemptionPart = ({
 const OptionSummary = ({
   option,
   orderTooSmall,
+  balanceShown,
   short = false,
 }: {
   option: Checkout.LoyaltySourceOption;
   orderTooSmall: boolean;
+  balanceShown: boolean;
   short?: boolean;
 }) => {
   const t = useTranslations('Checkout');
@@ -188,6 +207,7 @@ const OptionSummary = ({
     option.source === 'POINTS' && option.availablePoints !== null
       ? points(option.availablePoints)
       : formatMoney(locale, option.availableAmount);
+  if (!orderTooSmall && balanceShown) return null;
   return (
     <Typography.Text type="secondary" className={styles.note}>
       {orderTooSmall
@@ -242,8 +262,7 @@ const RedemptionDetails = ({
     );
   }
   if (redemption) {
-    const maximum =
-      redemption.requestedPoints === null && redemption.requestedAmount === null;
+    const maximum = isAtMaximum(option, redemption);
     return (
       <>
         <span>
@@ -315,13 +334,13 @@ const AmountField = ({
   const { styles } = useStyles();
   const points = usePointsLabel();
   const bounds = redemptionBounds(option, redemption);
-  const initial =
-    option.source === 'POINTS'
-      ? (redemption?.requestedPoints ?? redemption?.points ?? '')
-      : redemption
-        ? String(redemption.requestedAmount?.amount ?? redemption.discount.amount)
-        : '';
-  const [draft, setDraft] = useState(initial);
+  // The field starts with what is applied now: the amount the buyer chose, or the maximum.
+  const applied = redemption
+    ? option.source === 'POINTS'
+      ? (redemption.points ?? '')
+      : String(redemption.discount.amount)
+    : '';
+  const [draft, setDraft] = useState(applied);
   const [error, setError] = useState<AmountError | null>(null);
   const label = (value: string) =>
     option.source === 'POINTS'
@@ -330,9 +349,16 @@ const AmountField = ({
 
   const submit = () => {
     const value = parseRedemptionInput(option.source, draft);
+    if (busy) return;
+    // An amount over the most allowed is not an error: the most allowed is applied instead.
+    if (value !== null && reachesMaximum(option.source, value, bounds)) {
+      setError(null);
+      onMaximum();
+      return;
+    }
     const problem = checkRedemptionInput(option.source, value, bounds);
     setError(problem);
-    if (problem || value === null || busy) return;
+    if (problem || value === null) return;
     void onSubmit(
       option.source === 'POINTS'
         ? { source: 'POINTS', points: value }
@@ -410,7 +436,7 @@ const LinkButton = ({
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
     padding: ${token.paddingSM}px ${token.padding}px;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    border-top: 1px solid ${token.colorBorder};
   `,
   title: css`
     font-weight: 500;

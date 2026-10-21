@@ -61,7 +61,7 @@ const useStyles = createStyles(({ css, token }) => ({
     gap: 12px;
     padding: 12px ${token.padding}px calc(20px + env(safe-area-inset-bottom));
     background: ${token.colorBgContainer};
-    border-top: 1px solid ${token.colorBorderSecondary};
+    border-top: 1px solid ${token.colorBorder};
 
     ${mq.lg} {
       position: static;
