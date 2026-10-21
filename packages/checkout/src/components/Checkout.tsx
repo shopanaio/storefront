@@ -8,7 +8,7 @@ import { CheckoutProgressBar } from './CheckoutProgressBar';
 import { CheckoutView } from './CheckoutView';
 import { CheckoutController } from '#checkout/components/CheckoutController';
 import { CheckoutDataContextProvider } from '#checkout/context/CheckoutDataContext';
-import { CheckoutThemeProvider } from '#checkout/theme';
+import { CheckoutProviders } from './CheckoutProviders';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
 import {
@@ -45,7 +45,8 @@ export interface CheckoutProps {
     /** Optional ISO country code to control which blocks are shown */
     country?: 'UA' | 'INTL';
   };
-  theme: CheckoutThemeAdapter;
+  /** What the theme changes; the checkout works without it. */
+  theme?: CheckoutThemeAdapter;
 }
 
 /**
@@ -68,7 +69,7 @@ export const Checkout = ({
   useEffect(() => resetBanners, [resetBanners, cartId]);
 
   return (
-    <CheckoutThemeProvider theme={theme}>
+    <CheckoutProviders theme={theme}>
       <CheckoutDataContextProvider checkoutId={cartId}>
         <CheckoutApiProvider>
           <CheckoutController
@@ -78,7 +79,7 @@ export const Checkout = ({
           <CheckoutBody checkoutId={cartId} brand={brand} features={features} />
         </CheckoutApiProvider>
       </CheckoutDataContextProvider>
-    </CheckoutThemeProvider>
+    </CheckoutProviders>
   );
 };
 

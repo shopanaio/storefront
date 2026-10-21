@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@shopana/storefront/next/navigation';
 import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
-import { CheckoutThemeProvider, useCheckoutTheme } from '#checkout/theme';
+import { useCheckoutTheme } from '#checkout/theme';
+import { CheckoutProviders } from '#checkout/components/CheckoutProviders';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
 import { createAttemptJournal } from '#checkout/state/placement/attemptJournal';
 import {
@@ -34,7 +35,8 @@ type ReturnView = PlacementPhase | { name: 'loading' };
  * the address bar, and follows the placement to its outcome.
  */
 export interface CheckoutReturnPageProps {
-  theme: CheckoutThemeAdapter;
+  /** What the theme changes; the checkout works without it. */
+  theme?: CheckoutThemeAdapter;
   /**
    * Called after the cart of an accepted order was cleared, so that the host clears its own
    * cart-related state too (for example a box builder kept in localStorage).
@@ -46,9 +48,9 @@ export const CheckoutReturnPageClient = ({
   theme,
   onOrderAccepted,
 }: CheckoutReturnPageProps) => (
-  <CheckoutThemeProvider theme={theme}>
+  <CheckoutProviders theme={theme}>
     <CheckoutReturn onOrderAccepted={onOrderAccepted} />
-  </CheckoutThemeProvider>
+  </CheckoutProviders>
 );
 
 const CheckoutReturn = ({

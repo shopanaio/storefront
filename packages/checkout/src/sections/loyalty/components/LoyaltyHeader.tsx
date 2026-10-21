@@ -1,9 +1,9 @@
 'use client';
 
-import { Flex, Typography } from 'antd';
+import { Flex, Tooltip, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useLocale, useTranslations } from 'next-intl';
-import { TbClockHour4, TbCrown } from 'react-icons/tb';
+import { TbClockHour4, TbCrown, TbInfoCircle } from 'react-icons/tb';
 import type { Checkout } from '#checkout/types/entity';
 import { formatMoney } from '#checkout/ui/Money';
 import { formatMultiplier, formatShortDate, usePointsLabel } from '../format';
@@ -56,26 +56,40 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
   const pendingCredit = (storeCredit?.pendingAmount.amount ?? 0) > 0;
 
   return (
-    <Flex vertical gap={8} className={styles.root}>
+    <Flex vertical gap={4} className={styles.root}>
       <Flex align="center" justify="space-between" gap={12} wrap>
         <Flex align="center" gap={8}>
           <LoyaltyIcon size={20} />
           <span className={styles.balance}>{balances.join(' · ')}</span>
         </Flex>
         {tier ? (
-          <span className={styles.pill}>
-            <TbCrown size={14} aria-hidden="true" />
-            {t('loyalty-tier', {
+          <Tooltip
+            title={t('loyalty-tier-hint', {
               tier: tier.name,
               multiplier: formatMultiplier(locale, tier.earnMultiplierBps),
             })}
-          </span>
+          >
+            <span className={styles.pill} tabIndex={0}>
+              <TbCrown size={14} aria-hidden="true" />
+              {t('loyalty-tier', {
+                tier: tier.name,
+                multiplier: formatMultiplier(locale, tier.earnMultiplierBps),
+              })}
+            </span>
+          </Tooltip>
         ) : null}
       </Flex>
       {tier?.progress ? (
-        <Typography.Text type="secondary" className={styles.note}>
-          {tier.progress}
-        </Typography.Text>
+        <Flex align="center" gap={4}>
+          <Typography.Text type="secondary" className={styles.note}>
+            {tier.progress}
+          </Typography.Text>
+          <Tooltip title={t('loyalty-progress-hint')}>
+            <button type="button" className={styles.info} aria-label={t('loyalty-progress-hint')}>
+              <TbInfoCircle size={14} aria-hidden="true" />
+            </button>
+          </Tooltip>
+        </Flex>
       ) : null}
       {nextExpiration ? (
         <Typography.Text type="secondary" className={styles.note}>
@@ -139,10 +153,19 @@ const useStyles = createStyles(({ css, token }) => ({
     font-size: ${token.fontSizeSM}px;
     font-weight: 500;
     white-space: nowrap;
+    cursor: help;
   `,
   note: css`
     font-size: ${token.fontSizeSM}px;
     line-height: ${token.lineHeightSM};
+  `,
+  info: css`
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: ${token.colorTextTertiary};
+    cursor: help;
   `,
   expiring: css`
     flex: none;

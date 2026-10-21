@@ -17,24 +17,38 @@ const paymentMethodSchema = yup.object<PaymentMethod>().shape({
 
 /**
  * Yup validation schema for PaymentFormData.
- * A selected method is required; its data is validated only when the method
+ * A selected method is required only when the server has an amount to collect.
+ * Its data is validated only when the method
  * module declares a schema. A selected method without a UI module is invalid.
  */
 export const paymentFormSchema = yup.object<PaymentFormData>().shape({
+  paymentRequired: yup.boolean().required(),
   paymentMethods: yup
     .array()
     .of(paymentMethodSchema)
-    .min(1, 'At least one payment method is required')
+    .when('paymentRequired', {
+      is: true,
+      then: (schema) =>
+        schema.min(1, 'At least one payment method is required'),
+    })
     .required('Payment methods are required'),
-  selectedPaymentMethod: buildSelectedProviderMethodSchema({
-    moduleType: ProviderModuleType.Payment,
-    baseSchema: paymentMethodSchema,
-    requireMethodModule: true,
-    messages: {
-      required: 'A payment method must be selected',
-      notSelected: 'A payment method must be selected',
-      invalid: 'Invalid payment method data',
-      unavailable: 'The selected payment method is unavailable',
-    },
-  }),
+  selectedPaymentMethod: yup
+    .mixed<PaymentMethod>()
+    .nullable()
+    .when('paymentRequired', {
+      is: false,
+      then: (schema) => schema.oneOf([null]).defined(),
+      otherwise: () =>
+        buildSelectedProviderMethodSchema({
+          moduleType: ProviderModuleType.Payment,
+          baseSchema: paymentMethodSchema,
+          requireMethodModule: true,
+          messages: {
+            required: 'A payment method must be selected',
+            notSelected: 'A payment method must be selected',
+            invalid: 'Invalid payment method data',
+            unavailable: 'The selected payment method is unavailable',
+          },
+        }),
+    }),
 });

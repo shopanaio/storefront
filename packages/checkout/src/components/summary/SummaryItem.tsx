@@ -58,6 +58,8 @@ export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
 
 const useStyles = createStyles(({ token, css }) => ({
   item: css`
+    /* The same border as the fields of the checkout. */
+    border: 1px solid ${token.colorBorder};
     border-radius: ${token.borderRadius}px;
     background-color: ${token.colorBgBase};
     padding: ${token.paddingXS}px;

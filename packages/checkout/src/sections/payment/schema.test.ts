@@ -38,16 +38,33 @@ const unknownMethod: PaymentMethod = {
 
 const form = (
   selectedPaymentMethod: PaymentMethod | null,
-  paymentMethods: PaymentMethod[] = [liqpay, cod, unknownProvider, unknownMethod]
+  paymentMethods: PaymentMethod[] = [
+    liqpay,
+    cod,
+    unknownProvider,
+    unknownMethod,
+  ]
 ): PaymentFormData => ({
+  paymentRequired: true,
   paymentMethods,
   selectedPaymentMethod,
   resetReason: null,
 });
 
 describe('paymentFormSchema', () => {
-  it.each([liqpay, cod])('accepts a selected method with a module: $code', async (method) => {
-    await expect(paymentFormSchema.validate(form(method))).resolves.toBeTruthy();
+  it.each([liqpay, cod])(
+    'accepts a selected method with a module: $code',
+    async (method) => {
+      await expect(
+        paymentFormSchema.validate(form(method))
+      ).resolves.toBeTruthy();
+    }
+  );
+
+  it('accepts no methods or selection when the server has nothing to collect', async () => {
+    await expect(
+      paymentFormSchema.validate({ ...form(null, []), paymentRequired: false })
+    ).resolves.toBeTruthy();
   });
 
   it('requires a selected method', async () => {
@@ -60,7 +77,9 @@ describe('paymentFormSchema', () => {
     await expect(
       paymentFormSchema.validate(form(null, []), { abortEarly: false })
     ).rejects.toMatchObject({
-      errors: expect.arrayContaining(['At least one payment method is required']),
+      errors: expect.arrayContaining([
+        'At least one payment method is required',
+      ]),
     });
   });
 

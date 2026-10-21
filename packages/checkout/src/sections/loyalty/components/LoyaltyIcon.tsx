@@ -1,15 +1,15 @@
 'use client';
 
 import { createStyles } from 'antd-style';
-import { TbPaw } from 'react-icons/tb';
+import { TbCoins } from 'react-icons/tb';
 
 /**
- * Mark of the loyalty program: the brand paw in the theme's secondary color (`colorSecondary`
+ * Mark of the loyalty program: coins, as any store's bonus points, in the theme's secondary color (`colorSecondary`
  * custom token, the error color when the theme has none).
  */
 export const LoyaltyIcon = ({ size }: { size: number }) => {
   const { styles } = useStyles();
-  return <TbPaw size={size} className={styles.icon} aria-hidden="true" />;
+  return <TbCoins size={size} className={styles.icon} aria-hidden="true" />;
 };
 
 const useStyles = createStyles(({ css, token }) => ({

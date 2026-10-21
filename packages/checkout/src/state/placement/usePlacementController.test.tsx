@@ -303,7 +303,10 @@ describe('usePlacementController', () => {
     expect(mocks.refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('SC-q2tn: a changed total keeps the checkout open and reads it again', async () => {
+  it.each([
+    ['SC-q2tn', 'CHECKOUT_TOTAL_CHANGED', ['input', 'expectedTotal']],
+    ['SC-fz14', 'CHECKOUT_SHIPPING_CHANGED', ['input', 'checkoutId']],
+  ])('%s: %s keeps the checkout open and reads it again', async (_scenario, code, field) => {
     mocks.refetch.mockResolvedValue(undefined);
     mocks.submitCheckout.mockResolvedValue({
       ...paid,
@@ -313,8 +316,8 @@ describe('usePlacementController', () => {
       status: null,
       userErrors: [
         {
-          code: 'CHECKOUT_TOTAL_CHANGED',
-          field: ['input', 'expectedTotal'],
+          code,
+          field,
           message: 'The checkout total changed.',
           retryable: false,
         },
@@ -326,7 +329,7 @@ describe('usePlacementController', () => {
     await waitFor(() =>
       expect(usePlacementStore.getState().phase).toEqual({
         name: 'rejected',
-        code: 'CHECKOUT_TOTAL_CHANGED',
+        code,
       })
     );
     // Nothing was placed: the next press sends the new total with a new key.

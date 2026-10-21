@@ -1,5 +1,6 @@
 import type { Checkout } from '#checkout/types/entity';
 import { mapCheckoutToPaymentFormData } from './mapper';
+import { paymentFormSchema } from './schema';
 
 const method = (
   handle: string,
@@ -90,12 +91,26 @@ describe('mapCheckoutToPaymentFormData', () => {
     expect(selected?.resetReason).toBeNull();
   });
 
+  it('requires payment again when a recalculation raises a zero total', async () => {
+    const zero = mapCheckoutToPaymentFormData(
+      checkoutWithPayment({
+        ...payment(),
+        payableAmount: { amount: 0, currencyCode: 'UAH' },
+        paymentMethods: [],
+      })
+    );
+    expect(await paymentFormSchema.isValid(zero)).toBe(true);
+    const raised = mapCheckoutToPaymentFormData(checkoutWithPayment(payment()));
+    expect(await paymentFormSchema.isValid(raised)).toBe(false);
+  });
+
   it('keeps an empty method list so validation can reject it', () => {
     const data = mapCheckoutToPaymentFormData(
       checkoutWithPayment({ ...payment(), paymentMethods: [] })
     );
 
     expect(data).toEqual({
+      paymentRequired: true,
       paymentMethods: [],
       selectedPaymentMethod: null,
       resetReason: null,

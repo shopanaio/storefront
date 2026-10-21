@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useCheckoutTheme } from '#checkout/theme';
 import type { Checkout } from '#checkout/types/entity';
 import { SectionTitle } from '#checkout/components/common/SectionTitle';
+import { SummaryBlocks } from '#checkout/ui/summaryBlocks';
 import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { SectionId } from '#checkout/state/interface';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
@@ -19,7 +20,6 @@ interface Prop {
 
 export const Summary = ({ checkout }: Prop) => {
   const t = useTranslations('Checkout');
-  const tListing = useTranslations('Listing');
   const { styles } = useStyles();
 
   const { CartDrawer, useOpenCart } = useCheckoutTheme();
@@ -32,45 +32,49 @@ export const Summary = ({ checkout }: Prop) => {
   const hasHidden = lines.length > 5;
 
   return (
-    <>
-      <Flex align="center" justify="space-between">
-        <Flex align="center" gap={8}>
-          <SectionTitle>{t('order-summary')}</SectionTitle>
-          <Badge count={checkout?.totalQuantity} variant="primary" />
-        </Flex>
-        <Button
-          color="default"
-          variant="text"
-          onClick={() => openCartDrawer()}
-          icon={<TbShoppingCart size={20} />}
-        />
-      </Flex>
-      <Flex vertical gap={8}>
-        {visibleLines.map((line) => (
-          <SummaryItem
-            key={line.id}
-            line={line}
-            undeliverable={undeliverable.has(line.id)}
-          />
-        ))}
-        {hasHidden ? (
-          <div>
+    <SummaryBlocks>
+      <Flex vertical gap={12}>
+        <Flex align="center" justify="space-between">
+          <Flex align="center" gap={8}>
+            <SectionTitle>{t('order-summary')}</SectionTitle>
+            <Badge count={checkout?.totalQuantity} variant="primary" />
+          </Flex>
+          {openCartDrawer ? (
             <Button
-              className={styles.confirmLinkBtn}
-              variant="link"
-              color="primary"
-              onClick={() => setIsExpanded((prev) => !prev)}
-            >
-              {isExpanded ? tListing('show-less') : tListing('show-more')}
-            </Button>
-          </div>
-        ) : null}
+              color="default"
+              variant="text"
+              onClick={() => openCartDrawer()}
+              icon={<TbShoppingCart size={20} />}
+            />
+          ) : null}
+        </Flex>
+        <Flex vertical gap={8}>
+          {visibleLines.map((line) => (
+            <SummaryItem
+              key={line.id}
+              line={line}
+              undeliverable={undeliverable.has(line.id)}
+            />
+          ))}
+          {hasHidden ? (
+            <div>
+              <Button
+                className={styles.confirmLinkBtn}
+                variant="link"
+                color="primary"
+                onClick={() => setIsExpanded((prev) => !prev)}
+              >
+                {isExpanded ? t('summary-show-less') : t('summary-show-more')}
+              </Button>
+            </div>
+          ) : null}
+        </Flex>
       </Flex>
       <SectionRenderer slug={SectionId.Promo} />
       <SectionRenderer slug={SectionId.Loyalty} />
       <SummaryTotals checkout={checkout} />
       <CartDrawer />
-    </>
+    </SummaryBlocks>
   );
 };
 

@@ -1,4 +1,5 @@
-import { createContext, createElement, useContext } from 'react';
+import { createContext, createElement, useContext, useMemo } from 'react';
+import { DefaultCheckoutAuth } from '#checkout/components/DefaultCheckoutAuth';
 import type { ComponentType, ReactNode } from 'react';
 
 /** What the checkout passes to the theme's sign-in control. */
@@ -14,44 +15,86 @@ export interface CheckoutAuthProps {
   onSignOut: () => void;
 }
 
+/**
+ * What a theme changes in the checkout. Every field is optional: the checkout works without a
+ * theme, and a theme sets only what it needs (its logo, its cart, locale-aware paths).
+ */
 export interface CheckoutThemeAdapter {
-  Brand: ComponentType;
-  Auth: ComponentType<CheckoutAuthProps>;
+  /** Logo above the form; none by default. */
+  Brand?: ComponentType;
+  /** Sign-in control next to the contact section; the checkout has its own. */
+  Auth?: ComponentType<CheckoutAuthProps>;
   /** Whether the store has customer accounts; the checkout offers sign-in only then. */
-  customerAccountsEnabled: boolean;
-  CartDrawer: ComponentType;
-  useHomePath: () => string;
+  customerAccountsEnabled?: boolean;
+  /** Cart drawer of the store, opened by `useOpenCart`. */
+  CartDrawer?: ComponentType;
+  useHomePath?: () => string;
   /**
-   * Locale-aware path of the checkout return page (`/checkout/return` module). The payment
-   * provider sends the buyer there after paying.
+   * Path of the checkout return page (`/checkout/return` module). The payment provider sends
+   * the buyer there after paying.
    */
-  useCheckoutReturnPath: () => string;
-  /** Locale-aware path of the checkout page, used to go back from the return page. */
-  useCheckoutPath: () => string;
+  useCheckoutReturnPath?: () => string;
+  /** Path of the checkout page, used to go back from the return page. */
+  useCheckoutPath?: () => string;
   /**
    * Path of the placed order page, when the theme has one (decision 1.4). Returning `null`
    * hides the link on the result screen.
    */
   useOrderPath?: (orderId: string) => string | null;
-  useOpenCart: () => () => void;
+  /** Opens the store cart. Without it the checkout offers no cart. */
+  useOpenCart?: () => () => void;
 }
 
-const CheckoutThemeContext = createContext<CheckoutThemeAdapter | null>(null);
+/** The theme the checkout renders with: the adapter over the checkout defaults. */
+export interface CheckoutTheme {
+  Brand: ComponentType;
+  Auth: ComponentType<CheckoutAuthProps>;
+  customerAccountsEnabled: boolean;
+  CartDrawer: ComponentType;
+  useHomePath: () => string;
+  useCheckoutReturnPath: () => string;
+  useCheckoutPath: () => string;
+  useOrderPath: (orderId: string) => string | null;
+  /** `null` when the theme has no cart. */
+  useOpenCart: () => (() => void) | null;
+}
+
+const Nothing = () => null;
+
+const DEFAULT_THEME: CheckoutTheme = {
+  Brand: Nothing,
+  Auth: DefaultCheckoutAuth,
+  customerAccountsEnabled: false,
+  CartDrawer: Nothing,
+  useHomePath: () => '/',
+  useCheckoutReturnPath: () => '/checkout/return',
+  useCheckoutPath: () => '/checkout',
+  useOrderPath: () => null,
+  useOpenCart: () => null,
+};
+
+/** The checkout defaults with what the theme sets. */
+export function resolveCheckoutTheme(adapter: CheckoutThemeAdapter = {}): CheckoutTheme {
+  const defined = Object.fromEntries(
+    Object.entries(adapter).filter(([, value]) => value !== undefined)
+  ) as Partial<CheckoutTheme>;
+  return { ...DEFAULT_THEME, ...defined };
+}
+
+const CheckoutThemeContext = createContext<CheckoutTheme>(DEFAULT_THEME);
 
 export function CheckoutThemeProvider({
   theme,
   children,
 }: {
-  theme: CheckoutThemeAdapter;
+  theme?: CheckoutThemeAdapter;
   children: ReactNode;
 }) {
-  return createElement(CheckoutThemeContext.Provider, { value: theme }, children);
+  const value = useMemo(() => resolveCheckoutTheme(theme), [theme]);
+  return createElement(CheckoutThemeContext.Provider, { value }, children);
 }
 
-export function useCheckoutTheme(): CheckoutThemeAdapter {
-  const theme = useContext(CheckoutThemeContext);
-  if (!theme) {
-    throw new Error('Checkout must be rendered with a CheckoutThemeAdapter.');
-  }
-  return theme;
+/** The theme of the checkout; the defaults when no theme is given. */
+export function useCheckoutTheme(): CheckoutTheme {
+  return useContext(CheckoutThemeContext);
 }

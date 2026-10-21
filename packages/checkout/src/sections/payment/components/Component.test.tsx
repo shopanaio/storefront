@@ -10,7 +10,11 @@ vi.mock('#checkout/context/CheckoutApiContext', () => ({
   useCheckoutApi: () => ({ selectPaymentMethod: mocks.selectPaymentMethod }),
 }));
 vi.mock('#checkout/infra/ProviderRenderer', () => ({
-  ProviderRenderer: ({ availableMethods, selectedMethod, onSelectMethod }: ProviderProps) => (
+  ProviderRenderer: ({
+    availableMethods,
+    selectedMethod,
+    onSelectMethod,
+  }: ProviderProps) => (
     <>
       {availableMethods.map((method) => (
         <label key={method.handle}>
@@ -39,13 +43,18 @@ const cod = method('cod', 'Cash on delivery');
 
 // The mapper builds new objects on every checkout read.
 const data = (selected: PaymentMethod | null): PaymentFormData => ({
+  paymentRequired: true,
   paymentMethods: [{ ...card }, { ...cod }],
   selectedPaymentMethod: selected ? { ...selected } : null,
   resetReason: null,
 });
 
 const view = (value: PaymentFormData) => (
-  <NextIntlClientProvider locale="en" messages={{ Checkout: {} }} onError={() => {}}>
+  <NextIntlClientProvider
+    locale="en"
+    messages={{ Checkout: {} }}
+    onError={() => {}}
+  >
     <PaymentSectionView data={value} />
   </NextIntlClientProvider>
 );

@@ -49,7 +49,7 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   };
 
   return (
-    <Flex vertical gap={8}>
+    <Flex vertical gap={8} className={styles.root}>
       <Flex justify="space-between">
         <Text className={styles.lineLabel}>{t('subtotal')}</Text>
         <Text className={styles.lineValue}>
@@ -168,6 +168,11 @@ export const LoyaltyEarningLine = ({ earning }: { earning: Checkout.LoyaltyEarni
 };
 
 const useStyles = createStyles(({ css, token }) => ({
+  // The totals are a block of their own, apart from the promo codes and rewards above.
+  root: css`
+    padding-top: ${token.padding}px;
+    border-top: 1px solid ${token.colorBorder};
+  `,
   lineLabel: css`
     font-size: ${token.fontSize}px;
   `,

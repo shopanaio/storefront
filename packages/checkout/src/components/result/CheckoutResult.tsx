@@ -45,7 +45,7 @@ export const CheckoutResult = ({
   const router = useRouter();
   const theme = useCheckoutTheme();
   const homePath = theme.useHomePath();
-  const useOrderPath = theme.useOrderPath ?? noOrderPath;
+  const useOrderPath = theme.useOrderPath;
   const themeOrderPath = useOrderPath(orderId ?? '');
   const orderPath = orderId ? themeOrderPath : null;
   const placed = usePlacedOrderNumber(orderId);
@@ -169,7 +169,3 @@ const LoyaltyResult = ({
     </Flex>
   );
 };
-
-function noOrderPath(): string | null {
-  return null;
-}

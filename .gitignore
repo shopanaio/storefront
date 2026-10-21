@@ -65,3 +65,7 @@ schema.shopana.graphql
 public/embed/
 
 external/
+
+# Storybook
+storybook-static
+*storybook.log

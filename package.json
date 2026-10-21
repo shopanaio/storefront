@@ -17,8 +17,10 @@
     "codegen:openapi": "node ./scripts/codegen-openapi.mjs",
     "widgets:build": "yarn workspace @shopana/brand-bite-crunch widgets:build",
     "widgets:watch": "yarn workspace @shopana/brand-bite-crunch widgets:watch",
-    "storybook": "yarn workspace @shopana/brand-bite-crunch storybook",
-    "build-storybook": "yarn workspace @shopana/brand-bite-crunch build-storybook",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build -o storybook-static",
+    "storybook:theme": "yarn workspace @shopana/brand-bite-crunch storybook",
+    "build-storybook:theme": "yarn workspace @shopana/brand-bite-crunch build-storybook",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint ."
@@ -26,7 +28,11 @@
   "devDependencies": {
     "@atlaskit/eslint-plugin-design-system": "^13.27.0",
     "@graphql-eslint/eslint-plugin": "^4.4.0",
+    "@storybook/addon-a11y": "10.1.0",
+    "@storybook/addon-docs": "10.1.0",
+    "@storybook/react-vite": "10.1.0",
     "@types/node": "^24.10.1",
+    "@vitejs/plugin-react": "4.7.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.5",
     "eslint-plugin-css": "^0.11.0",
@@ -34,7 +40,9 @@
     "graphql": "^16.10.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.7.1",
-    "typescript": "^5.8.3"
+    "storybook": "10.1.0",
+    "typescript": "^5.8.3",
+    "vite": "7.2.4"
   },
   "resolutions": {
     "@types/react": "19.2.2"

@@ -13,6 +13,8 @@ export interface PaymentMethod {
  * Form data type for the payment section
  */
 export interface PaymentFormData {
+  /** Whether the server still has an amount to collect. */
+  paymentRequired: boolean;
   /** Payment methods in API order. */
   paymentMethods: PaymentMethod[];
   selectedPaymentMethod: PaymentMethod | null;

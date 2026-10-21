@@ -1,4 +1,3 @@
-import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import { mq } from '#checkout/ui/breakpoints';
 import { Summary } from './summary/Summary';
@@ -7,6 +6,7 @@ import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
 import { CheckoutAuth } from './CheckoutAuth';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
+import { CheckoutColumns } from './CheckoutColumns';
 import { SectionIssues } from './notices/SectionIssues';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { SectionId } from '#checkout/state/interface';
@@ -38,9 +38,9 @@ export const CheckoutView = ({
   return (
     <div className={styles.wrapper}>
       <form onSubmit={onSubmit}>
-        <div className={styles.container}>
-          <div className={styles.main}>
-            <Flex className={styles.left}>
+        <CheckoutColumns
+          left={
+            <>
               {brand}
               <CheckoutSection
                 id={sectionAnchor(SectionId.Contact)}
@@ -85,88 +85,31 @@ export const CheckoutView = ({
               <div className={styles.actionsLeft}>
                 <CheckoutActions />
               </div>
-            </Flex>
-            <Flex className={styles.rightContainer}>
-              <Flex vertical gap={12} className={styles.right}>
-                <div id={SUMMARY_ANCHOR} className={styles.summary}>
-                  {checkout ? <Summary checkout={checkout} /> : null}
-                </div>
-                <div className={styles.actionsRight}>
-                  <CheckoutActions />
-                </div>
-              </Flex>
-            </Flex>
-          </div>
-        </div>
+            </>
+          }
+          right={
+            <>
+              <div id={SUMMARY_ANCHOR} className={styles.summary}>
+                {checkout ? <Summary checkout={checkout} /> : null}
+              </div>
+              <div className={styles.actionsRight}>
+                <CheckoutActions />
+              </div>
+            </>
+          }
+        />
       </form>
       <CheckoutSkeleton brand={brand} isReady={!!checkout} />
     </div>
   );
 };
 
-const useStyles = createStyles(({ token, css }) => {
+const useStyles = createStyles(({ css }) => {
   return {
     wrapper: css`
       position: relative;
       width: 100%;
       ${bannerToneDeclarations()}
-    `,
-    container: css`
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      /* checkout layout variables */
-      --checkout-content-max: 1280px;
-      /* make left column slightly wider than right */
-      --checkout-left-ratio: 0.56;
-      --checkout-right-ratio: calc(1 - var(--checkout-left-ratio));
-      --checkout-left-fr: 1.1fr;
-      --checkout-right-fr: 0.9fr;
-      --checkout-left-max: calc(
-        var(--checkout-content-max) * var(--checkout-left-ratio)
-      );
-      --checkout-right-max: calc(
-        var(--checkout-content-max) * var(--checkout-right-ratio)
-      );
-    `,
-    main: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 100dvh;
-
-      ${mq.lg} {
-        display: grid;
-        grid-template-columns: var(--checkout-left-fr) var(--checkout-right-fr);
-      }
-    `,
-    left: css`
-      width: 100%;
-      flex-direction: column;
-      gap: ${token.margin}px;
-      border-right: 2px solid ${token.colorBorderSecondary};
-      padding: ${token.padding}px;
-
-      ${mq.lg} {
-        margin-left: auto;
-        max-width: var(--checkout-left-max);
-        padding: ${token.paddingXL}px;
-      }
-    `,
-    rightContainer: css`
-      background-color: ${token.colorBgLayout};
-    `,
-    right: css`
-      width: 100%;
-      padding: ${token.padding}px;
-
-      ${mq.lg} {
-        max-width: var(--checkout-right-max);
-        position: sticky;
-        padding: ${token.paddingXL}px;
-        top: 0;
-        align-self: flex-start;
-      }
     `,
     actionsLeft: css`
       display: none;

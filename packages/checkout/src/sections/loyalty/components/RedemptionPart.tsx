@@ -349,7 +349,7 @@ const AmountField = ({
         : t('loyalty-amount-invalid');
 
   return (
-    <Flex vertical gap={8}>
+    <Flex vertical gap={8} className={styles.amount}>
       <FloatingLabelInput
         label={t(
           option.source === 'POINTS' ? 'loyalty-amount-points' : 'loyalty-amount-money'
@@ -415,6 +415,10 @@ const useStyles = createStyles(({ css, token }) => ({
   title: css`
     font-weight: 500;
   `,
+  amount: css`
+    /* Apart from the title above: the field is a step of its own. */
+    margin-top: ${token.marginXS}px;
+  `,
   note: css`
     font-size: ${token.fontSizeSM}px;
     line-height: ${token.lineHeightSM};
@@ -446,6 +450,9 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 4px;
+    /* The radio group sets no font of its own for what is not a radio. */
+    font-size: ${token.fontSize}px;
+    line-height: ${token.lineHeight};
     padding: 0 ${token.padding}px ${token.paddingSM}px 44px;
   `,
   link: css`

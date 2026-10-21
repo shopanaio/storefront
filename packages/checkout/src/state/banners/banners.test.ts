@@ -45,6 +45,7 @@ const handlers = (): BannerHandlers => ({
   closePlacement: vi.fn(),
   closeSaveError: vi.fn(),
   goHome: vi.fn(),
+  homePath: '/',
   openCart: vi.fn(),
   focusSection: vi.fn(),
   focusSummary: vi.fn(),

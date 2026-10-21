@@ -54,6 +54,7 @@ export function useCheckoutBanners(): BannerItem[] {
   const cleanup = useDefaultCartCleanup();
   const theme = useCheckoutTheme();
   const openCart = theme.useOpenCart();
+  const homePath = theme.useHomePath();
   const checkoutId = checkout?.id ?? null;
   const notifications = checkout?.notifications;
   const locale = useLocale();
@@ -110,6 +111,7 @@ export function useCheckoutBanners(): BannerItem[] {
           closeSaveError: clearSaveError,
           // Placed elsewhere: this cart can no longer be used; without it the page goes home.
           goHome: () => cleanup(checkoutId),
+          homePath,
           openCart,
           focusSection: (section) => focusAnchor(sectionAnchor(section)),
           focusSummary: () => focusAnchor(SUMMARY_ANCHOR, { focus: false }),
@@ -145,6 +147,7 @@ export function useCheckoutBanners(): BannerItem[] {
       clearSaveError,
       cleanup,
       checkoutId,
+      homePath,
       openCart,
       dismiss,
       loyalty,

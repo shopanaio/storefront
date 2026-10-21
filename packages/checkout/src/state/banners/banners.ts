@@ -90,7 +90,10 @@ export interface BannerHandlers {
   /** Forgets a failed save the buyer may close. */
   closeSaveError: (key: string) => void;
   goHome: () => void;
-  openCart: () => void;
+  /** Home page of the store, where a buyer without a theme cart goes back to. */
+  homePath: string;
+  /** Opens the store cart; `null` when the theme has none. */
+  openCart: (() => void) | null;
   focusSection: (section: SectionId) => void;
   focusSummary: () => void;
   dismiss: (id: string) => void;
@@ -223,7 +226,9 @@ export function collectBanners(
         priority: BannerPriority.Closed,
         tone: 'critical',
         title: t(key),
-        action: { label: t('banner-open-cart'), onClick: handlers.openCart },
+        action: handlers.openCart
+          ? { label: t('banner-open-cart'), onClick: handlers.openCart }
+          : { label: t('go-home'), href: handlers.homePath },
       });
     } else {
       // The checkout stays editable: the buyer may close it and go on.

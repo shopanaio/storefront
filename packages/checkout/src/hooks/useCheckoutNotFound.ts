@@ -46,7 +46,7 @@ export function useCheckoutNotFound(checkoutId: string | null): boolean {
     }
     handledRef.current = checkoutId;
     router.replace(homePath);
-    openCart();
+    openCart?.();
   }, [missing, sessionExpired, checkoutId, router, homePath, openCart]);
 
   return missing;

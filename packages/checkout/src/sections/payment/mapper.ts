@@ -26,6 +26,7 @@ export function mapCheckoutToPaymentFormData(
   const { selection, paymentMethods } = checkout.payment;
 
   return {
+    paymentRequired: checkout.payment.payableAmount.amount > 0,
     paymentMethods: paymentMethods.map(mapPaymentMethod),
     selectedPaymentMethod: selection.method
       ? mapPaymentMethod(selection.method)

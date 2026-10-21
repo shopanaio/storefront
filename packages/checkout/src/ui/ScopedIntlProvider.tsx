@@ -50,7 +50,8 @@ export function ScopedIntlProvider({
         ...base,
         [scopePrefix]: {
           ...currentScope,
-          [scope]: { ...((currentScope[scope] as Record<string, unknown>) ?? {}), ...loaded },
+          // The host overrides the module's own messages.
+          [scope]: { ...loaded, ...((currentScope[scope] as Record<string, unknown>) ?? {}) },
         },
       }}
     >

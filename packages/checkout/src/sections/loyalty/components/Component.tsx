@@ -1,17 +1,19 @@
 'use client';
 
 import { useId } from 'react';
-import { Flex, Skeleton, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
 import { SectionId } from '#checkout/state/interface';
 import { sectionAnchor } from '#checkout/ui/focusAnchor';
+import { SUMMARY_BLOCK_GAP } from '#checkout/ui/summaryBlocks';
 import type { Checkout } from '#checkout/types/entity';
 import type { LoyaltyFormData } from '../types';
 import { loyaltyIssues } from '../issues';
 import { LoyaltyHeader } from './LoyaltyHeader';
+import { LoyaltySkeleton } from './LoyaltySkeleton';
 import { RedemptionPart } from './RedemptionPart';
 import { RewardsPart } from './RewardsPart';
 
@@ -72,23 +74,35 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
     if (known) options.push(known);
   }
 
+  const label = (
+    <Typography.Text id={headingId} strong type="secondary" className={styles.label}>
+      {t('loyalty-title')}
+    </Typography.Text>
+  );
   let body;
+  // Loading shows the skeleton only when the checkout already says there is a program: it loads
+  // before the account, and a skeleton that then vanishes would make the summary jump.
+  const programKnown = Boolean(checkout.loyaltyEarning || data.redemption || data.selection);
   if (loading) {
+    if (!programKnown) return null;
     body = (
-      <div className={styles.card} aria-busy="true" aria-label={t('loyalty-loading')}>
-        <Flex vertical gap={10} className={styles.padded}>
-          <Skeleton.Input active size="small" />
-          <Skeleton active title={false} paragraph={{ rows: 1, width: '60%' }} />
-        </Flex>
-      </div>
+      <Flex vertical gap={8}>
+        {label}
+        <div className={styles.card} aria-busy="true" aria-label={t('loyalty-loading')}>
+          <LoyaltySkeleton />
+        </div>
+      </Flex>
     );
   } else if (failed) {
     body = (
-      <Flex align="center" justify="space-between" gap={12} className={styles.quiet}>
-        <Typography.Text type="secondary">{t('loyalty-load-failed')}</Typography.Text>
-        <button type="button" className={styles.link} onClick={refetch}>
-          {t('loyalty-reload')}
-        </button>
+      <Flex vertical gap={8}>
+        {label}
+        <Flex align="center" justify="space-between" gap={12} className={styles.quiet}>
+          <Typography.Text type="secondary">{t('loyalty-load-failed')}</Typography.Text>
+          <button type="button" className={styles.link} onClick={refetch}>
+            {t('loyalty-reload')}
+          </button>
+        </Flex>
       </Flex>
     );
   } else if (!active && !data.redemption && !data.selection) {
@@ -96,18 +110,21 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
   } else {
     body = (
       <>
-        <div className={styles.card}>
-          {active ? <LoyaltyHeader account={active} /> : null}
-          {showRedemption && options.length > 0 ? (
-            <RedemptionPart
-              options={options}
-              redemption={data.redemption}
-              failedSource={failedSource}
-              orderTooSmall={orderTooSmall}
-              currencyCode={checkout.currencyCode}
-            />
-          ) : null}
-        </div>
+        <Flex vertical gap={8}>
+          {label}
+          <div className={styles.card}>
+            {active ? <LoyaltyHeader account={active} /> : null}
+            {showRedemption && options.length > 0 ? (
+              <RedemptionPart
+                options={options}
+                redemption={data.redemption}
+                failedSource={failedSource}
+                orderTooSmall={orderTooSmall}
+                currencyCode={checkout.currencyCode}
+              />
+            ) : null}
+          </div>
+        </Flex>
         {active ? (
           <RewardsPart
             rewards={active.rewards}
@@ -131,19 +148,18 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
       aria-labelledby={headingId}
       className={styles.root}
     >
-      <Typography.Text id={headingId} strong type="secondary" className={styles.label}>
-        {t('loyalty-title')}
-      </Typography.Text>
       {body}
     </section>
   );
 };
 
 const useStyles = createStyles(({ css, token }) => ({
+  // The balance and "My rewards" are two blocks of the summary: the label of each is as far
+  // from the block above as any other.
   root: css`
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: ${SUMMARY_BLOCK_GAP}px;
   `,
   label: css`
     font-size: ${token.fontSize}px;
@@ -153,9 +169,6 @@ const useStyles = createStyles(({ css, token }) => ({
     border-radius: ${token.borderRadius}px;
     background: ${token.colorBgContainer};
     overflow: hidden;
-  `,
-  padded: css`
-    padding: ${token.paddingSM}px ${token.padding}px;
   `,
   quiet: css`
     padding: ${token.paddingSM}px ${token.padding}px;

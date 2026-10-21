@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from '@shopana/storefront/next/navigation';
 import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
+import { resolveCheckoutTheme } from '#checkout/theme';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
 import type { OrderAcceptedEvent } from '#checkout/state/checkoutBus';
 import { useIsPlacementBusy } from '#checkout/state/placement/placementStore';
@@ -17,20 +18,22 @@ export const CheckoutPageClient = ({
   theme,
   onOrderAccepted,
 }: {
-  theme: CheckoutThemeAdapter;
+  /** What the theme changes; the checkout works without it. */
+  theme?: CheckoutThemeAdapter;
   /** Called after the cart is cleared for an accepted order, as on the return page. */
   onOrderAccepted?: (event: OrderAcceptedEvent) => void;
 }) => {
   const { cartId, loaded } = useCartId();
   const router = useRouter();
-  const homePath = theme.useHomePath();
+  const resolved = useMemo(() => resolveCheckoutTheme(theme), [theme]);
+  const homePath = resolved.useHomePath();
   const cleanup = useDefaultCartCleanup();
   const placementBusy = useIsPlacementBusy();
   const sessionExpired = useSessionExpired();
-  const Brand = theme.Brand;
+  const Brand = resolved.Brand;
   const features = useMemo(
-    () => ({ auth: theme.customerAccountsEnabled }),
-    [theme.customerAccountsEnabled]
+    () => ({ auth: resolved.customerAccountsEnabled }),
+    [resolved.customerAccountsEnabled]
   );
 
   useEffect(() => {
