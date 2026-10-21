@@ -13,10 +13,18 @@ interface Prop {
   line: Checkout.Line;
   /** The line cannot be delivered to the address (R7). */
   undeliverable?: boolean;
+  /** Framed like the fields of the checkout; a list that divides its items turns it off. */
+  bordered?: boolean;
+  className?: string;
 }
 
-export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
-  const { styles } = useStyles();
+export const SummaryItem = ({
+  line,
+  undeliverable = false,
+  bordered = true,
+  className,
+}: Prop) => {
+  const { styles, cx } = useStyles();
   const t = useTranslations('Checkout');
 
   const title = composeProductTitle({
@@ -27,7 +35,12 @@ export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
   const imageUrl = line.imageSrc ?? line.purchasable?.cover?.url;
 
   return (
-    <Flex className={styles.item} align="center" justify="space-between" gap={16}>
+    <Flex
+      className={cx(bordered && styles.item, className)}
+      align="center"
+      justify="space-between"
+      gap={16}
+    >
       <Flex align="center" gap={16} className={styles.main}>
         <Badge
           size="default"
@@ -39,7 +52,6 @@ export const SummaryItem = ({ line, undeliverable = false }: Prop) => {
             className={styles.thumbnail}
             src={imageUrl}
             alt={title}
-            width={100}
           />
         </Badge>
         <Flex vertical className={styles.main}>

@@ -1,22 +1,20 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { DeliveryGroup, DeliveryMethod } from '../types';
 import type { DeliveryMethodListProps } from './DeliveryMethodList';
 import { Shipments } from './Shipments';
 
-/** Lists the shipments render, newest render last. */
-const lists: DeliveryMethodListProps[] = [];
-
 vi.mock('./DeliveryMethodList', () => ({
-  DeliveryMethodList: (props: DeliveryMethodListProps) => {
-    lists.push(props);
-    return (
-      <div data-testid={props.groups.length > 1 ? 'shared-list' : 'shipment-list'} />
-    );
-  },
+  DeliveryMethodList: (props: DeliveryMethodListProps) => (
+    <div
+      data-testid="method-list"
+      data-groups={props.groups.map((group) => group.id).join(',')}
+      data-methods={props.methods.map((method) => method.handle).join(',')}
+      data-initial={props.initialSelectKey ?? ''}
+    />
+  ),
 }));
 vi.mock('./ShipmentLines', () => ({ ShipmentLines: () => null }));
-vi.mock('./ShipmentQuote', () => ({ ShipmentQuote: () => null }));
 
 const method = (handle: string, code: string, data?: unknown): DeliveryMethod => ({
   handle,
@@ -31,7 +29,11 @@ const method = (handle: string, code: string, data?: unknown): DeliveryMethod =>
   publicData: {},
 });
 
-const group = (id: string, methods: DeliveryMethod[], selected: DeliveryMethod | null) => ({
+const group = (
+  id: string,
+  methods: DeliveryMethod[],
+  selected: DeliveryMethod | null
+): DeliveryGroup => ({
   id,
   replacesGroupIds: [],
   lines: [],
@@ -53,6 +55,10 @@ const renderShipments = (groups: DeliveryGroup[]) =>
     </NextIntlClientProvider>
   );
 
+/** Groups of each method list, top to bottom. */
+const listedGroups = () =>
+  screen.getAllByTestId('method-list').map((list) => list.dataset.groups);
+
 describe('Shipments', () => {
   beforeAll(() => {
     Object.defineProperty(window, 'matchMedia', {
@@ -70,45 +76,55 @@ describe('Shipments', () => {
     });
   });
 
-  beforeEach(() => {
-    lists.length = 0;
-  });
-
   it('shares one list when every shipment has the same method and input', () => {
     const a = method('a1', 'warehouse', branch('5'));
     const b = method('b1', 'warehouse', branch('5'));
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
-    expect(screen.getByTestId('shared-list')).toBeTruthy();
-    expect(screen.queryAllByTestId('shipment-list')).toHaveLength(0);
+    expect(listedGroups()).toEqual(['g1,g2']);
+    expect(screen.getAllByText('Checkout.delivery-shipment-split')).toHaveLength(2);
   });
 
-  it('shows the shipments one by one when the same method goes to different branches', () => {
+  it('starts a shipment apart when the same method goes to another branch', () => {
     const a = method('a1', 'warehouse', branch('5'));
     const b = method('b1', 'warehouse', branch('7'));
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
-    expect(screen.queryByTestId('shared-list')).toBeNull();
-    expect(screen.getAllByTestId('shipment-list')).toHaveLength(2);
+    expect(listedGroups()).toEqual(['g1', 'g2']);
+    expect(screen.getByText('Checkout.delivery-shipment-merge')).toBeTruthy();
   });
 
-  it('applies the first shipment to all of them on "one method for all"', () => {
+  it('takes out only the shipment whose "another delivery method" was clicked', () => {
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'warehouse');
+    const c = method('c1', 'warehouse');
+    const courier = method('b2', 'courier');
+    renderShipments([group('g1', [a], a), group('g2', [b, courier], b), group('g3', [c], c)]);
+
+    fireEvent.click(screen.getAllByText('Checkout.delivery-shipment-split')[1]);
+
+    expect(listedGroups()).toEqual(['g1,g3', 'g2']);
+    // The shipment apart offers its own methods, also ones the others lack.
+    expect(screen.getAllByTestId('method-list')[1].dataset.methods).toBe('b1,b2');
+  });
+
+  it('puts a shipment back with the method of the others', () => {
     const a = method('a1', 'warehouse', branch('5'));
     const b = method('b1', 'warehouse', branch('7'));
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
-    fireEvent.click(screen.getByText('Checkout.delivery-same-for-all-shipments'));
+    fireEvent.click(screen.getByText('Checkout.delivery-shipment-merge'));
 
-    // The shared list stays while it applies the method, even though the groups differ.
-    const shared = lists.at(-1)!;
-    expect(shared.groups).toHaveLength(2);
-    expect(shared.initialSelectKey).toBe('nova-poshta\nwarehouse');
-    act(() => shared.onSelectingChange?.(true));
-    expect(screen.getByTestId('shared-list')).toBeTruthy();
+    expect(listedGroups()).toEqual(['g1,g2']);
+    expect(screen.getByTestId('method-list').dataset.initial).toBe('nova-poshta\nwarehouse');
+  });
 
-    // The selection ended and the shipments still differ: they are shown one by one.
-    act(() => shared.onSelectingChange?.(false));
-    expect(screen.queryByTestId('shared-list')).toBeNull();
-    expect(screen.getAllByTestId('shipment-list')).toHaveLength(2);
+  it('offers no way back to a shipment that shares no method with the others', () => {
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'courier');
+    renderShipments([group('g1', [a], null), group('g2', [b], null)]);
+
+    expect(listedGroups()).toEqual(['g1', 'g2']);
+    expect(screen.queryByText('Checkout.delivery-shipment-merge')).toBeNull();
   });
 });

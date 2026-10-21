@@ -2,21 +2,19 @@
 
 import { Button } from 'antd';
 import { createStyles } from 'antd-style';
+import { ProductImage } from './ProductImage';
 
 export interface ThumbnailProps {
   src?: string | null;
   alt?: string;
   className?: string;
-  width?: number;
 }
 
-export function Thumbnail({ src, alt = '', className, width }: ThumbnailProps) {
+export function Thumbnail({ src, alt = '', className }: ThumbnailProps) {
   const { styles, cx } = useStyles();
   return (
     <Button className={cx(styles.root, className)} type="default">
-      {src ? (
-        <img src={src} alt={alt} width={width} className={styles.image} />
-      ) : null}
+      <ProductImage src={src} alt={alt} className={styles.image} />
     </Button>
   );
 }

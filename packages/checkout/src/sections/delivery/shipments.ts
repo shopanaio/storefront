@@ -73,6 +73,33 @@ export function selectionsDiffer(groups: DeliveryGroup[]): boolean {
   return new Set(selected.map((method) => JSON.stringify(method.data ?? null))).size > 1;
 }
 
+/** Selection of the group as a shared list shows it: the method with its input. */
+const selectionOf = (group: DeliveryGroup): string | null =>
+  group.selectedDeliveryMethod
+    ? `${methodKey(group.selectedDeliveryMethod)}\n${JSON.stringify(
+        group.selectedDeliveryMethod.data ?? null
+      )}`
+    : null;
+
+/**
+ * Groups shown in blocks of their own when the shipments appear, as if the customer had asked
+ * for "another delivery method" for each: a group whose method or input differs from the first
+ * selected one, and every group but the first when the groups share no method. A group with
+ * nothing selected stays with the others; the order is blocked until it has a method.
+ */
+export function initialSplitGroupIds(groups: DeliveryGroup[]): string[] {
+  if (commonMethods(groups).length === 0) {
+    return groups.slice(1).map((group) => group.id);
+  }
+  const first = groups.map(selectionOf).find((selection) => selection !== null) ?? null;
+  return groups
+    .filter((group) => {
+      const selection = selectionOf(group);
+      return selection !== null && selection !== first;
+    })
+    .map((group) => group.id);
+}
+
 /**
  * Option whose price and dates are known: the API accepted the selection together with the
  * input it needs. An option picked or edited a moment ago, or one still waiting for its

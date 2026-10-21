@@ -155,6 +155,7 @@ export const TwoShipments: Story = {
             productTitle: 'Pepperoni pizza',
             quantity: 2,
             unitPrice: 289,
+            imageSrc: 'https://picsum.photos/seed/pepperoni/200',
           }),
         ],
         selected: WAREHOUSE,
@@ -168,6 +169,7 @@ export const TwoShipments: Story = {
             title: 'Medium, 28 cm',
             productTitle: 'Four cheese pizza',
             unitPrice: 319,
+            imageSrc: 'https://picsum.photos/seed/cheese/200',
           }),
           makeLine({
             id: 'line-3',

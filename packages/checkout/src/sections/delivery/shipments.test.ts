@@ -7,6 +7,7 @@ import {
   commonMethods,
   commonSelectionKey,
   groupsShippingQuote,
+  initialSplitGroupIds,
   methodKey,
   quotedMethod,
   quotedShipment,
@@ -323,5 +324,41 @@ describe('undeliverableLines', () => {
     } as unknown as Checkout.Checkout;
 
     expect(undeliverableLines(checkout)).toEqual([]);
+  });
+});
+
+describe('initialSplitGroupIds', () => {
+  const branch = (ref: string) => ({ type: 'WAREHOUSE', warehouseRef: ref });
+
+  it('keeps every shipment together when they have the same method and input', () => {
+    const a = method('a1', 'warehouse', { data: branch('5') });
+    const b = method('b1', 'warehouse', { data: branch('5') });
+    expect(initialSplitGroupIds([group('g1', [a], a), group('g2', [b], b)])).toEqual([]);
+  });
+
+  it('takes apart a shipment whose method or branch differs from the first one', () => {
+    const a = method('a1', 'warehouse', { data: branch('5') });
+    const b = method('b1', 'warehouse', { data: branch('7') });
+    const c = method('c1', 'warehouse', { data: branch('5') });
+    const courier = method('c2', 'courier');
+    expect(
+      initialSplitGroupIds([
+        group('g1', [a], a),
+        group('g2', [b], b),
+        group('g3', [c, courier], courier),
+      ])
+    ).toEqual(['g2', 'g3']);
+  });
+
+  it('keeps a shipment with nothing selected with the others', () => {
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'warehouse');
+    expect(initialSplitGroupIds([group('g1', [a]), group('g2', [b], b)])).toEqual([]);
+  });
+
+  it('takes apart every shipment but the first when they share no method', () => {
+    const a = method('a1', 'warehouse');
+    const b = method('b1', 'courier');
+    expect(initialSplitGroupIds([group('g1', [a]), group('g2', [b])])).toEqual(['g2']);
   });
 });
