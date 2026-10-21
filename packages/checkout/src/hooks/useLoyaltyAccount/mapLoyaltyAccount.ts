@@ -80,10 +80,7 @@ export function mapLoyaltyAccount(account: ApiAccount): Checkout.LoyaltyAccount 
       headline: reward.presentation.headline,
       description: reward.presentation.description ?? null,
       validUntil: toDate(reward.validUntil),
-      voucherCode:
-        reward.reward.__typename === 'LoyaltyVoucherRewardPresentation'
-          ? (reward.reward.code ?? null)
-          : null,
+      voucherCode: reward.discountCode ?? null,
     })),
   };
 }

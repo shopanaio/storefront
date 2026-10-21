@@ -315,6 +315,39 @@ describe('useCreateCheckoutApi loyalty', () => {
     ]);
   });
 
+  it('replacing a reward with the same Pricing code keeps that code applied', async () => {
+    mocks.cached = loyaltyCheckout({
+      promoCodes: [
+        { code: 'GIFT-1', status: 'APPLIED' },
+      ] as Checkout.Checkout['promoCodes'],
+      loyaltySelection: {
+        source: null,
+        points: null,
+        amount: null,
+        rewardId: 'r1',
+      },
+    });
+    const { result } = renderHook(() => useCreateCheckoutApi());
+    await act(async () => {
+      await result.current.setLoyaltyReward(
+        { id: 'r2', voucherCode: 'GIFT-1' },
+        { id: 'r1', voucherCode: 'GIFT-1' }
+      );
+    });
+    expect(loyaltyCalls()).toEqual([
+      {
+        mutation: 'update',
+        input: {
+          checkoutId: 'c1',
+          source: null,
+          points: null,
+          amount: null,
+          rewardId: 'r2',
+        },
+      },
+    ]);
+  });
+
   it('S5: takes the voucher code back when the reward was not saved', async () => {
     mocks.cached = loyaltyCheckout();
     mocks.send.mockImplementation(async (mutation) => {

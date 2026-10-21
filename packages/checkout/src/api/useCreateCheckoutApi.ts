@@ -335,8 +335,8 @@ export function useCreateCheckoutApi(): CheckoutApi {
       const entered = checkout.promoCodes.map((item) => item.code);
       const context = mutationContext();
       const reward = changes.reward;
-      // A voucher is a promo code: Pricing applies its discount once the code is entered, and
-      // the reward reserves it for this order.
+      // A discount-backed reward activates Pricing with its code; Pricing calculates the effect,
+      // and the selected entitlement reserves the reward for this order.
       const voucherCode = reward?.reward?.voucherCode ?? null;
       const addedCode =
         voucherCode && !isPromoEntered(entered, voucherCode) ? voucherCode : null;
@@ -364,6 +364,7 @@ export function useCreateCheckoutApi(): CheckoutApi {
         reward?.replaced &&
         reward.replaced.id !== reward.reward?.id &&
         previousCode &&
+        !isPromoEntered(voucherCode ? [voucherCode] : [], previousCode) &&
         isPromoEntered(entered, previousCode)
       ) {
         await sendRemovePromo({ input: { code: previousCode, ...context } });

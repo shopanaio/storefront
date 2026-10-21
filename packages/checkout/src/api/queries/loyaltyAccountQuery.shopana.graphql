@@ -61,6 +61,7 @@ query StorefrontLoyaltyAccountQuery {
       availableRewards(first: 20) {
         nodes {
           id
+          discountCode
           validUntil
           presentation {
             headline

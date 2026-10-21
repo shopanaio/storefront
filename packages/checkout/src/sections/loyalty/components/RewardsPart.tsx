@@ -213,6 +213,8 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   problem: css`
     border-style: dashed;
+    border-color: ${token.colorWarningBorder};
+    background: ${token.colorWarningBg};
   `,
   icon: css`
     display: flex;
