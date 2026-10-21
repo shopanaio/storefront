@@ -86,6 +86,7 @@ describe('useCheckoutLifecycle', () => {
       JSON.stringify({
         checkoutId: 'checkout-1',
         idempotencyKey: 'key-1',
+        expectedTotal: { amount: '1000', currencyCode: 'UAH' },
         returnUrl: 'https://shop.example/checkout/return?checkout=checkout-1',
         resultRevision: 'rev-1',
         paymentFlow: 'ONLINE',

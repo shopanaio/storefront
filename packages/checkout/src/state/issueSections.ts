@@ -17,9 +17,11 @@ const DELIVERY = new Set(['delivery', 'deliverygroups', 'deliverygroup', 'shippi
  * of apps name their own fields.
  */
 export function issueSection(issue: Pick<Checkout.Issue, 'field' | 'lineId'>): SectionId | null {
-  if (issue.lineId) return null;
   const path = issue.field.map((part) => String(part).toLowerCase());
   const parts = path[0] === 'cartintent' ? path.slice(1) : path;
+  // Missing destinations are reported per line, but the buyer fixes them in the address section.
+  if (parts[0] === 'delivery' && parts[1] === 'destinations') return SectionId.Address;
+  if (issue.lineId) return null;
   const head = parts[0];
   if (!head) return null;
   if (PROMO.has(head)) return SectionId.Promo;

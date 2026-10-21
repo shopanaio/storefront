@@ -21,4 +21,8 @@ describe('issueSection', () => {
     expect(at(['cart', 'lines'])).toBeNull();
     expect(at(['payment'], 'line-1')).toBeNull();
   });
+
+  it('routes a missing delivery destination of a line to the address section', () => {
+    expect(at(['delivery', 'destinations'], 'line-1')).toBe(SectionId.Address);
+  });
 });

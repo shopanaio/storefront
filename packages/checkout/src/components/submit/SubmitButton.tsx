@@ -18,7 +18,8 @@ export interface SubmitButtonProps {
 /**
  * Submit button for the checkout form. Uses large primary AntD button
  * and localized label from Checkout namespace.
- * Loading while mutations are in flight; disabled for the whole placement attempt (1.12),
+ * A click during an input save starts placement, which waits for that save (BR-awbl).
+ * Loading and disabled for the whole placement attempt (1.12),
  * while some lines cannot be delivered to the address (R7), and once the checkout expired
  * (it is being replaced, R5). A checkout that is not ready yet keeps the button pressable, so
  * that pressing it tells the buyer what is missing; it is not placed until it is READY.
@@ -37,7 +38,8 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       size="large"
       htmlType="submit"
       onClick={onClick}
-      loading={hasActiveOperations || placementBusy}
+      aria-busy={hasActiveOperations || placementBusy}
+      loading={placementBusy}
       disabled={placementBusy || blocked || expired}
     >
       {t('confirm-order')}
