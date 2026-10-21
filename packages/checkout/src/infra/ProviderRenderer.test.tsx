@@ -3,8 +3,35 @@ import { NextIntlClientProvider } from 'next-intl';
 import { MockedProvider } from '@apollo/client/testing/react';
 import '#checkout/vendors/liqpay/register';
 import '#checkout/vendors/nova-poshta/register';
-import { ProviderMethod, ProviderModuleType } from '#checkout/vendors/types';
+import {
+  ProviderMethod,
+  ProviderModuleApi,
+  ProviderModuleType,
+} from '#checkout/vendors/types';
+import { registerModule } from '@shopana/storefront-sdk/registry';
+import { act } from 'react';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 import { ProviderRenderer } from './ProviderRenderer';
+import { loadMessages, loadModule } from './loadCache';
+
+/**
+ * Loads a provider module and its messages, as the checkout preloads them: the renderer then
+ * reads them at once instead of suspending (a suspended test render is not retried outside act).
+ */
+const preload = async (type: ProviderModuleType, provider: string) => {
+  const api = await loadModule<ProviderModuleApi>(type, provider);
+  if (api?.messages) {
+    await loadMessages(api.messages.scope, 'uk', api.messages.load);
+  }
+};
+
+beforeAll(async () => {
+  await Promise.all([
+    preload(ProviderModuleType.Payment, 'liqpay'),
+    preload(ProviderModuleType.Payment, 'nova-poshta'),
+    preload(ProviderModuleType.Delivery, 'nova-poshta'),
+  ]);
+});
 
 const method = (
   handle: string,
@@ -225,5 +252,57 @@ describe('ProviderRenderer (delivery)', () => {
     rerender(deliveryRenderer('test-fedex', [fedex], deliveryAddress('Main st 1'), fedex));
 
     expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('Ring twice');
+  });
+});
+
+describe('ProviderRenderer (a module that fails to load)', () => {
+  it('says the part failed and loads it again on "Retry"', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    let attempts = 0;
+    registerModule({
+      type: ProviderModuleType.Payment,
+      slug: 'test-flaky',
+      loader: async () => {
+        attempts += 1;
+        if (attempts === 1) throw new Error('ChunkLoadError');
+        return {
+          provider: 'test-flaky',
+          moduleType: ProviderModuleType.Payment,
+          Component: ({ availableMethods }: { availableMethods: ProviderMethod[] }) => (
+            <span>{availableMethods.map((item) => item.title).join()}</span>
+          ),
+          config: {
+            logo: () => null,
+            methods: [{ code: 'card', Component: () => null }],
+          },
+        };
+      },
+    });
+
+    await act(async () => {
+      render(
+        <NextIntlClientProvider
+          locale="en"
+          messages={{ Checkout: { 'load-failed': 'Failed to load', 'banner-retry': 'Retry' } }}
+          onError={() => {}}
+        >
+          <LoadingBoundary fallback={<span>Loading</span>}>
+            <ProviderRenderer
+              moduleType={ProviderModuleType.Payment}
+              provider="test-flaky"
+              availableMethods={[{ ...method('h-card', 'card', 'test-flaky'), title: 'Card' }]}
+              selectedMethod={null}
+            />
+          </LoadingBoundary>
+        </NextIntlClientProvider>
+      );
+    });
+    expect(await screen.findByText('Failed to load')).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    });
+    expect(await screen.findByText('Card')).toBeTruthy();
+    expect(attempts).toBe(2);
   });
 });

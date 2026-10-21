@@ -1,9 +1,18 @@
 'use client';
 
 import { NextIntlClientProvider, useLocale, useMessages } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { use } from 'react';
 import type { ReactNode } from 'react';
+import { loadMessages } from '#checkout/infra/loadCache';
 
+type Messages = Record<string, unknown>;
+
+/**
+ * Gives a module its own messages under `Modules.<scope>`. It suspends until they are loaded,
+ * so no message key flashes on screen and the nearest `LoadingBoundary` shows its skeleton
+ * meanwhile; messages loaded before render at once. The host overrides the module's messages.
+ * The checkout puts it around a module from the module's `messages` (see `ProviderRenderer`).
+ */
 export function ScopedIntlProvider({
   scope,
   load,
@@ -11,38 +20,14 @@ export function ScopedIntlProvider({
   children,
 }: {
   scope: string;
-  load: (locale: string) => Promise<Record<string, unknown>>;
+  load: (locale: string) => Promise<Messages>;
   scopePrefix?: string;
   children: ReactNode;
 }) {
   const locale = useLocale();
-  const base = useMessages() as Record<string, unknown>;
-  const [loaded, setLoaded] = useState<Record<string, unknown> | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoaded(null);
-    load(locale).then(
-      (messages) => {
-        if (mounted) setLoaded(messages);
-      },
-      (error) => {
-        // Without its own messages the module falls back to those of the host, if any.
-        console.error(`Failed to load the "${scope}" messages:`, error);
-        if (mounted) setLoaded({});
-      }
-    );
-    return () => {
-      mounted = false;
-    };
-  }, [locale, load, scope]);
-
-  const currentScope = (base[scopePrefix] as Record<string, unknown>) ?? {};
-  if (!loaded) {
-    // The host may ship the module messages itself; otherwise the module waits for its own,
-    // so that no message key flashes on screen.
-    return currentScope[scope] ? <>{children}</> : null;
-  }
+  const base = useMessages() as Messages;
+  const loaded = use(loadMessages(scope, locale, load));
+  const currentScope = (base[scopePrefix] as Messages) ?? {};
   return (
     <NextIntlClientProvider
       locale={locale}
@@ -50,8 +35,7 @@ export function ScopedIntlProvider({
         ...base,
         [scopePrefix]: {
           ...currentScope,
-          // The host overrides the module's own messages.
-          [scope]: { ...loaded, ...((currentScope[scope] as Record<string, unknown>) ?? {}) },
+          [scope]: { ...loaded, ...((currentScope[scope] as Messages) ?? {}) },
         },
       }}
     >

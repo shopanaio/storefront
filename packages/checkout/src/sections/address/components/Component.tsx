@@ -1,7 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Flex, Select, Skeleton, Typography } from 'antd';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { Button, Flex, Select, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
 import type { AddressFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
@@ -15,10 +21,15 @@ import { closedCheckoutCode } from '#checkout/state/closedCheckout';
 import {
   ProviderModuleType,
   type AddressModuleApi,
+  type AddressModuleProps,
   type AddressModuleValue,
 } from '#checkout/vendors/types';
+import { hasModule } from '#checkout/infra/loadCache';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
+import { ScopedIntlProvider } from '#checkout/ui/ScopedIntlProvider';
 import { ADDRESS_SECTION_ANCHOR } from '../anchor';
 import { pickDeliveryCountry, type DeliveryCountry } from '../countries';
+import { AddressSkeleton } from './AddressSkeleton';
 import { InternationalAddressForm } from './InternationalAddressForm';
 
 export interface AddressSectionViewProps {
@@ -96,24 +107,31 @@ export const AddressSectionView = ({
   const [openedWith, setOpenedWith] = useState<string | null>(null);
   // Without the list of countries the section falls back to the Ukrainian form (see above).
   const noCountries = !loading && countries.length === 0;
-  const countryCode = noCountries
-    ? FALLBACK_COUNTRY_CODE
-    : (pickedCountryCode ??
-      pickDeliveryCountry(
-        countries,
-        savedCountryCode,
-        openedWith ?? data?.customerCountryCode ?? null
-      ));
-  if (!openedWith && !noCountries && countryCode) {
+  /**
+   * A saved Ukrainian address is shown at once, while the list loads: its form needs no
+   * address format, and the city comes with the checkout. The list then adds the country
+   * selector, or moves the form to another country if the store no longer delivers to Ukraine.
+   */
+  const savedUkrainian = loading && savedCountryCode === FALLBACK_COUNTRY_CODE;
+  const countryCode =
+    noCountries || savedUkrainian
+      ? FALLBACK_COUNTRY_CODE
+      : (pickedCountryCode ??
+        pickDeliveryCountry(
+          countries,
+          savedCountryCode,
+          openedWith ?? data?.customerCountryCode ?? null
+        ));
+  // The form opens with the country the list picks, not with the one shown meanwhile.
+  if (!openedWith && !noCountries && !savedUkrainian && countryCode) {
     setOpenedWith(countryCode);
   }
-  const country = noCountries
-    ? fallbackCountry(FALLBACK_COUNTRY_CODE)
-    : (countries.find(({ code }) => code === countryCode) ?? null);
-  const { found, api } = useRegisteredModule<AddressModuleApi>(
-    ProviderModuleType.Address,
-    countryCode
-  );
+  const country =
+    noCountries || savedUkrainian
+      ? fallbackCountry(FALLBACK_COUNTRY_CODE)
+      : (countries.find(({ code }) => code === countryCode) ?? null);
+  const found =
+    countryCode !== null && hasModule(ProviderModuleType.Address, countryCode);
 
   // The saved address belongs to another country than the form shows (picked in the selector,
   // or no longer delivered to): the order must not go to it until one is saved for this country.
@@ -172,56 +190,76 @@ export const AddressSectionView = ({
       </Flex>
     );
   }
-  // The anchor stays on the page in every state: validation scrolls to it.
-  if (loading || (found && !api)) {
-    return (
-      <div id={ADDRESS_SECTION_ANCHOR}>
-        <Skeleton.Input active block size="large" />
-      </div>
-    );
-  }
-  if (!country || (noCountries && !found)) {
-    return (
-      <Typography.Text id={ADDRESS_SECTION_ANCHOR} type="danger">
-        {t('delivery-countries-empty')}
-      </Typography.Text>
-    );
-  }
-
-  const Form = api?.Component ?? InternationalAddressForm;
+  // A saved Ukrainian address does not wait for the list (see `savedUkrainian`).
   return (
-    <Flex id={ADDRESS_SECTION_ANCHOR} vertical gap={12}>
-      {countries.length > 1 ? (
-        <Select
-          size="large"
-          showSearch
-          optionFilterProp="label"
-          aria-label={t('country-region')}
-          value={country.code}
-          options={countries.map(({ code, name }) => ({
-            value: code,
-            label: name,
-          }))}
-          onChange={(code: string) =>
-            setPicked({ code, over: savedCountryCode })
-          }
-        />
-      ) : null}
-      <Form
-        address={
-          savedAddress && savedCountryCode === country.code
-            ? savedAddress
-            : null
-        }
-        country={country}
-        onSubmit={onSubmit}
-      />
-      {saveFailed ? (
-        <Typography.Text type="danger" role="alert">
-          {t('error-save-address')}
+    <LoadingBoundary
+      pending={loading && !savedUkrainian}
+      fallback={<AddressSkeleton />}
+    >
+      {!country || (noCountries && !found) ? (
+        <Typography.Text id={ADDRESS_SECTION_ANCHOR} type="danger">
+          {t('delivery-countries-empty')}
         </Typography.Text>
-      ) : null}
-    </Flex>
+      ) : (
+        <Flex id={ADDRESS_SECTION_ANCHOR} vertical gap={12}>
+          {countries.length > 1 ? (
+            <Select
+              size="large"
+              showSearch
+              optionFilterProp="label"
+              aria-label={t('country-region')}
+              value={country.code}
+              options={countries.map(({ code, name }) => ({
+                value: code,
+                label: name,
+              }))}
+              // The form of the country picked before stays until the new one has loaded.
+              onChange={(code: string) =>
+                startTransition(() =>
+                  setPicked({ code, over: savedCountryCode })
+                )
+              }
+            />
+          ) : null}
+          <AddressForm
+            address={
+              savedAddress && savedCountryCode === country.code
+                ? savedAddress
+                : null
+            }
+            country={country}
+            onSubmit={onSubmit}
+          />
+          {saveFailed ? (
+            <Typography.Text type="danger" role="alert">
+              {t('error-save-address')}
+            </Typography.Text>
+          ) : null}
+        </Flex>
+      )}
+    </LoadingBoundary>
+  );
+};
+
+/**
+ * The form of the country: the address module registered for it, with its messages, or the
+ * form laid out by the country's address format. It suspends while the module loads.
+ */
+const AddressForm = (props: AddressModuleProps) => {
+  const { api } = useRegisteredModule<AddressModuleApi>(
+    ProviderModuleType.Address,
+    props.country.code
+  );
+  if (!api) {
+    return <InternationalAddressForm {...props} />;
+  }
+  const { Component: Form, messages } = api;
+  return messages ? (
+    <ScopedIntlProvider scope={messages.scope} load={messages.load}>
+      <Form {...props} />
+    </ScopedIntlProvider>
+  ) : (
+    <Form {...props} />
   );
 };
 

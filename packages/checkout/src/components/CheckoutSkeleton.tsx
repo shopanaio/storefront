@@ -48,21 +48,21 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
           {brand}
           <Flex vertical gap={16}>
             <Text className={styles.sectionTitle} strong>
-              <Skeleton.Input active size="small" style={{ width: 150 }} />
+              <Skeleton.Input size="small" style={{ width: 150 }} />
             </Text>
-            <Skeleton active paragraph={{ rows: 3 }} title={false} />
-            <Skeleton active paragraph={{ rows: 3 }} title={false} />
+            <Skeleton paragraph={{ rows: 3 }} title={false} />
+            <Skeleton paragraph={{ rows: 3 }} title={false} />
           </Flex>
         </Flex>
 
         <Flex className={styles.rightContainer}>
           <Flex vertical gap={12} className={styles.right}>
-            <Skeleton active paragraph={{ rows:5 }} />
+            <Skeleton paragraph={{ rows:5 }} />
             <Flex vertical gap={12} className={styles.actionsRight}>
-              <Skeleton.Button active size="large" style={{ width: 220 }} />
-              <Skeleton.Input active size="small" style={{ width: 180 }} />
+              <Skeleton.Button size="large" style={{ width: 220 }} />
+              <Skeleton.Input size="small" style={{ width: 180 }} />
             </Flex>
-            <Skeleton active paragraph={{ rows: 3 }} title={false} />
+            <Skeleton paragraph={{ rows: 3 }} title={false} />
 
           </Flex>
         </Flex>

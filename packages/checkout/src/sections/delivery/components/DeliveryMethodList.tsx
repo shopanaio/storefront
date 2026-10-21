@@ -6,6 +6,8 @@ import { SectionId } from '#checkout/state/interface';
 import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { useTranslations } from 'next-intl';
 import { ProviderRenderer } from '#checkout/infra/ProviderRenderer';
+import { MethodPanelsSkeleton } from '#checkout/components/common/MethodPanelsSkeleton';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   DeliveryAddress,
@@ -606,17 +608,22 @@ export const DeliveryMethodList = ({
         <CheckoutBanner tone="warning" title={t('delivery-input-retrying')} />
       )}
       {Object.entries(providerMethodsRecord).map(
+        // Each carrier loads on its own: a new one does not hide the methods already shown.
         ([provider, providerMethods]) => (
-          <ProviderRenderer
+          <LoadingBoundary
             key={provider}
-            moduleType={ProviderModuleType.Delivery}
-            provider={provider}
-            availableMethods={providerMethods}
-            selectedMethod={selectedMethod}
-            onSelectMethod={handleSelectMethod}
-            onUpdateMethodData={handleUpdateMethodData}
-            deliveryAddress={address}
-          />
+            fallback={<MethodPanelsSkeleton count={providerMethods.length} />}
+          >
+            <ProviderRenderer
+              moduleType={ProviderModuleType.Delivery}
+              provider={provider}
+              availableMethods={providerMethods}
+              selectedMethod={selectedMethod}
+              onSelectMethod={handleSelectMethod}
+              onUpdateMethodData={handleUpdateMethodData}
+              deliveryAddress={address}
+            />
+          </LoadingBoundary>
         )
       )}
       {quotedShipments && <ShipmentQuote shipments={quotedShipments} withLabel />}

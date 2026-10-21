@@ -9,6 +9,7 @@ import { CheckoutSkeleton } from './CheckoutSkeleton';
 import { CheckoutColumns } from './CheckoutColumns';
 import { SectionIssues } from './notices/SectionIssues';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { usePreloadModules } from '#checkout/infra/preloadModules';
 import { SectionId } from '#checkout/state/interface';
 import { bannerToneDeclarations } from '#checkout/ui/banner/tones';
 import { sectionAnchor, SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
@@ -33,6 +34,7 @@ export const CheckoutView = ({
   t,
 }: CheckoutViewProps) => {
   const { checkout } = useCheckoutData();
+  usePreloadModules(checkout);
   const { styles } = useStyles();
 
   return (

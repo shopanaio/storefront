@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSectionController } from '#checkout/state/hooks/useSectionController';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
@@ -9,6 +9,7 @@ import type { Checkout } from '#checkout/types/entity';
 import type { AnySchema, Lazy } from 'yup';
 import { extractYupErrors } from '#checkout/utils/validation';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 
 /**
  * Polymorphic container for Checkout sections.
@@ -52,6 +53,12 @@ export interface SectionContainerProp<K extends SectionId, TData = unknown> {
    * Data will be validated automatically on mount and when data changes.
    */
   schema: AnySchema | Lazy<unknown>;
+  /**
+   * Skeleton of the section while anything in the view loads (see `LoadingBoundary`). The view
+   * shows its own loading inside; this one catches what it does not, so a loading part never
+   * reaches the boundaries of the whole checkout.
+   */
+  fallback?: ReactNode;
 }
 
 const useSelectedData = <TData,>(data: TData | null) => data;
@@ -63,6 +70,7 @@ export function SectionContainer<K extends SectionId, TData extends object>({
   selector,
   useData: useSectionData = useSelectedData,
   schema,
+  fallback,
 }: SectionContainerProp<K, TData>) {
   const { busy, publishValid, publishInvalid } = useSectionController(id, {
     required,
@@ -129,5 +137,9 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     publishInvalid({});
   }, [publishInvalid]);
 
-  return <Component data={data} invalidate={invalidate} holdInvalid={setHeld} />;
+  return (
+    <LoadingBoundary fallback={fallback ?? null}>
+      <Component data={data} invalidate={invalidate} holdInvalid={setHeld} />
+    </LoadingBoundary>
+  );
 }

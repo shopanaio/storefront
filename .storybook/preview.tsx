@@ -15,6 +15,10 @@ sb.mock(import('../packages/checkout/src/context/CheckoutApiContext.tsx'), {
 sb.mock(import('../packages/checkout/src/hooks/useCheckoutAuth.ts'), {
   spy: true,
 });
+// Removing undeliverable lines goes through the cart, which the stories do not have.
+sb.mock(import('../packages/checkout/src/hooks/useUndeliverableLines.ts'), {
+  spy: true,
+});
 sb.mock(
   import('../packages/checkout/src/hooks/useLoyaltyAccount/useLoyaltyAccount.ts'),
   {

@@ -1,6 +1,7 @@
 'use client';
 
-import { Flex } from 'antd';
+import { Flex, Skeleton } from 'antd';
+import { createStyles } from 'antd-style';
 import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
@@ -9,6 +10,7 @@ import { readSettlementRef } from '../../address';
 import { pointInput, readInput } from '../../customerInput';
 import type { PointInput, PointView, Warehouse } from '../../types';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 
 interface PointFormProps {
   type: PointInput['type'];
@@ -27,11 +29,14 @@ export function PointForm({
   deliveryAddress,
 }: PointFormProps) {
   const t = useTranslations('Modules.novaPoshta.form');
+  const { styles } = useStyles();
   const settlementRef = readSettlementRef(deliveryAddress);
   const input = readInput(data, type, settlementRef);
   const stored = input ? ((view as PointView | undefined) ?? null) : null;
   // Picked in another browser or before the storage was cleared: the point is read by its ref.
-  const found = useWarehouse(input && !stored ? (input as PointInput).warehouseRef : null);
+  const { warehouse: found, loading } = useWarehouse(
+    input && !stored ? (input as PointInput).warehouseRef : null
+  );
   const point: PointView | null =
     stored ??
     (found
@@ -56,15 +61,31 @@ export function PointForm({
 
   return (
     <Flex vertical gap={12}>
-      <WarehouseModal
-        kind={type}
-        point={point}
-        changeWarehouse={handleChangeWarehouse}
-        settlementRef={settlementRef}
-      />
+      {/* The point saved in the checkout is being read: its button would show it as not picked. */}
+      <LoadingBoundary
+        pending={loading}
+        fallback={<Skeleton.Input block className={styles.skeleton} />}
+      >
+        <WarehouseModal
+          kind={type}
+          point={point}
+          changeWarehouse={handleChangeWarehouse}
+          settlementRef={settlementRef}
+        />
+      </LoadingBoundary>
       {!settlementRef && (
         <CheckoutBanner tone="action" title={t('city_required_warning')} />
       )}
     </Flex>
   );
 }
+
+// Same box as the point button (SelectButton): 56px high, button radius.
+const useStyles = createStyles(({ token, css, prefixCls }) => ({
+  skeleton: css`
+    .${prefixCls}-skeleton-input {
+      height: 56px !important;
+      border-radius: ${token.borderRadius}px !important;
+    }
+  `,
+}));

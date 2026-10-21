@@ -13,6 +13,7 @@ import type { Checkout } from '#checkout/types/entity';
 import type { LoyaltyFormData } from '../types';
 import { loyaltyIssues } from '../issues';
 import { LoyaltyHeader } from './LoyaltyHeader';
+import { useHeldPending } from '#checkout/ui/LoadingBoundary';
 import { LoyaltySkeleton } from './LoyaltySkeleton';
 import { RedemptionPart } from './RedemptionPart';
 import { RewardsPart } from './RewardsPart';
@@ -55,6 +56,7 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
   const headingId = useId();
   const { checkout } = useCheckoutData();
   const { account, loading, failed, refetch } = useLoyaltyAccount();
+  const skeleton = useHeldPending(loading);
   if (!checkout || !data?.signedIn) return null;
 
   const issues = loyaltyIssues(checkout);
@@ -83,7 +85,7 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
   // Loading shows the skeleton only when the checkout already says there is a program: it loads
   // before the account, and a skeleton that then vanishes would make the summary jump.
   const programKnown = Boolean(checkout.loyaltyEarning || data.redemption || data.selection);
-  if (loading) {
+  if (skeleton) {
     if (!programKnown) return null;
     body = (
       <Flex vertical gap={8}>

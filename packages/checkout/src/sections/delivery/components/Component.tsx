@@ -7,6 +7,7 @@ import { pruneCustomerInputs } from '../customerInputStorage';
 import { useAddressLoading } from '../useAddressLoading';
 import { DeliveryMethodList } from './DeliveryMethodList';
 import { DeliveryMethodsSkeleton } from './DeliveryMethodsSkeleton';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 import { Shipments } from './Shipments';
 import { UndeliverableLines } from './UndeliverableLines';
 
@@ -43,28 +44,27 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
   }, [groupIds]);
 
   const addressLoading = useAddressLoading();
-  if (addressLoading) {
-    return <DeliveryMethodsSkeleton />;
-  }
 
   return (
-    <Flex vertical gap={12}>
-      <UndeliverableLines />
-      {deliverable.length === 1 ? (
-        <DeliveryMethodList
-          key={deliverable[0].id}
-          groups={deliverable}
-          methods={deliverable[0].deliveryMethods}
-          address={address}
-        />
-      ) : deliverable.length > 1 ? (
-        <Shipments
-          key={deliverable.map((group) => group.id).join('\n')}
-          groups={deliverable}
-          address={address}
-        />
-      ) : null}
-    </Flex>
+    <LoadingBoundary pending={addressLoading} fallback={<DeliveryMethodsSkeleton />}>
+      <Flex vertical gap={12}>
+        <UndeliverableLines />
+        {deliverable.length === 1 ? (
+          <DeliveryMethodList
+            key={deliverable[0].id}
+            groups={deliverable}
+            methods={deliverable[0].deliveryMethods}
+            address={address}
+          />
+        ) : deliverable.length > 1 ? (
+          <Shipments
+            key={deliverable.map((group) => group.id).join('\n')}
+            groups={deliverable}
+            address={address}
+          />
+        ) : null}
+      </Flex>
+    </LoadingBoundary>
   );
 };
 

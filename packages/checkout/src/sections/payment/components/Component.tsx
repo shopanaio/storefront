@@ -7,6 +7,8 @@ import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { ProviderRenderer } from '#checkout/infra/ProviderRenderer';
+import { MethodPanelsSkeleton } from '#checkout/components/common/MethodPanelsSkeleton';
+import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 import { useState, useCallback, useRef } from 'react';
 import type { PaymentFormData, PaymentMethod } from '../types';
 import { ProviderMethod, ProviderModuleType } from '#checkout/vendors/types';
@@ -84,14 +86,20 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
         />
       )}
       {paymentMethods.map((method) => (
-        <ProviderRenderer
+        // Each method loads on its own: a new one (cash on delivery after a Nova Poshta
+        // delivery) does not hide the methods already shown.
+        <LoadingBoundary
           key={method.handle}
-          moduleType={ProviderModuleType.Payment}
-          provider={method.provider}
-          availableMethods={[method]}
-          selectedMethod={localSelectedMethod}
-          onSelectMethod={handleSelectMethod}
-        />
+          fallback={<MethodPanelsSkeleton count={1} />}
+        >
+          <ProviderRenderer
+            moduleType={ProviderModuleType.Payment}
+            provider={method.provider}
+            availableMethods={[method]}
+            selectedMethod={localSelectedMethod}
+            onSelectMethod={handleSelectMethod}
+          />
+        </LoadingBoundary>
       ))}
     </Flex>
   );

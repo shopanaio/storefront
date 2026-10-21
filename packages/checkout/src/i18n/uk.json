@@ -170,6 +170,7 @@
     "payment-failed-title": "Оплата не пройшла",
     "payment-failed-description": "Гроші не списано. Спробуйте ще раз або оберіть інший спосіб оплати.",
     "banner-retry": "Ще раз",
+    "load-failed": "Не вдалося завантажити цю частину сторінки.",
     "banner-go-to": "Перейти",
     "banner-review": "Переглянути",
     "banner-open-cart": "До кошика",

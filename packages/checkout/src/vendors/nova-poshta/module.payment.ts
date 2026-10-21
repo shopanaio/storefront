@@ -15,10 +15,8 @@ import { CodPaymentMethod } from './components/methods/CodPaymentMethod';
 const paymentProviderModule: ProviderModuleApi = {
   provider: NOVA_POSHTA,
   moduleType: ProviderModuleType.Payment,
-  Component: createPaymentProvider({
-    scope: NOVA_POSHTA_SCOPE,
-    load: loadNovaPoshtaMessages,
-  }),
+  Component: createPaymentProvider(),
+  messages: { scope: NOVA_POSHTA_SCOPE, load: loadNovaPoshtaMessages },
   config: {
     logo: LogoComponent,
     methods: [

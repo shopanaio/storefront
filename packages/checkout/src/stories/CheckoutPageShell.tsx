@@ -1,4 +1,5 @@
 import { Flex, Skeleton } from 'antd';
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { CheckoutColumns } from '#checkout/components/CheckoutColumns';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
@@ -24,13 +25,18 @@ const noop = () => {};
 
 /**
  * The checkout page with the order summary as the buyer sees it: the columns of the page, the
- * form on the left as placeholders, and on the right the order lines, the promo codes, the
- * loyalty block and the totals, in the order of the summary.
+ * form on the left, and on the right the order lines, the promo codes, the loyalty block and
+ * the totals, in the order of the summary. The sections of the form a story is not about are
+ * placeholders; `delivery` and `payment` put the real ones in their place.
  */
 export function CheckoutPageShell({
   checkout,
+  delivery,
+  payment,
 }: {
   checkout: Checkout.Checkout;
+  delivery?: ReactNode;
+  payment?: ReactNode;
 }) {
   const t = useTranslations('Checkout');
   return (
@@ -39,8 +45,16 @@ export function CheckoutPageShell({
         <>
           <strong>Storefront</strong>
           <FormSection title={t('contact')} rows={3} />
-          <FormSection title={t('delivery')} rows={4} />
-          <FormSection title={t('payment')} rows={2} />
+          {delivery ? (
+            <CheckoutSection title={t('delivery')}>{delivery}</CheckoutSection>
+          ) : (
+            <FormSection title={t('delivery')} rows={4} />
+          )}
+          {payment ? (
+            <CheckoutSection title={t('payment')}>{payment}</CheckoutSection>
+          ) : (
+            <FormSection title={t('payment')} rows={2} />
+          )}
         </>
       }
       right={

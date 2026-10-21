@@ -85,4 +85,13 @@ describe('PointForm', () => {
     render(pointForm());
     expect(await screen.findByText('№7 Київ, Хрещатик, 1')).toBeTruthy();
   });
+
+  it('shows a placeholder of the branch button while the saved branch is read', async () => {
+    const { container } = render(pointForm());
+    expect(container.querySelector('.ant-skeleton')).not.toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+
+    await screen.findByText('№7 Київ, Хрещатик, 1');
+    expect(container.querySelector('.ant-skeleton')).toBeNull();
+  });
 });

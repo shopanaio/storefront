@@ -1,16 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ScopedIntlProvider } from '#checkout/ui/ScopedIntlProvider';
 import type { AddressModuleProps } from '#checkout/vendors/types';
 import {
   readSettlementRef,
   settlementAddressData,
 } from '#checkout/vendors/nova-poshta/address';
-import {
-  loadNovaPoshtaMessages,
-  NOVA_POSHTA_SCOPE,
-} from '#checkout/vendors/nova-poshta/i18n';
 import type { Settlement } from '#checkout/vendors/nova-poshta/types';
 import { CitySelect, type PickedCity } from './CitySelect';
 import { settlementProvinceCode } from '../provinceCode';
@@ -37,9 +32,5 @@ export function UaAddressForm({ address, onSubmit }: AddressModuleProps) {
       data: settlementAddressData(settlement),
     });
 
-  return (
-    <ScopedIntlProvider scope={NOVA_POSHTA_SCOPE} load={loadNovaPoshtaMessages}>
-      <CitySelect city={city} onSubmit={handleSubmit} />
-    </ScopedIntlProvider>
-  );
+  return <CitySelect city={city} onSubmit={handleSubmit} />;
 }

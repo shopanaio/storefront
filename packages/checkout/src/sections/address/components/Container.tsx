@@ -1,5 +1,6 @@
 import { makeSection } from '#checkout/components/section/makeSection';
 import Component from './Component';
+import { AddressSkeleton } from './AddressSkeleton';
 
 import type { AddressFormData } from '../types';
 import { SectionId } from '#checkout/state/interface';
@@ -17,4 +18,5 @@ export const AddressSection = makeSection<AddressFormData>({
   selector: mapCheckoutToAddressFormData,
   schema: addressFormSchema,
   displayName: 'AddressSection',
+  fallback: <AddressSkeleton />,
 });

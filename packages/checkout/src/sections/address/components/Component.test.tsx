@@ -205,4 +205,30 @@ describe('AddressSectionView', () => {
     expect(screen.getByLabelText('Address')).toHaveValue('Unter den Linden 1');
     expect(screen.getByLabelText('City')).toHaveValue('Berlin');
   });
+
+  // Ожидаемое поведение: сохранённый украинский адрес (город) показывается сразу, не дожидаясь
+  // списка стран: форме Украины формат адреса не нужен, город приходит с checkout.
+  it('shows a saved Ukrainian address while the countries load', () => {
+    mocks.countries = { ...mocks.countries, countries: [], loading: true };
+    const saved = (countryCode: string) =>
+      data({
+        address: {
+          addressId: 'address-1',
+          countryCode,
+          city: 'Київ',
+          address1: null,
+          address2: null,
+          postalCode: null,
+          provinceCode: null,
+          data: null,
+        },
+      });
+
+    const { container, rerender } = render(view(saved('UA')));
+    expect(container.querySelector('.ant-skeleton')).toBeNull();
+
+    // Another country is laid out by its address format: it waits for the list.
+    rerender(view(saved('GB')));
+    expect(container.querySelector('.ant-skeleton')).not.toBeNull();
+  });
 });

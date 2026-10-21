@@ -1,15 +1,26 @@
 import { useSyncExternalStore } from 'react';
 import { fn, mocked } from 'storybook/test';
+import type {
+  DeliveryMethodUpdateDto,
+  PaymentMethodUpdateDto,
+} from '#checkout/api/dto';
 import type { CheckoutApi } from '#checkout/api/interface';
+import type { CheckoutDeliveryAddressInput } from '#checkout/graphql/operations';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
+import { useRemoveCartLines } from '#checkout/hooks/useUndeliverableLines';
 import type {
   RedemptionRequest,
   RewardChoice,
 } from '#checkout/sections/loyalty/selection';
 import type { Checkout } from '#checkout/types/entity';
+import {
+  withDeliveryAddress,
+  withDeliveryInput,
+  withDeliveryOption,
+} from './deliveryFixtures';
 import { defaultCheckout } from './fixtures';
 import { moneyRewards, rewardDiscount, rewards } from './loyaltyFixtures';
 import { PROMO_CODES, promoCode, promoDiscount } from './promoFixtures';
@@ -25,7 +36,20 @@ export interface CheckoutMockState {
     loading: boolean;
     failed: boolean;
   };
+  /** Writes the API refuses in the story, with what they are rejected with. */
+  failures?: MockFailures;
 }
+
+/** Delivery and payment writes a story can make fail. */
+export type MockFailures = Partial<
+  Record<
+    | 'selectDeliveryMethod'
+    | 'updateShippingMethod'
+    | 'selectPaymentMethod'
+    | 'saveDeliveryAddress',
+    unknown
+  >
+>;
 
 /** How long a write of the mock API takes, so its loading state shows. */
 const LATENCY_MS = 600;
@@ -207,16 +231,74 @@ function selectionOf(checkout: Checkout.Checkout): Checkout.LoyaltySelection {
   );
 }
 
-/** The API of the checkout, answering loyalty writes as the server would. */
+/**
+ * Applies a write to the checkout once its latency passed, or rejects it as the story says.
+ */
+async function write(
+  name: keyof MockFailures,
+  apply: (checkout: Checkout.Checkout) => Checkout.Checkout
+) {
+  await wait();
+  const failure = state.failures?.[name];
+  if (failure !== undefined) {
+    throw failure;
+  }
+  if (state.checkout) {
+    setState({ ...state, checkout: recalculate(apply(state.checkout)) });
+  }
+}
+
+/**
+ * The API of the checkout, answering promo, loyalty, delivery and payment writes as the
+ * server would.
+ */
 function createApi(): CheckoutApi {
   const resolved = () => fn(async () => {});
   return {
-    selectDeliveryMethod: resolved(),
-    selectPaymentMethod: resolved(),
+    selectDeliveryMethod: fn((input: DeliveryMethodUpdateDto) =>
+      write('selectDeliveryMethod', (checkout) =>
+        withDeliveryOption(
+          checkout,
+          input.deliveryGroupId,
+          input.optionHandle,
+          input.customerInput ?? null
+        )
+      )
+    ).mockName('selectDeliveryMethod'),
+    selectPaymentMethod: fn((input: PaymentMethodUpdateDto) =>
+      write('selectPaymentMethod', (checkout) => ({
+        ...checkout,
+        payment: {
+          ...checkout.payment,
+          selection: {
+            status: 'SELECTED',
+            method:
+              checkout.payment.paymentMethods.find(
+                (method) => method.handle === input.methodHandle
+              ) ?? null,
+            previousMethodHandle: null,
+            resetReason: null,
+          },
+        },
+      }))
+    ).mockName('selectPaymentMethod'),
     updatePaymentMethod: resolved(),
-    updateShippingMethod: resolved(),
+    updateShippingMethod: fn((input: DeliveryMethodUpdateDto) =>
+      write('updateShippingMethod', (checkout) =>
+        withDeliveryInput(checkout, input.deliveryGroupId, input.customerInput)
+      )
+    ).mockName('updateShippingMethod'),
     updateCustomerIdentity: resolved(),
-    saveDeliveryAddress: resolved(),
+    saveDeliveryAddress: fn((address: CheckoutDeliveryAddressInput) =>
+      write('saveDeliveryAddress', (checkout) =>
+        withDeliveryAddress(checkout, {
+          city: address.city ?? null,
+          countryCode: address.countryCode ?? null,
+          provinceCode: address.provinceCode ?? null,
+          data: address.data ?? null,
+        })
+      )
+    ).mockName('saveDeliveryAddress'),
     removeDeliveryAddresses: resolved(),
     saveDeliveryRecipient: resolved(),
     updateCustomerNote: resolved(),
@@ -304,6 +386,7 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
       failed: false,
       ...initial.loyalty,
     },
+    failures: initial.failures,
   });
   const api = createApi();
   const refetch = fn().mockName('refetchLoyaltyAccount');
@@ -338,6 +421,38 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
       onSignOut: signOut,
     };
   });
+  const removeLines = fn(async (lines: Checkout.Line[]) => {
+    await wait();
+    const { checkout } = state;
+    if (!checkout) return;
+    const ids = new Set(lines.map((line) => line.id));
+    const kept = checkout.lines.filter((line) => !ids.has(line.id));
+    setState({
+      ...state,
+      checkout: recalculate({
+        ...checkout,
+        lines: kept,
+        totalQuantity: kept.reduce((sum, line) => sum + line.quantity, 0),
+        cost: {
+          ...checkout.cost,
+          subtotalAmount: {
+            ...checkout.cost.subtotalAmount,
+            amount: kept.reduce(
+              (sum, line) => sum + line.cost.totalAmount.amount,
+              0
+            ),
+          },
+        },
+        deliveryGroups: checkout.deliveryGroups.filter((group) =>
+          group.checkoutLines.some((line) => !ids.has(line.id))
+        ),
+      }),
+    });
+  }).mockName('removeCartLines');
+  mocked(useRemoveCartLines).mockImplementation(() => ({
+    remove: removeLines,
+    removing: false,
+  }));
   mocked(useLoyaltyAccount).mockImplementation(() => {
     const { loyalty } = useMockState();
     return { ...loyalty, refetch };

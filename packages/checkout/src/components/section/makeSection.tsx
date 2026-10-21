@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentType, FC } from 'react';
+import type { ComponentType, FC, ReactNode } from 'react';
 import { SectionContainer } from './SectionContainer';
 import { SectionId } from '#checkout/state/interface';
 import type { Checkout } from '#checkout/types/entity';
@@ -35,6 +35,8 @@ export function makeSection<
   schema: AnySchema | Lazy<unknown>;
   /** Optional display name for React DevTools */
   displayName: string;
+  /** Skeleton of the section while anything in the view loads (see `LoadingBoundary`). */
+  fallback?: ReactNode;
 }): FC {
   const {
     id,
@@ -44,6 +46,7 @@ export function makeSection<
     useData,
     schema,
     displayName,
+    fallback,
   } = config;
 
   const Container: FC = () => {
@@ -55,6 +58,7 @@ export function makeSection<
         selector={selector}
         useData={useData}
         schema={schema}
+        fallback={fallback}
       />
     );
   };

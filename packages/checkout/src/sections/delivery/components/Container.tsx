@@ -1,5 +1,6 @@
 import { makeSection } from '#checkout/components/section/makeSection';
 import Component from './Component';
+import { DeliveryMethodsSkeleton } from './DeliveryMethodsSkeleton';
 
 import type { DeliveryFormData } from '../types';
 import { SectionId } from '#checkout/state/interface';
@@ -19,4 +20,5 @@ export const DeliverySection = makeSection<DeliveryFormData>({
   useData: useDeliveryFormData,
   schema: deliveryFormSchema,
   displayName: 'DeliverySection',
+  fallback: <DeliveryMethodsSkeleton />,
 });

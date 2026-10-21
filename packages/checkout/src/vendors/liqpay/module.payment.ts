@@ -16,10 +16,8 @@ import { LiqPayPaymentMethod } from './components/methods/LiqPayPaymentMethod';
 const paymentProviderModule: ProviderModuleApi = {
   provider: 'liqpay',
   moduleType: ProviderModuleType.Payment,
-  Component: createPaymentProvider({
-    scope: 'liqpay',
-    load: loadLiqPayMessages,
-  }),
+  Component: createPaymentProvider(),
+  messages: { scope: 'liqpay', load: loadLiqPayMessages },
   config: {
     logo: LiqPayLogo,
     methods: [

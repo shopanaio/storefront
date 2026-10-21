@@ -1,38 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { moduleRegistry } from '@shopana/storefront-sdk/registry';
+import { use } from 'react';
 import type { ProviderModuleType } from '#checkout/vendors/types';
+import { loadModule } from './loadCache';
 
 /**
- * Loads the module registered under `type`/`slug`. `found` is false when nothing is
- * registered; `api` stays null until the loader resolves.
+ * The module registered under `type`/`slug`, read while rendering: the component suspends
+ * until the module is loaded (the nearest `LoadingBoundary` shows its skeleton meanwhile) and a
+ * module loaded before renders at once. A module that fails to load throws a `LoadError`, which
+ * the boundary shows with a "Retry". `api` is `null` only when nothing is registered.
  */
 export function useRegisteredModule<T>(
   type: ProviderModuleType,
   slug: string | null
-) {
-  const loader = useMemo(
-    () => (slug ? moduleRegistry.resolve<T>(type, slug) : null),
-    [type, slug]
-  );
-  const [loaded, setLoaded] = useState<{ slug: string; api: T } | null>(null);
-
-  useEffect(() => {
-    if (!loader || !slug) {
-      return;
-    }
-    let cancelled = false;
-    Promise.resolve(loader()).then((api: T) => {
-      if (!cancelled) {
-        setLoaded({ slug, api });
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [loader, slug]);
-
-  return {
-    found: Boolean(loader),
-    api: loaded && loaded.slug === slug ? loaded.api : null,
-  };
+): { found: boolean; api: T | null } {
+  const load = slug ? loadModule<T>(type, slug) : null;
+  return { found: load !== null, api: load ? use(load) : null };
 }

@@ -113,11 +113,22 @@ export interface ProviderMethodComponentProps {
   carrierChargeWaived?: boolean;
 }
 
+/**
+ * Messages a module renders with (`ScopedIntlProvider`), declared so the checkout can load them
+ * together with the module, ahead of rendering.
+ */
+export interface ModuleMessages {
+  /** Scope under `Modules`. */
+  scope: string;
+  load: (locale: string) => Promise<Record<string, unknown>>;
+}
+
 export interface ProviderModuleApi {
   provider: string;
   moduleType: ProviderModuleType;
   config: ProviderConfig;
   Component: ComponentType<ProviderComponentProps>;
+  messages?: ModuleMessages;
 }
 
 /**
@@ -166,4 +177,5 @@ export interface AddressModuleProps {
 export interface AddressModuleApi {
   country: string;
   Component: ComponentType<AddressModuleProps>;
+  messages?: ModuleMessages;
 }

@@ -170,6 +170,7 @@
     "payment-failed-title": "Payment failed",
     "payment-failed-description": "You were not charged. Try again or choose another payment method.",
     "banner-retry": "Try again",
+    "load-failed": "Couldn't load this part of the page.",
     "banner-go-to": "Go to",
     "banner-review": "Review",
     "banner-open-cart": "Open cart",

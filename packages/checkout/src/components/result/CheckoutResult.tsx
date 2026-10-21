@@ -15,6 +15,7 @@ import { PlacementScreen } from '#checkout/components/result/PlacementScreen';
 import { paymentStatusMessageKey } from '#checkout/components/result/placementMessages';
 import type { PaymentFlow, PlacementStatus } from '#checkout/state/placement/types';
 import type { Checkout } from '#checkout/types/entity';
+import { useHeldPending } from '#checkout/ui/LoadingBoundary';
 import { LoyaltyIcon } from '#checkout/sections/loyalty/components/LoyaltyIcon';
 
 export interface CheckoutResultProps {
@@ -50,7 +51,7 @@ export const CheckoutResult = ({
   const orderPath = orderId ? themeOrderPath : null;
   const placed = usePlacedOrderNumber(orderId);
   const number = orderNumber ?? placed.number;
-  const loading = !orderNumber && placed.loading;
+  const loading = useHeldPending(!orderNumber && placed.loading);
 
   return (
     <PlacementScreen brand={brand}>
@@ -60,7 +61,7 @@ export const CheckoutResult = ({
         subTitle={
           <Flex vertical gap={4} align="center">
             {loading ? (
-              <Skeleton.Input active size="small" />
+              <Skeleton.Input size="small" />
             ) : number !== null ? (
               <strong>{t('order-number', { number })}</strong>
             ) : null}

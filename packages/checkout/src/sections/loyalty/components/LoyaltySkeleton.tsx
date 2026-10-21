@@ -13,12 +13,12 @@ export const LoyaltySkeleton = () => {
     <Flex vertical gap={8} className={styles.root}>
       <Flex align="center" justify="space-between" gap={12}>
         <Flex align="center" gap={8}>
-          <Skeleton.Avatar active size={20} shape="circle" />
-          <Skeleton.Input active size="small" className={styles.balance} />
+          <Skeleton.Avatar size={20} shape="circle" />
+          <Skeleton.Input size="small" className={styles.balance} />
         </Flex>
-        <Skeleton.Button active size="small" shape="round" className={styles.pill} />
+        <Skeleton.Button size="small" shape="round" className={styles.pill} />
       </Flex>
-      <Skeleton.Input active size="small" className={styles.note} />
+      <Skeleton.Input size="small" className={styles.note} />
     </Flex>
   );
 };

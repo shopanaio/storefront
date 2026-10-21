@@ -7,6 +7,7 @@ import { NPLogo as LogoComponent } from './components/Logo';
 import { createShippingMethod } from './components/methods/ShippingMethod';
 import { SERVICE_RECEIVING_TYPE } from './customerInput';
 import { NOVA_POSHTA } from './address';
+import { loadNovaPoshtaMessages, NOVA_POSHTA_SCOPE } from './i18n';
 import type { ServiceCode } from './types';
 
 /**
@@ -17,6 +18,7 @@ const shippingProviderModule: ProviderModuleApi = {
   provider: NOVA_POSHTA,
   moduleType: ProviderModuleType.Delivery,
   Component: NPProvider,
+  messages: { scope: NOVA_POSHTA_SCOPE, load: loadNovaPoshtaMessages },
   config: {
     logo: LogoComponent,
     methods: (Object.keys(SERVICE_RECEIVING_TYPE) as ServiceCode[]).map(

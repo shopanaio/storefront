@@ -84,15 +84,19 @@ export function useStreetSearch(settlementRef: string | null, text: string) {
 
 /**
  * Branch or postomat by its ref, for a point picked earlier whose display state this browser
- * does not have: the checkout returns only `warehouseRef`. `null` while loading, when the
- * carrier does not know the point, or on a failure.
+ * does not have: the checkout returns only `warehouseRef`. `warehouse` is `null` while
+ * loading, when the carrier does not know the point, or on a failure; `loading` tells the
+ * first of these apart.
  */
 export function useWarehouse(ref: string | null) {
   const result = useQuery(StorefrontNovaPoshtaWarehouseQueryDocument, {
     variables: { ref: ref ?? '' },
     skip: !ref,
   });
-  return (ref ? result.data?.novaPoshtaWarehouses.items[0] : null) ?? null;
+  return {
+    warehouse: (ref ? result.data?.novaPoshtaWarehouses.items[0] : null) ?? null,
+    loading: Boolean(ref) && result.loading,
+  };
 }
 
 interface WarehouseListState {

@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Flex } from 'antd';
 
-import { moduleRegistry } from '@shopana/storefront-sdk/registry';
 import {
   ProviderMethod,
   ProviderModuleApi,
@@ -13,6 +12,8 @@ import { warnMissingPaymentModule } from '#checkout/infra/warnMissingPaymentModu
 import { GenericCustomerInputForm } from '#checkout/infra/GenericCustomerInputForm';
 import { contractNeedsForm } from '#checkout/infra/customerInputForm';
 import { addressScope } from '#checkout/sections/delivery/customerInputStorage';
+import { useRegisteredModule } from '#checkout/infra/useRegisteredModule';
+import { ScopedIntlProvider } from '#checkout/ui/ScopedIntlProvider';
 
 const GenericDeliveryProvider = ({
   availableMethods,
@@ -54,11 +55,10 @@ const GenericDeliveryProvider = ({
 );
 
 /**
- * Generic component for loading and rendering provider modules.
- * Handles async module loading and provides a consistent interface
- * for both shipping and payment providers.
- *
- * Provides explicit validation callback interface following enterprise patterns.
+ * Generic component for loading and rendering provider modules: it suspends until the module of
+ * the provider and its messages are loaded (the `LoadingBoundary` around it shows its skeleton
+ * meanwhile) and gives shipping and payment providers one interface. A module that fails to
+ * load throws a `LoadError`, shown by that boundary with a "Retry".
  */
 export const ProviderRenderer = ({
   moduleType,
@@ -67,42 +67,18 @@ export const ProviderRenderer = ({
   onUpdateMethodData,
   ...componentProps
 }: ProviderProps) => {
-  const [api, setApi] = useState<ProviderModuleApi | null>(null);
-  const loader = useMemo(
-    () => moduleRegistry.resolve<ProviderModuleApi>(moduleType, provider),
-    [moduleType, provider]
+  const { found, api } = useRegisteredModule<ProviderModuleApi>(
+    moduleType,
+    provider
   );
-
-  useEffect(() => {
-    if (!loader) {
-      setApi(null);
-      return;
-    }
-
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const api = await loader();
-        if (!cancelled) {
-          setApi(api);
-        }
-      } catch (error) {
-        // A module chunk that fails to load hides its methods instead of breaking the section.
-        console.error(`Failed to load the ${moduleType} module "${provider}":`, error);
-        if (!cancelled) {
-          setApi(null);
-        }
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [loader, moduleType, provider]);
 
   const activeApi =
     api?.provider === provider && api.moduleType === moduleType ? api : null;
+  if (api && !activeApi && process.env.NODE_ENV !== 'production') {
+    console.error(
+      `The ${moduleType} module registered as "${provider}" declares "${api.moduleType}" / "${api.provider}".`
+    );
+  }
   const { Component, config } = activeApi || {};
   const { availableMethods } = componentProps;
 
@@ -125,7 +101,7 @@ export const ProviderRenderer = ({
       return;
     }
 
-    if (!loader) {
+    if (!found) {
       availableMethods.forEach((method) =>
         warnMissingPaymentModule(provider, method.code, 'provider')
       );
@@ -139,10 +115,10 @@ export const ProviderRenderer = ({
           warnMissingPaymentModule(provider, method.code, 'method')
         );
     }
-  }, [moduleType, loader, config, availableMethods, renderableMethods, provider]);
+  }, [moduleType, found, config, availableMethods, renderableMethods, provider]);
 
   if (!Component || !config) {
-    if (!loader && moduleType === ProviderModuleType.Delivery) {
+    if (!found && moduleType === ProviderModuleType.Delivery) {
       return (
         <GenericDeliveryProvider
           availableMethods={availableMethods}
@@ -157,7 +133,7 @@ export const ProviderRenderer = ({
     return null;
   }
 
-  return (
+  const view = (
     <Component
       {...componentProps}
       availableMethods={renderableMethods}
@@ -167,5 +143,13 @@ export const ProviderRenderer = ({
       onUpdateMethodData={onUpdateMethodData}
       deliveryAddress={componentProps.deliveryAddress}
     />
+  );
+  const messages = activeApi?.messages;
+  return messages ? (
+    <ScopedIntlProvider scope={messages.scope} load={messages.load}>
+      {view}
+    </ScopedIntlProvider>
+  ) : (
+    view
   );
 };
