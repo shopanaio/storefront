@@ -29,7 +29,7 @@ export const DefaultCheckoutAuth = ({
         gap={8}
       >
         <Typography.Text type="secondary" className={styles.email} ellipsis>
-          {t('signed-in-as', { email: user.email })}
+          {t('signed-in-as', { email: user.identifier })}
         </Typography.Text>
         <Button
           className={styles.logOut}

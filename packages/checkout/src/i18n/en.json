@@ -295,12 +295,19 @@
     "log-out": "Log out",
     "prices-updated": "Prices were updated for your account. Check the order and place it again.",
     "sign-in-required": "Sign in to place your order",
-    "session-expired": "Your session has ended. Sign in again to continue.",
     "email": "Email",
     "email-invalid-format": "Enter a valid email",
     "summary-show-more": "Show more",
     "summary-show-less": "Show less",
     "summary-expand": "Show order items",
-    "summary-collapse": "Hide order items"
+    "summary-collapse": "Hide order items",
+    "login-identifier-locked": "Used to sign in. It cannot be changed.",
+    "available-after-sign-in": "Available after signing in",
+    "account-data-added": "Your account details are added to the order.",
+    "account-data-loading": "Loading your account details…",
+    "country-search": "Search country",
+    "country-choose": "Choose a country",
+    "country-not-found": "No countries found",
+    "country-trigger": "Country: {country}, +{code}"
   }
 }

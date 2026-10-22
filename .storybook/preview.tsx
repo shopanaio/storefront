@@ -39,6 +39,11 @@ sb.mock(
   { spy: true }
 );
 
+// The headless sign-in of the checkout stories answers from `checkout/src/stories/mockAuth.ts`.
+sb.mock(import('../packages/storefront-auth/src/react/useAuth.ts'), {
+  spy: true,
+});
+
 const preview: Preview = {
   globalTypes: {
     locale: {
@@ -48,6 +53,7 @@ const preview: Preview = {
         items: [
           { value: 'en', title: 'English' },
           { value: 'uk', title: 'Українська' },
+          { value: 'ru', title: 'Русский' },
         ],
         dynamicTitle: true,
       },

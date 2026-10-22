@@ -4,7 +4,7 @@ import { Flex, Select, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
 import type {
   AddressModuleProps,

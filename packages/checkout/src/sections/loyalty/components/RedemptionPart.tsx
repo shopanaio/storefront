@@ -9,7 +9,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { TbAlertCircle } from 'react-icons/tb';
 import type { model } from '@shopana/storefront-sdk';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { formatMoney } from '#checkout/ui/Money';
 import type { Checkout } from '#checkout/types/entity';
 import type { RedemptionRequest } from '../selection';

@@ -2,17 +2,21 @@
 
 import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import useToken from 'antd/es/theme/useToken';
-import { DrawerBase } from '#checkout/ui/DrawerBase';
+import {
+  DrawerBase,
+  FloatingLabelInput,
+  PhoneInput,
+  formatPhoneNumberIntl,
+  isPossiblePhoneNumber,
+  isValidPhoneNumber,
+} from '@shopana/storefront-ui';
 import { StickyButton } from '#checkout/ui/StickyButton';
-import { PhoneInputField } from './phone/PhoneNumberField';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
-import { formatPhoneNumberIntl } from 'react-phone-number-input';
-import { PiUserCircleCheckDuotone } from 'react-icons/pi';
+import { PiLockSimple, PiUserCircleCheckDuotone } from 'react-icons/pi';
 import { SelectCard } from '#checkout/ui/SelectCard';
 import { PiUserCircle } from 'react-icons/pi';
 
@@ -32,6 +36,11 @@ export interface ContactSelectProps {
   title: ReactNode;
   /** Adds the email field (a guest buyer, design F2). */
   withEmail?: boolean;
+  /**
+   * The identifier the buyer signed in with (A3, A4): shown and never edited, since the account
+   * is reached by it. A phone replaces the phone field; an email is shown under the fields.
+   */
+  lockedIdentifier?: { method: 'email' | 'phone'; value: string } | null;
 }
 
 const defaultValues: ContactForm = {
@@ -54,9 +63,12 @@ export const ContactSelect = ({
   data,
   onSubmit,
   withEmail = false,
+  lockedIdentifier = null,
 }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
+  const locale = useLocale();
+  const lockedPhone = lockedIdentifier?.method === 'phone';
   const [, token] = useToken();
   const [open, setOpen] = useState(false);
 
@@ -91,9 +103,23 @@ export const ContactSelect = ({
 
   /** Formats phone in international format */
   const formattedPhone = useMemo(() => {
-    if (!phone) return '';
-    return formatPhoneNumberIntl(phone) || phone;
-  }, [phone]);
+    // A phone-signed buyer's number is the account's, whatever the form holds.
+    const shown = lockedPhone ? lockedIdentifier!.value : phone;
+    if (!shown) return '';
+    return formatPhoneNumberIntl(shown) || shown;
+  }, [phone, lockedPhone, lockedIdentifier]);
+
+  const lockedValue = lockedIdentifier
+    ? lockedPhone
+      ? formatPhoneNumberIntl(lockedIdentifier.value) || lockedIdentifier.value
+      : lockedIdentifier.value
+    : '';
+  const lockNote = lockedIdentifier ? (
+    <Typography.Text type="secondary" className={styles.lockNote}>
+      <PiLockSimple aria-hidden />
+      {t('login-identifier-locked')}
+    </Typography.Text>
+  ) : null;
 
   const [saving, setSaving] = useState(false);
   const onDrawerSubmit = methods.handleSubmit(async (values) => {
@@ -102,7 +128,10 @@ export const ContactSelect = ({
     reset(values);
     setSaving(true);
     try {
-      await onSubmit(values);
+      // The phone the buyer signs in with is the account's, whatever the form holds.
+      await onSubmit(
+        lockedPhone ? { ...values, phone: lockedIdentifier!.value } : values
+      );
       setOpen(false);
     } catch {
       // The failure is shown by the checkout API; the drawer keeps the input for a retry.
@@ -223,21 +252,52 @@ export const ContactSelect = ({
                 />
               )}
             />
-            <PhoneInputField
-              control={control}
-              name="phone"
-              label={t('phone-number')}
-              country={'UA'}
-              international
-              withCountryCallingCode
-              validationMessages={{
-                required: t('required-field'),
-                invalidFormat: t('phone-invalid-format'),
-                invalidLength: t('phone-invalid-length'),
-              }}
-              error={errors.phone?.message}
-              autoComplete="tel"
-            />
+            {lockedPhone ? (
+              <div>
+                <FloatingLabelInput
+                  label={t('phone-number')}
+                  value={lockedValue}
+                  readOnly
+                  aria-readonly
+                  variant="filled"
+                  suffix={<PiLockSimple aria-hidden />}
+                />
+                {lockNote}
+              </div>
+            ) : (
+              <Controller
+                name="phone"
+                control={control}
+                rules={{
+                  required: t('required-field'),
+                  validate: {
+                    possible: (value) =>
+                      !value || isPossiblePhoneNumber(value) || t('phone-invalid-length'),
+                    valid: (value) =>
+                      !value || isValidPhoneNumber(value) || t('phone-invalid-format'),
+                  },
+                }}
+                render={({ field }) => (
+                  <PhoneInput
+                    label={t('phone-number')}
+                    value={field.value}
+                    onChange={(value) => field.onChange(value ?? '')}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    locale={locale}
+                    status={errors.phone ? 'error' : undefined}
+                    error={errors.phone?.message}
+                    autoComplete="tel"
+                    pickerTexts={{
+                      search: t('country-search'),
+                      title: t('country-choose'),
+                      empty: t('country-not-found'),
+                      trigger: t('country-trigger', { country: '{country}', code: '{code}' }),
+                    }}
+                  />
+                )}
+              />
+            )}
             {withEmail ? (
               <Controller
                 name="email"
@@ -259,6 +319,20 @@ export const ContactSelect = ({
                 )}
               />
             ) : null}
+            {lockedIdentifier?.method === 'email' ? (
+              <div>
+                <FloatingLabelInput
+                  label={t('email')}
+                  value={lockedIdentifier.value}
+                  readOnly
+                  aria-readonly
+                  variant="filled"
+                  type="email"
+                  suffix={<PiLockSimple aria-hidden />}
+                />
+                {lockNote}
+              </div>
+            ) : null}
             <StickyButton onClick={onDrawerSubmit} loading={saving}>
               {t('save')}
             </StickyButton>
@@ -279,6 +353,13 @@ const useStyles = createStyles(({ css, token }) => {
     secondaryText: css`
       font-size: ${token.fontSizeSM}px;
       line-height: 1;
+    `,
+    lockNote: css`
+      display: flex;
+      align-items: center;
+      gap: ${token.marginXXS + 2}px;
+      margin-top: ${token.marginXXS}px;
+      font-size: ${token.fontSizeSM}px;
     `,
   };
 });

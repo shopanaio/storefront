@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { PiMapPin } from 'react-icons/pi';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import { useStreetSearch } from '../../api/directory';
 import { DirectoryNotice } from '../DirectoryNotice';

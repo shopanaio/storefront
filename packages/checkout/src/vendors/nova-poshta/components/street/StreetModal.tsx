@@ -5,8 +5,7 @@ import { useStreetSearch } from '../../api/directory';
 import { StreetModalItem } from './StreetModalItem';
 import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
-import { DrawerBase } from '#checkout/ui/DrawerBase';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
 import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import type { Street } from '../../types';
 

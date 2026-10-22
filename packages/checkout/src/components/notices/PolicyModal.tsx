@@ -6,7 +6,7 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useStorePolicy } from '#checkout/hooks/useStorePolicy';
 import { breakpoints } from '#checkout/ui/breakpoints';
-import { DrawerBase } from '#checkout/ui/DrawerBase';
+import { DrawerBase } from '@shopana/storefront-ui';
 import { useMediaQuery } from '#checkout/ui/useMediaQuery';
 
 const { Link, Text } = Typography;

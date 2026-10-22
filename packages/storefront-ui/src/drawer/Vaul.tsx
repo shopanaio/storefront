@@ -1,16 +1,23 @@
 'use client';
 
 import React, {
+  createContext,
+  useContext,
   useCallback,
   useEffect,
   useLayoutEffect,
   useState,
   useRef,
 } from 'react';
-import { Portal, Root, Content, Overlay } from 'vaul';
+import { Portal, Root, NestedRoot, Content, Overlay } from 'vaul';
 import AnimateHeight, { type Height } from 'react-animate-height';
 import clsx from 'clsx';
 import { useStyles } from './styles';
+
+const InsideDrawerContext = createContext(false);
+
+/** Whether the component is rendered inside a vaul drawer, so its own drawer nests in it. */
+export const useInsideDrawer = () => useContext(InsideDrawerContext);
 
 export type DrawerDirection = 'top' | 'bottom' | 'left' | 'right';
 
@@ -32,6 +39,11 @@ export interface VaulProps {
   /** Drawer width for horizontal directions */
   width?: string | number;
   'aria-labelledby'?: string;
+  /**
+   * Opened from another vaul drawer (a picker in a bottom sheet): the parent sheet steps back
+   * while this one is open, as vaul nests drawers.
+   */
+  nested?: boolean;
 }
 
 /**
@@ -48,7 +60,9 @@ export const Vaul = ({
   isFullscreen,
   width,
   'aria-labelledby': ariaLabelledBy,
+  nested = false,
 }: VaulProps) => {
+  const DrawerRoot = nested ? NestedRoot : Root;
   const { styles } = useStyles();
   const opener = useRef<HTMLElement | null>(null);
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
@@ -114,20 +128,26 @@ export const Vaul = ({
   );
 
   const renderContent = () => {
+    const body = (
+      <InsideDrawerContext.Provider value={true}>
+        {children}
+      </InsideDrawerContext.Provider>
+    );
+
     if (isHorizontal) {
-      return <div className={styles.container}>{children}</div>;
+      return <div className={styles.container}>{body}</div>;
     }
 
     return (
       <>
         <div className={styles.handle} />
-        <div className={clsx(styles.container)}>{children}</div>
+        <div className={clsx(styles.container)}>{body}</div>
       </>
     );
   };
 
   return (
-    <Root
+    <DrawerRoot
       open={open}
       onClose={onClose}
       dismissible={dismissible}
@@ -169,7 +189,7 @@ export const Vaul = ({
         </Content>
         <Overlay className={styles.overlay} />
       </Portal>
-    </Root>
+    </DrawerRoot>
   );
 };
 

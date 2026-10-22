@@ -8,6 +8,7 @@ import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
 import { BrandHeader } from './BrandHeader';
 import { CheckoutAuth } from './CheckoutAuth';
+import { AccountDataNotice } from './AccountDataNotice';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 import { CheckoutColumns } from './CheckoutColumns';
 import { SectionIssues } from './notices/SectionIssues';
@@ -69,6 +70,7 @@ export const CheckoutView = ({
                 }
               >
                 <SectionRenderer slug={SectionId.Contact} />
+                {features?.auth ? <AccountDataNotice /> : null}
                 <SectionIssues sections={[SectionId.Contact]} />
               </CheckoutSection>
 

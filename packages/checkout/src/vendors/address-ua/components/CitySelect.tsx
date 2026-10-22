@@ -12,8 +12,7 @@ import { TbX } from 'react-icons/tb';
 import { PiMapPinDuotone, PiMapPin } from 'react-icons/pi';
 import { SelectCard } from '#checkout/ui/SelectCard';
 import useToken from 'antd/es/theme/useToken';
-import { DrawerBase } from '#checkout/ui/DrawerBase';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
 
 /** The picked city as the address keeps it: its name, its oblast and the settlement hint. */
 export interface PickedCity {

@@ -1,6 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { fn, mocked } from 'storybook/test';
-import { useIsAuthenticated } from '@shopana/storefront-sdk/modules/session/react';
 import type {
   CustomerIdentityUpdateDto,
   CustomerNoteUpdateDto,
@@ -14,7 +13,10 @@ import type {
 } from '#checkout/graphql/operations';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
-import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
+import { useCheckoutAuth, useSaveCheckoutInput } from '#checkout/hooks/useCheckoutAuth';
+import { useAuthDialogStore } from '#checkout/state/authDialogStore';
+import { formatPhoneNumberIntl } from '@shopana/storefront-ui';
+import { mockSession, type MockSessionOptions } from './mockAuth';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
 import { useStorePolicy } from '#checkout/hooks/useStorePolicy';
@@ -47,6 +49,8 @@ export interface CheckoutMockState {
   };
   /** Writes the API refuses in the story, with what they are rejected with. */
   failures?: MockFailures;
+  /** The storefront session and the headless sign-in (`mockAuth`). */
+  session?: MockSessionOptions;
 }
 
 /** Writes of the form a story can make fail. */
@@ -432,6 +436,7 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
       ...initial.loyalty,
     },
     failures: initial.failures,
+    session: initial.session,
   });
   const api = createApi();
   const refetch = fn().mockName('refetchLoyaltyAccount');
@@ -450,27 +455,63 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
       refetch: async () => undefined,
     };
   });
+  const auth = mockSession(initial.session, {
+    useCustomer: () => useMockState().checkout?.customerIdentity.customer ?? null,
+    setCustomer: (customer, phone) => {
+      const { checkout } = state;
+      if (!checkout) return;
+      const identity = checkout.customerIdentity;
+      // The account claims the checkout: its contact fills what the buyer left empty (F1).
+      setState({
+        ...state,
+        checkout: {
+          ...checkout,
+          customerIdentity: customer
+            ? {
+                ...identity,
+                customer,
+                firstName: identity.firstName || customer.firstName,
+                lastName: identity.lastName || customer.lastName,
+                email: customer.email ?? identity.email,
+                phone: phone ?? identity.phone,
+              }
+            : { ...identity, customer: null },
+        },
+      });
+    },
+  });
   mocked(useCheckoutAuth).mockImplementation(() => {
     const customer = useMockState().checkout?.customerIdentity.customer ?? null;
+    const phone = auth.phone();
     return {
       status: customer ? 'authenticated' : 'anonymous',
-      user: customer?.email
+      user: customer
         ? {
-            email: customer.email,
+            email: customer.email ?? '',
             firstName: customer.firstName ?? undefined,
             lastName: customer.lastName ?? undefined,
+            identifier:
+              (auth.loginMethod() === 'phone' && phone
+                ? formatPhoneNumberIntl(phone)
+                : customer.email) ?? '',
           }
         : null,
       pending: false,
-      onSignIn: signIn,
-      onSignOut: signOut,
+      // "Log in" opens the sign-in drawer of the checkout, as in the app.
+      onSignIn: () => {
+        signIn();
+        useAuthDialogStore.getState().setOpen(true);
+      },
+      onSignOut: () => {
+        signOut();
+        auth.signOut();
+      },
     };
   });
+  // Saving the typed input before a social sign-in goes through the cart, which stories lack.
+  mocked(useSaveCheckoutInput).mockImplementation(() => async () => undefined);
   const cleanupCart = fn().mockName('cleanupCart');
   mocked(useDefaultCartCleanup).mockImplementation(() => cleanupCart);
-  mocked(useIsAuthenticated).mockImplementation(
-    () => !!useMockState().checkout?.customerIdentity.customer
-  );
   const removeLines = fn(async (lines: Checkout.Line[]) => {
     await wait();
     const { checkout } = state;

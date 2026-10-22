@@ -4,7 +4,7 @@ import { Flex } from 'antd';
 import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 import { StreetAutocomplete } from '../street/StreetAutocomplete';
 import { readSettlementRef } from '../../address';

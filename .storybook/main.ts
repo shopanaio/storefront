@@ -41,6 +41,26 @@ const SDK_SOURCES = {
   replacement: path.join(packagesDir, 'shopana-storefront-sdk/src$1'),
 };
 
+/** The sign-in screens and their primitives are read from sources too, not from `dist`. */
+const PACKAGE_SOURCES = [
+  {
+    find: /^@shopana\/storefront-auth\/ui$/,
+    replacement: path.join(packagesDir, 'storefront-auth/src/ui/index.ts'),
+  },
+  {
+    find: /^@shopana\/storefront-auth\/react$/,
+    replacement: path.join(packagesDir, 'storefront-auth/src/react/index.ts'),
+  },
+  {
+    find: /^@shopana\/storefront-auth$/,
+    replacement: path.join(packagesDir, 'storefront-auth/src/index.ts'),
+  },
+  {
+    find: /^@shopana\/storefront-ui$/,
+    replacement: path.join(packagesDir, 'storefront-ui/src/index.ts'),
+  },
+];
+
 type Alias = { find: string | RegExp; replacement: string };
 
 function toAliasList(alias: unknown): Alias[] {
@@ -82,6 +102,7 @@ const config: StorybookConfig = {
         ...toAliasList(viteConfig.resolve?.alias),
         ...toAliasList(subpathImports),
         SDK_SOURCES,
+        ...PACKAGE_SOURCES,
       ],
     },
     server: {

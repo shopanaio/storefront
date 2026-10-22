@@ -1,7 +1,7 @@
 import { Flex } from 'antd';
 import { useSyncExternalStore } from 'react';
 import { SummaryItem } from '#checkout/components/summary/SummaryItem';
-import { DrawerBase } from '#checkout/ui/DrawerBase';
+import { DrawerBase } from '@shopana/storefront-ui';
 import { useMockCheckout } from './mockCheckout';
 
 /**

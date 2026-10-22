@@ -5,18 +5,18 @@ import type { ButtonProps, FlexProps } from 'antd';
 import { createStyles } from 'antd-style';
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { useMedia } from 'react-use';
 import { LuX } from 'react-icons/lu';
 import clsx from 'clsx';
-import { Vaul, type DrawerDirection } from './drawer/Vaul';
-import { breakpoints, mq } from './breakpoints';
+import { Vaul, type DrawerDirection } from './Vaul';
+import { breakpoints, mq } from '../breakpoints';
+import { useMediaQuery } from '../useMediaQuery';
 
 const { Text } = Typography;
 
 /** Same breakpoint as the theme's `useIsMobile`: the cart drawer turns into a bottom sheet below `lg`. */
 const MOBILE_QUERY = `(max-width: ${breakpoints.lg - 0.05}px)`;
 
-const useIsDrawerMobile = () => useMedia(MOBILE_QUERY, false);
+export const useIsDrawerMobile = () => useMediaQuery(MOBILE_QUERY);
 
 export interface DrawerBaseProps {
   /** Whether the drawer is open */
@@ -75,7 +75,7 @@ const useDrawerBaseContext = () => {
 };
 
 /**
- * Drawer of the checkout: the same vaul drawer, layout and styles as the cart drawer of the
+ * Drawer of the storefront: the same vaul drawer, layout and styles as the cart drawer of the
  * theme (brand-bite-crunch `ui-kit/DrawerBase`). Bottom sheet on mobile, right panel on desktop.
  */
 export const DrawerBase = ({

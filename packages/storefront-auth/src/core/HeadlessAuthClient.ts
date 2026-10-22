@@ -119,9 +119,8 @@ export class HeadlessAuthClient {
   async linkConnection(input: ConnectionLinkInput): Promise<never> {
     const step = await this.account<AuthStep>('POST', 'connection-link', {
       provider: input.provider,
-      returnTo:
-        input.returnTo ??
-        `${location.pathname}${location.search}${location.hash}`,
+      // IAM rejects a return URI with a fragment.
+      returnTo: input.returnTo ?? `${location.pathname}${location.search}`,
     });
     if (step.type !== 'redirect') {
       throw new AuthError(
@@ -143,9 +142,8 @@ export class HeadlessAuthClient {
   async startSocial(input: SocialStartInput): Promise<never> {
     const step = await this.step('social-start', {
       provider: input.provider,
-      returnTo:
-        input.returnTo ??
-        `${location.pathname}${location.search}${location.hash}`,
+      // IAM rejects a return URI with a fragment.
+      returnTo: input.returnTo ?? `${location.pathname}${location.search}`,
     });
     if (step.type !== 'redirect') {
       throw new AuthError('unavailable', 'Social sign-in did not start', 502);
@@ -230,28 +228,28 @@ export class HeadlessAuthClient {
       throw new AuthError('unavailable', 'Sign-in server is unreachable', 0);
     }
     const payload: unknown = await response.json().catch(() => null);
-    const body =
+    const answer =
       payload !== null && typeof payload === 'object'
         ? (payload as Partial<AuthErrorBody>)
         : null;
     if (!response.ok) {
       throw new AuthError(
-        authErrorCode(body?.error),
-        typeof body?.message === 'string'
-          ? body.message
+        authErrorCode(answer?.error),
+        typeof answer?.message === 'string'
+          ? answer.message
           : `Sign-in request failed (${response.status})`,
         response.status,
-        typeof body?.retryAfter === 'number' ? body.retryAfter : undefined
+        typeof answer?.retryAfter === 'number' ? answer.retryAfter : undefined
       );
     }
-    if (!body) {
+    if (!answer) {
       throw new AuthError(
         'unavailable',
         'Sign-in server answered without a body',
         response.status
       );
     }
-    return body as T;
+    return answer as T;
   }
 }
 

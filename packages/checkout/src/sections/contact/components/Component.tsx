@@ -10,7 +10,11 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 import { ContactFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
-import { useIsAuthenticated } from '@shopana/storefront-sdk/modules/session/react';
+import {
+  useIsAuthenticated,
+  useLoginMethod,
+  useUser,
+} from '@shopana/storefront-sdk/modules/session/react';
 
 /**
  * View component for the checkout contact section.
@@ -32,6 +36,15 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
   const { updateCustomerIdentity } = useCheckoutApi();
   // A guest gives an email here; a signed-in buyer's email is the account's and is not edited.
   const withEmail = !useIsAuthenticated();
+  // The identifier the buyer signed in with stays read-only (A3, A4).
+  const loginMethod = useLoginMethod();
+  const user = useUser();
+  const lockedValue =
+    loginMethod === 'phone' ? user?.phone : loginMethod === 'email' ? user?.email : null;
+  const lockedIdentifier = useMemo(
+    () => (loginMethod && lockedValue ? { method: loginMethod, value: lockedValue } : null),
+    [loginMethod, lockedValue]
+  );
 
   const onSubmit = useCallback(
     async (data: ContactForm) => {
@@ -53,6 +66,7 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
         title={t('contact')}
         onSubmit={onSubmit}
         withEmail={withEmail}
+        lockedIdentifier={lockedIdentifier}
       />
     </Flex>
   );

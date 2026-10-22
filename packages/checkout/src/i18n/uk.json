@@ -295,12 +295,19 @@
     "log-out": "Вийти",
     "prices-updated": "Ціни оновлено для вашого акаунта. Перевірте замовлення й оформіть його ще раз.",
     "sign-in-required": "Увійдіть, щоб оформити замовлення",
-    "session-expired": "Сесія завершилася. Увійдіть знову, щоб продовжити.",
     "email": "Email",
     "email-invalid-format": "Введіть коректний email",
     "summary-show-more": "Показати більше",
     "summary-show-less": "Показати менше",
     "summary-expand": "Показати товари замовлення",
-    "summary-collapse": "Сховати товари замовлення"
+    "summary-collapse": "Сховати товари замовлення",
+    "login-identifier-locked": "Використовується для входу. Змінити не можна.",
+    "available-after-sign-in": "Доступно після входу",
+    "account-data-added": "Дані з вашого акаунта додано до замовлення.",
+    "account-data-loading": "Завантаження даних акаунта…",
+    "country-search": "Пошук країни",
+    "country-choose": "Оберіть країну",
+    "country-not-found": "Країну не знайдено",
+    "country-trigger": "Країна: {country}, +{code}"
   }
 }

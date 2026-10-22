@@ -32,7 +32,7 @@ export const FloatingLabelInput = forwardRef<InputRef, FloatingLabelInputProps>(
       Boolean(inputProps.defaultValue)
     );
     const reactId = useId();
-    const id = inputProps.id ?? `checkout-input-${reactId}`;
+    const id = inputProps.id ?? `sf-input-${reactId}`;
     const controlled = value !== undefined;
 
     useImperativeHandle(ref, () => inputRef.current!);

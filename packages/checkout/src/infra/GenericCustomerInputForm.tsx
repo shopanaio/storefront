@@ -3,7 +3,7 @@
 import { Checkbox, Flex, Select, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState, type ReactNode } from 'react';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { validateCustomerInput } from '#checkout/utils/jsonSchema';
 import {
   contractFormModel,

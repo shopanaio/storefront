@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { TbCheck, TbClockHour4, TbExclamationMark, TbTicket, TbX } from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';

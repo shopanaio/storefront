@@ -6,11 +6,16 @@ import type { ComponentType, ReactNode } from 'react';
 export interface CheckoutAuthProps {
   className?: string;
   status: 'loading' | 'authenticated' | 'anonymous';
-  /** The signed-in buyer, shown as "signed in as". */
-  user: { email: string; firstName?: string; lastName?: string } | null;
-  /** A sign-in or sign-out is in progress. */
+  /** The signed-in buyer; `identifier` is what they signed in with, shown as "signed in as". */
+  user: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    identifier: string;
+  } | null;
+  /** A sign-out is in progress, or the account cart is being attached after a sign-in. */
   pending: boolean;
-  /** Saves the pending input of the checkout, then leaves for the sign-in. */
+  /** Opens the sign-in of the checkout. */
   onSignIn: () => void;
   onSignOut: () => void;
 }
@@ -22,7 +27,10 @@ export interface CheckoutAuthProps {
 export interface CheckoutThemeAdapter {
   /** Logo above the form; none by default. */
   Brand?: ComponentType;
-  /** Sign-in control next to the contact section; the checkout has its own. */
+  /**
+   * "Log in" / "Log out" control next to the contact section; the checkout has its own. The
+   * sign-in it opens is always the checkout's own (`@shopana/storefront-auth/ui`).
+   */
   Auth?: ComponentType<CheckoutAuthProps>;
   /** Whether the store has customer accounts; the checkout offers sign-in only then. */
   customerAccountsEnabled?: boolean;

@@ -19,6 +19,7 @@ The session after sign-in is the SDK session: `/auth/token`, `/auth/refresh`, `/
 | Import                            | Contents                                              |
 | --------------------------------- | ----------------------------------------------------- |
 | `@shopana/storefront-auth/react`  | `useAuth`, `useAuthConfiguration`, session re-exports |
+| `@shopana/storefront-auth/ui`     | sign-in screens, `AuthDialog`, `AuthInline`, theme    |
 | `@shopana/storefront-auth`        | `HeadlessAuthClient` (no React), types, `AuthError`   |
 | `@shopana/storefront-auth/server` | `createHeadlessAuthRouteHandlers()`                   |
 
@@ -118,6 +119,7 @@ or, for a spent or expired link, an error. The page reads it and sets the new pa
 
 ```tsx
 const link = readPasswordResetLink(); // { token } | { error: 'expired' } | null
+clearPasswordResetLink(); // keeps the token out of the history and the Referer
 if (link && 'token' in link) {
   await auth.password.reset({ token: link.token, password });
 }
@@ -178,3 +180,69 @@ yarn workspace @shopana/storefront-auth test
 ```
 
 The tests import the built SDK (`@shopana/storefront-sdk/dist`).
+
+## Sign-in screens (`@shopana/storefront-auth/ui`)
+
+Ready screens of the headless sign-in, on antd and `@shopana/storefront-ui`. They have no sign-in
+logic of their own: everything comes from the hooks above. A storefront renders them either
+here or not at all — a storefront signs in either headless or on the IAM pages, never both.
+
+| Component               | Where                                                                    |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `AuthDialog`            | `store`: antd `Modal` 440px; `checkoutGuest`: the right drawer (vaul)     |
+| `AuthInline`            | in the page, `checkoutRequired` by default                               |
+| `AuthFlow`              | the screens and their navigation, without a container                    |
+| `ResetPasswordPage`     | `/account/reset-password`: new password, a spent link offers a new one   |
+| `EmailVerificationPage` | `/account/verify-email`: confirmed email, or a new verification email    |
+| `AccountConnections`    | social accounts of the profile (`useAccountConnections`)                 |
+
+On a phone (narrower than 768px) the dialog and the drawer are bottom sheets. `context`
+(`store`, `checkoutGuest`, `checkoutRequired`) changes texts and what is offered only: the title,
+the guest-checkout hint of `unavailable` and `disabled`, the password sign-up link (store only).
+
+```tsx
+<AuthDialog
+  context="checkoutGuest"
+  open={open}
+  onClose={() => setOpen(false)}
+  defaultIdentifier={{ email: contact.email, phone: contact.phone }}
+  beforeSocial={saveTypedInput}
+/>
+```
+
+The screens (`IdentifyScreen`, `PasswordScreen`, `SignUpScreen`, `CodeScreen`, `ForgotScreen`,
+`ResultScreen`, `ResetPasswordScreen`, `EmailVerificationScreen`, `AccountConnectionsView`) take
+plain props, so a story or a test renders any of their states.
+
+### Theme
+
+Three levels, none of them touches the logic:
+
+1. **Tokens.** Colors, fonts, sizes and radii come from the antd tokens only; a theme sets them
+   in its `ConfigProvider` (also restyling the checkout).
+2. **`classNames` and `styles`** of `AuthUIProvider`, for all screens at once: `root`, `header`,
+   `title`, `alert`, `tabs`, `field`, `submit`, `divider`, `social`, `legal`, `footer`.
+3. **`components`** of `AuthUIProvider`, a fixed set tokens cannot draw: `SocialButtons`,
+   `Divider`, `Logo`, `Legal`, `MethodTabs`. Fields, the phone and the drawer are shared with
+   the checkout and are not replaced.
+
+```tsx
+<ConfigProvider theme={brandTheme}>
+  <AuthUIProvider
+    classNames={{ submit: 'brand-cta' }}
+    components={{ SocialButtons, Divider, Logo }}
+    legalLinks={{ terms: '/policies/terms', privacy: '/policies/privacy' }}
+  >
+    {children}
+  </AuthUIProvider>
+</ConfigProvider>
+```
+
+Texts live in the next-intl namespace `Auth` with uk / ru / en defaults; a theme overrides any
+of them in its own messages. Social providers are named and drawn from their id (`google`,
+`facebook`, `apple`); an unknown provider shows its id and its first letter.
+
+### Storybook
+
+`yarn storybook` from the workspace root: **Storefront Auth / Screens**, every screen with the
+`state` values of its design board, without a theme and with the Bite Crunch one.

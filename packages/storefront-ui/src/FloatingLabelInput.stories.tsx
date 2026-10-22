@@ -1,11 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { withCheckout } from '#checkout/stories/withCheckout';
 import { FloatingLabelInput } from './FloatingLabelInput';
 
 const meta = {
-  title: 'Checkout/UI/FloatingLabelInput',
+  title: 'Storefront UI/FloatingLabelInput',
   component: FloatingLabelInput,
-  decorators: [withCheckout],
   args: { label: 'Email' },
 } satisfies Meta<typeof FloatingLabelInput>;
 

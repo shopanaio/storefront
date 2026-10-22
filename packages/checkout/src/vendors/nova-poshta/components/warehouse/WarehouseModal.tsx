@@ -7,8 +7,7 @@ import { formatSchedule } from '../../schedule';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
-import { DrawerBase } from '#checkout/ui/DrawerBase';
-import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
+import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
 
 interface Props {
   /** Branches or postomats: the list shows only points of this kind. */
