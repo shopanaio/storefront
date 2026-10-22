@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { Modal, Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useQuery } from '@apollo/client/react';
-import { storePolicyQuery } from '#checkout/api/queries/storePolicyQuery.shopana';
+import { useStorePolicy } from '#checkout/hooks/useStorePolicy';
+import { breakpoints } from '#checkout/ui/breakpoints';
+import { DrawerBase } from '#checkout/ui/DrawerBase';
+import { useMediaQuery } from '#checkout/ui/useMediaQuery';
 
 const { Link, Text } = Typography;
 
@@ -22,24 +25,27 @@ export interface PolicyModalProps {
 }
 
 /**
- * A store policy over the checkout, so the buyer reads it without leaving the order. The body is
- * HTML the API sanitized. The policy page stays one link away, also when the policy cannot be read.
+ * A store policy over the checkout, so the buyer reads it without leaving the order: a modal on
+ * desktop, a bottom sheet on mobile, as the other drawers of the checkout. The body is HTML the
+ * API sanitized. The policy page stays one link away, also when the policy cannot be read.
  */
 export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
   const t = useTranslations('Checkout');
-  const { styles } = useStyles();
-  const { data, loading } = useQuery(storePolicyQuery, {
-    variables: { handle: policy?.handle ?? '' },
-    skip: !policy,
-  });
-  const loaded =
-    data?.storePolicy?.handle === policy?.handle ? data?.storePolicy : null;
-  const html = typeof loaded?.body?.html === 'string' ? loaded.body.html : '';
+  const { styles, cx } = useStyles();
+  const mobile = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
+  // The last opened policy stays until the closing animation ends, so it does not blank out.
+  const [shown, setShown] = useState(policy);
+  if (policy && policy !== shown) setShown(policy);
+  const current = policy ?? shown;
+  const { policy: loaded, loading } = useStorePolicy(current?.handle ?? null);
 
   let content: React.ReactNode;
   if (loaded) {
     content = (
-      <div className={styles.body} dangerouslySetInnerHTML={{ __html: html }} />
+      <div
+        className={cx(styles.body, !mobile && styles.scroll)}
+        dangerouslySetInnerHTML={{ __html: loaded.html }}
+      />
     );
   } else if (loading) {
     content = <Skeleton active paragraph={{ rows: 6 }} title={false} />;
@@ -47,23 +53,33 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
     // Unpublished since the checkout was read, or not readable now.
     content = <Text type="secondary">{t('policy-load-error')}</Text>;
   }
+  const title = loaded?.title ?? current?.title;
+  const pageLink = current ? (
+    <Link href={loaded?.path ?? current.path} target="_blank" rel="noopener">
+      {t('policy-open-page')}
+    </Link>
+  ) : null;
 
+  if (mobile) {
+    return (
+      <DrawerBase
+        open={policy !== null}
+        onClose={onClose}
+        onExited={() => setShown(null)}
+        title={title}
+      >
+        {content}
+        <div className={styles.pageLink}>{pageLink}</div>
+      </DrawerBase>
+    );
+  }
   return (
     <Modal
       open={policy !== null}
       onCancel={onClose}
-      title={loaded?.title ?? policy?.title}
-      footer={
-        policy ? (
-          <Link
-            href={loaded?.path ?? policy.path}
-            target="_blank"
-            rel="noopener"
-          >
-            {t('policy-open-page')}
-          </Link>
-        ) : null
-      }
+      afterClose={() => setShown(null)}
+      title={title}
+      footer={pageLink}
       width={720}
       centered
       destroyOnHidden
@@ -75,8 +91,6 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
 
 const useStyles = createStyles(({ css, token }) => ({
   body: css`
-    max-height: 60vh;
-    overflow-y: auto;
     overflow-wrap: anywhere;
 
     & > :first-child {
@@ -88,5 +102,14 @@ const useStyles = createStyles(({ css, token }) => ({
     & a {
       color: ${token.colorLink};
     }
+  `,
+  // The bottom sheet scrolls itself; the modal keeps its footer in view.
+  scroll: css`
+    max-height: 60vh;
+    overflow-y: auto;
+  `,
+  // In the sheet the page link closes the text rather than lying over it.
+  pageLink: css`
+    margin-top: ${token.margin}px;
   `,
 }));

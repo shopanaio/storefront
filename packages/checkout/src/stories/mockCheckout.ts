@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { fn, mocked } from 'storybook/test';
 import { useIsAuthenticated } from '@shopana/storefront-sdk/modules/session/react';
 import type {
@@ -17,6 +17,7 @@ import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
+import { useStorePolicy } from '#checkout/hooks/useStorePolicy';
 import { useRemoveCartLines } from '#checkout/hooks/useUndeliverableLines';
 import type {
   RedemptionRequest,
@@ -30,6 +31,7 @@ import {
 } from './deliveryFixtures';
 import { defaultCheckout } from './fixtures';
 import { moneyRewards, rewardDiscount, rewards } from './loyaltyFixtures';
+import { storePolicies } from './policyFixtures';
 import { PROMO_CODES, promoCode, promoDiscount } from './promoFixtures';
 
 /**
@@ -505,6 +507,24 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
     const { loyalty } = useMockState();
     return { ...loyalty, refetch };
   });
+  mocked(useStorePolicy).mockImplementation(useMockStorePolicy);
+}
+
+/** A published policy of `storePolicies`, read with the latency of the mock API. */
+function useMockStorePolicy(handle: string | null) {
+  const [loaded, setLoaded] = useState<string | null>(null);
+  useEffect(() => {
+    if (!handle) return;
+    const timer = setTimeout(() => setLoaded(handle), LATENCY_MS);
+    return () => clearTimeout(timer);
+  }, [handle]);
+  const ready = handle !== null && loaded === handle;
+  return {
+    policy: ready
+      ? (storePolicies.find((policy) => policy.handle === handle) ?? null)
+      : null,
+    loading: handle !== null && !ready,
+  };
 }
 
 /** The checkout of the story as it is now, after the buyer's changes. */

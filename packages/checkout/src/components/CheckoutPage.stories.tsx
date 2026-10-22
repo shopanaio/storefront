@@ -28,6 +28,10 @@ import {
 } from '#checkout/stories/mockCheckout';
 import type { CheckoutMockState } from '#checkout/stories/mockCheckout';
 import { LIQPAY, NOVA_POSHTA_COD } from '#checkout/stories/paymentFixtures';
+import {
+  checkboxDisclosures,
+  noticeDisclosures,
+} from '#checkout/stories/policyFixtures';
 import { withCheckout } from '#checkout/stories/withCheckout';
 import { withDirectory } from '#checkout/stories/withDirectory';
 import { settlementAddressData } from '#checkout/vendors/nova-poshta/address';
@@ -39,8 +43,10 @@ import { usePlacementStore } from '#checkout/state/placement/placementStore';
 /**
  * The whole checkout page as the buyer fills it in: the contact with the sign-in button, the
  * city and Nova Poshta delivery, a different recipient, LiqPay, the order comment, and in the
- * summary the promo codes, the loyalty block and the totals. Every section is the real one
- * against the mock API, so the page can be clicked through; placing the order is refused.
+ * summary the promo codes, the loyalty block and the totals. Under the submit button the store
+ * policies the order accepts; a policy link opens the policy over the checkout. Every section is
+ * the real one against the mock API, so the page can be clicked through; placing the order is
+ * refused.
  */
 const meta = {
   title: 'Checkout/Page/Filled',
@@ -79,6 +85,8 @@ interface PageScenario {
     rewardId?: string | null;
     earning?: Checkout.LoyaltyEarning | null;
   };
+  /** Policy notice of the store; the NOTICE mode by default. */
+  disclosures?: Checkout.Disclosures | null;
   checkout?: Partial<Checkout.Checkout>;
 }
 
@@ -93,12 +101,13 @@ function pageScenario({
   note = null,
   promoCodes = [],
   loyalty = { account: null },
+  disclosures = noticeDisclosures,
   checkout: overrides,
 }: PageScenario) {
   const base = formScenario({
     groups: [delivery],
     payment,
-    checkout: { customerNote: note, ...overrides },
+    checkout: { customerNote: note, disclosures, ...overrides },
   });
   let checkout = base.checkout.checkout as Checkout.Checkout;
   checkout = {
@@ -192,7 +201,7 @@ export const LockerCashOnDelivery: Story = {
 
 /**
  * A guest: no loyalty account, the sign-in offer of the points the order earns, a promo code
- * and a code the order does not meet.
+ * and a code the order does not meet. The store asks to tick the box of its policies.
  */
 export const Guest: Story = {
   parameters: pageScenario({
@@ -202,6 +211,7 @@ export const Guest: Story = {
     note: NOTE,
     promoCodes: ['WELCOME10', 'SUMMER25'],
     loyalty: { account: null, earning: guestEarning },
+    disclosures: checkboxDisclosures,
     checkout: { customerIdentity: guestCheckout.customerIdentity },
   }),
 };
@@ -224,7 +234,9 @@ export const CityWithOblast: Story = {
         ...kyivAddress,
         city: 'Львів',
         provinceCode: '46',
-        data: settlementAddressData(popularCities.find((city) => city.name === 'Львів')!),
+        data: settlementAddressData(
+          popularCities.find((city) => city.name === 'Львів')!
+        ),
         formatted: ['Львів'],
         formattedArea: 'Львів, Ukraine',
       },
@@ -273,7 +285,9 @@ export const BannerWarning: Story = {
 export const BannerError: Story = {
   parameters: Filled.parameters,
   beforeEach: () => {
-    usePlacementStore.getState().setPhase({ name: 'payment-failed', failure: null });
+    usePlacementStore
+      .getState()
+      .setPhase({ name: 'payment-failed', failure: null });
     return () => usePlacementStore.getState().reset();
   },
 };

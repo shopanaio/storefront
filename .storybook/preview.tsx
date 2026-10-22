@@ -28,6 +28,10 @@ sb.mock(
     spy: true,
   }
 );
+// Store policies come from the storefront API; the policy modal reads them here.
+sb.mock(import('../packages/checkout/src/hooks/useStorePolicy.ts'), {
+  spy: true,
+});
 // The storefront session lives in the host app; the contact section reads whether the buyer
 // is signed in from it.
 sb.mock(
