@@ -37,6 +37,7 @@ export {
   getStorefrontSessionServer,
   isRejectedGrant,
   parseCookieHeader,
+  readAccessCookie,
   serializeCookie,
   type IssuedSession,
   type ServerSessionPayload,
@@ -86,7 +87,10 @@ export async function readServerAuthState(
   const cookies = parseCookieHeader(cookieHeader);
   const access = await readAccessCookie(config, cookies);
   if (!access) {
-    return { ...ANONYMOUS, refreshPending: cookies.get(SIGNED_IN_COOKIE) === '1' };
+    return {
+      ...ANONYMOUS,
+      refreshPending: cookies.get(SIGNED_IN_COOKIE) === '1',
+    };
   }
   return {
     accessToken: access.t,

@@ -8,16 +8,34 @@ export {
   type HeadlessAuthClientOptions,
 } from './core/HeadlessAuthClient';
 export { AuthError, isAuthError } from './core/AuthError';
-export { AUTH_ERROR_CODES, HEADLESS_AUTH_BASE_PATH } from './core/types';
+export {
+  AUTH_ERROR_CODES,
+  DEFAULT_PASSWORD_RESET_PATH,
+  HEADLESS_AUTH_BASE_PATH,
+} from './core/types';
+export {
+  clearConnectionResult,
+  readConnectionResult,
+  readPasswordResetLink,
+} from './core/links';
 export type {
+  AccountConnection,
+  AccountConnections,
   AuthConfiguration,
   AuthErrorCode,
   AuthMethods,
   AuthStep,
+  ConnectionErrorCode,
+  ConnectionLinkInput,
+  ConnectionResult,
+  ConnectionUnlinkInput,
   EmailOtpSendInput,
   EmailOtpVerifyInput,
+  EmailVerificationResendInput,
   HeadlessAction,
   OtpChannel,
+  PasswordForgotInput,
+  PasswordResetInput,
   PasswordSignInInput,
   PasswordSignUpInput,
   PhoneOtpSendInput,

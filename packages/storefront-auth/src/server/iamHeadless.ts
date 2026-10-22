@@ -13,6 +13,8 @@ import type { AuthConfiguration } from '../core/types';
  */
 
 const END_USER_AGENT_HEADER = 'shopana-end-user-agent';
+/** The buyer's access token on account requests; `Authorization` authenticates the client. */
+const END_USER_ACCESS_TOKEN_HEADER = 'shopana-end-user-access-token';
 const MAX_USER_AGENT_LENGTH = 512;
 
 export interface EndUser {
@@ -31,7 +33,9 @@ export type IamHeadlessStep =
   | 'email-otp/verify'
   | 'phone-otp/send'
   | 'phone-otp/verify'
-  | 'social/start';
+  | 'social/start'
+  | 'password/forgot'
+  | 'email-verification/resend';
 
 export type IamHeadlessStepResponse =
   | { status: 'completed'; code: string; state: string; iss: string }
@@ -49,7 +53,18 @@ export type IamHeadlessStepResponse =
       transaction_id: string;
     }
   | { status: 'sign_in_required'; transaction_id: string }
+  | { status: 'reset_link_sent'; transaction_id: string }
+  | { status: 'verification_sent'; transaction_id: string }
   | { status: 'redirect'; url: string };
+
+export interface IamAccountConnections {
+  providers: {
+    provider: string;
+    enabled: boolean;
+    status: 'connected' | 'not_connected' | 'conflict';
+  }[];
+  reauthentication_required: boolean;
+}
 
 export interface IamTransactionStart {
   state: string;
@@ -115,7 +130,10 @@ export class IamHeadlessClient {
     endUser: EndUser
   ): Promise<IamTransaction> {
     const config = this.server.config;
-    const body = await this.json<{ transaction_id: string; expires_in: number }>(
+    const body = await this.json<{
+      transaction_id: string;
+      expires_in: number;
+    }>(
       '/transactions',
       {
         redirect_uri: config.redirectUri,
@@ -144,13 +162,57 @@ export class IamHeadlessClient {
     );
   }
 
+  /** Sets a new password with the token of a reset link (outside any transaction). */
+  async resetPassword(
+    input: { token: string; password: string },
+    endUser: EndUser
+  ): Promise<void> {
+    await this.json('/password/reset', input, endUser);
+  }
+
+  async accountConnections(
+    accessToken: string,
+    endUser: EndUser
+  ): Promise<IamAccountConnections> {
+    const headers = this.headers(endUser);
+    headers.set(END_USER_ACCESS_TOKEN_HEADER, accessToken);
+    const response = await this.fetch('/account/connections', { headers });
+    await assertOk(response);
+    return (await response.json()) as IamAccountConnections;
+  }
+
+  /** Answers the one-time URL the browser opens to connect the provider. */
+  async linkAccount(
+    accessToken: string,
+    input: { provider: string; return_uri: string },
+    endUser: EndUser
+  ): Promise<string> {
+    const body = await this.json<{ url: string }>(
+      '/account/connections/link',
+      input,
+      endUser,
+      accessToken
+    );
+    return body.url;
+  }
+
+  async unlinkAccount(
+    accessToken: string,
+    input: { provider: string },
+    endUser: EndUser
+  ): Promise<void> {
+    await this.json('/account/connections/unlink', input, endUser, accessToken);
+  }
+
   private async json<T>(
     path: string,
     body: Record<string, unknown>,
-    endUser: EndUser
+    endUser: EndUser,
+    accessToken?: string
   ): Promise<T> {
     const headers = this.headers(endUser);
     headers.set('Content-Type', 'application/json');
+    if (accessToken) headers.set(END_USER_ACCESS_TOKEN_HEADER, accessToken);
     const response = await this.fetch(path, {
       method: 'POST',
       headers,
@@ -177,9 +239,16 @@ export class IamHeadlessClient {
 
   private async fetch(path: string, init: RequestInit): Promise<Response> {
     try {
-      return await fetch(`${this.baseUrl}${path}`, { ...init, cache: 'no-store' });
+      return await fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        cache: 'no-store',
+      });
     } catch {
-      throw new IamHeadlessError(503, 'temporarily_unavailable', 'IAM is unreachable');
+      throw new IamHeadlessError(
+        503,
+        'temporarily_unavailable',
+        'IAM is unreachable'
+      );
     }
   }
 }

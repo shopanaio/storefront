@@ -7,6 +7,7 @@ import {
   IamOAuthError,
   parseCookieHeader,
   randomBase64Url,
+  readAccessCookie,
   rejectCrossSite,
   safeReturnTo,
   seal,
@@ -19,17 +20,20 @@ import {
   type StorefrontSessionServer,
   type TransactionCookie,
 } from '@shopana/storefront-sdk/modules/session/server';
-import type {
-  AuthConfiguration,
-  AuthErrorBody,
-  AuthErrorCode,
-  AuthStep,
-  HeadlessAction,
+import {
+  DEFAULT_PASSWORD_RESET_PATH,
+  type AccountConnections,
+  type AuthConfiguration,
+  type AuthErrorBody,
+  type AuthErrorCode,
+  type AuthStep,
+  type HeadlessAction,
 } from '../core/types';
 import {
   IamHeadlessClient,
   IamHeadlessError,
   type EndUser,
+  type IamAccountConnections,
   type IamHeadlessStep,
   type IamHeadlessStepResponse,
 } from './iamHeadless';
@@ -41,7 +45,12 @@ import {
  * - `POST password-sign-in | password-sign-up` — `{ email, password[, firstName, lastName] }`;
  * - `POST email-otp-send | email-otp-verify` — `{ email[, code] }`;
  * - `POST phone-otp-send | phone-otp-verify` — `{ phone[, code] }`;
- * - `POST social-start` — `{ provider, returnTo }`, answers the provider URL to leave for.
+ * - `POST social-start` — `{ provider, returnTo }`, answers the provider URL to leave for;
+ * - `POST password-forgot` — `{ email, resetPath }`, sends a reset link to that page;
+ * - `POST password-reset` — `{ token, password }`, sets the new password (no transaction);
+ * - `POST email-verification-resend` — `{ email }`, sends the verification email again;
+ * - `GET  connections`, `POST connection-link | connection-unlink` — social accounts of the
+ *   signed-in buyer, with the access token of the session cookie.
  *
  * The IAM transaction, its PKCE verifier, state and nonce live in a sealed cookie; IAM rotates
  * the transaction id on every step, and the cookie follows it. The cookie lives as long as IAM
@@ -75,10 +84,15 @@ interface StepDefinition {
   step: IamHeadlessStep;
   /** A step that may start a new transaction; the others continue the current one. */
   entry: boolean;
-  body(input: Record<string, unknown>): Record<string, unknown> | null;
+  body(
+    input: Record<string, unknown>,
+    session: StorefrontSessionServer
+  ): Record<string, unknown> | null;
 }
 
-const STEPS: Record<HeadlessAction, StepDefinition> = {
+type TransactionAction = Exclude<HeadlessAction, 'password-reset'>;
+
+const STEPS: Record<TransactionAction, StepDefinition> = {
   'password-sign-in': {
     step: 'password/sign-in',
     entry: true,
@@ -104,7 +118,8 @@ const STEPS: Record<HeadlessAction, StepDefinition> = {
   'email-otp-send': {
     step: 'email-otp/send',
     entry: true,
-    body: (input) => (strings(input, ['email']) ? { email: input.email } : null),
+    body: (input) =>
+      strings(input, ['email']) ? { email: input.email } : null,
   },
   'email-otp-verify': {
     step: 'email-otp/verify',
@@ -136,6 +151,27 @@ const STEPS: Record<HeadlessAction, StepDefinition> = {
         ? { provider: input.provider }
         : null,
   },
+  'password-forgot': {
+    step: 'password/forgot',
+    entry: true,
+    body: (input, session) =>
+      strings(input, ['email']) && optionalString(input.resetPath)
+        ? {
+            email: input.email,
+            reset_uri: storefrontUrl(
+              session,
+              (input.resetPath as string | undefined) ||
+                DEFAULT_PASSWORD_RESET_PATH
+            ),
+          }
+        : null,
+  },
+  'email-verification-resend': {
+    step: 'email-verification/resend',
+    entry: true,
+    body: (input) =>
+      strings(input, ['email']) ? { email: input.email } : null,
+  },
 };
 
 interface RouteContext {
@@ -147,7 +183,10 @@ export interface HeadlessAuthRouteHandlers {
   POST(request: Request, context: RouteContext): Promise<Response>;
 }
 
-type Handler = (request: Request, auth: HeadlessAuthServer) => Promise<Response>;
+type Handler = (
+  request: Request,
+  auth: HeadlessAuthServer
+) => Promise<Response>;
 
 interface HeadlessAuthServer {
   session: StorefrontSessionServer;
@@ -181,7 +220,7 @@ export function createHeadlessAuthRouteHandlers(
     };
 
   const steps = Object.fromEntries(
-    (Object.keys(STEPS) as HeadlessAction[]).map((action) => [
+    (Object.keys(STEPS) as TransactionAction[]).map((action) => [
       action,
       (request: Request, auth: HeadlessAuthServer) =>
         runStep(request, auth, STEPS[action]),
@@ -189,8 +228,13 @@ export function createHeadlessAuthRouteHandlers(
   );
 
   return {
-    GET: route({ configuration }),
-    POST: route(steps),
+    GET: route({ configuration, connections }),
+    POST: route({
+      ...steps,
+      'password-reset': passwordReset,
+      'connection-link': connectionLink,
+      'connection-unlink': connectionUnlink,
+    }),
   };
 }
 
@@ -220,12 +264,10 @@ async function runStep(
 ): Promise<Response> {
   const endUser = readEndUser(request, session);
   if (!endUser) return unknownEndUser();
-  const input = (await request.json().catch(() => null)) as Record<
-    string,
-    unknown
-  > | null;
-  const body = input && typeof input === 'object' ? definition.body(input) : null;
-  if (!input || !body) return error(400, 'invalidInput', 'Invalid request body');
+  const input = await readInput(request);
+  const body = input ? definition.body(input, session) : null;
+  if (!input || !body)
+    return error(400, 'invalidInput', 'Invalid request body');
 
   const cookieName = headlessCookieName(session);
   const cookies = parseCookieHeader(request.headers.get('cookie'));
@@ -259,12 +301,21 @@ async function runStep(
     result = await iam.step(transaction.id, definition.step, body, endUser);
   } catch (failure) {
     const setCookies: string[] = [];
-    if (failure instanceof IamHeadlessError && failure.code === 'transaction_expired') {
+    if (
+      failure instanceof IamHeadlessError &&
+      failure.code === 'transaction_expired'
+    ) {
       // Spent by a parallel step or by failed attempts: the buyer starts over.
       setCookies.push(clear);
-    } else if (transaction && failure instanceof IamHeadlessError && failure.transactionId) {
+    } else if (
+      transaction &&
+      failure instanceof IamHeadlessError &&
+      failure.transactionId
+    ) {
       // The step failed after IAM rotated the transaction; the next attempt uses the new id.
-      setCookies.push(await persist(rotated(transaction, failure.transactionId)));
+      setCookies.push(
+        await persist(rotated(transaction, failure.transactionId))
+      );
     } else if (started && transaction) {
       setCookies.push(await persist(transaction));
     }
@@ -291,14 +342,170 @@ async function runStep(
     case 'verification_required':
       return json(
         200,
-        { type: 'verificationRequired', method: result.method } satisfies AuthStep,
+        {
+          type: 'verificationRequired',
+          method: result.method,
+        } satisfies AuthStep,
         [await persist(rotated(current, result.transaction_id))]
       );
     case 'sign_in_required':
       return json(200, { type: 'signInRequired' } satisfies AuthStep, [
         await persist(rotated(current, result.transaction_id)),
       ]);
+    case 'reset_link_sent':
+      return json(200, { type: 'resetLinkSent' } satisfies AuthStep, [
+        await persist(rotated(current, result.transaction_id)),
+      ]);
+    case 'verification_sent':
+      return json(200, { type: 'verificationSent' } satisfies AuthStep, [
+        await persist(rotated(current, result.transaction_id)),
+      ]);
   }
+}
+
+/** Sets the new password of a reset link; the link may be opened in any browser. */
+async function passwordReset(
+  request: Request,
+  { session, iam }: HeadlessAuthServer
+): Promise<Response> {
+  const endUser = readEndUser(request, session);
+  if (!endUser) return unknownEndUser();
+  const input = await readInput(request);
+  if (!input || !strings(input, ['token', 'password'])) {
+    return error(400, 'invalidInput', 'Invalid request body');
+  }
+  try {
+    await iam.resetPassword(
+      { token: input.token as string, password: input.password as string },
+      endUser
+    );
+    return json(200, { type: 'passwordReset' } satisfies AuthStep);
+  } catch (failure) {
+    // A spent or expired reset token: the buyer requests a new link.
+    if (
+      failure instanceof IamHeadlessError &&
+      failure.code === 'invalid_grant'
+    ) {
+      return error(
+        400,
+        'expired',
+        'The reset link has expired; request a new one'
+      );
+    }
+    return failed(failure);
+  }
+}
+
+async function connections(
+  request: Request,
+  auth: HeadlessAuthServer
+): Promise<Response> {
+  return accountAction(request, auth, async (iam, accessToken, endUser) =>
+    json(200, toConnections(await iam.accountConnections(accessToken, endUser)))
+  );
+}
+
+/** Answers the URL the browser leaves for; it returns to `returnTo` with the outcome. */
+async function connectionLink(
+  request: Request,
+  auth: HeadlessAuthServer
+): Promise<Response> {
+  const input = await readInput(request);
+  if (
+    !input ||
+    !strings(input, ['provider']) ||
+    !optionalString(input.returnTo)
+  ) {
+    return error(400, 'invalidInput', 'Invalid request body');
+  }
+  return accountAction(request, auth, async (iam, accessToken, endUser) => {
+    const url = await iam.linkAccount(
+      accessToken,
+      {
+        provider: input.provider as string,
+        return_uri: storefrontUrl(
+          auth.session,
+          (input.returnTo as string | undefined) ?? '/'
+        ),
+      },
+      endUser
+    );
+    return json(200, { type: 'redirect', url } satisfies AuthStep);
+  });
+}
+
+/** Disconnects a provider and answers the connections left. */
+async function connectionUnlink(
+  request: Request,
+  auth: HeadlessAuthServer
+): Promise<Response> {
+  const input = await readInput(request);
+  if (!input || !strings(input, ['provider'])) {
+    return error(400, 'invalidInput', 'Invalid request body');
+  }
+  return accountAction(request, auth, async (iam, accessToken, endUser) => {
+    await iam.unlinkAccount(
+      accessToken,
+      { provider: input.provider as string },
+      endUser
+    );
+    return json(
+      200,
+      toConnections(await iam.accountConnections(accessToken, endUser))
+    );
+  });
+}
+
+/** An account request on behalf of the buyer whose access token is in the session cookie. */
+async function accountAction(
+  request: Request,
+  { session, iam }: HeadlessAuthServer,
+  run: (
+    iam: IamHeadlessClient,
+    accessToken: string,
+    endUser: EndUser
+  ) => Promise<Response>
+): Promise<Response> {
+  const endUser = readEndUser(request, session);
+  if (!endUser) return unknownEndUser();
+  const access = await readAccessCookie(
+    session.config,
+    parseCookieHeader(request.headers.get('cookie'))
+  );
+  if (!access) {
+    return error(401, 'signInRequired', 'Sign in to manage the account');
+  }
+  try {
+    return await run(iam, access.t, endUser);
+  } catch (failure) {
+    return failed(failure);
+  }
+}
+
+function toConnections(value: IamAccountConnections): AccountConnections {
+  return {
+    providers: value.providers.map((provider) => ({
+      provider: provider.provider,
+      enabled: provider.enabled,
+      status:
+        provider.status === 'not_connected' ? 'notConnected' : provider.status,
+    })),
+    reauthenticationRequired: value.reauthentication_required,
+  };
+}
+
+/** Absolute URL of a path of this storefront; anything else is its home page. */
+function storefrontUrl(session: StorefrontSessionServer, path: string): string {
+  return new URL(safeReturnTo(path, session.origin), session.origin).href;
+}
+
+async function readInput(
+  request: Request
+): Promise<Record<string, unknown> | null> {
+  const input: unknown = await request.json().catch(() => null);
+  return input !== null && typeof input === 'object' && !Array.isArray(input)
+    ? (input as Record<string, unknown>)
+    : null;
 }
 
 async function begin(
@@ -366,7 +573,9 @@ async function complete(
     if (session.config.scopes.includes('openid')) {
       const claims = tokens.id_token ? decodeJwtPayload(tokens.id_token) : null;
       if (claims?.nonce !== transaction.nonce) {
-        return error(400, 'expired', 'The sign-in could not be completed', [clear]);
+        return error(400, 'expired', 'The sign-in could not be completed', [
+          clear,
+        ]);
       }
     }
     const issued = await session.sessionCookies(await session.issue(tokens));
@@ -396,15 +605,22 @@ async function leaveForProvider(
     state: transaction.state,
     nonce: transaction.nonce,
     verifier: transaction.verifier,
-    returnTo: safeReturnTo(input.returnTo as string | undefined, session.origin),
+    returnTo: safeReturnTo(
+      input.returnTo as string | undefined,
+      session.origin
+    ),
     exp: nowSeconds() + SOCIAL_TRANSACTION_LIFETIME_SECONDS,
   };
   return json(200, { type: 'redirect', url } satisfies AuthStep, [
     clear,
-    serializeCookie(name, await seal(session.config.sessionSecret, name, callback), {
-      maxAge: SOCIAL_TRANSACTION_LIFETIME_SECONDS,
-      secure: session.secure,
-    }),
+    serializeCookie(
+      name,
+      await seal(session.config.sessionSecret, name, callback),
+      {
+        maxAge: SOCIAL_TRANSACTION_LIFETIME_SECONDS,
+        secure: session.secure,
+      }
+    ),
   ]);
 }
 
@@ -417,19 +633,40 @@ const IAM_ERRORS: Record<string, { status: number; code: AuthErrorCode }> = {
   transaction_expired: { status: 400, code: 'expired' },
   slow_down: { status: 429, code: 'rateLimited' },
   delivery_unavailable: { status: 503, code: 'deliveryUnavailable' },
+  invalid_token: { status: 401, code: 'signInRequired' },
+  reauthentication_required: { status: 403, code: 'reauthenticationRequired' },
+  last_login_method: { status: 400, code: 'lastLoginMethod' },
+  account_conflict: { status: 409, code: 'accountConflict' },
+  linking_failed: { status: 400, code: 'linkingFailed' },
 };
 
 function failed(failure: unknown, setCookies: string[] = []): Response {
   if (failure instanceof IamHeadlessError) {
     const known = IAM_ERRORS[failure.code];
     if (known) {
-      return error(known.status, known.code, failure.message, setCookies, failure.retryAfter);
+      return error(
+        known.status,
+        known.code,
+        failure.message,
+        setCookies,
+        failure.retryAfter
+      );
     }
     if (failure.code === 'invalid_client' || failure.code === 'access_denied') {
       // The storefront's IAM client is misconfigured; nothing the buyer can fix.
-      console.error('Headless sign-in rejected by IAM:', failure.code, failure.message);
+      console.error(
+        'Headless sign-in rejected by IAM:',
+        failure.code,
+        failure.message
+      );
     }
-    return error(503, 'unavailable', 'Sign-in is temporarily unavailable', setCookies, failure.retryAfter);
+    return error(
+      503,
+      'unavailable',
+      'Sign-in is temporarily unavailable',
+      setCookies,
+      failure.retryAfter
+    );
   }
   if (failure instanceof IamOAuthError && failure.status === 429) {
     return error(
@@ -441,10 +678,20 @@ function failed(failure: unknown, setCookies: string[] = []): Response {
     );
   }
   if (failure instanceof IamOAuthError && isRejectedGrant(failure)) {
-    return error(400, 'expired', 'The sign-in could not be completed', setCookies);
+    return error(
+      400,
+      'expired',
+      'The sign-in could not be completed',
+      setCookies
+    );
   }
   console.error('Headless sign-in failed:', failure);
-  return error(503, 'unavailable', 'Sign-in is temporarily unavailable', setCookies);
+  return error(
+    503,
+    'unavailable',
+    'Sign-in is temporarily unavailable',
+    setCookies
+  );
 }
 
 function readEndUser(
@@ -475,7 +722,9 @@ function headlessCookieName(session: StorefrontSessionServer): string {
 }
 
 function strings(input: Record<string, unknown>, keys: string[]): boolean {
-  return keys.every((key) => typeof input[key] === 'string' && input[key] !== '');
+  return keys.every(
+    (key) => typeof input[key] === 'string' && input[key] !== ''
+  );
 }
 
 function optionalString(value: unknown): boolean {
@@ -495,11 +744,16 @@ function error(
     ...(retryAfter !== undefined ? { retryAfter } : {}),
   };
   const response = json(status, body, setCookies);
-  if (retryAfter !== undefined) response.headers.set('Retry-After', String(retryAfter));
+  if (retryAfter !== undefined)
+    response.headers.set('Retry-After', String(retryAfter));
   return response;
 }
 
-function json(status: number, body: unknown, setCookies: string[] = []): Response {
+function json(
+  status: number,
+  body: unknown,
+  setCookies: string[] = []
+): Response {
   const headers = new Headers({
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',

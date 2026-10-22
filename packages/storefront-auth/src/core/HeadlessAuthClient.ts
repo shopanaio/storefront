@@ -6,14 +6,22 @@ import { AuthError } from './AuthError';
 import {
   AUTH_ERROR_CODES,
   HEADLESS_AUTH_BASE_PATH,
+  type AccountAction,
+  type AccountActionInputs,
+  type AccountConnections,
   type AuthConfiguration,
   type AuthErrorBody,
   type AuthErrorCode,
   type AuthStep,
+  type ConnectionLinkInput,
+  type ConnectionUnlinkInput,
   type EmailOtpSendInput,
   type EmailOtpVerifyInput,
+  type EmailVerificationResendInput,
   type HeadlessAction,
   type HeadlessActionInputs,
+  type PasswordForgotInput,
+  type PasswordResetInput,
   type PasswordSignInInput,
   type PasswordSignUpInput,
   type PhoneOtpSendInput,
@@ -86,6 +94,51 @@ export class HeadlessAuthClient {
     return this.step('phone-otp-verify', input);
   }
 
+  /** Sends a reset link to the email, if it has an account; it opens `resetPath`. */
+  requestPasswordReset(input: PasswordForgotInput): Promise<AuthStep> {
+    return this.step('password-forgot', input);
+  }
+
+  /** Sets the new password of a reset link; every session ends and the buyer signs in again. */
+  resetPassword(input: PasswordResetInput): Promise<AuthStep> {
+    return this.step('password-reset', input);
+  }
+
+  resendVerificationEmail(
+    input: EmailVerificationResendInput
+  ): Promise<AuthStep> {
+    return this.step('email-verification-resend', input);
+  }
+
+  /** Social accounts of the signed-in buyer. */
+  connections(): Promise<AccountConnections> {
+    return this.account<AccountConnections>('GET', 'connections');
+  }
+
+  /** Leaves for the provider; the browser returns to `returnTo`, see `readConnectionResult()`. */
+  async linkConnection(input: ConnectionLinkInput): Promise<never> {
+    const step = await this.account<AuthStep>('POST', 'connection-link', {
+      provider: input.provider,
+      returnTo:
+        input.returnTo ??
+        `${location.pathname}${location.search}${location.hash}`,
+    });
+    if (step.type !== 'redirect') {
+      throw new AuthError(
+        'unavailable',
+        'Connecting the provider did not start',
+        502
+      );
+    }
+    location.assign(step.url);
+    return new Promise<never>(() => undefined);
+  }
+
+  /** Disconnects a provider and resolves to the connections left. */
+  unlinkConnection(input: ConnectionUnlinkInput): Promise<AccountConnections> {
+    return this.account<AccountConnections>('POST', 'connection-unlink', input);
+  }
+
   /** Leaves for the provider; the sign-in completes at `/auth/callback`. */
   async startSocial(input: SocialStartInput): Promise<never> {
     const step = await this.step('social-start', {
@@ -128,6 +181,32 @@ export class HeadlessAuthClient {
       this.options.onSignedIn?.();
     }
     return step;
+  }
+
+  /**
+   * An account request of the signed-in buyer. The handlers read the access token from the
+   * session cookie, so it is renewed first; a token rejected anyway is refreshed once.
+   */
+  private async account<T>(
+    method: 'GET' | 'POST',
+    action: 'connections' | AccountAction,
+    body?: AccountActionInputs[AccountAction] | Record<string, unknown>
+  ): Promise<T> {
+    if (!(await this.session.getAccessToken())) {
+      throw new AuthError(
+        'signInRequired',
+        'Sign in to manage the account',
+        401
+      );
+    }
+    try {
+      return await this.request<T>(method, action, body);
+    } catch (error) {
+      if (!(error instanceof AuthError) || error.code !== 'signInRequired')
+        throw error;
+      if (!(await this.session.refresh())) throw error;
+      return this.request<T>(method, action, body);
+    }
   }
 
   private async request<T>(

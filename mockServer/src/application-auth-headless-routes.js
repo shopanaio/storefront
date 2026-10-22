@@ -3,17 +3,24 @@ import { randomBytes } from 'node:crypto';
 /**
  * Mock of the IAM headless API (`/auth/applications/{id}/headless/v1/*`, contract k4hd) for the
  * storefront's own sign-in forms. Password and email-code sign-in are enabled; the email code
- * is always `000000`. Like IAM, it answers only server requests: any `Origin` is refused.
+ * is always `000000`. Password reset is enabled: the reset link is printed to the console
+ * instead of an email. Like IAM, it answers only server requests: any `Origin` is refused.
  */
 
 const routePattern =
-  /^\/auth\/applications\/([a-zA-Z0-9-]+)\/headless\/v1\/(configuration|transactions|transactions\/([^/]+)\/(password\/sign-in|password\/sign-up|email-otp\/send|email-otp\/verify|phone-otp\/send|phone-otp\/verify|social\/start)|logout)$/;
+  /^\/auth\/applications\/([a-zA-Z0-9-]+)\/headless\/v1\/(configuration|transactions|transactions\/([^/]+)\/(password\/sign-in|password\/sign-up|password\/forgot|email-otp\/send|email-otp\/verify|phone-otp\/send|phone-otp\/verify|email-verification\/resend|social\/start)|logout|password\/reset|account\/connections|account\/connections\/link|account\/connections\/unlink)$/;
 const MOCK_OTP = '000000';
 const TRANSACTION_TTL_MS = 10 * 60 * 1000;
 
 const configuration = {
   methods: {
-    password: { signIn: true, signUp: true, minLength: 10, maxLength: 128 },
+    password: {
+      signIn: true,
+      signUp: true,
+      reset: true,
+      minLength: 10,
+      maxLength: 128,
+    },
     emailOtp: { signIn: true, signUp: true, codeLength: 6 },
     phoneOtp: { signIn: false, signUp: false, codeLength: 6 },
     social: [],
@@ -48,10 +55,16 @@ const readJson = async (request) => {
 
 const basicClientId = (request) => {
   const authorization = request.headers.authorization;
-  if (typeof authorization !== 'string' || !authorization.startsWith('Basic ')) {
+  if (
+    typeof authorization !== 'string' ||
+    !authorization.startsWith('Basic ')
+  ) {
     return null;
   }
-  const decoded = Buffer.from(authorization.slice(6).trim(), 'base64').toString();
+  const decoded = Buffer.from(
+    authorization.slice(6).trim(),
+    'base64'
+  ).toString();
   const separator = decoded.indexOf(':');
   if (separator < 0) return null;
   return decodeURIComponent(decoded.slice(0, separator).replace(/\+/g, ' '));
@@ -96,7 +109,12 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
     const [, applicationId, operation, transactionId, step] = match;
 
     if (request.headers.origin) {
-      fail(response, 403, 'access_denied', 'Headless API is server-to-server only');
+      fail(
+        response,
+        403,
+        'access_denied',
+        'Headless API is server-to-server only'
+      );
       return true;
     }
     const clientId = basicClientId(request);
@@ -111,11 +129,17 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
 
     try {
       if (operation === 'configuration' && request.method === 'GET') {
-        if (request.headers['if-none-match'] === `"${configuration.revision}"`) {
-          response.writeHead(304, { etag: `"${configuration.revision}"` }).end();
+        if (
+          request.headers['if-none-match'] === `"${configuration.revision}"`
+        ) {
+          response
+            .writeHead(304, { etag: `"${configuration.revision}"` })
+            .end();
           return true;
         }
-        sendJson(response, 200, configuration, { etag: `"${configuration.revision}"` });
+        sendJson(response, 200, configuration, {
+          etag: `"${configuration.revision}"`,
+        });
         return true;
       }
 
@@ -123,6 +147,55 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
         const input = await readJson(request);
         if (input.refresh_token) store.revokeOAuthToken(input.refresh_token);
         sendJson(response, 200, { status: 'logged_out' });
+        return true;
+      }
+
+      if (operation === 'password/reset' && request.method === 'POST') {
+        const input = await readJson(request);
+        if (typeof input.password !== 'string' || input.password.length < 10) {
+          fail(response, 400, 'invalid_request', 'Password is invalid');
+          return true;
+        }
+        if (!store.resetPassword(applicationId, input.token, input.password)) {
+          fail(
+            response,
+            400,
+            'invalid_grant',
+            'Reset token is invalid or expired'
+          );
+          return true;
+        }
+        sendJson(response, 200, { status: 'password_reset' });
+        return true;
+      }
+
+      if (operation.startsWith('account/connections')) {
+        const token = request.headers['shopana-end-user-access-token'];
+        if (
+          typeof token !== 'string' ||
+          !store.userInfo(applicationId, token)
+        ) {
+          fail(
+            response,
+            401,
+            'invalid_token',
+            'End-user access token is invalid'
+          );
+          return true;
+        }
+        // Social providers are disabled in the mock configuration: nothing to connect.
+        if (operation === 'account/connections' && request.method === 'GET') {
+          sendJson(response, 200, {
+            providers: [],
+            reauthentication_required: false,
+          });
+          return true;
+        }
+        if (operation === 'account/connections/link') {
+          fail(response, 404, 'not_found', 'Provider is disabled');
+          return true;
+        }
+        fail(response, 400, 'invalid_request', 'Provider is not connected');
         return true;
       }
 
@@ -168,7 +241,11 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
           fail(response, 400, 'invalid_grant', 'Invalid credentials', id);
           return true;
         }
-        sendJson(response, 200, complete(request, applicationId, transaction, result.session));
+        sendJson(
+          response,
+          200,
+          complete(request, applicationId, transaction, result.session)
+        );
         return true;
       }
 
@@ -183,19 +260,31 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
           fail(response, 400, 'invalid_request', 'Invalid sign-up input', id);
           return true;
         }
-        const name = [input.firstName, input.lastName].filter(Boolean).join(' ');
+        const name = [input.firstName, input.lastName]
+          .filter(Boolean)
+          .join(' ');
         const result = store.signUp(applicationId, { ...input, name }, request);
         if (result.error) {
           fail(response, 409, 'user_exists', 'User already exists', id);
           return true;
         }
-        sendJson(response, 200, complete(request, applicationId, transaction, result.session));
+        sendJson(
+          response,
+          200,
+          complete(request, applicationId, transaction, result.session)
+        );
         return true;
       }
 
       if (step === 'email-otp/send') {
         if (!isEmail(input.email)) {
-          fail(response, 400, 'invalid_request', 'A valid email is required', id);
+          fail(
+            response,
+            400,
+            'invalid_request',
+            'A valid email is required',
+            id
+          );
           return true;
         }
         console.info(`[mock-iam] email code for ${input.email}: ${MOCK_OTP}`);
@@ -214,12 +303,50 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
           fail(response, 400, 'invalid_grant', 'Invalid code', id);
           return true;
         }
-        const result = store.signInWithEmailCode(applicationId, input.email, request);
-        sendJson(response, 200, complete(request, applicationId, transaction, result.session));
+        const result = store.signInWithEmailCode(
+          applicationId,
+          input.email,
+          request
+        );
+        sendJson(
+          response,
+          200,
+          complete(request, applicationId, transaction, result.session)
+        );
         return true;
       }
 
-      // Phone codes and social providers are disabled in the mock configuration.
+      if (step === 'password/forgot') {
+        if (!isEmail(input.email) || typeof input.reset_uri !== 'string') {
+          fail(response, 400, 'invalid_request', 'Invalid reset request', id);
+          return true;
+        }
+        const resetUri = new URL(input.reset_uri);
+        if (resetUri.origin !== new URL(transaction.redirectUri).origin) {
+          fail(
+            response,
+            400,
+            'invalid_request',
+            'Reset URI origin is not registered',
+            id
+          );
+          return true;
+        }
+        const token = store.requestPasswordReset(applicationId, input.email);
+        if (token) {
+          resetUri.searchParams.set('token', token);
+          console.info(
+            `[mock-iam] password reset link for ${input.email}: ${resetUri}`
+          );
+        }
+        sendJson(response, 200, {
+          status: 'reset_link_sent',
+          transaction_id: id,
+        });
+        return true;
+      }
+
+      // Phone codes, social providers and email verification are disabled in the mock.
       fail(response, 404, 'not_found', 'Method is disabled');
       return true;
     } catch {

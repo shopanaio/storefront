@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSessionContext } from '@shopana/storefront-sdk/modules/session/react';
 import { AuthError } from '../core/AuthError';
 import type {
   AuthConfiguration,
   AuthMethods,
   AuthStep,
   OtpChannel,
+  PasswordResetInput,
   PasswordSignInInput,
   PasswordSignUpInput,
 } from '../core/types';
@@ -35,6 +35,12 @@ export type AuthFlowStep =
   | { type: 'verificationRequired'; method: 'otp' | 'link'; email: string }
   /** The account was created; sign in with the same credentials. */
   | { type: 'signInRequired'; email: string }
+  /** A reset link was sent to `email` if it has an account; ask the buyer to check the inbox. */
+  | { type: 'resetLinkSent'; email: string }
+  /** The new password is set; sign in with it. */
+  | { type: 'passwordReset' }
+  /** The verification email was sent to `email` again. */
+  | { type: 'verificationSent'; email: string }
   /** Signed in; the session hooks of the SDK already see the user. */
   | { type: 'completed' };
 
@@ -59,6 +65,20 @@ export interface UseAuthResult {
   password: {
     signIn(input: PasswordSignInInput): Promise<AuthStep | null>;
     signUp(input: PasswordSignUpInput): Promise<AuthStep | null>;
+    /**
+     * Sends a reset link opening `resetPath` (`/account/reset-password` by default); that page
+     * reads the token with `readPasswordResetLink()` and calls `reset()`.
+     */
+    forgot(
+      email: string,
+      options?: { resetPath?: string }
+    ): Promise<AuthStep | null>;
+    /** Sets the new password of a reset link; the buyer then signs in with it. */
+    reset(input: PasswordResetInput): Promise<AuthStep | null>;
+  };
+  emailVerification: {
+    /** Sends the verification email again; without an argument, to the email of the step. */
+    resend(email?: string): Promise<AuthStep | null>;
   };
   emailOtp: OtpActions;
   phoneOtp: OtpActions;
@@ -66,8 +86,6 @@ export interface UseAuthResult {
     /** Leaves for the provider; the buyer returns to `returnTo` (the current page) signed in. */
     start(provider: string, options?: { returnTo?: string }): Promise<void>;
   };
-  /** IAM page to reset a forgotten password; null without customer accounts. */
-  passwordResetUrl: string | null;
   /** Back to the method forms, e.g. to change the email a code was sent to. */
   reset(): void;
 }
@@ -90,9 +108,11 @@ const IDLE: AuthFlowStep = { type: 'idle' };
  */
 export function useAuth(): UseAuthResult {
   const client = useHeadlessAuthClient();
-  const { iamClient } = useSessionContext();
-  const { configuration, isLoading, error: configurationError } =
-    useAuthConfiguration();
+  const {
+    configuration,
+    isLoading,
+    error: configurationError,
+  } = useAuthConfiguration();
   const [step, setStep] = useState<AuthFlowStep>(IDLE);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
@@ -105,9 +125,15 @@ export function useAuth(): UseAuthResult {
     if (!otpSent) return;
     const timer = setInterval(() => {
       setStep((current) => {
-        if (current.type !== 'otpSent' || current.resendIn === 0) return current;
-        const resendIn = Math.max(0, Math.ceil((resendAt.current - Date.now()) / 1000));
-        return resendIn === current.resendIn ? current : { ...current, resendIn };
+        if (current.type !== 'otpSent' || current.resendIn === 0)
+          return current;
+        const resendIn = Math.max(
+          0,
+          Math.ceil((resendAt.current - Date.now()) / 1000)
+        );
+        return resendIn === current.resendIn
+          ? current
+          : { ...current, resendIn };
       });
     }, 1000);
     return () => clearInterval(timer);
@@ -156,7 +182,11 @@ export function useAuth(): UseAuthResult {
       const send = (destination?: string) => {
         const target = destination ?? remembered();
         if (!target) {
-          const failure = new AuthError('invalidInput', `No ${channel} to send a code to`, 0);
+          const failure = new AuthError(
+            'invalidInput',
+            `No ${channel} to send a code to`,
+            0
+          );
           setError(failure);
           return Promise.resolve(null);
         }
@@ -166,7 +196,11 @@ export function useAuth(): UseAuthResult {
             channel === 'email'
               ? client.sendEmailOtp({ email: target })
               : client.sendPhoneOtp({ phone: target }),
-          { channel, destination: target, email: channel === 'email' ? target : undefined }
+          {
+            channel,
+            destination: target,
+            email: channel === 'email' ? target : undefined,
+          }
         );
       };
       return {
@@ -180,7 +214,11 @@ export function useAuth(): UseAuthResult {
               channel === 'email'
                 ? client.verifyEmailOtp({ email: target, code })
                 : client.verifyPhoneOtp({ phone: target, code }),
-            { channel, destination: target, email: channel === 'email' ? target : undefined }
+            {
+              channel,
+              destination: target,
+              email: channel === 'email' ? target : undefined,
+            }
           );
         },
       };
@@ -200,6 +238,37 @@ export function useAuth(): UseAuthResult {
       signUp: (input: PasswordSignUpInput) => {
         destinations.current.email = input.email;
         return run(() => client.passwordSignUp(input), { email: input.email });
+      },
+      forgot: (email: string, options: { resetPath?: string } = {}) => {
+        destinations.current.email = email;
+        return run(() => client.requestPasswordReset({ email, ...options }), {
+          email,
+        });
+      },
+      reset: (input: PasswordResetInput) =>
+        run(() => client.resetPassword(input), {}),
+    }),
+    [client, run]
+  );
+
+  const emailVerification = useMemo(
+    () => ({
+      resend: (email?: string) => {
+        const target = email ?? destinations.current.email;
+        if (!target) {
+          setError(
+            new AuthError(
+              'invalidInput',
+              'No email to send the verification to',
+              0
+            )
+          );
+          return Promise.resolve(null);
+        }
+        destinations.current.email = target;
+        return run(() => client.resendVerificationEmail({ email: target }), {
+          email: target,
+        });
       },
     }),
     [client, run]
@@ -227,12 +296,10 @@ export function useAuth(): UseAuthResult {
     isPending,
     error: error ?? (step.type === 'idle' ? configurationError : null),
     password,
+    emailVerification,
     emailOtp,
     phoneOtp,
     social,
-    passwordResetUrl: iamClient
-      ? `${iamClient.applicationBaseUrl}/password/forgot`
-      : null,
     reset,
   };
 }
@@ -262,6 +329,12 @@ function toFlowStep(
       };
     case 'signInRequired':
       return { type: 'signInRequired', email: context.email ?? '' };
+    case 'resetLinkSent':
+      return { type: 'resetLinkSent', email: context.email ?? '' };
+    case 'passwordReset':
+      return { type: 'passwordReset' };
+    case 'verificationSent':
+      return { type: 'verificationSent', email: context.email ?? '' };
     case 'redirect':
       // The page is leaving for the provider; the form stays as it is.
       return IDLE;

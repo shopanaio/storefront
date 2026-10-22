@@ -63,7 +63,9 @@ describe('useAuth', () => {
     expect(result.current.isPending).toBe(true);
 
     act(() => {
-      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      window.dispatchEvent(
+        new PageTransitionEvent('pageshow', { persisted: true })
+      );
     });
     expect(result.current.isPending).toBe(false);
   });

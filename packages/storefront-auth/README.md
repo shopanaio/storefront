@@ -63,16 +63,22 @@ export function SignIn() {
         <PasswordForm
           minLength={auth.methods.password.minLength}
           onSubmit={auth.password.signIn}
-          forgotPasswordHref={auth.passwordResetUrl}
+          onForgotPassword={
+            auth.methods.password.reset ? auth.password.forgot : undefined
+          }
         />
       )}
-      {auth.methods?.emailOtp.signIn && <EmailForm onSubmit={(email) => auth.emailOtp.send(email)} />}
+      {auth.methods?.emailOtp.signIn && (
+        <EmailForm onSubmit={(email) => auth.emailOtp.send(email)} />
+      )}
       {auth.methods?.social.map(({ provider }) => (
         <button key={provider} onClick={() => auth.social.start(provider)}>
           {provider}
         </button>
       ))}
-      {auth.error && <FormError code={auth.error.code} retryAfter={auth.error.retryAfter} />}
+      {auth.error && (
+        <FormError code={auth.error.code} retryAfter={auth.error.retryAfter} />
+      )}
     </>
   );
 }
@@ -84,30 +90,55 @@ outcome of the pending one.
 
 ### Steps (`auth.step.type`)
 
-| Step                   | What the form shows                                                                 |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `idle`                 | Method forms                                                                        |
-| `otpSent`              | Code field; `destination`, `resendIn` (counts down), `expiresAt`                    |
+| Step                   | What the form shows                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `idle`                 | Method forms                                                                       |
+| `otpSent`              | Code field; `destination`, `resendIn` (counts down), `expiresAt`                   |
 | `verificationRequired` | `method: 'otp'` — `emailOtp.send()` then `verify(code)`; `link` — check your email |
-| `signInRequired`       | Account created; sign in with the same credentials                                  |
-| `completed`            | Signed in; `useUser()` already has the user, the account cart is being attached     |
+| `signInRequired`       | Account created; sign in with the same credentials                                 |
+| `resetLinkSent`        | `password.forgot()` sent a reset link to `email`, if it has an account             |
+| `passwordReset`        | `password.reset()` set the new password; sign in with it                           |
+| `verificationSent`     | `emailVerification.resend()` sent the verification email to `email` again          |
+| `completed`            | Signed in; `useUser()` already has the user, the account cart is being attached    |
 
 ### Errors (`auth.error.code`)
 
 `invalidCredentials` (never says whether the account exists), `userExists`, `signUpDisabled`,
 `methodDisabled`, `invalidInput`, `expired` (the sign-in timed out, failed too often or was
 spent by a parallel step; the flow returns to `idle`), `rateLimited`
-(`retryAfter` seconds), `deliveryUnavailable`, `unavailable`, `disabled`.
+(`retryAfter` seconds), `deliveryUnavailable`, `unavailable`, `disabled`. Account actions add
+`signInRequired`, `reauthenticationRequired`, `lastLoginMethod`, `accountConflict` and
+`linkingFailed`.
 
-## Not covered by the IAM headless API
+## Password reset
 
-Password reset, resending the verification email and changing the password are IAM hosted
-pages only. `auth.passwordResetUrl` points to the hosted password reset page.
+`auth.password.forgot(email, { resetPath })` emails a link to `resetPath` of this storefront
+(`/account/reset-password` by default). The link passes through IAM, which adds the reset token
+or, for a spent or expired link, an error. The page reads it and sets the new password:
+
+```tsx
+const link = readPasswordResetLink(); // { token } | { error: 'expired' } | null
+if (link && 'token' in link) {
+  await auth.password.reset({ token: link.token, password });
+}
+```
+
+The reset ends every session of the buyer, who then signs in with the new password.
+
+## Connected accounts
+
+`useAccountConnections()` lists the social providers of the signed-in buyer and connects or
+disconnects them, like the IAM hosted connections page. Connecting leaves for the provider and
+returns to `returnTo` (the current page); the hook reads the outcome from the address bar into
+`result`. Changing connections needs a sign-in within the last 10 minutes
+(`connections.reauthenticationRequired`, error `reauthenticationRequired`); the last way to
+sign in cannot be disconnected (`lastLoginMethod`).
 
 ## Local development
 
-The mock server implements the headless API: password and email-code sign-in are enabled,
-the email code is always `000000`.
+The mock server implements the headless API: password and email-code sign-in and password
+reset are enabled, the email code is always `000000`, and the reset link is printed to its
+console.
 
 ## Tests
 

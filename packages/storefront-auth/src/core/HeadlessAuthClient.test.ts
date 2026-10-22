@@ -27,7 +27,9 @@ afterEach(() => {
 describe('HeadlessAuthClient', () => {
   it('sends a step requested while another runs only once', async () => {
     let answer!: (response: Response) => void;
-    fetchMock.mockReturnValue(new Promise<Response>((resolve) => (answer = resolve)));
+    fetchMock.mockReturnValue(
+      new Promise<Response>((resolve) => (answer = resolve))
+    );
     const client = new HeadlessAuthClient({ session });
 
     const first = client.passwordSignIn(credentials);
@@ -56,14 +58,22 @@ describe('HeadlessAuthClient', () => {
 
   it('keeps a known code and its retry delay', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(429, { error: 'rateLimited', message: 'Slow down', retryAfter: 30 })
+      jsonResponse(429, {
+        error: 'rateLimited',
+        message: 'Slow down',
+        retryAfter: 30,
+      })
     );
 
     const failure = await new HeadlessAuthClient({ session })
       .passwordSignIn(credentials)
       .catch((error: unknown) => error);
 
-    expect(failure).toMatchObject({ code: 'rateLimited', retryAfter: 30, message: 'Slow down' });
+    expect(failure).toMatchObject({
+      code: 'rateLimited',
+      retryAfter: 30,
+      message: 'Slow down',
+    });
   });
 
   it('rejects a successful answer without a body', async () => {

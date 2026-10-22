@@ -11,6 +11,8 @@ export interface AuthMethods {
   password: {
     signIn: boolean;
     signUp: boolean;
+    /** A forgotten password can be reset by a link sent to the email. */
+    reset: boolean;
     minLength: number;
     maxLength: number;
   };
@@ -34,7 +36,12 @@ export type AuthStep =
   /** Signed in: the session cookies are set and the session is adopted by this tab. */
   | { type: 'completed'; session: BrowserSession }
   /** A code was sent; it can be resent after `resendAfter` seconds. */
-  | { type: 'otpSent'; channel: OtpChannel; resendAfter: number; expiresIn: number }
+  | {
+      type: 'otpSent';
+      channel: OtpChannel;
+      resendAfter: number;
+      expiresIn: number;
+    }
   /**
    * The email must be confirmed first. With `otp` the form asks for the code sent to it
    * (`emailOtp.verify`); with `link` the buyer follows the link and signs in again.
@@ -42,6 +49,12 @@ export type AuthStep =
   | { type: 'verificationRequired'; method: 'otp' | 'link' }
   /** The account was created without a session: the buyer signs in now. */
   | { type: 'signInRequired' }
+  /** A reset link was sent, if the email belongs to an account; it opens `resetPath`. */
+  | { type: 'resetLinkSent' }
+  /** The new password is set and every session ended; the buyer signs in with it. */
+  | { type: 'passwordReset' }
+  /** The verification email was sent again, if the email waits for it. */
+  | { type: 'verificationSent' }
   /** The browser leaves for a social provider. */
   | { type: 'redirect'; url: string };
 
@@ -58,7 +71,12 @@ export type AuthStep =
  * - `rateLimited` — too many attempts; `retryAfter` says when to try again;
  * - `deliveryUnavailable` — the code could not be delivered;
  * - `unavailable` — IAM or the session server is unreachable;
- * - `disabled` — customer accounts are not configured for this storefront.
+ * - `disabled` — customer accounts are not configured for this storefront;
+ * - `signInRequired` — an account action without a session; the buyer signs in;
+ * - `reauthenticationRequired` — connections change only within 10 minutes of signing in;
+ * - `lastLoginMethod` — the last way to sign in cannot be disconnected;
+ * - `accountConflict` — the provider account is connected more than once or to someone else;
+ * - `linkingFailed` — the provider could not be connected or disconnected.
  */
 export const AUTH_ERROR_CODES = [
   'invalidCredentials',
@@ -71,6 +89,11 @@ export const AUTH_ERROR_CODES = [
   'deliveryUnavailable',
   'unavailable',
   'disabled',
+  'signInRequired',
+  'reauthenticationRequired',
+  'lastLoginMethod',
+  'accountConflict',
+  'linkingFailed',
 ] as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number];
@@ -112,6 +135,22 @@ export interface PhoneOtpVerifyInput {
   code: string;
 }
 
+export interface PasswordForgotInput {
+  email: string;
+  /** Page of this storefront with the new-password form; `/account/reset-password` by default. */
+  resetPath?: string;
+}
+
+export interface PasswordResetInput {
+  /** `token` of the reset link, see `readPasswordResetLink()`. */
+  token: string;
+  password: string;
+}
+
+export interface EmailVerificationResendInput {
+  email: string;
+}
+
 export interface SocialStartInput {
   provider: string;
   /** Path of this storefront to return to after the provider; the current page by default. */
@@ -127,9 +166,59 @@ export interface HeadlessActionInputs {
   'phone-otp-send': PhoneOtpSendInput;
   'phone-otp-verify': PhoneOtpVerifyInput;
   'social-start': SocialStartInput;
+  'password-forgot': PasswordForgotInput;
+  'password-reset': PasswordResetInput;
+  'email-verification-resend': EmailVerificationResendInput;
 }
 
 export type HeadlessAction = keyof HeadlessActionInputs;
+
+/** A social provider as the account page shows it. */
+export interface AccountConnection {
+  provider: string;
+  /** Enabled for this store; a disabled provider is listed while it is still connected. */
+  enabled: boolean;
+  status: 'connected' | 'notConnected' | 'conflict';
+}
+
+export interface AccountConnections {
+  providers: readonly AccountConnection[];
+  /** Connections change only within 10 minutes of signing in; sign in again first. */
+  reauthenticationRequired: boolean;
+}
+
+export type ConnectionErrorCode =
+  | 'accessDenied'
+  | 'emailMismatch'
+  | 'accountConflict'
+  | 'reauthenticationRequired'
+  | 'linkingFailed';
+
+/** Outcome of connecting a provider, read from the page the browser returned to. */
+export type ConnectionResult =
+  | { provider: string; linked: true }
+  | { provider: string; linked: false; error: ConnectionErrorCode };
+
+export interface ConnectionLinkInput {
+  provider: string;
+  /** Path of this storefront to return to from the provider; the current page by default. */
+  returnTo?: string;
+}
+
+export interface ConnectionUnlinkInput {
+  provider: string;
+}
+
+/** Account actions of the headless handlers and their request bodies. */
+export interface AccountActionInputs {
+  'connection-link': ConnectionLinkInput;
+  'connection-unlink': ConnectionUnlinkInput;
+}
+
+export type AccountAction = keyof AccountActionInputs;
+
+/** Default page of the new-password form a reset link opens. */
+export const DEFAULT_PASSWORD_RESET_PATH = '/account/reset-password';
 
 /** Base path of the headless handlers generated by the storefront runtime. */
 export const HEADLESS_AUTH_BASE_PATH = '/auth/headless';
