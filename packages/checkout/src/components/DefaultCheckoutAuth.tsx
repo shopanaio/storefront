@@ -1,8 +1,10 @@
 'use client';
 
 import { Button, Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import type { CheckoutAuthProps } from '#checkout/theme';
+import { mq } from '#checkout/ui/breakpoints';
 
 /**
  * The checkout's own sign-in control: "Log in" for a guest, "Signed in as" with "Log out" for a
@@ -17,14 +19,20 @@ export const DefaultCheckoutAuth = ({
   onSignOut,
 }: CheckoutAuthProps) => {
   const t = useTranslations('Checkout');
+  const { styles, cx } = useStyles();
   if (status === 'authenticated' && user) {
     return (
-      <Flex className={className} align="center" gap={8} wrap>
-        <Typography.Text type="secondary">
+      <Flex
+        className={cx(styles.signedIn, className)}
+        align="center"
+        justify="space-between"
+        gap={8}
+      >
+        <Typography.Text type="secondary" className={styles.email} ellipsis>
           {t('signed-in-as', { email: user.email })}
         </Typography.Text>
         <Button
-          size="large"
+          className={styles.logOut}
           variant="link"
           color="primary"
           loading={pending}
@@ -38,7 +46,6 @@ export const DefaultCheckoutAuth = ({
   return (
     <Button
       className={className}
-      size="large"
       variant="link"
       color="primary"
       loading={pending || status === 'loading'}
@@ -48,3 +55,24 @@ export const DefaultCheckoutAuth = ({
     </Button>
   );
 };
+
+const useStyles = createStyles(({ css }) => ({
+  // On a phone always a row of its own under the title; beside the form, the rest of the header
+  // row. "Log out" is at its end.
+  signedIn: css`
+    flex: 1 1 100%;
+    min-width: 0;
+
+    ${mq.lg} {
+      flex: 1 1 auto;
+    }
+  `,
+  // Short of room the address is cut, and "Log out" stays on the line.
+  email: css`
+    min-width: 0;
+  `,
+  logOut: css`
+    flex: none;
+    padding-inline: 0;
+  `,
+}));

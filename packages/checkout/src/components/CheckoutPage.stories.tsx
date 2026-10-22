@@ -1,8 +1,4 @@
-import '#checkout/vendors/address-ua/register';
-import '#checkout/vendors/liqpay/register';
-import '#checkout/vendors/nova-poshta/register';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useTranslations } from 'next-intl';
 import { clearCustomerInputs } from '#checkout/sections/delivery/customerInputStorage';
 import {
   branchInput,
@@ -37,7 +33,7 @@ import { withDirectory } from '#checkout/stories/withDirectory';
 import { settlementAddressData } from '#checkout/vendors/nova-poshta/address';
 import { popularCities } from '#checkout/vendors/nova-poshta/popularCities';
 import type { Checkout } from '#checkout/types/entity';
-import { CheckoutView } from './CheckoutView';
+import { CheckoutFormPage } from '#checkout/stories/CheckoutFormPage';
 
 /**
  * The whole checkout page as the buyer fills it in: the contact with the sign-in button, the
@@ -45,28 +41,16 @@ import { CheckoutView } from './CheckoutView';
  * summary the promo codes, the loyalty block and the totals. Every section is the real one
  * against the mock API, so the page can be clicked through; placing the order is refused.
  */
-function CheckoutPage() {
-  const t = useTranslations('Checkout');
-  return (
-    <CheckoutView
-      brand={<strong>Storefront</strong>}
-      features={{ auth: true, country: 'UA' }}
-      onSubmit={(event) => event.preventDefault()}
-      t={t}
-    />
-  );
-}
-
 const meta = {
   title: 'Checkout/Page/Filled',
-  component: CheckoutPage,
+  component: CheckoutFormPage,
   decorators: [withCheckout, withDirectory],
   parameters: { layout: 'fullscreen' },
   beforeEach: ({ parameters }) => {
     clearCustomerInputs();
     mockCheckout(parameters.checkout as Partial<CheckoutMockState>);
   },
-} satisfies Meta<typeof CheckoutPage>;
+} satisfies Meta<typeof CheckoutFormPage>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

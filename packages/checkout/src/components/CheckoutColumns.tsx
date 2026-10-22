@@ -81,7 +81,9 @@ const useStyles = createStyles(({ token, css }) => ({
     }
   `,
   rightContainer: css`
-    background-color: ${token.colorBgLayout};
+    ${mq.lg} {
+      background-color: ${token.colorBgLayout};
+    }
   `,
   right: css`
     box-sizing: border-box;

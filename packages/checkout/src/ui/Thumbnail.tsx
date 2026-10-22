@@ -19,12 +19,14 @@ export function Thumbnail({ src, alt = '', className }: ThumbnailProps) {
   );
 }
 
+/** Side of a product thumbnail, the same on a phone and on a desktop. */
+export const THUMBNAIL_SIZE = 50;
 /** Space between the image and the frame of the thumbnail. */
-const INSET = 2;
+export const THUMBNAIL_INSET = 2;
 
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
-    padding: ${INSET}px;
+    padding: ${THUMBNAIL_INSET}px;
     overflow: hidden;
     min-height: 48px;
     height: unset;
@@ -37,6 +39,6 @@ const useStyles = createStyles(({ css, token }) => ({
     height: 100%;
     object-fit: contain;
     /* Follows the frame: its radius less the inset. */
-    border-radius: ${Math.max(token.borderRadius - INSET, 0)}px;
+    border-radius: ${Math.max(token.borderRadius - THUMBNAIL_INSET, 0)}px;
   `,
 }));

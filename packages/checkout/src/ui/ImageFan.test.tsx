@@ -28,9 +28,29 @@ describe('ImageFan', () => {
     const [front, left, right] = screen
       .getAllByRole('img')
       .map((image) => image.parentElement?.style.transform);
-    expect(front).toBe('translateX(0px) rotate(0deg)');
+    expect(front).toBe('translate(0px, 0px) rotate(0deg)');
     expect(left).toContain('rotate(-');
     expect(right).not.toContain('rotate(-');
+  });
+
+  it('keeps its proportions at any size', () => {
+    const fan = (size: number) => {
+      const { container, unmount } = render(<ImageFan images={images(3)} size={size} />);
+      const box = container.firstElementChild as HTMLElement;
+      const cards = [...box.children] as HTMLElement[];
+      const result = {
+        width: parseFloat(box.style.width),
+        transforms: cards.map((card) => card.style.transform),
+      };
+      unmount();
+      return result;
+    };
+    const small = fan(50);
+    const large = fan(100);
+    expect(large.width).toBeCloseTo(small.width * 2);
+    expect(large.transforms[2]).toBe(
+      small.transforms[2].replace(/(-?[\d.]+)px/g, (_, value) => `${Number(value) * 2}px`)
+    );
   });
 
   it('draws nothing without images', () => {

@@ -297,6 +297,8 @@
     "email": "Email",
     "email-invalid-format": "Enter a valid email",
     "summary-show-more": "Show more",
-    "summary-show-less": "Show less"
+    "summary-show-less": "Show less",
+    "summary-expand": "Show order items",
+    "summary-collapse": "Hide order items"
   }
 }

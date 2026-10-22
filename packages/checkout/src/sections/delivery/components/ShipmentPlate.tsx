@@ -4,17 +4,16 @@ import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useId, useState, type ReactNode } from 'react';
-import { TbChevronDown } from 'react-icons/tb';
-import { ImageFan } from '#checkout/ui/ImageFan';
-import { composeProductTitle } from '#checkout/ui/composeProductTitle';
+import { Fold, FoldToggle } from '#checkout/ui/Fold';
+import { ImageFan, linesToFanImages } from '#checkout/ui/ImageFan';
 import type { Checkout } from '#checkout/types/entity';
 import { ShipmentLines } from './ShipmentLines';
 
 const { Text } = Typography;
 
 export interface ShipmentPlateProps {
-  /** "Shipment 1 of 3". Without it the plate opens on the pictures alone, as the order summary does. */
-  title?: string;
+  /** "Shipment 1 of 3". */
+  title: ReactNode;
   lines: Checkout.Line[];
   /** Lines that cannot be delivered to the address (R7). */
   undeliverable?: ReadonlySet<string>;
@@ -39,42 +38,26 @@ export const ShipmentPlate = ({
   children,
 }: ShipmentPlateProps) => {
   const t = useTranslations('Checkout');
-  const { styles, cx } = useStyles();
+  const { styles } = useStyles();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const listId = useId();
   const toggle = () => setExpanded((value) => !value);
   const quantity = lines.reduce((total, line) => total + line.quantity, 0);
 
-  const avatars = (
-    <Flex align="center" gap={12} className={styles.avatars}>
-      <ImageFan
-        images={lines.map((line) => ({
-          key: line.id,
-          src: line.imageSrc ?? line.purchasable?.cover?.url,
-          alt: composeProductTitle({
-            productTitle: line.purchasable?.product?.title,
-            variantTitle: line.purchasable?.title ?? line.title,
-            fallback: line.title,
-          }),
-        }))}
-      />
-      <Text type="secondary" className={styles.count}>
-        {t('delivery-shipment-items', { count: quantity })}
-      </Text>
-    </Flex>
-  );
-
   return (
     <Flex vertical className={styles.plate}>
-      <Flex align={title ? 'flex-start' : 'center'} gap={12}>
+      <Flex align="flex-start" gap={12}>
         <Flex vertical className={styles.summary} onClick={toggle}>
-          {title ? <Text strong>{title}</Text> : null}
-          <div
-            className={cx(styles.collapse, !expanded && styles.open)}
-            inert={expanded}
-          >
-            <div className={styles.collapseInner}>{avatars}</div>
-          </div>
+          {typeof title === 'string' ? <Text strong>{title}</Text> : title}
+          {/* The pictures fold while the list unfolds, so nothing jumps. */}
+          <Fold open={!expanded}>
+            <Flex align="center" gap={12} className={styles.avatars}>
+              <ImageFan images={linesToFanImages(lines)} />
+              <Text type="secondary" className={styles.count}>
+                {t('delivery-shipment-items', { count: quantity })}
+              </Text>
+            </Flex>
+          </Fold>
         </Flex>
         {action ? (
           <Button
@@ -86,34 +69,20 @@ export const ShipmentPlate = ({
             {action.label}
           </Button>
         ) : null}
-        <Button
-          type="text"
-          size="small"
-          className={styles.toggle}
-          aria-expanded={expanded}
-          aria-controls={listId}
-          aria-label={t(
+        <FoldToggle
+          open={expanded}
+          controls={listId}
+          label={t(
             expanded ? 'delivery-shipment-collapse' : 'delivery-shipment-expand'
           )}
-          icon={
-            <TbChevronDown
-              className={cx(styles.chevron, expanded && styles.chevronUp)}
-            />
-          }
           onClick={toggle}
         />
       </Flex>
-      <div
-        id={listId}
-        className={cx(styles.collapse, expanded && styles.open)}
-        inert={!expanded}
-      >
-        <div className={styles.collapseInner}>
-          <div className={styles.lines}>
-            <ShipmentLines lines={lines} undeliverable={undeliverable} />
-          </div>
+      <Fold id={listId} open={expanded}>
+        <div className={styles.lines}>
+          <ShipmentLines lines={lines} undeliverable={undeliverable} />
         </div>
-      </div>
+      </Fold>
       {children}
     </Flex>
   );
@@ -131,27 +100,6 @@ const useStyles = createStyles(({ css, token }) => ({
     min-width: 0;
     cursor: pointer;
   `,
-  // The rows animate their height: the avatars fold while the list unfolds, so nothing jumps.
-  collapse: css`
-    display: grid;
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transition:
-      grid-template-rows ${token.motionDurationMid} ease,
-      opacity ${token.motionDurationMid} ease;
-
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
-    }
-  `,
-  open: css`
-    grid-template-rows: 1fr;
-    opacity: 1;
-  `,
-  collapseInner: css`
-    overflow: hidden;
-    min-height: 0;
-  `,
   avatars: css`
     padding-top: ${token.paddingXXS}px;
   `,
@@ -162,16 +110,6 @@ const useStyles = createStyles(({ css, token }) => ({
     flex: none;
     height: auto;
     padding: 0;
-  `,
-  toggle: css`
-    flex: none;
-    color: ${token.colorTextSecondary};
-  `,
-  chevron: css`
-    transition: transform ${token.motionDurationMid} ease;
-  `,
-  chevronUp: css`
-    transform: rotate(180deg);
   `,
   lines: css`
     padding-top: ${token.paddingXXS}px;

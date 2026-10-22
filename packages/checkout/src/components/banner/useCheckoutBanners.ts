@@ -30,7 +30,7 @@ import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyA
 import {
   focusAnchor,
   sectionAnchor,
-  SUMMARY_ANCHOR,
+  LINES_ANCHOR,
 } from '#checkout/ui/focusAnchor';
 
 /** Messages of the checkout banner, most important first. */
@@ -114,7 +114,7 @@ export function useCheckoutBanners(): BannerItem[] {
           homePath,
           openCart,
           focusSection: (section) => focusAnchor(sectionAnchor(section)),
-          focusSummary: () => focusAnchor(SUMMARY_ANCHOR, { focus: false }),
+          focusSummary: () => focusAnchor(LINES_ANCHOR, { focus: false }),
           dismiss,
           // A failed write is reported by its own banner; the action needs no handling here.
           dropRedemption: () => void api.setLoyaltyRedemption(null).catch(() => undefined),

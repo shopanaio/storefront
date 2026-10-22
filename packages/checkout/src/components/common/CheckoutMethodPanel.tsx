@@ -85,6 +85,8 @@ const useStyles = createStyles(({ token, css }) => ({
     box-sizing: border-box;
     border: 1px solid;
     border-color: ${token.colorBorder};
+    /* White on any page, as the other cards of the checkout (SelectCard). */
+    background: ${token.colorBgContainer} !important;
     min-height: 50px;
     overflow: visible;
   `,

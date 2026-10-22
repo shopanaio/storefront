@@ -10,6 +10,11 @@ interface Prop {
   title?: React.ReactNode;
   /** Optional action component to render next to the section title */
   headerAction?: React.ReactNode;
+  /**
+   * Space between the title and the content, 8px by default; less where a header action taller
+   * than the title already adds room under it.
+   */
+  titleGap?: number;
   /** Section content */
   children: React.ReactNode;
 }
@@ -23,10 +28,11 @@ export const CheckoutSection = ({
   id,
   title,
   headerAction,
+  titleGap = 8,
   children,
 }: Prop) => {
   return (
-    <Flex id={id} vertical gap={8}>
+    <Flex id={id} vertical gap={titleGap}>
       {(title || headerAction) && (
         // On a phone a long header action goes under the title instead of squeezing it.
         <Flex justify="space-between" align="center" wrap gap={8}>

@@ -1,6 +1,8 @@
 import { createStyles } from 'antd-style';
-import { mq } from '#checkout/ui/breakpoints';
+import { breakpoints, mq } from '#checkout/ui/breakpoints';
+import { useMediaQuery } from '#checkout/ui/useMediaQuery';
 import { Summary } from './summary/Summary';
+import { SummaryLines } from './summary/SummaryLines';
 import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
@@ -36,6 +38,15 @@ export const CheckoutView = ({
   const { checkout } = useCheckoutData();
   usePreloadModules(checkout);
   const { styles } = useStyles();
+  // Below lg the lines of the order lead the page, over the form; the rest of the summary goes
+  // under the form, and the order comment with it, over the totals.
+  const stacked = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
+  const comment = (
+    <CheckoutSection id={sectionAnchor(SectionId.Comment)}>
+      <SectionRenderer slug={SectionId.Comment} />
+      <SectionIssues sections={[SectionId.Comment]} />
+    </CheckoutSection>
+  );
 
   return (
     <div className={styles.wrapper}>
@@ -44,9 +55,12 @@ export const CheckoutView = ({
           left={
             <>
               {brand}
+              {stacked && checkout ? <SummaryLines checkout={checkout} /> : null}
               <CheckoutSection
                 id={sectionAnchor(SectionId.Contact)}
                 title={t('contact')}
+                // "Log in" is taller than the title and already leaves room under it.
+                titleGap={6}
                 headerAction={
                   features?.auth ? (
                     <CheckoutAuth className={styles.logInButton} />
@@ -79,10 +93,7 @@ export const CheckoutView = ({
                 <SectionIssues sections={[SectionId.Payment]} />
               </CheckoutSection>
 
-              <CheckoutSection id={sectionAnchor(SectionId.Comment)}>
-                <SectionRenderer slug={SectionId.Comment} />
-                <SectionIssues sections={[SectionId.Comment]} />
-              </CheckoutSection>
+              {stacked ? null : comment}
 
               <div className={styles.actionsLeft}>
                 <CheckoutActions />
@@ -92,7 +103,13 @@ export const CheckoutView = ({
           right={
             <>
               <div id={SUMMARY_ANCHOR} className={styles.summary}>
-                {checkout ? <Summary checkout={checkout} /> : null}
+                {checkout ? (
+                  <Summary
+                    checkout={checkout}
+                    withLines={!stacked}
+                    beforeTotals={stacked ? comment : null}
+                  />
+                ) : null}
               </div>
               <div className={styles.actionsRight}>
                 <CheckoutActions />

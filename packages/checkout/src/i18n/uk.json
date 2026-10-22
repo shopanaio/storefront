@@ -297,6 +297,8 @@
     "email": "Email",
     "email-invalid-format": "Введіть коректний email",
     "summary-show-more": "Показати більше",
-    "summary-show-less": "Показати менше"
+    "summary-show-less": "Показати менше",
+    "summary-expand": "Показати товари замовлення",
+    "summary-collapse": "Сховати товари замовлення"
   }
 }

@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 import { Badge } from '#checkout/ui/Badge';
 import { createStyles } from 'antd-style';
-import { Thumbnail } from '#checkout/ui/Thumbnail';
+import { THUMBNAIL_SIZE, Thumbnail } from '#checkout/ui/Thumbnail';
 import type { Checkout } from '#checkout/types/entity';
 import { Money } from '#checkout/ui/Money';
 import { composeProductTitle } from '#checkout/ui/composeProductTitle';
@@ -89,8 +89,8 @@ const useStyles = createStyles(({ token, css }) => ({
     padding-right: ${token.padding}px;
   `,
   thumbnail: css`
-    width: 50px;
-    height: 50px;
+    width: ${THUMBNAIL_SIZE}px;
+    height: ${THUMBNAIL_SIZE}px;
   `,
   productName: css`
     display: -webkit-box;

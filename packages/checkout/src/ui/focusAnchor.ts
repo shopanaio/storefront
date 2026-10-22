@@ -1,8 +1,10 @@
 import { SectionId } from '#checkout/state/interface';
 import { ADDRESS_SECTION_ANCHOR } from '#checkout/sections/address/anchor';
 
-/** Id of the order summary, for actions that send the buyer to the lines. */
+/** Id of the order summary: the promo codes, the rewards and the totals. */
 export const SUMMARY_ANCHOR = 'checkout-summary';
+/** Id of the lines of the order, for actions that send the buyer to them; on a phone they lead the page. */
+export const LINES_ANCHOR = 'checkout-lines';
 
 /** Id of the element holding a section, for actions that send the buyer there. */
 export function sectionAnchor(section: SectionId): string {
