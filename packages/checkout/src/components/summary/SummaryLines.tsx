@@ -122,7 +122,6 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
     <Flex id={LINES_ANCHOR} vertical gap={8}>
       <Flex align="center" gap={8} className={styles.header} onClick={toggle}>
         {title}
-        {action}
         <FoldToggle
           open={expanded}
           controls={listId}

@@ -3,6 +3,7 @@
 import { Divider, Flex, Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { mq } from '#checkout/ui/breakpoints';
+import { BrandHeader } from './BrandHeader';
 import React, { useEffect, useState } from 'react';
 
 const { Text } = Typography;
@@ -45,7 +46,7 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
       <div className={styles.container}>
       <div className={styles.main}>
         <Flex className={styles.left} vertical>
-          {brand}
+          <BrandHeader>{brand}</BrandHeader>
           <Flex vertical gap={16}>
             <Text className={styles.sectionTitle} strong>
               <Skeleton.Input size="small" style={{ width: 150 }} />

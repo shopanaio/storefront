@@ -6,6 +6,7 @@ import { SummaryLines } from './summary/SummaryLines';
 import { CheckoutActions } from './submit/CheckoutActions';
 import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
+import { BrandHeader } from './BrandHeader';
 import { CheckoutAuth } from './CheckoutAuth';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 import { CheckoutColumns } from './CheckoutColumns';
@@ -54,7 +55,7 @@ export const CheckoutView = ({
         <CheckoutColumns
           left={
             <>
-              {brand}
+              <BrandHeader>{brand}</BrandHeader>
               {stacked && checkout ? <SummaryLines checkout={checkout} /> : null}
               <CheckoutSection
                 id={sectionAnchor(SectionId.Contact)}

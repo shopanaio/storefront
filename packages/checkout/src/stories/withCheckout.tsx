@@ -5,12 +5,18 @@ import CheckoutLayout from '#checkout/components/CheckoutLayout';
 import { CheckoutProviders } from '#checkout/components/CheckoutProviders';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
 import { bannerToneDeclarations } from '#checkout/ui/banner/tones';
+import { StoryCartDrawer, useOpenStoryCart } from './StoryCartDrawer';
 
 /**
- * The only thing the stories change in the checkout: the store has customer accounts, so the
- * loyalty and sign-in parts show. Everything else is the checkout's own.
+ * What the stories change in the checkout: the store has customer accounts, so the loyalty and
+ * sign-in parts show, and a cart, opened from the header on a phone and from the summary on
+ * desktop. Everything else is the checkout's own.
  */
-const storyTheme: CheckoutThemeAdapter = { customerAccountsEnabled: true };
+const storyTheme: CheckoutThemeAdapter = {
+  customerAccountsEnabled: true,
+  CartDrawer: StoryCartDrawer,
+  useOpenCart: useOpenStoryCart,
+};
 
 function CheckoutRoot({
   fullscreen,
