@@ -1,14 +1,21 @@
 import { useSyncExternalStore } from 'react';
 import { fn, mocked } from 'storybook/test';
+import { useIsAuthenticated } from '@shopana/storefront-sdk/modules/session/react';
 import type {
+  CustomerIdentityUpdateDto,
+  CustomerNoteUpdateDto,
   DeliveryMethodUpdateDto,
   PaymentMethodUpdateDto,
 } from '#checkout/api/dto';
 import type { CheckoutApi } from '#checkout/api/interface';
-import type { CheckoutDeliveryAddressInput } from '#checkout/graphql/operations';
+import type {
+  CheckoutDeliveryAddressInput,
+  CheckoutRecipientInput,
+} from '#checkout/graphql/operations';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
+import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
 import { useRemoveCartLines } from '#checkout/hooks/useUndeliverableLines';
 import type {
@@ -40,13 +47,16 @@ export interface CheckoutMockState {
   failures?: MockFailures;
 }
 
-/** Delivery and payment writes a story can make fail. */
+/** Writes of the form a story can make fail. */
 export type MockFailures = Partial<
   Record<
     | 'selectDeliveryMethod'
     | 'updateShippingMethod'
     | 'selectPaymentMethod'
-    | 'saveDeliveryAddress',
+    | 'saveDeliveryAddress'
+    | 'updateCustomerIdentity'
+    | 'saveDeliveryRecipient'
+    | 'updateCustomerNote',
     unknown
   >
 >;
@@ -249,8 +259,8 @@ async function write(
 }
 
 /**
- * The API of the checkout, answering promo, loyalty, delivery and payment writes as the
- * server would.
+ * The API of the checkout, answering contact, recipient, note, promo, loyalty, delivery and
+ * payment writes as the server would.
  */
 function createApi(): CheckoutApi {
   const resolved = () => fn(async () => {});
@@ -288,7 +298,21 @@ function createApi(): CheckoutApi {
         withDeliveryInput(checkout, input.deliveryGroupId, input.customerInput)
       )
     ).mockName('updateShippingMethod'),
-    updateCustomerIdentity: resolved(),
+    updateCustomerIdentity: fn((input: CustomerIdentityUpdateDto) =>
+      write('updateCustomerIdentity', (checkout) => {
+        const identity = { ...checkout.customerIdentity };
+        for (const key of [
+          'email',
+          'firstName',
+          'lastName',
+          'middleName',
+          'phone',
+        ] as const) {
+          if (input[key] !== undefined) identity[key] = input[key] ?? null;
+        }
+        return { ...checkout, customerIdentity: identity };
+      })
+    ).mockName('updateCustomerIdentity'),
     saveDeliveryAddress: fn((address: CheckoutDeliveryAddressInput) =>
       write('saveDeliveryAddress', (checkout) =>
         withDeliveryAddress(checkout, {
@@ -300,8 +324,27 @@ function createApi(): CheckoutApi {
       )
     ).mockName('saveDeliveryAddress'),
     removeDeliveryAddresses: resolved(),
-    saveDeliveryRecipient: resolved(),
-    updateCustomerNote: resolved(),
+    saveDeliveryRecipient: fn((recipient: CheckoutRecipientInput | null) =>
+      write('saveDeliveryRecipient', (checkout) => ({
+        ...checkout,
+        deliveryGroups: checkout.deliveryGroups.map((group) => ({
+          ...group,
+          recipient: recipient && {
+            email: recipient.email ?? null,
+            firstName: recipient.firstName ?? null,
+            lastName: recipient.lastName ?? null,
+            middleName: recipient.middleName ?? null,
+            phone: recipient.phone ?? null,
+          },
+        })),
+      }))
+    ).mockName('saveDeliveryRecipient'),
+    updateCustomerNote: fn((input: CustomerNoteUpdateDto) =>
+      write('updateCustomerNote', (checkout) => ({
+        ...checkout,
+        customerNote: input.note || null,
+      }))
+    ).mockName('updateCustomerNote'),
     addPromoCode: fn(async ({ code }: { code: string }) => {
       await wait();
       const { checkout } = state;
@@ -421,6 +464,11 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
       onSignOut: signOut,
     };
   });
+  const cleanupCart = fn().mockName('cleanupCart');
+  mocked(useDefaultCartCleanup).mockImplementation(() => cleanupCart);
+  mocked(useIsAuthenticated).mockImplementation(
+    () => !!useMockState().checkout?.customerIdentity.customer
+  );
   const removeLines = fn(async (lines: Checkout.Line[]) => {
     await wait();
     const { checkout } = state;

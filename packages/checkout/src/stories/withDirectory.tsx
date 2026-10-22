@@ -46,7 +46,18 @@ const UKRAINE = {
     postalCodeLabel: null,
     postalCodePattern: null,
     postalCodeExample: null,
-    provinces: [],
+    // A few oblasts and the cities of their own, as the store lists them (ISO codes, no prefix).
+    provinces: [
+      ['30', 'Київ'],
+      ['32', 'Київська область'],
+      ['46', 'Львівська область'],
+      ['51', 'Одеська область'],
+      ['63', 'Харківська область'],
+    ].map(([code, name]) => ({
+      __typename: 'CheckoutAddressProvince',
+      code,
+      name,
+    })),
   },
 };
 

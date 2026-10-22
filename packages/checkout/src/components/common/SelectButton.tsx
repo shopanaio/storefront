@@ -1,36 +1,30 @@
-import { Button, ButtonProps, Flex, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
+import { SelectCard } from '#checkout/ui/SelectCard';
 
-interface SelectButtonProps extends Omit<ButtonProps, 'children' | 'icon'> {
-  /**
-   * Main text to display when value is selected
-   */
+interface SelectButtonProps {
+  /** Main text to display when value is selected */
   mainText?: string;
-  /**
-   * Secondary text to display below main text (optional)
-   */
+  /** Secondary text to display below main text (optional) */
   secondaryText?: string;
-  /**
-   * Placeholder text when no value is selected
-   */
+  /** Placeholder text when no value is selected; also the name of the field */
   placeholder: string;
-  /**
-   * Whether a value is selected
-   */
+  /** Whether a value is selected */
   hasValue: boolean;
-  /**
-   * Optional icon to display in the button
-   */
+  /** Optional icon to display in the card */
   icon?: ReactNode;
-  /**
-   * If true, swap main and secondary text positions
-   */
+  /** If true, swap main and secondary text positions */
   invert?: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
 }
 
 /**
- * Reusable select button component with two-level text layout
+ * A value picked from a list (a Nova Poshta branch, a street) as a card with two-level text and
+ * the select or change action on the right, like the contact and the city.
  */
 export const SelectButton = ({
   mainText,
@@ -39,18 +33,23 @@ export const SelectButton = ({
   hasValue,
   icon,
   invert = false,
+  onClick,
+  disabled,
   className,
-  ...buttonProps
 }: SelectButtonProps) => {
+  const t = useTranslations('Checkout');
   const { styles, cx } = useStyles();
 
   return (
-    <Button
-      color="default"
-      variant="outlined"
-      className={cx(styles.button, className)}
+    <SelectCard
+      label={placeholder}
+      labelShown={!hasValue}
       icon={icon}
-      {...buttonProps}
+      selected={hasValue}
+      action={hasValue ? t('change') : t('select')}
+      onClick={onClick}
+      disabled={disabled}
+      className={cx(styles.card, className)}
     >
       {hasValue ? (
         <Flex className={cx(styles.flex, invert && styles.invert)}>
@@ -66,20 +65,14 @@ export const SelectButton = ({
       ) : (
         <Typography.Text type="secondary">{placeholder}</Typography.Text>
       )}
-    </Button>
+    </SelectCard>
   );
 };
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    button: css`
-      display: flex;
-      justify-content: start;
-      padding: ${token.paddingXXS}px ${token.paddingLG}px ${token.paddingXXS}px
-        ${token.paddingSM}px;
+    card: css`
       min-height: 56px;
-      height: 100%;
-      overflow: hidden;
     `,
     flex: css`
       flex-direction: column;
@@ -90,7 +83,7 @@ const useStyles = createStyles(({ token, css }) => {
       flex-direction: column-reverse;
     `,
     mainText: css`
-      max-width: 300px !important;
+      max-width: 100% !important;
       line-height: 1;
       font-size: ${token.fontSize}px;
     `,

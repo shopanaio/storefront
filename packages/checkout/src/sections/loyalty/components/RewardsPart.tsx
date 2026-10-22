@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
+import { selectedDeclarations } from '#checkout/ui/selected';
 import { useLocale, useTranslations } from 'next-intl';
 import type { IconType } from 'react-icons';
 import {
@@ -212,8 +213,7 @@ const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorBgContainer};
   `,
   applied: css`
-    border-color: ${token.colorPrimary};
-    outline: 1px solid ${token.colorPrimary};
+    ${selectedDeclarations(token)}
   `,
   problem: css`
     border-style: dashed;

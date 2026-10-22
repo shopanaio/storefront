@@ -49,7 +49,10 @@ const useStyles = createStyles(({ css, token }) => ({
     margin: 0;
   `,
   link: css`
+    /* Long titles wrap on a phone instead of running off the screen. */
+    height: auto;
     padding: 0;
-    height: 0px;
+    white-space: normal;
+    text-align: start;
   `,
 }));

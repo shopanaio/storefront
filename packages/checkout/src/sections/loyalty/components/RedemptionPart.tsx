@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Button, Flex, Radio, Switch, Typography } from 'antd';
 import { createStyles } from 'antd-style';
+import { OptionWave } from '#checkout/ui/OptionWave';
+import { selectedDeclarations } from '#checkout/ui/selected';
 import { useLocale, useTranslations } from 'next-intl';
 import { TbAlertCircle } from 'react-icons/tb';
 import type { model } from '@shopana/storefront-sdk';
@@ -149,39 +151,43 @@ export const RedemptionPart = ({
         {options.map((option) => {
           const on = selected === option.source;
           return (
-            <div key={option.source} className={styles.option} data-selected={on || undefined}>
-              <Radio
-                value={option.source}
-                disabled={orderTooSmall}
-                className={styles.radio}
-              >
-                <Flex vertical>
-                  <span>
-                    {t(
-                      option.source === 'POINTS'
-                        ? 'loyalty-source-points'
-                        : 'loyalty-source-store-credit'
+            <OptionWave key={option.source} disabled={on || busy || orderTooSmall}>
+              <div className={styles.option} data-selected={on || undefined}>
+                <Radio
+                  value={option.source}
+                  disabled={orderTooSmall}
+                  className={styles.radio}
+                >
+                  <Flex vertical>
+                    <span>
+                      {t(
+                        option.source === 'POINTS'
+                          ? 'loyalty-source-points'
+                          : 'loyalty-source-store-credit'
+                      )}
+                    </span>
+                    {on ? null : (
+                      <OptionSummary
+                        option={option}
+                        orderTooSmall={orderTooSmall}
+                        balanceShown={balanceShown}
+                        short
+                      />
                     )}
-                  </span>
-                  {on ? null : (
-                    <OptionSummary
-                      option={option}
-                      orderTooSmall={orderTooSmall}
-                      balanceShown={balanceShown}
-                      short
-                    />
-                  )}
-                </Flex>
-              </Radio>
-              {on ? <div className={styles.optionBody}>{details(option)}</div> : null}
-            </div>
+                  </Flex>
+                </Radio>
+                {on ? <div className={styles.optionBody}>{details(option)}</div> : null}
+              </div>
+            </OptionWave>
           );
         })}
-        <div className={styles.option} data-selected={selected === null || undefined}>
-          <Radio value={NONE} className={styles.radio}>
-            {t('loyalty-source-none')}
-          </Radio>
-        </div>
+        <OptionWave disabled={selected === null || busy}>
+          <div className={styles.option} data-selected={selected === null || undefined}>
+            <Radio value={NONE} className={styles.radio}>
+              {t('loyalty-source-none')}
+            </Radio>
+          </div>
+        </OptionWave>
       </Radio.Group>
     </Flex>
   );
@@ -460,8 +466,7 @@ const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorBgContainer};
 
     &[data-selected] {
-      border-color: ${token.colorPrimary};
-      outline: 1px solid ${token.colorPrimary};
+      ${selectedDeclarations(token)}
     }
   `,
   radio: css`

@@ -1,7 +1,9 @@
 import { Button, Collapse, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
+import { selectedDeclarations } from '#checkout/ui/selected';
 import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
+import { OptionWave } from '#checkout/ui/OptionWave';
 import type { Warehouse } from '../../types';
 import { formatSchedule } from '../../schedule';
 import { NPLogo } from '../Logo';
@@ -28,46 +30,48 @@ export const WarehouseModalItem = ({
     t('schedule.not_specified');
 
   return (
-    <Collapse
-      className={clsx(
-        styles.collapse,
-        isExpanded && styles.active,
-        !item.selectable && styles.disabled
-      )}
-      activeKey={isExpanded ? item.ref : undefined}
-      onChange={onToggle}
-      collapsible={item.selectable ? undefined : 'disabled'}
-      ghost
-      bordered={false}
-    >
-      <Panel
-        showArrow={false}
-        key={item.ref}
-        header={
-          <Flex gap={8} align="center" className={styles.header}>
-            <NPLogo showText={false} />
-            <Flex vertical align="start" gap={4} className={styles.content}>
-              <Typography.Text className={styles.warehouseMain}>
-                {`№${item.number} ${item.shortAddress}`}
-              </Typography.Text>
-              <Typography.Text className={styles.workTime} type="secondary">
-                {item.selectable ? schedule : t('form.point_closed')}
-              </Typography.Text>
-            </Flex>
-          </Flex>
-        }
+    <OptionWave disabled={isExpanded || !item.selectable}>
+      <Collapse
+        className={clsx(
+          styles.collapse,
+          isExpanded && styles.active,
+          !item.selectable && styles.disabled
+        )}
+        activeKey={isExpanded ? item.ref : undefined}
+        onChange={onToggle}
+        collapsible={item.selectable ? undefined : 'disabled'}
+        ghost
+        bordered={false}
       >
-        <Button
-          type="primary"
-          size="large"
-          block
-          disabled={!item.selectable}
-          onClick={() => changeWarehouse(item)}
+        <Panel
+          showArrow={false}
+          key={item.ref}
+          header={
+            <Flex gap={8} align="center" className={styles.header}>
+              <NPLogo showText={false} />
+              <Flex vertical align="start" gap={4} className={styles.content}>
+                <Typography.Text className={styles.warehouseMain}>
+                  {`№${item.number} ${item.shortAddress}`}
+                </Typography.Text>
+                <Typography.Text className={styles.workTime} type="secondary">
+                  {item.selectable ? schedule : t('form.point_closed')}
+                </Typography.Text>
+              </Flex>
+            </Flex>
+          }
         >
-          {t('pickup_from_here')}
-        </Button>
-      </Panel>
-    </Collapse>
+          <Button
+            type="primary"
+            size="large"
+            block
+            disabled={!item.selectable}
+            onClick={() => changeWarehouse(item)}
+          >
+            {t('pickup_from_here')}
+          </Button>
+        </Panel>
+      </Collapse>
+    </OptionWave>
   );
 };
 
@@ -93,8 +97,7 @@ const useStyles = createStyles(({ token, css }) => {
       }
     `,
     active: css`
-      outline: 1px solid ${token.colorPrimary};
-      border-color: ${token.colorPrimary} !important;
+      ${selectedDeclarations(token)}
     `,
     disabled: css`
       opacity: 0.6;

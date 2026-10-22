@@ -1,7 +1,9 @@
 import { Collapse, Flex, Radio, Typography } from 'antd';
 import { FC, ReactNode, useRef } from 'react';
 import { createStyles } from 'antd-style';
+import { selectedDeclarations } from '#checkout/ui/selected';
 import clsx from 'clsx';
+import { OptionWave } from '#checkout/ui/OptionWave';
 
 const { Panel } = Collapse;
 const { Text } = Typography;
@@ -29,46 +31,52 @@ export const CheckoutMethodPanel = ({
   const codeRef = useRef(Math.random().toString(36).substring(2, 15));
   const { styles } = useStyles();
   return (
-    <Collapse
-      activeKey={isActive ? codeRef.current : ''}
-      // A click on the active method changes nothing, so nothing is sent again (SC-83ef).
-      onChange={() => {
-        if (!isActive) {
-          onActive();
-        }
-      }}
-      ghost
-      bordered
-      classNames={{
-        body: clsx(styles.body, !Component && styles.hiddenBody),
-        header: styles.header,
-        root: clsx(styles.root, isActive && styles.active),
-      }}
-    >
-      <Panel
-        forceRender
-        showArrow={false}
-        key={codeRef.current}
-        header={
-          <Flex justify="space-between" align="center">
-            <Flex gap={8}>
-              <Radio checked={isActive} />
-              <Flex vertical justify="center" className={styles.titleContainer}>
-                <Text className={styles.title}>{title}</Text>
-                {description && (
-                  <Text type="secondary" className={styles.description}>
-                    {description}
-                  </Text>
-                )}
-              </Flex>
-            </Flex>
-            {brand}
-          </Flex>
-        }
+    <OptionWave disabled={isActive}>
+      <Collapse
+        activeKey={isActive ? codeRef.current : ''}
+        // A click on the active method changes nothing, so nothing is sent again (SC-83ef).
+        onChange={() => {
+          if (!isActive) {
+            onActive();
+          }
+        }}
+        ghost
+        bordered
+        classNames={{
+          body: clsx(styles.body, !Component && styles.hiddenBody),
+          header: styles.header,
+          root: clsx(styles.root, isActive && styles.active),
+        }}
       >
-        {Component && <Component {...componentProps} />}
-      </Panel>
-    </Collapse>
+        <Panel
+          forceRender
+          showArrow={false}
+          key={codeRef.current}
+          header={
+            <Flex justify="space-between" align="center" gap={12}>
+              <Flex gap={8} className={styles.main}>
+                <Radio checked={isActive} />
+                <Flex
+                  vertical
+                  justify="center"
+                  className={styles.titleContainer}
+                >
+                  <Text className={styles.title}>{title}</Text>
+                  {description && (
+                    <Text type="secondary" className={styles.description}>
+                      {description}
+                    </Text>
+                  )}
+                </Flex>
+              </Flex>
+              {brand}
+            </Flex>
+          }
+        >
+          {Component && <Component {...componentProps} />}
+        </Panel>
+      </Collapse>
+    </OptionWave>
   );
 };
 
@@ -81,8 +89,7 @@ const useStyles = createStyles(({ token, css }) => ({
     overflow: visible;
   `,
   active: css`
-    outline: 1px solid ${token.colorPrimary};
-    border-color: ${token.colorPrimary} !important;
+    ${selectedDeclarations(token)}
   `,
   header: css``,
   body: css`
@@ -99,7 +106,12 @@ const useStyles = createStyles(({ token, css }) => ({
     display: inline-block;
     margin-top: -4px;
   `,
+  /* The texts wrap beside the brand mark, never under it. */
+  main: css`
+    flex: 1;
+    min-width: 0;
+  `,
   titleContainer: css`
-    height: 40px;
+    min-height: 40px;
   `,
 }));

@@ -57,13 +57,20 @@ const useStyles = createStyles(({ token, css }) => ({
 
     ${mq.lg} {
       display: grid;
-      grid-template-columns: var(--checkout-left-fr) var(--checkout-right-fr);
+      /* minmax(0, …): a long word or a wide field does not widen its column over the other. */
+      grid-template-columns:
+        minmax(0, var(--checkout-left-fr))
+        minmax(0, var(--checkout-right-fr));
     }
   `,
   left: css`
+    /* The padding is inside the width, so the column never runs past the screen or its track. */
+    box-sizing: border-box;
     width: 100%;
+    min-width: 0;
     flex-direction: column;
-    gap: ${token.margin}px;
+    /* Between the blocks of the form: contact, delivery, payment. */
+    gap: ${token.marginLG}px;
     border-right: 2px solid ${token.colorBorder};
     padding: ${token.padding}px;
 
@@ -77,7 +84,9 @@ const useStyles = createStyles(({ token, css }) => ({
     background-color: ${token.colorBgLayout};
   `,
   right: css`
+    box-sizing: border-box;
     width: 100%;
+    min-width: 0;
     padding: ${token.padding}px;
 
     ${mq.lg} {

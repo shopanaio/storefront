@@ -64,11 +64,11 @@ export const CheckoutView = ({
                 <SectionRenderer slug={SectionId.Address} />
                 <SectionRenderer slug={SectionId.Delivery} />
                 <SectionIssues sections={[SectionId.Address, SectionId.Delivery]} />
-              </CheckoutSection>
-
-              <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
-                <SectionRenderer slug={SectionId.Recipient} />
-                <SectionIssues sections={[SectionId.Recipient]} />
+                {/* Part of the delivery block: who receives it. */}
+                <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
+                  <SectionRenderer slug={SectionId.Recipient} />
+                  <SectionIssues sections={[SectionId.Recipient]} />
+                </CheckoutSection>
               </CheckoutSection>
 
               <CheckoutSection

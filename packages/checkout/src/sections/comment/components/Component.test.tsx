@@ -12,7 +12,9 @@ vi.mock('#checkout/context/CheckoutApiContext', () => ({
 const view = (note: string) => (
   <NextIntlClientProvider
     locale="en"
-    messages={{ Checkout: { 'order-note': 'Order note' } }}
+    messages={{
+      Checkout: { 'order-note': 'Order note', 'remove-note': 'Cancel' },
+    }}
     onError={() => {}}
   >
     <CommentSectionView data={{ note }} />
@@ -61,5 +63,19 @@ describe('CommentSectionView', () => {
     flushPendingInputs();
 
     expect(mocks.updateCustomerNote).toHaveBeenCalledWith({ note: 'Ring twice' });
+  });
+
+  it('cancel closes the field and removes the saved note', () => {
+    mocks.updateCustomerNote.mockResolvedValue(undefined);
+    render(view('Call me'));
+    fireEvent.change(screen.getByLabelText('Order note'), {
+      target: { value: 'Call me twice' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByLabelText('Order note')).toBeNull();
+    expect(mocks.updateCustomerNote).toHaveBeenCalledTimes(1);
+    expect(mocks.updateCustomerNote).toHaveBeenCalledWith({ note: '' });
   });
 });

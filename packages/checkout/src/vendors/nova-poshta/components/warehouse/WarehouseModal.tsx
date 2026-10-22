@@ -9,7 +9,6 @@ import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
 import { DrawerBase } from '#checkout/ui/DrawerBase';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
-import { useIsMobile } from '#checkout/ui/useIsMobile';
 
 interface Props {
   /** Branches or postomats: the list shows only points of this kind. */
@@ -26,7 +25,6 @@ export const WarehouseModal = ({
   changeWarehouse,
   settlementRef,
 }: Props) => {
-  const isMobile = useIsMobile();
   const t = useTranslations('Modules.novaPoshta');
 
   const [open, setOpen] = useState(false);
@@ -63,7 +61,6 @@ export const WarehouseModal = ({
       <DrawerBase
         open={open}
         onClose={close}
-        engine={isMobile ? 'overlay' : 'vaul'}
         header={
           <DrawerBase.Header vertical gap={8}>
             <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>

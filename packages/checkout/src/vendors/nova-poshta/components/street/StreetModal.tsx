@@ -9,7 +9,6 @@ import { DrawerBase } from '#checkout/ui/DrawerBase';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import type { Street } from '../../types';
-import { useIsMobile } from '#checkout/ui/useIsMobile';
 
 interface Prop {
   /** Label of the picked street. */
@@ -23,7 +22,6 @@ export const StreetModal = ({
   changeStreet,
   settlementRef,
 }: Prop) => {
-  const isMobile = useIsMobile();
   const t = useTranslations('Modules.novaPoshta.form');
 
   const [isStreetModalVisible, setIsStreetModalVisible] = useState(false);
@@ -53,7 +51,6 @@ export const StreetModal = ({
       <DrawerBase
         open={isStreetModalVisible}
         onClose={() => setIsStreetModalVisible(false)}
-        engine={isMobile ? 'overlay' : 'vaul'}
         header={
           <DrawerBase.Header vertical gap={8}>
             <Flex

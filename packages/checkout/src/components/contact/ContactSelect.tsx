@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Flex, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
@@ -10,12 +10,10 @@ import { DrawerBase } from '#checkout/ui/DrawerBase';
 import { StickyButton } from '#checkout/ui/StickyButton';
 import { PhoneInputField } from './phone/PhoneNumberField';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import clsx from 'clsx';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import { formatPhoneNumberIntl } from 'react-phone-number-input';
-import { useIsMobile } from '#checkout/ui/useIsMobile';
-import { PiArrowCircleRightDuotone, PiArrowCircleRight } from 'react-icons/pi';
 import { PiUserCircleCheckDuotone } from 'react-icons/pi';
+import { SelectCard } from '#checkout/ui/SelectCard';
 import { PiUserCircle } from 'react-icons/pi';
 
 export type ContactForm = {
@@ -58,7 +56,6 @@ export const ContactSelect = ({
   withEmail = false,
 }: ContactSelectProps) => {
   const { styles } = useStyles();
-  const isMobile = useIsMobile();
   const t = useTranslations('Checkout');
   const [, token] = useToken();
   const [open, setOpen] = useState(false);
@@ -116,14 +113,15 @@ export const ContactSelect = ({
     }
   });
 
-  const ArrowIcon = hasValue ? PiArrowCircleRightDuotone : PiArrowCircleRight;
   const UserIcon = hasValue ? PiUserCircleCheckDuotone : PiUserCircle;
 
   return (
     <>
-      <Button
-        color={hasValue ? 'primary' : 'default'}
-        variant={'outlined'}
+      <SelectCard
+        label={title}
+        labelShown={!hasValue}
+        selected={Boolean(hasValue)}
+        action={hasValue ? t('change') : t('select')}
         onClick={() => setOpen(true)}
         icon={
           <UserIcon
@@ -131,37 +129,29 @@ export const ContactSelect = ({
             color={hasValue ? token.colorPrimary : token.colorIcon}
           />
         }
-        className={clsx(styles.button)}
       >
-        <Flex align="center" justify="space-between" style={{ width: '100%' }}>
-          {hasValue ? (
-            <Flex vertical align="start">
-              <Typography.Text className={styles.mainText}>
-                {fullName || t('full-name')}
+        {hasValue ? (
+          <Flex vertical align="start">
+            <Typography.Text className={styles.mainText}>
+              {fullName || t('full-name')}
+            </Typography.Text>
+            {formattedPhone && (
+              <Typography.Text type="secondary">
+                {formattedPhone}
               </Typography.Text>
-              {formattedPhone && (
-                <Typography.Text type="secondary">
-                  {formattedPhone}
-                </Typography.Text>
-              )}
-            </Flex>
-          ) : (
-            <Flex vertical align="start">
-              <Typography.Text type="secondary">{title}</Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {t('enter-contact-details')}
-              </Typography.Text>
-            </Flex>
-          )}
-          <ArrowIcon
-            color={hasValue ? token.colorPrimary : token.colorIcon}
-            size={24}
-          />
-        </Flex>
-      </Button>
+            )}
+          </Flex>
+        ) : (
+          <Flex vertical align="start">
+            <Typography.Text type="secondary">{title}</Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {t('enter-contact-details')}
+            </Typography.Text>
+          </Flex>
+        )}
+      </SelectCard>
 
       <DrawerBase
-        engine={isMobile ? 'overlay' : 'vaul'}
         open={open}
         onClose={() => setOpen(false)}
         header={
@@ -171,7 +161,6 @@ export const ContactSelect = ({
           </DrawerBase.Header>
         }
         aria-labelledby="contact-form-title"
-        aria-modal="true"
       >
         <FormProvider {...methods}>
           <Flex
@@ -282,13 +271,6 @@ export const ContactSelect = ({
 
 const useStyles = createStyles(({ css, token }) => {
   return {
-    button: css`
-      display: flex;
-      justify-content: start;
-      padding: ${token.paddingXXS}px ${token.paddingSM}px;
-      min-height: 64px;
-      height: 100%;
-    `,
     mainText: css`
       max-width: 300px !important;
       line-height: 1;

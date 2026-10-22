@@ -9,8 +9,8 @@ import type { CheckoutThemeAdapter } from '#checkout/theme';
 
 /**
  * Type scale of the checkout: text one step over the antd default (15 and 13), with the large
- * and extra large sizes kept, so titles and the total stay as they are, and secondary texts one
- * tone darker. The rest of the tokens come from the host.
+ * and extra large sizes kept, so titles and the total stay as they are, secondary texts one
+ * tone darker, and one corner radius. The rest of the tokens come from the host.
  */
 const CHECKOUT_TOKENS: ThemeConfig = {
   token: {
@@ -21,6 +21,10 @@ const CHECKOUT_TOKENS: ThemeConfig = {
     // Secondary texts (hints, balances, terms) one tone darker than antd's, to read on the grey
     // summary: the tone of colorTextSecondary.
     colorTextDescription: 'rgba(0, 0, 0, 0.65)',
+    // One corner for buttons, fields and panels whatever their size: antd rounds large controls
+    // and panels (8) more than the others (6).
+    borderRadius: 8,
+    borderRadiusLG: 8,
   },
 };
 

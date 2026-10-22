@@ -108,10 +108,13 @@ const useStyles = createStyles(({ token, css }) => {
 
       ${mq.lg} {
         display: grid;
-        grid-template-columns: var(--checkout-left-fr) var(--checkout-right-fr);
+        grid-template-columns:
+          minmax(0, var(--checkout-left-fr))
+          minmax(0, var(--checkout-right-fr));
       }
     `,
     left: css`
+      box-sizing: border-box;
       width: 100%;
       flex-direction: column;
       gap: ${token.marginMD}px;
@@ -132,6 +135,7 @@ const useStyles = createStyles(({ token, css }) => {
       background-color: ${token.colorBgLayout};
     `,
     right: css`
+      box-sizing: border-box;
       width: 100%;
       padding: ${token.padding}px;
 

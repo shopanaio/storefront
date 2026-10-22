@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
+import { LuMessageSquarePlus } from 'react-icons/lu';
 import { useTranslations } from 'next-intl';
 import type { CommentFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
@@ -94,7 +95,15 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
       if (typed === null) return undefined;
       return inFlight?.note === typed ? inFlight.save : save(typed);
     };
-    return { schedule: debounced, flushNow };
+    /** Drops the save waiting for a pause in typing or for a retry. */
+    const cancel = () => {
+      debounced.cancel();
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+    };
+    return { schedule: debounced, flushNow, cancel, save };
   }, []);
 
   // A note typed right before leaving the page is still saved.
@@ -146,13 +155,38 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
 
   const onToggle = () => setIsOpen((prev) => !prev);
 
+  /** The buyer changed their mind: the field closes and the saved note is removed. */
+  const onCancel = () => {
+    setIsOpen(false);
+    setNote('');
+    failures.current = 0;
+    debouncedUpdate.cancel();
+    // Nothing saved and nothing typed: there is nothing to remove.
+    if (!data?.note && !typedRef.current) {
+      typedRef.current = null;
+      return;
+    }
+    typedRef.current = '';
+    debouncedUpdate.save('').catch(() => undefined);
+  };
+
   return (
-    <Flex vertical gap={8} className={styles.container}>
+    <Flex vertical gap={8}>
       {isOpen ? (
         <div className={styles.fieldWrap}>
-          <Typography.Text className={styles.label} id="order-note-label">
-            {t('order-note')}
-          </Typography.Text>
+          <Flex align="center" justify="space-between">
+            <Typography.Text className={styles.label} id="order-note-label">
+              {t('order-note')}
+            </Typography.Text>
+            <Button
+              type="text"
+              size="small"
+              className={styles.cancel}
+              onClick={onCancel}
+            >
+              {t('remove-note')}
+            </Button>
+          </Flex>
           <Input.TextArea
             id="order-note"
             aria-labelledby="order-note-label"
@@ -172,9 +206,15 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
           variant="link"
           color="primary"
           className={styles.toggle}
+          icon={
+            <LuMessageSquarePlus
+              size={18}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+          }
           onClick={onToggle}
           aria-expanded={false}
-          aria-label={t('add-note')}
         >
           {t('add-note')}
         </Button>
@@ -184,12 +224,11 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
 };
 
 const useStyles = createStyles(({ token, css }) => ({
-  container: css`
-    margin-top: ${token.marginXS}px;
-  `,
   toggle: css`
-    padding: 0;
     align-self: flex-start;
+    height: auto;
+    min-height: 44px;
+    padding: 0;
   `,
   fieldWrap: css`
     display: flex;
@@ -197,6 +236,12 @@ const useStyles = createStyles(({ token, css }) => ({
     gap: ${token.marginXXS}px;
   `,
   label: css`
+    color: ${token.colorTextSecondary};
+  `,
+  cancel: css`
+    height: auto;
+    padding: 0 ${token.paddingXXS}px;
+    margin-right: -${token.paddingXXS}px;
     color: ${token.colorTextSecondary};
   `,
 }));

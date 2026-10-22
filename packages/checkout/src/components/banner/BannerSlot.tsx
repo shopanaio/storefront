@@ -10,8 +10,7 @@ import { useCheckoutBanners } from './useCheckoutBanners';
 
 /**
  * The one checkout banner, above the submit button: the most important message in one line,
- * the others behind its counter. On desktop the slot keeps the height of one line even when
- * empty, so the form does not move when a banner comes or goes.
+ * the others behind its counter. Without a banner the slot takes no room.
  */
 export const BannerSlot = () => {
   const t = useTranslations('Checkout');
@@ -122,11 +121,6 @@ const useStyles = createStyles(({ css }) => ({
   `,
   empty: css`
     display: none;
-
-    ${mq.lg} {
-      display: flex;
-      visibility: hidden;
-    }
   `,
   counter: css`
     /* Inside the banner, whose tone colors it takes. */

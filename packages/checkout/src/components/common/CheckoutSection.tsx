@@ -16,7 +16,8 @@ interface Prop {
 
 /**
  * Common wrapper component for checkout sections.
- * Renders a title, optional header action, and section content.
+ * Renders a title, optional header action, and section content. The title sits closer to the
+ * content (8px) than the parts of the content to each other (12px).
  */
 export const CheckoutSection = ({
   id,
@@ -25,14 +26,17 @@ export const CheckoutSection = ({
   children,
 }: Prop) => {
   return (
-    <Flex id={id} vertical gap={12}>
+    <Flex id={id} vertical gap={8}>
       {(title || headerAction) && (
-        <Flex justify="space-between" align="center">
+        // On a phone a long header action goes under the title instead of squeezing it.
+        <Flex justify="space-between" align="center" wrap gap={8}>
           {title ? <SectionTitle>{title}</SectionTitle> : null}
           {headerAction}
         </Flex>
       )}
-      {children}
+      <Flex vertical gap={12}>
+        {children}
+      </Flex>
     </Flex>
   );
 };

@@ -19,11 +19,20 @@ sb.mock(import('../packages/checkout/src/hooks/useCheckoutAuth.ts'), {
 sb.mock(import('../packages/checkout/src/hooks/useUndeliverableLines.ts'), {
   spy: true,
 });
+sb.mock(import('../packages/checkout/src/hooks/useDefaultCartCleanup.ts'), {
+  spy: true,
+});
 sb.mock(
   import('../packages/checkout/src/hooks/useLoyaltyAccount/useLoyaltyAccount.ts'),
   {
     spy: true,
   }
+);
+// The storefront session lives in the host app; the contact section reads whether the buyer
+// is signed in from it.
+sb.mock(
+  import('../packages/shopana-storefront-sdk/src/modules/session/react/context/SessionContext.tsx'),
+  { spy: true }
 );
 
 const preview: Preview = {
