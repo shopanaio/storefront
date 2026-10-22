@@ -684,6 +684,9 @@ export type components = {
             readonly family_name?: string | null;
             /** Format: uri */
             readonly picture?: string | null;
+            /** @description Confirmed phone in E.164, given with the `profile` scope. */
+            readonly phone_number?: string | null;
+            readonly phone_number_verified?: boolean | null;
         };
         readonly AuthorizationServerMetadata: {
             /** Format: uri */

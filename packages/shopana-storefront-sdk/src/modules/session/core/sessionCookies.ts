@@ -18,7 +18,27 @@ export const AUTH_EVENT_COOKIE = 'shopana_auth_event';
 /** Query parameter `/auth/callback` adds to `returnTo` when the sign-in did not complete. */
 export const AUTH_RESULT_PARAM = 'auth';
 
-export type AuthResult = 'cancelled' | 'failed';
+/**
+ * Why a sign-in through the provider page did not complete:
+ * - `cancelled` — the buyer declined at the provider;
+ * - `accountNotLinked` — the provider email belongs to an account with another way to sign in,
+ *   and the provider is not connected to it;
+ * - `failed` — anything else (provider or server error, a forged or expired return).
+ */
+export type AuthResult = 'cancelled' | 'accountNotLinked' | 'failed';
+
+const AUTH_RESULTS: readonly AuthResult[] = ['cancelled', 'accountNotLinked', 'failed'];
+
+export function parseAuthResult(value: string | null): AuthResult | null {
+  return AUTH_RESULTS.find((result) => result === value) ?? null;
+}
+
+/** The result of the IAM `error` of a sign-in that came back without a code. */
+export function authResultOfError(error: string): AuthResult {
+  if (error === 'access_denied') return 'cancelled';
+  if (error === 'account_not_linked') return 'accountNotLinked';
+  return 'failed';
+}
 
 export function readBrowserCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;

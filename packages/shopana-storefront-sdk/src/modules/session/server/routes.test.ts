@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StorefrontAuthServerConfig } from './config';
 import { createStorefrontAuthRouteHandlers, endUserIp } from './routes';
 import { readServerAuthState } from './index';
+import { seal } from './sealedCookie';
 
 const origin = 'https://shop.example.test';
 const config: StorefrontAuthServerConfig = {
@@ -227,6 +228,53 @@ describe('storefront session handlers', () => {
     await call(jar, 'GET', '/auth/login?returnTo=/checkout');
     const callback = await call(jar, 'GET', '/auth/callback?error=access_denied&state=x');
     expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=cancelled`);
+  });
+
+  it('tells an account of another sign-in method from a failed provider sign-in', async () => {
+    const results: (string | null)[] = [];
+    for (const error of ['account_not_linked', 'server_error']) {
+      const jar = new Jar();
+      await call(jar, 'GET', '/auth/login?returnTo=/checkout');
+      const callback = await call(jar, 'GET', `/auth/callback?error=${error}&state=x`);
+      results.push(new URL(callback.headers.get('location')!).searchParams.get('auth'));
+    }
+    expect(results).toEqual(['accountNotLinked', 'failed']);
+  });
+
+  it('keeps the identifier of a headless social sign-in for the whole session', async () => {
+    const jar = new Jar();
+    const name = '__Host-shopana_auth_tx';
+    lastNonce = 'nonce-social';
+    const transaction = await seal(config.sessionSecret, name, {
+      state: 'state-social',
+      nonce: lastNonce,
+      verifier: 'verifier-social',
+      returnTo: '/checkout',
+      loginMethod: 'email' as const,
+      exp: Math.floor(Date.now() / 1000) + 600,
+    });
+    jar.apply(
+      new Response(null, {
+        headers: { 'set-cookie': `${name}=${encodeURIComponent(transaction)}; Path=/` },
+      })
+    );
+
+    await call(jar, 'GET', '/auth/callback?code=code-1&state=state-social');
+    const token = await call(jar, 'GET', '/auth/token');
+    const refresh = await call(jar, 'POST', '/auth/refresh');
+
+    expect((await token.json()).session.loginMethod).toBe('email');
+    expect((await refresh.json()).session.loginMethod).toBe('email');
+    expect((await readServerAuthState(jar.header('/'))).session?.loginMethod).toBe(
+      'email'
+    );
+  });
+
+  it('has no identifier for a sign-in on the IAM pages', async () => {
+    const jar = new Jar();
+    await signIn(jar);
+    const token = await call(jar, 'GET', '/auth/token');
+    expect((await token.json()).session.loginMethod).toBeUndefined();
   });
 
   it('keeps returnTo on this storefront', async () => {

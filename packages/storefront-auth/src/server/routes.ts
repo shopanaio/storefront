@@ -20,7 +20,9 @@ import {
   type StorefrontSessionServer,
   type TransactionCookie,
 } from '@shopana/storefront-sdk/modules/session/server';
+import type { LoginMethod } from '@shopana/storefront-sdk/modules/session';
 import {
+  DEFAULT_EMAIL_VERIFICATION_PATH,
   DEFAULT_PASSWORD_RESET_PATH,
   type AccountConnections,
   type AuthConfiguration,
@@ -42,13 +44,15 @@ import {
  * Headless sign-in handlers (BFF), mounted by the runtime at `/auth/headless/[action]`:
  *
  * - `GET  configuration` — enabled methods and validation rules;
- * - `POST password-sign-in | password-sign-up` — `{ email, password[, firstName, lastName] }`;
+ * - `POST password-sign-in | password-sign-up` — `{ email, password[, firstName, lastName],
+ *   verifyPath }`; an unverified email gets a verification link to the `verifyPath` page;
  * - `POST email-otp-send | email-otp-verify` — `{ email[, code] }`;
  * - `POST phone-otp-send | phone-otp-verify` — `{ phone[, code] }`;
  * - `POST social-start` — `{ provider, returnTo }`, answers the provider URL to leave for;
  * - `POST password-forgot` — `{ email, resetPath }`, sends a reset link to that page;
  * - `POST password-reset` — `{ token, password }`, sets the new password (no transaction);
- * - `POST email-verification-resend` — `{ email }`, sends the verification email again;
+ * - `POST email-verification-resend` — `{ email, verifyPath }`, sends the verification email
+ *   again;
  * - `GET  connections`, `POST connection-link | connection-unlink` — social accounts of the
  *   signed-in buyer, with the access token of the session cookie.
  *
@@ -84,6 +88,8 @@ interface StepDefinition {
   step: IamHeadlessStep;
   /** A step that may start a new transaction; the others continue the current one. */
   entry: boolean;
+  /** The identifier a sign-in completed by this step was made with. */
+  loginMethod?: LoginMethod;
   body(
     input: Record<string, unknown>,
     session: StorefrontSessionServer
@@ -95,23 +101,31 @@ type TransactionAction = Exclude<HeadlessAction, 'password-reset'>;
 const STEPS: Record<TransactionAction, StepDefinition> = {
   'password-sign-in': {
     step: 'password/sign-in',
+    loginMethod: 'email',
     entry: true,
-    body: (input) =>
-      strings(input, ['email', 'password'])
-        ? { email: input.email, password: input.password }
+    body: (input, session) =>
+      strings(input, ['email', 'password']) && optionalString(input.verifyPath)
+        ? {
+            email: input.email,
+            password: input.password,
+            verify_uri: verifyUri(input, session),
+          }
         : null,
   },
   'password-sign-up': {
     step: 'password/sign-up',
+    loginMethod: 'email',
     entry: true,
-    body: (input) =>
+    body: (input, session) =>
       strings(input, ['email', 'password', 'firstName']) &&
-      optionalString(input.lastName)
+      optionalString(input.lastName) &&
+      optionalString(input.verifyPath)
         ? {
             email: input.email,
             password: input.password,
             firstName: input.firstName,
             ...(input.lastName ? { lastName: input.lastName } : {}),
+            verify_uri: verifyUri(input, session),
           }
         : null,
   },
@@ -123,6 +137,7 @@ const STEPS: Record<TransactionAction, StepDefinition> = {
   },
   'email-otp-verify': {
     step: 'email-otp/verify',
+    loginMethod: 'email',
     entry: false,
     body: (input) =>
       strings(input, ['email', 'code'])
@@ -137,6 +152,7 @@ const STEPS: Record<TransactionAction, StepDefinition> = {
   },
   'phone-otp-verify': {
     step: 'phone-otp/verify',
+    loginMethod: 'phone',
     entry: false,
     body: (input) =>
       strings(input, ['phone', 'code'])
@@ -145,6 +161,7 @@ const STEPS: Record<TransactionAction, StepDefinition> = {
   },
   'social-start': {
     step: 'social/start',
+    loginMethod: 'email',
     entry: true,
     body: (input) =>
       strings(input, ['provider']) && optionalString(input.returnTo)
@@ -169,8 +186,10 @@ const STEPS: Record<TransactionAction, StepDefinition> = {
   'email-verification-resend': {
     step: 'email-verification/resend',
     entry: true,
-    body: (input) =>
-      strings(input, ['email']) ? { email: input.email } : null,
+    body: (input, session) =>
+      strings(input, ['email']) && optionalString(input.verifyPath)
+        ? { email: input.email, verify_uri: verifyUri(input, session) }
+        : null,
   },
 };
 
@@ -325,9 +344,24 @@ async function runStep(
 
   switch (result.status) {
     case 'completed':
-      return complete(request, session, iam, current, result, clear);
+      return complete(
+        request,
+        session,
+        iam,
+        current,
+        result,
+        clear,
+        definition.loginMethod
+      );
     case 'redirect':
-      return leaveForProvider(session, current, input, result.url, clear);
+      return leaveForProvider(
+        session,
+        current,
+        input,
+        result.url,
+        clear,
+        definition.loginMethod
+      );
     case 'otp_sent':
       return json(
         200,
@@ -499,6 +533,17 @@ function storefrontUrl(session: StorefrontSessionServer, path: string): string {
   return new URL(safeReturnTo(path, session.origin), session.origin).href;
 }
 
+/** The page of this storefront the email verification link leads to. */
+function verifyUri(
+  input: Record<string, unknown>,
+  session: StorefrontSessionServer
+): string {
+  return storefrontUrl(
+    session,
+    (input.verifyPath as string | undefined) || DEFAULT_EMAIL_VERIFICATION_PATH
+  );
+}
+
 async function readInput(
   request: Request
 ): Promise<Record<string, unknown> | null> {
@@ -559,7 +604,8 @@ async function complete(
   iam: IamHeadlessClient,
   transaction: HeadlessTransactionCookie,
   result: Extract<IamHeadlessStepResponse, { status: 'completed' }>,
-  clear: string
+  clear: string,
+  loginMethod: LoginMethod | undefined
 ): Promise<Response> {
   if (result.state !== transaction.state || result.iss !== iam.issuer) {
     return error(400, 'expired', 'The sign-in could not be completed', [clear]);
@@ -578,7 +624,9 @@ async function complete(
         ]);
       }
     }
-    const issued = await session.sessionCookies(await session.issue(tokens));
+    const issued = await session.sessionCookies(
+      await session.issue(tokens, undefined, loginMethod)
+    );
     return json(
       200,
       { type: 'completed', session: issued.session } satisfies AuthStep,
@@ -598,7 +646,8 @@ async function leaveForProvider(
   transaction: HeadlessTransactionCookie,
   input: Record<string, unknown>,
   url: string,
-  clear: string
+  clear: string,
+  loginMethod: LoginMethod | undefined
 ): Promise<Response> {
   const name = transactionCookieName(session);
   const callback: TransactionCookie = {
@@ -610,6 +659,7 @@ async function leaveForProvider(
       session.origin
     ),
     exp: nowSeconds() + SOCIAL_TRANSACTION_LIFETIME_SECONDS,
+    ...(loginMethod ? { loginMethod } : {}),
   };
   return json(200, { type: 'redirect', url } satisfies AuthStep, [
     clear,

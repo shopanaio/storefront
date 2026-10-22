@@ -6,8 +6,11 @@ export interface User {
   /** Unique identifier for the user */
   id: string;
 
-  /** User's email address */
+  /** User's email address; empty for a buyer who signed in only by phone */
   email: string;
+
+  /** Confirmed phone in E.164, when the account has one */
+  phone?: string;
 
   /** User's first name (optional, mainly for Shopify) */
   firstName?: string;

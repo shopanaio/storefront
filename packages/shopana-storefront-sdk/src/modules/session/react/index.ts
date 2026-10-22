@@ -15,6 +15,8 @@ export {
   useSessionStatus,
   useSessionExpired,
   useSignInPending,
+  useAuthResult,
+  useLoginMethod,
   type SessionProviderProps,
   type SessionContextValue,
 } from './context/SessionContext';

@@ -219,7 +219,11 @@ describe('headless sign-in handlers', () => {
     const body = await response.json();
     expect(body).toMatchObject({
       type: 'completed',
-      session: { accessToken: 'access-1', user: { id: 'user-1' } },
+      session: {
+        accessToken: 'access-1',
+        user: { id: 'user-1' },
+        loginMethod: 'email',
+      },
     });
     expect(jar.has('__Host-shopana_auth_htx')).toBe(false);
     expect(jar.has('shopana_at')).toBe(true);
@@ -420,7 +424,10 @@ describe('headless sign-in handlers', () => {
       phone: '+380501234567',
       code: '123456',
     });
-    expect((await verified.json()).type).toBe('completed');
+    expect(await verified.json()).toMatchObject({
+      type: 'completed',
+      session: { loginMethod: 'phone' },
+    });
   });
 
   it('answers the outcomes of a password sign-up', async () => {
@@ -431,7 +438,10 @@ describe('headless sign-in handlers', () => {
     };
 
     steps['password/sign-up'] = (call) => {
-      expect(call.body).toEqual(signUp);
+      expect(call.body).toEqual({
+        ...signUp,
+        verify_uri: `${origin}/account/verify-email`,
+      });
       return jsonResponse(409, {
         error: 'user_exists',
         error_description: 'Account already exists',
@@ -682,7 +692,10 @@ describe('headless sign-in handlers', () => {
 
   it('sends the verification email again', async () => {
     steps['email-verification/resend'] = (call) => {
-      expect(call.body).toEqual({ email: 'buyer@example.test' });
+      expect(call.body).toEqual({
+        email: 'buyer@example.test',
+        verify_uri: `${origin}/account/verify-email`,
+      });
       return jsonResponse(200, {
         status: 'verification_sent',
         transaction_id: 'tx-rotated',
@@ -694,6 +707,35 @@ describe('headless sign-in handlers', () => {
     });
 
     expect(await sent.json()).toEqual({ type: 'verificationSent' });
+  });
+
+  it('leads the verification link to a page of this storefront only', async () => {
+    const verifyUris: unknown[] = [];
+    steps['password/sign-in'] = (call) => {
+      verifyUris.push(call.body!.verify_uri);
+      return jsonResponse(200, {
+        status: 'verification_required',
+        channel: 'email',
+        method: 'link',
+        transaction_id: 'tx-next',
+      });
+    };
+
+    await post(new Jar(), 'password-sign-in', {
+      email: 'buyer@example.test',
+      password: 'correct horse',
+      verifyPath: '/uk/account/verify-email?from=checkout',
+    });
+    await post(new Jar(), 'password-sign-in', {
+      email: 'buyer@example.test',
+      password: 'correct horse',
+      verifyPath: '//evil.example/verify',
+    });
+
+    expect(verifyUris).toEqual([
+      `${origin}/uk/account/verify-email?from=checkout`,
+      `${origin}/`,
+    ]);
   });
 
   it('manages the connections of the signed-in buyer', async () => {

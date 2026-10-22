@@ -10,12 +10,14 @@ export {
 export { AuthError, isAuthError } from './core/AuthError';
 export {
   AUTH_ERROR_CODES,
+  DEFAULT_EMAIL_VERIFICATION_PATH,
   DEFAULT_PASSWORD_RESET_PATH,
   HEADLESS_AUTH_BASE_PATH,
 } from './core/types';
 export {
   clearConnectionResult,
   readConnectionResult,
+  readEmailVerificationLink,
   readPasswordResetLink,
 } from './core/links';
 export type {

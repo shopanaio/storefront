@@ -8,6 +8,7 @@ import {
   type OpenIdUserInfo,
 } from './iamOAuth';
 import { seal, unseal, type SealedPayload } from './sealedCookie';
+import type { LoginMethod } from '../core/types';
 
 /** Access token for SSR, the server Apollo client and `/auth/token`; scoped to the site. */
 export const ACCESS_COOKIE = 'shopana_at';
@@ -23,6 +24,8 @@ export interface AccessCookie extends SealedPayload {
   t: string;
   /** OpenID user, read when the token was issued. */
   u: model.User;
+  /** Identifier of a headless sign-in. */
+  m?: LoginMethod;
 }
 
 interface RefreshCookie extends SealedPayload {
@@ -30,6 +33,8 @@ interface RefreshCookie extends SealedPayload {
   r: string;
   /** ID token, the hint for IAM end-session. */
   i?: string;
+  /** Identifier of a headless sign-in, kept for the whole session. */
+  m?: LoginMethod;
 }
 
 /** What the browser receives from `/auth/token` and `/auth/refresh`. */
@@ -37,6 +42,7 @@ export interface ServerSessionPayload {
   user: model.User;
   accessToken: string;
   expiresAt: string;
+  loginMethod?: LoginMethod;
 }
 
 export interface CookieOptions {
@@ -88,6 +94,7 @@ export function mapOpenIdUser(user: OpenIdUserInfo): model.User {
     email: user.email ?? '',
     firstName: user.given_name ?? undefined,
     lastName: user.family_name ?? undefined,
+    phone: user.phone_number ?? undefined,
   };
 }
 
@@ -116,6 +123,7 @@ export function toSessionPayload(access: AccessCookie): ServerSessionPayload {
     user: access.u,
     accessToken: access.t,
     expiresAt: new Date(access.exp * 1000).toISOString(),
+    ...(access.m ? { loginMethod: access.m } : {}),
   };
 }
 
@@ -152,16 +160,22 @@ export class StorefrontSessionServer {
     this.secure = this.origin.startsWith('https:');
   }
 
-  /** Seals the tokens of a code exchange or a refresh into the session cookies. */
+  /**
+   * Seals the tokens of a code exchange or a refresh into the session cookies. A headless
+   * sign-in names its `loginMethod`; a refresh keeps the one of the `previous` cookie.
+   */
   async issue(
     tokens: OAuthTokenResponse,
-    previous?: RefreshCookie
+    previous?: RefreshCookie,
+    loginMethod?: LoginMethod
   ): Promise<RefreshOutcome> {
     const user = mapOpenIdUser(await this.iam.userInfo(tokens.access_token));
+    const method = loginMethod ?? previous?.m;
     const access: AccessCookie = {
       t: tokens.access_token,
       u: user,
       exp: tokenExpiry(tokens),
+      ...(method ? { m: method } : {}),
     };
     const refreshToken = tokens.refresh_token ?? previous?.r;
     if (!refreshToken) {
@@ -171,6 +185,7 @@ export class StorefrontSessionServer {
       r: refreshToken,
       i: tokens.id_token ?? previous?.i,
       exp: nowSeconds() + REFRESH_LIFETIME_SECONDS,
+      ...(method ? { m: method } : {}),
     };
     return { access, refresh };
   }

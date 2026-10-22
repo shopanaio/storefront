@@ -9,9 +9,11 @@ export const defaultSessionState: SessionStore = {
   status: 'loading',
   expired: false,
   signInPending: false,
+  authResult: null,
   setSession: () => {},
   expireSession: () => {},
   setSignInPending: () => {},
+  setAuthResult: () => {},
   refreshSession: () => {},
   setRefreshSession: () => {},
 };
@@ -44,6 +46,7 @@ export function createSessionStore(
       session,
       status: session ? 'authenticated' : 'anonymous',
       expired: session ? false : state.expired,
+      authResult: session ? null : state.authResult,
     }));
   };
 
@@ -59,6 +62,10 @@ export function createSessionStore(
 
   const setSignInPending = (signInPending: boolean) => {
     storeImpl.setState((state) => ({ ...state, signInPending }));
+  };
+
+  const setAuthResult = (authResult: SessionStore['authResult']) => {
+    storeImpl.setState((state) => ({ ...state, authResult }));
   };
 
   const refreshSession = () => {
@@ -89,9 +96,13 @@ export function createSessionStore(
     get signInPending() {
       return storeImpl.getState().signInPending;
     },
+    get authResult() {
+      return storeImpl.getState().authResult;
+    },
     setSession,
     expireSession,
     setSignInPending,
+    setAuthResult,
     refreshSession,
     setRefreshSession,
   };

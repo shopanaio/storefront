@@ -19,10 +19,12 @@ import {
 import {
   AUTH_EVENT_COOKIE,
   AUTH_RESULT_PARAM,
+  parseAuthResult,
   readBrowserCookie,
   removeBrowserCookie,
+  type AuthResult,
 } from '../../core/sessionCookies';
-import type { Session } from '../../core/types';
+import type { LoginMethod, Session } from '../../core/types';
 
 /**
  * Session context value providing store and utilities
@@ -64,7 +66,11 @@ export interface SessionProviderProps {
 }
 
 function toSession(session: BrowserSession): Session {
-  return { user: session.user, expiresAt: session.expiresAt };
+  return {
+    user: session.user,
+    expiresAt: session.expiresAt,
+    ...(session.loginMethod ? { loginMethod: session.loginMethod } : {}),
+  };
 }
 
 /**
@@ -123,6 +129,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     }
     const url = new URL(window.location.href);
     if (url.searchParams.has(AUTH_RESULT_PARAM)) {
+      state.setAuthResult(parseAuthResult(url.searchParams.get(AUTH_RESULT_PARAM)));
       url.searchParams.delete(AUTH_RESULT_PARAM);
       window.history.replaceState(
         window.history.state,
@@ -234,6 +241,31 @@ export const useSessionStatus = () => {
 export const useSessionExpired = (): boolean => {
   const useStore = useSessionStore();
   return useStore((state) => state.expired);
+};
+
+/**
+ * Why the last sign-in through the provider page did not complete (`cancelled`,
+ * `accountNotLinked`, `failed`), or null. A form shows it once and calls `clear()`; a new
+ * session clears it too.
+ */
+export const useAuthResult = (): {
+  result: AuthResult | null;
+  clear: () => void;
+} => {
+  const useStore = useSessionStore();
+  const result = useStore((state) => state.authResult);
+  const setAuthResult = useStore((state) => state.setAuthResult);
+  const clear = React.useCallback(() => setAuthResult(null), [setAuthResult]);
+  return { result, clear };
+};
+
+/**
+ * The identifier the buyer signed in with (`email` or `phone`); null for an anonymous buyer or
+ * a hosted sign-in.
+ */
+export const useLoginMethod = (): LoginMethod | null => {
+  const useStore = useSessionStore();
+  return useStore((state) => state.session?.loginMethod ?? null);
 };
 
 /** Whether a sign-in has just completed and the account cart is being attached. */

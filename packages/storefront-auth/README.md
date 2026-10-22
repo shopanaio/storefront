@@ -125,6 +125,37 @@ if (link && 'token' in link) {
 
 The reset ends every session of the buyer, who then signs in with the new password.
 
+## Email verification
+
+A password sign-in or sign-up of an unverified email, and `auth.emailVerification.resend()`,
+email a verification link to `verifyPath` of this storefront (`/account/verify-email` by
+default): `auth.password.signIn({ email, password, verifyPath })`,
+`auth.emailVerification.resend(email, { verifyPath })`. The link passes through IAM, which
+verifies the email and adds the outcome. The page reads it:
+
+```tsx
+const link = readEmailVerificationLink(); // { verified: true } | { error: 'expired' } | null
+```
+
+A verified buyer then signs in. An expired link offers `emailVerification.resend()`.
+
+## Provider sign-in that did not complete
+
+Back from a social provider without a session, the page gets the reason from
+`useAuthResult()`: `cancelled` (declined at the provider), `accountNotLinked` (the email belongs
+to an account with another way to sign in; sign in with it and connect the provider) or `failed`.
+Show it once and call `clear()`; a new session clears it too.
+
+## Buyer
+
+`useUser()` has `phone` (E.164) when the account has a confirmed phone. A buyer who signed in
+only by phone has an empty `email`.
+
+`useLoginMethod()` is the identifier the buyer signed in with: `email` (password, email code or a
+social provider) or `phone` (SMS code). It lasts for the whole session, refreshes included, so a
+form can keep it read-only. A storefront signs in either with these forms or on the IAM pages,
+never both; after a sign-in on the IAM pages it is null.
+
 ## Connected accounts
 
 `useAccountConnections()` lists the social providers of the signed-in buyer and connects or

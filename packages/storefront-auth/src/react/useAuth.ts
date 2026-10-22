@@ -77,8 +77,15 @@ export interface UseAuthResult {
     reset(input: PasswordResetInput): Promise<AuthStep | null>;
   };
   emailVerification: {
-    /** Sends the verification email again; without an argument, to the email of the step. */
-    resend(email?: string): Promise<AuthStep | null>;
+    /**
+     * Sends the verification email again; without an email, to the email of the step. The link
+     * opens `verifyPath` (`/account/verify-email` by default); that page reads the outcome with
+     * `readEmailVerificationLink()`.
+     */
+    resend(
+      email?: string,
+      options?: { verifyPath?: string }
+    ): Promise<AuthStep | null>;
   };
   emailOtp: OtpActions;
   phoneOtp: OtpActions;
@@ -253,7 +260,7 @@ export function useAuth(): UseAuthResult {
 
   const emailVerification = useMemo(
     () => ({
-      resend: (email?: string) => {
+      resend: (email?: string, options: { verifyPath?: string } = {}) => {
         const target = email ?? destinations.current.email;
         if (!target) {
           setError(
@@ -266,9 +273,10 @@ export function useAuth(): UseAuthResult {
           return Promise.resolve(null);
         }
         destinations.current.email = target;
-        return run(() => client.resendVerificationEmail({ email: target }), {
-          email: target,
-        });
+        return run(
+          () => client.resendVerificationEmail({ email: target, ...options }),
+          { email: target }
+        );
       },
     }),
     [client, run]

@@ -12,6 +12,7 @@ export const defaultSessionState: Partial<SessionStore> = {
   status: 'loading',
   expired: false,
   signInPending: false,
+  authResult: null,
   refreshSession: () => {},
 };
 
@@ -28,11 +29,13 @@ function sessionStoreState(
     status: initialSession ? 'authenticated' : 'loading',
     expired: false,
     signInPending: false,
+    authResult: null,
     setSession: (session) =>
       set((state) => ({
         session,
         status: session ? 'authenticated' : 'anonymous',
         expired: session ? false : state.expired,
+        authResult: session ? null : state.authResult,
       })),
     expireSession: () =>
       set({
@@ -42,6 +45,7 @@ function sessionStoreState(
         signInPending: false,
       }),
     setSignInPending: (signInPending) => set({ signInPending }),
+    setAuthResult: (authResult) => set({ authResult }),
     refreshSession: () => {},
     setRefreshSession: (fn) => set({ refreshSession: fn }),
   };

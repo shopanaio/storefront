@@ -390,6 +390,13 @@ components:
           type: string
           format: uri
           nullable: true
+        phone_number:
+          type: string
+          nullable: true
+          description: Confirmed phone in E.164, given with the `profile` scope.
+        phone_number_verified:
+          type: boolean
+          nullable: true
     AuthorizationServerMetadata:
       type: object
       required:

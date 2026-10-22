@@ -1,3 +1,4 @@
+import type { AuthResult } from '../core/sessionCookies';
 import type { Session } from '../core/types';
 
 /**
@@ -15,12 +16,18 @@ export interface SessionStore {
    * (claim of the guest cart or the saved account cart, design F1).
    */
   signInPending: boolean;
+  /**
+   * Why the last sign-in through the provider page did not complete, read from the address it
+   * returned to; null when there is nothing to show.
+   */
+  authResult: AuthResult | null;
 
   // Actions
   setSession(session: Session | null): void;
   /** Ends the session because the server no longer has it. */
   expireSession(): void;
   setSignInPending(pending: boolean): void;
+  setAuthResult(result: AuthResult | null): void;
   refreshSession(): void;
   setRefreshSession(fn: () => void): void;
 }
@@ -30,7 +37,7 @@ export interface SessionStore {
  */
 export type SessionActions = Omit<
   SessionStore,
-  'session' | 'status' | 'expired' | 'signInPending'
+  'session' | 'status' | 'expired' | 'signInPending' | 'authResult'
 >;
 
 /**

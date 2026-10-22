@@ -21,7 +21,10 @@ export { useHeadlessAuthClient } from './useHeadlessAuthClient';
 
 // Session state and sign-out, so a theme takes all of auth from one package.
 export {
+  useAuthResult,
   useIsAuthenticated,
+  useLoginMethod,
+  useSessionExpired,
   useSessionStatus,
   useSignInPending,
   useSignOut,
@@ -29,6 +32,13 @@ export {
 } from '@shopana/storefront-sdk/modules/session/react';
 
 export { AuthError, isAuthError } from '../core/AuthError';
-export { readConnectionResult, readPasswordResetLink } from '../core/links';
-export { DEFAULT_PASSWORD_RESET_PATH } from '../core/types';
+export {
+  readConnectionResult,
+  readEmailVerificationLink,
+  readPasswordResetLink,
+} from '../core/links';
+export {
+  DEFAULT_EMAIL_VERIFICATION_PATH,
+  DEFAULT_PASSWORD_RESET_PATH,
+} from '../core/types';
 export type * from '../core/types';

@@ -97,6 +97,7 @@ export async function readServerAuthState(
     session: {
       user: access.u,
       expiresAt: new Date(access.exp * 1000).toISOString(),
+      ...(access.m ? { loginMethod: access.m } : {}),
     },
     refreshPending: false,
   };

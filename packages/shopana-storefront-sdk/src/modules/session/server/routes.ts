@@ -2,6 +2,7 @@ import {
   AUTH_EVENT_COOKIE,
   AUTH_RESULT_PARAM,
   SESSION_REQUEST_HEADER,
+  authResultOfError,
   type AuthResult,
 } from '../core/sessionCookies';
 import {
@@ -11,6 +12,7 @@ import {
 import { randomBase64Url, sha256Base64Url } from './encoding';
 import { decodeJwtPayload } from './iamOAuth';
 import { seal, unseal, type SealedPayload } from './sealedCookie';
+import type { LoginMethod } from '../core/types';
 import {
   getStorefrontSessionServer,
   isFresh,
@@ -47,6 +49,8 @@ export interface TransactionCookie extends SealedPayload {
   nonce: string;
   verifier: string;
   returnTo: string;
+  /** Identifier of the headless social sign-in this transaction completes. */
+  loginMethod?: LoginMethod;
 }
 
 interface RouteContext {
@@ -135,7 +139,8 @@ async function callback(
       clearTransaction,
     ]);
 
-  if (url.searchParams.get('error')) return fail('cancelled');
+  const error = url.searchParams.get('error');
+  if (error) return fail(authResultOfError(error));
   const code = url.searchParams.get('code');
   if (!transaction || !code || url.searchParams.get('state') !== transaction.state) {
     return fail('failed');
@@ -151,7 +156,9 @@ async function callback(
       const claims = tokens.id_token ? decodeJwtPayload(tokens.id_token) : null;
       if (claims?.nonce !== transaction.nonce) return fail('failed');
     }
-    const issued = await server.sessionCookies(await server.issue(tokens));
+    const issued = await server.sessionCookies(
+      await server.issue(tokens, undefined, transaction.loginMethod)
+    );
     return redirect(new URL(returnTo, server.origin).href, [
       clearTransaction,
       ...issued.setCookies,

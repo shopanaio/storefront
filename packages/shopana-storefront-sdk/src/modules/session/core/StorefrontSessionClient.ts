@@ -1,4 +1,5 @@
 import type { model } from '../../../model/namespace';
+import type { LoginMethod } from './types';
 import {
   AUTH_BASE_PATH,
   SESSION_REQUEST_HEADER,
@@ -11,6 +12,7 @@ export interface BrowserSession {
   user: model.User;
   accessToken: string;
   expiresAt: string;
+  loginMethod?: LoginMethod;
 }
 
 export type SessionChange =
