@@ -23,6 +23,12 @@ export interface StorefrontAuthServerConfig {
   scopes: readonly ApplicationAuthScope[];
   /** Key material for the session cookies, at least 32 characters. */
   sessionSecret: string;
+  /**
+   * Proxies in front of the storefront that append to `X-Forwarded-For`; the buyer address is
+   * the entry this many hops from the right. Entries further left are set by the client and
+   * are never trusted. 1 by default (one proxy).
+   */
+  trustedProxyHops?: number;
 }
 
 const DEFAULT_SCOPES: readonly ApplicationAuthScope[] = [
@@ -41,6 +47,7 @@ const ENV = {
   redirectUri: 'IAM_OAUTH_REDIRECT_URI',
   postLogoutRedirectUri: 'IAM_OAUTH_POST_LOGOUT_REDIRECT_URI',
   sessionSecret: 'STOREFRONT_SESSION_SECRET',
+  trustedProxyHops: 'STOREFRONT_TRUSTED_PROXY_HOPS',
 } as const;
 
 const MIN_SESSION_SECRET_LENGTH = 32;
@@ -76,6 +83,11 @@ export function readStorefrontAuthServerConfig(
       `${ENV.sessionSecret} must be at least ${MIN_SESSION_SECRET_LENGTH} characters`
     );
   }
+  const hops = value('trustedProxyHops');
+  const trustedProxyHops = hops === undefined ? 1 : Number(hops);
+  if (!Number.isInteger(trustedProxyHops) || trustedProxyHops < 1) {
+    throw new Error(`${ENV.trustedProxyHops} must be a positive integer`);
+  }
 
   return {
     iamUrl: value('iamUrl')!.replace(/\/$/, ''),
@@ -87,6 +99,7 @@ export function readStorefrontAuthServerConfig(
     postLogoutRedirectUri: value('postLogoutRedirectUri'),
     scopes: DEFAULT_SCOPES,
     sessionSecret,
+    trustedProxyHops,
   };
 }
 

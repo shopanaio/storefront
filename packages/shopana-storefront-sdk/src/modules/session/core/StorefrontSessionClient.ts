@@ -97,6 +97,14 @@ export class StorefrontSessionClient {
     return this.refreshing;
   }
 
+  /**
+   * Takes the session a sign-in on this page has just issued (the headless sign-in returns it
+   * with the session cookies), so the page continues signed in without a reload.
+   */
+  adopt(session: BrowserSession): void {
+    this.setSession(session, 'expired');
+  }
+
   /** Starts the IAM-hosted sign-in; the page leaves for `/auth/login`. */
   authorize(options: AuthorizationOptions = {}): Promise<never> {
     const query = new URLSearchParams({

@@ -4,11 +4,16 @@ import type { StorefrontAuthServerConfig } from './config';
 export type OAuthTokenResponse = components['schemas']['OAuthTokenResponse'];
 export type OpenIdUserInfo = components['schemas']['OpenIdUserInfo'];
 
+/** Buyer address on server-to-server IAM calls: the headless API and the token endpoint. */
+export const END_USER_IP_HEADER = 'shopana-end-user-ip';
+
 export class IamOAuthError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly code?: string
+    readonly code?: string,
+    /** Seconds from `Retry-After` of a rate-limited request. */
+    readonly retryAfter?: number
   ) {
     super(message);
     this.name = 'IamOAuthError';
@@ -57,7 +62,7 @@ export class IamOAuthServerClient {
   exchangeCode(
     code: string,
     codeVerifier: string,
-    forwardedFor?: string
+    endUserIp?: string
   ): Promise<OAuthTokenResponse> {
     return this.tokenRequest(
       {
@@ -67,13 +72,13 @@ export class IamOAuthServerClient {
         redirect_uri: this.config.redirectUri,
         resource: this.config.resource,
       },
-      forwardedFor
+      endUserIp
     );
   }
 
   refresh(
     refreshToken: string,
-    forwardedFor?: string
+    endUserIp?: string
   ): Promise<OAuthTokenResponse> {
     return this.tokenRequest(
       {
@@ -81,7 +86,7 @@ export class IamOAuthServerClient {
         refresh_token: refreshToken,
         resource: this.config.resource,
       },
-      forwardedFor
+      endUserIp
     );
   }
 
@@ -104,16 +109,16 @@ export class IamOAuthServerClient {
   }
 
   /**
-   * IAM rate-limits the token endpoint per client and requester IP. Every buyer reaches it
-   * through this server, so the buyer address is forwarded; IAM counts it only when this
-   * server is one of its trusted proxies.
+   * IAM rate-limits the token endpoint per client and buyer. Every buyer reaches it through
+   * this server, so the buyer address is sent in `shopana-end-user-ip`; IAM honours it for an
+   * authenticated headless client (BR-k4i4).
    */
   private async tokenRequest(
     grant: Record<string, string>,
-    forwardedFor?: string
+    endUserIp?: string
   ): Promise<OAuthTokenResponse> {
     const headers = this.clientHeaders();
-    if (forwardedFor) headers['X-Forwarded-For'] = forwardedFor;
+    if (endUserIp) headers[END_USER_IP_HEADER] = endUserIp;
     const response = await this.request('/oauth2/token', {
       method: 'POST',
       headers,
@@ -122,11 +127,9 @@ export class IamOAuthServerClient {
     return (await response.json()) as OAuthTokenResponse;
   }
 
-  /** `client_secret_basic` (RFC 6749 §2.3.1): both parts form-encoded before base64. */
   private clientHeaders(): Record<string, string> {
-    const credentials = `${formEncode(this.config.clientId)}:${formEncode(this.config.clientSecret)}`;
     return {
-      Authorization: `Basic ${btoa(credentials)}`,
+      Authorization: clientBasicAuthorization(this.config),
       'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'application/json',
     };
@@ -148,15 +151,29 @@ export class IamOAuthServerClient {
           body.error ??
           `IAM request failed (${response.status})`,
         response.status,
-        body.error
+        body.error,
+        retryAfterSeconds(response)
       );
     }
     return response;
   }
 }
 
+/** `client_secret_basic` (RFC 6749 §2.3.1): both parts form-encoded before base64. */
+export function clientBasicAuthorization(
+  config: Pick<StorefrontAuthServerConfig, 'clientId' | 'clientSecret'>
+): string {
+  return `Basic ${btoa(`${formEncode(config.clientId)}:${formEncode(config.clientSecret)}`)}`;
+}
+
 function formEncode(value: string): string {
   return encodeURIComponent(value).replace(/%20/g, '+');
+}
+
+/** Delay-seconds of a `Retry-After` header; an HTTP date or a missing header gives undefined. */
+export function retryAfterSeconds(response: Response): number | undefined {
+  const value = Number(response.headers.get('retry-after'));
+  return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
 export function decodeJwtPayload(token: string): Record<string, unknown> | null {

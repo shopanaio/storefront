@@ -19,6 +19,7 @@
       "default": "./src/init.js"
     },
     "./next/auth": "./src/next/auth.ts",
+    "./next/auth-headless": "./src/next/auth-headless.ts",
     "./next/headers": "./src/next/headers.ts",
     "./next/dynamic": "./src/next/dynamic.ts",
     "./next/image": "./src/next/image.ts",
@@ -34,6 +35,7 @@
   "peerDependencies": {
     "@apollo/client": "^4.0.0",
     "@graphql-typed-document-node/core": "^3.2.0",
+    "@shopana/storefront-auth": "^0.1.0",
     "@shopana/storefront-sdk": "^0.1.0",
     "next-intl": "^4.5.6",
     "react": "^19.0.0",

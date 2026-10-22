@@ -50,7 +50,10 @@ cookies. The handlers read the server environment:
 - `IAM_OAUTH_CLIENT_ID`, `IAM_OAUTH_CLIENT_SECRET`, `IAM_OAUTH_RESOURCE`;
 - `IAM_OAUTH_REDIRECT_URI`, the registered `{origin}/auth/callback`;
 - `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI` (optional; sign-out then ends the IAM session);
-- `STOREFRONT_SESSION_SECRET`, at least 32 characters, the cookie encryption key.
+- `STOREFRONT_SESSION_SECRET`, at least 32 characters, the cookie encryption key;
+- `STOREFRONT_TRUSTED_PROXY_HOPS` (optional, 1 by default), the number of proxies in front of
+  the storefront that append to `X-Forwarded-For`. The buyer address sent to IAM is the entry
+  this many hops from the right; entries the client added further left are ignored.
 
 The default middleware matcher leaves `/auth/*` to these handlers.
 

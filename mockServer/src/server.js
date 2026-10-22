@@ -8,6 +8,7 @@ import { createYoga } from "graphql-yoga";
 
 import { createMockStore } from "./mock-store.js";
 import { applyResolvers, createContext } from "./resolvers.js";
+import { createApplicationAuthHeadlessRoutes } from "./application-auth-headless-routes.js";
 import { createApplicationAuthRoutes } from "./application-auth-routes.js";
 import { createApplicationAuthStore } from "./application-auth-store.js";
 
@@ -81,11 +82,14 @@ export const createMockServer = async ({ fixtures, publicPath }) => {
     context: createContext(store, applicationAuthStore),
   });
   const applicationAuthRoutes = createApplicationAuthRoutes(applicationAuthStore);
+  const applicationAuthHeadlessRoutes =
+    createApplicationAuthHeadlessRoutes(applicationAuthStore);
 
   const httpServer = createServer(async (request, response) => {
     const pathname = decodeURIComponent(
       new URL(request.url ?? "/", "http://mock.local").pathname,
     );
+    if (await applicationAuthHeadlessRoutes(request, response, pathname)) return;
     if (await applicationAuthRoutes(request, response, pathname)) return;
     if (
       pathname === "/graphql"

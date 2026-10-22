@@ -173,6 +173,37 @@ export const createApplicationAuthStore = ({
       return { session, user: publicUser(user) };
     },
 
+    /**
+     * Session for a confirmed email code (headless email OTP): signs in the account of the
+     * email, creating it when there is none, as IAM does when OTP sign-up is allowed.
+     */
+    signInWithEmailCode(applicationId, email, request) {
+      const normalized = normalizeEmail(email);
+      const users = realmUsers(applicationId);
+      let user = users.get(normalized);
+      if (!user) {
+        const timestamp = now().toISOString();
+        user = {
+          id: randomUUID(),
+          applicationId,
+          email: normalized,
+          emailVerified: true,
+          name: normalized.split('@')[0],
+          firstName: null,
+          lastName: null,
+          image: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          password: null,
+        };
+        users.set(normalized, user);
+        linkCustomer(user);
+      }
+      user.emailVerified = true;
+      const session = createSession(applicationId, user, request, true);
+      return { session, user: publicUser(user) };
+    },
+
     requestPasswordReset(applicationId, email) {
       const user = realmUsers(applicationId).get(normalizeEmail(email));
       if (!user) return null;

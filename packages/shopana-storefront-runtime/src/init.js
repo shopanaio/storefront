@@ -22,6 +22,7 @@ const defaultGeneratedFiles = [
   'app/[locale]/[[...slug]]/layout.tsx',
   'app/[locale]/[[...slug]]/page.tsx',
   'app/auth/[action]/route.ts',
+  'app/auth/headless/[action]/route.ts',
   'src/i18n/request.ts',
   'next-env.d.ts',
   'tsconfig.json',

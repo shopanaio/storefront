@@ -14,8 +14,34 @@ export {
 } from './config';
 export {
   createStorefrontAuthRouteHandlers,
+  endUserIp,
+  rejectCrossSite,
+  safeReturnTo,
+  transactionCookieName,
   type StorefrontAuthRouteHandlers,
+  type TransactionCookie,
 } from './routes';
+// Building blocks for other `/auth/*` handlers, such as the headless sign-in of
+// `@shopana/storefront-auth`: they share the session cookies and the session key.
+export {
+  END_USER_IP_HEADER,
+  IamOAuthError,
+  clientBasicAuthorization,
+  decodeJwtPayload,
+  retryAfterSeconds,
+  type OAuthTokenResponse,
+} from './iamOAuth';
+export { randomBase64Url, sha256Base64Url } from './encoding';
+export { seal, unseal, type SealedPayload } from './sealedCookie';
+export {
+  getStorefrontSessionServer,
+  isRejectedGrant,
+  parseCookieHeader,
+  serializeCookie,
+  type IssuedSession,
+  type ServerSessionPayload,
+  type StorefrontSessionServer,
+} from './serverSession';
 
 export interface ServerAuthState {
   /** Valid access token of this request, for the server Apollo client. */

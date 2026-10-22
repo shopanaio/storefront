@@ -4,6 +4,8 @@
  * for one cookie does not open as another.
  */
 
+import { bytesToBase64Url } from './encoding';
+
 const VERSION = 'v1';
 const IV_BYTES = 12;
 const keyCache = new Map<string, Promise<CryptoKey>>();
@@ -44,7 +46,7 @@ export async function seal<T extends SealedPayload>(
     await deriveKey(secret),
     new TextEncoder().encode(JSON.stringify(payload))
   );
-  return `${VERSION}.${toBase64Url(iv)}.${toBase64Url(new Uint8Array(cipher))}`;
+  return `${VERSION}.${bytesToBase64Url(iv)}.${bytesToBase64Url(new Uint8Array(cipher))}`;
 }
 
 export async function unseal<T extends SealedPayload>(
@@ -73,14 +75,6 @@ export async function unseal<T extends SealedPayload>(
   } catch {
     return null;
   }
-}
-
-function toBase64Url(bytes: Uint8Array): string {
-  let value = '';
-  bytes.forEach((byte) => {
-    value += String.fromCharCode(byte);
-  });
-  return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function fromBase64Url(value: string): Uint8Array<ArrayBuffer> {

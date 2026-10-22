@@ -232,11 +232,11 @@ export class StorefrontSessionServer {
    * Exchanges the refresh token once for all concurrent requests that carry it. A request that
    * arrives shortly after with the spent token gets the same result.
    */
-  refresh(refresh: RefreshCookie, forwardedFor?: string): Promise<RefreshOutcome> {
+  refresh(refresh: RefreshCookie, endUserIp?: string): Promise<RefreshOutcome> {
     let flight = refreshFlights.get(refresh.r);
     if (!flight) {
       flight = this.iam
-        .refresh(refresh.r, forwardedFor)
+        .refresh(refresh.r, endUserIp)
         .then((tokens) => this.issue(tokens, refresh));
       refreshFlights.set(refresh.r, flight);
       const forget = () => {

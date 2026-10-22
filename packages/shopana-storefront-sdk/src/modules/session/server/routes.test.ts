@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StorefrontAuthServerConfig } from './config';
-import { createStorefrontAuthRouteHandlers } from './routes';
+import { createStorefrontAuthRouteHandlers, endUserIp } from './routes';
 import { readServerAuthState } from './index';
 
 const origin = 'https://shop.example.test';
@@ -297,5 +297,27 @@ describe('storefront session handlers', () => {
   it('marks a page request whose access token expired for a browser refresh', async () => {
     const state = await readServerAuthState('shopana_signed_in=1; cartId=abc');
     expect(state).toEqual({ accessToken: null, session: null, refreshPending: true });
+  });
+});
+
+describe('endUserIp', () => {
+  const request = (headers: Record<string, string>) =>
+    new Request(`${origin}/auth/token`, { headers });
+
+  it('ignores the entries the client put in front of the proxy', () => {
+    expect(endUserIp(request({ 'x-forwarded-for': '198.51.100.9, 203.0.113.7' }))).toBe(
+      '203.0.113.7'
+    );
+  });
+
+  it('counts the trusted proxies from the right', () => {
+    const forwarded = { 'x-forwarded-for': '198.51.100.9, 203.0.113.7, 10.0.0.1' };
+    expect(endUserIp(request(forwarded), 2)).toBe('203.0.113.7');
+    expect(endUserIp(request({ 'x-forwarded-for': '203.0.113.7' }), 2)).toBe('203.0.113.7');
+  });
+
+  it('falls back to X-Real-IP without X-Forwarded-For', () => {
+    expect(endUserIp(request({ 'x-real-ip': '203.0.113.7' }))).toBe('203.0.113.7');
+    expect(endUserIp(request({}))).toBeUndefined();
   });
 });

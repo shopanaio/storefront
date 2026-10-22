@@ -1,0 +1,44 @@
+{
+  "name": "@shopana/storefront-auth",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./react": "./dist/react/index.js",
+    "./server": "./dist/server/index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc -p tsconfig.json",
+    "prepack": "yarn build",
+    "dev": "tsc -p tsconfig.json --watch",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "@shopana/storefront-sdk": "^0.1.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@shopana/storefront-sdk": "0.1.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.14.1",
+    "@types/react": "19.2.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "react": "19.2.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.0.5"
+  }
+}

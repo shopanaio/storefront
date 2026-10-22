@@ -8,6 +8,7 @@ import {
   getStorefrontAuthServerConfig,
   type StorefrontAuthServerConfig,
 } from './config';
+import { randomBase64Url, sha256Base64Url } from './encoding';
 import { decodeJwtPayload } from './iamOAuth';
 import { seal, unseal, type SealedPayload } from './sealedCookie';
 import {
@@ -37,7 +38,11 @@ const AUTH_EVENT_LIFETIME_SECONDS = 2 * 60;
 const CART_COOKIE_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const PROMPTS = new Set(['login', 'create', 'select_account', 'consent']);
 
-interface TransactionCookie extends SealedPayload {
+/**
+ * Authorization request this browser is waiting on at `/auth/callback`. The headless social
+ * sign-in writes the same cookie before it leaves for the provider.
+ */
+export interface TransactionCookie extends SealedPayload {
   state: string;
   nonce: string;
   verifier: string;
@@ -140,7 +145,7 @@ async function callback(
     const tokens = await server.iam.exchangeCode(
       code,
       transaction.verifier,
-      forwardedFor(request)
+      endUserIp(request, server.config.trustedProxyHops)
     );
     if (server.config.scopes.includes('openid')) {
       const claims = tokens.id_token ? decodeJwtPayload(tokens.id_token) : null;
@@ -199,7 +204,7 @@ async function refreshSession(
   }
   try {
     const issued = await server.sessionCookies(
-      await server.refresh(refresh, forwardedFor(request))
+      await server.refresh(refresh, endUserIp(request, server.config.trustedProxyHops))
     );
     return json(200, { session: issued.session }, issued.setCookies);
   } catch (error) {
@@ -256,7 +261,7 @@ async function logout(
  * The session handlers answer only the storefront's own pages: the custom header cannot be
  * sent cross-origin without a preflight, which these handlers never allow.
  */
-function rejectCrossSite(
+export function rejectCrossSite(
   request: Request,
   server: StorefrontSessionServer
 ): Response | null {
@@ -273,7 +278,7 @@ function rejectCrossSite(
 }
 
 /** Only a path of this storefront; anything else returns to the home page. */
-function safeReturnTo(value: string | null, origin: string): string {
+export function safeReturnTo(value: string | null | undefined, origin: string): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
   try {
     const url = new URL(value, origin);
@@ -296,16 +301,24 @@ function withAuthResult(
 }
 
 /** `__Host-` needs HTTPS; a local HTTP storefront uses the plain name. */
-function transactionCookieName(server: StorefrontSessionServer): string {
+export function transactionCookieName(server: StorefrontSessionServer): string {
   return server.secure ? '__Host-shopana_auth_tx' : 'shopana_auth_tx';
 }
 
-function forwardedFor(request: Request): string | undefined {
-  return (
-    request.headers.get('x-forwarded-for') ??
-    request.headers.get('x-real-ip') ??
-    undefined
-  );
+/**
+ * The buyer address: the `X-Forwarded-For` entry added by the outermost trusted proxy, counted
+ * `trustedProxyHops` from the right. A proxy appends the address it saw, so entries left of it
+ * come from the client and may be forged. Without `X-Forwarded-For`, `X-Real-IP` of the proxy.
+ */
+export function endUserIp(request: Request, trustedProxyHops = 1): string | undefined {
+  const forwarded = (request.headers.get('x-forwarded-for') ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (forwarded.length > 0) {
+    return forwarded[Math.max(0, forwarded.length - trustedProxyHops)];
+  }
+  return request.headers.get('x-real-ip')?.trim() || undefined;
 }
 
 function redirect(location: string, setCookies: string[]): Response {
@@ -325,24 +338,4 @@ function json(status: number, body: unknown, setCookies: string[] = []): Respons
 
 function nowSeconds(): number {
   return Math.floor(Date.now() / 1000);
-}
-
-function randomBase64Url(byteLength: number): string {
-  return bytesToBase64Url(crypto.getRandomValues(new Uint8Array(byteLength)));
-}
-
-async function sha256Base64Url(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(value)
-  );
-  return bytesToBase64Url(new Uint8Array(digest));
-}
-
-function bytesToBase64Url(bytes: Uint8Array): string {
-  let value = '';
-  bytes.forEach((byte) => {
-    value += String.fromCharCode(byte);
-  });
-  return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

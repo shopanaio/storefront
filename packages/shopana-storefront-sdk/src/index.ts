@@ -69,6 +69,7 @@ export {
   StorefrontSessionClient,
   StorefrontSessionError,
   storefrontSession,
+  type BrowserSession,
 } from './modules/session/core/StorefrontSessionClient';
 
 // Public application authentication OpenAPI contract.
