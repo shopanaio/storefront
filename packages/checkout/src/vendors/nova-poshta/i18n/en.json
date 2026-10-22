@@ -5,7 +5,7 @@
       "doors": "Nova Poshta courier",
       "postomat": "Nova Poshta parcel locker"
     },
-    "estimate": "About {amount}, paid to the carrier on receipt",
+    "estimate": "About {amount}",
     "estimate_pending": "The carrier rate is being calculated"
   },
   "payment": {
