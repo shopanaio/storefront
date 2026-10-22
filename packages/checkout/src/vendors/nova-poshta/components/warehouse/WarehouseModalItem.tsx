@@ -49,11 +49,11 @@ export const WarehouseModalItem = ({
           header={
             <Flex gap={8} align="center" className={styles.header}>
               <NPLogo showText={false} />
-              <Flex vertical align="start" gap={4} className={styles.content}>
-                <Typography.Text className={styles.warehouseMain}>
+              <Flex vertical align="start" gap={2} className={styles.content}>
+                <Typography.Text className={styles.warehouseMain} ellipsis>
                   {`№${item.number} ${item.shortAddress}`}
                 </Typography.Text>
-                <Typography.Text className={styles.workTime} type="secondary">
+                <Typography.Text className={styles.workTime} ellipsis>
                   {item.selectable ? schedule : t('form.point_closed')}
                 </Typography.Text>
               </Flex>
@@ -82,12 +82,11 @@ const useStyles = createStyles(({ token, css }) => {
       border: 1px solid;
       border-color: ${token.colorBorder};
       border-radius: ${token.borderRadius}px;
-      min-height: 56px;
       overflow: visible;
       margin-bottom: ${token.marginXS}px;
 
       & .ant-collapse-header {
-        padding: ${token.paddingSM}px !important;
+        padding: ${token.paddingXS}px ${token.paddingSM}px !important;
         align-items: center !important;
       }
 
@@ -111,13 +110,20 @@ const useStyles = createStyles(({ token, css }) => {
       line-height: 1.2;
       font-size: ${token.fontSize}px;
     `,
+    // Lighter than the address, on one line (the schedule is short, see formatSchedule).
     workTime: css`
       font-size: ${token.fontSizeSM}px;
       line-height: 1.2;
+      color: ${token.colorTextTertiary};
     `,
     content: css`
       overflow: hidden;
       flex: 1;
+      min-width: 0;
+
+      & > .ant-typography {
+        max-width: 100%;
+      }
     `,
   };
 });

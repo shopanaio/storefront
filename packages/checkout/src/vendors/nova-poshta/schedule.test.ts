@@ -22,7 +22,7 @@ describe('formatSchedule', () => {
         ],
         (name) => name.slice(0, 3)
       )
-    ).toBe('Mon-Fri: 08:00-20:00, Sat: 09:00-15:00');
+    ).toBe('Mon–Fri 8–20 · Sat 9–15');
   });
 
   it('does not join days separated by a closed day', () => {
@@ -35,7 +35,16 @@ describe('formatSchedule', () => {
         ],
         (name) => name.slice(0, 2)
       )
-    ).toBe('Mo: 10:00-18:00, We: 10:00-18:00');
+    ).toBe('Mo 10–18 · We 10–18');
+  });
+
+  it('keeps the minutes of hours that are not whole', () => {
+    expect(
+      formatSchedule(
+        [day('Monday', '08:30-19:45'), day('Tuesday', '24 hours')],
+        (name) => name.slice(0, 3)
+      )
+    ).toBe('Mon 8:30–19:45 · Tue 24 hours');
   });
 
   it('is empty without open days', () => {

@@ -96,6 +96,8 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         )}
       </SelectCard>
       <DrawerBase
+        // The list comes as the buyer types: the sheet keeps its height meanwhile.
+        minHeight="60dvh"
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
         header={
@@ -129,15 +131,19 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       >
         <Flex vertical gap={16}>
           {!searchValue && (
-            <Flex vertical gap={8} wrap>
+            // Popular cities as pills in a row, wrapping; the chosen one in the primary color.
+            <Flex gap={8} wrap>
               {popularCities.map((item) => (
                 <Button
-                  block
-                  variant={item.ref === city?.settlementRef ? 'outlined' : 'text'}
+                  size="large"
+                  shape="round"
+                  variant="outlined"
                   color={item.ref === city?.settlementRef ? 'primary' : 'default'}
-                  key={item.ref}
-                  onClick={() => handleSelectCity(item)}
-                  style={{ justifyContent: 'start' }}
+                  key={item.name}
+                  // A city without a ref is searched for by name, and picked from the results.
+                  onClick={() =>
+                    item.ref ? handleSelectCity(item) : setSearchValue(item.name)
+                  }
                 >
                   {item.name}
                 </Button>

@@ -74,8 +74,9 @@ function answer(
       return {
         novaPoshtaSettlements: {
           __typename: 'NovaPoshtaSettlementPage',
-          items: popularCities.filter((city) =>
-            matches(variables.query, city.name, city.present)
+          // Only the cities the carrier is known for: the others have no ref yet.
+          items: popularCities.filter(
+            (city) => city.ref && matches(variables.query, city.name, city.present)
           ),
           hasNextPage: false,
         },

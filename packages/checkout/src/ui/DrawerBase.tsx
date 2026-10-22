@@ -49,6 +49,12 @@ export interface DrawerBaseProps {
   placement?: DrawerDirection;
   /** Drawer width for horizontal placements */
   width?: string | number;
+  /**
+   * Least height of the content in a bottom sheet, for content loaded as the buyer types (cities,
+   * branches, streets), so the sheet does not jump with each answer. Without it the sheet is as
+   * tall as its content.
+   */
+  minHeight?: string;
   'aria-labelledby'?: string;
 }
 
@@ -86,9 +92,10 @@ export const DrawerBase = ({
   sectionStyles,
   placement,
   width,
+  minHeight,
   'aria-labelledby': ariaLabelledBy,
 }: DrawerBaseProps) => {
-  const { styles } = useStyles();
+  const { styles, cx } = useStyles();
   const isMobile = useIsDrawerMobile();
   const showCloseButton = showCloseButtonProp || !isMobile;
 
@@ -115,7 +122,10 @@ export const DrawerBase = ({
     <div className={clsx(styles.layout, contentClassName)}>
       {renderHeader()}
 
-      <div className={clsx(styles.content, sectionStyles?.content)}>
+      <div
+        className={cx(styles.content, footer ? styles.withFooter : undefined, sectionStyles?.content)}
+        style={isMobile && !isHorizontal && minHeight ? { minHeight } : undefined}
+      >
         {children}
       </div>
       {footer && (
@@ -242,7 +252,7 @@ const useStyles = createStyles(({ css, token }) => ({
     flex: 1;
     padding: ${token.paddingXS}px
       calc(${token.paddingSM}px + var(--safe-area-right, 0px))
-      calc(84px + var(--safe-area-bottom, 0px))
+      calc(${token.padding}px + var(--safe-area-bottom, 0px))
       calc(${token.paddingSM}px + var(--safe-area-left, 0px));
     height: 100%;
     max-height: 80dvh;
@@ -250,6 +260,10 @@ const useStyles = createStyles(({ css, token }) => ({
     ${mq.lg} {
       max-height: unset;
     }
+  `,
+  // Room for the footer, which lies over the end of the content.
+  withFooter: css`
+    padding-bottom: calc(84px + var(--safe-area-bottom, 0px));
   `,
   footer: css`
     position: absolute;

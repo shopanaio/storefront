@@ -14,9 +14,11 @@ export const CityOption = ({ item, changeCity }: Prop) => {
       variant="text"
       size="large"
       color="default"
+      // The hover background has room around the two lines.
       style={{
         justifyContent: 'start',
-        padding: 0,
+        height: 'auto',
+        padding: '8px 12px',
       }}
     >
       <Flex vertical align="start">

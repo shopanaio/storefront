@@ -49,6 +49,7 @@ export const WarehouseModal = ({
       <SelectButton
         hasValue={!!point}
         mainText={point ? `№${point.number} ${point.shortAddress}` : undefined}
+        subtle
         secondaryText={
           point
             ? formatSchedule(point.schedule, (day) => t(`schedule.days.${day}`))
@@ -59,6 +60,8 @@ export const WarehouseModal = ({
         disabled={!settlementRef}
       />
       <DrawerBase
+        // The list comes as the buyer types: the sheet keeps its height meanwhile.
+        minHeight="60dvh"
         open={open}
         onClose={close}
         header={

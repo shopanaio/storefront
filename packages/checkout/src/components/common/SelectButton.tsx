@@ -17,6 +17,8 @@ interface SelectButtonProps {
   icon?: ReactNode;
   /** If true, swap main and secondary text positions */
   invert?: boolean;
+  /** The secondary text on one line and lighter, such as the schedule of a branch. */
+  subtle?: boolean;
   onClick: () => void;
   disabled?: boolean;
   className?: string;
@@ -33,6 +35,7 @@ export const SelectButton = ({
   hasValue,
   icon,
   invert = false,
+  subtle = false,
   onClick,
   disabled,
   className,
@@ -57,7 +60,11 @@ export const SelectButton = ({
             {mainText}
           </Typography.Text>
           {secondaryText && (
-            <Typography.Text className={styles.secondaryText} type="secondary">
+            <Typography.Text
+              className={cx(styles.secondaryText, subtle && styles.subtle)}
+              type={subtle ? undefined : 'secondary'}
+              ellipsis={subtle}
+            >
               {secondaryText}
             </Typography.Text>
           )}
@@ -90,6 +97,10 @@ const useStyles = createStyles(({ token, css }) => {
     secondaryText: css`
       font-size: ${token.fontSizeSM}px;
       line-height: 1;
+    `,
+    subtle: css`
+      max-width: 100% !important;
+      color: ${token.colorTextTertiary};
     `,
   };
 });

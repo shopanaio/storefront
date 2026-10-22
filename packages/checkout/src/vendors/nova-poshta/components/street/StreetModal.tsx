@@ -49,6 +49,8 @@ export const StreetModal = ({
         disabled={!settlementRef}
       />
       <DrawerBase
+        // The list comes as the buyer types: the sheet keeps its height meanwhile.
+        minHeight="60dvh"
         open={isStreetModalVisible}
         onClose={() => setIsStreetModalVisible(false)}
         header={

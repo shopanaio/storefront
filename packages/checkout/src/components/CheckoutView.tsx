@@ -133,13 +133,15 @@ const useStyles = createStyles(({ css, token }) => {
       line-height: ${token.lineHeight};
       ${bannerToneDeclarations()}
     `,
+    // On desktop the actions sit right in the form column, so their panel can be sticky in it.
     actionsLeft: css`
       display: none;
       ${mq.lg} {
-        display: flex;
+        display: contents;
       }
     `,
     actionsRight: css`
+      display: contents;
       ${mq.lg} {
         display: none;
       }
@@ -149,6 +151,12 @@ const useStyles = createStyles(({ css, token }) => {
       display: flex;
       flex-direction: column;
       gap: 12px;
+      /* On a phone it stands right in the page, under the form. */
+      padding: ${token.padding}px ${token.padding}px 0;
+
+      ${mq.lg} {
+        padding: 0;
+      }
     `,
 
     logInButton: css`

@@ -34,6 +34,7 @@ import { settlementAddressData } from '#checkout/vendors/nova-poshta/address';
 import { popularCities } from '#checkout/vendors/nova-poshta/popularCities';
 import type { Checkout } from '#checkout/types/entity';
 import { CheckoutFormPage } from '#checkout/stories/CheckoutFormPage';
+import { usePlacementStore } from '#checkout/state/placement/placementStore';
 
 /**
  * The whole checkout page as the buyer fills it in: the contact with the sign-in button, the
@@ -223,7 +224,7 @@ export const CityWithOblast: Story = {
         ...kyivAddress,
         city: 'Львів',
         provinceCode: '46',
-        data: settlementAddressData(popularCities[5]),
+        data: settlementAddressData(popularCities.find((city) => city.name === 'Львів')!),
         formatted: ['Львів'],
         formattedArea: 'Львів, Ukraine',
       },
@@ -231,4 +232,48 @@ export const CityWithOblast: Story = {
     loyalty: { account: bothSourcesAccount, earning },
   }),
   globals: { locale: 'uk' },
+};
+
+/** The filled page with what the server reports on the checkout changed by the story. */
+function filledWith(
+  change: (checkout: Checkout.Checkout) => Partial<Checkout.Checkout>
+) {
+  const parameters = Filled.parameters as ReturnType<typeof pageScenario>;
+  const checkout = parameters.checkout.checkout as Checkout.Checkout;
+  return {
+    ...parameters,
+    checkout: {
+      ...parameters.checkout,
+      checkout: { ...checkout, ...change(checkout) },
+    },
+  };
+}
+
+/**
+ * A warning banner in its place over the submit button: the prices changed since the buyer
+ * opened the checkout. On a phone it sticks to the bottom of the screen with the button.
+ */
+export const BannerWarning: Story = {
+  parameters: filledWith(() => ({
+    notifications: [
+      {
+        id: 'notification-prices',
+        code: 'PRICE_CHANGED',
+        isDismissed: false,
+        severity: 'WARNING',
+      },
+    ],
+  })),
+};
+
+/**
+ * An error banner over the submit button: the payment of the order failed, and the buyer can
+ * try again. The placement is set to that state before the story and reset after it.
+ */
+export const BannerError: Story = {
+  parameters: Filled.parameters,
+  beforeEach: () => {
+    usePlacementStore.getState().setPhase({ name: 'payment-failed', failure: null });
+    return () => usePlacementStore.getState().reset();
+  },
 };

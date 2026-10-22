@@ -20,11 +20,9 @@ export const CheckoutColumns = ({ left, right }: CheckoutColumnsProps) => {
     <div className={styles.container}>
       <div className={styles.main}>
         <Flex className={styles.left}>{left}</Flex>
-        <Flex className={styles.rightContainer}>
-          <Flex vertical gap={12} className={styles.right}>
-            {right}
-          </Flex>
-        </Flex>
+        <div className={styles.rightContainer}>
+          <div className={styles.right}>{right}</div>
+        </div>
       </div>
     </div>
   );
@@ -48,6 +46,12 @@ const useStyles = createStyles(({ token, css }) => ({
     --checkout-right-max: calc(
       var(--checkout-content-max) * var(--checkout-right-ratio)
     );
+    /* Grey page; on desktop the form side is white and the summary column keeps the grey. */
+    background-color: ${token.colorBgLayout};
+
+    ${mq.lg} {
+      background-color: ${token.colorBgContainer};
+    }
   `,
   main: css`
     display: flex;
@@ -80,18 +84,26 @@ const useStyles = createStyles(({ token, css }) => ({
       padding: ${token.paddingXL}px;
     }
   `,
+  // On a phone the columns give way, so the parts of the summary stand right in the page and the
+  // sticky submit panel sticks within all of it.
   rightContainer: css`
+    display: contents;
+
     ${mq.lg} {
+      display: flex;
       background-color: ${token.colorBgLayout};
     }
   `,
   right: css`
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-    padding: ${token.padding}px;
+    display: contents;
 
     ${mq.lg} {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
       max-width: var(--checkout-right-max);
       position: sticky;
       padding: ${token.paddingXL}px;
