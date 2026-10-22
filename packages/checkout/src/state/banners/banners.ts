@@ -96,6 +96,8 @@ export interface BannerHandlers {
   openCart: (() => void) | null;
   focusSection: (section: SectionId) => void;
   focusSummary: () => void;
+  /** Brings the terms of the order into view. */
+  focusTerms: () => void;
   dismiss: (id: string) => void;
   /** Stops paying with points or store credit, keeping the reward. */
   dropRedemption: () => void;
@@ -212,7 +214,9 @@ export function collectBanners(
   } else if (phase.name === 'rejected') {
     const key = placementErrorMessageKey(phase.code);
     const id = `rejected:${phase.code}`;
-    if (phase.code === 'CHECKOUT_ALREADY_PLACED') {
+    if (key === 'terms-required') {
+      // The checkbox itself says so, next to the button.
+    } else if (phase.code === 'CHECKOUT_ALREADY_PLACED') {
       items.push({
         id,
         priority: BannerPriority.Closed,
@@ -240,6 +244,8 @@ export function collectBanners(
         };
       } else if (key === 'placement-error-not-found') {
         action = undefined;
+      } else if (key === 'placement-error-disclosures-changed') {
+        action = { label: t('banner-review'), onClick: handlers.focusTerms };
       } else if (key === 'placement-error-loyalty') {
         action = { label: t('loyalty-banner-refresh'), onClick: handlers.refreshLoyalty };
       } else if (key === 'sign-in-required' || key === 'loyalty-banner-sign-in') {

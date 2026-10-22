@@ -76,7 +76,7 @@ export const Shipments = ({
 
   return (
     <Flex vertical gap={12}>
-      <Text strong>
+      <Text strong className={styles.heading}>
         {t('delivery-shipments-count', { count: groups.length })}
       </Text>
       <Flex vertical gap={8}>
@@ -151,6 +151,10 @@ export const Shipments = ({
 };
 
 const useStyles = createStyles(({ css, token }) => ({
+  // Apart from the address above it, as the start of the shipments.
+  heading: css`
+    margin-top: ${token.marginXS}px;
+  `,
   divider: css`
     margin: ${token.marginXS}px 0;
   `,

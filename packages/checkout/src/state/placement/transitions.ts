@@ -1,6 +1,7 @@
 import type { AttemptJournal, PlacementAttempt } from '#checkout/state/placement/attemptJournal';
 import type { PlacementPhase } from '#checkout/state/placement/placementStore';
 import type { PlacementOutcome, PlacementResult } from '#checkout/state/placement/types';
+import { DISCLOSURES_CHANGED_CODE } from '#checkout/state/placement/outcome';
 
 /**
  * How an outcome was reached:
@@ -43,7 +44,8 @@ export function phaseForOutcome(
  * Records an outcome in the attempt journal so that the key never sticks:
  * - a placed order or a final rejection removes the attempt;
  * - a failed payment marks it failed, so the retry takes a new key (decision 1.7);
- * - a retryable rejection keeps it `sent`, so the retry reuses the key;
+ * - a retryable rejection keeps it `sent`, so the retry reuses the key, except changed
+ *   disclosures: the retry carries another version;
  * - a placement in progress is kept for recovery.
  */
 export function recordOutcome(
@@ -57,7 +59,11 @@ export function recordOutcome(
       journal.clear(attempt.checkoutId);
       return null;
     case 'rejected':
-      if (outcome.retryable) return attempt;
+      // Changed disclosures are answered before anything is placed, and the next press sends
+      // another version: the key is not kept for a retry of this request.
+      if (outcome.retryable && outcome.code !== DISCLOSURES_CHANGED_CODE) {
+        return attempt;
+      }
       journal.clear(attempt.checkoutId);
       return null;
     case 'payment-failed':

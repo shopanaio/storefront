@@ -33,6 +33,13 @@ export interface PlacementAttempt {
    * hash too; the API places nothing when the recalculated checkout pays another amount.
    */
   expectedTotal: MoneyInput;
+  /**
+   * The terms acceptance sent with the request: whether the buyer ticked the checkbox, and the
+   * version of the disclosures shown (`null` without disclosures). Both are part of the request
+   * hash.
+   */
+  termsAccepted: boolean;
+  disclosuresVersion: string | null;
   resultRevision: string;
   paymentFlow: PaymentFlow | null;
   state: AttemptState;
@@ -67,6 +74,8 @@ export interface BeginAttemptInput {
   paymentFlow: PaymentFlow | null;
   returnUrl: string;
   expectedTotal: MoneyInput;
+  termsAccepted: boolean;
+  disclosuresVersion: string | null;
 }
 
 export class AttemptJournal {
@@ -100,7 +109,8 @@ export class AttemptJournal {
    *
    * The key is reused while the previous request may still have been processed (`created`,
    * `sent`) and the snapshot did not change. A new key is issued after a payment failure, when
-   * `resultRevision` changed before the payment started, or when there is no attempt yet.
+   * `resultRevision` or the terms acceptance changed before the payment started, or when there
+   * is no attempt yet.
    */
   begin(input: BeginAttemptInput): PlacementAttempt {
     this.prune();
@@ -108,7 +118,9 @@ export class AttemptJournal {
     const reusable =
       current !== null &&
       (current.state === 'created' || current.state === 'sent') &&
-      current.resultRevision === input.resultRevision;
+      current.resultRevision === input.resultRevision &&
+      current.termsAccepted === input.termsAccepted &&
+      current.disclosuresVersion === input.disclosuresVersion;
     if (reusable) {
       return current;
     }
@@ -118,6 +130,8 @@ export class AttemptJournal {
       idempotencyKey: this.createKey(),
       returnUrl: input.returnUrl,
       expectedTotal: input.expectedTotal,
+      termsAccepted: input.termsAccepted,
+      disclosuresVersion: input.disclosuresVersion,
       resultRevision: input.resultRevision,
       paymentFlow: input.paymentFlow,
       state: 'created',
@@ -264,6 +278,9 @@ function isPlacementAttempt(value: unknown): value is PlacementAttempt {
     typeof record.idempotencyKey === 'string' &&
     typeof record.returnUrl === 'string' &&
     isMoneyInput(record.expectedTotal) &&
+    typeof record.termsAccepted === 'boolean' &&
+    (record.disclosuresVersion === null ||
+      typeof record.disclosuresVersion === 'string') &&
     typeof record.resultRevision === 'string' &&
     typeof record.state === 'string' &&
     typeof record.createdAt === 'number'

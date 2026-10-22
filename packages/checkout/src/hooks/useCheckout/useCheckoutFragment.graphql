@@ -184,6 +184,22 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       description
     }
   }
+  disclosures {
+    version
+    acceptanceMode
+    parts {
+      __typename
+      ... on CheckoutDisclosureText {
+        text
+      }
+      ... on CheckoutDisclosurePolicyLink {
+        policyType
+        handle
+        title
+        path
+      }
+    }
+  }
   lines {
     ...StorefrontCheckoutLineFields
     children {

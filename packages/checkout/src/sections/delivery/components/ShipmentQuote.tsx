@@ -1,6 +1,7 @@
 'use client';
 
 import { Flex, Typography } from 'antd';
+import { createStyles } from 'antd-style';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { formatMoney, Money } from '#checkout/ui/Money';
 import type { Checkout } from '#checkout/types/entity';
@@ -84,15 +85,9 @@ export function useEstimateLabel() {
  * shipping is free. Shown only for options the API accepted with their input, so the price is
  * the one the order takes.
  */
-export const ShipmentQuote = ({
-  shipments,
-  withLabel = false,
-}: {
-  shipments: QuotedShipment[];
-  /** Prefixes the price with "Shipping:" where nothing else says what it is. */
-  withLabel?: boolean;
-}) => {
+export const ShipmentQuote = ({ shipments }: { shipments: QuotedShipment[] }) => {
   const t = useTranslations('Checkout');
+  const { styles } = useStyles();
   const estimateLabel = useEstimateLabel();
   const reasonLabel = useFreeShippingReason();
   const quote = shippingQuote(shipments);
@@ -102,17 +97,23 @@ export const ShipmentQuote = ({
   const estimate = estimateLabel(quote.estimatedMinDeliveryAt, quote.estimatedMaxDeliveryAt);
   const reason = reasonLabel(quote.freeShipping);
   return (
-    <Flex vertical align={withLabel ? 'flex-start' : 'flex-end'}>
-      <Text type="secondary">
-        {withLabel ? `${t('shipping')}: ` : null}
+    <Flex vertical align="flex-start">
+      <Text type="secondary" className={styles.note}>
         <ShippingPriceValue price={quote.price} />
         {estimate ? ` · ${t('delivery-estimate', { dates: estimate })}` : ''}
       </Text>
       {reason ? (
-        <Text type="success" style={{ fontSize: 'smaller' }}>
+        <Text type="success" className={styles.note}>
           {reason}
         </Text>
       ) : null}
     </Flex>
   );
 };
+
+const useStyles = createStyles(({ css, token }) => ({
+  // A note under the delivery methods, in the small text of the other notes.
+  note: css`
+    font-size: ${token.fontSizeSM}px;
+  `,
+}));

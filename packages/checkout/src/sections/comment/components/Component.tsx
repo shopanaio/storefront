@@ -175,12 +175,17 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
       {isOpen ? (
         <div className={styles.fieldWrap}>
           <Flex align="center" justify="space-between">
-            <Typography.Text className={styles.label} id="order-note-label">
+            <Typography.Text
+              strong
+              type="secondary"
+              className={styles.label}
+              id="order-note-label"
+            >
               {t('order-note')}
             </Typography.Text>
             <Button
-              type="text"
-              size="small"
+              variant="link"
+              color="default"
               className={styles.cancel}
               onClick={onCancel}
             >
@@ -235,14 +240,14 @@ const useStyles = createStyles(({ token, css }) => ({
     flex-direction: column;
     gap: ${token.marginXXS}px;
   `,
+  // As the labels of the summary blocks (promo codes, rewards).
   label: css`
-    color: ${token.colorTextSecondary};
+    font-size: ${token.fontSize}px;
   `,
+  // A link on the line of the label, as tall as its text.
   cancel: css`
     height: auto;
-    padding: 0 ${token.paddingXXS}px;
-    margin-right: -${token.paddingXXS}px;
-    color: ${token.colorTextSecondary};
+    padding: 0;
   `,
 }));
 

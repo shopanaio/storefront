@@ -6,6 +6,9 @@ export const SUMMARY_ANCHOR = 'checkout-summary';
 /** Id of the lines of the order, for actions that send the buyer to them; on a phone they lead the page. */
 export const LINES_ANCHOR = 'checkout-lines';
 
+/** Id of the terms checkbox next to the submit button. */
+export const TERMS_ANCHOR = 'checkout-terms';
+
 /** Id of the element holding a section, for actions that send the buyer there. */
 export function sectionAnchor(section: SectionId): string {
   if (section === SectionId.Address) return ADDRESS_SECTION_ANCHOR;

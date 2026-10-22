@@ -78,11 +78,13 @@ export const CheckoutView = ({
                 <SectionRenderer slug={SectionId.Address} />
                 <SectionRenderer slug={SectionId.Delivery} />
                 <SectionIssues sections={[SectionId.Address, SectionId.Delivery]} />
-                {/* Part of the delivery block: who receives it. */}
-                <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
-                  <SectionRenderer slug={SectionId.Recipient} />
-                  <SectionIssues sections={[SectionId.Recipient]} />
-                </CheckoutSection>
+                {/* Part of the delivery block: who receives it, a little apart from the methods. */}
+                <div className={styles.recipient}>
+                  <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
+                    <SectionRenderer slug={SectionId.Recipient} />
+                    <SectionIssues sections={[SectionId.Recipient]} />
+                  </CheckoutSection>
+                </div>
               </CheckoutSection>
 
               <CheckoutSection
@@ -157,6 +159,10 @@ const useStyles = createStyles(({ css, token }) => {
       ${mq.lg} {
         padding: 0;
       }
+    `,
+
+    recipient: css`
+      margin-top: ${token.marginXS}px;
     `,
 
     logInButton: css`

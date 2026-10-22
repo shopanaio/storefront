@@ -48,7 +48,13 @@ export const ShipmentPlate = ({
     <Flex vertical className={styles.plate}>
       <Flex align="flex-start" gap={12}>
         <Flex vertical className={styles.summary} onClick={toggle}>
-          {typeof title === 'string' ? <Text strong>{title}</Text> : title}
+          {typeof title === 'string' ? (
+            <Text strong ellipsis className={styles.title}>
+              {title}
+            </Text>
+          ) : (
+            title
+          )}
           {/* The pictures fold while the list unfolds, so nothing jumps. */}
           <Fold open={!expanded}>
             <Flex align="center" gap={12} className={styles.avatars}>
@@ -59,16 +65,6 @@ export const ShipmentPlate = ({
             </Flex>
           </Fold>
         </Flex>
-        {action ? (
-          <Button
-            type="link"
-            icon={action.icon}
-            className={styles.action}
-            onClick={action.onClick}
-          >
-            {action.label}
-          </Button>
-        ) : null}
         <FoldToggle
           open={expanded}
           controls={listId}
@@ -83,6 +79,17 @@ export const ShipmentPlate = ({
           <ShipmentLines lines={lines} undeliverable={undeliverable} />
         </div>
       </Fold>
+      {/* A line of its own under the shipment: beside the title it squeezed both on a phone. */}
+      {action ? (
+        <Button
+          type="link"
+          icon={action.icon}
+          className={styles.action}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </Button>
+      ) : null}
       {children}
     </Flex>
   );
@@ -103,12 +110,17 @@ const useStyles = createStyles(({ css, token }) => ({
   avatars: css`
     padding-top: ${token.paddingXXS}px;
   `,
+  title: css`
+    max-width: 100%;
+  `,
   count: css`
     font-size: ${token.fontSizeSM}px;
+    white-space: nowrap;
   `,
   action: css`
-    flex: none;
+    align-self: flex-start;
     height: auto;
+    margin-top: ${token.marginXS}px;
     padding: 0;
   `,
   lines: css`

@@ -31,6 +31,7 @@ import {
   focusAnchor,
   sectionAnchor,
   LINES_ANCHOR,
+  TERMS_ANCHOR,
 } from '#checkout/ui/focusAnchor';
 
 /** Messages of the checkout banner, most important first. */
@@ -115,6 +116,8 @@ export function useCheckoutBanners(): BannerItem[] {
           openCart,
           focusSection: (section) => focusAnchor(sectionAnchor(section)),
           focusSummary: () => focusAnchor(LINES_ANCHOR, { focus: false }),
+          // The checkbox when the buyer ticks one; otherwise the notice under the button.
+          focusTerms: () => focusAnchor(TERMS_ANCHOR, { focus: false }),
           dismiss,
           // A failed write is reported by its own banner; the action needs no handling here.
           dropRedemption: () => void api.setLoyaltyRedemption(null).catch(() => undefined),

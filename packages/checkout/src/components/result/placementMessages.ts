@@ -2,6 +2,7 @@ import type { PlacementStatus } from '#checkout/state/placement/types';
 import {
   CLAIM_REQUIRED_CODE,
   CLIENT_SDK_UNAVAILABLE_CODE,
+  DISCLOSURES_CHANGED_CODE,
   GUEST_NOT_ALLOWED_CODE,
   IDEMPOTENCY_MISMATCH_CODE,
   INPUT_UNSAVED_CODE,
@@ -11,6 +12,7 @@ import {
   STALE_SELECTION_CODE,
   TOTAL_CHANGED_CODE,
   SHIPPING_CHANGED_CODE,
+  TERMS_NOT_ACCEPTED_CODE,
 } from '#checkout/state/placement/outcome';
 
 /**
@@ -31,6 +33,8 @@ export function placementErrorMessageKey(code: string): string {
   ) {
     return 'placement-error-changed';
   }
+  if (code === DISCLOSURES_CHANGED_CODE) return 'placement-error-disclosures-changed';
+  if (code === TERMS_NOT_ACCEPTED_CODE) return 'terms-required';
   if (
     code === CLIENT_SDK_UNAVAILABLE_CODE ||
     code === 'CHECKOUT_RETURN_URL_UNSUPPORTED_BY_PAYMENT_METHOD' ||

@@ -292,6 +292,27 @@ const mapLoyaltyEarning = (
         description: earning.presentation.description ?? null,
       }
     : null;
+const mapDisclosures = (
+  disclosures: ApiCheckout['disclosures']
+): Checkout.Disclosures | null =>
+  disclosures
+    ? {
+        version: disclosures.version,
+        acceptanceMode: disclosures.acceptanceMode,
+        parts: disclosures.parts.map(
+          (part): Checkout.DisclosurePart =>
+            part.__typename === 'CheckoutDisclosurePolicyLink'
+              ? {
+                  kind: 'policy',
+                  policyType: part.policyType,
+                  handle: part.handle,
+                  title: part.title,
+                  path: part.path,
+                }
+              : { kind: 'text', text: part.text }
+        ),
+      }
+    : null;
 /**
  * Collects lines and bundle components by id, because delivery groups may
  * reference either.
@@ -398,6 +419,7 @@ export function mapApiCheckoutToCheckout(
     loyaltyRewardId: apiCheckout.loyaltyRewardId ?? null,
     loyaltySelection: mapLoyaltySelection(apiCheckout.loyaltySelection),
     loyaltyEarning: mapLoyaltyEarning(apiCheckout.loyaltyEarning),
+    disclosures: mapDisclosures(apiCheckout.disclosures),
     notifications: apiCheckout.notifications.map((notification) => ({
       id: notification.id,
       code: notification.code,

@@ -53,6 +53,7 @@ const handlers: BannerHandlers = {
   openCart: fn(),
   focusSection: fn(),
   focusSummary: fn(),
+  focusTerms: fn(),
   dismiss: fn(),
   dropRedemption: fn(),
   dropReward: fn(),

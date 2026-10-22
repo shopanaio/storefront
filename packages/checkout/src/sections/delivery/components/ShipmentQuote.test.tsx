@@ -27,11 +27,11 @@ const view = (shipments: QuotedShipment[]) =>
           'shipping-free-because': 'Безкоштовна доставка: {reasons}',
           'shipping-free-reason-tier': 'рівень «{title}»',
           'shipping-free-reason-reward': 'нагорода «{title}»',
-          'delivery-estimate': 'доставка {dates}',
+          'delivery-estimate': 'орієнтовно {dates}',
         },
       }}
     >
-      <ShipmentQuote shipments={shipments} withLabel />
+      <ShipmentQuote shipments={shipments} />
     </NextIntlClientProvider>
   );
 

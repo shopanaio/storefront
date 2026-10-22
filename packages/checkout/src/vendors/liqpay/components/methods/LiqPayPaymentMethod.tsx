@@ -6,7 +6,8 @@ import { ProviderMethodComponentProps } from '#checkout/vendors/types';
 import { LiqPayLogo } from '../Logo';
 
 /**
- * LiqPay payment method: card, Apple Pay and Google Pay on the LiqPay page.
+ * LiqPay payment method: a card or the wallets the store enabled, on the LiqPay page. Its
+ * default description names none of them, since the store sets them up in LiqPay.
  * Has no form; the selection alone makes the payment section valid.
  * The title and description of the API are shown as they are (decision 5.1); the module
  * texts stand in only when the API gives none (or only the method code).

@@ -1,6 +1,6 @@
 {
   "payment": {
     "name": "Оплата карткою онлайн",
-    "description": "Visa, Mastercard, Apple Pay або Google Pay через LiqPay"
+    "description": "Через LiqPay"
   }
 }

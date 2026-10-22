@@ -16,6 +16,7 @@ const collectionEntries = (state) => [
   ["Order", state.orders],
   ["OrderReturnRequest", state.orderReturnRequests],
   ["Market", state.markets],
+  ["StorePolicy", state.storePolicies],
   ["Review", state.reviews],
   ["ProductQuestion", state.productQuestions],
   ["ProductQuestionAnswer", state.productQuestionAnswers],
@@ -40,6 +41,7 @@ export class MockStore {
     this.state = clone(data);
     this.state.customers ??= [];
     this.state.collections ??= [];
+    this.state.storePolicies ??= [];
     this.state.productComparisons ??= [];
     this.state.productRecommendations ??= [];
     for (const customer of this.state.customers ?? []) {

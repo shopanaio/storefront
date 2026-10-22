@@ -6,6 +6,8 @@ import { useHasActiveOperations } from '#checkout/state/selectors';
 import { useIsPlacementBusy } from '#checkout/state/placement/placementStore';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
+import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { Money } from '#checkout/ui/Money';
 
 export interface SubmitButtonProps {
   /**
@@ -30,6 +32,8 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
   const placementBusy = useIsPlacementBusy();
   const blocked = useUndeliverableLines().length > 0;
   const expired = useCheckoutReadiness()?.expired ?? false;
+  // What the buyer pays, after the label, as the checkout button of the cart shows it.
+  const total = useCheckoutData().checkout?.cost.totalAmount;
 
   return (
     <Button
@@ -43,6 +47,12 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       disabled={placementBusy || blocked || expired}
     >
       {t('confirm-order')}
+      {total ? (
+        <>
+          {' • '}
+          <Money money={total} />
+        </>
+      ) : null}
     </Button>
   );
 };

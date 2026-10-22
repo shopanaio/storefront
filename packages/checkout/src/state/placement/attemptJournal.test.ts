@@ -34,6 +34,8 @@ const input = {
   paymentFlow: 'ONLINE' as const,
   returnUrl: 'https://shop.example/uk/checkout/return?checkout=checkout-1',
   expectedTotal: { amount: '1000', currencyCode: 'UAH' as const },
+  termsAccepted: false,
+  disclosuresVersion: null,
 };
 
 const placement: PlacementResult = {

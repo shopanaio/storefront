@@ -43,6 +43,16 @@ export const TOTAL_CHANGED_CODE = 'CHECKOUT_TOTAL_CHANGED';
 export const SHIPPING_CHANGED_CODE = 'CHECKOUT_SHIPPING_CHANGED';
 
 /**
+ * The disclosures changed since the buyer saw them (another notice, policy version or acceptance
+ * mode): nothing was placed. The checkout is read again, the checkbox starts unticked, and the
+ * buyer reviews the new terms and confirms again.
+ */
+export const DISCLOSURES_CHANGED_CODE = 'DISCLOSURES_CHANGED';
+
+/** The store requires ticking the terms checkbox, and the order went without it. */
+export const TERMS_NOT_ACCEPTED_CODE = 'TERMS_NOT_ACCEPTED';
+
+/**
  * A buyer signed in, but this guest checkout was not claimed by the account yet (B6). The order
  * is not placed as a guest: the account claims the checkout, its prices are read again and the
  * buyer places the order from the account checkout.

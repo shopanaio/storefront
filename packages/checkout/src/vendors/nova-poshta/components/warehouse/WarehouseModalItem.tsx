@@ -90,6 +90,12 @@ const useStyles = createStyles(({ token, css }) => {
         align-items: center !important;
       }
 
+      /* The header text shrinks to the card, so a long address is cut instead of running out. */
+      & .ant-collapse-title {
+        flex: 1;
+        min-width: 0;
+      }
+
       & .ant-collapse-content-box {
         padding: ${token.paddingSM}px !important;
         padding-top: 0 !important;

@@ -2,14 +2,15 @@
 
 import { createStyles } from 'antd-style';
 import { SubmitButton } from './SubmitButton';
-import { TermsNotice } from '../notices/TermsNotice';
+import { TermsCheckbox, TermsNotice } from '../notices/TermsNotice';
 import { BannerSlot } from '#checkout/components/banner/BannerSlot';
 import { mq } from '#checkout/ui/breakpoints';
 
 /**
- * Submit button with the checkout banner above it and the terms under it. The banner and the
- * button are sticky (CSS `position: sticky`): they stay at the bottom of the screen while the
- * buyer scrolls, and land in their place over the terms at the end. The wrappers give way
+ * Submit button with the checkout banner above it and the terms under it; a terms checkbox the
+ * buyer must tick is over the button instead, so a phone shows it too. The banner, the checkbox
+ * and the button are sticky (CSS `position: sticky`): they stay at the bottom of the screen while
+ * the buyer scrolls, and land in their place over the terms at the end. The wrappers give way
  * (`display: contents`), so the panel sticks within the whole page on a phone and within the
  * form column on desktop.
  */
@@ -19,6 +20,7 @@ export const CheckoutActions = () => {
     <div className={styles.actions}>
       <div className={styles.dock}>
         <BannerSlot />
+        <TermsCheckbox />
         <SubmitButton />
       </div>
       <div className={styles.terms}>

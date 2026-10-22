@@ -14,6 +14,7 @@ import {
 } from '#checkout/state/placement/attemptJournal';
 import type { PlacementAttempt } from '#checkout/state/placement/attemptJournal';
 import {
+  DISCLOSURES_CHANGED_CODE,
   IDEMPOTENCY_MISMATCH_CODE,
   NETWORK_ERROR_CODE,
   PLACEMENT_UNCONFIRMED_CODE,
@@ -22,6 +23,7 @@ import {
   STALE_SELECTION_CODE,
   TOTAL_CHANGED_CODE,
   SHIPPING_CHANGED_CODE,
+  TERMS_NOT_ACCEPTED_CODE,
 } from '#checkout/state/placement/outcome';
 import {
   isPlacementBusy,
@@ -38,6 +40,13 @@ import {
 } from '#checkout/state/placement/transitions';
 import type { PlacementContext } from '#checkout/state/placement/transitions';
 import { checkoutReadiness } from '#checkout/state/readiness';
+import {
+  disclosuresKey,
+  isTermsAccepted,
+  requiresTermsCheckbox,
+  useTermsStore,
+} from '#checkout/state/terms/termsStore';
+import { focusAnchor, TERMS_ANCHOR } from '#checkout/ui/focusAnchor';
 import type {
   PlacementLocator,
   PlacementOutcome,
@@ -147,6 +156,22 @@ export function usePlacementController(checkoutId: string | null) {
         // summary the new total the buyer confirms with the next press (BR-q2tm).
         void refetchCheckout().catch(() => undefined);
       }
+      if (
+        outcome.kind === 'rejected' &&
+        outcome.code === DISCLOSURES_CHANGED_CODE
+      ) {
+        // The new terms are read and shown unticked; the banner asks to review them.
+        useTermsStore.getState().reset();
+        void refetchCheckout().catch(() => undefined);
+      }
+      if (
+        outcome.kind === 'rejected' &&
+        outcome.code === TERMS_NOT_ACCEPTED_CODE
+      ) {
+        const key = disclosuresKey(checkoutRef.current);
+        if (key) useTermsStore.getState().require(key);
+        focusAnchor(TERMS_ANCHOR);
+      }
     },
     [isActive, setPhase, refetchCheckout, refetchLoyaltyAccount]
   );
@@ -194,6 +219,8 @@ export function usePlacementController(checkoutId: string | null) {
             idempotencyKey: attempt.idempotencyKey,
             expectedTotal: attempt.expectedTotal,
             returnUrl: attempt.returnUrl,
+            termsAccepted: attempt.termsAccepted,
+            disclosuresVersion: attempt.disclosuresVersion,
           });
         } catch (error) {
           // The answer is lost or inconclusive: the attempt stays `sent`, the retry reuses the key.
@@ -257,6 +284,18 @@ export function usePlacementController(checkoutId: string | null) {
       if (!resend && !checkoutReadiness(checkout, Date.now()).canPlace) {
         return;
       }
+      // The terms checkbox is checked here first; the server checks it again.
+      const termsKey = disclosuresKey(checkout);
+      if (
+        !resend &&
+        termsKey &&
+        requiresTermsCheckbox(checkout) &&
+        !isTermsAccepted(checkout)
+      ) {
+        useTermsStore.getState().require(termsKey);
+        focusAnchor(TERMS_ANCHOR);
+        return;
+      }
       let returnUrl: string;
       try {
         returnUrl =
@@ -281,6 +320,17 @@ export function usePlacementController(checkoutId: string | null) {
           // The checkout's own currency, read from the API as `CurrencyCode`.
           currencyCode: shownTotal.currencyCode as CurrencyCode,
         },
+        // A resent request repeats the acceptance it went with, so it keeps its key.
+        ...(resend
+          ? {
+              termsAccepted: current.termsAccepted,
+              disclosuresVersion: current.disclosuresVersion,
+            }
+          : {
+              termsAccepted:
+                requiresTermsCheckbox(checkout) && isTermsAccepted(checkout),
+              disclosuresVersion: checkout.disclosures?.version ?? null,
+            }),
       });
       await send(attempt, 'submit');
     });

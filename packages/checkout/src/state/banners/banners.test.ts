@@ -49,6 +49,7 @@ const handlers = (): BannerHandlers => ({
   openCart: vi.fn(),
   focusSection: vi.fn(),
   focusSummary: vi.fn(),
+  focusTerms: vi.fn(),
   dismiss: vi.fn(),
   dropRedemption: vi.fn(),
   dropReward: vi.fn(),

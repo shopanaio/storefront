@@ -626,7 +626,7 @@ export const DeliveryMethodList = ({
           </LoadingBoundary>
         )
       )}
-      {quotedShipments && <ShipmentQuote shipments={quotedShipments} withLabel />}
+      {quotedShipments && <ShipmentQuote shipments={quotedShipments} />}
     </Flex>
   );
 };

@@ -16,6 +16,9 @@ vi.mock('#checkout/hooks/useUndeliverableLines', () => ({
 vi.mock('#checkout/hooks/useCheckoutReadiness', () => ({
   useCheckoutReadiness: () => ({ expired: false }),
 }));
+vi.mock('#checkout/context/CheckoutDataContext', () => ({
+  useCheckoutData: () => ({ checkout: null }),
+}));
 
 describe('SubmitButton', () => {
   beforeEach(() => {

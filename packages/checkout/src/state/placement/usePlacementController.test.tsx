@@ -53,6 +53,8 @@ const sentAttempt: PlacementAttempt = {
   idempotencyKey: 'key-1',
   returnUrl: 'https://shop.example/checkout/return?checkout=checkout-1',
   expectedTotal: { amount: '1000', currencyCode: 'UAH' },
+  termsAccepted: false,
+  disclosuresVersion: null,
   resultRevision: 'rev-1',
   paymentFlow: 'ONLINE',
   state: 'sent',
@@ -142,6 +144,8 @@ describe('usePlacementController', () => {
       idempotencyKey: 'key-1',
       expectedTotal: sentAttempt.expectedTotal,
       returnUrl: sentAttempt.returnUrl,
+      termsAccepted: false,
+      disclosuresVersion: null,
     });
     expect(accepted).toHaveBeenCalledWith({
       checkoutId: 'checkout-1',
@@ -444,6 +448,8 @@ describe('usePlacementController', () => {
           idempotencyKey: 'key-1',
           expectedTotal: sentAttempt.expectedTotal,
           returnUrl: sentAttempt.returnUrl,
+          termsAccepted: false,
+          disclosuresVersion: null,
         })
       );
     });

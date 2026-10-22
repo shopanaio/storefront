@@ -480,6 +480,7 @@ const specialFields = (store) => ({
   "OrderReturnRequestLine.orderLine": (line) => store.get(line.orderLineId),
 
   "Store.markets": (value, args) => connection(value.marketIds.map((id) => store.get(id)).filter(Boolean), args),
+  "Store.policies": () => store.all("StorePolicy"),
   "StoreBrand.logo": (brand) => store.get(brand.logoId),
   "StoreBrand.squareLogo": (brand) => store.get(brand.squareLogoId),
   "StoreBrand.coverImage": (brand) => store.get(brand.coverImageId),
@@ -579,6 +580,7 @@ const queryResolvers = (store) => ({
   store: () => store.state.store,
   localization: () => store.state.localization,
   market: (_, { handle }) => store.byHandle("Market", handle),
+  storePolicy: (_, { handle }) => store.byHandle("StorePolicy", handle),
   reviewStoreConfiguration: () => store.state.reviewStoreConfiguration,
   review: (_, { id }, context) => visibleReviewContent(store, id, "Review", context),
   productQuestion: (_, { id }, context) => visibleReviewContent(store, id, "ProductQuestion", context),

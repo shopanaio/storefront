@@ -140,6 +140,7 @@ const createApiCheckout = (
   loyaltyRewardId: null,
   loyaltySelection: null,
   loyaltyEarning: null,
+  disclosures: null,
   lines: [{ ...lineFields('line-1', '500'), children: [] }],
   promoCodes: [],
   customerIdentity: {

@@ -72,9 +72,36 @@ export namespace Checkout {
     loyaltySelection: LoyaltySelection | null;
     /** What placing the order is expected to earn; `null` when nothing or unknown. */
     loyaltyEarning: LoyaltyEarning | null;
+    /**
+     * Legal notice the buyer accepts by placing the order; `null` when the store links no
+     * published policy, and then nothing is shown.
+     */
+    disclosures: Disclosures | null;
     /** Notifications for the user regarding the checkout. */
     notifications: Notification[];
   }
+
+  export type DisclosuresAcceptanceMode = 'NOTICE' | 'CHECKBOX';
+
+  export interface Disclosures {
+    /** Version the buyer is shown; `placeOrder` sends it back. */
+    version: string;
+    /** `NOTICE`: placing the order is the acceptance; `CHECKBOX`: the buyer ticks a box. */
+    acceptanceMode: DisclosuresAcceptanceMode;
+    /** The notice split into text and policy links, in reading order. */
+    parts: DisclosurePart[];
+  }
+
+  export type DisclosurePart =
+    | { kind: 'text'; text: string }
+    | {
+        kind: 'policy';
+        policyType: string;
+        handle: string;
+        title: string;
+        /** Storefront path of the policy page. */
+        path: string;
+      };
 
   export type LoyaltySource = 'POINTS' | 'STORE_CREDIT';
 

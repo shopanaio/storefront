@@ -313,6 +313,10 @@ type Query @join__type(graph: APPS_HEADLESS_STOREFRONT)  @join__type(graph: APPS
   """
   market(handle: String!) : Market @join__field(graph: PROJECT_STOREFRONT)
   """
+  A published store policy by its handle.
+  """
+  storePolicy(handle: String!) : StorePolicy @join__field(graph: PROJECT_STOREFRONT)
+  """
   Storefront capabilities and limits for reviews and product questions.
   """
   reviewStoreConfiguration: ReviewStoreConfiguration @join__field(graph: REVIEWS_STOREFRONT)
@@ -4361,6 +4365,43 @@ type Store implements Node @join__type(graph: PROJECT_STOREFRONT, key: "id")  @j
   address: StoreAddress
   brand: StoreBrand!
   markets(first: Int = 20, after: Cursor, last: Int, before: Cursor) : MarketConnection!
+  """
+  Published store policies.
+  """
+  policies: [StorePolicy!]!
+}
+
+"""
+The latest published version of a store legal document in the request content locale, falling
+back to the store default locale.
+"""
+type StorePolicy implements Node @join__type(graph: PROJECT_STOREFRONT)  @join__implements(graph: PROJECT_STOREFRONT, interface: "Node")  {
+  id: ID!
+  type: StorePolicyType!
+  handle: String!
+  """
+  Storefront path of the policy page, e.g. `/policies/terms-of-service`.
+  """
+  path: String!
+  title: String!
+  body: RichText
+  """
+  Published version number.
+  """
+  version: Int!
+  publishedAt: DateTime!
+}
+
+"""
+Type of a store legal document.
+"""
+enum StorePolicyType @join__type(graph: PROJECT_STOREFRONT)  {
+  TERMS_OF_SERVICE @join__enumValue(graph: PROJECT_STOREFRONT)
+  PRIVACY_POLICY @join__enumValue(graph: PROJECT_STOREFRONT)
+  REFUND_POLICY @join__enumValue(graph: PROJECT_STOREFRONT)
+  SHIPPING_POLICY @join__enumValue(graph: PROJECT_STOREFRONT)
+  CONTACT_INFORMATION @join__enumValue(graph: PROJECT_STOREFRONT)
+  LEGAL_NOTICE @join__enumValue(graph: PROJECT_STOREFRONT)
 }
 
 type ReviewStoreConfiguration implements Node @join__type(graph: REVIEWS_STOREFRONT, key: "id")  @join__implements(graph: REVIEWS_STOREFRONT, interface: "Node")  {

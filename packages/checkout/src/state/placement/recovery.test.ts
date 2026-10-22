@@ -35,6 +35,8 @@ const attempt: PlacementAttempt = {
   idempotencyKey: 'key-1',
   returnUrl: 'https://shop.example/uk/checkout/return?checkout=checkout-1',
   expectedTotal: { amount: '1000', currencyCode: 'UAH' },
+  termsAccepted: false,
+  disclosuresVersion: null,
   resultRevision: 'rev-1',
   paymentFlow: 'ONLINE',
   state: 'resolved',
