@@ -5,20 +5,21 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useId, useState, type ReactNode } from 'react';
 import { TbChevronDown } from 'react-icons/tb';
-import { ProductImage } from '#checkout/ui/ProductImage';
+import { ImageFan } from '#checkout/ui/ImageFan';
 import { composeProductTitle } from '#checkout/ui/composeProductTitle';
 import type { Checkout } from '#checkout/types/entity';
 import { ShipmentLines } from './ShipmentLines';
 
 const { Text } = Typography;
 
-/** Pictures shown in a collapsed shipment; the rest are counted as "+N". */
-const MAX_AVATARS = 4;
-
 export interface ShipmentPlateProps {
-  /** "Shipment 1 of 3". */
-  title: string;
+  /** "Shipment 1 of 3". Without it the plate opens on the pictures alone, as the order summary does. */
+  title?: string;
   lines: Checkout.Line[];
+  /** Lines that cannot be delivered to the address (R7). */
+  undeliverable?: ReadonlySet<string>;
+  /** Starts with the lines shown, such as when one of them needs attention. */
+  defaultExpanded?: boolean;
   /** Action on the right: "another delivery method" or "deliver with the others". */
   action?: { label: string; icon: ReactNode; onClick: () => void } | null;
   /** Shown under the shipment, such as why its method was reset. */
@@ -32,57 +33,47 @@ export interface ShipmentPlateProps {
 export const ShipmentPlate = ({
   title,
   lines,
+  undeliverable,
+  defaultExpanded = false,
   action,
   children,
 }: ShipmentPlateProps) => {
   const t = useTranslations('Checkout');
   const { styles, cx } = useStyles();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const listId = useId();
   const toggle = () => setExpanded((value) => !value);
   const quantity = lines.reduce((total, line) => total + line.quantity, 0);
 
+  const avatars = (
+    <Flex align="center" gap={12} className={styles.avatars}>
+      <ImageFan
+        images={lines.map((line) => ({
+          key: line.id,
+          src: line.imageSrc ?? line.purchasable?.cover?.url,
+          alt: composeProductTitle({
+            productTitle: line.purchasable?.product?.title,
+            variantTitle: line.purchasable?.title ?? line.title,
+            fallback: line.title,
+          }),
+        }))}
+      />
+      <Text type="secondary" className={styles.count}>
+        {t('delivery-shipment-items', { count: quantity })}
+      </Text>
+    </Flex>
+  );
+
   return (
     <Flex vertical className={styles.plate}>
-      <Flex align="flex-start" gap={12}>
+      <Flex align={title ? 'flex-start' : 'center'} gap={12}>
         <Flex vertical className={styles.summary} onClick={toggle}>
-          <Text strong>{title}</Text>
+          {title ? <Text strong>{title}</Text> : null}
           <div
             className={cx(styles.collapse, !expanded && styles.open)}
             inert={expanded}
           >
-            <div className={styles.collapseInner}>
-              <Flex align="center" gap={12} className={styles.avatars}>
-                <Flex align="center">
-                  {lines.slice(0, MAX_AVATARS).map((line, index) => (
-                    // The first picture lies on top, as in a fanned stack.
-                    <span
-                      key={line.id}
-                      className={styles.avatar}
-                      style={{ zIndex: MAX_AVATARS - index }}
-                    >
-                      <ProductImage
-                        src={line.imageSrc ?? line.purchasable?.cover?.url}
-                        alt={composeProductTitle({
-                          productTitle: line.purchasable?.product?.title,
-                          variantTitle: line.purchasable?.title ?? line.title,
-                          fallback: line.title,
-                        })}
-                        className={styles.image}
-                      />
-                    </span>
-                  ))}
-                  {lines.length > MAX_AVATARS ? (
-                    <span className={cx(styles.avatar, styles.more)}>
-                      +{lines.length - MAX_AVATARS}
-                    </span>
-                  ) : null}
-                </Flex>
-                <Text type="secondary" className={styles.count}>
-                  {t('delivery-shipment-items', { count: quantity })}
-                </Text>
-              </Flex>
-            </div>
+            <div className={styles.collapseInner}>{avatars}</div>
           </div>
         </Flex>
         {action ? (
@@ -119,7 +110,7 @@ export const ShipmentPlate = ({
       >
         <div className={styles.collapseInner}>
           <div className={styles.lines}>
-            <ShipmentLines lines={lines} />
+            <ShipmentLines lines={lines} undeliverable={undeliverable} />
           </div>
         </div>
       </div>
@@ -161,43 +152,8 @@ const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     min-height: 0;
   `,
-  // Room for the white ring of the avatars, which overflow would cut.
   avatars: css`
-    padding: ${token.paddingXS}px 0 2px 2px;
-    margin-left: -2px;
-  `,
-  // A stack of thumbnails framed like the ones of the order summary.
-  avatar: css`
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    box-sizing: border-box;
-    width: 40px;
-    height: 40px;
-    padding: 2px;
-    overflow: hidden;
-    border: 1px solid ${token.colorBorder};
-    border-radius: ${token.borderRadius}px;
-    background-color: ${token.colorBgContainer};
-    box-shadow: 0 0 0 2px ${token.colorBgContainer};
-
-    & + & {
-      margin-left: -8px;
-    }
-  `,
-  image: css`
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: ${Math.max(token.borderRadius - 2, 0)}px;
-  `,
-  more: css`
-    background-color: ${token.colorBgLayout};
-    color: ${token.colorTextSecondary};
-    font-size: ${token.fontSizeSM}px;
-    font-weight: 600;
+    padding-top: ${token.paddingXXS}px;
   `,
   count: css`
     font-size: ${token.fontSizeSM}px;

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { FloatingLabelInput } from '#checkout/ui/FloatingLabelInput';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
-import { StreetModal } from '../street/StreetModal';
+import { StreetAutocomplete } from '../street/StreetAutocomplete';
 import { readSettlementRef } from '../../address';
 import { doorDraft, doorInput, readInput } from '../../customerInput';
 import type { DoorView, Street } from '../../types';
@@ -105,7 +105,7 @@ function CourierFields({
 
   return (
     <Flex vertical gap={12}>
-      <StreetModal
+      <StreetAutocomplete
         streetPresent={fields.street?.present ?? null}
         changeStreet={handleChangeStreet}
         settlementRef={settlementRef}

@@ -11,6 +11,7 @@ export const ShipmentLines = ({
   priced = true,
   counted = true,
   divided = true,
+  undeliverable,
 }: {
   lines: Checkout.Line[];
   /** Shows the cost of each line. */
@@ -19,6 +20,8 @@ export const ShipmentLines = ({
   counted?: boolean;
   /** Divides the lines with a rule; otherwise they stand apart by a gap. */
   divided?: boolean;
+  /** Lines that cannot be delivered to the address (R7), marked as the order summary does. */
+  undeliverable?: ReadonlySet<string>;
 }) => {
   const { styles, cx } = useStyles();
   return (
@@ -27,6 +30,7 @@ export const ShipmentLines = ({
         <SummaryItem
           key={line.id}
           line={line}
+          undeliverable={undeliverable?.has(line.id)}
           bordered={false}
           priced={priced}
           counted={counted}

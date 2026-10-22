@@ -12,6 +12,9 @@ import { mapCheckoutToPromoFormData } from '#checkout/sections/promo/mapper';
 import { PromoSectionView } from '#checkout/sections/promo/components/Component';
 import { Badge } from '#checkout/ui/Badge';
 import { SummaryBlocks } from '#checkout/ui/summaryBlocks';
+import { useMediaQuery } from '#checkout/ui/useMediaQuery';
+import { breakpoints } from '#checkout/ui/breakpoints';
+import { ShipmentPlate } from '#checkout/sections/delivery/components/ShipmentPlate';
 import type { Checkout } from '#checkout/types/entity';
 
 /** A section of the form the story is not about: its title over a placeholder. */
@@ -39,6 +42,8 @@ export function CheckoutPageShell({
   payment?: ReactNode;
 }) {
   const t = useTranslations('Checkout');
+  // The same fold as Summary: under the form the lines fold into their pictures.
+  const stacked = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
   return (
     <CheckoutColumns
       left={
@@ -64,11 +69,15 @@ export function CheckoutPageShell({
               <SectionTitle>{t('order-summary')}</SectionTitle>
               <Badge count={checkout.totalQuantity} variant="primary" />
             </Flex>
-            <Flex vertical gap={8}>
-              {checkout.lines.map((line) => (
-                <SummaryItem key={line.id} line={line} />
-              ))}
-            </Flex>
+            {stacked ? (
+              <ShipmentPlate lines={checkout.lines} />
+            ) : (
+              <Flex vertical gap={8}>
+                {checkout.lines.map((line) => (
+                  <SummaryItem key={line.id} line={line} />
+                ))}
+              </Flex>
+            )}
           </Flex>
           <PromoSectionView
             data={mapCheckoutToPromoFormData(checkout)}

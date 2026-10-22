@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fireEvent, userEvent, within } from 'storybook/test';
 import { makeCheckout } from '#checkout/stories/fixtures';
-import { CheckoutPageShell } from '#checkout/stories/CheckoutPageShell';
+import { CheckoutFormPage } from '#checkout/stories/CheckoutFormPage';
 import {
   mockCheckout,
   recalculate,
-  useMockCheckout,
 } from '#checkout/stories/mockCheckout';
 import type { CheckoutMockState } from '#checkout/stories/mockCheckout';
 import { promoCode } from '#checkout/stories/promoFixtures';
 import { withCheckout } from '#checkout/stories/withCheckout';
+import { withDirectory } from '#checkout/stories/withDirectory';
 import type { Checkout } from '#checkout/types/entity';
 
 /**
@@ -17,21 +17,15 @@ import type { Checkout } from '#checkout/types/entity';
  * field works with the mock API: WELCOME10 takes 10% off, FREESHIP waits for a delivery that
  * allows it, SUMMER25 is entered but not applied, and any other code is refused as invalid.
  */
-function PromoBlock() {
-  const checkout = useMockCheckout();
-  if (!checkout) return null;
-  return <CheckoutPageShell checkout={checkout} />;
-}
-
 const meta = {
   title: 'Checkout/Promo',
-  component: PromoBlock,
-  decorators: [withCheckout],
+  component: CheckoutFormPage,
+  decorators: [withCheckout, withDirectory],
   parameters: { layout: 'fullscreen' },
   beforeEach: ({ parameters }) => {
     mockCheckout(parameters.checkout as Partial<CheckoutMockState>);
   },
-} satisfies Meta<typeof PromoBlock>;
+} satisfies Meta<typeof CheckoutFormPage>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

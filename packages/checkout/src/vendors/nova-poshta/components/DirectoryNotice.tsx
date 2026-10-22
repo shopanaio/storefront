@@ -1,6 +1,7 @@
 'use client';
 
-import { Typography } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Flex, Spin, Typography } from 'antd';
 import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
 import { useTranslations } from 'next-intl';
 import type { DirectoryError } from '../api/directory';
@@ -35,7 +36,12 @@ export function DirectoryNotice({
     );
   }
   if (loading) {
-    return <Typography.Text type="secondary">{t('form.loading')}</Typography.Text>;
+    return (
+      <Flex gap={8} align="center">
+        <Spin size="small" indicator={<LoadingOutlined spin />} />
+        <Typography.Text type="secondary">{t('form.loading')}</Typography.Text>
+      </Flex>
+    );
   }
   if (empty) {
     return <Typography.Text type="secondary">{t('form.empty')}</Typography.Text>;

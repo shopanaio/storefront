@@ -28,13 +28,13 @@ import {
 } from '#checkout/stories/loyaltyFixtures';
 import {
   mockCheckout,
-  useMockCheckout,
   withRedemption,
   withReward,
 } from '#checkout/stories/mockCheckout';
 import type { CheckoutMockState } from '#checkout/stories/mockCheckout';
-import { CheckoutPageShell } from '#checkout/stories/CheckoutPageShell';
+import { CheckoutFormPage } from '#checkout/stories/CheckoutFormPage';
 import { withCheckout } from '#checkout/stories/withCheckout';
+import { withDirectory } from '#checkout/stories/withDirectory';
 import type { Checkout } from '#checkout/types/entity';
 
 /**
@@ -43,21 +43,15 @@ import type { Checkout } from '#checkout/types/entity';
  * rewards, the loyalty lines of the totals and what the order earns. Choices work: the mock API
  * applies them to the checkout.
  */
-function LoyaltyBlock() {
-  const checkout = useMockCheckout();
-  if (!checkout) return null;
-  return <CheckoutPageShell checkout={checkout} />;
-}
-
 const meta = {
   title: 'Checkout/Loyalty',
-  component: LoyaltyBlock,
-  decorators: [withCheckout],
+  component: CheckoutFormPage,
+  decorators: [withCheckout, withDirectory],
   parameters: { layout: 'fullscreen' },
   beforeEach: ({ parameters }) => {
     mockCheckout(parameters.checkout as Partial<CheckoutMockState>);
   },
-} satisfies Meta<typeof LoyaltyBlock>;
+} satisfies Meta<typeof CheckoutFormPage>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
