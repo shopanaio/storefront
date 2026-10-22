@@ -4,6 +4,7 @@ import {
   retryAfterSeconds,
   type StorefrontSessionServer,
 } from '@shopana/storefront-sdk/modules/session/server';
+import type { ApplicationAuthComponents } from '@shopana/storefront-sdk';
 import type { AuthConfiguration } from '../core/types';
 
 /**
@@ -57,14 +58,9 @@ export type IamHeadlessStepResponse =
   | { status: 'verification_sent'; transaction_id: string }
   | { status: 'redirect'; url: string };
 
-export interface IamAccountConnections {
-  providers: {
-    provider: string;
-    enabled: boolean;
-    status: 'connected' | 'not_connected' | 'conflict';
-  }[];
-  reauthentication_required: boolean;
-}
+/** IAM OpenAPI contract of the account connections answer. */
+export type IamAccountConnections =
+  ApplicationAuthComponents['schemas']['HeadlessAccountConnections'];
 
 export interface IamTransactionStart {
   state: string;

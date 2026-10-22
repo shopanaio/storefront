@@ -23,6 +23,359 @@ info:
     better-auth-oauth-provider: 1.6.23
 components:
   schemas:
+    HeadlessConfiguration:
+      type: object
+      required:
+        - methods
+        - emailVerificationRequired
+        - emailVerificationMethod
+        - defaultLocale
+        - revision
+      properties:
+        methods:
+          type: object
+          additionalProperties: true
+        emailVerificationRequired:
+          type: boolean
+        emailVerificationMethod:
+          type: string
+          enum:
+            - otp
+            - link
+        defaultLocale:
+          type: string
+        revision:
+          type: integer
+    HeadlessTransactionStartRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - redirect_uri
+        - scope
+        - state
+        - nonce
+        - code_challenge
+        - code_challenge_method
+      properties:
+        redirect_uri:
+          type: string
+          maxLength: 2048
+        scope:
+          type: string
+          maxLength: 2048
+        resource:
+          type: string
+          maxLength: 2048
+        state:
+          type: string
+          minLength: 16
+          maxLength: 2048
+        nonce:
+          type: string
+          minLength: 16
+          maxLength: 2048
+        code_challenge:
+          type: string
+          minLength: 43
+          maxLength: 128
+        code_challenge_method:
+          type: string
+          enum:
+            - S256
+    HeadlessTransactionStarted:
+      type: object
+      additionalProperties: false
+      required:
+        - transaction_id
+        - expires_in
+      properties:
+        transaction_id:
+          type: string
+        expires_in:
+          type: integer
+    HeadlessPasswordSignInRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        verify_uri:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Storefront page the email verification link leads to, on the origin of the
+            transaction's `redirect_uri`. It receives `email_verified=true` or
+            `error=invalid_token`. Without it the link leads to the hosted page.
+    HeadlessPasswordSignUpRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+        - firstName
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        firstName:
+          type: string
+          maxLength: 80
+        lastName:
+          type: string
+          maxLength: 80
+        verify_uri:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Storefront page the email verification link leads to, on the origin of the
+            transaction's `redirect_uri`. It receives `email_verified=true` or
+            `error=invalid_token`. Without it the link leads to the hosted page.
+    HeadlessPasswordForgotRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - reset_uri
+      properties:
+        email:
+          type: string
+          format: email
+        reset_uri:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Storefront page the reset link leads to, on the origin of the transaction's
+            `redirect_uri`. It receives `token` or `error=invalid_token`.
+    HeadlessPasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - token
+        - password
+      properties:
+        token:
+          type: string
+          minLength: 16
+          maxLength: 2048
+        password:
+          type: string
+          minLength: 10
+          maxLength: 128
+    HeadlessEmailVerificationResendRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+        verify_uri:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Storefront page the email verification link leads to, on the origin of the
+            transaction's `redirect_uri`. It receives `email_verified=true` or
+            `error=invalid_token`. Without it the link leads to the hosted page.
+    HeadlessEmailOtpSendRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+    HeadlessEmailOtpVerifyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - otp
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+          pattern: ^[0-9]{6}$
+    HeadlessPhoneOtpSendRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: string
+          pattern: ^\+[1-9][0-9]{6,14}$
+    HeadlessPhoneOtpVerifyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - phoneNumber
+        - code
+      properties:
+        phoneNumber:
+          type: string
+          pattern: ^\+[1-9][0-9]{6,14}$
+        code:
+          type: string
+          pattern: ^[0-9]{6}$
+    HeadlessSocialStartRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+    HeadlessAccountConnections:
+      type: object
+      additionalProperties: false
+      required:
+        - providers
+        - reauthentication_required
+      properties:
+        providers:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - provider
+              - enabled
+              - status
+            properties:
+              provider:
+                type: string
+              enabled:
+                type: boolean
+              status:
+                type: string
+                enum:
+                  - connected
+                  - not_connected
+                  - conflict
+        reauthentication_required:
+          type: boolean
+    HeadlessAccountLinkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - provider
+        - return_uri
+      properties:
+        provider:
+          type: string
+          minLength: 1
+          maxLength: 64
+        return_uri:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Storefront page on a registered redirect URI origin, without fragment.
+    HeadlessAccountUnlinkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+          minLength: 1
+          maxLength: 64
+    HeadlessLogoutRequest:
+      type: object
+      additionalProperties: false
+      description: At least one of the tokens is required.
+      properties:
+        refresh_token:
+          type: string
+        id_token_hint:
+          type: string
+    HeadlessStepResult:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - completed
+            - otp_sent
+            - verification_required
+            - sign_in_required
+            - redirect
+            - reset_link_sent
+            - verification_sent
+        code:
+          type: string
+        state:
+          type: string
+        iss:
+          type: string
+        transaction_id:
+          type: string
+        channel:
+          type: string
+          enum:
+            - email
+            - phone
+        method:
+          type: string
+          enum:
+            - otp
+            - link
+        resend_after:
+          type: integer
+        expires_in:
+          type: integer
+        url:
+          type: string
+    HeadlessError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - invalid_request
+            - invalid_client
+            - invalid_grant
+            - transaction_expired
+            - verification_required
+            - user_exists
+            - signup_disabled
+            - slow_down
+            - delivery_unavailable
+            - not_found
+            - access_denied
+            - server_error
+            - temporarily_unavailable
+            - invalid_token
+            - reauthentication_required
+            - last_login_method
+            - account_conflict
+            - linking_failed
+        error_description:
+          type: string
+        transaction_id:
+          type: string
+        retry_after:
+          type: integer
     ApplicationAuthErrorResponse:
       oneOf:
         - $ref: "#/components/schemas/ApplicationAuthError"
@@ -521,6 +874,35 @@ components:
     Session:
       $ref: "#/components/schemas/ApplicationSession"
   parameters:
+    HeadlessTransaction:
+      name: transaction
+      in: path
+      required: true
+      description: Opaque transaction id returned by the previous step.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{43}$
+    HeadlessEndUserIp:
+      name: shopana-end-user-ip
+      in: header
+      required: true
+      description: IP address of the end user, used for rate limits.
+      schema:
+        type: string
+    HeadlessEndUserAccessToken:
+      name: shopana-end-user-access-token
+      in: header
+      required: true
+      description: Access token issued to this client for the end user.
+      schema:
+        type: string
+    HeadlessEndUserAgent:
+      name: shopana-end-user-agent
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 512
     ApplicationId:
       name: applicationId
       in: path
@@ -551,6 +933,18 @@ components:
       schema:
         type: string
   responses:
+    HeadlessStepResult:
+      description: Step result
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HeadlessStepResult"
+    HeadlessError:
+      description: Headless request failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HeadlessError"
     ApplicationAuthError:
       description: Application authentication request failed
       headers:
@@ -614,523 +1008,8 @@ tags:
   - name: Email OTP
   - name: Social authentication
   - name: Sessions
+  - name: Headless authentication
 paths:
-  /auth/applications/{applicationId}/sign-in/email:
-    post:
-      tags:
-        - Password authentication
-      description: Sign in with email and password
-      operationId: signInApplicationUserWithPassword
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-              $ref: "#/components/schemas/PasswordSignInRequest"
-        required: true
-      responses:
-        "200":
-          description: User authenticated and application session created
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Session response when idToken is provided
-                properties:
-                  redirect:
-                    type: boolean
-                    enum:
-                      - false
-                  token:
-                    type: string
-                    description: Session token
-                  url:
-                    type: string
-                    nullable: true
-                  user:
-                    type: object
-                    $ref: "#/components/schemas/User"
-                required:
-                  - redirect
-                  - token
-                  - user
-                $ref: "#/components/schemas/ApplicationAuthenticationResponse"
-          headers:
-            Set-Cookie:
-              $ref: "#/components/headers/ApplicationSessionSetCookie"
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/InvalidCredentials"
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Sign in an application user with email and password
-      x-feature-condition: passwordSignInAllowed
-  /auth/applications/{applicationId}/sign-in/social:
-    post:
-      tags:
-        - Social authentication
-      description: |
-        The signed `oauth_query` comes from the IAM hosted authorization flow.
-        Caller-supplied callback URLs, scopes, ID tokens, and signup overrides
-        are rejected by the IAM boundary.
-      operationId: startApplicationUserSocialSignIn
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                provider:
-                  type: string
-                  enum:
-                    - google
-                    - facebook
-                oauth_query:
-                  type: string
-                  minLength: 32
-                  maxLength: 16384
-              additionalProperties: false
-              required:
-                - provider
-                - oauth_query
-        required: true
-      responses:
-        "200":
-          description: Provider authorization URL
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Returns session details when idToken is provided, or an authorize URL otherwise
-                properties:
-                  token:
-                    type: string
-                  user:
-                    type: object
-                    $ref: "#/components/schemas/User"
-                  url:
-                    type: string
-                    format: uri
-                  redirect:
-                    type: boolean
-                required:
-                  - redirect
-                  - url
-        "302":
-          description: Redirect to the social provider
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Start sign-in with an enabled social provider
-      x-feature-condition: enabledSocialProviders.length > 0
-  /auth/applications/{applicationId}/sign-up/email:
-    post:
-      tags:
-        - Password authentication
-      description: Available only when password signup and registration are enabled.
-      operationId: signUpApplicationUserWithPassword
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: The name of the user
-                email:
-                  type: string
-                  description: The email of the user
-                password:
-                  type: string
-                  description: The password of the user
-                image:
-                  type: string
-                  description: The profile image URL of the user
-                callbackURL:
-                  type: string
-                  description: The URL to use for email verification callback
-                rememberMe:
-                  type: boolean
-                  description: If this is false, the session will not be remembered. Default is `true`.
-              required:
-                - name
-                - email
-                - password
-              $ref: "#/components/schemas/PasswordSignUpRequest"
-        required: true
-      responses:
-        "200":
-          description: User created; a session cookie is set when auto-signin is allowed.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    nullable: true
-                    description: Authentication token for the session
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: The unique identifier of the user
-                      email:
-                        type: string
-                        format: email
-                        description: The email address of the user
-                      name:
-                        type: string
-                        description: The name of the user
-                      image:
-                        type: string
-                        format: uri
-                        nullable: true
-                        description: The profile image URL of the user
-                      emailVerified:
-                        type: boolean
-                        description: Whether the email has been verified
-                      createdAt:
-                        type: string
-                        format: date-time
-                        description: When the user was created
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        description: When the user was last updated
-                    required:
-                      - id
-                      - email
-                      - name
-                      - emailVerified
-                      - createdAt
-                      - updatedAt
-                required:
-                  - user
-                $ref: "#/components/schemas/ApplicationAuthenticationResponse"
-          headers:
-            Set-Cookie:
-              $ref: "#/components/headers/ApplicationSessionSetCookie"
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-          $ref: "#/components/responses/InvalidSignUp"
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "422":
-          description: Unprocessable Entity. User already exists or failed to create user.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Create an application user with email and password
-      x-feature-condition: passwordSignUpAllowed
-  /auth/applications/{applicationId}/send-verification-email:
-    post:
-      tags:
-        - Password authentication
-      description: Always returns a generic response to prevent account enumeration.
-      operationId: sendApplicationUserVerificationEmail
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  description: The email to send the verification email to
-                  example: user@example.com
-                  format: email
-                  maxLength: 320
-                callbackURL:
-                  type: string
-                  description: The URL to use for email verification callback
-                  example: https://example.com/callback
-                  nullable: true
-                  format: uri
-              required:
-                - email
-              additionalProperties: false
-        required: true
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: boolean
-                    description: Indicates if the email was sent successfully
-                    example: true
-        "202":
-          $ref: "#/components/responses/GenericAuthenticationMessageAccepted"
-        "400":
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message
-                    example: Verification email isn't enabled
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Request an email-verification message
-      x-feature-condition: emailVerificationEnabled
   /auth/applications/{applicationId}/verify-email:
     get:
       tags:
@@ -1238,111 +1117,6 @@ paths:
           $ref: "#/components/responses/ApplicationAuthError"
       summary: Verify an application user's email
       x-feature-condition: emailVerificationEnabled
-  /auth/applications/{applicationId}/request-password-reset:
-    post:
-      tags:
-        - Password authentication
-      description: Always returns a generic response to prevent account enumeration.
-      operationId: requestApplicationUserPasswordReset
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  maxLength: 320
-                redirectTo:
-                  type: string
-                  format: uri
-              additionalProperties: false
-              required:
-                - email
-        required: true
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: boolean
-                  message:
-                    type: string
-        "202":
-          $ref: "#/components/responses/GenericAuthenticationMessageAccepted"
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Request a password-reset message
-      x-feature-condition: passwordResetAllowed
   /auth/applications/{applicationId}/reset-password/{token}:
     get:
       tags:
@@ -1433,110 +1207,6 @@ paths:
                   message:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
-  /auth/applications/{applicationId}/reset-password:
-    post:
-      tags:
-        - Password authentication
-      description: Reset the password for a user
-      operationId: resetApplicationUserPassword
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                token:
-                  type: string
-                  maxLength: 1024
-                newPassword:
-                  type: string
-                  minLength: 10
-                  maxLength: 128
-                  format: password
-              additionalProperties: false
-              required:
-                - token
-                - newPassword
-        required: true
-      responses:
-        "200":
-          description: Password changed and all user sessions revoked
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: boolean
-                $ref: "#/components/schemas/StatusResponse"
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Complete a password reset
-      x-feature-condition: passwordResetAllowed
   /auth/applications/{applicationId}/list-sessions:
     get:
       tags:
@@ -1808,240 +1478,6 @@ paths:
         default:
           $ref: "#/components/responses/ApplicationAuthError"
       summary: Revoke the current application session
-  /auth/applications/{applicationId}/email-otp/send-verification-otp:
-    post:
-      tags:
-        - Email OTP
-      description: Only `type=sign-in` is accepted at the IAM public boundary.
-      operationId: requestApplicationUserSignInOtp
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  maxLength: 320
-                type:
-                  type: string
-                  enum:
-                    - sign-in
-              additionalProperties: false
-              required:
-                - email
-                - type
-        required: true
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-        "202":
-          description: Generic acceptance response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GenericMessageResponse"
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Unauthorized. Due to missing or invalid authentication.
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        "503":
-          $ref: "#/components/responses/ApplicationAuthError"
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Request a six-digit email sign-in code
-      x-feature-condition: emailOtpSignInAllowed
-  /auth/applications/{applicationId}/sign-in/email-otp:
-    post:
-      tags:
-        - Email OTP
-      description: May create a user only when OTP signup and registration are enabled.
-      operationId: signInApplicationUserWithEmailOtp
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  maxLength: 320
-                otp:
-                  type: string
-                  pattern: ^[0-9]{6}$
-                name:
-                  type: string
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                image:
-                  type: string
-                  format: uri
-              additionalProperties: false
-              required:
-                - email
-                - otp
-        required: true
-      responses:
-        "200":
-          description: User authenticated and application session created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    description: Session token for the authenticated session
-                  user:
-                    $ref: "#/components/schemas/User"
-                required:
-                  - token
-                  - user
-                $ref: "#/components/schemas/ApplicationAuthenticationResponse"
-          headers:
-            Set-Cookie:
-              $ref: "#/components/headers/ApplicationSessionSetCookie"
-        "400":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-          description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                $ref: "#/components/schemas/OAuthError"
-              example:
-                error: invalid_code
-                error_description: Email or code is invalid
-          description: Invalid email or code
-        "403":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Not Found. The requested resource was not found.
-        "429":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-          description: Internal Server Error. This is a problem with the server that you cannot fix.
-        default:
-          $ref: "#/components/responses/ApplicationAuthError"
-      summary: Sign in with a six-digit email code
-      x-feature-condition: emailOtpSignInAllowed
   /auth/applications/{applicationId}/oauth2/authorize:
     get:
       tags:
@@ -3181,3 +2617,749 @@ paths:
           $ref: "#/components/responses/OAuthError"
         default:
           $ref: "#/components/responses/ApplicationAuthError"
+  /auth/applications/{applicationId}/headless/v1/configuration:
+    get:
+      tags:
+        - Headless authentication
+      operationId: getApplicationHeadlessConfiguration
+      summary: Read the effective headless sign-in configuration
+      description: |
+        Server-to-server only. Requires the service-managed confidential web
+        client (`headlessEnabled`) and rejects requests carrying `Origin`.
+        Supports `If-None-Match` with the returned `ETag` (configuration revision).
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      responses:
+        "200":
+          description: Effective configuration
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeadlessConfiguration"
+        "304":
+          description: Configuration revision unchanged
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions:
+    post:
+      tags:
+        - Headless authentication
+      operationId: startApplicationHeadlessTransaction
+      summary: Start a headless authorization transaction
+      description: |
+        Binds the following steps to OAuth authorization parameters. Every
+        accepted step returns a new `transaction_id`; previous ids are rejected.
+        Five failed attempts expire the transaction.
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessTransactionStartRequest"
+      responses:
+        "201":
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeadlessTransactionStarted"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/sign-in:
+    post:
+      tags:
+        - Headless authentication
+      operationId: signInApplicationUserHeadlessPassword
+      summary: Sign in with email and password
+      x-feature-condition: passwordSignInAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessPasswordSignInRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/sign-up:
+    post:
+      tags:
+        - Headless authentication
+      operationId: signUpApplicationUserHeadlessPassword
+      summary: Sign up with email and password
+      x-feature-condition: passwordSignUpAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessPasswordSignUpRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-otp/send:
+    post:
+      tags:
+        - Headless authentication
+      operationId: sendApplicationUserHeadlessEmailOtp
+      summary: Send an email one-time code
+      x-feature-condition: emailOtpSignInAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessEmailOtpSendRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-otp/verify:
+    post:
+      tags:
+        - Headless authentication
+      operationId: verifyApplicationUserHeadlessEmailOtp
+      summary: Verify an email one-time code
+      x-feature-condition: emailOtpSignInAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessEmailOtpVerifyRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/phone-otp/send:
+    post:
+      tags:
+        - Headless authentication
+      operationId: sendApplicationUserHeadlessPhoneOtp
+      summary: Send a phone one-time code
+      x-feature-condition: phoneOtpSignInAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessPhoneOtpSendRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/phone-otp/verify:
+    post:
+      tags:
+        - Headless authentication
+      operationId: verifyApplicationUserHeadlessPhoneOtp
+      summary: Verify a phone one-time code
+      x-feature-condition: phoneOtpSignInAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessPhoneOtpVerifyRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/social/start:
+    post:
+      tags:
+        - Headless authentication
+      operationId: startApplicationUserHeadlessSocial
+      summary: Issue a one-time social sign-in launch URL
+      x-feature-condition: socialProviders
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessSocialStartRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/social/launch:
+    get:
+      tags:
+        - Headless authentication
+      operationId: launchApplicationUserHeadlessSocial
+      summary: Browser navigation to the social provider
+      description: |
+        Opened by the end-user browser. Consumes the one-time ticket and the
+        transaction, then redirects to the provider. A reused ticket is rejected.
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - name: ticket
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "303":
+          description: Redirect to the social provider
+        default:
+          description: HTML error page
+  /auth/applications/{applicationId}/headless/v1/social/error:
+    get:
+      tags:
+        - Headless authentication
+      operationId: completeApplicationUserHeadlessSocialError
+      summary: Return a social sign-in failure to the client redirect URI
+      description: |
+        Redirects the browser to the transaction `redirect_uri` with `error`
+        (`access_denied`, `account_not_linked` or `server_error`), `state` and `iss`.
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - name: ref
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "303":
+          description: Redirect to the client redirect URI
+        default:
+          description: HTML error page
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/forgot:
+    post:
+      tags:
+        - Headless authentication
+      operationId: requestApplicationUserHeadlessPasswordReset
+      summary: Email a password reset link
+      description: |
+        Emails a link that opens `reset_uri` with the reset token. The answer is
+        `reset_link_sent` whether or not the email belongs to a user, also when
+        the email cannot be delivered.
+      x-feature-condition: passwordResetAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessPasswordForgotRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/password/reset:
+    post:
+      tags:
+        - Headless authentication
+      operationId: resetApplicationUserHeadlessPassword
+      summary: Set a new password with the token of a reset link
+      description: |
+        Outside a transaction. Ends every session of the user, who then signs in
+        again. A spent, expired or invalid token answers `invalid_grant`.
+      x-feature-condition: passwordResetAllowed
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessPasswordResetRequest"
+      responses:
+        "200":
+          description: Password set
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - password_reset
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/password/reset-link:
+    get:
+      tags:
+        - Headless authentication
+      operationId: openApplicationUserHeadlessPasswordResetLink
+      summary: Browser navigation from a password reset email
+      description: |
+        Redirects the browser to the storefront `reset_uri` with `token`, or with
+        `error=invalid_token` for an invalid, expired or spent reset token. The
+        signed `ref` outlives the reset token.
+      x-feature-condition: passwordResetAllowed
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - name: ref
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "303":
+          description: Redirect to the storefront page
+        default:
+          description: HTML error page
+  /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-verification/resend:
+    post:
+      tags:
+        - Headless authentication
+      operationId: resendApplicationUserHeadlessVerificationEmail
+      summary: Email the verification link again
+      description: |
+        Answers `verification_sent` alike for an unknown, unverified and verified
+        email, also when the email cannot be delivered. The link opens
+        `verify_uri`, or the hosted page without it.
+      x-feature-condition: emailVerificationEnabled
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessTransaction"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessEmailVerificationResendRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/email-verification/link:
+    get:
+      tags:
+        - Headless authentication
+      operationId: openApplicationUserHeadlessEmailVerificationLink
+      summary: Browser navigation from an email verification email
+      description: |
+        The verification email leads here with the token. Verifies the email and
+        redirects the browser to the storefront `verify_uri` with
+        `email_verified=true`, or with `error=invalid_token` for an invalid,
+        expired, missing or spent verification token (an email verified before
+        counts as spent). The signed `ref` outlives the verification token.
+      x-feature-condition: emailVerificationEnabled
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - name: ref
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "303":
+          description: Redirect to the storefront page
+        default:
+          description: HTML error page
+  /auth/applications/{applicationId}/headless/v1/account/connections:
+    get:
+      tags:
+        - Headless authentication
+      operationId: listApplicationUserHeadlessAccountConnections
+      summary: Social account connections of the signed-in user
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserAccessToken"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      responses:
+        "200":
+          description: Connections
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeadlessAccountConnections"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/account/connections/link:
+    post:
+      tags:
+        - Headless authentication
+      operationId: linkApplicationUserHeadlessAccountConnection
+      summary: Start linking a social provider to the signed-in user
+      description: |
+        Answers a one-time launch URL valid for 60 seconds. After the provider
+        the browser returns to `return_uri` with `connection=linked` or
+        `connection_error`. Requires a session younger than 10 minutes.
+      x-feature-condition: socialProviders
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserAccessToken"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessAccountLinkRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlessStepResult"
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "429":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/account/connections/unlink:
+    post:
+      tags:
+        - Headless authentication
+      operationId: unlinkApplicationUserHeadlessAccountConnection
+      summary: Remove the single connection of a provider
+      description: |
+        The last way to sign in cannot be removed (`last_login_method`); a
+        provider connected twice answers `account_conflict`. Requires a session
+        younger than 10 minutes.
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserAccessToken"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessAccountUnlinkRequest"
+      responses:
+        "200":
+          description: Connection removed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - unlinked
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"
+        "403":
+          $ref: "#/components/responses/HeadlessError"
+        "404":
+          $ref: "#/components/responses/HeadlessError"
+        "409":
+          $ref: "#/components/responses/HeadlessError"
+        "503":
+          $ref: "#/components/responses/HeadlessError"
+  /auth/applications/{applicationId}/headless/v1/account/connections/launch:
+    get:
+      tags:
+        - Headless authentication
+      operationId: launchApplicationUserHeadlessAccountConnection
+      summary: Browser navigation that starts the provider redirect of an account link
+      description: Consumes the one-time ticket from `link`; a second navigation is rejected.
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - name: ticket
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "303":
+          description: Redirect to the provider, or to `return_uri` with `connection_error`
+        default:
+          description: HTML error page
+  /auth/applications/{applicationId}/headless/v1/account/connections/return:
+    get:
+      tags:
+        - Headless authentication
+      operationId: returnApplicationUserHeadlessAccountConnection
+      summary: Provider callback of an account link
+      description: |
+        Redirects the browser to `return_uri` with `connection=linked` only when
+        the provider account is stored for the user, otherwise with
+        `connection_error`. An unreadable provider state also returns here.
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - name: ref
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: error
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "303":
+          description: Redirect to the storefront page
+        default:
+          description: HTML error page
+  /auth/applications/{applicationId}/headless/v1/logout:
+    post:
+      tags:
+        - Headless authentication
+      operationId: logoutApplicationUserHeadless
+      summary: Revoke the end-user session issued to this client
+      description: Idempotent; always returns `logged_out` for an authenticated client.
+      security:
+        - oauthClientBasic: []
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/HeadlessEndUserIp"
+        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeadlessLogoutRequest"
+      responses:
+        "200":
+          description: Session revoked or already absent
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - logged_out
+        "400":
+          $ref: "#/components/responses/HeadlessError"
+        "401":
+          $ref: "#/components/responses/HeadlessError"

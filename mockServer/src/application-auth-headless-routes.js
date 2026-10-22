@@ -73,6 +73,46 @@ const basicClientId = (request) => {
 const isEmail = (value) =>
   typeof value === 'string' && /^\S+@\S+\.\S+$/.test(value);
 
+const STOREFRONT_URI_MAX_LENGTH = 2048;
+
+/** Like IAM: an http(s) URL of `origin` without credentials or fragment, or null. */
+const parseStorefrontUri = (value, origin) => {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (
+    (url.protocol !== 'https:' && url.protocol !== 'http:') ||
+    url.username ||
+    url.password ||
+    url.hash ||
+    url.origin !== origin ||
+    url.href.length > STOREFRONT_URI_MAX_LENGTH
+  ) {
+    return null;
+  }
+  return url;
+};
+
+const originOf = (value) => {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Phone codes, social providers and email verification are disabled in the mock. IAM answers
+ * a disabled step before rotating: the transaction stays usable.
+ */
+const isDisabledStep = (step) =>
+  step.startsWith('phone-otp/') ||
+  step === 'social/start' ||
+  step === 'email-verification/resend';
+
 export const createApplicationAuthHeadlessRoutes = (store) => {
   /** Transactions by opaque id; every step rotates the id, as IAM does. */
   const transactions = new Map();
@@ -226,6 +266,10 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
       }
 
       const input = await readJson(request);
+      if (isDisabledStep(step)) {
+        fail(response, 404, 'not_found', 'Method is disabled');
+        return true;
+      }
       const rotated = rotate(transactionId);
       if (!rotated) {
         fail(response, 400, 'transaction_expired', 'Transaction expired');
@@ -321,15 +365,12 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
           fail(response, 400, 'invalid_request', 'Invalid reset request', id);
           return true;
         }
-        const resetUri = new URL(input.reset_uri);
-        if (resetUri.origin !== new URL(transaction.redirectUri).origin) {
-          fail(
-            response,
-            400,
-            'invalid_request',
-            'Reset URI origin is not registered',
-            id
-          );
+        const resetUri = parseStorefrontUri(
+          input.reset_uri,
+          originOf(transaction.redirectUri)
+        );
+        if (!resetUri) {
+          fail(response, 400, 'invalid_request', 'Reset URI is invalid', id);
           return true;
         }
         const token = store.requestPasswordReset(applicationId, input.email);
@@ -346,8 +387,7 @@ export const createApplicationAuthHeadlessRoutes = (store) => {
         return true;
       }
 
-      // Phone codes, social providers and email verification are disabled in the mock.
-      fail(response, 404, 'not_found', 'Method is disabled');
+      fail(response, 404, 'not_found', 'Method is disabled', id);
       return true;
     } catch {
       fail(response, 400, 'invalid_request', 'Request body must be valid JSON');

@@ -4,88 +4,6 @@
  */
 
 export type paths = {
-    readonly "/auth/applications/{applicationId}/sign-in/email": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Sign in an application user with email and password
-         * @description Sign in with email and password
-         */
-        readonly post: operations["signInApplicationUserWithPassword"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/auth/applications/{applicationId}/sign-in/social": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Start sign-in with an enabled social provider
-         * @description The signed `oauth_query` comes from the IAM hosted authorization flow.
-         *     Caller-supplied callback URLs, scopes, ID tokens, and signup overrides
-         *     are rejected by the IAM boundary.
-         */
-        readonly post: operations["startApplicationUserSocialSignIn"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/auth/applications/{applicationId}/sign-up/email": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Create an application user with email and password
-         * @description Available only when password signup and registration are enabled.
-         */
-        readonly post: operations["signUpApplicationUserWithPassword"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/auth/applications/{applicationId}/send-verification-email": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Request an email-verification message
-         * @description Always returns a generic response to prevent account enumeration.
-         */
-        readonly post: operations["sendApplicationUserVerificationEmail"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
     readonly "/auth/applications/{applicationId}/verify-email": {
         readonly parameters: {
             readonly query?: never;
@@ -106,26 +24,6 @@ export type paths = {
         readonly patch?: never;
         readonly trace?: never;
     };
-    readonly "/auth/applications/{applicationId}/request-password-reset": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Request a password-reset message
-         * @description Always returns a generic response to prevent account enumeration.
-         */
-        readonly post: operations["requestApplicationUserPasswordReset"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
     readonly "/auth/applications/{applicationId}/reset-password/{token}": {
         readonly parameters: {
             readonly query?: never;
@@ -137,26 +35,6 @@ export type paths = {
         readonly get: operations["resetPasswordCallback"];
         readonly put?: never;
         readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/auth/applications/{applicationId}/reset-password": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Complete a password reset
-         * @description Reset the password for a user
-         */
-        readonly post: operations["resetApplicationUserPassword"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -217,46 +95,6 @@ export type paths = {
          * @description Sign out the current user
          */
         readonly post: operations["signOutApplicationUser"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/auth/applications/{applicationId}/email-otp/send-verification-otp": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Request a six-digit email sign-in code
-         * @description Only `type=sign-in` is accepted at the IAM public boundary.
-         */
-        readonly post: operations["requestApplicationUserSignInOtp"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/auth/applications/{applicationId}/sign-in/email-otp": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        /**
-         * Sign in with a six-digit email code
-         * @description May create a user only when OTP signup and registration are enabled.
-         */
-        readonly post: operations["signInApplicationUserWithEmailOtp"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -500,10 +338,590 @@ export type paths = {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/auth/applications/{applicationId}/headless/v1/configuration": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Read the effective headless sign-in configuration
+         * @description Server-to-server only. Requires the service-managed confidential web
+         *     client (`headlessEnabled`) and rejects requests carrying `Origin`.
+         *     Supports `If-None-Match` with the returned `ETag` (configuration revision).
+         */
+        readonly get: operations["getApplicationHeadlessConfiguration"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Start a headless authorization transaction
+         * @description Binds the following steps to OAuth authorization parameters. Every
+         *     accepted step returns a new `transaction_id`; previous ids are rejected.
+         *     Five failed attempts expire the transaction.
+         */
+        readonly post: operations["startApplicationHeadlessTransaction"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/sign-in": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Sign in with email and password */
+        readonly post: operations["signInApplicationUserHeadlessPassword"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/sign-up": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Sign up with email and password */
+        readonly post: operations["signUpApplicationUserHeadlessPassword"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-otp/send": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Send an email one-time code */
+        readonly post: operations["sendApplicationUserHeadlessEmailOtp"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-otp/verify": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Verify an email one-time code */
+        readonly post: operations["verifyApplicationUserHeadlessEmailOtp"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/phone-otp/send": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Send a phone one-time code */
+        readonly post: operations["sendApplicationUserHeadlessPhoneOtp"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/phone-otp/verify": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Verify a phone one-time code */
+        readonly post: operations["verifyApplicationUserHeadlessPhoneOtp"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/social/start": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Issue a one-time social sign-in launch URL */
+        readonly post: operations["startApplicationUserHeadlessSocial"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/social/launch": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Browser navigation to the social provider
+         * @description Opened by the end-user browser. Consumes the one-time ticket and the
+         *     transaction, then redirects to the provider. A reused ticket is rejected.
+         */
+        readonly get: operations["launchApplicationUserHeadlessSocial"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/social/error": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Return a social sign-in failure to the client redirect URI
+         * @description Redirects the browser to the transaction `redirect_uri` with `error`
+         *     (`access_denied`, `account_not_linked` or `server_error`), `state` and `iss`.
+         */
+        readonly get: operations["completeApplicationUserHeadlessSocialError"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/forgot": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Email a password reset link
+         * @description Emails a link that opens `reset_uri` with the reset token. The answer is
+         *     `reset_link_sent` whether or not the email belongs to a user, also when
+         *     the email cannot be delivered.
+         */
+        readonly post: operations["requestApplicationUserHeadlessPasswordReset"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/password/reset": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Set a new password with the token of a reset link
+         * @description Outside a transaction. Ends every session of the user, who then signs in
+         *     again. A spent, expired or invalid token answers `invalid_grant`.
+         */
+        readonly post: operations["resetApplicationUserHeadlessPassword"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/password/reset-link": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Browser navigation from a password reset email
+         * @description Redirects the browser to the storefront `reset_uri` with `token`, or with
+         *     `error=invalid_token` for an invalid, expired or spent reset token. The
+         *     signed `ref` outlives the reset token.
+         */
+        readonly get: operations["openApplicationUserHeadlessPasswordResetLink"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-verification/resend": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Email the verification link again
+         * @description Answers `verification_sent` alike for an unknown, unverified and verified
+         *     email, also when the email cannot be delivered. The link opens
+         *     `verify_uri`, or the hosted page without it.
+         */
+        readonly post: operations["resendApplicationUserHeadlessVerificationEmail"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/email-verification/link": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Browser navigation from an email verification email
+         * @description The verification email leads here with the token. Verifies the email and
+         *     redirects the browser to the storefront `verify_uri` with
+         *     `email_verified=true`, or with `error=invalid_token` for an invalid,
+         *     expired, missing or spent verification token (an email verified before
+         *     counts as spent). The signed `ref` outlives the verification token.
+         */
+        readonly get: operations["openApplicationUserHeadlessEmailVerificationLink"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/account/connections": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** Social account connections of the signed-in user */
+        readonly get: operations["listApplicationUserHeadlessAccountConnections"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/account/connections/link": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Start linking a social provider to the signed-in user
+         * @description Answers a one-time launch URL valid for 60 seconds. After the provider
+         *     the browser returns to `return_uri` with `connection=linked` or
+         *     `connection_error`. Requires a session younger than 10 minutes.
+         */
+        readonly post: operations["linkApplicationUserHeadlessAccountConnection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/account/connections/unlink": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Remove the single connection of a provider
+         * @description The last way to sign in cannot be removed (`last_login_method`); a
+         *     provider connected twice answers `account_conflict`. Requires a session
+         *     younger than 10 minutes.
+         */
+        readonly post: operations["unlinkApplicationUserHeadlessAccountConnection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/account/connections/launch": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Browser navigation that starts the provider redirect of an account link
+         * @description Consumes the one-time ticket from `link`; a second navigation is rejected.
+         */
+        readonly get: operations["launchApplicationUserHeadlessAccountConnection"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/account/connections/return": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Provider callback of an account link
+         * @description Redirects the browser to `return_uri` with `connection=linked` only when
+         *     the provider account is stored for the user, otherwise with
+         *     `connection_error`. An unreadable provider state also returns here.
+         */
+        readonly get: operations["returnApplicationUserHeadlessAccountConnection"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/auth/applications/{applicationId}/headless/v1/logout": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Revoke the end-user session issued to this client
+         * @description Idempotent; always returns `logged_out` for an authenticated client.
+         */
+        readonly post: operations["logoutApplicationUserHeadless"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
 };
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        readonly HeadlessConfiguration: {
+            readonly methods: {
+                readonly [key: string]: unknown;
+            };
+            readonly emailVerificationRequired: boolean;
+            /** @enum {string} */
+            readonly emailVerificationMethod: "otp" | "link";
+            readonly defaultLocale: string;
+            readonly revision: number;
+        };
+        readonly HeadlessTransactionStartRequest: {
+            readonly redirect_uri: string;
+            readonly scope: string;
+            readonly resource?: string;
+            readonly state: string;
+            readonly nonce: string;
+            readonly code_challenge: string;
+            /** @enum {string} */
+            readonly code_challenge_method: "S256";
+        };
+        readonly HeadlessTransactionStarted: {
+            readonly transaction_id: string;
+            readonly expires_in: number;
+        };
+        readonly HeadlessPasswordSignInRequest: {
+            /** Format: email */
+            readonly email: string;
+            readonly password: string;
+            /**
+             * Format: uri
+             * @description Storefront page the email verification link leads to, on the origin of the
+             *     transaction's `redirect_uri`. It receives `email_verified=true` or
+             *     `error=invalid_token`. Without it the link leads to the hosted page.
+             */
+            readonly verify_uri?: string;
+        };
+        readonly HeadlessPasswordSignUpRequest: {
+            /** Format: email */
+            readonly email: string;
+            readonly password: string;
+            readonly firstName: string;
+            readonly lastName?: string;
+            /**
+             * Format: uri
+             * @description Storefront page the email verification link leads to, on the origin of the
+             *     transaction's `redirect_uri`. It receives `email_verified=true` or
+             *     `error=invalid_token`. Without it the link leads to the hosted page.
+             */
+            readonly verify_uri?: string;
+        };
+        readonly HeadlessPasswordForgotRequest: {
+            /** Format: email */
+            readonly email: string;
+            /**
+             * Format: uri
+             * @description Storefront page the reset link leads to, on the origin of the transaction's
+             *     `redirect_uri`. It receives `token` or `error=invalid_token`.
+             */
+            readonly reset_uri: string;
+        };
+        readonly HeadlessPasswordResetRequest: {
+            readonly token: string;
+            readonly password: string;
+        };
+        readonly HeadlessEmailVerificationResendRequest: {
+            /** Format: email */
+            readonly email: string;
+            /**
+             * Format: uri
+             * @description Storefront page the email verification link leads to, on the origin of the
+             *     transaction's `redirect_uri`. It receives `email_verified=true` or
+             *     `error=invalid_token`. Without it the link leads to the hosted page.
+             */
+            readonly verify_uri?: string;
+        };
+        readonly HeadlessEmailOtpSendRequest: {
+            /** Format: email */
+            readonly email: string;
+        };
+        readonly HeadlessEmailOtpVerifyRequest: {
+            /** Format: email */
+            readonly email: string;
+            readonly otp: string;
+        };
+        readonly HeadlessPhoneOtpSendRequest: {
+            readonly phoneNumber: string;
+        };
+        readonly HeadlessPhoneOtpVerifyRequest: {
+            readonly phoneNumber: string;
+            readonly code: string;
+        };
+        readonly HeadlessSocialStartRequest: {
+            readonly provider: string;
+        };
+        readonly HeadlessAccountConnections: {
+            readonly providers: readonly {
+                readonly provider: string;
+                readonly enabled: boolean;
+                /** @enum {string} */
+                readonly status: "connected" | "not_connected" | "conflict";
+            }[];
+            readonly reauthentication_required: boolean;
+        };
+        readonly HeadlessAccountLinkRequest: {
+            readonly provider: string;
+            /**
+             * Format: uri
+             * @description Storefront page on a registered redirect URI origin, without fragment.
+             */
+            readonly return_uri: string;
+        };
+        readonly HeadlessAccountUnlinkRequest: {
+            readonly provider: string;
+        };
+        /** @description At least one of the tokens is required. */
+        readonly HeadlessLogoutRequest: {
+            readonly refresh_token?: string;
+            readonly id_token_hint?: string;
+        };
+        readonly HeadlessStepResult: {
+            /** @enum {string} */
+            readonly status: "completed" | "otp_sent" | "verification_required" | "sign_in_required" | "redirect" | "reset_link_sent" | "verification_sent";
+            readonly code?: string;
+            readonly state?: string;
+            readonly iss?: string;
+            readonly transaction_id?: string;
+            /** @enum {string} */
+            readonly channel?: "email" | "phone";
+            /** @enum {string} */
+            readonly method?: "otp" | "link";
+            readonly resend_after?: number;
+            readonly expires_in?: number;
+            readonly url?: string;
+        };
+        readonly HeadlessError: {
+            /** @enum {string} */
+            readonly error: "invalid_request" | "invalid_client" | "invalid_grant" | "transaction_expired" | "verification_required" | "user_exists" | "signup_disabled" | "slow_down" | "delivery_unavailable" | "not_found" | "access_denied" | "server_error" | "temporarily_unavailable" | "invalid_token" | "reauthentication_required" | "last_login_method" | "account_conflict" | "linking_failed";
+            readonly error_description?: string;
+            readonly transaction_id?: string;
+            readonly retry_after?: number;
+        };
         readonly ApplicationAuthErrorResponse: components["schemas"]["ApplicationAuthError"] | components["schemas"]["BetterAuthError"] | components["schemas"]["OAuthError"];
         readonly ApplicationAuthError: {
             /** @example invalid_request */
@@ -730,6 +1148,24 @@ export type components = {
         readonly Session: components["schemas"]["ApplicationSession"];
     };
     responses: {
+        /** @description Step result */
+        readonly HeadlessStepResult: {
+            headers: {
+                readonly [name: string]: unknown;
+            };
+            content: {
+                readonly "application/json": components["schemas"]["HeadlessStepResult"];
+            };
+        };
+        /** @description Headless request failed */
+        readonly HeadlessError: {
+            headers: {
+                readonly [name: string]: unknown;
+            };
+            content: {
+                readonly "application/json": components["schemas"]["HeadlessError"];
+            };
+        };
         /** @description Application authentication request failed */
         readonly ApplicationAuthError: {
             headers: {
@@ -800,6 +1236,13 @@ export type components = {
         };
     };
     parameters: {
+        /** @description Opaque transaction id returned by the previous step. */
+        readonly HeadlessTransaction: string;
+        /** @description IP address of the end user, used for rate limits. */
+        readonly HeadlessEndUserIp: string;
+        /** @description Access token issued to this client for the end user. */
+        readonly HeadlessEndUserAccessToken: string;
+        readonly HeadlessEndUserAgent: string;
         /** @description Canonical lowercase UUID of the IAM application realm. */
         readonly ApplicationId: string;
     };
@@ -812,356 +1255,6 @@ export type components = {
 };
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly signInApplicationUserWithPassword: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": components["schemas"]["PasswordSignInRequest"];
-            };
-        };
-        readonly responses: {
-            /** @description User authenticated and application session created */
-            readonly 200: {
-                headers: {
-                    readonly "Set-Cookie": components["headers"]["ApplicationSessionSetCookie"];
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["ApplicationAuthenticationResponse"];
-                };
-            };
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: components["responses"]["InvalidCredentials"];
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: components["responses"]["ApplicationAuthError"];
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: components["responses"]["RateLimitError"];
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
-    readonly startApplicationUserSocialSignIn: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    /** @enum {string} */
-                    readonly provider: "google" | "facebook";
-                    readonly oauth_query: string;
-                };
-            };
-        };
-        readonly responses: {
-            /** @description Provider authorization URL */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly token?: string;
-                        readonly user?: components["schemas"]["User"];
-                        /** Format: uri */
-                        readonly url: string;
-                        readonly redirect: boolean;
-                    };
-                };
-            };
-            /** @description Redirect to the social provider */
-            readonly 302: {
-                headers: {
-                    readonly Location?: string;
-                    readonly [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: components["responses"]["ApplicationAuthError"];
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
-    readonly signUpApplicationUserWithPassword: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": components["schemas"]["PasswordSignUpRequest"];
-            };
-        };
-        readonly responses: {
-            /** @description User created; a session cookie is set when auto-signin is allowed. */
-            readonly 200: {
-                headers: {
-                    readonly "Set-Cookie": components["headers"]["ApplicationSessionSetCookie"];
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["ApplicationAuthenticationResponse"];
-                };
-            };
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: components["responses"]["InvalidSignUp"];
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: components["responses"]["ApplicationAuthError"];
-            /** @description Unprocessable Entity. User already exists or failed to create user. */
-            readonly 422: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: components["responses"]["RateLimitError"];
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
-    readonly sendApplicationUserVerificationEmail: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    /**
-                     * Format: email
-                     * @description The email to send the verification email to
-                     * @example user@example.com
-                     */
-                    readonly email: string;
-                    /**
-                     * Format: uri
-                     * @description The URL to use for email verification callback
-                     * @example https://example.com/callback
-                     */
-                    readonly callbackURL?: string | null;
-                };
-            };
-        };
-        readonly responses: {
-            /** @description Success */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        /**
-                         * @description Indicates if the email was sent successfully
-                         * @example true
-                         */
-                        readonly status?: boolean;
-                    };
-                };
-            };
-            readonly 202: components["responses"]["GenericAuthenticationMessageAccepted"];
-            /** @description Bad Request */
-            readonly 400: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        /**
-                         * @description Error message
-                         * @example Verification email isn't enabled
-                         */
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: components["responses"]["ApplicationAuthError"];
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: components["responses"]["RateLimitError"];
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
     readonly verifyApplicationUserEmail: {
         readonly parameters: {
             readonly query: {
@@ -1253,91 +1346,6 @@ export interface operations {
                     };
                 };
             };
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
-    readonly requestApplicationUserPasswordReset: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    /** Format: email */
-                    readonly email: string;
-                    /** Format: uri */
-                    readonly redirectTo?: string;
-                };
-            };
-        };
-        readonly responses: {
-            /** @description Success */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly status?: boolean;
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly 202: components["responses"]["GenericAuthenticationMessageAccepted"];
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: components["responses"]["ApplicationAuthError"];
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: components["responses"]["RateLimitError"];
             /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
             readonly 500: {
                 headers: {
@@ -1446,86 +1454,6 @@ export interface operations {
                     };
                 };
             };
-        };
-    };
-    readonly resetApplicationUserPassword: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly token: string;
-                    /** Format: password */
-                    readonly newPassword: string;
-                };
-            };
-        };
-        readonly responses: {
-            /** @description Password changed and all user sessions revoked */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["StatusResponse"];
-                };
-            };
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: components["responses"]["ApplicationAuthError"];
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: components["responses"]["ApplicationAuthError"];
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
         };
     };
     readonly listApplicationUserSessions: {
@@ -1761,207 +1689,6 @@ export interface operations {
                     };
                 };
             };
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
-    readonly requestApplicationUserSignInOtp: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    /** Format: email */
-                    readonly email: string;
-                    /** @enum {string} */
-                    readonly type: "sign-in";
-                };
-            };
-        };
-        readonly responses: {
-            /** @description Success */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly success?: boolean;
-                    };
-                };
-            };
-            /** @description Generic acceptance response */
-            readonly 202: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["GenericMessageResponse"];
-                };
-            };
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Unauthorized. Due to missing or invalid authentication. */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: components["responses"]["RateLimitError"];
-            /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
-            readonly 500: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            readonly 503: components["responses"]["ApplicationAuthError"];
-            readonly default: components["responses"]["ApplicationAuthError"];
-        };
-    };
-    readonly signInApplicationUserWithEmailOtp: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                /** @description Canonical lowercase UUID of the IAM application realm. */
-                readonly applicationId: components["parameters"]["ApplicationId"];
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    /** Format: email */
-                    readonly email: string;
-                    readonly otp: string;
-                    readonly name?: string;
-                    readonly firstName?: string;
-                    readonly lastName?: string;
-                    /** Format: uri */
-                    readonly image?: string;
-                };
-            };
-        };
-        readonly responses: {
-            /** @description User authenticated and application session created */
-            readonly 200: {
-                headers: {
-                    readonly "Set-Cookie": components["headers"]["ApplicationSessionSetCookie"];
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["ApplicationAuthenticationResponse"];
-                };
-            };
-            /** @description Bad Request. Usually due to missing parameters, or invalid parameters. */
-            readonly 400: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message: string;
-                    };
-                };
-            };
-            /** @description Invalid email or code */
-            readonly 401: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "error": "invalid_code",
-                     *       "error_description": "Email or code is invalid"
-                     *     }
-                     */
-                    readonly "application/json": components["schemas"]["OAuthError"];
-                };
-            };
-            /** @description Forbidden. You do not have permission to access this resource or to perform this action. */
-            readonly 403: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Not Found. The requested resource was not found. */
-            readonly 404: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": {
-                        readonly message?: string;
-                    };
-                };
-            };
-            /** @description Too Many Requests. You have exceeded the rate limit. Try again later. */
-            readonly 429: components["responses"]["RateLimitError"];
             /** @description Internal Server Error. This is a problem with the server that you cannot fix. */
             readonly 500: {
                 headers: {
@@ -2828,6 +2555,725 @@ export interface operations {
             readonly 401: components["responses"]["OAuthError"];
             readonly 403: components["responses"]["OAuthError"];
             readonly default: components["responses"]["ApplicationAuthError"];
+        };
+    };
+    readonly getApplicationHeadlessConfiguration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Effective configuration */
+            readonly 200: {
+                headers: {
+                    readonly ETag?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["HeadlessConfiguration"];
+                };
+            };
+            /** @description Configuration revision unchanged */
+            readonly 304: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly startApplicationHeadlessTransaction: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessTransactionStartRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Transaction created */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["HeadlessTransactionStarted"];
+                };
+            };
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly signInApplicationUserHeadlessPassword: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessPasswordSignInRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly signUpApplicationUserHeadlessPassword: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessPasswordSignUpRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly sendApplicationUserHeadlessEmailOtp: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessEmailOtpSendRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly verifyApplicationUserHeadlessEmailOtp: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessEmailOtpVerifyRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly sendApplicationUserHeadlessPhoneOtp: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessPhoneOtpSendRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly verifyApplicationUserHeadlessPhoneOtp: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessPhoneOtpVerifyRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly startApplicationUserHeadlessSocial: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessSocialStartRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly launchApplicationUserHeadlessSocial: {
+        readonly parameters: {
+            readonly query: {
+                readonly ticket: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Redirect to the social provider */
+            readonly 303: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTML error page */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly completeApplicationUserHeadlessSocialError: {
+        readonly parameters: {
+            readonly query: {
+                readonly ref: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Redirect to the client redirect URI */
+            readonly 303: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTML error page */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly requestApplicationUserHeadlessPasswordReset: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessPasswordForgotRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly resetApplicationUserHeadlessPassword: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessPasswordResetRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Password set */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** @enum {string} */
+                        readonly status: "password_reset";
+                    };
+                };
+            };
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly openApplicationUserHeadlessPasswordResetLink: {
+        readonly parameters: {
+            readonly query: {
+                readonly ref: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Redirect to the storefront page */
+            readonly 303: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTML error page */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly resendApplicationUserHeadlessVerificationEmail: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+                /** @description Opaque transaction id returned by the previous step. */
+                readonly transaction: components["parameters"]["HeadlessTransaction"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessEmailVerificationResendRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly openApplicationUserHeadlessEmailVerificationLink: {
+        readonly parameters: {
+            readonly query: {
+                readonly ref: string;
+                readonly token?: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Redirect to the storefront page */
+            readonly 303: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTML error page */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly listApplicationUserHeadlessAccountConnections: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description Access token issued to this client for the end user. */
+                readonly "shopana-end-user-access-token": components["parameters"]["HeadlessEndUserAccessToken"];
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Connections */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["HeadlessAccountConnections"];
+                };
+            };
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly linkApplicationUserHeadlessAccountConnection: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description Access token issued to this client for the end user. */
+                readonly "shopana-end-user-access-token": components["parameters"]["HeadlessEndUserAccessToken"];
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessAccountLinkRequest"];
+            };
+        };
+        readonly responses: {
+            readonly 200: components["responses"]["HeadlessStepResult"];
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 429: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly unlinkApplicationUserHeadlessAccountConnection: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description Access token issued to this client for the end user. */
+                readonly "shopana-end-user-access-token": components["parameters"]["HeadlessEndUserAccessToken"];
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessAccountUnlinkRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Connection removed */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** @enum {string} */
+                        readonly status: "unlinked";
+                    };
+                };
+            };
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
+            readonly 403: components["responses"]["HeadlessError"];
+            readonly 404: components["responses"]["HeadlessError"];
+            readonly 409: components["responses"]["HeadlessError"];
+            readonly 503: components["responses"]["HeadlessError"];
+        };
+    };
+    readonly launchApplicationUserHeadlessAccountConnection: {
+        readonly parameters: {
+            readonly query: {
+                readonly ticket: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Redirect to the provider, or to `return_uri` with `connection_error` */
+            readonly 303: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTML error page */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly returnApplicationUserHeadlessAccountConnection: {
+        readonly parameters: {
+            readonly query: {
+                readonly ref: string;
+                readonly error?: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Redirect to the storefront page */
+            readonly 303: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTML error page */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly logoutApplicationUserHeadless: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description IP address of the end user, used for rate limits. */
+                readonly "shopana-end-user-ip": components["parameters"]["HeadlessEndUserIp"];
+                readonly "shopana-end-user-agent"?: components["parameters"]["HeadlessEndUserAgent"];
+            };
+            readonly path: {
+                /** @description Canonical lowercase UUID of the IAM application realm. */
+                readonly applicationId: components["parameters"]["ApplicationId"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["HeadlessLogoutRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Session revoked or already absent */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** @enum {string} */
+                        readonly status: "logged_out";
+                    };
+                };
+            };
+            readonly 400: components["responses"]["HeadlessError"];
+            readonly 401: components["responses"]["HeadlessError"];
         };
     };
 }

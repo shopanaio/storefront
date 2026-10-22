@@ -220,22 +220,44 @@ describe('storefront session handlers', () => {
     const callback = await call(jar, 'GET', '/auth/callback?code=code-1&state=forged');
     expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=failed`);
     expect(jar.has('shopana_at')).toBe(false);
+    expect(jar.has('__Host-shopana_auth_tx')).toBe(true);
     expect(iamCalls.some((entry) => entry.url.endsWith('/oauth2/token'))).toBe(false);
+  });
+
+  it('ignores an error of a callback without the transaction state', async () => {
+    const jar = new Jar();
+    await call(jar, 'GET', '/auth/login?returnTo=/checkout');
+    for (const query of ['error=account_not_linked', 'error=account_not_linked&state=x']) {
+      const callback = await call(jar, 'GET', `/auth/callback?${query}`);
+      expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=failed`);
+      expect(jar.has('__Host-shopana_auth_tx')).toBe(true);
+    }
   });
 
   it('returns a cancelled sign-in to the page it started from', async () => {
     const jar = new Jar();
-    await call(jar, 'GET', '/auth/login?returnTo=/checkout');
-    const callback = await call(jar, 'GET', '/auth/callback?error=access_denied&state=x');
+    const login = await call(jar, 'GET', '/auth/login?returnTo=/checkout');
+    const state = new URL(login.headers.get('location')!).searchParams.get('state');
+    const callback = await call(
+      jar,
+      'GET',
+      `/auth/callback?error=access_denied&state=${state}`
+    );
     expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=cancelled`);
+    expect(jar.has('__Host-shopana_auth_tx')).toBe(false);
   });
 
   it('tells an account of another sign-in method from a failed provider sign-in', async () => {
     const results: (string | null)[] = [];
     for (const error of ['account_not_linked', 'server_error']) {
       const jar = new Jar();
-      await call(jar, 'GET', '/auth/login?returnTo=/checkout');
-      const callback = await call(jar, 'GET', `/auth/callback?error=${error}&state=x`);
+      const login = await call(jar, 'GET', '/auth/login?returnTo=/checkout');
+      const state = new URL(login.headers.get('location')!).searchParams.get('state');
+      const callback = await call(
+        jar,
+        'GET',
+        `/auth/callback?error=${error}&state=${state}`
+      );
       results.push(new URL(callback.headers.get('location')!).searchParams.get('auth'));
     }
     expect(results).toEqual(['accountNotLinked', 'failed']);

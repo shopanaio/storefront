@@ -790,7 +790,7 @@ describe('headless sign-in handlers', () => {
     };
     const link = await post(jar, 'connection-link', {
       provider: 'google',
-      returnTo: '/account',
+      returnTo: '/account#connections',
     });
     expect(await link.json()).toEqual({
       type: 'redirect',

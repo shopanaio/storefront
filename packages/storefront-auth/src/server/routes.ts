@@ -528,9 +528,14 @@ function toConnections(value: IamAccountConnections): AccountConnections {
   };
 }
 
-/** Absolute URL of a path of this storefront; anything else is its home page. */
+/**
+ * Absolute URL of a path of this storefront; anything else is its home page. IAM rejects a URI
+ * with a fragment, so it is dropped.
+ */
 function storefrontUrl(session: StorefrontSessionServer, path: string): string {
-  return new URL(safeReturnTo(path, session.origin), session.origin).href;
+  const url = new URL(safeReturnTo(path, session.origin), session.origin);
+  url.hash = '';
+  return url.href;
 }
 
 /** The page of this storefront the email verification link leads to. */

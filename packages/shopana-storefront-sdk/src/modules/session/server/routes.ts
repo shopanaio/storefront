@@ -139,12 +139,15 @@ async function callback(
       clearTransaction,
     ]);
 
+  // IAM sends `state` with errors too; a callback of another transaction, such as a cross-site
+  // link, keeps the transaction cookie and never shows its error.
+  if (!transaction || url.searchParams.get('state') !== transaction.state) {
+    return redirect(withAuthResult(returnTo, 'failed', server.origin), []);
+  }
   const error = url.searchParams.get('error');
   if (error) return fail(authResultOfError(error));
   const code = url.searchParams.get('code');
-  if (!transaction || !code || url.searchParams.get('state') !== transaction.state) {
-    return fail('failed');
-  }
+  if (!code) return fail('failed');
 
   try {
     const tokens = await server.iam.exchangeCode(

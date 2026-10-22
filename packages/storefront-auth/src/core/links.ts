@@ -34,6 +34,21 @@ export function readPasswordResetLink(
 }
 
 /**
+ * Removes the reset token from the address bar once read, so it does not stay in the history,
+ * the `Referer` of the next requests or analytics.
+ */
+export function clearPasswordResetLink(): void {
+  const url = new URL(location.href);
+  if (!url.searchParams.has('token')) return;
+  url.searchParams.delete('token');
+  history.replaceState(
+    history.state,
+    '',
+    `${url.pathname}${url.search}${url.hash}`
+  );
+}
+
+/**
  * Outcome of an email verification link: `verified`, or `expired` when IAM found the link
  * invalid or spent; null on a page opened without a verification link.
  */

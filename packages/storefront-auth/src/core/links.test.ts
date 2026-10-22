@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { readEmailVerificationLink, readPasswordResetLink } from './links';
+import {
+  clearPasswordResetLink,
+  readEmailVerificationLink,
+  readPasswordResetLink,
+} from './links';
 
 describe('links from IAM', () => {
   it('reads the outcome of an email verification link', () => {
@@ -19,5 +23,15 @@ describe('links from IAM', () => {
     expect(readPasswordResetLink('?error=invalid_token')).toEqual({
       error: 'expired',
     });
+  });
+
+  it('removes only the reset token from the address bar', () => {
+    history.replaceState(null, '', '/account/reset-password?token=reset-token&lang=uk#form');
+
+    clearPasswordResetLink();
+
+    expect(`${location.pathname}${location.search}${location.hash}`).toBe(
+      '/account/reset-password?lang=uk#form'
+    );
   });
 });
