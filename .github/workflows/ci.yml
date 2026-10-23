@@ -54,9 +54,18 @@ jobs:
       - run: yarn typecheck
 
   test:
-    name: Unit tests
+    name: Unit tests (${{ matrix.workspace }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace:
+          - '@shopana/storefront-sdk'
+          - '@shopana/storefront-ui'
+          - '@shopana/storefront-auth'
+          - '@shopana/checkout'
+          - '@shopana/mock-server'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,4 +74,4 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn build:packages
-      - run: yarn test
+      - run: yarn workspace ${{ matrix.workspace }} test
