@@ -2,10 +2,11 @@
 
 import { useCallback } from 'react';
 import { useSessionContext } from '../../context/SessionContext';
+import { useLocalization } from '../../../../localization/react/useLocalization';
 import { useAuthAction } from './useAuthAction';
 
 export interface SignOutOptions {
-  /** Where to go when IAM sign-out is not configured; the home page by default. */
+  /** Where to go when IAM sign-out is not configured; the home page of the active locale by default. */
   redirectTo?: string;
 }
 
@@ -16,13 +17,14 @@ export interface SignOutOptions {
  */
 export function useSignOut() {
   const { sessionClient, cartCookieName } = useSessionContext();
+  const { buildHref } = useLocalization();
   const action = useCallback(
-    async ({ redirectTo = '/' }: SignOutOptions = {}) => {
+    async ({ redirectTo = buildHref('/') }: SignOutOptions = {}) => {
       const endSessionUrl = await sessionClient.signOut({ cartCookieName });
       // A full navigation drops the account data held by this page (Apollo cache, cart store).
       window.location.assign(endSessionUrl ?? redirectTo);
     },
-    [sessionClient, cartCookieName]
+    [sessionClient, cartCookieName, buildHref]
   );
   const { execute: signOut, ...state } = useAuthAction(action);
   return { signOut, ...state };

@@ -1,0 +1,121 @@
+fragment SdkStoreImage on MediaImage {
+  id
+  alt
+  image {
+    id
+    url
+    width
+    height
+    altText
+    thumbhash
+  }
+}
+
+fragment SdkStore on Store {
+  id
+  handle
+  name
+  description
+  email
+  timezone
+  defaultLocale
+  defaultCurrency
+  contact {
+    name
+    email
+    phoneNumbers
+  }
+  address {
+    companyName
+    countryCode
+    address1
+    address2
+    city
+    province
+    postalCode
+  }
+  brand {
+    logo {
+      ...SdkStoreImage
+    }
+    squareLogo {
+      ...SdkStoreImage
+    }
+    coverImage {
+      ...SdkStoreImage
+    }
+    primaryColor
+    secondaryColor
+    slogan
+    shortDescription
+    socialLinks {
+      platform
+      url
+    }
+  }
+  policies {
+    id
+    type
+    handle
+    path
+    title
+  }
+}
+
+fragment SdkLocalization on Localization {
+  market {
+    id
+    handle
+    name
+    timezone
+    taxIncluded
+  }
+  country {
+    code
+    name
+  }
+  language {
+    code
+    name
+  }
+  currency {
+    code
+    name
+    symbol
+  }
+  availableCountries {
+    code
+    name
+  }
+  availableLanguages {
+    code
+    name
+  }
+  availableCurrencies {
+    code
+    name
+    symbol
+  }
+}
+
+query SdkStorefrontContext {
+  store {
+    ...SdkStore
+  }
+  localization {
+    ...SdkLocalization
+  }
+}
+
+query SdkStorefrontLocales {
+  store {
+    id
+    defaultLocale
+  }
+  localization {
+    availableLanguages {
+      code
+      name
+    }
+  }
+}

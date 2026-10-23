@@ -24,14 +24,13 @@ export type RuntimeRouteResolution<T = unknown> =
       route: ParsedRoute;
     };
 
+/** Removes the locale segment of the request (the `[locale]` route param) from a pathname. */
 export function stripLocalePrefix(pathname: string, locale?: string): string {
   if (!locale) return pathname;
 
-  const prefix = `/${locale}`;
-  if (pathname === prefix) return '/';
-  if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length);
-
-  return pathname;
+  const [, first = '', ...rest] = pathname.split('/');
+  if (first.toLowerCase() !== locale.toLowerCase()) return pathname;
+  return `/${rest.join('/')}`;
 }
 
 export function resolveRuntimeRoute<T = unknown>(
@@ -53,7 +52,7 @@ export function resolveRuntimeRoute<T = unknown>(
     };
   }
 
-  const route = parseRoute(pathname);
+  const route = parseRoute(pathnameWithoutLocale);
   return {
     kind: 'sdk',
     pathname: pathnameWithoutLocale,

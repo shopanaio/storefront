@@ -4,24 +4,27 @@ import type {
   CheckoutLinePurchaseType,
   CurrencyCode,
   LocaleCode,
-  SdkCreateCartMutation,
 } from '../../../../graphql/apollo/generated/operations';
 import { createCartMutation } from '../../core/graphql/mutations/createCartMutation';
 import { useCartConfig, useCartSetters } from '../context/CartContext';
-import type { CreateCartInput } from '../../core/types';
-type CreatedCheckout = SdkCreateCartMutation['checkoutCreate']['checkout'];
+import type { CreateCartInput, MutationOptions } from '../../core/types';
+import type { model } from '../../../../model/namespace';
+import {
+  cartUserError,
+  missingCheckoutError,
+  settleCartMutation,
+} from '../../core/errors';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 const useCreateCart = () => {
   const { setId, setCartKey } = useCartSetters();
   const { channelCode } = useCartConfig();
   const [commit, isInFlight] = useMutation(createCartMutation);
+  /** Resolves with the new cart; rejects only with `CartMutationError`. */
   const createCart = (
     input: CreateCartInput,
-    options?: {
-      onSuccess?: () => void;
-      onError?: () => void;
-    }
-  ): Promise<CreatedCheckout> => {
-    return new Promise((resolve, reject) => {
+    options?: MutationOptions
+  ): Promise<model.Cart> => {
+    const write = new Promise<model.Cart>((resolve, reject) => {
       commit({
         variables: {
           input: {
@@ -35,7 +38,7 @@ const useCreateCart = () => {
               purchase: item.purchase
                 ? { type: item.purchase.type as CheckoutLinePurchaseType }
                 : undefined,
-              attributes: item.attributes as object | undefined,
+              attributes: item.attributes,
               tagSlug: item.tagSlug,
               children: item.children?.map((child) => ({
                 componentItemId: child.componentItemId,
@@ -46,33 +49,23 @@ const useCreateCart = () => {
             })),
           },
         },
-        onCompleted: (response, errors) => {
-          if (errors && errors.length > 0) {
-            options?.onError?.();
-            return reject(errors);
+        onCompleted: (response) => {
+          const payload = response.checkoutCreate;
+          if (payload.errors.length > 0) {
+            return reject(cartUserError(payload.errors));
           }
-          if (response.checkoutCreate.errors.length > 0) {
-            options?.onError?.();
-            return reject(response.checkoutCreate.errors);
-          }
-          const checkout = response.checkoutCreate.checkout;
+          const checkout = payload.checkout;
           if (!checkout) {
-            options?.onError?.();
-            return reject(
-              new Error('No cart found in checkoutCreate response')
-            );
+            return reject(missingCheckoutError('checkoutCreate'));
           }
           setId(checkout.id);
           setCartKey(checkout);
-          options?.onSuccess?.();
-          return resolve(checkout);
+          return resolve(mapShopanaCheckoutToEntityCart(checkout));
         },
-        onError: (error) => {
-          options?.onError?.();
-          reject(error);
-        },
+        onError: reject,
       });
     });
+    return settleCartMutation(write, options);
   };
   return { createCart, isLoading: isInFlight };
 };

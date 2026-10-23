@@ -1,0 +1,108 @@
+fragment SdkNavigationTarget on OnlineStoreNavigationTarget {
+  type
+  resourceId
+  url
+  resource {
+    __typename
+    id
+  }
+}
+
+fragment SdkNavigationMenuItemFields on OnlineStoreNavigationMenuItem {
+  id
+  handle
+  label
+  openInNewTab
+  target {
+    ...SdkNavigationTarget
+  }
+}
+
+fragment SdkNavigationMenu on OnlineStoreNavigationMenu {
+  id
+  handle
+  items(first: 50) {
+    nodes {
+      ...SdkNavigationMenuItemFields
+      children(first: 50) {
+        nodes {
+          ...SdkNavigationMenuItemFields
+          children(first: 50) {
+            nodes {
+              ...SdkNavigationMenuItemFields
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query SdkNavigationMenuByHandle($handle: String!) {
+  onlineStoreNavigationMenuByHandle(handle: $handle) {
+    ...SdkNavigationMenu
+  }
+}
+
+fragment SdkOnlineStorePage on OnlineStorePage {
+  id
+  handle
+  templateSuffix
+  publishedAt
+  content {
+    locale
+    title
+    description {
+      text
+      json
+    }
+    excerpt {
+      text
+      json
+    }
+    seo {
+      title
+      description
+      openGraph {
+        title
+        description
+        image {
+          id
+          alt
+          image {
+            id
+            url
+            width
+            height
+          }
+        }
+      }
+    }
+  }
+}
+
+query SdkOnlineStorePageByHandle($handle: String!) {
+  onlineStorePageByHandle(handle: $handle) {
+    ...SdkOnlineStorePage
+  }
+}
+
+fragment SdkStorePolicyDetail on StorePolicy {
+  id
+  type
+  handle
+  path
+  title
+  version
+  publishedAt
+  body {
+    text
+    html
+  }
+}
+
+query SdkStorePolicyByHandle($handle: String!) {
+  storePolicy(handle: $handle) {
+    ...SdkStorePolicyDetail
+  }
+}

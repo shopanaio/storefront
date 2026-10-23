@@ -35,7 +35,7 @@ vi.mock('#checkout/context/CheckoutApiContext', () => ({
 vi.mock('#checkout/context/CheckoutDataContext', () => ({
   useCheckoutData: () => ({ refetch: mocks.refetch, ...mocks.checkoutData }),
 }));
-vi.mock('#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount', () => ({
+vi.mock('@shopana/storefront-sdk/modules/customer/react', () => ({
   useRefetchLoyaltyAccount: () => mocks.refetchLoyaltyAccount,
 }));
 vi.mock('#checkout/theme', () => ({

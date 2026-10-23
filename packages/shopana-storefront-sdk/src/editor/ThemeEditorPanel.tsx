@@ -269,6 +269,7 @@ function SchemaFields({
 const PAGE_TYPES: PageType[] = [
   'home',
   'product',
+  'category',
   'collection',
   'search',
   'blog',

@@ -22,6 +22,9 @@ vi.mock('@shopana/storefront-sdk/modules/session/react', () => ({
   useSignInPending: () => false,
   useSignOut: () => () => undefined,
 }));
+vi.mock('@shopana/storefront-sdk/modules/localization/react', () => ({
+  useLocalization: () => ({ buildHref: (href: string) => href }),
+}));
 
 import { useAuthFlow } from './useAuthFlow';
 

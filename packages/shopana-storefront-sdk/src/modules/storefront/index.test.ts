@@ -198,7 +198,6 @@ describe('Storefront API', () => {
       publishedAt: checkout.createdAt,
       createdAt: checkout.createdAt,
       updatedAt: checkout.updatedAt,
-      listingUpdatedAt: checkout.updatedAt,
       seo: { openGraph: {} },
       media: {
         edges: [{ cursor: '1', node: null }],

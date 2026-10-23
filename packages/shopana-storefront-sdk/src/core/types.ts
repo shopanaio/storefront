@@ -9,6 +9,7 @@ import type {
 export type PageType =
   | 'home'
   | 'product'
+  | 'category'
   | 'collection'
   | 'search'
   | 'blog'

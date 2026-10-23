@@ -1,5 +1,5 @@
+export { accountProductActionsQuery } from './graphql.js';
 export {
-  AccountMutationError,
   useAccountProductActions,
   type AccountProductActions,
   type AccountProductActionsInput,

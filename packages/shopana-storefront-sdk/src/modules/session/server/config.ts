@@ -1,4 +1,8 @@
 import type { ApplicationAuthScope } from '../../../graphql/apollo/types';
+import {
+  DEFAULT_COOKIE_POLICY,
+  type CookiePolicy,
+} from '../../../core/cookiePolicy';
 
 /**
  * Server-only configuration of the storefront session (BFF). The storefront is a confidential
@@ -29,7 +33,14 @@ export interface StorefrontAuthServerConfig {
    * are never trusted. 1 by default (one proxy).
    */
   trustedProxyHops?: number;
+  /**
+   * Where the storefront runs: `embedded` writes the session cookies with
+   * `SameSite=None; Secure; Partitioned` for a third-party iframe. `first-party` by default.
+   */
+  cookiePolicy: CookiePolicy;
 }
+
+const COOKIE_POLICIES: readonly CookiePolicy[] = ['first-party', 'embedded'];
 
 const DEFAULT_SCOPES: readonly ApplicationAuthScope[] = [
   'openid',
@@ -48,6 +59,7 @@ const ENV = {
   postLogoutRedirectUri: 'IAM_OAUTH_POST_LOGOUT_REDIRECT_URI',
   sessionSecret: 'STOREFRONT_SESSION_SECRET',
   trustedProxyHops: 'STOREFRONT_TRUSTED_PROXY_HOPS',
+  cookiePolicy: 'STOREFRONT_COOKIE_POLICY',
 } as const;
 
 const MIN_SESSION_SECRET_LENGTH = 32;
@@ -88,6 +100,13 @@ export function readStorefrontAuthServerConfig(
   if (!Number.isInteger(trustedProxyHops) || trustedProxyHops < 1) {
     throw new Error(`${ENV.trustedProxyHops} must be a positive integer`);
   }
+  const policy = value('cookiePolicy') ?? DEFAULT_COOKIE_POLICY;
+  const cookiePolicy = COOKIE_POLICIES.find((item) => item === policy);
+  if (!cookiePolicy) {
+    throw new Error(
+      `${ENV.cookiePolicy} must be one of: ${COOKIE_POLICIES.join(', ')}`
+    );
+  }
 
   return {
     iamUrl: value('iamUrl')!.replace(/\/$/, ''),
@@ -100,6 +119,7 @@ export function readStorefrontAuthServerConfig(
     scopes: DEFAULT_SCOPES,
     sessionSecret,
     trustedProxyHops,
+    cookiePolicy,
   };
 }
 

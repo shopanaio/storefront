@@ -1,0 +1,129 @@
+# The account of the signed-in customer: the account pages and the checkout read the same
+# selection, so one request serves both.
+fragment SdkLoyaltyAccountFragment on LoyaltyAccount {
+  id
+  status
+  balance {
+    availablePoints
+    pendingPoints
+    reservedPoints
+    debtPoints
+  }
+  tier {
+    code
+    name
+    rank
+    effectiveFrom
+    effectiveTo
+    earnMultiplierBps
+    progress {
+      nextTier {
+        code
+        name
+        rank
+      }
+      presentation {
+        headline
+        description
+        badge
+        accessibilityLabel
+        terms
+      }
+    }
+  }
+  upcomingExpirations {
+    points
+    expiresAt
+  }
+  storeCredit {
+    availableAmount {
+      ...SdkCustomerMoneyFragment
+    }
+    pendingAmount {
+      ...SdkCustomerMoneyFragment
+    }
+    upcomingExpirations {
+      amount {
+        ...SdkCustomerMoneyFragment
+      }
+      expiresAt
+    }
+  }
+  redemptionSources {
+    source
+    availablePoints
+    availableAmount {
+      ...SdkCustomerMoneyFragment
+    }
+    minimum {
+      points
+      amount {
+        ...SdkCustomerMoneyFragment
+      }
+    }
+    maximumPerOrder {
+      points
+      amount {
+        ...SdkCustomerMoneyFragment
+      }
+    }
+  }
+  availableRewards(first: 20) {
+    nodes {
+      id
+      discountCode
+      validUntil
+      presentation {
+        headline
+        description
+      }
+      reward {
+        kind
+        ... on LoyaltyVoucherRewardPresentation {
+          code
+        }
+      }
+    }
+  }
+}
+
+query SdkLoyaltyAccountQuery {
+  customer {
+    id
+    loyaltyAccount {
+      ...SdkLoyaltyAccountFragment
+    }
+  }
+}
+
+fragment SdkLoyaltyTransactionFragment on LoyaltyTransaction {
+  id
+  type
+  direction
+  points
+  description
+  occurredAt
+  effectiveAt
+  expiresAt
+}
+
+query SdkLoyaltyTransactionsQuery($first: Int, $after: Cursor) {
+  customer {
+    id
+    loyaltyAccount {
+      id
+      transactions(first: $first, after: $after) {
+        edges {
+          cursor
+          node {
+            ...SdkLoyaltyTransactionFragment
+          }
+        }
+        pageInfo {
+          ...SdkCustomerPageInfoFragment
+        }
+        totalCount
+      }
+    }
+  }
+}

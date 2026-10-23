@@ -16,6 +16,7 @@ const config: StorefrontAuthServerConfig = {
   postLogoutRedirectUri: `${origin}/`,
   scopes: ['openid', 'profile', 'email', 'offline_access'],
   sessionSecret: 'test-session-secret-0123456789-abcdef',
+  cookiePolicy: 'first-party',
 };
 const iamBase = 'https://iam.example.test/auth/applications/app-1';
 

@@ -50,8 +50,6 @@ export type Scalars = {
   URL: { input: any; output: any };
   /** An unsigned 64-bit integer serialized as a decimal string. */
   UnsignedInt64: { input: any; output: any };
-  join__FieldSet: { input: any; output: any };
-  link__Import: { input: any; output: any };
 };
 
 /**
@@ -1382,7 +1380,6 @@ export type Collection = Node & {
   readonly featuredMedia?: Maybe<Media>;
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
-  readonly listingUpdatedAt: Scalars['DateTime']['output'];
   readonly media: CollectionMediaConnection;
   readonly name: Scalars['String']['output'];
   readonly products: ProductConnection;
@@ -3429,7 +3426,7 @@ export type LoyaltyAccountStatus = 'ACTIVE' | 'CLOSED' | 'SUSPENDED';
 /** An issued reward that the current customer can use now. */
 export type LoyaltyAvailableReward = Node & {
   readonly __typename: 'LoyaltyAvailableReward';
-  /** Код связанной скидки Pricing для применения награды в checkout, если она активируется кодом. */
+  /** Code of the linked Pricing discount used to apply the reward at checkout when activated by a code. */
   readonly discountCode?: Maybe<Scalars['String']['output']>;
   readonly id: Scalars['ID']['output'];
   readonly issuedAt: Scalars['DateTime']['output'];
@@ -4589,7 +4586,7 @@ export type NovaPoshtaSettlement = {
   /** Ref of the carrier city that serves the settlement. */
   readonly cityRef: Scalars['ID']['output'];
   readonly name: Scalars['String']['output'];
-  /** Full name with area and region, for example "м. Київ, Київська обл.". */
+  /** Full name with area and region, for example "Kyiv, Kyiv region". */
   readonly present: Scalars['String']['output'];
   /** Settlement ref; `settlementRef` of the delivery customer input. */
   readonly ref: Scalars['ID']['output'];
@@ -4613,7 +4610,7 @@ export type NovaPoshtaSettlementPage = {
 export type NovaPoshtaSettlementStreet = {
   readonly __typename: 'NovaPoshtaSettlementStreet';
   readonly name: Scalars['String']['output'];
-  /** Name with the street type, for example "вул. Хрещатик". */
+  /** Name with the street type, for example "Khreshchatyk Street". */
   readonly present: Scalars['String']['output'];
   /** Settlement street ref; `streetRef` of the courier customer input. */
   readonly ref: Scalars['ID']['output'];
@@ -8114,46 +8111,6 @@ export type WishlistUpdatePayload = {
   readonly wishlist?: Maybe<CustomerWishlist>;
 };
 
-export type Join__Graph =
-  | 'APPS_HEADLESS_STOREFRONT'
-  | 'APPS_NOVA_POSHTA_STOREFRONT'
-  | 'APPS_ONLINE_STORE_STOREFRONT'
-  | 'CATALOG_STOREFRONT'
-  | 'CHECKOUT_STOREFRONT'
-  | 'CUSTOMERS_STOREFRONT'
-  | 'LISTING_STOREFRONT'
-  | 'LOYALTY_STOREFRONT'
-  | 'MEDIA_STOREFRONT'
-  | 'ORDERS_STOREFRONT'
-  | 'PROJECT_STOREFRONT'
-  | 'REVIEWS_STOREFRONT';
-
-export type Link__Purpose =
-  /** `EXECUTION` features provide metadata necessary for operation execution. */
-  | 'EXECUTION'
-  /** `SECURITY` features provide metadata necessary to securely resolve fields. */
-  | 'SECURITY';
-
-export type SdkAccountUserErrorFragment = {
-  readonly __typename: 'CustomerUserError';
-  readonly code: string;
-  readonly field?: ReadonlyArray<string> | null;
-  readonly message: string;
-  readonly retryable: boolean;
-};
-
-export type SdkComparisonMutationResultFragment = {
-  readonly __typename: 'CustomerComparisonMutationPayload';
-  readonly revision?: number | null;
-  readonly errors: ReadonlyArray<{
-    readonly __typename: 'CustomerUserError';
-    readonly code: string;
-    readonly field?: ReadonlyArray<string> | null;
-    readonly message: string;
-    readonly retryable: boolean;
-  }>;
-};
-
 export type SdkAccountProductActionsQueryVariables = Exact<{
   [key: string]: never;
 }>;
@@ -8195,93 +8152,6 @@ export type SdkAccountProductActionsQuery = {
       }>;
     };
   } | null;
-};
-
-export type SdkWishlistProductAddMutationVariables = Exact<{
-  input: WishlistProductAddInput;
-}>;
-
-export type SdkWishlistProductAddMutation = {
-  readonly __typename: 'Mutation';
-  readonly wishlistProductAdd: {
-    readonly __typename: 'WishlistProductAddPayload';
-    readonly wishlistItem?: {
-      readonly __typename: 'CustomerWishlistItem';
-      readonly id: string;
-      readonly product?: {
-        readonly __typename: 'Product';
-        readonly id: string;
-      } | null;
-      readonly wishlist: {
-        readonly __typename: 'CustomerWishlist';
-        readonly id: string;
-      };
-    } | null;
-    readonly errors: ReadonlyArray<{
-      readonly __typename: 'CustomerUserError';
-      readonly code: string;
-      readonly field?: ReadonlyArray<string> | null;
-      readonly message: string;
-      readonly retryable: boolean;
-    }>;
-  };
-};
-
-export type SdkWishlistProductRemoveMutationVariables = Exact<{
-  input: WishlistProductRemoveInput;
-}>;
-
-export type SdkWishlistProductRemoveMutation = {
-  readonly __typename: 'Mutation';
-  readonly wishlistProductRemove: {
-    readonly __typename: 'WishlistProductRemovePayload';
-    readonly deletedWishlistItemId?: string | null;
-    readonly errors: ReadonlyArray<{
-      readonly __typename: 'CustomerUserError';
-      readonly code: string;
-      readonly field?: ReadonlyArray<string> | null;
-      readonly message: string;
-      readonly retryable: boolean;
-    }>;
-  };
-};
-
-export type SdkCustomerComparisonVariantAddMutationVariables = Exact<{
-  input: CustomerComparisonVariantAddInput;
-}>;
-
-export type SdkCustomerComparisonVariantAddMutation = {
-  readonly __typename: 'Mutation';
-  readonly customerComparisonVariantAdd: {
-    readonly __typename: 'CustomerComparisonMutationPayload';
-    readonly revision?: number | null;
-    readonly errors: ReadonlyArray<{
-      readonly __typename: 'CustomerUserError';
-      readonly code: string;
-      readonly field?: ReadonlyArray<string> | null;
-      readonly message: string;
-      readonly retryable: boolean;
-    }>;
-  };
-};
-
-export type SdkCustomerComparisonVariantRemoveMutationVariables = Exact<{
-  input: CustomerComparisonVariantRemoveInput;
-}>;
-
-export type SdkCustomerComparisonVariantRemoveMutation = {
-  readonly __typename: 'Mutation';
-  readonly customerComparisonVariantRemove: {
-    readonly __typename: 'CustomerComparisonMutationPayload';
-    readonly revision?: number | null;
-    readonly errors: ReadonlyArray<{
-      readonly __typename: 'CustomerUserError';
-      readonly code: string;
-      readonly field?: ReadonlyArray<string> | null;
-      readonly message: string;
-      readonly retryable: boolean;
-    }>;
-  };
 };
 
 export type SdkCartFragment_CartFragment = {
@@ -8423,7 +8293,125 @@ export type SdkCartFragment_CartFragment = {
     readonly sku?: string | null;
     readonly quantity: number;
     readonly purchasableId: string;
+    readonly componentItemId?: string | null;
     readonly attributes: object;
+    readonly children: ReadonlyArray<{
+      readonly __typename: 'CheckoutLine';
+      readonly id: string;
+      readonly title: string;
+      readonly sku?: string | null;
+      readonly quantity: number;
+      readonly purchasableId: string;
+      readonly componentItemId?: string | null;
+      readonly attributes: object;
+      readonly cost: {
+        readonly __typename: 'CheckoutLineCost';
+        readonly unitPrice: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly compareAtUnitPrice: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly subtotalAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+      };
+      readonly purchasable: {
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly title: string;
+        readonly handle: string;
+        readonly currentlyNotInStock: boolean;
+        readonly quantityAvailable?: number | null;
+        readonly isAvailable: boolean;
+        readonly product: {
+          readonly __typename: 'Product';
+          readonly id: string;
+          readonly title: string;
+          readonly handle: string;
+        };
+        readonly cover?:
+          | { readonly __typename: 'ExternalVideo'; readonly id: string }
+          | {
+              readonly __typename: 'MediaImage';
+              readonly id: string;
+              readonly image: {
+                readonly __typename: 'Image';
+                readonly url: any;
+              };
+            }
+          | { readonly __typename: 'Model3d'; readonly id: string }
+          | { readonly __typename: 'Video'; readonly id: string }
+          | null;
+        readonly price?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly compareAtPrice?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly inventoryItem?: {
+          readonly __typename: 'InventoryItem';
+          readonly inventoryPolicy: ProductVariantInventoryPolicy;
+        } | null;
+        readonly selectedOptions: ReadonlyArray<{
+          readonly __typename: 'SelectedOption';
+          readonly name: string;
+          readonly value: string;
+          readonly option: {
+            readonly __typename: 'ProductOption';
+            readonly id: string;
+            readonly handle: string;
+            readonly name: string;
+          };
+          readonly optionValue: {
+            readonly __typename: 'ProductOptionValue';
+            readonly id: string;
+            readonly handle: string;
+            readonly name: string;
+          };
+        }>;
+      };
+      readonly parent?: {
+        readonly __typename: 'CheckoutLine';
+        readonly id: string;
+      } | null;
+      readonly image?: {
+        readonly __typename: 'MediaImage';
+        readonly id: string;
+        readonly image: {
+          readonly __typename: 'Image';
+          readonly url: any;
+          readonly width?: number | null;
+          readonly height?: number | null;
+          readonly altText?: string | null;
+        };
+      } | null;
+      readonly purchase: {
+        readonly __typename: 'CheckoutLinePurchase';
+        readonly type: CheckoutLinePurchaseType;
+      };
+      readonly tag?: {
+        readonly __typename: 'CheckoutTag';
+        readonly id: string;
+        readonly slug: string;
+        readonly unique: boolean;
+      } | null;
+    }>;
     readonly cost: {
       readonly __typename: 'CheckoutLineCost';
       readonly unitPrice: {
@@ -8503,12 +8491,10 @@ export type SdkCartFragment_CartFragment = {
         };
       }>;
     };
-    readonly children: ReadonlyArray<{
+    readonly parent?: {
       readonly __typename: 'CheckoutLine';
       readonly id: string;
-      readonly title: string;
-      readonly quantity: number;
-    }>;
+    } | null;
     readonly image?: {
       readonly __typename: 'MediaImage';
       readonly id: string;
@@ -8533,13 +8519,14 @@ export type SdkCartFragment_CartFragment = {
   }>;
 };
 
-export type SdkCartLineFragment_LineFragment = {
+export type SdkCartLineFragment_FieldsFragment = {
   readonly __typename: 'CheckoutLine';
   readonly id: string;
   readonly title: string;
   readonly sku?: string | null;
   readonly quantity: number;
   readonly purchasableId: string;
+  readonly componentItemId?: string | null;
   readonly attributes: object;
   readonly cost: {
     readonly __typename: 'CheckoutLineCost';
@@ -8620,12 +8607,239 @@ export type SdkCartLineFragment_LineFragment = {
       };
     }>;
   };
+  readonly parent?: {
+    readonly __typename: 'CheckoutLine';
+    readonly id: string;
+  } | null;
+  readonly image?: {
+    readonly __typename: 'MediaImage';
+    readonly id: string;
+    readonly image: {
+      readonly __typename: 'Image';
+      readonly url: any;
+      readonly width?: number | null;
+      readonly height?: number | null;
+      readonly altText?: string | null;
+    };
+  } | null;
+  readonly purchase: {
+    readonly __typename: 'CheckoutLinePurchase';
+    readonly type: CheckoutLinePurchaseType;
+  };
+  readonly tag?: {
+    readonly __typename: 'CheckoutTag';
+    readonly id: string;
+    readonly slug: string;
+    readonly unique: boolean;
+  } | null;
+};
+
+export type SdkCartLineFragment_LineFragment = {
+  readonly __typename: 'CheckoutLine';
+  readonly id: string;
+  readonly title: string;
+  readonly sku?: string | null;
+  readonly quantity: number;
+  readonly purchasableId: string;
+  readonly componentItemId?: string | null;
+  readonly attributes: object;
   readonly children: ReadonlyArray<{
     readonly __typename: 'CheckoutLine';
     readonly id: string;
     readonly title: string;
+    readonly sku?: string | null;
     readonly quantity: number;
+    readonly purchasableId: string;
+    readonly componentItemId?: string | null;
+    readonly attributes: object;
+    readonly cost: {
+      readonly __typename: 'CheckoutLineCost';
+      readonly unitPrice: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      };
+      readonly compareAtUnitPrice: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      };
+      readonly subtotalAmount: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      };
+      readonly totalAmount: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      };
+    };
+    readonly purchasable: {
+      readonly __typename: 'ProductVariant';
+      readonly id: string;
+      readonly title: string;
+      readonly handle: string;
+      readonly currentlyNotInStock: boolean;
+      readonly quantityAvailable?: number | null;
+      readonly isAvailable: boolean;
+      readonly product: {
+        readonly __typename: 'Product';
+        readonly id: string;
+        readonly title: string;
+        readonly handle: string;
+      };
+      readonly cover?:
+        | { readonly __typename: 'ExternalVideo'; readonly id: string }
+        | {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: { readonly __typename: 'Image'; readonly url: any };
+          }
+        | { readonly __typename: 'Model3d'; readonly id: string }
+        | { readonly __typename: 'Video'; readonly id: string }
+        | null;
+      readonly price?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+      readonly compareAtPrice?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+      readonly inventoryItem?: {
+        readonly __typename: 'InventoryItem';
+        readonly inventoryPolicy: ProductVariantInventoryPolicy;
+      } | null;
+      readonly selectedOptions: ReadonlyArray<{
+        readonly __typename: 'SelectedOption';
+        readonly name: string;
+        readonly value: string;
+        readonly option: {
+          readonly __typename: 'ProductOption';
+          readonly id: string;
+          readonly handle: string;
+          readonly name: string;
+        };
+        readonly optionValue: {
+          readonly __typename: 'ProductOptionValue';
+          readonly id: string;
+          readonly handle: string;
+          readonly name: string;
+        };
+      }>;
+    };
+    readonly parent?: {
+      readonly __typename: 'CheckoutLine';
+      readonly id: string;
+    } | null;
+    readonly image?: {
+      readonly __typename: 'MediaImage';
+      readonly id: string;
+      readonly image: {
+        readonly __typename: 'Image';
+        readonly url: any;
+        readonly width?: number | null;
+        readonly height?: number | null;
+        readonly altText?: string | null;
+      };
+    } | null;
+    readonly purchase: {
+      readonly __typename: 'CheckoutLinePurchase';
+      readonly type: CheckoutLinePurchaseType;
+    };
+    readonly tag?: {
+      readonly __typename: 'CheckoutTag';
+      readonly id: string;
+      readonly slug: string;
+      readonly unique: boolean;
+    } | null;
   }>;
+  readonly cost: {
+    readonly __typename: 'CheckoutLineCost';
+    readonly unitPrice: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    };
+    readonly compareAtUnitPrice: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    };
+    readonly subtotalAmount: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    };
+    readonly totalAmount: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    };
+  };
+  readonly purchasable: {
+    readonly __typename: 'ProductVariant';
+    readonly id: string;
+    readonly title: string;
+    readonly handle: string;
+    readonly currentlyNotInStock: boolean;
+    readonly quantityAvailable?: number | null;
+    readonly isAvailable: boolean;
+    readonly product: {
+      readonly __typename: 'Product';
+      readonly id: string;
+      readonly title: string;
+      readonly handle: string;
+    };
+    readonly cover?:
+      | { readonly __typename: 'ExternalVideo'; readonly id: string }
+      | {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly image: { readonly __typename: 'Image'; readonly url: any };
+        }
+      | { readonly __typename: 'Model3d'; readonly id: string }
+      | { readonly __typename: 'Video'; readonly id: string }
+      | null;
+    readonly price?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+    readonly compareAtPrice?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+    readonly inventoryItem?: {
+      readonly __typename: 'InventoryItem';
+      readonly inventoryPolicy: ProductVariantInventoryPolicy;
+    } | null;
+    readonly selectedOptions: ReadonlyArray<{
+      readonly __typename: 'SelectedOption';
+      readonly name: string;
+      readonly value: string;
+      readonly option: {
+        readonly __typename: 'ProductOption';
+        readonly id: string;
+        readonly handle: string;
+        readonly name: string;
+      };
+      readonly optionValue: {
+        readonly __typename: 'ProductOptionValue';
+        readonly id: string;
+        readonly handle: string;
+        readonly name: string;
+      };
+    }>;
+  };
+  readonly parent?: {
+    readonly __typename: 'CheckoutLine';
+    readonly id: string;
+  } | null;
   readonly image?: {
     readonly __typename: 'MediaImage';
     readonly id: string;
@@ -8796,7 +9010,125 @@ export type SdkAddPromoCodeMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -8879,12 +9211,10 @@ export type SdkAddPromoCodeMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -9065,7 +9395,125 @@ export type SdkAddToCartMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -9148,12 +9596,10 @@ export type SdkAddToCartMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -9335,7 +9781,125 @@ export type SdkClaimCartMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -9418,12 +9982,10 @@ export type SdkClaimCartMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -9604,7 +10166,125 @@ export type SdkClearCartMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -9687,12 +10367,10 @@ export type SdkClearCartMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -9873,7 +10551,125 @@ export type SdkCreateCartMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -9956,12 +10752,10 @@ export type SdkCreateCartMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -10142,7 +10936,125 @@ export type SdkRemoveFromCartMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -10225,12 +11137,10 @@ export type SdkRemoveFromCartMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -10411,7 +11321,125 @@ export type SdkRemovePromoCodeMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -10494,12 +11522,10 @@ export type SdkRemovePromoCodeMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -10680,7 +11706,125 @@ export type SdkReplaceCartItemMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -10763,12 +11907,780 @@ export type SdkReplaceCartItemMutation = {
             };
           }>;
         };
+        readonly parent?: {
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+        } | null;
+        readonly image?: {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly image: {
+            readonly __typename: 'Image';
+            readonly url: any;
+            readonly width?: number | null;
+            readonly height?: number | null;
+            readonly altText?: string | null;
+          };
+        } | null;
+        readonly purchase: {
+          readonly __typename: 'CheckoutLinePurchase';
+          readonly type: CheckoutLinePurchaseType;
+        };
+        readonly tag?: {
+          readonly __typename: 'CheckoutTag';
+          readonly id: string;
+          readonly slug: string;
+          readonly unique: boolean;
+        } | null;
+      }>;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CheckoutUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkUpdateCartCurrencyCodeMutationVariables = Exact<{
+  input: CheckoutCurrencyCodeUpdateInput;
+}>;
+
+export type SdkUpdateCartCurrencyCodeMutation = {
+  readonly __typename: 'Mutation';
+  readonly checkoutCurrencyCodeUpdate: {
+    readonly __typename: 'CheckoutMutationPayload';
+    readonly checkout?: {
+      readonly __typename: 'Checkout';
+      readonly id: string;
+      readonly channelCode: string;
+      readonly localeCode: LocaleCode;
+      readonly currencyCode: CurrencyCode;
+      readonly resultRevision: string;
+      readonly valid: boolean;
+      readonly status: CheckoutLifecycleStatus;
+      readonly expiresAt: string;
+      readonly loyaltyRewardId?: string | null;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly totalQuantity: number;
+      readonly guestCheckoutAllowed: boolean;
+      readonly customerNote?: string | null;
+      readonly loyaltyRedemption?: {
+        readonly __typename: 'CheckoutLoyaltyRedemption';
+        readonly quoteId: string;
+        readonly revision: string;
+        readonly accountId: string;
+        readonly programId: string;
+        readonly programCode: string;
+        readonly programVersion: number;
+        readonly source: LoyaltyRedemptionSource;
+        readonly requestedPoints?: number | null;
+        readonly points?: number | null;
+        readonly availablePoints?: number | null;
+        readonly expiresAt: string;
+        readonly requestedAmount?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly availableAmount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly discount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly payableAfterLoyalty: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+      } | null;
+      readonly issues: ReadonlyArray<{
+        readonly __typename: 'CheckoutIssue';
+        readonly code: string;
+        readonly message: string;
+        readonly severity: CheckoutIssueSeverity;
+        readonly effect: CheckoutIssueEffect;
+        readonly field: ReadonlyArray<string>;
+        readonly lineId?: string | null;
+        readonly retryable: boolean;
+      }>;
+      readonly cost: {
+        readonly __typename: 'CheckoutCost';
+        readonly subtotalAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalDiscountAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalTaxAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalShippingAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly merchandiseDiscountAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly loyaltyAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+      };
+      readonly promoCodes: ReadonlyArray<{
+        readonly __typename: 'CheckoutPromoCode';
+        readonly code: string;
+        readonly status: CheckoutPromoCodeStatus;
+        readonly reason?: string | null;
+        readonly message?: string | null;
+      }>;
+      readonly loyaltyEarning?: {
+        readonly __typename: 'CheckoutLoyaltyEarning';
+        readonly state: CheckoutLoyaltyEarningState;
+        readonly points: number;
+        readonly amount?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
+        readonly presentation: {
+          readonly __typename: 'CheckoutLoyaltyEarningPresentation';
+          readonly headline: string;
+          readonly description?: string | null;
+        };
+      } | null;
+      readonly notifications: ReadonlyArray<{
+        readonly __typename: 'CheckoutNotification';
+        readonly code: CheckoutNotificationCode;
+        readonly severity: NotificationSeverity;
+        readonly isDismissed: boolean;
+      }>;
+      readonly tags: ReadonlyArray<{
+        readonly __typename: 'CheckoutTag';
+        readonly id: string;
+        readonly slug: string;
+        readonly unique: boolean;
+      }>;
+      readonly lines: ReadonlyArray<{
+        readonly __typename: 'CheckoutLine';
+        readonly id: string;
+        readonly title: string;
+        readonly sku?: string | null;
+        readonly quantity: number;
+        readonly purchasableId: string;
+        readonly componentItemId?: string | null;
+        readonly attributes: object;
         readonly children: ReadonlyArray<{
           readonly __typename: 'CheckoutLine';
           readonly id: string;
           readonly title: string;
+          readonly sku?: string | null;
           readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
         }>;
+        readonly cost: {
+          readonly __typename: 'CheckoutLineCost';
+          readonly unitPrice: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly compareAtUnitPrice: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly subtotalAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly totalAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+        };
+        readonly purchasable: {
+          readonly __typename: 'ProductVariant';
+          readonly id: string;
+          readonly title: string;
+          readonly handle: string;
+          readonly currentlyNotInStock: boolean;
+          readonly quantityAvailable?: number | null;
+          readonly isAvailable: boolean;
+          readonly product: {
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+          };
+          readonly cover?:
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | {
+                readonly __typename: 'MediaImage';
+                readonly id: string;
+                readonly image: {
+                  readonly __typename: 'Image';
+                  readonly url: any;
+                };
+              }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+          readonly price?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly compareAtPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly inventoryItem?: {
+            readonly __typename: 'InventoryItem';
+            readonly inventoryPolicy: ProductVariantInventoryPolicy;
+          } | null;
+          readonly selectedOptions: ReadonlyArray<{
+            readonly __typename: 'SelectedOption';
+            readonly name: string;
+            readonly value: string;
+            readonly option: {
+              readonly __typename: 'ProductOption';
+              readonly id: string;
+              readonly handle: string;
+              readonly name: string;
+            };
+            readonly optionValue: {
+              readonly __typename: 'ProductOptionValue';
+              readonly id: string;
+              readonly handle: string;
+              readonly name: string;
+            };
+          }>;
+        };
+        readonly parent?: {
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+        } | null;
+        readonly image?: {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly image: {
+            readonly __typename: 'Image';
+            readonly url: any;
+            readonly width?: number | null;
+            readonly height?: number | null;
+            readonly altText?: string | null;
+          };
+        } | null;
+        readonly purchase: {
+          readonly __typename: 'CheckoutLinePurchase';
+          readonly type: CheckoutLinePurchaseType;
+        };
+        readonly tag?: {
+          readonly __typename: 'CheckoutTag';
+          readonly id: string;
+          readonly slug: string;
+          readonly unique: boolean;
+        } | null;
+      }>;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CheckoutUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkUpdateCartLanguageCodeMutationVariables = Exact<{
+  input: CheckoutLanguageCodeUpdateInput;
+}>;
+
+export type SdkUpdateCartLanguageCodeMutation = {
+  readonly __typename: 'Mutation';
+  readonly checkoutLanguageCodeUpdate: {
+    readonly __typename: 'CheckoutMutationPayload';
+    readonly checkout?: {
+      readonly __typename: 'Checkout';
+      readonly id: string;
+      readonly channelCode: string;
+      readonly localeCode: LocaleCode;
+      readonly currencyCode: CurrencyCode;
+      readonly resultRevision: string;
+      readonly valid: boolean;
+      readonly status: CheckoutLifecycleStatus;
+      readonly expiresAt: string;
+      readonly loyaltyRewardId?: string | null;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly totalQuantity: number;
+      readonly guestCheckoutAllowed: boolean;
+      readonly customerNote?: string | null;
+      readonly loyaltyRedemption?: {
+        readonly __typename: 'CheckoutLoyaltyRedemption';
+        readonly quoteId: string;
+        readonly revision: string;
+        readonly accountId: string;
+        readonly programId: string;
+        readonly programCode: string;
+        readonly programVersion: number;
+        readonly source: LoyaltyRedemptionSource;
+        readonly requestedPoints?: number | null;
+        readonly points?: number | null;
+        readonly availablePoints?: number | null;
+        readonly expiresAt: string;
+        readonly requestedAmount?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly availableAmount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly discount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly payableAfterLoyalty: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+      } | null;
+      readonly issues: ReadonlyArray<{
+        readonly __typename: 'CheckoutIssue';
+        readonly code: string;
+        readonly message: string;
+        readonly severity: CheckoutIssueSeverity;
+        readonly effect: CheckoutIssueEffect;
+        readonly field: ReadonlyArray<string>;
+        readonly lineId?: string | null;
+        readonly retryable: boolean;
+      }>;
+      readonly cost: {
+        readonly __typename: 'CheckoutCost';
+        readonly subtotalAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalDiscountAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalTaxAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly totalShippingAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly merchandiseDiscountAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly loyaltyAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+      };
+      readonly promoCodes: ReadonlyArray<{
+        readonly __typename: 'CheckoutPromoCode';
+        readonly code: string;
+        readonly status: CheckoutPromoCodeStatus;
+        readonly reason?: string | null;
+        readonly message?: string | null;
+      }>;
+      readonly loyaltyEarning?: {
+        readonly __typename: 'CheckoutLoyaltyEarning';
+        readonly state: CheckoutLoyaltyEarningState;
+        readonly points: number;
+        readonly amount?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
+        readonly presentation: {
+          readonly __typename: 'CheckoutLoyaltyEarningPresentation';
+          readonly headline: string;
+          readonly description?: string | null;
+        };
+      } | null;
+      readonly notifications: ReadonlyArray<{
+        readonly __typename: 'CheckoutNotification';
+        readonly code: CheckoutNotificationCode;
+        readonly severity: NotificationSeverity;
+        readonly isDismissed: boolean;
+      }>;
+      readonly tags: ReadonlyArray<{
+        readonly __typename: 'CheckoutTag';
+        readonly id: string;
+        readonly slug: string;
+        readonly unique: boolean;
+      }>;
+      readonly lines: ReadonlyArray<{
+        readonly __typename: 'CheckoutLine';
+        readonly id: string;
+        readonly title: string;
+        readonly sku?: string | null;
+        readonly quantity: number;
+        readonly purchasableId: string;
+        readonly componentItemId?: string | null;
+        readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
+        readonly cost: {
+          readonly __typename: 'CheckoutLineCost';
+          readonly unitPrice: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly compareAtUnitPrice: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly subtotalAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly totalAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+        };
+        readonly purchasable: {
+          readonly __typename: 'ProductVariant';
+          readonly id: string;
+          readonly title: string;
+          readonly handle: string;
+          readonly currentlyNotInStock: boolean;
+          readonly quantityAvailable?: number | null;
+          readonly isAvailable: boolean;
+          readonly product: {
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+          };
+          readonly cover?:
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | {
+                readonly __typename: 'MediaImage';
+                readonly id: string;
+                readonly image: {
+                  readonly __typename: 'Image';
+                  readonly url: any;
+                };
+              }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+          readonly price?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly compareAtPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly inventoryItem?: {
+            readonly __typename: 'InventoryItem';
+            readonly inventoryPolicy: ProductVariantInventoryPolicy;
+          } | null;
+          readonly selectedOptions: ReadonlyArray<{
+            readonly __typename: 'SelectedOption';
+            readonly name: string;
+            readonly value: string;
+            readonly option: {
+              readonly __typename: 'ProductOption';
+              readonly id: string;
+              readonly handle: string;
+              readonly name: string;
+            };
+            readonly optionValue: {
+              readonly __typename: 'ProductOptionValue';
+              readonly id: string;
+              readonly handle: string;
+              readonly name: string;
+            };
+          }>;
+        };
+        readonly parent?: {
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -10949,7 +12861,125 @@ export type SdkUpdateCartLineQuantityMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -11032,12 +13062,10 @@ export type SdkUpdateCartLineQuantityMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -11217,7 +13245,125 @@ export type SdkLoadAccountCartQuery = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -11300,12 +13446,10 @@ export type SdkLoadAccountCartQuery = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -11477,7 +13621,125 @@ export type SdkLoadCartQuery = {
       readonly sku?: string | null;
       readonly quantity: number;
       readonly purchasableId: string;
+      readonly componentItemId?: string | null;
       readonly attributes: object;
+      readonly children: ReadonlyArray<{
+        readonly __typename: 'CheckoutLine';
+        readonly id: string;
+        readonly title: string;
+        readonly sku?: string | null;
+        readonly quantity: number;
+        readonly purchasableId: string;
+        readonly componentItemId?: string | null;
+        readonly attributes: object;
+        readonly cost: {
+          readonly __typename: 'CheckoutLineCost';
+          readonly unitPrice: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly compareAtUnitPrice: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly subtotalAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly totalAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+        };
+        readonly purchasable: {
+          readonly __typename: 'ProductVariant';
+          readonly id: string;
+          readonly title: string;
+          readonly handle: string;
+          readonly currentlyNotInStock: boolean;
+          readonly quantityAvailable?: number | null;
+          readonly isAvailable: boolean;
+          readonly product: {
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+          };
+          readonly cover?:
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | {
+                readonly __typename: 'MediaImage';
+                readonly id: string;
+                readonly image: {
+                  readonly __typename: 'Image';
+                  readonly url: any;
+                };
+              }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+          readonly price?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly compareAtPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly inventoryItem?: {
+            readonly __typename: 'InventoryItem';
+            readonly inventoryPolicy: ProductVariantInventoryPolicy;
+          } | null;
+          readonly selectedOptions: ReadonlyArray<{
+            readonly __typename: 'SelectedOption';
+            readonly name: string;
+            readonly value: string;
+            readonly option: {
+              readonly __typename: 'ProductOption';
+              readonly id: string;
+              readonly handle: string;
+              readonly name: string;
+            };
+            readonly optionValue: {
+              readonly __typename: 'ProductOptionValue';
+              readonly id: string;
+              readonly handle: string;
+              readonly name: string;
+            };
+          }>;
+        };
+        readonly parent?: {
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+        } | null;
+        readonly image?: {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly image: {
+            readonly __typename: 'Image';
+            readonly url: any;
+            readonly width?: number | null;
+            readonly height?: number | null;
+            readonly altText?: string | null;
+          };
+        } | null;
+        readonly purchase: {
+          readonly __typename: 'CheckoutLinePurchase';
+          readonly type: CheckoutLinePurchaseType;
+        };
+        readonly tag?: {
+          readonly __typename: 'CheckoutTag';
+          readonly id: string;
+          readonly slug: string;
+          readonly unique: boolean;
+        } | null;
+      }>;
       readonly cost: {
         readonly __typename: 'CheckoutLineCost';
         readonly unitPrice: {
@@ -11560,12 +13822,10 @@ export type SdkLoadCartQuery = {
           };
         }>;
       };
-      readonly children: ReadonlyArray<{
+      readonly parent?: {
         readonly __typename: 'CheckoutLine';
         readonly id: string;
-        readonly title: string;
-        readonly quantity: number;
-      }>;
+      } | null;
       readonly image?: {
         readonly __typename: 'MediaImage';
         readonly id: string;
@@ -11589,6 +13849,3615 @@ export type SdkLoadCartQuery = {
       } | null;
     }>;
   } | null;
+};
+
+export type SdkNavigationTargetFragment = {
+  readonly __typename: 'OnlineStoreNavigationTarget';
+  readonly type: OnlineStoreNavigationTargetType;
+  readonly resourceId?: string | null;
+  readonly url: any;
+  readonly resource?:
+    | { readonly __typename: 'Category'; readonly id: string }
+    | { readonly __typename: 'Checkout'; readonly id: string }
+    | { readonly __typename: 'CheckoutLine'; readonly id: string }
+    | { readonly __typename: 'CheckoutTag'; readonly id: string }
+    | { readonly __typename: 'Collection'; readonly id: string }
+    | { readonly __typename: 'CustomerAddress'; readonly id: string }
+    | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
+    | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+    | { readonly __typename: 'CustomerTaxIdentifier'; readonly id: string }
+    | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+    | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+    | { readonly __typename: 'ExternalVideo'; readonly id: string }
+    | { readonly __typename: 'Facet'; readonly id: string }
+    | { readonly __typename: 'FacetSwatch'; readonly id: string }
+    | { readonly __typename: 'FacetValue'; readonly id: string }
+    | { readonly __typename: 'GenericFile'; readonly id: string }
+    | { readonly __typename: 'InventoryItem'; readonly id: string }
+    | { readonly __typename: 'LoyaltyAvailableReward'; readonly id: string }
+    | { readonly __typename: 'Market'; readonly id: string }
+    | { readonly __typename: 'MediaImage'; readonly id: string }
+    | { readonly __typename: 'Model3d'; readonly id: string }
+    | { readonly __typename: 'OnlineStoreNavigationMenu'; readonly id: string }
+    | {
+        readonly __typename: 'OnlineStoreNavigationMenuItem';
+        readonly id: string;
+      }
+    | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+    | { readonly __typename: 'Order'; readonly id: string }
+    | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+    | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+    | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+    | { readonly __typename: 'OrderLine'; readonly id: string }
+    | { readonly __typename: 'OrderPaymentTransaction'; readonly id: string }
+    | { readonly __typename: 'OrderRefund'; readonly id: string }
+    | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+    | { readonly __typename: 'OrderShipment'; readonly id: string }
+    | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+    | { readonly __typename: 'OrderVoid'; readonly id: string }
+    | { readonly __typename: 'Product'; readonly id: string }
+    | { readonly __typename: 'ProductFeature'; readonly id: string }
+    | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
+    | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+    | { readonly __typename: 'ProductOption'; readonly id: string }
+    | { readonly __typename: 'ProductOptionType'; readonly id: string }
+    | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+    | { readonly __typename: 'ProductQuestion'; readonly id: string }
+    | { readonly __typename: 'ProductQuestionAnswer'; readonly id: string }
+    | {
+        readonly __typename: 'ProductQuestionSubscription';
+        readonly id: string;
+      }
+    | { readonly __typename: 'ProductVariant'; readonly id: string }
+    | { readonly __typename: 'Review'; readonly id: string }
+    | {
+        readonly __typename: 'ReviewContentExternalReference';
+        readonly id: string;
+      }
+    | { readonly __typename: 'ReviewContentPublication'; readonly id: string }
+    | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+    | { readonly __typename: 'ReviewContentRevision'; readonly id: string }
+    | { readonly __typename: 'ReviewContentTranslation'; readonly id: string }
+    | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+    | { readonly __typename: 'ReviewMedia'; readonly id: string }
+    | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+    | { readonly __typename: 'ReviewModerationEvent'; readonly id: string }
+    | { readonly __typename: 'ReviewModerationSignal'; readonly id: string }
+    | { readonly __typename: 'ReviewRatingCriterion'; readonly id: string }
+    | {
+        readonly __typename: 'ReviewRatingCriterionAssignment';
+        readonly id: string;
+      }
+    | { readonly __typename: 'ReviewReply'; readonly id: string }
+    | { readonly __typename: 'ReviewRequest'; readonly id: string }
+    | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+    | { readonly __typename: 'ReviewStoreConfiguration'; readonly id: string }
+    | { readonly __typename: 'Store'; readonly id: string }
+    | { readonly __typename: 'StorePolicy'; readonly id: string }
+    | { readonly __typename: 'Tag'; readonly id: string }
+    | { readonly __typename: 'Vendor'; readonly id: string }
+    | { readonly __typename: 'Video'; readonly id: string }
+    | null;
+};
+
+export type SdkNavigationMenuItemFieldsFragment = {
+  readonly __typename: 'OnlineStoreNavigationMenuItem';
+  readonly id: string;
+  readonly handle: string;
+  readonly label?: string | null;
+  readonly openInNewTab: boolean;
+  readonly target: {
+    readonly __typename: 'OnlineStoreNavigationTarget';
+    readonly type: OnlineStoreNavigationTargetType;
+    readonly resourceId?: string | null;
+    readonly url: any;
+    readonly resource?:
+      | { readonly __typename: 'Category'; readonly id: string }
+      | { readonly __typename: 'Checkout'; readonly id: string }
+      | { readonly __typename: 'CheckoutLine'; readonly id: string }
+      | { readonly __typename: 'CheckoutTag'; readonly id: string }
+      | { readonly __typename: 'Collection'; readonly id: string }
+      | { readonly __typename: 'CustomerAddress'; readonly id: string }
+      | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
+      | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+      | { readonly __typename: 'CustomerTaxIdentifier'; readonly id: string }
+      | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+      | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+      | { readonly __typename: 'ExternalVideo'; readonly id: string }
+      | { readonly __typename: 'Facet'; readonly id: string }
+      | { readonly __typename: 'FacetSwatch'; readonly id: string }
+      | { readonly __typename: 'FacetValue'; readonly id: string }
+      | { readonly __typename: 'GenericFile'; readonly id: string }
+      | { readonly __typename: 'InventoryItem'; readonly id: string }
+      | { readonly __typename: 'LoyaltyAvailableReward'; readonly id: string }
+      | { readonly __typename: 'Market'; readonly id: string }
+      | { readonly __typename: 'MediaImage'; readonly id: string }
+      | { readonly __typename: 'Model3d'; readonly id: string }
+      | {
+          readonly __typename: 'OnlineStoreNavigationMenu';
+          readonly id: string;
+        }
+      | {
+          readonly __typename: 'OnlineStoreNavigationMenuItem';
+          readonly id: string;
+        }
+      | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+      | { readonly __typename: 'Order'; readonly id: string }
+      | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+      | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+      | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+      | { readonly __typename: 'OrderLine'; readonly id: string }
+      | { readonly __typename: 'OrderPaymentTransaction'; readonly id: string }
+      | { readonly __typename: 'OrderRefund'; readonly id: string }
+      | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+      | { readonly __typename: 'OrderShipment'; readonly id: string }
+      | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+      | { readonly __typename: 'OrderVoid'; readonly id: string }
+      | { readonly __typename: 'Product'; readonly id: string }
+      | { readonly __typename: 'ProductFeature'; readonly id: string }
+      | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
+      | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+      | { readonly __typename: 'ProductOption'; readonly id: string }
+      | { readonly __typename: 'ProductOptionType'; readonly id: string }
+      | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+      | { readonly __typename: 'ProductQuestion'; readonly id: string }
+      | { readonly __typename: 'ProductQuestionAnswer'; readonly id: string }
+      | {
+          readonly __typename: 'ProductQuestionSubscription';
+          readonly id: string;
+        }
+      | { readonly __typename: 'ProductVariant'; readonly id: string }
+      | { readonly __typename: 'Review'; readonly id: string }
+      | {
+          readonly __typename: 'ReviewContentExternalReference';
+          readonly id: string;
+        }
+      | { readonly __typename: 'ReviewContentPublication'; readonly id: string }
+      | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+      | { readonly __typename: 'ReviewContentRevision'; readonly id: string }
+      | { readonly __typename: 'ReviewContentTranslation'; readonly id: string }
+      | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+      | { readonly __typename: 'ReviewMedia'; readonly id: string }
+      | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+      | { readonly __typename: 'ReviewModerationEvent'; readonly id: string }
+      | { readonly __typename: 'ReviewModerationSignal'; readonly id: string }
+      | { readonly __typename: 'ReviewRatingCriterion'; readonly id: string }
+      | {
+          readonly __typename: 'ReviewRatingCriterionAssignment';
+          readonly id: string;
+        }
+      | { readonly __typename: 'ReviewReply'; readonly id: string }
+      | { readonly __typename: 'ReviewRequest'; readonly id: string }
+      | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+      | { readonly __typename: 'ReviewStoreConfiguration'; readonly id: string }
+      | { readonly __typename: 'Store'; readonly id: string }
+      | { readonly __typename: 'StorePolicy'; readonly id: string }
+      | { readonly __typename: 'Tag'; readonly id: string }
+      | { readonly __typename: 'Vendor'; readonly id: string }
+      | { readonly __typename: 'Video'; readonly id: string }
+      | null;
+  };
+};
+
+export type SdkNavigationMenuFragment = {
+  readonly __typename: 'OnlineStoreNavigationMenu';
+  readonly id: string;
+  readonly handle: string;
+  readonly items: {
+    readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'OnlineStoreNavigationMenuItem';
+      readonly id: string;
+      readonly handle: string;
+      readonly label?: string | null;
+      readonly openInNewTab: boolean;
+      readonly children: {
+        readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
+        readonly nodes: ReadonlyArray<{
+          readonly __typename: 'OnlineStoreNavigationMenuItem';
+          readonly id: string;
+          readonly handle: string;
+          readonly label?: string | null;
+          readonly openInNewTab: boolean;
+          readonly children: {
+            readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
+            readonly nodes: ReadonlyArray<{
+              readonly __typename: 'OnlineStoreNavigationMenuItem';
+              readonly id: string;
+              readonly handle: string;
+              readonly label?: string | null;
+              readonly openInNewTab: boolean;
+              readonly target: {
+                readonly __typename: 'OnlineStoreNavigationTarget';
+                readonly type: OnlineStoreNavigationTargetType;
+                readonly resourceId?: string | null;
+                readonly url: any;
+                readonly resource?:
+                  | { readonly __typename: 'Category'; readonly id: string }
+                  | { readonly __typename: 'Checkout'; readonly id: string }
+                  | { readonly __typename: 'CheckoutLine'; readonly id: string }
+                  | { readonly __typename: 'CheckoutTag'; readonly id: string }
+                  | { readonly __typename: 'Collection'; readonly id: string }
+                  | {
+                      readonly __typename: 'CustomerAddress';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'CustomerDataRequest';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'CustomerTaxExemption';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'CustomerTaxIdentifier';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'CustomerWishlist';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'CustomerWishlistItem';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ExternalVideo';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'Facet'; readonly id: string }
+                  | { readonly __typename: 'FacetSwatch'; readonly id: string }
+                  | { readonly __typename: 'FacetValue'; readonly id: string }
+                  | { readonly __typename: 'GenericFile'; readonly id: string }
+                  | {
+                      readonly __typename: 'InventoryItem';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'LoyaltyAvailableReward';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'Market'; readonly id: string }
+                  | { readonly __typename: 'MediaImage'; readonly id: string }
+                  | { readonly __typename: 'Model3d'; readonly id: string }
+                  | {
+                      readonly __typename: 'OnlineStoreNavigationMenu';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'OnlineStoreNavigationMenuItem';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'OnlineStorePage';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'Order'; readonly id: string }
+                  | {
+                      readonly __typename: 'OrderDeliveryAddress';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'OrderDeliveryGroup';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'OrderFulfillment';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'OrderLine'; readonly id: string }
+                  | {
+                      readonly __typename: 'OrderPaymentTransaction';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'OrderRefund'; readonly id: string }
+                  | {
+                      readonly __typename: 'OrderReturnRequest';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'OrderShipment';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'OrderTrackingEvent';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'OrderVoid'; readonly id: string }
+                  | { readonly __typename: 'Product'; readonly id: string }
+                  | {
+                      readonly __typename: 'ProductFeature';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductFeatureGroup';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductFeatureValue';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductOption';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductOptionType';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductOptionValue';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductQuestion';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductQuestionAnswer';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductQuestionSubscription';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ProductVariant';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'Review'; readonly id: string }
+                  | {
+                      readonly __typename: 'ReviewContentExternalReference';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewContentPublication';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewContentReport';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewContentRevision';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewContentTranslation';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewContentVote';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'ReviewMedia'; readonly id: string }
+                  | {
+                      readonly __typename: 'ReviewModerationCase';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewModerationEvent';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewModerationSignal';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewRatingCriterion';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewRatingCriterionAssignment';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'ReviewReply'; readonly id: string }
+                  | {
+                      readonly __typename: 'ReviewRequest';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewRequestEvent';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'ReviewStoreConfiguration';
+                      readonly id: string;
+                    }
+                  | { readonly __typename: 'Store'; readonly id: string }
+                  | { readonly __typename: 'StorePolicy'; readonly id: string }
+                  | { readonly __typename: 'Tag'; readonly id: string }
+                  | { readonly __typename: 'Vendor'; readonly id: string }
+                  | { readonly __typename: 'Video'; readonly id: string }
+                  | null;
+              };
+            }>;
+          };
+          readonly target: {
+            readonly __typename: 'OnlineStoreNavigationTarget';
+            readonly type: OnlineStoreNavigationTargetType;
+            readonly resourceId?: string | null;
+            readonly url: any;
+            readonly resource?:
+              | { readonly __typename: 'Category'; readonly id: string }
+              | { readonly __typename: 'Checkout'; readonly id: string }
+              | { readonly __typename: 'CheckoutLine'; readonly id: string }
+              | { readonly __typename: 'CheckoutTag'; readonly id: string }
+              | { readonly __typename: 'Collection'; readonly id: string }
+              | { readonly __typename: 'CustomerAddress'; readonly id: string }
+              | {
+                  readonly __typename: 'CustomerDataRequest';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'CustomerTaxExemption';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'CustomerTaxIdentifier';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+              | {
+                  readonly __typename: 'CustomerWishlistItem';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | { readonly __typename: 'Facet'; readonly id: string }
+              | { readonly __typename: 'FacetSwatch'; readonly id: string }
+              | { readonly __typename: 'FacetValue'; readonly id: string }
+              | { readonly __typename: 'GenericFile'; readonly id: string }
+              | { readonly __typename: 'InventoryItem'; readonly id: string }
+              | {
+                  readonly __typename: 'LoyaltyAvailableReward';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'Market'; readonly id: string }
+              | { readonly __typename: 'MediaImage'; readonly id: string }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | {
+                  readonly __typename: 'OnlineStoreNavigationMenu';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'OnlineStoreNavigationMenuItem';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+              | { readonly __typename: 'Order'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderDeliveryAddress';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'OrderDeliveryGroup';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+              | { readonly __typename: 'OrderLine'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderPaymentTransaction';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderRefund'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderReturnRequest';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderShipment'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderTrackingEvent';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderVoid'; readonly id: string }
+              | { readonly __typename: 'Product'; readonly id: string }
+              | { readonly __typename: 'ProductFeature'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductFeatureGroup';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ProductFeatureValue';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ProductOption'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductOptionType';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ProductOptionValue';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ProductQuestion'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductQuestionAnswer';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ProductQuestionSubscription';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ProductVariant'; readonly id: string }
+              | { readonly __typename: 'Review'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewContentExternalReference';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentPublication';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentReport';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentRevision';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentTranslation';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentVote';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ReviewMedia'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewModerationCase';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewModerationEvent';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewModerationSignal';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewRatingCriterion';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewRatingCriterionAssignment';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ReviewReply'; readonly id: string }
+              | { readonly __typename: 'ReviewRequest'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewRequestEvent';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewStoreConfiguration';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'Store'; readonly id: string }
+              | { readonly __typename: 'StorePolicy'; readonly id: string }
+              | { readonly __typename: 'Tag'; readonly id: string }
+              | { readonly __typename: 'Vendor'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+          };
+        }>;
+      };
+      readonly target: {
+        readonly __typename: 'OnlineStoreNavigationTarget';
+        readonly type: OnlineStoreNavigationTargetType;
+        readonly resourceId?: string | null;
+        readonly url: any;
+        readonly resource?:
+          | { readonly __typename: 'Category'; readonly id: string }
+          | { readonly __typename: 'Checkout'; readonly id: string }
+          | { readonly __typename: 'CheckoutLine'; readonly id: string }
+          | { readonly __typename: 'CheckoutTag'; readonly id: string }
+          | { readonly __typename: 'Collection'; readonly id: string }
+          | { readonly __typename: 'CustomerAddress'; readonly id: string }
+          | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
+          | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+          | {
+              readonly __typename: 'CustomerTaxIdentifier';
+              readonly id: string;
+            }
+          | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+          | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+          | { readonly __typename: 'ExternalVideo'; readonly id: string }
+          | { readonly __typename: 'Facet'; readonly id: string }
+          | { readonly __typename: 'FacetSwatch'; readonly id: string }
+          | { readonly __typename: 'FacetValue'; readonly id: string }
+          | { readonly __typename: 'GenericFile'; readonly id: string }
+          | { readonly __typename: 'InventoryItem'; readonly id: string }
+          | {
+              readonly __typename: 'LoyaltyAvailableReward';
+              readonly id: string;
+            }
+          | { readonly __typename: 'Market'; readonly id: string }
+          | { readonly __typename: 'MediaImage'; readonly id: string }
+          | { readonly __typename: 'Model3d'; readonly id: string }
+          | {
+              readonly __typename: 'OnlineStoreNavigationMenu';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'OnlineStoreNavigationMenuItem';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+          | { readonly __typename: 'Order'; readonly id: string }
+          | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+          | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+          | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+          | { readonly __typename: 'OrderLine'; readonly id: string }
+          | {
+              readonly __typename: 'OrderPaymentTransaction';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OrderRefund'; readonly id: string }
+          | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+          | { readonly __typename: 'OrderShipment'; readonly id: string }
+          | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+          | { readonly __typename: 'OrderVoid'; readonly id: string }
+          | { readonly __typename: 'Product'; readonly id: string }
+          | { readonly __typename: 'ProductFeature'; readonly id: string }
+          | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
+          | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+          | { readonly __typename: 'ProductOption'; readonly id: string }
+          | { readonly __typename: 'ProductOptionType'; readonly id: string }
+          | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+          | { readonly __typename: 'ProductQuestion'; readonly id: string }
+          | {
+              readonly __typename: 'ProductQuestionAnswer';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ProductQuestionSubscription';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ProductVariant'; readonly id: string }
+          | { readonly __typename: 'Review'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewContentExternalReference';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentPublication';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewContentRevision';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentTranslation';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+          | { readonly __typename: 'ReviewMedia'; readonly id: string }
+          | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewModerationEvent';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewModerationSignal';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewRatingCriterion';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewRatingCriterionAssignment';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewReply'; readonly id: string }
+          | { readonly __typename: 'ReviewRequest'; readonly id: string }
+          | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewStoreConfiguration';
+              readonly id: string;
+            }
+          | { readonly __typename: 'Store'; readonly id: string }
+          | { readonly __typename: 'StorePolicy'; readonly id: string }
+          | { readonly __typename: 'Tag'; readonly id: string }
+          | { readonly __typename: 'Vendor'; readonly id: string }
+          | { readonly __typename: 'Video'; readonly id: string }
+          | null;
+      };
+    }>;
+  };
+};
+
+export type SdkNavigationMenuByHandleQueryVariables = Exact<{
+  handle: Scalars['String']['input'];
+}>;
+
+export type SdkNavigationMenuByHandleQuery = {
+  readonly __typename: 'Query';
+  readonly onlineStoreNavigationMenuByHandle?: {
+    readonly __typename: 'OnlineStoreNavigationMenu';
+    readonly id: string;
+    readonly handle: string;
+    readonly items: {
+      readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
+      readonly nodes: ReadonlyArray<{
+        readonly __typename: 'OnlineStoreNavigationMenuItem';
+        readonly id: string;
+        readonly handle: string;
+        readonly label?: string | null;
+        readonly openInNewTab: boolean;
+        readonly children: {
+          readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
+          readonly nodes: ReadonlyArray<{
+            readonly __typename: 'OnlineStoreNavigationMenuItem';
+            readonly id: string;
+            readonly handle: string;
+            readonly label?: string | null;
+            readonly openInNewTab: boolean;
+            readonly children: {
+              readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
+              readonly nodes: ReadonlyArray<{
+                readonly __typename: 'OnlineStoreNavigationMenuItem';
+                readonly id: string;
+                readonly handle: string;
+                readonly label?: string | null;
+                readonly openInNewTab: boolean;
+                readonly target: {
+                  readonly __typename: 'OnlineStoreNavigationTarget';
+                  readonly type: OnlineStoreNavigationTargetType;
+                  readonly resourceId?: string | null;
+                  readonly url: any;
+                  readonly resource?:
+                    | { readonly __typename: 'Category'; readonly id: string }
+                    | { readonly __typename: 'Checkout'; readonly id: string }
+                    | {
+                        readonly __typename: 'CheckoutLine';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'CheckoutTag';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Collection'; readonly id: string }
+                    | {
+                        readonly __typename: 'CustomerAddress';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'CustomerDataRequest';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'CustomerTaxExemption';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'CustomerTaxIdentifier';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'CustomerWishlist';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'CustomerWishlistItem';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ExternalVideo';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Facet'; readonly id: string }
+                    | {
+                        readonly __typename: 'FacetSwatch';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'FacetValue'; readonly id: string }
+                    | {
+                        readonly __typename: 'GenericFile';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'InventoryItem';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'LoyaltyAvailableReward';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Market'; readonly id: string }
+                    | { readonly __typename: 'MediaImage'; readonly id: string }
+                    | { readonly __typename: 'Model3d'; readonly id: string }
+                    | {
+                        readonly __typename: 'OnlineStoreNavigationMenu';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OnlineStoreNavigationMenuItem';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OnlineStorePage';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Order'; readonly id: string }
+                    | {
+                        readonly __typename: 'OrderDeliveryAddress';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OrderDeliveryGroup';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OrderFulfillment';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'OrderLine'; readonly id: string }
+                    | {
+                        readonly __typename: 'OrderPaymentTransaction';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OrderRefund';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OrderReturnRequest';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OrderShipment';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'OrderTrackingEvent';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'OrderVoid'; readonly id: string }
+                    | { readonly __typename: 'Product'; readonly id: string }
+                    | {
+                        readonly __typename: 'ProductFeature';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductFeatureGroup';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductFeatureValue';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductOption';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductOptionType';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductOptionValue';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductQuestion';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductQuestionAnswer';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductQuestionSubscription';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ProductVariant';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Review'; readonly id: string }
+                    | {
+                        readonly __typename: 'ReviewContentExternalReference';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewContentPublication';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewContentReport';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewContentRevision';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewContentTranslation';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewContentVote';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewMedia';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewModerationCase';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewModerationEvent';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewModerationSignal';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewRatingCriterion';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewRatingCriterionAssignment';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewReply';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewRequest';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewRequestEvent';
+                        readonly id: string;
+                      }
+                    | {
+                        readonly __typename: 'ReviewStoreConfiguration';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Store'; readonly id: string }
+                    | {
+                        readonly __typename: 'StorePolicy';
+                        readonly id: string;
+                      }
+                    | { readonly __typename: 'Tag'; readonly id: string }
+                    | { readonly __typename: 'Vendor'; readonly id: string }
+                    | { readonly __typename: 'Video'; readonly id: string }
+                    | null;
+                };
+              }>;
+            };
+            readonly target: {
+              readonly __typename: 'OnlineStoreNavigationTarget';
+              readonly type: OnlineStoreNavigationTargetType;
+              readonly resourceId?: string | null;
+              readonly url: any;
+              readonly resource?:
+                | { readonly __typename: 'Category'; readonly id: string }
+                | { readonly __typename: 'Checkout'; readonly id: string }
+                | { readonly __typename: 'CheckoutLine'; readonly id: string }
+                | { readonly __typename: 'CheckoutTag'; readonly id: string }
+                | { readonly __typename: 'Collection'; readonly id: string }
+                | {
+                    readonly __typename: 'CustomerAddress';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'CustomerDataRequest';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'CustomerTaxExemption';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'CustomerTaxIdentifier';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'CustomerWishlist';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'CustomerWishlistItem';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | { readonly __typename: 'Facet'; readonly id: string }
+                | { readonly __typename: 'FacetSwatch'; readonly id: string }
+                | { readonly __typename: 'FacetValue'; readonly id: string }
+                | { readonly __typename: 'GenericFile'; readonly id: string }
+                | { readonly __typename: 'InventoryItem'; readonly id: string }
+                | {
+                    readonly __typename: 'LoyaltyAvailableReward';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'Market'; readonly id: string }
+                | { readonly __typename: 'MediaImage'; readonly id: string }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | {
+                    readonly __typename: 'OnlineStoreNavigationMenu';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'OnlineStoreNavigationMenuItem';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'OnlineStorePage';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'Order'; readonly id: string }
+                | {
+                    readonly __typename: 'OrderDeliveryAddress';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'OrderDeliveryGroup';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'OrderFulfillment';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'OrderLine'; readonly id: string }
+                | {
+                    readonly __typename: 'OrderPaymentTransaction';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'OrderRefund'; readonly id: string }
+                | {
+                    readonly __typename: 'OrderReturnRequest';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'OrderShipment'; readonly id: string }
+                | {
+                    readonly __typename: 'OrderTrackingEvent';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'OrderVoid'; readonly id: string }
+                | { readonly __typename: 'Product'; readonly id: string }
+                | { readonly __typename: 'ProductFeature'; readonly id: string }
+                | {
+                    readonly __typename: 'ProductFeatureGroup';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ProductFeatureValue';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'ProductOption'; readonly id: string }
+                | {
+                    readonly __typename: 'ProductOptionType';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ProductOptionValue';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ProductQuestion';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ProductQuestionAnswer';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ProductQuestionSubscription';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'ProductVariant'; readonly id: string }
+                | { readonly __typename: 'Review'; readonly id: string }
+                | {
+                    readonly __typename: 'ReviewContentExternalReference';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewContentPublication';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewContentReport';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewContentRevision';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewContentTranslation';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewContentVote';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'ReviewMedia'; readonly id: string }
+                | {
+                    readonly __typename: 'ReviewModerationCase';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewModerationEvent';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewModerationSignal';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewRatingCriterion';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewRatingCriterionAssignment';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'ReviewReply'; readonly id: string }
+                | { readonly __typename: 'ReviewRequest'; readonly id: string }
+                | {
+                    readonly __typename: 'ReviewRequestEvent';
+                    readonly id: string;
+                  }
+                | {
+                    readonly __typename: 'ReviewStoreConfiguration';
+                    readonly id: string;
+                  }
+                | { readonly __typename: 'Store'; readonly id: string }
+                | { readonly __typename: 'StorePolicy'; readonly id: string }
+                | { readonly __typename: 'Tag'; readonly id: string }
+                | { readonly __typename: 'Vendor'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+            };
+          }>;
+        };
+        readonly target: {
+          readonly __typename: 'OnlineStoreNavigationTarget';
+          readonly type: OnlineStoreNavigationTargetType;
+          readonly resourceId?: string | null;
+          readonly url: any;
+          readonly resource?:
+            | { readonly __typename: 'Category'; readonly id: string }
+            | { readonly __typename: 'Checkout'; readonly id: string }
+            | { readonly __typename: 'CheckoutLine'; readonly id: string }
+            | { readonly __typename: 'CheckoutTag'; readonly id: string }
+            | { readonly __typename: 'Collection'; readonly id: string }
+            | { readonly __typename: 'CustomerAddress'; readonly id: string }
+            | {
+                readonly __typename: 'CustomerDataRequest';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxExemption';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxIdentifier';
+                readonly id: string;
+              }
+            | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+            | {
+                readonly __typename: 'CustomerWishlistItem';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | { readonly __typename: 'Facet'; readonly id: string }
+            | { readonly __typename: 'FacetSwatch'; readonly id: string }
+            | { readonly __typename: 'FacetValue'; readonly id: string }
+            | { readonly __typename: 'GenericFile'; readonly id: string }
+            | { readonly __typename: 'InventoryItem'; readonly id: string }
+            | {
+                readonly __typename: 'LoyaltyAvailableReward';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Market'; readonly id: string }
+            | { readonly __typename: 'MediaImage'; readonly id: string }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenu';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenuItem';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+            | { readonly __typename: 'Order'; readonly id: string }
+            | {
+                readonly __typename: 'OrderDeliveryAddress';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+            | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+            | { readonly __typename: 'OrderLine'; readonly id: string }
+            | {
+                readonly __typename: 'OrderPaymentTransaction';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderRefund'; readonly id: string }
+            | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+            | { readonly __typename: 'OrderShipment'; readonly id: string }
+            | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+            | { readonly __typename: 'OrderVoid'; readonly id: string }
+            | { readonly __typename: 'Product'; readonly id: string }
+            | { readonly __typename: 'ProductFeature'; readonly id: string }
+            | {
+                readonly __typename: 'ProductFeatureGroup';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductFeatureValue';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ProductOption'; readonly id: string }
+            | { readonly __typename: 'ProductOptionType'; readonly id: string }
+            | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+            | { readonly __typename: 'ProductQuestion'; readonly id: string }
+            | {
+                readonly __typename: 'ProductQuestionAnswer';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestionSubscription';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ProductVariant'; readonly id: string }
+            | { readonly __typename: 'Review'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewContentExternalReference';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentPublication';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentReport';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentRevision';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentTranslation';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+            | { readonly __typename: 'ReviewMedia'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewModerationCase';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationEvent';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationSignal';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterion';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterionAssignment';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewReply'; readonly id: string }
+            | { readonly __typename: 'ReviewRequest'; readonly id: string }
+            | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewStoreConfiguration';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Store'; readonly id: string }
+            | { readonly __typename: 'StorePolicy'; readonly id: string }
+            | { readonly __typename: 'Tag'; readonly id: string }
+            | { readonly __typename: 'Vendor'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+        };
+      }>;
+    };
+  } | null;
+};
+
+export type SdkOnlineStorePageFragment = {
+  readonly __typename: 'OnlineStorePage';
+  readonly id: string;
+  readonly handle: string;
+  readonly templateSuffix?: string | null;
+  readonly publishedAt: string;
+  readonly content?: {
+    readonly __typename: 'OnlineStorePageContent';
+    readonly locale: LocaleCode;
+    readonly title: string;
+    readonly description?: {
+      readonly __typename: 'RichText';
+      readonly text: string;
+      readonly json: object;
+    } | null;
+    readonly excerpt?: {
+      readonly __typename: 'RichText';
+      readonly text: string;
+      readonly json: object;
+    } | null;
+    readonly seo?: {
+      readonly __typename: 'OnlineStoreSEO';
+      readonly title?: string | null;
+      readonly description?: string | null;
+      readonly openGraph?: {
+        readonly __typename: 'OnlineStoreOpenGraphMetadata';
+        readonly title?: string | null;
+        readonly description?: string | null;
+        readonly image?: {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly alt?: string | null;
+          readonly image: {
+            readonly __typename: 'Image';
+            readonly id: string;
+            readonly url: any;
+            readonly width?: number | null;
+            readonly height?: number | null;
+          };
+        } | null;
+      } | null;
+    } | null;
+  } | null;
+};
+
+export type SdkOnlineStorePageByHandleQueryVariables = Exact<{
+  handle: Scalars['String']['input'];
+}>;
+
+export type SdkOnlineStorePageByHandleQuery = {
+  readonly __typename: 'Query';
+  readonly onlineStorePageByHandle?: {
+    readonly __typename: 'OnlineStorePage';
+    readonly id: string;
+    readonly handle: string;
+    readonly templateSuffix?: string | null;
+    readonly publishedAt: string;
+    readonly content?: {
+      readonly __typename: 'OnlineStorePageContent';
+      readonly locale: LocaleCode;
+      readonly title: string;
+      readonly description?: {
+        readonly __typename: 'RichText';
+        readonly text: string;
+        readonly json: object;
+      } | null;
+      readonly excerpt?: {
+        readonly __typename: 'RichText';
+        readonly text: string;
+        readonly json: object;
+      } | null;
+      readonly seo?: {
+        readonly __typename: 'OnlineStoreSEO';
+        readonly title?: string | null;
+        readonly description?: string | null;
+        readonly openGraph?: {
+          readonly __typename: 'OnlineStoreOpenGraphMetadata';
+          readonly title?: string | null;
+          readonly description?: string | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly alt?: string | null;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly id: string;
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+            };
+          } | null;
+        } | null;
+      } | null;
+    } | null;
+  } | null;
+};
+
+export type SdkStorePolicyDetailFragment = {
+  readonly __typename: 'StorePolicy';
+  readonly id: string;
+  readonly type: StorePolicyType;
+  readonly handle: string;
+  readonly path: string;
+  readonly title: string;
+  readonly version: number;
+  readonly publishedAt: string;
+  readonly body?: {
+    readonly __typename: 'RichText';
+    readonly text: string;
+    readonly html: any;
+  } | null;
+};
+
+export type SdkStorePolicyByHandleQueryVariables = Exact<{
+  handle: Scalars['String']['input'];
+}>;
+
+export type SdkStorePolicyByHandleQuery = {
+  readonly __typename: 'Query';
+  readonly storePolicy?: {
+    readonly __typename: 'StorePolicy';
+    readonly id: string;
+    readonly type: StorePolicyType;
+    readonly handle: string;
+    readonly path: string;
+    readonly title: string;
+    readonly version: number;
+    readonly publishedAt: string;
+    readonly body?: {
+      readonly __typename: 'RichText';
+      readonly text: string;
+      readonly html: any;
+    } | null;
+  } | null;
+};
+
+export type SdkCustomerAddressFragment = {
+  readonly __typename: 'CustomerAddress';
+  readonly id: string;
+  readonly label?: string | null;
+  readonly prefix?: string | null;
+  readonly firstName?: string | null;
+  readonly middleName?: string | null;
+  readonly lastName?: string | null;
+  readonly suffix?: string | null;
+  readonly name: string;
+  readonly company?: string | null;
+  readonly address1: string;
+  readonly address2?: string | null;
+  readonly city: string;
+  readonly province?: string | null;
+  readonly provinceCode?: string | null;
+  readonly country?: string | null;
+  readonly countryCode: CountryCode;
+  readonly zip?: string | null;
+  readonly phone?: string | null;
+  readonly isDefaultShipping: boolean;
+  readonly isDefaultBilling: boolean;
+  readonly validationStatus: CustomerAddressValidationStatus;
+  readonly validatedAt?: string | null;
+  readonly formatted: ReadonlyArray<string>;
+  readonly formattedArea?: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SdkCustomerAddressDefaultsFragment = {
+  readonly __typename: 'Customer';
+  readonly id: string;
+  readonly defaultShippingAddress?: {
+    readonly __typename: 'CustomerAddress';
+    readonly id: string;
+  } | null;
+  readonly defaultBillingAddress?: {
+    readonly __typename: 'CustomerAddress';
+    readonly id: string;
+  } | null;
+};
+
+export type SdkCustomerAddressesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkCustomerAddressesQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly addresses: {
+      readonly __typename: 'CustomerAddressConnection';
+      readonly totalCount: number;
+      readonly edges: ReadonlyArray<{
+        readonly __typename: 'CustomerAddressEdge';
+        readonly cursor: string;
+        readonly node: {
+          readonly __typename: 'CustomerAddress';
+          readonly id: string;
+          readonly label?: string | null;
+          readonly prefix?: string | null;
+          readonly firstName?: string | null;
+          readonly middleName?: string | null;
+          readonly lastName?: string | null;
+          readonly suffix?: string | null;
+          readonly name: string;
+          readonly company?: string | null;
+          readonly address1: string;
+          readonly address2?: string | null;
+          readonly city: string;
+          readonly province?: string | null;
+          readonly provinceCode?: string | null;
+          readonly country?: string | null;
+          readonly countryCode: CountryCode;
+          readonly zip?: string | null;
+          readonly phone?: string | null;
+          readonly isDefaultShipping: boolean;
+          readonly isDefaultBilling: boolean;
+          readonly validationStatus: CustomerAddressValidationStatus;
+          readonly validatedAt?: string | null;
+          readonly formatted: ReadonlyArray<string>;
+          readonly formattedArea?: string | null;
+          readonly createdAt: string;
+          readonly updatedAt: string;
+        };
+      }>;
+      readonly pageInfo: {
+        readonly __typename: 'PageInfo';
+        readonly hasNextPage: boolean;
+        readonly endCursor?: string | null;
+      };
+    };
+    readonly defaultShippingAddress?: {
+      readonly __typename: 'CustomerAddress';
+      readonly id: string;
+    } | null;
+    readonly defaultBillingAddress?: {
+      readonly __typename: 'CustomerAddress';
+      readonly id: string;
+    } | null;
+  } | null;
+};
+
+export type SdkCustomerAddressCreateMutationVariables = Exact<{
+  input: CustomerAddressCreateInput;
+}>;
+
+export type SdkCustomerAddressCreateMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerAddressCreate: {
+    readonly __typename: 'CustomerAddressCreatePayload';
+    readonly customerAddress?: {
+      readonly __typename: 'CustomerAddress';
+      readonly id: string;
+      readonly label?: string | null;
+      readonly prefix?: string | null;
+      readonly firstName?: string | null;
+      readonly middleName?: string | null;
+      readonly lastName?: string | null;
+      readonly suffix?: string | null;
+      readonly name: string;
+      readonly company?: string | null;
+      readonly address1: string;
+      readonly address2?: string | null;
+      readonly city: string;
+      readonly province?: string | null;
+      readonly provinceCode?: string | null;
+      readonly country?: string | null;
+      readonly countryCode: CountryCode;
+      readonly zip?: string | null;
+      readonly phone?: string | null;
+      readonly isDefaultShipping: boolean;
+      readonly isDefaultBilling: boolean;
+      readonly validationStatus: CustomerAddressValidationStatus;
+      readonly validatedAt?: string | null;
+      readonly formatted: ReadonlyArray<string>;
+      readonly formattedArea?: string | null;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+    } | null;
+    readonly customer?: {
+      readonly __typename: 'Customer';
+      readonly id: string;
+      readonly defaultShippingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+      readonly defaultBillingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerAddressUpdateMutationVariables = Exact<{
+  input: CustomerAddressUpdateInput;
+}>;
+
+export type SdkCustomerAddressUpdateMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerAddressUpdate: {
+    readonly __typename: 'CustomerAddressUpdatePayload';
+    readonly customerAddress?: {
+      readonly __typename: 'CustomerAddress';
+      readonly id: string;
+      readonly label?: string | null;
+      readonly prefix?: string | null;
+      readonly firstName?: string | null;
+      readonly middleName?: string | null;
+      readonly lastName?: string | null;
+      readonly suffix?: string | null;
+      readonly name: string;
+      readonly company?: string | null;
+      readonly address1: string;
+      readonly address2?: string | null;
+      readonly city: string;
+      readonly province?: string | null;
+      readonly provinceCode?: string | null;
+      readonly country?: string | null;
+      readonly countryCode: CountryCode;
+      readonly zip?: string | null;
+      readonly phone?: string | null;
+      readonly isDefaultShipping: boolean;
+      readonly isDefaultBilling: boolean;
+      readonly validationStatus: CustomerAddressValidationStatus;
+      readonly validatedAt?: string | null;
+      readonly formatted: ReadonlyArray<string>;
+      readonly formattedArea?: string | null;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+    } | null;
+    readonly customer?: {
+      readonly __typename: 'Customer';
+      readonly id: string;
+      readonly defaultShippingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+      readonly defaultBillingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerAddressDeleteMutationVariables = Exact<{
+  input: CustomerAddressDeleteInput;
+}>;
+
+export type SdkCustomerAddressDeleteMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerAddressDelete: {
+    readonly __typename: 'CustomerAddressDeletePayload';
+    readonly deletedAddressId?: string | null;
+    readonly customer?: {
+      readonly __typename: 'Customer';
+      readonly id: string;
+      readonly defaultShippingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+      readonly defaultBillingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerAddressDefaultSetMutationVariables = Exact<{
+  input: CustomerAddressDefaultSetInput;
+}>;
+
+export type SdkCustomerAddressDefaultSetMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerAddressDefaultSet: {
+    readonly __typename: 'CustomerAddressDefaultSetPayload';
+    readonly customer?: {
+      readonly __typename: 'Customer';
+      readonly id: string;
+      readonly defaultShippingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+      readonly defaultBillingAddress?: {
+        readonly __typename: 'CustomerAddress';
+        readonly id: string;
+      } | null;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerProductComparisonsQueryVariables = Exact<{
+  imageTransform?: InputMaybe<ImageTransformInput>;
+}>;
+
+export type SdkCustomerProductComparisonsQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly productComparisons: {
+      readonly __typename: 'CustomerProductComparisons';
+      readonly totalCount: number;
+      readonly itemCount: number;
+      readonly nodes: ReadonlyArray<{
+        readonly __typename: 'ProductComparison';
+        readonly key: string;
+        readonly title?: string | null;
+        readonly category: {
+          readonly __typename: 'Category';
+          readonly id: string;
+          readonly handle: string;
+          readonly name: string;
+        };
+        readonly columns: {
+          readonly __typename: 'ProductComparisonColumnConnection';
+          readonly totalCount: number;
+          readonly nodes: ReadonlyArray<{
+            readonly __typename: 'ProductComparisonColumn';
+            readonly key: string;
+            readonly position: number;
+            readonly availableForSale: boolean;
+            readonly savedForComparison: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+            };
+            readonly variant: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+            };
+            readonly featuredMedia?:
+              | {
+                  readonly __typename: 'ExternalVideo';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly id: string;
+                    readonly url: any;
+                    readonly altText?: string | null;
+                    readonly width?: number | null;
+                    readonly height?: number | null;
+                  };
+                }
+              | {
+                  readonly __typename: 'Model3d';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                }
+              | {
+                  readonly __typename: 'Video';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }>;
+          readonly groups: ReadonlyArray<{
+            readonly __typename: 'ProductComparisonGroup';
+            readonly key: string;
+            readonly name: string;
+            readonly rows: ReadonlyArray<{
+              readonly __typename: 'ProductComparisonRow';
+              readonly key: string;
+              readonly name: string;
+              readonly description?: string | null;
+              readonly cells: ReadonlyArray<{
+                readonly __typename: 'ProductComparisonCell';
+                readonly status: ProductComparisonCellStatus;
+                readonly feature?: {
+                  readonly __typename: 'ProductFeature';
+                  readonly id: string;
+                  readonly name: string;
+                  readonly values: ReadonlyArray<{
+                    readonly __typename: 'ProductFeatureValue';
+                    readonly id: string;
+                    readonly name: string;
+                  }>;
+                } | null;
+                readonly selectedOption?: {
+                  readonly __typename: 'SelectedOption';
+                  readonly name: string;
+                  readonly value: string;
+                  readonly option: {
+                    readonly __typename: 'ProductOption';
+                    readonly id: string;
+                    readonly name: string;
+                  };
+                  readonly optionValue: {
+                    readonly __typename: 'ProductOptionValue';
+                    readonly id: string;
+                    readonly name: string;
+                  };
+                } | null;
+              }>;
+            }>;
+          }>;
+        };
+      }>;
+    };
+  } | null;
+};
+
+export type SdkComparisonMutationResultFragment = {
+  readonly __typename: 'CustomerComparisonMutationPayload';
+  readonly revision?: number | null;
+  readonly errors: ReadonlyArray<{
+    readonly __typename: 'CustomerUserError';
+    readonly code: string;
+    readonly field?: ReadonlyArray<string> | null;
+    readonly message: string;
+    readonly retryable: boolean;
+  }>;
+};
+
+export type SdkCustomerComparisonVariantAddMutationVariables = Exact<{
+  input: CustomerComparisonVariantAddInput;
+}>;
+
+export type SdkCustomerComparisonVariantAddMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerComparisonVariantAdd: {
+    readonly __typename: 'CustomerComparisonMutationPayload';
+    readonly revision?: number | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerComparisonVariantRemoveMutationVariables = Exact<{
+  input: CustomerComparisonVariantRemoveInput;
+}>;
+
+export type SdkCustomerComparisonVariantRemoveMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerComparisonVariantRemove: {
+    readonly __typename: 'CustomerComparisonMutationPayload';
+    readonly revision?: number | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerComparisonCategoryClearMutationVariables = Exact<{
+  input: CustomerComparisonCategoryClearInput;
+}>;
+
+export type SdkCustomerComparisonCategoryClearMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerComparisonCategoryClear: {
+    readonly __typename: 'CustomerComparisonMutationPayload';
+    readonly revision?: number | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerDataRequestFragment = {
+  readonly __typename: 'CustomerDataRequest';
+  readonly id: string;
+  readonly type: CustomerDataRequestType;
+  readonly status: CustomerDataRequestStatus;
+  readonly correctionDetails?: object | null;
+  readonly rejectionReason?: string | null;
+  readonly requestedAt: string;
+  readonly dueAt?: string | null;
+  readonly startedAt?: string | null;
+  readonly finishedAt?: string | null;
+  readonly updatedAt: string;
+  readonly resultFile?: {
+    readonly __typename: 'GenericFile';
+    readonly id: string;
+    readonly url: any;
+    readonly mimeType?: string | null;
+    readonly originalFileSize: any;
+  } | null;
+};
+
+export type SdkCustomerDataRequestsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkCustomerDataRequestsQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly dataRequests: {
+      readonly __typename: 'CustomerDataRequestConnection';
+      readonly totalCount: number;
+      readonly edges: ReadonlyArray<{
+        readonly __typename: 'CustomerDataRequestEdge';
+        readonly cursor: string;
+        readonly node: {
+          readonly __typename: 'CustomerDataRequest';
+          readonly id: string;
+          readonly type: CustomerDataRequestType;
+          readonly status: CustomerDataRequestStatus;
+          readonly correctionDetails?: object | null;
+          readonly rejectionReason?: string | null;
+          readonly requestedAt: string;
+          readonly dueAt?: string | null;
+          readonly startedAt?: string | null;
+          readonly finishedAt?: string | null;
+          readonly updatedAt: string;
+          readonly resultFile?: {
+            readonly __typename: 'GenericFile';
+            readonly id: string;
+            readonly url: any;
+            readonly mimeType?: string | null;
+            readonly originalFileSize: any;
+          } | null;
+        };
+      }>;
+      readonly pageInfo: {
+        readonly __typename: 'PageInfo';
+        readonly hasNextPage: boolean;
+        readonly endCursor?: string | null;
+      };
+    };
+  } | null;
+};
+
+export type SdkCustomerDataRequestCreateMutationVariables = Exact<{
+  input: CustomerDataRequestCreateInput;
+}>;
+
+export type SdkCustomerDataRequestCreateMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerDataRequestCreate: {
+    readonly __typename: 'CustomerDataRequestCreatePayload';
+    readonly dataRequest?: {
+      readonly __typename: 'CustomerDataRequest';
+      readonly id: string;
+      readonly type: CustomerDataRequestType;
+      readonly status: CustomerDataRequestStatus;
+      readonly correctionDetails?: object | null;
+      readonly rejectionReason?: string | null;
+      readonly requestedAt: string;
+      readonly dueAt?: string | null;
+      readonly startedAt?: string | null;
+      readonly finishedAt?: string | null;
+      readonly updatedAt: string;
+      readonly resultFile?: {
+        readonly __typename: 'GenericFile';
+        readonly id: string;
+        readonly url: any;
+        readonly mimeType?: string | null;
+        readonly originalFileSize: any;
+      } | null;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerDataRequestCancelMutationVariables = Exact<{
+  input: CustomerDataRequestCancelInput;
+}>;
+
+export type SdkCustomerDataRequestCancelMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerDataRequestCancel: {
+    readonly __typename: 'CustomerDataRequestCancelPayload';
+    readonly dataRequest?: {
+      readonly __typename: 'CustomerDataRequest';
+      readonly id: string;
+      readonly type: CustomerDataRequestType;
+      readonly status: CustomerDataRequestStatus;
+      readonly correctionDetails?: object | null;
+      readonly rejectionReason?: string | null;
+      readonly requestedAt: string;
+      readonly dueAt?: string | null;
+      readonly startedAt?: string | null;
+      readonly finishedAt?: string | null;
+      readonly updatedAt: string;
+      readonly resultFile?: {
+        readonly __typename: 'GenericFile';
+        readonly id: string;
+        readonly url: any;
+        readonly mimeType?: string | null;
+        readonly originalFileSize: any;
+      } | null;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerUserErrorFragment = {
+  readonly __typename: 'CustomerUserError';
+  readonly code: string;
+  readonly field?: ReadonlyArray<string> | null;
+  readonly message: string;
+  readonly retryable: boolean;
+};
+
+export type SdkCustomerMoneyFragment = {
+  readonly __typename: 'Money';
+  readonly amount: any;
+  readonly currencyCode: CurrencyCode;
+};
+
+type SdkCustomerMediaFragment_ExternalVideo = {
+  readonly __typename: 'ExternalVideo';
+  readonly id: string;
+  readonly alt?: string | null;
+};
+
+type SdkCustomerMediaFragment_MediaImage = {
+  readonly __typename: 'MediaImage';
+  readonly id: string;
+  readonly alt?: string | null;
+  readonly image: {
+    readonly __typename: 'Image';
+    readonly id: string;
+    readonly url: any;
+    readonly altText?: string | null;
+    readonly width?: number | null;
+    readonly height?: number | null;
+  };
+};
+
+type SdkCustomerMediaFragment_Model3d = {
+  readonly __typename: 'Model3d';
+  readonly id: string;
+  readonly alt?: string | null;
+};
+
+type SdkCustomerMediaFragment_Video = {
+  readonly __typename: 'Video';
+  readonly id: string;
+  readonly alt?: string | null;
+};
+
+export type SdkCustomerMediaFragment =
+  | SdkCustomerMediaFragment_ExternalVideo
+  | SdkCustomerMediaFragment_MediaImage
+  | SdkCustomerMediaFragment_Model3d
+  | SdkCustomerMediaFragment_Video;
+
+export type SdkCustomerProductFragment = {
+  readonly __typename: 'Product';
+  readonly id: string;
+  readonly handle: string;
+  readonly title: string;
+  readonly availableForSale: boolean;
+  readonly featuredMedia?:
+    | {
+        readonly __typename: 'ExternalVideo';
+        readonly id: string;
+        readonly alt?: string | null;
+      }
+    | {
+        readonly __typename: 'MediaImage';
+        readonly id: string;
+        readonly alt?: string | null;
+        readonly image: {
+          readonly __typename: 'Image';
+          readonly id: string;
+          readonly url: any;
+          readonly altText?: string | null;
+          readonly width?: number | null;
+          readonly height?: number | null;
+        };
+      }
+    | {
+        readonly __typename: 'Model3d';
+        readonly id: string;
+        readonly alt?: string | null;
+      }
+    | {
+        readonly __typename: 'Video';
+        readonly id: string;
+        readonly alt?: string | null;
+      }
+    | null;
+  readonly selectedOrFirstAvailableVariant?: {
+    readonly __typename: 'ProductVariant';
+    readonly id: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly availableForSale: boolean;
+    readonly price?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+    readonly compareAtPrice?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+  } | null;
+};
+
+export type SdkCustomerPageInfoFragment = {
+  readonly __typename: 'PageInfo';
+  readonly hasNextPage: boolean;
+  readonly endCursor?: string | null;
+};
+
+export type SdkLoyaltyAccountFragment = {
+  readonly __typename: 'LoyaltyAccount';
+  readonly id: string;
+  readonly status: LoyaltyAccountStatus;
+  readonly balance: {
+    readonly __typename: 'LoyaltyBalance';
+    readonly availablePoints: any;
+    readonly pendingPoints: any;
+    readonly reservedPoints: any;
+    readonly debtPoints: any;
+  };
+  readonly tier?: {
+    readonly __typename: 'LoyaltyTier';
+    readonly code: string;
+    readonly name: string;
+    readonly rank: number;
+    readonly effectiveFrom: string;
+    readonly effectiveTo?: string | null;
+    readonly earnMultiplierBps: number;
+    readonly progress?: {
+      readonly __typename: 'LoyaltyTierProgress';
+      readonly nextTier: {
+        readonly __typename: 'LoyaltyNextTier';
+        readonly code: string;
+        readonly name: string;
+        readonly rank: number;
+      };
+      readonly presentation: {
+        readonly __typename: 'LoyaltyOpportunityCopy';
+        readonly headline: string;
+        readonly description?: string | null;
+        readonly badge?: string | null;
+        readonly accessibilityLabel: string;
+        readonly terms: ReadonlyArray<string>;
+      };
+    } | null;
+  } | null;
+  readonly upcomingExpirations: ReadonlyArray<{
+    readonly __typename: 'LoyaltyPointsExpiration';
+    readonly points: any;
+    readonly expiresAt: string;
+  }>;
+  readonly storeCredit?: {
+    readonly __typename: 'LoyaltyStoreCredit';
+    readonly availableAmount: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    };
+    readonly pendingAmount: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    };
+    readonly upcomingExpirations: ReadonlyArray<{
+      readonly __typename: 'LoyaltyStoreCreditExpiration';
+      readonly expiresAt: string;
+      readonly amount: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      };
+    }>;
+  } | null;
+  readonly redemptionSources: ReadonlyArray<{
+    readonly __typename: 'LoyaltyRedemptionSourceOption';
+    readonly source: LoyaltyRedemptionSource;
+    readonly availablePoints?: any | null;
+    readonly availableAmount: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    };
+    readonly minimum: {
+      readonly __typename: 'LoyaltyRedemptionBound';
+      readonly points?: any | null;
+      readonly amount: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      };
+    };
+    readonly maximumPerOrder?: {
+      readonly __typename: 'LoyaltyRedemptionBound';
+      readonly points?: any | null;
+      readonly amount: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      };
+    } | null;
+  }>;
+  readonly availableRewards: {
+    readonly __typename: 'LoyaltyAvailableRewardConnection';
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'LoyaltyAvailableReward';
+      readonly id: string;
+      readonly discountCode?: string | null;
+      readonly validUntil?: string | null;
+      readonly presentation: {
+        readonly __typename: 'LoyaltyOpportunityCopy';
+        readonly headline: string;
+        readonly description?: string | null;
+      };
+      readonly reward:
+        | {
+            readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+            readonly kind: LoyaltyRewardKind;
+          }
+        | {
+            readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+            readonly kind: LoyaltyRewardKind;
+          }
+        | {
+            readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+            readonly kind: LoyaltyRewardKind;
+          }
+        | {
+            readonly __typename: 'LoyaltyMoneyRewardPresentation';
+            readonly kind: LoyaltyRewardKind;
+          }
+        | {
+            readonly __typename: 'LoyaltyPercentageRewardPresentation';
+            readonly kind: LoyaltyRewardKind;
+          }
+        | {
+            readonly __typename: 'LoyaltyPointsRewardPresentation';
+            readonly kind: LoyaltyRewardKind;
+          }
+        | {
+            readonly __typename: 'LoyaltyVoucherRewardPresentation';
+            readonly code?: string | null;
+            readonly kind: LoyaltyRewardKind;
+          };
+    }>;
+  };
+};
+
+export type SdkLoyaltyAccountQueryVariables = Exact<{ [key: string]: never }>;
+
+export type SdkLoyaltyAccountQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly loyaltyAccount?: {
+      readonly __typename: 'LoyaltyAccount';
+      readonly id: string;
+      readonly status: LoyaltyAccountStatus;
+      readonly balance: {
+        readonly __typename: 'LoyaltyBalance';
+        readonly availablePoints: any;
+        readonly pendingPoints: any;
+        readonly reservedPoints: any;
+        readonly debtPoints: any;
+      };
+      readonly tier?: {
+        readonly __typename: 'LoyaltyTier';
+        readonly code: string;
+        readonly name: string;
+        readonly rank: number;
+        readonly effectiveFrom: string;
+        readonly effectiveTo?: string | null;
+        readonly earnMultiplierBps: number;
+        readonly progress?: {
+          readonly __typename: 'LoyaltyTierProgress';
+          readonly nextTier: {
+            readonly __typename: 'LoyaltyNextTier';
+            readonly code: string;
+            readonly name: string;
+            readonly rank: number;
+          };
+          readonly presentation: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        } | null;
+      } | null;
+      readonly upcomingExpirations: ReadonlyArray<{
+        readonly __typename: 'LoyaltyPointsExpiration';
+        readonly points: any;
+        readonly expiresAt: string;
+      }>;
+      readonly storeCredit?: {
+        readonly __typename: 'LoyaltyStoreCredit';
+        readonly availableAmount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly pendingAmount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly upcomingExpirations: ReadonlyArray<{
+          readonly __typename: 'LoyaltyStoreCreditExpiration';
+          readonly expiresAt: string;
+          readonly amount: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+        }>;
+      } | null;
+      readonly redemptionSources: ReadonlyArray<{
+        readonly __typename: 'LoyaltyRedemptionSourceOption';
+        readonly source: LoyaltyRedemptionSource;
+        readonly availablePoints?: any | null;
+        readonly availableAmount: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        };
+        readonly minimum: {
+          readonly __typename: 'LoyaltyRedemptionBound';
+          readonly points?: any | null;
+          readonly amount: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+        };
+        readonly maximumPerOrder?: {
+          readonly __typename: 'LoyaltyRedemptionBound';
+          readonly points?: any | null;
+          readonly amount: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+        } | null;
+      }>;
+      readonly availableRewards: {
+        readonly __typename: 'LoyaltyAvailableRewardConnection';
+        readonly nodes: ReadonlyArray<{
+          readonly __typename: 'LoyaltyAvailableReward';
+          readonly id: string;
+          readonly discountCode?: string | null;
+          readonly validUntil?: string | null;
+          readonly presentation: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+          };
+          readonly reward:
+            | {
+                readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                readonly kind: LoyaltyRewardKind;
+              }
+            | {
+                readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                readonly kind: LoyaltyRewardKind;
+              }
+            | {
+                readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                readonly kind: LoyaltyRewardKind;
+              }
+            | {
+                readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                readonly kind: LoyaltyRewardKind;
+              }
+            | {
+                readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                readonly kind: LoyaltyRewardKind;
+              }
+            | {
+                readonly __typename: 'LoyaltyPointsRewardPresentation';
+                readonly kind: LoyaltyRewardKind;
+              }
+            | {
+                readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                readonly code?: string | null;
+                readonly kind: LoyaltyRewardKind;
+              };
+        }>;
+      };
+    } | null;
+  } | null;
+};
+
+export type SdkLoyaltyTransactionFragment = {
+  readonly __typename: 'LoyaltyTransaction';
+  readonly id: string;
+  readonly type: LoyaltyTransactionType;
+  readonly direction: LoyaltyTransactionDirection;
+  readonly points: any;
+  readonly description?: string | null;
+  readonly occurredAt: string;
+  readonly effectiveAt: string;
+  readonly expiresAt?: string | null;
+};
+
+export type SdkLoyaltyTransactionsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkLoyaltyTransactionsQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly loyaltyAccount?: {
+      readonly __typename: 'LoyaltyAccount';
+      readonly id: string;
+      readonly transactions: {
+        readonly __typename: 'LoyaltyTransactionConnection';
+        readonly totalCount: number;
+        readonly edges: ReadonlyArray<{
+          readonly __typename: 'LoyaltyTransactionEdge';
+          readonly cursor: string;
+          readonly node: {
+            readonly __typename: 'LoyaltyTransaction';
+            readonly id: string;
+            readonly type: LoyaltyTransactionType;
+            readonly direction: LoyaltyTransactionDirection;
+            readonly points: any;
+            readonly description?: string | null;
+            readonly occurredAt: string;
+            readonly effectiveAt: string;
+            readonly expiresAt?: string | null;
+          };
+        }>;
+        readonly pageInfo: {
+          readonly __typename: 'PageInfo';
+          readonly hasNextPage: boolean;
+          readonly endCursor?: string | null;
+        };
+      };
+    } | null;
+  } | null;
+};
+
+export type SdkCustomerMarketingConsentFragment = {
+  readonly __typename: 'CustomerMarketingConsent';
+  readonly channel: CustomerMarketingConsentChannel;
+  readonly state: CustomerMarketingConsentState;
+  readonly optInLevel: CustomerMarketingConsentOptInLevel;
+  readonly consentedAt?: string | null;
+  readonly withdrawnAt?: string | null;
+  readonly updatedAt: string;
+};
+
+export type SdkCustomerContactsFragment = {
+  readonly __typename: 'Customer';
+  readonly id: string;
+  readonly emailAddress?: {
+    readonly __typename: 'CustomerEmailAddress';
+    readonly emailAddress: string;
+    readonly verified: boolean;
+    readonly marketingConsent?: {
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    } | null;
+  } | null;
+  readonly phoneNumber?: {
+    readonly __typename: 'CustomerPhoneNumber';
+    readonly phoneNumber: string;
+    readonly verified: boolean;
+    readonly marketingConsent?: {
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    } | null;
+  } | null;
+  readonly marketingConsents: ReadonlyArray<{
+    readonly __typename: 'CustomerMarketingConsent';
+    readonly channel: CustomerMarketingConsentChannel;
+    readonly state: CustomerMarketingConsentState;
+    readonly optInLevel: CustomerMarketingConsentOptInLevel;
+    readonly consentedAt?: string | null;
+    readonly withdrawnAt?: string | null;
+    readonly updatedAt: string;
+  }>;
+};
+
+export type SdkCustomerProfileFragment = {
+  readonly __typename: 'Customer';
+  readonly id: string;
+  readonly revision: number;
+  readonly accountStatus: CustomerAccountStatus;
+  readonly prefix?: string | null;
+  readonly firstName?: string | null;
+  readonly middleName?: string | null;
+  readonly lastName?: string | null;
+  readonly suffix?: string | null;
+  readonly displayName: string;
+  readonly preferredLocale?: string | null;
+  readonly dateOfBirth?: any | null;
+  readonly gender?: string | null;
+  readonly companyName?: string | null;
+  readonly jobTitle?: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly emailAddress?: {
+    readonly __typename: 'CustomerEmailAddress';
+    readonly emailAddress: string;
+    readonly verified: boolean;
+    readonly marketingConsent?: {
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    } | null;
+  } | null;
+  readonly phoneNumber?: {
+    readonly __typename: 'CustomerPhoneNumber';
+    readonly phoneNumber: string;
+    readonly verified: boolean;
+    readonly marketingConsent?: {
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    } | null;
+  } | null;
+  readonly marketingConsents: ReadonlyArray<{
+    readonly __typename: 'CustomerMarketingConsent';
+    readonly channel: CustomerMarketingConsentChannel;
+    readonly state: CustomerMarketingConsentState;
+    readonly optInLevel: CustomerMarketingConsentOptInLevel;
+    readonly consentedAt?: string | null;
+    readonly withdrawnAt?: string | null;
+    readonly updatedAt: string;
+  }>;
+};
+
+export type SdkCustomerQueryVariables = Exact<{ [key: string]: never }>;
+
+export type SdkCustomerQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly revision: number;
+    readonly accountStatus: CustomerAccountStatus;
+    readonly prefix?: string | null;
+    readonly firstName?: string | null;
+    readonly middleName?: string | null;
+    readonly lastName?: string | null;
+    readonly suffix?: string | null;
+    readonly displayName: string;
+    readonly preferredLocale?: string | null;
+    readonly dateOfBirth?: any | null;
+    readonly gender?: string | null;
+    readonly companyName?: string | null;
+    readonly jobTitle?: string | null;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly emailAddress?: {
+      readonly __typename: 'CustomerEmailAddress';
+      readonly emailAddress: string;
+      readonly verified: boolean;
+      readonly marketingConsent?: {
+        readonly __typename: 'CustomerMarketingConsent';
+        readonly channel: CustomerMarketingConsentChannel;
+        readonly state: CustomerMarketingConsentState;
+        readonly optInLevel: CustomerMarketingConsentOptInLevel;
+        readonly consentedAt?: string | null;
+        readonly withdrawnAt?: string | null;
+        readonly updatedAt: string;
+      } | null;
+    } | null;
+    readonly phoneNumber?: {
+      readonly __typename: 'CustomerPhoneNumber';
+      readonly phoneNumber: string;
+      readonly verified: boolean;
+      readonly marketingConsent?: {
+        readonly __typename: 'CustomerMarketingConsent';
+        readonly channel: CustomerMarketingConsentChannel;
+        readonly state: CustomerMarketingConsentState;
+        readonly optInLevel: CustomerMarketingConsentOptInLevel;
+        readonly consentedAt?: string | null;
+        readonly withdrawnAt?: string | null;
+        readonly updatedAt: string;
+      } | null;
+    } | null;
+    readonly marketingConsents: ReadonlyArray<{
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    }>;
+  } | null;
+};
+
+export type SdkCustomerUpdateMutationVariables = Exact<{
+  input: CustomerUpdateInput;
+}>;
+
+export type SdkCustomerUpdateMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerUpdate: {
+    readonly __typename: 'CustomerUpdatePayload';
+    readonly customer?: {
+      readonly __typename: 'Customer';
+      readonly id: string;
+      readonly revision: number;
+      readonly accountStatus: CustomerAccountStatus;
+      readonly prefix?: string | null;
+      readonly firstName?: string | null;
+      readonly middleName?: string | null;
+      readonly lastName?: string | null;
+      readonly suffix?: string | null;
+      readonly displayName: string;
+      readonly preferredLocale?: string | null;
+      readonly dateOfBirth?: any | null;
+      readonly gender?: string | null;
+      readonly companyName?: string | null;
+      readonly jobTitle?: string | null;
+      readonly createdAt: string;
+      readonly updatedAt: string;
+      readonly emailAddress?: {
+        readonly __typename: 'CustomerEmailAddress';
+        readonly emailAddress: string;
+        readonly verified: boolean;
+        readonly marketingConsent?: {
+          readonly __typename: 'CustomerMarketingConsent';
+          readonly channel: CustomerMarketingConsentChannel;
+          readonly state: CustomerMarketingConsentState;
+          readonly optInLevel: CustomerMarketingConsentOptInLevel;
+          readonly consentedAt?: string | null;
+          readonly withdrawnAt?: string | null;
+          readonly updatedAt: string;
+        } | null;
+      } | null;
+      readonly phoneNumber?: {
+        readonly __typename: 'CustomerPhoneNumber';
+        readonly phoneNumber: string;
+        readonly verified: boolean;
+        readonly marketingConsent?: {
+          readonly __typename: 'CustomerMarketingConsent';
+          readonly channel: CustomerMarketingConsentChannel;
+          readonly state: CustomerMarketingConsentState;
+          readonly optInLevel: CustomerMarketingConsentOptInLevel;
+          readonly consentedAt?: string | null;
+          readonly withdrawnAt?: string | null;
+          readonly updatedAt: string;
+        } | null;
+      } | null;
+      readonly marketingConsents: ReadonlyArray<{
+        readonly __typename: 'CustomerMarketingConsent';
+        readonly channel: CustomerMarketingConsentChannel;
+        readonly state: CustomerMarketingConsentState;
+        readonly optInLevel: CustomerMarketingConsentOptInLevel;
+        readonly consentedAt?: string | null;
+        readonly withdrawnAt?: string | null;
+        readonly updatedAt: string;
+      }>;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkCustomerMarketingConsentsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type SdkCustomerMarketingConsentsQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly emailAddress?: {
+      readonly __typename: 'CustomerEmailAddress';
+      readonly emailAddress: string;
+      readonly verified: boolean;
+      readonly marketingConsent?: {
+        readonly __typename: 'CustomerMarketingConsent';
+        readonly channel: CustomerMarketingConsentChannel;
+        readonly state: CustomerMarketingConsentState;
+        readonly optInLevel: CustomerMarketingConsentOptInLevel;
+        readonly consentedAt?: string | null;
+        readonly withdrawnAt?: string | null;
+        readonly updatedAt: string;
+      } | null;
+    } | null;
+    readonly phoneNumber?: {
+      readonly __typename: 'CustomerPhoneNumber';
+      readonly phoneNumber: string;
+      readonly verified: boolean;
+      readonly marketingConsent?: {
+        readonly __typename: 'CustomerMarketingConsent';
+        readonly channel: CustomerMarketingConsentChannel;
+        readonly state: CustomerMarketingConsentState;
+        readonly optInLevel: CustomerMarketingConsentOptInLevel;
+        readonly consentedAt?: string | null;
+        readonly withdrawnAt?: string | null;
+        readonly updatedAt: string;
+      } | null;
+    } | null;
+    readonly marketingConsents: ReadonlyArray<{
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    }>;
+  } | null;
+};
+
+export type SdkCustomerMarketingConsentUpdateMutationVariables = Exact<{
+  input: CustomerMarketingConsentUpdateInput;
+}>;
+
+export type SdkCustomerMarketingConsentUpdateMutation = {
+  readonly __typename: 'Mutation';
+  readonly customerMarketingConsentUpdate: {
+    readonly __typename: 'CustomerMarketingConsentUpdatePayload';
+    readonly marketingConsent?: {
+      readonly __typename: 'CustomerMarketingConsent';
+      readonly channel: CustomerMarketingConsentChannel;
+      readonly state: CustomerMarketingConsentState;
+      readonly optInLevel: CustomerMarketingConsentOptInLevel;
+      readonly consentedAt?: string | null;
+      readonly withdrawnAt?: string | null;
+      readonly updatedAt: string;
+    } | null;
+    readonly customer?: {
+      readonly __typename: 'Customer';
+      readonly id: string;
+      readonly emailAddress?: {
+        readonly __typename: 'CustomerEmailAddress';
+        readonly emailAddress: string;
+        readonly verified: boolean;
+        readonly marketingConsent?: {
+          readonly __typename: 'CustomerMarketingConsent';
+          readonly channel: CustomerMarketingConsentChannel;
+          readonly state: CustomerMarketingConsentState;
+          readonly optInLevel: CustomerMarketingConsentOptInLevel;
+          readonly consentedAt?: string | null;
+          readonly withdrawnAt?: string | null;
+          readonly updatedAt: string;
+        } | null;
+      } | null;
+      readonly phoneNumber?: {
+        readonly __typename: 'CustomerPhoneNumber';
+        readonly phoneNumber: string;
+        readonly verified: boolean;
+        readonly marketingConsent?: {
+          readonly __typename: 'CustomerMarketingConsent';
+          readonly channel: CustomerMarketingConsentChannel;
+          readonly state: CustomerMarketingConsentState;
+          readonly optInLevel: CustomerMarketingConsentOptInLevel;
+          readonly consentedAt?: string | null;
+          readonly withdrawnAt?: string | null;
+          readonly updatedAt: string;
+        } | null;
+      } | null;
+      readonly marketingConsents: ReadonlyArray<{
+        readonly __typename: 'CustomerMarketingConsent';
+        readonly channel: CustomerMarketingConsentChannel;
+        readonly state: CustomerMarketingConsentState;
+        readonly optInLevel: CustomerMarketingConsentOptInLevel;
+        readonly consentedAt?: string | null;
+        readonly withdrawnAt?: string | null;
+        readonly updatedAt: string;
+      }>;
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkReviewRequestFragment = {
+  readonly __typename: 'ReviewRequest';
+  readonly id: string;
+  readonly status: ReviewRequestStatus;
+  readonly channel: ReviewNotificationChannel;
+  readonly locale: LocaleCode;
+  readonly scheduledAt: string;
+  readonly sentAt?: string | null;
+  readonly deliveredAt?: string | null;
+  readonly openedAt?: string | null;
+  readonly submittedAt?: string | null;
+  readonly expiresAt?: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly product: {
+    readonly __typename: 'Product';
+    readonly id: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly availableForSale: boolean;
+    readonly featuredMedia?:
+      | {
+          readonly __typename: 'ExternalVideo';
+          readonly id: string;
+          readonly alt?: string | null;
+        }
+      | {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly alt?: string | null;
+          readonly image: {
+            readonly __typename: 'Image';
+            readonly id: string;
+            readonly url: any;
+            readonly altText?: string | null;
+            readonly width?: number | null;
+            readonly height?: number | null;
+          };
+        }
+      | {
+          readonly __typename: 'Model3d';
+          readonly id: string;
+          readonly alt?: string | null;
+        }
+      | {
+          readonly __typename: 'Video';
+          readonly id: string;
+          readonly alt?: string | null;
+        }
+      | null;
+    readonly selectedOrFirstAvailableVariant?: {
+      readonly __typename: 'ProductVariant';
+      readonly id: string;
+      readonly handle: string;
+      readonly title: string;
+      readonly availableForSale: boolean;
+      readonly price?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+      readonly compareAtPrice?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+    } | null;
+  };
+  readonly variant?: {
+    readonly __typename: 'ProductVariant';
+    readonly id: string;
+    readonly title: string;
+  } | null;
+  readonly review?: {
+    readonly __typename: 'Review';
+    readonly id: string;
+    readonly status: ReviewContentStatus;
+    readonly rating: number;
+    readonly title?: string | null;
+    readonly createdAt: string;
+    readonly publishedAt?: string | null;
+  } | null;
+};
+
+export type SdkCustomerReviewRequestsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  imageTransform?: InputMaybe<ImageTransformInput>;
+}>;
+
+export type SdkCustomerReviewRequestsQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly reviewRequests: {
+      readonly __typename: 'ReviewRequestConnection';
+      readonly totalCount: number;
+      readonly edges: ReadonlyArray<{
+        readonly __typename: 'ReviewRequestEdge';
+        readonly cursor: string;
+        readonly node: {
+          readonly __typename: 'ReviewRequest';
+          readonly id: string;
+          readonly status: ReviewRequestStatus;
+          readonly channel: ReviewNotificationChannel;
+          readonly locale: LocaleCode;
+          readonly scheduledAt: string;
+          readonly sentAt?: string | null;
+          readonly deliveredAt?: string | null;
+          readonly openedAt?: string | null;
+          readonly submittedAt?: string | null;
+          readonly expiresAt?: string | null;
+          readonly createdAt: string;
+          readonly updatedAt: string;
+          readonly product: {
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly featuredMedia?:
+              | {
+                  readonly __typename: 'ExternalVideo';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly id: string;
+                    readonly url: any;
+                    readonly altText?: string | null;
+                    readonly width?: number | null;
+                    readonly height?: number | null;
+                  };
+                }
+              | {
+                  readonly __typename: 'Model3d';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                }
+              | {
+                  readonly __typename: 'Video';
+                  readonly id: string;
+                  readonly alt?: string | null;
+                }
+              | null;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+          readonly variant?: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+          } | null;
+          readonly review?: {
+            readonly __typename: 'Review';
+            readonly id: string;
+            readonly status: ReviewContentStatus;
+            readonly rating: number;
+            readonly title?: string | null;
+            readonly createdAt: string;
+            readonly publishedAt?: string | null;
+          } | null;
+        };
+      }>;
+      readonly pageInfo: {
+        readonly __typename: 'PageInfo';
+        readonly hasNextPage: boolean;
+        readonly endCursor?: string | null;
+      };
+    };
+  } | null;
+};
+
+export type SdkWishlistItemFragment = {
+  readonly __typename: 'CustomerWishlistItem';
+  readonly id: string;
+  readonly addedAt: string;
+  readonly product?: {
+    readonly __typename: 'Product';
+    readonly id: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly availableForSale: boolean;
+    readonly featuredMedia?:
+      | {
+          readonly __typename: 'ExternalVideo';
+          readonly id: string;
+          readonly alt?: string | null;
+        }
+      | {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly alt?: string | null;
+          readonly image: {
+            readonly __typename: 'Image';
+            readonly id: string;
+            readonly url: any;
+            readonly altText?: string | null;
+            readonly width?: number | null;
+            readonly height?: number | null;
+          };
+        }
+      | {
+          readonly __typename: 'Model3d';
+          readonly id: string;
+          readonly alt?: string | null;
+        }
+      | {
+          readonly __typename: 'Video';
+          readonly id: string;
+          readonly alt?: string | null;
+        }
+      | null;
+    readonly selectedOrFirstAvailableVariant?: {
+      readonly __typename: 'ProductVariant';
+      readonly id: string;
+      readonly handle: string;
+      readonly title: string;
+      readonly availableForSale: boolean;
+      readonly price?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+      readonly compareAtPrice?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+    } | null;
+  } | null;
+};
+
+export type SdkCustomerWishlistQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  imageTransform?: InputMaybe<ImageTransformInput>;
+}>;
+
+export type SdkCustomerWishlistQuery = {
+  readonly __typename: 'Query';
+  readonly customer?: {
+    readonly __typename: 'Customer';
+    readonly id: string;
+    readonly defaultWishlist?: {
+      readonly __typename: 'CustomerWishlist';
+      readonly id: string;
+      readonly name: string;
+      readonly isDefault: boolean;
+      readonly items: {
+        readonly __typename: 'CustomerWishlistItemConnection';
+        readonly totalCount: number;
+        readonly edges: ReadonlyArray<{
+          readonly __typename: 'CustomerWishlistItemEdge';
+          readonly cursor: string;
+          readonly node: {
+            readonly __typename: 'CustomerWishlistItem';
+            readonly id: string;
+            readonly addedAt: string;
+            readonly product?: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly featuredMedia?:
+                | {
+                    readonly __typename: 'ExternalVideo';
+                    readonly id: string;
+                    readonly alt?: string | null;
+                  }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly alt?: string | null;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly id: string;
+                      readonly url: any;
+                      readonly altText?: string | null;
+                      readonly width?: number | null;
+                      readonly height?: number | null;
+                    };
+                  }
+                | {
+                    readonly __typename: 'Model3d';
+                    readonly id: string;
+                    readonly alt?: string | null;
+                  }
+                | {
+                    readonly __typename: 'Video';
+                    readonly id: string;
+                    readonly alt?: string | null;
+                  }
+                | null;
+              readonly selectedOrFirstAvailableVariant?: {
+                readonly __typename: 'ProductVariant';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly availableForSale: boolean;
+                readonly price?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly compareAtPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            } | null;
+          };
+        }>;
+        readonly pageInfo: {
+          readonly __typename: 'PageInfo';
+          readonly hasNextPage: boolean;
+          readonly endCursor?: string | null;
+        };
+      };
+    } | null;
+  } | null;
+};
+
+export type SdkWishlistProductAddMutationVariables = Exact<{
+  input: WishlistProductAddInput;
+}>;
+
+export type SdkWishlistProductAddMutation = {
+  readonly __typename: 'Mutation';
+  readonly wishlistProductAdd: {
+    readonly __typename: 'WishlistProductAddPayload';
+    readonly wishlistItem?: {
+      readonly __typename: 'CustomerWishlistItem';
+      readonly id: string;
+      readonly addedAt: string;
+      readonly product?: {
+        readonly __typename: 'Product';
+        readonly id: string;
+      } | null;
+      readonly wishlist: {
+        readonly __typename: 'CustomerWishlist';
+        readonly id: string;
+      };
+    } | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkWishlistProductRemoveMutationVariables = Exact<{
+  input: WishlistProductRemoveInput;
+}>;
+
+export type SdkWishlistProductRemoveMutation = {
+  readonly __typename: 'Mutation';
+  readonly wishlistProductRemove: {
+    readonly __typename: 'WishlistProductRemovePayload';
+    readonly deletedWishlistItemId?: string | null;
+    readonly errors: ReadonlyArray<{
+      readonly __typename: 'CustomerUserError';
+      readonly code: string;
+      readonly field?: ReadonlyArray<string> | null;
+      readonly message: string;
+      readonly retryable: boolean;
+    }>;
+  };
+};
+
+export type SdkStoreImageFragment = {
+  readonly __typename: 'MediaImage';
+  readonly id: string;
+  readonly alt?: string | null;
+  readonly image: {
+    readonly __typename: 'Image';
+    readonly id: string;
+    readonly url: any;
+    readonly width?: number | null;
+    readonly height?: number | null;
+    readonly altText?: string | null;
+    readonly thumbhash?: string | null;
+  };
+};
+
+export type SdkStoreFragment = {
+  readonly __typename: 'Store';
+  readonly id: string;
+  readonly handle: string;
+  readonly name: string;
+  readonly description?: string | null;
+  readonly email?: string | null;
+  readonly timezone: string;
+  readonly defaultLocale: LocaleCode;
+  readonly defaultCurrency: CurrencyCode;
+  readonly contact?: {
+    readonly __typename: 'StoreContact';
+    readonly name: string;
+    readonly email?: string | null;
+    readonly phoneNumbers: ReadonlyArray<string>;
+  } | null;
+  readonly address?: {
+    readonly __typename: 'StoreAddress';
+    readonly companyName?: string | null;
+    readonly countryCode: CountryCode;
+    readonly address1?: string | null;
+    readonly address2?: string | null;
+    readonly city?: string | null;
+    readonly province?: string | null;
+    readonly postalCode?: string | null;
+  } | null;
+  readonly brand: {
+    readonly __typename: 'StoreBrand';
+    readonly primaryColor: any;
+    readonly secondaryColor: any;
+    readonly slogan?: string | null;
+    readonly shortDescription?: string | null;
+    readonly logo?: {
+      readonly __typename: 'MediaImage';
+      readonly id: string;
+      readonly alt?: string | null;
+      readonly image: {
+        readonly __typename: 'Image';
+        readonly id: string;
+        readonly url: any;
+        readonly width?: number | null;
+        readonly height?: number | null;
+        readonly altText?: string | null;
+        readonly thumbhash?: string | null;
+      };
+    } | null;
+    readonly squareLogo?: {
+      readonly __typename: 'MediaImage';
+      readonly id: string;
+      readonly alt?: string | null;
+      readonly image: {
+        readonly __typename: 'Image';
+        readonly id: string;
+        readonly url: any;
+        readonly width?: number | null;
+        readonly height?: number | null;
+        readonly altText?: string | null;
+        readonly thumbhash?: string | null;
+      };
+    } | null;
+    readonly coverImage?: {
+      readonly __typename: 'MediaImage';
+      readonly id: string;
+      readonly alt?: string | null;
+      readonly image: {
+        readonly __typename: 'Image';
+        readonly id: string;
+        readonly url: any;
+        readonly width?: number | null;
+        readonly height?: number | null;
+        readonly altText?: string | null;
+        readonly thumbhash?: string | null;
+      };
+    } | null;
+    readonly socialLinks: ReadonlyArray<{
+      readonly __typename: 'StoreSocialLink';
+      readonly platform: string;
+      readonly url: any;
+    }>;
+  };
+  readonly policies: ReadonlyArray<{
+    readonly __typename: 'StorePolicy';
+    readonly id: string;
+    readonly type: StorePolicyType;
+    readonly handle: string;
+    readonly path: string;
+    readonly title: string;
+  }>;
+};
+
+export type SdkLocalizationFragment = {
+  readonly __typename: 'Localization';
+  readonly market: {
+    readonly __typename: 'Market';
+    readonly id: string;
+    readonly handle: string;
+    readonly name: string;
+    readonly timezone: string;
+    readonly taxIncluded: boolean;
+  };
+  readonly country: {
+    readonly __typename: 'Country';
+    readonly code: CountryCode;
+    readonly name: string;
+  };
+  readonly language: {
+    readonly __typename: 'Language';
+    readonly code: LocaleCode;
+    readonly name: string;
+  };
+  readonly currency: {
+    readonly __typename: 'Currency';
+    readonly code: CurrencyCode;
+    readonly name: string;
+    readonly symbol: string;
+  };
+  readonly availableCountries: ReadonlyArray<{
+    readonly __typename: 'Country';
+    readonly code: CountryCode;
+    readonly name: string;
+  }>;
+  readonly availableLanguages: ReadonlyArray<{
+    readonly __typename: 'Language';
+    readonly code: LocaleCode;
+    readonly name: string;
+  }>;
+  readonly availableCurrencies: ReadonlyArray<{
+    readonly __typename: 'Currency';
+    readonly code: CurrencyCode;
+    readonly name: string;
+    readonly symbol: string;
+  }>;
+};
+
+export type SdkStorefrontContextQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type SdkStorefrontContextQuery = {
+  readonly __typename: 'Query';
+  readonly store: {
+    readonly __typename: 'Store';
+    readonly id: string;
+    readonly handle: string;
+    readonly name: string;
+    readonly description?: string | null;
+    readonly email?: string | null;
+    readonly timezone: string;
+    readonly defaultLocale: LocaleCode;
+    readonly defaultCurrency: CurrencyCode;
+    readonly contact?: {
+      readonly __typename: 'StoreContact';
+      readonly name: string;
+      readonly email?: string | null;
+      readonly phoneNumbers: ReadonlyArray<string>;
+    } | null;
+    readonly address?: {
+      readonly __typename: 'StoreAddress';
+      readonly companyName?: string | null;
+      readonly countryCode: CountryCode;
+      readonly address1?: string | null;
+      readonly address2?: string | null;
+      readonly city?: string | null;
+      readonly province?: string | null;
+      readonly postalCode?: string | null;
+    } | null;
+    readonly brand: {
+      readonly __typename: 'StoreBrand';
+      readonly primaryColor: any;
+      readonly secondaryColor: any;
+      readonly slogan?: string | null;
+      readonly shortDescription?: string | null;
+      readonly logo?: {
+        readonly __typename: 'MediaImage';
+        readonly id: string;
+        readonly alt?: string | null;
+        readonly image: {
+          readonly __typename: 'Image';
+          readonly id: string;
+          readonly url: any;
+          readonly width?: number | null;
+          readonly height?: number | null;
+          readonly altText?: string | null;
+          readonly thumbhash?: string | null;
+        };
+      } | null;
+      readonly squareLogo?: {
+        readonly __typename: 'MediaImage';
+        readonly id: string;
+        readonly alt?: string | null;
+        readonly image: {
+          readonly __typename: 'Image';
+          readonly id: string;
+          readonly url: any;
+          readonly width?: number | null;
+          readonly height?: number | null;
+          readonly altText?: string | null;
+          readonly thumbhash?: string | null;
+        };
+      } | null;
+      readonly coverImage?: {
+        readonly __typename: 'MediaImage';
+        readonly id: string;
+        readonly alt?: string | null;
+        readonly image: {
+          readonly __typename: 'Image';
+          readonly id: string;
+          readonly url: any;
+          readonly width?: number | null;
+          readonly height?: number | null;
+          readonly altText?: string | null;
+          readonly thumbhash?: string | null;
+        };
+      } | null;
+      readonly socialLinks: ReadonlyArray<{
+        readonly __typename: 'StoreSocialLink';
+        readonly platform: string;
+        readonly url: any;
+      }>;
+    };
+    readonly policies: ReadonlyArray<{
+      readonly __typename: 'StorePolicy';
+      readonly id: string;
+      readonly type: StorePolicyType;
+      readonly handle: string;
+      readonly path: string;
+      readonly title: string;
+    }>;
+  };
+  readonly localization: {
+    readonly __typename: 'Localization';
+    readonly market: {
+      readonly __typename: 'Market';
+      readonly id: string;
+      readonly handle: string;
+      readonly name: string;
+      readonly timezone: string;
+      readonly taxIncluded: boolean;
+    };
+    readonly country: {
+      readonly __typename: 'Country';
+      readonly code: CountryCode;
+      readonly name: string;
+    };
+    readonly language: {
+      readonly __typename: 'Language';
+      readonly code: LocaleCode;
+      readonly name: string;
+    };
+    readonly currency: {
+      readonly __typename: 'Currency';
+      readonly code: CurrencyCode;
+      readonly name: string;
+      readonly symbol: string;
+    };
+    readonly availableCountries: ReadonlyArray<{
+      readonly __typename: 'Country';
+      readonly code: CountryCode;
+      readonly name: string;
+    }>;
+    readonly availableLanguages: ReadonlyArray<{
+      readonly __typename: 'Language';
+      readonly code: LocaleCode;
+      readonly name: string;
+    }>;
+    readonly availableCurrencies: ReadonlyArray<{
+      readonly __typename: 'Currency';
+      readonly code: CurrencyCode;
+      readonly name: string;
+      readonly symbol: string;
+    }>;
+  };
+};
+
+export type SdkStorefrontLocalesQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type SdkStorefrontLocalesQuery = {
+  readonly __typename: 'Query';
+  readonly store: {
+    readonly __typename: 'Store';
+    readonly id: string;
+    readonly defaultLocale: LocaleCode;
+  };
+  readonly localization: {
+    readonly __typename: 'Localization';
+    readonly availableLanguages: ReadonlyArray<{
+      readonly __typename: 'Language';
+      readonly code: LocaleCode;
+      readonly name: string;
+    }>;
+  };
 };
 
 export type SdkPlacementFieldsFragment = {
@@ -11869,7 +17738,125 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -11952,12 +17939,10 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -12138,7 +18123,125 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
         readonly sku?: string | null;
         readonly quantity: number;
         readonly purchasableId: string;
+        readonly componentItemId?: string | null;
         readonly attributes: object;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'CheckoutLine';
+          readonly id: string;
+          readonly title: string;
+          readonly sku?: string | null;
+          readonly quantity: number;
+          readonly purchasableId: string;
+          readonly componentItemId?: string | null;
+          readonly attributes: object;
+          readonly cost: {
+            readonly __typename: 'CheckoutLineCost';
+            readonly unitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly compareAtUnitPrice: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly subtotalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly totalAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+          };
+          readonly purchasable: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly title: string;
+            readonly handle: string;
+            readonly currentlyNotInStock: boolean;
+            readonly quantityAvailable?: number | null;
+            readonly isAvailable: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly title: string;
+              readonly handle: string;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly inventoryItem?: {
+              readonly __typename: 'InventoryItem';
+              readonly inventoryPolicy: ProductVariantInventoryPolicy;
+            } | null;
+            readonly selectedOptions: ReadonlyArray<{
+              readonly __typename: 'SelectedOption';
+              readonly name: string;
+              readonly value: string;
+              readonly option: {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+              readonly optionValue: {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+                readonly handle: string;
+                readonly name: string;
+              };
+            }>;
+          };
+          readonly parent?: {
+            readonly __typename: 'CheckoutLine';
+            readonly id: string;
+          } | null;
+          readonly image?: {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: {
+              readonly __typename: 'Image';
+              readonly url: any;
+              readonly width?: number | null;
+              readonly height?: number | null;
+              readonly altText?: string | null;
+            };
+          } | null;
+          readonly purchase: {
+            readonly __typename: 'CheckoutLinePurchase';
+            readonly type: CheckoutLinePurchaseType;
+          };
+          readonly tag?: {
+            readonly __typename: 'CheckoutTag';
+            readonly id: string;
+            readonly slug: string;
+            readonly unique: boolean;
+          } | null;
+        }>;
         readonly cost: {
           readonly __typename: 'CheckoutLineCost';
           readonly unitPrice: {
@@ -12221,12 +18324,10 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
             };
           }>;
         };
-        readonly children: ReadonlyArray<{
+        readonly parent?: {
           readonly __typename: 'CheckoutLine';
           readonly id: string;
-          readonly title: string;
-          readonly quantity: number;
-        }>;
+        } | null;
         readonly image?: {
           readonly __typename: 'MediaImage';
           readonly id: string;
@@ -12273,7 +18374,6 @@ export type SdkCollectionFieldsFragment = {
   readonly publishedAt: string;
   readonly createdAt: string;
   readonly updatedAt: string;
-  readonly listingUpdatedAt: string;
   readonly description?: {
     readonly __typename: 'RichText';
     readonly text: string;
@@ -12345,7 +18445,6 @@ export type SdkCollectionByIdQuery = {
     readonly publishedAt: string;
     readonly createdAt: string;
     readonly updatedAt: string;
-    readonly listingUpdatedAt: string;
     readonly description?: {
       readonly __typename: 'RichText';
       readonly text: string;
@@ -12421,7 +18520,6 @@ export type SdkCollectionByHandleQuery = {
     readonly publishedAt: string;
     readonly createdAt: string;
     readonly updatedAt: string;
-    readonly listingUpdatedAt: string;
     readonly description?: {
       readonly __typename: 'RichText';
       readonly text: string;
@@ -13039,84 +19137,12 @@ export type SdkProductComparisonQuery = {
   } | null;
 };
 
-export const SdkAccountUserErrorFragmentDoc = {
+export const SdkCartLineFragment_FieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerUserError' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<SdkAccountUserErrorFragment, unknown>;
-export const SdkComparisonMutationResultFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'errors' },
-            name: { kind: 'Name', value: 'userErrors' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerUserError' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<SdkComparisonMutationResultFragment, unknown>;
-export const SdkCartLineFragment_LineFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -13413,15 +19439,414 @@ export const SdkCartLineFragment_LineFragmentDoc = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'image' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchase' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'attributes' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tag' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCartLineFragment_FieldsFragment, unknown>;
+export const SdkCartLineFragment_LineFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'children' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sku' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cost' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'unitPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtUnitPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'subtotalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchasable' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'product' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'title' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'handle' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        alias: { kind: 'Name', value: 'cover' },
+                        name: { kind: 'Name', value: 'featuredMedia' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'InlineFragment',
+                              typeCondition: {
+                                kind: 'NamedType',
+                                name: { kind: 'Name', value: 'MediaImage' },
+                              },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'image' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'url' },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'price' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'amount' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'currencyCode' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'compareAtPrice' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'amount' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'currencyCode' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        alias: { kind: 'Name', value: 'isAvailable' },
+                        name: { kind: 'Name', value: 'availableForSale' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currentlyNotInStock' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'quantityAvailable' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'inventoryItem' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'inventoryPolicy' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'selectedOptions' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'name' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'value' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'option' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'optionValue' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -13854,7 +20279,7 @@ export const SdkCartFragment_CartFragmentDoc = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -14151,15 +20576,14 @@ export const SdkCartFragment_CartFragmentDoc = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -14218,8 +20642,2360 @@ export const SdkCartFragment_CartFragmentDoc = {
         ],
       },
     },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<SdkCartFragment_CartFragment, unknown>;
+export const SdkNavigationTargetFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationTarget' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationTarget' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'resourceId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resource' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkNavigationTargetFragment, unknown>;
+export const SdkNavigationMenuItemFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenuItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'openInNewTab' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'target' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkNavigationTarget' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationTarget' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationTarget' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'resourceId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resource' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkNavigationMenuItemFieldsFragment, unknown>;
+export const SdkNavigationMenuFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationMenu' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenu' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'items' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'IntValue', value: '50' },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkNavigationMenuItemFields',
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'children' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'first' },
+                            value: { kind: 'IntValue', value: '50' },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'nodes' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkNavigationMenuItemFields',
+                                    },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'children' },
+                                    arguments: [
+                                      {
+                                        kind: 'Argument',
+                                        name: { kind: 'Name', value: 'first' },
+                                        value: {
+                                          kind: 'IntValue',
+                                          value: '50',
+                                        },
+                                      },
+                                    ],
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'nodes',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'FragmentSpread',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value:
+                                                    'SdkNavigationMenuItemFields',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationTarget' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationTarget' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'resourceId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resource' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenuItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'openInNewTab' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'target' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkNavigationTarget' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkNavigationMenuFragment, unknown>;
+export const SdkOnlineStorePageFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkOnlineStorePage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStorePage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'templateSuffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'content' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'description' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'json' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'excerpt' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'json' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'seo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'openGraph' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'title' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'description' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'alt' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'image' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'id' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'url' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'width',
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'height',
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkOnlineStorePageFragment, unknown>;
+export const SdkStorePolicyDetailFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStorePolicyDetail' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorePolicy' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'body' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'html' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkStorePolicyDetailFragment, unknown>;
+export const SdkCustomerAddressFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerAddress' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'company' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address1' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address2' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'city' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'province' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provinceCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'country' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'countryCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'zip' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'phone' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultShipping' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultBilling' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validationStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formatted' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formattedArea' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerAddressFragment, unknown>;
+export const SdkCustomerAddressDefaultsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultShippingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultBillingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerAddressDefaultsFragment, unknown>;
+export const SdkCustomerUserErrorFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerUserErrorFragment, unknown>;
+export const SdkComparisonMutationResultFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'errors' },
+            name: { kind: 'Name', value: 'userErrors' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkComparisonMutationResultFragment, unknown>;
+export const SdkCustomerDataRequestFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerDataRequest' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'correctionDetails' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resultFile' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'originalFileSize' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'rejectionReason' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'requestedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dueAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'finishedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerDataRequestFragment, unknown>;
+export const SdkCustomerPageInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerPageInfoFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'PageInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerPageInfoFragment, unknown>;
+export const SdkCustomerMoneyFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerMoneyFragment, unknown>;
+export const SdkLoyaltyAccountFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyAccountFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyAccount' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'balance' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availablePoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pendingPoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reservedPoints' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'debtPoints' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tier' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'effectiveFrom' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'effectiveTo' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'earnMultiplierBps' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'progress' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'nextTier' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'code' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'name' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'rank' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'presentation' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'headline' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'description' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'badge' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: {
+                                kind: 'Name',
+                                value: 'accessibilityLabel',
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'terms' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'upcomingExpirations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'storeCredit' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pendingAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'upcomingExpirations' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerMoneyFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'expiresAt' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'redemptionSources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availablePoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'minimum' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerMoneyFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumPerOrder' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerMoneyFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableRewards' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'IntValue', value: '20' },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'validUntil' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'presentation' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'headline' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'description' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'reward' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'kind' },
+                            },
+                            {
+                              kind: 'InlineFragment',
+                              typeCondition: {
+                                kind: 'NamedType',
+                                name: {
+                                  kind: 'Name',
+                                  value: 'LoyaltyVoucherRewardPresentation',
+                                },
+                              },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'code' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkLoyaltyAccountFragment, unknown>;
+export const SdkLoyaltyTransactionFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyTransactionFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyTransaction' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'effectiveAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkLoyaltyTransactionFragment, unknown>;
+export const SdkCustomerMarketingConsentFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerMarketingConsentFragment, unknown>;
+export const SdkCustomerContactsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddress' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phoneNumber' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'phoneNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marketingConsents' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerMarketingConsentFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerContactsFragment, unknown>;
+export const SdkCustomerProfileFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProfileFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'accountStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'preferredLocale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dateOfBirth' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'gender' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'companyName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'jobTitle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddress' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phoneNumber' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'phoneNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marketingConsents' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerMarketingConsentFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerProfileFragment, unknown>;
+export const SdkCustomerMediaFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerMediaFragment, unknown>;
+export const SdkCustomerProductFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Product' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerProductFragment, unknown>;
+export const SdkReviewRequestFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkReviewRequestFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ReviewRequest' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'scheduledAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sentAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'deliveredAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'openedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'review' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rating' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Product' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkReviewRequestFragment, unknown>;
+export const SdkWishlistItemFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkWishlistItemFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerWishlistItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'addedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Product' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkWishlistItemFragment, unknown>;
+export const SdkStoreImageFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStoreImage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'MediaImage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'image' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'height' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'altText' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'thumbhash' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkStoreImageFragment, unknown>;
+export const SdkStoreFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStore' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Store' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'timezone' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'defaultLocale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'defaultCurrency' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'contact' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'phoneNumbers' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'address' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'companyName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'countryCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'address1' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'address2' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'city' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'province' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'postalCode' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'brand' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStoreImage' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'squareLogo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStoreImage' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'coverImage' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStoreImage' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'primaryColor' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'secondaryColor' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'slogan' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'shortDescription' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'socialLinks' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'platform' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'policies' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStoreImage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'MediaImage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'image' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'height' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'altText' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'thumbhash' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkStoreFragment, unknown>;
+export const SdkLocalizationFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLocalization' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Localization' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'market' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timezone' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'taxIncluded' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'country' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'language' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'currency' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableCountries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableLanguages' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableCurrencies' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkLocalizationFragment, unknown>;
 export const SdkPlacementFieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -14332,7 +23108,6 @@ export const SdkCollectionFieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'listingUpdatedAt' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'description' },
@@ -14647,439 +23422,6 @@ export const SdkAccountProductActionsQueryDocument = {
   SdkAccountProductActionsQuery,
   SdkAccountProductActionsQueryVariables
 >;
-export const SdkWishlistProductAddMutationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'SdkWishlistProductAddMutation' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'WishlistProductAddInput' },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'wishlistProductAdd' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'wishlistItem' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'product' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'id' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'wishlist' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'id' },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  alias: { kind: 'Name', value: 'errors' },
-                  name: { kind: 'Name', value: 'userErrors' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkAccountUserErrorFragment',
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerUserError' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  SdkWishlistProductAddMutation,
-  SdkWishlistProductAddMutationVariables
->;
-export const SdkWishlistProductRemoveMutationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'SdkWishlistProductRemoveMutation' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'WishlistProductRemoveInput' },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'wishlistProductRemove' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'deletedWishlistItemId' },
-                },
-                {
-                  kind: 'Field',
-                  alias: { kind: 'Name', value: 'errors' },
-                  name: { kind: 'Name', value: 'userErrors' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkAccountUserErrorFragment',
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerUserError' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  SdkWishlistProductRemoveMutation,
-  SdkWishlistProductRemoveMutationVariables
->;
-export const SdkCustomerComparisonVariantAddMutationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'SdkCustomerComparisonVariantAddMutation' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: {
-                kind: 'Name',
-                value: 'CustomerComparisonVariantAddInput',
-              },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'customerComparisonVariantAdd' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: {
-                    kind: 'Name',
-                    value: 'SdkComparisonMutationResultFragment',
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerUserError' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'errors' },
-            name: { kind: 'Name', value: 'userErrors' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  SdkCustomerComparisonVariantAddMutation,
-  SdkCustomerComparisonVariantAddMutationVariables
->;
-export const SdkCustomerComparisonVariantRemoveMutationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: {
-        kind: 'Name',
-        value: 'SdkCustomerComparisonVariantRemoveMutation',
-      },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: {
-                kind: 'Name',
-                value: 'CustomerComparisonVariantRemoveInput',
-              },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'customerComparisonVariantRemove' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: {
-                    kind: 'Name',
-                    value: 'SdkComparisonMutationResultFragment',
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerUserError' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'errors' },
-            name: { kind: 'Name', value: 'userErrors' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkAccountUserErrorFragment' },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  SdkCustomerComparisonVariantRemoveMutation,
-  SdkCustomerComparisonVariantRemoveMutationVariables
->;
 export const SdkAddPromoCodeMutationDocument = {
   kind: 'Document',
   definitions: [
@@ -15162,7 +23504,7 @@ export const SdkAddPromoCodeMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -15459,15 +23801,14 @@ export const SdkAddPromoCodeMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -15520,6 +23861,36 @@ export const SdkAddPromoCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -15981,7 +24352,7 @@ export const SdkAddToCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -16278,15 +24649,14 @@ export const SdkAddToCartMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -16339,6 +24709,36 @@ export const SdkAddToCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -16805,7 +25205,7 @@ export const SdkClaimCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -17102,15 +25502,14 @@ export const SdkClaimCartMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -17163,6 +25562,36 @@ export const SdkClaimCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -17624,7 +26053,7 @@ export const SdkClearCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -17921,15 +26350,14 @@ export const SdkClearCartMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -17982,6 +26410,36 @@ export const SdkClearCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -18444,7 +26902,7 @@ export const SdkCreateCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -18741,15 +27199,14 @@ export const SdkCreateCartMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -18802,6 +27259,36 @@ export const SdkCreateCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -19263,7 +27750,7 @@ export const SdkRemoveFromCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -19560,15 +28047,14 @@ export const SdkRemoveFromCartMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -19621,6 +28107,36 @@ export const SdkRemoveFromCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -20081,7 +28597,7 @@ export const SdkRemovePromoCodeMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -20378,15 +28894,14 @@ export const SdkRemovePromoCodeMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -20439,6 +28954,36 @@ export const SdkRemovePromoCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -20900,7 +29445,7 @@ export const SdkReplaceCartItemMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -21197,15 +29742,14 @@ export const SdkReplaceCartItemMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -21258,6 +29802,36 @@ export const SdkReplaceCartItemMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -21636,13 +30210,13 @@ export const SdkReplaceCartItemMutationDocument = {
   SdkReplaceCartItemMutation,
   SdkReplaceCartItemMutationVariables
 >;
-export const SdkUpdateCartLineQuantityMutationDocument = {
+export const SdkUpdateCartCurrencyCodeMutationDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'SdkUpdateCartLineQuantityMutation' },
+      name: { kind: 'Name', value: 'SdkUpdateCartCurrencyCodeMutation' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -21654,7 +30228,7 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
             kind: 'NonNullType',
             type: {
               kind: 'NamedType',
-              name: { kind: 'Name', value: 'CheckoutLinesUpdateInput' },
+              name: { kind: 'Name', value: 'CheckoutCurrencyCodeUpdateInput' },
             },
           },
         },
@@ -21664,7 +30238,7 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'checkoutLinesUpdate' },
+            name: { kind: 'Name', value: 'checkoutCurrencyCodeUpdate' },
             arguments: [
               {
                 kind: 'Argument',
@@ -21719,7 +30293,7 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -22016,15 +30590,14 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -22077,6 +30650,1732 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartFragment_cart' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Checkout' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'channelCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'localeCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'resultRevision' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'valid' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'loyaltyRewardId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'loyaltyRedemption' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'quoteId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'accountId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'programId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'programCode' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'programVersion' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'requestedPoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'requestedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availablePoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'payableAfterLoyalty' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'issues' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'severity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'effect' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'lineId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'totalQuantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cost' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'subtotalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalDiscountAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalTaxAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalShippingAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'merchandiseDiscountAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'loyaltyAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guestCheckoutAllowed' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'promoCodes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'loyaltyEarning' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'amount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'presentation' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'headline' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'customerNote' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'notifications' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'severity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isDismissed' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lines' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkUpdateCartCurrencyCodeMutation,
+  SdkUpdateCartCurrencyCodeMutationVariables
+>;
+export const SdkUpdateCartLanguageCodeMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkUpdateCartLanguageCodeMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CheckoutLanguageCodeUpdateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'checkoutLanguageCodeUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'checkout' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkCartFragment_cart' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'message' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'retryable' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sku' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cost' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'unitPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtUnitPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'subtotalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchasable' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'product' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'title' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'handle' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        alias: { kind: 'Name', value: 'cover' },
+                        name: { kind: 'Name', value: 'featuredMedia' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'InlineFragment',
+                              typeCondition: {
+                                kind: 'NamedType',
+                                name: { kind: 'Name', value: 'MediaImage' },
+                              },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'image' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'url' },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'price' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'amount' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'currencyCode' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'compareAtPrice' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'amount' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'currencyCode' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        alias: { kind: 'Name', value: 'isAvailable' },
+                        name: { kind: 'Name', value: 'availableForSale' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currentlyNotInStock' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'quantityAvailable' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'inventoryItem' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'inventoryPolicy' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'selectedOptions' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'name' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'value' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'option' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'optionValue' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'image' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchase' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'attributes' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tag' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartFragment_cart' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Checkout' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'channelCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'localeCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'resultRevision' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'valid' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'loyaltyRewardId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'loyaltyRedemption' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'quoteId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'accountId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'programId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'programCode' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'programVersion' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'requestedPoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'requestedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availablePoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'payableAfterLoyalty' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'issues' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'severity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'effect' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'lineId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'totalQuantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cost' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'subtotalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalDiscountAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalTaxAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalShippingAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'merchandiseDiscountAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'loyaltyAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guestCheckoutAllowed' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'promoCodes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'loyaltyEarning' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'amount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'presentation' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'headline' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'customerNote' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'notifications' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'severity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isDismissed' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lines' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkUpdateCartLanguageCodeMutation,
+  SdkUpdateCartLanguageCodeMutationVariables
+>;
+export const SdkUpdateCartLineQuantityMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkUpdateCartLineQuantityMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CheckoutLinesUpdateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'checkoutLinesUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'checkout' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkCartFragment_cart' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'message' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'retryable' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sku' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cost' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'unitPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtUnitPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'subtotalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'totalAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchasable' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'product' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'title' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'handle' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        alias: { kind: 'Name', value: 'cover' },
+                        name: { kind: 'Name', value: 'featuredMedia' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'InlineFragment',
+                              typeCondition: {
+                                kind: 'NamedType',
+                                name: { kind: 'Name', value: 'MediaImage' },
+                              },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'image' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'url' },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'price' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'amount' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'currencyCode' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'compareAtPrice' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'amount' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'currencyCode' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        alias: { kind: 'Name', value: 'isAvailable' },
+                        name: { kind: 'Name', value: 'availableForSale' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currentlyNotInStock' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'quantityAvailable' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'inventoryItem' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'inventoryPolicy' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'selectedOptions' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'name' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'value' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'option' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'optionValue' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'image' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchase' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'attributes' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tag' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -22494,7 +32793,7 @@ export const SdkLoadAccountCartQueryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -22791,15 +33090,14 @@ export const SdkLoadAccountCartQueryDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -22852,6 +33150,36 @@ export const SdkLoadAccountCartQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -23281,7 +33609,7 @@ export const SdkLoadCartQueryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -23578,15 +33906,14 @@ export const SdkLoadCartQueryDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -23639,6 +33966,36 @@ export const SdkLoadCartQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -24014,6 +34371,5397 @@ export const SdkLoadCartQueryDocument = {
     },
   ],
 } as unknown as DocumentNode<SdkLoadCartQuery, SdkLoadCartQueryVariables>;
+export const SdkNavigationMenuByHandleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkNavigationMenuByHandle' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'handle' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onlineStoreNavigationMenuByHandle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'handle' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'handle' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkNavigationMenu' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationTarget' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationTarget' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'resourceId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resource' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenuItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'openInNewTab' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'target' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkNavigationTarget' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkNavigationMenu' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenu' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'items' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'IntValue', value: '50' },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkNavigationMenuItemFields',
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'children' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'first' },
+                            value: { kind: 'IntValue', value: '50' },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'nodes' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkNavigationMenuItemFields',
+                                    },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'children' },
+                                    arguments: [
+                                      {
+                                        kind: 'Argument',
+                                        name: { kind: 'Name', value: 'first' },
+                                        value: {
+                                          kind: 'IntValue',
+                                          value: '50',
+                                        },
+                                      },
+                                    ],
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'nodes',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'FragmentSpread',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value:
+                                                    'SdkNavigationMenuItemFields',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkNavigationMenuByHandleQuery,
+  SdkNavigationMenuByHandleQueryVariables
+>;
+export const SdkOnlineStorePageByHandleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkOnlineStorePageByHandle' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'handle' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onlineStorePageByHandle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'handle' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'handle' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkOnlineStorePage' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkOnlineStorePage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStorePage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'templateSuffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'content' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'description' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'json' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'excerpt' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'json' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'seo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'description' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'openGraph' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'title' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'description' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'alt' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'image' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'id' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'url' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'width',
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'height',
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkOnlineStorePageByHandleQuery,
+  SdkOnlineStorePageByHandleQueryVariables
+>;
+export const SdkStorePolicyByHandleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStorePolicyByHandle' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'handle' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'storePolicy' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'handle' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'handle' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkStorePolicyDetail' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStorePolicyDetail' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorePolicy' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'body' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'html' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStorePolicyByHandleQuery,
+  SdkStorePolicyByHandleQueryVariables
+>;
+export const SdkCustomerAddressesQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerAddressesQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerAddressDefaultsFragment',
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'addresses' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'first' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'first' },
+                      },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'after' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'after' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'edges' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'cursor' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'node' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkCustomerAddressFragment',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'pageInfo' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerPageInfoFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'totalCount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultShippingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultBillingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerAddress' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'company' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address1' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address2' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'city' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'province' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provinceCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'country' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'countryCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'zip' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'phone' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultShipping' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultBilling' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validationStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formatted' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formattedArea' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerPageInfoFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'PageInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerAddressesQuery,
+  SdkCustomerAddressesQueryVariables
+>;
+export const SdkCustomerAddressCreateMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerAddressCreateMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerAddressCreateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerAddressCreate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customerAddress' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerAddressFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerAddressDefaultsFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerAddress' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'company' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address1' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address2' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'city' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'province' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provinceCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'country' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'countryCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'zip' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'phone' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultShipping' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultBilling' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validationStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formatted' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formattedArea' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultShippingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultBillingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerAddressCreateMutation,
+  SdkCustomerAddressCreateMutationVariables
+>;
+export const SdkCustomerAddressUpdateMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerAddressUpdateMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerAddressUpdateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerAddressUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customerAddress' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerAddressFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerAddressDefaultsFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerAddress' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'company' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address1' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'address2' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'city' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'province' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provinceCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'country' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'countryCode' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'zip' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'phone' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultShipping' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isDefaultBilling' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validationStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formatted' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'formattedArea' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultShippingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultBillingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerAddressUpdateMutation,
+  SdkCustomerAddressUpdateMutationVariables
+>;
+export const SdkCustomerAddressDeleteMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDeleteMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerAddressDeleteInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerAddressDelete' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'deletedAddressId' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerAddressDefaultsFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultShippingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultBillingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerAddressDeleteMutation,
+  SdkCustomerAddressDeleteMutationVariables
+>;
+export const SdkCustomerAddressDefaultSetMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultSetMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerAddressDefaultSetInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerAddressDefaultSet' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerAddressDefaultsFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerAddressDefaultsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultShippingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'defaultBillingAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerAddressDefaultSetMutation,
+  SdkCustomerAddressDefaultSetMutationVariables
+>;
+export const SdkCustomerProductComparisonsQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerProductComparisonsQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'imageTransform' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'ImageTransformInput' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'productComparisons' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'totalCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'itemCount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'nodes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'key' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'title' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'category' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'id' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'handle' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'columns' },
+                              arguments: [
+                                {
+                                  kind: 'Argument',
+                                  name: { kind: 'Name', value: 'first' },
+                                  value: { kind: 'IntValue', value: '100' },
+                                },
+                              ],
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'nodes' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'key' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'position',
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'product',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'id',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'handle',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'title',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'variant',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'id',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'handle',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'title',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'featuredMedia',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'FragmentSpread',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value:
+                                                    'SdkCustomerMediaFragment',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'price',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'FragmentSpread',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value:
+                                                    'SdkCustomerMoneyFragment',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'compareAtPrice',
+                                          },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'FragmentSpread',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value:
+                                                    'SdkCustomerMoneyFragment',
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'availableForSale',
+                                          },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'savedForComparison',
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'groups' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'key' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'name' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'rows' },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'key',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'name',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'description',
+                                                },
+                                              },
+                                              {
+                                                kind: 'Field',
+                                                name: {
+                                                  kind: 'Name',
+                                                  value: 'cells',
+                                                },
+                                                selectionSet: {
+                                                  kind: 'SelectionSet',
+                                                  selections: [
+                                                    {
+                                                      kind: 'Field',
+                                                      name: {
+                                                        kind: 'Name',
+                                                        value: 'status',
+                                                      },
+                                                    },
+                                                    {
+                                                      kind: 'Field',
+                                                      name: {
+                                                        kind: 'Name',
+                                                        value: 'feature',
+                                                      },
+                                                      selectionSet: {
+                                                        kind: 'SelectionSet',
+                                                        selections: [
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value: 'id',
+                                                            },
+                                                          },
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value: 'name',
+                                                            },
+                                                          },
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value: 'values',
+                                                            },
+                                                            selectionSet: {
+                                                              kind: 'SelectionSet',
+                                                              selections: [
+                                                                {
+                                                                  kind: 'Field',
+                                                                  name: {
+                                                                    kind: 'Name',
+                                                                    value: 'id',
+                                                                  },
+                                                                },
+                                                                {
+                                                                  kind: 'Field',
+                                                                  name: {
+                                                                    kind: 'Name',
+                                                                    value:
+                                                                      'name',
+                                                                  },
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                        ],
+                                                      },
+                                                    },
+                                                    {
+                                                      kind: 'Field',
+                                                      name: {
+                                                        kind: 'Name',
+                                                        value: 'selectedOption',
+                                                      },
+                                                      selectionSet: {
+                                                        kind: 'SelectionSet',
+                                                        selections: [
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value: 'name',
+                                                            },
+                                                          },
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value: 'value',
+                                                            },
+                                                          },
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value: 'option',
+                                                            },
+                                                            selectionSet: {
+                                                              kind: 'SelectionSet',
+                                                              selections: [
+                                                                {
+                                                                  kind: 'Field',
+                                                                  name: {
+                                                                    kind: 'Name',
+                                                                    value: 'id',
+                                                                  },
+                                                                },
+                                                                {
+                                                                  kind: 'Field',
+                                                                  name: {
+                                                                    kind: 'Name',
+                                                                    value:
+                                                                      'name',
+                                                                  },
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                          {
+                                                            kind: 'Field',
+                                                            name: {
+                                                              kind: 'Name',
+                                                              value:
+                                                                'optionValue',
+                                                            },
+                                                            selectionSet: {
+                                                              kind: 'SelectionSet',
+                                                              selections: [
+                                                                {
+                                                                  kind: 'Field',
+                                                                  name: {
+                                                                    kind: 'Name',
+                                                                    value: 'id',
+                                                                  },
+                                                                },
+                                                                {
+                                                                  kind: 'Field',
+                                                                  name: {
+                                                                    kind: 'Name',
+                                                                    value:
+                                                                      'name',
+                                                                  },
+                                                                },
+                                                              ],
+                                                            },
+                                                          },
+                                                        ],
+                                                      },
+                                                    },
+                                                  ],
+                                                },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'totalCount' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerProductComparisonsQuery,
+  SdkCustomerProductComparisonsQueryVariables
+>;
+export const SdkCustomerComparisonVariantAddMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerComparisonVariantAddMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'CustomerComparisonVariantAddInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerComparisonVariantAdd' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkComparisonMutationResultFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'errors' },
+            name: { kind: 'Name', value: 'userErrors' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerComparisonVariantAddMutation,
+  SdkCustomerComparisonVariantAddMutationVariables
+>;
+export const SdkCustomerComparisonVariantRemoveMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: {
+        kind: 'Name',
+        value: 'SdkCustomerComparisonVariantRemoveMutation',
+      },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'CustomerComparisonVariantRemoveInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerComparisonVariantRemove' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkComparisonMutationResultFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'errors' },
+            name: { kind: 'Name', value: 'userErrors' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerComparisonVariantRemoveMutation,
+  SdkCustomerComparisonVariantRemoveMutationVariables
+>;
+export const SdkCustomerComparisonCategoryClearMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: {
+        kind: 'Name',
+        value: 'SdkCustomerComparisonCategoryClearMutation',
+      },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'CustomerComparisonCategoryClearInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerComparisonCategoryClear' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkComparisonMutationResultFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkComparisonMutationResultFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerComparisonMutationPayload' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'errors' },
+            name: { kind: 'Name', value: 'userErrors' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerComparisonCategoryClearMutation,
+  SdkCustomerComparisonCategoryClearMutationVariables
+>;
+export const SdkCustomerDataRequestsQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestsQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'dataRequests' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'first' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'first' },
+                      },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'after' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'after' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'edges' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'cursor' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'node' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkCustomerDataRequestFragment',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'pageInfo' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerPageInfoFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'totalCount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerDataRequest' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'correctionDetails' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resultFile' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'originalFileSize' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'rejectionReason' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'requestedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dueAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'finishedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerPageInfoFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'PageInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerDataRequestsQuery,
+  SdkCustomerDataRequestsQueryVariables
+>;
+export const SdkCustomerDataRequestCreateMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestCreateMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerDataRequestCreateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerDataRequestCreate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'dataRequest' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerDataRequestFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerDataRequest' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'correctionDetails' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resultFile' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'originalFileSize' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'rejectionReason' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'requestedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dueAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'finishedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerDataRequestCreateMutation,
+  SdkCustomerDataRequestCreateMutationVariables
+>;
+export const SdkCustomerDataRequestCancelMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestCancelMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerDataRequestCancelInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerDataRequestCancel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'dataRequest' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerDataRequestFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerDataRequestFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerDataRequest' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'correctionDetails' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resultFile' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'originalFileSize' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'rejectionReason' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'requestedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dueAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'finishedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerDataRequestCancelMutation,
+  SdkCustomerDataRequestCancelMutationVariables
+>;
+export const SdkLoyaltyAccountQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkLoyaltyAccountQuery' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'loyaltyAccount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkLoyaltyAccountFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyAccountFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyAccount' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'balance' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availablePoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pendingPoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reservedPoints' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'debtPoints' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tier' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'effectiveFrom' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'effectiveTo' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'earnMultiplierBps' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'progress' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'nextTier' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'code' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'name' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'rank' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'presentation' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'headline' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'description' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'badge' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: {
+                                kind: 'Name',
+                                value: 'accessibilityLabel',
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'terms' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'upcomingExpirations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'storeCredit' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pendingAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'upcomingExpirations' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerMoneyFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'expiresAt' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'redemptionSources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availablePoints' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'minimum' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerMoneyFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumPerOrder' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerMoneyFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableRewards' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'IntValue', value: '20' },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'validUntil' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'presentation' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'headline' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'description' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'reward' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'kind' },
+                            },
+                            {
+                              kind: 'InlineFragment',
+                              typeCondition: {
+                                kind: 'NamedType',
+                                name: {
+                                  kind: 'Name',
+                                  value: 'LoyaltyVoucherRewardPresentation',
+                                },
+                              },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'code' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkLoyaltyAccountQuery,
+  SdkLoyaltyAccountQueryVariables
+>;
+export const SdkLoyaltyTransactionsQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkLoyaltyTransactionsQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'loyaltyAccount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'transactions' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'first' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'first' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'after' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'after' },
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'edges' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'cursor' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'node' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'FragmentSpread',
+                                          name: {
+                                            kind: 'Name',
+                                            value:
+                                              'SdkLoyaltyTransactionFragment',
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'pageInfo' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkCustomerPageInfoFragment',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'totalCount' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyTransactionFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyTransaction' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'points' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'effectiveAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerPageInfoFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'PageInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkLoyaltyTransactionsQuery,
+  SdkLoyaltyTransactionsQueryVariables
+>;
+export const SdkCustomerQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerQuery' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerProfileFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddress' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phoneNumber' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'phoneNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marketingConsents' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerMarketingConsentFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProfileFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'accountStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'preferredLocale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dateOfBirth' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'gender' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'companyName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'jobTitle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkCustomerQuery, SdkCustomerQueryVariables>;
+export const SdkCustomerUpdateMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkCustomerUpdateMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CustomerUpdateInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerProfileFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddress' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phoneNumber' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'phoneNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marketingConsents' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerMarketingConsentFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProfileFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'accountStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'middleName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'suffix' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'preferredLocale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'dateOfBirth' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'gender' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'companyName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'jobTitle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerUpdateMutation,
+  SdkCustomerUpdateMutationVariables
+>;
+export const SdkCustomerMarketingConsentsQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentsQuery' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddress' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phoneNumber' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'phoneNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marketingConsents' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerMarketingConsentFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerMarketingConsentsQuery,
+  SdkCustomerMarketingConsentsQueryVariables
+>;
+export const SdkCustomerMarketingConsentUpdateMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: {
+        kind: 'Name',
+        value: 'SdkCustomerMarketingConsentUpdateMutation',
+      },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'CustomerMarketingConsentUpdateInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customerMarketingConsentUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'customer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerContactsFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMarketingConsentFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerMarketingConsent' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'optInLevel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consentedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerContactsFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Customer' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailAddress' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddress' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phoneNumber' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'phoneNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'marketingConsent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMarketingConsentFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marketingConsents' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'SdkCustomerMarketingConsentFragment',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerMarketingConsentUpdateMutation,
+  SdkCustomerMarketingConsentUpdateMutationVariables
+>;
+export const SdkCustomerReviewRequestsQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerReviewRequestsQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'imageTransform' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'ImageTransformInput' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reviewRequests' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'first' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'first' },
+                      },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'after' },
+                      value: {
+                        kind: 'Variable',
+                        name: { kind: 'Name', value: 'after' },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'edges' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'cursor' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'node' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkReviewRequestFragment',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'pageInfo' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkCustomerPageInfoFragment',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'totalCount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Product' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkReviewRequestFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ReviewRequest' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'channel' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'scheduledAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sentAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'deliveredAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'openedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'review' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rating' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerPageInfoFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'PageInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerReviewRequestsQuery,
+  SdkCustomerReviewRequestsQueryVariables
+>;
+export const SdkCustomerWishlistQueryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkCustomerWishlistQuery' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'imageTransform' },
+          },
+          type: {
+            kind: 'NamedType',
+            name: { kind: 'Name', value: 'ImageTransformInput' },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'defaultWishlist' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'isDefault' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'items' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'first' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'first' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'after' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'after' },
+                            },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'edges' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'cursor' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'node' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'FragmentSpread',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'SdkWishlistItemFragment',
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'pageInfo' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkCustomerPageInfoFragment',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'totalCount' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Media' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'InlineFragment',
+            typeCondition: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'MediaImage' },
+            },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'image' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'url' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'transform' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'imageTransform' },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'altText' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'height' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Money' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Product' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerMoneyFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkWishlistItemFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerWishlistItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'addedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerPageInfoFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'PageInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkCustomerWishlistQuery,
+  SdkCustomerWishlistQueryVariables
+>;
+export const SdkWishlistProductAddMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkWishlistProductAddMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'WishlistProductAddInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'wishlistProductAdd' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'wishlistItem' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'addedAt' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'product' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'wishlist' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkWishlistProductAddMutation,
+  SdkWishlistProductAddMutationVariables
+>;
+export const SdkWishlistProductRemoveMutationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SdkWishlistProductRemoveMutation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'WishlistProductRemoveInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'wishlistProductRemove' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'deletedWishlistItemId' },
+                },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'errors' },
+                  name: { kind: 'Name', value: 'userErrors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkCustomerUserErrorFragment',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCustomerUserErrorFragment' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CustomerUserError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'field' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'retryable' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkWishlistProductRemoveMutation,
+  SdkWishlistProductRemoveMutationVariables
+>;
+export const SdkStorefrontContextDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStorefrontContext' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'store' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkStore' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'localization' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLocalization' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStoreImage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'MediaImage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'image' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'width' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'height' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'altText' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'thumbhash' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStore' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Store' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'timezone' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'defaultLocale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'defaultCurrency' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'contact' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'phoneNumbers' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'address' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'companyName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'countryCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'address1' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'address2' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'city' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'province' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'postalCode' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'brand' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStoreImage' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'squareLogo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStoreImage' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'coverImage' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStoreImage' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'primaryColor' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'secondaryColor' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'slogan' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'shortDescription' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'socialLinks' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'platform' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'policies' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLocalization' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Localization' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'market' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timezone' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'taxIncluded' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'country' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'language' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'currency' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableCountries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableLanguages' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'availableCurrencies' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStorefrontContextQuery,
+  SdkStorefrontContextQueryVariables
+>;
+export const SdkStorefrontLocalesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStorefrontLocales' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'store' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'defaultLocale' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'localization' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableLanguages' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStorefrontLocalesQuery,
+  SdkStorefrontLocalesQueryVariables
+>;
 export const SdkPlaceOrderDocument = {
   kind: 'Document',
   definitions: [
@@ -24365,7 +40113,7 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -24662,15 +40410,14 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -24723,6 +40470,36 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -25186,7 +40963,7 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
         name: { kind: 'Name', value: 'CheckoutLine' },
@@ -25483,15 +41260,14 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'componentItemId' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'children' },
+            name: { kind: 'Name', value: 'parent' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
               ],
             },
           },
@@ -25544,6 +41320,36 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkCartLineFragment_line' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'CheckoutLine' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'FragmentSpread',
+            name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'children' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
+                },
               ],
             },
           },
@@ -26004,7 +41810,6 @@ export const SdkCollectionByIdDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'listingUpdatedAt' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'description' },
@@ -26268,7 +42073,6 @@ export const SdkCollectionByHandleDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'listingUpdatedAt' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'description' },

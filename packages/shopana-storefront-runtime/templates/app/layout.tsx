@@ -1,1 +1,1 @@
-export { default } from '@src/runtime/layout';
+export { default, generateMetadata } from '@src/runtime/layout';

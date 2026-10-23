@@ -56,38 +56,20 @@ export const computeCartTotals = (cart: model.Cart): model.Cart['cost'] => {
     (acc, l) => acc + parseAmount(l.cost.subtotalAmount.amount),
     0
   );
-  const localDiscount = cart.lines.reduce(
-    (acc, l) =>
-      acc +
-      Math.max(
-        parseAmount(l.cost.subtotalAmount.amount) -
-          parseAmount(l.cost.totalAmount.amount),
-        0
-      ),
-    0
-  );
-  const discount = parseAmount(
-    cart.cost.totalDiscountAmount?.amount ?? localDiscount
-  );
-  const shipping = parseAmount(cart.cost.totalShippingAmount?.amount ?? 0);
-  const tax = parseAmount(cart.cost.totalTaxAmount?.amount ?? 0);
+  const discount = parseAmount(cart.cost.totalDiscountAmount.amount);
+  const shipping = parseAmount(cart.cost.totalShippingAmount.amount);
+  const tax = parseAmount(cart.cost.totalTaxAmount.amount);
   const total = subtotal - discount + shipping + tax;
 
   return {
     subtotalAmount: { amount: subtotal, currencyCode: currency },
     totalAmount: { amount: total, currencyCode: currency },
-    totalDiscountAmount: cart.cost.totalDiscountAmount
-      ? { amount: discount, currencyCode: currency }
-      : { amount: 0, currencyCode: currency },
-    totalTaxAmount: cart.cost.totalTaxAmount
-      ? { amount: tax, currencyCode: currency }
-      : { amount: 0, currencyCode: currency },
-    totalShippingAmount: cart.cost.totalShippingAmount
-      ? { amount: shipping, currencyCode: currency }
-      : { amount: 0, currencyCode: currency },
+    totalDiscountAmount: { amount: discount, currencyCode: currency },
+    totalTaxAmount: { amount: tax, currencyCode: currency },
+    totalShippingAmount: { amount: shipping, currencyCode: currency },
     // Not known locally: kept from the last server calculation.
-    merchandiseDiscountAmount: cart.cost.merchandiseDiscountAmount ?? null,
-    loyaltyAmount: cart.cost.loyaltyAmount ?? null,
+    merchandiseDiscountAmount: cart.cost.merchandiseDiscountAmount,
+    loyaltyAmount: cart.cost.loyaltyAmount,
   };
 };
 

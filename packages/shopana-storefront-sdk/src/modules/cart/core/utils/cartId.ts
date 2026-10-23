@@ -1,24 +1,37 @@
-import Cookies from 'js-cookie';
-import type { CartConfig } from '../config';
+import {
+  readCookie,
+  resolveCookieAttributes,
+  serializeCookie,
+  type CookieAttributes,
+} from '../../../../core/cookiePolicy';
+import {
+  DEFAULT_CART_CONFIG,
+  type CartCookieOptions,
+  type ResolvedCartConfig,
+} from '../config';
 
-const DEFAULT_COOKIE_NAME = 'cartId';
-
-export interface CartIdUtilsConfig {
-  cookieName?: string;
-  cookieOptions?: CartConfig['cookieOptions'];
-}
+export type CartIdUtilsConfig = Partial<
+  Pick<ResolvedCartConfig, 'cookieName' | 'cookiePolicy'>
+> & {
+  cookieOptions?: Partial<CartCookieOptions>;
+};
 
 /**
  * Creates cart ID utilities with configuration support
- * Allows customization of cookie name and options
+ * Allows customization of cookie name, policy and options
  */
-export function createCartIdUtils(config?: CartIdUtilsConfig) {
-  const cookieName = config?.cookieName ?? DEFAULT_COOKIE_NAME;
-  const cookieOptions = config?.cookieOptions ?? {
-    secure: true,
-    sameSite: 'strict' as const,
-    maxAge: 3600 * 24 * 30, // 30 days
+export function createCartIdUtils(config: CartIdUtilsConfig = {}) {
+  const cookieName = config.cookieName ?? DEFAULT_CART_CONFIG.cookieName;
+  const cookieOptions: CartCookieOptions = {
+    ...DEFAULT_CART_CONFIG.cookieOptions,
+    ...config.cookieOptions,
   };
+  // Setting and deleting use the same attributes: a partitioned cookie is deleted only by a
+  // `Set-Cookie` that is partitioned too.
+  const attributes: CookieAttributes = resolveCookieAttributes(
+    config.cookiePolicy ?? DEFAULT_CART_CONFIG.cookiePolicy,
+    { secure: cookieOptions.secure }
+  );
 
   return {
     /**
@@ -28,36 +41,20 @@ export function createCartIdUtils(config?: CartIdUtilsConfig) {
      */
     getCartIdFromCookie(serverCookies?: string): string | null {
       if (typeof window === 'undefined') {
-        // Server-side
-        if (serverCookies) {
-          // Create regex dynamically with cookie name
-          const regex = new RegExp(`(?:^|; )${cookieName}=([^;]*)`);
-          const match = serverCookies.match(regex);
-          return match ? decodeURIComponent(match[1]) : null;
-        }
-        return null;
+        return readCookie(serverCookies, cookieName);
       }
-      // Client-side
-      return Cookies.get(cookieName) ?? null;
+      return readCookie(document.cookie, cookieName);
     },
 
     /**
      * Set cart ID cookie
      * @param cartId - Cart ID to store
-     * @param customOptions - Override default cookie options
      */
-    setCartIdCookie(
-      cartId: string,
-      customOptions?: Partial<CartConfig['cookieOptions']>
-    ): void {
-      const options = { ...cookieOptions, ...customOptions };
-      const expiresInDays = (options.maxAge ?? 3600 * 24 * 30) / (3600 * 24);
-
-      Cookies.set(cookieName, cartId, {
-        path: '/',
-        secure: options.secure ?? true,
-        sameSite: options.sameSite ?? 'strict',
-        expires: expiresInDays,
+    setCartIdCookie(cartId: string): void {
+      if (typeof document === 'undefined') return;
+      document.cookie = serializeCookie(cookieName, cartId, {
+        ...attributes,
+        maxAge: cookieOptions.maxAge,
       });
     },
 
@@ -65,8 +62,11 @@ export function createCartIdUtils(config?: CartIdUtilsConfig) {
      * Remove cart ID cookie
      */
     removeCartIdCookie(): void {
-      if (typeof window === 'undefined') return;
-      Cookies.remove(cookieName);
+      if (typeof document === 'undefined') return;
+      document.cookie = serializeCookie(cookieName, '', {
+        ...attributes,
+        maxAge: 0,
+      });
     },
 
     /**
@@ -80,7 +80,4 @@ export function createCartIdUtils(config?: CartIdUtilsConfig) {
   };
 }
 
-/**
- * Default cart ID utilities (backward compatibility)
- */
-export const cartIdUtils = createCartIdUtils();
+export type CartIdUtils = ReturnType<typeof createCartIdUtils>;

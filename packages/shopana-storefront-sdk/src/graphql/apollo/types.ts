@@ -1,3 +1,4 @@
+import type { CookiePolicy } from '../../core/cookiePolicy';
 import type {
   ApolloLink,
   InMemoryCacheConfig,
@@ -14,6 +15,11 @@ export interface ApolloEnvironmentConfig {
   apiKey: string;
   /** Absent when the store has no customer accounts. */
   applicationAuth?: ApplicationAuthConfig;
+  /**
+   * Cookie attributes of the cart, visitor and session cookies: `embedded` when the storefront
+   * runs in a third-party iframe. `first-party` by default.
+   */
+  cookiePolicy?: CookiePolicy;
 }
 
 export type ApplicationAuthScope =
@@ -44,6 +50,8 @@ export interface CreateApolloClientOptions {
    */
   accessToken?: string | null;
   initialState?: NormalizedCacheObject;
+  /** Active storefront locale tag sent as `Accept-Language`, for example `uk` or `pt-BR`. */
+  locale?: string;
   cacheConfig?: InMemoryCacheConfig;
   links?: readonly ApolloLink[];
 }

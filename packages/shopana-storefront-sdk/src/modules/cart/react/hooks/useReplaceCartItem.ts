@@ -20,7 +20,7 @@ import { useCartStoreApi, useCartSetters } from '../context/CartContext';
  *   },
  *   {
  *     onSuccess: () => console.log('Item replaced successfully'),
- *     onError: () => console.error('Failed to replace item'),
+ *     onError: (error) => console.error(error.kind, error.userErrors),
  *   }
  * );
  * ```
@@ -29,7 +29,14 @@ import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { replaceCartItemMutation } from '../../core/graphql/mutations/replaceCartItemMutation';
 import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
-import { ReplaceCartItemInput } from '../../core/types';
+import type { MutationOptions, ReplaceCartItemInput } from '../../core/types';
+import type { model } from '../../../../model/namespace';
+import {
+  cartUserError,
+  missingCheckoutError,
+  settleCartMutation,
+} from '../../core/errors';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 const useReplaceCartItem = () => {
   const { setCartKey, enqueueMutation, getConfirmedLineId } = useCartSetters();
   const cartStore = useCartStoreApi();
@@ -37,13 +44,14 @@ const useReplaceCartItem = () => {
 
   const actions = useCartActions();
   const [commit, isInFlight] = useMutation(replaceCartItemMutation);
+  /**
+   * Resolves with the confirmed cart, or null when there is no cart or the server has no such
+   * line. Rejects only with `CartMutationError`.
+   */
   const replaceCartItem = async (
     input: ReplaceCartItemInput,
-    options?: {
-      onSuccess?: () => void;
-      onError?: () => void;
-    }
-  ) => {
+    options?: MutationOptions<model.Cart | null>
+  ): Promise<model.Cart | null> => {
     const { lineId, purchasableId, purchasableSnapshot, quantity } = input;
     const { checkoutLinesReplace } = actions;
     if (!cartId) {
@@ -71,44 +79,49 @@ const useReplaceCartItem = () => {
         },
       });
     };
-    return enqueueMutation(
-      () =>
-        new Promise((resolve, reject) => {
-          commit({
-            variables: {
-              input: {
-                checkoutId: cartId,
-                lines: [
-                  {
-                    lineId: getConfirmedLineId(lineId, sourcePurchasableId),
-                    purchasableId: purchasableId,
-                    ...(quantity !== undefined && {
-                      quantity: quantity,
-                    }),
-                  },
-                ],
+    return settleCartMutation(
+      enqueueMutation(
+        () =>
+          new Promise<model.Cart | null>((resolve, reject) => {
+            const sourceLineId = getConfirmedLineId(
+              lineId,
+              sourcePurchasableId
+            );
+            if (!sourceLineId) return resolve(null);
+            commit({
+              variables: {
+                input: {
+                  checkoutId: cartId,
+                  lines: [
+                    {
+                      lineId: sourceLineId,
+                      purchasableId: purchasableId,
+                      ...(quantity !== undefined && {
+                        quantity: quantity,
+                      }),
+                    },
+                  ],
+                },
               },
-            },
-            onCompleted: (response, errors) => {
-              if (errors && errors.length > 0) {
-                options?.onError?.();
-                return reject(errors);
-              } else if (response.checkoutLinesReplace.errors.length > 0) {
-                options?.onError?.();
-                return reject(response.checkoutLinesReplace.errors);
-              } else {
-                setCartKey(response.checkoutLinesReplace.checkout);
-                options?.onSuccess?.();
-                return resolve(response.checkoutLinesReplace.checkout);
-              }
-            },
-            onError: (err) => {
-              options?.onError?.();
-              return reject(err);
-            },
-          });
-        }),
-      { optimisticEdit }
+              onCompleted: (response) => {
+                const payload = response.checkoutLinesReplace;
+                if (payload.errors.length > 0) {
+                  return reject(cartUserError(payload.errors));
+                }
+                if (!payload.checkout) {
+                  return reject(missingCheckoutError('checkoutLinesReplace'));
+                }
+                setCartKey(payload.checkout);
+                return resolve(
+                  mapShopanaCheckoutToEntityCart(payload.checkout)
+                );
+              },
+              onError: reject,
+            });
+          }),
+        { optimisticEdit }
+      ),
+      options
     );
   };
   return { replaceCartItem, loading: isInFlight };

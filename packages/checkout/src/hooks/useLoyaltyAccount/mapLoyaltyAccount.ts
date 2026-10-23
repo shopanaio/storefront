@@ -1,15 +1,10 @@
 import type { model } from '@shopana/storefront-sdk';
-import type {
-  StorefrontCheckoutMoneyFragment,
-  StorefrontLoyaltyAccountQuery,
-} from '#checkout/graphql/operations';
+import type { LoyaltyAccount as ApiAccount } from '@shopana/storefront-sdk/modules/customer/react';
 import type { Checkout } from '#checkout/types/entity';
 
-type ApiAccount = NonNullable<
-  NonNullable<StorefrontLoyaltyAccountQuery['customer']>['loyaltyAccount']
->;
+type ApiMoney = ApiAccount['redemptionSources'][number]['availableAmount'];
 
-const mapMoney = (money: StorefrontCheckoutMoneyFragment): model.Money => {
+const mapMoney = (money: ApiMoney): model.Money => {
   const amount = Number(money.amount ?? 0);
   return {
     amount: Number.isFinite(amount) ? amount : 0,

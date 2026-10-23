@@ -1,0 +1,51 @@
+fragment SdkReviewRequestFragment on ReviewRequest {
+  id
+  status
+  channel
+  locale
+  scheduledAt
+  sentAt
+  deliveredAt
+  openedAt
+  submittedAt
+  expiresAt
+  createdAt
+  updatedAt
+  product {
+    ...SdkCustomerProductFragment
+  }
+  variant {
+    id
+    title
+  }
+  review {
+    id
+    status
+    rating
+    title
+    createdAt
+    publishedAt
+  }
+}
+
+query SdkCustomerReviewRequestsQuery(
+  $first: Int
+  $after: Cursor
+  $imageTransform: ImageTransformInput
+) {
+  customer {
+    id
+    reviewRequests(first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          ...SdkReviewRequestFragment
+        }
+      }
+      pageInfo {
+        ...SdkCustomerPageInfoFragment
+      }
+      totalCount
+    }
+  }
+}

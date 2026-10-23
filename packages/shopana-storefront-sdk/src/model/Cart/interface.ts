@@ -1,5 +1,6 @@
 import type { Money } from '../Money';
 import type { ProductVariant } from '../Product/variant';
+import type { CheckoutLinePurchaseType } from '../../graphql/apollo/generated/operations';
 
 export type CartPurchasable = ProductVariant;
 
@@ -9,24 +10,25 @@ export interface CartLineOption {
   value: string;
 }
 
-/** Component of a bundle line. */
-export interface CartLineChild {
-  id: string;
-  title: string;
-  quantity: number;
+/** Image of the purchasable shown for the line. */
+export interface CartLineImage {
+  url: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
 }
 
-export interface CartLine {
+/** Tag the line was added with; a `unique` tag keeps one line per checkout. */
+export interface CartLineTag {
+  id: string;
+  slug: string;
+  unique: boolean;
+}
+
+interface CartLineBase {
   id: string;
   quantity: number;
   purchasableId: string;
-  purchasable: CartPurchasable;
-  /** Selected options of the variant; absent on an optimistic line. */
-  options?: CartLineOption[];
-  /** Components of a bundle line; absent on an optimistic line. */
-  children?: CartLineChild[];
-  /** The variant is out of stock but still sold (backorder). */
-  currentlyNotInStock?: boolean;
   cost: {
     unitPrice: Money;
     compareAtUnitPrice: Money | null;
@@ -34,6 +36,40 @@ export interface CartLine {
     totalAmount: Money;
   };
 }
+
+/** A line confirmed by the server. */
+export interface ConfirmedCartLine extends CartLineBase {
+  isOptimistic: false;
+  purchasable: CartPurchasable;
+  /** Title of the purchasable as the checkout captured it. */
+  title: string;
+  image: CartLineImage | null;
+  tag: CartLineTag | null;
+  /** Line attributes as the API returns them (JSON). */
+  attributes: object;
+  purchaseType: CheckoutLinePurchaseType;
+  /** Parent bundle line; null for a root line. */
+  parentId: string | null;
+  /** Component item of the parent bundle this child line fills; null for a root line. */
+  componentItemId: string | null;
+  /** Selected options of the variant. */
+  options: CartLineOption[];
+  /** Components of a bundle line; the server confirms them with their parent. */
+  children: ConfirmedCartLine[];
+  /** The variant is out of stock but still sold (backorder). */
+  currentlyNotInStock: boolean;
+}
+
+/**
+ * A line added on the client and not confirmed yet. Only what the buyer asked for is known; the
+ * server answer replaces it with a confirmed line.
+ */
+export interface OptimisticCartLine extends CartLineBase {
+  isOptimistic: true;
+  purchasable: CartPurchasable | null;
+}
+
+export type CartLine = ConfirmedCartLine | OptimisticCartLine;
 
 export interface CheckoutLoyaltyRedemption {
   quoteId: string;
@@ -116,13 +152,13 @@ export interface Cart {
   cost: {
     subtotalAmount: Money;
     totalAmount: Money;
-    totalDiscountAmount: Money | null;
-    totalTaxAmount: Money | null;
-    totalShippingAmount: Money | null;
+    totalDiscountAmount: Money;
+    totalTaxAmount: Money;
+    totalShippingAmount: Money;
     /** Promotions on items only, without shipping discounts. */
-    merchandiseDiscountAmount?: Money | null;
+    merchandiseDiscountAmount: Money;
     /** Paid with loyalty points or store credit. */
-    loyaltyAmount?: Money | null;
+    loyaltyAmount: Money;
   };
   lines: CartLine[];
 }

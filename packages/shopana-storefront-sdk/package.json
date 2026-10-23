@@ -116,13 +116,9 @@
       "types": "./dist/modules/cart/store/CartStore.d.ts",
       "default": "./dist/modules/cart/store/CartStore.js"
     },
-    "./modules/localization/core/types": {
-      "types": "./dist/modules/localization/core/types.d.ts",
-      "default": "./dist/modules/localization/core/types.js"
-    },
-    "./modules/localization/react/index": {
-      "types": "./dist/modules/localization/react/index.d.ts",
-      "default": "./dist/modules/localization/react/index.js"
+    "./modules/customer/react": {
+      "types": "./dist/modules/customer/react/index.d.ts",
+      "default": "./dist/modules/customer/react/index.js"
     },
     "./modules/session": {
       "types": "./dist/modules/session/index.d.ts",
@@ -168,14 +164,6 @@
       "types": "./dist/registry/index.d.ts",
       "default": "./dist/registry/index.js"
     },
-    "./shop/mockShopConfig": {
-      "types": "./dist/shop/mockShopConfig.d.ts",
-      "default": "./dist/shop/mockShopConfig.js"
-    },
-    "./shop/types": {
-      "types": "./dist/shop/types.d.ts",
-      "default": "./dist/shop/types.js"
-    },
     "./utils/routeParser": {
       "types": "./dist/utils/routeParser.d.ts",
       "default": "./dist/utils/routeParser.js"
@@ -203,6 +191,34 @@
     "./modules/cart/react/hooks/*": {
       "types": "./dist/modules/cart/react/hooks/*.d.ts",
       "default": "./dist/modules/cart/react/hooks/*.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./routing": {
+      "types": "./dist/routing/index.d.ts",
+      "default": "./dist/routing/index.js"
+    },
+    "./modules/store/react": {
+      "types": "./dist/modules/store/react/index.d.ts",
+      "default": "./dist/modules/store/react/index.js"
+    },
+    "./modules/store/server": {
+      "types": "./dist/modules/store/server/index.d.ts",
+      "default": "./dist/modules/store/server/index.js"
+    },
+    "./modules/content/react": {
+      "types": "./dist/modules/content/react/index.d.ts",
+      "default": "./dist/modules/content/react/index.js"
+    },
+    "./modules/content/server": {
+      "types": "./dist/modules/content/server/index.d.ts",
+      "default": "./dist/modules/content/server/index.js"
+    },
+    "./modules/localization/server": {
+      "types": "./dist/modules/localization/server/index.d.ts",
+      "default": "./dist/modules/localization/server/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -248,7 +264,6 @@
   },
   "dependencies": {
     "path-to-regexp": "^8.3.0",
-    "js-cookie": "^3.0.5",
     "zustand": "^5.0.6"
   },
   "peerDependenciesMeta": {

@@ -1,6 +1,8 @@
 import type { NormalizedCacheObject, OperationVariables } from '@apollo/client';
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import type { Metadata } from 'next';
+
+export type { Metadata };
 import type { ComponentType, ReactNode } from 'react';
 import type {
   PageTemplate,

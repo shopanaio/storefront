@@ -1,6 +1,7 @@
 import type { model } from '../../../../model/namespace';
 import type {
   SdkCartFragment_CartFragment,
+  SdkCartLineFragment_FieldsFragment,
   SdkCartLineFragment_LineFragment,
 } from '../../../../graphql/apollo/generated/operations';
 export type DenormalizedShopanaCart = Omit<
@@ -9,14 +10,17 @@ export type DenormalizedShopanaCart = Omit<
 > & {
   readonly lines: ReadonlyArray<SdkCartLineFragment_LineFragment>;
 };
-type ApiMoney = SdkCartLineFragment_LineFragment['cost']['unitPrice'];
+type ApiMoney = SdkCartLineFragment_FieldsFragment['cost']['unitPrice'];
+/** A child line carries the same fields as a root line; its own children are not read. */
+type ApiLine = SdkCartLineFragment_FieldsFragment &
+  Partial<Pick<SdkCartLineFragment_LineFragment, 'children'>>;
 const toAmount = (amount: unknown): number => {
-  const value = Number(amount ?? 0);
+  const value = Number(amount);
   return Number.isFinite(value) ? value : 0;
 };
-const toMoney = (money: ApiMoney | null | undefined): model.Money => ({
-  amount: toAmount(money?.amount),
-  currencyCode: money?.currencyCode ?? 'USD',
+const toMoney = (money: ApiMoney): model.Money => ({
+  amount: toAmount(money.amount),
+  currencyCode: money.currencyCode,
 });
 const toDate = (value: unknown): Date => {
   const date = new Date(String(value ?? ''));
@@ -28,7 +32,7 @@ const emptyTags = (): model.TagConnection => ({
   totalCount: 0,
 });
 const createProductReference = (
-  product: SdkCartLineFragment_LineFragment['purchasable']['product'],
+  product: ApiLine['purchasable']['product'],
   fallbackId: string
 ): model.Product | null => {
   if (!product) {
@@ -57,7 +61,7 @@ const createProductReference = (
     variants: [],
   };
 };
-const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
+const mapLine = (line: ApiLine): model.ConfirmedCartLine => {
   const apiPurchasable = line.purchasable;
   const id = apiPurchasable.id ?? line.purchasableId;
   const cover =
@@ -117,21 +121,35 @@ const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
     updatedAt: '',
     product: createProductReference(apiPurchasable.product, id),
   };
+  const image = line.image?.image;
   return {
+    isOptimistic: false,
     id: line.id,
     quantity: line.quantity,
     purchasableId: line.purchasableId,
     purchasable,
+    title: line.title,
+    image: image?.url
+      ? {
+          url: String(image.url),
+          width: image.width ?? null,
+          height: image.height ?? null,
+          alt: image.altText ?? null,
+        }
+      : null,
+    tag: line.tag
+      ? { id: line.tag.id, slug: line.tag.slug, unique: line.tag.unique }
+      : null,
+    attributes: line.attributes,
+    purchaseType: line.purchase.type,
+    parentId: line.parent?.id ?? null,
+    componentItemId: line.componentItemId ?? null,
     options:
       apiPurchasable.selectedOptions?.map((selection) => ({
         name: selection.option.name,
         value: selection.optionValue.name,
       })) ?? [],
-    children: line.children.map((child) => ({
-      id: child.id,
-      title: child.title,
-      quantity: child.quantity,
-    })),
+    children: line.children?.map(mapLine) ?? [],
     currentlyNotInStock: apiPurchasable.currentlyNotInStock ?? false,
     cost: {
       unitPrice: toMoney(line.cost.unitPrice),

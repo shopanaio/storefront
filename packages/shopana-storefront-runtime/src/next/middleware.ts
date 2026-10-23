@@ -1,15 +1,35 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
+import {
+  loadStorefrontLocales,
+  resolveStorefrontLocale,
+} from '@shopana/storefront-sdk/modules/localization/server';
+import {
+  STOREFRONT_LOCALE_HEADER,
+  splitLocaleFromPathname,
+  type StorefrontLocales,
+  type StorefrontRoutingConfig,
+} from '@shopana/storefront-sdk/routing';
 
 export * from 'next/server';
 
-type MiddlewareFunction = (
-  request: NextRequest
-) =>
+type MiddlewareResult =
   | NextResponse
   | Response
-  | Promise<NextResponse | Response>
+  | Promise<NextResponse | Response | undefined | void>
   | undefined
   | void;
+
+export interface RuntimeMiddlewareContext {
+  /** Store languages the locale segment of the request was matched against. */
+  locales: StorefrontLocales;
+}
+
+type MiddlewareFunction = (
+  request: NextRequest,
+  context: RuntimeMiddlewareContext
+) => MiddlewareResult;
 
 export const SDK_URL_HEADER = 'x-sdk-url';
 export const SDK_PATHNAME_HEADER = 'x-sdk-pathname';
@@ -26,7 +46,8 @@ function cloneResponse(response: Response): Response {
 
 function applyRequestContext(
   response: Response,
-  request: NextRequest
+  request: NextRequest,
+  localeTag: string
 ): Response {
   const requestHeaders = new Headers(request.headers);
   const existingOverrides = response.headers
@@ -53,6 +74,7 @@ function applyRequestContext(
     SDK_HOST_HEADER,
     request.headers.get('host') || request.nextUrl.host
   );
+  requestHeaders.set(STOREFRONT_LOCALE_HEADER, localeTag);
 
   const requestOverride = NextResponse.next({
     request: { headers: requestHeaders },
@@ -79,44 +101,76 @@ function applyRequestContext(
   return response;
 }
 
+type IntlMiddleware = ReturnType<typeof createIntlMiddleware>;
+
+const intlMiddlewares = new Map<string, IntlMiddleware>();
+
+/** next-intl routing over the store languages; rebuilt only when the languages change. */
+function getIntlMiddleware(
+  locales: StorefrontLocales,
+  routing: StorefrontRoutingConfig
+): IntlMiddleware {
+  const segments = locales.locales.map((locale) => locale.segment);
+  const key = JSON.stringify([
+    locales.defaultLocale.segment,
+    segments,
+    routing.localePrefix,
+  ]);
+  let middleware = intlMiddlewares.get(key);
+  if (!middleware) {
+    middleware = createIntlMiddleware({
+      locales: segments,
+      defaultLocale: locales.defaultLocale.segment,
+      localePrefix: routing.localePrefix,
+      localeDetection: false,
+    });
+    intlMiddlewares.set(key, middleware);
+  }
+  return middleware;
+}
+
+export interface CreateRuntimeMiddlewareOptions {
+  environmentConfig: ApolloEnvironmentConfig;
+  routing: StorefrontRoutingConfig;
+  /** Runs before locale routing; a returned response ends the request. */
+  middleware?: MiddlewareFunction;
+}
+
 /**
- * Creates SDK middleware that injects URL information into request headers.
- * Can be composed with other middleware.
+ * Creates the storefront middleware: matches the locale segment against the store languages,
+ * applies next-intl locale routing and passes the request URL and locale to server rendering.
  *
  * @example
  * ```ts
- * // middleware.ts
- * import { createRuntimeMiddleware } from '@shopana/storefront/next/middleware';
- * import createIntlMiddleware from 'next-intl/middleware';
- *
- * const intlMiddleware = createIntlMiddleware(routing);
- *
+ * // src/runtime/middleware.ts
  * export default createRuntimeMiddleware({
- *   middleware: intlMiddleware,
+ *   environmentConfig,
+ *   routing: { localePrefix: 'as-needed' },
  * });
  * ```
  */
-export function createRuntimeMiddleware(options?: {
-  middleware?: MiddlewareFunction;
-}) {
+export function createRuntimeMiddleware(
+  options: CreateRuntimeMiddlewareOptions
+) {
   return async function sdkMiddleware(request: NextRequest) {
-    let response: Response;
+    const locales = await loadStorefrontLocales(options.environmentConfig);
+    const segment = splitLocaleFromPathname(
+      request.nextUrl.pathname,
+      locales.locales.map((locale) => locale.segment)
+    ).locale;
+    const localeTag = resolveStorefrontLocale(locales, segment).tag;
 
-    if (options?.middleware) {
-      const result = await options.middleware(request);
-
-      if (result instanceof NextResponse) {
-        response = result;
-      } else if (result instanceof Response) {
-        response = cloneResponse(result);
-      } else {
-        response = NextResponse.next();
-      }
-    } else {
-      response = NextResponse.next();
+    const custom = await options.middleware?.(request, { locales });
+    if (custom) {
+      return applyRequestContext(
+        custom instanceof NextResponse ? custom : cloneResponse(custom),
+        request,
+        localeTag
+      );
     }
 
-    return applyRequestContext(response, request);
+    const response = await getIntlMiddleware(locales, options.routing)(request);
+    return applyRequestContext(response, request, localeTag);
   };
 }
 

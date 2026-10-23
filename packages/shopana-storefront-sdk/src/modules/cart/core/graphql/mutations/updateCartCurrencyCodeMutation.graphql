@@ -1,0 +1,15 @@
+mutation SdkUpdateCartCurrencyCodeMutation(
+  $input: CheckoutCurrencyCodeUpdateInput!
+) {
+  checkoutCurrencyCodeUpdate(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

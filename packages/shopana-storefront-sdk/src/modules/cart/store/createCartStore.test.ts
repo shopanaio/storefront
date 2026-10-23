@@ -23,15 +23,18 @@ function createCart(): model.Cart {
     cost: {
       subtotalAmount: { amount: 10, currencyCode: 'USD' },
       totalAmount: { amount: 10, currencyCode: 'USD' },
-      totalDiscountAmount: null,
-      totalTaxAmount: null,
-      totalShippingAmount: null,
+      totalDiscountAmount: { amount: 0, currencyCode: 'USD' },
+      totalTaxAmount: { amount: 0, currencyCode: 'USD' },
+      totalShippingAmount: { amount: 0, currencyCode: 'USD' },
+      merchandiseDiscountAmount: { amount: 0, currencyCode: 'USD' },
+      loyaltyAmount: { amount: 0, currencyCode: 'USD' },
     },
     lines: [
       {
+        isOptimistic: true,
         id: 'line-1',
         purchasableId: 'variant-1',
-        purchasable: undefined as never,
+        purchasable: null,
         quantity: 1,
         cost: {
           unitPrice: { amount: 10, currencyCode: 'USD' },

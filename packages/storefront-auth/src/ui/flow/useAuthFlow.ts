@@ -13,6 +13,7 @@ import {
 } from '../../react';
 import { initialOf } from '../common/format';
 import { useLoginIdentifier } from '../hooks/useLoginIdentifier';
+import { useLocalizedAuthPaths } from '../hooks/useLocalizedAuthPaths';
 import {
   draftOf,
   type AuthContext,
@@ -51,9 +52,9 @@ export interface AuthFlowOptions {
    * the flow waits for it. A rejection keeps the buyer here, told the sign-in failed.
    */
   beforeSocial?: () => Promise<unknown> | void;
-  /** Page of the email verification link; `/account/verify-email` by default. */
+  /** Page of the email verification link; `/account/verify-email` of the active locale by default. */
   verifyPath?: string;
-  /** Page of the password reset link; `/account/reset-password` by default. */
+  /** Page of the password reset link; `/account/reset-password` of the active locale by default. */
   resetPath?: string;
   /** Page to return to from a social provider; the current page by default. */
   returnTo?: string;
@@ -97,11 +98,15 @@ export function useAuthFlow({
   initialScreen = 'identify',
   onCompleted,
   beforeSocial,
-  verifyPath,
-  resetPath,
+  verifyPath: verifyPathOption,
+  resetPath: resetPathOption,
   returnTo,
   identifySubtitle,
 }: AuthFlowOptions = {}): UseAuthFlowResult {
+  const { verifyPath, resetPath } = useLocalizedAuthPaths({
+    verifyPath: verifyPathOption,
+    resetPath: resetPathOption,
+  });
   const auth = useAuth();
   const user = useUser();
   const login = useLoginIdentifier();

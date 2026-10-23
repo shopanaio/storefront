@@ -60,7 +60,6 @@ export async function loadCartServerQuery(
   // Create cart ID utils with cart config
   const cartIdUtils = createCartIdUtils({
     cookieName: cartConfig.cookieName,
-    cookieOptions: cartConfig.cookieOptions,
   });
   const cartId = cartIdUtils.getCartIdFromCookie(cookie);
   if (!cartId) {

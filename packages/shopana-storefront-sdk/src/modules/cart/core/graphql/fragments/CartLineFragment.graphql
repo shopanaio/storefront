@@ -1,4 +1,4 @@
-fragment SdkCartLineFragment_line on CheckoutLine {
+fragment SdkCartLineFragment_fields on CheckoutLine {
   __typename
   id
   title
@@ -71,10 +71,9 @@ fragment SdkCartLineFragment_line on CheckoutLine {
       }
     }
   }
-  children {
+  componentItemId
+  parent {
     id
-    title
-    quantity
   }
   image {
     id
@@ -93,5 +92,12 @@ fragment SdkCartLineFragment_line on CheckoutLine {
     id
     slug
     unique
+  }
+}
+
+fragment SdkCartLineFragment_line on CheckoutLine {
+  ...SdkCartLineFragment_fields
+  children {
+    ...SdkCartLineFragment_fields
   }
 }

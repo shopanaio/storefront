@@ -51,6 +51,8 @@ cookies. The handlers read the server environment:
 - `IAM_OAUTH_REDIRECT_URI`, the registered `{origin}/auth/callback`;
 - `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI` (optional; sign-out then ends the IAM session);
 - `STOREFRONT_SESSION_SECRET`, at least 32 characters, the cookie encryption key;
+- `STOREFRONT_COOKIE_POLICY` (optional, `first-party` by default): `embedded` for a storefront
+  shown in a third-party iframe, the same value as `environmentConfig.cookiePolicy`;
 - `STOREFRONT_TRUSTED_PROXY_HOPS` (optional, 1 by default), the number of proxies in front of
   the storefront that append to `X-Forwarded-For`. The buyer address sent to IAM is the entry
   this many hops from the right; entries the client added further left are ignored.
@@ -66,9 +68,26 @@ import Link from '@shopana/storefront/next/link';
 import { useRouter } from '@shopana/storefront/next/navigation';
 ```
 
-The existing `next/headers`, `next/middleware`, `next/page`, `next/layout`, and
-`next/not-found` exports remain available. `next/headers` and `next/middleware`
-also expose the corresponding public Next.js primitives.
+`Link` and `useRouter()` take a pathname without the locale segment, a named route
+(`{ route: 'product', params: { handle } }`) or an absolute URL, and keep the active locale;
+`usePathname()` returns the pathname without the locale segment.
+
+The theme middleware is created with the store languages as locales:
+
+```ts
+// src/runtime/middleware.ts
+export default createRuntimeMiddleware({
+  environmentConfig,
+  routing: { localePrefix: 'as-needed' },
+});
+```
+
+It matches the first path segment against the store languages (cached for a minute), applies
+next-intl locale routing and passes the request URL and locale to server rendering.
+
+The `next/headers`, `next/middleware`, `next/page`, `next/layout`, and `next/not-found` exports
+remain available. `next/headers` and `next/middleware` also expose the corresponding public
+Next.js primitives.
 
 Reserved page definitions use the contracts from
 `@shopana/storefront/next/page-definition`. Each lazy module has a required

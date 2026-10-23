@@ -10,6 +10,8 @@ export interface ApolloAppProviderProps {
   children: React.ReactNode;
   environmentConfig: ApolloEnvironmentConfig;
   initialState?: NormalizedCacheObject;
+  /** BCP 47 tag of the page locale, sent as `Accept-Language`. */
+  locale: string;
 }
 
 /**
@@ -20,10 +22,11 @@ export function ApolloAppProvider({
   children,
   environmentConfig,
   initialState,
+  locale,
 }: ApolloAppProviderProps) {
   const makeClient = useCallback(
-    () => createApolloClient(environmentConfig, { initialState }),
-    [environmentConfig, initialState]
+    () => createApolloClient(environmentConfig, { initialState, locale }),
+    [environmentConfig, initialState, locale]
   );
 
   return (

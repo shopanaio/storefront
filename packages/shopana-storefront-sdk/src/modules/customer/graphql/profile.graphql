@@ -1,0 +1,90 @@
+fragment SdkCustomerMarketingConsentFragment on CustomerMarketingConsent {
+  channel
+  state
+  optInLevel
+  consentedAt
+  withdrawnAt
+  updatedAt
+}
+
+# Contacts and consents of the customer. The marketing consent mutation answers the same
+# selection, so the profile and the consents read from the cache stay equal after it.
+fragment SdkCustomerContactsFragment on Customer {
+  id
+  emailAddress {
+    emailAddress
+    verified
+    marketingConsent {
+      ...SdkCustomerMarketingConsentFragment
+    }
+  }
+  phoneNumber {
+    phoneNumber
+    verified
+    marketingConsent {
+      ...SdkCustomerMarketingConsentFragment
+    }
+  }
+  marketingConsents {
+    ...SdkCustomerMarketingConsentFragment
+  }
+}
+
+fragment SdkCustomerProfileFragment on Customer {
+  id
+  revision
+  accountStatus
+  prefix
+  firstName
+  middleName
+  lastName
+  suffix
+  displayName
+  preferredLocale
+  dateOfBirth
+  gender
+  companyName
+  jobTitle
+  createdAt
+  updatedAt
+  ...SdkCustomerContactsFragment
+}
+
+query SdkCustomerQuery {
+  customer {
+    ...SdkCustomerProfileFragment
+  }
+}
+
+mutation SdkCustomerUpdateMutation($input: CustomerUpdateInput!) {
+  customerUpdate(input: $input) {
+    customer {
+      ...SdkCustomerProfileFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}
+
+query SdkCustomerMarketingConsentsQuery {
+  customer {
+    ...SdkCustomerContactsFragment
+  }
+}
+
+mutation SdkCustomerMarketingConsentUpdateMutation(
+  $input: CustomerMarketingConsentUpdateInput!
+) {
+  customerMarketingConsentUpdate(input: $input) {
+    marketingConsent {
+      ...SdkCustomerMarketingConsentFragment
+    }
+    customer {
+      ...SdkCustomerContactsFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}

@@ -42,47 +42,42 @@ export function createApolloCache(
         searchProducts: cursorConnectionPolicy(['query', 'sort', 'filters']),
       },
     },
-  };
-
-  return new InMemoryCache({
-    ...overrides,
-    typePolicies: {
-      ...baseTypePolicies,
-      ...overrides.typePolicies,
-      Collection: {
-        ...baseTypePolicies.Collection,
-        ...overrides.typePolicies?.Collection,
-        fields: {
-          ...baseTypePolicies.Collection?.fields,
-          ...overrides.typePolicies?.Collection?.fields,
-        },
-      },
-      Category: {
-        ...baseTypePolicies.Category,
-        ...overrides.typePolicies?.Category,
-        fields: {
-          ...baseTypePolicies.Category?.fields,
-          ...overrides.typePolicies?.Category?.fields,
-        },
-      },
-      Product: {
-        ...baseTypePolicies.Product,
-        ...overrides.typePolicies?.Product,
-        fields: {
-          ...baseTypePolicies.Product?.fields,
-          ...overrides.typePolicies?.Product?.fields,
-        },
-      },
-      Query: {
-        ...baseTypePolicies.Query,
-        ...overrides.typePolicies?.Query,
-        fields: {
-          ...baseTypePolicies.Query?.fields,
-          ...overrides.typePolicies?.Query?.fields,
-        },
+    // Customer connections are keyed by the page size, so readers with different sizes (the
+    // wishlist page and the product actions) keep separate lists; `after` pages are appended.
+    Customer: {
+      fields: {
+        addresses: cursorConnectionPolicy(['first']),
+        dataRequests: cursorConnectionPolicy(['first']),
+        reviewRequests: cursorConnectionPolicy(['first']),
       },
     },
-  });
+    CustomerWishlist: {
+      fields: {
+        items: cursorConnectionPolicy(['first']),
+      },
+    },
+    LoyaltyAccount: {
+      fields: {
+        transactions: cursorConnectionPolicy(['first']),
+      },
+    },
+  };
+
+  const typePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
+    ...baseTypePolicies,
+    ...overrides.typePolicies,
+  };
+  for (const [typename, base] of Object.entries(baseTypePolicies)) {
+    const override = overrides.typePolicies?.[typename];
+    if (!override) continue;
+    typePolicies[typename] = {
+      ...base,
+      ...override,
+      fields: { ...base.fields, ...override.fields },
+    };
+  }
+
+  return new InMemoryCache({ ...overrides, typePolicies });
 }
 
 /**

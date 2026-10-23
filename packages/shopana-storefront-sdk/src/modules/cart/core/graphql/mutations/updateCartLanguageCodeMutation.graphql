@@ -1,0 +1,15 @@
+mutation SdkUpdateCartLanguageCodeMutation(
+  $input: CheckoutLanguageCodeUpdateInput!
+) {
+  checkoutLanguageCodeUpdate(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

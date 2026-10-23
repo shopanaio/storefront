@@ -67,11 +67,18 @@ describe('parseRoute', () => {
       expect(result.params).toEqual({});
     });
 
-    it('parses article route', () => {
-      const result = parseRoute('/blogs/deep-dive');
+    it('parses blog route', () => {
+      const result = parseRoute('/blogs/news');
 
-      expect(result.pageType).toBe('article');
-      expect(result.params).toEqual({ handle: 'deep-dive' });
+      expect(result.pageType).toBe('blog');
+      expect(result.params).toEqual({ blog: 'news' });
+    });
+
+    it('parses category route', () => {
+      const result = parseRoute('/categories/dogs');
+
+      expect(result.pageType).toBe('category');
+      expect(result.params).toEqual({ handle: 'dogs' });
     });
 
     it('parses article with blog handle', () => {
@@ -89,42 +96,10 @@ describe('parseRoute', () => {
     });
   });
 
-  describe('locale handling', () => {
-    it('strips 2-letter locale prefix', () => {
-      const result = parseRoute('/ru/products/my-product');
-
-      expect(result.pageType).toBe('product');
-      expect(result.params).toEqual({ handle: 'my-product' });
-      expect(result.locale).toBe('ru');
-    });
-
-    it('strips 3-letter locale prefix', () => {
-      const result = parseRoute('/rus/products/my-product');
-
-      expect(result.pageType).toBe('product');
-      expect(result.params).toEqual({ handle: 'my-product' });
-      expect(result.locale).toBe('rus');
-    });
-
-    it('parses home with locale', () => {
-      const result = parseRoute('/en/');
-
-      expect(result.pageType).toBe('home');
-      expect(result.locale).toBe('en');
-    });
-
-    it('parses home with locale (no trailing slash)', () => {
-      const result = parseRoute('/en');
-
-      expect(result.pageType).toBe('home');
-      expect(result.locale).toBe('en');
-    });
-
-    it('can disable locale stripping', () => {
-      const result = parseRoute('/ru/products/test', { stripLocale: false });
-
-      expect(result.pageType).toBe('404');
-      expect(result.locale).toBeUndefined();
+  describe('locale segments', () => {
+    it('does not treat a short first segment as a locale', () => {
+      expect(parseRoute('/faq').pageType).toBe('404');
+      expect(parseRoute('/uk/products/tea').pageType).toBe('404');
     });
   });
 
@@ -210,6 +185,12 @@ describe('buildPath', () => {
 
   it('builds search path', () => {
     expect(buildPath('search')).toBe('/search');
+  });
+
+  it('builds module paths', () => {
+    expect(buildPath('policy', { handle: 'privacy' })).toBe('/policies/privacy');
+    expect(buildPath('account')).toBe('/account');
+    expect(buildPath('account', { path: 'orders/42' })).toBe('/account/orders/42');
   });
 
   it('encodes special characters', () => {

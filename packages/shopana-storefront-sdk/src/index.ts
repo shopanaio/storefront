@@ -4,13 +4,15 @@ export { model } from './model/namespace';
 
 // Re-export main AppProvider
 export { App } from './App';
-export { AppProvider } from './AppProvider';
-export { useLocalization } from './modules/localization/react';
+export { AppProvider, type AppPreloadConfig } from './AppProvider';
+export { useLocalization, useFormatter, Money } from './modules/localization/react';
+export { useStore, type Store } from './modules/store/react';
 export type {
-  LocalizationConfig,
   LocalizationState,
   LocalePrefixMode,
+  StorefrontRoutingConfig,
 } from './modules/localization/core/types';
+export type { CookiePolicy } from './core/cookiePolicy';
 // The theme editor renders with antd, an optional peer dependency: `@shopana/storefront-sdk/editor`.
 export type { ThemeEditorScope } from './editor/store';
 

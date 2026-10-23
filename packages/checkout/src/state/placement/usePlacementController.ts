@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutTheme } from '#checkout/theme';
-import { useRefetchLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
+import { useRefetchLoyaltyAccount } from '@shopana/storefront-sdk/modules/customer/react';
 import {
   CheckoutEvent,
   emitCheckoutEvent,
@@ -138,7 +138,7 @@ export function usePlacementController(checkoutId: string | null) {
         outcome.kind === 'accepted' ||
         (outcome.kind === 'rejected' && outcome.code.startsWith('LOYALTY_'))
       ) {
-        refetchLoyaltyAccount();
+        void refetchLoyaltyAccount();
       }
       if (outcome.kind === 'accepted') {
         void emitCheckoutEvent(CheckoutEvent.OrderAccepted, {

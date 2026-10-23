@@ -1,3 +1,10 @@
+import {
+  readCookie,
+  resolveCookieAttributes,
+  serializeCookie,
+  type CookiePolicy,
+} from '../../../core/cookiePolicy';
+
 /**
  * Names and paths shared by the storefront session server (BFF) and the browser. The token
  * cookies are HttpOnly and never readable here; the browser sees only the two flags below.
@@ -46,12 +53,16 @@ export function authResultOfError(error: string): AuthResult {
 
 export function readBrowserCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  return readCookie(document.cookie, name);
 }
 
-export function removeBrowserCookie(name: string): void {
+/** Deletes a cookie the session server set, with the attributes of the same cookie policy. */
+export function removeBrowserCookie(name: string, policy?: CookiePolicy): void {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = serializeCookie(name, '', {
+    ...resolveCookieAttributes(policy, {
+      secure: window.location.protocol === 'https:',
+    }),
+    maxAge: 0,
+  });
 }

@@ -103,7 +103,10 @@ export namespace model {
   export type CartLine = CartTypes.CartLine;
   export type Cart = CartTypes.Cart;
   export type CartLineOption = CartTypes.CartLineOption;
-  export type CartLineChild = CartTypes.CartLineChild;
+  export type ConfirmedCartLine = CartTypes.ConfirmedCartLine;
+  export type OptimisticCartLine = CartTypes.OptimisticCartLine;
+  export type CartLineImage = CartTypes.CartLineImage;
+  export type CartLineTag = CartTypes.CartLineTag;
   export type CartIssue = CartTypes.CartIssue;
   export type CartNotification = CartTypes.CartNotification;
   export type CartPromoCode = CartTypes.CartPromoCode;

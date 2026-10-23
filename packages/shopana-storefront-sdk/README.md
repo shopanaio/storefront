@@ -19,9 +19,49 @@ typed GraphQL documents.
 ## Entry points
 
 The package exports its public modules explicitly (see `exports` in `package.json`): the root
-entry, `graphql/apollo`, `registry`, `config`, the `modules/*` entries of the cart, session,
-account, localization and storefront API, `next/apollo/*`, `core/*`, and the cart hooks
-(`modules/cart/react/hooks/*`). Other files are internal.
+entry, `react`, `routing`, `graphql/apollo`, `registry`, `config`, the `modules/*` entries of the
+cart, session, account, customer, store, content, localization and storefront API,
+`next/apollo/*`, `core/*`, and the cart hooks (`modules/cart/react/hooks/*`). Other files are
+internal.
+
+## Store, languages and links
+
+`AppProvider` loads the store (`store`) and the request localization (`localization`) with the
+request-scoped client; there is no static shop configuration.
+
+```tsx
+<AppProvider
+  environmentConfig={environmentConfig}
+  routing={{ localePrefix: 'as-needed' }}
+  cartConfig={cartConfig}
+  preload={{ navigationMenus: ['main-menu', 'footer-menu'] }}
+>
+  {children}
+</AppProvider>
+```
+
+- The store languages (`localization.availableLanguages`, default `store.defaultLocale`) are the
+  URL locales. A language is used in three forms: the API `LocaleCode` (`pt_BR`), the BCP 47 tag
+  (`pt-BR`, sent as `Accept-Language` by every request) and the URL segment (`pt-br`). The runtime
+  middleware resolves the segment of the request; the locale of a page never changes on the client.
+- `useStore()` (`modules/store/react`) returns the store: name, contacts, address, brand and the
+  published policy links. `getStorefrontRequestContext(environmentConfig)`
+  (`modules/store/server`) returns the store, localization and request locale on the server, once
+  per request.
+- `useLocalization()` returns the active locale, store languages, market, country, currency,
+  store timezone, `buildHref(target)` and `switchLocale(code)`. `buildHref` takes a pathname
+  without the locale segment, a named route `{ route, params, query, hash }` or an absolute URL;
+  the default locale stays without a segment under `as-needed`. The route table, `buildPath` and
+  the pure `buildHref` are in `routing`.
+- `useFormatter()` and `<Money>` format money, numbers and dates in the active locale and the
+  store timezone.
+- `modules/content/react`: `useNavigationMenu(handle)`, `useOnlineStorePage(handle)`,
+  `useStorePolicies()`, `useStorePolicyLink(type)`, `useStorePolicy(handle)`. Menus listed in
+  `preload.navigationMenus` are part of the server HTML. Online store page bodies are read as
+  RichText `json`; render them with a RichText renderer, not as HTML.
+- `environmentConfig.cookiePolicy: 'embedded'` gives the cart, visitor and session cookies
+  `SameSite=None; Secure; Partitioned` for a storefront shown in a third-party iframe; the session
+  server reads the same policy from `STOREFRONT_COOKIE_POLICY`.
 
 The theme editor renders with antd, an optional peer dependency, and is published separately:
 
@@ -52,10 +92,10 @@ example, `checkbox` can target only a boolean setting and `range` only a number.
 
 Entity pickers use `type: 'entity_picker'`, declare a supported entity type, and
 persist only the selected entity's stable `handle` or `id`. Hydrated API
-entities never become part of a template. Category, product, article, blog, and
-page pickers use handles by default. Navigation menus and navigation items can
-store either handles or Relay IDs through `valueField`; a navigation-item picker
-can also be limited to a menu with `navigationMenuId`.
+entities never become part of a template. Category, collection, product,
+article, blog, and page pickers use handles by default. Navigation menus and
+navigation items can store either handles or Relay IDs through `valueField`; a
+navigation-item picker can also be limited to a menu with `navigationMenuHandle`.
 
 ```ts
 interface Settings {
@@ -96,7 +136,7 @@ menu:
   type: 'entity_picker',
   entity: 'navigation_menu_item',
   valueField: 'handle',
-  navigationMenuId: 'gid://shopana/OnlineStoreNavigationMenu/main-menu',
+  navigationMenuHandle: 'main-menu',
   id: 'navigationItemHandle',
   label: 'Navigation item',
 }
@@ -243,7 +283,26 @@ and the setters do nothing, so the theme asks for a sign-in first.
 take the wanted state instead of toggling it. An action asked for before a
 sign-in (`useAuthAction` of `@shopana/storefront-auth/react`) can therefore run
 after it without undoing what the account already has: adding a saved product
-or a compared variant again leaves it as it is.
+or a compared variant again leaves it as it is. The setters reject with
+`CustomerMutationError`.
+
+## Customer account
+
+`@shopana/storefront-sdk/modules/customer/react` reads and changes the account
+of the signed-in customer: `useCustomer`/`useUpdateCustomer`, the addresses,
+the default wishlist, the comparisons, the loyalty account and its ledger, the
+marketing consents, the privacy requests and the review requests. Each query
+hook reads nothing without a customer session (`requiresSignIn`), and keeps the
+data it read when a later read fails. Connection hooks read page by page
+(`nodes`, `hasNext`, `loadNext`) through the cursor policies of
+`createApolloCache`.
+
+Each mutation hook returns `[mutate, loading]`. `mutate` generates the
+idempotency key, resolves to the changed entity, reads the affected lists again,
+and rejects with `CustomerMutationError`: `kind` is `unauthenticated`,
+`userErrors` (see `userErrors`), `request` (see `cause`) or `emptyPayload`.
+Scalars the generated types leave as `any` (`Date`, `URL`, `Decimal`,
+`UnsignedInt64`) are typed as the strings the API sends.
 
 ## Code generation
 

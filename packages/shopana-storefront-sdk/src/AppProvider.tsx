@@ -1,7 +1,6 @@
 import React from 'react';
 import type { NormalizedCacheObject } from '@apollo/client';
 import { App } from './App';
-import type { ShopConfig } from './shop/types';
 import type { CartConfig } from './modules/cart/core/config';
 import type { ApolloEnvironmentConfig } from './graphql/apollo/types';
 import { loadCartServerQuery } from './modules/cart/next/loaders/loadCartServerQuery';
@@ -9,81 +8,70 @@ import { loadSessionServerQuery } from './modules/session/next/loaders/loadSessi
 import { setEnvironmentConfig } from './config';
 import { mergeApolloCacheStates } from './graphql/apollo/cache';
 import { getApolloRequestClient } from './next/apollo/server';
-import type { LocalizationConfig } from './modules/localization/core/types';
+import type { StorefrontRoutingConfig } from './modules/localization/core/types';
+import { getStorefrontRequestContext } from './modules/store/server/getStorefrontRequestContext';
+import { preloadNavigationMenus } from './modules/content/server';
+
+export interface AppPreloadConfig {
+  /** Navigation menu handles the layout renders; they are part of the server HTML. */
+  navigationMenus?: readonly string[];
+}
 
 export interface AppProviderProps {
   children: React.ReactNode;
-  /**
-   * Apollo environment configuration
-   */
   environmentConfig: ApolloEnvironmentConfig;
   /** Optional normalized cache produced before rendering the root provider. */
   apolloInitialState?: NormalizedCacheObject;
-  /**
-   * Shop configuration (currency, locale, features)
-   */
-  shopConfig: ShopConfig;
-  localizationConfig: LocalizationConfig;
-  /**
-   * Cart configuration
-   */
+  routing: StorefrontRoutingConfig;
   cartConfig: CartConfig;
+  preload?: AppPreloadConfig;
 }
 
 /**
  * App Provider (Server Component)
  *
- * Main wrapper component that handles SSR cart and session loading internally.
- * This is an async Server Component that:
- * 1. Loads cart data on the server using cookies
- * 2. Loads session data on the server using cookies
- * 3. Passes preloaded data to the client App component
+ * Loads the store, its languages and the request localization, the cart, the session and the
+ * preloaded layout queries with the request-scoped client, then hands the cache snapshot to the
+ * client providers. The request locale is the one the runtime middleware resolved.
  *
  * @example
  * ```tsx
- * // app/layout.tsx
- * import { AppProvider } from '@shopana/storefront-sdk';
- *
- * export default function RootLayout({ children }) {
- *   return (
- *     <html>
- *       <body>
- *         <AppProvider
- *           environmentConfig={environmentConfig}
- *           shopConfig={shopConfig}
- *           cartConfig={cartConfig}
- *         >
- *           {children}
- *         </AppProvider>
- *       </body>
- *     </html>
- *   );
- * }
+ * <AppProvider
+ *   environmentConfig={environmentConfig}
+ *   routing={{ localePrefix: 'as-needed' }}
+ *   cartConfig={cartConfig}
+ *   preload={{ navigationMenus: ['main-menu', 'footer'] }}
+ * >
+ *   {children}
+ * </AppProvider>
  * ```
  */
 export async function AppProvider({
   children,
   environmentConfig,
   apolloInitialState,
-  shopConfig,
-  localizationConfig,
+  routing,
   cartConfig,
+  preload,
 }: AppProviderProps) {
   setEnvironmentConfig(environmentConfig);
   const { headers } = await import('next/headers');
   const serverCookies = (await headers()).get('cookie') ?? undefined;
   const client = await getApolloRequestClient(environmentConfig);
 
-  // Both root queries share the client registered for this server request.
-  const [preloadedCartQuery, initialSession] = await Promise.all([
-    loadCartServerQuery({
-      environmentConfig,
-      cartConfig,
-      client,
-      serverCookies,
-    }),
-    loadSessionServerQuery({ serverCookies }),
-  ]);
+  // Every root query shares the client registered for this server request.
+  const [storefrontContext, preloadedCartQuery, initialSession] =
+    await Promise.all([
+      getStorefrontRequestContext(environmentConfig),
+      loadCartServerQuery({
+        environmentConfig,
+        cartConfig,
+        client,
+        serverCookies,
+      }),
+      loadSessionServerQuery({ serverCookies }),
+      preloadNavigationMenus(client, preload?.navigationMenus ?? []),
+    ]);
 
   const initialState = mergeApolloCacheStates(
     client.extract() as NormalizedCacheObject,
@@ -94,8 +82,11 @@ export async function AppProvider({
     <App
       environmentConfig={environmentConfig}
       apolloInitialState={initialState}
-      shopConfig={shopConfig}
-      localizationConfig={localizationConfig}
+      store={storefrontContext.store}
+      localization={storefrontContext.localization}
+      locale={storefrontContext.locale}
+      locales={storefrontContext.locales}
+      localePrefix={routing.localePrefix}
       cartConfig={cartConfig}
       initialCartId={preloadedCartQuery?.variables.checkoutId}
       initialSession={initialSession}

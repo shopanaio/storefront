@@ -2,11 +2,23 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import type { CartStore, CartActions } from '../../store/CartStore';
-import type { CartConfig } from '../../core/config';
-import { createCartIdUtils } from '../../core/utils/cartId';
+import type { ErrorLike } from '@apollo/client';
+import type { ResolvedCartConfig } from '../../core/config';
+import type { CartIdUtils } from '../../core/utils/cartId';
 import type { UseBoundStore, StoreApi } from 'zustand';
 import type { MutationQueueOptions } from '../../core/utils/mutationQueue';
-import type { SdkCartFragment_CartFragment } from '../../../../graphql/apollo/generated/operations';
+import type {
+  CurrencyCode,
+  SdkCartFragment_CartFragment,
+} from '../../../../graphql/apollo/generated/operations';
+
+/** Active language and currency of the storefront; the cart follows them. */
+export interface CartLocalization {
+  /** Value of the API `LocaleCode`, e.g. `uk` or `pt_BR`. */
+  languageCode: string;
+  /** API `CurrencyCode`, e.g. `UAH`. */
+  currencyCode: CurrencyCode;
+}
 
 /**
  * Cart context value providing store, config, and utilities
@@ -24,24 +36,27 @@ export interface CartContextValue {
   useStore: UseBoundStore<StoreApi<CartStore>>;
 
   /**
-   * Cart configuration (currency, locale, cookies)
+   * Cart configuration (sales channel, cookies)
    */
-  config: Required<CartConfig>;
+  config: ResolvedCartConfig;
+
+  /** Active language and currency new carts are created with and existing carts follow. */
+  localization: CartLocalization;
 
   /**
    * Utilities for managing cart ID in cookies
    */
-  cartIdUtils: ReturnType<typeof createCartIdUtils>;
+  cartIdUtils: CartIdUtils;
 
   /**
    * Current normalized cart data
    */
-  cartKey: any | null;
+  cartKey: SdkCartFragment_CartFragment | null;
 
   /**
    * Set normalized cart data
    */
-  setCartKey: (key: any | null) => void;
+  setCartKey: (key: SdkCartFragment_CartFragment | null) => void;
   /**
    * Runs a write of the cart or its checkout after the writes queued before it; a waiting
    * write with the same `key` is replaced by this one.
@@ -59,10 +74,14 @@ export interface CartContextValue {
   subscribeCartUpdates: (
     listener: (checkout: SdkCartFragment_CartFragment | null) => void
   ) => () => void;
+  /**
+   * The server id of a line: a provisional line resolves to the line the server confirmed for
+   * its purchasable. Null when the server has no such line.
+   */
   getConfirmedLineId: (
     lineId: string,
     purchasableId: string | undefined
-  ) => string;
+  ) => string | null;
 
   /**
    * Current cart ID
@@ -88,7 +107,7 @@ export interface CartContextValue {
    * Why the cart could not be loaded, when the server did not say it is missing. The cart id
    * is kept: the cart still exists and a retry loads it.
    */
-  cartError: unknown;
+  cartError: ErrorLike | null;
 
   /** Loads the cart again after `cartError`. */
   retryCart: () => Promise<void>;
@@ -101,6 +120,7 @@ type StableCartContextValue = Pick<
   | 'store'
   | 'useStore'
   | 'config'
+  | 'localization'
   | 'cartIdUtils'
   | 'setCartKey'
   | 'setId'
@@ -118,9 +138,11 @@ export interface CartContextProviderProps {
   children: React.ReactNode;
   store: CartStore;
   useStore: UseBoundStore<StoreApi<CartStore>>;
-  config: Required<CartConfig>;
-  cartKey: any | null;
-  setCartKey: (key: any | null) => void;
+  config: ResolvedCartConfig;
+  localization: CartLocalization;
+  cartIdUtils: CartIdUtils;
+  cartKey: SdkCartFragment_CartFragment | null;
+  setCartKey: (key: SdkCartFragment_CartFragment | null) => void;
   /**
    * Runs a write of the cart or its checkout after the writes queued before it; a waiting
    * write with the same `key` is replaced by this one.
@@ -141,12 +163,12 @@ export interface CartContextProviderProps {
   getConfirmedLineId: (
     lineId: string,
     purchasableId: string | undefined
-  ) => string;
+  ) => string | null;
   cartId: string | null;
   setId: (id: string | null) => void;
   isCartLoading: boolean;
   isCartLoaded: boolean;
-  cartError: unknown;
+  cartError: ErrorLike | null;
   retryCart: () => Promise<void>;
 }
 
@@ -161,6 +183,8 @@ export function CartContextProvider({
   store,
   useStore,
   config,
+  localization,
+  cartIdUtils,
   cartKey,
   setCartKey,
   enqueueMutation,
@@ -174,21 +198,12 @@ export function CartContextProvider({
   cartError,
   retryCart,
 }: CartContextProviderProps) {
-  // Create cart ID utils with config
-  const cartIdUtils = useMemo(
-    () =>
-      createCartIdUtils({
-        cookieName: config.cookieName,
-        cookieOptions: config.cookieOptions,
-      }),
-    [config.cookieName, config.cookieOptions]
-  );
-
   const value = useMemo<CartContextValue>(
     () => ({
       store,
       useStore,
       config,
+      localization,
       cartIdUtils,
       cartKey,
       setCartKey,
@@ -207,6 +222,7 @@ export function CartContextProvider({
       store,
       useStore,
       config,
+      localization,
       cartIdUtils,
       cartKey,
       setCartKey,
@@ -228,6 +244,7 @@ export function CartContextProvider({
       store,
       useStore,
       config,
+      localization,
       cartIdUtils,
       setCartKey,
       enqueueMutation,
@@ -240,6 +257,7 @@ export function CartContextProvider({
       store,
       useStore,
       config,
+      localization,
       cartIdUtils,
       setCartKey,
       setId,
@@ -353,7 +371,7 @@ export function useCartActions(): CartActions {
  *
  * @throws Error if used outside CartProvider
  */
-export function useCartConfig(): Required<CartConfig> {
+export function useCartConfig(): ResolvedCartConfig {
   const { config } = useStableCartContext();
   return config;
 }
@@ -363,7 +381,17 @@ export function useCartConfig(): Required<CartConfig> {
  *
  * @throws Error if used outside CartProvider
  */
-export function useCartIdUtils(): ReturnType<typeof createCartIdUtils> {
+export function useCartIdUtils(): CartIdUtils {
   const { cartIdUtils } = useStableCartContext();
   return cartIdUtils;
+}
+
+/**
+ * Hook to access the active language and currency of the cart
+ *
+ * @throws Error if used outside CartProvider
+ */
+export function useCartLocalization(): CartLocalization {
+  const { localization } = useStableCartContext();
+  return localization;
 }

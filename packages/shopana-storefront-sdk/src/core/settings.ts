@@ -121,6 +121,7 @@ export type IconPickerSettingDefinition<TSettings extends object> =
 
 export type EntityPickerEntity =
   | 'category'
+  | 'collection'
   | 'product'
   | 'article'
   | 'blog'
@@ -134,13 +135,13 @@ type EntityPickerSelection =
   | {
       entity: 'navigation_menu_item';
       valueField: EntityPickerValueField;
-      /** Limits navigation-item choices to one navigation menu. */
-      navigationMenuId?: string;
+      /** Limits navigation-item choices to the navigation menu with this handle. */
+      navigationMenuHandle?: string;
     }
   | {
       entity: Exclude<EntityPickerEntity, 'navigation_menu_item'>;
       valueField?: EntityPickerValueField;
-      navigationMenuId?: never;
+      navigationMenuHandle?: never;
     };
 
 /** Stores one stable entity field, never a hydrated entity. */

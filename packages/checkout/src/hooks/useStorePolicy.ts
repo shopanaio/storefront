@@ -1,5 +1,4 @@
-import { useQuery } from '@apollo/client/react';
-import { storePolicyQuery } from '#checkout/api/queries/storePolicyQuery.shopana';
+import { useStorePolicy as useSdkStorePolicy } from '@shopana/storefront-sdk/modules/content/react';
 
 /** A published store policy as the policy modal shows it. */
 export interface StorePolicy {
@@ -19,19 +18,14 @@ export function useStorePolicy(handle: string | null): {
   policy: StorePolicy | null;
   loading: boolean;
 } {
-  const { data, loading } = useQuery(storePolicyQuery, {
-    variables: { handle: handle ?? '' },
-    skip: !handle,
-  });
-  const loaded =
-    data?.storePolicy?.handle === handle ? data?.storePolicy : null;
+  const { policy, loading } = useSdkStorePolicy(handle);
   return {
-    policy: loaded
+    policy: policy
       ? {
-          handle: loaded.handle,
-          title: loaded.title,
-          path: loaded.path,
-          html: typeof loaded.body?.html === 'string' ? loaded.body.html : '',
+          handle: policy.handle,
+          title: policy.title,
+          path: policy.path,
+          html: policy.body?.html ?? '',
         }
       : null,
     loading,

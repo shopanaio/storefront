@@ -86,7 +86,6 @@ fragment SdkCollectionFields on Collection {
   publishedAt
   createdAt
   updatedAt
-  listingUpdatedAt
   description {
     text
     html

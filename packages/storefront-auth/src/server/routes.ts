@@ -304,11 +304,11 @@ async function runStep(
     serializeCookie(
       cookieName,
       await seal(session.config.sessionSecret, cookieName, next),
-      { maxAge: next.exp - nowSeconds(), secure: session.secure }
+      { maxAge: next.exp - nowSeconds(), ...session.cookieAttributes }
     );
   const clear = serializeCookie(cookieName, '', {
     maxAge: 0,
-    secure: session.secure,
+    ...session.cookieAttributes,
   });
 
   let started = false;
@@ -674,7 +674,7 @@ async function leaveForProvider(
       await seal(session.config.sessionSecret, name, callback),
       {
         maxAge: SOCIAL_TRANSACTION_LIFETIME_SECONDS,
-        secure: session.secure,
+        ...session.cookieAttributes,
       }
     ),
   ]);

@@ -76,9 +76,10 @@ export function createCartStore(
           const currencyCode =
             price?.currencyCode || base.cost.totalAmount.currencyCode;
           nextLines.push({
+            isOptimistic: true,
             id: genClientLineId(),
             purchasableId: l.purchasableId,
-            purchasable: undefined as any,
+            purchasable: null,
             quantity: l.quantity,
             cost: {
               unitPrice: { amount: price?.unitPrice ?? 0, currencyCode },
@@ -220,9 +221,10 @@ export function createCartStore(
           nextLines[targetIdx] = updatedTarget;
         } else {
           nextLines.push({
+            isOptimistic: true,
             id: genClientLineId(),
             purchasableId: replacement.purchasableId,
-            purchasable: undefined as any,
+            purchasable: null,
             quantity: requestedQty,
             cost: {
               unitPrice: { amount: price?.unitPrice ?? 0, currencyCode },
@@ -268,6 +270,8 @@ export function createCartStore(
           totalDiscountAmount: { amount: 0, currencyCode },
           totalTaxAmount: { amount: 0, currencyCode },
           totalShippingAmount: { amount: 0, currencyCode },
+          merchandiseDiscountAmount: { amount: 0, currencyCode },
+          loyaltyAmount: { amount: 0, currencyCode },
         },
       };
 

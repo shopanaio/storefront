@@ -1,0 +1,109 @@
+fragment SdkCustomerAddressFragment on CustomerAddress {
+  id
+  label
+  prefix
+  firstName
+  middleName
+  lastName
+  suffix
+  name
+  company
+  address1
+  address2
+  city
+  province
+  provinceCode
+  country
+  countryCode
+  zip
+  phone
+  isDefaultShipping
+  isDefaultBilling
+  validationStatus
+  validatedAt
+  formatted
+  formattedArea
+  createdAt
+  updatedAt
+}
+
+fragment SdkCustomerAddressDefaultsFragment on Customer {
+  id
+  defaultShippingAddress {
+    id
+  }
+  defaultBillingAddress {
+    id
+  }
+}
+
+query SdkCustomerAddressesQuery($first: Int, $after: Cursor) {
+  customer {
+    ...SdkCustomerAddressDefaultsFragment
+    addresses(first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          ...SdkCustomerAddressFragment
+        }
+      }
+      pageInfo {
+        ...SdkCustomerPageInfoFragment
+      }
+      totalCount
+    }
+  }
+}
+
+mutation SdkCustomerAddressCreateMutation($input: CustomerAddressCreateInput!) {
+  customerAddressCreate(input: $input) {
+    customerAddress {
+      ...SdkCustomerAddressFragment
+    }
+    customer {
+      ...SdkCustomerAddressDefaultsFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}
+
+mutation SdkCustomerAddressUpdateMutation($input: CustomerAddressUpdateInput!) {
+  customerAddressUpdate(input: $input) {
+    customerAddress {
+      ...SdkCustomerAddressFragment
+    }
+    customer {
+      ...SdkCustomerAddressDefaultsFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}
+
+mutation SdkCustomerAddressDeleteMutation($input: CustomerAddressDeleteInput!) {
+  customerAddressDelete(input: $input) {
+    deletedAddressId
+    customer {
+      ...SdkCustomerAddressDefaultsFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}
+
+mutation SdkCustomerAddressDefaultSetMutation(
+  $input: CustomerAddressDefaultSetInput!
+) {
+  customerAddressDefaultSet(input: $input) {
+    customer {
+      ...SdkCustomerAddressDefaultsFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}

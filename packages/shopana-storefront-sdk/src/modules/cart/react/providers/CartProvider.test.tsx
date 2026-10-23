@@ -42,6 +42,8 @@ const { requests, cartQuery } = vi.hoisted(() => ({
 
 vi.mock('@apollo/client/react', () => ({
   useQuery: () => cartQuery.current,
+  // The test carts are in the provider language and currency: nothing is synchronized.
+  useApolloClient: () => ({ mutate: vi.fn() }),
   useMutation: (document: TypedDocumentNode) => [
     ({ variables }: { variables: (typeof requests)[number]['variables'] }) =>
       new Promise((resolve, reject) => {
@@ -126,12 +128,12 @@ function checkout(quantity: number): SdkCartFragment_CartFragment {
 }
 
 const config: CartConfig = {
-  defaultCurrency: 'USD',
-  defaultLocale: 'en',
   channelCode: 'online-store',
   cookieName: 'review-test-cart',
   cookieOptions: { secure: false },
 };
+
+const localization = { languageCode: 'en', currencyCode: 'USD' } as const;
 
 function mount(initialCheckout?: SdkCartFragment_CartFragment) {
   const original = mapShopanaCheckoutToEntityCart(
@@ -152,6 +154,7 @@ function mount(initialCheckout?: SdkCartFragment_CartFragment) {
         <CartProvider
           store={store}
           config={config}
+          localization={localization}
           initialCart={initialCheckout}
         >
           {children}
@@ -282,7 +285,7 @@ function withAddedLine() {
 }
 
 const snapshot = () =>
-  mapShopanaCheckoutToEntityCart(checkout(1)).lines[0].purchasable;
+  mapShopanaCheckoutToEntityCart(checkout(1)).lines[0].purchasable!;
 
 describe('queued optimistic edits', () => {
   it.each(['network', 'userErrors'])(
@@ -531,7 +534,11 @@ describe('loading the cart from the cookie', () => {
       () => ({ context: useCartContext(), ...useAddItemToCart() }),
       {
         wrapper: ({ children }) => (
-          <CartProvider store={store} config={config}>
+          <CartProvider
+            store={store}
+            config={config}
+            localization={localization}
+          >
             {children}
           </CartProvider>
         ),

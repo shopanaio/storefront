@@ -4,30 +4,34 @@ import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
 import {
   useCartActions,
-  useCartConfig,
   useCartIdUtils,
+  useCartLocalization,
   useCartStoreApi,
 } from '../context/CartContext';
 import useCreateCart from './useCreateCart';
-import type { AddToCartInput } from '../../core/types';
+import type { AddToCartInput, MutationOptions } from '../../core/types';
+import type { model } from '../../../../model/namespace';
+import {
+  cartUserError,
+  missingCheckoutError,
+  settleCartMutation,
+} from '../../core/errors';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 const useAddItemToCart = () => {
   const { setCartKey, enqueueMutation } = useCartSetters();
   const { createCart } = useCreateCart();
   const cartStore = useCartStoreApi();
   const cartIdUtils = useCartIdUtils();
   const actions = useCartActions();
-  const { defaultLocale } = useCartConfig();
+  const localization = useCartLocalization();
   const [commitAddLine, isInFlight] = useMutation(addToCartMutation);
   return {
+    /** Resolves with the confirmed cart; rejects only with `CartMutationError`. */
     addToCart: async (
       input: AddToCartInput,
-      options?: {
-        onSuccess?: () => void;
-        onError?: () => void;
-      }
-    ): Promise<unknown> => {
+      options?: MutationOptions
+    ): Promise<model.Cart> => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
-      const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
       // A cart that is still loading or failed to load keeps its cookie: the line goes there,
       // and only a shopper without a cart gets a new one.
@@ -36,8 +40,8 @@ const useAddItemToCart = () => {
       if (!cartId) {
         return createCart(
           {
-            currencyCode: purchasableSnapshot.price.currencyCode,
-            localeCode: defaultLocale,
+            currencyCode: localization.currencyCode,
+            localeCode: localization.languageCode,
             items: [
               {
                 purchasableId,
@@ -68,48 +72,48 @@ const useAddItemToCart = () => {
             },
           },
         });
-      return enqueueMutation(
-        () =>
-          new Promise((resolve, reject) => {
-            commitAddLine({
-              variables: {
-                input: {
-                  checkoutId: cartId,
-                  lines: [
-                    {
-                      purchasableId,
-                      quantity,
-                      tagSlug: input.tagSlug,
-                      children: input.children?.map((child) => ({
-                        componentItemId: child.componentItemId,
-                        purchasableId: child.purchasableId,
-                        quantity: child.quantity,
-                        attributes: child.attributes,
-                      })),
-                    },
-                  ],
+      return settleCartMutation(
+        enqueueMutation(
+          () =>
+            new Promise<model.Cart>((resolve, reject) => {
+              commitAddLine({
+                variables: {
+                  input: {
+                    checkoutId: cartId,
+                    lines: [
+                      {
+                        purchasableId,
+                        quantity,
+                        tagSlug: input.tagSlug,
+                        children: input.children?.map((child) => ({
+                          componentItemId: child.componentItemId,
+                          purchasableId: child.purchasableId,
+                          quantity: child.quantity,
+                          attributes: child.attributes,
+                        })),
+                      },
+                    ],
+                  },
                 },
-              },
-              onCompleted: (response, errors) => {
-                if (errors && errors.length > 0) {
-                  onError?.();
-                  return reject(errors);
-                }
-                if (response.checkoutLinesAdd.errors.length > 0) {
-                  onError?.();
-                  return reject(response.checkoutLinesAdd.errors);
-                }
-                setCartKey(response.checkoutLinesAdd.checkout);
-                onSuccess?.();
-                return resolve(response.checkoutLinesAdd.checkout);
-              },
-              onError: (error) => {
-                onError?.();
-                reject(error);
-              },
-            });
-          }),
-        { optimisticEdit }
+                onCompleted: (response) => {
+                  const payload = response.checkoutLinesAdd;
+                  if (payload.errors.length > 0) {
+                    return reject(cartUserError(payload.errors));
+                  }
+                  if (!payload.checkout) {
+                    return reject(missingCheckoutError('checkoutLinesAdd'));
+                  }
+                  setCartKey(payload.checkout);
+                  return resolve(
+                    mapShopanaCheckoutToEntityCart(payload.checkout)
+                  );
+                },
+                onError: reject,
+              });
+            }),
+          { optimisticEdit }
+        ),
+        options
       );
     },
     isInFlight,

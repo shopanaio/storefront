@@ -71,6 +71,23 @@ function getComponentFromModule(
   return input as React.ComponentType<DynamicModulePageProps>;
 }
 
+/** A module page module may export `generateMetadata(props)` next to its default component. */
+type ModuleMetadataGenerator = (
+  props: DynamicModulePageProps
+) => Promise<Metadata> | Metadata;
+
+function getModuleMetadataGenerator(
+  input: unknown
+): ModuleMetadataGenerator | null {
+  if (input && typeof input === 'object' && 'generateMetadata' in input) {
+    const generate = (input as { generateMetadata: unknown }).generateMetadata;
+    if (typeof generate === 'function') {
+      return generate as ModuleMetadataGenerator;
+    }
+  }
+  return null;
+}
+
 export type { SDKRequestContext };
 
 export function createRuntimePage(options: CreateRuntimePageOptions) {
@@ -119,7 +136,21 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     );
 
     if (resolution.kind === 'module') {
-      return buildModuleMetadata(resolution.match.record.slug);
+      const generate = getModuleMetadataGenerator(
+        await resolution.match.record.loader()
+      );
+      if (!generate) return buildModuleMetadata(resolution.match.record.slug);
+      return generate({
+        params: {
+          locale: resolvedParams.locale ?? '',
+          module: resolvedParams.slug ?? [],
+        },
+        searchParams: { ...resolvedSearchParams },
+        pathParams: resolution.match.params
+          ? { ...resolution.match.params }
+          : {},
+        services,
+      });
     }
 
     const { pageType, params: routeParams } = resolution.route;
@@ -168,11 +199,11 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
         getComponentFromModule(modulePayload),
         {
           params: {
-            locale: params.locale ?? 'en',
+            locale: params.locale ?? '',
             module: segments,
           },
+          services,
           searchParams,
-          segments: segments.slice(1),
           pathParams: resolution.match.params
             ? { ...resolution.match.params }
             : {},

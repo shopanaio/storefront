@@ -1,169 +1,114 @@
-import { match } from 'path-to-regexp';
+import { compile, match } from 'path-to-regexp';
 
 import type { PageType, TemplateParams } from '../core/types';
 
-export interface ParsedRoute extends TemplateParams {
-  pageType: PageType;
-  /** The locale extracted from the path, if present */
-  locale?: string;
-}
-
-type Matcher = ReturnType<typeof match>;
-
-interface RouteDefinition {
-  pageType: PageType;
-  pattern: string;
-  matcher: Matcher;
-}
+/** A parsed pathname without the locale segment. */
+export type ParsedRoute = TemplateParams;
 
 /**
- * Route definitions for the storefront.
- * Routes are matched in order, so more specific routes should come first.
+ * Canonical storefront pathnames without the locale segment. Reserved pages are parsed by the
+ * runtime; `policy`, `checkout` and `account` belong to modules and are only built here.
  */
-const routePatterns: Array<{ pageType: PageType; pattern: string }> = [
-  // Product routes
-  { pageType: 'product', pattern: '/products/:handle' },
+export const storefrontRoutes = {
+  home: '/',
+  product: '/products/:handle',
+  category: '/categories/:handle',
+  collection: '/collections/:handle',
+  'list-collections': '/collections',
+  page: '/pages/:handle',
+  policy: '/policies/:handle',
+  blog: '/blogs/:blog',
+  article: '/blogs/:blog/:handle',
+  search: '/search',
+  cart: '/cart',
+  checkout: '/checkout',
+  account: '/account{/*path}',
+} as const;
+
+export type StorefrontRouteName = keyof typeof storefrontRoutes;
+
+export type StorefrontRouteParams = Record<string, string | readonly string[]>;
+
+type ReservedPageType = Exclude<PageType, '404'>;
+
+/**
+ * Reserved page routes in match order: specific patterns first, the root last.
+ * `/p/:handle` and `/c/:handle` are short product and collection URLs.
+ */
+const pageRoutePatterns: ReadonlyArray<{
+  pageType: ReservedPageType;
+  pattern: string;
+}> = [
+  { pageType: 'product', pattern: storefrontRoutes.product },
   { pageType: 'product', pattern: '/p/:handle' },
-
-  // Collection routes (specific first, then list)
-  { pageType: 'collection', pattern: '/collections/:handle' },
+  { pageType: 'category', pattern: storefrontRoutes.category },
+  { pageType: 'collection', pattern: storefrontRoutes.collection },
   { pageType: 'collection', pattern: '/c/:handle' },
-  { pageType: 'list-collections', pattern: '/collections' },
-
-  // Blog routes (article with handle first, then blog list)
-  { pageType: 'article', pattern: '/blogs/:blog/:handle' },
-  { pageType: 'article', pattern: '/blogs/:handle' },
-  { pageType: 'blog', pattern: '/blogs' },
-
-  // Other pages
-  { pageType: 'search', pattern: '/search' },
-  { pageType: 'cart', pattern: '/cart' },
-  { pageType: 'page', pattern: '/pages/:handle' },
-
-  // Home page (must be last as it matches root)
-  { pageType: 'home', pattern: '/' },
+  { pageType: 'list-collections', pattern: storefrontRoutes['list-collections'] },
+  { pageType: 'article', pattern: storefrontRoutes.article },
+  { pageType: 'blog', pattern: storefrontRoutes.blog },
+  { pageType: 'search', pattern: storefrontRoutes.search },
+  { pageType: 'cart', pattern: storefrontRoutes.cart },
+  { pageType: 'page', pattern: storefrontRoutes.page },
+  { pageType: 'home', pattern: storefrontRoutes.home },
 ];
 
-// Build matchers from patterns
-const routes: RouteDefinition[] = routePatterns.map(
-  ({ pageType, pattern }) => ({
-    pageType,
-    pattern,
-    matcher: match(pattern, { decode: decodeURIComponent, end: true }),
-  })
-);
+const pageRoutes = pageRoutePatterns.map(({ pageType, pattern }) => ({
+  pageType,
+  matcher: match(pattern, { decode: decodeURIComponent, end: true }),
+}));
 
-// Regex to match locale prefix (2-3 letter code like /ru, /en, /rus, etc.)
-const LOCALE_REGEX = /^\/([a-z]{2,3})(?=\/|$)/;
-
-export interface ParseRouteOptions {
-  /** Strip locale prefix from pathname before matching (default: true) */
-  stripLocale?: boolean;
-  /** Custom locale regex pattern */
-  localePattern?: RegExp;
-}
+const routeBuilders = Object.fromEntries(
+  Object.entries(storefrontRoutes).map(([name, pattern]) => [
+    name,
+    compile(pattern, { encode: encodeURIComponent }),
+  ])
+) as Record<StorefrontRouteName, ReturnType<typeof compile>>;
 
 /**
- * Parse route from full pathname string using path-to-regexp.
- * Automatically strips locale prefix if present.
+ * Parses a pathname that no longer carries the locale segment.
  *
  * @example
- * ```ts
- * // Basic usage
- * const route = parseRoute('/products/my-product');
- * // route.pageType === 'product'
- * // route.params.handle === 'my-product'
- *
- * // With locale
- * const route = parseRoute('/ru/products/my-product');
- * // route.pageType === 'product'
- * // route.params.handle === 'my-product'
- * // route.locale === 'ru'
- *
- * // With request context
- * const ctx = await getRequestContext();
- * const route = parseRoute(ctx.pathname);
- * ```
+ * parseRoute('/products/my-product'); // { pageType: 'product', params: { handle: 'my-product' } }
  */
-export function parseRoute(
-  pathname: string,
-  options: ParseRouteOptions = {}
-): ParsedRoute {
-  const { stripLocale = true, localePattern = LOCALE_REGEX } = options;
+export function parseRoute(pathname: string): ParsedRoute {
+  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
 
-  let normalizedPath = pathname;
-  let locale: string | undefined;
-
-  // Extract and strip locale prefix
-  if (stripLocale) {
-    const localeMatch = pathname.match(localePattern);
-    if (localeMatch) {
-      locale = localeMatch[1];
-      normalizedPath = pathname.slice(localeMatch[0].length) || '/';
-    }
-  }
-
-  // Ensure path starts with /
-  if (!normalizedPath.startsWith('/')) {
-    normalizedPath = '/' + normalizedPath;
-  }
-
-  // Try to match against route patterns
-  for (const route of routes) {
+  for (const route of pageRoutes) {
     const result = route.matcher(normalizedPath);
-
     if (!result) continue;
 
     return {
       pageType: route.pageType,
       params: result.params as Record<string, string | undefined>,
       searchParams: undefined,
-      locale,
     };
   }
 
-  return {
-    pageType: '404',
-    params: {},
-    searchParams: undefined,
-    locale,
-  };
+  return { pageType: '404', params: {}, searchParams: undefined };
 }
 
 /**
- * @deprecated Use parseRoute instead
- */
-export function parseRoutePath(pathname: string): ParsedRoute {
-  return parseRoute(pathname);
-}
-
-/**
- * Build a pathname from a route definition.
+ * Builds a canonical pathname without the locale segment.
  *
  * @example
- * ```ts
  * buildPath('product', { handle: 'my-product' }); // '/products/my-product'
- * buildPath('collection', { handle: 'shirts' }); // '/collections/shirts'
- * buildPath('home'); // '/'
- * ```
+ * buildPath('account', { path: ['orders', '42'] }); // '/account/orders/42'
  */
 export function buildPath(
-  pageType: PageType,
-  params?: Record<string, string>
+  route: StorefrontRouteName,
+  params: StorefrontRouteParams = {}
 ): string {
-  const route = routePatterns.find((r) => r.pageType === pageType);
-  if (!route) {
-    return '/';
-  }
-
-  let path = route.pattern;
-
-  // Replace params in pattern
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      path = path.replace(`:${key}`, encodeURIComponent(value));
+  const normalized: Record<string, string | string[]> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string') {
+      normalized[key] = value;
+    } else if (value.length > 0) {
+      normalized[key] = [...value];
     }
   }
-
-  return path;
+  if (route === 'account' && typeof normalized.path === 'string') {
+    normalized.path = normalized.path.split('/').filter(Boolean);
+  }
+  return routeBuilders[route](normalized);
 }

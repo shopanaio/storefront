@@ -1,4 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
+import type { NormalizedCacheObject, OperationVariables } from '@apollo/client';
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
+import type { SerializableApolloQuery } from '../graphql/apollo/loadSerializableQuery';
 import { match, type MatchFunction, type ParamData } from 'path-to-regexp';
 
 // Re-export ParamData for module authors
@@ -88,13 +91,22 @@ const HOME_PATHNAME = '/';
 /**
  * Props contract for module page components resolved by `[...module]`.
  */
+/** Request-scoped data services of a module page; the same ones reserved pages receive. */
+export interface ModulePageServices {
+  loadQuery<TData, TVariables extends OperationVariables>(
+    document: TypedDocumentNode<TData, TVariables>,
+    variables: TVariables
+  ): Promise<SerializableApolloQuery<TData, TVariables>>;
+  extractCacheState(): Promise<NormalizedCacheObject>;
+}
+
 export interface DynamicModulePageProps {
+  /** `locale` is the URL locale segment of the request. */
   params: { locale: string; module?: string[] };
   searchParams?: Record<string, string | string[] | undefined>;
-  /** @deprecated Use pathParams instead */
-  segments?: string[];
   /** Extracted path parameters from the URL pattern (e.g., { step: 'shipping' } for /checkout/:step) */
   pathParams: ParamData;
+  services: ModulePageServices;
 }
 
 /**

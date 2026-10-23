@@ -1,0 +1,61 @@
+fragment SdkWishlistItemFragment on CustomerWishlistItem {
+  id
+  addedAt
+  product {
+    ...SdkCustomerProductFragment
+  }
+}
+
+query SdkCustomerWishlistQuery(
+  $first: Int
+  $after: Cursor
+  $imageTransform: ImageTransformInput
+) {
+  customer {
+    id
+    defaultWishlist {
+      id
+      name
+      isDefault
+      items(first: $first, after: $after) {
+        edges {
+          cursor
+          node {
+            ...SdkWishlistItemFragment
+          }
+        }
+        pageInfo {
+          ...SdkCustomerPageInfoFragment
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+mutation SdkWishlistProductAddMutation($input: WishlistProductAddInput!) {
+  wishlistProductAdd(input: $input) {
+    wishlistItem {
+      id
+      addedAt
+      product {
+        id
+      }
+      wishlist {
+        id
+      }
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}
+
+mutation SdkWishlistProductRemoveMutation($input: WishlistProductRemoveInput!) {
+  wishlistProductRemove(input: $input) {
+    deletedWishlistItemId
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}

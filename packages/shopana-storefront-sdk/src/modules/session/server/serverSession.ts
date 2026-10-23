@@ -1,4 +1,9 @@
 import type { model } from '../../../model/namespace';
+import {
+  resolveCookieAttributes,
+  serializeCookie as serializeCookieValue,
+  type CookieAttributes,
+} from '../../../core/cookiePolicy';
 import { SIGNED_IN_COOKIE } from '../core/sessionCookies';
 import type { StorefrontAuthServerConfig } from './config';
 import {
@@ -45,12 +50,12 @@ export interface ServerSessionPayload {
   loginMethod?: LoginMethod;
 }
 
-export interface CookieOptions {
+/** Attributes of a session cookie; SameSite, Secure and Partitioned follow the cookie policy. */
+export interface CookieOptions extends CookieAttributes {
   path?: string;
   maxAge: number;
+  /** True by default. */
   httpOnly?: boolean;
-  secure: boolean;
-  sameSite?: 'Lax' | 'Strict';
 }
 
 export function serializeCookie(
@@ -58,15 +63,11 @@ export function serializeCookie(
   value: string,
   options: CookieOptions
 ): string {
-  const parts = [
-    `${name}=${encodeURIComponent(value)}`,
-    `Path=${options.path ?? '/'}`,
-    `Max-Age=${Math.max(0, Math.floor(options.maxAge))}`,
-    `SameSite=${options.sameSite ?? 'Lax'}`,
-  ];
-  if (options.httpOnly !== false) parts.push('HttpOnly');
-  if (options.secure) parts.push('Secure');
-  return parts.join('; ');
+  return serializeCookieValue(name, value, {
+    ...options,
+    maxAge: Math.max(0, Math.floor(options.maxAge)),
+    httpOnly: options.httpOnly !== false,
+  });
 }
 
 export function parseCookieHeader(
@@ -153,11 +154,19 @@ export class StorefrontSessionServer {
   readonly iam: IamOAuthServerClient;
   readonly secure: boolean;
   readonly origin: string;
+  /**
+   * SameSite, Secure and Partitioned of every cookie the session handlers set or delete; a
+   * partitioned cookie is deleted only with the same attributes.
+   */
+  readonly cookieAttributes: CookieAttributes;
 
   constructor(readonly config: StorefrontAuthServerConfig) {
     this.iam = new IamOAuthServerClient(config);
     this.origin = new URL(config.redirectUri).origin;
     this.secure = this.origin.startsWith('https:');
+    this.cookieAttributes = resolveCookieAttributes(config.cookiePolicy, {
+      secure: this.secure,
+    });
   }
 
   /**
@@ -198,7 +207,7 @@ export class StorefrontSessionServer {
         serializeCookie(
           ACCESS_COOKIE,
           await seal(secret, ACCESS_COOKIE, outcome.access),
-          { maxAge: accessMaxAge, secure: this.secure }
+          { maxAge: accessMaxAge, ...this.cookieAttributes }
         ),
         serializeCookie(
           REFRESH_COOKIE,
@@ -206,13 +215,13 @@ export class StorefrontSessionServer {
           {
             path: REFRESH_COOKIE_PATH,
             maxAge: REFRESH_LIFETIME_SECONDS,
-            secure: this.secure,
+            ...this.cookieAttributes,
           }
         ),
         serializeCookie(SIGNED_IN_COOKIE, '1', {
           maxAge: REFRESH_LIFETIME_SECONDS,
           httpOnly: false,
-          secure: this.secure,
+          ...this.cookieAttributes,
         }),
       ],
       session: toSessionPayload(outcome.access),
@@ -221,16 +230,19 @@ export class StorefrontSessionServer {
 
   clearSessionCookies(): string[] {
     return [
-      serializeCookie(ACCESS_COOKIE, '', { maxAge: 0, secure: this.secure }),
+      serializeCookie(ACCESS_COOKIE, '', {
+        maxAge: 0,
+        ...this.cookieAttributes,
+      }),
       serializeCookie(REFRESH_COOKIE, '', {
         path: REFRESH_COOKIE_PATH,
         maxAge: 0,
-        secure: this.secure,
+        ...this.cookieAttributes,
       }),
       serializeCookie(SIGNED_IN_COOKIE, '', {
         maxAge: 0,
         httpOnly: false,
-        secure: this.secure,
+        ...this.cookieAttributes,
       }),
     ];
   }

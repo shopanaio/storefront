@@ -1,68 +1,118 @@
 'use client';
 
 import { createContext, useCallback, useMemo, type ReactNode } from 'react';
-import type { Locale } from '../../../shop/types';
-import { buildLocalizedPathname } from '../core/buildLocalizedPathname';
-import type { LocalizationConfig, LocalizationState } from '../core/types';
+import type { SdkLocalizationFragment } from '../../../graphql/apollo/generated/operations';
+import {
+  buildHref as buildLocalizedHref,
+  splitLocaleFromPathname,
+  type HrefTarget,
+  type LocaleRouting,
+} from '../core/href';
+import { findStorefrontLocale, type StorefrontLocale } from '../core/locale';
+import type {
+  LocalePrefixMode,
+  LocalizationState,
+  StorefrontLocales,
+} from '../core/types';
 
 export const LocalizationContext = createContext<LocalizationState | null>(
   null
 );
 
-interface LocalizationProviderProps {
+export interface LocalizationProviderProps {
   children: ReactNode;
-  config: LocalizationConfig;
-  currentLocale: Locale;
-  availableLocales: readonly Locale[];
+  locale: StorefrontLocale;
+  locales: StorefrontLocales;
+  localePrefix: LocalePrefixMode;
+  localization: SdkLocalizationFragment;
+  timeZone: string;
 }
 
 export function LocalizationProvider({
   children,
-  config,
-  currentLocale,
-  availableLocales,
+  locale,
+  locales,
+  localePrefix,
+  localization,
+  timeZone,
 }: LocalizationProviderProps) {
-  const getLocaleUrl = useCallback(
-    (localeCode: string) => {
-      const url = new URL(window.location.href);
-      url.pathname = buildLocalizedPathname({
-        pathname: url.pathname,
-        localeCode,
-        defaultLocale: config.defaultLocale,
-        availableLocaleCodes: availableLocales.map((locale) => locale.code),
-        localePrefix: config.localePrefix,
-      });
-
-      return `${url.pathname}${url.search}${url.hash}`;
-    },
-    [availableLocales, config.defaultLocale, config.localePrefix]
+  const segments = useMemo(
+    () => locales.locales.map((item) => item.segment),
+    [locales.locales]
   );
 
-  const changeLocale = useCallback(
-    (localeCode: string) => {
-      if (localeCode === currentLocale.code) return;
+  const routingFor = useCallback(
+    (segment: string): LocaleRouting => ({
+      locale: segment,
+      defaultLocale: locales.defaultLocale.segment,
+      locales: segments,
+      localePrefix,
+    }),
+    [locales.defaultLocale.segment, localePrefix, segments]
+  );
 
-      const localeExists = availableLocales.some(
-        (locale) => locale.code === localeCode
-      );
-
-      if (!localeExists) {
-        throw new Error(`Unsupported locale: ${localeCode}`);
+  const buildHref = useCallback(
+    (target: HrefTarget, options?: { locale?: string }) => {
+      const targetLocale = options?.locale
+        ? findStorefrontLocale(locales.locales, options.locale)
+        : locale;
+      if (!targetLocale) {
+        throw new Error(`Unsupported locale: ${options?.locale}`);
       }
-
-      window.location.assign(getLocaleUrl(localeCode));
+      return buildLocalizedHref(target, routingFor(targetLocale.segment));
     },
-    [availableLocales, currentLocale.code, getLocaleUrl]
+    [locale, locales.locales, routingFor]
+  );
+
+  const stripLocale = useCallback(
+    (pathname: string) => splitLocaleFromPathname(pathname, segments).pathname,
+    [segments]
+  );
+
+  const switchLocale = useCallback(
+    (value: string) => {
+      const target = findStorefrontLocale(locales.locales, value);
+      if (!target) throw new Error(`Unsupported locale: ${value}`);
+      if (target.segment === locale.segment) return;
+
+      const url = new URL(window.location.href);
+      const href = buildLocalizedHref(
+        `${stripLocale(url.pathname)}${url.search}${url.hash}`,
+        routingFor(target.segment)
+      );
+      // The root layout, the Apollo cache and next-intl messages belong to one locale.
+      window.location.assign(href);
+    },
+    [locale.segment, locales.locales, routingFor, stripLocale]
   );
 
   const value = useMemo<LocalizationState>(
     () => ({
-      currentLocale,
-      availableLocales,
-      getLocaleUrl,
-      changeLocale,
+      locale,
+      defaultLocale: locales.defaultLocale,
+      availableLanguages: locales.locales,
+      localePrefix,
+      market: localization.market,
+      country: localization.country,
+      currency: localization.currency,
+      availableCountries: localization.availableCountries,
+      availableCurrencies: localization.availableCurrencies,
+      timeZone,
+      intlLocale: locale.tag,
+      buildHref,
+      stripLocale,
+      switchLocale,
     }),
-    [availableLocales, changeLocale, currentLocale, getLocaleUrl]
+    [
+      buildHref,
+      locale,
+      localePrefix,
+      localization,
+      locales,
+      stripLocale,
+      switchLocale,
+      timeZone,
+    ]
   );
 
   return (

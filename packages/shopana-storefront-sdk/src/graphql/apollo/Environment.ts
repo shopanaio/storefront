@@ -13,6 +13,11 @@ import {
 } from '@apollo/client-integration-nextjs';
 import { createApolloCache } from './cache';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
+import {
+  readCookie,
+  resolveCookieAttributes,
+  serializeCookie,
+} from '../../core/cookiePolicy';
 import type {
   ApolloEnvironmentConfig,
   CreateApolloClientOptions,
@@ -20,6 +25,7 @@ import type {
 
 const IS_SERVER = typeof window === 'undefined';
 const VISITOR_COOKIE_NAME = 'shopana_storefront_visitor_id';
+const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 /** The gateway rejects the whole request when the bearer token is not valid (anymore). */
 const CUSTOMER_INVALID_CODE = 'STOREFRONT_CUSTOMER_INVALID';
 
@@ -27,16 +33,7 @@ function getCookieValue(
   cookieName: string,
   serverCookies?: string
 ): string | null {
-  const cookieSource = IS_SERVER ? serverCookies : document.cookie;
-  if (!cookieSource) {
-    return null;
-  }
-
-  const escapedName = cookieName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = cookieSource.match(
-    new RegExp(`(?:^|; )${escapedName}=([^;]*)`)
-  );
-  return match ? decodeURIComponent(match[1]) : null;
+  return readCookie(IS_SERVER ? serverCookies : document.cookie, cookieName);
 }
 
 function hasCustomerInvalidError(
@@ -125,9 +122,16 @@ export function createApolloClient(
     let visitorId = getCookieValue(VISITOR_COOKIE_NAME, options.serverCookies);
     if (!visitorId && !IS_SERVER) {
       visitorId = crypto.randomUUID();
-      document.cookie = `${VISITOR_COOKIE_NAME}=${visitorId}; Path=/; SameSite=Lax; Max-Age=2592000${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+      document.cookie = serializeCookie(VISITOR_COOKIE_NAME, visitorId, {
+        ...resolveCookieAttributes(config.cookiePolicy, {
+          secure: window.location.protocol === 'https:',
+        }),
+        maxAge: VISITOR_COOKIE_MAX_AGE,
+      });
     }
     if (visitorId) headers['x-shopana-storefront-visitor-id'] = visitorId;
+    // The gateway picks the content language from Accept-Language (lz20).
+    if (options.locale) headers['Accept-Language'] = options.locale;
 
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;

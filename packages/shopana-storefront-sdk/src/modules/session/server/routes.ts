@@ -116,7 +116,7 @@ async function login(
     serializeCookie(
       name,
       await seal(server.config.sessionSecret, name, transaction),
-      { maxAge: TRANSACTION_LIFETIME_SECONDS, secure: server.secure }
+      { maxAge: TRANSACTION_LIFETIME_SECONDS, ...server.cookieAttributes }
     ),
   ]);
 }
@@ -135,7 +135,7 @@ async function callback(
   );
   const clearTransaction = serializeCookie(name, '', {
     maxAge: 0,
-    secure: server.secure,
+    ...server.cookieAttributes,
   });
   const returnTo = transaction?.returnTo ?? '/';
   const fail = (result: AuthResult) =>
@@ -172,7 +172,7 @@ async function callback(
       serializeCookie(AUTH_EVENT_COOKIE, 'signed-in', {
         maxAge: AUTH_EVENT_LIFETIME_SECONDS,
         httpOnly: false,
-        secure: server.secure,
+        ...server.cookieAttributes,
       }),
     ]);
   } catch {
@@ -268,8 +268,7 @@ async function logout(
     serializeCookie(cartCookieName, '', {
       maxAge: 0,
       httpOnly: false,
-      secure: server.secure,
-      sameSite: 'Strict',
+      ...server.cookieAttributes,
     }),
   ]);
 }

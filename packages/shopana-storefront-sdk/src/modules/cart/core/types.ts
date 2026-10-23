@@ -1,4 +1,5 @@
-import { model } from '../../../model/namespace';
+import type { model } from '../../../model/namespace';
+import type { CartMutationError } from './errors';
 
 /**
  * Attribute for cart item
@@ -67,13 +68,14 @@ export interface ClearCartInput {
  * Return type for useClearCart hook
  */
 export interface UseClearCartReturn {
+  /**
+   * Resolves with the emptied cart, or null when there is no cart or the server dropped it.
+   * Rejects only with `CartMutationError`.
+   */
   clearCart: (
     input?: ClearCartInput,
-    options?: {
-      onSuccess?: () => void;
-      onError?: () => void;
-    }
-  ) => Promise<any>;
+    options?: MutationOptions<model.Cart | null>
+  ) => Promise<model.Cart | null>;
   loading: boolean;
 }
 
@@ -121,8 +123,8 @@ export interface CreateCartInput {
     quantity: number;
     /** How the line is purchased; the API default applies when missing. */
     purchase?: { type: string };
-    /** Line attributes, passed to the API as they are. */
-    attributes?: unknown;
+    /** Line attributes, passed to the API as they are (JSON). */
+    attributes?: object;
     tagSlug?: string;
     children?: AddToCartChildInput[];
   }[];
@@ -135,7 +137,7 @@ export interface CreateCartInput {
 /**
  * Options for mutation callbacks
  */
-export interface MutationOptions {
-  onSuccess?: () => void;
-  onError?: (error?: any) => void;
+export interface MutationOptions<TResult = model.Cart> {
+  onSuccess?: (result: TResult) => void;
+  onError?: (error: CartMutationError) => void;
 }

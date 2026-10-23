@@ -1,0 +1,62 @@
+fragment SdkCustomerDataRequestFragment on CustomerDataRequest {
+  id
+  type
+  status
+  correctionDetails
+  resultFile {
+    id
+    url
+    mimeType
+    originalFileSize
+  }
+  rejectionReason
+  requestedAt
+  dueAt
+  startedAt
+  finishedAt
+  updatedAt
+}
+
+query SdkCustomerDataRequestsQuery($first: Int, $after: Cursor) {
+  customer {
+    id
+    dataRequests(first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          ...SdkCustomerDataRequestFragment
+        }
+      }
+      pageInfo {
+        ...SdkCustomerPageInfoFragment
+      }
+      totalCount
+    }
+  }
+}
+
+mutation SdkCustomerDataRequestCreateMutation(
+  $input: CustomerDataRequestCreateInput!
+) {
+  customerDataRequestCreate(input: $input) {
+    dataRequest {
+      ...SdkCustomerDataRequestFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}
+
+mutation SdkCustomerDataRequestCancelMutation(
+  $input: CustomerDataRequestCancelInput!
+) {
+  customerDataRequestCancel(input: $input) {
+    dataRequest {
+      ...SdkCustomerDataRequestFragment
+    }
+    errors: userErrors {
+      ...SdkCustomerUserErrorFragment
+    }
+  }
+}

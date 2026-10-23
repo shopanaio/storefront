@@ -1,0 +1,52 @@
+fragment SdkCustomerUserErrorFragment on CustomerUserError {
+  code
+  field
+  message
+  retryable
+}
+
+fragment SdkCustomerMoneyFragment on Money {
+  amount
+  currencyCode
+}
+
+fragment SdkCustomerMediaFragment on Media {
+  id
+  alt
+  ... on MediaImage {
+    image {
+      id
+      url(transform: $imageTransform)
+      altText
+      width
+      height
+    }
+  }
+}
+
+fragment SdkCustomerProductFragment on Product {
+  id
+  handle
+  title
+  availableForSale
+  featuredMedia {
+    ...SdkCustomerMediaFragment
+  }
+  selectedOrFirstAvailableVariant {
+    id
+    handle
+    title
+    price {
+      ...SdkCustomerMoneyFragment
+    }
+    compareAtPrice {
+      ...SdkCustomerMoneyFragment
+    }
+    availableForSale
+  }
+}
+
+fragment SdkCustomerPageInfoFragment on PageInfo {
+  hasNextPage
+  endCursor
+}

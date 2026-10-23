@@ -5,6 +5,14 @@ import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
 import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
+import type { MutationOptions } from '../../core/types';
+import type { model } from '../../../../model/namespace';
+import {
+  cartUserError,
+  missingCheckoutError,
+  settleCartMutation,
+} from '../../core/errors';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
 const useUpdateCartLineQuantity = () => {
   const { setCartKey, enqueueMutation, getConfirmedLineId } = useCartSetters();
   const cartStore = useCartStoreApi();
@@ -12,6 +20,10 @@ const useUpdateCartLineQuantity = () => {
 
   const actions = useCartActions();
   const [commit, isInFlight] = useMutation(updateCartLineQuantityMutation);
+  /**
+   * Resolves with the confirmed cart, or null when there is no cart or the server has no such
+   * line. Rejects only with `CartMutationError`.
+   */
   const updateQuantity = async (
     {
       cartItemId,
@@ -20,11 +32,8 @@ const useUpdateCartLineQuantity = () => {
       cartItemId: string;
       quantity: number;
     },
-    options?: {
-      onSuccess?: () => void;
-      onError?: () => void;
-    }
-  ) => {
+    options?: MutationOptions<model.Cart | null>
+  ): Promise<model.Cart | null> => {
     const { checkoutLinesUpdate } = actions;
     if (!cartId) {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
@@ -41,41 +50,38 @@ const useUpdateCartLineQuantity = () => {
       );
       if (lineId) checkoutLinesUpdate({ lines: [{ lineId, quantity }] });
     };
-    return enqueueMutation(
-      () =>
-        new Promise((resolve, reject) => {
-          commit({
-            variables: {
-              input: {
-                checkoutId: cartId,
-                lines: [
-                  {
-                    lineId: getConfirmedLineId(cartItemId, purchasableId),
-                    quantity,
-                  },
-                ],
+    return settleCartMutation(
+      enqueueMutation(
+        () =>
+          new Promise<model.Cart | null>((resolve, reject) => {
+            const lineId = getConfirmedLineId(cartItemId, purchasableId);
+            if (!lineId) return resolve(null);
+            commit({
+              variables: {
+                input: {
+                  checkoutId: cartId,
+                  lines: [{ lineId, quantity }],
+                },
               },
-            },
-            onCompleted: (response, errors) => {
-              if (errors && errors.length > 0) {
-                options?.onError?.();
-                return reject(errors);
-              } else if (response.checkoutLinesUpdate.errors.length > 0) {
-                options?.onError?.();
-                return reject(response.checkoutLinesUpdate.errors);
-              } else {
-                setCartKey(response.checkoutLinesUpdate.checkout);
-                options?.onSuccess?.();
-                return resolve(response.checkoutLinesUpdate.checkout);
-              }
-            },
-            onError: (err) => {
-              options?.onError?.();
-              return reject(err);
-            },
-          });
-        }),
-      { optimisticEdit }
+              onCompleted: (response) => {
+                const payload = response.checkoutLinesUpdate;
+                if (payload.errors.length > 0) {
+                  return reject(cartUserError(payload.errors));
+                }
+                if (!payload.checkout) {
+                  return reject(missingCheckoutError('checkoutLinesUpdate'));
+                }
+                setCartKey(payload.checkout);
+                return resolve(
+                  mapShopanaCheckoutToEntityCart(payload.checkout)
+                );
+              },
+              onError: reject,
+            });
+          }),
+        { optimisticEdit }
+      ),
+      options
     );
   };
   return { updateQuantity, loading: isInFlight };

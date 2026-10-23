@@ -25,7 +25,7 @@ import { updateCustomerNoteMutation } from '#checkout/api/mutations/updateCustom
 import { submitCheckoutMutation } from '#checkout/api/mutations/submitCheckoutMutation.shopana';
 import { updateLoyaltyRedemptionMutation } from '#checkout/api/mutations/updateLoyaltyRedemptionMutation.shopana';
 import { removeLoyaltyRedemptionMutation } from '#checkout/api/mutations/removeLoyaltyRedemptionMutation.shopana';
-import { loyaltyAccountQuery } from '#checkout/api/queries/loyaltyAccountQuery.shopana';
+import { loyaltyAccountQuery } from '@shopana/storefront-sdk/modules/customer/react';
 import {
   currentSelection,
   quoteNeedsRenewal,

@@ -57,6 +57,11 @@ const cart = defineRuntimePage({
   loadData: async () => ({ status: 'ready', data: null }),
   loadTemplate: async () => ({ sections: { order: [] } }),
 });
+const category = defineRuntimePage({
+  pageType: 'category',
+  loadData: async () => ({ status: 'ready', data: null }),
+  loadTemplate: async () => ({ sections: { order: [] } }),
+});
 const listCollections = defineRuntimePage({
   pageType: 'list-collections',
   loadData: async () => ({ status: 'ready', data: null }),
@@ -71,6 +76,7 @@ const notFound = defineRuntimeNotFound({
 const validModules = {
   home: async () => ({ default: home }),
   product: async () => ({ default: product }),
+  category: async () => ({ default: category }),
   collection: async () => ({ default: collection }),
   search: async () => ({ default: search }),
   blog: async () => ({ default: blog }),
@@ -87,6 +93,7 @@ defineRuntimePages(validModules);
 defineRuntimePages({
   home: validModules.home,
   product: validModules.product,
+  category: validModules.category,
   collection: validModules.collection,
   search: validModules.search,
   blog: validModules.blog,

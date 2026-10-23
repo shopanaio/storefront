@@ -10,6 +10,7 @@ import type { SessionStore } from '../../store/SessionStore';
 import type { SessionStoreZustand } from '../store/SessionStoreZustand';
 import type { UseBoundStore, StoreApi } from 'zustand';
 import type { ApplicationAuthConfig } from '../../../../graphql/apollo/types';
+import type { CookiePolicy } from '../../../../core/cookiePolicy';
 import { IamApplicationClient } from '../../core/IamApplicationClient';
 import {
   storefrontSession,
@@ -63,6 +64,11 @@ export interface SessionProviderProps {
   store: SessionStoreZustand;
   applicationAuth?: ApplicationAuthConfig;
   cartCookieName?: string;
+  /**
+   * Cookie policy of the session server (`STOREFRONT_COOKIE_POLICY`); the browser deletes the
+   * cookies the server set with the same attributes. `first-party` by default.
+   */
+  cookiePolicy?: CookiePolicy;
 }
 
 function toSession(session: BrowserSession): Session {
@@ -100,6 +106,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
   store: storeProp,
   applicationAuth,
   cartCookieName,
+  cookiePolicy,
 }) => {
   const storeObject = storeProp.store;
   const iamClient = useMemo(
@@ -125,7 +132,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     });
 
     if (readBrowserCookie(AUTH_EVENT_COOKIE) === 'signed-in') {
-      removeBrowserCookie(AUTH_EVENT_COOKIE);
+      removeBrowserCookie(AUTH_EVENT_COOKIE, cookiePolicy);
       state.setSignInPending(true);
     }
     const url = new URL(window.location.href);
@@ -147,7 +154,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
       state.setSession(null);
     }
     return unsubscribe;
-  }, [storeObject]);
+  }, [storeObject, cookiePolicy]);
 
   const value = useMemo<SessionContextValue>(
     () => ({

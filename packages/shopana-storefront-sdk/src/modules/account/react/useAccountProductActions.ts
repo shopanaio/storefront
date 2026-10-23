@@ -1,16 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { useMutation, useQuery } from '@apollo/client/react';
-import {
-  accountProductActionsQuery,
-  customerComparisonVariantAddMutation,
-  customerComparisonVariantRemoveMutation,
-  wishlistProductAddMutation,
-  wishlistProductRemoveMutation,
-  type AccountUserError,
-} from './graphql.js';
+import { useQuery } from '@apollo/client/react';
+import { accountProductActionsQuery } from './graphql.js';
 import { useIsAuthenticated } from '../../session/react/context/SessionContext.js';
+import {
+  useAddComparisonVariant,
+  useRemoveComparisonVariant,
+} from '../../customer/react/useProductComparisons.js';
+import {
+  useAddWishlistProduct,
+  useRemoveWishlistItem,
+} from '../../customer/react/useWishlist.js';
 
 export interface AccountProductActionsInput {
   /** Product whose wishlist state is read. */
@@ -36,20 +37,13 @@ export interface AccountProductActions {
   loading: boolean;
   wishlistLoading: boolean;
   comparisonLoading: boolean;
-  /** Saves the product to the default wishlist, or removes it from there. */
+  /**
+   * Saves the product to the default wishlist, or removes it from there. Rejects with
+   * `CustomerMutationError` from `@shopana/storefront-sdk/modules/customer/react`.
+   */
   setWishlisted(productId: string, wishlisted: boolean): Promise<void>;
-  /** Adds the variant to the comparisons, or removes it from them. */
+  /** Adds the variant to the comparisons, or removes it from them; rejects likewise. */
   setCompared(variantId: string, compared: boolean): Promise<void>;
-}
-
-export class AccountMutationError extends Error {
-  readonly userErrors: readonly AccountUserError[];
-
-  constructor(userErrors: readonly AccountUserError[]) {
-    super(userErrors[0]?.message ?? 'Unable to update the customer account');
-    this.name = 'AccountMutationError';
-    this.userErrors = userErrors;
-  }
 }
 
 export function useAccountProductActions({
@@ -61,18 +55,13 @@ export function useAccountProductActions({
     skip: !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
-  const [addWishlistProduct, addWishlistState] = useMutation(
-    wishlistProductAddMutation
-  );
-  const [removeWishlistProduct, removeWishlistState] = useMutation(
-    wishlistProductRemoveMutation
-  );
-  const [addComparisonVariant, addComparisonState] = useMutation(
-    customerComparisonVariantAddMutation
-  );
-  const [removeComparisonVariant, removeComparisonState] = useMutation(
-    customerComparisonVariantRemoveMutation
-  );
+  // The mutations read this query and the wishlist and comparison pages again on success.
+  const [addWishlistProduct, addingWishlistProduct] = useAddWishlistProduct();
+  const [removeWishlistItem, removingWishlistItem] = useRemoveWishlistItem();
+  const [addComparisonVariant, addingComparisonVariant] =
+    useAddComparisonVariant();
+  const [removeComparisonVariant, removingComparisonVariant] =
+    useRemoveComparisonVariant();
 
   const customer = isAuthenticated ? query.data?.customer : undefined;
   const wishlistItems = customer?.defaultWishlist?.items.nodes;
@@ -80,76 +69,40 @@ export function useAccountProductActions({
     (comparison) => comparison.columns.nodes.map((column) => column.variant.id)
   );
 
-  const { refetch } = query;
-  const refresh = React.useCallback(async () => {
-    await refetch();
-  }, [refetch]);
-
   const setWishlisted = React.useCallback(
     async (targetProductId: string, wishlisted: boolean) => {
       if (!isAuthenticated) return;
       if (wishlisted) {
         // Adding a saved product answers the item it already has.
-        const { data } = await addWishlistProduct({
-          variables: {
-            input: {
-              productId: targetProductId,
-              idempotencyKey: crypto.randomUUID(),
-            },
-          },
-        });
-        assertMutationSucceeded(data?.wishlistProductAdd.errors);
-      } else {
-        const item = wishlistItems?.find(
-          (candidate) => candidate.product?.id === targetProductId
-        );
-        if (!item) return;
-        const { data } = await removeWishlistProduct({
-          variables: {
-            input: { itemId: item.id, idempotencyKey: crypto.randomUUID() },
-          },
-        });
-        assertMutationSucceeded(data?.wishlistProductRemove.errors);
+        await addWishlistProduct(targetProductId);
+        return;
       }
-      await refresh();
+      const item = wishlistItems?.find(
+        (candidate) => candidate.product?.id === targetProductId
+      );
+      if (!item) return;
+      await removeWishlistItem(item.id);
     },
-    [
-      addWishlistProduct,
-      isAuthenticated,
-      refresh,
-      removeWishlistProduct,
-      wishlistItems,
-    ]
+    [addWishlistProduct, isAuthenticated, removeWishlistItem, wishlistItems]
   );
 
   const setCompared = React.useCallback(
     async (targetVariantId: string, compared: boolean) => {
       if (!isAuthenticated) return;
       // Adding a compared variant, or removing one that is not, changes nothing.
-      const input = {
-        variantId: targetVariantId,
-        idempotencyKey: crypto.randomUUID(),
-      };
       if (compared) {
-        const { data } = await addComparisonVariant({ variables: { input } });
-        assertMutationSucceeded(data?.customerComparisonVariantAdd.errors);
+        await addComparisonVariant(targetVariantId);
       } else {
-        const { data } = await removeComparisonVariant({
-          variables: { input },
-        });
-        assertMutationSucceeded(data?.customerComparisonVariantRemove.errors);
+        await removeComparisonVariant(targetVariantId);
       }
-      await refresh();
     },
-    [addComparisonVariant, isAuthenticated, refresh, removeComparisonVariant]
+    [addComparisonVariant, isAuthenticated, removeComparisonVariant]
   );
 
   const wishlistLoading =
-    query.loading || addWishlistState.loading || removeWishlistState.loading;
+    query.loading || addingWishlistProduct || removingWishlistItem;
   const comparisonLoading =
-    query.loading ||
-    addComparisonState.loading ||
-    removeComparisonState.loading;
+    query.loading || addingComparisonVariant || removingComparisonVariant;
 
   return {
     requiresSignIn: !isAuthenticated,
@@ -163,12 +116,4 @@ export function useAccountProductActions({
     setWishlisted,
     setCompared,
   };
-}
-
-function assertMutationSucceeded(
-  errors: readonly AccountUserError[] | null | undefined
-): void {
-  if (errors?.length) {
-    throw new AccountMutationError(errors);
-  }
 }

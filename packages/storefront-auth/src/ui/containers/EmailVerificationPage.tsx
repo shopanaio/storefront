@@ -7,6 +7,7 @@ import {
 } from '../../core/links';
 import { useAuth } from '../../react/useAuth';
 import { useLocationLink } from '../common/useLocationLink';
+import { useLocalizedAuthPaths } from '../hooks/useLocalizedAuthPaths';
 import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
 import { EmailVerificationScreen } from '../screens/EmailVerificationScreen';
 import { draftOf, type AuthDraft } from '../screens/types';
@@ -16,7 +17,7 @@ import { PageLoading } from './PageLoading';
 export interface EmailVerificationPageProps {
   /** Opens the sign-in (the store's `AuthDialog`). */
   onSignIn: () => void;
-  /** Page of the new verification link; `/account/verify-email` by default. */
+  /** Page of the new verification link; `/account/verify-email` of the active locale by default. */
   verifyPath?: string;
   /**
    * Query of the page from the host's router; `location.search` by default, which a client-side
@@ -43,9 +44,10 @@ export const EmailVerificationPage = ({
 
 const EmailVerificationContent = ({
   onSignIn,
-  verifyPath,
+  verifyPath: verifyPathOption,
   search,
 }: Omit<EmailVerificationPageProps, 'className'>) => {
+  const { verifyPath } = useLocalizedAuthPaths({ verifyPath: verifyPathOption });
   const auth = useAuth();
   const link = useLocationLink(
     readEmailVerificationLink,

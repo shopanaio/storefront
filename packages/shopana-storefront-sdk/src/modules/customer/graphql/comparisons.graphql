@@ -1,0 +1,109 @@
+query SdkCustomerProductComparisonsQuery($imageTransform: ImageTransformInput) {
+  customer {
+    id
+    productComparisons {
+      totalCount
+      itemCount
+      nodes {
+        key
+        title
+        category {
+          id
+          handle
+          name
+        }
+        columns(first: 100) {
+          nodes {
+            key
+            position
+            product {
+              id
+              handle
+              title
+            }
+            variant {
+              id
+              handle
+              title
+            }
+            featuredMedia {
+              ...SdkCustomerMediaFragment
+            }
+            price {
+              ...SdkCustomerMoneyFragment
+            }
+            compareAtPrice {
+              ...SdkCustomerMoneyFragment
+            }
+            availableForSale
+            savedForComparison
+          }
+          groups {
+            key
+            name
+            rows {
+              key
+              name
+              description
+              cells {
+                status
+                feature {
+                  id
+                  name
+                  values {
+                    id
+                    name
+                  }
+                }
+                selectedOption {
+                  name
+                  value
+                  option {
+                    id
+                    name
+                  }
+                  optionValue {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+          totalCount
+        }
+      }
+    }
+  }
+}
+
+fragment SdkComparisonMutationResultFragment on CustomerComparisonMutationPayload {
+  revision
+  errors: userErrors {
+    ...SdkCustomerUserErrorFragment
+  }
+}
+
+mutation SdkCustomerComparisonVariantAddMutation(
+  $input: CustomerComparisonVariantAddInput!
+) {
+  customerComparisonVariantAdd(input: $input) {
+    ...SdkComparisonMutationResultFragment
+  }
+}
+
+mutation SdkCustomerComparisonVariantRemoveMutation(
+  $input: CustomerComparisonVariantRemoveInput!
+) {
+  customerComparisonVariantRemove(input: $input) {
+    ...SdkComparisonMutationResultFragment
+  }
+}
+
+mutation SdkCustomerComparisonCategoryClearMutation(
+  $input: CustomerComparisonCategoryClearInput!
+) {
+  customerComparisonCategoryClear(input: $input) {
+    ...SdkComparisonMutationResultFragment
+  }
+}
