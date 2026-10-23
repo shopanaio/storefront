@@ -10,7 +10,7 @@ import {
   isUnionType,
 } from 'graphql';
 
-import { money } from './fixture-helpers.js';
+import { gid, money } from './fixture-helpers.js';
 import {
   comparisonColumns,
   customerProductComparisons,
@@ -40,6 +40,10 @@ import {
   reviewStoreConfiguration,
 } from './mutations/reviews.js';
 import { defaultWishlist, wishlistMutations } from './mutations/wishlists.js';
+import {
+  contactRequestForm,
+  storefrontFormMutations,
+} from './mutations/storefront-forms.js';
 
 const isListOutput = (type) =>
   isNonNullType(type) ? isListOutput(type.ofType) : isListType(type);
@@ -419,6 +423,76 @@ const recommendationsForProduct = (store, product, fieldName, args) => {
   return connection(recommendations, args);
 };
 
+/** Vendors with at least one product, ordered by name and id, as `Query.vendors`. */
+const visibleVendors = (store) => {
+  const vendorIds = new Set(
+    store.state.products.map((product) => product.vendor?.id).filter(Boolean)
+  );
+  return store.state.vendors
+    .filter((vendor) => vendorIds.has(vendor.id))
+    .sort(
+      (left, right) =>
+        left.name.localeCompare(right.name) || left.id.localeCompare(right.id)
+    );
+};
+
+const visibleVendor = (store, vendor) =>
+  vendor?.__typename === 'Vendor' &&
+  store.state.products.some((product) => product.vendor?.id === vendor.id)
+    ? vendor
+    : null;
+
+/** Cart cross-sell: frequently bought together of the cart products, without the cart. */
+const cartRecommendations = (store, { input, first = 8 }) => {
+  if (first < 1 || first > 24)
+    throw new GraphQLError('first must be between 1 and 24', {
+      extensions: { code: 'BAD_USER_INPUT', field: ['first'] },
+    });
+  const productOf = (variantId) => store.get(store.get(variantId)?.productId);
+  const anchors = input.lines
+    .map((line) => productOf(line.purchasableId))
+    .filter((product) => product?.__typename === 'Product');
+  const excluded = new Set([
+    ...anchors.map(({ id }) => id),
+    ...input.lines.flatMap((line) =>
+      (line.componentPurchasableIds ?? []).map((id) => productOf(id)?.id)
+    ),
+  ]);
+  const items = new Map();
+  for (const anchor of anchors.slice(0, 20)) {
+    const fixture = store.state.productRecommendations.find(
+      ({ productId }) => productId === anchor.id
+    );
+    for (const recommendation of fixture?.frequentlyBoughtTogether ?? []) {
+      const product = store.get(recommendation.productId);
+      if (product?.__typename !== 'Product' || excluded.has(product.id))
+        continue;
+      const item = items.get(product.id) ?? {
+        product,
+        source: recommendation.source,
+        anchors: [],
+      };
+      if (item.anchors.length < 3) item.anchors.push(anchor);
+      items.set(product.id, item);
+    }
+  }
+  return {
+    id: gid(
+      'CartRecommendations',
+      [...anchors.map(({ id }) => id), first].join('|')
+    ),
+    items: [...items.values()].slice(0, first),
+  };
+};
+
+/** No storefront-visible promotions are configured in the fixtures. */
+const emptyPromotionPresentation = (store) => ({
+  promotions: [],
+  evaluatedAt: store.now(),
+  validUntil: null,
+  revision: 'mock',
+});
+
 const productConnection = (store, source, args = {}, options = {}) => {
   validateFirst(args.first);
   const inputFilters = args.filters ?? [];
@@ -574,6 +648,27 @@ const specialFields = (store) => ({
       (collection.productIds ?? []).map((id) => store.get(id)).filter(Boolean),
       args
     ),
+
+  'Vendor.products': (vendor, args) =>
+    productConnection(
+      store,
+      store.state.products.filter(
+        (product) => product.vendor?.id === vendor.id
+      ),
+      args,
+      { query: args.query }
+    ),
+  // Products embed `{ id, name }`; the vendor record carries handle, logo and SEO.
+  'Product.vendor': (product) =>
+    product.vendor
+      ? (store.find('Vendor', ({ id }) => id === product.vendor.id) ?? {
+          handle: product.vendor.id,
+          seo: { title: product.vendor.name, description: null },
+          ...product.vendor,
+          __typename: 'Vendor',
+        })
+      : null,
+  'ProductVariant.promotions': () => emptyPromotionPresentation(store),
 
   'Product.primaryCategory': (product) => store.get(product.primaryCategoryId),
   'Product.comparison': (product, _args, context) =>
@@ -893,6 +988,13 @@ const queryResolvers = (store) => ({
     store.get(id)?.__typename === 'Collection' ? store.get(id) : null,
   collectionByHandle: (_, { handle }) => store.byHandle('Collection', handle),
   categories: (_, args) => connection(store.state.categories, args),
+  vendor: (_, { id }) => visibleVendor(store, store.get(id)),
+  vendorByHandle: (_, { handle }) =>
+    visibleVendor(store, store.byHandle('Vendor', handle)),
+  vendors: (_, args) => connection(visibleVendors(store), args),
+  cartRecommendations: (_, args) => cartRecommendations(store, args),
+  storefrontPromotions: () => emptyPromotionPresentation(store),
+  contactRequestForm: () => contactRequestForm(store),
   checkout: (_, { id }, context) => {
     const checkout = store.get(id);
     return checkout?.__typename === 'Checkout' &&
@@ -965,6 +1067,7 @@ const mutationResolvers = (store) => ({
   ...customerOrderMutations(store),
   ...reviewMutations(store),
   ...wishlistMutations(store),
+  ...storefrontFormMutations(store),
 });
 
 const reviewKindType = {

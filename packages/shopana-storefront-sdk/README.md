@@ -58,7 +58,9 @@ request-scoped client; there is no static shop configuration.
 - `modules/content/react`: `useNavigationMenu(handle)`, `useOnlineStorePage(handle)`,
   `useStorePolicies()`, `useStorePolicyLink(type)`, `useStorePolicy(handle)`. Menus listed in
   `preload.navigationMenus` are part of the server HTML. Online store page bodies are read as
-  RichText `json`; render them with a RichText renderer, not as HTML.
+  RichText `json`; render them with a RichText renderer, not as HTML. `useVendors(first)` lists
+  the brands that have published products, with handle and logo; a brand page is the
+  reserved `vendor` route `/vendors/:handle`.
 - `environmentConfig.cookiePolicy: 'embedded'` gives the cart, visitor and session cookies
   `SameSite=None; Secure; Partitioned` for a storefront shown in a third-party iframe; the session
   server reads the same policy from `STOREFRONT_COOKIE_POLICY`.
@@ -303,6 +305,31 @@ and rejects with `CustomerMutationError`: `kind` is `unauthenticated`,
 `userErrors` (see `userErrors`), `request` (see `cause`) or `emptyPayload`.
 Scalars the generated types leave as `any` (`Date`, `URL`, `Decimal`,
 `UnsignedInt64`) are typed as the strings the API sends.
+
+The marketing consent mutation resolves to `{ consent, pendingConfirmation }`: subscribing an
+unverified profile email sends a confirmation email and leaves the consent unchanged.
+
+## Storefront forms, promotions and media
+
+These hooks work for guests too and reject with `StorefrontRequestError`: `kind` is
+`userErrors` (stable `code` in `userErrors`, `hasCode(code)`), `request` or `emptyPayload`.
+Every mutation generates its own idempotency key.
+
+- `modules/marketing/react`: `useMarketingSubscribe()` subscribes an email with double opt-in
+  and resolves to `PENDING_CONFIRMATION` (always for a guest) or `SUBSCRIBED`;
+  `useConfirmMarketingSubscription()` confirms with the token of the email link. The link
+  leads to the `newsletter-confirm` route (`/newsletter/confirm?token=`); confirm from a
+  button, not on load.
+- `modules/contact/react`: `useContactRequestForm()` is `null` when the store takes no call-back
+  requests; `useCreateContactRequest()` sends the phone (E.164) with the
+  `disclosure.version` the buyer saw and asks to read the form again on `DISCLOSURES_CHANGED`.
+- `modules/promotions/react`: `useStorefrontPromotions(kinds)` lists the published automatic
+  promotions with their buyer copy. The cart entity carries `promotionProgress`,
+  `freeShippingProgress` and `appliedPromotions`; `cartRecommendationLines(cart.lines)` from
+  `modules/cart/react` builds the input of `cartRecommendations`.
+- `modules/media/react`: `useUploadCustomerMedia()` uploads an image of the signed-in customer
+  (e.g. purpose `REVIEW`) as a GraphQL multipart request; the browser client sends every
+  operation with a `File` variable this way.
 
 ## Code generation
 

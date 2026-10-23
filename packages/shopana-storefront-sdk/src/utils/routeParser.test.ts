@@ -94,6 +94,13 @@ describe('parseRoute', () => {
       expect(result.pageType).toBe('list-collections');
       expect(result.params).toEqual({});
     });
+
+    it('parses vendor route', () => {
+      const result = parseRoute('/vendors/acana');
+
+      expect(result.pageType).toBe('vendor');
+      expect(result.params).toEqual({ handle: 'acana' });
+    });
   });
 
   describe('locale segments', () => {
@@ -188,9 +195,13 @@ describe('buildPath', () => {
   });
 
   it('builds module paths', () => {
-    expect(buildPath('policy', { handle: 'privacy' })).toBe('/policies/privacy');
+    expect(buildPath('policy', { handle: 'privacy' })).toBe(
+      '/policies/privacy'
+    );
     expect(buildPath('account')).toBe('/account');
-    expect(buildPath('account', { path: 'orders/42' })).toBe('/account/orders/42');
+    expect(buildPath('account', { path: 'orders/42' })).toBe(
+      '/account/orders/42'
+    );
   });
 
   it('encodes special characters', () => {

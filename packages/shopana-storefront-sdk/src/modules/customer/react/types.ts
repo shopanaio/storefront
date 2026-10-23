@@ -66,6 +66,15 @@ export type CustomerMarketingConsentValues = Omit<
   'idempotencyKey'
 >;
 
+/**
+ * Answer of a consent change. Subscribing the EMAIL channel of an unverified profile email does
+ * not change the consent: a confirmation email is sent and `pendingConfirmation` is true.
+ */
+export interface CustomerMarketingConsentChange {
+  consent: CustomerMarketingConsent | null;
+  pendingConfirmation: boolean;
+}
+
 export type CustomerAddress = WithStringScalars<SdkCustomerAddressFragment>;
 
 export type CustomerAddressCreateValues = WithStringScalars<

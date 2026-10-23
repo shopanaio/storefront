@@ -20,6 +20,7 @@ export type {
   CustomerDataRequest,
   CustomerDataRequestValues,
   CustomerMarketingConsent,
+  CustomerMarketingConsentChange,
   CustomerMarketingConsentValues,
   CustomerMutation,
   CustomerProfile,

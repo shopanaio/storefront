@@ -17,6 +17,7 @@ import {
 } from './internal.js';
 import type {
   CustomerMarketingConsent,
+  CustomerMarketingConsentChange,
   CustomerMarketingConsentValues,
   CustomerMutation,
   CustomerProfile,
@@ -95,17 +96,23 @@ type ConsentPayload =
 const updateMarketingConsentConfig: CustomerMutationConfig<
   SdkCustomerMarketingConsentUpdateMutation,
   ConsentPayload,
-  CustomerMarketingConsent
+  CustomerMarketingConsentChange
 > = {
   payload: (data) => data.customerMarketingConsentUpdate,
   // The payload answers the customer with the same contacts selection the readers use.
-  result: (payload) => payload.marketingConsent,
+  result: (payload) => ({
+    consent: payload.marketingConsent ?? null,
+    pendingConfirmation: payload.pendingConfirmation,
+  }),
 };
 
-/** Subscribes the customer to a channel or unsubscribes; resolves to the new consent. */
+/**
+ * Subscribes the customer to a channel or unsubscribes. Resolves to the new consent, or to
+ * `pendingConfirmation: true` when the email has to be confirmed first.
+ */
 export function useUpdateMarketingConsent(): CustomerMutation<
   CustomerMarketingConsentValues,
-  CustomerMarketingConsent
+  CustomerMarketingConsentChange
 > {
   const [commit, loading] = useCustomerMutation(
     SdkCustomerMarketingConsentUpdateMutationDocument,

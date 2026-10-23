@@ -83,6 +83,7 @@ mutation SdkCustomerMarketingConsentUpdateMutation(
     customer {
       ...SdkCustomerContactsFragment
     }
+    pendingConfirmation
     errors: userErrors {
       ...SdkCustomerUserErrorFragment
     }

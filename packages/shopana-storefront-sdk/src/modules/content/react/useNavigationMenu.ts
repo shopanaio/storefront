@@ -8,8 +8,10 @@ import {
 
 export type NavigationMenu = SdkNavigationMenuFragment;
 export type NavigationMenuItem = NavigationMenu['items']['nodes'][number];
-export type NavigationMenuGroup = NavigationMenuItem['children']['nodes'][number];
-export type NavigationMenuLink = NavigationMenuGroup['children']['nodes'][number];
+export type NavigationMenuGroup =
+  NavigationMenuItem['children']['nodes'][number];
+export type NavigationMenuLink =
+  NavigationMenuGroup['children']['nodes'][number];
 
 const EMPTY_ITEMS: readonly NavigationMenuItem[] = [];
 

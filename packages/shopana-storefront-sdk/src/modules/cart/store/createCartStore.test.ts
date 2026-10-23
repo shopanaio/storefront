@@ -20,6 +20,9 @@ function createCart(): model.Cart {
     notifications: [],
     promoCodes: [],
     loyaltyEarning: null,
+    promotionProgress: [],
+    freeShippingProgress: null,
+    appliedPromotions: [],
     cost: {
       subtotalAmount: { amount: 10, currencyCode: 'USD' },
       totalAmount: { amount: 10, currencyCode: 'USD' },

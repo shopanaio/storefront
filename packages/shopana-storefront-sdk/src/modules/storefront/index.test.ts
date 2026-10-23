@@ -41,6 +41,9 @@ const checkout = {
   guestCheckoutAllowed: true,
   promoCodes: [],
   loyaltyEarning: null,
+  promotionProgress: [],
+  freeShippingProgress: null,
+  appliedPromotions: [],
   cost: {
     subtotalAmount: money,
     totalAmount: money,

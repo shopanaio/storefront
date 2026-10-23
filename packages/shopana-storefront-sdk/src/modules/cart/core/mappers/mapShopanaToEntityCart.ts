@@ -4,6 +4,7 @@ import type {
   SdkCartLineFragment_FieldsFragment,
   SdkCartLineFragment_LineFragment,
 } from '../../../../graphql/apollo/generated/operations';
+import { mapStorefrontPromotion } from '../../../promotions/core/mapStorefrontPromotion';
 export type DenormalizedShopanaCart = Omit<
   SdkCartFragment_CartFragment,
   'lines'
@@ -161,6 +162,42 @@ const mapLine = (line: ApiLine): model.ConfirmedCartLine => {
     },
   };
 };
+type ApiRequirement = NonNullable<
+  SdkCartFragment_CartFragment['promotionProgress'][number]['requirement']
+>;
+const toOptionalMoney = (
+  money: ApiMoney | null | undefined
+): model.Money | null => (money ? toMoney(money) : null);
+const mapRequirement = (
+  requirement: ApiRequirement
+): model.CartPromotionRequirement => ({
+  type: requirement.type,
+  required: toOptionalMoney(requirement.required),
+  current: toOptionalMoney(requirement.current),
+  remaining: toOptionalMoney(requirement.remaining),
+  requiredQuantity: requirement.requiredQuantity ?? null,
+  currentQuantity: requirement.currentQuantity ?? null,
+  remainingQuantity: requirement.remainingQuantity ?? null,
+  ratio: Math.min(1, Math.max(0, toAmount(requirement.ratio))),
+});
+const mapFreeShippingProgress = (
+  progress: NonNullable<SdkCartFragment_CartFragment['freeShippingProgress']>
+): model.CartFreeShippingProgress => ({
+  status: progress.status,
+  source: progress.source ?? null,
+  title: progress.title,
+  promotion: progress.promotion
+    ? mapStorefrontPromotion(progress.promotion)
+    : null,
+  requirement: progress.requirement
+    ? mapRequirement(progress.requirement)
+    : null,
+  nextRequirement: progress.nextRequirement
+    ? mapRequirement(progress.nextRequirement)
+    : null,
+  maximumShippingPrice: toOptionalMoney(progress.maximumShippingPrice),
+  appliesToSelectedDelivery: progress.appliesToSelectedDelivery ?? null,
+});
 /** Maps the current Checkout GraphQL fragment to the public cart entity. */
 export function mapShopanaCheckoutToEntityCart(
   checkout: DenormalizedShopanaCart
@@ -217,6 +254,24 @@ export function mapShopanaCheckoutToEntityCart(
           description: checkout.loyaltyEarning.presentation.description ?? null,
         }
       : null,
+    promotionProgress: checkout.promotionProgress.map((progress) => ({
+      promotion: progress.promotion
+        ? mapStorefrontPromotion(progress.promotion)
+        : null,
+      status: progress.status,
+      requirement: mapRequirement(progress.requirement),
+    })),
+    freeShippingProgress: checkout.freeShippingProgress
+      ? mapFreeShippingProgress(checkout.freeShippingProgress)
+      : null,
+    appliedPromotions: checkout.appliedPromotions.map((applied) => ({
+      title: applied.title,
+      discountClass: applied.discountClass,
+      amount: toMoney(applied.amount),
+      promotion: applied.promotion
+        ? mapStorefrontPromotion(applied.promotion)
+        : null,
+    })),
     cost: {
       subtotalAmount: toMoney(checkout.cost.subtotalAmount),
       totalAmount: toMoney(checkout.cost.totalAmount),

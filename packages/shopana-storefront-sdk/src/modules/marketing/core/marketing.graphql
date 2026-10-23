@@ -1,0 +1,23 @@
+mutation SdkMarketingSubscribe($input: MarketingSubscribeInput!) {
+  marketingSubscribe(input: $input) {
+    result
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+mutation SdkMarketingSubscriptionConfirm(
+  $input: MarketingSubscriptionConfirmInput!
+) {
+  marketingSubscriptionConfirm(input: $input) {
+    result
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

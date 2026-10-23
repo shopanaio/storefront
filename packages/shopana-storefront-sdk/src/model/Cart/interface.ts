@@ -131,6 +131,83 @@ export interface CartLoyaltyEarning {
   description: string | null;
 }
 
+/**
+ * Buyer-facing automatic promotion of the store: server copy (headline, badge) in the request
+ * language and the rule value. The admin title of the discount is never exposed.
+ */
+export interface StorefrontPromotion {
+  key: string;
+  kind: import('../../graphql/apollo/generated/operations').StorefrontPromotionKind;
+  headline: string;
+  badge: string;
+  description: { text: string; html: string } | null;
+  accessibilityLabel: string;
+  terms: string | null;
+  value: {
+    type: import('../../graphql/apollo/generated/operations').StorefrontPromotionValueType;
+    /** Percentage such as 15 or 12.5. */
+    percentage: number | null;
+    amount: Money | null;
+    maximumDiscount: Money | null;
+    maximumShippingPrice: Money | null;
+    buyQuantity: number | null;
+    getQuantity: number | null;
+  } | null;
+  minimumSubtotal: Money | null;
+  minimumQuantity: number | null;
+  startsAt: Date;
+  endsAt: Date | null;
+}
+
+/** Minimum order requirement on the subtotal before discounts or on the item quantity. */
+export interface CartPromotionRequirement {
+  type: import('../../graphql/apollo/generated/operations').CheckoutPromotionRequirementType;
+  required: Money | null;
+  current: Money | null;
+  remaining: Money | null;
+  requiredQuantity: number | null;
+  currentQuantity: number | null;
+  remainingQuantity: number | null;
+  /** Share of the requirement met, from 0 to 1. */
+  ratio: number;
+}
+
+/** Progress toward an automatic promotion with a minimum order requirement. */
+export interface CartPromotionProgress {
+  /** Null once the discount is deleted. */
+  promotion: StorefrontPromotion | null;
+  status: import('../../graphql/apollo/generated/operations').CheckoutPromotionProgressStatus;
+  requirement: CartPromotionRequirement;
+}
+
+/** Free shipping summary for a progress bar: promotions and loyalty free shipping. */
+export interface CartFreeShippingProgress {
+  status: import('../../graphql/apollo/generated/operations').CheckoutFreeShippingProgressStatus;
+  /** What makes shipping free; null while IN_PROGRESS. */
+  source:
+    | import('../../graphql/apollo/generated/operations').CheckoutFreeShippingSource
+    | null;
+  /** Promotion headline, loyalty tier name or reward name. */
+  title: string;
+  promotion: StorefrontPromotion | null;
+  /** Null for loyalty free shipping or a promotion without a minimum. */
+  requirement: CartPromotionRequirement | null;
+  /** Nearest published threshold when loyalty already makes shipping free. */
+  nextRequirement: CartPromotionRequirement | null;
+  /** Maximum shipping price the source covers; null without a limit. */
+  maximumShippingPrice: Money | null;
+  /** Null without a selected delivery or while IN_PROGRESS. */
+  appliesToSelectedDelivery: boolean | null;
+}
+
+/** Automatic discount applied to the cart; promo codes are in `promoCodes`. */
+export interface CartAppliedPromotion {
+  title: string;
+  discountClass: import('../../graphql/apollo/generated/operations').CheckoutDiscountClass;
+  amount: Money;
+  promotion: StorefrontPromotion | null;
+}
+
 export interface Cart {
   id: string;
   status: import('../../graphql/apollo/generated/operations').CheckoutLifecycleStatus;
@@ -149,6 +226,10 @@ export interface Cart {
   notifications: CartNotification[];
   promoCodes: CartPromoCode[];
   loyaltyEarning: CartLoyaltyEarning | null;
+  promotionProgress: CartPromotionProgress[];
+  /** Null when no free shipping is possible for this buyer and cart. */
+  freeShippingProgress: CartFreeShippingProgress | null;
+  appliedPromotions: CartAppliedPromotion[];
   cost: {
     subtotalAmount: Money;
     totalAmount: Money;

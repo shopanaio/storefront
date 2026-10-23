@@ -277,6 +277,7 @@ const PAGE_TYPES: PageType[] = [
   'page',
   'cart',
   'list-collections',
+  'vendor',
   '404',
 ];
 

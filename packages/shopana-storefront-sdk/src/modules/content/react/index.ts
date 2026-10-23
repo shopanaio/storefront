@@ -14,3 +14,4 @@ export {
   type StorePolicyLink,
   type StorePolicyType,
 } from './useStorePolicies';
+export { useVendors, type Vendor } from './useVendors';

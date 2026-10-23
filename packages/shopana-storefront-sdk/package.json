@@ -216,6 +216,22 @@
       "types": "./dist/modules/content/server/index.d.ts",
       "default": "./dist/modules/content/server/index.js"
     },
+    "./modules/marketing/react": {
+      "types": "./dist/modules/marketing/react/index.d.ts",
+      "default": "./dist/modules/marketing/react/index.js"
+    },
+    "./modules/contact/react": {
+      "types": "./dist/modules/contact/react/index.d.ts",
+      "default": "./dist/modules/contact/react/index.js"
+    },
+    "./modules/promotions/react": {
+      "types": "./dist/modules/promotions/react/index.d.ts",
+      "default": "./dist/modules/promotions/react/index.js"
+    },
+    "./modules/media/react": {
+      "types": "./dist/modules/media/react/index.d.ts",
+      "default": "./dist/modules/media/react/index.js"
+    },
     "./modules/localization/server": {
       "types": "./dist/modules/localization/server/index.d.ts",
       "default": "./dist/modules/localization/server/index.js"

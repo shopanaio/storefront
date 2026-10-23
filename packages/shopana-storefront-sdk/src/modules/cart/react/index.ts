@@ -25,3 +25,4 @@ export {
   useCartLocalization,
   type CartLocalization,
 } from './context/CartContext';
+export { cartRecommendationLines } from '../core/utils/cartRecommendationLines';

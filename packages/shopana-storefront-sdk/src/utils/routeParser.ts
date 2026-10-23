@@ -7,7 +7,8 @@ export type ParsedRoute = TemplateParams;
 
 /**
  * Canonical storefront pathnames without the locale segment. Reserved pages are parsed by the
- * runtime; `policy`, `checkout` and `account` belong to modules and are only built here.
+ * runtime; `policy`, `newsletter-confirm`, `checkout` and `account` belong to modules and are
+ * only built here.
  */
 export const storefrontRoutes = {
   home: '/',
@@ -15,12 +16,14 @@ export const storefrontRoutes = {
   category: '/categories/:handle',
   collection: '/collections/:handle',
   'list-collections': '/collections',
+  vendor: '/vendors/:handle',
   page: '/pages/:handle',
   policy: '/policies/:handle',
   blog: '/blogs/:blog',
   article: '/blogs/:blog/:handle',
   search: '/search',
   cart: '/cart',
+  'newsletter-confirm': '/newsletter/confirm',
   checkout: '/checkout',
   account: '/account{/*path}',
 } as const;
@@ -44,7 +47,11 @@ const pageRoutePatterns: ReadonlyArray<{
   { pageType: 'category', pattern: storefrontRoutes.category },
   { pageType: 'collection', pattern: storefrontRoutes.collection },
   { pageType: 'collection', pattern: '/c/:handle' },
-  { pageType: 'list-collections', pattern: storefrontRoutes['list-collections'] },
+  {
+    pageType: 'list-collections',
+    pattern: storefrontRoutes['list-collections'],
+  },
+  { pageType: 'vendor', pattern: storefrontRoutes.vendor },
   { pageType: 'article', pattern: storefrontRoutes.article },
   { pageType: 'blog', pattern: storefrontRoutes.blog },
   { pageType: 'search', pattern: storefrontRoutes.search },

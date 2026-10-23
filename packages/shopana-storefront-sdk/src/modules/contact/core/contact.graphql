@@ -1,0 +1,29 @@
+query SdkContactRequestForm {
+  contactRequestForm {
+    nameMaxLength
+    messageMaxLength
+    disclosure {
+      version
+      text
+      policies {
+        type
+        title
+        path
+      }
+    }
+  }
+}
+
+mutation SdkContactRequestCreate($input: ContactRequestCreateInput!) {
+  contactRequestCreate(input: $input) {
+    contactRequest {
+      id
+      createdAt
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

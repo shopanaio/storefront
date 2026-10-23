@@ -1,3 +1,23 @@
+fragment SdkCartPromotionRequirement on CheckoutPromotionRequirement {
+  type
+  required {
+    amount
+    currencyCode
+  }
+  current {
+    amount
+    currencyCode
+  }
+  remaining {
+    amount
+    currencyCode
+  }
+  requiredQuantity
+  currentQuantity
+  remainingQuantity
+  ratio
+}
+
 fragment SdkCartFragment_cart on Checkout {
   __typename
   id
@@ -109,6 +129,45 @@ fragment SdkCartFragment_cart on Checkout {
     id
     slug
     unique
+  }
+  promotionProgress {
+    promotion {
+      ...SdkStorefrontPromotion
+    }
+    status
+    requirement {
+      ...SdkCartPromotionRequirement
+    }
+  }
+  freeShippingProgress {
+    status
+    source
+    title
+    promotion {
+      ...SdkStorefrontPromotion
+    }
+    requirement {
+      ...SdkCartPromotionRequirement
+    }
+    nextRequirement {
+      ...SdkCartPromotionRequirement
+    }
+    maximumShippingPrice {
+      amount
+      currencyCode
+    }
+    appliesToSelectedDelivery
+  }
+  appliedPromotions {
+    title
+    discountClass
+    amount {
+      amount
+      currencyCode
+    }
+    promotion {
+      ...SdkStorefrontPromotion
+    }
   }
   lines {
     ...SdkCartLineFragment_line

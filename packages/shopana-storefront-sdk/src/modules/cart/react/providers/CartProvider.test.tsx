@@ -78,6 +78,9 @@ function checkout(quantity: number): SdkCartFragment_CartFragment {
     guestCheckoutAllowed: true,
     promoCodes: [],
     loyaltyEarning: null,
+    promotionProgress: [],
+    freeShippingProgress: null,
+    appliedPromotions: [],
     cost: {
       __typename: 'CheckoutCost',
       subtotalAmount: money(quantity * 10),

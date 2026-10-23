@@ -12,6 +12,7 @@ import {
   SSRMultipartLink,
 } from '@apollo/client-integration-nextjs';
 import { createApolloCache } from './cache';
+import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
 import {
   readCookie,
@@ -145,9 +146,16 @@ export function createApolloClient(
     credentials: 'include',
   });
 
+  // Files are uploaded from the browser only (customer media), as a multipart request.
   const transportLinks = IS_SERVER
     ? [new SSRMultipartLink({ stripDefer: true }), httpLink]
-    : [httpLink];
+    : [
+        ApolloLink.split(
+          (operation) => hasUploadVariables(operation.variables),
+          createUploadLink(config.graphqlUrl),
+          httpLink
+        ),
+      ];
 
   const cache = createApolloCache(options.cacheConfig);
   if (options.initialState) {

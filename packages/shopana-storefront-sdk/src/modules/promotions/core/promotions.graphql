@@ -1,0 +1,52 @@
+fragment SdkStorefrontPromotion on StorefrontPromotion {
+  key
+  kind
+  presentation {
+    headline
+    badge
+    description {
+      text
+      html
+    }
+    accessibilityLabel
+    terms
+  }
+  value {
+    type
+    percentage
+    amount {
+      amount
+      currencyCode
+    }
+    maximumDiscount {
+      amount
+      currencyCode
+    }
+    maximumShippingPrice {
+      amount
+      currencyCode
+    }
+    buyQuantity
+    getQuantity
+  }
+  minimumSubtotal {
+    amount
+    currencyCode
+  }
+  minimumQuantity
+  appliesOnOneTimePurchase
+  appliesOnSubscription
+  startsAt
+  endsAt
+}
+
+query SdkStorefrontPromotions($kinds: [StorefrontPromotionKind!]) {
+  storefrontPromotions(kinds: $kinds) {
+    promotions {
+      ...SdkStorefrontPromotion
+    }
+    evaluatedAt
+    validUntil
+    revision
+  }
+}

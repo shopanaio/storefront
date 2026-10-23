@@ -134,6 +134,25 @@ Wishlists belong to the customer: `wishlistProductAdd` and
 and answers the existing item when the product is already saved.
 `Customer.defaultWishlist`, `wishlists` and `wishlist(id)` read them.
 
+### Vendors, promotions and buyer forms
+
+`data.vendors` holds the vendor records (`handle`, `name`, `logoId`, `seo`);
+products reference them by `vendor.id`. `vendors`, `vendor` and
+`vendorByHandle` answer only vendors with products, ordered by name, and
+`Vendor.products` is a listing over that vendor's products.
+
+`cartRecommendations` merges the frequently-bought-together fixtures of the
+cart products without the products already in the cart. No promotion is
+storefront-visible: `storefrontPromotions` and `ProductVariant.promotions`
+answer an empty set, the checkout progress fields are empty.
+
+`marketingSubscribe` answers `PENDING_CONFIRMATION` and prints the
+confirmation link as a `[mock-marketing]` line; any token confirms.
+`contactRequestForm` is available while a `PRIVACY_POLICY` is published, and
+`contactRequestCreate` keeps nothing but checks the E.164 phone and the
+disclosure version. `customerMediaUpload` is not emulated and answers
+`INTERNAL_ERROR`.
+
 ## Theme composition
 
 The theme owns the executable entrypoint, fixture bundle, deterministic clock,

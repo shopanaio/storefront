@@ -106,3 +106,32 @@ query SdkStorePolicyByHandle($handle: String!) {
     ...SdkStorePolicyDetail
   }
 }
+
+fragment SdkVendor on Vendor {
+  id
+  handle
+  name
+  logo {
+    id
+    alt
+    image {
+      id
+      url
+      width
+      height
+    }
+  }
+}
+
+query SdkVendors($first: Int!, $after: Cursor) {
+  vendors(first: $first, after: $after) {
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      ...SdkVendor
+    }
+  }
+}

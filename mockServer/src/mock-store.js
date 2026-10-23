@@ -6,6 +6,7 @@ const collectionEntries = (state) => [
   ['Collection', state.collections],
   ['Facet', state.facets],
   ['Product', state.products],
+  ['Vendor', state.vendors],
   ['ProductVariant', state.productVariants],
   ['ProductComponentConfiguration', state.productComponentConfigurations],
   ['Checkout', state.checkouts],
@@ -46,6 +47,7 @@ export class MockStore {
     this.state.storePolicies ??= [];
     this.state.productComparisons ??= [];
     this.state.productRecommendations ??= [];
+    this.state.vendors ??= [];
     for (const customer of this.state.customers ?? []) {
       customer.revision ??= 1;
       customer.accountStatus ??= 'REGISTERED';

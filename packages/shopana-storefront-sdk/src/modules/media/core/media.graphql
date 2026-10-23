@@ -1,0 +1,19 @@
+mutation SdkCustomerMediaUpload($input: CustomerMediaUploadInput!) {
+  customerMediaUpload(input: $input) {
+    media {
+      id
+      alt
+      image {
+        id
+        url
+        width
+        height
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
