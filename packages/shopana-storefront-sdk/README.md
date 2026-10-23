@@ -170,6 +170,39 @@ useCartClaimed(({ checkoutId, mergedFromCheckoutId }) => setClaimed(true));
 `useClaimAccountCart()` from the same entry claims the cart on request, e.g.
 after placement answered `CHECKOUT_CLAIM_REQUIRED`.
 
+## Closed module pages
+
+A page module declares `access: { session: 'required' }` in `registerModule()`
+to close its pages to visitors without a session; `publicPaths` keeps some of
+them open (path-to-regexp patterns over the same locale-free pathname as
+`path`):
+
+```ts
+registerModule({
+  type: 'page',
+  slug: 'account',
+  path: '/account{/*path}',
+  access: { session: 'required', publicPaths: ['/account/reset-password'] },
+  loader: async () => import('./page/page'),
+});
+```
+
+Such a visitor goes to the home page of the same locale
+(`buildClosedPageRedirect()`), with the `?auth=` result of a sign-in that did
+not complete carried over:
+
+- the runtime answers the request with a redirect before the module loads; a
+  request whose access token expired while the browser still has a session is
+  admitted, since the browser refreshes it;
+- `ClosedPageGuard`, which the runtime wraps around an admitted page, leaves
+  once with `location.replace` when the browser finds the session missing (a
+  rejected refresh, a session ended in another tab). A sign-out on the page is
+  not followed: `useSignOut()` leaves for its own address.
+
+The home page is never closed: `registerModule()` refuses a closed module that
+matches `/`, and the runtime refuses a redirect to a closed page, so a redirect
+cannot lead back to a closed page.
+
 ## Account product actions
 
 `useAccountProductActions({ productId, variantId })` from

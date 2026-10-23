@@ -9,6 +9,7 @@ export * from './core/types';
 export * from './core/IamApplicationClient';
 export * from './core/StorefrontSessionClient';
 export * from './core/sessionCookies';
+export * from './core/closedPageRedirect';
 
 // Store
 export * from './store/SessionStore';

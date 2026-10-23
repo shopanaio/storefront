@@ -47,6 +47,21 @@ export interface ModuleConfig<T = unknown> {
   layoutLoader?: AsyncModuleLoader<{
     default: ComponentType<{ children: ReactNode }>;
   }>;
+  /**
+   * Who may open the pages of a `page` module; open to everyone when omitted. A closed page
+   * without a session sends the visitor to the home page (see `ModuleAccess`).
+   */
+  access?: ModuleAccess;
+}
+
+/**
+ * Access of a page module. `session: 'required'` closes every page of the module to visitors
+ * without a session, except the `publicPaths` (path-to-regexp patterns matched against the
+ * same locale-free pathname as `path`), e.g. the pages links from emails open.
+ */
+export interface ModuleAccess {
+  session: 'required';
+  publicPaths?: string[];
 }
 
 /**
@@ -54,6 +69,7 @@ export interface ModuleConfig<T = unknown> {
  */
 export interface RegisteredModuleRecord<T = unknown> extends ModuleConfig<T> {
   matcher: MatchFunction<ParamData> | null;
+  publicMatchers: MatchFunction<ParamData>[];
 }
 
 /**
@@ -62,7 +78,12 @@ export interface RegisteredModuleRecord<T = unknown> extends ModuleConfig<T> {
 export interface ModuleMatchResult<T = unknown> {
   record: RegisteredModuleRecord<T>;
   params: ParamData;
+  /** The matched page is closed to visitors without a session. */
+  requiresSession: boolean;
 }
+
+/** Pathname of the home page, where a closed page sends a visitor without a session. */
+const HOME_PATHNAME = '/';
 
 /**
  * Props contract for module page components resolved by `[...module]`.
@@ -124,20 +145,36 @@ export class ModuleRegistry {
    * @param config Module configuration object.
    */
   register<T = unknown>(config: ModuleConfig<T>): void {
-    const { type, slug, path, loader, layoutLoader } = config;
+    const { type, slug, path, loader, layoutLoader, access } = config;
+    const matcher = path ? match(path, { decode: decodeURIComponent }) : null;
+    const publicMatchers = (access?.publicPaths ?? []).map((publicPath) =>
+      match(publicPath, { decode: decodeURIComponent })
+    );
+    // The home page is where a closed page sends a visitor without a session; a module that
+    // closed it would send the visitor back to itself.
+    if (
+      access?.session === 'required' &&
+      matcher?.(HOME_PATHNAME) &&
+      !publicMatchers.some((publicMatcher) => publicMatcher(HOME_PATHNAME))
+    ) {
+      throw new Error(
+        `Module "${type}/${slug}" cannot require a session for the home page "${HOME_PATHNAME}"`
+      );
+    }
     let bySlug = this.typeToSlugToRecord.get(type);
     if (!bySlug) {
       bySlug = new Map();
       this.typeToSlugToRecord.set(type, bySlug);
     }
-    const matcher = path ? match(path, { decode: decodeURIComponent }) : null;
     const record: RegisteredModuleRecord<T> = {
       type,
       slug,
       path,
       loader,
       layoutLoader,
+      access,
       matcher,
+      publicMatchers,
     };
     bySlug.set(slug, record);
   }
@@ -180,6 +217,11 @@ export class ModuleRegistry {
         return {
           record: record as RegisteredModuleRecord<T>,
           params: result.params,
+          requiresSession:
+            record.access?.session === 'required' &&
+            !record.publicMatchers.some((publicMatcher) =>
+              publicMatcher(pathname)
+            ),
         };
       }
     }
