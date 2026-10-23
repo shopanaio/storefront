@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
-import { AuthDialog } from '@shopana/storefront-auth/ui';
+import { AuthDialog, AuthUIProvider } from '@shopana/storefront-auth/ui';
 import { useAuthResult } from '@shopana/storefront-sdk/modules/session/react';
 import { useCheckoutTheme } from '#checkout/theme';
-import { useCheckoutAuth, useSaveCheckoutInput } from '#checkout/hooks/useCheckoutAuth';
+import {
+  useCheckoutAuth,
+  useSaveCheckoutInput,
+} from '#checkout/hooks/useCheckoutAuth';
 import { useAuthDialogStore } from '#checkout/state/authDialogStore';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { CHECKOUT_AUTH_COMPONENTS } from '#checkout/components/notices/AuthConsent';
 
 export interface CheckoutAuthProps {
   /** Optional className applied to the theme's sign-in control */
@@ -44,13 +48,17 @@ export const CheckoutAuthDialog = () => {
     if (result) setOpen(true);
   }, [result, setOpen]);
   return (
-    <AuthDialog
-      context="checkoutGuest"
-      open={open}
-      onClose={() => setOpen(false)}
-      defaultIdentifier={{ email: identity?.email, phone: identity?.phone }}
-      beforeSocial={saveInput}
-    />
+    // The consent under the field is the checkout's own: its policy opens over the checkout,
+    // as in the notice under the submit button.
+    <AuthUIProvider components={CHECKOUT_AUTH_COMPONENTS}>
+      <AuthDialog
+        context="checkoutGuest"
+        open={open}
+        onClose={() => setOpen(false)}
+        defaultIdentifier={{ email: identity?.email, phone: identity?.phone }}
+        beforeSocial={saveInput}
+      />
+    </AuthUIProvider>
   );
 };
 

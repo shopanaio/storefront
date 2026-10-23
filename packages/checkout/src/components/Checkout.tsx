@@ -21,7 +21,6 @@ import { CheckoutLoadError } from '#checkout/components/CheckoutLoadError';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutNotFound } from '#checkout/hooks/useCheckoutNotFound';
 import { useBannerStore } from '#checkout/state/banners/bannerStore';
-import { CheckoutSignInRequired } from '#checkout/components/CheckoutSignInRequired';
 import {
   useSessionExpired,
   useSessionStatus,
@@ -87,7 +86,9 @@ const CheckoutBody = ({
   checkoutId,
   brand,
   features,
-}: Pick<CheckoutProps, 'brand' | 'features'> & { checkoutId: string | null }) => {
+}: Pick<CheckoutProps, 'brand' | 'features'> & {
+  checkoutId: string | null;
+}) => {
   const t = useTranslations('Checkout');
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
   const phase = usePlacementPhase();
@@ -117,24 +118,22 @@ const CheckoutBody = ({
     );
   }
 
-  if (
+  // S6: the account checkout is not readable after the session ended; S7: the store takes
+  // orders from accounts only. Either way the buyer signs in in place of the contact.
+  const signInRequired =
     phase.name === 'idle' &&
-    sessionExpired &&
-    !checkout &&
-    (notFound || !checkoutId)
-  ) {
-    return <CheckoutSignInRequired brand={brand} reason="expired" />;
-  }
-  if (
-    phase.name === 'idle' &&
-    checkout &&
-    !checkout.guestCheckoutAllowed &&
-    sessionStatus !== 'authenticated'
-  ) {
-    return <CheckoutSignInRequired brand={brand} reason="required" />;
-  }
+    ((sessionExpired && !checkout && (notFound || !checkoutId)) ||
+      (Boolean(checkout) &&
+        !checkout!.guestCheckoutAllowed &&
+        sessionStatus !== 'authenticated'));
 
-  if (error && !checkout && !notFound && phase.name === 'idle') {
+  if (
+    !signInRequired &&
+    error &&
+    !checkout &&
+    !notFound &&
+    phase.name === 'idle'
+  ) {
     return <CheckoutLoadError brand={brand} onRetry={() => void refetch()} />;
   }
 
@@ -151,6 +150,7 @@ const CheckoutBody = ({
         features={features}
         onSubmit={handleSubmit}
         t={t}
+        signInRequired={signInRequired}
       />
     </>
   );

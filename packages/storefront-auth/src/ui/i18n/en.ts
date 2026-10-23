@@ -20,8 +20,7 @@ export const en: AuthMessages = {
     signIn: 'Sign in',
     backToSignIn: 'Back to sign in',
     loadingMethods: 'Loading sign-in methods',
-    legal:
-      'By continuing, you accept the <terms>Terms of use</terms> and the <privacy>Privacy policy</privacy>.',
+    legal: 'By signing in, you agree to the <privacy>terms of personal data processing</privacy>.',
     country: {
       search: 'Search country',
       title: 'Choose a country',
@@ -64,16 +63,13 @@ export const en: AuthMessages = {
     },
   },
   identify: {
-    title: 'Sign in or sign up',
-    titleRequired: 'Sign in to continue',
-    subtitle: 'We will send you a one-time sign-in code.',
+    title: 'Sign in',
     subtitleNoCode: 'Choose how to sign in.',
     subtitleRequired: 'An account is required to place the order.',
     tabs: 'Way to sign in',
     tabPhone: 'Phone',
     tabEmail: 'Email',
     withPassword: 'Sign in with password',
-    signUpPrompt: 'Want a password? <link>Sign up with password</link>',
   },
   password: {
     title: 'Sign in with password',
@@ -92,7 +88,8 @@ export const en: AuthMessages = {
   signUp: {
     title: 'Create an account',
     firstName: 'First name',
-    lastName: 'Last name (optional)',
+    lastName: 'Last name',
+    lastNameMissing: 'Enter your last name.',
     firstNameMissing: 'Enter your first name.',
     passwordRule: 'From {min} to {max} characters',
     submit: 'Create account',

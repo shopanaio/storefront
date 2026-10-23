@@ -1,7 +1,10 @@
 import { createStyles } from 'antd-style';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { AuthHeadingContext, type AuthHeading } from '../common/Screen';
 import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
-import { CardHeader, DrawerHeader } from '../containers/Headers';
+import { DrawerBase } from '@shopana/storefront-ui';
+import { CardHeader } from '../containers/Headers';
 import type { AuthContext } from '../screens/types';
 
 /** Stories open in Ukrainian, the language of the boards; the toolbar switches it. */
@@ -42,6 +45,7 @@ const FrameBox = ({
   children: ReactNode;
 }) => {
   const { styles } = useStyles();
+  const [heading, setHeading] = useState<AuthHeading | null>(null);
   const noop = () => undefined;
   if (context === 'profile') {
     return (
@@ -51,11 +55,11 @@ const FrameBox = ({
     );
   }
   if (context === 'checkoutGuest') {
+    // The checkout drawer itself, open over the story: its header carries the screen's title.
     return (
-      <div className={styles.drawer} style={{ width: width ?? 500 }}>
-        <DrawerHeader canGoBack={Boolean(back)} back={noop} onClose={noop} />
-        <div className={styles.drawerBody}>{children}</div>
-      </div>
+      <DrawerBase open onClose={noop} title={heading?.title} width={width}>
+        <AuthHeadingContext.Provider value={setHeading}>{children}</AuthHeadingContext.Provider>
+      </DrawerBase>
     );
   }
   if (context === 'checkoutRequired') {
@@ -85,20 +89,6 @@ const useStyles = createStyles(({ css, token }) => ({
     border-radius: ${token.borderRadiusLG}px;
     box-shadow: ${token.boxShadowTertiary};
     font-family: ${token.fontFamily};
-  `,
-  drawer: css`
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    min-height: 720px;
-    padding: ${token.paddingSM}px ${token.padding}px;
-    background: ${token.colorBgElevated};
-    border-radius: ${token.borderRadiusLG}px;
-    box-shadow: ${token.boxShadowSecondary};
-    font-family: ${token.fontFamily};
-  `,
-  drawerBody: css`
-    padding: ${token.paddingLG}px ${token.paddingXS}px;
   `,
   profile: css`
     box-sizing: border-box;

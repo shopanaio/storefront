@@ -6,10 +6,13 @@ import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useStorePolicy } from '#checkout/hooks/useStorePolicy';
 import { breakpoints } from '#checkout/ui/breakpoints';
-import { DrawerBase } from '@shopana/storefront-ui';
+import { DrawerBase, useInsideDrawer } from '@shopana/storefront-ui';
 import { useMediaQuery } from '#checkout/ui/useMediaQuery';
 
 const { Link, Text } = Typography;
+
+/** z-index of the vaul drawers (`@shopana/storefront-ui` drawer styles). */
+const DRAWER_Z_INDEX = 99999;
 
 export interface PolicyModalPolicy {
   handle: string;
@@ -33,6 +36,8 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
   const t = useTranslations('Checkout');
   const { styles, cx } = useStyles();
   const mobile = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
+  // Opened from a drawer (the sign-in's consent), the modal stands over the drawer.
+  const insideDrawer = useInsideDrawer();
   // The last opened policy stays until the closing animation ends, so it does not blank out.
   const [shown, setShown] = useState(policy);
   if (policy && policy !== shown) setShown(policy);
@@ -83,6 +88,7 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
       width={720}
       centered
       destroyOnHidden
+      zIndex={insideDrawer ? DRAWER_Z_INDEX + 1 : undefined}
     >
       {content}
     </Modal>

@@ -22,19 +22,23 @@ export type AlertType = 'info' | 'success' | 'warning' | 'error';
 /** Texts that depend on `context`. */
 export function contextCopy(context: AuthContext) {
   return {
-    identifyTitle:
-      context === 'checkoutRequired' ? 'identify.titleRequired' : 'identify.title',
+    /** None in the account-only checkout: the sign-in sits under the contact section's title. */
+    identifyTitle: context === 'checkoutRequired' ? null : 'identify.title',
+    /** The line under the title; none over a code form. */
     identifySubtitle: (hasCode: boolean) =>
       context === 'checkoutRequired'
         ? 'identify.subtitleRequired'
         : hasCode
-          ? 'identify.subtitle'
+          ? null
           : 'identify.subtitleNoCode',
     unavailable:
       context === 'checkoutGuest' ? 'alerts.unavailableGuest' : 'alerts.unavailable',
     accountsDisabled: `alerts.accountsDisabled.${context}`,
-    /** A password account is offered on store pages only, never in the checkout. */
-    offersPasswordSignUp: context === 'store',
+    /**
+     * A password account is offered wherever the store enables it: a password sign-in never
+     * creates the account, so the buyer without one needs the way to it.
+     */
+    offersPasswordSignUp: true,
   } as const;
 }
 

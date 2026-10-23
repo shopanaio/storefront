@@ -1,48 +1,60 @@
 'use client';
 
-import { Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import type { LegalProps } from '../AuthUIProvider';
 
-/** "By continuing, you accept the terms and the privacy policy", linked when the store has them. */
+/**
+ * "By signing in, you agree to the terms of personal data processing", linked to the privacy
+ * policy when the store has one. It reads like the notice under the checkout's submit button:
+ * secondary text, the policy an underlined link within the sentence.
+ */
 export const DefaultLegal = ({ links, className, style }: LegalProps) => {
   const t = useTranslations('Auth.common');
   const { styles, cx } = useStyles();
   const link = (href: string | undefined) =>
     function LegalLink(chunks: ReactNode) {
       return href ? (
-        <a href={href} target="_blank" rel="noreferrer">
+        <Button
+          color="default"
+          variant="link"
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className={styles.link}
+        >
           {chunks}
-        </a>
+        </Button>
       ) : (
         chunks
       );
     };
   return (
-    <Typography.Paragraph
-      type="secondary"
-      className={cx(styles.legal, className)}
-      style={style}
-    >
-      {t.rich('legal', { terms: link(links.terms), privacy: link(links.privacy) })}
-    </Typography.Paragraph>
+    <Typography.Text type="secondary" className={cx(styles.legal, className)} style={style}>
+      {t.rich('legal', { privacy: link(links.privacy) })}
+    </Typography.Text>
   );
 };
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css }) => ({
   legal: css`
+    display: block;
+    text-align: start;
+  `,
+  // Inline within the sentence; a long title wraps on a phone instead of running off it.
+  link: css`
     && {
-      margin: 0;
-      font-size: ${token.fontSizeSM}px;
-      line-height: ${token.lineHeightSM};
-      text-align: center;
-    }
-
-    a {
-      color: inherit;
+      display: inline;
+      height: auto;
+      padding: 0;
+      font-size: inherit;
+      line-height: inherit;
+      white-space: normal;
+      text-align: start;
       text-decoration: underline;
+      vertical-align: baseline;
     }
   `,
 }));

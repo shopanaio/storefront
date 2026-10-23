@@ -42,7 +42,6 @@ function renderIdentify(
           notice={null}
           onSubmit={noop}
           onPassword={noop}
-          onSignUp={noop}
           onSocial={noop}
           {...overrides}
         />
@@ -52,10 +51,10 @@ function renderIdentify(
 }
 
 describe('contextCopy', () => {
-  it('asks to sign in to continue only in the account-only checkout', () => {
+  it('has no title of its own in the account-only checkout', () => {
     expect(contextCopy('store').identifyTitle).toBe('identify.title');
     expect(contextCopy('checkoutGuest').identifyTitle).toBe('identify.title');
-    expect(contextCopy('checkoutRequired').identifyTitle).toBe('identify.titleRequired');
+    expect(contextCopy('checkoutRequired').identifyTitle).toBeNull();
   });
 
   it('offers guest checkout when sign-in fails in the guest checkout', () => {
@@ -64,24 +63,24 @@ describe('contextCopy', () => {
     expect(contextCopy('store').accountsDisabled).toBe('alerts.accountsDisabled.store');
   });
 
-  it('offers a password account on store pages only', () => {
+  it('offers a password account in every context', () => {
     expect(contextCopy('store').offersPasswordSignUp).toBe(true);
-    expect(contextCopy('checkoutGuest').offersPasswordSignUp).toBe(false);
-    expect(contextCopy('checkoutRequired').offersPasswordSignUp).toBe(false);
+    expect(contextCopy('checkoutGuest').offersPasswordSignUp).toBe(true);
+    expect(contextCopy('checkoutRequired').offersPasswordSignUp).toBe(true);
   });
 });
 
 describe('IdentifyScreen texts', () => {
   it('shows the title of each context', () => {
     renderIdentify('store');
-    expect(screen.getByRole('heading', { name: 'Увійдіть або зареєструйтеся' })).toBeInTheDocument();
-    expect(screen.getByText('Зареєструватися з паролем')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Вхід' })).toBeInTheDocument();
+    // The password sign-up is offered on the password screen only.
+    expect(screen.queryByText('Зареєструватися з паролем')).not.toBeInTheDocument();
     cleanup();
 
     renderIdentify('checkoutRequired');
-    expect(screen.getByRole('heading', { name: 'Увійдіть, щоб продовжити' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
     expect(screen.getByText('Для оформлення замовлення потрібен акаунт.')).toBeInTheDocument();
-    expect(screen.queryByText('Зареєструватися з паролем')).not.toBeInTheDocument();
   });
 
   it('adds guest checkout to the unavailable alert of the guest checkout', () => {
@@ -128,7 +127,7 @@ describe('IdentifyScreen texts', () => {
 });
 
 describe('PasswordScreen texts', () => {
-  it('offers the password sign-up on store pages only', () => {
+  it('offers the password sign-up in the checkout too', () => {
     const props = {
       methods,
       email: 'olena@example.com',
@@ -149,7 +148,7 @@ describe('PasswordScreen texts', () => {
         </AuthIntlProvider>
       </NextIntlClientProvider>
     );
-    expect(screen.queryByText('Зареєструватися з паролем')).not.toBeInTheDocument();
+    expect(screen.getByText('Зареєструватися з паролем')).toBeInTheDocument();
     expect(screen.getByText('Увійти за кодом')).toBeInTheDocument();
   });
 });

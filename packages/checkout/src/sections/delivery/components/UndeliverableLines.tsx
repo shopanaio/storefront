@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from 'antd';
 import { createStyles } from 'antd-style';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { ShipmentLines } from './ShipmentLines';
@@ -30,7 +30,7 @@ export const UndeliverableLines = () => {
   const shown = hidden ? lines.slice(0, VISIBLE_LINES) : lines;
 
   return (
-    <CheckoutBanner
+    <Banner
       tone="action"
       title={t('undeliverable-title', { count: lines.length })}
       description={t('undeliverable-hint', { count: lines.length })}
@@ -53,7 +53,7 @@ export const UndeliverableLines = () => {
           </Button>
         </div>
       )}
-    </CheckoutBanner>
+    </Banner>
   );
 };
 

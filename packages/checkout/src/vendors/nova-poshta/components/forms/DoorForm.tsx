@@ -1,7 +1,7 @@
 'use client';
 
 import { Flex } from 'antd';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { FloatingLabelInput } from '@shopana/storefront-ui';
@@ -111,7 +111,7 @@ function CourierFields({
         settlementRef={settlementRef}
       />
       {disabled && (
-        <CheckoutBanner tone="action" title={t('city_required_warning')} />
+        <Banner tone="action" title={t('city_required_warning')} />
       )}
       <Flex gap={12}>
         <FloatingLabelInput

@@ -1,7 +1,7 @@
 'use client';
 
 import { Flex } from 'antd';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { SectionId } from '#checkout/state/interface';
 import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { useTranslations } from 'next-intl';
@@ -567,7 +567,7 @@ export const DeliveryMethodList = ({
   return (
     <Flex vertical gap={12}>
       {resetReason && !serverKey && !pendingKey && (
-        <CheckoutBanner
+        <Banner
           tone="action"
           title={t(resetReasonMessageKey(resetReason, SectionId.Delivery))}
           description={t(
@@ -578,7 +578,7 @@ export const DeliveryMethodList = ({
         />
       )}
       {rejectedMessages && rejectedMessages.length > 0 && (
-        <CheckoutBanner
+        <Banner
           tone="critical"
           title={t('delivery-input-rejected-title')}
           description={t('delivery-input-rejected')}
@@ -587,10 +587,10 @@ export const DeliveryMethodList = ({
         />
       )}
       {groupChangedKey && !pendingKey && serverKey !== groupChangedKey && (
-        <CheckoutBanner tone="warning" title={t('delivery-group-changed')} />
+        <Banner tone="warning" title={t('delivery-group-changed')} />
       )}
       {failedKey && !pendingKey && (
-        <CheckoutBanner
+        <Banner
           tone="critical"
           title={
             groups.length > 1
@@ -605,7 +605,7 @@ export const DeliveryMethodList = ({
         />
       )}
       {failureCount > 0 && !rejectedMessages && (
-        <CheckoutBanner tone="warning" title={t('delivery-input-retrying')} />
+        <Banner tone="warning" title={t('delivery-input-retrying')} />
       )}
       {Object.entries(providerMethodsRecord).map(
         // Each carrier loads on its own: a new one does not hide the methods already shown.

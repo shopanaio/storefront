@@ -3,8 +3,10 @@
 import { createStyles } from 'antd-style';
 import { useState } from 'react';
 import { DrawerBase, ResponsiveDialog } from '@shopana/storefront-ui';
+import { AuthHeadingContext, type AuthHeading } from '../common/Screen';
 import { AuthFlow, type AuthFlowProps } from '../flow/AuthFlow';
-import { CardHeader, DrawerHeader } from './Headers';
+import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
+import { CardHeader } from './Headers';
 
 export interface AuthDialogProps extends Omit<AuthFlowProps, 'context' | 'renderHeader'> {
   open: boolean;
@@ -25,6 +27,7 @@ export const AuthDialog = ({
   ...flowProps
 }: AuthDialogProps) => {
   const { styles } = useStyles();
+  const [heading, setHeading] = useState<AuthHeading | null>(null);
   // Each opening starts from the first screen.
   const [session, setSession] = useState(0);
   const [wasOpen, setWasOpen] = useState(open);
@@ -33,12 +36,12 @@ export const AuthDialog = ({
     if (open) setSession((value) => value + 1);
   }
 
-  const flow = (renderHeader: AuthFlowProps['renderHeader']) => (
+  const flow = (header: Pick<AuthFlowProps, 'renderHeader'> = {}) => (
     <AuthFlow
       key={session}
       {...flowProps}
+      {...header}
       context={context}
-      renderHeader={renderHeader}
       onCompleted={() => {
         onCompleted?.();
         onClose();
@@ -48,24 +51,21 @@ export const AuthDialog = ({
 
   if (context === 'checkoutGuest') {
     return (
-      <DrawerBase
-        open={open}
-        onClose={onClose}
-        header={<span />}
-        contentClassName={styles.drawer}
-      >
-        {flow((navigation) => (
-          <div className={styles.drawerHeader}>
-            <DrawerHeader {...navigation} onClose={onClose} />
-          </div>
-        ))}
-      </DrawerBase>
+      // The header is the drawer's own, as in every drawer of the checkout: the screen's title
+      // is its `title`; the screens bring their own ways back.
+      <AuthIntlProvider>
+        <DrawerBase open={open} onClose={onClose} title={heading?.title}>
+          <AuthHeadingContext.Provider value={setHeading}>{flow()}</AuthHeadingContext.Provider>
+        </DrawerBase>
+      </AuthIntlProvider>
     );
   }
 
   return (
     <ResponsiveDialog open={open} onClose={onClose}>
-      <div className={styles.card}>{flow((navigation) => <CardHeader {...navigation} />)}</div>
+      <div className={styles.card}>
+        {flow({ renderHeader: (navigation) => <CardHeader {...navigation} /> })}
+      </div>
     </ResponsiveDialog>
   );
 };
@@ -76,11 +76,5 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-direction: column;
     gap: ${token.paddingLG + 4}px;
     padding: ${token.paddingSM}px ${token.paddingSM}px ${token.padding}px;
-  `,
-  drawer: css`
-    gap: ${token.paddingLG}px;
-  `,
-  drawerHeader: css`
-    margin: 0 -${token.paddingXS}px ${token.padding}px;
   `,
 }));

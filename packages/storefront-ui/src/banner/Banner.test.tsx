@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { CheckoutBanner } from './CheckoutBanner';
+import { Banner } from './Banner';
 
-describe('CheckoutBanner', () => {
+describe('Banner', () => {
   it('shows the title, the text under it and one action as a text link', () => {
     const onClick = vi.fn();
     render(
-      <CheckoutBanner
+      <Banner
         tone="action"
         title="Оберіть доставку ще раз"
         description="Відділення тимчасово не працює."
@@ -26,7 +26,7 @@ describe('CheckoutBanner', () => {
 
   it('a critical banner is an alert and cannot be closed', () => {
     render(
-      <CheckoutBanner
+      <Banner
         tone="critical"
         title="Оплата не пройшла"
         onDismiss={vi.fn()}
@@ -41,7 +41,7 @@ describe('CheckoutBanner', () => {
   it('other banners can be closed', () => {
     const onDismiss = vi.fn();
     render(
-      <CheckoutBanner
+      <Banner
         tone="success"
         title="Промокод застосовано"
         onDismiss={onDismiss}
@@ -55,7 +55,7 @@ describe('CheckoutBanner', () => {
 
   it('the compact banner keeps to the title', () => {
     render(
-      <CheckoutBanner
+      <Banner
         tone="warning"
         title="Ми змінили 2 товари"
         description="Перевірте суму."
@@ -68,7 +68,7 @@ describe('CheckoutBanner', () => {
 
   it('an action with an address is a link', () => {
     render(
-      <CheckoutBanner
+      <Banner
         tone="action"
         title="Оплату не завершено."
         action={{ label: 'Продовжити оплату', href: 'https://pay.example/1' }}

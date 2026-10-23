@@ -148,7 +148,7 @@ export const ResetPasswordScreen = ({
           {t('reset.submit')}
         </SubmitButton>
       </form>
-      <TextAction strong onClick={onSignIn}>
+      <TextAction onClick={onSignIn}>
         {t('common.backToSignIn')}
       </TextAction>
     </Screen>

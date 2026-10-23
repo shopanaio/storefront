@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftOutlined, CloseOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
@@ -24,28 +24,6 @@ export const CardHeader = ({ canGoBack, back }: AuthFlowNavigation) => {
       <span className={styles.logo}>
         <Logo />
       </span>
-    </div>
-  );
-};
-
-/** Header of a drawer: "Back" and "Close" icons, no title. */
-export const DrawerHeader = ({
-  canGoBack,
-  back,
-  onClose,
-}: AuthFlowNavigation & { onClose: () => void }) => {
-  const t = useTranslations('Auth.common');
-  const { styles } = useStyles();
-  const { part } = useAuthUI();
-  const header = part('header', styles.header);
-  return (
-    <div className={header.className} style={header.style}>
-      {canGoBack ? (
-        <Button type="text" size="large" icon={<ArrowLeftOutlined />} aria-label={t('back')} onClick={back} />
-      ) : (
-        <span />
-      )}
-      <Button type="text" size="large" icon={<CloseOutlined />} aria-label={t('close')} onClick={onClose} />
     </div>
   );
 };

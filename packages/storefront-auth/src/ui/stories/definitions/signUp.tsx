@@ -8,6 +8,7 @@ const STATES = [
   'default',
   'pending',
   'firstNameMissing',
+  'lastNameMissing',
   'invalidInput',
   'passwordTooShort',
   'passwordTooLong',
@@ -49,7 +50,7 @@ const Story = (args: Args) => {
         showErrors={state !== 'default' && state !== 'pending'}
         defaultValues={{
           firstName: state === 'firstNameMissing' ? '' : 'Олена',
-          lastName: 'Коваленко',
+          lastName: state === 'lastNameMissing' ? '' : 'Коваленко',
           email: state === 'invalidInput' ? 'olena@example' : EMAIL,
           password,
         }}
@@ -62,7 +63,7 @@ const Story = (args: Args) => {
   );
 };
 
-/** Board SdkSignUp: a password account, the first name required, the last name not. */
+/** Board SdkSignUp: a password account, the first and the last name required. */
 export const signUp = {
   render: (args) => <Story {...args} />,
   args: { social: true, minLength: 10, maxLength: 128, state: 'default' },

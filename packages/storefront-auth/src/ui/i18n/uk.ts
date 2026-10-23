@@ -19,8 +19,7 @@ export const uk = {
     signIn: 'Увійти',
     backToSignIn: 'Повернутися до входу',
     loadingMethods: 'Завантаження способів входу',
-    legal:
-      'Продовжуючи, ви приймаєте <terms>Умови використання</terms> та <privacy>Політику конфіденційності</privacy>.',
+    legal: 'Авторизуючись, ви погоджуєтеся з <privacy>умовами обробки персональних даних</privacy>.',
     country: {
       search: 'Пошук країни',
       title: 'Оберіть країну',
@@ -64,16 +63,13 @@ export const uk = {
     },
   },
   identify: {
-    title: 'Увійдіть або зареєструйтеся',
-    titleRequired: 'Увійдіть, щоб продовжити',
-    subtitle: 'Надішлемо одноразовий код для входу.',
+    title: 'Вхід',
     subtitleNoCode: 'Оберіть спосіб входу.',
     subtitleRequired: 'Для оформлення замовлення потрібен акаунт.',
     tabs: 'Спосіб входу',
     tabPhone: 'Телефон',
     tabEmail: 'Пошта',
     withPassword: 'Увійти з паролем',
-    signUpPrompt: 'Хочете пароль? <link>Зареєструватися з паролем</link>',
   },
   password: {
     title: 'Вхід з паролем',
@@ -92,7 +88,8 @@ export const uk = {
   signUp: {
     title: 'Створення акаунта',
     firstName: "Ім'я",
-    lastName: 'Прізвище (необовʼязково)',
+    lastName: 'Прізвище',
+    lastNameMissing: 'Вкажіть прізвище.',
     firstNameMissing: "Вкажіть ім'я.",
     passwordRule: 'Від {min} до {max} символів',
     submit: 'Створити акаунт',

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { LuChevronDown } from 'react-icons/lu';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { mq } from '#checkout/ui/breakpoints';
 import { useCheckoutBanners } from './useCheckoutBanners';
 
@@ -68,7 +68,7 @@ export const BannerSlot = () => {
       {first ? (
         open ? (
           banners.map((banner, index) => (
-            <CheckoutBanner
+            <Banner
               key={banner.id}
               tone={banner.tone}
               title={banner.title}
@@ -80,7 +80,7 @@ export const BannerSlot = () => {
             />
           ))
         ) : (
-          <CheckoutBanner
+          <Banner
             key={first.id}
             tone={first.tone}
             title={first.title}

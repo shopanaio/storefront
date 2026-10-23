@@ -140,14 +140,16 @@ export function AuthUIProvider({
   legalLinks,
   children,
 }: AuthUIProviderProps) {
+  // Inside another provider (the theme's), only what this one sets changes.
+  const parent = useContext(AuthUIContext);
   const value = useMemo<AuthUIValue>(
     () => ({
-      classNames: classNames ?? {},
-      styles: styles ?? {},
-      components: { ...DEFAULT_COMPONENTS, ...definedOnly(components) },
-      legalLinks: legalLinks ?? {},
+      classNames: { ...parent.classNames, ...classNames },
+      styles: { ...parent.styles, ...styles },
+      components: { ...parent.components, ...definedOnly(components) },
+      legalLinks: { ...parent.legalLinks, ...definedOnly(legalLinks) },
     }),
-    [classNames, styles, components, legalLinks]
+    [parent, classNames, styles, components, legalLinks]
   );
   return (
     <AuthUIContext.Provider value={value}>{children}</AuthUIContext.Provider>

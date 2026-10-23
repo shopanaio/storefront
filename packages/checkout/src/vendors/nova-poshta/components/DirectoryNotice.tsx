@@ -2,7 +2,7 @@
 
 import { LoadingOutlined } from '@ant-design/icons';
 import { Flex, Spin, Typography } from 'antd';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import type { DirectoryError } from '../api/directory';
 
@@ -24,7 +24,7 @@ export function DirectoryNotice({
 
   if (error) {
     return (
-      <CheckoutBanner
+      <Banner
         tone={error === 'invalid' ? 'action' : 'warning'}
         title={t(`errors.${error}`)}
         action={

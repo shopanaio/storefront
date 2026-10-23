@@ -1,81 +1,84 @@
 'use client';
 
-import { Flex, Typography } from 'antd';
-import { createStyles } from 'antd-style';
-import { useTranslations } from 'next-intl';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { PiLockSimple } from 'react-icons/pi';
-import { AuthInline } from '@shopana/storefront-auth/ui';
+import { useLocale, useTranslations } from 'next-intl';
+import { AuthInline, AuthUIProvider } from '@shopana/storefront-auth/ui';
+import { usePointsLabel } from '#checkout/sections/loyalty/format';
+import { formatMoney } from '#checkout/ui/Money';
+import type { Checkout } from '#checkout/types/entity';
 import { useSaveCheckoutInput } from '#checkout/hooks/useCheckoutAuth';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { useAuthDialogStore } from '#checkout/state/authDialogStore';
+import { CHECKOUT_AUTH_COMPONENTS } from '#checkout/components/notices/AuthConsent';
 
 /**
- * Sign-in in place of the sections (A1–A2), in the page: delivery and payment stay locked until
- * the buyer signs in.
+ * Sign-in in place of the contact (A1–A2), in the page of the checkout; the summary beside it
+ * keeps the lines and the totals.
  * - `required` (S7): the store requires an account; the cart stays and the account claims it
  *   after signing in;
  * - `expired` (S6): the session ended while the account checkout was open; it is not readable
  *   as a guest, so the buyer signs in again, told the session ended.
  */
-export const CheckoutSignInRequired = ({
-  brand,
-}: {
-  brand?: ReactNode;
-  reason: 'required' | 'expired';
-}) => {
-  const t = useTranslations('Checkout');
-  const { styles } = useStyles();
+export const CheckoutSignInRequired = () => {
   const { checkout } = useCheckoutData();
   const saveInput = useSaveCheckoutInput();
   const identity = checkout?.customerIdentity;
+  const earningInvite = useEarningInvite(checkout?.loyaltyEarning ?? null);
+  const root = useRef<HTMLDivElement>(null);
+  const signInAsked = useAuthDialogStore((state) => state.open);
+  const setSignInAsked = useAuthDialogStore((state) => state.setOpen);
+
+  // "Log in" elsewhere on the page (the points the order earns) leads to this form: the
+  // checkout has no sign-in drawer while the sign-in is on the page.
+  useEffect(() => {
+    if (!signInAsked) return;
+    setSignInAsked(false);
+    root.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // The phone or email field, past the method tabs and the country; a button without one.
+    const target =
+      root.current?.querySelector<HTMLElement>(
+        'input:not([type="radio"]):not([type="hidden"])'
+      ) ?? root.current?.querySelector<HTMLElement>('button');
+    target?.focus({ preventScroll: true });
+  }, [signInAsked, setSignInAsked]);
+
   return (
-    <Flex vertical className={styles.column}>
-      {brand}
+    <div ref={root}>
       {/* The session-ended alert comes from the SDK session itself (S6). */}
-      <AuthInline
-        context="checkoutRequired"
-        defaultIdentifier={{ email: identity?.email, phone: identity?.phone }}
-        beforeSocial={saveInput}
-      />
-      {[t('delivery'), t('payment')].map((title) => (
-        <section key={title} className={styles.locked} aria-label={title}>
-          <Typography.Title level={3} className={styles.lockedTitle}>
-            {title}
-          </Typography.Title>
-          <Typography.Text type="secondary" className={styles.lock}>
-            <PiLockSimple aria-hidden />
-            {t('available-after-sign-in')}
-          </Typography.Text>
-        </section>
-      ))}
-    </Flex>
+      {/* The consent opens the store's policy over the checkout, as the submit notice does. */}
+      <AuthUIProvider components={CHECKOUT_AUTH_COMPONENTS}>
+        <AuthInline
+          context="checkoutRequired"
+          defaultIdentifier={{ email: identity?.email, phone: identity?.phone }}
+          beforeSocial={saveInput}
+          identifySubtitle={earningInvite}
+        />
+      </AuthUIProvider>
+    </div>
   );
 };
 
-const useStyles = createStyles(({ token, css }) => ({
-  column: css`
-    width: 100%;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: ${token.paddingXL}px ${token.padding}px;
-    gap: ${token.marginLG}px;
-  `,
-  locked: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.marginXS}px;
-  `,
-  lockedTitle: css`
-    && {
-      margin: 0;
-      font-size: ${token.fontSizeXL}px;
-      font-weight: ${token.fontWeightStrong};
-      color: ${token.colorTextDisabled};
-    }
-  `,
-  lock: css`
-    display: inline-flex;
-    align-items: center;
-    gap: ${token.marginXXS + 2}px;
-  `,
-}));
+/**
+ * What the order earns once the buyer signs in, when the loyalty program quoted it: "Sign in
+ * to check out faster and get **+112 ₴ to the bonus account** for your order". None without an
+ * estimate: the sign-in then says an account is required.
+ */
+function useEarningInvite(earning: Checkout.LoyaltyEarning | null): ReactNode {
+  const t = useTranslations('Checkout');
+  const locale = useLocale();
+  const pointsLabel = usePointsLabel();
+  if (!earning || earning.state !== 'AUTHENTICATION_REQUIRED') return null;
+  const reward = earning.amount
+    ? t('result-loyalty-earned-store-credit', {
+        amount: formatMoney(locale, earning.amount),
+      })
+    : BigInt(earning.points) > 0n
+      ? `+${pointsLabel(earning.points)}`
+      : null;
+  if (!reward) return null;
+  return t.rich('sign-in-required-earning', {
+    reward,
+    b: (chunks) => <b>{chunks}</b>,
+  });
+}

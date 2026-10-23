@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, UserAddOutlined } from '@ant-design/icons';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
@@ -11,6 +11,7 @@ import type { AuthMethods } from '../../core/types';
 import { useAuthUI } from '../AuthUIProvider';
 import {
   AuthAlert,
+  Badge,
   Field,
   Footer,
   InlineAction,
@@ -45,7 +46,7 @@ export interface SignUpScreenProps {
   onSocial: (provider: string) => void;
 }
 
-/** A password account: the first name is required, the last name is not. */
+/** A password account: the first and the last name are required. */
 export const SignUpScreen = ({
   context,
   methods,
@@ -77,6 +78,7 @@ export const SignUpScreen = ({
   const min = methods?.password.minLength ?? 8;
   const max = methods?.password.maxLength ?? 128;
   const nameMissing = !values.firstName.trim();
+  const lastNameMissing = !values.lastName.trim();
   const emailInvalid = !isEmail(values.email);
   const passwordOk = values.password.length >= min && values.password.length <= max;
   const providers = (methods?.social ?? [])
@@ -89,7 +91,7 @@ export const SignUpScreen = ({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setTouched(true);
-    if (nameMissing || emailInvalid || !passwordOk) return;
+    if (nameMissing || lastNameMissing || emailInvalid || !passwordOk) return;
     onSubmit({
       ...values,
       firstName: values.firstName.trim(),
@@ -129,6 +131,7 @@ export const SignUpScreen = ({
 
   return (
     <Screen>
+      <Badge icon={<UserAddOutlined />} />
       <ScreenTitle id={titleId} title={t('signUp.title')} />
       {alert}
       <form className={styles.form} aria-labelledby={titleId} onSubmit={submit} noValidate>
@@ -149,6 +152,8 @@ export const SignUpScreen = ({
               autoComplete="family-name"
               value={values.lastName}
               onChange={set('lastName')}
+              status={touched && lastNameMissing ? 'error' : undefined}
+              error={touched && lastNameMissing ? t('signUp.lastNameMissing') : undefined}
             />
           </Field>
         </div>

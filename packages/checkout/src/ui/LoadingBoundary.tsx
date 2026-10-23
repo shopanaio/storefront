@@ -11,7 +11,7 @@ import {
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { LoadError, retryFailedLoads } from '#checkout/infra/loadCache';
-import { CheckoutBanner } from './banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 
 /** Shortest time a skeleton stays up once shown, so a fast answer does not flash it. */
 export const MIN_SKELETON_MS = 400;
@@ -65,7 +65,7 @@ function Held({
 function LoadFailed({ onRetry }: { onRetry: () => void }) {
   const t = useTranslations('Checkout');
   return (
-    <CheckoutBanner
+    <Banner
       tone="warning"
       title={t('load-failed')}
       action={{ label: t('banner-retry'), onClick: onRetry }}

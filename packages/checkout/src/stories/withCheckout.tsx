@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import CheckoutLayout from '#checkout/components/CheckoutLayout';
 import { CheckoutProviders } from '#checkout/components/CheckoutProviders';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
-import { bannerToneDeclarations } from '#checkout/ui/banner/tones';
+import { bannerToneDeclarations } from '@shopana/storefront-ui';
 import { StoryCartDrawer, useOpenStoryCart } from './StoryCartDrawer';
 
 /**

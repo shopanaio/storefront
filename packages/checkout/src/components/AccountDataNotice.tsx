@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Flex, Skeleton, Typography } from 'antd';
+import { Flex, Skeleton, Typography } from 'antd';
+import { Banner } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import {
@@ -37,13 +38,11 @@ export const AccountDataNotice = () => {
   }
   if (!authenticated || !claimed) return null;
   return (
-    <Alert
-      type="info"
-      showIcon
-      role="status"
+    <Banner
+      tone="success"
       title={t('account-data-added')}
-      closable
-      onClose={() => setClaimed(false)}
+      onDismiss={() => setClaimed(false)}
+      dismissLabel={t('banner-close')}
     />
   );
 };

@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { clearCustomerInputs } from '#checkout/sections/delivery/customerInputStorage';
 import { useAuthDialogStore } from '#checkout/state/authDialogStore';
 import { defaultCheckout, guestCheckout } from '#checkout/stories/fixtures';
+import { guestEarning } from '#checkout/stories/loyaltyFixtures';
+import { noticeDisclosures } from '#checkout/stories/policyFixtures';
 import { mockCheckout } from '#checkout/stories/mockCheckout';
 import type { CheckoutMockState } from '#checkout/stories/mockCheckout';
 import { withCheckout } from '#checkout/stories/withCheckout';
@@ -29,14 +31,19 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// The store has its policies set: the consent under the field links to its privacy policy.
 const guest = (identity: Partial<typeof guestCheckout.customerIdentity> = {}) => ({
   ...guestCheckout,
+  disclosures: noticeDisclosures,
   customerIdentity: { ...guestCheckout.customerIdentity, ...identity },
 });
 
 const accountOnly = {
   ...guestCheckout,
   guestCheckoutAllowed: false,
+  disclosures: noticeDisclosures,
+  // The points the order earns invite the guest to sign in; "Log in" leads to the form.
+  loyaltyEarning: guestEarning,
   customerIdentity: {
     ...guestCheckout.customerIdentity,
     firstName: null,
@@ -83,7 +90,10 @@ export const GuestAccountNotLinked: Story = {
   },
 };
 
-/** A1: the store takes orders from accounts only; the sign-in is on the page. */
+/**
+ * A1: the store takes orders from accounts only; the sign-in stands in place of the contact,
+ * the summary keeps the lines, the guest loyalty invite and the totals.
+ */
 export const AccountOnly: Story = {
   parameters: { checkout: { checkout: accountOnly } },
 };

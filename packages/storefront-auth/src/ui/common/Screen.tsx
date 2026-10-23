@@ -1,20 +1,30 @@
 'use client';
 
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons';
-import { Alert, Avatar, Button, Spin, Typography } from 'antd';
+import { Avatar, Button, Spin, Typography } from 'antd';
+import { Banner } from '@shopana/storefront-ui';
 import type { ButtonProps } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
+import { createContext, useContext, useEffect } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useAuthUI } from '../AuthUIProvider';
 import type { AuthError } from '../../core/AuthError';
 import { formatWait } from './format';
 import { useCountdown } from './useCountdown';
+
+export interface AuthHeading {
+  title: ReactNode;
+  /** Names the form the title heads. */
+  id?: string;
+}
+
+/**
+ * A container with a header of its own (the checkout drawer) takes the title of the screen
+ * there; the screen keeps the line under it.
+ */
+export const AuthHeadingContext = createContext<((heading: AuthHeading) => void) | null>(
+  null
+);
 
 /** One centered column of a screen: the layout every sign-in screen shares. */
 export const Screen = ({
@@ -25,9 +35,12 @@ export const Screen = ({
   /** The screen only reports progress ("Signing in…"): announced politely. */
   busy?: boolean;
 }) => {
-  const { styles } = useStyles();
+  const { styles, cx } = useStyles();
   const { part } = useAuthUI();
-  const root = part('root', styles.root);
+  // In a container with a header of its own (the checkout drawer) the screen is its content,
+  // as wide as the other drawer content, with the drawer's own padding only.
+  const embedded = Boolean(useContext(AuthHeadingContext));
+  const root = part('root', cx(styles.root, embedded && styles.embedded));
   return (
     <div
       className={root.className}
@@ -45,24 +58,41 @@ export const ScreenTitle = ({
   id,
   title,
   subtitle,
+  align = 'center',
 }: {
   id?: string;
-  title: ReactNode;
+  /** None when the container already names the step (the contact section of the checkout). */
+  title?: ReactNode;
   subtitle?: ReactNode;
+  /** `start`: under a section title of the page, as the text of the section. */
+  align?: 'center' | 'start';
 }) => {
-  const { styles } = useStyles();
+  const { styles, cx } = useStyles();
   const { part } = useAuthUI();
   const titlePart = part('title', styles.title);
+  const setHeading = useContext(AuthHeadingContext);
+  useEffect(() => {
+    if (title) setHeading?.({ title, id });
+  }, [setHeading, title, id]);
+  if (setHeading) {
+    return subtitle ? (
+      <Typography.Text type="secondary" className={styles.subtitle}>
+        {subtitle}
+      </Typography.Text>
+    ) : null;
+  }
   return (
-    <div className={styles.head}>
-      <Typography.Title
-        level={2}
-        id={id}
-        className={titlePart.className}
-        style={titlePart.style}
-      >
-        {title}
-      </Typography.Title>
+    <div className={cx(styles.head, align === 'start' && styles.headStart)}>
+      {title ? (
+        <Typography.Title
+          level={2}
+          id={id}
+          className={titlePart.className}
+          style={titlePart.style}
+        >
+          {title}
+        </Typography.Title>
+      ) : null}
       {subtitle ? (
         <Typography.Text type="secondary" className={styles.subtitle}>
           {subtitle}
@@ -95,39 +125,31 @@ export const Badge = ({
   );
 };
 
-const ALERT_ICONS = {
-  info: <InfoCircleOutlined />,
-  success: <CheckCircleOutlined />,
-  // Warnings of the sign-in are about time: a session, an attempt limit, a spent sign-in.
-  warning: <ClockCircleOutlined />,
-  error: <ExclamationCircleOutlined />,
-};
+const BANNER_TONE = {
+  info: 'action',
+  success: 'success',
+  warning: 'warning',
+  error: 'critical',
+} as const;
 
+/** A message of the sign-in: the storefront banner, the same as the checkout's. */
 export const AuthAlert = ({
   type,
   children,
   action,
-  icon,
 }: {
   type: 'info' | 'success' | 'warning' | 'error';
   children: ReactNode;
-  action?: ReactNode;
-  /** Replaces the outline icon of the type, e.g. an envelope for an email to follow. */
-  icon?: ReactNode;
+  /** One next step, a text link on the right. */
+  action?: { label: string; onClick: () => void };
 }) => {
-  const { styles } = useStyles();
   const { part } = useAuthUI();
-  const alert = part('alert', styles.alert);
   return (
-    <Alert
-      showIcon
-      icon={icon ?? ALERT_ICONS[type]}
-      type={type}
-      role={type === 'error' || type === 'warning' ? 'alert' : 'status'}
-      className={alert.className}
-      style={alert.style}
+    <Banner
+      tone={BANNER_TONE[type]}
       title={children}
       action={action}
+      className={part('alert').className}
     />
   );
 };
@@ -195,33 +217,30 @@ export const SubmitButton = ({
   );
 };
 
-/** A text action in the flow ("Forgot password?", "Back to sign in"). */
+/** A text action in the flow ("Forgot password?", "Back to sign in"): an antd link button. */
 export const TextAction = ({
   children,
   onClick,
   disabled,
-  strong,
   ariaLabel,
+  icon,
 }: {
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
-  strong?: boolean;
   ariaLabel?: string;
-}) => {
-  const { styles, cx } = useStyles();
-  return (
-    <Button
-      type="link"
-      className={cx(styles.textAction, strong && styles.strong)}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
-  );
-};
+  icon?: ReactNode;
+}) => (
+  <Button
+    type="link"
+    icon={icon}
+    disabled={disabled}
+    aria-label={ariaLabel}
+    onClick={onClick}
+  >
+    {children}
+  </Button>
+);
 
 /** A link inside a sentence of an alert or the footer. */
 export const InlineAction = ({
@@ -261,8 +280,8 @@ export const Chip = ({
       {action ? (
         <Button
           size="small"
-          shape="round"
-          className={styles.chipAction}
+          variant="link"
+          color="primary"
           aria-label={action.ariaLabel}
           onClick={action.onClick}
         >
@@ -342,10 +361,19 @@ export const useStyles = createStyles(({ css, token }) => ({
     margin: 0 auto;
     text-align: center;
   `,
+  // Room under the last control, so it does not sit on the bottom edge of the drawer.
+  embedded: css`
+    max-width: none;
+    padding-bottom: ${token.paddingLG}px;
+  `,
   head: css`
     display: flex;
     flex-direction: column;
     gap: ${token.marginXXS}px;
+  `,
+  headStart: css`
+    align-self: stretch;
+    text-align: left;
   `,
   title: css`
     && {
@@ -376,18 +404,6 @@ export const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorWarningBg};
     color: ${token.colorWarning};
   `,
-  // The icon stands at the first line of a long message.
-  alert: css`
-    && {
-      width: 100%;
-      align-items: flex-start;
-      text-align: left;
-    }
-
-    .ant-alert-icon {
-      margin-top: ${(token.fontSize * token.lineHeight - token.fontSize) / 2 + 1}px;
-    }
-  `,
   field: css`
     display: flex;
     flex-direction: column;
@@ -406,53 +422,33 @@ export const useStyles = createStyles(({ css, token }) => ({
   stackMiddle: css`
     gap: ${token.padding}px;
   `,
-  textAction: css`
-    && {
-      height: auto;
-      padding: 0;
-    }
-  `,
-  strong: css`
-    font-weight: ${token.fontWeightStrong};
-  `,
+  // The same link button as the other actions, set in the line of the sentence it ends.
   inlineAction: css`
     && {
+      display: inline;
       height: auto;
       padding: 0;
-      font-weight: ${token.fontWeightStrong};
+      font-size: inherit;
+      line-height: inherit;
       vertical-align: baseline;
     }
   `,
+  // Right under the line it belongs to ("We sent a code by SMS"), no plate of its own.
   chip: css`
     display: inline-flex;
     align-items: center;
-    gap: ${token.marginXS}px;
+    gap: ${token.marginXXS}px;
     max-width: 100%;
-    height: 36px;
-    padding: 0 ${token.marginXXS + 2}px 0 ${token.paddingSM + 2}px;
-    border-radius: 999px;
-    background: ${token.colorFillTertiary};
+    margin-top: -${token.marginSM}px;
     font-size: ${token.fontSize}px;
   `,
-  chipBare: css`
-    padding-right: ${token.paddingSM + 2}px;
-  `,
+  chipBare: css``,
   chipValue: css`
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: ${token.fontWeightStrong};
     color: ${token.colorText};
-  `,
-  chipAction: css`
-    && {
-      border: 0;
-      box-shadow: none;
-      background: ${token.colorBgContainer};
-      color: ${token.colorPrimary};
-      font-weight: ${token.fontWeightStrong};
-    }
   `,
   footer: css`
     display: block;

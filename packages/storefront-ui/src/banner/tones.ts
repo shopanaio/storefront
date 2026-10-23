@@ -19,7 +19,7 @@ export interface BannerToneColors {
 
 /**
  * Brand palette of the banners (store colors, "action" in the brand blue). Each color is a CSS
- * custom property, `--checkout-banner-<tone>-<part>`, so a theme can override any of them in CSS.
+ * custom property, `--banner-<tone>-<part>`, so a theme can override any of them in CSS.
  */
 export const BANNER_TONES: Record<BannerTone, BannerToneColors> = {
   critical: {
@@ -60,10 +60,13 @@ export function bannerToneVar(
   tone: BannerTone,
   part: keyof BannerToneColors
 ): string {
-  return `--checkout-banner-${tone}-${part}`;
+  return `--banner-${tone}-${part}`;
 }
 
-/** Declarations of every tone color, for the root of the checkout. */
+/**
+ * Declarations of every tone color, for the root of the checkout. A banner outside it (in a
+ * drawer, which is portalled out) falls back to the same colors.
+ */
 export function bannerToneDeclarations(): string {
   return (Object.keys(BANNER_TONES) as BannerTone[])
     .flatMap((tone) =>

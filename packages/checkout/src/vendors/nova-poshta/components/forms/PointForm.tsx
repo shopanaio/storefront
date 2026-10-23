@@ -2,7 +2,7 @@
 
 import { Flex, Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 import { useWarehouse } from '../../api/directory';
@@ -74,7 +74,7 @@ export function PointForm({
         />
       </LoadingBoundary>
       {!settlementRef && (
-        <CheckoutBanner tone="action" title={t('city_required_warning')} />
+        <Banner tone="action" title={t('city_required_warning')} />
       )}
     </Flex>
   );

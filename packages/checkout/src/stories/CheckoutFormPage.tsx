@@ -9,7 +9,11 @@ import { CheckoutView } from '#checkout/components/CheckoutView';
  * (`withDirectory`): every section and the summary as the buyer sees them, nothing drawn for
  * the story. Placing the order is refused.
  */
-export function CheckoutFormPage() {
+export function CheckoutFormPage({
+  signInRequired = false,
+}: {
+  signInRequired?: boolean;
+}) {
   const t = useTranslations('Checkout');
   return (
     <CheckoutView
@@ -17,6 +21,7 @@ export function CheckoutFormPage() {
       features={{ auth: true, country: 'UA' }}
       onSubmit={(event) => event.preventDefault()}
       t={t}
+      signInRequired={signInRequired}
     />
   );
 }

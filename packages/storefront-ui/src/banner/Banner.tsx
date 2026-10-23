@@ -11,9 +11,10 @@ import {
   LuTriangleAlert,
   LuX,
 } from 'react-icons/lu';
-import { mq } from '#checkout/ui/breakpoints';
+import { mq } from '../breakpoints';
 import type { BannerTone } from './tones';
-import { bannerToneVar } from './tones';
+import { BANNER_TONES, bannerToneVar } from './tones';
+import { useBannerTheme, type BannerIcon, type BannerPart } from './BannerProvider';
 
 export interface BannerAction {
   label: string;
@@ -24,7 +25,7 @@ export interface BannerAction {
   loading?: boolean;
 }
 
-export interface CheckoutBannerProps {
+export interface BannerProps {
   tone: BannerTone;
   title: ReactNode;
   description?: ReactNode;
@@ -46,18 +47,24 @@ export interface CheckoutBannerProps {
   children?: ReactNode;
 }
 
-const ICONS: Record<BannerTone, typeof LuInfo> = {
-  critical: LuCircleAlert,
-  warning: LuTriangleAlert,
-  action: LuInfo,
-  success: LuCircleCheck,
+const outline =
+  (Icon: typeof LuInfo): BannerIcon =>
+  // eslint-disable-next-line react/display-name -- One outline icon per tone, never inspected.
+  (props) => <Icon {...props} strokeWidth={1.75} />;
+
+const ICONS: Record<BannerTone, BannerIcon> = {
+  critical: outline(LuCircleAlert),
+  warning: outline(LuTriangleAlert),
+  action: outline(LuInfo),
+  success: outline(LuCircleCheck),
 };
 
 /**
- * Message of the checkout, in the style of the Shopify checkout banner: a 1px border, radius 12,
+ * Message of the storefront (the checkout, the sign-in), in the style of the Shopify checkout
+ * banner: a 1px border, radius 12,
  * an icon without a circle, a bold title with the text under it and one action as a text link.
  */
-export const CheckoutBanner = ({
+export const Banner = ({
   tone,
   title,
   description,
@@ -68,43 +75,50 @@ export const CheckoutBanner = ({
   extra,
   className,
   children,
-}: CheckoutBannerProps) => {
+}: BannerProps) => {
   const { styles } = useStyles();
-  const Icon = ICONS[tone];
+  const theme = useBannerTheme();
+  const part = (name: BannerPart, ...own: (string | false | undefined)[]) => ({
+    className: clsx(...own, theme.classNames?.[name]),
+    style: theme.styles?.[name],
+  });
+  const Icon = theme.icons?.[tone] ?? ICONS[tone];
+  const color = (name: keyof typeof BANNER_TONES[typeof tone]) =>
+    `var(${bannerToneVar(tone, name)}, ${theme.tones?.[tone]?.[name] ?? BANNER_TONES[tone][name]})`;
   const dismissible = tone !== 'critical' && onDismiss;
   const body = compact ? null : (
     <>
       {description ? (
-        <div className={styles.description}>{description}</div>
+        <div {...part('description', styles.description)}>{description}</div>
       ) : null}
-      {children ? <div className={styles.content}>{children}</div> : null}
+      {children ? <div {...part('content', styles.content)}>{children}</div> : null}
     </>
   );
+  const root = part('root', styles.banner, className);
 
   return (
     <div
       role={tone === 'critical' ? 'alert' : 'status'}
       data-tone={tone}
-      className={clsx(styles.banner, className)}
+      className={root.className}
       style={{
-        ['--banner-bg' as string]: `var(${bannerToneVar(tone, 'background')})`,
-        ['--banner-border' as string]: `var(${bannerToneVar(tone, 'border')})`,
-        ['--banner-text' as string]: `var(${bannerToneVar(tone, 'text')})`,
-        ['--banner-accent' as string]: `var(${bannerToneVar(tone, 'accent')})`,
+        ['--banner-bg' as string]: color('background'),
+        ['--banner-border' as string]: color('border'),
+        ['--banner-text' as string]: color('text'),
+        ['--banner-accent' as string]: color('accent'),
+        ...root.style,
       }}
     >
-      <span className={styles.icon} aria-hidden="true">
-        <Icon size={18} strokeWidth={1.75} />
+      <span {...part('icon', styles.icon)} aria-hidden="true">
+        <Icon size={18} aria-hidden />
       </span>
-      <div className={clsx(styles.title, compact && styles.titleCompact)}>
-        {title}
-      </div>
-      <div className={styles.side}>
+      <div {...part('title', styles.title, compact && styles.titleCompact)}>{title}</div>
+      <div {...part('side', styles.side)}>
         {extra}
         {action ? (
           action.href ? (
             <a
-              className={styles.action}
+              {...part('action', styles.action)}
               href={action.href}
               onClick={action.onClick}
             >
@@ -113,7 +127,7 @@ export const CheckoutBanner = ({
           ) : (
             <button
               type="button"
-              className={clsx(styles.action, action.loading && styles.actionLoading)}
+              {...part('action', styles.action, action.loading && styles.actionLoading)}
               onClick={action.onClick}
               disabled={action.loading}
               aria-busy={action.loading || undefined}
@@ -132,7 +146,7 @@ export const CheckoutBanner = ({
         {dismissible ? (
           <button
             type="button"
-            className={styles.close}
+            {...part('close', styles.close)}
             aria-label={dismissLabel}
             onClick={onDismiss}
           >
@@ -157,6 +171,10 @@ const useStyles = createStyles(({ css, token }) => ({
     border-radius: 12px;
     background: var(--banner-bg);
     color: var(--banner-text);
+    /* Portalled out of the page (a drawer), it keeps the font of the theme; in a centered
+       column (the sign-in) its text still starts at the icon. */
+    font-family: ${token.fontFamily};
+    text-align: left;
     font-size: 14px;
     line-height: 19px;
   `,
@@ -205,8 +223,8 @@ const useStyles = createStyles(({ css, token }) => ({
     opacity: 0.65;
   `,
   spinner: css`
-    animation: checkout-banner-spin 1s linear infinite;
-    @keyframes checkout-banner-spin {
+    animation: banner-spin 1s linear infinite;
+    @keyframes banner-spin {
       to {
         transform: rotate(360deg);
       }

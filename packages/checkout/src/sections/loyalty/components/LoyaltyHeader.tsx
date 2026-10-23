@@ -234,9 +234,9 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   // The tones of the checkout banners: a warning for what expires, a gain for what is coming.
   expiring: css`
-    color: var(--checkout-banner-warning-accent, ${token.colorWarningText});
+    color: var(--banner-warning-accent, ${token.colorWarningText});
   `,
   pending: css`
-    color: var(--checkout-banner-success-accent, ${token.colorSuccessText});
+    color: var(--banner-success-accent, ${token.colorSuccessText});
   `,
 }));

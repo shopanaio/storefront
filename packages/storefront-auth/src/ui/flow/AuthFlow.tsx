@@ -54,6 +54,8 @@ export interface AuthFlowProps {
   resetPath?: string;
   /** Page to return to from a social provider; the current page by default. */
   returnTo?: string;
+  /** The line under the title of the first screen, in the host's words. */
+  identifySubtitle?: ReactNode;
   /** Header of the container (back, close, logo), given the navigation of the flow. */
   renderHeader?: (navigation: AuthFlowNavigation) => ReactNode;
 }
@@ -87,6 +89,7 @@ function AuthFlowScreens({
   resetPath,
   returnTo,
   renderHeader,
+  identifySubtitle,
 }: AuthFlowProps) {
   const auth = useAuth();
   const user = useUser();
@@ -149,10 +152,12 @@ function AuthFlowScreens({
     auth.reset();
     dispatch({ type: 'open', screen: next });
   };
-  const back = () => {
-    auth.reset();
+  const { reset } = auth;
+  const back = useCallback(() => {
+    reset();
     dispatch({ type: 'back' });
-  };
+  }, [reset]);
+  const backAllowed = canGoBack(flow);
 
   const social = (provider: string) => {
     clearResult();
@@ -202,8 +207,8 @@ function AuthFlowScreens({
               )
             }
             onPassword={() => go(screenOf('password'))}
-            onSignUp={() => go(screenOf('signUp'))}
             onSocial={social}
+            subtitle={identifySubtitle}
           />
         );
       case 'password':
@@ -242,7 +247,7 @@ function AuthFlowScreens({
                   email: values.email,
                   password: values.password,
                   firstName: values.firstName,
-                  lastName: values.lastName || undefined,
+                  lastName: values.lastName,
                   verifyPath,
                 })
               );
@@ -336,9 +341,11 @@ function AuthFlowScreens({
   })();
 
   return (
-    <>
-      {renderHeader?.({ canGoBack: canGoBack(flow), back })}
+    // A host may render the flow inside its own form (the checkout) or portal it out of one:
+    // the submits of the sign-in never reach the host's form.
+    <div style={{ display: 'contents' }} onSubmit={(event) => event.stopPropagation()}>
+      {renderHeader?.({ canGoBack: backAllowed, back })}
       {body}
-    </>
+    </div>
   );
 }

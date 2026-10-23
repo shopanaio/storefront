@@ -20,8 +20,7 @@ export const ru: AuthMessages = {
     signIn: 'Войти',
     backToSignIn: 'Вернуться ко входу',
     loadingMethods: 'Загрузка способов входа',
-    legal:
-      'Продолжая, вы принимаете <terms>Условия использования</terms> и <privacy>Политику конфиденциальности</privacy>.',
+    legal: 'Авторизуясь, вы соглашаетесь с <privacy>условиями обработки персональных данных</privacy>.',
     country: {
       search: 'Поиск страны',
       title: 'Выберите страну',
@@ -65,16 +64,13 @@ export const ru: AuthMessages = {
     },
   },
   identify: {
-    title: 'Войдите или зарегистрируйтесь',
-    titleRequired: 'Войдите, чтобы продолжить',
-    subtitle: 'Отправим одноразовый код для входа.',
+    title: 'Вход',
     subtitleNoCode: 'Выберите способ входа.',
     subtitleRequired: 'Для оформления заказа нужен аккаунт.',
     tabs: 'Способ входа',
     tabPhone: 'Телефон',
     tabEmail: 'Почта',
     withPassword: 'Войти с паролем',
-    signUpPrompt: 'Хотите пароль? <link>Зарегистрироваться с паролем</link>',
   },
   password: {
     title: 'Вход с паролем',
@@ -93,7 +89,8 @@ export const ru: AuthMessages = {
   signUp: {
     title: 'Создание аккаунта',
     firstName: 'Имя',
-    lastName: 'Фамилия (необязательно)',
+    lastName: 'Фамилия',
+    lastNameMissing: 'Укажите фамилию.',
     firstNameMissing: 'Укажите имя.',
     passwordRule: 'От {min} до {max} символов',
     submit: 'Создать аккаунт',

@@ -88,7 +88,6 @@ const Story = (args: Args) => {
         countryPickerOpen={state === 'countryPicker' ? true : undefined}
         onSubmit={fn()}
         onPassword={fn()}
-        onSignUp={fn()}
         onSocial={fn()}
       />
     </Frame>

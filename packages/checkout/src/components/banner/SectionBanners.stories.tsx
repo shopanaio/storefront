@@ -16,8 +16,8 @@ import { formScenario } from '#checkout/stories/formScenario';
 import { mockCheckout } from '#checkout/stories/mockCheckout';
 import type { CheckoutMockState } from '#checkout/stories/mockCheckout';
 import { withCheckout } from '#checkout/stories/withCheckout';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
-import type { BannerTone } from '#checkout/ui/banner/tones';
+import { Banner as UiBanner } from '@shopana/storefront-ui';
+import type { BannerTone } from '@shopana/storefront-ui';
 import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 import { DirectoryNotice } from '#checkout/vendors/nova-poshta/components/DirectoryNotice';
 import novaPoshtaEn from '#checkout/vendors/nova-poshta/i18n/en.json';
@@ -56,7 +56,7 @@ interface BannerProps {
 function Banner({ tone, title, values, description, action }: BannerProps) {
   const t = useTranslations('Checkout');
   return (
-    <CheckoutBanner
+    <UiBanner
       tone={tone}
       title={t(title, values)}
       description={description ? t(description) : undefined}
@@ -91,7 +91,7 @@ function NovaPoshtaMessages({ children }: { children: ReactNode }) {
 
 function CityRequired() {
   const t = useTranslations('Modules.novaPoshta.form');
-  return <CheckoutBanner tone="action" title={t('city_required_warning')} />;
+  return <Banner tone="action" title={t('city_required_warning')} />;
 }
 
 function FailedPart(): ReactNode {

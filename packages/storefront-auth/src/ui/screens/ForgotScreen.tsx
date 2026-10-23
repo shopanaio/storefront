@@ -126,7 +126,7 @@ export const ForgotScreen = ({
           {t('forgot.submit')}
         </SubmitButton>
       </form>
-      <TextAction strong onClick={onBackToSignIn}>
+      <TextAction onClick={onBackToSignIn}>
         {t('common.backToSignIn')}
       </TextAction>
     </Screen>

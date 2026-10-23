@@ -1,7 +1,7 @@
 'use client';
 
 import { Flex } from 'antd';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { SectionId } from '#checkout/state/interface';
 import { resetReasonMessageKey } from '#checkout/state/banners/messages';
 import { createStyles } from 'antd-style';
@@ -79,7 +79,7 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
   return (
     <Flex vertical gap={12} className={styles.container}>
       {resetReason && !localSelectedMethod && (
-        <CheckoutBanner
+        <Banner
           tone="action"
           title={t(resetReasonMessageKey(resetReason, SectionId.Payment))}
           description={t('payment-selection-reset')}

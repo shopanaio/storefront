@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Button, Checkbox, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
@@ -19,43 +20,57 @@ import type { PolicyModalPolicy } from './PolicyModal';
 const { Text } = Typography;
 
 /**
- * The notice in reading order: text as is, policies as links that open the policy over the
- * checkout. The link keeps the policy page as its address, for a new tab.
+ * A policy within a sentence: a link that opens the policy over the checkout. The link keeps
+ * the policy page as its address, for a new tab. The sign-in's consent uses it too.
  */
+export const PolicyLink = ({
+  policy,
+  onOpen,
+  children,
+}: {
+  policy: PolicyModalPolicy & { path: string };
+  onOpen: (policy: PolicyModalPolicy) => void;
+  children: ReactNode;
+}) => {
+  const { styles } = useStyles();
+  return (
+    <Button
+      color="default"
+      variant="link"
+      href={policy.path}
+      className={styles.link}
+      onClick={(event) => {
+        // Inside the checkbox label a click on the link must not tick the box.
+        event.preventDefault();
+        event.stopPropagation();
+        onOpen(policy);
+      }}
+    >
+      {children}
+    </Button>
+  );
+};
+
+/** The notice in reading order: text as is, policies as links that open the policy. */
 const DisclosureParts = ({
   parts,
   onOpen,
 }: {
   parts: Checkout.DisclosurePart[];
   onOpen: (policy: PolicyModalPolicy) => void;
-}) => {
-  const { styles } = useStyles();
-  return (
-    <>
-      {parts.map((part, index) =>
-        part.kind === 'text' ? (
-          <span key={index}>{part.text}</span>
-        ) : (
-          <Button
-            key={index}
-            color="default"
-            variant="link"
-            href={part.path}
-            className={styles.link}
-            onClick={(event) => {
-              // Inside the checkbox label a click on the link must not tick the box.
-              event.preventDefault();
-              event.stopPropagation();
-              onOpen(part);
-            }}
-          >
-            {part.title}
-          </Button>
-        )
-      )}
-    </>
-  );
-};
+}) => (
+  <>
+    {parts.map((part, index) =>
+      part.kind === 'text' ? (
+        <span key={index}>{part.text}</span>
+      ) : (
+        <PolicyLink key={index} policy={part} onOpen={onOpen}>
+          {part.title}
+        </PolicyLink>
+      )
+    )}
+  </>
+);
 
 /**
  * The notice the buyer accepts by placing the order (NOTICE mode), under the submit button.

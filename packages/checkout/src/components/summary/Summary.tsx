@@ -13,16 +13,30 @@ interface Prop {
   withLines?: boolean;
   /** Shown right over the totals, such as the order comment on a phone. */
   beforeTotals?: ReactNode;
+  /**
+   * The lines and the totals only: before the buyer signs in to an account-only checkout,
+   * codes and rewards cannot be applied yet.
+   */
+  linesAndTotalsOnly?: boolean;
 }
 
-export const Summary = ({ checkout, withLines = true, beforeTotals }: Prop) => {
+export const Summary = ({
+  checkout,
+  withLines = true,
+  beforeTotals,
+  linesAndTotalsOnly = false,
+}: Prop) => {
   const { CartDrawer } = useCheckoutTheme();
 
   return (
     <SummaryBlocks>
       {withLines ? <SummaryLines checkout={checkout} /> : null}
-      <SectionRenderer slug={SectionId.Promo} />
-      <SectionRenderer slug={SectionId.Loyalty} />
+      {linesAndTotalsOnly ? null : (
+        <>
+          <SectionRenderer slug={SectionId.Promo} />
+          <SectionRenderer slug={SectionId.Loyalty} />
+        </>
+      )}
       {beforeTotals}
       <SummaryTotals checkout={checkout} />
       <CartDrawer />

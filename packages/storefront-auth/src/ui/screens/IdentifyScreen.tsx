@@ -1,10 +1,11 @@
 'use client';
 
+import { LockOutlined } from '@ant-design/icons';
 import { Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
 import { useLocale, useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { FloatingLabelInput, PhoneInput } from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
 import type { AuthMethods } from '../../core/types';
@@ -12,8 +13,6 @@ import { useAuthUI, type AuthMethodTab } from '../AuthUIProvider';
 import {
   AuthAlert,
   Field,
-  Footer,
-  InlineAction,
   RateLimitAlert,
   Screen,
   ScreenTitle,
@@ -43,10 +42,14 @@ export interface IdentifyScreenProps {
   /** Sends a code to the phone or the email. */
   onSubmit: (channel: AuthMethodTab, destination: string) => void;
   onPassword: () => void;
-  onSignUp: () => void;
   onSocial: (provider: string) => void;
   /** Opens the country list of the phone (stories). */
   countryPickerOpen?: boolean;
+  /**
+   * The line under the title, in the host's words: the checkout says what the order earns once
+   * the buyer signs in. The default line of the context otherwise.
+   */
+  subtitle?: ReactNode;
 }
 
 const NOTICE_ALERTS: Record<IdentifyNotice, 'warning' | 'error'> = {
@@ -76,9 +79,9 @@ export const IdentifyScreen = ({
   notice,
   onSubmit,
   onPassword,
-  onSignUp,
   onSocial,
   countryPickerOpen,
+  subtitle,
 }: IdentifyScreenProps) => {
   const t = useTranslations('Auth');
   const locale = useLocale();
@@ -136,8 +139,16 @@ export const IdentifyScreen = ({
     <Screen>
       <ScreenTitle
         id={titleId}
-        title={t(copy.identifyTitle)}
-        subtitle={t(copy.identifySubtitle(hasCode || status === 'loading'))}
+        title={copy.identifyTitle ? t(copy.identifyTitle) : undefined}
+        subtitle={
+          subtitle ??
+          (() => {
+            const key = copy.identifySubtitle(hasCode || status === 'loading');
+            return key ? t(key) : undefined;
+          })()
+        }
+        // Without a title of its own the line is the text of the page section it sits in.
+        align={copy.identifyTitle ? 'center' : 'start'}
       />
       {notice && !blocked ? (
         <AuthAlert type={NOTICE_ALERTS[notice]}>{t(`alerts.${notice}`)}</AuthAlert>
@@ -201,6 +212,8 @@ export const IdentifyScreen = ({
               />
             )}
           </Field>
+          {/* The consent to the personal data processing goes right with the identifier. */}
+          <Legal {...part('legal')} links={legalLinks} />
           <SubmitButton
             pending={pending}
             pendingLabel={t('common.pending')}
@@ -211,7 +224,7 @@ export const IdentifyScreen = ({
         </form>
       ) : null}
       {withPassword && !hasCode ? (
-        <SubmitButton htmlType="button" onClick={onPassword}>
+        <SubmitButton htmlType="button" icon={<LockOutlined />} onClick={onPassword}>
           {t('identify.withPassword')}
         </SubmitButton>
       ) : null}
@@ -230,19 +243,12 @@ export const IdentifyScreen = ({
         />
       ) : null}
       {withPassword && hasCode ? (
-        <TextAction strong onClick={onPassword}>
+        <TextAction icon={<LockOutlined />} onClick={onPassword}>
           {t('identify.withPassword')}
         </TextAction>
       ) : null}
-      {!blocked && status === 'ready' ? (
+      {!hasCode && !blocked && status === 'ready' ? (
         <Legal {...part('legal')} links={legalLinks} />
-      ) : null}
-      {copy.offersPasswordSignUp && methods?.password.signUp && !blocked ? (
-        <Footer>
-          {t.rich('identify.signUpPrompt', {
-            link: (chunks) => <InlineAction onClick={onSignUp}>{chunks}</InlineAction>,
-          })}
-        </Footer>
       ) : null}
     </Screen>
   );

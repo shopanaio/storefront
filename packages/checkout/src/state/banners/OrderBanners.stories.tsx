@@ -5,7 +5,7 @@ import { SectionId } from '#checkout/state/interface';
 import { maximumPointsRedemption } from '#checkout/stories/loyaltyFixtures';
 import { withCheckout } from '#checkout/stories/withCheckout';
 import type { Checkout } from '#checkout/types/entity';
-import { CheckoutBanner } from '#checkout/ui/banner/CheckoutBanner';
+import { Banner } from '@shopana/storefront-ui';
 import { collectBanners } from './banners';
 import type { BannerHandlers, BannerInput } from './banners';
 
@@ -95,7 +95,7 @@ function OrderBanners({
       }}
     >
       {banners.map((banner) => (
-        <CheckoutBanner
+        <Banner
           key={banner.id}
           tone={banner.tone}
           title={banner.title}

@@ -167,11 +167,7 @@ export const AccountConnectionsView = ({
       {reauth ? (
         <AuthAlert
           type="warning"
-          action={
-            <Button size="small" onClick={onReauthenticate}>
-              {t('reauthenticateAction')}
-            </Button>
-          }
+          action={{ label: t('reauthenticateAction'), onClick: onReauthenticate }}
         >
           {t('reauthenticate')}
         </AuthAlert>
@@ -179,11 +175,7 @@ export const AccountConnectionsView = ({
       {status === 'unavailable' ? (
         <AuthAlert
           type="error"
-          action={
-            <Button size="small" type="link" onClick={onReload}>
-              {t('retry')}
-            </Button>
-          }
+          action={{ label: t('retry'), onClick: onReload }}
         >
           {t('unavailable')}
         </AuthAlert>

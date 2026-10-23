@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { withCheckout } from '#checkout/stories/withCheckout';
-import { CheckoutBanner } from './CheckoutBanner';
+import { LuSparkles } from 'react-icons/lu';
+import { Banner } from './Banner';
+import { BannerProvider } from './BannerProvider';
 
 const meta = {
-  title: 'Checkout/UI/CheckoutBanner',
-  component: CheckoutBanner,
-  decorators: [withCheckout],
+  title: 'Storefront UI/Banner',
+  component: Banner,
   args: {
     tone: 'action',
     title: 'Choose a delivery method',
@@ -18,7 +18,7 @@ const meta = {
       options: ['critical', 'warning', 'action', 'success'],
     },
   },
-} satisfies Meta<typeof CheckoutBanner>;
+} satisfies Meta<typeof Banner>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -74,4 +74,23 @@ export const Compact: Story = {
     action: { label: 'Choose', onClick: fn() },
     extra: '+2',
   },
+};
+
+/**
+ * A theme restyles the banners through `BannerProvider`: classes and styles of the parts, the
+ * icons and the colors of the tones (here a squarer, louder `action` tone).
+ */
+export const Themed: Story = {
+  decorators: [
+    (Story) => (
+      <BannerProvider
+        styles={{ root: { borderRadius: 4, borderWidth: 2 }, title: { fontWeight: 700 } }}
+        icons={{ action: LuSparkles }}
+        tones={{ action: { background: '#fff7e6', border: '#ffa940', accent: '#d46b08' } }}
+      >
+        <Story />
+      </BannerProvider>
+    ),
+  ],
+  args: { action: { label: 'Choose', onClick: fn() } },
 };

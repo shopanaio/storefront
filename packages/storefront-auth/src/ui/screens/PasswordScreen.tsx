@@ -1,7 +1,6 @@
 'use client';
 
-import { KeyOutlined, MailOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { LockOutlined, MessageOutlined } from '@ant-design/icons';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
@@ -11,6 +10,7 @@ import type { AuthError } from '../../core/AuthError';
 import type { AuthMethods } from '../../core/types';
 import {
   AuthAlert,
+  Badge,
   Field,
   Footer,
   InlineAction,
@@ -97,10 +97,11 @@ export const PasswordScreen = ({
 
   return (
     <Screen>
+      <Badge icon={<LockOutlined />} />
       <ScreenTitle id={titleId} title={t('password.title')} />
       {alert}
       {notice === 'verificationLink' || notice === 'verificationResent' ? (
-        <AuthAlert type="info" icon={<MailOutlined />}>
+        <AuthAlert type="info">
           {t.rich('password.verificationLink', {
             email: email.trim(),
             b: (chunks) => <b>{chunks}</b>,
@@ -140,6 +141,12 @@ export const PasswordScreen = ({
               hide: t('common.hidePassword'),
             }}
           />
+          {/* Belongs to the password: right under its field. */}
+          {methods?.password.reset ? (
+            <span className={styles.forgot}>
+              <InlineAction onClick={onForgot}>{t('password.forgot')}</InlineAction>
+            </span>
+          ) : null}
         </Field>
         <SubmitButton
           pending={pending}
@@ -149,20 +156,22 @@ export const PasswordScreen = ({
           {t('password.submit')}
         </SubmitButton>
       </form>
-      {methods?.password.reset ? (
-        <TextAction onClick={onForgot}>{t('password.forgot')}</TextAction>
-      ) : null}
-      {hasCode ? (
-        <Button shape="round" icon={<KeyOutlined aria-hidden />} onClick={onCode}>
-          {t('password.withCode')}
-        </Button>
-      ) : null}
-      {copy.offersPasswordSignUp && methods?.password.signUp ? (
-        <Footer>
-          {t.rich('password.signUpPrompt', {
-            link: (chunks) => <InlineAction onClick={onSignUp}>{chunks}</InlineAction>,
-          })}
-        </Footer>
+      {/* The other ways in, together under the form. */}
+      {hasCode || (copy.offersPasswordSignUp && methods?.password.signUp) ? (
+        <div className={styles.otherWays}>
+          {hasCode ? (
+            <TextAction icon={<MessageOutlined />} onClick={onCode}>
+              {t('password.withCode')}
+            </TextAction>
+          ) : null}
+          {copy.offersPasswordSignUp && methods?.password.signUp ? (
+            <Footer>
+              {t.rich('password.signUpPrompt', {
+                link: (chunks) => <InlineAction onClick={onSignUp}>{chunks}</InlineAction>,
+              })}
+            </Footer>
+          ) : null}
+        </div>
       ) : null}
     </Screen>
   );
@@ -176,5 +185,17 @@ const useStyles = createStyles(({ css, token }) => ({
     width: 100%;
     margin: 0;
     text-align: left;
+  `,
+  forgot: css`
+    display: flex;
+    justify-content: flex-end;
+  `,
+  // The last line stands 16px under the text above it, as on the other screens: the link
+  // button over it adds its own room of a control (32px) around a line of text.
+  otherWays: css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: ${token.padding - (token.controlHeight - token.fontSize * token.lineHeight) / 2}px;
   `,
 }));
