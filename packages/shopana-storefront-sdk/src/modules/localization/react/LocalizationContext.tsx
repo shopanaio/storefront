@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useCallback, useMemo, type ReactNode } from 'react';
-import type { SdkLocalizationFragment } from '../../../graphql/apollo/generated/operations';
 import {
   buildHref as buildLocalizedHref,
   splitLocaleFromPathname,
@@ -24,7 +23,7 @@ export interface LocalizationProviderProps {
   locale: StorefrontLocale;
   locales: StorefrontLocales;
   localePrefix: LocalePrefixMode;
-  localization: SdkLocalizationFragment;
+  currencyCode: string;
   timeZone: string;
 }
 
@@ -33,7 +32,7 @@ export function LocalizationProvider({
   locale,
   locales,
   localePrefix,
-  localization,
+  currencyCode,
   timeZone,
 }: LocalizationProviderProps) {
   const segments = useMemo(
@@ -90,13 +89,9 @@ export function LocalizationProvider({
     () => ({
       locale,
       defaultLocale: locales.defaultLocale,
-      availableLanguages: locales.locales,
+      locales: locales.locales,
       localePrefix,
-      market: localization.market,
-      country: localization.country,
-      currency: localization.currency,
-      availableCountries: localization.availableCountries,
-      availableCurrencies: localization.availableCurrencies,
+      currencyCode,
       timeZone,
       intlLocale: locale.tag,
       buildHref,
@@ -105,9 +100,9 @@ export function LocalizationProvider({
     }),
     [
       buildHref,
+      currencyCode,
       locale,
       localePrefix,
-      localization,
       locales,
       stripLocale,
       switchLocale,

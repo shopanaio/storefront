@@ -99,6 +99,7 @@ if (process.argv.includes('--schema-only')) {
   process.exit(0);
 }
 await run(process.execPath, ['scripts/codegen-openapi.mjs']);
+await run(process.execPath, ['scripts/codegen-possible-types.mjs']);
 if (themeDir) {
   await run(
     process.execPath,

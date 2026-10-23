@@ -4,6 +4,7 @@ import type {
 } from '@apollo/client';
 import { InMemoryCache } from '@apollo/client-integration-nextjs';
 import { cursorConnectionPolicy } from './pagination/cursorPagination';
+import { possibleTypes } from './generated/possibleTypes';
 
 /**
  * Shared cache policy factory for the RSC and browser clients.
@@ -77,7 +78,16 @@ export function createApolloCache(
     };
   }
 
-  return new InMemoryCache({ ...overrides, typePolicies });
+  return new InMemoryCache({
+    ...overrides,
+    // Fragments on interfaces and unions (`... on Media`) match only with the schema types.
+    possibleTypes: Object.fromEntries(
+      Object.entries({ ...possibleTypes, ...overrides.possibleTypes }).map(
+        ([supertype, subtypes]) => [supertype, [...subtypes]]
+      )
+    ),
+    typePolicies,
+  });
 }
 
 /**

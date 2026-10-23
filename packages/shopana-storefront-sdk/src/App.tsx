@@ -14,7 +14,6 @@ import { ApolloAppProvider } from './next/apollo/ApolloProvider';
 import type { ApolloEnvironmentConfig } from './graphql/apollo/types';
 import {
   SdkLoadCartQueryDocument,
-  type SdkLocalizationFragment,
   type SdkStoreFragment,
 } from './graphql/apollo/generated/operations';
 import type { Session } from './modules/session/core/types';
@@ -31,7 +30,6 @@ interface AppProvidersProps {
   environmentConfig: ApolloEnvironmentConfig;
   apolloInitialState?: NormalizedCacheObject;
   store: SdkStoreFragment;
-  localization: SdkLocalizationFragment;
   locale: StorefrontLocale;
   locales: StorefrontLocales;
   localePrefix: LocalePrefixMode;
@@ -46,7 +44,6 @@ const HydratedAppProviders: React.FC<
   children,
   environmentConfig,
   store,
-  localization,
   locale,
   locales,
   localePrefix,
@@ -72,9 +69,9 @@ const HydratedAppProviders: React.FC<
   const cartLocalization = React.useMemo(
     () => ({
       languageCode: locale.code,
-      currencyCode: localization.currency.code,
+      currencyCode: store.defaultCurrency,
     }),
-    [locale.code, localization.currency.code]
+    [locale.code, store.defaultCurrency]
   );
 
   return (
@@ -83,7 +80,7 @@ const HydratedAppProviders: React.FC<
         locale={locale}
         locales={locales}
         localePrefix={localePrefix}
-        localization={localization}
+        currencyCode={store.defaultCurrency}
         timeZone={store.timezone}
       >
         <SessionProvider

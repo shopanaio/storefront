@@ -19,6 +19,7 @@ fragment SdkStore on Store {
   email
   timezone
   defaultLocale
+  locales
   defaultCurrency
   contact {
     name
@@ -62,48 +63,9 @@ fragment SdkStore on Store {
   }
 }
 
-fragment SdkLocalization on Localization {
-  market {
-    id
-    handle
-    name
-    timezone
-    taxIncluded
-  }
-  country {
-    code
-    name
-  }
-  language {
-    code
-    name
-  }
-  currency {
-    code
-    name
-    symbol
-  }
-  availableCountries {
-    code
-    name
-  }
-  availableLanguages {
-    code
-    name
-  }
-  availableCurrencies {
-    code
-    name
-    symbol
-  }
-}
-
 query SdkStorefrontContext {
   store {
     ...SdkStore
-  }
-  localization {
-    ...SdkLocalization
   }
 }
 
@@ -111,11 +73,6 @@ query SdkStorefrontLocales {
   store {
     id
     defaultLocale
-  }
-  localization {
-    availableLanguages {
-      code
-      name
-    }
+    locales
   }
 }

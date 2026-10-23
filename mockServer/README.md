@@ -142,9 +142,21 @@ products reference them by `vendor.id`. `vendors`, `vendor` and
 `Vendor.products` is a listing over that vendor's products.
 
 `cartRecommendations` merges the frequently-bought-together fixtures of the
-cart products without the products already in the cart. No promotion is
-storefront-visible: `storefrontPromotions` and `ProductVariant.promotions`
-answer an empty set, the checkout progress fields are empty.
+cart products without the products already in the cart.
+
+`data.promotions` holds automatic promotions: a `StorefrontPromotion` record
+plus `targets` (`variantIds`, `productIds`, `categoryIds`) of a product
+discount or Buy X Get Y, `sortOrder`, `priority` and `storefrontVisible`
+(`false` hides a promotion and keeps it applied). `storefrontPromotions` and
+`ProductVariant.promotions` answer the promotions active at the mock clock; a
+variant gets those whose targets match it and every order discount and free
+shipping. The checkout fills `promotionProgress`, `appliedPromotions` and
+`freeShippingProgress`: thresholds count line subtotals before discounts, a
+product discount counts only its target lines, a satisfied product or order
+discount lowers the totals, and satisfied free shipping zeroes the selected
+delivery groups up to `maximumShippingPrice`. A free-shipping loyalty reward
+gives `LOYALTY_REWARD` with the nearest threshold as `nextRequirement`. Buy X
+Get Y is shown on variants only and is neither applied nor tracked.
 
 `marketingSubscribe` answers `PENDING_CONFIRMATION` and prints the
 confirmation link as a `[mock-marketing]` line; any token confirms.

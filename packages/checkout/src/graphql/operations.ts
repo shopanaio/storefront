@@ -1520,6 +1520,7 @@ export type Collection = Node & {
   readonly featuredMedia?: Maybe<Media>;
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
+  readonly listingUpdatedAt: Scalars['DateTime']['output'];
   readonly media: CollectionMediaConnection;
   readonly name: Scalars['String']['output'];
   readonly products: ProductConnection;
@@ -1662,12 +1663,6 @@ export type ContactRequestReceipt = {
   readonly __typename: 'ContactRequestReceipt';
   readonly createdAt: Scalars['DateTime']['output'];
   readonly id: Scalars['ID']['output'];
-};
-
-export type Country = {
-  readonly __typename: 'Country';
-  readonly code: CountryCode;
-  readonly name: Scalars['String']['output'];
 };
 
 /** Supported country codes. */
@@ -1921,13 +1916,6 @@ export type CountryCode =
   | 'ZM'
   | 'ZW'
   | 'ZZ';
-
-export type Currency = {
-  readonly __typename: 'Currency';
-  readonly code: CurrencyCode;
-  readonly name: Scalars['String']['output'];
-  readonly symbol: Scalars['String']['output'];
-};
 
 /** Currency codes according to ISO 4217 */
 export type CurrencyCode =
@@ -3326,12 +3314,6 @@ export type InventoryItem = Node & {
   readonly variant: ProductVariant;
 };
 
-export type Language = {
-  readonly __typename: 'Language';
-  readonly code: LocaleCode;
-  readonly name: Scalars['String']['output'];
-};
-
 /**
  * One structured listing predicate.
  *
@@ -3644,18 +3626,6 @@ export type LocaleCode =
   | 'zh_TW'
   /** Zulu */
   | 'zu';
-
-export type Localization = {
-  readonly __typename: 'Localization';
-  readonly availableCountries: ReadonlyArray<Country>;
-  readonly availableCurrencies: ReadonlyArray<Currency>;
-  readonly availableLanguages: ReadonlyArray<Language>;
-  readonly country: Country;
-  readonly currency: Currency;
-  readonly language: Language;
-  readonly market: Market;
-  readonly store: Store;
-};
 
 /**
  * The authenticated customer's account in the store's active loyalty program.
@@ -4066,35 +4036,6 @@ export type LoyaltyVoucherRewardPresentation = LoyaltyRewardPresentation & {
   readonly code?: Maybe<Scalars['String']['output']>;
   readonly copy: LoyaltyOpportunityCopy;
   readonly kind: LoyaltyRewardKind;
-};
-
-export type Market = Node & {
-  readonly __typename: 'Market';
-  readonly countries: ReadonlyArray<Country>;
-  readonly currencies: ReadonlyArray<Currency>;
-  readonly defaultCountry?: Maybe<Country>;
-  readonly defaultCurrency: Currency;
-  readonly defaultLanguage: Language;
-  readonly handle: Scalars['String']['output'];
-  readonly id: Scalars['ID']['output'];
-  readonly languages: ReadonlyArray<Language>;
-  readonly name: Scalars['String']['output'];
-  readonly taxIncluded: Scalars['Boolean']['output'];
-  readonly timezone: Scalars['String']['output'];
-};
-
-export type MarketConnection = Connection & {
-  readonly __typename: 'MarketConnection';
-  readonly edges: ReadonlyArray<MarketEdge>;
-  readonly nodes: ReadonlyArray<Market>;
-  readonly pageInfo: PageInfo;
-  readonly totalCount: Scalars['Int']['output'];
-};
-
-export type MarketEdge = {
-  readonly __typename: 'MarketEdge';
-  readonly cursor: Scalars['Cursor']['output'];
-  readonly node: Market;
 };
 
 export type MarketingSubscribeInput = {
@@ -7234,10 +7175,6 @@ export type Query = {
   readonly customer?: Maybe<Customer>;
   /** Confirms that the request carries verified Headless storefront access. */
   readonly headlessStorefrontAccess: Scalars['Boolean']['output'];
-  /** Localization resolved for the current storefront request. */
-  readonly localization: Localization;
-  /** An active storefront market by its stable handle. */
-  readonly market?: Maybe<Market>;
   /** Returns any catalog object by its globally unique Relay ID. */
   readonly node?: Maybe<Node>;
   /** Returns catalog objects in the same order as the supplied Relay IDs. */
@@ -7387,12 +7324,6 @@ export type QueryCollectionArgs = {
 
 /** Public Catalog entry points for the active storefront context. */
 export type QueryCollectionByHandleArgs = {
-  handle: Scalars['String']['input'];
-};
-
-
-/** Public Catalog entry points for the active storefront context. */
-export type QueryMarketArgs = {
   handle: Scalars['String']['input'];
 };
 
@@ -8523,19 +8454,12 @@ export type Store = Node & {
   readonly email?: Maybe<Scalars['String']['output']>;
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
-  readonly markets: MarketConnection;
+  /** Enabled locale codes of the store. */
+  readonly locales: ReadonlyArray<LocaleCode>;
   readonly name: Scalars['String']['output'];
   /** Published store policies. */
   readonly policies: ReadonlyArray<StorePolicy>;
   readonly timezone: Scalars['String']['output'];
-};
-
-
-export type StoreMarketsArgs = {
-  after?: InputMaybe<Scalars['Cursor']['input']>;
-  before?: InputMaybe<Scalars['Cursor']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type StoreAddress = {

@@ -20,8 +20,8 @@ export {
   findStorefrontLocale,
   localeCodeToSegment,
   localeCodeToTag,
+  localeDisplayName,
   toStorefrontLocale,
-  type StorefrontLanguage,
   type StorefrontLocale,
 } from '../modules/localization/core/locale';
 export {

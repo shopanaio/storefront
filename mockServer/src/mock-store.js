@@ -16,7 +16,6 @@ const collectionEntries = (state) => [
   ['OnlineStorePage', state.pages],
   ['Order', state.orders],
   ['OrderReturnRequest', state.orderReturnRequests],
-  ['Market', state.markets],
   ['StorePolicy', state.storePolicies],
   ['Review', state.reviews],
   ['ProductQuestion', state.productQuestions],
@@ -48,6 +47,7 @@ export class MockStore {
     this.state.productComparisons ??= [];
     this.state.productRecommendations ??= [];
     this.state.vendors ??= [];
+    this.state.promotions ??= [];
     for (const customer of this.state.customers ?? []) {
       customer.revision ??= 1;
       customer.accountStatus ??= 'REGISTERED';
@@ -109,7 +109,6 @@ export class MockStore {
 
     for (const [, values] of collectionEntries(this.state)) visit(values);
     visit(this.state.store);
-    visit(this.state.localization);
     visit(this.state.reviewStoreConfiguration);
     return this;
   }

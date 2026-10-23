@@ -22,15 +22,12 @@ function environmentKey(config: ApolloEnvironmentConfig): string {
 }
 
 export function toStorefrontLocales(
-  data: Pick<SdkStorefrontLocalesQuery, 'store' | 'localization'>
+  store: SdkStorefrontLocalesQuery['store']
 ): StorefrontLocales {
-  const locales = data.localization.availableLanguages.map(toStorefrontLocale);
+  const locales = store.locales.map(toStorefrontLocale);
   const defaultLocale =
-    findStorefrontLocale(locales, data.store.defaultLocale) ??
-    toStorefrontLocale({
-      code: data.store.defaultLocale,
-      name: data.store.defaultLocale,
-    });
+    findStorefrontLocale(locales, store.defaultLocale) ??
+    toStorefrontLocale(store.defaultLocale);
   return {
     defaultLocale,
     locales: locales.some((locale) => locale.code === defaultLocale.code)
@@ -61,7 +58,7 @@ async function fetchStorefrontLocales(
   if (!payload.data || payload.errors?.length) {
     throw new Error('Store languages response has no data');
   }
-  return toStorefrontLocales(payload.data);
+  return toStorefrontLocales(payload.data.store);
 }
 
 /**

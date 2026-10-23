@@ -1,4 +1,3 @@
-import type { SdkLocalizationFragment } from '../../../graphql/apollo/generated/operations';
 import type { HrefTarget } from './href';
 import type { StorefrontLocale } from './locale';
 
@@ -9,27 +8,21 @@ export interface StorefrontRoutingConfig {
   localePrefix: LocalePrefixMode;
 }
 
-/** Store languages for routing: the store default and every language of its market. */
+/** Store languages for routing: the store default and every enabled store locale. */
 export interface StorefrontLocales {
   defaultLocale: StorefrontLocale;
   locales: readonly StorefrontLocale[];
 }
 
-export type StorefrontMarket = SdkLocalizationFragment['market'];
-export type StorefrontCountry = SdkLocalizationFragment['country'];
-export type StorefrontCurrency = SdkLocalizationFragment['currency'];
-
 export interface LocalizationState {
   /** Active language, taken from the URL locale segment. */
   locale: StorefrontLocale;
   defaultLocale: StorefrontLocale;
-  availableLanguages: readonly StorefrontLocale[];
+  /** Enabled store languages, the store default included. */
+  locales: readonly StorefrontLocale[];
   localePrefix: LocalePrefixMode;
-  market: StorefrontMarket;
-  country: StorefrontCountry;
-  currency: StorefrontCurrency;
-  availableCountries: readonly StorefrontCountry[];
-  availableCurrencies: readonly StorefrontCurrency[];
+  /** Store currency (`store.defaultCurrency`) for prices and the cart. */
+  currencyCode: string;
   /** Store timezone used for dates. */
   timeZone: string;
   /** BCP 47 locale for `Intl` formatting. */

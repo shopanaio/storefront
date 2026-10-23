@@ -64,6 +64,10 @@
       "types": "./dist/graphql/apollo/loadSerializableQuery.d.ts",
       "default": "./dist/graphql/apollo/loadSerializableQuery.js"
     },
+    "./graphql/apollo/pagination": {
+      "types": "./dist/graphql/apollo/pagination/index.d.ts",
+      "default": "./dist/graphql/apollo/pagination/index.js"
+    },
     "./graphql/apollo/types": {
       "types": "./dist/graphql/apollo/types.d.ts",
       "default": "./dist/graphql/apollo/types.js"

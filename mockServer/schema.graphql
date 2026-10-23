@@ -471,14 +471,6 @@ type Query @join__type(graph: APPS_CONTACT_REQUESTS_STOREFRONT)  @join__type(gra
   """
   store: Store! @join__field(graph: PROJECT_STOREFRONT) 
   """
-  Localization resolved for the current storefront request.
-  """
-  localization: Localization! @join__field(graph: PROJECT_STOREFRONT) 
-  """
-  An active storefront market by its stable handle.
-  """
-  market(handle: String!) : Market @join__field(graph: PROJECT_STOREFRONT) 
-  """
   A published store policy by its handle.
   """
   storePolicy(handle: String!) : StorePolicy @join__field(graph: PROJECT_STOREFRONT) 
@@ -5130,59 +5122,6 @@ type StorefrontPromotionValue @join__type(graph: PRICING_STOREFRONT)  {
   getQuantity: Int
 }
 
-type Market implements Node @join__type(graph: PROJECT_STOREFRONT, key: "id")  @join__implements(graph: PROJECT_STOREFRONT, interface: "Node")  {
-  id: ID!
-  handle: String!
-  name: String!
-  countries: [Country!]!
-  languages: [Language!]!
-  currencies: [Currency!]!
-  defaultCountry: Country
-  defaultLanguage: Language!
-  defaultCurrency: Currency!
-  timezone: String!
-  taxIncluded: Boolean!
-}
-
-type Country @join__type(graph: PROJECT_STOREFRONT)  {
-  code: CountryCode!
-  name: String!
-}
-
-type Language @join__type(graph: PROJECT_STOREFRONT)  {
-  code: LocaleCode!
-  name: String!
-}
-
-type Currency @join__type(graph: PROJECT_STOREFRONT)  {
-  code: CurrencyCode!
-  name: String!
-  symbol: String!
-}
-
-type MarketConnection implements Connection @join__type(graph: PROJECT_STOREFRONT)  @join__implements(graph: PROJECT_STOREFRONT, interface: "Connection")  {
-  edges: [MarketEdge!]!
-  nodes: [Market!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type MarketEdge @join__type(graph: PROJECT_STOREFRONT)  {
-  cursor: Cursor!
-  node: Market!
-}
-
-type Localization @join__type(graph: PROJECT_STOREFRONT)  {
-  store: Store!
-  market: Market!
-  country: Country!
-  language: Language!
-  currency: Currency!
-  availableCountries: [Country!]!
-  availableLanguages: [Language!]!
-  availableCurrencies: [Currency!]!
-}
-
 type StoreBrand @join__type(graph: PROJECT_STOREFRONT)  {
   logo: MediaImage
   squareLogo: MediaImage
@@ -5244,11 +5183,14 @@ type Store implements Node @join__type(graph: PROJECT_STOREFRONT, key: "id")  @j
   email: String
   timezone: String!
   defaultLocale: LocaleCode!
+  """
+  Enabled locale codes of the store.
+  """
+  locales: [LocaleCode!]!
   defaultCurrency: CurrencyCode!
   contact: StoreContact
   address: StoreAddress
   brand: StoreBrand!
-  markets(first: Int = 20, after: Cursor, last: Int, before: Cursor) : MarketConnection!
   """
   Published store policies.
   """

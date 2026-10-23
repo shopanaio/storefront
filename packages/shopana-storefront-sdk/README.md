@@ -26,8 +26,8 @@ internal.
 
 ## Store, languages and links
 
-`AppProvider` loads the store (`store`) and the request localization (`localization`) with the
-request-scoped client; there is no static shop configuration.
+`AppProvider` loads the store (`store`) with the request-scoped client; there is no static shop
+configuration. Languages and currency come from the store: there are no markets.
 
 ```tsx
 <AppProvider
@@ -40,19 +40,20 @@ request-scoped client; there is no static shop configuration.
 </AppProvider>
 ```
 
-- The store languages (`localization.availableLanguages`, default `store.defaultLocale`) are the
-  URL locales. A language is used in three forms: the API `LocaleCode` (`pt_BR`), the BCP 47 tag
-  (`pt-BR`, sent as `Accept-Language` by every request) and the URL segment (`pt-br`). The runtime
-  middleware resolves the segment of the request; the locale of a page never changes on the client.
+- The store languages (`store.locales`, default `store.defaultLocale`) are the URL locales. A
+  language is used in three forms: the API `LocaleCode` (`pt_BR`), the BCP 47 tag (`pt-BR`, sent
+  as `Accept-Language` by every request) and the URL segment (`pt-br`). The runtime middleware
+  resolves the segment of the request; the locale of a page never changes on the client.
 - `useStore()` (`modules/store/react`) returns the store: name, contacts, address, brand and the
   published policy links. `getStorefrontRequestContext(environmentConfig)`
-  (`modules/store/server`) returns the store, localization and request locale on the server, once
-  per request.
-- `useLocalization()` returns the active locale, store languages, market, country, currency,
-  store timezone, `buildHref(target)` and `switchLocale(code)`. `buildHref` takes a pathname
-  without the locale segment, a named route `{ route, params, query, hash }` or an absolute URL;
-  the default locale stays without a segment under `as-needed`. The route table, `buildPath` and
-  the pure `buildHref` are in `routing`.
+  (`modules/store/server`) returns the store, its languages and the request locale on the server,
+  once per request.
+- `useLocalization()` returns the active locale, store languages (`locales`), the store currency
+  (`currencyCode`, from `store.defaultCurrency`), store timezone, `buildHref(target)` and
+  `switchLocale(code)`. `buildHref` takes a pathname without the locale segment, a named route
+  `{ route, params, query, hash }` or an absolute URL; the default locale stays without a segment
+  under `as-needed`. The route table, `buildPath` and the pure `buildHref` are in `routing`. The
+  store country is `store.address.countryCode` (`useStore()`).
 - `useFormatter()` and `<Money>` format money, numbers and dates in the active locale and the
   store timezone.
 - `modules/content/react`: `useNavigationMenu(handle)`, `useOnlineStorePage(handle)`,
@@ -178,7 +179,7 @@ const buttonBlock = {
 Create a descriptor next to the theme operation:
 
 ```ts
-import { definePaginationQuery } from '@shopana/storefront-sdk/graphql/apollo';
+import { definePaginationQuery } from '@shopana/storefront-sdk/graphql/apollo/pagination';
 import { ProductReviewsPaginationQueryDocument } from '@codegen/apollo/storefront-operations';
 
 export const ProductReviewsPagination = definePaginationQuery({

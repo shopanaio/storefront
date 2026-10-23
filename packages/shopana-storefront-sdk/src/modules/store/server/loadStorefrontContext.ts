@@ -5,8 +5,8 @@ import {
 } from '../../../graphql/apollo/generated/operations';
 
 /**
- * Store and localization of the request, read with the request-scoped client so the result is
- * part of the cache snapshot sent to the browser.
+ * Store of the request, read with the request-scoped client so the result is part of the cache
+ * snapshot sent to the browser.
  */
 export async function loadStorefrontContext(
   client: ApolloClient

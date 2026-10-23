@@ -10,9 +10,6 @@ export type {
   LocalePrefixMode,
   StorefrontRoutingConfig,
   StorefrontLocales,
-  StorefrontCountry,
-  StorefrontCurrency,
-  StorefrontMarket,
 } from '../core/types';
 export type { StorefrontLocale } from '../core/locale';
 export type {

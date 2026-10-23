@@ -30,9 +30,9 @@ export interface AppProviderProps {
 /**
  * App Provider (Server Component)
  *
- * Loads the store, its languages and the request localization, the cart, the session and the
- * preloaded layout queries with the request-scoped client, then hands the cache snapshot to the
- * client providers. The request locale is the one the runtime middleware resolved.
+ * Loads the store and its languages, the cart, the session and the preloaded layout queries with
+ * the request-scoped client, then hands the cache snapshot to the client providers. The request
+ * locale is the one the runtime middleware resolved.
  *
  * @example
  * ```tsx
@@ -83,7 +83,6 @@ export async function AppProvider({
       environmentConfig={environmentConfig}
       apolloInitialState={initialState}
       store={storefrontContext.store}
-      localization={storefrontContext.localization}
       locale={storefrontContext.locale}
       locales={storefrontContext.locales}
       localePrefix={routing.localePrefix}

@@ -1,4 +1,5 @@
 import { loyaltyAccount } from './loyalty.js';
+import { promotionPresentation } from './promotions.js';
 import {
   GraphQLError,
   getNamedType,
@@ -58,7 +59,6 @@ const ALIASES = {
   events: 'events',
   featuredMedia: 'featuredMediaId',
   lines: 'lineIds',
-  markets: 'marketIds',
   media: 'mediaIds',
   options: 'options',
   replies: 'replyIds',
@@ -278,13 +278,18 @@ const loyaltyPresentation = (store, subject) => {
     Math.max(...bonuses.map(({ amount }) => Number(amount))),
     currencyCode
   );
+  const bonus = new Intl.NumberFormat('uk', {
+    style: 'currency',
+    currency: currencyCode,
+  }).format(Number(maximum.amount));
   const copy = {
     __typename: 'LoyaltyOpportunityCopy',
-    headline: `${maximum.amount} ${currencyCode} на бонусний рахунок`,
+    // Like the program copy of the API: the value is the typed reward, not part of the text.
+    headline: 'на бонусний рахунок',
     description:
       '10% від вартості товару буде зараховано після виконання замовлення.',
-    badge: `+${maximum.amount} ${currencyCode}`,
-    accessibilityLabel: `${maximum.amount} ${currencyCode} буде зараховано на бонусний рахунок`,
+    badge: `+${bonus}`,
+    accessibilityLabel: `${bonus} буде зараховано на бонусний рахунок`,
     terms: [],
   };
   const opportunity = {
@@ -485,14 +490,6 @@ const cartRecommendations = (store, { input, first = 8 }) => {
   };
 };
 
-/** No storefront-visible promotions are configured in the fixtures. */
-const emptyPromotionPresentation = (store) => ({
-  promotions: [],
-  evaluatedAt: store.now(),
-  validUntil: null,
-  revision: 'mock',
-});
-
 const productConnection = (store, source, args = {}, options = {}) => {
   validateFirst(args.first);
   const inputFilters = args.filters ?? [];
@@ -561,19 +558,14 @@ const absoluteAssetUrl = (value, request) => {
 };
 
 const localizedContent = (store, entity, locale) => {
-  const requestedLocale = locale ?? store.state.localization.language.code;
-  if (
-    !store.state.localization.availableLanguages.some(
-      ({ code }) => code === requestedLocale
-    )
-  )
-    return null;
+  const requestedLocale = locale ?? store.state.store.defaultLocale;
+  if (!store.state.store.locales.includes(requestedLocale)) return null;
   if (entity.content?.locale === requestedLocale) return entity.content;
-  return (
-    entity.translations?.find(
-      (translation) => translation.locale === requestedLocale
-    ) ?? null
+  const translation = entity.translations?.find(
+    (candidate) => candidate.locale === requestedLocale
   );
+  // Without an explicit locale the store language is asked: untranslated content stays readable.
+  return translation ?? (locale ? null : (entity.content ?? null));
 };
 
 const specialFields = (store) => ({
@@ -590,18 +582,14 @@ const specialFields = (store) => ({
   'OnlineStoreNavigationMenuItem.children': (item, args) =>
     connection(item.children, args),
   'OnlineStoreNavigationMenuItem.label': (item, { locale }) => {
-    const requestedLocale = locale ?? store.state.localization.language.code;
-    if (
-      !store.state.localization.availableLanguages.some(
-        ({ code }) => code === requestedLocale
-      )
-    )
-      return null;
-    return requestedLocale === item.sourceLocale
-      ? item.sourceLabel
-      : (item.translations?.find(
-          (translation) => translation.locale === requestedLocale
-        )?.label ?? null);
+    const requestedLocale = locale ?? store.state.store.defaultLocale;
+    if (!store.state.store.locales.includes(requestedLocale)) return null;
+    if (requestedLocale === item.sourceLocale) return item.sourceLabel;
+    const translated = item.translations?.find(
+      (translation) => translation.locale === requestedLocale
+    )?.label;
+    // Without an explicit locale the store language is asked: untranslated labels stay readable.
+    return translated ?? (locale ? null : item.sourceLabel);
   },
   'OnlineStorePage.content': (page, { locale }) =>
     localizedContent(store, page, locale),
@@ -668,7 +656,8 @@ const specialFields = (store) => ({
           __typename: 'Vendor',
         })
       : null,
-  'ProductVariant.promotions': () => emptyPromotionPresentation(store),
+  'ProductVariant.promotions': (variant) =>
+    promotionPresentation(store, { variant }),
 
   'Product.primaryCategory': (product) => store.get(product.primaryCategoryId),
   'Product.comparison': (product, _args, context) =>
@@ -775,14 +764,16 @@ const specialFields = (store) => ({
   'CheckoutLine.purchasable': (line) => store.get(line.purchasableId),
   'CheckoutDeliveryGroup.checkoutLines': (group) =>
     group.checkoutLineIds.map((id) => store.get(id)).filter(Boolean),
-  'CheckoutDeliveryGroup.shipping': ({ selection }) =>
+  'CheckoutDeliveryGroup.shipping': ({ selection, freeShipping }) =>
     selection.option
       ? {
           paymentModel: selection.option.paymentModel,
           originalPrice: selection.option.cost,
           payer: 'MERCHANT',
-          total: selection.option.cost,
-          freeShipping: null,
+          total: freeShipping
+            ? money(0, selection.option.cost.currencyCode)
+            : selection.option.cost,
+          freeShipping: freeShipping ?? null,
         }
       : null,
 
@@ -846,18 +837,10 @@ const specialFields = (store) => ({
   'OrderReturnRequest.order': (request) => store.get(request.orderId),
   'OrderReturnRequestLine.orderLine': (line) => store.get(line.orderLineId),
 
-  'Store.markets': (value, args) =>
-    connection(
-      value.marketIds.map((id) => store.get(id)).filter(Boolean),
-      args
-    ),
   'Store.policies': () => store.all('StorePolicy'),
   'StoreBrand.logo': (brand) => store.get(brand.logoId),
   'StoreBrand.squareLogo': (brand) => store.get(brand.squareLogoId),
   'StoreBrand.coverImage': (brand) => store.get(brand.coverImageId),
-  'Localization.store': (value) =>
-    store.get(value.storeId) ?? store.state.store,
-  'Localization.market': (value) => store.get(value.marketId),
 
   'ReviewContentAuthor.customer': (author) => store.get(author.customerId),
   'ReviewRating.criterion': (rating) => store.get(rating.criterionId),
@@ -993,7 +976,8 @@ const queryResolvers = (store) => ({
     visibleVendor(store, store.byHandle('Vendor', handle)),
   vendors: (_, args) => connection(visibleVendors(store), args),
   cartRecommendations: (_, args) => cartRecommendations(store, args),
-  storefrontPromotions: () => emptyPromotionPresentation(store),
+  storefrontPromotions: (_, { kinds }) =>
+    promotionPresentation(store, { kinds }),
   contactRequestForm: () => contactRequestForm(store),
   checkout: (_, { id }, context) => {
     const checkout = store.get(id);
@@ -1029,8 +1013,6 @@ const queryResolvers = (store) => ({
     return store.owns(context.customer, order) ? request : null;
   },
   store: () => store.state.store,
-  localization: () => store.state.localization,
-  market: (_, { handle }) => store.byHandle('Market', handle),
   storePolicy: (_, { handle }) => store.byHandle('StorePolicy', handle),
   reviewStoreConfiguration: () => reviewStoreConfiguration(store),
   review: (_, { id }, context) =>

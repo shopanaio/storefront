@@ -3,16 +3,13 @@
  * - `code`: the API `LocaleCode` value (`uk`, `pt_BR`);
  * - `tag`: the BCP 47 tag for `Accept-Language`, `Intl` and `<html lang>` (`uk`, `pt-BR`);
  * - `segment`: the URL path segment (`uk`, `pt-br`).
+ *
+ * `name` is the language name written in that language (`Українська`, `Português (Brasil)`).
  */
 export interface StorefrontLocale {
   code: string;
   tag: string;
   segment: string;
-  name: string;
-}
-
-export interface StorefrontLanguage {
-  code: string;
   name: string;
 }
 
@@ -28,14 +25,24 @@ export function localeCodeToSegment(code: string): string {
   return localeCodeToTag(code).toLowerCase();
 }
 
-export function toStorefrontLocale(
-  language: StorefrontLanguage
-): StorefrontLocale {
+/** Name of a language in that language; the tag itself when `Intl` does not know it. */
+export function localeDisplayName(tag: string): string {
+  try {
+    const name = new Intl.DisplayNames([tag], { type: 'language' }).of(tag);
+    if (!name) return tag;
+    return name.charAt(0).toLocaleUpperCase(tag) + name.slice(1);
+  } catch {
+    return tag;
+  }
+}
+
+export function toStorefrontLocale(code: string): StorefrontLocale {
+  const tag = localeCodeToTag(code);
   return {
-    code: language.code,
-    tag: localeCodeToTag(language.code),
-    segment: localeCodeToSegment(language.code),
-    name: language.name,
+    code,
+    tag,
+    segment: localeCodeToSegment(code),
+    name: localeDisplayName(tag),
   };
 }
 

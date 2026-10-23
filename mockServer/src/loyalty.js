@@ -226,6 +226,18 @@ export const applyLoyaltyReward = (store, checkout, { shipping }) => {
   return reward.amount ?? 0;
 };
 
+/** The free-shipping reward the checkout uses, once `applyLoyaltyReward` accepted it. */
+export const freeShippingReward = (store, checkout) => {
+  if (!checkout.loyaltyRewardId) return null;
+  const balance = account(store, checkout.customerIdentity.customerId);
+  return (
+    (balance?.rewards ?? []).find(
+      ({ id, kind }) =>
+        id === checkout.loyaltyRewardId && kind === 'FREE_SHIPPING'
+    ) ?? null
+  );
+};
+
 /**
  * Quotes the chosen source on the total after promotions and rewards: the request is cut to the
  * order limit with a warning, a request above the balance is refused, a limit below the minimum

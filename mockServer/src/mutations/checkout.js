@@ -9,10 +9,12 @@ import {
 import {
   applyLoyaltyReward,
   estimateLoyaltyEarning,
+  freeShippingReward,
   loyaltySelection,
   quoteLoyaltyRedemption,
   updateLoyaltyIntent,
 } from '../loyalty.js';
+import { applyFreeShipping, evaluatePromotions } from '../promotions.js';
 
 const successful = (checkout) => ({ checkout, userErrors: [] });
 const failed = (...userErrors) => ({ checkout: null, userErrors });
@@ -173,15 +175,21 @@ export const refreshCheckout = (store, checkout) => {
           : Number(promo.value)),
       0
     );
-  const shipping = checkout.deliveryGroups.reduce(
-    (sum, group) => sum + Number(group.selection?.option?.cost?.amount ?? 0),
-    0
+  const promotions = evaluatePromotions(store, checkout);
+  const automaticDiscount = promotions.discount;
+  // A free-shipping reward zeroes shipping below, not as a discount.
+  const rewardDiscount = applyLoyaltyReward(store, checkout, { shipping: 0 });
+  const shipping = applyFreeShipping(
+    checkout,
+    promotions,
+    freeShippingReward(store, checkout)
   );
-  const rewardDiscount = applyLoyaltyReward(store, checkout, { shipping });
-  const tax = Math.max(0, subtotal - promoDiscount - rewardDiscount) * 0.08;
+  const merchandiseDiscount =
+    promoDiscount + automaticDiscount + rewardDiscount;
+  const tax = Math.max(0, subtotal - merchandiseDiscount) * 0.08;
   const totalBeforeLoyalty = Math.max(
     0,
-    subtotal - promoDiscount - rewardDiscount + tax + shipping
+    subtotal - merchandiseDiscount + tax + shipping
   );
   // Loyalty pays after Pricing: it is a tender, not a discount (A6).
   const loyaltyAmount = quoteLoyaltyRedemption(
@@ -198,11 +206,11 @@ export const refreshCheckout = (store, checkout) => {
   checkout.cost = {
     subtotalAmount: money(subtotal, checkout.currencyCode),
     totalDiscountAmount: money(
-      catalogDiscount + promoDiscount + rewardDiscount,
+      catalogDiscount + merchandiseDiscount,
       checkout.currencyCode
     ),
     merchandiseDiscountAmount: money(
-      catalogDiscount + promoDiscount + rewardDiscount,
+      catalogDiscount + merchandiseDiscount,
       checkout.currencyCode
     ),
     totalTaxAmount: money(tax, checkout.currencyCode),
