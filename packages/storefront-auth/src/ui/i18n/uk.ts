@@ -19,7 +19,14 @@ export const uk = {
     signIn: 'Увійти',
     backToSignIn: 'Повернутися до входу',
     loadingMethods: 'Завантаження способів входу',
-    legal: 'Авторизуючись, ви погоджуєтеся з <privacy>умовами обробки персональних даних</privacy>.',
+    loading: 'Завантаження',
+    retry: 'Повторити',
+    resendIn: 'Надіслати повторно через {time}',
+    passwordRule: 'Від {min} до {max} символів',
+    rulePassed: 'Виконано:',
+    ruleFailed: 'Не виконано:',
+    legal:
+      'Авторизуючись, ви погоджуєтеся з <privacy>умовами обробки персональних даних</privacy>.',
     country: {
       search: 'Пошук країни',
       title: 'Оберіть країну',
@@ -75,6 +82,7 @@ export const uk = {
     title: 'Вхід з паролем',
     submit: 'Увійти',
     submitPending: 'Вхід…',
+    missing: 'Введіть пароль.',
     invalidCredentials: 'Невірна пошта або пароль.',
     verificationLink:
       'Підтвердьте пошту: ми надіслали посилання на <b>{email}</b>. Перейдіть за ним і увійдіть знову.',
@@ -91,7 +99,6 @@ export const uk = {
     lastName: 'Прізвище',
     lastNameMissing: 'Вкажіть прізвище.',
     firstNameMissing: "Вкажіть ім'я.",
-    passwordRule: 'Від {min} до {max} символів',
     submit: 'Створити акаунт',
     userExists: 'Акаунт з цією поштою вже існує. <link>Увійти</link>',
     signUpDisabled:
@@ -103,14 +110,14 @@ export const uk = {
     titleVerifyEmail: 'Підтвердіть пошту',
     sentEmail: 'Ми надіслали {length}-значний код на вашу пошту.',
     sentPhone: 'Ми надіслали {length}-значний код в SMS.',
-    label: 'Код підтвердження, {length} цифр',
+    label:
+      'Код підтвердження, {length, plural, one {# цифра} few {# цифри} many {# цифр} other {# цифри}}',
     verifying: 'Перевіряємо…',
     invalid: 'Невірний або прострочений код. Спробуйте ще раз.',
     invalidNoSignUpEmail:
       'Невірний або прострочений код. Якщо акаунта з цією поштою ще немає, увійдіть іншим способом.',
     invalidNoSignUpPhone:
       'Невірний або прострочений код. Якщо акаунта з цим номером ще немає, увійдіть іншим способом.',
-    resendIn: 'Надіслати повторно через {time}',
     resend: 'Надіслати код повторно',
     signingIn: 'Виконуємо вхід…',
   },
@@ -161,11 +168,9 @@ export const uk = {
   connections: {
     title: 'Підключені акаунти',
     subtitle: 'Входьте через соцмережі без пароля.',
-    loading: 'Завантаження',
     reauthenticate: 'Щоб змінити підключення, увійдіть знову.',
     reauthenticateAction: 'Увійти знову',
     unavailable: 'Не вдалося завантажити підключення.',
-    retry: 'Повторити',
     connected: 'Підключено',
     conflict: 'Конфлікт',
     connect: 'Підключити',

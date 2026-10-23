@@ -1,12 +1,22 @@
 import type { Meta } from '@storybook/react-vite';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
+import {
+  EMAIL,
+  PHONE,
+  errorOf,
+  methodsOf,
+  type MethodsArg,
+} from '../../../testing';
 import type { AuthMethodTab } from '../../AuthUIProvider';
 import { IdentifyScreen } from '../../screens/IdentifyScreen';
-import type { AuthContext, IdentifyNotice } from '../../screens/types';
-import { EMAIL, PHONE, errorOf, methodsOf, type MethodsArg } from '../fixtures';
+import type {
+  AuthContext,
+  AuthDraft,
+  IdentifyNotice,
+} from '../../screens/types';
+import { contextArgType, errorForState } from '../args';
 import { Frame } from '../frames';
-
 const STATES = [
   'default',
   'loading',
@@ -45,27 +55,42 @@ const NOTICES: Partial<Record<Args['state'], IdentifyNotice>> = {
 const Story = (args: Args) => {
   const { state } = args;
   const invalid = state === 'invalidInput';
-  const [channel, setChannel] = useState<AuthMethodTab>(args.channel);
-  const [phone, setPhone] = useState<string | undefined>(invalid ? '+3806712345' : PHONE);
-  const [email, setEmail] = useState(invalid ? 'olena@example' : EMAIL);
+  const [draft, setDraft] = useState<AuthDraft>({
+    channel: args.channel,
+    phone: invalid ? '+3806712345' : PHONE,
+    email: invalid ? 'olena@example' : EMAIL,
+  });
   const error =
     state === 'accountsDisabled'
       ? errorOf('disabled')
-      : state === 'rateLimited'
-        ? errorOf('rateLimited', 720)
-        : state === 'invalidInput' ||
-            state === 'deliveryUnavailable' ||
-            state === 'methodDisabled' ||
-            state === 'expired' ||
-            state === 'unavailable'
-          ? errorOf(state)
-          : null;
+      : errorForState(
+          state,
+          [
+            'invalidInput',
+            'deliveryUnavailable',
+            'methodDisabled',
+            'expired',
+            'unavailable',
+          ],
+          { rateLimited: 720 }
+        );
   return (
-    <Frame context={args.context}>
+    <Frame
+      context={args.context}
+      preset={{
+        countryPickerOpen: state === 'countryPicker' ? true : undefined,
+      }}
+    >
       <IdentifyScreen
         key={`${state}-${args.channel}`}
         context={args.context}
-        status={state === 'loading' ? 'loading' : state === 'accountsDisabled' ? 'unavailable' : 'ready'}
+        status={
+          state === 'loading'
+            ? 'loading'
+            : state === 'accountsDisabled'
+              ? 'unavailable'
+              : 'ready'
+        }
         methods={
           state === 'loading' || state === 'accountsDisabled'
             ? null
@@ -76,19 +101,17 @@ const Story = (args: Args) => {
                 social: args.social,
               })
         }
-        channel={channel}
-        onChannelChange={setChannel}
-        phone={phone}
-        onPhoneChange={setPhone}
-        email={email}
-        onEmailChange={setEmail}
+        draft={draft}
+        onDraftChange={(patch) =>
+          setDraft((current) => ({ ...current, ...patch }))
+        }
         pending={state === 'pending'}
         error={error}
         notice={NOTICES[state] ?? null}
-        countryPickerOpen={state === 'countryPicker' ? true : undefined}
         onSubmit={fn()}
         onPassword={fn()}
         onSocial={fn()}
+        onRetry={fn()}
       />
     </Frame>
   );
@@ -110,8 +133,11 @@ export const identify = {
     state: 'default',
   },
   argTypes: {
-    context: { control: 'inline-radio', options: ['store', 'checkoutGuest', 'checkoutRequired'] },
-    methods: { control: 'inline-radio', options: ['both', 'phone', 'email', 'none'] },
+    context: contextArgType,
+    methods: {
+      control: 'inline-radio',
+      options: ['both', 'phone', 'email', 'none'],
+    },
     channel: { control: 'inline-radio', options: ['phone', 'email'] },
     state: { control: 'select', options: STATES },
   },

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { clearCustomerInputs } from '#checkout/sections/delivery/customerInputStorage';
-import { useAuthDialogStore } from '#checkout/state/authDialogStore';
 import { defaultCheckout, guestCheckout } from '#checkout/stories/fixtures';
 import { guestEarning } from '#checkout/stories/loyaltyFixtures';
 import { noticeDisclosures } from '#checkout/stories/policyFixtures';
@@ -24,7 +23,6 @@ const meta = {
   beforeEach: ({ parameters }) => {
     clearCustomerInputs();
     mockCheckout(parameters.checkout as Partial<CheckoutMockState>);
-    useAuthDialogStore.getState().setOpen(Boolean(parameters.signInOpen));
   },
 } satisfies Meta<typeof CheckoutGatePage>;
 
@@ -60,7 +58,8 @@ export const GuestCheckout: Story = {
 
 /** G2: the sign-in drawer, prefilled from the contact; Phone | Email, password, providers. */
 export const GuestSignInDrawer: Story = {
-  parameters: { checkout: { checkout: guest() }, signInOpen: true },
+  parameters: { checkout: { checkout: guest() } },
+  args: { signInOpen: true },
 };
 
 /** G2: the store has email codes only. */
@@ -72,8 +71,8 @@ export const GuestSignInEmailOnly: Story = {
         methods: { phoneOtp: { signIn: false, signUp: false, codeLength: 6 } },
       },
     },
-    signInOpen: true,
   },
+  args: { signInOpen: true },
 };
 
 /** Back from Google without a session: the drawer opens to say the sign-in was cancelled. */

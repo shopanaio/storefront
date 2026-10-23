@@ -1,33 +1,37 @@
 'use client';
 
-import { createStyles } from 'antd-style';
 import { useState } from 'react';
-import { DrawerBase, ResponsiveDialog } from '@shopana/storefront-ui';
-import { AuthHeadingContext, type AuthHeading } from '../common/Screen';
 import { AuthFlow, type AuthFlowProps } from '../flow/AuthFlow';
 import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
 import { CardHeader } from './Headers';
+import { AuthDialogSurface, AuthDrawerSurface } from './surfaces';
 
-export interface AuthDialogProps extends Omit<AuthFlowProps, 'context' | 'renderHeader'> {
+export interface AuthDialogProps extends AuthFlowProps {
   open: boolean;
   onClose: () => void;
   /**
-   * `store`: a 440px dialog on desktop; `checkoutGuest`: a drawer on the right, as the checkout
-   * drawers. A bottom sheet on a phone in both.
+   * `dialog`: a 440px dialog on desktop (the store); `drawer`: a drawer on the right, as the
+   * drawers of the checkout, its header carrying the title of the screen. A bottom sheet on a
+   * phone in both. `dialog` by default.
    */
-  context?: 'store' | 'checkoutGuest';
+  presentation?: 'dialog' | 'drawer';
+  /**
+   * Header over the screen, given the navigation of the flow. In a dialog the store card's
+   * header (back and the logo) by default; in a drawer none, its own header has the title.
+   */
+  renderHeader?: AuthFlowProps['renderHeader'];
 }
 
 /** Sign-in over the page; it closes itself once the buyer is signed in. */
 export const AuthDialog = ({
   open,
   onClose,
+  presentation = 'dialog',
   context = 'store',
   onCompleted,
+  renderHeader,
   ...flowProps
 }: AuthDialogProps) => {
-  const { styles } = useStyles();
-  const [heading, setHeading] = useState<AuthHeading | null>(null);
   // Each opening starts from the first screen.
   const [session, setSession] = useState(0);
   const [wasOpen, setWasOpen] = useState(open);
@@ -36,12 +40,12 @@ export const AuthDialog = ({
     if (open) setSession((value) => value + 1);
   }
 
-  const flow = (header: Pick<AuthFlowProps, 'renderHeader'> = {}) => (
+  const flow = (header: AuthFlowProps['renderHeader']) => (
     <AuthFlow
       key={session}
       {...flowProps}
-      {...header}
       context={context}
+      renderHeader={header}
       onCompleted={() => {
         onCompleted?.();
         onClose();
@@ -49,32 +53,26 @@ export const AuthDialog = ({
     />
   );
 
-  if (context === 'checkoutGuest') {
+  if (presentation === 'drawer') {
     return (
-      // The header is the drawer's own, as in every drawer of the checkout: the screen's title
-      // is its `title`; the screens bring their own ways back.
       <AuthIntlProvider>
-        <DrawerBase open={open} onClose={onClose} title={heading?.title}>
-          <AuthHeadingContext.Provider value={setHeading}>{flow()}</AuthHeadingContext.Provider>
-        </DrawerBase>
+        <AuthDrawerSurface open={open} onClose={onClose}>
+          {flow(renderHeader)}
+        </AuthDrawerSurface>
       </AuthIntlProvider>
     );
   }
 
   return (
-    <ResponsiveDialog open={open} onClose={onClose}>
-      <div className={styles.card}>
-        {flow({ renderHeader: (navigation) => <CardHeader {...navigation} /> })}
-      </div>
-    </ResponsiveDialog>
+    <AuthDialogSurface open={open} onClose={onClose}>
+      {flow(
+        renderHeader ??
+          ((navigation) => (
+            <CardHeader
+              onBack={navigation.canGoBack ? navigation.back : undefined}
+            />
+          ))
+      )}
+    </AuthDialogSurface>
   );
 };
-
-const useStyles = createStyles(({ css, token }) => ({
-  card: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingLG + 4}px;
-    padding: ${token.paddingSM}px ${token.paddingSM}px ${token.padding}px;
-  `,
-}));

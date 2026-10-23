@@ -1,5 +1,4 @@
-import type { BannerTone } from '@shopana/storefront-ui';
-import type { BannerAction } from '@shopana/storefront-ui';
+import type { BannerAction, BannerTone } from '@shopana/storefront-ui';
 import { SectionId } from '#checkout/state/interface';
 import type { RenewalState } from '#checkout/state/renewal';
 import type { PlacementPhase } from '#checkout/state/placement/placementStore';

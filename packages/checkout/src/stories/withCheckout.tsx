@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import CheckoutLayout from '#checkout/components/CheckoutLayout';
 import { CheckoutProviders } from '#checkout/components/CheckoutProviders';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
-import { bannerToneDeclarations } from '@shopana/storefront-ui';
 import { StoryCartDrawer, useOpenStoryCart } from './StoryCartDrawer';
 
 /**
@@ -34,7 +33,7 @@ function CheckoutRoot({
 }
 
 /**
- * Renders a story the way the checkout page does: its messages, layout, theme and banner colors. A story
+ * Renders a story the way the checkout page does: its messages, layout and theme. A story
  * with the `fullscreen` layout (the page columns) gets no padding around it.
  */
 // Any args: the decorator wraps stories of every component.
@@ -52,7 +51,6 @@ const useStyles = createStyles(({ css, token }) => ({
   root: css`
     font-size: ${token.fontSize}px;
     line-height: ${token.lineHeight};
-    ${bannerToneDeclarations()}
   `,
   padded: css`
     padding: ${token.paddingLG}px;

@@ -5,19 +5,35 @@ import { Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useAuthUI } from '../AuthUIProvider';
-import type { AuthFlowNavigation } from '../flow/AuthFlow';
+import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
 
-/** Header of a store card: "Back" and the logo; the logo alone, centered, on the first screen. */
-export const CardHeader = ({ canGoBack, back }: AuthFlowNavigation) => {
+export interface CardHeaderProps {
+  /** "Back" on the left; none on the first screen, where the logo is centered. */
+  onBack?: () => void;
+}
+
+/** Header of a store card: "Back" and the logo of `AuthUIProvider`. */
+export const CardHeader = (props: CardHeaderProps) => (
+  <AuthIntlProvider>
+    <CardHeaderContent {...props} />
+  </AuthIntlProvider>
+);
+
+const CardHeaderContent = ({ onBack }: CardHeaderProps) => {
   const t = useTranslations('Auth.common');
   const { styles, cx } = useStyles();
   const { components, part } = useAuthUI();
   const { Logo } = components;
-  const header = part('header', cx(styles.header, !canGoBack && styles.centered));
+  const header = part('header', cx(styles.header, !onBack && styles.centered));
   return (
     <div className={header.className} style={header.style}>
-      {canGoBack ? (
-        <Button type="text" icon={<ArrowLeftOutlined aria-hidden />} onClick={back} className={styles.back}>
+      {onBack ? (
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined aria-hidden />}
+          onClick={onBack}
+          className={styles.back}
+        >
           {t('back')}
         </Button>
       ) : null}

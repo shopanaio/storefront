@@ -2,7 +2,7 @@ import type { Meta } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import type { AccountConnections, ConnectionResult } from '../../../core/types';
 import { AccountConnectionsView } from '../../screens/AccountConnectionsView';
-import { errorOf } from '../fixtures';
+import { errorForState } from '../args';
 import { Frame } from '../frames';
 
 const STATES = [
@@ -36,7 +36,11 @@ function connectionsOf(state: Args['state']): AccountConnections {
     reauthenticationRequired: state === 'reauthenticationRequired',
     providers: [
       { provider: 'google', enabled: true, status: 'connected' },
-      { provider: 'facebook', enabled: state !== 'providerDisabled', status: facebook },
+      {
+        provider: 'facebook',
+        enabled: state !== 'providerDisabled',
+        status: facebook,
+      },
     ],
   };
 }
@@ -57,17 +61,25 @@ function resultOf(state: Args['state']): ConnectionResult | null {
 const Story = ({ state }: Args) => (
   <Frame context="profile">
     <AccountConnectionsView
-      status={state === 'loading' ? 'loading' : state === 'unavailable' ? 'unavailable' : 'ready'}
-      connections={state === 'loading' || state === 'unavailable' ? null : connectionsOf(state)}
+      status={
+        state === 'loading'
+          ? 'loading'
+          : state === 'unavailable'
+            ? 'unavailable'
+            : 'ready'
+      }
+      connections={
+        state === 'loading' || state === 'unavailable'
+          ? null
+          : connectionsOf(state)
+      }
       result={resultOf(state)}
       pendingProvider={state === 'pending' ? 'facebook' : null}
-      error={
-        state === 'lastLoginMethod' || state === 'linkingFailed'
-          ? errorOf(state)
-          : state === 'unavailable'
-            ? errorOf('unavailable')
-            : null
-      }
+      error={errorForState(state, [
+        'lastLoginMethod',
+        'linkingFailed',
+        'unavailable',
+      ])}
       errorProvider={state === 'lastLoginMethod' ? 'google' : 'facebook'}
       onLink={fn()}
       onUnlink={fn()}

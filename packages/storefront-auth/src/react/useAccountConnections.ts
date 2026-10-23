@@ -21,6 +21,7 @@ export interface UseAccountConnectionsResult {
   /** Leaves for the provider; the browser returns to `returnTo` (the current page). */
   link(provider: string, options?: { returnTo?: string }): Promise<void>;
   unlink(provider: string): Promise<void>;
+  /** Reads the connections again, showing them loading. */
   reload(): Promise<void>;
 }
 
@@ -39,7 +40,7 @@ export function useAccountConnections(): UseAccountConnectionsResult {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
 
-  const reload = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
       setConnections(await client.connections());
       setStatus('ready');
@@ -49,14 +50,21 @@ export function useAccountConnections(): UseAccountConnectionsResult {
     }
   }, [client]);
 
+  /** Shows the list loading again, without the error of the last read. */
+  const reload = useCallback(() => {
+    setStatus('loading');
+    setError(null);
+    return load();
+  }, [load]);
+
   useEffect(() => {
     const returned = readConnectionResult();
     if (returned) {
       setResult(returned);
       clearConnectionResult();
     }
-    void reload();
-  }, [reload]);
+    void load();
+  }, [load]);
 
   // Linking leaves the page pending; back from the provider it may come from the bfcache.
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { Divider, Flex, Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { mq } from '#checkout/ui/breakpoints';
+import { mq } from '@shopana/storefront-ui';
 import { BrandHeader } from './BrandHeader';
 import React, { useEffect, useState } from 'react';
 

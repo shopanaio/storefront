@@ -2,7 +2,13 @@
 
 import type { ThemeConfig } from 'antd';
 import { ThemeProvider } from 'antd-style';
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 import type { ReactNode } from 'react';
+import {
+  StorefrontUIProvider,
+  type StorefrontUITextOverrides,
+} from '@shopana/storefront-ui';
 import { CheckoutIntlProvider } from '#checkout/i18n/CheckoutIntlProvider';
 import { CheckoutThemeProvider } from '#checkout/theme';
 import type { CheckoutThemeAdapter } from '#checkout/theme';
@@ -28,6 +34,31 @@ const CHECKOUT_TOKENS: ThemeConfig = {
   },
 };
 
+/** The checkout's texts of the shared components (drawers, banners, the country picker). */
+function CheckoutUIProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations('Checkout');
+  const locale = useLocale();
+  const texts = useMemo<StorefrontUITextOverrides>(
+    () => ({
+      dialog: t('dialog'),
+      close: t('close'),
+      dismiss: t('banner-close'),
+      countryPicker: {
+        search: t('country-search'),
+        title: t('country-choose'),
+        empty: t('country-not-found'),
+        trigger: (country, code) => t('country-trigger', { country, code }),
+      },
+    }),
+    [t]
+  );
+  return (
+    <StorefrontUIProvider locale={locale} texts={texts}>
+      {children}
+    </StorefrontUIProvider>
+  );
+}
+
 /** What every checkout page renders in: its messages, its type scale and the theme over its defaults. */
 export function CheckoutProviders({
   theme,
@@ -38,9 +69,13 @@ export function CheckoutProviders({
 }) {
   return (
     <CheckoutIntlProvider>
-      <ThemeProvider theme={CHECKOUT_TOKENS}>
-        <CheckoutThemeProvider theme={theme}>{children}</CheckoutThemeProvider>
-      </ThemeProvider>
+      <CheckoutUIProvider>
+        <ThemeProvider theme={CHECKOUT_TOKENS}>
+          <CheckoutThemeProvider theme={theme}>
+            {children}
+          </CheckoutThemeProvider>
+        </ThemeProvider>
+      </CheckoutUIProvider>
     </CheckoutIntlProvider>
   );
 }

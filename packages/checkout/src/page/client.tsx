@@ -31,10 +31,6 @@ export const CheckoutPageClient = ({
   const placementBusy = useIsPlacementBusy();
   const sessionExpired = useSessionExpired();
   const Brand = resolved.Brand;
-  const features = useMemo(
-    () => ({ auth: resolved.customerAccountsEnabled }),
-    [resolved.customerAccountsEnabled]
-  );
 
   useEffect(() => {
     if (loaded && !cartId && !placementBusy && !sessionExpired) {
@@ -55,7 +51,6 @@ export const CheckoutPageClient = ({
       cartId={cartId}
       onOrderAccepted={handleOrderAccepted}
       brand={<Brand />}
-      features={features}
       theme={theme}
     />
   );

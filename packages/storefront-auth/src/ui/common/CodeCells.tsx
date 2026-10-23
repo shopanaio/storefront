@@ -2,6 +2,7 @@
 
 import { createStyles } from 'antd-style';
 import { Fragment, useState } from 'react';
+import { useAuthUI } from '../AuthUIProvider';
 
 export type CodeCellsState = 'idle' | 'verifying' | 'error' | 'off';
 
@@ -32,19 +33,24 @@ export const CodeCells = ({
   'aria-describedby': describedBy,
 }: CodeCellsProps) => {
   const { styles, cx } = useStyles();
-  const [focused, setFocused] = useState(Boolean(autoFocus));
+  const { part } = useAuthUI();
+  // `autoFocus` focuses the input on mount, which fires its focus event.
+  const [focused, setFocused] = useState(false);
   const half = length % 2 === 0 ? length / 2 : -1;
   const current = Math.min(value.length, length - 1);
+  const off = state === 'off' || disabled;
+  const root = part(
+    'codeCells',
+    cx(
+      styles.cells,
+      state === 'error' && styles.error,
+      state === 'verifying' && styles.done,
+      off && styles.off
+    )
+  );
 
   return (
-    <div
-      className={cx(
-        styles.cells,
-        state === 'error' && styles.error,
-        state === 'verifying' && styles.done,
-        (state === 'off' || disabled) && styles.off
-      )}
-    >
+    <div className={root.className} style={root.style}>
       {Array.from({ length }, (_, index) => (
         <Fragment key={index}>
           {index === half ? (
@@ -55,7 +61,8 @@ export const CodeCells = ({
             data-cell=""
             className={cx(
               styles.cell,
-              focused && state === 'idle' && index === current && styles.active
+              // The focus stays visible on a wrong or checked code too.
+              focused && !off && index === current && styles.active
             )}
           >
             {value[index] ?? ''}
@@ -72,7 +79,7 @@ export const CodeCells = ({
         aria-label={label}
         aria-invalid={state === 'error' || undefined}
         aria-describedby={describedBy}
-        disabled={disabled || state === 'off'}
+        disabled={off}
         autoFocus={autoFocus}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

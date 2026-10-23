@@ -20,7 +20,14 @@ export const ru: AuthMessages = {
     signIn: 'Войти',
     backToSignIn: 'Вернуться ко входу',
     loadingMethods: 'Загрузка способов входа',
-    legal: 'Авторизуясь, вы соглашаетесь с <privacy>условиями обработки персональных данных</privacy>.',
+    loading: 'Загрузка',
+    retry: 'Повторить',
+    resendIn: 'Отправить повторно через {time}',
+    passwordRule: 'От {min} до {max} символов',
+    rulePassed: 'Выполнено:',
+    ruleFailed: 'Не выполнено:',
+    legal:
+      'Авторизуясь, вы соглашаетесь с <privacy>условиями обработки персональных данных</privacy>.',
     country: {
       search: 'Поиск страны',
       title: 'Выберите страну',
@@ -76,6 +83,7 @@ export const ru: AuthMessages = {
     title: 'Вход с паролем',
     submit: 'Войти',
     submitPending: 'Вход…',
+    missing: 'Введите пароль.',
     invalidCredentials: 'Неверная почта или пароль.',
     verificationLink:
       'Подтвердите почту: мы отправили ссылку на <b>{email}</b>. Перейдите по ней и войдите снова.',
@@ -92,7 +100,6 @@ export const ru: AuthMessages = {
     lastName: 'Фамилия',
     lastNameMissing: 'Укажите фамилию.',
     firstNameMissing: 'Укажите имя.',
-    passwordRule: 'От {min} до {max} символов',
     submit: 'Создать аккаунт',
     userExists: 'Аккаунт с этой почтой уже существует. <link>Войти</link>',
     signUpDisabled:
@@ -104,14 +111,14 @@ export const ru: AuthMessages = {
     titleVerifyEmail: 'Подтвердите почту',
     sentEmail: 'Мы отправили {length}-значный код на вашу почту.',
     sentPhone: 'Мы отправили {length}-значный код в SMS.',
-    label: 'Код подтверждения, {length} цифр',
+    label:
+      'Код подтверждения, {length, plural, one {# цифра} few {# цифры} many {# цифр} other {# цифры}}',
     verifying: 'Проверяем…',
     invalid: 'Неверный или просроченный код. Попробуйте ещё раз.',
     invalidNoSignUpEmail:
       'Неверный или просроченный код. Если аккаунта с этой почтой ещё нет, войдите другим способом.',
     invalidNoSignUpPhone:
       'Неверный или просроченный код. Если аккаунта с этим номером ещё нет, войдите другим способом.',
-    resendIn: 'Отправить повторно через {time}',
     resend: 'Отправить код повторно',
     signingIn: 'Выполняем вход…',
   },
@@ -162,11 +169,9 @@ export const ru: AuthMessages = {
   connections: {
     title: 'Подключённые аккаунты',
     subtitle: 'Входите через соцсети без пароля.',
-    loading: 'Загрузка',
     reauthenticate: 'Чтобы изменить подключения, войдите снова.',
     reauthenticateAction: 'Войти снова',
     unavailable: 'Не удалось загрузить подключения.',
-    retry: 'Повторить',
     connected: 'Подключено',
     conflict: 'Конфликт',
     connect: 'Подключить',
@@ -183,6 +188,7 @@ export const ru: AuthMessages = {
     accountConflict: 'Этот аккаунт {provider} уже подключён к другому профилю.',
     lastLoginMethod:
       '{provider} — ваш единственный способ входа, поэтому его нельзя отключить. Сначала подключите другой.',
-    linkingFailed: 'Не удалось изменить подключение {provider}. Попробуйте ещё раз.',
+    linkingFailed:
+      'Не удалось изменить подключение {provider}. Попробуйте ещё раз.',
   },
 };

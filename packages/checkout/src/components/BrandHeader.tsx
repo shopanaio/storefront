@@ -6,8 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { TbShoppingCart } from 'react-icons/tb';
 import { useCheckoutTheme } from '#checkout/theme';
-import { breakpoints, mq } from '#checkout/ui/breakpoints';
-import { useMediaQuery } from '#checkout/ui/useMediaQuery';
+import { mq, useBreakpointDown } from '@shopana/storefront-ui';
 
 /**
  * The brand of the store over the form. On a phone it is a white bar from edge to edge over the
@@ -20,7 +19,7 @@ export const BrandHeader = ({ children }: { children?: ReactNode }) => {
   const { styles } = useStyles();
   const { useOpenCart } = useCheckoutTheme();
   const openCart = useOpenCart();
-  const mobile = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
+  const mobile = useBreakpointDown('lg');
   const cart = mobile && openCart;
   if (!children && !cart) return null;
   return (

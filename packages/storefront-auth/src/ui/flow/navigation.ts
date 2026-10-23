@@ -1,8 +1,10 @@
 import type { AuthStep } from '../../core/types';
-import type { PasswordNotice } from '../screens/PasswordScreen';
-import type { OtpPurpose } from '../screens/types';
+import type { OtpPurpose, PasswordNotice } from '../screens/types';
 
-/** A screen of the flow and what it shows. */
+/** Digits of a one-time code when the configuration does not say. */
+export const DEFAULT_CODE_LENGTH = 6;
+
+/** A screen of the flow and what it shows; `name` picks its component. */
 export type FlowScreen =
   | { name: 'identify' }
   | { name: 'password'; notice: PasswordNotice | null }
@@ -12,6 +14,8 @@ export type FlowScreen =
   | { name: 'verifyLink'; sent: boolean }
   | { name: 'social'; provider: string }
   | { name: 'signingIn' };
+
+export type FlowScreenName = FlowScreen['name'];
 
 /** Screens a flow may open on. */
 export type InitialScreen = 'identify' | 'password' | 'signUp' | 'forgot';
@@ -40,7 +44,10 @@ export function screenOf(name: InitialScreen): FlowScreen {
 
 export function initialFlow(name: InitialScreen = 'identify'): FlowState {
   return {
-    stack: name === 'identify' ? [screenOf(name)] : [screenOf('identify'), screenOf(name)],
+    stack:
+      name === 'identify'
+        ? [screenOf(name)]
+        : [screenOf('identify'), screenOf(name)],
   };
 }
 
@@ -51,7 +58,9 @@ export const currentScreen = (state: FlowState): FlowScreen =>
 export const canGoBack = (state: FlowState): boolean => {
   const screen = currentScreen(state);
   return (
-    state.stack.length > 1 && screen.name !== 'signingIn' && screen.name !== 'social'
+    state.stack.length > 1 &&
+    screen.name !== 'signingIn' &&
+    screen.name !== 'social'
   );
 };
 
@@ -59,14 +68,18 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
   switch (action.type) {
     case 'open': {
       // Opening a screen already in the stack returns to it, so the stack never loops.
-      const index = state.stack.findIndex((screen) => screen.name === action.screen.name);
+      const index = state.stack.findIndex(
+        (screen) => screen.name === action.screen.name
+      );
       const base = index === -1 ? state.stack : state.stack.slice(0, index);
       return { stack: [...base, action.screen] };
     }
     case 'update':
       return { stack: [...state.stack.slice(0, -1), action.screen] };
     case 'back':
-      return state.stack.length > 1 ? { stack: state.stack.slice(0, -1) } : state;
+      return state.stack.length > 1
+        ? { stack: state.stack.slice(0, -1) }
+        : state;
     case 'restart':
       return { stack: [state.stack[0] ?? screenOf('identify')] };
   }
@@ -93,24 +106,41 @@ export function reactToStep(screen: FlowScreen, step: AuthStep): StepReaction {
         screen: {
           name: 'code',
           purpose:
-            screen.name === 'password' || screen.name === 'signUp' ? 'verifyEmail' : 'signIn',
+            screen.name === 'password' || screen.name === 'signUp'
+              ? 'verifyEmail'
+              : 'signIn',
         },
       };
     case 'verificationRequired':
       if (step.method === 'otp') return { type: 'sendVerificationCode' };
       if (screen.name === 'password')
-        return { type: 'update', screen: { name: 'password', notice: 'verificationLink' } };
+        return {
+          type: 'update',
+          screen: { name: 'password', notice: 'verificationLink' },
+        };
       return { type: 'open', screen: { name: 'verifyLink', sent: false } };
     case 'signInRequired':
       // The account is created without a session: sign in with the same password.
-      return { type: 'update', screen: { name: 'password', notice: 'signInRequired' } };
+      return {
+        type: 'update',
+        screen: { name: 'password', notice: 'signInRequired' },
+      };
     case 'resetLinkSent':
       return screen.name === 'forgot'
-        ? { type: 'update', screen: { name: 'forgot', sent: true, resent: screen.sent } }
-        : { type: 'open', screen: { name: 'forgot', sent: true, resent: false } };
+        ? {
+            type: 'update',
+            screen: { name: 'forgot', sent: true, resent: screen.sent },
+          }
+        : {
+            type: 'open',
+            screen: { name: 'forgot', sent: true, resent: false },
+          };
     case 'verificationSent':
       if (screen.name === 'password')
-        return { type: 'update', screen: { name: 'password', notice: 'verificationResent' } };
+        return {
+          type: 'update',
+          screen: { name: 'password', notice: 'verificationResent' },
+        };
       if (screen.name === 'verifyLink')
         return { type: 'update', screen: { name: 'verifyLink', sent: true } };
       return { type: 'none' };

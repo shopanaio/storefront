@@ -154,6 +154,22 @@ The hydrator merges the current browser cache followed by the incoming page
 snapshot. Incoming fields win, while browser records absent from the snapshot
 remain intact. Ordinary rerenders do not replay the snapshot.
 
+## Account cart after a sign-in
+
+After each sign-in the account cart replaces or absorbs the guest cart of the
+browser, then `CART_CLAIMED_EVENT` is dispatched on `window` with the account
+checkout and the merged guest checkout, if any. Modules use the public entry
+`@shopana/storefront-sdk/modules/cart/react`:
+
+```tsx
+import { useCartClaimed } from '@shopana/storefront-sdk/modules/cart/react';
+
+useCartClaimed(({ checkoutId, mergedFromCheckoutId }) => setClaimed(true));
+```
+
+`useClaimAccountCart()` from the same entry claims the cart on request, e.g.
+after placement answered `CHECKOUT_CLAIM_REQUIRED`.
+
 ## Code generation
 
 SDK GraphQL documents live only under `packages/shopana-storefront-sdk/src`.

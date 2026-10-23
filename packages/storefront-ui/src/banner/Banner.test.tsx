@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { StorefrontUIProvider } from '../StorefrontUIProvider';
 import { Banner } from './Banner';
 
 describe('Banner', () => {
@@ -51,6 +52,69 @@ describe('Banner', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Закрити' }));
     expect(onDismiss).toHaveBeenCalled();
+  });
+
+  it('the close button is named by the texts of the provider by default', () => {
+    render(
+      <StorefrontUIProvider texts={{ dismiss: 'Сховати' }}>
+        <Banner tone="warning" title="Ціна змінилась" onDismiss={vi.fn()} />
+      </StorefrontUIProvider>
+    );
+
+    expect(screen.getByRole('button', { name: 'Сховати' })).toBeInTheDocument();
+  });
+
+  it('the action gets the click event, and a control of its own renders as is', () => {
+    const onClick = vi.fn();
+    const { rerender } = render(
+      <Banner
+        tone="action"
+        title="Оберіть доставку"
+        action={{ label: 'Обрати', onClick }}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Обрати' }));
+    expect(onClick.mock.calls[0][0]).toHaveProperty('type', 'click');
+
+    rerender(
+      <Banner
+        tone="action"
+        title="Оберіть доставку"
+        action={<a href="/delivery">Доставка</a>}
+      />
+    );
+    expect(screen.getByRole('link', { name: 'Доставка' })).toHaveAttribute(
+      'href',
+      '/delivery'
+    );
+  });
+
+  it('a running action waits and cannot be pressed again', () => {
+    render(
+      <Banner
+        tone="warning"
+        title="Зберігаємо"
+        action={{ label: 'Ще раз', loading: true }}
+      />
+    );
+    const action = screen.getByRole('button', { name: 'Ще раз' });
+    expect(action).toBeDisabled();
+    expect(action).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('forwards the ref, the id and the data attributes to the root', () => {
+    const ref = { current: null as HTMLDivElement | null };
+    render(
+      <Banner
+        ref={ref}
+        id="notice"
+        data-testid="notice"
+        tone="success"
+        title="Готово"
+      />
+    );
+    expect(ref.current).toBe(screen.getByTestId('notice'));
+    expect(ref.current).toHaveAttribute('id', 'notice');
   });
 
   it('the compact banner keeps to the title', () => {

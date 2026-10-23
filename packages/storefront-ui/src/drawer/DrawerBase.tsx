@@ -3,82 +3,107 @@
 import { Button, Flex, Typography } from 'antd';
 import type { ButtonProps, FlexProps } from 'antd';
 import { createStyles } from 'antd-style';
-import { createContext, useContext, useMemo } from 'react';
-import type { ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
+import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from 'react';
 import { LuX } from 'react-icons/lu';
-import clsx from 'clsx';
-import { Vaul, type DrawerDirection } from './Vaul';
-import { breakpoints, mq } from '../breakpoints';
-import { useMediaQuery } from '../useMediaQuery';
+import type { Breakpoint } from '../breakpoints';
+import { useStorefrontUI } from '../StorefrontUIProvider';
+import { useBreakpointDown } from '../useMediaQuery';
+import { Sheet, type DrawerDirection } from './Sheet';
 
 const { Text } = Typography;
 
-/** Same breakpoint as the theme's `useIsMobile`: the cart drawer turns into a bottom sheet below `lg`. */
-const MOBILE_QUERY = `(max-width: ${breakpoints.lg - 0.05}px)`;
+/**
+ * Parts of a drawer: `root` is its column (header, body, footer), `sheet` the vaul panel it
+ * lies in.
+ */
+export type DrawerBasePart =
+  | 'root'
+  | 'sheet'
+  | 'header'
+  | 'title'
+  | 'body'
+  | 'footer'
+  | 'close';
 
-export const useIsDrawerMobile = () => useMediaQuery(MOBILE_QUERY);
-
-export interface DrawerBaseProps {
-  /** Whether the drawer is open */
+export interface DrawerBaseProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'title' | 'children'
+> {
+  /** The dialog element (the vaul panel), as `id` and the `aria-*` and `data-*` props. */
+  ref?: Ref<HTMLDivElement>;
   open: boolean;
-  /** Callback when drawer is closed */
   onClose: () => void;
-  /** Callback after the closing animation is finished */
+  /** Called after the closing animation, when the content is gone. */
   onExited?: () => void;
-  /** Drawer title */
+  /** Title in the header; it names the drawer. */
   title?: ReactNode;
-  /** Custom header content (overrides title) */
+  /** Header of its own instead of the title and the close button; `DrawerBase.Title` names it. */
   header?: ReactNode;
-  /** Extra content to display in header next to close button */
+  /** Next to the close button. */
   headerExtra?: ReactNode;
-  /** Footer content */
+  /** Under the body, always in view. */
   footer?: ReactNode;
-  /** Main content */
   children: ReactNode;
-  /** Whether to show close button */
+  /**
+   * The close button of the header; shown on a side panel and hidden in a bottom sheet, which
+   * closes by dragging it down or pressing the overlay.
+   */
   showCloseButton?: boolean;
-  /** Additional class for content wrapper */
-  contentClassName?: string;
-  /** Custom styles for different sections */
-  sectionStyles?: {
-    header?: string;
-    content?: string;
-    footer?: string;
-  };
-  /** Side the drawer slides from; bottom on mobile and right on desktop by default */
+  /** Accessible name of the close button; the `close` text of `StorefrontUIProvider`. */
+  closeLabel?: string;
+  /** Side the drawer slides from; bottom in a sheet and right on a wider screen by default. */
   placement?: DrawerDirection;
-  /** Drawer width for horizontal placements */
+  /** Below it the drawer is a bottom sheet; `lg` by default. */
+  breakpoint?: Breakpoint;
+  /** Width of a side panel. */
   width?: string | number;
   /**
-   * Least height of the content in a bottom sheet, for content loaded as the buyer types (cities,
+   * Least height of the body in a bottom sheet, for content loaded as the buyer types (cities,
    * branches, streets), so the sheet does not jump with each answer. Without it the sheet is as
    * tall as its content.
    */
   minHeight?: string;
-  'aria-labelledby'?: string;
+  /** Element the drawer is portalled into (see `Sheet`). */
+  container?: HTMLElement | null;
+  classNames?: Partial<Record<DrawerBasePart, string>>;
+  styles?: Partial<Record<DrawerBasePart, CSSProperties>>;
 }
 
-type DrawerBaseContextValue = {
+interface DrawerBaseContextValue {
   onClose: () => void;
-};
+  closeLabel?: string;
+  titleId: string;
+  /** A title tells the drawer its id, so the drawer is named by it. */
+  registerTitle: (id: string) => () => void;
+  classNames?: Partial<Record<DrawerBasePart, string>>;
+  styles?: Partial<Record<DrawerBasePart, CSSProperties>>;
+}
 
 const DrawerBaseContext = createContext<DrawerBaseContextValue | null>(null);
 
 const useDrawerBaseContext = () => {
   const context = useContext(DrawerBaseContext);
-
   if (!context) {
     throw new Error('DrawerBase components must be used within DrawerBase');
   }
-
   return context;
 };
 
 /**
- * Drawer of the storefront: the same vaul drawer, layout and styles as the cart drawer of the
- * theme (brand-bite-crunch `ui-kit/DrawerBase`). Bottom sheet on mobile, right panel on desktop.
+ * Drawer of the storefront (the cart, the checkout pickers, the sign-in): a header with the
+ * title and the close button, the body and a footer always in view. A bottom sheet below
+ * `breakpoint`, a right panel above it.
  */
 export const DrawerBase = ({
+  ref,
   open,
   onClose,
   onExited,
@@ -88,72 +113,111 @@ export const DrawerBase = ({
   footer,
   children,
   showCloseButton: showCloseButtonProp,
-  contentClassName,
-  sectionStyles,
+  closeLabel,
   placement,
+  breakpoint = 'lg',
   width,
   minHeight,
-  'aria-labelledby': ariaLabelledBy,
+  container,
+  className,
+  style,
+  classNames,
+  styles: partStyles,
+  ...rest
 }: DrawerBaseProps) => {
   const { styles, cx } = useStyles();
-  const isMobile = useIsDrawerMobile();
-  const showCloseButton = showCloseButtonProp || !isMobile;
+  const isSheet = useBreakpointDown(breakpoint);
+  const showCloseButton = showCloseButtonProp ?? !isSheet;
+  const titleId = useId();
+  const [registeredTitle, setRegisteredTitle] = useState<string | null>(null);
 
-  const finalPlacement = placement || (isMobile ? 'bottom' : 'right');
+  const finalPlacement = placement ?? (isSheet ? 'bottom' : 'right');
   const isHorizontal = finalPlacement === 'left' || finalPlacement === 'right';
+
+  const context = useMemo<DrawerBaseContextValue>(
+    () => ({
+      onClose,
+      closeLabel,
+      titleId,
+      registerTitle: (id) => {
+        setRegisteredTitle(id);
+        return () =>
+          setRegisteredTitle((current) => (current === id ? null : current));
+      },
+      classNames,
+      styles: partStyles,
+    }),
+    [onClose, closeLabel, titleId, classNames, partStyles]
+  );
 
   const renderHeader = () => {
     if (header) return header;
-
     if (!title && !showCloseButton && !headerExtra) return null;
-
     return (
-      <DrawerBaseHeader className={sectionStyles?.header}>
-        {title && <Text className={styles.title}>{title}</Text>}
+      <DrawerBaseHeader
+        className={classNames?.header}
+        style={partStyles?.header}
+      >
+        {title ? <DrawerBaseTitle>{title}</DrawerBaseTitle> : null}
         <Flex align="center" gap={8}>
           {headerExtra}
-          {showCloseButton && <DrawerBaseCloseButton />}
+          {showCloseButton ? <DrawerBaseCloseButton /> : null}
         </Flex>
       </DrawerBaseHeader>
     );
   };
 
-  const content = (
-    <div className={clsx(styles.layout, contentClassName)}>
-      {renderHeader()}
-
-      <div
-        className={cx(styles.content, footer ? styles.withFooter : undefined, sectionStyles?.content)}
-        style={isMobile && !isHorizontal && minHeight ? { minHeight } : undefined}
-      >
-        {children}
-      </div>
-      {footer && (
-        <div className={clsx(styles.footer, sectionStyles?.footer)}>
-          {footer}
-        </div>
-      )}
-    </div>
-  );
-
   return (
-    <DrawerBaseContext.Provider value={useMemo(() => ({ onClose }), [onClose])}>
-      <Vaul
+    <DrawerBaseContext.Provider value={context}>
+      <Sheet
+        {...rest}
+        ref={ref}
+        aria-labelledby={
+          rest['aria-labelledby'] ?? registeredTitle ?? undefined
+        }
         open={open}
         onClose={onClose}
         onExited={onExited}
-        dismissible
         direction={finalPlacement}
         width={width}
-        isFullscreen={isMobile && isHorizontal}
-        aria-labelledby={ariaLabelledBy}
+        fullscreen={isSheet && isHorizontal}
+        container={container}
+        className={classNames?.sheet}
+        style={partStyles?.sheet}
       >
-        {content}
-      </Vaul>
+        <div
+          className={cx(styles.layout, classNames?.root, className)}
+          style={{ ...partStyles?.root, ...style }}
+        >
+          {renderHeader()}
+          <div
+            className={cx(
+              styles.body,
+              !isHorizontal && styles.bodySheet,
+              classNames?.body
+            )}
+            style={{
+              ...(!isHorizontal && minHeight ? { minHeight } : undefined),
+              ...partStyles?.body,
+            }}
+          >
+            {children}
+          </div>
+          {footer ? (
+            <div
+              className={cx(styles.footer, classNames?.footer)}
+              style={partStyles?.footer}
+            >
+              {footer}
+            </div>
+          ) : null}
+        </div>
+      </Sheet>
     </DrawerBaseContext.Provider>
   );
 };
 
+/** Title of a header of its own: it names the drawer. */
 const DrawerBaseTitle = ({
   children,
   id,
@@ -161,10 +225,21 @@ const DrawerBaseTitle = ({
   children: ReactNode;
   id?: string;
 }) => {
-  const { styles } = useStyles();
-
+  const { styles, cx } = useStyles();
+  const {
+    titleId,
+    registerTitle,
+    classNames,
+    styles: partStyles,
+  } = useDrawerBaseContext();
+  const finalId = id ?? titleId;
+  useLayoutEffect(() => registerTitle(finalId), [registerTitle, finalId]);
   return (
-    <Text id={id} className={styles.title}>
+    <Text
+      id={finalId}
+      className={cx(styles.title, classNames?.title)}
+      style={partStyles?.title}
+    >
       {children}
     </Text>
   );
@@ -172,44 +247,49 @@ const DrawerBaseTitle = ({
 
 const DrawerBaseHeader = ({
   children,
+  className,
   ...props
 }: { children: ReactNode } & FlexProps) => {
-  const { styles } = useStyles();
-
+  const { styles, cx } = useStyles();
   return (
     <Flex
       align="center"
       justify="space-between"
       {...props}
-      className={clsx(styles.header, props.className)}
+      className={cx(styles.header, className)}
     >
       {children}
     </Flex>
   );
 };
 
-const DrawerBaseCloseButton = ({ onClick, ...buttonProps }: ButtonProps) => {
-  const { styles } = useStyles();
-  const { onClose } = useDrawerBaseContext();
-  const isMobile = useIsDrawerMobile();
-
-  const handleClick = (
-    event: Parameters<NonNullable<ButtonProps['onClick']>>[0]
-  ) => {
-    onClick?.(event);
-    onClose();
-  };
-
-  // On mobile the sheet is closed by dragging it down or tapping the overlay, as the cart drawer.
-  if (isMobile) return null;
-
+/** Closes the drawer; shown wherever it is placed, the bottom sheet as well. */
+const DrawerBaseCloseButton = ({
+  onClick,
+  className,
+  style,
+  ...buttonProps
+}: ButtonProps) => {
+  const { styles, cx } = useStyles();
+  const {
+    onClose,
+    closeLabel,
+    classNames,
+    styles: partStyles,
+  } = useDrawerBaseContext();
+  const { texts } = useStorefrontUI();
   return (
     <Button
-      icon={<LuX size={24} color="currentColor" />}
+      icon={<LuX size={24} color="currentColor" aria-hidden />}
       type="text"
-      className={styles.closeBtn}
-      onClick={handleClick}
+      aria-label={closeLabel ?? texts.close}
       {...buttonProps}
+      className={cx(styles.closeBtn, classNames?.close, className)}
+      style={{ ...partStyles?.close, ...style }}
+      onClick={(event) => {
+        onClick?.(event);
+        onClose();
+      }}
     />
   );
 };
@@ -224,54 +304,49 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-direction: column;
     height: 100%;
     background-color: ${token.colorBgElevated};
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
   `,
   header: css`
-    position: sticky;
-    background: ${token.colorBgElevated};
-    top: 0;
-    z-index: 1;
-    padding: calc(8px + var(--safe-area-top, 0px))
-      calc(${token.paddingSM}px + var(--safe-area-right, 0px)) 8px
+    flex-shrink: 0;
+    padding: calc(${token.paddingXS}px + var(--safe-area-top, 0px))
+      calc(${token.paddingSM}px + var(--safe-area-right, 0px))
+      ${token.paddingXS}px
       calc(${token.paddingSM}px + var(--safe-area-left, 0px));
     border-bottom: 1px solid ${token.colorBorderSecondary};
-    flex-shrink: 0;
+    background: ${token.colorBgElevated};
   `,
   title: css`
     font-size: ${token.fontSizeXL}px;
     font-weight: 600;
   `,
   closeBtn: css`
-    &:hover {
-      color: ${token.colorPrimary} !important;
-    }
     margin-right: -${token.marginXXS}px;
+
+    &&&:not(:disabled):hover {
+      color: ${token.colorPrimary};
+    }
   `,
-  content: css`
-    flex: 1;
+  // The body scrolls between the header and the footer, which stay in view.
+  body: css`
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: ${token.paddingXS}px
       calc(${token.paddingSM}px + var(--safe-area-right, 0px))
       calc(${token.padding}px + var(--safe-area-bottom, 0px))
       calc(${token.paddingSM}px + var(--safe-area-left, 0px));
-    height: 100%;
-    max-height: 80dvh;
-
-    ${mq.lg} {
-      max-height: unset;
-    }
   `,
-  // Room for the footer, which lies over the end of the content.
-  withFooter: css`
-    padding-bottom: calc(84px + var(--safe-area-bottom, 0px));
+  // A bottom sheet is as tall as its content, up to most of the screen.
+  bodySheet: css`
+    max-height: 80dvh;
   `,
   footer: css`
-    position: absolute;
-    bottom: 0;
-    width: 100%;
+    flex-shrink: 0;
     padding: ${token.padding}px
       calc(${token.padding}px + var(--safe-area-right, 0px))
       calc(${token.padding}px + var(--safe-area-bottom, 0px))
       calc(${token.padding}px + var(--safe-area-left, 0px));
+    background: ${token.colorBgElevated};
   `,
 }));

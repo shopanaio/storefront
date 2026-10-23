@@ -1,16 +1,15 @@
 import { useCallback } from 'react';
 import {
-  useLoginMethod,
   useSessionStatus,
   useSignInPending,
+  useSignOut,
   useUser,
 } from '@shopana/storefront-sdk/modules/session/react';
-import { useSignOut } from '@shopana/storefront-sdk/modules/session/react/hooks';
 import { useCartSetters } from '@shopana/storefront-sdk/modules/cart/react/context/CartContext';
-import { formatPhoneNumberIntl } from '@shopana/storefront-ui';
+import { useLoginIdentifier } from '@shopana/storefront-auth/ui';
 import type { CheckoutAuthProps } from '#checkout/theme';
 import { flushPendingInputs } from '#checkout/state/pendingInputs';
-import { useAuthDialogStore } from '#checkout/state/authDialogStore';
+import { useCheckoutSignIn } from '#checkout/context/CheckoutSignInContext';
 
 /** How long a social sign-in waits for the held-back input to save before leaving the page. */
 const FLUSH_TIMEOUT_MS = 3000;
@@ -38,21 +37,21 @@ export function useSaveCheckoutInput(): () => Promise<void> {
 }
 
 /**
- * Sign-in state and actions of the checkout (design F2). "Log in" opens the sign-in drawer of
- * the checkout; the sign-in itself happens in the page, never on the IAM pages.
+ * Sign-in state and actions of the checkout (design F2). "Log in" leads to the sign-in of the
+ * page (`useCheckoutSignIn`); the sign-in itself happens in the page, never on the IAM pages.
  */
 export function useCheckoutAuth(): Omit<CheckoutAuthProps, 'className'> {
   const status = useSessionStatus();
   const signInPending = useSignInPending();
   const user = useUser();
-  const loginMethod = useLoginMethod();
+  const loginIdentifier = useLoginIdentifier();
   const { signOut, isPending: signingOut } = useSignOut();
-  const setDialogOpen = useAuthDialogStore((state) => state.setOpen);
+  const { requestSignIn } = useCheckoutSignIn();
 
   const onSignIn = useCallback(() => {
     if (status === 'loading') return;
-    setDialogOpen(true);
-  }, [setDialogOpen, status]);
+    requestSignIn();
+  }, [requestSignIn, status]);
 
   const onSignOut = useCallback(() => {
     void signOut().catch(() => undefined);
@@ -65,21 +64,13 @@ export function useCheckoutAuth(): Omit<CheckoutAuthProps, 'className'> {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          // "Signed in as" shows what the buyer signed in with (A3).
-          identifier: identifierOf(loginMethod, user),
+          // "Signed in as" shows what the buyer signed in with (A3); the email after a hosted
+          // sign-in, which has no login method.
+          identifier: loginIdentifier?.display ?? user.email,
         }
       : null,
     pending: signingOut || signInPending,
     onSignIn,
     onSignOut,
   };
-}
-
-/** What the buyer signed in with, as they typed it: an email, or the phone in its format. */
-function identifierOf(
-  loginMethod: 'email' | 'phone' | null,
-  user: { email: string; phone?: string }
-): string {
-  const phone = user.phone ? formatPhoneNumberIntl(user.phone) || user.phone : '';
-  return (loginMethod === 'phone' ? phone : user.email) || phone || user.email;
 }

@@ -13,8 +13,7 @@ import { Fold, FoldToggle } from '#checkout/ui/Fold';
 import { ImageFan, linesToFanImages } from '#checkout/ui/ImageFan';
 import { Money } from '#checkout/ui/Money';
 import { OptionWave } from '#checkout/ui/OptionWave';
-import { useMediaQuery } from '#checkout/ui/useMediaQuery';
-import { breakpoints } from '#checkout/ui/breakpoints';
+import { useBreakpointDown } from '@shopana/storefront-ui';
 import { SectionTitle } from '#checkout/components/common/SectionTitle';
 import type { Checkout } from '#checkout/types/entity';
 import { ShipmentLines } from '#checkout/sections/delivery/components/ShipmentLines';
@@ -42,7 +41,7 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
   const openCartDrawer = useOpenCart();
   const undeliverable = new Set(useUndeliverableLines().map((line) => line.id));
   // Below lg the lines lead the page, over the form (CheckoutView).
-  const stacked = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
+  const stacked = useBreakpointDown('lg');
   const [showAll, setShowAll] = useState(false);
   const [expanded, setExpanded] = useState(() => undeliverable.size > 0);
   const listId = useId();

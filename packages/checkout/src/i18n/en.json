@@ -137,6 +137,7 @@
     "undeliverable-title": "Can't be delivered to this address",
     "undeliverable-hint": "{count, plural, one {Change the address or remove this item from the cart} other {Change the address or remove these items from the cart}}",
     "undeliverable-show-more": "Show {count} more",
+    "undeliverable-change-address": "Change address",
     "address-line1": "Address",
     "address-line2": "Apartment, suite, etc.",
     "address-optional": "{label} (optional)",
@@ -181,6 +182,8 @@
     "banner-open-cart": "Open cart",
     "banner-choose": "Choose",
     "banner-close": "Close",
+    "close": "Close",
+    "dialog": "Dialog",
     "banner-collapse": "Collapse",
     "banner-details": "Details",
     "banner-show-all": "Show all messages ({count})",
@@ -291,7 +294,7 @@
     "delivery-selection-reset-input": "The delivery details need to be updated",
     "payment-selection-reset-title": "The selected payment method is no longer available",
     "delivery-input-rejected-title": "Couldn't save the delivery details",
-    "signed-in-as": "Signed in as {email}",
+    "signed-in-as": "Signed in as {identifier}",
     "log-out": "Log out",
     "prices-updated": "Prices were updated for your account. Check the order and place it again.",
     "sign-in-required": "Sign in to place your order",
@@ -308,6 +311,7 @@
     "country-choose": "Choose a country",
     "country-not-found": "No countries found",
     "country-trigger": "Country: {country}, +{code}",
-    "sign-in-required-earning": "Sign in to check out faster and get <b>{reward}</b> for your order."
+    "sign-in-required-earning": "Sign in to check out faster and get <b>{reward}</b> for your order.",
+    "sign-in-required-earning-store-credit": "+{amount} to store credit"
   }
 }

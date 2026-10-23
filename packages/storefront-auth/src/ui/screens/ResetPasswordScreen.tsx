@@ -1,26 +1,22 @@
 'use client';
 
-import { CheckOutlined, CloseOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { createStyles } from 'antd-style';
+import { CheckOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
 import { FloatingLabelPassword } from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
-import {
-  AuthAlert,
-  Field,
-  InlineAction,
-  RateLimitAlert,
-  Screen,
-  ScreenTitle,
-  SubmitButton,
-  TextAction,
-  useRateLimit,
-} from '../common/Screen';
+import { useAuthUI } from '../AuthUIProvider';
+import { InlineAction, SubmitButton, TextAction } from '../common/actions';
+import { AuthAlert, useErrorAlert, useRateLimit } from '../common/alerts';
+import { AuthForm, Field, usePasswordRules, useSubmit } from '../common/form';
+import { ScreenTitle } from '../common/heading';
+import { Screen } from '../common/layout';
+import { useScreenPreset } from '../common/preset';
 import { ResultScreen } from './ResultScreen';
+import type { AuthContext } from './types';
 
 export interface ResetPasswordScreenProps {
+  context: AuthContext;
   /** The new-password form, the password changed, or a link IAM found spent or invalid. */
   state: 'form' | 'done' | 'expired';
   minLength: number;
@@ -31,12 +27,11 @@ export interface ResetPasswordScreenProps {
   onSignIn: () => void;
   /** Asks for another reset link (the forgot-password screen). */
   onRequestNewLink: () => void;
-  /** Password typed in (stories). */
-  defaultPassword?: string;
 }
 
 /** The page a reset link opens (`/account/reset-password`): the new password, then sign in. */
 export const ResetPasswordScreen = ({
+  context,
   state,
   minLength,
   maxLength,
@@ -45,15 +40,33 @@ export const ResetPasswordScreen = ({
   onSubmit,
   onSignIn,
   onRequestNewLink,
-  defaultPassword = '',
 }: ResetPasswordScreenProps) => {
   const t = useTranslations('Auth');
-  const { styles, cx } = useStyles();
+  const { components, part } = useAuthUI();
+  const { PasswordRules } = components;
+  const preset = useScreenPreset();
   const titleId = useId();
   const rulesId = useId();
-  const [password, setPassword] = useState(defaultPassword);
-  const [touched, setTouched] = useState(defaultPassword.length > 0);
+  const [password, setPassword] = useState(preset.password ?? '');
+  const form = useSubmit();
   const waiting = useRateLimit(error);
+  const rules = usePasswordRules(password, {
+    minLength,
+    maxLength,
+    submitted: form.submitted || error?.code === 'invalidInput',
+  });
+  const linkInvalid = error?.code === 'expired';
+  const alert = useErrorAlert(error, context, {
+    expired: (
+      <AuthAlert type="error">
+        {t.rich('reset.linkInvalid', {
+          link: (chunks) => (
+            <InlineAction onClick={onRequestNewLink}>{chunks}</InlineAction>
+          ),
+        })}
+      </AuthAlert>
+    ),
+  });
 
   if (state === 'done') {
     return (
@@ -87,34 +100,18 @@ export const ResetPasswordScreen = ({
     );
   }
 
-  const ok = password.length >= minLength && password.length <= maxLength;
-  const bad = (touched || error?.code === 'invalidInput') && !ok;
-  const linkInvalid = error?.code === 'expired';
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setTouched(true);
-    if (!ok) return;
-    onSubmit(password);
-  };
-
   return (
     <Screen>
-      <ScreenTitle id={titleId} title={t('reset.title')} subtitle={t('reset.subtitle')} />
-      <RateLimitAlert error={error} />
-      {linkInvalid ? (
-        <AuthAlert type="error">
-          {t.rich('reset.linkInvalid', {
-            link: (chunks) => (
-              <InlineAction onClick={onRequestNewLink}>{chunks}</InlineAction>
-            ),
-          })}
-        </AuthAlert>
-      ) : null}
-      {error?.code === 'unavailable' ? (
-        <AuthAlert type="error">{t('alerts.unavailable')}</AuthAlert>
-      ) : null}
-      <form className={styles.form} aria-labelledby={titleId} onSubmit={submit} noValidate>
+      <ScreenTitle
+        id={titleId}
+        title={t('reset.title')}
+        subtitle={t('reset.subtitle')}
+      />
+      {alert}
+      <AuthForm
+        labelledBy={titleId}
+        onSubmit={() => form.submit(rules.valid, () => onSubmit(password))}
+      >
         <Field>
           <FloatingLabelPassword
             label={t('reset.label')}
@@ -122,23 +119,12 @@ export const ResetPasswordScreen = ({
             value={password}
             minLength={minLength}
             maxLength={maxLength}
-            onChange={(event) => {
-              setTouched(true);
-              setPassword(event.target.value);
-            }}
-            status={bad ? 'error' : undefined}
+            onChange={(event) => setPassword(event.target.value)}
+            status={rules.failed ? 'error' : undefined}
+            aria-invalid={rules.failed || undefined}
             aria-describedby={rulesId}
-            toggleLabels={{
-              show: t('common.showPassword'),
-              hide: t('common.hidePassword'),
-            }}
           />
-          <ul id={rulesId} className={styles.rules}>
-            <li className={cx(ok ? styles.ok : bad && styles.bad)}>
-              {ok ? <CheckOutlined aria-hidden /> : bad ? <CloseOutlined aria-hidden /> : null}
-              {t('signUp.passwordRule', { min: minLength, max: maxLength })}
-            </li>
-          </ul>
+          <PasswordRules {...part('rules')} id={rulesId} rules={rules.rules} />
         </Field>
         <SubmitButton
           pending={pending}
@@ -147,44 +133,8 @@ export const ResetPasswordScreen = ({
         >
           {t('reset.submit')}
         </SubmitButton>
-      </form>
-      <TextAction onClick={onSignIn}>
-        {t('common.backToSignIn')}
-      </TextAction>
+      </AuthForm>
+      <TextAction onClick={onSignIn}>{t('common.backToSignIn')}</TextAction>
     </Screen>
   );
 };
-
-const useStyles = createStyles(({ css, token }) => ({
-  form: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingSM}px;
-    width: 100%;
-    margin: 0;
-    text-align: left;
-  `,
-  rules: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.marginXXS}px;
-    margin: ${token.marginXXS}px 0 0;
-    padding: 0;
-    list-style: none;
-    font-size: ${token.fontSizeSM}px;
-    line-height: ${token.lineHeightSM};
-    color: ${token.colorTextSecondary};
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: ${token.marginXXS + 2}px;
-    }
-  `,
-  ok: css`
-    color: ${token.colorSuccessText};
-  `,
-  bad: css`
-    color: ${token.colorErrorText};
-  `,
-}));

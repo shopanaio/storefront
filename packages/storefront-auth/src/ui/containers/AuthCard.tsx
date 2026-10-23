@@ -1,36 +1,24 @@
 'use client';
 
-import { createStyles } from 'antd-style';
-import type { ReactNode } from 'react';
-import { CardHeader } from './Headers';
+import type { CSSProperties, ReactNode } from 'react';
+import { AuthCardSurface } from './surfaces';
+
+export interface AuthCardProps {
+  children: ReactNode;
+  /** "Back" in the header; the logo alone, centered, without it. */
+  onBack?: () => void;
+  className?: string;
+  style?: CSSProperties;
+}
 
 /** A store card on a page of its own: the logo over the screen, 440px wide at most. */
 export const AuthCard = ({
   children,
+  onBack,
   className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) => {
-  const { styles, cx } = useStyles();
-  return (
-    <div className={cx(styles.card, className)}>
-      <CardHeader canGoBack={false} back={() => undefined} />
-      {children}
-    </div>
-  );
-};
-
-const useStyles = createStyles(({ css, token }) => ({
-  card: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingLG + 4}px;
-    width: 100%;
-    max-width: 440px;
-    margin: 0 auto;
-    padding: ${token.paddingLG + 4}px ${token.paddingXL + 4}px ${token.paddingXL}px;
-    background: ${token.colorBgContainer};
-    border-radius: ${token.borderRadiusLG}px;
-  `,
-}));
+  style,
+}: AuthCardProps) => (
+  <AuthCardSurface onBack={onBack} className={className} style={style}>
+    {children}
+  </AuthCardSurface>
+);

@@ -14,8 +14,8 @@ import type {
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutAuth, useSaveCheckoutInput } from '#checkout/hooks/useCheckoutAuth';
-import { useAuthDialogStore } from '#checkout/state/authDialogStore';
-import { formatPhoneNumberIntl } from '@shopana/storefront-ui';
+import { useCheckoutSignIn } from '#checkout/context/CheckoutSignInContext';
+import { useLoginIdentifier } from '@shopana/storefront-auth/ui';
 import { mockSession, type MockSessionOptions } from './mockAuth';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
@@ -482,7 +482,8 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
   });
   mocked(useCheckoutAuth).mockImplementation(() => {
     const customer = useMockState().checkout?.customerIdentity.customer ?? null;
-    const phone = auth.phone();
+    const identifier = useLoginIdentifier();
+    const { requestSignIn } = useCheckoutSignIn();
     return {
       status: customer ? 'authenticated' : 'anonymous',
       user: customer
@@ -490,17 +491,14 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
             email: customer.email ?? '',
             firstName: customer.firstName ?? undefined,
             lastName: customer.lastName ?? undefined,
-            identifier:
-              (auth.loginMethod() === 'phone' && phone
-                ? formatPhoneNumberIntl(phone)
-                : customer.email) ?? '',
+            identifier: identifier?.display ?? customer.email ?? '',
           }
         : null,
       pending: false,
-      // "Log in" opens the sign-in drawer of the checkout, as in the app.
+      // "Log in" leads to the sign-in of the page, as in the app.
       onSignIn: () => {
         signIn();
-        useAuthDialogStore.getState().setOpen(true);
+        requestSignIn();
       },
       onSignOut: () => {
         signOut();

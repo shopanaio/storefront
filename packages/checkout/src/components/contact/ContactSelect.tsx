@@ -1,24 +1,28 @@
 'use client';
 
-import { Flex, Typography } from 'antd';
+import { Flex, Typography, theme } from 'antd';
 import { createStyles } from 'antd-style';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import useToken from 'antd/es/theme/useToken';
 import {
   DrawerBase,
   FloatingLabelInput,
   PhoneInput,
-  formatPhoneNumberIntl,
-  isPossiblePhoneNumber,
-  isValidPhoneNumber,
+  formatPhoneInternational,
+  isEmail,
+  isPossiblePhone,
+  isValidPhone,
 } from '@shopana/storefront-ui';
 import { StickyButton } from '#checkout/ui/StickyButton';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import { PiLockSimple, PiUserCircleCheckDuotone } from 'react-icons/pi';
+import {
+  PiLockSimple,
+  PiUserCircle,
+  PiUserCircleCheckDuotone,
+} from 'react-icons/pi';
+import type { LoginIdentifier } from '@shopana/storefront-auth/ui';
 import { SelectCard } from '#checkout/ui/SelectCard';
-import { PiUserCircle } from 'react-icons/pi';
 
 export type ContactForm = {
   firstName: string;
@@ -37,10 +41,11 @@ export interface ContactSelectProps {
   /** Adds the email field (a guest buyer, design F2). */
   withEmail?: boolean;
   /**
-   * The identifier the buyer signed in with (A3, A4): shown and never edited, since the account
-   * is reached by it. A phone replaces the phone field; an email is shown under the fields.
+   * The identifier the buyer signed in with (A3, A4, `useLoginIdentifier()`): shown as the buyer
+   * typed it and never edited, since the account is reached by it. A phone replaces the phone
+   * field; an email is shown under the fields.
    */
-  lockedIdentifier?: { method: 'email' | 'phone'; value: string } | null;
+  lockedIdentifier?: LoginIdentifier | null;
 }
 
 const defaultValues: ContactForm = {
@@ -50,8 +55,6 @@ const defaultValues: ContactForm = {
   phone: '',
   email: '',
 };
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * ContactSelect renders a CitySelect-like button. On click, a drawer opens
@@ -67,9 +70,8 @@ export const ContactSelect = ({
 }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const locale = useLocale();
   const lockedPhone = lockedIdentifier?.method === 'phone';
-  const [, token] = useToken();
+  const { token } = theme.useToken();
   const [open, setOpen] = useState(false);
 
   const methods = useForm<ContactForm>({ defaultValues });
@@ -101,19 +103,12 @@ export const ContactSelect = ({
       .join(' ');
   }, [firstName, lastName, middleName]);
 
-  /** Formats phone in international format */
-  const formattedPhone = useMemo(() => {
-    // A phone-signed buyer's number is the account's, whatever the form holds.
-    const shown = lockedPhone ? lockedIdentifier!.value : phone;
-    if (!shown) return '';
-    return formatPhoneNumberIntl(shown) || shown;
-  }, [phone, lockedPhone, lockedIdentifier]);
-
-  const lockedValue = lockedIdentifier
-    ? lockedPhone
-      ? formatPhoneNumberIntl(lockedIdentifier.value) || lockedIdentifier.value
-      : lockedIdentifier.value
-    : '';
+  // A phone-signed buyer's number is the account's, whatever the form holds.
+  const formattedPhone = lockedPhone
+    ? lockedIdentifier!.display
+    : phone
+      ? formatPhoneInternational(phone)
+      : '';
   const lockNote = lockedIdentifier ? (
     <Typography.Text type="secondary" className={styles.lockNote}>
       <PiLockSimple aria-hidden />
@@ -183,13 +178,7 @@ export const ContactSelect = ({
       <DrawerBase
         open={open}
         onClose={() => setOpen(false)}
-        header={
-          <DrawerBase.Header gap={8} justify="space-between" align="center">
-            <DrawerBase.Title id="contact-form-title">{title}</DrawerBase.Title>
-            <DrawerBase.CloseButton />
-          </DrawerBase.Header>
-        }
-        aria-labelledby="contact-form-title"
+        title={title}
       >
         <FormProvider {...methods}>
           <Flex
@@ -256,7 +245,7 @@ export const ContactSelect = ({
               <div>
                 <FloatingLabelInput
                   label={t('phone-number')}
-                  value={lockedValue}
+                  value={lockedIdentifier!.display}
                   readOnly
                   aria-readonly
                   variant="filled"
@@ -272,9 +261,9 @@ export const ContactSelect = ({
                   required: t('required-field'),
                   validate: {
                     possible: (value) =>
-                      !value || isPossiblePhoneNumber(value) || t('phone-invalid-length'),
+                      !value || isPossiblePhone(value) || t('phone-invalid-length'),
                     valid: (value) =>
-                      !value || isValidPhoneNumber(value) || t('phone-invalid-format'),
+                      !value || isValidPhone(value) || t('phone-invalid-format'),
                   },
                 }}
                 render={({ field }) => (
@@ -284,16 +273,11 @@ export const ContactSelect = ({
                     onChange={(value) => field.onChange(value ?? '')}
                     onBlur={field.onBlur}
                     name={field.name}
-                    locale={locale}
+                    // The checkout's market: an empty number starts with +380.
+                    defaultCountry="UA"
                     status={errors.phone ? 'error' : undefined}
                     error={errors.phone?.message}
                     autoComplete="tel"
-                    pickerTexts={{
-                      search: t('country-search'),
-                      title: t('country-choose'),
-                      empty: t('country-not-found'),
-                      trigger: t('country-trigger', { country: '{country}', code: '{code}' }),
-                    }}
                   />
                 )}
               />
@@ -303,7 +287,7 @@ export const ContactSelect = ({
                 name="email"
                 control={control}
                 rules={{
-                  pattern: { value: EMAIL_PATTERN, message: t('email-invalid-format') },
+                  validate: (value) => !value || isEmail(value) || t('email-invalid-format'),
                 }}
                 render={({ field }) => (
                   <FloatingLabelInput
@@ -323,7 +307,7 @@ export const ContactSelect = ({
               <div>
                 <FloatingLabelInput
                   label={t('email')}
-                  value={lockedIdentifier.value}
+                  value={lockedIdentifier.display}
                   readOnly
                   aria-readonly
                   variant="filled"

@@ -1,10 +1,9 @@
 'use client';
 
 import { Flex } from 'antd';
-import { Banner } from '@shopana/storefront-ui';
+import { Banner, FloatingLabelInput } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { FloatingLabelInput } from '@shopana/storefront-ui';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 import { StreetAutocomplete } from '../street/StreetAutocomplete';
 import { readSettlementRef } from '../../address';

@@ -4,7 +4,7 @@ import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import type { CheckoutAuthProps } from '#checkout/theme';
-import { mq } from '#checkout/ui/breakpoints';
+import { mq } from '@shopana/storefront-ui';
 
 /**
  * The checkout's own sign-in control: "Log in" for a guest, "Signed in as" with "Log out" for a
@@ -29,7 +29,7 @@ export const DefaultCheckoutAuth = ({
         gap={8}
       >
         <Typography.Text type="secondary" className={styles.email} ellipsis>
-          {t('signed-in-as', { email: user.identifier })}
+          {t('signed-in-as', { identifier: user.identifier })}
         </Typography.Text>
         <Button
           className={styles.logOut}

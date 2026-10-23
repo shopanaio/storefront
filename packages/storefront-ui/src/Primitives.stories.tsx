@@ -3,18 +3,37 @@ import { Button, Flex } from 'antd';
 import { useState } from 'react';
 import { FloatingLabelPassword } from './FloatingLabelPassword';
 import { PhoneInput } from './phone/PhoneInput';
-import { ResponsiveDialog } from './ResponsiveDialog';
+import { ResponsiveDialog } from './drawer/ResponsiveDialog';
 import { DrawerBase } from './drawer/DrawerBase';
+import { StorefrontUIProvider } from './StorefrontUIProvider';
+
+/** Ukrainian texts of the components, given once for all of them. */
+const UK_TEXTS = {
+  close: 'Закрити',
+  countryPicker: {
+    search: 'Пошук країни',
+    title: 'Оберіть країну',
+    empty: 'Нічого не знайдено',
+    trigger: (country: string, code: string) => `Країна: ${country}, +${code}`,
+  },
+};
 
 const meta = {
   title: 'Storefront UI/Primitives',
   parameters: { layout: 'padded' },
+  decorators: [
+    (Story) => (
+      <StorefrontUIProvider locale="uk" texts={UK_TEXTS}>
+        <Story />
+      </StorefrontUIProvider>
+    ),
+  ],
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Phone = ({ open, locale }: { open?: boolean; locale: string }) => {
+const Phone = ({ open }: { open?: boolean }) => {
   const [value, setValue] = useState<string | undefined>('+380671234567');
   return (
     <div style={{ maxWidth: 380 }}>
@@ -22,23 +41,16 @@ const Phone = ({ open, locale }: { open?: boolean; locale: string }) => {
         label="Номер телефону"
         value={value}
         onChange={setValue}
-        locale={locale}
         pickerOpen={open}
-        pickerTexts={{
-          search: 'Пошук країни',
-          title: 'Оберіть країну',
-          empty: 'Нічого не знайдено',
-          trigger: 'Країна: {country}, +{code}',
-        }}
       />
     </div>
   );
 };
 
-export const PhoneNumber: Story = { render: () => <Phone locale="uk" /> };
+export const PhoneNumber: Story = { render: () => <Phone /> };
 
 export const PhoneCountryPicker: Story = {
-  render: () => <Phone locale="uk" open />,
+  render: () => <Phone open />,
 };
 
 export const Password: Story = {
@@ -56,11 +68,15 @@ const Overlays = () => {
     <Flex gap={8}>
       <Button onClick={() => setDialog(true)}>ResponsiveDialog</Button>
       <Button onClick={() => setDrawer(true)}>DrawerBase</Button>
-      <ResponsiveDialog open={dialog} onClose={() => setDialog(false)}>
-        <Phone locale="uk" />
+      <ResponsiveDialog
+        open={dialog}
+        onClose={() => setDialog(false)}
+        title="Телефон"
+      >
+        <Phone />
       </ResponsiveDialog>
       <DrawerBase open={drawer} onClose={() => setDrawer(false)} title="Drawer">
-        <Phone locale="uk" />
+        <Phone />
       </DrawerBase>
     </Flex>
   );

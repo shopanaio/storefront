@@ -1,30 +1,39 @@
 'use client';
 
 import { MailOutlined } from '@ant-design/icons';
-import { Button, Spin, Typography } from 'antd';
+import { Spin, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
+import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthError } from '../../core/AuthError';
-import {
-  AuthAlert,
-  Badge,
-  Chip,
-  RateLimitAlert,
-  Screen,
-  ScreenTitle,
-  Stack,
-  SubmitButton,
-  useRateLimit,
-} from '../common/Screen';
+import { ResendAction, SubmitButton } from '../common/actions';
+import { AuthAlert, useErrorAlert } from '../common/alerts';
+import { ScreenTitle } from '../common/heading';
+import { Badge, Chip, MediaCircle, Screen, Stack } from '../common/layout';
 import { socialProviderView } from '../parts/providers';
+import type { AuthContext } from './types';
 
-export interface ResultScreenProps {
-  /** Badge over the title; with `busy`, a spinner beside it. */
-  icon: ReactNode;
-  tone?: 'info' | 'success' | 'warning';
+/** A badge with the icon of the step, or media of its own (a provider logo) in its place. */
+type ResultMedia =
+  | {
+      /** Badge over the title. */
+      icon: ReactNode;
+      tone?: 'info' | 'success' | 'warning';
+      media?: undefined;
+    }
+  | {
+      /** Replaces the badge, e.g. a provider logo. */
+      media: ReactNode;
+      icon?: undefined;
+      tone?: undefined;
+    };
+
+export type ResultScreenProps = ResultMedia & {
   title: ReactNode;
   subtitle?: ReactNode;
+  /** Id of the title, for a form in `actions` it heads; one of its own by default. */
+  titleId?: string;
   /** Where the email went, with its change action. */
   chip?: ReactNode;
   alerts?: ReactNode;
@@ -34,28 +43,28 @@ export interface ResultScreenProps {
   hint?: ReactNode;
   /** The screen only reports progress. */
   busy?: boolean;
-  /** Replaces the badge, e.g. a provider logo. */
-  media?: ReactNode;
-}
+};
 
 /** The outcome of a step: an email to follow, a redirect, a confirmed address, a spent link. */
 export const ResultScreen = ({
   icon,
   tone = 'info',
+  media,
   title,
   subtitle,
+  titleId,
   chip,
   alerts,
   actions,
   hint,
   busy,
-  media,
 }: ResultScreenProps) => {
   const { styles } = useStyles();
+  const ownId = useId();
   return (
     <Screen busy={busy}>
       {media ?? <Badge icon={icon} tone={tone} />}
-      <ScreenTitle title={title} subtitle={subtitle} />
+      <ScreenTitle id={titleId ?? ownId} title={title} subtitle={subtitle} />
       {chip}
       {alerts}
       {actions ? <Stack>{actions}</Stack> : null}
@@ -69,6 +78,7 @@ export const ResultScreen = ({
 };
 
 export interface VerifyEmailLinkScreenProps {
+  context: AuthContext;
   email: string;
   /** The email was sent again. */
   sent: boolean;
@@ -81,6 +91,7 @@ export interface VerifyEmailLinkScreenProps {
 
 /** The account waits for the link in its email: follow it and sign in. */
 export const VerifyEmailLinkScreen = ({
+  context,
   email,
   sent,
   pending,
@@ -90,7 +101,7 @@ export const VerifyEmailLinkScreen = ({
   onChangeEmail,
 }: VerifyEmailLinkScreenProps) => {
   const t = useTranslations('Auth');
-  const waiting = useRateLimit(error);
+  const alert = useErrorAlert(error, context);
   return (
     <ResultScreen
       icon={<MailOutlined />}
@@ -108,11 +119,10 @@ export const VerifyEmailLinkScreen = ({
       }
       alerts={
         <>
-          {sent && !error ? <AuthAlert type="info">{t('verifyLink.sent')}</AuthAlert> : null}
-          <RateLimitAlert error={error} />
-          {error?.code === 'unavailable' ? (
-            <AuthAlert type="error">{t('alerts.unavailable')}</AuthAlert>
+          {sent && !error ? (
+            <AuthAlert type="info">{t('verifyLink.sent')}</AuthAlert>
           ) : null}
+          {alert}
         </>
       }
       actions={
@@ -120,15 +130,14 @@ export const VerifyEmailLinkScreen = ({
           <SubmitButton htmlType="button" onClick={onSignIn}>
             {t('common.signIn')}
           </SubmitButton>
-          <Button
-            size="large"
-            block
-            disabled={pending || waiting > 0}
-            aria-busy={pending || undefined}
-            onClick={onResend}
-          >
-            {pending ? t('common.pending') : t('verifyLink.resend')}
-          </Button>
+          <ResendAction
+            appearance="button"
+            onResend={onResend}
+            label={t('verifyLink.resend')}
+            pending={pending}
+            pendingLabel={t('common.pending')}
+            error={error}
+          />
         </>
       }
       hint={t('verifyLink.hint')}
@@ -136,18 +145,23 @@ export const VerifyEmailLinkScreen = ({
   );
 };
 
+export interface SocialRedirectScreenProps {
+  provider: string;
+}
+
 /** The browser leaves for the provider: "Going to Google…". */
-export const SocialRedirectScreen = ({ provider }: { provider: string }) => {
+export const SocialRedirectScreen = ({
+  provider,
+}: SocialRedirectScreenProps) => {
   const t = useTranslations('Auth.social');
   const { styles } = useStyles();
   const view = socialProviderView(provider);
   return (
     <ResultScreen
       busy
-      icon={null}
       media={
         <span className={styles.redirect} aria-hidden="true">
-          <span className={styles.logo}>{view.icon}</span>
+          <MediaCircle outlined>{view.icon}</MediaCircle>
           <Spin size="large" />
         </span>
       }
@@ -165,16 +179,5 @@ const useStyles = createStyles(({ css, token }) => ({
     display: inline-flex;
     align-items: center;
     gap: ${token.padding}px;
-  `,
-  logo: css`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    border: ${token.lineWidth}px solid ${token.colorBorder};
-    border-radius: 50%;
-    background: ${token.colorBgContainer};
-    font-size: ${token.fontSizeHeading3}px;
   `,
 }));

@@ -1,29 +1,31 @@
 'use client';
 
-import { CheckOutlined, CloseOutlined, UserAddOutlined } from '@ant-design/icons';
+import { UserAddOutlined } from '@ant-design/icons';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
-import { FloatingLabelInput, FloatingLabelPassword } from '@shopana/storefront-ui';
+import {
+  FloatingLabelInput,
+  FloatingLabelPassword,
+  isEmail,
+} from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
 import type { AuthMethods } from '../../core/types';
 import { useAuthUI } from '../AuthUIProvider';
+import { InlineAction, SubmitButton } from '../common/actions';
+import { AuthAlert, useErrorAlert, useRateLimit } from '../common/alerts';
 import {
-  AuthAlert,
-  Badge,
+  AuthForm,
+  EmailField,
   Field,
-  Footer,
-  InlineAction,
-  RateLimitAlert,
-  Screen,
-  ScreenTitle,
-  SubmitButton,
-  useRateLimit,
-} from '../common/Screen';
-import { isEmail } from '../common/validation';
+  usePasswordRules,
+  useSubmit,
+} from '../common/form';
+import { ScreenTitle } from '../common/heading';
+import { Badge, Footer, Screen } from '../common/layout';
+import { useScreenPreset } from '../common/preset';
 import { socialProviderView } from '../parts/providers';
-import { contextCopy, type AuthContext } from './types';
+import type { AuthContext, AuthDraft, AuthDraftChange } from './types';
 
 export interface SignUpValues {
   firstName: string;
@@ -35,11 +37,11 @@ export interface SignUpValues {
 export interface SignUpScreenProps {
   context: AuthContext;
   methods: AuthMethods | null;
+  /** The email typed so far; the names and the password are the screen's own. */
+  draft: AuthDraft;
+  onDraftChange: AuthDraftChange;
   pending: boolean;
   error: AuthError | null;
-  defaultValues?: Partial<SignUpValues>;
-  /** Shows what does not pass the rules before a submit (stories). */
-  showErrors?: boolean;
   onSubmit: (values: SignUpValues) => void;
   onSignIn: () => void;
   onCode: () => void;
@@ -50,149 +52,130 @@ export interface SignUpScreenProps {
 export const SignUpScreen = ({
   context,
   methods,
+  draft,
+  onDraftChange,
   pending,
   error,
-  defaultValues,
-  showErrors = false,
   onSubmit,
   onSignIn,
   onCode,
   onSocial,
 }: SignUpScreenProps) => {
   const t = useTranslations('Auth');
-  const { styles, cx } = useStyles();
+  const { styles } = useStyles();
   const { components, legalLinks, part } = useAuthUI();
-  const { Divider, SocialButtons, Legal } = components;
-  const copy = contextCopy(context);
+  const { Divider, SocialButtons, Legal, PasswordRules } = components;
+  const preset = useScreenPreset();
   const titleId = useId();
   const rulesId = useId();
-  const [values, setValues] = useState<SignUpValues>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    ...defaultValues,
-  });
-  const [touched, setTouched] = useState(showErrors);
+  const [firstName, setFirstName] = useState(preset.firstName ?? '');
+  const [lastName, setLastName] = useState(preset.lastName ?? '');
+  const [password, setPassword] = useState(preset.password ?? '');
   const waiting = useRateLimit(error);
-  const min = methods?.password.minLength ?? 8;
-  const max = methods?.password.maxLength ?? 128;
-  const nameMissing = !values.firstName.trim();
-  const lastNameMissing = !values.lastName.trim();
-  const emailInvalid = !isEmail(values.email);
-  const passwordOk = values.password.length >= min && values.password.length <= max;
+  const email = draft.email;
+  const minLength = methods?.password.minLength ?? 8;
+  const maxLength = methods?.password.maxLength ?? 128;
+  const nameMissing = !firstName.trim();
+  const lastNameMissing = !lastName.trim();
   const providers = (methods?.social ?? [])
     .filter((item) => item.signUp)
     .map((item) => socialProviderView(item.provider));
 
-  const set = (key: keyof SignUpValues) => (event: { target: { value: string } }) =>
-    setValues((current) => ({ ...current, [key]: event.target.value }));
+  const form = useSubmit();
+  const rules = usePasswordRules(password, {
+    minLength,
+    maxLength,
+    submitted: form.submitted,
+  });
+  const valid =
+    !nameMissing && !lastNameMissing && isEmail(email) && rules.valid;
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setTouched(true);
-    if (nameMissing || lastNameMissing || emailInvalid || !passwordOk) return;
-    onSubmit({
-      ...values,
-      firstName: values.firstName.trim(),
-      lastName: values.lastName.trim(),
-      email: values.email.trim(),
-    });
-  };
-
-  const alert = (() => {
-    switch (error?.code) {
-      case 'userExists':
-        return (
-          <AuthAlert type="info">
-            {t.rich('signUp.userExists', {
-              link: (chunks) => <InlineAction onClick={onSignIn}>{chunks}</InlineAction>,
-            })}
-          </AuthAlert>
-        );
-      case 'signUpDisabled':
-        return (
-          <AuthAlert type="warning">
-            {t.rich('signUp.signUpDisabled', {
-              link: (chunks) => <InlineAction onClick={onCode}>{chunks}</InlineAction>,
-            })}
-          </AuthAlert>
-        );
-      case 'rateLimited':
-        return <RateLimitAlert error={error} />;
-      case 'unavailable':
-        return <AuthAlert type="error">{t(copy.unavailable)}</AuthAlert>;
-      default:
-        return null;
-    }
-  })();
-
-  const passwordBad = (touched || values.password.length > 0) && !passwordOk;
+  const alert = useErrorAlert(error, context, {
+    userExists: (
+      <AuthAlert type="info">
+        {t.rich('signUp.userExists', {
+          link: (chunks) => (
+            <InlineAction onClick={onSignIn}>{chunks}</InlineAction>
+          ),
+        })}
+      </AuthAlert>
+    ),
+    signUpDisabled: (
+      <AuthAlert type="warning">
+        {t.rich('signUp.signUpDisabled', {
+          link: (chunks) => (
+            <InlineAction onClick={onCode}>{chunks}</InlineAction>
+          ),
+        })}
+      </AuthAlert>
+    ),
+  });
 
   return (
     <Screen>
       <Badge icon={<UserAddOutlined />} />
       <ScreenTitle id={titleId} title={t('signUp.title')} />
       {alert}
-      <form className={styles.form} aria-labelledby={titleId} onSubmit={submit} noValidate>
+      <AuthForm
+        labelledBy={titleId}
+        onSubmit={() =>
+          form.submit(valid, () =>
+            onSubmit({
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              email: email.trim(),
+              password,
+            })
+          )
+        }
+      >
         <div className={styles.names}>
           <Field>
             <FloatingLabelInput
               label={t('signUp.firstName')}
               autoComplete="given-name"
-              value={values.firstName}
-              onChange={set('firstName')}
-              status={touched && nameMissing ? 'error' : undefined}
-              error={touched && nameMissing ? t('signUp.firstNameMissing') : undefined}
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              error={
+                form.submitted && nameMissing
+                  ? t('signUp.firstNameMissing')
+                  : undefined
+              }
             />
           </Field>
           <Field>
             <FloatingLabelInput
               label={t('signUp.lastName')}
               autoComplete="family-name"
-              value={values.lastName}
-              onChange={set('lastName')}
-              status={touched && lastNameMissing ? 'error' : undefined}
-              error={touched && lastNameMissing ? t('signUp.lastNameMissing') : undefined}
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              error={
+                form.submitted && lastNameMissing
+                  ? t('signUp.lastNameMissing')
+                  : undefined
+              }
             />
           </Field>
         </div>
-        <Field>
-          <FloatingLabelInput
-            label={t('common.email')}
-            type="email"
-            autoComplete="email"
-            value={values.email}
-            onChange={set('email')}
-            status={(touched && emailInvalid) || error?.code === 'invalidInput' ? 'error' : undefined}
-            error={
-              (touched && emailInvalid) || error?.code === 'invalidInput'
-                ? t('common.invalidEmail')
-                : undefined
-            }
-          />
-        </Field>
+        <EmailField
+          value={email}
+          onChange={(next) => onDraftChange({ email: next })}
+          submitted={form.submitted}
+          error={error}
+        />
         <Field>
           <FloatingLabelPassword
             label={t('common.password')}
             autoComplete="new-password"
-            value={values.password}
-            onChange={set('password')}
-            minLength={min}
-            maxLength={max}
-            status={passwordBad ? 'error' : undefined}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            minLength={minLength}
+            maxLength={maxLength}
+            status={rules.failed ? 'error' : undefined}
+            aria-invalid={rules.failed || undefined}
             aria-describedby={rulesId}
-            toggleLabels={{
-              show: t('common.showPassword'),
-              hide: t('common.hidePassword'),
-            }}
           />
-          <ul id={rulesId} className={styles.rules}>
-            <li className={cx(passwordOk ? styles.ok : passwordBad && styles.bad)}>
-              {passwordOk ? <CheckOutlined aria-hidden /> : passwordBad ? <CloseOutlined aria-hidden /> : null}
-              {t('signUp.passwordRule', { min, max })}
-            </li>
-          </ul>
+          <PasswordRules {...part('rules')} id={rulesId} rules={rules.rules} />
         </Field>
         <SubmitButton
           pending={pending}
@@ -201,7 +184,7 @@ export const SignUpScreen = ({
         >
           {t('signUp.submit')}
         </SubmitButton>
-      </form>
+      </AuthForm>
       {providers.length ? (
         <>
           <Divider {...part('divider')} label={t('common.or')} />
@@ -210,7 +193,9 @@ export const SignUpScreen = ({
             intent="signUp"
             providers={providers}
             label={t('social.signUpGroup')}
-            buttonLabel={(provider) => t('social.signUp', { provider: provider.name })}
+            buttonLabel={(provider) =>
+              t('social.signUp', { provider: provider.name })
+            }
             disabled={pending}
             onSelect={onSocial}
           />
@@ -219,7 +204,9 @@ export const SignUpScreen = ({
       <Legal {...part('legal')} links={legalLinks} />
       <Footer>
         {t.rich('signUp.signInPrompt', {
-          link: (chunks) => <InlineAction onClick={onSignIn}>{chunks}</InlineAction>,
+          link: (chunks) => (
+            <InlineAction onClick={onSignIn}>{chunks}</InlineAction>
+          ),
         })}
       </Footer>
     </Screen>
@@ -227,40 +214,9 @@ export const SignUpScreen = ({
 };
 
 const useStyles = createStyles(({ css, token }) => ({
-  form: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingSM}px;
-    width: 100%;
-    margin: 0;
-    text-align: left;
-  `,
   names: css`
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: ${token.paddingSM}px;
-  `,
-  rules: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.marginXXS}px;
-    margin: ${token.marginXXS}px 0 0;
-    padding: 0;
-    list-style: none;
-    font-size: ${token.fontSizeSM}px;
-    line-height: ${token.lineHeightSM};
-    color: ${token.colorTextSecondary};
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: ${token.marginXXS + 2}px;
-    }
-  `,
-  ok: css`
-    color: ${token.colorSuccessText};
-  `,
-  bad: css`
-    color: ${token.colorErrorText};
   `,
 }));

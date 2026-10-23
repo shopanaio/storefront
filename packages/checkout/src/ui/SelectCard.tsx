@@ -5,7 +5,7 @@ import { useId } from 'react';
 import type { ReactNode } from 'react';
 import { LuChevronRight } from 'react-icons/lu';
 import { OptionWave } from './OptionWave';
-import { mq } from './breakpoints';
+import { mq, VisuallyHidden } from '@shopana/storefront-ui';
 import { selectedDeclarations } from './selected';
 
 /**
@@ -62,9 +62,7 @@ export function SelectCard({
           </span>
         ) : null}
         {labelShown ? null : (
-          <span id={labelId} className={styles.hidden}>
-            {label}
-          </span>
+          <VisuallyHidden id={labelId}>{label}</VisuallyHidden>
         )}
         <div id={contentId} className={styles.content}>
           {children}
@@ -169,13 +167,5 @@ const useStyles = createStyles(({ css, token }) => ({
       clip: rect(0 0 0 0);
       white-space: nowrap;
     }
-  `,
-  hidden: css`
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
   `,
 }));

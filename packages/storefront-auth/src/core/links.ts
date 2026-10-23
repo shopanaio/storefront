@@ -38,14 +38,7 @@ export function readPasswordResetLink(
  * the `Referer` of the next requests or analytics.
  */
 export function clearPasswordResetLink(): void {
-  const url = new URL(location.href);
-  if (!url.searchParams.has('token')) return;
-  url.searchParams.delete('token');
-  history.replaceState(
-    history.state,
-    '',
-    `${url.pathname}${url.search}${url.hash}`
-  );
+  clearParams(['token']);
 }
 
 /**
@@ -59,6 +52,11 @@ export function readEmailVerificationLink(
   if (query.get('email_verified') === 'true') return { verified: true };
   if (query.has('error')) return { error: 'expired' };
   return null;
+}
+
+/** Removes the outcome of a verification link from the address bar, so a reload does not show it again. */
+export function clearEmailVerificationLink(): void {
+  clearParams(['email_verified', 'error']);
 }
 
 /** Outcome of connecting a provider on the page the browser returned to, if any. */
@@ -80,8 +78,13 @@ export function readConnectionResult(
 
 /** Removes the connection outcome from the address bar, so a reload does not show it again. */
 export function clearConnectionResult(): void {
+  clearParams(CONNECTION_PARAMS);
+}
+
+function clearParams(names: readonly string[]): void {
   const url = new URL(location.href);
-  CONNECTION_PARAMS.forEach((name) => url.searchParams.delete(name));
+  if (!names.some((name) => url.searchParams.has(name))) return;
+  names.forEach((name) => url.searchParams.delete(name));
   history.replaceState(
     history.state,
     '',

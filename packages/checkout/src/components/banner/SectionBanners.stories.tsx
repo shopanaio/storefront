@@ -91,7 +91,8 @@ function NovaPoshtaMessages({ children }: { children: ReactNode }) {
 
 function CityRequired() {
   const t = useTranslations('Modules.novaPoshta.form');
-  return <Banner tone="action" title={t('city_required_warning')} />;
+  // Its text is the module's own, already translated: the storefront-ui banner as is.
+  return <UiBanner tone="action" title={t('city_required_warning')} />;
 }
 
 function FailedPart(): ReactNode {

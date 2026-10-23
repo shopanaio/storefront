@@ -1,7 +1,8 @@
 import type { Meta } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { errorOf } from '../../../testing';
 import { ResetPasswordScreen } from '../../screens/ResetPasswordScreen';
-import { errorOf } from '../fixtures';
+import { errorForState } from '../args';
 import { Frame } from '../frames';
 
 const STATES = [
@@ -24,29 +25,31 @@ interface Args {
 
 const Story = (args: Args) => {
   const { state, minLength, maxLength } = args;
+  const password =
+    state === 'passwordTooShort'
+      ? 'x'.repeat(Math.max(1, minLength - 4))
+      : state === 'passwordTooLong'
+        ? 'x'.repeat(maxLength + 2)
+        : 'x'.repeat(minLength + 2);
   return (
-    <Frame context="page">
+    <Frame context="page" preset={{ password }}>
       <ResetPasswordScreen
         key={`${state}-${minLength}-${maxLength}`}
-        state={state === 'passwordReset' ? 'done' : state === 'linkExpired' ? 'expired' : 'form'}
+        context="store"
+        state={
+          state === 'passwordReset'
+            ? 'done'
+            : state === 'linkExpired'
+              ? 'expired'
+              : 'form'
+        }
         minLength={minLength}
         maxLength={maxLength}
         pending={state === 'pending'}
         error={
           state === 'linkInvalid'
             ? errorOf('expired')
-            : state === 'rateLimited'
-              ? errorOf('rateLimited', 300)
-              : state === 'unavailable'
-                ? errorOf('unavailable')
-                : null
-        }
-        defaultPassword={
-          state === 'passwordTooShort'
-            ? 'x'.repeat(Math.max(1, minLength - 4))
-            : state === 'passwordTooLong'
-              ? 'x'.repeat(maxLength + 2)
-              : 'x'.repeat(minLength + 2)
+            : errorForState(state, ['unavailable'], { rateLimited: 300 })
         }
         onSubmit={fn()}
         onSignIn={fn()}

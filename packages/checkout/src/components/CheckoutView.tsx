@@ -1,157 +1,77 @@
 import { createStyles } from 'antd-style';
-import { breakpoints, mq } from '#checkout/ui/breakpoints';
-import { useMediaQuery } from '#checkout/ui/useMediaQuery';
+import { mq, useBreakpointDown } from '@shopana/storefront-ui';
 import { Summary } from './summary/Summary';
 import { SummaryLines } from './summary/SummaryLines';
 import { CheckoutActions } from './submit/CheckoutActions';
-import { SectionRenderer } from '#checkout/infra/SectionRenderer';
-import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
 import { BrandHeader } from './BrandHeader';
-import { CheckoutAuth } from './CheckoutAuth';
-import { AccountDataNotice } from './AccountDataNotice';
-import { CheckoutSignInRequired } from './CheckoutSignInRequired';
+import { CheckoutFormSections, CommentSection } from './CheckoutFormSections';
+import { CheckoutSignInColumn } from './CheckoutSignInColumn';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 import { CheckoutColumns } from './CheckoutColumns';
-import { SectionIssues } from './notices/SectionIssues';
+import type { CheckoutProps } from './Checkout';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
+import { useCheckoutSignIn } from '#checkout/context/CheckoutSignInContext';
 import { usePreloadModules } from '#checkout/infra/preloadModules';
-import { SectionId } from '#checkout/state/interface';
-import { bannerToneDeclarations } from '@shopana/storefront-ui';
-import { sectionAnchor, SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
+import { useCheckoutTheme } from '#checkout/theme';
+import { SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
 
-interface CheckoutViewProps {
-  brand?: React.ReactNode;
-  features?: {
-    auth?: boolean;
-    country?: 'UA' | 'INTL';
-  };
+export type CheckoutViewProps = Pick<CheckoutProps, 'brand'> & {
   onSubmit: (e: React.FormEvent) => void;
-  t: (key: string) => string;
-  /**
-   * The store takes orders from accounts only and the buyer is not signed in (A1–A2, S6): the
-   * sign-in stands in place of the contact and the other sections, and the summary keeps the
-   * lines and the totals.
-   */
-  signInRequired?: boolean;
-}
+};
 
 /**
- * Checkout view component - handles only rendering
+ * Checkout view component - handles only rendering. The form on the left, the summary on the
+ * right. While the sign-in is required (`useCheckoutSignIn().required`: A1–A2, S6) it stands
+ * in place of the form, and the summary keeps the lines and the totals.
  */
-export const CheckoutView = ({
-  brand,
-  features,
-  onSubmit,
-  t,
-  signInRequired = false,
-}: CheckoutViewProps) => {
+export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
   const { checkout } = useCheckoutData();
   usePreloadModules(checkout);
   const { styles } = useStyles();
+  const { required: signInRequired } = useCheckoutSignIn();
+  const { beforeActions: BeforeActions } = useCheckoutTheme().slots;
   // Below lg the lines of the order lead the page, over the form; the rest of the summary goes
   // under the form, and the order comment with it, over the totals.
-  const stacked = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
-  // Nothing to place before the sign-in, and the sign-in brings forms of its own.
-  const Form = signInRequired ? 'div' : 'form';
-  const comment = (
-    <CheckoutSection id={sectionAnchor(SectionId.Comment)}>
-      <SectionRenderer slug={SectionId.Comment} />
-      <SectionIssues sections={[SectionId.Comment]} />
-    </CheckoutSection>
-  );
+  const stacked = useBreakpointDown('lg');
 
   return (
     <div className={styles.wrapper}>
-      <Form onSubmit={signInRequired ? undefined : onSubmit}>
-        <CheckoutColumns
-          left={
-            <>
-              <BrandHeader>{brand}</BrandHeader>
-              {stacked && checkout ? (
-                <SummaryLines checkout={checkout} />
+      <CheckoutColumns
+        left={
+          <>
+            <BrandHeader>{brand}</BrandHeader>
+            {stacked && checkout ? <SummaryLines checkout={checkout} /> : null}
+            {signInRequired ? (
+              <CheckoutSignInColumn />
+            ) : (
+              <CheckoutFormSections onSubmit={onSubmit} stacked={stacked} />
+            )}
+          </>
+        }
+        right={
+          <>
+            <div id={SUMMARY_ANCHOR} className={styles.summary}>
+              {checkout ? (
+                <Summary
+                  checkout={checkout}
+                  withLines={!stacked}
+                  beforeTotals={
+                    stacked && !signInRequired ? <CommentSection /> : null
+                  }
+                  linesAndTotalsOnly={signInRequired}
+                />
               ) : null}
-              {signInRequired ? (
-                // The sign-in takes the place of the contact card, under its title.
-                <CheckoutSection
-                  id={sectionAnchor(SectionId.Contact)}
-                  title={t('contact')}
-                >
-                  <CheckoutSignInRequired />
-                </CheckoutSection>
-              ) : (
-                <>
-                  <CheckoutSection
-                    id={sectionAnchor(SectionId.Contact)}
-                    title={t('contact')}
-                    // "Log in" is taller than the title and already leaves room under it.
-                    titleGap={6}
-                    headerAction={
-                      features?.auth ? (
-                        <CheckoutAuth className={styles.logInButton} />
-                      ) : undefined
-                    }
-                  >
-                    <SectionRenderer slug={SectionId.Contact} />
-                    {features?.auth ? <AccountDataNotice /> : null}
-                    <SectionIssues sections={[SectionId.Contact]} />
-                  </CheckoutSection>
-
-                  <CheckoutSection
-                    id={sectionAnchor(SectionId.Delivery)}
-                    title={t('delivery')}
-                  >
-                    <SectionRenderer slug={SectionId.Address} />
-                    <SectionRenderer slug={SectionId.Delivery} />
-                    <SectionIssues
-                      sections={[SectionId.Address, SectionId.Delivery]}
-                    />
-                    {/* Part of the delivery block: who receives it, a little apart from the methods. */}
-                    <div className={styles.recipient}>
-                      <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
-                        <SectionRenderer slug={SectionId.Recipient} />
-                        <SectionIssues sections={[SectionId.Recipient]} />
-                      </CheckoutSection>
-                    </div>
-                  </CheckoutSection>
-
-                  <CheckoutSection
-                    id={sectionAnchor(SectionId.Payment)}
-                    title={t('payment')}
-                  >
-                    <SectionRenderer slug={SectionId.Payment} />
-                    <SectionIssues sections={[SectionId.Payment]} />
-                  </CheckoutSection>
-
-                  {stacked ? null : comment}
-
-                  <div className={styles.actionsLeft}>
-                    <CheckoutActions />
-                  </div>
-                </>
-              )}
-            </>
-          }
-          right={
-            <>
-              <div id={SUMMARY_ANCHOR} className={styles.summary}>
-                {checkout ? (
-                  <Summary
-                    checkout={checkout}
-                    withLines={!stacked}
-                    beforeTotals={stacked && !signInRequired ? comment : null}
-                    linesAndTotalsOnly={signInRequired}
-                  />
-                ) : null}
+            </div>
+            {signInRequired ? null : (
+              // On a phone the actions stand under the summary, out of the form they submit.
+              <div className={styles.actions}>
+                {BeforeActions ? <BeforeActions /> : null}
+                <CheckoutActions />
               </div>
-              {signInRequired ? null : (
-                <div className={styles.actionsRight}>
-                  <CheckoutActions />
-                </div>
-              )}
-            </>
-          }
-        />
-      </Form>
+            )}
+          </>
+        }
+      />
       {/* An expired account checkout has no data to wait for: the sign-in shows at once (S6). */}
       <CheckoutSkeleton brand={brand} isReady={!!checkout || signInRequired} />
     </div>
@@ -166,16 +86,8 @@ const useStyles = createStyles(({ css, token }) => {
       /* Text that sets no size of its own takes the checkout's, not the host page's. */
       font-size: ${token.fontSize}px;
       line-height: ${token.lineHeight};
-      ${bannerToneDeclarations()}
     `,
-    // On desktop the actions sit right in the form column, so their panel can be sticky in it.
-    actionsLeft: css`
-      display: none;
-      ${mq.lg} {
-        display: contents;
-      }
-    `,
-    actionsRight: css`
+    actions: css`
       display: contents;
       ${mq.lg} {
         display: none;
@@ -192,14 +104,6 @@ const useStyles = createStyles(({ css, token }) => {
       ${mq.lg} {
         padding: 0;
       }
-    `,
-
-    recipient: css`
-      margin-top: ${token.marginXS}px;
-    `,
-
-    logInButton: css`
-      padding: 0;
     `,
   };
 });

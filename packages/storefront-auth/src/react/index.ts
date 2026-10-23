@@ -6,9 +6,11 @@
 export {
   useAuth,
   type AuthFlowStep,
+  type AuthOutcome,
   type OtpActions,
   type UseAuthResult,
 } from './useAuth';
+export { secondsUntil, useSecondsUntil } from './useSecondsUntil';
 export {
   useAuthConfiguration,
   type AuthConfigurationState,

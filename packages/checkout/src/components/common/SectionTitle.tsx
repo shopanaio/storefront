@@ -1,4 +1,4 @@
-import { mq } from '#checkout/ui/breakpoints';
+import { mq } from '@shopana/storefront-ui';
 import { Typography } from 'antd';
 import { createStyles } from 'antd-style';
 

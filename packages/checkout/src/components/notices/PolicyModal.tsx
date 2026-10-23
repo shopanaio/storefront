@@ -1,18 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal, Skeleton, Typography } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
+import { mq, ResponsiveDialog } from '@shopana/storefront-ui';
 import { useStorePolicy } from '#checkout/hooks/useStorePolicy';
-import { breakpoints } from '#checkout/ui/breakpoints';
-import { DrawerBase, useInsideDrawer } from '@shopana/storefront-ui';
-import { useMediaQuery } from '#checkout/ui/useMediaQuery';
 
 const { Link, Text } = Typography;
-
-/** z-index of the vaul drawers (`@shopana/storefront-ui` drawer styles). */
-const DRAWER_Z_INDEX = 99999;
 
 export interface PolicyModalPolicy {
   handle: string;
@@ -34,10 +29,7 @@ export interface PolicyModalProps {
  */
 export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
   const t = useTranslations('Checkout');
-  const { styles, cx } = useStyles();
-  const mobile = useMediaQuery(`(max-width: ${breakpoints.lg - 0.05}px)`);
-  // Opened from a drawer (the sign-in's consent), the modal stands over the drawer.
-  const insideDrawer = useInsideDrawer();
+  const { styles } = useStyles();
   // The last opened policy stays until the closing animation ends, so it does not blank out.
   const [shown, setShown] = useState(policy);
   if (policy && policy !== shown) setShown(policy);
@@ -48,7 +40,7 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
   if (loaded) {
     content = (
       <div
-        className={cx(styles.body, !mobile && styles.scroll)}
+        className={styles.body}
         dangerouslySetInnerHTML={{ __html: loaded.html }}
       />
     );
@@ -58,40 +50,27 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
     // Unpublished since the checkout was read, or not readable now.
     content = <Text type="secondary">{t('policy-load-error')}</Text>;
   }
-  const title = loaded?.title ?? current?.title;
   const pageLink = current ? (
     <Link href={loaded?.path ?? current.path} target="_blank" rel="noopener">
       {t('policy-open-page')}
     </Link>
   ) : null;
 
-  if (mobile) {
-    return (
-      <DrawerBase
-        open={policy !== null}
-        onClose={onClose}
-        onExited={() => setShown(null)}
-        title={title}
-      >
-        {content}
-        <div className={styles.pageLink}>{pageLink}</div>
-      </DrawerBase>
-    );
-  }
+  // Opened from a drawer (the sign-in's consent), the dialog stands over it by itself.
   return (
-    <Modal
+    <ResponsiveDialog
       open={policy !== null}
-      onCancel={onClose}
-      afterClose={() => setShown(null)}
-      title={title}
+      onClose={onClose}
+      onExited={() => setShown(null)}
+      title={loaded?.title ?? current?.title}
       footer={pageLink}
       width={720}
-      centered
-      destroyOnHidden
-      zIndex={insideDrawer ? DRAWER_Z_INDEX + 1 : undefined}
+      // A bottom sheet below lg, as the other drawers of the checkout.
+      breakpoint="lg"
+      classNames={{ body: styles.scroll }}
     >
       {content}
-    </Modal>
+    </ResponsiveDialog>
   );
 };
 
@@ -111,11 +90,9 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   // The bottom sheet scrolls itself; the modal keeps its footer in view.
   scroll: css`
-    max-height: 60vh;
-    overflow-y: auto;
-  `,
-  // In the sheet the page link closes the text rather than lying over it.
-  pageLink: css`
-    margin-top: ${token.margin}px;
+    ${mq.lg} {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
   `,
 }));

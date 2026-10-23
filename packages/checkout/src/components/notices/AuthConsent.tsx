@@ -1,20 +1,19 @@
 'use client';
 
-import { Typography } from 'antd';
-import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import type { LegalProps } from '@shopana/storefront-auth/ui';
+import { DefaultLegal, type LegalProps } from '@shopana/storefront-auth/ui';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { PolicyModal } from './PolicyModal';
 import type { PolicyModalPolicy } from './PolicyModal';
-import { PolicyLink } from './TermsNotice';
+import { PolicyLink } from './PolicyLink';
 
 /**
- * The consent under the sign-in field in the checkout, the same as the notice under the submit
- * button: the store's privacy policy (from the disclosures) opens over the checkout.
+ * The consent under the sign-in field in the checkout: the sign-in's own `DefaultLegal`, whose
+ * privacy policy (from the disclosures) opens over the checkout, as in the notice under the
+ * submit button. Without that policy in the disclosures it links `links.privacy`, as by
+ * default.
  */
-export const AuthConsent = ({ className, style }: LegalProps) => {
-  const t = useTranslations('Auth.common');
+export const AuthConsent = (props: LegalProps) => {
   const { checkout } = useCheckoutData();
   const [policy, setPolicy] = useState<PolicyModalPolicy | null>(null);
   const privacy = checkout?.disclosures?.parts.find(
@@ -23,22 +22,19 @@ export const AuthConsent = ({ className, style }: LegalProps) => {
   );
   return (
     <>
-      <Typography.Text type="secondary" className={className} style={style}>
-        {t.rich('legal', {
-          privacy: (chunks) =>
-            privacy ? (
-              <PolicyLink policy={privacy} onOpen={setPolicy}>
-                {chunks}
-              </PolicyLink>
-            ) : (
-              chunks
-            ),
-        })}
-      </Typography.Text>
+      <DefaultLegal
+        {...props}
+        renderPrivacyLink={
+          privacy
+            ? (chunks) => (
+                <PolicyLink policy={privacy} onOpen={setPolicy}>
+                  {chunks}
+                </PolicyLink>
+              )
+            : undefined
+        }
+      />
       <PolicyModal policy={policy} onClose={() => setPolicy(null)} />
     </>
   );
 };
-
-/** What the checkout changes in the sign-in: its consent, linked like its own notice. */
-export const CHECKOUT_AUTH_COMPONENTS = { Legal: AuthConsent };

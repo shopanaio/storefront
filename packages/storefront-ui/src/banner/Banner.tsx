@@ -1,7 +1,15 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { createStyles } from 'antd-style';
+import { isValidElement } from 'react';
+import type {
+  CSSProperties,
+  HTMLAttributes,
+  MouseEvent,
+  ReactNode,
+  Ref,
+} from 'react';
+import { theme } from 'antd';
+import { createStyles, keyframes } from 'antd-style';
 import clsx from 'clsx';
 import {
   LuCircleAlert,
@@ -12,28 +20,54 @@ import {
   LuX,
 } from 'react-icons/lu';
 import { mq } from '../breakpoints';
-import type { BannerTone } from './tones';
-import { BANNER_TONES, bannerToneVar } from './tones';
-import { useBannerTheme, type BannerIcon, type BannerPart } from './BannerProvider';
+import { useStorefrontUI } from '../StorefrontUIProvider';
+import type { BannerTone, BannerToneColors } from './tones';
+import {
+  useBannerTheme,
+  useBannerTone,
+  type BannerIcon,
+  type BannerPart,
+} from './BannerProvider';
 
-export interface BannerAction {
-  label: string;
-  /** A link when set, a button otherwise. */
-  href?: string;
-  onClick?: () => void;
-  /** The step is running: the button waits for it and cannot be pressed again. */
-  loading?: boolean;
+/** The next step of a banner that leads elsewhere: a link. */
+export interface BannerLinkAction {
+  label: ReactNode;
+  href: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  target?: string;
+  rel?: string;
+  /** A link cannot wait: it leaves the page. */
+  loading?: never;
 }
 
-export interface BannerProps {
+/** The next step of a banner done in place: a button. */
+export interface BannerButtonAction {
+  label: ReactNode;
+  href?: undefined;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  /** The step is running: the button shows a spinner and cannot be pressed again. */
+  loading?: boolean;
+  disabled?: boolean;
+}
+
+export type BannerAction = BannerLinkAction | BannerButtonAction;
+
+export interface BannerProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'title' | 'role' | 'children'
+> {
+  ref?: Ref<HTMLDivElement>;
   tone: BannerTone;
   title: ReactNode;
   description?: ReactNode;
-  /** One next step, shown as a text link on the right. */
-  action?: BannerAction;
+  /**
+   * One next step, a text link on the right: a link or a button from its description, or a
+   * control of its own.
+   */
+  action?: BannerAction | ReactNode;
   /** Closes the banner. A critical banner stays until its problem is solved and has no close. */
-  onDismiss?: () => void;
-  /** Accessible name of the close button. */
+  onDismiss?: (event: MouseEvent<HTMLButtonElement>) => void;
+  /** Accessible name of the close button; the `dismiss` text of `StorefrontUIProvider`. */
   dismissLabel?: string;
   /**
    * The title only, the description and the content left out: one line on desktop, up to two
@@ -43,28 +77,50 @@ export interface BannerProps {
   /** Next to the action, e.g. the counter of other messages. */
   extra?: ReactNode;
   className?: string;
+  style?: CSSProperties;
+  /** Classes of the parts, over the ones of `BannerProvider`. */
+  classNames?: Partial<Record<BannerPart, string>>;
+  /** Styles of the parts, over the ones of `BannerProvider`. */
+  styles?: Partial<Record<BannerPart, CSSProperties>>;
   /** Content under the description, e.g. a list of lines with their buttons. */
   children?: ReactNode;
 }
 
-const outline =
-  (Icon: typeof LuInfo): BannerIcon =>
-  // eslint-disable-next-line react/display-name -- One outline icon per tone, never inspected.
-  (props) => <Icon {...props} strokeWidth={1.75} />;
+const CriticalIcon: BannerIcon = (props) => (
+  <LuCircleAlert {...props} strokeWidth={1.75} />
+);
+const WarningIcon: BannerIcon = (props) => (
+  <LuTriangleAlert {...props} strokeWidth={1.75} />
+);
+const ActionIcon: BannerIcon = (props) => (
+  <LuInfo {...props} strokeWidth={1.75} />
+);
+const SuccessIcon: BannerIcon = (props) => (
+  <LuCircleCheck {...props} strokeWidth={1.75} />
+);
 
 const ICONS: Record<BannerTone, BannerIcon> = {
-  critical: outline(LuCircleAlert),
-  warning: outline(LuTriangleAlert),
-  action: outline(LuInfo),
-  success: outline(LuCircleCheck),
+  critical: CriticalIcon,
+  warning: WarningIcon,
+  action: ActionIcon,
+  success: SuccessIcon,
 };
+
+const isActionDescription = (
+  action: BannerProps['action']
+): action is BannerAction =>
+  typeof action === 'object' &&
+  action !== null &&
+  !isValidElement(action) &&
+  'label' in action;
 
 /**
  * Message of the storefront (the checkout, the sign-in), in the style of the Shopify checkout
- * banner: a 1px border, radius 12,
- * an icon without a circle, a bold title with the text under it and one action as a text link.
+ * banner: a 1px border, an icon without a circle, a bold title with the text under it and one
+ * action as a text link. The colors of the tones come from the antd status tokens.
  */
 export const Banner = ({
+  ref,
   tone,
   title,
   description,
@@ -74,202 +130,249 @@ export const Banner = ({
   compact = false,
   extra,
   className,
+  style,
+  classNames,
+  styles: partStyles,
   children,
+  ...rest
 }: BannerProps) => {
-  const { styles } = useStyles();
-  const theme = useBannerTheme();
+  const colors = useBannerTone(tone);
+  const { styles } = useStyles({ colors });
+  const { token } = theme.useToken();
+  const { texts } = useStorefrontUI();
+  const bannerTheme = useBannerTheme();
   const part = (name: BannerPart, ...own: (string | false | undefined)[]) => ({
-    className: clsx(...own, theme.classNames?.[name]),
-    style: theme.styles?.[name],
+    className: clsx(...own, bannerTheme.classNames?.[name], classNames?.[name]),
+    style: { ...bannerTheme.styles?.[name], ...partStyles?.[name] },
   });
-  const Icon = theme.icons?.[tone] ?? ICONS[tone];
-  const color = (name: keyof typeof BANNER_TONES[typeof tone]) =>
-    `var(${bannerToneVar(tone, name)}, ${theme.tones?.[tone]?.[name] ?? BANNER_TONES[tone][name]})`;
+  const Icon = bannerTheme.icons?.[tone] ?? ICONS[tone];
+  const iconSize = Math.round(token.fontSize * 1.25);
   const dismissible = tone !== 'critical' && onDismiss;
-  const body = compact ? null : (
-    <>
-      {description ? (
-        <div {...part('description', styles.description)}>{description}</div>
-      ) : null}
-      {children ? <div {...part('content', styles.content)}>{children}</div> : null}
-    </>
-  );
   const root = part('root', styles.banner, className);
+
+  const renderAction = () => {
+    if (!isActionDescription(action)) return action;
+    if (action.href !== undefined) {
+      return (
+        <a
+          {...part('action', styles.action)}
+          href={action.href}
+          target={action.target}
+          rel={action.rel}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </a>
+      );
+    }
+    return (
+      <button
+        type="button"
+        {...part(
+          'action',
+          styles.action,
+          action.loading && styles.actionLoading
+        )}
+        onClick={action.onClick}
+        disabled={action.loading || action.disabled}
+        aria-busy={action.loading || undefined}
+      >
+        {action.loading ? (
+          <LuLoaderCircle
+            size={token.fontSize}
+            aria-hidden="true"
+            className={styles.spinner}
+          />
+        ) : null}
+        {action.label}
+      </button>
+    );
+  };
 
   return (
     <div
+      {...rest}
+      ref={ref}
       role={tone === 'critical' ? 'alert' : 'status'}
       data-tone={tone}
       className={root.className}
-      style={{
-        ['--banner-bg' as string]: color('background'),
-        ['--banner-border' as string]: color('border'),
-        ['--banner-text' as string]: color('text'),
-        ['--banner-accent' as string]: color('accent'),
-        ...root.style,
-      }}
+      style={{ ...root.style, ...style }}
     >
       <span {...part('icon', styles.icon)} aria-hidden="true">
-        <Icon size={18} aria-hidden />
+        <Icon size={iconSize} aria-hidden />
       </span>
-      <div {...part('title', styles.title, compact && styles.titleCompact)}>{title}</div>
+      <div {...part('title', styles.title, compact && styles.titleCompact)}>
+        {title}
+      </div>
       <div {...part('side', styles.side)}>
         {extra}
-        {action ? (
-          action.href ? (
-            <a
-              {...part('action', styles.action)}
-              href={action.href}
-              onClick={action.onClick}
-            >
-              {action.label}
-            </a>
-          ) : (
-            <button
-              type="button"
-              {...part('action', styles.action, action.loading && styles.actionLoading)}
-              onClick={action.onClick}
-              disabled={action.loading}
-              aria-busy={action.loading || undefined}
-            >
-              {action.loading ? (
-                <LuLoaderCircle
-                  size={14}
-                  aria-hidden="true"
-                  className={styles.spinner}
-                />
-              ) : null}
-              {action.label}
-            </button>
-          )
-        ) : null}
+        {renderAction()}
         {dismissible ? (
           <button
             type="button"
             {...part('close', styles.close)}
-            aria-label={dismissLabel}
+            aria-label={dismissLabel ?? texts.dismiss}
             onClick={onDismiss}
           >
-            <LuX size={16} strokeWidth={1.75} aria-hidden="true" />
+            <LuX
+              size={token.fontSizeLG}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
           </button>
         ) : null}
       </div>
-      {body}
+      {compact ? null : (
+        <>
+          {description ? (
+            <div {...part('description', styles.description)}>
+              {description}
+            </div>
+          ) : null}
+          {children ? (
+            <div {...part('content', styles.content)}>{children}</div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 };
 
-const useStyles = createStyles(({ css, token }) => ({
-  banner: css`
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: start;
-    box-sizing: border-box;
-    width: 100%;
-    padding: 15px 16px;
-    border: 1px solid var(--banner-border);
-    border-radius: 12px;
-    background: var(--banner-bg);
-    color: var(--banner-text);
-    /* Portalled out of the page (a drawer), it keeps the font of the theme; in a centered
-       column (the sign-in) its text still starts at the icon. */
-    font-family: ${token.fontFamily};
-    text-align: left;
-    font-size: 14px;
-    line-height: 19px;
-  `,
-  icon: css`
-    grid-column: 1;
-    grid-row: 1;
-    display: flex;
-    align-items: center;
-    height: 19px;
-    margin-right: 10px;
-    color: var(--banner-accent);
-  `,
-  title: css`
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 0;
-    font-weight: 600;
-  `,
-  titleCompact: css`
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
 
-    ${mq.lg} {
-      display: block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-  `,
-  side: css`
-    grid-column: 3;
-    grid-row: 1;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    height: 19px;
-    /* 16px from the title once the action's touch padding is taken off. */
-    margin-left: 24px;
-  `,
-  actionLoading: css`
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: default;
-    opacity: 0.65;
-  `,
-  spinner: css`
-    animation: banner-spin 1s linear infinite;
-    @keyframes banner-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  `,
-  action: css`
-    /* 44px touch target around one line of text. */
-    margin: -12px -8px;
-    padding: 12px 8px;
-    border: 0;
-    background: transparent;
-    font: inherit;
-    color: var(--banner-accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    white-space: nowrap;
-    cursor: pointer;
+const useStyles = createStyles(
+  ({ css, token }, { colors }: { colors: BannerToneColors }) => {
+    // One line of the banner: the title, the icon, the action and the close button share it.
+    const line = Math.round(token.fontSize * token.lineHeight);
+    const closeSize = token.controlHeightLG;
+    const closeOffset = (line - closeSize) / 2;
+    return {
+      banner: css`
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: start;
+        box-sizing: border-box;
+        width: 100%;
+        padding: ${token.paddingSM}px ${token.padding}px;
+        border: ${token.lineWidth}px ${token.lineType} ${colors.border};
+        border-radius: ${token.borderRadiusLG}px;
+        background: ${colors.background};
+        color: ${colors.text};
+        /* Portalled out of the page (a drawer), it keeps the font of the theme; in a centered
+         column (the sign-in) its text still starts at the icon. */
+        font-family: ${token.fontFamily};
+        text-align: start;
+        font-size: ${token.fontSize}px;
+        line-height: ${line}px;
+      `,
+      icon: css`
+        grid-column: 1;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        height: ${line}px;
+        margin-inline-end: ${token.marginXS}px;
+        color: ${colors.accent};
+      `,
+      title: css`
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        font-weight: ${token.fontWeightStrong};
+      `,
+      titleCompact: css`
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
 
-    &:hover {
-      color: var(--banner-accent);
-      text-decoration: underline;
-      text-decoration-thickness: 2px;
-    }
-  `,
-  close: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    margin: -12px -14px -13px 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--banner-text);
-    cursor: pointer;
-  `,
-  // Secondary to the title in every tone, so it reads as the explanation of it.
-  description: css`
-    grid-column: 2 / 4;
-    margin: 0;
-    color: ${token.colorTextSecondary};
-  `,
-  content: css`
-    grid-column: 2 / 4;
-    margin-top: 12px;
-  `,
-}));
+        ${mq.lg} {
+          display: block;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+      `,
+      side: css`
+        grid-column: 3;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        gap: ${token.marginXXS}px;
+        height: ${line}px;
+        /* Clear of the title once the action's touch padding is taken off. */
+        margin-inline-start: ${token.marginLG}px;
+      `,
+      actionLoading: css`
+        display: inline-flex;
+        align-items: center;
+        gap: ${token.marginXXS}px;
+        cursor: default;
+        opacity: 0.65;
+      `,
+      spinner: css`
+        animation: ${spin} 1s linear infinite;
+
+        @media (prefers-reduced-motion: reduce) {
+          animation: none;
+        }
+      `,
+      action: css`
+        /* A touch target of a control's height around one line of text. */
+        margin: -${token.paddingSM}px -${token.paddingXS}px;
+        padding: ${token.paddingSM}px ${token.paddingXS}px;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        color: ${colors.accent};
+        text-decoration: underline;
+        text-underline-offset: ${token.lineWidthBold}px;
+        white-space: nowrap;
+        cursor: pointer;
+
+        &:hover {
+          color: ${colors.accent};
+          text-decoration: underline;
+          text-decoration-thickness: ${token.lineWidthBold}px;
+        }
+
+        &:focus-visible {
+          outline: ${token.lineWidthBold}px solid ${token.colorPrimaryBorder};
+          outline-offset: -${token.lineWidthBold}px;
+        }
+      `,
+      close: css`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: ${closeSize}px;
+        height: ${closeSize}px;
+        margin: ${closeOffset}px -${token.paddingSM}px ${closeOffset}px 0;
+        padding: 0;
+        border: 0;
+        border-radius: ${token.borderRadius}px;
+        background: transparent;
+        color: ${colors.text};
+        cursor: pointer;
+
+        &:focus-visible {
+          outline: ${token.lineWidthBold}px solid ${token.colorPrimaryBorder};
+          outline-offset: -${token.lineWidthBold}px;
+        }
+      `,
+      // Secondary to the title in every tone, so it reads as the explanation of it.
+      description: css`
+        grid-column: 2 / 4;
+        margin: 0;
+        color: ${token.colorTextSecondary};
+      `,
+      content: css`
+        grid-column: 2 / 4;
+        margin-top: ${token.marginSM}px;
+      `,
+    };
+  }
+);

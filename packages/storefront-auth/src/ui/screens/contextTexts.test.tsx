@@ -7,12 +7,18 @@ import type { AuthMethods } from '../../core/types';
 import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
 import { IdentifyScreen } from './IdentifyScreen';
 import { PasswordScreen } from './PasswordScreen';
-import { contextCopy, type AuthContext } from './types';
+import { contextCopy, draftOf, type AuthContext } from './types';
 
 afterEach(cleanup);
 
 const methods: AuthMethods = {
-  password: { signIn: true, signUp: true, reset: true, minLength: 10, maxLength: 128 },
+  password: {
+    signIn: true,
+    signUp: true,
+    reset: true,
+    minLength: 10,
+    maxLength: 128,
+  },
   emailOtp: { signIn: true, signUp: true, codeLength: 6 },
   phoneOtp: { signIn: true, signUp: true, codeLength: 6 },
   social: [{ provider: 'google', signUp: true }],
@@ -31,12 +37,8 @@ function renderIdentify(
           context={context}
           status="ready"
           methods={methods}
-          channel="email"
-          onChannelChange={noop}
-          phone={undefined}
-          onPhoneChange={noop}
-          email=""
-          onEmailChange={noop}
+          draft={{ ...draftOf(), channel: 'email' }}
+          onDraftChange={noop}
           pending={false}
           error={null}
           notice={null}
@@ -58,15 +60,15 @@ describe('contextCopy', () => {
   });
 
   it('offers guest checkout when sign-in fails in the guest checkout', () => {
-    expect(contextCopy('checkoutGuest').unavailable).toBe('alerts.unavailableGuest');
-    expect(contextCopy('checkoutRequired').unavailable).toBe('alerts.unavailable');
-    expect(contextCopy('store').accountsDisabled).toBe('alerts.accountsDisabled.store');
-  });
-
-  it('offers a password account in every context', () => {
-    expect(contextCopy('store').offersPasswordSignUp).toBe(true);
-    expect(contextCopy('checkoutGuest').offersPasswordSignUp).toBe(true);
-    expect(contextCopy('checkoutRequired').offersPasswordSignUp).toBe(true);
+    expect(contextCopy('checkoutGuest').unavailable).toBe(
+      'alerts.unavailableGuest'
+    );
+    expect(contextCopy('checkoutRequired').unavailable).toBe(
+      'alerts.unavailable'
+    );
+    expect(contextCopy('store').accountsDisabled).toBe(
+      'alerts.accountsDisabled.store'
+    );
   });
 });
 
@@ -75,12 +77,16 @@ describe('IdentifyScreen texts', () => {
     renderIdentify('store');
     expect(screen.getByRole('heading', { name: 'Вхід' })).toBeInTheDocument();
     // The password sign-up is offered on the password screen only.
-    expect(screen.queryByText('Зареєструватися з паролем')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Зареєструватися з паролем')
+    ).not.toBeInTheDocument();
     cleanup();
 
     renderIdentify('checkoutRequired');
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
-    expect(screen.getByText('Для оформлення замовлення потрібен акаунт.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Для оформлення замовлення потрібен акаунт.')
+    ).toBeInTheDocument();
   });
 
   it('adds guest checkout to the unavailable alert of the guest checkout', () => {
@@ -88,7 +94,9 @@ describe('IdentifyScreen texts', () => {
       error: new AuthError('unavailable', 'down', 503),
     });
     expect(
-      screen.getByText('Щось пішло не так. Спробуйте пізніше. Або оформіть замовлення як гість.')
+      screen.getByText(
+        'Щось пішло не так. Спробуйте пізніше. Або оформіть замовлення як гість.'
+      )
     ).toBeInTheDocument();
   });
 
@@ -99,7 +107,9 @@ describe('IdentifyScreen texts', () => {
       error: new AuthError('disabled', 'off', 404),
     });
     expect(
-      screen.getByText('Вхід до акаунта зараз недоступний. Оформіть замовлення як гість.')
+      screen.getByText(
+        'Вхід до акаунта зараз недоступний. Оформіть замовлення як гість.'
+      )
     ).toBeInTheDocument();
   });
 
@@ -121,7 +131,9 @@ describe('IdentifyScreen texts', () => {
         phoneOtp: { ...methods.phoneOtp, signIn: false },
       },
     });
-    expect(screen.getByRole('button', { name: 'Увійти з паролем' })).toHaveClass('ant-btn-primary');
+    expect(
+      screen.getByRole('button', { name: 'Увійти з паролем' })
+    ).toHaveClass('ant-btn-primary');
     expect(screen.getByText('Оберіть спосіб входу.')).toBeInTheDocument();
   });
 });
@@ -130,8 +142,8 @@ describe('PasswordScreen texts', () => {
   it('offers the password sign-up in the checkout too', () => {
     const props = {
       methods,
-      email: 'olena@example.com',
-      onEmailChange: noop,
+      draft: draftOf({ email: 'olena@example.com' }),
+      onDraftChange: noop,
       pending: false,
       error: null,
       notice: null,

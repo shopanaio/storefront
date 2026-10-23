@@ -3,13 +3,14 @@
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
+import { useId } from 'react';
 import type { AuthError } from '../../core/AuthError';
 import type {
   AccountConnection,
   AccountConnections,
   ConnectionResult,
 } from '../../core/types';
-import { AuthAlert } from '../common/Screen';
+import { AuthAlert } from '../common/alerts';
 import { socialProviderView } from '../parts/providers';
 import { useAuthUI } from '../AuthUIProvider';
 
@@ -30,7 +31,11 @@ export interface AccountConnectionsViewProps {
   onReauthenticate: () => void;
 }
 
-type Outcome = { type: 'info' | 'warning' | 'error'; key: string; provider: string };
+type Outcome = {
+  type: 'info' | 'warning' | 'error';
+  key: string;
+  provider: string;
+};
 
 function outcomeOf(
   result: ConnectionResult | null,
@@ -42,9 +47,17 @@ function outcomeOf(
   if (error && errorProvider && loaded) {
     switch (error.code) {
       case 'lastLoginMethod':
-        return { type: 'error', key: 'lastLoginMethod', provider: errorProvider };
+        return {
+          type: 'error',
+          key: 'lastLoginMethod',
+          provider: errorProvider,
+        };
       case 'accountConflict':
-        return { type: 'error', key: 'accountConflict', provider: errorProvider };
+        return {
+          type: 'error',
+          key: 'accountConflict',
+          provider: errorProvider,
+        };
       case 'linkingFailed':
       case 'unavailable':
         return { type: 'error', key: 'linkingFailed', provider: errorProvider };
@@ -53,14 +66,23 @@ function outcomeOf(
     }
   }
   if (!result) return null;
-  if (result.linked) return { type: 'info', key: 'linked', provider: result.provider };
+  if (result.linked)
+    return { type: 'info', key: 'linked', provider: result.provider };
   switch (result.error) {
     case 'accessDenied':
-      return { type: 'warning', key: 'accessDenied', provider: result.provider };
+      return {
+        type: 'warning',
+        key: 'accessDenied',
+        provider: result.provider,
+      };
     case 'emailMismatch':
       return { type: 'error', key: 'emailMismatch', provider: result.provider };
     case 'accountConflict':
-      return { type: 'error', key: 'accountConflict', provider: result.provider };
+      return {
+        type: 'error',
+        key: 'accountConflict',
+        provider: result.provider,
+      };
     case 'reauthenticationRequired':
       return null;
     default:
@@ -82,13 +104,18 @@ export const AccountConnectionsView = ({
   onReauthenticate,
 }: AccountConnectionsViewProps) => {
   const t = useTranslations('Auth.connections');
+  const tCommon = useTranslations('Auth.common');
   const { styles } = useStyles();
-  const { part } = useAuthUI();
+  const { part, headingLevel } = useAuthUI();
+  const titleId = useId();
+  const root = part('root', styles.root);
   const titlePart = part('title', styles.title);
   const reauth =
     Boolean(connections?.reauthenticationRequired) ||
     error?.code === 'reauthenticationRequired' ||
-    (result !== null && !result.linked && result.error === 'reauthenticationRequired');
+    (result !== null &&
+      !result.linked &&
+      result.error === 'reauthenticationRequired');
   const outcome = outcomeOf(result, error, errorProvider, status === 'ready');
   const busy = pendingProvider !== null;
 
@@ -114,12 +141,12 @@ export const AccountConnectionsView = ({
           <Typography.Text type="secondary">{sub}</Typography.Text>
         </span>
         {connection.status === 'connected' ? (
-          <Tag color="success" bordered={false}>
+          <Tag color="success" variant="filled">
             {t('connected')}
           </Tag>
         ) : null}
         {connection.status === 'conflict' ? (
-          <Tag color="error" bordered={false}>
+          <Tag color="error" variant="filled">
             {t('conflict')}
           </Tag>
         ) : null}
@@ -147,11 +174,15 @@ export const AccountConnectionsView = ({
   };
 
   return (
-    <section className={styles.root} aria-labelledby="auth-connections-title">
+    <section
+      className={root.className}
+      style={root.style}
+      aria-labelledby={titleId}
+    >
       <div className={styles.head}>
         <Typography.Title
-          level={2}
-          id="auth-connections-title"
+          level={headingLevel}
+          id={titleId}
           className={titlePart.className}
           style={titlePart.style}
         >
@@ -161,13 +192,18 @@ export const AccountConnectionsView = ({
       </div>
       {outcome ? (
         <AuthAlert type={outcome.type}>
-          {t(outcome.key, { provider: socialProviderView(outcome.provider).name })}
+          {t(outcome.key, {
+            provider: socialProviderView(outcome.provider).name,
+          })}
         </AuthAlert>
       ) : null}
       {reauth ? (
         <AuthAlert
           type="warning"
-          action={{ label: t('reauthenticateAction'), onClick: onReauthenticate }}
+          action={{
+            label: t('reauthenticateAction'),
+            onClick: onReauthenticate,
+          }}
         >
           {t('reauthenticate')}
         </AuthAlert>
@@ -175,13 +211,17 @@ export const AccountConnectionsView = ({
       {status === 'unavailable' ? (
         <AuthAlert
           type="error"
-          action={{ label: t('retry'), onClick: onReload }}
+          action={{ label: tCommon('retry'), onClick: onReload }}
         >
           {t('unavailable')}
         </AuthAlert>
       ) : null}
       {status === 'loading' ? (
-        <div aria-busy="true" aria-label={t('loading')} className={styles.skeletons}>
+        <div
+          aria-busy="true"
+          aria-label={tCommon('loading')}
+          className={styles.skeletons}
+        >
           <Skeleton.Button active block size="large" />
           <Skeleton.Button active block size="large" />
         </div>
@@ -229,7 +269,7 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: ${token.paddingSM}px;
-    padding: ${token.padding}px ${token.paddingLG - 4}px;
+    padding: ${token.padding}px ${token.paddingMD}px;
 
     & + & {
       border-top: ${token.lineWidth}px solid ${token.colorBorderSecondary};
@@ -250,7 +290,7 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 2px;
+    gap: ${token.marginXXS / 2}px;
     min-width: 0;
   `,
   name: css`

@@ -6,6 +6,12 @@ export const SUMMARY_ANCHOR = 'checkout-summary';
 /** Id of the lines of the order, for actions that send the buyer to them; on a phone they lead the page. */
 export const LINES_ANCHOR = 'checkout-lines';
 
+/**
+ * Id of the checkout form. On a phone the submit button stands under the summary, out of the
+ * form, and names it by this id.
+ */
+export const CHECKOUT_FORM_ID = 'checkout-form';
+
 /** Id of the terms checkbox next to the submit button. */
 export const TERMS_ANCHOR = 'checkout-terms';
 

@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import { Button, Checkbox, Typography } from 'antd';
+import { Checkbox, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
@@ -16,40 +15,9 @@ import { TERMS_ANCHOR } from '#checkout/ui/focusAnchor';
 import type { Checkout } from '#checkout/types/entity';
 import { PolicyModal } from './PolicyModal';
 import type { PolicyModalPolicy } from './PolicyModal';
+import { PolicyLink } from './PolicyLink';
 
 const { Text } = Typography;
-
-/**
- * A policy within a sentence: a link that opens the policy over the checkout. The link keeps
- * the policy page as its address, for a new tab. The sign-in's consent uses it too.
- */
-export const PolicyLink = ({
-  policy,
-  onOpen,
-  children,
-}: {
-  policy: PolicyModalPolicy & { path: string };
-  onOpen: (policy: PolicyModalPolicy) => void;
-  children: ReactNode;
-}) => {
-  const { styles } = useStyles();
-  return (
-    <Button
-      color="default"
-      variant="link"
-      href={policy.path}
-      className={styles.link}
-      onClick={(event) => {
-        // Inside the checkbox label a click on the link must not tick the box.
-        event.preventDefault();
-        event.stopPropagation();
-        onOpen(policy);
-      }}
-    >
-      {children}
-    </Button>
-  );
-};
 
 /** The notice in reading order: text as is, policies as links that open the policy. */
 const DisclosureParts = ({
@@ -140,18 +108,6 @@ export const TermsCheckbox = () => {
 };
 
 const useStyles = createStyles(({ css, token }) => ({
-  link: css`
-    /* Inline within the sentence; long titles wrap on a phone instead of running off the screen. */
-    display: inline;
-    height: auto;
-    padding: 0;
-    font-size: inherit;
-    line-height: inherit;
-    white-space: normal;
-    text-align: start;
-    text-decoration: underline;
-    vertical-align: baseline;
-  `,
   checkbox: css`
     display: flex;
     flex-direction: column;

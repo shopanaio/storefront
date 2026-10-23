@@ -8,6 +8,7 @@ import { WarehouseModalItem } from './WarehouseModalItem';
 import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
 import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
+import { SearchDrawerHeader } from '#checkout/ui/SearchDrawerHeader';
 
 interface Props {
   /** Branches or postomats: the list shows only points of this kind. */
@@ -64,18 +65,14 @@ export const WarehouseModal = ({
         open={open}
         onClose={close}
         header={
-          <DrawerBase.Header vertical gap={8}>
-            <Flex gap={8} justify="space-between" align="center" style={{ width: '100%' }}>
-              <DrawerBase.Title>{t(`form.${kind}`)}</DrawerBase.Title>
-              <DrawerBase.CloseButton />
-            </Flex>
+          <SearchDrawerHeader title={t(`form.${kind}`)}>
             <FloatingLabelInput
               label={t('form.search_point')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               disabled={!settlementRef}
             />
-          </DrawerBase.Header>
+          </SearchDrawerHeader>
         }
       >
         <Flex vertical gap={4}>

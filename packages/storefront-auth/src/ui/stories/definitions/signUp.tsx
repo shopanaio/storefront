@@ -1,7 +1,10 @@
 import type { Meta } from '@storybook/react-vite';
+import { useState } from 'react';
 import { fn } from 'storybook/test';
+import { EMAIL, methodsOf } from '../../../testing';
 import { SignUpScreen } from '../../screens/SignUpScreen';
-import { EMAIL, errorOf, methodsOf } from '../fixtures';
+import { draftOf, type AuthDraft } from '../../screens/types';
+import { errorForState } from '../args';
 import { Frame } from '../frames';
 
 const STATES = [
@@ -27,33 +30,48 @@ interface Args {
 
 const Story = (args: Args) => {
   const { state, minLength, maxLength } = args;
+  const [draft, setDraft] = useState<AuthDraft>(() =>
+    draftOf({ email: state === 'invalidInput' ? 'olena@example' : EMAIL })
+  );
   const password =
     state === 'passwordTooShort'
       ? 'x'.repeat(Math.max(1, minLength - 4))
       : state === 'passwordTooLong'
         ? 'x'.repeat(maxLength + 2)
         : 'x'.repeat(minLength + 2);
-  const error =
-    state === 'rateLimited'
-      ? errorOf('rateLimited', 252)
-      : state === 'userExists' || state === 'signUpDisabled' || state === 'unavailable'
-        ? errorOf(state)
-        : null;
+  const error = errorForState(
+    state,
+    ['userExists', 'signUpDisabled', 'unavailable'],
+    {
+      rateLimited: 252,
+    }
+  );
   return (
-    <Frame context="store" back>
+    <Frame
+      context="store"
+      back
+      preset={{
+        submitted: state !== 'default' && state !== 'pending',
+        firstName: state === 'firstNameMissing' ? '' : 'Олена',
+        lastName: state === 'lastNameMissing' ? '' : 'Коваленко',
+        password,
+      }}
+    >
       <SignUpScreen
         key={`${state}-${minLength}-${maxLength}`}
         context="store"
-        methods={methodsOf({ social: args.social, minLength, maxLength, passwordSignUp: true })}
+        methods={methodsOf({
+          social: args.social,
+          minLength,
+          maxLength,
+          passwordSignUp: true,
+        })}
+        draft={draft}
+        onDraftChange={(patch) =>
+          setDraft((current) => ({ ...current, ...patch }))
+        }
         pending={state === 'pending'}
         error={error}
-        showErrors={state !== 'default' && state !== 'pending'}
-        defaultValues={{
-          firstName: state === 'firstNameMissing' ? '' : 'Олена',
-          lastName: state === 'lastNameMissing' ? '' : 'Коваленко',
-          email: state === 'invalidInput' ? 'olena@example' : EMAIL,
-          password,
-        }}
         onSubmit={fn()}
         onSignIn={fn()}
         onCode={fn()}

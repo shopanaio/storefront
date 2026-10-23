@@ -16,6 +16,7 @@ export {
 } from './core/types';
 export {
   clearConnectionResult,
+  clearEmailVerificationLink,
   clearPasswordResetLink,
   readConnectionResult,
   readEmailVerificationLink,

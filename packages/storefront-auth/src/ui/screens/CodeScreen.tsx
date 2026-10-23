@@ -4,25 +4,20 @@ import { MailOutlined, MobileOutlined } from '@ant-design/icons';
 import { Spin, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useId, useRef, useState } from 'react';
-import { formatPhoneNumberIntl } from '@shopana/storefront-ui';
+import { useEffect, useId, useRef, useState } from 'react';
+import { formatPhoneInternational } from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
 import type { OtpChannel } from '../../core/types';
+import { ResendAction } from '../common/actions';
+import { AuthAlert, useErrorAlert } from '../common/alerts';
 import { CodeCells } from '../common/CodeCells';
-import { formatResend } from '../common/format';
-import {
-  AuthAlert,
-  Badge,
-  Chip,
-  RateLimitAlert,
-  Screen,
-  ScreenTitle,
-  SigningIn,
-  TextAction,
-} from '../common/Screen';
-import type { OtpPurpose } from './types';
+import { ScreenTitle } from '../common/heading';
+import { Badge, Chip, Screen } from '../common/layout';
+import { useScreenPreset } from '../common/preset';
+import type { AuthContext, OtpPurpose } from './types';
 
 export interface CodeScreenProps {
+  context: AuthContext;
   /** A code to sign in, or to confirm the email of a password account. */
   purpose: OtpPurpose;
   channel: OtpChannel;
@@ -38,18 +33,18 @@ export interface CodeScreenProps {
   signUpWithCode: boolean;
   pending: boolean;
   error: AuthError | null;
-  /** Signed in: "Signing in…" with the buyer's initial, a spinner until it is known. */
-  signingIn?: { initial: string | null } | null;
   onVerify: (code: string) => void;
   onResend: () => void;
   /** Back to change the email or the number. */
   onChange: () => void;
-  /** Code typed in (stories). */
-  defaultCode?: string;
 }
 
-/** The code: six cells, sent once all are filled, with a countdown to sending it again. */
+/**
+ * The code: six cells, sent once all are filled — or as soon as the step before it is done —
+ * with a countdown to sending it again.
+ */
 export const CodeScreen = ({
+  context,
   purpose,
   channel,
   destination,
@@ -58,20 +53,22 @@ export const CodeScreen = ({
   signUpWithCode,
   pending,
   error,
-  signingIn,
   onVerify,
   onResend,
   onChange,
-  defaultCode = '',
 }: CodeScreenProps) => {
   const t = useTranslations('Auth');
   const { styles } = useStyles();
+  const preset = useScreenPreset();
   const titleId = useId();
   const errorId = useId();
-  const [code, setCode] = useState(defaultCode);
+  const [code, setCode] = useState(preset.code ?? '');
   const [shownError, setShownError] = useState<AuthError | null>(error);
   const [lastError, setLastError] = useState<AuthError | null>(error);
-  const submitted = useRef<string | null>(defaultCode.length === codeLength ? defaultCode : null);
+  // The last code sent; a code typed in before (a story's) counts as sent.
+  const submitted = useRef<string | null>(
+    code.length === codeLength ? code : null
+  );
 
   // An error stays until the buyer changes the code.
   if (error !== lastError) {
@@ -79,37 +76,57 @@ export const CodeScreen = ({
     setShownError(error);
   }
 
+  // A complete code is sent once; typed while a step was still running, it goes when it ends.
+  useEffect(() => {
+    if (code.length < codeLength) {
+      submitted.current = null;
+      return;
+    }
+    if (pending || submitted.current === code) return;
+    submitted.current = code;
+    onVerify(code);
+  }, [code, codeLength, pending, onVerify]);
+
   const shown =
-    channel === 'phone' ? formatPhoneNumberIntl(destination) || destination : destination;
-
-  if (signingIn) {
-    return <SigningIn initial={signingIn.initial} destination={shown} title={t('code.signingIn')} />;
-  }
-
+    channel === 'phone' ? formatPhoneInternational(destination) : destination;
   const verifyEmail = purpose === 'verifyEmail';
   const wrong = shownError?.code === 'invalidCredentials';
   const limited = error?.code === 'rateLimited';
   const off = limited || error?.code === 'unavailable';
   const verifying = pending && code.length === codeLength;
-  const wrongText = verifyEmail || signUpWithCode
-    ? t('code.invalid')
-    : channel === 'email'
-      ? t('code.invalidNoSignUpEmail')
-      : t('code.invalidNoSignUpPhone');
+  const wrongText =
+    verifyEmail || signUpWithCode
+      ? t('code.invalid')
+      : channel === 'email'
+        ? t('code.invalidNoSignUpEmail')
+        : t('code.invalidNoSignUpPhone');
+
+  const alert = useErrorAlert(error, context, {
+    // Told under the cells.
+    invalidCredentials: null,
+    deliveryUnavailable: (
+      <AuthAlert type="error">
+        {t('alerts.deliveryUnavailableResend')}
+      </AuthAlert>
+    ),
+  });
 
   const change = (next: string) => {
     setCode(next);
     if (shownError?.code === 'invalidCredentials') setShownError(null);
-    if (next.length === codeLength && submitted.current !== next && !pending) {
-      submitted.current = next;
-      onVerify(next);
-    }
-    if (next.length < codeLength) submitted.current = null;
   };
 
   return (
     <Screen>
-      <Badge icon={channel === 'email' || verifyEmail ? <MailOutlined /> : <MobileOutlined />} />
+      <Badge
+        icon={
+          channel === 'email' || verifyEmail ? (
+            <MailOutlined />
+          ) : (
+            <MobileOutlined />
+          )
+        }
+      />
       <ScreenTitle
         id={titleId}
         title={verifyEmail ? t('code.titleVerifyEmail') : t('code.title')}
@@ -123,17 +140,14 @@ export const CodeScreen = ({
         value={shown}
         action={{
           label: t('common.change'),
-          ariaLabel: channel === 'phone' ? t('common.changePhone') : t('common.changeEmail'),
+          ariaLabel:
+            channel === 'phone'
+              ? t('common.changePhone')
+              : t('common.changeEmail'),
           onClick: onChange,
         }}
       />
-      {limited ? <RateLimitAlert error={error} /> : null}
-      {error?.code === 'deliveryUnavailable' ? (
-        <AuthAlert type="error">{t('alerts.deliveryUnavailableResend')}</AuthAlert>
-      ) : null}
-      {error?.code === 'unavailable' ? (
-        <AuthAlert type="error">{t('alerts.unavailable')}</AuthAlert>
-      ) : null}
+      {alert}
       <CodeCells
         length={codeLength}
         value={code}
@@ -154,15 +168,13 @@ export const CodeScreen = ({
           {wrongText}
         </Typography.Text>
       ) : null}
-      {resendIn > 0 ? (
-        <Typography.Text type="secondary">
-          {t('code.resendIn', { time: formatResend(resendIn) })}
-        </Typography.Text>
-      ) : (
-        <TextAction onClick={onResend} disabled={pending || limited}>
-          {t('code.resend')}
-        </TextAction>
-      )}
+      <ResendAction
+        onResend={onResend}
+        label={t('code.resend')}
+        pending={pending}
+        error={error}
+        resendIn={resendIn}
+      />
     </Screen>
   );
 };

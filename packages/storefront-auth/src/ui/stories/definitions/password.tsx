@@ -1,9 +1,15 @@
 import type { Meta } from '@storybook/react-vite';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
-import { PasswordScreen, type PasswordNotice } from '../../screens/PasswordScreen';
-import type { AuthContext } from '../../screens/types';
-import { EMAIL, errorOf, methodsOf } from '../fixtures';
+import { EMAIL, methodsOf } from '../../../testing';
+import { PasswordScreen } from '../../screens/PasswordScreen';
+import {
+  draftOf,
+  type AuthContext,
+  type AuthDraft,
+  type PasswordNotice,
+} from '../../screens/types';
+import { contextArgType, errorForState } from '../args';
 import { Frame } from '../frames';
 
 const STATES = [
@@ -35,18 +41,16 @@ const NOTICES: Partial<Record<Args['state'], PasswordNotice>> = {
 
 const Story = (args: Args) => {
   const { state } = args;
-  const [email, setEmail] = useState(state === 'invalidInput' ? 'olena@example' : EMAIL);
-  const error =
-    state === 'rateLimited'
-      ? errorOf('rateLimited', 45)
-      : state === 'invalidInput' ||
-          state === 'invalidCredentials' ||
-          state === 'methodDisabled' ||
-          state === 'unavailable'
-        ? errorOf(state)
-        : null;
+  const [draft, setDraft] = useState<AuthDraft>(() =>
+    draftOf({ email: state === 'invalidInput' ? 'olena@example' : EMAIL })
+  );
+  const error = errorForState(
+    state,
+    ['invalidInput', 'invalidCredentials', 'methodDisabled', 'unavailable'],
+    { rateLimited: 45 }
+  );
   return (
-    <Frame context={args.context} back>
+    <Frame context={args.context} back preset={{ password: 'secret-password' }}>
       <PasswordScreen
         key={state}
         context={args.context}
@@ -55,12 +59,13 @@ const Story = (args: Args) => {
           passwordSignUp: args.passwordSignUp,
           passwordReset: args.passwordReset,
         })}
-        email={email}
-        onEmailChange={setEmail}
+        draft={draft}
+        onDraftChange={(patch) =>
+          setDraft((current) => ({ ...current, ...patch }))
+        }
         pending={state === 'pending'}
         error={error}
         notice={NOTICES[state] ?? null}
-        defaultPassword="secret-password"
         onSubmit={fn()}
         onForgot={fn()}
         onCode={fn()}
@@ -82,7 +87,7 @@ export const password = {
     state: 'default',
   },
   argTypes: {
-    context: { control: 'inline-radio', options: ['store', 'checkoutGuest', 'checkoutRequired'] },
+    context: contextArgType,
     state: { control: 'select', options: STATES },
   },
 } satisfies Meta<Args>;

@@ -1,21 +1,24 @@
 'use client';
 
 import { CheckOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { FloatingLabelInput } from '@shopana/storefront-ui';
+import { useId } from 'react';
+import { isEmail } from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
-import { Chip, Field, RateLimitAlert, AuthAlert, SubmitButton, useRateLimit } from '../common/Screen';
-import { isEmail } from '../common/validation';
+import { SubmitButton } from '../common/actions';
+import { useErrorAlert, useRateLimit } from '../common/alerts';
+import { AuthForm, EmailField, useSubmit } from '../common/form';
+import { Chip } from '../common/layout';
 import { ResultScreen } from './ResultScreen';
+import type { AuthContext, AuthDraft, AuthDraftChange } from './types';
 
 export interface EmailVerificationScreenProps {
+  context: AuthContext;
   /** The email is confirmed, or the link is spent and a new email can be sent. */
   state: 'verified' | 'expired';
-  email: string;
-  onEmailChange: (email: string) => void;
+  /** The email typed so far. */
+  draft: AuthDraft;
+  onDraftChange: AuthDraftChange;
   /** A new verification email was sent. */
   sent: boolean;
   pending: boolean;
@@ -26,9 +29,10 @@ export interface EmailVerificationScreenProps {
 
 /** The page a verification link opens (`/account/verify-email`). */
 export const EmailVerificationScreen = ({
+  context,
   state,
-  email,
-  onEmailChange,
+  draft,
+  onDraftChange,
   sent,
   pending,
   error,
@@ -36,9 +40,11 @@ export const EmailVerificationScreen = ({
   onSignIn,
 }: EmailVerificationScreenProps) => {
   const t = useTranslations('Auth');
-  const { styles } = useStyles();
-  const [touched, setTouched] = useState(false);
+  const titleId = useId();
+  const form = useSubmit();
   const waiting = useRateLimit(error);
+  const alert = useErrorAlert(error, context);
+  const email = draft.email;
 
   if (state === 'verified') {
     return (
@@ -56,28 +62,18 @@ export const EmailVerificationScreen = ({
     );
   }
 
-  const invalid = (touched && !isEmail(email)) || error?.code === 'invalidInput';
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setTouched(true);
-    if (!isEmail(email)) return;
-    onResend(email.trim());
-  };
-
   return (
     <ResultScreen
       tone="warning"
       icon={<ExclamationCircleOutlined />}
+      titleId={titleId}
       title={t('linkExpired.title')}
-      subtitle={sent ? t('linkExpired.verifySentSubtitle') : t('linkExpired.verifySubtitle')}
-      alerts={
-        <>
-          <RateLimitAlert error={error} />
-          {error?.code === 'unavailable' ? (
-            <AuthAlert type="error">{t('alerts.unavailable')}</AuthAlert>
-          ) : null}
-        </>
+      subtitle={
+        sent
+          ? t('linkExpired.verifySentSubtitle')
+          : t('linkExpired.verifySubtitle')
       }
+      alerts={alert}
       chip={sent ? <Chip value={email.trim()} /> : null}
       actions={
         sent ? (
@@ -85,34 +81,28 @@ export const EmailVerificationScreen = ({
             {t('common.signIn')}
           </SubmitButton>
         ) : (
-          <form className={styles.form} onSubmit={submit} noValidate>
-            <Field>
-              <FloatingLabelInput
-                label={t('common.email')}
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => onEmailChange(event.target.value)}
-                status={invalid ? 'error' : undefined}
-                error={invalid ? t('common.invalidEmail') : undefined}
-              />
-            </Field>
-            <SubmitButton pending={pending} pendingLabel={t('common.pending')} disabled={waiting > 0}>
+          <AuthForm
+            labelledBy={titleId}
+            onSubmit={() =>
+              form.submit(isEmail(email), () => onResend(email.trim()))
+            }
+          >
+            <EmailField
+              value={email}
+              onChange={(next) => onDraftChange({ email: next })}
+              submitted={form.submitted}
+              error={error}
+            />
+            <SubmitButton
+              pending={pending}
+              pendingLabel={t('common.pending')}
+              disabled={waiting > 0}
+            >
               {t('linkExpired.verifyAction')}
             </SubmitButton>
-          </form>
+          </AuthForm>
         )
       }
     />
   );
 };
-
-const useStyles = createStyles(({ css, token }) => ({
-  form: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingSM}px;
-    width: 100%;
-    margin: 0;
-  `,
-}));

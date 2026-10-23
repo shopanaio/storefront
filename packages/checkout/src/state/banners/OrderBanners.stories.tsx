@@ -102,7 +102,6 @@ function OrderBanners({
           description={compact ? undefined : banner.description}
           action={banner.action}
           onDismiss={banner.onDismiss}
-          dismissLabel={t('banner-close')}
           compact={compact}
         />
       ))}

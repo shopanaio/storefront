@@ -10,6 +10,9 @@ import type {
 import { SectionId } from '#checkout/state/interface';
 import type { Checkout } from '#checkout/types/entity';
 
+/** The click a banner passes its action; the handlers do not read it. */
+const click = {} as never;
+
 const t = (key: string, values?: Record<string, string | number>) =>
   values ? `${key} ${JSON.stringify(values)}` : key;
 
@@ -112,7 +115,7 @@ describe('collectBanners', () => {
       title: 'payment-failed-title',
     });
     expect(banner.onDismiss).toBeUndefined();
-    banner.action?.onClick?.();
+    banner.action?.onClick?.(click);
     expect(h.retryPlacement).toHaveBeenCalled();
   });
 
@@ -124,7 +127,7 @@ describe('collectBanners', () => {
     );
 
     expect(banner.priority).toBe(BannerPriority.Closed);
-    banner.action?.onClick?.();
+    banner.action?.onClick?.(click);
     expect(h.goHome).toHaveBeenCalled();
   });
 
@@ -153,7 +156,7 @@ describe('collectBanners', () => {
     expect(banners[0].title).toBe(
       `banner-fill-sections ${JSON.stringify({ sections: 'contact, delivery, payment' })}`
     );
-    banners[0].action?.onClick?.();
+    banners[0].action?.onClick?.(click);
     expect(h.focusSection).toHaveBeenCalledWith(SectionId.Contact);
   });
 
@@ -285,7 +288,7 @@ describe('collectBanners', () => {
       title: 'Contact not saved',
     });
     expect(banner.onDismiss).toBeUndefined();
-    banner.action?.onClick?.();
+    banner.action?.onClick?.(click);
     expect(h.focusSection).toHaveBeenCalledWith(SectionId.Contact);
   });
   it('a rejected placement can be closed and gives way to what blocks the order', () => {
@@ -446,7 +449,7 @@ describe('collectBanners', () => {
         action: { label: 'loyalty-banner-go' },
       });
       expect(banner.onDismiss).toBeDefined();
-      banner.action?.onClick?.();
+      banner.action?.onClick?.(click);
       expect(h.focusSection).toHaveBeenCalledWith(SectionId.Loyalty);
     });
 
@@ -485,7 +488,7 @@ describe('collectBanners', () => {
       );
 
       expect(banner.title).toBe('loyalty-banner-unavailable');
-      banner.action?.onClick?.();
+      banner.action?.onClick?.(click);
       expect(h.refreshLoyalty).toHaveBeenCalled();
     });
 
@@ -509,7 +512,7 @@ describe('collectBanners', () => {
         action: { label: 'loyalty-banner-without-points', loading: true },
       });
       expect(banners[0].onDismiss).toBeUndefined();
-      banners[0].action?.onClick?.();
+      banners[0].action?.onClick?.(click);
       expect(h.dropRedemption).toHaveBeenCalled();
     });
 
@@ -548,7 +551,7 @@ describe('collectBanners', () => {
         'loyalty-banner-reward-inactive',
         'loyalty-banner-reward-unavailable',
       ]);
-      banners[0].action?.onClick?.();
+      banners[0].action?.onClick?.(click);
       expect(h.dropReward).toHaveBeenCalled();
     });
 
@@ -561,7 +564,7 @@ describe('collectBanners', () => {
       );
 
       expect(banner.title).toBe('loyalty-banner-sign-in');
-      banner.action?.onClick?.();
+      banner.action?.onClick?.(click);
       expect(h.signIn).toHaveBeenCalled();
     });
 
@@ -593,7 +596,7 @@ describe('collectBanners', () => {
         title: 'placement-error-loyalty',
         action: { label: 'loyalty-banner-refresh' },
       });
-      banner.action?.onClick?.();
+      banner.action?.onClick?.(click);
       expect(h.refreshLoyalty).toHaveBeenCalled();
     });
   });

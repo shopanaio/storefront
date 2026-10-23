@@ -23,6 +23,7 @@
     "@shopana/storefront": "^0.1.0",
     "@shopana/storefront-auth": "^0.1.0",
     "@shopana/storefront-sdk": "^0.1.0",
+    "@shopana/storefront-ui": "^0.1.0",
     "next-intl": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -31,7 +32,6 @@
     "@ant-design/icons": "^6.1.0",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.2",
-    "@shopana/storefront-ui": "0.1.0",
     "antd": "^6.0.0",
     "antd-style": "^3.7.1",
     "clsx": "^2.1.1",
@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@shopana/storefront-auth": "0.1.0",
+    "@shopana/storefront-ui": "0.1.0",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@vitejs/plugin-react": "^4.3.4",

@@ -21,12 +21,12 @@ Key components:
 
 - `components/Checkout.tsx`: Checkout container. Mounts data (`CheckoutDataContextProvider`) and API (`CheckoutApiProvider`) contexts, wires the controller (`CheckoutController`), and renders by placement phase: the result screen (`components/result/CheckoutResult.tsx`), the waiting screen (`components/result/PaymentPendingScreen.tsx`), or progress and the view (`CheckoutView`). Handles submit via `useCheckoutStore().requestSubmit()`.
 - `components/CheckoutController.tsx`: hooks in `useOperationTracker` and `usePlacementController`, calls `onOrderAccepted` on `OrderAccepted`, and hosts a client SDK module for `CLIENT_SDK` actions.
-- `components/CheckoutView.tsx`: render-only component. Renders sections using `infra/SectionRenderer` wrapped with `components/common/CheckoutSection`. Left column — sections, right — `summary`.
+- `components/CheckoutView.tsx`: render-only component. Left column — the brand and `CheckoutFormSections` (the checkout `<form>`: contact, delivery, payment, comment and, on desktop, the actions) or, while the sign-in is required, `CheckoutSignInColumn` in its place, out of the form; right — `summary` and, on a phone, the actions, whose submit button names the form by `CHECKOUT_FORM_ID`. Sections render through `infra/SectionRenderer` wrapped with `components/common/CheckoutSection`.
 - `components/submit/CheckoutActions.tsx`: the checkout banner (`components/banner/BannerSlot.tsx`) above the submit button. On mobile both stay in a panel at the bottom of the screen; on desktop they stay at the end of the form, and the banner slot keeps the height of one line even when empty, so the form does not move.
 
 ## Banners
 
-The checkout has its own banner (`Banner` of `@shopana/storefront-ui`, shared with the sign-in screens) instead of antd `Alert`/`notification`: a 1px border, radius 12, an icon without a circle, a bold title with the text under it, one action as a text link on the right. Tones (`banner/tones.ts` there): `critical` (failed: payment, placement, a save), `warning` (the order changed on its own), `action` (the buyer has to choose or fill something in), `success`. Their colors are CSS custom properties `--banner-<tone>-<background|border|text|accent>`, declared on the checkout root (a banner outside it, in a drawer, falls back to the same colors), so a theme can override them in CSS. A critical banner cannot be closed: it stays until its problem is solved.
+The checkout's banners are `Banner` of `@shopana/storefront-ui`, shared with the sign-in screens, instead of antd `Alert`/`notification`: a 1px border, an icon without a circle, a bold title with the text under it, one action as a text link on the right. Tones (`banner/tones.ts` there): `critical` (failed: payment, placement, a save), `warning` (the order changed on its own), `action` (the buyer has to choose or fill something in), `success`. Their colors come from the antd status tokens (error, warning, info, success); a theme changes them with `BannerProvider` of `@shopana/storefront-ui` (`tones`), and a control placed in a banner takes them from `useBannerTone`. A critical banner cannot be closed: it stays until its problem is solved.
 
 Messages of the whole checkout share one banner above the submit button (`state/banners/banners.ts`, `collectBanners`): the most important is shown in one line, the others behind its counter. Order: the checkout is closed (placed elsewhere, expired, being replaced) → the payment failed or is unfinished → something blocks the order (unfilled sections and blocking issues, after the buyer pressed the button; lines that cannot be delivered, said once: `DELIVERY_OPTIONS_UNAVAILABLE` is left out while they last) → the last placement was rejected (a `warning` the buyer may close) → a save failed → the order changed (stock and price notifications, warnings of the calculation). On a phone the compact title takes up to two lines, the text of a single banner opens with a chevron, and the open list scrolls within 60% of the screen. A section shows its own problem in place as a quiet line (`components/notices/SectionIssues.tsx`) or a banner of its own (a reset selection, an unsaved delivery input).
 
@@ -41,6 +41,23 @@ Sections live under `sections/*` and include:
 - `schema.ts` — Yup validation schema
 - `mapper.ts`, `types.ts` — helpers and types
 - Sections map — `sections/sections.tsx` with keys from `SectionId` (`state/interface.ts`).
+
+## Sign-in
+
+The sign-in screens come from `@shopana/storefront-auth/ui` (a peer dependency, with `@shopana/storefront-ui` and `@shopana/storefront-sdk`); the checkout adds only where they stand and its consent.
+
+- One switch: `theme.customerAccountsEnabled` (`CheckoutThemeAdapter`). Only with it the contact title has the sign-in control (`components/CheckoutAuth.tsx`: the theme's `Auth`, `DefaultCheckoutAuth` by default: "Log in", or "Signed in as {identifier}" with "Log out", the identifier from `useLoginIdentifier()`), the account data notice after a sign-in (`AccountDataNotice`, on `useCartClaimed` of the SDK) and the invitation to sign in for the points the order earns (`LoyaltyEarningLine`).
+- One surface: `components/CheckoutSignInProvider.tsx`, mounted once by `Checkout` around the view. `useCheckoutSignIn().requestSignIn()` (`context/CheckoutSignInContext.tsx`) is what "Log in", the earning line and the loyalty banners' sign-in action call: it opens the sign-in drawer (`CheckoutAuthDialog`, `AuthDialog` with `presentation="drawer"`), or, while the sign-in is required, scrolls to the inline form and focuses its field (the `AuthInline` handle). Back from a social provider without a session (`useAuthResult`), the drawer is open to say why until it is closed.
+- Sign-in required: `hooks/useSignInRequired.ts` — the store takes orders from accounts only and the buyer is a guest (S7: `checkout.guestCheckoutAllowed` is false), or the session ended on the account checkout (S6). `CheckoutSignInRequired` (`AuthInline`) then stands in place of the contact and the other sections; the summary keeps the lines and the totals, and the sign-in invites with what the order earns.
+- Both start from the email or phone of the contact and save the typed input before a social provider (`CheckoutAuthUI.tsx`, `useCheckoutAuthFlowProps`).
+- Consent: `components/notices/AuthConsent.tsx` is storefront-auth's `DefaultLegal` whose privacy policy (from the disclosures) opens over the checkout in `PolicyModal`, as in the notice under the submit button (`PolicyLink`); without it, `links.privacy` as by default. `CheckoutAuthUI` sets it only when the `AuthUIProvider` above the checkout keeps the default `Legal`: a host's own `Legal` stays. The rest of the screens is restyled by the host's `AuthUIProvider` and antd `ConfigProvider`.
+
+## Theme slots
+
+`theme.slots` (`CheckoutSlots`) adds the theme's own components to the form; each renders in the checkout providers and can read the checkout with its hooks:
+
+- `afterContact` — under the contact section, over the delivery;
+- `beforeActions` — over the banner and the submit button; rendered with both placements of the actions (the form column on desktop, under the summary on a phone), the one not on screen hidden by CSS.
 
 ## Data and Contexts
 
@@ -138,7 +155,7 @@ Files: `state/placement/*`, `components/result/*`, `page/return.tsx`.
 
 ## Lifecycle
 
-Files: `state/useCheckoutLifecycle.ts`, `state/renewal.ts`, `hooks/useCheckoutNotFound.ts`.
+Files: `state/useCheckoutLifecycle.ts`, `state/renewal.ts`, `hooks/useCheckoutNotFound.ts`, `hooks/useIsCheckoutMissing.ts`.
 
 - `PLACED` is handled like `CHECKOUT_ALREADY_PLACED`: the placement of this browser is followed, otherwise the buyer is told the order was already placed.
 - `EXPIRED` or `ABANDONED` from the server, or a mutation rejected with `CHECKOUT_EXPIRED`/`CHECKOUT_ABANDONED`: a new checkout with the same lines (purchase, attributes, tags, components) replaces it once (R5); contacts and promo codes are not carried over. When `expiresAt` passes by the browser clock, the checkout is read again once; it is replaced only when the server answers that it is closed, never by the browser clock alone. Nothing is replaced while a placement attempt of this browser (`sent` or `resolved`) owns the checkout. The checkout banner tells the buyer, or offers a retry when creating it failed.
@@ -185,7 +202,6 @@ Files: `sections/loyalty/**`, `hooks/useLoyaltyAccount/**`. One program per stor
 
 ## Configuration
 
-- `config.ts` — country configuration (`UA`/`INTL`) that can control visibility and localization.
 - `page/*` — routing integration, redirect when `cartId` is absent (not while a placement runs or its result is shown), the return page, brand injection.
 
 ## Adding a New Section
@@ -212,11 +228,12 @@ Files: `sections/loyalty/**`, `hooks/useLoyaltyAccount/**`. One program per stor
 
 ## Quick Links
 
-- Components: `components/Checkout.tsx`, `components/CheckoutView.tsx`, `components/CheckoutController.tsx`
+- Components: `components/Checkout.tsx`, `components/CheckoutView.tsx`, `components/CheckoutFormSections.tsx`, `components/CheckoutController.tsx`
+- Sign-in: `components/CheckoutSignInProvider.tsx`, `context/CheckoutSignInContext.tsx`, `components/CheckoutAuth.tsx`, `components/CheckoutSignInRequired.tsx`, `hooks/useSignInRequired.ts`
 - Data context: `context/CheckoutDataContext.tsx`
 - API context: `context/CheckoutApiContext.tsx`
 - Sections: `sections/*`, map: `sections/sections.tsx`
 - Store and events: `state/checkoutStore.ts`, `state/checkoutBus.ts`, `state/hooks/*`
 - API: `api/useCreateCheckoutApi.ts`, `api/useCheckoutOperation.ts`, `api/mutations/*`, `api/queries/*`
 - Providers: `vendors/*`, `infra/ProviderRenderer.tsx`, `infra/resolveProviderConfig.ts`
-- Config: `config.ts`, page: `page/*`
+- Theme: `theme.ts`, page: `page/*`

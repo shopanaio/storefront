@@ -1,4 +1,4 @@
-import type { AuthError } from '../../core/AuthError';
+import type { AuthMethodTab } from '../AuthUIProvider';
 
 /**
  * Where the sign-in is shown. It changes texts and what is offered, never the logic:
@@ -15,9 +15,40 @@ export type IdentifyNotice =
   | 'socialFailed'
   | 'accountNotLinked';
 
+/** The email waits for its link, the link was sent again, or the account was just created. */
+export type PasswordNotice =
+  | 'verificationLink'
+  | 'verificationResent'
+  | 'signInRequired';
+
 export type OtpPurpose = 'signIn' | 'verifyEmail';
 
-export type AlertType = 'info' | 'success' | 'warning' | 'error';
+/**
+ * What the buyer typed that outlives a screen: the way to get a code and the identifier. The
+ * flow keeps one draft for all its screens, so the email typed on one is on the next; the
+ * screens own the rest of their fields (passwords, names, the code).
+ */
+export interface AuthDraft {
+  channel: AuthMethodTab;
+  email: string;
+  /** E.164, as the phone field gives it. */
+  phone: string | undefined;
+}
+
+/** Changes some fields of the draft. */
+export type AuthDraftChange = (patch: Partial<AuthDraft>) => void;
+
+/** The draft of an identifier the buyer already gave (the checkout contact). */
+export function draftOf(identifier?: {
+  email?: string | null;
+  phone?: string | null;
+}): AuthDraft {
+  return {
+    channel: identifier?.email && !identifier.phone ? 'email' : 'phone',
+    email: identifier?.email ?? '',
+    phone: identifier?.phone ?? undefined,
+  };
+}
 
 /** Texts that depend on `context`. */
 export function contextCopy(context: AuthContext) {
@@ -32,16 +63,9 @@ export function contextCopy(context: AuthContext) {
           ? null
           : 'identify.subtitleNoCode',
     unavailable:
-      context === 'checkoutGuest' ? 'alerts.unavailableGuest' : 'alerts.unavailable',
+      context === 'checkoutGuest'
+        ? 'alerts.unavailableGuest'
+        : 'alerts.unavailable',
     accountsDisabled: `alerts.accountsDisabled.${context}`,
-    /**
-     * A password account is offered wherever the store enables it: a password sign-in never
-     * creates the account, so the buyer without one needs the way to it.
-     */
-    offersPasswordSignUp: true,
   } as const;
 }
-
-/** An error of the last step that the screen shows as an alert; others go under fields. */
-export const isFieldError = (error: AuthError | null) =>
-  error?.code === 'invalidInput';

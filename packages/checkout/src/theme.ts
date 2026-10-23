@@ -21,6 +21,22 @@ export interface CheckoutAuthProps {
 }
 
 /**
+ * Places in the checkout form where a theme adds its own content; nothing by default. Each is
+ * rendered in the checkout's providers (its messages, the data of the checkout), so it can
+ * read the checkout with the checkout hooks.
+ */
+export interface CheckoutSlots {
+  /** Under the contact section, over the delivery (a newsletter opt-in, a note). */
+  afterContact?: ComponentType;
+  /**
+   * Over the banner and the submit button. The actions stand in the form column on desktop
+   * and under the summary on a phone: the slot is rendered with each of them, the one that is
+   * not on screen hidden by CSS.
+   */
+  beforeActions?: ComponentType;
+}
+
+/**
  * What a theme changes in the checkout. Every field is optional: the checkout works without a
  * theme, and a theme sets only what it needs (its logo, its cart, locale-aware paths).
  */
@@ -29,11 +45,20 @@ export interface CheckoutThemeAdapter {
   Brand?: ComponentType;
   /**
    * "Log in" / "Log out" control next to the contact section; the checkout has its own. The
-   * sign-in it opens is always the checkout's own (`@shopana/storefront-auth/ui`).
+   * sign-in it opens is always the checkout's own (`@shopana/storefront-auth/ui`), restyled by
+   * an `AuthUIProvider` of the host above the checkout; a `Legal` set there replaces the
+   * checkout's consent.
    */
   Auth?: ComponentType<CheckoutAuthProps>;
-  /** Whether the store has customer accounts; the checkout offers sign-in only then. */
+  /**
+   * Whether the store has customer accounts: the one switch of the sign-in in the checkout.
+   * Only then the checkout shows "Log in", the sign-in drawer and the invitation to sign in for
+   * the points the order earns. A store that takes orders from accounts only shows its sign-in
+   * in place of the contact regardless.
+   */
   customerAccountsEnabled?: boolean;
+  /** What the theme adds to the checkout form. */
+  slots?: CheckoutSlots;
   /** Cart drawer of the store, opened by `useOpenCart`. */
   CartDrawer?: ComponentType;
   useHomePath?: () => string;
@@ -58,6 +83,7 @@ export interface CheckoutTheme {
   Brand: ComponentType;
   Auth: ComponentType<CheckoutAuthProps>;
   customerAccountsEnabled: boolean;
+  slots: CheckoutSlots;
   CartDrawer: ComponentType;
   useHomePath: () => string;
   useCheckoutReturnPath: () => string;
@@ -73,6 +99,7 @@ const DEFAULT_THEME: CheckoutTheme = {
   Brand: Nothing,
   Auth: DefaultCheckoutAuth,
   customerAccountsEnabled: false,
+  slots: {},
   CartDrawer: Nothing,
   useHomePath: () => '/',
   useCheckoutReturnPath: () => '/checkout/return',

@@ -20,7 +20,14 @@ export const en: AuthMessages = {
     signIn: 'Sign in',
     backToSignIn: 'Back to sign in',
     loadingMethods: 'Loading sign-in methods',
-    legal: 'By signing in, you agree to the <privacy>terms of personal data processing</privacy>.',
+    loading: 'Loading',
+    retry: 'Retry',
+    resendIn: 'Send again in {time}',
+    passwordRule: 'From {min} to {max} characters',
+    rulePassed: 'Passed:',
+    ruleFailed: 'Not passed:',
+    legal:
+      'By signing in, you agree to the <privacy>terms of personal data processing</privacy>.',
     country: {
       search: 'Search country',
       title: 'Choose a country',
@@ -75,6 +82,7 @@ export const en: AuthMessages = {
     title: 'Sign in with password',
     submit: 'Sign in',
     submitPending: 'Signing in…',
+    missing: 'Enter your password.',
     invalidCredentials: 'Wrong email or password.',
     verificationLink:
       'Confirm your email: we sent a link to <b>{email}</b>. Follow it and sign in again.',
@@ -91,9 +99,9 @@ export const en: AuthMessages = {
     lastName: 'Last name',
     lastNameMissing: 'Enter your last name.',
     firstNameMissing: 'Enter your first name.',
-    passwordRule: 'From {min} to {max} characters',
     submit: 'Create account',
-    userExists: 'An account with this email already exists. <link>Sign in</link>',
+    userExists:
+      'An account with this email already exists. <link>Sign in</link>',
     signUpDisabled:
       'Signing up with a password is not available. <link>Sign in with a code</link>',
     signInPrompt: 'Already have an account? <link>Sign in</link>',
@@ -103,14 +111,14 @@ export const en: AuthMessages = {
     titleVerifyEmail: 'Confirm your email',
     sentEmail: 'We sent a {length}-digit code to your email.',
     sentPhone: 'We sent a {length}-digit code by SMS.',
-    label: 'Confirmation code, {length} digits',
+    label:
+      'Confirmation code, {length, plural, one {# digit} other {# digits}}',
     verifying: 'Checking…',
     invalid: 'Wrong or expired code. Try again.',
     invalidNoSignUpEmail:
       'Wrong or expired code. If there is no account with this email yet, sign in another way.',
     invalidNoSignUpPhone:
       'Wrong or expired code. If there is no account with this number yet, sign in another way.',
-    resendIn: 'Send again in {time}',
     resend: 'Send the code again',
     signingIn: 'Signing in…',
   },
@@ -135,7 +143,8 @@ export const en: AuthMessages = {
   },
   reset: {
     title: 'New password',
-    subtitle: 'After changing the password you will be signed out on all devices.',
+    subtitle:
+      'After changing the password you will be signed out on all devices.',
     label: 'New password',
     submit: 'Save password',
     linkInvalid:
@@ -161,11 +170,9 @@ export const en: AuthMessages = {
   connections: {
     title: 'Connected accounts',
     subtitle: 'Sign in with social accounts without a password.',
-    loading: 'Loading',
     reauthenticate: 'Sign in again to change the connections.',
     reauthenticateAction: 'Sign in again',
     unavailable: 'Could not load the connections.',
-    retry: 'Retry',
     connected: 'Connected',
     conflict: 'Conflict',
     connect: 'Connect',

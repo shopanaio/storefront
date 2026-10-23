@@ -3,39 +3,43 @@
 import { LockOutlined } from '@ant-design/icons';
 import { Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
-import { useLocale, useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
-import type { FormEvent, ReactNode } from 'react';
-import { FloatingLabelInput, PhoneInput } from '@shopana/storefront-ui';
+import { useTranslations } from 'next-intl';
+import { useId } from 'react';
+import type { ReactNode } from 'react';
+import {
+  FLOATING_FIELD_HEIGHT,
+  FloatingLabelInput,
+  isEmail,
+  isPossiblePhone,
+  PhoneInput,
+  VisuallyHidden,
+} from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
 import type { AuthMethods } from '../../core/types';
 import { useAuthUI, type AuthMethodTab } from '../AuthUIProvider';
-import {
-  AuthAlert,
-  Field,
-  RateLimitAlert,
-  Screen,
-  ScreenTitle,
-  Stack,
-  SubmitButton,
-  TextAction,
-  useRateLimit,
-} from '../common/Screen';
-import { isEmail, isPhone } from '../common/validation';
+import { SubmitButton, TextAction } from '../common/actions';
+import { AuthAlert, useErrorAlert, useRateLimit } from '../common/alerts';
+import { AuthForm, Field, useSubmit } from '../common/form';
+import { ScreenTitle } from '../common/heading';
+import { Screen, Stack } from '../common/layout';
+import { useScreenPreset } from '../common/preset';
 import { socialProviderView } from '../parts/providers';
-import { contextCopy, type AuthContext, type IdentifyNotice } from './types';
+import {
+  contextCopy,
+  type AuthContext,
+  type AuthDraft,
+  type AuthDraftChange,
+  type IdentifyNotice,
+} from './types';
 
 export interface IdentifyScreenProps {
   context: AuthContext;
   /** Configuration of the methods is loading, ready, or could not be read. */
   status: 'loading' | 'ready' | 'unavailable';
   methods: AuthMethods | null;
-  channel: AuthMethodTab;
-  onChannelChange: (channel: AuthMethodTab) => void;
-  phone: string | undefined;
-  onPhoneChange: (phone: string | undefined) => void;
-  email: string;
-  onEmailChange: (email: string) => void;
+  /** The channel, the phone and the email typed so far. */
+  draft: AuthDraft;
+  onDraftChange: AuthDraftChange;
   pending: boolean;
   error: AuthError | null;
   notice: IdentifyNotice | null;
@@ -43,8 +47,8 @@ export interface IdentifyScreenProps {
   onSubmit: (channel: AuthMethodTab, destination: string) => void;
   onPassword: () => void;
   onSocial: (provider: string) => void;
-  /** Opens the country list of the phone (stories). */
-  countryPickerOpen?: boolean;
+  /** Reads the methods again when they could not be read; no retry without it. */
+  onRetry?: () => void;
   /**
    * The line under the title, in the host's words: the checkout says what the order earns once
    * the buyer signs in. The default line of the context otherwise.
@@ -68,29 +72,24 @@ export const IdentifyScreen = ({
   context,
   status,
   methods,
-  channel,
-  onChannelChange,
-  phone,
-  onPhoneChange,
-  email,
-  onEmailChange,
+  draft,
+  onDraftChange,
   pending,
   error,
   notice,
   onSubmit,
   onPassword,
   onSocial,
-  countryPickerOpen,
+  onRetry,
   subtitle,
 }: IdentifyScreenProps) => {
   const t = useTranslations('Auth');
-  const locale = useLocale();
   const { styles } = useStyles();
   const { components, legalLinks, part } = useAuthUI();
   const { MethodTabs, Divider, SocialButtons, Legal } = components;
+  const preset = useScreenPreset();
   const copy = contextCopy(context);
   const titleId = useId();
-  const [touched, setTouched] = useState(false);
   const waiting = useRateLimit(error);
 
   const accountsDisabled = error?.code === 'disabled';
@@ -99,41 +98,31 @@ export const IdentifyScreen = ({
   const emailCode = Boolean(methods?.emailOtp.signIn) && !blocked;
   const hasCode = phoneCode || emailCode;
   const withPassword = Boolean(methods?.password.signIn) && !blocked;
-  const providers = blocked ? [] : (methods?.social ?? []).map((item) => socialProviderView(item.provider));
-  const activeChannel: AuthMethodTab =
-    phoneCode && emailCode ? channel : phoneCode ? 'phone' : 'email';
-  const value = activeChannel === 'phone' ? (phone ?? '') : email;
-  const valid = activeChannel === 'phone' ? isPhone(phone) : isEmail(email);
-  const invalid = (touched && !valid) || error?.code === 'invalidInput';
+  const providers = blocked
+    ? []
+    : (methods?.social ?? []).map((item) => socialProviderView(item.provider));
+  const channel: AuthMethodTab =
+    phoneCode && emailCode ? draft.channel : phoneCode ? 'phone' : 'email';
+  const valid =
+    channel === 'phone' ? isPossiblePhone(draft.phone) : isEmail(draft.email);
+  const form = useSubmit();
+  const invalid = (form.submitted && !valid) || error?.code === 'invalidInput';
   const invalidText =
-    activeChannel === 'phone' ? t('common.invalidPhone') : t('common.invalidEmail');
+    channel === 'phone' ? t('common.invalidPhone') : t('common.invalidEmail');
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setTouched(true);
-    if (!valid) return;
-    onSubmit(activeChannel, activeChannel === 'phone' ? value : value.trim());
-  };
-
-  const alert = (() => {
-    if (status === 'loading') return null;
-    if (accountsDisabled)
-      return <AuthAlert type="info">{t(copy.accountsDisabled)}</AuthAlert>;
-    switch (error?.code) {
-      case 'expired':
-        return <AuthAlert type="warning">{t('alerts.expired')}</AuthAlert>;
-      case 'rateLimited':
-        return <RateLimitAlert error={error} />;
-      case 'deliveryUnavailable':
-        return <AuthAlert type="error">{t('alerts.deliveryUnavailable')}</AuthAlert>;
-      case 'methodDisabled':
-        return <AuthAlert type="error">{t('alerts.methodDisabled')}</AuthAlert>;
-      case 'unavailable':
-        return <AuthAlert type="error">{t(copy.unavailable)}</AuthAlert>;
-      default:
-        return null;
-    }
-  })();
+  const errorAlert = useErrorAlert(error, context, {
+    disabled: <AuthAlert type="info">{t(copy.accountsDisabled)}</AuthAlert>,
+    // The configuration could not be read: it can be read again.
+    unavailable:
+      status === 'unavailable' && onRetry ? (
+        <AuthAlert
+          type="error"
+          action={{ label: t('common.retry'), onClick: onRetry }}
+        >
+          {t(copy.unavailable)}
+        </AuthAlert>
+      ) : undefined,
+  });
 
   return (
     <Screen>
@@ -151,27 +140,50 @@ export const IdentifyScreen = ({
         align={copy.identifyTitle ? 'center' : 'start'}
       />
       {notice && !blocked ? (
-        <AuthAlert type={NOTICE_ALERTS[notice]}>{t(`alerts.${notice}`)}</AuthAlert>
+        <AuthAlert type={NOTICE_ALERTS[notice]}>
+          {t(`alerts.${notice}`)}
+        </AuthAlert>
       ) : null}
-      {alert}
+      {status === 'loading' ? null : errorAlert}
       {status === 'loading' ? (
         <Stack>
-          <Skeleton.Button active block size="large" className={styles.skeleton} />
-          <Skeleton.Button active block size="large" className={styles.skeleton} />
-          <span className={styles.hidden} role="status" aria-busy="true">
+          <Skeleton.Button
+            active
+            block
+            size="large"
+            className={styles.skeleton}
+          />
+          <Skeleton.Button
+            active
+            block
+            size="large"
+            className={styles.skeleton}
+          />
+          <VisuallyHidden role="status" aria-busy="true">
             {t('common.loadingMethods')}
-          </span>
+          </VisuallyHidden>
         </Stack>
       ) : null}
       {hasCode ? (
-        <form className={styles.form} aria-labelledby={titleId} onSubmit={submit} noValidate>
+        <AuthForm
+          labelledBy={titleId}
+          gap="middle"
+          onSubmit={() =>
+            form.submit(valid, () =>
+              onSubmit(
+                channel,
+                channel === 'phone' ? (draft.phone ?? '') : draft.email.trim()
+              )
+            )
+          }
+        >
           {phoneCode && emailCode ? (
             <MethodTabs
               {...part('tabs')}
-              value={activeChannel}
+              value={channel}
               onChange={(next) => {
-                setTouched(false);
-                onChannelChange(next);
+                form.reset();
+                onDraftChange({ channel: next });
               }}
               label={t('identify.tabs')}
               items={[
@@ -181,22 +193,16 @@ export const IdentifyScreen = ({
             />
           ) : null}
           <Field>
-            {activeChannel === 'phone' ? (
+            {channel === 'phone' ? (
               <PhoneInput
                 label={t('common.phone')}
-                value={phone}
-                onChange={onPhoneChange}
-                locale={locale}
+                value={draft.phone}
+                onChange={(phone) => onDraftChange({ phone })}
+                // The store's market: an empty number starts with +380.
+                defaultCountry="UA"
                 autoComplete="tel"
-                status={invalid ? 'error' : undefined}
                 error={invalid ? invalidText : undefined}
-                pickerOpen={countryPickerOpen}
-                pickerTexts={{
-                  search: t('common.country.search'),
-                  title: t('common.country.title'),
-                  empty: t('common.country.empty'),
-                  trigger: t('common.country.trigger', { country: '{country}', code: '{code}' }),
-                }}
+                pickerOpen={preset.countryPickerOpen}
               />
             ) : (
               <FloatingLabelInput
@@ -204,11 +210,11 @@ export const IdentifyScreen = ({
                 type="email"
                 inputMode="email"
                 autoComplete="email"
-                value={email}
-                onChange={(event) => onEmailChange(event.target.value)}
-                status={invalid ? 'error' : undefined}
+                value={draft.email}
+                onChange={(event) =>
+                  onDraftChange({ email: event.target.value })
+                }
                 error={invalid ? invalidText : undefined}
-                aria-invalid={invalid || undefined}
               />
             )}
           </Field>
@@ -221,10 +227,14 @@ export const IdentifyScreen = ({
           >
             {t('common.continue')}
           </SubmitButton>
-        </form>
+        </AuthForm>
       ) : null}
       {withPassword && !hasCode ? (
-        <SubmitButton htmlType="button" icon={<LockOutlined />} onClick={onPassword}>
+        <SubmitButton
+          htmlType="button"
+          icon={<LockOutlined />}
+          onClick={onPassword}
+        >
           {t('identify.withPassword')}
         </SubmitButton>
       ) : null}
@@ -237,7 +247,9 @@ export const IdentifyScreen = ({
           intent="signIn"
           providers={providers}
           label={t('social.group')}
-          buttonLabel={(provider) => t('social.signIn', { provider: provider.name })}
+          buttonLabel={(provider) =>
+            t('social.signIn', { provider: provider.name })
+          }
           disabled={pending}
           onSelect={onSocial}
         />
@@ -254,25 +266,11 @@ export const IdentifyScreen = ({
   );
 };
 
-const useStyles = createStyles(({ css, token }) => ({
-  form: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.padding}px;
-    width: 100%;
-    margin: 0;
-    text-align: left;
-  `,
+const useStyles = createStyles(({ css }) => ({
+  // As tall as the field it stands for.
   skeleton: css`
     && {
-      height: ${token.controlHeightLG + 24}px;
+      height: ${FLOATING_FIELD_HEIGHT}px;
     }
-  `,
-  hidden: css`
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
   `,
 }));

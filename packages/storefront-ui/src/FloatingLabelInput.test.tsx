@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { FloatingLabelInput } from './FloatingLabelInput';
 import { FloatingLabelPassword } from './FloatingLabelPassword';
+import { StorefrontUIProvider } from './StorefrontUIProvider';
 
 afterEach(cleanup);
 
@@ -26,6 +27,38 @@ it('reserves space for the floating label and preserves field height while editi
   expect(label.className).not.toBe(initialClass);
 });
 
+it('describes the field by its error and marks it invalid', () => {
+  render(
+    <FloatingLabelInput
+      label="Email"
+      error="Enter a valid email"
+      aria-describedby="hint"
+    />
+  );
+  const input = screen.getByLabelText('Email');
+  expect(input).toHaveAttribute('aria-invalid', 'true');
+  const error = screen.getByText('Enter a valid email');
+  expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([
+    'hint',
+    error.id,
+  ]);
+});
+
+it('puts className and style on the root and the parts by name', () => {
+  render(
+    <FloatingLabelInput
+      label="Email"
+      className="root"
+      classNames={{ field: 'field', input: 'input', label: 'label' }}
+    />
+  );
+  const input = screen.getByLabelText('Email');
+  expect(input).toHaveClass('input');
+  expect(input.closest('.field')).not.toBeNull();
+  expect(input.closest('.root')).not.toBeNull();
+  expect(screen.getByText('Email')).toHaveClass('label');
+});
+
 it('shows and hides the password', () => {
   render(
     <FloatingLabelPassword
@@ -41,4 +74,16 @@ it('shows and hides the password', () => {
     'aria-pressed',
     'true'
   );
+});
+
+it('keeps a suffix of its own next to the reveal button, named by the provider', () => {
+  render(
+    <StorefrontUIProvider texts={{ showPassword: 'Показати пароль' }}>
+      <FloatingLabelPassword label="Password" suffix={<span>caps</span>} />
+    </StorefrontUIProvider>
+  );
+  expect(screen.getByText('caps')).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Показати пароль' })
+  ).toBeInTheDocument();
 });

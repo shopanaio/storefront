@@ -1,9 +1,11 @@
+import type { GlobalToken } from 'antd';
+
 /**
- * Tones of a checkout banner, by what the buyer has to do:
- * - `critical`: something failed and the order cannot go on (payment, placement, a save);
- * - `warning`: the order changed on its own (stock, price, promo code);
- * - `action`: the buyer has to choose or fill something in;
- * - `success`: something the buyer did worked.
+ * Tones of a banner, by what the reader has to do:
+ * - `critical`: something failed and the task cannot go on until it is solved;
+ * - `warning`: something changed on its own and is worth a look;
+ * - `action`: the reader has to choose or fill something in;
+ * - `success`: something the reader did worked.
  */
 export type BannerTone = 'critical' | 'warning' | 'action' | 'success';
 
@@ -18,61 +20,41 @@ export interface BannerToneColors {
 }
 
 /**
- * Brand palette of the banners (store colors, "action" in the brand blue). Each color is a CSS
- * custom property, `--banner-<tone>-<part>`, so a theme can override any of them in CSS.
+ * Colors of a tone from the antd status tokens (error, warning, info, success), so they follow
+ * the theme and its dark algorithm.
  */
-export const BANNER_TONES: Record<BannerTone, BannerToneColors> = {
-  critical: {
-    background: '#fff2f0',
-    border: '#ffccc7',
-    text: '#5c0011',
-    accent: '#cf1322',
-  },
-  warning: {
-    background: '#fffbe6',
-    border: '#ffe58f',
-    text: '#3d2600',
-    accent: '#ad5f00',
-  },
-  action: {
-    background: '#f0f6ff',
-    border: '#bfd4f5',
-    text: '#0e2160',
-    accent: '#1c49c2',
-  },
-  success: {
-    background: '#f6ffed',
-    border: '#b7eb8f',
-    text: '#092b00',
-    accent: '#237804',
-  },
-};
-
-const PARTS: Array<keyof BannerToneColors> = [
-  'background',
-  'border',
-  'text',
-  'accent',
-];
-
-/** Name of the CSS custom property holding one color of a tone. */
-export function bannerToneVar(
-  tone: BannerTone,
-  part: keyof BannerToneColors
-): string {
-  return `--banner-${tone}-${part}`;
-}
-
-/**
- * Declarations of every tone color, for the root of the checkout. A banner outside it (in a
- * drawer, which is portalled out) falls back to the same colors.
- */
-export function bannerToneDeclarations(): string {
-  return (Object.keys(BANNER_TONES) as BannerTone[])
-    .flatMap((tone) =>
-      PARTS.map(
-        (part) => `${bannerToneVar(tone, part)}: ${BANNER_TONES[tone][part]};`
-      )
-    )
-    .join('\n');
+export function toneColors(
+  token: GlobalToken,
+  tone: BannerTone
+): BannerToneColors {
+  switch (tone) {
+    case 'critical':
+      return {
+        background: token.colorErrorBg,
+        border: token.colorErrorBorder,
+        text: token.colorErrorTextActive,
+        accent: token.colorErrorText,
+      };
+    case 'warning':
+      return {
+        background: token.colorWarningBg,
+        border: token.colorWarningBorder,
+        text: token.colorWarningTextActive,
+        accent: token.colorWarningText,
+      };
+    case 'action':
+      return {
+        background: token.colorInfoBg,
+        border: token.colorInfoBorder,
+        text: token.colorInfoTextActive,
+        accent: token.colorInfoText,
+      };
+    case 'success':
+      return {
+        background: token.colorSuccessBg,
+        border: token.colorSuccessBorder,
+        text: token.colorSuccessTextActive,
+        accent: token.colorSuccessText,
+      };
+  }
 }

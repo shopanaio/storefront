@@ -4,7 +4,7 @@ import { createStyles } from 'antd-style';
 import { SubmitButton } from './SubmitButton';
 import { TermsCheckbox, TermsNotice } from '../notices/TermsNotice';
 import { BannerSlot } from '#checkout/components/banner/BannerSlot';
-import { mq } from '#checkout/ui/breakpoints';
+import { mq } from '@shopana/storefront-ui';
 
 /**
  * Submit button with the checkout banner above it and the terms under it; a terms checkbox the

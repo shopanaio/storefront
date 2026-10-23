@@ -4,30 +4,21 @@ import { KeyOutlined, MailOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
-import { FloatingLabelInput } from '@shopana/storefront-ui';
+import { useId } from 'react';
+import { isEmail } from '@shopana/storefront-ui';
 import type { AuthError } from '../../core/AuthError';
-import {
-  AuthAlert,
-  Badge,
-  Chip,
-  Field,
-  RateLimitAlert,
-  Screen,
-  ScreenTitle,
-  Stack,
-  SubmitButton,
-  TextAction,
-  useRateLimit,
-} from '../common/Screen';
-import { isEmail } from '../common/validation';
-import { contextCopy, type AuthContext } from './types';
+import { ResendAction, SubmitButton, TextAction } from '../common/actions';
+import { AuthAlert, useErrorAlert, useRateLimit } from '../common/alerts';
+import { AuthForm, EmailField, useSubmit } from '../common/form';
+import { ScreenTitle } from '../common/heading';
+import { Badge, Chip, Screen, Stack } from '../common/layout';
+import type { AuthContext, AuthDraft, AuthDraftChange } from './types';
 
 export interface ForgotScreenProps {
   context: AuthContext;
-  email: string;
-  onEmailChange: (email: string) => void;
+  /** The email typed so far. */
+  draft: AuthDraft;
+  onDraftChange: AuthDraftChange;
   /** The link was sent: "Check your email". */
   sent: boolean;
   /** The link was sent once more. */
@@ -43,8 +34,8 @@ export interface ForgotScreenProps {
 /** A link to set a new password; never says whether the email has an account. */
 export const ForgotScreen = ({
   context,
-  email,
-  onEmailChange,
+  draft,
+  onDraftChange,
   sent,
   resent,
   pending,
@@ -56,17 +47,20 @@ export const ForgotScreen = ({
 }: ForgotScreenProps) => {
   const t = useTranslations('Auth');
   const { styles } = useStyles();
-  const copy = contextCopy(context);
   const titleId = useId();
-  const [touched, setTouched] = useState(false);
+  const form = useSubmit();
   const waiting = useRateLimit(error);
-  const invalid = (touched && !isEmail(email)) || error?.code === 'invalidInput';
+  const alert = useErrorAlert(error, context);
+  const email = draft.email;
 
   if (sent) {
     return (
       <Screen>
         <Badge icon={<MailOutlined />} />
-        <ScreenTitle title={t('forgot.sentTitle')} subtitle={t('forgot.sentSubtitle')} />
+        <ScreenTitle
+          title={t('forgot.sentTitle')}
+          subtitle={t('forgot.sentSubtitle')}
+        />
         <Chip
           value={email.trim()}
           action={{
@@ -75,57 +69,60 @@ export const ForgotScreen = ({
             onClick: onChangeEmail,
           }}
         />
-        {resent && !error ? <AuthAlert type="info">{t('forgot.resent')}</AuthAlert> : null}
-        <RateLimitAlert error={error} />
-        {error?.code === 'unavailable' ? (
-          <AuthAlert type="error">{t(copy.unavailable)}</AuthAlert>
+        {resent && !error ? (
+          <AuthAlert type="info">{t('forgot.resent')}</AuthAlert>
         ) : null}
+        {alert}
         <Stack>
           <SubmitButton htmlType="button" onClick={onBackToSignIn}>
             {t('common.backToSignIn')}
           </SubmitButton>
         </Stack>
         <span className={styles.links}>
-          <Typography.Text type="secondary">{t('forgot.notReceived')}</Typography.Text>
-          <TextAction onClick={onResend} disabled={pending || waiting > 0}>
-            {pending ? t('forgot.resendPending') : t('forgot.resend')}
-          </TextAction>
+          <Typography.Text type="secondary">
+            {t('forgot.notReceived')}
+          </Typography.Text>
+          <ResendAction
+            onResend={onResend}
+            label={t('forgot.resend')}
+            pending={pending}
+            pendingLabel={t('forgot.resendPending')}
+            error={error}
+          />
         </span>
       </Screen>
     );
   }
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setTouched(true);
-    if (!isEmail(email)) return;
-    onSubmit(email.trim());
-  };
-
   return (
     <Screen>
       <Badge icon={<KeyOutlined />} />
-      <ScreenTitle id={titleId} title={t('forgot.title')} subtitle={t('forgot.subtitle')} />
-      <RateLimitAlert error={error} />
-      {error?.code === 'unavailable' ? (
-        <AuthAlert type="error">{t(copy.unavailable)}</AuthAlert>
-      ) : null}
-      <form className={styles.form} aria-labelledby={titleId} onSubmit={submit} noValidate>
-        <Field>
-          <FloatingLabelInput
-            label={t('common.email')}
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => onEmailChange(event.target.value)}
-            status={invalid ? 'error' : undefined}
-            error={invalid ? t('common.invalidEmail') : undefined}
-          />
-        </Field>
-        <SubmitButton pending={pending} pendingLabel={t('common.pending')} disabled={waiting > 0}>
+      <ScreenTitle
+        id={titleId}
+        title={t('forgot.title')}
+        subtitle={t('forgot.subtitle')}
+      />
+      {alert}
+      <AuthForm
+        labelledBy={titleId}
+        onSubmit={() =>
+          form.submit(isEmail(email), () => onSubmit(email.trim()))
+        }
+      >
+        <EmailField
+          value={email}
+          onChange={(next) => onDraftChange({ email: next })}
+          submitted={form.submitted}
+          error={error}
+        />
+        <SubmitButton
+          pending={pending}
+          pendingLabel={t('common.pending')}
+          disabled={waiting > 0}
+        >
           {t('forgot.submit')}
         </SubmitButton>
-      </form>
+      </AuthForm>
       <TextAction onClick={onBackToSignIn}>
         {t('common.backToSignIn')}
       </TextAction>
@@ -134,14 +131,6 @@ export const ForgotScreen = ({
 };
 
 const useStyles = createStyles(({ css, token }) => ({
-  form: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingSM}px;
-    width: 100%;
-    margin: 0;
-    text-align: left;
-  `,
   links: css`
     display: inline-flex;
     flex-wrap: wrap;

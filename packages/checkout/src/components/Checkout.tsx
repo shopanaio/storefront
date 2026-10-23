@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useTranslations } from 'next-intl';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { CheckoutApiProvider } from '#checkout/context/CheckoutApiContext';
 import { CheckoutProgressBar } from './CheckoutProgressBar';
@@ -21,10 +20,8 @@ import { CheckoutLoadError } from '#checkout/components/CheckoutLoadError';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutNotFound } from '#checkout/hooks/useCheckoutNotFound';
 import { useBannerStore } from '#checkout/state/banners/bannerStore';
-import {
-  useSessionExpired,
-  useSessionStatus,
-} from '@shopana/storefront-sdk/modules/session/react';
+import { useSignInRequired } from '#checkout/hooks/useSignInRequired';
+import { CheckoutSignInProvider } from './CheckoutSignInProvider';
 
 export interface CheckoutProps {
   cartId: string | null;
@@ -35,28 +32,19 @@ export interface CheckoutProps {
   onOrderAccepted: (event: OrderAcceptedEvent) => void;
   brand?: React.ReactNode;
   /**
-   * Optional feature flags controlling Checkout UI behavior.
-   * - auth: when true, renders the Login button near the contact section.
+   * What the theme changes; the checkout works without it. Its `customerAccountsEnabled` is the
+   * switch of the sign-in in the checkout.
    */
-  features?: {
-    /** Gate for rendering login button */
-    auth?: boolean;
-    /** Optional ISO country code to control which blocks are shown */
-    country?: 'UA' | 'INTL';
-  };
-  /** What the theme changes; the checkout works without it. */
   theme?: CheckoutThemeAdapter;
 }
 
 /**
  * Checkout container component - handles logic and state management.
- * Feature flags can adjust visible UI (e.g., `features.auth` shows login button).
  */
 export const Checkout = ({
   cartId,
   onOrderAccepted,
   brand,
-  features,
   theme,
 }: CheckoutProps) => {
   const resetPlacement = usePlacementStore((s) => s.reset);
@@ -75,7 +63,7 @@ export const Checkout = ({
             checkoutId={cartId}
             onOrderAccepted={onOrderAccepted}
           />
-          <CheckoutBody checkoutId={cartId} brand={brand} features={features} />
+          <CheckoutBody checkoutId={cartId} brand={brand} />
         </CheckoutApiProvider>
       </CheckoutDataContextProvider>
     </CheckoutProviders>
@@ -85,17 +73,14 @@ export const Checkout = ({
 const CheckoutBody = ({
   checkoutId,
   brand,
-  features,
-}: Pick<CheckoutProps, 'brand' | 'features'> & {
+}: Pick<CheckoutProps, 'brand'> & {
   checkoutId: string | null;
 }) => {
-  const t = useTranslations('Checkout');
   const requestSubmit = useCheckoutStore((s) => s.requestSubmit);
   const phase = usePlacementPhase();
   const { checkout, error, refetch } = useCheckoutData();
   const notFound = useCheckoutNotFound(checkoutId);
-  const sessionStatus = useSessionStatus();
-  const sessionExpired = useSessionExpired();
+  const signInRequired = useSignInRequired(checkoutId);
 
   if (phase.name === 'accepted') {
     return (
@@ -118,15 +103,6 @@ const CheckoutBody = ({
     );
   }
 
-  // S6: the account checkout is not readable after the session ended; S7: the store takes
-  // orders from accounts only. Either way the buyer signs in in place of the contact.
-  const signInRequired =
-    phase.name === 'idle' &&
-    ((sessionExpired && !checkout && (notFound || !checkoutId)) ||
-      (Boolean(checkout) &&
-        !checkout!.guestCheckoutAllowed &&
-        sessionStatus !== 'authenticated'));
-
   if (
     !signInRequired &&
     error &&
@@ -143,15 +119,10 @@ const CheckoutBody = ({
   };
 
   return (
-    <>
+    // The one sign-in of the page: the drawer, or the form in place of the contact.
+    <CheckoutSignInProvider required={signInRequired}>
       <CheckoutProgressBar />
-      <CheckoutView
-        brand={brand}
-        features={features}
-        onSubmit={handleSubmit}
-        t={t}
-        signInRequired={signInRequired}
-      />
-    </>
+      <CheckoutView brand={brand} onSubmit={handleSubmit} />
+    </CheckoutSignInProvider>
   );
 };

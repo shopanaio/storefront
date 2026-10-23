@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useClaimAccountCart } from '@shopana/storefront-sdk/modules/cart/react/providers/AccountCartSync';
+import { useClaimAccountCart } from '@shopana/storefront-sdk/modules/cart/react';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { usePlacementPhase } from '#checkout/state/placement/placementStore';
 import {

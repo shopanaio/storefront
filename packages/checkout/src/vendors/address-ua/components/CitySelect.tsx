@@ -1,4 +1,4 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Typography, theme } from 'antd';
 import { createStyles } from 'antd-style';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -11,8 +11,8 @@ import { CityOption } from './CityOption';
 import { TbX } from 'react-icons/tb';
 import { PiMapPinDuotone, PiMapPin } from 'react-icons/pi';
 import { SelectCard } from '#checkout/ui/SelectCard';
-import useToken from 'antd/es/theme/useToken';
 import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
+import { SearchDrawerHeader } from '#checkout/ui/SearchDrawerHeader';
 
 /** The picked city as the address keeps it: its name, its oblast and the settlement hint. */
 export interface PickedCity {
@@ -34,7 +34,7 @@ interface Prop {
 export const CitySelect = ({ city, onSubmit }: Prop) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const [, token] = useToken();
+  const { token } = theme.useToken();
 
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
   const { searchTerm: searchValue, setSearchTerm: setSearchValue, debouncedTerm } =
@@ -100,16 +100,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
         header={
-          <DrawerBase.Header vertical gap={8}>
-            <Flex
-              gap={8}
-              justify="space-between"
-              align="center"
-              style={{ width: '100%' }}
-            >
-              <DrawerBase.Title>{t('choose-your-city')}</DrawerBase.Title>
-              <DrawerBase.CloseButton />
-            </Flex>
+          <SearchDrawerHeader title={t('choose-your-city')}>
             <FloatingLabelInput
               label={t('city')}
               value={searchValue}
@@ -125,7 +116,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
                 )
               }
             />
-          </DrawerBase.Header>
+          </SearchDrawerHeader>
         }
       >
         <Flex vertical gap={16}>

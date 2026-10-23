@@ -137,6 +137,7 @@
     "undeliverable-title": "{count, plural, one {Не доставляється за цією адресою} other {Не доставляються за цією адресою}}",
     "undeliverable-hint": "{count, plural, one {Змініть адресу або видаліть цей товар з кошика} other {Змініть адресу або видаліть ці товари з кошика}}",
     "undeliverable-show-more": "Показати ще {count}",
+    "undeliverable-change-address": "Змінити адресу",
     "address-line1": "Адреса",
     "address-line2": "Квартира, офіс тощо",
     "address-optional": "{label} (необов’язково)",
@@ -181,6 +182,8 @@
     "banner-open-cart": "До кошика",
     "banner-choose": "Обрати",
     "banner-close": "Закрити",
+    "close": "Закрити",
+    "dialog": "Діалог",
     "banner-collapse": "Згорнути",
     "banner-details": "Детальніше",
     "banner-show-all": "Показати всі повідомлення ({count})",
@@ -291,7 +294,7 @@
     "delivery-selection-reset-input": "Дані доставки потрібно уточнити",
     "payment-selection-reset-title": "Обраний спосіб оплати більше недоступний",
     "delivery-input-rejected-title": "Не вдалося зберегти дані доставки",
-    "signed-in-as": "Ви увійшли як {email}",
+    "signed-in-as": "Ви увійшли як {identifier}",
     "log-out": "Вийти",
     "prices-updated": "Ціни оновлено для вашого акаунта. Перевірте замовлення й оформіть його ще раз.",
     "sign-in-required": "Увійдіть, щоб оформити замовлення",
@@ -308,6 +311,7 @@
     "country-choose": "Оберіть країну",
     "country-not-found": "Країну не знайдено",
     "country-trigger": "Країна: {country}, +{code}",
-    "sign-in-required-earning": "Увійдіть, щоб прискорити оформлення та отримати <b>{reward}</b> за своє замовлення."
+    "sign-in-required-earning": "Увійдіть, щоб прискорити оформлення та отримати <b>{reward}</b> за своє замовлення.",
+    "sign-in-required-earning-store-credit": "+{amount} на бонусний рахунок"
   }
 }

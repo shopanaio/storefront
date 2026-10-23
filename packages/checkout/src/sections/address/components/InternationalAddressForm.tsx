@@ -230,7 +230,7 @@ export function InternationalAddressForm({
     return (
       <FloatingLabelInput
         key={field}
-        wrapperClassName={styles.field}
+        className={styles.field}
         label={label(field)}
         value={values[field]}
         error={errorText(field)}

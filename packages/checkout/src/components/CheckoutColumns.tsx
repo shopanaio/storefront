@@ -1,7 +1,7 @@
 import { Flex } from 'antd';
 import { createStyles } from 'antd-style';
 import type { ReactNode } from 'react';
-import { mq } from '#checkout/ui/breakpoints';
+import { mq } from '@shopana/storefront-ui';
 
 interface CheckoutColumnsProps {
   /** The form: brand, sections and, on desktop, the actions. */

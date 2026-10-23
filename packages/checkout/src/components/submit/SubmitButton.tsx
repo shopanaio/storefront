@@ -8,11 +8,12 @@ import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { Money } from '#checkout/ui/Money';
+import { CHECKOUT_FORM_ID } from '#checkout/ui/focusAnchor';
 
 export interface SubmitButtonProps {
   /**
-   * Optional click handler. When used within a form with htmlType="submit",
-   * form submission will be triggered regardless of this handler.
+   * Optional click handler. The button submits the checkout form (`CHECKOUT_FORM_ID`)
+   * regardless of this handler.
    */
   onClick?: () => void;
 }
@@ -41,6 +42,8 @@ export const SubmitButton = ({ onClick }: SubmitButtonProps) => {
       type="primary"
       size="large"
       htmlType="submit"
+      // Under the summary on a phone the button is out of the form.
+      form={CHECKOUT_FORM_ID}
       onClick={onClick}
       aria-busy={hasActiveOperations || placementBusy}
       loading={placementBusy}

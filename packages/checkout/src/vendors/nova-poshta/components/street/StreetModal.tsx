@@ -6,6 +6,7 @@ import { StreetModalItem } from './StreetModalItem';
 import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
 import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
+import { SearchDrawerHeader } from '#checkout/ui/SearchDrawerHeader';
 import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import type { Street } from '../../types';
 
@@ -53,23 +54,14 @@ export const StreetModal = ({
         open={isStreetModalVisible}
         onClose={() => setIsStreetModalVisible(false)}
         header={
-          <DrawerBase.Header vertical gap={8}>
-            <Flex
-              gap={8}
-              justify="space-between"
-              align="center"
-              style={{ width: '100%' }}
-            >
-              <DrawerBase.Title>{t('street')}</DrawerBase.Title>
-              <DrawerBase.CloseButton />
-            </Flex>
+          <SearchDrawerHeader title={t('street')}>
             <FloatingLabelInput
               label={t('search_street')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!settlementRef}
             />
-          </DrawerBase.Header>
+          </SearchDrawerHeader>
         }
       >
         <Flex vertical gap={4}>

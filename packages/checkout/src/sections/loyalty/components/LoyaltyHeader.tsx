@@ -4,6 +4,7 @@ import { Flex, Tooltip, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useLocale, useTranslations } from 'next-intl';
 import { TbArrowDown, TbArrowUp, TbCrown, TbInfoCircle } from 'react-icons/tb';
+import { useBannerTone } from '@shopana/storefront-ui';
 import type { Checkout } from '#checkout/types/entity';
 import { formatMoney } from '#checkout/ui/Money';
 import { formatMultiplier, formatShortDate, usePointsLabel } from '../format';
@@ -165,12 +166,19 @@ interface StatusPillProps {
  * (a gain). The amount leads; the tooltip says what it means.
  */
 const StatusPill = ({ tone, amount, text, hint }: Omit<StatusPillProps, 'id'>) => {
-  const { styles, cx } = useStyles();
+  const { styles } = useStyles();
+  // The tones of the checkout banners: a warning for what expires, a gain for what is coming.
+  const { accent } = useBannerTone(tone === 'expiring' ? 'warning' : 'success');
   // Down for what the balance loses, up for what it gains.
   const Icon = tone === 'expiring' ? TbArrowDown : TbArrowUp;
   return (
     <Tooltip title={hint}>
-      <span className={cx(styles.statusPill, styles[tone])} tabIndex={0} aria-label={hint}>
+      <span
+        className={styles.statusPill}
+        style={{ color: accent }}
+        tabIndex={0}
+        aria-label={hint}
+      >
         <Icon size={14} className={styles.statusIcon} aria-hidden="true" />
         <strong>{amount}</strong>
         <span>{text}</span>
@@ -191,10 +199,10 @@ const useStyles = createStyles(({ css, token }) => ({
   pill: css`
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 24px;
-    padding: 0 8px;
-    border-radius: 12px;
+    gap: ${token.marginXXS}px;
+    height: ${token.controlHeightSM}px;
+    padding: 0 ${token.paddingXS}px;
+    border-radius: ${token.controlHeightSM / 2}px;
     background: ${token.colorPrimaryBg};
     color: ${token.colorPrimary};
     font-size: ${token.fontSizeSM}px;
@@ -215,28 +223,21 @@ const useStyles = createStyles(({ css, token }) => ({
     cursor: help;
   `,
   changes: css`
-    padding-top: 4px;
+    padding-top: ${token.paddingXXS}px;
   `,
   statusPill: css`
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 24px;
-    padding: 0 8px;
-    border: 1px solid currentColor;
-    border-radius: 12px;
+    gap: ${token.marginXXS}px;
+    height: ${token.controlHeightSM}px;
+    padding: 0 ${token.paddingXS}px;
+    border: ${token.lineWidth}px solid currentColor;
+    border-radius: ${token.controlHeightSM / 2}px;
     font-size: ${token.fontSizeSM}px;
     white-space: nowrap;
     cursor: help;
   `,
   statusIcon: css`
     flex: none;
-  `,
-  // The tones of the checkout banners: a warning for what expires, a gain for what is coming.
-  expiring: css`
-    color: var(--banner-warning-accent, ${token.colorWarningText});
-  `,
-  pending: css`
-    color: var(--banner-success-accent, ${token.colorSuccessText});
   `,
 }));

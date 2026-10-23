@@ -1,126 +1,159 @@
 'use client';
 
-import type { InputRef } from 'antd/es/input';
+import type { InputRef } from 'antd';
 import { createStyles } from 'antd-style';
-import {
-  createContext,
-  forwardRef,
-  useContext,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-} from 'react';
-import type { FocusEventHandler, ReactNode } from 'react';
+import { useImperativeHandle, useMemo, useRef } from 'react';
+import type { ComponentType, CSSProperties, ReactNode, Ref } from 'react';
 import PhoneInputWithCountrySelect, {
   getCountries,
 } from 'react-phone-number-input';
+import type {
+  FeatureProps,
+  Props as LibraryProps,
+  Value,
+} from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import {
+  FLOATING_FIELD_HEIGHT,
   FloatingLabelInput,
   type FloatingLabelInputProps,
 } from '../FloatingLabelInput';
-import { CountryPicker, type CountryPickerTexts } from './CountryPicker';
-import { countryLabels, type Country } from './countries';
+import {
+  useStorefrontUI,
+  type CountryPickerTexts,
+} from '../StorefrontUIProvider';
+import { CountryPicker } from './CountryPicker';
+import { useCountryLabels, type Country } from './countries';
 
-export interface PhoneInputProps {
+/** The floating-label field without what the phone input sets itself. */
+type PhoneFieldProps = Omit<
+  FloatingLabelInputProps,
+  | 'ref'
+  | 'value'
+  | 'defaultValue'
+  | 'onChange'
+  | 'type'
+  | 'inputMode'
+  | 'prefix'
+  | 'className'
+  | 'style'
+>;
+
+export interface PhoneInputProps extends Omit<
+  FeatureProps<PhoneFieldProps>,
+  | 'countries'
+  | 'labels'
+  | 'locales'
+  | 'flags'
+  | 'flagUrl'
+  | 'flagComponent'
+  | 'international'
+  | 'countryCallingCodeEditable'
+  | 'countrySelectComponent'
+  | 'countrySelectProps'
+  | 'inputComponent'
+  | 'containerComponent'
+  | 'containerComponentProps'
+  | 'internationalIcon'
+  | 'addInternationalOption'
+  | 'countryOptionsOrder'
+  | 'className'
+  | 'style'
+> {
+  /** The number input. */
+  ref?: Ref<HTMLInputElement>;
   /** E.164 (`+380501234567`), what `onChange` gives back; empty while incomplete. */
   value?: string;
   onChange: (value: string | undefined) => void;
-  label: string;
-  error?: string;
-  status?: 'error' | 'warning';
-  /** Country of an empty field; Ukraine by default. */
+  /** Countries of the picker; every country by default. */
+  countries?: readonly Country[];
+  /** Country of an empty field; none by default, the buyer types the code. */
   defaultCountry?: Country;
-  /** Locale of the country names in the picker. */
+  /** Locale of the country names; the one of `StorefrontUIProvider`. */
   locale?: string;
+  /** Texts of the country picker over the ones of `StorefrontUIProvider`. */
   pickerTexts?: Partial<CountryPickerTexts>;
   /** Controlled open state of the country picker; uncontrolled by default. */
   pickerOpen?: boolean;
   onPickerOpenChange?: (open: boolean) => void;
-  disabled?: boolean;
-  readOnly?: boolean;
   /** Shown at the end of the field, e.g. a lock of a read-only number. */
   suffix?: ReactNode;
-  autoFocus?: boolean;
-  autoComplete?: string;
-  name?: string;
-  id?: string;
-  onBlur?: FocusEventHandler<HTMLInputElement>;
-  onFocus?: FocusEventHandler<HTMLInputElement>;
-  wrapperClassName?: string;
-  'aria-describedby'?: string;
+  /** The box of the picker and the field; `classNames` and `styles` go to the field's parts. */
+  className?: string;
+  style?: CSSProperties;
 }
 
-interface PickerSettings {
+/** What `CountrySelect` gets through the library's `countrySelectProps`. */
+interface CountrySelectSettings {
   locale: string;
+  countries?: readonly Country[];
   texts?: Partial<CountryPickerTexts>;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const PickerSettingsContext = createContext<PickerSettings>({ locale: 'en' });
+// The library's component class does not type the ref it forwards to the number input.
+const PhoneNumberInput =
+  PhoneInputWithCountrySelect as unknown as ComponentType<
+    LibraryProps<PhoneFieldProps> & { ref?: Ref<HTMLInputElement> }
+  >;
 
 /**
  * International phone number in the floating-label field: the country flag inside the field on
  * the left, the number with its calling code after it (`+380 67 123 45 67`). The value is E.164,
- * ready for the API; check it with `isPossiblePhoneNumber`.
+ * ready for the API; check it with `isPossiblePhone` or `isValidPhone`.
  */
-export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
-  (
-    {
-      value,
-      onChange,
-      defaultCountry = 'UA',
-      locale = 'en',
-      pickerTexts,
-      pickerOpen,
-      onPickerOpenChange,
-      wrapperClassName,
-      disabled,
-      readOnly,
-      ...fieldProps
-    },
-    ref
-  ) => {
-    const { styles, cx } = useStyles();
-    const labels = useMemo(() => countryLabels(locale), [locale]);
-    const settings = useMemo(
-      () => ({
-        locale,
-        texts: pickerTexts,
-        open: pickerOpen,
-        onOpenChange: onPickerOpenChange,
-      }),
-      [locale, pickerTexts, pickerOpen, onPickerOpenChange]
-    );
+export const PhoneInput = ({
+  ref,
+  value,
+  onChange,
+  countries,
+  defaultCountry,
+  locale: localeProp,
+  pickerTexts,
+  pickerOpen,
+  onPickerOpenChange,
+  className,
+  style,
+  ...fieldProps
+}: PhoneInputProps) => {
+  const { styles, cx } = useStyles();
+  const ui = useStorefrontUI();
+  const locale = localeProp ?? ui.locale;
+  const labels = useCountryLabels(locale);
+  const countrySelectProps = useMemo<CountrySelectSettings>(
+    () => ({
+      locale,
+      countries,
+      texts: pickerTexts,
+      open: pickerOpen,
+      onOpenChange: onPickerOpenChange,
+    }),
+    [locale, countries, pickerTexts, pickerOpen, onPickerOpenChange]
+  );
 
-    return (
-      <PickerSettingsContext.Provider value={settings}>
-        <PhoneInputWithCountrySelect
-          // The library forwards the ref to the number input.
-          ref={ref as never}
-          value={value ?? ''}
-          onChange={onChange}
-          defaultCountry={defaultCountry}
-          international
-          countryCallingCodeEditable={false}
-          focusInputOnCountrySelection
-          labels={labels}
-          flags={flags}
-          disabled={disabled}
-          readOnly={readOnly}
-          className={cx(styles.container, wrapperClassName)}
-          containerComponent={PhoneContainer}
-          countrySelectComponent={CountrySelect}
-          inputComponent={PhoneField}
-          {...fieldProps}
-        />
-      </PickerSettingsContext.Provider>
-    );
-  }
-);
-
-PhoneInput.displayName = 'PhoneInput';
+  return (
+    <PhoneNumberInput
+      {...fieldProps}
+      ref={ref}
+      value={value ?? ''}
+      onChange={(next?: Value) => onChange(next)}
+      defaultCountry={defaultCountry}
+      countries={countries ? [...countries] : undefined}
+      international
+      countryCallingCodeEditable={false}
+      focusInputOnCountrySelection
+      labels={labels}
+      flags={flags}
+      className={cx(styles.container, className)}
+      style={style}
+      containerComponent={PhoneContainer}
+      countrySelectComponent={CountrySelect}
+      countrySelectProps={countrySelectProps}
+      inputComponent={PhoneField}
+    />
+  );
+};
 
 const PhoneContainer = ({
   className,
@@ -128,7 +161,7 @@ const PhoneContainer = ({
   children,
 }: {
   className?: string;
-  style?: object;
+  style?: CSSProperties;
   children: ReactNode;
 }) => (
   <div className={className} style={style}>
@@ -140,35 +173,31 @@ const PhoneContainer = ({
 const CountrySelect = ({
   value,
   onChange,
-  options,
   disabled,
   readOnly,
-}: {
+  locale,
+  countries,
+  texts,
+  open,
+  onOpenChange,
+}: CountrySelectSettings & {
   value?: Country;
   onChange: (country?: Country) => void;
-  options: { value?: Country; label: string; divider?: boolean }[];
   disabled?: boolean;
   readOnly?: boolean;
 }) => {
   const { styles } = useStyles();
-  const settings = useContext(PickerSettingsContext);
-  const countries = useMemo(
-    () =>
-      options
-        .map((option) => option.value)
-        .filter((country): country is Country => Boolean(country)),
-    [options]
-  );
+  const all = useMemo(() => getCountries(), []);
   return (
     <span className={styles.country}>
       <CountryPicker
         value={value}
         onChange={onChange}
-        countries={countries.length ? countries : getCountries()}
-        locale={settings.locale}
-        texts={settings.texts}
-        open={settings.open}
-        onOpenChange={settings.onOpenChange}
+        countries={countries ?? all}
+        locale={locale}
+        texts={texts}
+        open={open}
+        onOpenChange={onOpenChange}
         disabled={disabled || readOnly}
       />
     </span>
@@ -176,43 +205,49 @@ const CountrySelect = ({
 };
 
 /** `inputComponent` of the library: the floating-label field, room for the flag in front. */
-const PhoneField = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
-  (props, ref) => {
-    const { styles } = useStyles();
-    const inputRef = useRef<InputRef>(null);
-    useImperativeHandle(ref, () => inputRef.current?.input as HTMLInputElement, []);
-    return (
-      <FloatingLabelInput
-        ref={inputRef}
-        {...props}
-        type="tel"
-        inputMode="tel"
-        prefix={<span className={styles.flagRoom} aria-hidden />}
-      />
-    );
-  }
-);
+const PhoneField = ({
+  ref,
+  ...props
+}: PhoneFieldProps & { ref?: Ref<HTMLInputElement> }) => {
+  const { styles } = useStyles();
+  const inputRef = useRef<InputRef>(null);
+  useImperativeHandle(
+    ref,
+    () => inputRef.current?.input as HTMLInputElement,
+    []
+  );
+  return (
+    <FloatingLabelInput
+      ref={inputRef}
+      {...props}
+      type="tel"
+      inputMode="tel"
+      prefix={<span className={styles.flagRoom} aria-hidden />}
+    />
+  );
+};
 
-PhoneField.displayName = 'PhoneField';
+/** Room the field leaves at its start for the picker: the flag, the chevron and their padding. */
+const PICKER_WIDTH = 52;
 
 const useStyles = createStyles(({ css }) => ({
   container: css`
     position: relative;
     width: 100%;
   `,
-  // Over the field, as tall as it (50px), in the room the field leaves at its start.
+  // Over the field, as tall as it, in the room the field leaves at its start.
   country: css`
     position: absolute;
     z-index: 3;
     top: 0;
     left: 1px;
-    height: 50px;
+    height: ${FLOATING_FIELD_HEIGHT}px;
     display: flex;
     align-items: center;
     padding-left: 3px;
   `,
   flagRoom: css`
     display: inline-block;
-    width: 52px;
+    width: ${PICKER_WIDTH}px;
   `,
 }));

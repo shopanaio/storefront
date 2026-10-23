@@ -1,38 +1,58 @@
 'use client';
 
-import { createStyles } from 'antd-style';
+import { useImperativeHandle, useRef } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import { AuthFlow, type AuthFlowProps } from '../flow/AuthFlow';
+import { AuthInlineSurface } from './surfaces';
 
-export interface AuthInlineProps extends Omit<AuthFlowProps, 'context' | 'renderHeader'> {
-  /** `checkoutRequired` by default: the checkout of a store that takes orders from accounts only. */
-  context?: AuthFlowProps['context'];
-  className?: string;
+/** What a host does with the inline sign-in from outside, e.g. "Log in" elsewhere on the page. */
+export interface AuthInlineHandle {
+  /** Focuses the first field of the screen (the phone or the email), else its first button. */
+  focus(options?: FocusOptions): void;
+  /** The panel, e.g. to scroll it into view. */
+  element: HTMLDivElement | null;
 }
 
-/** Sign-in in the page itself, in a panel; the screens bring their own ways back. */
+export interface AuthInlineProps extends AuthFlowProps {
+  ref?: Ref<AuthInlineHandle>;
+  className?: string;
+  style?: CSSProperties;
+}
+
+/** Fields of a screen: past the method tabs (radios) and the hidden inputs of the country. */
+const FIELD = 'input:not([type="radio"]):not([type="hidden"]):not(:disabled)';
+
+/**
+ * Sign-in in the page itself, in a panel; the screens bring their own ways back.
+ * `checkoutRequired` by default: the checkout of a store that takes orders from accounts only.
+ */
 export const AuthInline = ({
+  ref,
   context = 'checkoutRequired',
   className,
+  style,
   ...flowProps
 }: AuthInlineProps) => {
-  const { styles, cx } = useStyles();
+  const panel = useRef<HTMLDivElement>(null);
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: (options) => {
+        const root = panel.current;
+        const target =
+          root?.querySelector<HTMLElement>(FIELD) ??
+          root?.querySelector<HTMLElement>('button');
+        target?.focus(options);
+      },
+      get element() {
+        return panel.current;
+      },
+    }),
+    []
+  );
   return (
-    <div className={cx(styles.panel, className)}>
+    <AuthInlineSurface ref={panel} className={className} style={style}>
       <AuthFlow {...flowProps} context={context} />
-    </div>
+    </AuthInlineSurface>
   );
 };
-
-const useStyles = createStyles(({ css, token }) => ({
-  // The side padding of the checkout blocks (an open method panel), so it sits among them;
-  // more room above and below the form.
-  panel: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.paddingSM}px;
-    padding: ${token.paddingLG}px ${token.paddingSM}px;
-    border: ${token.lineWidth}px solid ${token.colorBorder};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorBgContainer};
-  `,
-}));

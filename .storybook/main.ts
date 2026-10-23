@@ -48,6 +48,17 @@ const PACKAGE_SOURCES = [
     replacement: path.join(packagesDir, 'storefront-auth/src/ui/index.ts'),
   },
   {
+    find: /^@shopana\/storefront-auth\/ui\/primitives$/,
+    replacement: path.join(
+      packagesDir,
+      'storefront-auth/src/ui/primitives/index.ts'
+    ),
+  },
+  {
+    find: /^@shopana\/storefront-auth\/testing$/,
+    replacement: path.join(packagesDir, 'storefront-auth/src/testing/index.ts'),
+  },
+  {
     find: /^@shopana\/storefront-auth\/react$/,
     replacement: path.join(packagesDir, 'storefront-auth/src/react/index.ts'),
   },

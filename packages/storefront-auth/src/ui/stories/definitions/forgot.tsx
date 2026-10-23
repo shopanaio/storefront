@@ -1,9 +1,10 @@
 import type { Meta } from '@storybook/react-vite';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
+import { EMAIL } from '../../../testing';
 import { ForgotScreen } from '../../screens/ForgotScreen';
-import type { AuthContext } from '../../screens/types';
-import { EMAIL, errorOf } from '../fixtures';
+import { draftOf, type AuthContext, type AuthDraft } from '../../screens/types';
+import { contextArgType, errorForState } from '../args';
 import { Frame } from '../frames';
 
 const STATES = [
@@ -25,25 +26,27 @@ interface Args {
 
 const Story = (args: Args) => {
   const { state } = args;
-  const [email, setEmail] = useState(state === 'invalidInput' ? 'olena@example' : EMAIL);
+  const [draft, setDraft] = useState<AuthDraft>(() =>
+    draftOf({ email: state === 'invalidInput' ? 'olena@example' : EMAIL })
+  );
   const sent =
     state === 'resetLinkSent' ||
     state === 'resendPending' ||
     state === 'resetLinkResent' ||
     state === 'resendRateLimited';
-  const error =
-    state === 'rateLimited' || state === 'resendRateLimited'
-      ? errorOf('rateLimited', 600)
-      : state === 'invalidInput' || state === 'unavailable'
-        ? errorOf(state)
-        : null;
+  const error = errorForState(state, ['invalidInput', 'unavailable'], {
+    rateLimited: 600,
+    resendRateLimited: 600,
+  });
   return (
     <Frame context={args.context} back>
       <ForgotScreen
         key={state}
         context={args.context}
-        email={email}
-        onEmailChange={setEmail}
+        draft={draft}
+        onDraftChange={(patch) =>
+          setDraft((current) => ({ ...current, ...patch }))
+        }
         sent={sent}
         resent={state === 'resetLinkResent'}
         pending={state === 'pending' || state === 'resendPending'}
@@ -65,7 +68,7 @@ export const forgot = {
   render: (args) => <Story {...args} />,
   args: { context: 'store', state: 'default' },
   argTypes: {
-    context: { control: 'inline-radio', options: ['store', 'checkoutGuest', 'checkoutRequired'] },
+    context: contextArgType,
     state: { control: 'select', options: STATES },
   },
 } satisfies Meta<Args>;

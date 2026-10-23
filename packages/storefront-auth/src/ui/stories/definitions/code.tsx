@@ -1,8 +1,10 @@
 import type { Meta } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { EMAIL, PHONE, errorOf } from '../../../testing';
 import { CodeScreen } from '../../screens/CodeScreen';
+import { SigningInScreen } from '../../screens/SigningInScreen';
 import type { AuthContext, OtpPurpose } from '../../screens/types';
-import { EMAIL, PHONE, errorOf } from '../fixtures';
+import { contextArgType, errorForState } from '../args';
 import { Frame } from '../frames';
 
 const STATES = [
@@ -33,34 +35,39 @@ const RESEND_IN: Partial<Record<Args['state'], number>> = {
 const Story = (args: Args) => {
   const { state } = args;
   const channel = args.purpose === 'verifyEmail' ? 'email' : args.channel;
+  const destination = channel === 'email' ? EMAIL : PHONE;
+  if (state === 'signingIn') {
+    return (
+      <Frame context={args.context}>
+        <SigningInScreen initial="О" destination={destination} />
+      </Frame>
+    );
+  }
   const error =
     state === 'invalidCode'
       ? errorOf('invalidCredentials')
-      : state === 'rateLimited'
-        ? errorOf('rateLimited', 570)
-        : state === 'deliveryUnavailable' || state === 'unavailable'
-          ? errorOf(state)
-          : null;
+      : errorForState(state, ['deliveryUnavailable', 'unavailable'], {
+          rateLimited: 570,
+        });
+  const code =
+    state === 'typing'
+      ? '48190'
+      : state === 'verifying' || state === 'invalidCode'
+        ? '481907'
+        : '';
   return (
-    <Frame context={args.context} back>
+    <Frame context={args.context} back preset={{ code }}>
       <CodeScreen
         key={state}
+        context={args.context}
         purpose={args.purpose}
         channel={channel}
-        destination={channel === 'email' ? EMAIL : PHONE}
+        destination={destination}
         codeLength={6}
         resendIn={RESEND_IN[state] ?? 0}
         signUpWithCode={args.otpSignUp}
         pending={state === 'verifying'}
         error={error}
-        signingIn={state === 'signingIn' ? { initial: 'О' } : null}
-        defaultCode={
-          state === 'typing'
-            ? '48190'
-            : state === 'verifying' || state === 'invalidCode'
-              ? '481907'
-              : ''
-        }
         onVerify={fn()}
         onResend={fn()}
         onChange={fn()}
@@ -83,7 +90,7 @@ export const code = {
     state: 'typing',
   },
   argTypes: {
-    context: { control: 'inline-radio', options: ['store', 'checkoutGuest', 'checkoutRequired'] },
+    context: contextArgType,
     purpose: { control: 'inline-radio', options: ['signIn', 'verifyEmail'] },
     channel: { control: 'inline-radio', options: ['email', 'phone'] },
     state: { control: 'select', options: STATES },
