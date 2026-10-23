@@ -1,6 +1,6 @@
 'use client';
 
-import { createStyles } from 'antd-style';
+import { createStyles, keyframes } from 'antd-style';
 import { Fragment, useState } from 'react';
 import { useAuthUI } from '../AuthUIProvider';
 
@@ -39,6 +39,11 @@ export const CodeCells = ({
   const half = length % 2 === 0 ? length / 2 : -1;
   const current = Math.min(value.length, length - 1);
   const off = state === 'off' || disabled;
+  // The cell the next digit goes to shows a caret, as a text field does.
+  const caretAt =
+    focused && !off && state !== 'verifying' && value.length < length
+      ? value.length
+      : -1;
   const root = part(
     'codeCells',
     cx(
@@ -66,6 +71,7 @@ export const CodeCells = ({
             )}
           >
             {value[index] ?? ''}
+            {index === caretAt ? <span className={styles.caret} /> : null}
           </span>
         </Fragment>
       ))}
@@ -90,6 +96,11 @@ export const CodeCells = ({
     </div>
   );
 };
+
+const blink = keyframes`
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+`;
 
 const useStyles = createStyles(({ css, token }) => ({
   cells: css`
@@ -123,6 +134,17 @@ const useStyles = createStyles(({ css, token }) => ({
     border-color: ${token.colorPrimary};
     background: ${token.colorBgContainer};
     box-shadow: 0 0 0 ${token.controlOutlineWidth}px ${token.controlOutline};
+  `,
+  caret: css`
+    width: 2px;
+    height: ${token.fontSizeHeading3}px;
+    border-radius: 1px;
+    background: ${token.colorText};
+    animation: ${blink} 1s step-end infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   `,
   separator: css`
     flex: none;

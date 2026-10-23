@@ -22,7 +22,7 @@ import { SummaryItem } from './SummaryItem';
 const { Text } = Typography;
 
 /** Lines listed before "show more" beside the form. */
-const VISIBLE_LINES = 5;
+const VISIBLE_LINES = 3;
 
 interface SummaryLinesProps {
   checkout: Checkout.Checkout;
