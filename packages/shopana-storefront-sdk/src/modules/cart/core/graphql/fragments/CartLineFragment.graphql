@@ -1,6 +1,8 @@
 fragment SdkCartLineFragment_line on CheckoutLine {
   __typename
   id
+  title
+  sku
   quantity
   cost {
     unitPrice {
@@ -71,6 +73,7 @@ fragment SdkCartLineFragment_line on CheckoutLine {
   }
   children {
     id
+    title
     quantity
   }
   image {

@@ -70,6 +70,9 @@ export const computeCartTotals = (cart: model.Cart): model.Cart['cost'] => {
     totalShippingAmount: cart.cost.totalShippingAmount
       ? { amount: shipping, currencyCode: currency }
       : { amount: 0, currencyCode: currency },
+    // Not known locally: kept from the last server calculation.
+    merchandiseDiscountAmount: cart.cost.merchandiseDiscountAmount ?? null,
+    loyaltyAmount: cart.cost.loyaltyAmount ?? null,
   };
 };
 

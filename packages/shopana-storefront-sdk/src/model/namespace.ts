@@ -102,6 +102,12 @@ export namespace model {
   export type CartPurchasable = CartTypes.CartPurchasable;
   export type CartLine = CartTypes.CartLine;
   export type Cart = CartTypes.Cart;
+  export type CartLineOption = CartTypes.CartLineOption;
+  export type CartLineChild = CartTypes.CartLineChild;
+  export type CartIssue = CartTypes.CartIssue;
+  export type CartNotification = CartTypes.CartNotification;
+  export type CartPromoCode = CartTypes.CartPromoCode;
+  export type CartLoyaltyEarning = CartTypes.CartLoyaltyEarning;
   export type CheckoutLoyaltyRedemption = CartTypes.CheckoutLoyaltyRedemption;
   export type Collection = import('../modules/storefront').Collection;
   export type CheckoutPlacement = import('../modules/storefront').CheckoutPlacement;

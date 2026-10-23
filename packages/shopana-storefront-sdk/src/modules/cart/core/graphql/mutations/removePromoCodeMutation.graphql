@@ -1,0 +1,13 @@
+mutation SdkRemovePromoCodeMutation($input: CheckoutPromoCodeRemoveInput!) {
+  checkoutPromoCodeRemove(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

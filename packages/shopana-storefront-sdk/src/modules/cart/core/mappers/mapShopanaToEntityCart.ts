@@ -105,7 +105,7 @@ const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
       pageInfo: { hasNextPage: false, hasPreviousPage: false },
       totalCount: media ? 1 : 0,
     },
-    sku: null,
+    sku: line.sku ?? null,
     stockStatus: {
       isAvailable: apiPurchasable.isAvailable ?? true,
       maxQuantity:
@@ -122,6 +122,17 @@ const mapLine = (line: SdkCartLineFragment_LineFragment): model.CartLine => {
     quantity: line.quantity,
     purchasableId: line.purchasableId,
     purchasable,
+    options:
+      apiPurchasable.selectedOptions?.map((selection) => ({
+        name: selection.option.name,
+        value: selection.optionValue.name,
+      })) ?? [],
+    children: line.children.map((child) => ({
+      id: child.id,
+      title: child.title,
+      quantity: child.quantity,
+    })),
+    currentlyNotInStock: apiPurchasable.currentlyNotInStock ?? false,
     cost: {
       unitPrice: toMoney(line.cost.unitPrice),
       compareAtUnitPrice: line.cost.compareAtUnitPrice
@@ -163,12 +174,41 @@ export function mapShopanaCheckoutToEntityCart(
     createdAt: toDate(checkout.createdAt),
     updatedAt: toDate(checkout.updatedAt),
     totalQuantity: checkout.totalQuantity,
+    guestCheckoutAllowed: checkout.guestCheckoutAllowed,
+    issues: checkout.issues.map((issue) => ({
+      ...issue,
+      lineId: issue.lineId ?? null,
+    })),
+    notifications: checkout.notifications.map((notification) => ({
+      ...notification,
+    })),
+    promoCodes: checkout.promoCodes.map((promoCode) => ({
+      code: promoCode.code,
+      status: promoCode.status,
+      reason: promoCode.reason ?? null,
+      message: promoCode.message ?? null,
+    })),
+    loyaltyEarning: checkout.loyaltyEarning
+      ? {
+          state: checkout.loyaltyEarning.state,
+          points: checkout.loyaltyEarning.points,
+          amount: checkout.loyaltyEarning.amount
+            ? toMoney(checkout.loyaltyEarning.amount)
+            : null,
+          headline: checkout.loyaltyEarning.presentation.headline,
+          description: checkout.loyaltyEarning.presentation.description ?? null,
+        }
+      : null,
     cost: {
       subtotalAmount: toMoney(checkout.cost.subtotalAmount),
       totalAmount: toMoney(checkout.cost.totalAmount),
       totalDiscountAmount: toMoney(checkout.cost.totalDiscountAmount),
       totalTaxAmount: toMoney(checkout.cost.totalTaxAmount),
       totalShippingAmount: toMoney(checkout.cost.totalShippingAmount),
+      merchandiseDiscountAmount: toMoney(
+        checkout.cost.merchandiseDiscountAmount
+      ),
+      loyaltyAmount: toMoney(checkout.cost.loyaltyAmount),
     },
     lines: checkout.lines.map(mapLine),
   };

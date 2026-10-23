@@ -38,12 +38,17 @@ const checkout = {
   lines: [],
   tags: [],
   notifications: [],
+  guestCheckoutAllowed: true,
+  promoCodes: [],
+  loyaltyEarning: null,
   cost: {
     subtotalAmount: money,
     totalAmount: money,
     totalDiscountAmount: money,
     totalTaxAmount: money,
     totalShippingAmount: money,
+    merchandiseDiscountAmount: money,
+    loyaltyAmount: money,
   },
   loyaltyRewardId: 'reward-1',
   loyaltyRedemption: {

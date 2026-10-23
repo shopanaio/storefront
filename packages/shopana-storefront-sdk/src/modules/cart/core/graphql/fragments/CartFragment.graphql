@@ -71,6 +71,33 @@ fragment SdkCartFragment_cart on Checkout {
       currencyCode
       amount
     }
+    merchandiseDiscountAmount {
+      currencyCode
+      amount
+    }
+    loyaltyAmount {
+      currencyCode
+      amount
+    }
+  }
+  guestCheckoutAllowed
+  promoCodes {
+    code
+    status
+    reason
+    message
+  }
+  loyaltyEarning {
+    state
+    points
+    amount {
+      currencyCode
+      amount
+    }
+    presentation {
+      headline
+      description
+    }
   }
   customerNote
   notifications {

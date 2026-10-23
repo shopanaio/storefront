@@ -73,6 +73,9 @@ function checkout(quantity: number): SdkCartFragment_CartFragment {
     issues: [],
     notifications: [],
     tags: [],
+    guestCheckoutAllowed: true,
+    promoCodes: [],
+    loyaltyEarning: null,
     cost: {
       __typename: 'CheckoutCost',
       subtotalAmount: money(quantity * 10),
@@ -80,12 +83,16 @@ function checkout(quantity: number): SdkCartFragment_CartFragment {
       totalDiscountAmount: money(0),
       totalTaxAmount: money(0),
       totalShippingAmount: money(0),
+      merchandiseDiscountAmount: money(0),
+      loyaltyAmount: money(0),
     },
     lines: quantity
       ? [
           {
             __typename: 'CheckoutLine',
             id: 'line-1',
+            title: 'Variant 1',
+            sku: null,
             purchasableId: 'variant-1',
             quantity,
             attributes: {},

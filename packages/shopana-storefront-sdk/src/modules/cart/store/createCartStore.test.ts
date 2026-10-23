@@ -15,6 +15,11 @@ function createCart(): model.Cart {
     createdAt: new Date(0),
     updatedAt: new Date(0),
     totalQuantity: 1,
+    guestCheckoutAllowed: true,
+    issues: [],
+    notifications: [],
+    promoCodes: [],
+    loyaltyEarning: null,
     cost: {
       subtotalAmount: { amount: 10, currencyCode: 'USD' },
       totalAmount: { amount: 10, currencyCode: 'USD' },
