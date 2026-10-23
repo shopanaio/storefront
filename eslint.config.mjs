@@ -1,8 +1,14 @@
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'eslint/config';
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 import atlaskitDesignSystem from '@atlaskit/eslint-plugin-design-system';
 import graphqlEslint from '@graphql-eslint/eslint-plugin';
+
+/** The fetched API schema; without it (a fresh clone, CI) the mock server schema is used. */
+const graphqlSchema = existsSync('schema.shopana.graphql')
+  ? 'schema.shopana.graphql'
+  : 'mockServer/schema.graphql';
 
 export default defineConfig([
   {
@@ -56,7 +62,7 @@ export default defineConfig([
   },
   {
     files: [
-      'packages/brand-bite-crunch/src/**/*.graphql',
+      'themes/*/src/**/*.graphql',
       'packages/checkout/src/**/*.graphql',
       'packages/shopana-storefront-sdk/src/**/*.graphql',
     ],
@@ -64,9 +70,9 @@ export default defineConfig([
       parser: graphqlEslint.parser,
       parserOptions: {
         graphQLConfig: {
-          schema: 'schema.shopana.graphql',
+          schema: graphqlSchema,
           documents: [
-            'packages/brand-bite-crunch/src/**/*.graphql',
+            'themes/*/src/**/*.graphql',
             'packages/checkout/src/**/*.graphql',
             'packages/shopana-storefront-sdk/src/**/*.graphql',
           ],
@@ -101,7 +107,7 @@ export default defineConfig([
   },
   {
     files: [
-      'packages/brand-bite-crunch/src/**/*.{js,jsx,ts,tsx,mjs,cjs}',
+      'themes/*/src/**/*.{js,jsx,ts,tsx,mjs,cjs}',
       'packages/checkout/src/**/*.{js,jsx,ts,tsx,mjs,cjs}',
     ],
     rules: {

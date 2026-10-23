@@ -12,8 +12,8 @@ the GraphQL results are not serialized a second time in React props.
 GraphQL documents live in external `*.graphql` files. Components import
 generated `TypedDocumentNode` values and generated operation/fragment types:
 
-- theme documents generate
-  `packages/brand-bite-crunch/codegen/apollo/storefront-operations.ts`;
+- theme documents generate the theme's own operations module
+  (`themes/<name>/codegen/apollo/storefront-operations.ts`);
 - checkout documents generate `packages/checkout/src/graphql/operations.ts`;
 - SDK documents generate
   `packages/shopana-storefront-sdk/src/graphql/apollo/generated/operations.ts`.

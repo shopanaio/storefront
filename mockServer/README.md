@@ -137,9 +137,8 @@ and answers the existing item when the product is already saved.
 ## Theme composition
 
 The theme owns the executable entrypoint, fixture bundle, deterministic clock,
-and files served from `/images/*`. Bite & Crunch composes the engine in
-`packages/brand-bite-crunch/mock/server.js` and stores its fixture data under
-`packages/brand-bite-crunch/mock/fixtures/`.
+and files served from `/images/*`. A theme composes the engine in its own
+`mock/server.js` and stores its fixture data under `mock/fixtures/`.
 
 Authenticated requests normally use the Bearer token issued by application
 auth. For fixture-only scenarios, `x-mock-customer-id` explicitly selects a

@@ -74,9 +74,9 @@ as a modal. A provider inside another one changes only what it sets; a component
 <StorefrontUIProvider
   locale="uk"
   texts={{
-    close: 'Закрити',
+    close: 'Close',
     countryPicker: {
-      trigger: (country, code) => `Країна: ${country}, +${code}`,
+      trigger: (country, code) => `Country: ${country}, +${code}`,
     },
   }}
 >

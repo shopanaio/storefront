@@ -1,6 +1,22 @@
 {
   "name": "@shopana/brand-sdk",
   "version": "1.0.0",
+  "description": "Theme contract shared by Shopana storefront themes.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "theme"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/brand-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/brand-sdk"
+  },
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

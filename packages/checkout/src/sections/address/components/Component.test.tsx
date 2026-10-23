@@ -106,8 +106,8 @@ describe('AddressSectionView', () => {
     mocks.api.saveDeliveryAddress.mockReset().mockResolvedValue(undefined);
   });
 
-  // Ожидаемое поведение: повторная загрузка списка стран (например, после смены языка) не
-  // стирает то, что покупатель уже ввёл в несохранённые поля адреса.
+  // Expected behavior: reloading the country list (e.g. after a language change) does not
+  // erase what the buyer has already typed into unsaved address fields.
   it('SC-s8ak: keeps the unsaved address fields while the list of countries loads again', async () => {
     const { rerender } = render(view(data()));
     fireEvent.change(screen.getByLabelText('Address'), {
@@ -128,8 +128,8 @@ describe('AddressSectionView', () => {
     expect(screen.getByLabelText('Address')).toHaveValue('10 Downing St');
   });
 
-  // Ожидаемое поведение: страна, в которой покупатель уже начал вводить адрес, не меняется
-  // неявно (из customerIdentity.countryCode), и введённое не пропадает.
+  // Expected behavior: the country in which the buyer has started entering an address does not
+  // change implicitly (from customerIdentity.countryCode), and the entered data is kept.
   it('SC-s8ak: keeps the form the buyer is typing in when the buyer country changes implicitly', async () => {
     const { rerender } = render(view(data({ customerCountryCode: 'GB' })));
     fireEvent.change(screen.getByLabelText('Address'), {
@@ -206,8 +206,8 @@ describe('AddressSectionView', () => {
     expect(screen.getByLabelText('City')).toHaveValue('Berlin');
   });
 
-  // Ожидаемое поведение: сохранённый украинский адрес (город) показывается сразу, не дожидаясь
-  // списка стран: форме Украины формат адреса не нужен, город приходит с checkout.
+  // Expected behavior: a saved Ukrainian address (city) is shown immediately, without waiting for
+  // the country list: the Ukraine form needs no address format, the city comes with the checkout.
   it('shows a saved Ukrainian address while the countries load', () => {
     mocks.countries = { ...mocks.countries, countries: [], loading: true };
     const saved = (countryCode: string) =>

@@ -69,3 +69,7 @@ external/
 # Storybook
 storybook-static
 *storybook.log
+
+# Themes are separate repositories checked out on demand
+/themes/*
+!/themes/README.md

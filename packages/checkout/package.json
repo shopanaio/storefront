@@ -1,8 +1,25 @@
 {
   "name": "@shopana/checkout",
   "version": "0.1.0",
+  "description": "Checkout flow and registration API for Shopana storefront themes.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "checkout",
+    "react",
+    "nextjs"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/checkout#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/checkout"
+  },
   "private": false,
-  "license": "MIT",
   "type": "module",
   "imports": {
     "#checkout/*": {

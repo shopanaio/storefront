@@ -19,7 +19,7 @@ export function formatShortDate(locale: string, date: Date): string {
 }
 
 /**
- * Text of an amount of points, e.g. "1 240 балів". The brand names its points in its own
+ * Text of an amount of points, e.g. "1,240 points". The brand names its points in its own
  * messages (`loyalty-points`); the checkout does not know the name.
  */
 export function usePointsLabel(): (points: string) => string {

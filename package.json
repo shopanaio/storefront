@@ -5,48 +5,66 @@
   "workspaces": {
     "packages": [
       "packages/*",
+      "themes/*",
       "mockServer"
     ]
   },
   "scripts": {
-    "runtime:init": "yarn workspace @shopana/brand-bite-crunch runtime:init",
-    "dev": "yarn workspace @shopana/brand-bite-crunch dev",
-    "build": "yarn workspace @shopana/brand-bite-crunch build",
-    "start": "yarn workspace @shopana/brand-bite-crunch start",
+    "runtime:init": "node ./scripts/theme.mjs runtime:init",
+    "dev": "node ./scripts/theme.mjs dev",
+    "build": "node ./scripts/theme.mjs build",
+    "start": "node ./scripts/theme.mjs start",
     "codegen": "node ./scripts/codegen.mjs",
     "codegen:openapi": "node ./scripts/codegen-openapi.mjs",
-    "widgets:build": "yarn workspace @shopana/brand-bite-crunch widgets:build",
-    "widgets:watch": "yarn workspace @shopana/brand-bite-crunch widgets:watch",
+    "widgets:build": "node ./scripts/theme.mjs widgets:build",
+    "widgets:watch": "node ./scripts/theme.mjs widgets:watch",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build -o storybook-static",
-    "storybook:theme": "yarn workspace @shopana/brand-bite-crunch storybook",
-    "build-storybook:theme": "yarn workspace @shopana/brand-bite-crunch build-storybook",
+    "storybook:theme": "node ./scripts/theme.mjs storybook",
+    "build-storybook:theme": "node ./scripts/theme.mjs build-storybook",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint .",
     "build:packages": "yarn workspace @shopana/brand-sdk build && yarn workspace @shopana/storefront-sdk build && yarn workspace @shopana/storefront-ui build && yarn workspace @shopana/storefront-auth build",
-    "typecheck": "yarn build:packages && node ./scripts/typecheck.mjs"
+    "typecheck": "yarn build:packages && node ./scripts/typecheck.mjs",
+    "test": "yarn workspace @shopana/storefront-sdk test && yarn workspace @shopana/storefront-ui test && yarn workspace @shopana/storefront-auth test && yarn workspace @shopana/checkout test && yarn workspace @shopana/mock-server test"
   },
   "devDependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "@apollo/client": "^4.0.9",
+    "@apollo/client-integration-nextjs": "^0.14.5",
     "@atlaskit/eslint-plugin-design-system": "^13.27.0",
     "@graphql-eslint/eslint-plugin": "^4.4.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@storybook/addon-a11y": "10.1.0",
     "@storybook/addon-docs": "10.1.0",
     "@storybook/react-vite": "10.1.0",
+    "@types/lodash": "^4.17.20",
     "@types/node": "^24.10.1",
+    "@types/nprogress": "^0.2.3",
+    "@types/webpack-env": "^1.18.8",
     "@vitejs/plugin-react": "4.7.0",
+    "antd": "^6.0.0",
+    "antd-style": "^3.7.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.5",
     "eslint-plugin-css": "^0.11.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "graphql": "^16.10.0",
+    "js-cookie": "^3.0.5",
+    "next-intl": "^4.5.6",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.7.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "rxjs": "^7.8.2",
     "storybook": "10.1.0",
     "typescript": "^5.8.3",
-    "vite": "7.2.4"
+    "vite": "7.2.4",
+    "zustand": "^5.0.6"
   },
   "resolutions": {
     "@types/react": "19.2.2"
-  }
+  },
+  "license": "Apache-2.0"
 }

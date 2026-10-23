@@ -73,7 +73,7 @@ export interface LoyaltyBannerInput {
   redemption: Checkout.LoyaltyRedemption | null;
   /** Source of the saved selection, for an issue whose redemption the API did not apply. */
   selectedSource: Checkout.LoyaltySource | null;
-  /** What the redemption was reduced to, ready to show ("350 балів", "₴80"). */
+  /** What the redemption was reduced to, ready to show ("350 points", "₴80"). */
   reducedTo: string | null;
   /** A loyalty write is running: the banner action waits for it. */
   busy: boolean;

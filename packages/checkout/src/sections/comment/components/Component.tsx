@@ -78,7 +78,7 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
       request.then(clear, clear);
       return request;
     };
-    // debounce сохраняет обработчик и вызывает его позже, вне render.
+    // debounce keeps the handler and calls it later, outside render.
     // eslint-disable-next-line react-hooks/refs
     const debounced = debounce((nextNote: string) => {
       save(nextNote).catch(() => undefined);

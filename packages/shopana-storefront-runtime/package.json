@@ -1,8 +1,24 @@
 {
   "name": "@shopana/storefront",
   "version": "0.1.0",
+  "description": "Next.js App Router runtime and framework facades for Shopana storefront themes.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "nextjs",
+    "runtime"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/shopana-storefront-runtime#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/shopana-storefront-runtime"
+  },
   "private": false,
-  "license": "MIT",
   "type": "module",
   "files": [
     "bin",

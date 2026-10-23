@@ -1,59 +1,64 @@
-# Shopana storefront workspace
+# Shopana Storefront
 
-This repository is a workspace orchestrator. The runnable application is the
-`@shopana/brand-bite-crunch` theme package; the repository root does not own a
-Next.js app.
+Packages for building Next.js storefronts on the [Shopana](https://github.com/shopanaio) storefront
+API. A storefront is a theme: a complete runnable application composed from these packages.
+
+> **Status: beta.** APIs may change between minor versions until 1.0.
 
 ## Packages
 
-- `@shopana/storefront` — Next.js runtime CLI and framework facades.
-- `@shopana/storefront-sdk` — shared storefront data/runtime API.
-- `@shopana/checkout` — independent checkout flow and registration API.
-- `@shopana/brand-sdk` — common theme contract.
-- `@shopana/brand-bite-crunch` — full Bite & Crunch storefront application.
-- `@shopana/mock-server` — shared GraphQL mock engine with theme-injected data.
+| Package                                                      | Description                                          |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| [`@shopana/storefront`](packages/shopana-storefront-runtime) | Next.js App Router runtime CLI and framework facades |
+| [`@shopana/storefront-sdk`](packages/shopana-storefront-sdk) | Data, session, cart and composition primitives       |
+| [`@shopana/storefront-auth`](packages/storefront-auth)       | Headless customer sign-in and sign-up                |
+| [`@shopana/storefront-ui`](packages/storefront-ui)           | Form and overlay primitives                          |
+| [`@shopana/checkout`](packages/checkout)                     | Checkout flow and registration API                   |
+| [`@shopana/brand-sdk`](packages/brand-sdk) (private)         | Theme contract                                       |
+| [`@shopana/mock-server`](mockServer) (private)               | GraphQL mock engine for theme development            |
+
+## Requirements
+
+- Node.js 22 (see `.nvmrc`)
+- Yarn 1
 
 ## Setup
 
 ```bash
 yarn install
-cp packages/brand-bite-crunch/.env.sample packages/brand-bite-crunch/.env
+yarn build:packages
 ```
 
-Theme environment files are resolved from
-`packages/brand-bite-crunch`, not from the workspace root.
+## Themes
 
-## Commands
-
-Root commands delegate to the runnable theme workspace:
+Themes are separate repositories checked out under `themes/<name>`; see
+[themes/README.md](themes/README.md) and [docs/brand-configuration.md](docs/brand-configuration.md).
+With a theme checked out, the root commands run it:
 
 ```bash
 yarn runtime:init
 yarn dev
 yarn build
 yarn start
-yarn codegen
-yarn storybook
+yarn storybook:theme
 ```
 
-`runtime:init` generates
-`packages/brand-bite-crunch/.runtime`. Generated runtime files must not be
+`runtime:init` generates the theme's `.runtime` directory. Generated runtime files must not be
 edited directly.
 
-The theme source uses the runtime's Next.js facades, for example:
+## Development
 
-```tsx
-import Link from '@shopana/storefront/next/link';
-import { usePathname } from '@shopana/storefront/next/navigation';
+```bash
+yarn lint           # ESLint
+yarn format:check   # Prettier
+yarn typecheck      # builds the packages, then type-checks every workspace
+yarn test           # unit tests of the packages
+yarn storybook      # Storybook of the packages
+yarn codegen        # regenerates GraphQL and OpenAPI types (needs SHOPANA_GRAPHQL_URL)
 ```
 
-Checkout is composed by the theme adapter in
-`src/integrations/checkout.tsx` and registered through the thin module adapter
-in `src/modules/checkout/register.ts`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-## Adding another theme
+## License
 
-Create a complete runnable theme package with its own `src`, `public`,
-`codegen`, `mock/fixtures`, scripts, Storybook config, `next.config.js`, and runtime commands.
-Theme selection is made by the workspace/build target; there is no dynamic
-brand environment variable or fallback brand package.
+[Apache-2.0](LICENSE)

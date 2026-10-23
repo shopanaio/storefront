@@ -128,7 +128,7 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
 };
 
 /**
- * What the order earns, in the server's words ("Нарахуємо +236 балів"). A guest is invited to
+ * What the order earns, in the server's words ("You'll earn +236 points"). A guest is invited to
  * sign in for it in a highlighted box; without customer accounts a guest cannot earn, so nothing
  * is shown.
  */

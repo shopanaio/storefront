@@ -87,7 +87,7 @@ const StorefrontUIContext = createContext<StorefrontUIValue>({
  * ```tsx
  * <StorefrontUIProvider
  *   locale="uk"
- *   texts={{ close: 'Закрити', countryPicker: { trigger: (country, code) => `${country}, +${code}` } }}
+ *   texts={{ close: 'Close', countryPicker: { trigger: (country, code) => `${country}, +${code}` } }}
  * >
  *   {children}
  * </StorefrontUIProvider>

@@ -51,7 +51,7 @@ function sourceOptions(
 }
 
 /**
- * The "Бонуси" block of the order summary, under the promo codes: the account balance and tier,
+ * The "Points" block of the order summary, under the promo codes: the account balance and tier,
  * paying with points or store credit, and the rewards. Each part shows only with data. Problems
  * are said in the checkout banner; the block shows only the state, so the summary does not jump.
  * Guests see nothing here: what they could earn is under the total.

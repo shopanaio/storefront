@@ -1,8 +1,24 @@
 {
   "name": "@shopana/storefront-auth",
   "version": "0.1.0",
+  "description": "Headless customer sign-in and sign-up for Shopana storefronts.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "auth",
+    "react"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/storefront-auth#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/storefront-auth"
+  },
   "private": false,
-  "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

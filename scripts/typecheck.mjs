@@ -2,16 +2,22 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { listThemes } from './theme.mjs';
 
 const workspaceDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..'
 );
 const tsc = path.join(workspaceDir, 'node_modules/typescript/bin/tsc');
-const configs = readdirSync(path.join(workspaceDir, 'packages'))
-  .flatMap((name) => [
-    path.join('packages', name, 'tsconfig.json'),
-    path.join('packages', name, 'storybook', 'tsconfig.json'),
+const configs = [
+  ...readdirSync(path.join(workspaceDir, 'packages')).map((name) =>
+    path.join('packages', name)
+  ),
+  ...listThemes().map((dir) => path.relative(workspaceDir, dir)),
+]
+  .flatMap((dir) => [
+    path.join(dir, 'tsconfig.json'),
+    path.join(dir, 'storybook', 'tsconfig.json'),
   ])
   .filter((config) => existsSync(path.join(workspaceDir, config)));
 let failed = false;

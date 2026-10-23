@@ -3,18 +3,21 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildClientSchema, printSchema } from 'graphql';
+import { resolveTheme } from './theme.mjs';
 
 const workspaceDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..'
 );
-const themeDir = path.join(workspaceDir, 'packages', 'brand-bite-crunch');
+const themeDir = resolveTheme();
 const schemaFile = path.join(workspaceDir, 'schema.shopana.graphql');
 
-try {
-  process.loadEnvFile(path.join(themeDir, '.env'));
-} catch (error) {
-  if (error?.code !== 'ENOENT') throw error;
+if (themeDir) {
+  try {
+    process.loadEnvFile(path.join(themeDir, '.env'));
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
 }
 
 function run(command, args, cwd = workspaceDir) {
@@ -42,7 +45,7 @@ async function fetchShopanaSchema() {
   }
 
   const query = await readFile(
-    path.join(themeDir, 'codegen', 'scripts', 'IntrospectionQuery.gql'),
+    path.join(workspaceDir, 'scripts', 'IntrospectionQuery.gql'),
     'utf8'
   );
   const headers = {
@@ -76,6 +79,11 @@ async function fetchShopanaSchema() {
 }
 
 if (process.argv.includes('--use-existing-schema')) {
+  if (!themeDir) {
+    throw new Error(
+      '--use-existing-schema reads the schema of a checked-out theme'
+    );
+  }
   const existingSchema = await readFile(
     path.join(themeDir, 'schema.shopana.graphql'),
     'utf8'
@@ -91,21 +99,25 @@ if (process.argv.includes('--schema-only')) {
   process.exit(0);
 }
 await run(process.execPath, ['scripts/codegen-openapi.mjs']);
-await run(
-  process.execPath,
-  ['codegen/scripts/validate-apollo-documents.js'],
-  themeDir
-);
+if (themeDir) {
+  await run(
+    process.execPath,
+    ['codegen/scripts/validate-apollo-documents.js'],
+    themeDir
+  );
+}
 await run('yarn', [
   'graphql-codegen',
   '--config',
   'packages/shopana-storefront-sdk/codegen.ts',
 ]);
-await run('yarn', [
-  'graphql-codegen',
-  '--config',
-  'packages/brand-bite-crunch/codegen.ts',
-]);
+if (themeDir) {
+  await run('yarn', [
+    'graphql-codegen',
+    '--config',
+    path.relative(workspaceDir, path.join(themeDir, 'codegen.ts')),
+  ]);
+}
 await run('yarn', [
   'graphql-codegen',
   '--config',

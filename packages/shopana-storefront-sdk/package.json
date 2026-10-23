@@ -1,8 +1,26 @@
 {
   "name": "@shopana/storefront-sdk",
   "version": "0.1.0",
+  "description": "Data, session, cart and composition primitives for Shopana storefront themes.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "sdk",
+    "apollo",
+    "graphql",
+    "react"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/shopana-storefront-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/shopana-storefront-sdk"
+  },
   "private": false,
-  "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

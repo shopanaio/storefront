@@ -7,13 +7,10 @@ import react from '@vitejs/plugin-react';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packagesDir = path.join(root, 'packages');
 
-/** Themes run their own Storybook. */
-const THEMES = new Set(['brand-bite-crunch']);
-
 const STORY_FILE = /\.(mdx|stories\.tsx?)$/;
 
 const packages = readdirSync(packagesDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && !THEMES.has(entry.name))
+  .filter((entry) => entry.isDirectory())
   .map((entry) => path.join(packagesDir, entry.name))
   .filter((dir) => existsSync(path.join(dir, 'package.json')));
 
@@ -120,8 +117,9 @@ const config: StorybookConfig = {
       ...viteConfig.server,
       watch: {
         ...viteConfig.server?.watch,
-        // Theme builds (.next, .runtime) churn files the stories never import.
-        ignored: [...THEMES].map((theme) => `**/packages/${theme}/**`),
+        // Themes run their own Storybook; their builds (.next, .runtime) churn files the stories
+        // never import.
+        ignored: ['**/themes/**'],
       },
     },
   }),

@@ -26,7 +26,7 @@ export const computeLineTotals = (
   const unit = parseAmount(line.cost.unitPrice?.amount ?? 0);
   const quantity = parseAmount(line.quantity);
   const subtotal = unit * quantity;
-  const total = subtotal; // локально скидки неизвестны
+  const total = subtotal; // discounts are unknown locally
 
   return {
     unitPrice: {

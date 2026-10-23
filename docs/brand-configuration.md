@@ -1,7 +1,8 @@
 # Theme package contract
 
-The storefront is composed as a complete theme workspace. Bite & Crunch is the
-current runnable theme: `@shopana/brand-bite-crunch`.
+The storefront is composed as a complete theme workspace. Themes live in their
+own repositories and are checked out under `themes/<name>` (see
+`themes/README.md`).
 
 A theme package owns:
 
@@ -12,8 +13,9 @@ A theme package owns:
 - the root `next.config.js` override;
 - its generated `.runtime` directory.
 
-The workspace root chooses a theme by delegating to its package name. Runtime
-brand switching and compatibility aliases are intentionally unsupported.
+The workspace root delegates its commands to the checked-out theme;
+`STOREFRONT_THEME` selects one when several are checked out. Runtime brand
+switching and compatibility aliases are intentionally unsupported.
 
 ## Required scripts
 
@@ -25,11 +27,11 @@ Every runnable theme exposes `runtime:init`, `dev`, `build`, `start`, `codegen`,
 The runtime CLI is executed with the theme package as its working directory:
 
 ```bash
-yarn workspace @shopana/brand-bite-crunch runtime:init
+yarn runtime:init
 ```
 
-This creates `packages/brand-bite-crunch/.runtime`; `@src` and `@codegen`
-resolve against that same package.
+This creates `themes/<name>/.runtime`; `@src` and `@codegen` resolve against
+that same package.
 
 ## Checkout integration
 
@@ -40,6 +42,6 @@ not import theme source or theme aliases.
 ## Creating a theme
 
 Copy the complete theme package contract, assign a new workspace package name,
-provide its config and composition adapters, and point deployment/root delegate
-scripts at that workspace. Do not add a logo-only package or a runtime fallback
+provide its config and composition adapters, and check it out under
+`themes/<name>`. Do not add a logo-only package or a runtime fallback
 branch.

@@ -352,7 +352,7 @@ mocked(useAuth).mockImplementation(auth.useAuth);
 ### Storybook
 
 `yarn storybook` from the workspace root: **Storefront Auth / Screens**, every screen with the
-`state` values of its design board, without a theme and with the Bite Crunch one. A theme's
+`state` values of its design board. A theme's
 Storybook in this workspace renders the same board definitions from the sources
 (`src/ui/stories/definitions`, aliased as `@shopana/storefront-auth/stories`); they are not an
 entry of the package.

@@ -152,7 +152,7 @@ export function useHeldPending(pending: boolean): boolean {
   const [held, setHeld] = useState(false);
   useEffect(() => {
     if (pending) {
-      // Таймер гарантирует минимальное время показа скелетона после начала ожидания.
+      // The timer guarantees a minimum skeleton display time once waiting starts.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShownAt((current) => current ?? Date.now());
       setHeld(true);
