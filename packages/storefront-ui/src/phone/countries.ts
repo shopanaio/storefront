@@ -77,22 +77,17 @@ export interface CountryOption {
   callingCode: string;
 }
 
-/**
- * Countries of the picker: the selected one first, then the rest by name in the locale. With a
- * query, only those whose name or calling code contains it (`пол`, `48`, `+48`).
- */
+/** Countries of the picker: the selected one first, then the rest by name in the locale. */
 export function countryOptions({
   countries,
   labels,
   locale,
   selected,
-  query = '',
 }: {
   countries: readonly Country[];
   labels: Labels;
   locale: string;
   selected?: Country;
-  query?: string;
 }): CountryOption[] {
   const options = countries.map((country) => ({
     country,
@@ -100,17 +95,9 @@ export function countryOptions({
     callingCode: getCountryCallingCode(country),
   }));
   const collator = new Intl.Collator(locale);
-  options.sort((a, b) => {
+  return options.sort((a, b) => {
     if (a.country === selected) return -1;
     if (b.country === selected) return 1;
     return collator.compare(a.name, b.name);
   });
-  const text = query.trim().toLocaleLowerCase(locale);
-  if (!text) return options;
-  const digits = text.replace(/^\+/, '');
-  return options.filter(
-    (option) =>
-      option.name.toLocaleLowerCase(locale).includes(text) ||
-      (/^\d+$/.test(digits) && option.callingCode.startsWith(digits))
-  );
 }

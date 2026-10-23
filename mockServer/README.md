@@ -29,9 +29,46 @@ implements the OpenAPI email/password sign-up, sign-in, sign-out, password
 reset, session list, single-session revocation, and the OAuth
 authorization-code/PKCE routes under
 `/auth/applications/{applicationId}`. Users and sessions are isolated per
-application ID and kept only in memory until the server restarts. OTP, email
+application ID and kept only in memory until the server restarts. Email
 delivery, policy enforcement, rate limiting, and other production IAM features
 are intentionally not emulated.
+
+### Headless sign-in
+
+The headless API (`/auth/applications/{applicationId}/headless/v1/*`) used by
+the storefront's own sign-in forms enables every method of the contract:
+
+- password sign-in, sign-up and reset;
+- email code and phone code (E.164) sign-in and sign-up — the code is always
+  `000000`. A phone code creates a phone-only account (`phone_number` in
+  userinfo, no email) and a customer with that phone number;
+- Google, Facebook and Apple sign-in. `social/start` answers a one-time
+  `social/launch` URL (60 seconds) that opens a mock provider page: continue
+  as a provider account (email prefilled as `<provider>.user@example.com`, a
+  new email creates an account, an existing one signs in to it), cancel
+  (`error=access_denied`), or simulate `account_not_linked`. The browser then
+  returns to the transaction `redirect_uri` with `code`, `state` and `iss`, or
+  with `error`, `state` and `iss`;
+- account connections: list, link through the same provider page (returns to
+  `return_uri` with `connection=linked` or `connection_error`) and unlink. The
+  last way to sign in cannot be unlinked (`last_login_method`).
+
+Nothing is delivered: codes, password reset links and email verification
+links are printed to the server console as `[mock-iam] …` lines; open a
+printed link in the browser. Reset links redirect to the storefront
+`reset_uri` with `token` (or `error=invalid_token` once spent); verification
+links redirect to `verify_uri` with `email_verified=true` (or
+`error=invalid_token`).
+
+`MOCK_IAM_EMAIL_VERIFICATION` sets email verification: `off` (default), `otp`
+or `link`. When it is `otp` or `link`, password sign-up and password sign-in of
+an unverified email answer `verification_required`: with `otp` the buyer enters
+the printed code `000000`; with `link` the buyer opens the printed link and
+signs in again.
+
+Like IAM, the API routes accept only server requests (no `Origin`, Basic
+client authentication, `shopana-end-user-ip`); the launch, provider and email
+link routes are opened by the browser.
 
 When an authorization request has no active application session, the mock IAM
 renders its own email/password sign-in and sign-up page and then resumes the
@@ -60,6 +97,42 @@ supplied fixture data, so mutations never change the theme's source objects.
 
 Fixture constructors such as `gid`, `money`, `richText`, `postalAddress`, and
 `contentMetrics` are available from `@shopana/mock-server/fixture-helpers`.
+
+### Checkout disclosures
+
+`Checkout.disclosures` links the published `TERMS_OF_SERVICE` and
+`PRIVACY_POLICY` from `storePolicies` (en and uk notice text), and is null when
+neither is published. The acceptance mode comes from
+`checkoutSettings.termsAcceptanceMode` (`NOTICE` by default) or the
+`MOCK_CHECKOUT_TERMS_ACCEPTANCE=NOTICE|CHECKBOX` environment variable, which
+takes precedence. `placeOrder` answers `DISCLOSURES_CHANGED` for a stale
+`disclosuresVersion` and `TERMS_NOT_ACCEPTED` when the checkbox is required.
+
+### Reviews, questions and wishlists
+
+The review settings come from `data.reviewStoreConfiguration`. Three of them
+can be switched without editing fixtures, `true` or `false` overriding the
+fixture value, as `reviewStoreConfiguration` answers it and the mutations
+enforce it:
+
+- `MOCK_GUEST_REVIEWS` — `guestReviewsEnabled`: `reviewCreate` without a
+  customer answers `AUTHENTICATION_REQUIRED` when it is off;
+- `MOCK_GUEST_QUESTIONS` — `guestQuestionsEnabled`: the same for
+  `productQuestionCreate`;
+- `MOCK_CUSTOMER_ANSWERS` — `customerAnswersEnabled`:
+  `productQuestionAnswerCreate` always needs a customer and answers
+  `ANSWERS_DISABLED` when it is off.
+
+`productQuestionSubscriptionSet` needs a customer. Votes
+(`reviewContentVoteSet`, `reviewContentVoteRemove`) and reports
+(`reviewContentReportCreate`) are kept per customer or, without one, per
+anonymous visitor.
+
+Wishlists belong to the customer: `wishlistProductAdd` and
+`wishlistProductRemove` answer `AUTHENTICATION_REQUIRED` without one.
+`wishlistProductAdd` creates the default wishlist with the first saved product
+and answers the existing item when the product is already saved.
+`Customer.defaultWishlist`, `wishlists` and `wishlist(id)` read them.
 
 ## Theme composition
 

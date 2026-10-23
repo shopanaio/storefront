@@ -6,6 +6,8 @@ const publicUser = (user) => ({
   applicationId: user.applicationId,
   email: user.email,
   emailVerified: user.emailVerified,
+  phoneNumber: user.phoneNumber,
+  phoneNumberVerified: user.phoneNumberVerified,
   name: user.name,
   firstName: user.firstName,
   lastName: user.lastName,
@@ -26,6 +28,7 @@ export const createApplicationAuthStore = ({
   const accessTokens = new Map();
   const refreshTokens = new Map();
   const passwordResetTokens = new Map();
+  const emailVerificationTokens = new Map();
 
   const revokeOAuthForSession = (applicationSessionId) => {
     for (const [code, grant] of authorizationCodes) {
@@ -45,6 +48,7 @@ export const createApplicationAuthStore = ({
     }
   };
 
+  /** Users of a realm by id; an account has an email, a phone number or both. */
   const realmUsers = (applicationId) => {
     let users = usersByRealm.get(applicationId);
     if (!users) {
@@ -53,6 +57,65 @@ export const createApplicationAuthStore = ({
     }
     return users;
   };
+
+  const findUser = (applicationId, predicate) =>
+    [...realmUsers(applicationId).values()].find(predicate) ?? null;
+
+  const userByEmail = (applicationId, email) => {
+    const normalized = normalizeEmail(email);
+    return findUser(applicationId, (user) => user.email === normalized);
+  };
+
+  const userByPhone = (applicationId, phoneNumber) =>
+    findUser(applicationId, (user) => user.phoneNumber === phoneNumber);
+
+  const userById = (applicationId, id) =>
+    realmUsers(applicationId).get(id) ?? null;
+
+  const newUser = (applicationId, fields) => {
+    const timestamp = now().toISOString();
+    const user = {
+      id: randomUUID(),
+      applicationId,
+      email: null,
+      emailVerified: false,
+      phoneNumber: null,
+      phoneNumberVerified: false,
+      name: '',
+      firstName: null,
+      lastName: null,
+      image: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      password: null,
+      /** Connected social provider accounts: `{ provider, accountId, email }`. */
+      accounts: [],
+      ...fields,
+    };
+    realmUsers(applicationId).set(user.id, user);
+    return user;
+  };
+
+  /** The signed-in user of an OAuth access token. */
+  const userOfAccessToken = (applicationId, token) => {
+    const grant = accessTokens.get(token);
+    if (
+      !grant ||
+      grant.applicationId !== applicationId ||
+      grant.expiresAt <= now().getTime() ||
+      !findActiveSessionById(applicationId, grant.applicationSessionId)
+    )
+      return null;
+    return userById(applicationId, grant.userId);
+  };
+
+  const userOfProviderAccount = (applicationId, provider, accountId) =>
+    findUser(applicationId, (user) =>
+      user.accounts.some(
+        (account) =>
+          account.provider === provider && account.accountId === accountId
+      )
+    );
 
   const findActiveSession = (applicationId, token) => {
     if (!token) return null;
@@ -95,9 +158,28 @@ export const createApplicationAuthStore = ({
     return session;
   };
 
+  /**
+   * Provisions the storefront customer of a new user. The mock customer store matches
+   * customers by email; a phone-only user is provisioned under a placeholder email that no
+   * customer has, and the customer then gets the phone number instead of an email.
+   */
   const linkCustomer = (user) => {
-    const customer = customerStore?.provisionCustomer(user) ?? null;
-    if (customer) customerIdsByUserId.set(user.id, customer.id);
+    if (!customerStore) return null;
+    const customer = user.email
+      ? customerStore.provisionCustomer(user)
+      : customerStore.provisionCustomer({
+          ...user,
+          email: `${user.id}@phone.invalid`,
+        });
+    if (!user.email) {
+      customer.emailAddress = null;
+      customer.phoneNumber = {
+        phoneNumber: user.phoneNumber,
+        verified: user.phoneNumberVerified,
+        marketingConsent: null,
+      };
+    }
+    customerIdsByUserId.set(user.id, customer.id);
     return customer;
   };
 
@@ -106,47 +188,50 @@ export const createApplicationAuthStore = ({
     const customer = customerStore?.customerByEmail(email);
     if (!customer) return null;
 
-    const timestamp = now().toISOString();
-    const user = {
-      id: randomUUID(),
-      applicationId,
+    const user = newUser(applicationId, {
       email: normalizeEmail(email),
       emailVerified: true,
       name: customer.displayName,
       firstName: customer.firstName || null,
       lastName: customer.lastName || null,
-      image: null,
-      createdAt: timestamp,
-      updatedAt: timestamp,
       password: fixturePassword,
-    };
-    realmUsers(applicationId).set(user.email, user);
+    });
     customerIdsByUserId.set(user.id, customer.id);
     return user;
   };
 
-  return {
-    signUp(applicationId, input, request) {
-      const email = normalizeEmail(input.email);
-      const users = realmUsers(applicationId);
-      if (users.has(email)) return { error: 'email_already_exists' };
+  /** Session of a user signed in without a password (code, provider). */
+  const passwordlessSession = (applicationId, user, request) => ({
+    session: createSession(applicationId, user, request, true),
+    user: publicUser(user),
+  });
 
-      const timestamp = now().toISOString();
-      const user = {
-        id: randomUUID(),
-        applicationId,
-        email,
-        emailVerified: false,
+  return {
+    /**
+     * Creates an email/password account. With `requireVerifiedEmail` the account is created
+     * without a session and answers `email_not_verified`.
+     */
+    signUp(
+      applicationId,
+      input,
+      request,
+      { requireVerifiedEmail = false } = {}
+    ) {
+      if (userByEmail(applicationId, input.email)) {
+        return { error: 'email_already_exists' };
+      }
+      const user = newUser(applicationId, {
+        email: normalizeEmail(input.email),
         name: input.name.trim(),
         firstName: input.firstName?.trim() || null,
         lastName: input.lastName?.trim() || null,
         image: input.image || null,
-        createdAt: timestamp,
-        updatedAt: timestamp,
         password: input.password,
-      };
-      users.set(email, user);
+      });
       linkCustomer(user);
+      if (requireVerifiedEmail) {
+        return { error: 'email_not_verified', user: publicUser(user) };
+      }
       const session = createSession(
         applicationId,
         user,
@@ -156,13 +241,24 @@ export const createApplicationAuthStore = ({
       return { session, user: publicUser(user) };
     },
 
-    signIn(applicationId, input, request) {
-      const email = normalizeEmail(input.email);
+    /**
+     * Signs in with email and password. With `requireVerifiedEmail` a correct password of an
+     * unverified email answers `email_not_verified` without a session.
+     */
+    signIn(
+      applicationId,
+      input,
+      request,
+      { requireVerifiedEmail = false } = {}
+    ) {
       const user =
-        realmUsers(applicationId).get(email) ??
-        seedFixtureUser(applicationId, email, input.password);
-      if (!user || user.password !== input.password) {
+        userByEmail(applicationId, input.email) ??
+        seedFixtureUser(applicationId, input.email, input.password);
+      if (!user || !user.password || user.password !== input.password) {
         return { error: 'invalid_credentials' };
+      }
+      if (requireVerifiedEmail && !user.emailVerified) {
+        return { error: 'email_not_verified', user: publicUser(user) };
       }
       const session = createSession(
         applicationId,
@@ -178,34 +274,165 @@ export const createApplicationAuthStore = ({
      * email, creating it when there is none, as IAM does when OTP sign-up is allowed.
      */
     signInWithEmailCode(applicationId, email, request) {
-      const normalized = normalizeEmail(email);
-      const users = realmUsers(applicationId);
-      let user = users.get(normalized);
+      let user = userByEmail(applicationId, email);
       if (!user) {
-        const timestamp = now().toISOString();
-        user = {
-          id: randomUUID(),
-          applicationId,
+        const normalized = normalizeEmail(email);
+        user = newUser(applicationId, {
           email: normalized,
           emailVerified: true,
           name: normalized.split('@')[0],
-          firstName: null,
-          lastName: null,
-          image: null,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-          password: null,
-        };
-        users.set(normalized, user);
+        });
         linkCustomer(user);
       }
       user.emailVerified = true;
-      const session = createSession(applicationId, user, request, true);
-      return { session, user: publicUser(user) };
+      return passwordlessSession(applicationId, user, request);
+    },
+
+    /**
+     * Session for a confirmed phone code (headless phone OTP): signs in the account of the
+     * phone number, creating a phone-only account when there is none.
+     */
+    signInWithPhoneCode(applicationId, phoneNumber, request) {
+      let user = userByPhone(applicationId, phoneNumber);
+      if (!user) {
+        user = newUser(applicationId, {
+          phoneNumber,
+          phoneNumberVerified: true,
+          name: phoneNumber,
+        });
+        linkCustomer(user);
+      }
+      user.phoneNumberVerified = true;
+      return passwordlessSession(applicationId, user, request);
+    },
+
+    /**
+     * Session for a social provider account (`accountId` is the provider subject; the mock
+     * uses the provider email). Signs in the user the account is connected to; otherwise
+     * connects it to the user of the same email, or creates a user with a verified email.
+     */
+    signInWithProvider(applicationId, provider, profile, request) {
+      let user = userOfProviderAccount(
+        applicationId,
+        provider,
+        profile.accountId
+      );
+      if (!user) {
+        user = userByEmail(applicationId, profile.email);
+        if (!user) {
+          const email = normalizeEmail(profile.email);
+          user = newUser(applicationId, {
+            email,
+            emailVerified: true,
+            name: profile.name?.trim() || email.split('@')[0],
+          });
+          linkCustomer(user);
+        }
+        user.emailVerified = true;
+        user.accounts.push({
+          provider,
+          accountId: profile.accountId,
+          email: normalizeEmail(profile.email),
+        });
+      }
+      return passwordlessSession(applicationId, user, request);
+    },
+
+    /** Social connections of the user of an access token; null for an invalid token. */
+    accountConnections(applicationId, accessToken) {
+      const user = userOfAccessToken(applicationId, accessToken);
+      return user ? user.accounts.map((account) => account.provider) : null;
+    },
+
+    /** Id of the signed-in user of an access token, or null. */
+    userIdOfAccessToken(applicationId, accessToken) {
+      return userOfAccessToken(applicationId, accessToken)?.id ?? null;
+    },
+
+    /**
+     * Connects a provider account to a user: `linked`, or `account_conflict` when the account
+     * belongs to another user or the user already has an account of the provider.
+     */
+    linkProviderAccount(applicationId, userId, provider, profile) {
+      const user = userById(applicationId, userId);
+      if (!user) return 'linking_failed';
+      const owner = userOfProviderAccount(
+        applicationId,
+        provider,
+        profile.accountId
+      );
+      if (owner && owner.id !== user.id) return 'account_conflict';
+      if (owner) return 'linked';
+      if (user.accounts.some((account) => account.provider === provider)) {
+        return 'account_conflict';
+      }
+      user.accounts.push({
+        provider,
+        accountId: profile.accountId,
+        email: normalizeEmail(profile.email),
+      });
+      user.updatedAt = now().toISOString();
+      return 'linked';
+    },
+
+    /**
+     * Disconnects the provider: `unlinked`, `not_connected`, or `last_login_method` when the
+     * user has no other way to sign in (`signInMethods` says which passwordless methods count).
+     */
+    unlinkProviderAccount(applicationId, accessToken, provider, signInMethods) {
+      const user = userOfAccessToken(applicationId, accessToken);
+      if (!user) return 'invalid_token';
+      const accounts = user.accounts.filter(
+        (account) => account.provider === provider
+      );
+      if (accounts.length === 0) return 'not_connected';
+      if (accounts.length > 1) return 'account_conflict';
+      const otherMethod =
+        Boolean(user.password) ||
+        (signInMethods.emailOtp && Boolean(user.email)) ||
+        (signInMethods.phoneOtp && Boolean(user.phoneNumber)) ||
+        user.accounts.some((account) => account.provider !== provider);
+      if (!otherMethod) return 'last_login_method';
+      user.accounts = user.accounts.filter(
+        (account) => account.provider !== provider
+      );
+      user.updatedAt = now().toISOString();
+      return 'unlinked';
+    },
+
+    /** Verification token of an unverified email; null for an unknown or verified email. */
+    requestEmailVerification(applicationId, email) {
+      const user = userByEmail(applicationId, email);
+      if (!user || user.emailVerified) return null;
+      const token = randomBytes(32).toString('base64url');
+      emailVerificationTokens.set(token, {
+        applicationId,
+        userId: user.id,
+        expiresAt: now().getTime() + 24 * 60 * 60 * 1000,
+      });
+      return token;
+    },
+
+    /** Verifies the email of a token; a spent, expired or unknown token answers false. */
+    verifyEmail(applicationId, token) {
+      const verification = emailVerificationTokens.get(token);
+      emailVerificationTokens.delete(token);
+      if (
+        !verification ||
+        verification.applicationId !== applicationId ||
+        verification.expiresAt <= now().getTime()
+      ) {
+        return false;
+      }
+      const user = userById(applicationId, verification.userId);
+      if (!user || user.emailVerified) return false;
+      user.emailVerified = true;
+      user.updatedAt = now().toISOString();
+      return true;
     },
 
     requestPasswordReset(applicationId, email) {
-      const user = realmUsers(applicationId).get(normalizeEmail(email));
+      const user = userByEmail(applicationId, email);
       if (!user) return null;
       const token = randomBytes(32).toString('base64url');
       passwordResetTokens.set(token, {
@@ -214,6 +441,16 @@ export const createApplicationAuthStore = ({
         expiresAt: now().getTime() + 60 * 60 * 1000,
       });
       return token;
+    },
+
+    /** Whether a reset token can still set a password (not spent, not expired). */
+    isPasswordResetTokenValid(applicationId, token) {
+      const reset = passwordResetTokens.get(token);
+      return Boolean(
+        reset &&
+        reset.applicationId === applicationId &&
+        reset.expiresAt > now().getTime()
+      );
     },
 
     resetPassword(applicationId, token, newPassword) {
@@ -226,9 +463,7 @@ export const createApplicationAuthStore = ({
       ) {
         return false;
       }
-      const user = [...realmUsers(applicationId).values()].find(
-        (candidate) => candidate.id === reset.userId
-      );
+      const user = userById(applicationId, reset.userId);
       if (!user) return false;
       user.password = newPassword;
       user.updatedAt = now().toISOString();
@@ -298,22 +533,14 @@ export const createApplicationAuthStore = ({
     },
 
     userInfo(applicationId, token) {
-      const grant = accessTokens.get(token);
-      if (
-        !grant ||
-        grant.applicationId !== applicationId ||
-        grant.expiresAt <= now().getTime() ||
-        !findActiveSessionById(applicationId, grant.applicationSessionId)
-      )
-        return null;
-      const user = [...realmUsers(applicationId).values()].find(
-        (candidate) => candidate.id === grant.userId
-      );
+      const user = userOfAccessToken(applicationId, token);
       if (!user) return null;
       return {
         sub: user.id,
         email: user.email,
         email_verified: user.emailVerified,
+        phone_number: user.phoneNumber,
+        phone_number_verified: user.phoneNumberVerified,
         name: user.name,
         given_name: user.firstName,
         family_name: user.lastName,
@@ -378,12 +605,10 @@ export const createApplicationAuthStore = ({
     };
     accessTokens.set(accessToken, tokenGrant);
     refreshTokens.set(refreshToken, { ...grant });
-    const user = [...realmUsers(grant.applicationId).values()].find(
-      (candidate) => candidate.id === grant.userId
-    );
+    const user = userById(grant.applicationId, grant.userId);
     const idToken = mockIdToken({
       sub: grant.userId,
-      email: user?.email,
+      email: user?.email ?? undefined,
       nonce: grant.nonce,
       aud: grant.clientId,
       exp: Math.floor(now().getTime() / 1000) + expiresIn,

@@ -70,10 +70,11 @@ export const CodeScreen = ({
     code.length === codeLength ? code : null
   );
 
-  // An error stays until the buyer changes the code.
+  // An error stays until the buyer types again; a wrong code is cleared for the next one.
   if (error !== lastError) {
     setLastError(error);
     setShownError(error);
+    if (error?.code === 'invalidCredentials') setCode('');
   }
 
   // A complete code is sent once; typed while a step was still running, it goes when it ends.

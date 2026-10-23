@@ -28,9 +28,7 @@ export const uk = {
     legal:
       'Авторизуючись, ви погоджуєтеся з <privacy>умовами обробки персональних даних</privacy>.',
     country: {
-      search: 'Пошук країни',
       title: 'Оберіть країну',
-      empty: 'Країну не знайдено',
       trigger: 'Країна: {country}, +{code}',
     },
   },

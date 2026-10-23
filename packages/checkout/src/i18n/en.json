@@ -307,9 +307,7 @@
     "login-identifier-locked": "Used to sign in. It cannot be changed.",
     "account-data-added": "Your account details are added to the order.",
     "account-data-loading": "Loading your account details…",
-    "country-search": "Search country",
     "country-choose": "Choose a country",
-    "country-not-found": "No countries found",
     "country-trigger": "Country: {country}, +{code}",
     "sign-in-required-earning": "Sign in to check out faster and get <b>{reward}</b> for your order.",
     "sign-in-required-earning-store-credit": "+{amount} to store credit"

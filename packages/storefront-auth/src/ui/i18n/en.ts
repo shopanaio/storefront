@@ -29,9 +29,7 @@ export const en: AuthMessages = {
     legal:
       'By signing in, you agree to the <privacy>terms of personal data processing</privacy>.',
     country: {
-      search: 'Search country',
       title: 'Choose a country',
-      empty: 'No countries found',
       trigger: 'Country: {country}, +{code}',
     },
   },

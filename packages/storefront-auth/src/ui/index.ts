@@ -31,9 +31,9 @@ export {
   type FlowScreen,
   type FlowScreenName,
   type FlowState,
-  type InitialScreen,
   type StepReaction,
 } from './flow/navigation';
+export type { SignInScreen } from '../core/types';
 export { AuthDialog, type AuthDialogProps } from './containers/AuthDialog';
 export {
   AuthInline,

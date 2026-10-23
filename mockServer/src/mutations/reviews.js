@@ -1,6 +1,25 @@
 import { contentMetrics, emptyViewerState, gid } from "../fixture-helpers.js";
 import { reviewError } from "../helpers.js";
 
+/**
+ * Review settings of the store. `MOCK_GUEST_REVIEWS`, `MOCK_GUEST_QUESTIONS` and
+ * `MOCK_CUSTOMER_ANSWERS` (`true` or `false`) override the fixture's `guestReviewsEnabled`,
+ * `guestQuestionsEnabled` and `customerAnswersEnabled`.
+ */
+const CONFIGURATION_SWITCHES = {
+  guestReviewsEnabled: "MOCK_GUEST_REVIEWS",
+  guestQuestionsEnabled: "MOCK_GUEST_QUESTIONS",
+  customerAnswersEnabled: "MOCK_CUSTOMER_ANSWERS",
+};
+
+export const reviewStoreConfiguration = (store) => {
+  const configuration = store.state.reviewStoreConfiguration;
+  const overrides = Object.entries(CONFIGURATION_SWITCHES)
+    .filter(([, variable]) => process.env[variable] === "true" || process.env[variable] === "false")
+    .map(([field, variable]) => [field, process.env[variable] === "true"]);
+  return overrides.length ? { ...configuration, ...Object.fromEntries(overrides) } : configuration;
+};
+
 const contentCollections = (store) => [
   store.state.reviews,
   store.state.productQuestions,
@@ -106,7 +125,7 @@ const validateRatingsAndMedia = (store, ratings, media) => {
   if (media?.some(({ mediaId }) => !mediaTypes.has(store.get(mediaId)?.__typename))) {
     errors.push(reviewError("MEDIA_NOT_FOUND", "A review media item does not exist.", ["media", "mediaId"]));
   }
-  if ((media?.length ?? 0) > store.state.reviewStoreConfiguration.maxReviewMediaCount) {
+  if ((media?.length ?? 0) > reviewStoreConfiguration(store).maxReviewMediaCount) {
     errors.push(reviewError("TOO_MANY_MEDIA_ITEMS", "The review contains too many media items.", ["media"]));
   }
   return errors;
@@ -123,7 +142,7 @@ export const reviewMutations = (store) => ({
     }
     if (input.rating < 1 || input.rating > 5) errors.push(reviewError("INVALID_RATING", "Rating must be between 1 and 5.", ["rating"]));
     if (!context.customer) {
-      if (!store.state.reviewStoreConfiguration.guestReviewsEnabled) {
+      if (!reviewStoreConfiguration(store).guestReviewsEnabled) {
         errors.push(reviewError("AUTHENTICATION_REQUIRED", "Guest reviews are disabled."));
       } else {
         errors.push(...validateGuestAuthor(context, input.content));
@@ -204,7 +223,7 @@ export const reviewMutations = (store) => ({
       errors.push(reviewError("VARIANT_NOT_FOUND", "The product variant does not exist.", ["variantId"]));
     }
     if (!context.customer) {
-      if (!store.state.reviewStoreConfiguration.guestQuestionsEnabled) {
+      if (!reviewStoreConfiguration(store).guestQuestionsEnabled) {
         errors.push(reviewError("AUTHENTICATION_REQUIRED", "Guest questions are disabled."));
       } else {
         errors.push(...validateGuestAuthor(context, input.content));
@@ -245,11 +264,17 @@ export const reviewMutations = (store) => ({
   },
 
   productQuestionAnswerCreate: (_, { input }, context) => store.replay("productQuestionAnswerCreate", input.content.idempotencyKey, () => {
+    // Answers are the customer's, and only when the store takes them.
+    if (!context.customer) {
+      return { productQuestion: null, answer: null, userErrors: [reviewError("AUTHENTICATION_REQUIRED", "A customer session is required.")] };
+    }
+    if (!reviewStoreConfiguration(store).customerAnswersEnabled) {
+      return { productQuestion: null, answer: null, userErrors: [reviewError("ANSWERS_DISABLED", "Customer answers are disabled.", ["input"])] };
+    }
     const question = store.get(input.productQuestionId);
-    const errors = [];
-    if (question?.__typename !== "ProductQuestion") errors.push(reviewError("QUESTION_NOT_FOUND", "The question is unavailable.", ["productQuestionId"]));
-    if (!context.customer) errors.push(reviewError("AUTHENTICATION_REQUIRED", "A customer session is required."));
-    if (errors.length) return { productQuestion: null, answer: null, userErrors: errors };
+    if (question?.__typename !== "ProductQuestion") {
+      return { productQuestion: null, answer: null, userErrors: [reviewError("QUESTION_NOT_FOUND", "The question is unavailable.", ["productQuestionId"])] };
+    }
     const answer = {
       ...contentBase(store, "QUESTION_ANSWER", input.content, context.customer, "PENDING"),
       id: gid("ProductQuestionAnswer", `runtime-${store.next("question-answer")}`),

@@ -16,14 +16,14 @@ The session after sign-in is the SDK session: `/auth/token`, `/auth/refresh`, `/
 
 ## Entry points
 
-| Import                                   | Contents                                                       |
-| ---------------------------------------- | -------------------------------------------------------------- |
-| `@shopana/storefront-auth/react`         | `useAuth`, `useAuthConfiguration`, session re-exports          |
-| `@shopana/storefront-auth/ui`            | sign-in screens, `AuthFlow`, `AuthDialog`, `AuthInline`, theme |
-| `@shopana/storefront-auth/ui/primitives` | the parts the screens are built of, for screens of a host      |
-| `@shopana/storefront-auth/testing`       | `createMockAuth()` and fixtures for stories and tests          |
-| `@shopana/storefront-auth`               | `HeadlessAuthClient` (no React), types, `AuthError`            |
-| `@shopana/storefront-auth/server`        | `createHeadlessAuthRouteHandlers()`                            |
+| Import                                   | Contents                                                               |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| `@shopana/storefront-auth/react`         | `useAuth`, `useAuthConfiguration`, `useAuthAction`, session re-exports |
+| `@shopana/storefront-auth/ui`            | sign-in screens, `AuthFlow`, `AuthDialog`, `AuthInline`, theme         |
+| `@shopana/storefront-auth/ui/primitives` | the parts the screens are built of, for screens of a host              |
+| `@shopana/storefront-auth/testing`       | `createMockAuth()` and fixtures for stories and tests                  |
+| `@shopana/storefront-auth`               | `HeadlessAuthClient` (no React), types, `AuthError`                    |
+| `@shopana/storefront-auth/server`        | `createHeadlessAuthRouteHandlers()`                                    |
 
 The storefront runtime mounts the handlers at `/auth/headless/[action]`; they read the same
 server environment as the SDK session handlers (`IAM_OAUTH_CLIENT_ID`,
@@ -177,6 +177,35 @@ returns to `returnTo` (the current page); the hook reads the outcome from the ad
 `result`. Changing connections needs a sign-in within the last 10 minutes
 (`connections.reauthenticationRequired`, error `reauthenticationRequired`); the last way to
 sign in cannot be disconnected (`lastLoginMethod`).
+
+## Actions that need a sign-in
+
+An action of a signed-in buyer (open the account, save a product, answer a question) does not
+run together with opening the sign-in: it waits for the sign-in and runs after it.
+
+```tsx
+<AuthActionProvider requestSignIn={({ screen }) => openSignIn(screen)}>
+  …
+</AuthActionProvider>;
+
+const saveProduct = useAuthAction<{ productId: string }>(
+  `wishlist:${product.id}`,
+  ({ productId }) => wishlist.add(productId),
+  { guest: false, screen: 'identify' }
+);
+saveProduct({ productId: product.id });
+```
+
+With a session the handler runs at once. Without one the action is kept in `sessionStorage`
+(its `key`, a JSON payload, the page and the time) and `requestSignIn` opens the sign-in on
+`screen`; once the session is there, the component that registered `key` on that page runs the
+handler with the payload, also after a provider sign-in that left the page. `guest: true` runs
+it at once without a session, for what the store's settings let a guest do. While the session
+loads the call does nothing. A key names what the action is done to and is unique on the page,
+except for handlers that do the same with the payload. The action is dropped after 15 minutes,
+on another page, and when the buyer closes `AuthDialog`; a sign-in of its own calls
+`discardPendingAuthAction()`. The payload should carry the wanted state (`wishlisted: true`)
+rather than a toggle, so that running it after the sign-in keeps what the account already has.
 
 ## Local development
 

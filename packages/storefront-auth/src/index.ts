@@ -44,5 +44,6 @@ export type {
   PasswordSignUpInput,
   PhoneOtpSendInput,
   PhoneOtpVerifyInput,
+  SignInScreen,
   SocialStartInput,
 } from './core/types';

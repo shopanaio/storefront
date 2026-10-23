@@ -44,9 +44,7 @@ function CheckoutUIProvider({ children }: { children: ReactNode }) {
       close: t('close'),
       dismiss: t('banner-close'),
       countryPicker: {
-        search: t('country-search'),
         title: t('country-choose'),
-        empty: t('country-not-found'),
         trigger: (country, code) => t('country-trigger', { country, code }),
       },
     }),

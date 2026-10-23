@@ -3,6 +3,7 @@
 import { useCallback, useReducer, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { isAuthError } from '../../core/AuthError';
+import type { SignInScreen } from '../../core/types';
 import {
   useAuth,
   useAuthResult,
@@ -29,7 +30,6 @@ import {
   screenOf,
   type FlowScreen,
   type FlowScreenName,
-  type InitialScreen,
 } from './navigation';
 import type { AuthFlowScreenProps, AuthFlowView } from './screens';
 
@@ -43,7 +43,7 @@ export interface AuthFlowOptions {
   context?: AuthContext;
   /** Email or phone the buyer already gave (the checkout contact); fills the first screen. */
   defaultIdentifier?: { email?: string | null; phone?: string | null };
-  initialScreen?: InitialScreen;
+  initialScreen?: SignInScreen;
   /** Signed in: the session hooks already see the buyer. */
   onCompleted?: () => void;
   /**
@@ -155,7 +155,7 @@ export function useAuthFlow({
   };
 
   /** Opens a screen by the buyer's choice: the last error and step are dropped. */
-  const go = (name: InitialScreen) => {
+  const go = (name: SignInScreen) => {
     auth.reset();
     dispatch({ type: 'open', screen: screenOf(name) });
   };

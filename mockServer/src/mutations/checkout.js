@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { gid, money } from "../fixture-helpers.js";
 import {
   applyLoyaltyReward,
@@ -14,6 +16,12 @@ import {
 
 const successful = (checkout) => ({ checkout, userErrors: [] });
 const failed = (...userErrors) => ({ checkout: null, userErrors });
+
+/** Checkout addresses carry `postalCode` and no company. */
+const checkoutAddress = (id, input) => {
+  const { company, zip, ...address } = formatAddress(id, { ...input, zip: input.postalCode ?? null });
+  return { ...address, postalCode: zip || null, data: input.data ?? null };
+};
 
 const findCheckout = (store, id) => store.state.checkouts.find((checkout) => checkout.id === id);
 
@@ -127,6 +135,7 @@ export const refreshCheckout = (store, checkout) => {
   checkout.cost = {
     subtotalAmount: money(subtotal, checkout.currencyCode),
     totalDiscountAmount: money(catalogDiscount + promoDiscount + rewardDiscount, checkout.currencyCode),
+    merchandiseDiscountAmount: money(catalogDiscount + promoDiscount + rewardDiscount, checkout.currencyCode),
     totalTaxAmount: money(tax, checkout.currencyCode),
     totalShippingAmount: money(shipping, checkout.currencyCode),
     totalAmount: money(total, checkout.currencyCode),
@@ -169,6 +178,7 @@ export const createCheckout = (store, input, customer = null) => {
     updatedAt: now,
     cost: {
       subtotalAmount: money(0, input.currencyCode), totalDiscountAmount: money(0, input.currencyCode),
+      merchandiseDiscountAmount: money(0, input.currencyCode),
       totalTaxAmount: money(0, input.currencyCode), totalShippingAmount: money(0, input.currencyCode),
       totalAmount: money(0, input.currencyCode), loyaltyAmount: money(0, input.currencyCode),
     },
@@ -314,7 +324,7 @@ export const checkoutMutations = (store) => ({
 
   checkoutBillingAddressUpdate: (_, { input }) => withCheckout(store, input, (checkout) => {
     checkout.billingAddress = input.billingAddress
-      ? { ...formatAddress(null, input.billingAddress), data: input.billingAddress.data ?? null }
+      ? checkoutAddress(null, input.billingAddress)
       : null;
     return [];
   }),
@@ -331,7 +341,7 @@ export const checkoutMutations = (store) => ({
         id,
         replacesGroupIds: [],
         checkoutLineIds: destination.checkoutLineIds,
-        deliveryAddress: { ...formatAddress(gid("CheckoutDeliveryAddress", `runtime-${number}`), destination.address), data: destination.address.data ?? null },
+        deliveryAddress: checkoutAddress(gid("CheckoutDeliveryAddress", `runtime-${number}`), destination.address),
         recipient: null,
         options: structuredClone(getDeliveryOptions(store)),
         selection: { status: "NONE", option: null, previousOptionHandle: null, resetReason: null, customerInput: null },
@@ -352,7 +362,7 @@ export const checkoutMutations = (store) => ({
         continue;
       }
       const previous = group.deliveryAddress;
-      group.deliveryAddress = { ...formatAddress(update.addressId, update.address), data: update.address.data ?? null };
+      group.deliveryAddress = checkoutAddress(update.addressId, update.address);
       // A new country, province or city drops the delivery input saved for the old one.
       if (["countryCode", "provinceCode", "city"].some((field) => previous?.[field] !== group.deliveryAddress[field])) {
         group.deliveryInputs = {};
@@ -476,6 +486,121 @@ const updateRecipients = (checkout, updates) => {
 
 /** S7 switch of the mock store: `MOCK_GUEST_CHECKOUT=false` requires signing in to check out. */
 export const guestCheckoutEnabled = () => process.env.MOCK_GUEST_CHECKOUT !== "false";
+
+const TERMS_ACCEPTANCE_MODES = ["NOTICE", "CHECKBOX"];
+
+/**
+ * How the buyer accepts the checkout disclosures: `MOCK_CHECKOUT_TERMS_ACCEPTANCE` (NOTICE or
+ * CHECKBOX) overrides `checkoutSettings.termsAcceptanceMode` of the fixtures; NOTICE by default.
+ */
+export const termsAcceptanceMode = (store) => {
+  const mode = process.env.MOCK_CHECKOUT_TERMS_ACCEPTANCE ?? store.state.checkoutSettings?.termsAcceptanceMode;
+  return TERMS_ACCEPTANCE_MODES.includes(mode) ? mode : "NOTICE";
+};
+
+/** Policies the notice links to, in reading order. */
+const DISCLOSURE_POLICY_TYPES = ["TERMS_OF_SERVICE", "PRIVACY_POLICY"];
+
+/**
+ * Notice templates by language and acceptance mode, for both policies or only one of them.
+ * `{terms_of_service}` and `{privacy_policy}` become links to the published policies.
+ */
+const DISCLOSURE_TEMPLATES = {
+  en: {
+    NOTICE: {
+      BOTH: "By placing your order, you agree to the {terms_of_service} and acknowledge the {privacy_policy}.",
+      TERMS_OF_SERVICE: "By placing your order, you agree to the {terms_of_service}.",
+      PRIVACY_POLICY: "By placing your order, you acknowledge the {privacy_policy}.",
+    },
+    CHECKBOX: {
+      BOTH: "I agree to the {terms_of_service} and acknowledge the {privacy_policy}.",
+      TERMS_OF_SERVICE: "I agree to the {terms_of_service}.",
+      PRIVACY_POLICY: "I acknowledge the {privacy_policy}.",
+    },
+  },
+  uk: {
+    NOTICE: {
+      BOTH: "Оформлюючи замовлення, ви погоджуєтеся з {terms_of_service} та підтверджуєте, що ознайомилися з {privacy_policy}.",
+      TERMS_OF_SERVICE: "Оформлюючи замовлення, ви погоджуєтеся з {terms_of_service}.",
+      PRIVACY_POLICY: "Оформлюючи замовлення, ви підтверджуєте, що ознайомилися з {privacy_policy}.",
+    },
+    CHECKBOX: {
+      BOTH: "Я погоджуюся з {terms_of_service} та підтверджую ознайомлення з {privacy_policy}.",
+      TERMS_OF_SERVICE: "Я погоджуюся з {terms_of_service}.",
+      PRIVACY_POLICY: "Я підтверджую ознайомлення з {privacy_policy}.",
+    },
+  },
+};
+
+const templateLanguage = (locale) => {
+  const language = String(locale ?? "").toLowerCase().split(/[-_]/u)[0];
+  return Object.hasOwn(DISCLOSURE_TEMPLATES, language) ? language : null;
+};
+
+/**
+ * `Checkout.disclosures`: the notice in the checkout locale (the store default locale, then
+ * English, when the locale has no template) with links to the published terms of service and
+ * privacy policy; null when neither is published. The version changes with the mode, the
+ * locale, the notice and the published policy versions.
+ */
+export const checkoutDisclosures = (store, checkout) => {
+  const published = store.all("StorePolicy");
+  const policies = DISCLOSURE_POLICY_TYPES
+    .map((type) => published.find((policy) => policy.type === type))
+    .filter(Boolean);
+  if (!policies.length) return null;
+
+  const acceptanceMode = termsAcceptanceMode(store);
+  const language = templateLanguage(checkout.localeCode) ?? templateLanguage(store.state.store?.defaultLocale) ?? "en";
+  const templates = DISCLOSURE_TEMPLATES[language][acceptanceMode];
+  const notice = policies.length === DISCLOSURE_POLICY_TYPES.length ? templates.BOTH : templates[policies[0].type];
+  const parts = notice.split(/(\{\w+\})/u).filter(Boolean).map((piece) => {
+    const policy = policies.find(({ type }) => piece === `{${type.toLowerCase()}}`);
+    return policy
+      ? {
+        __typename: "CheckoutDisclosurePolicyLink",
+        policyType: policy.type,
+        handle: policy.handle,
+        title: policy.title,
+        path: policy.path,
+      }
+      : { __typename: "CheckoutDisclosureText", text: piece };
+  });
+  const version = createHash("sha256")
+    .update(JSON.stringify([
+      acceptanceMode,
+      checkout.localeCode,
+      notice,
+      policies.map((policy) => `${policy.type}:${policy.id}:${policy.version}`),
+    ]))
+    .digest("hex");
+  return { version, acceptanceMode, parts };
+};
+
+/**
+ * Acceptance check of `placeOrder`: the buyer confirms the current disclosures version, and
+ * ticks the checkbox in CHECKBOX mode. Null when the checkout has no disclosures.
+ */
+export const disclosuresPlacementError = (store, checkout, input) => {
+  const disclosures = checkoutDisclosures(store, checkout);
+  if (!disclosures) return null;
+  if (input.disclosuresVersion !== disclosures.version) {
+    return checkoutError(
+      "DISCLOSURES_CHANGED",
+      "The checkout disclosures changed; the buyer reviews them before placing.",
+      ["input", "disclosuresVersion"],
+      true,
+    );
+  }
+  if (disclosures.acceptanceMode === "CHECKBOX" && input.termsAccepted !== true) {
+    return checkoutError(
+      "TERMS_NOT_ACCEPTED",
+      "The buyer must accept the terms before placing the order.",
+      ["input", "termsAccepted"],
+    );
+  }
+  return null;
+};
 
 /** D2: an account checkout is visible only to its account; a guest checkout to anyone here. */
 export const canAccessCheckout = (checkout, customer) =>

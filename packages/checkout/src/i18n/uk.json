@@ -307,9 +307,7 @@
     "login-identifier-locked": "Використовується для входу. Змінити не можна.",
     "account-data-added": "Дані з вашого акаунта додано до замовлення.",
     "account-data-loading": "Завантаження даних акаунта…",
-    "country-search": "Пошук країни",
     "country-choose": "Оберіть країну",
-    "country-not-found": "Країну не знайдено",
     "country-trigger": "Країна: {country}, +{code}",
     "sign-in-required-earning": "Увійдіть, щоб прискорити оформлення та отримати <b>{reward}</b> за своє замовлення.",
     "sign-in-required-earning-store-credit": "+{amount} на бонусний рахунок"

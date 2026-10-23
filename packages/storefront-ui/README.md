@@ -27,7 +27,7 @@ on first use, each language its own chunk.
 | `FloatingLabelInput`    | antd `Input` with a floating label (`FLOATING_FIELD_HEIGHT`, 50px)                 |
 | `FloatingLabelPassword` | the same with a show / hide button; a `suffix` of its own goes before it           |
 | `PhoneInput`            | international phone, the flag inside the field; E.164 value                        |
-| `CountryPicker`         | searchable countries (an ARIA combobox), the selected one first; popover or sheet  |
+| `CountryPicker`         | the device's select on phones and tablets; a keyboard listbox in a popover above   |
 | `CountryFlag`           | the flag of a country in a 24×16 frame                                             |
 | `Sheet`                 | the vaul drawer: a bottom sheet as tall as its content, or a side panel            |
 | `DrawerBase`            | `Sheet` with a header (title, close button), a scrolling body and a footer in view |
@@ -50,7 +50,7 @@ Every component takes antd 6's styling props: `className` and `style` of its roo
 | -------------------- | ------------------------ | ----------------------------------------------------------------------- |
 | `FloatingLabelInput` | the field with its error | `field` (antd input box), `input`, `prefix`, `suffix`, `label`, `error` |
 | `PhoneInput`         | the picker and the field | `classNames` / `styles` go to the field's parts                         |
-| `CountryPicker`      | the flag button          | `popup`, `search`, `list`, `option`, `empty`                            |
+| `CountryPicker`      | the flag control         | `popup`, `list`, `option`                                               |
 | `Sheet`              | the panel                | `overlay`, `handle`, `body`                                             |
 | `DrawerBase`         | its column               | `sheet` (the panel), `header`, `title`, `body`, `footer`, `close`       |
 | `ResponsiveDialog`   | the panel                | `header`, `title`, `body`, `footer`                                     |
@@ -64,9 +64,10 @@ drawer, the flag button of the picker).
 
 `StorefrontUIProvider` gives the components their texts once, English by default: `dialog` (the
 name of a drawer without a title), `close` (the close button of a drawer), `dismiss` (of a
-banner), `showPassword` / `hidePassword`, and `countryPicker` (`search`, `title`, `empty`,
+banner), `showPassword` / `hidePassword`, and `countryPicker` (`title`,
 `trigger(country, callingCode)`). `locale` picks the country names (`uk`, `ru`, `en`; English
-for any other). A provider inside another one changes only what it sets; a component's own prop
+for any other). `dialogMotion` (`zoom` by default, or `fade`) is how `ResponsiveDialog` opens
+as a modal. A provider inside another one changes only what it sets; a component's own prop
 (`closeLabel`, `dismissLabel`, `toggleLabels`, `pickerTexts`, `texts`, `locale`) wins over both.
 
 ```tsx
@@ -98,6 +99,10 @@ the field's (`label`, `error`, `status`, `suffix`, …). No country is chosen by
   changes that. The title (or `DrawerBase.Title` in a `header` of its own) names the drawer.
 - `ResponsiveDialog` is a modal from `breakpoint` (`md`) up and a sheet below it, with the same
   `title`, content and `footer`.
+- `CountryPicker` below `breakpoint` (`lg`: phones and tablets) is a transparent native `select`
+  over the flag, so a tap opens the system picker. From it up, a popover with the countries, the
+  selected one first: the list takes the focus, the arrows, Home and End move through it, letters
+  jump to a name, Enter or Space picks one.
 - A sheet opened from another nests in it. Drawers stand at antd's `zIndexPopupBase`; a dialog
   opened from a drawer stands over it by itself, and the country picker opens inside the drawer
   that traps the focus. Other popups use `useDrawerLayer()`: its `zIndex` to stand over the

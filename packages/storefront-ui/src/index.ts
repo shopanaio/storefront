@@ -10,6 +10,7 @@ export {
   type StorefrontUIProviderProps,
   type StorefrontUITextOverrides,
   type StorefrontUITexts,
+  type DialogMotion,
 } from './StorefrontUIProvider';
 export {
   FLOATING_FIELD_HEIGHT,

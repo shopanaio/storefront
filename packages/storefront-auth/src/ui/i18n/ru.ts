@@ -29,9 +29,7 @@ export const ru: AuthMessages = {
     legal:
       'Авторизуясь, вы соглашаетесь с <privacy>условиями обработки персональных данных</privacy>.',
     country: {
-      search: 'Поиск страны',
       title: 'Выберите страну',
-      empty: 'Страна не найдена',
       trigger: 'Страна: {country}, +{code}',
     },
   },

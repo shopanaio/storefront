@@ -1,14 +1,22 @@
 'use client';
 
-import { Modal, theme, Typography } from 'antd';
+import { ConfigProvider, Modal, theme, Typography } from 'antd';
 import type { ModalProps } from 'antd';
 import { createStyles } from 'antd-style';
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+} from 'react';
 import type { CSSProperties, ReactNode, Ref } from 'react';
 import type { Breakpoint } from '../breakpoints';
 import { applyDomAttributes, type DomAttributes } from '../dom';
 import { useBreakpointDown } from '../useMediaQuery';
 import { DrawerLayerContext, useDrawerLayer, type DrawerLayer } from './layer';
+import { useStorefrontUI } from '../StorefrontUIProvider';
 import { Sheet } from './Sheet';
 
 /** Parts of the dialog, the same in the modal and in the sheet. `root` is the panel. */
@@ -74,6 +82,8 @@ export const ResponsiveDialog = ({
   const { token } = theme.useToken();
   const isSheet = useBreakpointDown(breakpoint);
   const parent = useDrawerLayer();
+  const { dialogMotion } = useStorefrontUI();
+  const { getPrefixCls } = useContext(ConfigProvider.ConfigContext);
   const titleId = useId();
   const zIndex =
     zIndexProp ?? (parent ? parent.zIndex + 1 : token.zIndexPopupBase);
@@ -162,6 +172,7 @@ export const ResponsiveDialog = ({
   }
 
   // `panelRef` is a prop of antd's Modal its types leave out: the dialog element.
+  const fade = dialogMotion === 'fade' ? getPrefixCls('fade') : undefined;
   const modalProps: ModalProps & { panelRef: Ref<HTMLDivElement> } = {
     open,
     onCancel: onClose,
@@ -172,6 +183,8 @@ export const ResponsiveDialog = ({
     width,
     closable,
     destroyOnHidden: true,
+    transitionName: fade,
+    maskTransitionName: fade,
     zIndex,
     className,
     style,

@@ -1,7 +1,7 @@
 import { commitOrderLoyalty } from "../loyalty.js";
 import { gid, money } from "../fixture-helpers.js";
 import { customerError, formatAddress, orderError } from "../helpers.js";
-import { createCheckout, refreshCheckout } from "./checkout.js";
+import { createCheckout, disclosuresPlacementError, refreshCheckout } from "./checkout.js";
 
 const customerFailure = (field, ...userErrors) => ({ [field]: null, userErrors });
 const orderFailure = (fields, ...userErrors) => ({
@@ -141,7 +141,7 @@ const createOrderFromCheckout = (store, checkout, customer) => {
       city: group.deliveryAddress.city,
       countryCode: group.deliveryAddress.countryCode,
       provinceCode: group.deliveryAddress.provinceCode,
-      postalCode: group.deliveryAddress.zip,
+      postalCode: group.deliveryAddress.postalCode,
     } : null,
     recipient: group.recipient,
     method: group.selection.option ? {
@@ -221,6 +221,8 @@ const placeOrder = (store, input, context) => store.replay("placeOrder", input.i
     if (checkout.deliveryGroups.some(({ selection }) => !selection.option)) {
       userErrors.push(orderError("DELIVERY_METHOD_REQUIRED", "Select a delivery method."));
     }
+    const disclosuresError = disclosuresPlacementError(store, checkout, input);
+    if (disclosuresError) userErrors.push(disclosuresError);
   }
   if (!checkout || userErrors.length) return { userErrors, placementId: null };
 
@@ -230,11 +232,14 @@ const placeOrder = (store, input, context) => store.replay("placeOrder", input.i
   const order = onlineRedirect ? null : createOrderFromCheckout(store, checkout, context.customer);
   const placement = {
     placementId,
+    placementToken: `mock-placement-token-${placementId.split("/").at(-1)}`,
     checkoutId: checkout.id,
     placementState: onlineRedirect ? "PAYMENT_CREATED" : "PLACED",
     resultRevision: checkout.resultRevision,
     orderId: order?.id ?? null,
+    orderNumber: order?.number ?? null,
     status: onlineRedirect ? "REQUIRES_ACTION" : "PAID",
+    paymentFlow: checkout.payment.selection.method.flow,
     paymentCollectionId: gid("PaymentCollection", placementId.split("/").at(-1)),
     paymentSessionId: gid("PaymentSession", placementId.split("/").at(-1)),
     paymentOperationId: gid("PaymentOperation", placementId.split("/").at(-1)),

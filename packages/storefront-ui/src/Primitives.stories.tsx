@@ -11,9 +11,7 @@ import { StorefrontUIProvider } from './StorefrontUIProvider';
 const UK_TEXTS = {
   close: 'Закрити',
   countryPicker: {
-    search: 'Пошук країни',
     title: 'Оберіть країну',
-    empty: 'Нічого не знайдено',
     trigger: (country: string, code: string) => `Країна: ${country}, +${code}`,
   },
 };

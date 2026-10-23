@@ -170,6 +170,20 @@ useCartClaimed(({ checkoutId, mergedFromCheckoutId }) => setClaimed(true));
 `useClaimAccountCart()` from the same entry claims the cart on request, e.g.
 after placement answered `CHECKOUT_CLAIM_REQUIRED`.
 
+## Account product actions
+
+`useAccountProductActions({ productId, variantId })` from
+`@shopana/storefront-sdk/modules/account/react` reads and changes the wishlist
+and comparisons of the signed-in customer for one product page. Both are
+customer-owned: without a session nothing is queried, `requiresSignIn` is true
+and the setters do nothing, so the theme asks for a sign-in first.
+
+`setWishlisted(productId, wishlisted)` and `setCompared(variantId, compared)`
+take the wanted state instead of toggling it. An action asked for before a
+sign-in (`useAuthAction` of `@shopana/storefront-auth/react`) can therefore run
+after it without undoing what the account already has: adding a saved product
+or a compared variant again leaves it as it is.
+
 ## Code generation
 
 SDK GraphQL documents live only under `packages/shopana-storefront-sdk/src`.

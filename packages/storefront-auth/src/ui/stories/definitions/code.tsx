@@ -49,12 +49,9 @@ const Story = (args: Args) => {
       : errorForState(state, ['deliveryUnavailable', 'unavailable'], {
           rateLimited: 570,
         });
+  // A wrong code is cleared for the next one.
   const code =
-    state === 'typing'
-      ? '48190'
-      : state === 'verifying' || state === 'invalidCode'
-        ? '481907'
-        : '';
+    state === 'typing' ? '48190' : state === 'verifying' ? '481907' : '';
   return (
     <Frame context={args.context} back preset={{ code }}>
       <CodeScreen

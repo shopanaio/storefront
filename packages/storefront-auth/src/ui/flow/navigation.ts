@@ -1,4 +1,4 @@
-import type { AuthStep } from '../../core/types';
+import type { AuthStep, SignInScreen } from '../../core/types';
 import type { OtpPurpose, PasswordNotice } from '../screens/types';
 
 /** Digits of a one-time code when the configuration does not say. */
@@ -17,9 +17,6 @@ export type FlowScreen =
 
 export type FlowScreenName = FlowScreen['name'];
 
-/** Screens a flow may open on. */
-export type InitialScreen = 'identify' | 'password' | 'signUp' | 'forgot';
-
 export interface FlowState {
   /** Screens the buyer went through; the last one is shown, "Back" returns to the one before. */
   stack: readonly FlowScreen[];
@@ -31,7 +28,7 @@ export type FlowAction =
   | { type: 'back' }
   | { type: 'restart' };
 
-export function screenOf(name: InitialScreen): FlowScreen {
+export function screenOf(name: SignInScreen): FlowScreen {
   switch (name) {
     case 'password':
       return { name, notice: null };
@@ -42,7 +39,7 @@ export function screenOf(name: InitialScreen): FlowScreen {
   }
 }
 
-export function initialFlow(name: InitialScreen = 'identify'): FlowState {
+export function initialFlow(name: SignInScreen = 'identify'): FlowState {
   return {
     stack:
       name === 'identify'

@@ -25,9 +25,12 @@ const from = (breakpoint: Breakpoint) =>
 export const queries = {
   below,
   from,
-  /** A phone: `ResponsiveDialog` and `CountryPicker` turn into bottom sheets. */
+  /** A phone: `ResponsiveDialog` turns into a bottom sheet. */
   phone: below('md'),
-  /** `DrawerBase` turns from a side panel into a bottom sheet. */
+  /**
+   * Phones and tablets: `DrawerBase` turns from a side panel into a bottom sheet and
+   * `CountryPicker` into the device's own select.
+   */
   drawerSheet: below('lg'),
 };
 

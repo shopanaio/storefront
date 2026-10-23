@@ -47,9 +47,7 @@ function AuthUITexts({
       showPassword: t('showPassword'),
       hidePassword: t('hidePassword'),
       countryPicker: {
-        search: t('country.search'),
         title: t('country.title'),
-        empty: t('country.empty'),
         trigger: (country, code) => t('country.trigger', { country, code }),
       },
     }),

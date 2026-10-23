@@ -53,6 +53,7 @@ export class MockStore {
       if (customer.phoneNumber) customer.phoneNumber.verified ??= true;
       customer.comparisonVariantIds ??= [];
       customer.comparisonRevision ??= 0;
+      customer.wishlists ??= [];
     }
     this.initialNow = now;
     this.idempotency = new Map();
@@ -167,6 +168,7 @@ export class MockStore {
       defaultAddressId: null,
       comparisonRevision: 0,
       comparisonVariantIds: [],
+      wishlists: [],
       orderIds: [],
       createdAt: applicationUser.createdAt,
       updatedAt: applicationUser.updatedAt,

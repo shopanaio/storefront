@@ -5,12 +5,8 @@ import type { ReactNode } from 'react';
 
 /** Texts of the country picker of `PhoneInput` and `CountryPicker`. */
 export interface CountryPickerTexts {
-  /** Placeholder and accessible name of the search field. */
-  search: string;
-  /** Accessible name of the list and title of the sheet. */
+  /** Accessible name of the list, and of the control while no country is chosen. */
   title: string;
-  /** Shown when no country matches the search. */
-  empty: string;
   /** Accessible name of the trigger, from the name of the selected country and its code. */
   trigger: (country: string, callingCode: string) => string;
 }
@@ -46,13 +42,22 @@ export interface StorefrontUIProviderProps {
    * page behind a drawer passes the wrapper of the page here.
    */
   drawerContainer?: HTMLElement | null;
+  /**
+   * How a dialog (`ResponsiveDialog` from its breakpoint up) opens and closes: antd's `zoom`
+   * by default, or `fade`.
+   */
+  dialogMotion?: DialogMotion;
   children: ReactNode;
 }
+
+/** Motion of a dialog: antd's default zoom or a fade. */
+export type DialogMotion = 'zoom' | 'fade';
 
 interface StorefrontUIValue {
   locale: string;
   texts: StorefrontUITexts;
   drawerContainer?: HTMLElement | null;
+  dialogMotion: DialogMotion;
 }
 
 const DEFAULT_TEXTS: StorefrontUITexts = {
@@ -62,9 +67,7 @@ const DEFAULT_TEXTS: StorefrontUITexts = {
   showPassword: 'Show password',
   hidePassword: 'Hide password',
   countryPicker: {
-    search: 'Search country',
     title: 'Choose a country',
-    empty: 'No countries found',
     trigger: (country, callingCode) => `Country: ${country}, +${callingCode}`,
   },
 };
@@ -72,6 +75,7 @@ const DEFAULT_TEXTS: StorefrontUITexts = {
 const StorefrontUIContext = createContext<StorefrontUIValue>({
   locale: 'en',
   texts: DEFAULT_TEXTS,
+  dialogMotion: 'zoom',
 });
 
 /**
@@ -93,6 +97,7 @@ export function StorefrontUIProvider({
   locale,
   texts,
   drawerContainer,
+  dialogMotion,
   children,
 }: StorefrontUIProviderProps) {
   const parent = useContext(StorefrontUIContext);
@@ -111,8 +116,9 @@ export function StorefrontUIProvider({
         drawerContainer === undefined
           ? parent.drawerContainer
           : drawerContainer,
+      dialogMotion: dialogMotion ?? parent.dialogMotion,
     }),
-    [parent, locale, texts, drawerContainer]
+    [parent, locale, texts, drawerContainer, dialogMotion]
   );
   return (
     <StorefrontUIContext.Provider value={value}>
@@ -121,7 +127,7 @@ export function StorefrontUIProvider({
   );
 }
 
-/** Locale, texts and the drawer container of the nearest `StorefrontUIProvider`. */
+/** Locale, texts, the drawer container and the dialog motion of the nearest provider. */
 export const useStorefrontUI = () => useContext(StorefrontUIContext);
 
 function definedOnly<T extends object>(value: T | undefined): Partial<T> {

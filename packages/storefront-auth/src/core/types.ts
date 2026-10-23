@@ -225,6 +225,9 @@ export interface AccountActionInputs {
 
 export type AccountAction = keyof AccountActionInputs;
 
+/** Screens a sign-in may open on: the first one, or straight on the password, sign-up or reset one. */
+export type SignInScreen = 'identify' | 'password' | 'signUp' | 'forgot';
+
 /** Default page of the new-password form a reset link opens. */
 export const DEFAULT_PASSWORD_RESET_PATH = '/account/reset-password';
 

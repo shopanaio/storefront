@@ -91,6 +91,10 @@ enum join__Graph {
     name: "apps-headless-storefront"
     url: "http://127.0.0.1:10023/subgraphs/shopana-headless/graphql"
   )
+  APPS_NOVA_POSHTA_STOREFRONT @join__graph(
+    name: "apps-nova-poshta-storefront"
+    url: "http://127.0.0.1:10023/subgraphs/nova-poshta/graphql"
+  )
   APPS_ONLINE_STORE_STOREFRONT @join__graph(
     name: "apps-online-store-storefront"
     url: "http://127.0.0.1:10023/subgraphs/shopana-online-store/graphql"
@@ -175,6 +179,92 @@ type Query @join__type(graph: APPS_HEADLESS_STOREFRONT)  @join__type(graph: APPS
   """
   headlessStorefrontAccess: Boolean! @join__field(graph: APPS_HEADLESS_STOREFRONT)
   """
+  Searches Nova Poshta settlements by name or postal code (carrier `searchSettlements`).
+  Read from the carrier on every request; does not depend on a checkout.
+  """
+  novaPoshtaSettlements(
+    """
+    Settlement name or its part, or a postal code (`CityName`).
+    """
+    query: String!
+    page: Int! = 1
+    """
+    Settlements per page, up to 500 (`Limit`).
+    """
+    limit: Int! = 20
+  ): NovaPoshtaSettlementPage! @join__field(graph: APPS_NOVA_POSHTA_STOREFRONT)
+  """
+  Lists Nova Poshta branches and postomats (carrier `getWarehouses`). Every carrier parameter
+  is available; only the given ones are passed, and no filter is required. Every row of the page
+  is returned, with `selectable` telling whether the point can be chosen.
+  """
+  novaPoshtaWarehouses(
+    """
+    A single point by its ref (`Ref`), for example `warehouseRef` of the delivery customer input.
+    """
+    ref: ID
+    """
+    Settlement of the points (`SettlementRef`).
+    """
+    settlementRef: ID
+    """
+    Carrier city of the points (`CityRef`).
+    """
+    cityRef: ID
+    """
+    City name or its part (`CityName`).
+    """
+    cityName: String
+    """
+    Text matched against the point's number and address (`FindByString`).
+    """
+    query: String
+    """
+    Point number within the city (`WarehouseId`).
+    """
+    number: String
+    """
+    Point type, for example a postomat type (`TypeOfWarehouseRef`).
+    """
+    typeRef: ID
+    """
+    Points with (true) or without (false) bicycle parking (`BicycleParking`).
+    """
+    bicycleParking: Boolean
+    """
+    Points with (true) or without (false) a NovaPay cash desk (`PostFinance`).
+    """
+    postFinance: Boolean
+    """
+    Points with (true) or without (false) a POS terminal (`POSTerminal`).
+    """
+    posTerminal: Boolean
+    """
+    Language of descriptions (`Language`).
+    """
+    language: NovaPoshtaLanguage
+    page: Int! = 1
+    """
+    Points per page, up to 500 (`Limit`).
+    """
+    limit: Int! = 50
+  ): NovaPoshtaWarehousePage! @join__field(graph: APPS_NOVA_POSHTA_STOREFRONT)
+  """
+  Searches streets of a settlement by name (carrier `searchSettlementStreets`). The carrier
+  returns one page of up to `limit` streets and has no page parameter.
+  """
+  novaPoshtaSettlementStreets(
+    settlementRef: ID!
+    """
+    Street name or its part (`StreetName`).
+    """
+    query: String!
+    """
+    Streets to return, up to 500 (`Limit`).
+    """
+    limit: Int! = 20
+  ): NovaPoshtaSettlementStreetPage! @join__field(graph: APPS_NOVA_POSHTA_STOREFRONT)
+  """
   Returns a published Online Store page by its global Relay ID.
   """
   onlineStorePage(id: ID!) : OnlineStorePage @join__field(graph: APPS_ONLINE_STORE_STOREFRONT)
@@ -246,9 +336,19 @@ type Query @join__type(graph: APPS_HEADLESS_STOREFRONT)  @join__type(graph: APPS
   Returns the latest durable result of a checkout placement.
 
   This query is suitable for restoring state after a payment-provider redirect
-  and for polling asynchronous payment completion.
+  and for polling asynchronous payment completion. With `token` the placement is
+  read by its access token alone, from any browser or device and without
+  checkout read access; such a read never returns the customer action. Without
+  `token` only the visitor or signed-in customer who placed it reads it. An
+  inaccessible placement is returned as null.
   """
-  checkoutPlacement(id: ID!) : PlaceOrderPayload @join__field(graph: CHECKOUT_STOREFRONT)
+  checkoutPlacement(id: ID!, token: String) : PlaceOrderPayload @join__field(graph: CHECKOUT_STOREFRONT)
+  """
+  Countries the store delivers to, each with the address form used there. The list comes
+  from the active delivery zones; a rest-of-world zone adds every other country. Country
+  names are localized for `localeCode` (a BCP 47 tag; English when missing or invalid).
+  """
+  checkoutDeliveryCountries(localeCode: String) : [CheckoutDeliveryCountry!]! @join__field(graph: CHECKOUT_STOREFRONT)
   """
   Returns the customer associated with the authenticated storefront session.
   Identity and store ownership are resolved only from trusted request context.
@@ -393,6 +493,136 @@ Represents a generic error in the input of a mutation.
 type UserError implements DisplayableError @join__type(graph: APPS_HEADLESS_STOREFRONT)  @join__type(graph: APPS_ONLINE_STORE_STOREFRONT)  @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: CHECKOUT_STOREFRONT)  @join__type(graph: CUSTOMERS_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOCALIZATION_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  @join__type(graph: ORDERS_STOREFRONT)  @join__type(graph: PROJECT_STOREFRONT)  @join__type(graph: REVIEWS_STOREFRONT)  @join__implements(graph: APPS_HEADLESS_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: APPS_ONLINE_STORE_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: CATALOG_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: CHECKOUT_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: CUSTOMERS_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: LISTING_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: LOCALIZATION_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: LOYALTY_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: MEDIA_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: ORDERS_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: PROJECT_STOREFRONT, interface: "DisplayableError")  @join__implements(graph: REVIEWS_STOREFRONT, interface: "DisplayableError")  {
   field: [String!]
   message: String!
+}
+
+type NovaPoshtaSettlementPage @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  items: [NovaPoshtaSettlement!]!
+  """
+  Matches across all pages, as the carrier reports it.
+  """
+  totalCount: Int!
+  page: Int!
+  limit: Int!
+  """
+  Whether the next page holds more settlements.
+  """
+  hasNextPage: Boolean!
+}
+
+type NovaPoshtaWarehousePage @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  items: [NovaPoshtaWarehouse!]!
+  """
+  Matches across all pages, or null when the carrier does not report it.
+  """
+  totalCount: Int
+  page: Int!
+  limit: Int!
+  """
+  Whether the next page holds more points: from `totalCount`, or from a full page when the
+  carrier does not report it.
+  """
+  hasNextPage: Boolean!
+}
+
+type NovaPoshtaSettlementStreetPage @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  items: [NovaPoshtaSettlementStreet!]!
+  """
+  Matches as the carrier reports it; may exceed the returned items.
+  """
+  totalCount: Int!
+  page: Int!
+  limit: Int!
+  """
+  Always false: the carrier has no page parameter for streets.
+  """
+  hasNextPage: Boolean!
+}
+
+"""
+A settlement as Nova Poshta's searchSettlements returns it.
+"""
+type NovaPoshtaSettlement @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  """
+  Settlement ref; `settlementRef` of the delivery customer input.
+  """
+  ref: ID!
+  """
+  Ref of the carrier city that serves the settlement.
+  """
+  cityRef: ID!
+  name: String!
+  """
+  Full name with area and region, for example "м. Київ, Київська обл.".
+  """
+  present: String!
+  area: String
+  region: String
+  settlementType: String
+  warehouseCount: Int
+  addressDeliveryAllowed: Boolean
+}
+
+"""
+A branch or postomat as Nova Poshta's getWarehouses returns it.
+"""
+type NovaPoshtaWarehouse @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  """
+  Point ref; `warehouseRef` of the delivery customer input.
+  """
+  ref: ID!
+  kind: NovaPoshtaPointKind!
+  number: String!
+  description: String!
+  shortAddress: String!
+  """
+  Carrier ref of the point type.
+  """
+  typeRef: ID!
+  """
+  Carrier status, for example "Working".
+  """
+  status: String!
+  """
+  Whether the point is working and not denied for selection; only such points pass the
+  delivery customer input check.
+  """
+  selectable: Boolean!
+  cityRef: ID!
+  cityName: String!
+  settlementRef: ID!
+  regionCity: String
+  """
+  Opening hours by weekday, in carrier order.
+  """
+  schedule: [NovaPoshtaScheduleDay!]!
+}
+
+type NovaPoshtaScheduleDay @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  """
+  English weekday name as the carrier returns it, for example "Monday".
+  """
+  day: String!
+  """
+  Hours as the carrier returns them, for example "08:00-21:00" or "-".
+  """
+  hours: String!
+}
+
+"""
+A street as Nova Poshta's searchSettlementStreets returns it.
+"""
+type NovaPoshtaSettlementStreet @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  """
+  Settlement street ref; `streetRef` of the courier customer input.
+  """
+  ref: ID!
+  settlementRef: ID!
+  name: String!
+  """
+  Name with the street type, for example "вул. Хрещатик".
+  """
+  present: String!
+  streetType: String
 }
 
 """
@@ -1853,8 +2083,15 @@ type CheckoutCost @join__type(graph: CHECKOUT_STOREFRONT)  {
   subtotalAmount: Money!
   """
   Total reduction from promotions on items and delivery; loyalty is in `loyaltyAmount`.
+  `totalAmount = subtotalAmount - totalDiscountAmount + totalShippingAmount + totalTaxAmount -
+  loyaltyAmount`.
   """
   totalDiscountAmount: Money!
+  """
+  Reduction from promotions on items only: `totalDiscountAmount` without what shipping
+  discounts took off, for a summary that shows shipping after its discounts.
+  """
+  merchandiseDiscountAmount: Money!
   """
   Amount paid with loyalty points or store credit; zero without a redemption.
   """
@@ -1864,7 +2101,9 @@ type CheckoutCost @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   totalTaxAmount: Money!
   """
-  Total shipping cost (only MERCHANT_COLLECTED payments).
+  Shipping charged at checkout before shipping discounts (only MERCHANT_COLLECTED payments).
+  Loyalty free shipping is no discount and is already taken off; shipping discounts are part
+  of `totalDiscountAmount`.
   """
   totalShippingAmount: Money!
   """
@@ -2019,6 +2258,11 @@ type Checkout implements Node @join__type(graph: CHECKOUT_STOREFRONT, key: "id")
   answer; the estimate never blocks placement.
   """
   loyaltyEarning: CheckoutLoyaltyEarning @join__field(graph: CHECKOUT_STOREFRONT)
+  """
+  Legal notice the buyer accepts by placing the order, in the checkout locale. Null when the
+  store links no published policy.
+  """
+  disclosures: CheckoutDisclosures @join__field(graph: CHECKOUT_STOREFRONT)
 }
 
 """
@@ -2158,7 +2402,6 @@ type CheckoutBillingAddress @join__type(graph: CHECKOUT_STOREFRONT)  {
   firstName: String
   lastName: String
   name: String!
-  company: String
   address1: String
   address2: String
   city: String
@@ -2166,7 +2409,7 @@ type CheckoutBillingAddress @join__type(graph: CHECKOUT_STOREFRONT)  {
   provinceCode: String
   country: String
   countryCode: CountryCode
-  zip: String
+  postalCode: String
   phone: String
   """
   Payment-provider-specific billing-address extension data.
@@ -2259,6 +2502,45 @@ type CheckoutPromoCode @join__type(graph: CHECKOUT_STOREFRONT)  {
   conditions: JSON
 }
 
+"""
+Why the shipping of a delivery group is free.
+"""
+type CheckoutFreeShipping @join__type(graph: CHECKOUT_STOREFRONT)  {
+  source: CheckoutFreeShippingSource!
+  """
+  Buyer-facing reason: the discount title, the loyalty tier name or the reward name.
+  """
+  title: String!
+  """
+  Promo code that made shipping free; null for an automatic discount or loyalty.
+  """
+  code: String
+}
+
+"""
+Shipping settlement of the selected delivery option of a group.
+"""
+type CheckoutDeliveryGroupShipping @join__type(graph: CHECKOUT_STOREFRONT)  {
+  paymentModel: CheckoutShippingPaymentModel!
+  """
+  Price before free shipping: the checkout charge of a MERCHANT_COLLECTED option, or the carrier
+  estimate of a CARRIER_DIRECT option (null when the carrier price is unknown).
+  """
+  originalPrice: Money
+  """
+  Who pays the carrier. RECIPIENT means the recipient pays the carrier on delivery.
+  """
+  payer: CheckoutShippingPayer!
+  """
+  Amount charged at checkout for this group.
+  """
+  total: Money!
+  """
+  Set when the shipping of this group is free, with the reason; null otherwise.
+  """
+  freeShipping: CheckoutFreeShipping
+}
+
 type CheckoutSelectionResetReason @join__type(graph: CHECKOUT_STOREFRONT)  {
   code: String!
   message: String!
@@ -2291,6 +2573,10 @@ type CheckoutDeliveryGroup @join__type(graph: CHECKOUT_STOREFRONT)  {
   recipient: CheckoutRecipient
   options: [CheckoutDeliveryOption!]!
   selection: CheckoutDeliveryOptionSelection!
+  """
+  Settlement of the selected option; null while no option is selected.
+  """
+  shipping: CheckoutDeliveryGroupShipping
 }
 
 """
@@ -2326,6 +2612,12 @@ type CheckoutDeliveryOption @join__type(graph: CHECKOUT_STOREFRONT)  {
   description: String
   deliveryMethodType: CheckoutDeliveryMethodType!
   cost: Money!
+  paymentModel: CheckoutShippingPaymentModel!
+  """
+  Carrier price estimate of a CARRIER_DIRECT option, which the recipient pays on delivery;
+  null for a MERCHANT_COLLECTED option or when the carrier price is unknown.
+  """
+  carrierEstimatedCost: Money
   estimatedMinDeliveryAt: DateTime
   estimatedMaxDeliveryAt: DateTime
   phoneRequired: Boolean!
@@ -2367,10 +2659,6 @@ type CheckoutDeliveryAddress @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   name: String!
   """
-  Company or organization receiving the delivery.
-  """
-  company: String
-  """
   Contact phone captured with this destination.
   """
   phone: String
@@ -2405,7 +2693,7 @@ type CheckoutDeliveryAddress @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   Postal or ZIP code.
   """
-  zip: String
+  postalCode: String
   """
   Carrier-specific address extension data.
   """
@@ -2418,6 +2706,54 @@ type CheckoutDeliveryAddress @join__type(graph: CHECKOUT_STOREFRONT)  {
   Compact city, region, and country representation.
   """
   formattedArea: String
+}
+
+"""
+A country the store delivers to.
+"""
+type CheckoutDeliveryCountry @join__type(graph: CHECKOUT_STOREFRONT, key: "name")  {
+  """
+  Country name localized for the requested locale.
+  """
+  name: String!
+  code: CountryCode!
+  addressFormat: CheckoutAddressFormat!
+}
+
+"""
+How a delivery address is written in a country. Labels are codes for the storefront
+to localize.
+"""
+type CheckoutAddressFormat @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  Rows of the address form in display order; fields of one row share a line.
+  """
+  rows: [[CheckoutAddressField!]!]!
+  required: [CheckoutAddressField!]!
+  """
+  Label of the PROVINCE field; null when the form has no province.
+  """
+  provinceLabel: CheckoutProvinceLabel
+  postalCodeLabel: CheckoutPostalCodeLabel
+  """
+  Case-insensitive pattern of a valid postal code, anchored at both ends.
+  """
+  postalCodePattern: String
+  postalCodeExample: String
+  """
+  Provinces to choose from; empty when the province is free text. When delivery zones
+  cover only some provinces, only those are listed. Names are written as the country's own
+  addresses write them and are not localized.
+  """
+  provinces: [CheckoutAddressProvince!]!
+}
+
+type CheckoutAddressProvince @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  ISO 3166-2 subdivision code without the country prefix; sent as provinceCode.
+  """
+  code: String!
+  name: String!
 }
 
 """
@@ -2613,6 +2949,11 @@ type PlaceOrderPayload @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   placementId: ID
   """
+  Access token of the placement for Query.checkoutPlacement. Returned only to
+  the buyer who placed the checkout; it grants reading the placement status.
+  """
+  placementToken: String
+  """
   Persisted orchestration state used for recovery and reconciliation.
   """
   placementState: CheckoutPlacementState
@@ -2625,7 +2966,15 @@ type PlaceOrderPayload @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   resultRevision: String
   orderId: ID
+  """
+  Human-readable number of the placed order.
+  """
+  orderNumber: String
   status: PlaceOrderStatus
+  """
+  Payment flow captured at placement, including reads without a browser journal.
+  """
+  paymentFlow: PaymentFlow
   paymentCollectionId: ID
   paymentSessionId: ID
   paymentOperationId: ID
@@ -3752,6 +4101,10 @@ type LoyaltyAvailableReward implements Node @join__type(graph: LOYALTY_STOREFRON
   id: ID!
   reward: LoyaltyRewardPresentation!
   """
+  Код связанной скидки Pricing для применения награды в checkout, если она активируется кодом.
+  """
+  discountCode: String
+  """
   Localized server-authored copy ready for an account or checkout surface.
   """
   presentation: LoyaltyOpportunityCopy!
@@ -4390,6 +4743,20 @@ type StorePolicy implements Node @join__type(graph: PROJECT_STOREFRONT)  @join__
   """
   version: Int!
   publishedAt: DateTime!
+}
+
+"""
+How the buyer accepts the checkout disclosures.
+"""
+enum CheckoutTermsAcceptanceMode @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  Placing the order is the acceptance; the notice is shown next to the place order button.
+  """
+  NOTICE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  """
+  The buyer ticks a required checkbox labelled with the notice.
+  """
+  CHECKBOX @join__enumValue(graph: CHECKOUT_STOREFRONT)
 }
 
 """
@@ -5180,6 +5547,11 @@ interface ReviewContent implements Node @join__type(graph: REVIEWS_STOREFRONT)  
   viewerEngagement: ReviewContentViewerEngagement!
   viewerCapabilities: ReviewContentViewerCapabilities!
 }
+
+"""
+A piece of the checkout disclosures notice.
+"""
+union CheckoutDisclosurePart @join__type(graph: CHECKOUT_STOREFRONT)  @join__unionMember(graph: CHECKOUT_STOREFRONT, member: "CheckoutDisclosureText")  @join__unionMember(graph: CHECKOUT_STOREFRONT, member: "CheckoutDisclosurePolicyLink")  = CheckoutDisclosureText | CheckoutDisclosurePolicyLink
 
 """
 The catalog entity purchased by a checkout line.
@@ -6691,6 +7063,16 @@ enum CountryCode @join__type(graph: APPS_HEADLESS_STOREFRONT)  @join__type(graph
   VI @join__enumValue(graph: APPS_HEADLESS_STOREFRONT)  @join__enumValue(graph: APPS_ONLINE_STORE_STOREFRONT)  @join__enumValue(graph: CATALOG_STOREFRONT)  @join__enumValue(graph: CHECKOUT_STOREFRONT)  @join__enumValue(graph: CUSTOMERS_STOREFRONT)  @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOCALIZATION_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)  @join__enumValue(graph: ORDERS_STOREFRONT)  @join__enumValue(graph: PROJECT_STOREFRONT)  @join__enumValue(graph: REVIEWS_STOREFRONT)
 }
 
+enum NovaPoshtaLanguage @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  UA @join__enumValue(graph: APPS_NOVA_POSHTA_STOREFRONT)
+  RU @join__enumValue(graph: APPS_NOVA_POSHTA_STOREFRONT)
+}
+
+enum NovaPoshtaPointKind @join__type(graph: APPS_NOVA_POSHTA_STOREFRONT)  {
+  WAREHOUSE @join__enumValue(graph: APPS_NOVA_POSHTA_STOREFRONT)
+  POSTOMAT @join__enumValue(graph: APPS_NOVA_POSHTA_STOREFRONT)
+}
+
 """
 Kinds of destination supported by the Online Store domain model.
 """
@@ -6866,10 +7248,83 @@ enum CheckoutDeliveryMethodType @join__type(graph: CHECKOUT_STOREFRONT)  {
   SHIPPING @join__enumValue(graph: CHECKOUT_STOREFRONT)
 }
 
+"""
+Who collects the delivery fee.
+"""
+enum CheckoutShippingPaymentModel @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  The merchant collects the fee as part of the checkout total.
+  """
+  MERCHANT_COLLECTED @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  """
+  The recipient pays the carrier directly on delivery; the option costs zero at checkout
+  and is excluded from totalShippingAmount and the payable amount.
+  """
+  CARRIER_DIRECT @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
+"""
+Who pays the carrier for the shipment of a delivery group.
+"""
+enum CheckoutShippingPayer @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  The merchant (sender) pays the carrier: the fee is part of the checkout total, or free
+  shipping made a CARRIER_DIRECT group merchant-paid.
+  """
+  MERCHANT @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  """
+  The recipient pays the carrier on delivery ("carrier pays"); nothing is charged at checkout.
+  """
+  RECIPIENT @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
+"""
+What made the shipping of a delivery group free.
+"""
+enum CheckoutFreeShippingSource @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  A free shipping discount, applied automatically or by a promo code.
+  """
+  DISCOUNT @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  """
+  A free shipping benefit of the customer's loyalty tier.
+  """
+  LOYALTY_TIER @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  """
+  A one-time free shipping reward of the customer; it is used up only by the placed order.
+  """
+  LOYALTY_REWARD @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
 enum CheckoutSelectionStatus @join__type(graph: CHECKOUT_STOREFRONT)  {
   NONE @join__enumValue(graph: CHECKOUT_STOREFRONT)
   SELECTED @join__enumValue(graph: CHECKOUT_STOREFRONT)
   RESET @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
+enum CheckoutAddressField @join__type(graph: CHECKOUT_STOREFRONT)  {
+  FIRST_NAME @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  LAST_NAME @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  ADDRESS1 @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  ADDRESS2 @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  CITY @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  PROVINCE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  POSTAL_CODE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  PHONE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
+enum CheckoutProvinceLabel @join__type(graph: CHECKOUT_STOREFRONT)  {
+  REGION @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  STATE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  PROVINCE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  COUNTY @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  OBLAST @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
+enum CheckoutPostalCodeLabel @join__type(graph: CHECKOUT_STOREFRONT)  {
+  POSTAL_CODE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  ZIP_CODE @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  POSTCODE @join__enumValue(graph: CHECKOUT_STOREFRONT)
 }
 
 """
@@ -7869,13 +8324,12 @@ Payment-provider-specific fields belong to data.
 input CheckoutBillingAddressInput @join__type(graph: CHECKOUT_STOREFRONT)  {
   firstName: String
   lastName: String
-  company: String
   address1: String
   address2: String
   city: String
   countryCode: CountryCode
   provinceCode: String
-  zip: String
+  postalCode: String
   phone: String
   """
   Payment-provider-specific billing-address extension data.
@@ -8192,10 +8646,6 @@ input CheckoutDeliveryAddressInput @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   lastName: String
   """
-  Company or organization receiving the delivery.
-  """
-  company: String
-  """
   Primary address line.
   """
   address1: String
@@ -8218,7 +8668,7 @@ input CheckoutDeliveryAddressInput @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   Postal or ZIP code.
   """
-  zip: String
+  postalCode: String
   """
   Phone number for delivery.
   """
@@ -8427,9 +8877,47 @@ input PlaceOrderInput @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   idempotencyKey: String!
   """
+  Amount the buyer confirmed: the checkout `cost.totalAmount` shown when the order is placed.
+  The checkout is recalculated before the placement; when it then pays a different amount,
+  nothing is placed and `CHECKOUT_TOTAL_CHANGED` asks the buyer to review the new total. When
+  the same total comes with other free shipping or another carrier payer, nothing is placed
+  and `CHECKOUT_SHIPPING_CHANGED` asks the buyer to review the checkout.
+  """
+  expectedTotal: MoneyInput!
+  """
   HTTPS URL to which an online payment provider may return the customer.
+  A query parameter whose whole value is `{placementId}` or `{placementToken}`
+  receives the placement ID or the placement access token after the placement
+  is created; the template itself is what idempotency compares, so a retry
+  sends it unchanged.
   """
   returnUrl: String
+  """
+  Whether the buyer ticked the terms checkbox. Required to be true when
+  `Checkout.disclosures.acceptanceMode` is CHECKBOX; otherwise `TERMS_NOT_ACCEPTED`.
+  """
+  termsAccepted: Boolean
+  """
+  `Checkout.disclosures.version` the buyer was shown. When the checkout has disclosures and the
+  version differs from the current one, nothing is placed and `DISCLOSURES_CHANGED` asks the buyer
+  to review them.
+  """
+  disclosuresVersion: String
+}
+
+"""
+A monetary amount and its currency. Supply amount as an exact decimal string in major currency
+units.
+"""
+input MoneyInput @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  Exact decimal amount serialized as a string.
+  """
+  amount: Decimal!
+  """
+  ISO 4217 currency code.
+  """
+  currencyCode: CurrencyCode!
 }
 
 """
@@ -8991,6 +9479,47 @@ extend type Checkout {
 
 extend type Customer {
   checkout: Checkout
+}
+
+"""
+Legal notice of a checkout with links to the published store policies it refers to.
+"""
+type CheckoutDisclosures @join__type(graph: CHECKOUT_STOREFRONT)  {
+  """
+  Version of what the buyer is shown; `placeOrder` sends it back as `disclosuresVersion`.
+  """
+  version: String!
+  """
+  How the buyer accepts the notice.
+  """
+  acceptanceMode: CheckoutTermsAcceptanceMode!
+  """
+  The notice split into text and policy links, in reading order.
+  """
+  parts: [CheckoutDisclosurePart!]!
+}
+
+"""
+Plain text of the notice.
+"""
+type CheckoutDisclosureText @join__type(graph: CHECKOUT_STOREFRONT)  {
+  text: String!
+}
+
+"""
+Link to the published store policy page.
+"""
+type CheckoutDisclosurePolicyLink @join__type(graph: CHECKOUT_STOREFRONT)  {
+  policyType: StorePolicyType!
+  handle: String!
+  """
+  Policy title in the checkout locale, or in the store default locale when it has no translation.
+  """
+  title: String!
+  """
+  Storefront path of the policy page, e.g. `/policies/terms-of-service`.
+  """
+  path: String!
 }
 
 type CheckoutLoyaltyEarningPresentation @join__type(graph: CHECKOUT_STOREFRONT)  {

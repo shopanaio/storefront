@@ -6,70 +6,68 @@ afterEach(cleanup);
 
 const countries = ['DE', 'PL', 'UA'] as const;
 
+/** Desktop and phone widths: `lg` and up gets the popover, below it the native select. */
+const setWidth = (desktop: boolean) => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: !desktop && query.includes('max-width'),
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
+};
+
 const renderOpen = (onChange = vi.fn()) => {
+  setWidth(true);
   render(
     <CountryPicker value="UA" onChange={onChange} countries={countries} open />
   );
-  return { onChange, search: screen.getByRole('combobox') };
+  return { onChange, list: screen.getByRole('listbox') };
 };
 
-const activeOption = (search: HTMLElement) =>
-  document.getElementById(search.getAttribute('aria-activedescendant') ?? '');
+const activeOption = (list: HTMLElement) =>
+  document.getElementById(list.getAttribute('aria-activedescendant') ?? '');
 
-describe('CountryPicker', () => {
-  it('is a combobox over a list of options that are not tabbable', () => {
-    const { search } = renderOpen();
-    const list = screen.getByRole('listbox');
-    expect(search).toHaveAttribute('aria-controls', list.id);
-    expect(search).toHaveAttribute('aria-expanded', 'true');
+describe('CountryPicker on a desktop', () => {
+  it('opens a focused list of options without a search field', () => {
+    const { list } = renderOpen();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.queryByRole('searchbox')).toBeNull();
+    expect(document.activeElement).toBe(list);
     const options = screen.getAllByRole('option');
     expect(options).toHaveLength(3);
     for (const option of options) {
-      expect(option.id).not.toBe('');
       expect(option).not.toHaveAttribute('tabindex');
-      expect(option.querySelector('button')).toBeNull();
     }
     // The selected country leads the list.
     expect(options[0]).toHaveAttribute('aria-selected', 'true');
-    expect(activeOption(search)).toBe(options[0]);
+    expect(activeOption(list)).toBe(options[0]);
   });
 
   it('moves through the countries with the arrows, Home and End', () => {
-    const { search } = renderOpen();
+    const { list } = renderOpen();
     const options = screen.getAllByRole('option');
-    fireEvent.keyDown(search, { key: 'ArrowDown' });
-    expect(activeOption(search)).toBe(options[1]);
-    fireEvent.keyDown(search, { key: 'ArrowDown' });
-    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    fireEvent.keyDown(list, { key: 'ArrowDown' });
+    expect(activeOption(list)).toBe(options[1]);
+    fireEvent.keyDown(list, { key: 'ArrowDown' });
+    fireEvent.keyDown(list, { key: 'ArrowDown' });
     // It stops at the last one.
-    expect(activeOption(search)).toBe(options[2]);
-    fireEvent.keyDown(search, { key: 'ArrowUp' });
-    expect(activeOption(search)).toBe(options[1]);
-    fireEvent.keyDown(search, { key: 'Home' });
-    expect(activeOption(search)).toBe(options[0]);
-    fireEvent.keyDown(search, { key: 'End' });
-    expect(activeOption(search)).toBe(options[2]);
+    expect(activeOption(list)).toBe(options[2]);
+    fireEvent.keyDown(list, { key: 'Home' });
+    expect(activeOption(list)).toBe(options[0]);
+    fireEvent.keyDown(list, { key: 'End' });
+    expect(activeOption(list)).toBe(options[2]);
   });
 
-  it('picks the highlighted country with Enter', () => {
-    const { search, onChange } = renderOpen();
-    // Ukraine (selected), then Germany and Poland by name.
-    fireEvent.keyDown(search, { key: 'ArrowDown' });
-    expect(activeOption(search)).toHaveTextContent('Germany');
-    fireEvent.keyDown(search, { key: 'Enter' });
-    expect(onChange).toHaveBeenCalledWith('DE');
-  });
-
-  it('starts over from the first match as the buyer types', () => {
-    const { search, onChange } = renderOpen();
-    fireEvent.keyDown(search, { key: 'End' });
-    fireEvent.change(search, { target: { value: 'pol' } });
-    expect(screen.getAllByRole('option')).toHaveLength(1);
-    fireEvent.keyDown(search, { key: 'Enter' });
+  it('jumps to a name by its first letters and picks it with Enter', () => {
+    const { list, onChange } = renderOpen();
+    fireEvent.keyDown(list, { key: 'p' });
+    expect(activeOption(list)).toHaveTextContent('Poland');
+    fireEvent.keyDown(list, { key: 'Enter' });
     expect(onChange).toHaveBeenCalledWith('PL');
   });
 
   it('names the trigger from the texts of the provider', () => {
+    setWidth(true);
     render(
       <StorefrontUIProvider
         texts={{
@@ -82,6 +80,27 @@ describe('CountryPicker', () => {
       </StorefrontUIProvider>
     );
     const trigger = screen.getByRole('button', { name: 'Ukraine (+380)' });
-    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
+  });
+});
+
+describe('CountryPicker on a phone or a tablet', () => {
+  it('is the native select of the device', () => {
+    setWidth(false);
+    const onChange = vi.fn();
+    render(
+      <CountryPicker value="UA" onChange={onChange} countries={countries} />
+    );
+    const select = screen.getByRole('combobox', {
+      name: 'Country: Ukraine, +380',
+    });
+    expect(select.tagName).toBe('SELECT');
+    expect(screen.queryByRole('button')).toBeNull();
+    // By name, with the calling code.
+    expect(
+      screen.getAllByRole('option').map((option) => option.textContent)
+    ).toEqual(['Germany (+49)', 'Poland (+48)', 'Ukraine (+380)']);
+    fireEvent.change(select, { target: { value: 'PL' } });
+    expect(onChange).toHaveBeenCalledWith('PL');
   });
 });

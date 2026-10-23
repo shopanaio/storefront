@@ -3,6 +3,7 @@ import {
   GraphQLError,
   getNamedType,
   isInterfaceType,
+  isLeafType,
   isListType,
   isNonNullType,
   isObjectType,
@@ -28,12 +29,14 @@ import {
 import {
   accountCheckout,
   canAccessCheckout,
+  checkoutDisclosures,
   checkoutMutations,
   guestCheckoutEnabled,
 } from "./mutations/checkout.js";
 import { comparisonMutations } from "./mutations/comparisons.js";
 import { customerOrderMutations } from "./mutations/customer-orders.js";
-import { reviewMutations } from "./mutations/reviews.js";
+import { reviewMutations, reviewStoreConfiguration } from "./mutations/reviews.js";
+import { defaultWishlist, wishlistMutations } from "./mutations/wishlists.js";
 
 const isListOutput = (type) => isNonNullType(type) ? isListOutput(type.ofType) : isListType(type);
 
@@ -66,7 +69,7 @@ const hydrateValue = (store, value, namedType, outputType, args) => {
   if (value === null) return null;
   if (namedType.name.endsWith("Connection")) return connection(value, args);
   if (Array.isArray(value)) {
-    if (!isListOutput(outputType)) return value;
+    if (!isListOutput(outputType) || isLeafType(namedType)) return value;
     return value.map((item) => typeof item === "string" ? store.get(item) : item).filter((item) => item !== null);
   }
   if ((isObjectType(namedType) || isInterfaceType(namedType) || isUnionType(namedType)) && typeof value === "string") {
@@ -446,16 +449,26 @@ const specialFields = (store) => ({
 
   "CheckoutCustomerIdentity.customer": (identity) => store.get(identity.customerId),
   "Checkout.guestCheckoutAllowed": (_checkout, _args, context) => Boolean(context.customer) || guestCheckoutEnabled(),
+  "Checkout.disclosures": (checkout) => checkoutDisclosures(store, checkout),
   "Customer.checkout": (customer, _args, context) =>
     context.customer?.id === customer.id ? accountCheckout(store, customer) : null,
   "CheckoutLine.image": (line) => store.get(line.imageId),
   "CheckoutLine.parent": (line) => store.get(line.parentId),
   "CheckoutLine.purchasable": (line) => store.get(line.purchasableId),
   "CheckoutDeliveryGroup.checkoutLines": (group) => group.checkoutLineIds.map((id) => store.get(id)).filter(Boolean),
+  "CheckoutDeliveryGroup.shipping": ({ selection }) => selection.option ? {
+    paymentModel: selection.option.paymentModel,
+    originalPrice: selection.option.cost,
+    payer: "MERCHANT",
+    total: selection.option.cost,
+    freeShipping: null,
+  } : null,
 
   "Customer.defaultAddress": (customer) => store.get(customer.defaultAddressId),
   "Customer.loyaltyAccount": (customer) => loyaltyAccount(store, customer),
   "Customer.productComparisons": (customer) => customerProductComparisons(store, customer),
+  "Customer.defaultWishlist": (customer) => defaultWishlist(customer),
+  "Customer.wishlist": (customer, { id }) => customer.wishlists.find((wishlist) => wishlist.id === id) ?? null,
   "Customer.orders": (customer, args) => {
     let orders = customer.orderIds.map((id) => store.get(id)).filter(Boolean);
     if (args.statuses?.length) orders = orders.filter(({ status }) => args.statuses.includes(status));
@@ -581,7 +594,7 @@ const queryResolvers = (store) => ({
   localization: () => store.state.localization,
   market: (_, { handle }) => store.byHandle("Market", handle),
   storePolicy: (_, { handle }) => store.byHandle("StorePolicy", handle),
-  reviewStoreConfiguration: () => store.state.reviewStoreConfiguration,
+  reviewStoreConfiguration: () => reviewStoreConfiguration(store),
   review: (_, { id }, context) => visibleReviewContent(store, id, "Review", context),
   productQuestion: (_, { id }, context) => visibleReviewContent(store, id, "ProductQuestion", context),
   reviewReply: (_, { id }, context) => visibleReviewContent(store, id, "ReviewReply", context),
@@ -606,6 +619,7 @@ const mutationResolvers = (store) => ({
   ...comparisonMutations(store),
   ...customerOrderMutations(store),
   ...reviewMutations(store),
+  ...wishlistMutations(store),
 });
 
 const reviewKindType = {

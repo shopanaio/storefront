@@ -20,6 +20,14 @@ export {
   type UseAccountConnectionsResult,
 } from './useAccountConnections';
 export { useHeadlessAuthClient } from './useHeadlessAuthClient';
+export {
+  AuthActionProvider,
+  discardPendingAuthAction,
+  useAuthAction,
+  type AuthActionOptions,
+  type AuthActionPayload,
+  type AuthSignInRequest,
+} from './authActions';
 
 // Session state and sign-out, so a theme takes all of auth from one package.
 export {

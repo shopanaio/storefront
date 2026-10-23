@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { discardPendingAuthAction } from '../../react/authActions';
 import { AuthFlow, type AuthFlowProps } from '../flow/AuthFlow';
 import { AuthIntlProvider } from '../i18n/AuthIntlProvider';
 import { CardHeader } from './Headers';
@@ -40,6 +41,12 @@ export const AuthDialog = ({
     if (open) setSession((value) => value + 1);
   }
 
+  // Closed by the buyer, not by signing in: the action that asked for the sign-in is dropped.
+  const dismiss = () => {
+    discardPendingAuthAction();
+    onClose();
+  };
+
   const flow = (header: AuthFlowProps['renderHeader']) => (
     <AuthFlow
       key={session}
@@ -56,7 +63,7 @@ export const AuthDialog = ({
   if (presentation === 'drawer') {
     return (
       <AuthIntlProvider>
-        <AuthDrawerSurface open={open} onClose={onClose}>
+        <AuthDrawerSurface open={open} onClose={dismiss}>
           {flow(renderHeader)}
         </AuthDrawerSurface>
       </AuthIntlProvider>
@@ -64,7 +71,7 @@ export const AuthDialog = ({
   }
 
   return (
-    <AuthDialogSurface open={open} onClose={onClose}>
+    <AuthDialogSurface open={open} onClose={dismiss}>
       {flow(
         renderHeader ??
           ((navigation) => (
