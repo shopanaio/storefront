@@ -14,6 +14,7 @@ import {
 } from '#checkout/state/placement/placementStore';
 import { renewalInput, useRenewalStore } from '#checkout/state/renewal';
 import type { Checkout } from '#checkout/types/entity';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /** Closed by the server: a checkout in this status can only be replaced. */
 const isClosedByServer = (checkout: Checkout.Checkout) =>
@@ -66,7 +67,10 @@ export function useCheckoutLifecycle(checkoutId: string | null) {
       createCart(renewalInput(source)).then(
         () => setState('renewed'),
         (error: unknown) => {
-          console.error('Failed to replace the expired checkout:', error);
+          logError('Failed to replace the expired checkout', {
+            error,
+            component: 'useCheckoutLifecycle',
+          });
           setState('failed');
           setRetry(() => renewRef.current(source));
         }

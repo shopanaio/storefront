@@ -28,6 +28,16 @@ export default defineConfig([
 
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      // Rest siblings drop properties from a copy; `_name` marks a value kept on purpose.
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          ignoreRestSiblings: true,
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-namespace': 'off',
       'no-restricted-imports': [
         'error',

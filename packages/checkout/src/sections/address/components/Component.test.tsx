@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import { registerModule } from '@shopana/storefront-sdk/registry';
+import { ProviderModuleType } from '#checkout/vendors/types';
 import type { DeliveryCountry } from '../countries';
 import type { AddressFormData } from '../types';
 import { AddressSectionView } from './Component';
@@ -206,9 +208,15 @@ describe('AddressSectionView', () => {
     expect(screen.getByLabelText('City')).toHaveValue('Berlin');
   });
 
-  // Expected behavior: a saved Ukrainian address (city) is shown immediately, without waiting for
-  // the country list: the Ukraine form needs no address format, the city comes with the checkout.
+  // Expected behavior: a saved address of a country with its own address module (Ukraine: the
+  // city) is shown immediately, without waiting for the country list: that form needs no address
+  // format, the city comes with the checkout.
   it('shows a saved Ukrainian address while the countries load', () => {
+    registerModule({
+      type: ProviderModuleType.Address,
+      slug: 'UA',
+      loader: async () => ({}),
+    });
     mocks.countries = { ...mocks.countries, countries: [], loading: true };
     const saved = (countryCode: string) =>
       data({

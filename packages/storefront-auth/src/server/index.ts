@@ -5,5 +5,6 @@
 export {
   createHeadlessAuthRouteHandlers,
   type HeadlessAuthRouteHandlers,
+  type RouteContext,
 } from './routes';
 export { IamHeadlessClient, IamHeadlessError } from './iamHeadless';

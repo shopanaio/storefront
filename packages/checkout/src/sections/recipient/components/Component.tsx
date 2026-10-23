@@ -4,12 +4,19 @@ import { Flex, Switch, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { ContactSelect } from '#checkout/components/contact/ContactSelect';
 import { useTranslations } from 'next-intl';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+} from 'react';
 import type { RecipientFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import type { ContactForm } from '#checkout/components/contact/ContactSelect';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { SectionId } from '#checkout/state/interface';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /**
  * View component for the checkout recipient section.
@@ -105,18 +112,21 @@ export const RecipientSectionView = ({
   const missingGroups = !isRecipientSelf
     ? (data?.groupIdsWithoutRecipient ?? []).join(',')
     : '';
-  useEffect(() => {
-    if (!missingGroups) return;
+  // Reads the recipient known when it runs, without running again for every recipient change.
+  const addKnownRecipient = useEffectEvent(() => {
     saveDeliveryRecipient(knownRecipient ?? EMPTY_RECIPIENT).catch(
       (error: unknown) => {
-        console.error(
-          'Failed to add the recipient to the delivery groups:',
-          error
-        );
+        logError('Failed to add the recipient to the delivery groups', {
+          error,
+          component: 'RecipientSection',
+        });
       }
     );
-    // Runs for a new set of groups without the recipient, not for every recipient change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  // Runs for a new set of groups without the recipient (and a new save function).
+  useEffect(() => {
+    if (!missingGroups) return;
+    addKnownRecipient();
   }, [missingGroups, saveDeliveryRecipient]);
 
   /**
@@ -135,7 +145,10 @@ export const RecipientSectionView = ({
         await saveDeliveryRecipient(null);
       } catch (error) {
         // The checkout API already showed the failure; the switch stays as the buyer set it.
-        console.error('Failed to remove the recipient:', error);
+        logError('Failed to remove the recipient', {
+          error,
+          component: 'RecipientSection',
+        });
       }
     },
     [data?.deliveryGroupIds.length, saveDeliveryRecipient]

@@ -75,15 +75,25 @@ export function createShippingMethod(
       return null;
     }
 
-    return (
+    const panel = {
+      title: title && title !== code ? title : t(`shipping.services.${code}`),
+      description: estimate,
+      isActive,
+      onActive,
+      brand: <NPLogo size={24} />,
+    };
+    const formProps = { data, view, onSubmit, deliveryAddress };
+    return type === 'DOOR' ? (
       <CheckoutMethodPanel
-        title={title && title !== code ? title : t(`shipping.services.${code}`)}
-        description={estimate}
-        isActive={isActive}
-        onActive={onActive}
-        brand={<NPLogo size={24} />}
-        component={type === 'DOOR' ? DoorForm : PointForm}
-        componentProps={{ data, view, onSubmit, deliveryAddress, type }}
+        {...panel}
+        component={DoorForm}
+        componentProps={formProps}
+      />
+    ) : (
+      <CheckoutMethodPanel
+        {...panel}
+        component={PointForm}
+        componentProps={{ ...formProps, type }}
       />
     );
   }

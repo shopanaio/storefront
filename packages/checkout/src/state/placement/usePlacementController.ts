@@ -53,6 +53,7 @@ import type {
   PlacementResult,
 } from '#checkout/state/placement/types';
 import type { CurrencyCode } from '#checkout/graphql/operations';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /**
  * Drives order placement in the checkout (plan, stage 1): sends `placeOrder` with the journal's
@@ -308,7 +309,10 @@ export function usePlacementController(checkoutId: string | null) {
             : buildReturnUrl(window.location.origin, returnPath, checkout.id);
       } catch (error) {
         // The return URL is over the provider limit: nothing is placed.
-        console.error(error);
+        logError('The return URL is over the provider limit', {
+          error,
+          component: 'usePlacementController',
+        });
         setPhase({ name: 'rejected', code: 'PLACE_ORDER_RETURN_URL_TOO_LONG' });
         return;
       }

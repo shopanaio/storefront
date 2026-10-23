@@ -193,7 +193,8 @@ const STEPS: Record<TransactionAction, StepDefinition> = {
   },
 };
 
-interface RouteContext {
+/** Context Next.js passes to an `/auth/[action]` route handler. */
+export interface RouteContext {
   params: Promise<{ action?: string | string[] }>;
 }
 

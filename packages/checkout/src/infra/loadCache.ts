@@ -1,5 +1,6 @@
 import { moduleRegistry } from '@shopana/storefront-sdk/registry';
 import type { ProviderModuleType } from '#checkout/vendors/types';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /**
  * Loads the checkout renders with React `use`: the code of vendor modules and their messages.
@@ -54,7 +55,7 @@ function start<T>(what: string, run: () => T | Promise<T>): Load<T> {
     Promise.resolve()
       .then(run)
       .catch((error: unknown) => {
-        console.error(`Failed to load ${what}:`, error);
+        logError(`Failed to load ${what}`, { error, component: 'loadCache' });
         throw new LoadError(what, { cause: error });
       })
   );

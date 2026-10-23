@@ -26,8 +26,8 @@ export const MOCK_CURRENCIES: Record<string, Currency> = {
 
 export const mockShopConfig: ShopConfig = {
   name: 'Shopana Demo Store',
-  domain: 'demo.shopana.io',
-  email: 'info@shopana.io',
+  domain: 'store.example.com',
+  email: 'info@example.com',
   locale: MOCK_LOCALES.en,
   availableLocales: [MOCK_LOCALES.en, MOCK_LOCALES.uk],
   currency: MOCK_CURRENCIES.USD,

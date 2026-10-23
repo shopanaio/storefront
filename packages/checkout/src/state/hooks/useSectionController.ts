@@ -2,7 +2,7 @@
  * Section controller hook for Checkout sections.
  * Registers section lifecycle in the Checkout store and exposes methods to publish validation.
  */
-import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { SectionId } from '#checkout/state/interface';

@@ -100,6 +100,8 @@ describe('useCheckoutLifecycle', () => {
         idempotencyKey: 'key-1',
         expectedTotal: { amount: '1000', currencyCode: 'UAH' },
         returnUrl: 'https://shop.example/checkout/return?checkout=checkout-1',
+        termsAccepted: true,
+        disclosuresVersion: null,
         resultRevision: 'rev-1',
         paymentFlow: 'ONLINE',
         state: 'resolved',

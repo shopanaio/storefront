@@ -41,6 +41,7 @@ import {
   type QuotedShipment,
 } from '../shipments';
 import { ShipmentQuote } from './ShipmentQuote';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /** Pause in typing after which an edited customer input is saved. */
 const SAVE_DELAY_MS = 600;
@@ -313,7 +314,10 @@ export const DeliveryMethodList = ({
           : []
       );
       reasons.forEach((reason) =>
-        console.error('Failed to select delivery method:', reason)
+        logError('Failed to select delivery method', {
+          error: reason,
+          component: 'DeliveryMethodList',
+        })
       );
       const failed = selected.filter((target, index) => {
         const result = results[index];
@@ -342,7 +346,11 @@ export const DeliveryMethodList = ({
       const key = methodKey(method);
       const selected = targetsOf(key);
       if (!selected.length) {
-        console.error('Delivery method or group not found:', method);
+        logError('Delivery method or group not found', {
+          error: null,
+          component: 'DeliveryMethodList',
+          extra: { method },
+        });
         return;
       }
       await selectIn(key, selected);
@@ -516,7 +524,10 @@ export const DeliveryMethodList = ({
     const timer = setTimeout(() => {
       saveSelectedInput().catch((error) => {
         // The input stays unsaved and keeps the order blocked until a save succeeds.
-        console.error('Failed to update delivery method data:', error);
+        logError('Failed to update delivery method data', {
+          error,
+          component: 'DeliveryMethodList',
+        });
         setFailures({
           key: unsavedKey,
           count: failureCount + 1,

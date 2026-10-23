@@ -154,12 +154,14 @@ describe('Storefront API', () => {
     };
     mutation.placeOrder.resolve = (_, { input }) => {
       expect(input.idempotencyKey).toBe('attempt-1');
+      expect(input.expectedTotal).toEqual(money);
       return placement;
     };
     query.checkoutPlacement.resolve = () => placement;
     const result = await api.placeOrder({
       checkoutId: checkout.id,
       idempotencyKey: 'attempt-1',
+      expectedTotal: money,
     });
     expect(result.placementState).toBe('PAYMENT_CREATED');
     const handlers = {

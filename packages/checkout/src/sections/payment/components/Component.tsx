@@ -13,6 +13,7 @@ import { useState, useCallback, useRef } from 'react';
 import type { PaymentFormData, PaymentMethod } from '../types';
 import { ProviderMethod, ProviderModuleType } from '#checkout/vendors/types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /**
  * View component for the payment section.
@@ -70,7 +71,10 @@ export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
           customerInput: selected.data as object | undefined,
         });
       } catch (error) {
-        console.error('Failed to select payment method:', error);
+        logError('Failed to select payment method', {
+          error,
+          component: 'PaymentSection',
+        });
       } finally {
         if (latestPick.current === pick) {
           setPicked(null);

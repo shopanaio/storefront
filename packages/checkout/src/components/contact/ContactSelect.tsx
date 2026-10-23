@@ -273,8 +273,6 @@ export const ContactSelect = ({
                     onChange={(value) => field.onChange(value ?? '')}
                     onBlur={field.onBlur}
                     name={field.name}
-                    // The checkout's market: an empty number starts with +380.
-                    defaultCountry="UA"
                     status={errors.phone ? 'error' : undefined}
                     error={errors.phone?.message}
                     autoComplete="tel"

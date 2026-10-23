@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { StorefrontUIProvider } from '../StorefrontUIProvider';
 import { CountryPicker } from './CountryPicker';
 
@@ -28,11 +34,11 @@ const activeOption = (list: HTMLElement) =>
   document.getElementById(list.getAttribute('aria-activedescendant') ?? '');
 
 describe('CountryPicker on a desktop', () => {
-  it('opens a focused list of options without a search field', () => {
+  it('opens a focused list of options without a search field', async () => {
     const { list } = renderOpen();
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.queryByRole('searchbox')).toBeNull();
-    expect(document.activeElement).toBe(list);
+    await waitFor(() => expect(document.activeElement).toBe(list));
     const options = screen.getAllByRole('option');
     expect(options).toHaveLength(3);
     for (const option of options) {

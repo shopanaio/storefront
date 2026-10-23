@@ -215,12 +215,12 @@ export function useWarehouseList(
       return;
     }
     const timer = setTimeout(() => void load(1), query ? 300 : 0);
+    // The request counter, not a DOM node: the cleanup bumps the same counter.
+    const requests = request;
     return () => {
       clearTimeout(timer);
-      // Answers to the previous settlement or search text are dropped. The ref is a
-      // request counter, not a DOM node, so reading it in the cleanup is intended.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      request.current++;
+      // Answers to the previous settlement or search text are dropped.
+      requests.current++;
     };
   }, [key, query, load]);
 

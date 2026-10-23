@@ -67,12 +67,14 @@ name of a drawer without a title), `close` (the close button of a drawer), `dism
 banner), `showPassword` / `hidePassword`, and `countryPicker` (`title`,
 `trigger(country, callingCode)`). `locale` picks the country names (`uk`, `ru`, `en`; English
 for any other). `dialogMotion` (`zoom` by default, or `fade`) is how `ResponsiveDialog` opens
-as a modal. A provider inside another one changes only what it sets; a component's own prop
+as a modal. `phoneCountry` is the country of an empty `PhoneInput`, the store's market (none by
+default). A provider inside another one changes only what it sets; a component's own prop
 (`closeLabel`, `dismissLabel`, `toggleLabels`, `pickerTexts`, `texts`, `locale`) wins over both.
 
 ```tsx
 <StorefrontUIProvider
   locale="uk"
+  phoneCountry="UA"
   texts={{
     close: 'Close',
     countryPicker: {
@@ -88,8 +90,9 @@ as a modal. A provider inside another one changes only what it sets; a component
 
 `PhoneInput` is `react-phone-number-input` with its own country picker and the floating-label
 field; it takes the library's props (`countries`, `defaultCountry`, `onCountryChange`, …) and
-the field's (`label`, `error`, `status`, `suffix`, …). No country is chosen by default: pass
-`defaultCountry` for the store's market. Check the value with `isPossiblePhone` (length) or
+the field's (`label`, `error`, `status`, `suffix`, …). An empty field starts with the
+`phoneCountry` of `StorefrontUIProvider`, or with its own `defaultCountry`; without either the
+buyer types the calling code. Check the value with `isPossiblePhone` (length) or
 `isValidPhone` (digits too), show it with `formatPhoneInternational`.
 
 ### Drawers and dialogs

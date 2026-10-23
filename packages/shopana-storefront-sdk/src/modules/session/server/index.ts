@@ -18,6 +18,7 @@ export {
   rejectCrossSite,
   safeReturnTo,
   transactionCookieName,
+  type RouteContext,
   type StorefrontAuthRouteHandlers,
   type TransactionCookie,
 } from './routes';

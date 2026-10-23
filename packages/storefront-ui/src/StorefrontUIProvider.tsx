@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
+import type { Country } from './phone/countries';
 
 /** Texts of the country picker of `PhoneInput` and `CountryPicker`. */
 export interface CountryPickerTexts {
@@ -47,6 +48,11 @@ export interface StorefrontUIProviderProps {
    * by default, or `fade`.
    */
   dialogMotion?: DialogMotion;
+  /**
+   * Country of an empty `PhoneInput` (the store's market), so a buyer types the number without
+   * its calling code; the parent's, else none and the buyer types the code.
+   */
+  phoneCountry?: Country;
   children: ReactNode;
 }
 
@@ -58,6 +64,7 @@ interface StorefrontUIValue {
   texts: StorefrontUITexts;
   drawerContainer?: HTMLElement | null;
   dialogMotion: DialogMotion;
+  phoneCountry?: Country;
 }
 
 const DEFAULT_TEXTS: StorefrontUITexts = {
@@ -98,6 +105,7 @@ export function StorefrontUIProvider({
   texts,
   drawerContainer,
   dialogMotion,
+  phoneCountry,
   children,
 }: StorefrontUIProviderProps) {
   const parent = useContext(StorefrontUIContext);
@@ -117,8 +125,9 @@ export function StorefrontUIProvider({
           ? parent.drawerContainer
           : drawerContainer,
       dialogMotion: dialogMotion ?? parent.dialogMotion,
+      phoneCountry: phoneCountry ?? parent.phoneCountry,
     }),
-    [parent, locale, texts, drawerContainer, dialogMotion]
+    [parent, locale, texts, drawerContainer, dialogMotion, phoneCountry]
   );
   return (
     <StorefrontUIContext.Provider value={value}>
@@ -127,7 +136,10 @@ export function StorefrontUIProvider({
   );
 }
 
-/** Locale, texts, the drawer container and the dialog motion of the nearest provider. */
+/**
+ * Locale, texts, the drawer container, the dialog motion and the phone country of the nearest
+ * provider.
+ */
 export const useStorefrontUI = () => useContext(StorefrontUIContext);
 
 function definedOnly<T extends object>(value: T | undefined): Partial<T> {

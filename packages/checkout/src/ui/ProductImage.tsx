@@ -36,6 +36,9 @@ export function ProductImage({ src, alt = '', className }: ProductImageProps) {
     );
   }
   return (
+    // A plain image: the pictures come from the store's media host, which the theme's
+    // `next/image` configuration need not allow, and a failed load shows the placeholder.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}

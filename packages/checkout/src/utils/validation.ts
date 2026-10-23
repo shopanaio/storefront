@@ -49,7 +49,7 @@ export interface ProviderMethodBase {
  */
 export function buildSelectedProviderMethodSchema<
   T extends ProviderMethodBase,
-  S extends yup.ObjectSchema<any, any, any, any>,
+  S extends yup.AnyObjectSchema,
 >(params: {
   moduleType: ProviderModuleType;
   baseSchema: S;

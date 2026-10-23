@@ -67,7 +67,7 @@ export interface PhoneInputProps extends Omit<
   onChange: (value: string | undefined) => void;
   /** Countries of the picker; every country by default. */
   countries?: readonly Country[];
-  /** Country of an empty field; none by default, the buyer types the code. */
+  /** Country of an empty field; the `phoneCountry` of `StorefrontUIProvider` by default. */
   defaultCountry?: Country;
   /** Locale of the country names; the one of `StorefrontUIProvider`. */
   locale?: string;
@@ -138,7 +138,7 @@ export const PhoneInput = ({
       ref={ref}
       value={value ?? ''}
       onChange={(next?: Value) => onChange(next)}
-      defaultCountry={defaultCountry}
+      defaultCountry={defaultCountry ?? ui.phoneCountry}
       countries={countries ? [...countries] : undefined}
       international
       countryCallingCodeEditable={false}

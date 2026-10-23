@@ -6,7 +6,7 @@ import type {
 } from '../core/types';
 
 export const EMAIL = 'olena@example.com';
-export const PHONE = '+380671234567';
+export const PHONE = '+447700900123';
 /** The email or SMS code the mock sign-in accepts. */
 export const MOCK_CODE = '000000';
 /** The password the mock sign-in refuses; any other signs in. */
@@ -83,7 +83,7 @@ export const configurationOf = (
   methods,
   emailVerificationRequired: false,
   emailVerificationMethod: 'otp',
-  defaultLocale: 'uk',
+  defaultLocale: 'en',
 });
 
 /** The error of a step; `rateLimited` waits `retryAfter` seconds from now. */

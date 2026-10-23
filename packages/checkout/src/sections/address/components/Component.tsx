@@ -24,6 +24,7 @@ import {
   type AddressModuleProps,
   type AddressModuleValue,
 } from '#checkout/vendors/types';
+import { moduleRegistry } from '@shopana/storefront-sdk/registry';
 import { hasModule } from '#checkout/infra/loadCache';
 import { LoadingBoundary } from '#checkout/ui/LoadingBoundary';
 import { ScopedIntlProvider } from '#checkout/ui/ScopedIntlProvider';
@@ -31,6 +32,7 @@ import { ADDRESS_SECTION_ANCHOR } from '../anchor';
 import { pickDeliveryCountry, type DeliveryCountry } from '../countries';
 import { AddressSkeleton } from './AddressSkeleton';
 import { InternationalAddressForm } from './InternationalAddressForm';
+import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 export interface AddressSectionViewProps {
   /** Current form data */
@@ -51,11 +53,15 @@ const toApiAddress = ({
 });
 
 /**
- * Country whose form works without the list of delivery countries: its module lays out the
- * form itself. Used while that list failed to load or came back empty, so buyers from
- * Ukraine can still check out.
+ * Country whose form works without the list of delivery countries: a registered address module
+ * lays out the form itself. Used while that list failed to load or came back empty, so buyers
+ * of that country can still check out: the saved country when it has such a module, else the
+ * first registered one; none when no address module is registered.
  */
-const FALLBACK_COUNTRY_CODE = 'UA';
+const fallbackCountryCode = (savedCountryCode: string | null): string | null =>
+  savedCountryCode && hasModule(ProviderModuleType.Address, savedCountryCode)
+    ? savedCountryCode
+    : (moduleRegistry.list(ProviderModuleType.Address)[0] ?? null);
 
 const fallbackCountry = (code: string): DeliveryCountry => ({
   code,
@@ -73,8 +79,8 @@ const fallbackCountry = (code: string): DeliveryCountry => ({
 
 /**
  * Address section (R4, B6). The country selector is shown only when the store delivers to more
- * than one country. The form is the address module registered for the country (Ukraine keeps
- * its city-first form); other countries get the form laid out by their address format.
+ * than one country. The form is the address module registered for the country (e.g. the
+ * city-first form of Ukraine); other countries get the form laid out by their address format.
  */
 export const AddressSectionView = ({
   data,
@@ -105,17 +111,25 @@ export const AddressSectionView = ({
   // The country the form opened with stays while nothing is saved: the buyer country set
   // implicitly later (by a contact save) does not swap the form under the buyer (BR-q7dr).
   const [openedWith, setOpenedWith] = useState<string | null>(null);
-  // Without the list of countries the section falls back to the Ukrainian form (see above).
+  // Without the list of countries the section falls back to a module-owned form (see above).
   const noCountries = !loading && countries.length === 0;
   /**
-   * A saved Ukrainian address is shown at once, while the list loads: its form needs no
-   * address format, and the city comes with the checkout. The list then adds the country
-   * selector, or moves the form to another country if the store no longer delivers to Ukraine.
+   * A saved address of a country with its own address module is shown at once, while the list
+   * loads: its form needs no address format, and the city comes with the checkout. The list then
+   * adds the country selector, or moves the form to another country if the store no longer
+   * delivers to that one.
    */
-  const savedUkrainian = loading && savedCountryCode === FALLBACK_COUNTRY_CODE;
+  const savedWithModule =
+    loading &&
+    savedCountryCode !== null &&
+    hasModule(ProviderModuleType.Address, savedCountryCode);
+  const fallbackCode =
+    noCountries || savedWithModule
+      ? fallbackCountryCode(savedCountryCode)
+      : null;
   const countryCode =
-    noCountries || savedUkrainian
-      ? FALLBACK_COUNTRY_CODE
+    noCountries || savedWithModule
+      ? fallbackCode
       : (pickedCountryCode ??
         pickDeliveryCountry(
           countries,
@@ -123,12 +137,14 @@ export const AddressSectionView = ({
           openedWith ?? data?.customerCountryCode ?? null
         ));
   // The form opens with the country the list picks, not with the one shown meanwhile.
-  if (!openedWith && !noCountries && !savedUkrainian && countryCode) {
+  if (!openedWith && !noCountries && !savedWithModule && countryCode) {
     setOpenedWith(countryCode);
   }
   const country =
-    noCountries || savedUkrainian
-      ? fallbackCountry(FALLBACK_COUNTRY_CODE)
+    noCountries || savedWithModule
+      ? fallbackCode
+        ? fallbackCountry(fallbackCode)
+        : null
       : (countries.find(({ code }) => code === countryCode) ?? null);
   const found =
     countryCode !== null && hasModule(ProviderModuleType.Address, countryCode);
@@ -166,7 +182,10 @@ export const AddressSectionView = ({
         .then(
           () => setSaveFailed(false),
           (failure: unknown) => {
-            console.error('Failed to save the delivery address:', failure);
+            logError('Failed to save the delivery address', {
+              error: failure,
+              component: 'AddressSection',
+            });
             // A closed checkout is handled for the whole checkout, not by the section.
             setSaveFailed(!closedCheckoutCode(failure));
           }
@@ -190,10 +209,11 @@ export const AddressSectionView = ({
       </Flex>
     );
   }
-  // A saved Ukrainian address does not wait for the list (see `savedUkrainian`).
+  // A saved address of a country with its own module does not wait for the list (see
+  // `savedWithModule`).
   return (
     <LoadingBoundary
-      pending={loading && !savedUkrainian}
+      pending={loading && !savedWithModule}
       fallback={<AddressSkeleton />}
     >
       {!country || (noCountries && !found) ? (

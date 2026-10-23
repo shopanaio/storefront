@@ -1,15 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import {
+  useState,
+  useEffect,
+  useEffectEvent,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { Button, Flex, Input, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { LuMessageSquarePlus } from 'react-icons/lu';
 import { useTranslations } from 'next-intl';
 import type { CommentFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
-import { debounce } from 'lodash';
 import { registerPendingInput } from '#checkout/state/pendingInputs';
 
+/** Pause in typing after which the note is saved. */
+const TYPING_PAUSE_MS = 500;
 /** Retries of a failed save: 2 s, 4 s, 8 s … up to 30 s. */
 const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
@@ -36,6 +44,7 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
   /** Failed saves of the typed note in a row, for the retry delay. */
   const failures = useRef(0);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** The latest API: a retry after the checkout was renewed goes to the new checkout. */
   const latestUpdate = useRef(updateCustomerNote);
   useEffect(() => {
@@ -65,7 +74,7 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
             );
             retryTimer.current = setTimeout(() => {
               retryTimer.current = null;
-              if (typedRef.current === nextNote) debounced(nextNote);
+              if (typedRef.current === nextNote) schedule(nextNote);
             }, delay);
           }
           throw error;
@@ -78,17 +87,24 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
       request.then(clear, clear);
       return request;
     };
-    // debounce keeps the handler and calls it later, outside render.
-    // eslint-disable-next-line react-hooks/refs
-    const debounced = debounce((nextNote: string) => {
-      save(nextNote).catch(() => undefined);
-    }, 500);
+    /** Saves the note after a pause in typing; each keystroke starts the pause again. */
+    const schedule = (nextNote: string) => {
+      clearTimeout(typingTimer.current ?? undefined);
+      typingTimer.current = setTimeout(() => {
+        typingTimer.current = null;
+        save(nextNote).catch(() => undefined);
+      }, TYPING_PAUSE_MS);
+    };
+    const cancelTyping = () => {
+      clearTimeout(typingTimer.current ?? undefined);
+      typingTimer.current = null;
+    };
     /**
      * Sends the typed note now: the one waiting for a pause in typing or for the retry of a
      * failed save. Returns the save, or nothing when the note is saved already.
      */
     const flushNow = (): Promise<void> | undefined => {
-      debounced.cancel();
+      cancelTyping();
       if (retryTimer.current) {
         clearTimeout(retryTimer.current);
         retryTimer.current = null;
@@ -101,13 +117,13 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
     };
     /** Drops the save waiting for a pause in typing or for a retry. */
     const cancel = () => {
-      debounced.cancel();
+      cancelTyping();
       if (retryTimer.current) {
         clearTimeout(retryTimer.current);
         retryTimer.current = null;
       }
     };
-    return { schedule: debounced, flushNow, cancel, save };
+    return { schedule, flushNow, cancel, save };
   }, []);
 
   // A note typed right before leaving the page is still saved.
@@ -143,8 +159,7 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
 
   // Sync local state when data changes. The answer to an earlier save must not overwrite
   // what the buyer is typing now: while a typed note is pending, only its own value clears it.
-  useEffect(() => {
-    const newComment = data?.note ?? '';
+  const syncNote = useEffectEvent((newComment: string) => {
     if (typedRef.current !== null) {
       if (typedRef.current === newComment) {
         typedRef.current = null;
@@ -155,6 +170,9 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
     if (newComment) {
       setIsOpen(true);
     }
+  });
+  useEffect(() => {
+    syncNote(data?.note ?? '');
   }, [data?.note]);
 
   const onToggle = () => setIsOpen((prev) => !prev);

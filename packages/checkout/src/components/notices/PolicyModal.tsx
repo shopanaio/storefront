@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
@@ -25,7 +26,8 @@ export interface PolicyModalProps {
 /**
  * A store policy over the checkout, so the buyer reads it without leaving the order: a modal on
  * desktop, a bottom sheet on mobile, as the other drawers of the checkout. The body is HTML the
- * API sanitized. The policy page stays one link away, also when the policy cannot be read.
+ * API sanitized, sanitized again here before it is rendered. The policy page stays one link away,
+ * also when the policy cannot be read.
  */
 export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
   const t = useTranslations('Checkout');
@@ -35,14 +37,15 @@ export const PolicyModal = ({ policy, onClose }: PolicyModalProps) => {
   if (policy && policy !== shown) setShown(policy);
   const current = policy ?? shown;
   const { policy: loaded, loading } = useStorePolicy(current?.handle ?? null);
+  const html = useMemo(
+    () => (loaded ? DOMPurify.sanitize(loaded.html) : ''),
+    [loaded]
+  );
 
   let content: React.ReactNode;
   if (loaded) {
     content = (
-      <div
-        className={styles.body}
-        dangerouslySetInnerHTML={{ __html: loaded.html }}
-      />
+      <div className={styles.body} dangerouslySetInnerHTML={{ __html: html }} />
     );
   } else if (loading) {
     content = <Skeleton active paragraph={{ rows: 6 }} title={false} />;

@@ -6,6 +6,7 @@ import {
   use,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import type { ReactNode } from 'react';
@@ -148,27 +149,30 @@ export function LoadingBoundary({
  * in a `LoadingBoundary`: while it waits, and at least MIN_SKELETON_MS since it showed.
  */
 export function useHeldPending(pending: boolean): boolean {
-  const [shownAt, setShownAt] = useState<number | null>(null);
-  const [held, setHeld] = useState(false);
+  // When the skeleton showed: the minimum display time counts from the start of the waiting.
+  const shownAt = useRef<number | null>(null);
+  const [lastPending, setLastPending] = useState(pending);
+  // Waiting ended, and the skeleton stays until the minimum display time passes.
+  const [releasing, setReleasing] = useState(false);
+  if (pending !== lastPending) {
+    setLastPending(pending);
+    setReleasing(!pending);
+  }
   useEffect(() => {
     if (pending) {
-      // The timer guarantees a minimum skeleton display time once waiting starts.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShownAt((current) => current ?? Date.now());
-      setHeld(true);
+      shownAt.current ??= Date.now();
       return;
     }
-    if (shownAt === null) {
-      return;
-    }
+    if (!releasing) return;
+    const started = shownAt.current ?? Date.now();
     const timer = setTimeout(
       () => {
-        setShownAt(null);
-        setHeld(false);
+        shownAt.current = null;
+        setReleasing(false);
       },
-      Math.max(0, MIN_SKELETON_MS - (Date.now() - shownAt))
+      Math.max(0, MIN_SKELETON_MS - (Date.now() - started))
     );
     return () => clearTimeout(timer);
-  }, [pending, shownAt]);
-  return pending || held;
+  }, [pending, releasing]);
+  return pending || releasing;
 }

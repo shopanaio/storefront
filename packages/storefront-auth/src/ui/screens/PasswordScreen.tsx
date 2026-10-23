@@ -154,7 +154,7 @@ export const PasswordScreen = ({
       {hasCode || signUp ? (
         <div className={styles.otherWays}>
           {hasCode ? (
-            <TextAction icon={<MessageOutlined />} onClick={onCode}>
+            <TextAction icon={<MessageOutlined aria-hidden />} onClick={onCode}>
               {t('password.withCode')}
             </TextAction>
           ) : null}

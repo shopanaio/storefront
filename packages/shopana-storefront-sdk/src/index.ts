@@ -11,14 +11,7 @@ export type {
   LocalizationState,
   LocalePrefixMode,
 } from './modules/localization/core/types';
-export {
-  ThemeEditorLayout,
-  useThemeEditorAvailable,
-  useThemeEditorGeneralSettings,
-  useThemeEditorStore,
-} from './editor/ThemeEditorLayout';
-export { ThemeEditorApp } from './editor/ThemeEditorApp';
-export { ThemeEditorPanel } from './editor/ThemeEditorPanel';
+// The theme editor renders with antd, an optional peer dependency: `@shopana/storefront-sdk/editor`.
 export type { ThemeEditorScope } from './editor/store';
 
 export type {

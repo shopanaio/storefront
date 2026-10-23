@@ -58,7 +58,9 @@ describe('paymentFormSchema', () => {
       await expect(
         paymentFormSchema.validate(form(method))
       ).resolves.toBeTruthy();
-    }
+    },
+    // The first case loads the vendor module, which takes seconds under a parallel run.
+    15_000
   );
 
   it('accepts no methods or selection when the server has nothing to collect', async () => {

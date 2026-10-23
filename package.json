@@ -25,7 +25,7 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "build:packages": "yarn workspace @shopana/brand-sdk build && yarn workspace @shopana/storefront-sdk build && yarn workspace @shopana/storefront-ui build && yarn workspace @shopana/storefront-auth build",
+    "build:packages": "yarn workspace @shopana/brand-sdk build && yarn workspace @shopana/storefront-sdk build && yarn workspace @shopana/storefront-ui build && yarn workspace @shopana/storefront-auth build && yarn workspace @shopana/storefront build && yarn workspace @shopana/checkout build",
     "typecheck": "yarn build:packages && node ./scripts/typecheck.mjs",
     "test": "yarn workspace @shopana/storefront-sdk test && yarn workspace @shopana/storefront-ui test && yarn workspace @shopana/storefront-auth test && yarn workspace @shopana/checkout test && yarn workspace @shopana/mock-server test"
   },

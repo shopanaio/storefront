@@ -57,7 +57,7 @@ const Story = (args: Args) => {
   const invalid = state === 'invalidInput';
   const [draft, setDraft] = useState<AuthDraft>({
     channel: args.channel,
-    phone: invalid ? '+3806712345' : PHONE,
+    phone: invalid ? '+4477009001' : PHONE,
     email: invalid ? 'olena@example' : EMAIL,
   });
   const error =

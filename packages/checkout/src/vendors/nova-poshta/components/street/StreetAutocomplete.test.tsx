@@ -34,6 +34,15 @@ const search = {
   },
 };
 
+/**
+ * The menu item of a street, found by its text: jsdom gives `<mark>` no inline display, so the
+ * accessible name it computes splits the highlighted word ("вул. Хре щатик").
+ */
+const findStreetItem = (present: string) =>
+  screen.findByRole('menuitem', {
+    name: (_, element) => element.textContent === present,
+  });
+
 const autocomplete = (
   changeStreet = vi.fn(),
   streetPresent: string | null = null
@@ -94,7 +103,7 @@ describe('StreetAutocomplete', () => {
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'хре' } });
 
-    const item = await screen.findByRole('menuitem', { name: 'вул. Хрещатик' });
+    const item = await findStreetItem('вул. Хрещатик');
     expect(item.querySelector('mark')?.textContent).toBe('Хре');
 
     fireEvent.click(item);
@@ -107,7 +116,7 @@ describe('StreetAutocomplete', () => {
     const input = screen.getByRole('combobox');
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'хре' } });
-    await screen.findByRole('menuitem', { name: 'вул. Хрещатицька' });
+    await findStreetItem('вул. Хрещатицька');
 
     fireEvent.keyDown(input, { key: 'ArrowDown' });
     fireEvent.keyDown(input, { key: 'Enter' });

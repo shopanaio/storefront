@@ -48,7 +48,7 @@
   },
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-imports.mjs dist",
     "prepack": "yarn build",
     "dev": "tsc -p tsconfig.json --watch",
     "clean": "rimraf dist",

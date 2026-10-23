@@ -16,6 +16,34 @@ providers, URL parameter semantics, or concrete pagination descriptors. Those
 belong to the active theme and are supplied to the generic SDK APIs through
 typed GraphQL documents.
 
+## Entry points
+
+The package exports its public modules explicitly (see `exports` in `package.json`): the root
+entry, `graphql/apollo`, `registry`, `config`, the `modules/*` entries of the cart, session,
+account, localization and storefront API, `next/apollo/*`, `core/*`, and the cart hooks
+(`modules/cart/react/hooks/*`). Other files are internal.
+
+The theme editor renders with antd, an optional peer dependency, and is published separately:
+
+```ts
+import {
+  ThemeEditorApp,
+  ThemeEditorLayout,
+} from '@shopana/storefront-sdk/editor';
+```
+
+Errors the storefront packages catch go through `logError` of
+`@shopana/storefront-sdk/utils/logger`; without a logger they are written to the console.
+Plug in an error tracker once, at the start of the app:
+
+```ts
+import { configureLogger } from '@shopana/storefront-sdk/utils/logger';
+
+configureLogger((level, message, options) => {
+  errorTracker.capture(options?.error ?? message, { level, ...options });
+});
+```
+
 ## Section settings
 
 `SectionConfig<TSettings>` accepts a strictly typed editor `schema`. A control

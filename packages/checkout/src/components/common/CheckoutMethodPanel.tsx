@@ -1,5 +1,5 @@
 import { Collapse, Flex, Radio, Typography } from 'antd';
-import { FC, ReactNode, useId } from 'react';
+import { ComponentType, ReactNode, useId } from 'react';
 import { createStyles } from 'antd-style';
 import { selectedDeclarations } from '#checkout/ui/selected';
 import clsx from 'clsx';
@@ -8,26 +8,27 @@ import { OptionWave } from '#checkout/ui/OptionWave';
 const { Panel } = Collapse;
 const { Text } = Typography;
 
-export interface CheckoutMethodPanelProps {
+export interface CheckoutMethodPanelProps<P extends object = object> {
   title: string;
   description: string | null;
   isActive: boolean;
   onActive: () => void;
   brand?: ReactNode;
-  component: FC<any> | null;
+  /** The form of the method under its title; `null` for a method without customer input. */
+  component: ComponentType<P> | null;
   /** Props to pass to the component */
-  componentProps?: Record<string, any>;
+  componentProps?: P;
 }
 
-export const CheckoutMethodPanel = ({
+export const CheckoutMethodPanel = <P extends object = object>({
   title,
   description,
   isActive,
   onActive,
   brand = null,
   component: Component,
-  componentProps = {},
-}: CheckoutMethodPanelProps) => {
+  componentProps = {} as P,
+}: CheckoutMethodPanelProps<P>) => {
   const code = useId();
   const { styles } = useStyles();
   return (

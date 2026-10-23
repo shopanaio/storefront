@@ -281,9 +281,18 @@ const CountryList = ({
   const optionId = (index: number) => `${listId}-${index}`;
   const activeOption = options[active];
 
-  // The list takes the focus as it opens: the keyboard goes on from the trigger.
+  // The list takes the focus as it opens: the keyboard goes on from the trigger. The popover
+  // attaches its portal after this effect, so a list not yet in the document waits a frame.
   useEffect(() => {
-    listRef.current?.focus({ preventScroll: true });
+    let frame = 0;
+    const focusList = () => {
+      const list = listRef.current;
+      if (!list) return;
+      if (list.isConnected) list.focus({ preventScroll: true });
+      else frame = requestAnimationFrame(focusList);
+    };
+    focusList();
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   // The highlighted country stays in view as the keyboard moves it.

@@ -198,8 +198,6 @@ export const IdentifyScreen = ({
                 label={t('common.phone')}
                 value={draft.phone}
                 onChange={(phone) => onDraftChange({ phone })}
-                // The store's market: an empty number starts with +380.
-                defaultCountry="UA"
                 autoComplete="tel"
                 error={invalid ? invalidText : undefined}
                 pickerOpen={preset.countryPickerOpen}
@@ -232,7 +230,7 @@ export const IdentifyScreen = ({
       {withPassword && !hasCode ? (
         <SubmitButton
           htmlType="button"
-          icon={<LockOutlined />}
+          icon={<LockOutlined aria-hidden />}
           onClick={onPassword}
         >
           {t('identify.withPassword')}
@@ -255,7 +253,7 @@ export const IdentifyScreen = ({
         />
       ) : null}
       {withPassword && hasCode ? (
-        <TextAction icon={<LockOutlined />} onClick={onPassword}>
+        <TextAction icon={<LockOutlined aria-hidden />} onClick={onPassword}>
           {t('identify.withPassword')}
         </TextAction>
       ) : null}

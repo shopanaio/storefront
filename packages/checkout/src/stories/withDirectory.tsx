@@ -1,7 +1,6 @@
 import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import type { Decorator } from '@storybook/react-vite';
-import { useMemo } from 'react';
 import { Observable } from 'rxjs';
 import { popularCities } from '#checkout/vendors/nova-poshta/popularCities';
 import type { Warehouse } from '#checkout/vendors/nova-poshta/types';
@@ -173,15 +172,23 @@ function createClient({
  * Renders a story with the storefront API of the Nova Poshta directory and the delivery
  * countries, answering as `parameters.directory` says.
  */
-// Any args: the decorator wraps stories of every component.
-export const withDirectory: Decorator<any> = function WithDirectory(
+/** One client per story, so no story reads answers cached by another. */
+const clients = new Map<string, ReturnType<typeof createClient>>();
+const clientOf = (storyId: string, scenario: DirectoryScenario) => {
+  let client = clients.get(storyId);
+  if (!client) {
+    client = createClient(scenario);
+    clients.set(storyId, client);
+  }
+  return client;
+};
+
+export const withDirectory: Decorator = function WithDirectory(
   Story,
   { parameters, id }
 ) {
   const scenario = (parameters.directory ?? {}) as DirectoryScenario;
-  // A new client per story, so no story reads answers cached by another.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const client = useMemo(() => createClient(scenario), [id]);
+  const client = clientOf(id, scenario);
   return (
     <ApolloProvider client={client}>
       <Story />

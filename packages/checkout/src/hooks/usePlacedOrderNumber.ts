@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { useQuery } from '@apollo/client/react';
 import type { model } from '@shopana/storefront-sdk';
 import { placedOrderQuery } from '#checkout/api/queries/placedOrderQuery.shopana';
@@ -69,16 +69,18 @@ export function usePlacedOrderNumber(orderId: string | null): {
     errorPolicy: 'all',
   });
   const order = data?.order ?? null;
+  const placedOrderId = order?.id ?? null;
   const awaitingEarning = order !== null && !order.loyaltyEarning;
+  const isAwaitingEarning = useEffectEvent(() => awaitingEarning);
+  const refetchOrder = useEffectEvent(() => {
+    void refetch().catch(() => undefined);
+  });
+  // Once per order: a second empty answer means the order earns nothing (yet).
   useEffect(() => {
-    if (!awaitingEarning) return;
-    const timer = setTimeout(() => {
-      void refetch().catch(() => undefined);
-    }, EARNING_REFETCH_DELAY_MS);
+    if (!placedOrderId || !isAwaitingEarning()) return;
+    const timer = setTimeout(refetchOrder, EARNING_REFETCH_DELAY_MS);
     return () => clearTimeout(timer);
-    // Once per order: a second empty answer means the order earns nothing (yet).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order?.id]);
+  }, [placedOrderId]);
   return {
     number: order?.number ?? null,
     loyalty: order ? mapLoyalty(order) : null,

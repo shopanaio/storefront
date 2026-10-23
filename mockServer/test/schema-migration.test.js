@@ -50,12 +50,12 @@ const setup = () => {
   });
   const schema = applyResolvers(buildSchema(typeDefs), store);
   const contextValue = { customer: store.state.customers[0] };
-  const run = async (source, variableValues = {}) => {
+  const run = async (source, variableValues = {}, context = contextValue) => {
     const result = await graphql({
       schema,
       source,
       variableValues,
-      contextValue,
+      contextValue: context,
     });
     assert.equal(result.errors, undefined, JSON.stringify(result.errors));
     return result.data;
@@ -63,6 +63,7 @@ const setup = () => {
   return { store, schema, run };
 };
 
+// A guest checkout: a signed-in buyer adds to the account cart instead of opening another (S3).
 const newCheckout = async (run) => {
   const result = await run(
     `mutation($input: CheckoutCreateInput!) {
@@ -75,7 +76,8 @@ const newCheckout = async (run) => {
         currencyCode: 'USD',
         items: [],
       },
-    }
+    },
+    { customer: null }
   );
   assert.deepEqual(result.checkoutCreate.userErrors, []);
   return result.checkoutCreate.checkout;

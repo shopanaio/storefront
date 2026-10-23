@@ -11,7 +11,10 @@ vi.mock('@shopana/storefront/next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock('#checkout/theme', () => ({
-  useCheckoutTheme: () => ({ useHomePath: () => '/' }),
+  useCheckoutTheme: () => ({
+    useHomePath: () => '/',
+    useOrderPath: () => null,
+  }),
 }));
 vi.mock('#checkout/hooks/usePlacedOrderNumber', () => ({
   usePlacedOrderNumber: () => placed.value,
