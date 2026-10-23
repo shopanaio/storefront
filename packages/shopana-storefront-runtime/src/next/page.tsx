@@ -164,20 +164,25 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
       const searchParams = rawSearchParams ? { ...rawSearchParams } : {};
       const modulePayload = await resolution.match.record.loader();
 
-      const modulePage = React.createElement(getComponentFromModule(modulePayload), {
-        params: {
-          locale: params.locale ?? 'en',
-          module: segments,
-        },
-        searchParams,
-        segments: segments.slice(1),
-        pathParams: resolution.match.params
-          ? { ...resolution.match.params }
-          : {},
-      });
+      const modulePage = React.createElement(
+        getComponentFromModule(modulePayload),
+        {
+          params: {
+            locale: params.locale ?? 'en',
+            module: segments,
+          },
+          searchParams,
+          segments: segments.slice(1),
+          pathParams: resolution.match.params
+            ? { ...resolution.match.params }
+            : {},
+        }
+      );
 
       return closedPageRedirect ? (
-        <ClosedPageGuard redirectTo={closedPageRedirect}>{modulePage}</ClosedPageGuard>
+        <ClosedPageGuard redirectTo={closedPageRedirect}>
+          {modulePage}
+        </ClosedPageGuard>
       ) : (
         modulePage
       );

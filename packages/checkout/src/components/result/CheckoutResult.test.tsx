@@ -17,7 +17,9 @@ vi.mock('#checkout/hooks/usePlacedOrderNumber', () => ({
   usePlacedOrderNumber: () => placed.value,
 }));
 vi.mock('#checkout/components/result/PlacementScreen', () => ({
-  PlacementScreen: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  PlacementScreen: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 const estimate: Checkout.LoyaltyEarning = {
@@ -37,13 +39,19 @@ const view = () => (
         'order-number': 'Order {number}',
         'payment-status-paid': 'Paid',
         'go-home': 'Home',
-        'loyalty-points': '{count, plural, one {{points} point} other {{points} points}}',
+        'loyalty-points':
+          '{count, plural, one {{points} point} other {{points} points}}',
         'result-loyalty-earned-points': 'Earned +{points}',
       },
     }}
     onError={() => {}}
   >
-    <CheckoutResult orderId="order-1" orderNumber="1001" status="PAID" earningEstimate={estimate} />
+    <CheckoutResult
+      orderId="order-1"
+      orderNumber="1001"
+      status="PAID"
+      earningEstimate={estimate}
+    />
   </NextIntlClientProvider>
 );
 
@@ -62,7 +70,9 @@ describe('CheckoutResult', () => {
       loading: false,
     };
     rerender(view());
-    expect(screen.queryByText('We will add +150 points')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('We will add +150 points')
+    ).not.toBeInTheDocument();
     expect(screen.getByText('Earned +150 points')).toBeInTheDocument();
   });
 

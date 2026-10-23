@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import type { AttemptJournalStorage } from '#checkout/state/placement/attemptJournal';
 import {
   ATTEMPT_TTL_MS,
   AttemptJournal,
   attemptStorageKey,
 } from '#checkout/state/placement/attemptJournal';
-import type { AttemptJournalStorage } from '#checkout/state/placement/attemptJournal';
 import type { PlacementResult } from '#checkout/state/placement/types';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 class MemoryStorage implements AttemptJournalStorage {
   items = new Map<string, string>();
@@ -112,7 +112,9 @@ describe('AttemptJournal', () => {
       journal.begin(input)
     );
     storage.setItem(KEY_1, JSON.stringify(legacy));
-    expect(new AttemptJournal(storage, () => now).read('checkout-1')).toBeNull();
+    expect(
+      new AttemptJournal(storage, () => now).read('checkout-1')
+    ).toBeNull();
   });
 
   it('issues a new key when the snapshot changed before payment', () => {

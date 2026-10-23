@@ -37,9 +37,14 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
   const { token } = theme.useToken();
 
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
-  const { searchTerm: searchValue, setSearchTerm: setSearchValue, debouncedTerm } =
-    useSearchInput();
-  const settlements = useSettlementSearch(isCityModalVisible ? debouncedTerm : '');
+  const {
+    searchTerm: searchValue,
+    setSearchTerm: setSearchValue,
+    debouncedTerm,
+  } = useSearchInput();
+  const settlements = useSettlementSearch(
+    isCityModalVisible ? debouncedTerm : ''
+  );
 
   const cityName = city?.name ?? null;
   useEffect(() => {
@@ -128,11 +133,15 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
                   size="large"
                   shape="round"
                   variant="outlined"
-                  color={item.ref === city?.settlementRef ? 'primary' : 'default'}
+                  color={
+                    item.ref === city?.settlementRef ? 'primary' : 'default'
+                  }
                   key={item.name}
                   // A city without a ref is searched for by name, and picked from the results.
                   onClick={() =>
-                    item.ref ? handleSelectCity(item) : setSearchValue(item.name)
+                    item.ref
+                      ? handleSelectCity(item)
+                      : setSearchValue(item.name)
                   }
                 >
                   {item.name}
@@ -144,7 +153,10 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
             <DirectoryNotice
               loading={settlements.loading}
               error={settlements.error}
-              empty={debouncedTerm.trim().length > 0 && settlements.items.length === 0}
+              empty={
+                debouncedTerm.trim().length > 0 &&
+                settlements.items.length === 0
+              }
               onRetry={settlements.retry}
             />
           )}

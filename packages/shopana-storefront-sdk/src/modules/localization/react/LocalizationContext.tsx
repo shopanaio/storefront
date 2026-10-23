@@ -1,17 +1,9 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useMemo, type ReactNode } from 'react';
 import type { Locale } from '../../../shop/types';
 import { buildLocalizedPathname } from '../core/buildLocalizedPathname';
-import type {
-  LocalizationConfig,
-  LocalizationState,
-} from '../core/types';
+import type { LocalizationConfig, LocalizationState } from '../core/types';
 
 export const LocalizationContext = createContext<LocalizationState | null>(
   null
@@ -79,4 +71,3 @@ export function LocalizationProvider({
     </LocalizationContext.Provider>
   );
 }
-

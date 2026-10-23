@@ -5,4 +5,3 @@ export type {
   LocalizationState,
   LocalePrefixMode,
 } from '../core/types';
-

@@ -24,7 +24,10 @@ const saved: ContactForm = {
   phone: '+380501112233',
 };
 
-const view = (data: ContactForm, onSubmit: (dto: ContactForm) => Promise<void>) => (
+const view = (
+  data: ContactForm,
+  onSubmit: (dto: ContactForm) => Promise<void>
+) => (
   <NextIntlClientProvider locale="en" messages={messages} onError={() => {}}>
     <ContactSelect title="Contact" data={data} onSubmit={onSubmit} />
   </NextIntlClientProvider>
@@ -51,7 +54,9 @@ describe('ContactSelect', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const { rerender } = render(view(saved, onSubmit));
     fireEvent.click(screen.getByRole('button', { name: /Olena/ }));
-    fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Oksana' } });
+    fireEvent.change(await screen.findByLabelText('First name'), {
+      target: { value: 'Oksana' },
+    });
 
     // The answer to an earlier save comes back with another last name.
     rerender(view({ ...saved, lastName: 'Kovalenko' }, onSubmit));
@@ -59,7 +64,9 @@ describe('ContactSelect', () => {
 
     expect(screen.getByLabelText('First name')).toHaveValue('Oksana');
     expect(screen.getByLabelText('Last name')).toHaveValue('Kovalenko');
-    expect(screen.getByRole('form', { name: 'Contact form' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('form', { name: 'Contact form' })
+    ).toBeInTheDocument();
   });
 
   it('closes the drawer only after the contact is saved', async () => {
@@ -72,13 +79,19 @@ describe('ContactSelect', () => {
     );
     render(view(saved, onSubmit));
     fireEvent.click(screen.getByRole('button', { name: /Olena/ }));
-    fireEvent.change(await screen.findByLabelText('First name'), { target: { value: 'Oksana' } });
+    fireEvent.change(await screen.findByLabelText('First name'), {
+      target: { value: 'Oksana' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await act(async () => undefined);
-    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ firstName: 'Oksana' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ firstName: 'Oksana' })
+    );
 
     await act(async () => fail(new Error('Failed to fetch')));
     expect(screen.getByLabelText('First name')).toHaveValue('Oksana');
-    expect(screen.getByRole('form', { name: 'Contact form' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('form', { name: 'Contact form' })
+    ).toBeInTheDocument();
   });
 });

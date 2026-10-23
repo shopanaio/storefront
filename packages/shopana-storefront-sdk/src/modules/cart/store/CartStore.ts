@@ -47,7 +47,10 @@ export interface CartStore {
 /**
  * Cart actions type - only methods, no state
  */
-export type CartActions = Omit<CartStore, 'cart' | 'loading' | 'loaded' | 'error'>;
+export type CartActions = Omit<
+  CartStore,
+  'cart' | 'loading' | 'loaded' | 'error'
+>;
 
 /**
  * Store implementation interface for dependency injection

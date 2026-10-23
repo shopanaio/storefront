@@ -33,7 +33,6 @@ export enum OperationKey {
  */
 export type InflightKey = OperationKey;
 
-
 /**
  * Checkout event names enum for type-safe event handling.
  */

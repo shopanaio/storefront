@@ -19,10 +19,17 @@ const address = {
   data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
 };
 
-const input = { type: 'WAREHOUSE', settlementRef: SETTLEMENT, warehouseRef: WAREHOUSE };
+const input = {
+  type: 'WAREHOUSE',
+  settlementRef: SETTLEMENT,
+  warehouseRef: WAREHOUSE,
+};
 
 const byRef = {
-  request: { query: StorefrontNovaPoshtaWarehouseQueryDocument, variables: { ref: WAREHOUSE } },
+  request: {
+    query: StorefrontNovaPoshtaWarehouseQueryDocument,
+    variables: { ref: WAREHOUSE },
+  },
   result: {
     data: {
       novaPoshtaWarehouses: {
@@ -77,7 +84,13 @@ describe('PointForm', () => {
   });
 
   it('shows the branch kept in this browser', () => {
-    render(pointForm({ number: '3', shortAddress: 'Київ, Січових Стрільців, 2', schedule: [] }));
+    render(
+      pointForm({
+        number: '3',
+        shortAddress: 'Київ, Січових Стрільців, 2',
+        schedule: [],
+      })
+    );
     expect(screen.getByText('№3 Київ, Січових Стрільців, 2')).toBeTruthy();
   });
 

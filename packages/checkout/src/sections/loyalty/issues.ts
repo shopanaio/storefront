@@ -61,7 +61,8 @@ export function loyaltyIssues(checkout: Checkout.Checkout): LoyaltyIssue[] {
     if (!isLoyaltyIssue(issue)) continue;
     const item = classifyLoyaltyIssue(issue, checkout.loyaltyRedemption);
     const known = byKind.get(item.kind);
-    if (!known || (item.blocking && !known.blocking)) byKind.set(item.kind, item);
+    if (!known || (item.blocking && !known.blocking))
+      byKind.set(item.kind, item);
   }
   return [...byKind.values()];
 }

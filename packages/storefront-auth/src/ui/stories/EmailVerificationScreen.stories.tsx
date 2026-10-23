@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { emailVerification, type EmailVerificationArgs } from './definitions/emailVerification';
+import {
+  emailVerification,
+  type EmailVerificationArgs,
+} from './definitions/emailVerification';
 import { BOARD_GLOBALS } from './frames';
 
 /**

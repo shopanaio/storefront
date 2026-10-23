@@ -37,7 +37,12 @@ const input = (overrides: Partial<BannerInput> = {}): BannerInput => ({
   saveErrors: [],
   notifications: [],
   dismissed: new Set(),
-  loyalty: { redemption: null, selectedSource: null, reducedTo: null, busy: false },
+  loyalty: {
+    redemption: null,
+    selectedSource: null,
+    reducedTo: null,
+    busy: false,
+  },
   ...overrides,
 });
 
@@ -296,7 +301,10 @@ describe('collectBanners', () => {
     const banners = collect(
       {
         attempted: true,
-        placement: { name: 'rejected', code: 'CHECKOUT_NOT_READY_FOR_PLACEMENT' },
+        placement: {
+          name: 'rejected',
+          code: 'CHECKOUT_NOT_READY_FOR_PLACEMENT',
+        },
         missingSections: [SectionId.Delivery],
       },
       h
@@ -413,7 +421,12 @@ describe('collectBanners', () => {
       loyalty: Partial<BannerInput['loyalty']> = {}
     ) =>
       input({
-        readiness: { canPlace: blocking.length === 0, expired: false, blocking, notices },
+        readiness: {
+          canPlace: blocking.length === 0,
+          expired: false,
+          blocking,
+          notices,
+        },
         loyalty: {
           redemption: null,
           selectedSource: null,
@@ -497,7 +510,12 @@ describe('collectBanners', () => {
       const banners = collectBanners(
         loyaltyInput(
           [],
-          [issue({ code: 'NO_AVAILABLE_POINTS', field: ['loyaltyRedemption'] })],
+          [
+            issue({
+              code: 'NO_AVAILABLE_POINTS',
+              field: ['loyaltyRedemption'],
+            }),
+          ],
           { selectedSource: 'POINTS', busy: true }
         ),
         h,
@@ -520,7 +538,12 @@ describe('collectBanners', () => {
       const [banner] = collectBanners(
         loyaltyInput(
           [],
-          [issue({ code: 'REQUEST_EXCEEDS_AVAILABLE_AMOUNT', field: ['loyaltyRedemption'] })],
+          [
+            issue({
+              code: 'REQUEST_EXCEEDS_AVAILABLE_AMOUNT',
+              field: ['loyaltyRedemption'],
+            }),
+          ],
           { selectedSource: 'STORE_CREDIT' }
         ),
         handlers(),
@@ -539,8 +562,14 @@ describe('collectBanners', () => {
         loyaltyInput(
           [],
           [
-            issue({ code: 'REWARD_DISCOUNT_NOT_APPLIED', field: ['loyaltyRedemption'] }),
-            issue({ code: 'ENTITLEMENT_NOT_AVAILABLE', field: ['loyaltyRedemption'] }),
+            issue({
+              code: 'REWARD_DISCOUNT_NOT_APPLIED',
+              field: ['loyaltyRedemption'],
+            }),
+            issue({
+              code: 'ENTITLEMENT_NOT_AVAILABLE',
+              field: ['loyaltyRedemption'],
+            }),
           ]
         ),
         h,
@@ -558,7 +587,10 @@ describe('collectBanners', () => {
     it('asks a guest to sign in', () => {
       const h = handlers();
       const [banner] = collectBanners(
-        loyaltyInput([], [issue({ code: 'CUSTOMER_REQUIRED', field: ['loyaltyRedemption'] })]),
+        loyaltyInput(
+          [],
+          [issue({ code: 'CUSTOMER_REQUIRED', field: ['loyaltyRedemption'] })]
+        ),
         h,
         t
       );
@@ -574,7 +606,12 @@ describe('collectBanners', () => {
         readiness: {
           canPlace: false,
           expired: false,
-          blocking: [issue({ code: 'BELOW_MINIMUM_REDEMPTION', field: ['loyaltyRedemption'] })],
+          blocking: [
+            issue({
+              code: 'BELOW_MINIMUM_REDEMPTION',
+              field: ['loyaltyRedemption'],
+            }),
+          ],
           notices: [],
         },
       });
@@ -587,7 +624,12 @@ describe('collectBanners', () => {
     it('offers to refresh after a rejected loyalty reservation', () => {
       const h = handlers();
       const [banner] = collect(
-        { placement: { name: 'rejected', code: 'LOYALTY_INSUFFICIENT_AVAILABLE_POINTS' } },
+        {
+          placement: {
+            name: 'rejected',
+            code: 'LOYALTY_INSUFFICIENT_AVAILABLE_POINTS',
+          },
+        },
         h
       );
 

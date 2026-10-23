@@ -131,7 +131,15 @@ export function SectionContainer<K extends SectionId, TData extends object>({
     return () => {
       cancelled = true;
     };
-  }, [busy, held, data, schema, publishValid, publishInvalid, requiredFromStore]);
+  }, [
+    busy,
+    held,
+    data,
+    schema,
+    publishValid,
+    publishInvalid,
+    requiredFromStore,
+  ]);
 
   const invalidate = useCallback(() => {
     publishInvalid({});

@@ -167,7 +167,10 @@ export class AttemptJournal {
   }
 
   /** Records a placement that is still in progress (redirect, pending payment). */
-  markResolved(attempt: PlacementAttempt, result: PlacementResult): PlacementAttempt {
+  markResolved(
+    attempt: PlacementAttempt,
+    result: PlacementResult
+  ): PlacementAttempt {
     return this.update(attempt, {
       state: 'resolved',
       placementId: result.placementId ?? attempt.placementId,
@@ -178,7 +181,10 @@ export class AttemptJournal {
   }
 
   /** The payment failed: keep the placement for reference, but never reuse the key. */
-  markFailed(attempt: PlacementAttempt, result: PlacementResult | null): PlacementAttempt {
+  markFailed(
+    attempt: PlacementAttempt,
+    result: PlacementResult | null
+  ): PlacementAttempt {
     return this.update(attempt, {
       state: 'failed',
       placementId: result?.placementId ?? attempt.placementId,
@@ -203,7 +209,8 @@ export class AttemptJournal {
       if (this.isExpired(attempt)) this.memory.delete(attempt.checkoutId);
     }
     const storage = this.storage;
-    if (!storage || this.storageFailed || typeof storage.key !== 'function') return;
+    if (!storage || this.storageFailed || typeof storage.key !== 'function')
+      return;
     try {
       const keys: string[] = [];
       for (let index = 0; index < (storage.length ?? 0); index += 1) {
@@ -234,7 +241,10 @@ export class AttemptJournal {
   private write(attempt: PlacementAttempt): void {
     this.memory.set(attempt.checkoutId, attempt);
     try {
-      this.storage?.setItem(attemptStorageKey(attempt.checkoutId), JSON.stringify(attempt));
+      this.storage?.setItem(
+        attemptStorageKey(attempt.checkoutId),
+        JSON.stringify(attempt)
+      );
     } catch {
       // The memory copy keeps the attempt; only recovery after a reload is lost.
       this.storageFailed = true;
@@ -264,9 +274,14 @@ export class AttemptJournal {
   }
 }
 
-export function attemptLocator(attempt: PlacementAttempt | null): PlacementLocator | null {
+export function attemptLocator(
+  attempt: PlacementAttempt | null
+): PlacementLocator | null {
   return attempt?.placementId
-    ? { placementId: attempt.placementId, placementToken: attempt.placementToken }
+    ? {
+        placementId: attempt.placementId,
+        placementToken: attempt.placementToken,
+      }
     : null;
 }
 
@@ -290,7 +305,9 @@ function isPlacementAttempt(value: unknown): value is PlacementAttempt {
 function isMoneyInput(value: unknown): value is MoneyInput {
   if (!value || typeof value !== 'object') return false;
   const record = value as Record<string, unknown>;
-  return typeof record.amount === 'string' && typeof record.currencyCode === 'string';
+  return (
+    typeof record.amount === 'string' && typeof record.currencyCode === 'string'
+  );
 }
 
 function browserStorage(): AttemptJournalStorage | null {

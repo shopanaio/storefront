@@ -9,6 +9,10 @@ export function mapCheckoutToPromoFormData(
     return null;
   }
   return {
-    codes: checkout.promoCodes.map(({ code, status, message }) => ({ code, status, message })),
+    codes: checkout.promoCodes.map(({ code, status, message }) => ({
+      code,
+      status,
+      message,
+    })),
   };
 }

@@ -30,7 +30,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 // The store has its policies set: the consent under the field links to its privacy policy.
-const guest = (identity: Partial<typeof guestCheckout.customerIdentity> = {}) => ({
+const guest = (
+  identity: Partial<typeof guestCheckout.customerIdentity> = {}
+) => ({
   ...guestCheckout,
   disclosures: noticeDisclosures,
   customerIdentity: { ...guestCheckout.customerIdentity, ...identity },
@@ -85,7 +87,10 @@ export const GuestSocialCancelled: Story = {
 /** The email belongs to an account with another way to sign in. */
 export const GuestAccountNotLinked: Story = {
   parameters: {
-    checkout: { checkout: guest(), session: { authResult: 'accountNotLinked' } },
+    checkout: {
+      checkout: guest(),
+      session: { authResult: 'accountNotLinked' },
+    },
   },
 };
 
@@ -106,7 +111,9 @@ export const AccountOnlySessionExpired: Story = {
 
 /** A3/A4: signed in by email; the email of the contact is read-only. */
 export const SignedInByEmail: Story = {
-  parameters: { checkout: { checkout: defaultCheckout, session: { loginMethod: 'email' } } },
+  parameters: {
+    checkout: { checkout: defaultCheckout, session: { loginMethod: 'email' } },
+  },
 };
 
 /** A3/A4: signed in by an SMS code; the phone of the contact is read-only. */
@@ -117,7 +124,10 @@ export const SignedInByPhone: Story = {
         ...defaultCheckout,
         customerIdentity: {
           ...defaultCheckout.customerIdentity,
-          customer: { ...defaultCheckout.customerIdentity.customer!, email: null },
+          customer: {
+            ...defaultCheckout.customerIdentity.customer!,
+            email: null,
+          },
           email: null,
         },
       },

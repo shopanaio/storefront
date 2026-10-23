@@ -40,4 +40,3 @@ export function buildLocalizedPathname({
 
   return `/${localeCode}${pathnameWithoutLocale}`;
 }
-

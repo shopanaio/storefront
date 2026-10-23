@@ -6,6 +6,14 @@ import graphqlEslint from '@graphql-eslint/eslint-plugin';
 
 export default defineConfig([
   {
+    ignores: [
+      '**/.runtime/**',
+      '**/dist/**',
+      '**/storybook-static/**',
+      '**/public/embed/**',
+    ],
+  },
+  {
     extends: [...nextCoreWebVitals, ...nextTypescript],
 
     plugins: {

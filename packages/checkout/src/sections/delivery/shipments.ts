@@ -26,7 +26,8 @@ export const methodOfGroup = (
 ): DeliveryMethod | null =>
   key === null
     ? null
-    : (group.deliveryMethods.find((method) => methodKey(method) === key) ?? null);
+    : (group.deliveryMethods.find((method) => methodKey(method) === key) ??
+      null);
 
 /** Methods offered in every group, in the order of the first group. */
 export function commonMethods(groups: DeliveryGroup[]): DeliveryMethod[] {
@@ -45,7 +46,9 @@ export function commonMethods(groups: DeliveryGroup[]): DeliveryMethod[] {
  */
 export function commonSelectionKey(groups: DeliveryGroup[]): string | null {
   const keys = groups.map((group) =>
-    group.selectedDeliveryMethod ? methodKey(group.selectedDeliveryMethod) : null
+    group.selectedDeliveryMethod
+      ? methodKey(group.selectedDeliveryMethod)
+      : null
   );
   const [first = null] = keys;
   return first !== null && keys.every((key) => key === first) ? first : null;
@@ -70,7 +73,10 @@ export function selectionsDiffer(groups: DeliveryGroup[]): boolean {
   if (!commonMethods(groups).some((method) => methodKey(method) === key)) {
     return true;
   }
-  return new Set(selected.map((method) => JSON.stringify(method.data ?? null))).size > 1;
+  return (
+    new Set(selected.map((method) => JSON.stringify(method.data ?? null)))
+      .size > 1
+  );
 }
 
 /** Selection of the group as a shared list shows it: the method with its input. */
@@ -91,7 +97,8 @@ export function initialSplitGroupIds(groups: DeliveryGroup[]): string[] {
   if (commonMethods(groups).length === 0) {
     return groups.slice(1).map((group) => group.id);
   }
-  const first = groups.map(selectionOf).find((selection) => selection !== null) ?? null;
+  const first =
+    groups.map(selectionOf).find((selection) => selection !== null) ?? null;
   return groups
     .filter((group) => {
       const selection = selectionOf(group);
@@ -109,7 +116,8 @@ export const quotedMethod = (group: DeliveryGroup): DeliveryMethod | null => {
   const method = group.selectedDeliveryMethod;
   return method &&
     method.synced !== false &&
-    validateCustomerInput(method.customerInputContract, method.data).length === 0
+    validateCustomerInput(method.customerInputContract, method.data).length ===
+      0
     ? method
     : null;
 };
@@ -148,7 +156,11 @@ export type ShippingPrice =
   /** The carrier charges the recipient for every shipment. */
   | { kind: 'carrier' }
   /** The merchant collects `amount`; the carrier charges the rest of the shipments. */
-  | { kind: 'amount-and-carrier'; amount: model.Money; original: model.Money | null };
+  | {
+      kind: 'amount-and-carrier';
+      amount: model.Money;
+      original: model.Money | null;
+    };
 
 export interface ShippingQuote {
   price: ShippingPrice;
@@ -168,8 +180,9 @@ const latest = (dates: Array<Date | null>): Date | null =>
 const sum = (amounts: model.Money[]): model.Money => ({
   currencyCode: amounts[0].currencyCode,
   amount:
-    Math.round(amounts.reduce((total, money) => total + Number(money.amount) * 100, 0)) /
-    100,
+    Math.round(
+      amounts.reduce((total, money) => total + Number(money.amount) * 100, 0)
+    ) / 100,
 });
 
 /**
@@ -179,7 +192,9 @@ const sum = (amounts: model.Money[]): model.Money => ({
  * The frontend never compares or ranks prices. The dates are those of the shipment arriving
  * last.
  */
-export function shippingQuote(shipments: QuotedShipment[]): ShippingQuote | null {
+export function shippingQuote(
+  shipments: QuotedShipment[]
+): ShippingQuote | null {
   if (shipments.length === 0) {
     return null;
   }
@@ -193,7 +208,8 @@ export function shippingQuote(shipments: QuotedShipment[]): ShippingQuote | null
   );
   const known = originals.length === charged.length;
   const before = charged.length && known ? sum(originals) : null;
-  const original = before && amount && before.amount > amount.amount ? before : null;
+  const original =
+    before && amount && before.amount > amount.amount ? before : null;
 
   let price: ShippingPrice;
   if (amount && amount.amount > 0) {
@@ -210,7 +226,8 @@ export function shippingQuote(shipments: QuotedShipment[]): ShippingQuote | null
     shipping.freeShipping ? [shipping.freeShipping] : []
   );
   const ends = shipments.map(
-    (shipment) => shipment.estimatedMaxDeliveryAt ?? shipment.estimatedMinDeliveryAt
+    (shipment) =>
+      shipment.estimatedMaxDeliveryAt ?? shipment.estimatedMinDeliveryAt
   );
   const lastEnd = latest(ends);
   const slowest = lastEnd ? shipments[ends.indexOf(lastEnd)] : null;
@@ -219,7 +236,8 @@ export function shippingQuote(shipments: QuotedShipment[]): ShippingQuote | null
     freeShipping: reasons.filter(
       (reason, index) =>
         reasons.findIndex(
-          (other) => other.source === reason.source && other.title === reason.title
+          (other) =>
+            other.source === reason.source && other.title === reason.title
         ) === index
     ),
     estimatedMinDeliveryAt: slowest?.estimatedMinDeliveryAt ?? null,
@@ -231,7 +249,9 @@ export function shippingQuote(shipments: QuotedShipment[]): ShippingQuote | null
  * Quote of the whole order: known once every shipment that can be delivered has its option
  * selected and quoted. The groups carry the stored customer input (`useDeliveryFormData`).
  */
-export function groupsShippingQuote(groups: DeliveryGroup[]): ShippingQuote | null {
+export function groupsShippingQuote(
+  groups: DeliveryGroup[]
+): ShippingQuote | null {
   const quoted = groups
     .filter((group) => group.deliveryMethods.length > 0)
     .map(quotedShipment);
@@ -248,7 +268,8 @@ export const carrierChargeWaived = (shipments: QuotedShipment[]): boolean =>
   shipments.length > 0 &&
   shipments.every(
     ({ shipping }) =>
-      shipping.paymentModel === 'CARRIER_DIRECT' && shipping.payer === 'MERCHANT'
+      shipping.paymentModel === 'CARRIER_DIRECT' &&
+      shipping.payer === 'MERCHANT'
   );
 
 /** Whether nothing can be delivered for the group to its address (R7). */
@@ -262,7 +283,9 @@ const contains = (line: Checkout.Line, ids: ReadonlySet<string>): boolean =>
  * Lines of the cart that cannot be delivered to the address. Groups may reference bundle
  * components; the cart line is the bundle itself.
  */
-export function undeliverableLines(checkout: Checkout.Checkout): Checkout.Line[] {
+export function undeliverableLines(
+  checkout: Checkout.Checkout
+): Checkout.Line[] {
   const ids = new Set(
     checkout.deliveryGroups
       .filter(isUndeliverable)

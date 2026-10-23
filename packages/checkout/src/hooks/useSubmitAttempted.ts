@@ -8,7 +8,8 @@ import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
 export function useSubmitAttempted(): boolean {
   const [attempted, setAttempted] = useState(false);
   useEffect(
-    () => onCheckoutEvent(CheckoutEvent.SubmitRequested, () => setAttempted(true)),
+    () =>
+      onCheckoutEvent(CheckoutEvent.SubmitRequested, () => setAttempted(true)),
     []
   );
   return attempted;

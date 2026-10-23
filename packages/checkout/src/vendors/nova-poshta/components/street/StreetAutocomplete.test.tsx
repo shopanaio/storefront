@@ -34,7 +34,10 @@ const search = {
   },
 };
 
-const autocomplete = (changeStreet = vi.fn(), streetPresent: string | null = null) => (
+const autocomplete = (
+  changeStreet = vi.fn(),
+  streetPresent: string | null = null
+) => (
   <MockedProvider mocks={[search]}>
     <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
       <StreetAutocomplete

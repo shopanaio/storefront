@@ -50,9 +50,7 @@ mutation SdkWishlistProductAddMutation($input: WishlistProductAddInput!) {
   }
 }
 
-mutation SdkWishlistProductRemoveMutation(
-  $input: WishlistProductRemoveInput!
-) {
+mutation SdkWishlistProductRemoveMutation($input: WishlistProductRemoveInput!) {
   wishlistProductRemove(input: $input) {
     deletedWishlistItemId
     errors: userErrors {

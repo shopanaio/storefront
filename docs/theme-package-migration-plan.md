@@ -59,32 +59,32 @@ monorepo.
 
 ## Границы пакетов
 
-| Пакет | Ответственность |
-| --- | --- |
-| `@shopana/storefront` | Next.js, генератор `.runtime`, CLI `init/dev/build/start`, Next facades |
-| `@shopana/storefront-sdk` | framework-agnostic storefront data/runtime API и registry |
-| `@shopana/checkout` | checkout state, API, UI flow, vendors, регистрация checkout page |
+| Пакет                        | Ответственность                                                                              |
+| ---------------------------- | -------------------------------------------------------------------------------------------- |
+| `@shopana/storefront`        | Next.js, генератор `.runtime`, CLI `init/dev/build/start`, Next facades                      |
+| `@shopana/storefront-sdk`    | framework-agnostic storefront data/runtime API и registry                                    |
+| `@shopana/checkout`          | checkout state, API, UI flow, vendors, регистрация checkout page                             |
 | `@shopana/brand-bite-crunch` | тема, layouts, templates, UI kit, i18n, app config, wishlist, box-builder и composition root |
-| корневой workspace | установка, общие команды, Docker/CI и локальная dev-инфраструктура |
+| корневой workspace           | установка, общие команды, Docker/CI и локальная dev-инфраструктура                           |
 
 `@shopana/brand-sdk` пока сохраняется как общий контракт темы. Его удаление или
 слияние с другим contracts-пакетом является отдельной задачей.
 
 ## Карта механического переноса
 
-| Сейчас | После переноса | Действие |
-| --- | --- | --- |
-| `src/modules/checkout/**` | `packages/checkout/src/**` | сначала копирование, затем переключение импортов и удаление оригинала |
-| `src/modules/storefront-box-builder-module/**` | `packages/brand-bite-crunch/src/modules/box-builder/**` | превратить gitlink в обычные файлы внутри theme repo |
-| `src/modules/wishlist/**` | `packages/brand-bite-crunch/src/modules/wishlist/**` | перенос без изменения поведения |
-| остальной `src/**` | `packages/brand-bite-crunch/src/**` | merge с существующими `assets`, `components`, `config.ts`, `index.ts` |
-| `public/**` | `packages/brand-bite-crunch/public/**` | перенос theme assets |
-| `codegen/apollo/**` | `packages/brand-bite-crunch/codegen/**` | оставить только операции темы |
-| checkout GraphQL documents/generated files | `packages/checkout/src/graphql/**` | checkout получает собственный output codegen |
-| `bin/widgets/**` | `packages/brand-bite-crunch/scripts/widgets/**` | перенести theme-specific scripts |
-| `bin/webpack/**` | `packages/brand-bite-crunch/scripts/webpack/**` | использовать из theme `next.config.js` |
-| `storybook/**` | `packages/brand-bite-crunch/storybook/**` | Storybook становится частью темы |
-| root app scripts | scripts Bite & Crunch | root scripts становятся только делегатами workspace |
+| Сейчас                                         | После переноса                                          | Действие                                                              |
+| ---------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- |
+| `src/modules/checkout/**`                      | `packages/checkout/src/**`                              | сначала копирование, затем переключение импортов и удаление оригинала |
+| `src/modules/storefront-box-builder-module/**` | `packages/brand-bite-crunch/src/modules/box-builder/**` | превратить gitlink в обычные файлы внутри theme repo                  |
+| `src/modules/wishlist/**`                      | `packages/brand-bite-crunch/src/modules/wishlist/**`    | перенос без изменения поведения                                       |
+| остальной `src/**`                             | `packages/brand-bite-crunch/src/**`                     | merge с существующими `assets`, `components`, `config.ts`, `index.ts` |
+| `public/**`                                    | `packages/brand-bite-crunch/public/**`                  | перенос theme assets                                                  |
+| `codegen/apollo/**`                            | `packages/brand-bite-crunch/codegen/**`                 | оставить только операции темы                                         |
+| checkout GraphQL documents/generated files     | `packages/checkout/src/graphql/**`                      | checkout получает собственный output codegen                          |
+| `bin/widgets/**`                               | `packages/brand-bite-crunch/scripts/widgets/**`         | перенести theme-specific scripts                                      |
+| `bin/webpack/**`                               | `packages/brand-bite-crunch/scripts/webpack/**`         | использовать из theme `next.config.js`                                |
+| `storybook/**`                                 | `packages/brand-bite-crunch/storybook/**`               | Storybook становится частью темы                                      |
+| root app scripts                               | scripts Bite & Crunch                                   | root scripts становятся только делегатами workspace                   |
 
 Пустой `src/app` не переносится. Неиспользуемый `overrides/` удаляется после
 проверки, что в нём нет локальных файлов окружения.
@@ -96,14 +96,14 @@ monorepo.
 Большинство `@src/*` можно сохранить: после переноса `@src` должен указывать на
 `packages/brand-bite-crunch/src` относительно theme-owned `.runtime`.
 
-| Старый импорт | Новый импорт |
-| --- | --- |
-| `@shopana/brand` | `@shopana/brand-bite-crunch` либо локальный `@src/config` |
-| `@src/modules/checkout` | `@shopana/checkout` |
-| `@src/modules/checkout/*` | публичный export `@shopana/checkout/*` |
-| `@checkout/*` | публичный export `@shopana/checkout/*` |
-| box-builder → checkout | `@shopana/checkout` |
-| `next/*` в theme source | `@shopana/storefront/next/*` |
+| Старый импорт             | Новый импорт                                              |
+| ------------------------- | --------------------------------------------------------- |
+| `@shopana/brand`          | `@shopana/brand-bite-crunch` либо локальный `@src/config` |
+| `@src/modules/checkout`   | `@shopana/checkout`                                       |
+| `@src/modules/checkout/*` | публичный export `@shopana/checkout/*`                    |
+| `@checkout/*`             | публичный export `@shopana/checkout/*`                    |
+| box-builder → checkout    | `@shopana/checkout`                                       |
+| `next/*` в theme source   | `@shopana/storefront/next/*`                              |
 
 Внутренние импорты box-builder на `@src/ui-kit`, `@src/store`, templates и
 hooks остаются допустимыми, потому что box-builder становится частью той же

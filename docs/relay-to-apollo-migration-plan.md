@@ -444,7 +444,7 @@ Cart и session мигрируются последними, потому что
 
 | Relay                                  | Целевой Apollo подход                                                                          |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `graphql` tag в TS                     | внешний `*.graphql` + generated `TypedDocumentNode`                                     |
+| `graphql` tag в TS                     | внешний `*.graphql` + generated `TypedDocumentNode`                                            |
 | generated `__generated__/*.graphql.ts` | Apollo outputs существующего `codegen.ts`: отдельные generated operations для storefront и SDK |
 | fragment `$key`                        | normalized object/reference + generated fragment type                                          |
 | `useFragment(fragment, key)`           | compatibility `useFragment(document, reference)`                                               |

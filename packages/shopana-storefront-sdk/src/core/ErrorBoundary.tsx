@@ -83,4 +83,3 @@ export function BlockErrorBoundary({
 }
 
 export { BaseErrorBoundary as ErrorBoundary };
-

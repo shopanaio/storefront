@@ -5,7 +5,11 @@ describe('closedCheckoutCode', () => {
   it('finds the code of a closed checkout among user errors', () => {
     expect(
       closedCheckoutCode([
-        { code: 'CHECKOUT_EXPIRED', message: 'Checkout has expired.', retryable: false },
+        {
+          code: 'CHECKOUT_EXPIRED',
+          message: 'Checkout has expired.',
+          retryable: false,
+        },
       ])
     ).toBe('CHECKOUT_EXPIRED');
   });

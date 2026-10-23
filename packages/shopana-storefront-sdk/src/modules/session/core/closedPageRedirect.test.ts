@@ -6,7 +6,9 @@ describe('buildClosedPageRedirect', () => {
     expect(
       buildClosedPageRedirect({ pathname: '/uk/account/orders', locale: 'uk' })
     ).toBe('/uk');
-    expect(buildClosedPageRedirect({ pathname: '/uk', locale: 'uk' })).toBe('/uk');
+    expect(buildClosedPageRedirect({ pathname: '/uk', locale: 'uk' })).toBe(
+      '/uk'
+    );
   });
 
   it('goes to the root for an unprefixed request', () => {

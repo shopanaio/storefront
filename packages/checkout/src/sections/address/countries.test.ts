@@ -6,18 +6,39 @@ import {
   pickDeliveryCountry,
 } from './countries';
 import type { AddressFormat, DeliveryCountry } from './countries';
-import { addressErrors, toAddressValue } from './components/InternationalAddressForm';
+import {
+  addressErrors,
+  toAddressValue,
+} from './components/InternationalAddressForm';
 
 const us: AddressFormat = {
-  rows: [['FIRST_NAME', 'LAST_NAME'], ['ADDRESS1'], ['ADDRESS2'], ['CITY'], ['PROVINCE', 'POSTAL_CODE'], ['PHONE']],
-  required: ['FIRST_NAME', 'LAST_NAME', 'ADDRESS1', 'CITY', 'PROVINCE', 'POSTAL_CODE'],
+  rows: [
+    ['FIRST_NAME', 'LAST_NAME'],
+    ['ADDRESS1'],
+    ['ADDRESS2'],
+    ['CITY'],
+    ['PROVINCE', 'POSTAL_CODE'],
+    ['PHONE'],
+  ],
+  required: [
+    'FIRST_NAME',
+    'LAST_NAME',
+    'ADDRESS1',
+    'CITY',
+    'PROVINCE',
+    'POSTAL_CODE',
+  ],
   provinceLabel: 'STATE',
   postalCodeLabel: 'ZIP_CODE',
   postalCodePattern: '^\\d{5}(-\\d{4})?$',
   postalCodeExample: '94043',
   provinces: [{ code: 'CA', name: 'California' }],
 };
-const country = (code: string): DeliveryCountry => ({ code, name: code, addressFormat: us });
+const country = (code: string): DeliveryCountry => ({
+  code,
+  name: code,
+  addressFormat: us,
+});
 const values = {
   FIRST_NAME: '',
   LAST_NAME: '',
@@ -39,14 +60,25 @@ describe('delivery countries', () => {
         addressFormat: {
           __typename: 'CheckoutAddressFormat',
           ...us,
-          provinces: [{ __typename: 'CheckoutAddressProvince', code: 'CA', name: 'California' }],
+          provinces: [
+            {
+              __typename: 'CheckoutAddressProvince',
+              code: 'CA',
+              name: 'California',
+            },
+          ],
         },
       })
     ).toEqual({ code: 'US', name: 'United States', addressFormat: us });
   });
 
   it('leaves name and phone to the recipient section', () => {
-    expect(addressRows(us)).toEqual([['ADDRESS1'], ['ADDRESS2'], ['CITY'], ['PROVINCE', 'POSTAL_CODE']]);
+    expect(addressRows(us)).toEqual([
+      ['ADDRESS1'],
+      ['ADDRESS2'],
+      ['CITY'],
+      ['PROVINCE', 'POSTAL_CODE'],
+    ]);
   });
 
   it('picks the saved country, then the customer country, then the first one', () => {
@@ -67,13 +99,17 @@ describe('delivery countries', () => {
   it('checks the postal code by the country pattern', () => {
     expect(isValidPostalCode(us, '94043-1351')).toBe(true);
     expect(isValidPostalCode(us, 'SW1A 1AA')).toBe(false);
-    expect(isValidPostalCode({ ...us, postalCodePattern: null }, 'anything')).toBe(true);
+    expect(
+      isValidPostalCode({ ...us, postalCodePattern: null }, 'anything')
+    ).toBe(true);
   });
 });
 
 describe('international address form', () => {
   it('reports missing required fields and an invalid postal code', () => {
-    expect(addressErrors(us, { ...values, CITY: ' ', POSTAL_CODE: '123' })).toEqual({
+    expect(
+      addressErrors(us, { ...values, CITY: ' ', POSTAL_CODE: '123' })
+    ).toEqual({
       CITY: 'required',
       POSTAL_CODE: 'invalid',
     });

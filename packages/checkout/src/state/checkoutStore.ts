@@ -4,10 +4,7 @@
  * Emits typed events via checkoutBus on important state transitions.
  */
 import { create } from 'zustand';
-import {
-  emitCheckoutEvent,
-  CheckoutEvent,
-} from '#checkout/state/checkoutBus';
+import { emitCheckoutEvent, CheckoutEvent } from '#checkout/state/checkoutBus';
 import { SectionEntry, SectionId } from '#checkout/state/interface';
 import { CheckoutState } from '#checkout/state/interface';
 

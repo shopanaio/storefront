@@ -14,7 +14,10 @@ export interface CheckoutReadiness {
   notices: Checkout.Issue[];
 }
 
-export function isCheckoutExpired(checkout: Checkout.Checkout, now: number): boolean {
+export function isCheckoutExpired(
+  checkout: Checkout.Checkout,
+  now: number
+): boolean {
   return (
     checkout.status === 'EXPIRED' ||
     checkout.status === 'ABANDONED' ||
@@ -22,13 +25,19 @@ export function isCheckoutExpired(checkout: Checkout.Checkout, now: number): boo
   );
 }
 
-export function checkoutReadiness(checkout: Checkout.Checkout, now: number): CheckoutReadiness {
+export function checkoutReadiness(
+  checkout: Checkout.Checkout,
+  now: number
+): CheckoutReadiness {
   const expired = isCheckoutExpired(checkout, now);
   const blocking = checkout.issues.filter((issue) => issue.effect === 'STOP');
   const notices = checkout.issues.filter((issue) => issue.effect !== 'STOP');
   return {
     canPlace:
-      checkout.status === 'READY' && checkout.valid && !expired && blocking.length === 0,
+      checkout.status === 'READY' &&
+      checkout.valid &&
+      !expired &&
+      blocking.length === 0,
     expired,
     blocking,
     notices,

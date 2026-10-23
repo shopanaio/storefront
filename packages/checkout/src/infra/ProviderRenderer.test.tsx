@@ -95,7 +95,9 @@ describe('ProviderRenderer (payment)', () => {
 
     await waitFor(() =>
       expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('no payment module is registered for provider "test-stripe"')
+        expect.stringContaining(
+          'no payment module is registered for provider "test-stripe"'
+        )
       )
     );
     expect(container.innerHTML).toBe('');
@@ -112,7 +114,9 @@ describe('ProviderRenderer (payment)', () => {
     expect(await screen.findByText('Оплата карткою онлайн')).toBeTruthy();
     await waitFor(() =>
       expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('payment module "liqpay" does not declare this method')
+        expect.stringContaining(
+          'payment module "liqpay" does not declare this method'
+        )
       )
     );
     expect(screen.getAllByRole('radio')).toHaveLength(1);
@@ -194,8 +198,18 @@ describe('ProviderRenderer (delivery)', () => {
 
   it('hides a service whose contract has no branch for its receiving type', async () => {
     renderDelivery('nova-poshta', [
-      deliveryOption('h1', 'warehouse', 'nova-poshta', npContract(['WAREHOUSE'])),
-      deliveryOption('h2', 'postomat', 'nova-poshta', npContract(['WAREHOUSE'])),
+      deliveryOption(
+        'h1',
+        'warehouse',
+        'nova-poshta',
+        npContract(['WAREHOUSE'])
+      ),
+      deliveryOption(
+        'h2',
+        'postomat',
+        'nova-poshta',
+        npContract(['WAREHOUSE'])
+      ),
     ]);
 
     expect(await screen.findByText('Відділення Нової Пошти')).toBeTruthy();
@@ -240,18 +254,31 @@ describe('ProviderRenderer (delivery)', () => {
     const fedex = deliveryOption('h-fx', 'FEDEX_GROUND', 'test-fedex', {
       schema: {
         type: 'object',
-        properties: { deliveryInstructions: { type: 'string', maxLength: 500 } },
+        properties: {
+          deliveryInstructions: { type: 'string', maxLength: 500 },
+        },
         additionalProperties: false,
       },
     });
-    const { rerender } = render(deliveryRenderer('test-fedex', [fedex], deliveryAddress(), fedex));
+    const { rerender } = render(
+      deliveryRenderer('test-fedex', [fedex], deliveryAddress(), fedex)
+    );
     await screen.findByText('Delivery instructions');
     const input = screen.getByRole('textbox') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'Ring twice' } });
 
-    rerender(deliveryRenderer('test-fedex', [fedex], deliveryAddress('Main st 1'), fedex));
+    rerender(
+      deliveryRenderer(
+        'test-fedex',
+        [fedex],
+        deliveryAddress('Main st 1'),
+        fedex
+      )
+    );
 
-    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('Ring twice');
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(
+      'Ring twice'
+    );
   });
 });
 
@@ -268,7 +295,11 @@ describe('ProviderRenderer (a module that fails to load)', () => {
         return {
           provider: 'test-flaky',
           moduleType: ProviderModuleType.Payment,
-          Component: ({ availableMethods }: { availableMethods: ProviderMethod[] }) => (
+          Component: ({
+            availableMethods,
+          }: {
+            availableMethods: ProviderMethod[];
+          }) => (
             <span>{availableMethods.map((item) => item.title).join()}</span>
           ),
           config: {
@@ -283,14 +314,21 @@ describe('ProviderRenderer (a module that fails to load)', () => {
       render(
         <NextIntlClientProvider
           locale="en"
-          messages={{ Checkout: { 'load-failed': 'Failed to load', 'banner-retry': 'Retry' } }}
+          messages={{
+            Checkout: {
+              'load-failed': 'Failed to load',
+              'banner-retry': 'Retry',
+            },
+          }}
           onError={() => {}}
         >
           <LoadingBoundary fallback={<span>Loading</span>}>
             <ProviderRenderer
               moduleType={ProviderModuleType.Payment}
               provider="test-flaky"
-              availableMethods={[{ ...method('h-card', 'card', 'test-flaky'), title: 'Card' }]}
+              availableMethods={[
+                { ...method('h-card', 'card', 'test-flaky'), title: 'Card' },
+              ]}
               selectedMethod={null}
             />
           </LoadingBoundary>

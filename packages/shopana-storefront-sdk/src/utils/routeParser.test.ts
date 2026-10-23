@@ -189,11 +189,15 @@ describe('buildPath', () => {
   });
 
   it('builds product path', () => {
-    expect(buildPath('product', { handle: 'my-product' })).toBe('/products/my-product');
+    expect(buildPath('product', { handle: 'my-product' })).toBe(
+      '/products/my-product'
+    );
   });
 
   it('builds collection path', () => {
-    expect(buildPath('collection', { handle: 'summer' })).toBe('/collections/summer');
+    expect(buildPath('collection', { handle: 'summer' })).toBe(
+      '/collections/summer'
+    );
   });
 
   it('builds page path', () => {
@@ -209,6 +213,8 @@ describe('buildPath', () => {
   });
 
   it('encodes special characters', () => {
-    expect(buildPath('product', { handle: 'тест' })).toBe('/products/%D1%82%D0%B5%D1%81%D1%82');
+    expect(buildPath('product', { handle: 'тест' })).toBe(
+      '/products/%D1%82%D0%B5%D1%81%D1%82'
+    );
   });
 });

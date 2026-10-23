@@ -112,11 +112,9 @@ const useStyles = createStyles(({ css, token }) => {
 
       ${mq.lg} {
         /* One compact banner: a line of text, its padding and its border. */
-        min-height: ${
-          Math.round(token.fontSize * token.lineHeight) +
-          2 * token.paddingSM +
-          2 * token.lineWidth
-        }px;
+        min-height: ${Math.round(token.fontSize * token.lineHeight) +
+        2 * token.paddingSM +
+        2 * token.lineWidth}px;
       }
     `,
     open: css`

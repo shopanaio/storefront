@@ -44,10 +44,16 @@ const readInput = async (request) => {
 const readClientInput = async (request) => {
   const input = await readInput(request);
   const authorization = request.headers.authorization;
-  if (typeof authorization !== 'string' || !authorization.startsWith('Basic ')) {
+  if (
+    typeof authorization !== 'string' ||
+    !authorization.startsWith('Basic ')
+  ) {
     return input;
   }
-  const decoded = Buffer.from(authorization.slice(6).trim(), 'base64').toString();
+  const decoded = Buffer.from(
+    authorization.slice(6).trim(),
+    'base64'
+  ).toString();
   const separator = decoded.indexOf(':');
   const clientId = decodeURIComponent(
     (separator < 0 ? decoded : decoded.slice(0, separator)).replace(/\+/g, ' ')

@@ -36,12 +36,7 @@ const overrideGroups = [
   },
   {
     kind: 'routing',
-    candidates: [
-      'middleware.js',
-      'middleware.ts',
-      'proxy.js',
-      'proxy.ts',
-    ],
+    candidates: ['middleware.js', 'middleware.ts', 'proxy.js', 'proxy.ts'],
     defaultTemplate: 'middleware.ts',
   },
   {
@@ -50,10 +45,7 @@ const overrideGroups = [
   },
   {
     kind: 'instrumentationClient',
-    candidates: [
-      'instrumentation-client.js',
-      'instrumentation-client.ts',
-    ],
+    candidates: ['instrumentation-client.js', 'instrumentation-client.ts'],
   },
 ];
 

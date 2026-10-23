@@ -42,7 +42,7 @@ function isDefinition(value: unknown): value is ErasedDefinition {
     return false;
   }
 
-  const candidate = value as Record<string, unknown>;
+  const candidate = value as Record<PropertyKey, unknown>;
   return (
     candidate[runtimeDefinitionBrand] === true &&
     typeof candidate.pageType === 'string' &&

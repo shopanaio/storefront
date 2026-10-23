@@ -25,7 +25,9 @@ export interface LoyaltySelection {
  * applied quote: a choice the last calculation could not apply (the loyalty service did not
  * answer, the order fell below the minimum) stays chosen and is sent again.
  */
-export function currentSelection(checkout: Checkout.Checkout): LoyaltySelection {
+export function currentSelection(
+  checkout: Checkout.Checkout
+): LoyaltySelection {
   const saved = checkout.loyaltySelection;
   let redemption: RedemptionRequest | null = null;
   if (saved?.source === 'POINTS') {
@@ -54,8 +56,13 @@ export function selectionInput(
 }
 
 /** Whether a quote expiring at `expiresAt` must be renewed before placing the order. */
-export function quoteNeedsRenewal(expiresAt: Date | null, now: number): boolean {
-  return expiresAt !== null && expiresAt.getTime() - now < QUOTE_RENEWAL_MARGIN_MS;
+export function quoteNeedsRenewal(
+  expiresAt: Date | null,
+  now: number
+): boolean {
+  return (
+    expiresAt !== null && expiresAt.getTime() - now < QUOTE_RENEWAL_MARGIN_MS
+  );
 }
 
 /** A quote that expires within this time is renewed before `placeOrder` reserves it. */

@@ -11,11 +11,7 @@ export interface CommitOptions<TData, TVariables extends OperationVariables> {
   optimisticResponse?: TData;
   onCompleted?(data: TData, errors: readonly unknown[] | null): void;
   onError?(error: Error): void;
-  updater?: MutationUpdaterFunction<
-    TData,
-    TVariables,
-    ApolloCache
-  >;
+  updater?: MutationUpdaterFunction<TData, TVariables, ApolloCache>;
 }
 
 export function useMutation<TData, TVariables extends OperationVariables>(

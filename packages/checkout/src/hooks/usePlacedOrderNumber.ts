@@ -20,7 +20,10 @@ export interface PlacedOrderLoyalty {
 
 type ApiOrder = NonNullable<StorefrontPlacedOrderQuery['order']>;
 
-const toMoney = (money: { amount: string; currencyCode: string }): model.Money => ({
+const toMoney = (money: {
+  amount: string;
+  currencyCode: string;
+}): model.Money => ({
   amount: Number(money.amount) || 0,
   currencyCode: money.currencyCode,
 });

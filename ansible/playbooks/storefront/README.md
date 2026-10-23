@@ -88,6 +88,7 @@ ansible-playbook ansible/playbooks/storefront/trigger-gh-workflow.yml \
 ```
 
 Notes:
+
 - `NEXT_PUBLIC_APP_URL` and `platforms` are optional; you may omit them.
 - If `gh_wait=true`, the playbook waits for the workflow to finish and returns the exit status.
 

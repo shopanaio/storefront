@@ -61,7 +61,10 @@ describe('customer input form model', () => {
           {
             type: 'object',
             title: 'Pickup point',
-            properties: { type: { const: 'POINT' }, pointId: { type: 'string' } },
+            properties: {
+              type: { const: 'POINT' },
+              pointId: { type: 'string' },
+            },
           },
           {
             type: 'object',
@@ -92,7 +95,9 @@ describe('customer input form model', () => {
 
     expect(contractFormModel(arrays)?.supported).toBe(false);
     expect(contractNeedsForm(arrays)).toBe(true);
-    expect(contractNeedsForm({ schema: { type: 'object', properties: {} } })).toBe(false);
+    expect(
+      contractNeedsForm({ schema: { type: 'object', properties: {} } })
+    ).toBe(false);
     expect(contractNeedsForm(null)).toBe(false);
   });
 });

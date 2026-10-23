@@ -10,9 +10,7 @@ vi.mock('../utils/logger', () => ({
 
 // Mock components
 const MockSection = ({ id, settings }: SectionProps<{ title: string }>) => (
-  <div data-testid={`section-${id}`}>
-    Section: {settings.title}
-  </div>
+  <div data-testid={`section-${id}`}>Section: {settings.title}</div>
 );
 
 const MockBlock = ({ id, settings }: BlockProps<{ text: string }>) => (
@@ -32,11 +30,7 @@ describe('Builder', () => {
     };
 
     render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     expect(screen.getByTestId('section-hero')).toBeInTheDocument();
@@ -63,11 +57,7 @@ describe('Builder', () => {
     };
 
     const { container } = render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     const sections = container.querySelectorAll('[data-testid^="section-"]');
@@ -93,11 +83,7 @@ describe('Builder', () => {
     };
 
     render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     expect(screen.getByTestId('section-valid')).toBeInTheDocument();
@@ -118,7 +104,7 @@ describe('Builder', () => {
         data={{ name: 'Test' }}
         pageType="home"
         fallback={<div data-testid="fallback">No content</div>}
-      />,
+      />
     );
 
     expect(screen.getByTestId('fallback')).toBeInTheDocument();
@@ -137,7 +123,7 @@ describe('Builder', () => {
         data={{ name: 'Test' }}
         pageType="home"
         fallback={<div data-testid="fallback">No valid sections</div>}
-      />,
+      />
     );
 
     expect(screen.getByTestId('fallback')).toBeInTheDocument();
@@ -151,14 +137,12 @@ describe('Builder', () => {
     };
 
     const { container } = render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
-    expect(container.querySelectorAll('[data-testid^="section-"]')).toHaveLength(0);
+    expect(
+      container.querySelectorAll('[data-testid^="section-"]')
+    ).toHaveLength(0);
   });
 
   it('handles sections with blocks', () => {
@@ -193,11 +177,7 @@ describe('Builder', () => {
     };
 
     render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     expect(screen.getByTestId('section-with-blocks')).toBeInTheDocument();
@@ -239,11 +219,7 @@ describe('Builder', () => {
     };
 
     render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     expect(screen.getByTestId('block-block1')).toBeInTheDocument();
@@ -263,11 +239,7 @@ describe('Builder', () => {
     };
 
     render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     expect(screen.getByTestId('section-simple')).toBeInTheDocument();
@@ -290,7 +262,7 @@ describe('Builder', () => {
         data={{ name: 'Test' }}
         pageType="home"
         fallback={<div data-testid="fallback">Error</div>}
-      />,
+      />
     );
 
     expect(screen.getByTestId('fallback')).toBeInTheDocument();
@@ -321,11 +293,7 @@ describe('Builder', () => {
     };
 
     render(
-      <Builder
-        template={template}
-        data={{ name: 'Test' }}
-        pageType="home"
-      />,
+      <Builder template={template} data={{ name: 'Test' }} pageType="home" />
     );
 
     expect(screen.getByTestId('section-with-blocks')).toBeInTheDocument();

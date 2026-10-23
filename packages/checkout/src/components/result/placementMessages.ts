@@ -33,7 +33,8 @@ export function placementErrorMessageKey(code: string): string {
   ) {
     return 'placement-error-changed';
   }
-  if (code === DISCLOSURES_CHANGED_CODE) return 'placement-error-disclosures-changed';
+  if (code === DISCLOSURES_CHANGED_CODE)
+    return 'placement-error-disclosures-changed';
   if (code === TERMS_NOT_ACCEPTED_CODE) return 'terms-required';
   if (
     code === CLIENT_SDK_UNAVAILABLE_CODE ||

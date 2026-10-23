@@ -1,4 +1,4 @@
-import { ContactFormData } from "#checkout/sections/contact/types";
+import { ContactFormData } from '#checkout/sections/contact/types';
 
 /**
  * Form data type for the recipient section.

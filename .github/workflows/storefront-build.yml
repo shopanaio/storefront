@@ -3,7 +3,7 @@ name: Build and Push Storefront
 on:
   push:
     branches:
-      - "releases/**"
+      - 'releases/**'
   workflow_dispatch:
     inputs:
       image_tag:

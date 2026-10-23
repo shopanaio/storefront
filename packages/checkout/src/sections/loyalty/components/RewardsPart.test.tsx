@@ -7,7 +7,9 @@ vi.mock('#checkout/context/CheckoutApiContext', () => ({
   useCheckoutApi: () => ({ setLoyaltyReward: vi.fn() }),
 }));
 
-const reward = (overrides: Partial<Checkout.LoyaltyReward>): Checkout.LoyaltyReward => ({
+const reward = (
+  overrides: Partial<Checkout.LoyaltyReward>
+): Checkout.LoyaltyReward => ({
   id: 'reward',
   kind: 'VOUCHER',
   headline: '100 UAH voucher',
@@ -32,7 +34,11 @@ describe('RewardsPart', () => {
       >
         <RewardsPart
           rewards={[
-            reward({ id: 'reward-ship', kind: 'FREE_SHIPPING', headline: 'Free delivery' }),
+            reward({
+              id: 'reward-ship',
+              kind: 'FREE_SHIPPING',
+              headline: 'Free delivery',
+            }),
             reward({ id: 'reward-voucher' }),
           ]}
           appliedId={null}
@@ -42,7 +48,9 @@ describe('RewardsPart', () => {
     );
 
     expect(screen.getByText('Free delivery')).toBeInTheDocument();
-    expect(screen.getByText('Applied to shipping automatically')).toBeInTheDocument();
+    expect(
+      screen.getByText('Applied to shipping automatically')
+    ).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Apply' })).toHaveLength(1);
   });
 });

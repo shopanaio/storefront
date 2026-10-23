@@ -4,7 +4,10 @@ import {
   followSuperseded,
   isMutationSuperseded,
 } from '@shopana/storefront-sdk/modules/cart/core/utils/mutationQueue';
-import { clearSaveError, reportSaveError } from '#checkout/state/banners/bannerStore';
+import {
+  clearSaveError,
+  reportSaveError,
+} from '#checkout/state/banners/bannerStore';
 import type { OperationVariables, TypedDocumentNode } from '@apollo/client';
 import { useCallback, useRef, useEffect } from 'react';
 import { debounce, type DebouncedFunc } from 'lodash';

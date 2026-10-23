@@ -24,7 +24,10 @@ function cloneResponse(response: Response): Response {
   });
 }
 
-function applyRequestContext(response: Response, request: NextRequest): Response {
+function applyRequestContext(
+  response: Response,
+  request: NextRequest
+): Response {
   const requestHeaders = new Headers(request.headers);
   const existingOverrides = response.headers
     .get('x-middleware-override-headers')

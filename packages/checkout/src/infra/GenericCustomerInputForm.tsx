@@ -65,7 +65,11 @@ function GenericCustomerInputFields({
     return null;
   }
   if (!model.supported) {
-    return <Typography.Text type="secondary">{t('delivery-form-unsupported')}</Typography.Text>;
+    return (
+      <Typography.Text type="secondary">
+        {t('delivery-form-unsupported')}
+      </Typography.Text>
+    );
   }
 
   const change = (path: string[], value: unknown) => {
@@ -81,7 +85,11 @@ function GenericCustomerInputFields({
     if (!keyword) {
       return undefined;
     }
-    return t(keyword === 'required' ? 'delivery-field-required' : 'delivery-field-invalid');
+    return t(
+      keyword === 'required'
+        ? 'delivery-field-required'
+        : 'delivery-field-invalid'
+    );
   };
 
   const renderField = (node: FieldNode) => {
@@ -98,10 +106,15 @@ function GenericCustomerInputFields({
             status={error ? 'error' : undefined}
             options={node.schema.enum
               .filter((option) => option !== null)
-              .map((option) => ({ value: option as string | number, label: String(option) }))}
+              .map((option) => ({
+                value: option as string | number,
+                label: String(option),
+              }))}
             onChange={(option) => change(node.path, option ?? undefined)}
           />
-          {error ? <Typography.Text type="danger">{error}</Typography.Text> : null}
+          {error ? (
+            <Typography.Text type="danger">{error}</Typography.Text>
+          ) : null}
         </Flex>
       );
     }
@@ -123,7 +136,13 @@ function GenericCustomerInputFields({
         label={node.title}
         value={typeof value === 'string' ? value : ''}
         maxLength={node.schema.maxLength}
-        inputMode={numeric ? (node.type === 'integer' ? 'numeric' : 'decimal') : undefined}
+        inputMode={
+          numeric
+            ? node.type === 'integer'
+              ? 'numeric'
+              : 'decimal'
+            : undefined
+        }
         error={error}
         onChange={(event) => change(node.path, event.target.value)}
         onBlur={() => setTouched((current) => ({ ...current, [key]: true }))}
@@ -162,7 +181,9 @@ function GenericCustomerInputFields({
                 change(choicePath, choice.branches[index]?.value)
               }
             />
-            {choiceError ? <Typography.Text type="danger">{choiceError}</Typography.Text> : null}
+            {choiceError ? (
+              <Typography.Text type="danger">{choiceError}</Typography.Text>
+            ) : null}
           </Flex>
         )}
         {branch && renderModel(branch.model)}

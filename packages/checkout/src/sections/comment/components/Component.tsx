@@ -42,9 +42,9 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
     latestUpdate.current = updateCustomerNote;
   });
 
+  const inFlight = useRef<{ note: string; save: Promise<void> } | null>(null);
   const debouncedUpdate = useMemo(() => {
     /** The save on the way, so that flushing does not send the same note twice. */
-    let inFlight: { note: string; save: Promise<void> } | null = null;
     const save = (nextNote: string): Promise<void> => {
       const request = latestUpdate.current({ note: nextNote }).then(
         () => {
@@ -71,13 +71,15 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
           throw error;
         }
       );
-      inFlight = { note: nextNote, save: request };
+      inFlight.current = { note: nextNote, save: request };
       const clear = () => {
-        if (inFlight?.save === request) inFlight = null;
+        if (inFlight.current?.save === request) inFlight.current = null;
       };
       request.then(clear, clear);
       return request;
     };
+    // debounce сохраняет обработчик и вызывает его позже, вне render.
+    // eslint-disable-next-line react-hooks/refs
     const debounced = debounce((nextNote: string) => {
       save(nextNote).catch(() => undefined);
     }, 500);
@@ -93,7 +95,9 @@ export const CommentSectionView = ({ data }: CommentSectionViewProps) => {
       }
       const typed = typedRef.current;
       if (typed === null) return undefined;
-      return inFlight?.note === typed ? inFlight.save : save(typed);
+      return inFlight.current?.note === typed
+        ? inFlight.current.save
+        : save(typed);
     };
     /** Drops the save waiting for a pause in typing or for a retry. */
     const cancel = () => {

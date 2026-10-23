@@ -3,10 +3,7 @@
  * Registers section lifecycle in the Checkout store and exposes methods to publish validation.
  */
 import { useEffect, useMemo, useCallback, useRef } from 'react';
-import {
-  CheckoutEvent,
-  onCheckoutEvent,
-} from '#checkout/state/checkoutBus';
+import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { SectionId } from '#checkout/state/interface';
 
@@ -19,21 +16,13 @@ export function useSectionController(
   sectionId: SectionId,
   options: { required: boolean }
 ) {
-  // Store sectionId and required in refs to avoid effect re-runs
-  const sectionIdRef = useRef(sectionId);
-  const requiredRef = useRef(options.required);
-
-  // Update refs if values change
-  sectionIdRef.current = sectionId;
-  requiredRef.current = options.required;
-
   const busy = useCheckoutStore(
     (state) => state.sections[sectionId]?.busy ?? false
   );
 
   useEffect(() => {
-    const id = sectionIdRef.current;
-    const required = requiredRef.current;
+    const id = sectionId;
+    const required = options.required;
 
     // Get store actions directly to avoid dependencies
     const store = useCheckoutStore.getState();
@@ -70,9 +59,7 @@ export function useSectionController(
       offStart();
       offEnd();
     };
-    // Empty deps array - effect runs once on mount and cleanup on unmount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sectionId, options.required]);
 
   const publishValid = useCallback(() => {
     useCheckoutStore.getState().sectionValid(sectionId);

@@ -176,7 +176,9 @@ export function retryAfterSeconds(response: Response): number | undefined {
   return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-export function decodeJwtPayload(token: string): Record<string, unknown> | null {
+export function decodeJwtPayload(
+  token: string
+): Record<string, unknown> | null {
   const payload = token.split('.')[1];
   if (!payload) return null;
   try {

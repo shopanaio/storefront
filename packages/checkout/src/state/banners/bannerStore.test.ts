@@ -71,13 +71,11 @@ describe('checkout banner lifecycle', () => {
     state.reset();
     expect(useBannerStore.getState().saveErrors).toEqual([]);
     expect([...useBannerStore.getState().dismissed]).toEqual([]);
-    useBannerStore
-      .getState()
-      .reportSaveError({
-        key: 'contact',
-        sectionId: SectionId.Contact,
-        message: 'New checkout failure',
-      });
+    useBannerStore.getState().reportSaveError({
+      key: 'contact',
+      sectionId: SectionId.Contact,
+      message: 'New checkout failure',
+    });
     expect(useBannerStore.getState().saveErrors[0].message).toBe(
       'New checkout failure'
     );

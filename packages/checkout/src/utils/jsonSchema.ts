@@ -44,8 +44,7 @@ export interface JsonSchemaIssue {
   keyword: string;
 }
 
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -112,7 +111,9 @@ function refTarget(ref: string, root: JsonSchema): JsonSchema | null {
   }
   let node: unknown = root;
   for (const part of ref.slice(2).split('/')) {
-    const key = decodeURIComponent(part).replace(/~1/g, '/').replace(/~0/g, '~');
+    const key = decodeURIComponent(part)
+      .replace(/~1/g, '/')
+      .replace(/~0/g, '~');
     node = isObject(node) ? node[key] : undefined;
   }
   return isObject(node) ? (node as JsonSchema) : null;
@@ -122,7 +123,10 @@ function refTarget(ref: string, root: JsonSchema): JsonSchema | null {
  * The schema with its `$ref` followed and its `allOf` merged into one: properties and
  * `required` of every part together. For building forms; validation checks each part.
  */
-export function resolveSchema(schema: JsonSchema, root: JsonSchema): JsonSchema {
+export function resolveSchema(
+  schema: JsonSchema,
+  root: JsonSchema
+): JsonSchema {
   let current = schema;
   for (let depth = 0; current.$ref && depth < 16; depth++) {
     const { $ref, ...rest } = current;
@@ -156,7 +160,8 @@ function validateAt(
   root: JsonSchema = schema
 ): JsonSchemaIssue[] {
   const issues: JsonSchemaIssue[] = [];
-  const fail = (keyword: string, at = path) => issues.push({ path: at, keyword });
+  const fail = (keyword: string, at = path) =>
+    issues.push({ path: at, keyword });
   const validate = (next: JsonSchema, item: unknown, at: string) =>
     validateAt(next, item, at, root);
 
@@ -192,7 +197,10 @@ function validateAt(
     if (schema.maxLength !== undefined && length > schema.maxLength) {
       fail('maxLength');
     }
-    if (schema.pattern !== undefined && !patternOf(schema.pattern).test(value)) {
+    if (
+      schema.pattern !== undefined &&
+      !patternOf(schema.pattern).test(value)
+    ) {
       fail('pattern');
     }
     if (schema.format === 'uuid' && !UUID.test(value)) {
@@ -207,10 +215,16 @@ function validateAt(
     if (schema.maximum !== undefined && value > schema.maximum) {
       fail('maximum');
     }
-    if (schema.exclusiveMinimum !== undefined && value <= schema.exclusiveMinimum) {
+    if (
+      schema.exclusiveMinimum !== undefined &&
+      value <= schema.exclusiveMinimum
+    ) {
       fail('exclusiveMinimum');
     }
-    if (schema.exclusiveMaximum !== undefined && value >= schema.exclusiveMaximum) {
+    if (
+      schema.exclusiveMaximum !== undefined &&
+      value >= schema.exclusiveMaximum
+    ) {
       fail('exclusiveMaximum');
     }
   }
@@ -247,7 +261,9 @@ function validateAt(
       } else if (schema.additionalProperties === false) {
         fail('additionalProperties', join(path, key));
       } else if (isObject(schema.additionalProperties)) {
-        issues.push(...validate(schema.additionalProperties, item, join(path, key)));
+        issues.push(
+          ...validate(schema.additionalProperties, item, join(path, key))
+        );
       }
     }
   }

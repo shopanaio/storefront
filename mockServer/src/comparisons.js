@@ -1,15 +1,26 @@
-import { connection } from "./helpers.js";
+import { connection } from './helpers.js';
 
-const tail = (id) => String(id).split("/").at(-1);
+const tail = (id) => String(id).split('/').at(-1);
 
 const comparisonConfig = (store, categoryId) =>
-  store.state.productComparisons?.find((candidate) => candidate.categoryId === categoryId) ?? null;
+  store.state.productComparisons?.find(
+    (candidate) => candidate.categoryId === categoryId
+  ) ?? null;
 
-const resolvedVariants = (store, variantIds) => [...new Set(variantIds ?? [])]
-  .map((id) => store.get(id))
-  .filter((variant) => variant?.__typename === "ProductVariant" && store.get(variant.productId));
+const resolvedVariants = (store, variantIds) =>
+  [...new Set(variantIds ?? [])]
+    .map((id) => store.get(id))
+    .filter(
+      (variant) =>
+        variant?.__typename === 'ProductVariant' && store.get(variant.productId)
+    );
 
-const comparisonModel = (categoryId, title, variants, savedVariantIds = []) => ({
+const comparisonModel = (
+  categoryId,
+  title,
+  variants,
+  savedVariantIds = []
+) => ({
   key: `comparison:${tail(categoryId)}`,
   categoryId,
   title,
@@ -22,22 +33,31 @@ export const productComparison = (store, product, customer) => {
   if (!config) return null;
 
   const configuredByProduct = new Map(
-    resolvedVariants(store, config.variantIds).map((variant) => [variant.productId, variant]),
+    resolvedVariants(store, config.variantIds).map((variant) => [
+      variant.productId,
+      variant,
+    ])
   );
-  const categoryProducts = store.state.products.filter((candidate) =>
-    candidate.primaryCategoryId === config.categoryId);
-  const variants = categoryProducts.map((candidate) => {
-    const availableVariants = resolvedVariants(store, candidate.variantIds);
-    return configuredByProduct.get(candidate.id)
-      ?? availableVariants.find(({ availableForSale }) => availableForSale)
-      ?? availableVariants[0];
-  }).filter(Boolean);
+  const categoryProducts = store.state.products.filter(
+    (candidate) => candidate.primaryCategoryId === config.categoryId
+  );
+  const variants = categoryProducts
+    .map((candidate) => {
+      const availableVariants = resolvedVariants(store, candidate.variantIds);
+      return (
+        configuredByProduct.get(candidate.id) ??
+        availableVariants.find(({ availableForSale }) => availableForSale) ??
+        availableVariants[0]
+      );
+    })
+    .filter(Boolean);
 
   return comparisonModel(
     config.categoryId,
-    config.title ?? `Compare ${store.get(config.categoryId)?.name ?? "products"}`,
+    config.title ??
+      `Compare ${store.get(config.categoryId)?.name ?? 'products'}`,
     variants,
-    customer?.comparisonVariantIds,
+    customer?.comparisonVariantIds
   );
 };
 
@@ -57,9 +77,9 @@ export const customerProductComparisons = (store, customer) => {
     const config = comparisonConfig(store, categoryId);
     return comparisonModel(
       categoryId,
-      config?.title ?? `Compare ${store.get(categoryId)?.name ?? "products"}`,
+      config?.title ?? `Compare ${store.get(categoryId)?.name ?? 'products'}`,
       groupedVariants,
-      customer.comparisonVariantIds,
+      customer.comparisonVariantIds
     );
   });
 
@@ -70,8 +90,17 @@ export const customerProductComparisons = (store, customer) => {
   };
 };
 
-const valueCell = (source) => ({ status: "VALUE", feature: null, selectedOption: null, ...source });
-const missingCell = () => ({ status: "MISSING", feature: null, selectedOption: null });
+const valueCell = (source) => ({
+  status: 'VALUE',
+  feature: null,
+  selectedOption: null,
+  ...source,
+});
+const missingCell = () => ({
+  status: 'MISSING',
+  feature: null,
+  selectedOption: null,
+});
 
 const buildRows = (store, variants) => {
   const groups = new Map();
@@ -85,17 +114,23 @@ const buildRows = (store, variants) => {
     }
 
     for (const feature of product.features ?? []) {
-      const group = (product.featureGroups ?? []).find(({ id }) => id === feature.group);
-      const groupHandle = group?.handle ?? "details";
+      const group = (product.featureGroups ?? []).find(
+        ({ id }) => id === feature.group
+      );
+      const groupHandle = group?.handle ?? 'details';
       if (!groups.has(groupHandle)) {
-        groups.set(groupHandle, { name: group?.name ?? "Details", rows: new Map() });
+        groups.set(groupHandle, {
+          name: group?.name ?? 'Details',
+          rows: new Map(),
+        });
       }
       const rows = groups.get(groupHandle).rows;
       if (!rows.has(feature.handle)) rows.set(feature.handle, feature.name);
     }
   }
 
-  if (optionRows.size) groups.set("options", { name: "Options", rows: optionRows, options: true });
+  if (optionRows.size)
+    groups.set('options', { name: 'Options', rows: optionRows, options: true });
 
   return [...groups].map(([groupHandle, group]) => ({
     key: `comparison-group:${groupHandle}`,
@@ -103,13 +138,19 @@ const buildRows = (store, variants) => {
     rows: [...group.rows].map(([rowHandle, name]) => {
       const cells = variants.map((variant) => {
         if (group.options) {
-          const selection = variant.selectedOptions?.find((candidate) =>
-            (candidate.option?.handle ?? candidate.name) === rowHandle);
-          return selection ? valueCell({ selectedOption: selection }) : missingCell();
+          const selection = variant.selectedOptions?.find(
+            (candidate) =>
+              (candidate.option?.handle ?? candidate.name) === rowHandle
+          );
+          return selection
+            ? valueCell({ selectedOption: selection })
+            : missingCell();
         }
 
         const product = store.get(variant.productId);
-        const feature = product.features?.find(({ handle }) => handle === rowHandle);
+        const feature = product.features?.find(
+          ({ handle }) => handle === rowHandle
+        );
         return feature?.values?.length ? valueCell({ feature }) : missingCell();
       });
 
@@ -125,24 +166,31 @@ const buildRows = (store, variants) => {
 
 export const comparisonColumns = (store, comparison, args) => {
   const savedVariantIds = new Set(comparison.savedVariantIds);
-  const columns = resolvedVariants(store, comparison.variantIds).map((variant, position) => {
-    const product = store.get(variant.productId);
-    return {
-      key: variant.id,
-      position,
-      product,
-      variant,
-      featuredMedia: store.get(variant.featuredMediaId ?? product.featuredMediaId),
-      price: variant.price,
-      compareAtPrice: variant.compareAtPrice,
-      availableForSale: variant.availableForSale,
-      savedForComparison: savedVariantIds.has(variant.id),
-    };
-  });
+  const columns = resolvedVariants(store, comparison.variantIds).map(
+    (variant, position) => {
+      const product = store.get(variant.productId);
+      return {
+        key: variant.id,
+        position,
+        product,
+        variant,
+        featuredMedia: store.get(
+          variant.featuredMediaId ?? product.featuredMediaId
+        ),
+        price: variant.price,
+        compareAtPrice: variant.compareAtPrice,
+        availableForSale: variant.availableForSale,
+        savedForComparison: savedVariantIds.has(variant.id),
+      };
+    }
+  );
   const result = connection(columns, args);
 
   return {
     ...result,
-    groups: buildRows(store, result.nodes.map(({ variant }) => variant)),
+    groups: buildRows(
+      store,
+      result.nodes.map(({ variant }) => variant)
+    ),
   };
 };

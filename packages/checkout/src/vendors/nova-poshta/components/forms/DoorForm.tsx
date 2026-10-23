@@ -24,7 +24,11 @@ interface DoorFields {
   comment: string;
 }
 
-const fieldsOf = (data: unknown, view: unknown, settlementRef: string | null): DoorFields => {
+const fieldsOf = (
+  data: unknown,
+  view: unknown,
+  settlementRef: string | null
+): DoorFields => {
   const input = readInput(data, 'DOOR', settlementRef);
   return {
     street:
@@ -32,7 +36,8 @@ const fieldsOf = (data: unknown, view: unknown, settlementRef: string | null): D
         ? {
             ref: input.streetRef,
             name: input.streetName,
-            present: (view as DoorView | undefined)?.streetPresent ?? input.streetName,
+            present:
+              (view as DoorView | undefined)?.streetPresent ?? input.streetName,
           }
         : null,
     building: input?.building ?? '',
@@ -51,7 +56,11 @@ export function DoorForm({ deliveryAddress, ...props }: DoorFormProps) {
   const settlementRef = readSettlementRef(deliveryAddress);
   // A new settlement starts the courier address over and drops a pending submit.
   return (
-    <CourierFields key={settlementRef ?? ''} settlementRef={settlementRef} {...props} />
+    <CourierFields
+      key={settlementRef ?? ''}
+      settlementRef={settlementRef}
+      {...props}
+    />
   );
 }
 
@@ -96,9 +105,9 @@ function CourierFields({
   };
 
   const handleChangeStreet = (street: Street) =>
-    change(
-      { street: { ref: street.ref, name: street.name, present: street.present } }
-    );
+    change({
+      street: { ref: street.ref, name: street.name, present: street.present },
+    });
 
   const disabled = !settlementRef;
 
@@ -109,9 +118,7 @@ function CourierFields({
         changeStreet={handleChangeStreet}
         settlementRef={settlementRef}
       />
-      {disabled && (
-        <Banner tone="action" title={t('city_required_warning')} />
-      )}
+      {disabled && <Banner tone="action" title={t('city_required_warning')} />}
       <Flex gap={12}>
         <FloatingLabelInput
           label={t('building')}

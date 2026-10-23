@@ -13,8 +13,5 @@ export interface ShopProviderProps {
 }
 
 export function ShopProvider({ config, children }: ShopProviderProps) {
-  return (
-    <ShopContext.Provider value={config}>{children}</ShopContext.Provider>
-  );
+  return <ShopContext.Provider value={config}>{children}</ShopContext.Provider>;
 }
-

@@ -72,7 +72,10 @@ export interface RecipientMutations {
  * save starts, so a recipient added by the previous save is updated, not added again.
  */
 export function recipientMutations(
-  data: Pick<RecipientFormData, 'deliveryGroupIds' | 'groupIdsWithoutRecipient'>,
+  data: Pick<
+    RecipientFormData,
+    'deliveryGroupIds' | 'groupIdsWithoutRecipient'
+  >,
   recipient: CheckoutRecipientInput | null
 ): RecipientMutations {
   const missing = new Set(data.groupIdsWithoutRecipient);
@@ -88,10 +91,20 @@ export function recipientMutations(
   return {
     remove: null,
     update: saved.length
-      ? { updates: saved.map((deliveryGroupId) => ({ deliveryGroupId, recipient })) }
+      ? {
+          updates: saved.map((deliveryGroupId) => ({
+            deliveryGroupId,
+            recipient,
+          })),
+        }
       : null,
     add: added.length
-      ? { recipients: added.map((deliveryGroupId) => ({ deliveryGroupId, recipient })) }
+      ? {
+          recipients: added.map((deliveryGroupId) => ({
+            deliveryGroupId,
+            recipient,
+          })),
+        }
       : null,
   };
 }

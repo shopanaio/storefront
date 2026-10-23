@@ -86,7 +86,10 @@ export function useCreateCheckoutApi(): CheckoutApi {
    * Resources whose latest save failed while the buyer's value stays on screen (address,
    * contact, note, recipient). The order is not placed until each is saved (BR-awbl).
    */
-  const pendingLoyalty = useRef<{ checkoutId: string | null; changes: PendingLoyalty }>({
+  const pendingLoyalty = useRef<{
+    checkoutId: string | null;
+    changes: PendingLoyalty;
+  }>({
     checkoutId: null,
     changes: {},
   });
@@ -169,14 +172,12 @@ export function useCreateCheckoutApi(): CheckoutApi {
       sectionId: SectionId.Promo,
     }
   );
-  const { commit: commitRemovePromo, send: sendRemovePromo } = useCheckoutOperation(
-    removePromoCodeMutation,
-    {
+  const { commit: commitRemovePromo, send: sendRemovePromo } =
+    useCheckoutOperation(removePromoCodeMutation, {
       reportError: false,
       operationKey: OperationKey.RemovePromoCode,
       sectionId: SectionId.Promo,
-    }
-  );
+    });
   // The loyalty selection is written in the queue: each write reads the selection the last answer
   // left and changes only its own part. A failure is reported in the checkout banner.
   const { send: sendUpdateLoyalty } = useCheckoutOperation(
@@ -339,22 +340,26 @@ export function useCreateCheckoutApi(): CheckoutApi {
       // and the selected entitlement reserves the reward for this order.
       const voucherCode = reward?.reward?.voucherCode ?? null;
       const addedCode =
-        voucherCode && !isPromoEntered(entered, voucherCode) ? voucherCode : null;
+        voucherCode && !isPromoEntered(entered, voucherCode)
+          ? voucherCode
+          : null;
       if (addedCode) {
         await sendAddPromo({ input: { code: addedCode, ...context } });
       }
       try {
         await writeLoyalty((selection) => ({
           redemption:
-            changes.redemption !== undefined ? changes.redemption : selection.redemption,
+            changes.redemption !== undefined
+              ? changes.redemption
+              : selection.redemption,
           rewardId: reward ? (reward.reward?.id ?? null) : selection.rewardId,
         }));
       } catch (error) {
         // The reward was not saved: its code leaves the promo codes again.
         if (addedCode) {
-          await sendRemovePromo({ input: { code: addedCode, ...context } }).catch(
-            () => undefined
-          );
+          await sendRemovePromo({
+            input: { code: addedCode, ...context },
+          }).catch(() => undefined);
         }
         throw error;
       }
@@ -373,11 +378,14 @@ export function useCreateCheckoutApi(): CheckoutApi {
     /** Queues a choice of the buyer, merged with the one still waiting. */
     const chooseLoyalty = (change: PendingLoyalty) => {
       const changes = pendingChanges();
-      if (change.redemption !== undefined) changes.redemption = change.redemption;
+      if (change.redemption !== undefined)
+        changes.redemption = change.redemption;
       if (change.reward) {
         changes.reward = {
           reward: change.reward.reward,
-          replaced: changes.reward ? changes.reward.replaced : change.reward.replaced,
+          replaced: changes.reward
+            ? changes.reward.replaced
+            : change.reward.replaced,
         };
       }
       return followSuperseded(

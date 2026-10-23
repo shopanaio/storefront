@@ -70,7 +70,11 @@ export function useStreetSearch(settlementRef: string | null, text: string) {
   const query = searchText(text);
   const skip = !settlementRef || query.length === 0;
   const result = useQuery(StorefrontNovaPoshtaSettlementStreetsQueryDocument, {
-    variables: { settlementRef: settlementRef ?? '', query, limit: STREETS_LIMIT },
+    variables: {
+      settlementRef: settlementRef ?? '',
+      query,
+      limit: STREETS_LIMIT,
+    },
     skip,
   });
   return {
@@ -94,7 +98,8 @@ export function useWarehouse(ref: string | null) {
     skip: !ref,
   });
   return {
-    warehouse: (ref ? result.data?.novaPoshtaWarehouses.items[0] : null) ?? null,
+    warehouse:
+      (ref ? result.data?.novaPoshtaWarehouses.items[0] : null) ?? null,
     loading: Boolean(ref) && result.loading,
   };
 }
@@ -133,7 +138,8 @@ export function useWarehouseList(
 ) {
   const client = useApolloClient();
   const query = searchText(text);
-  const key = enabled && settlementRef ? `${settlementRef}|${kind}|${query}` : '';
+  const key =
+    enabled && settlementRef ? `${settlementRef}|${kind}|${query}` : '';
   const [state, setState] = useState<WarehouseListState>(() => emptyList(''));
   const request = useRef(0);
 
@@ -183,7 +189,9 @@ export function useWarehouseList(
         setState((current) => ({
           key,
           items:
-            page === 1 || current.key !== key ? rows : [...current.items, ...rows],
+            page === 1 || current.key !== key
+              ? rows
+              : [...current.items, ...rows],
           page: lastPage,
           hasNextPage,
           loading: false,
@@ -217,7 +225,8 @@ export function useWarehouseList(
   }, [key, query, load]);
 
   // Until the rows of the current key arrive, the list is empty and loading.
-  const current = state.key === key ? state : { ...emptyList(key), loading: !!key };
+  const current =
+    state.key === key ? state : { ...emptyList(key), loading: !!key };
 
   return {
     items: current.items,
@@ -227,6 +236,8 @@ export function useWarehouseList(
     error: current.error,
     loadMore: () => void load(current.page + 1),
     retry: () =>
-      void load(current.page > 0 && current.items.length > 0 ? current.page + 1 : 1),
+      void load(
+        current.page > 0 && current.items.length > 0 ? current.page + 1 : 1
+      ),
   };
 }

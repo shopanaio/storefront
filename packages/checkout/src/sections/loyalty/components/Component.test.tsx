@@ -14,7 +14,9 @@ const api = vi.hoisted(() => ({
   setLoyaltyReward: vi.fn(),
 }));
 
-vi.mock('#checkout/context/CheckoutApiContext', () => ({ useCheckoutApi: () => api }));
+vi.mock('#checkout/context/CheckoutApiContext', () => ({
+  useCheckoutApi: () => api,
+}));
 vi.mock('#checkout/context/CheckoutDataContext', () => ({
   useCheckoutData: () => ({ checkout: state.checkout }),
 }));
@@ -32,7 +34,11 @@ const account: Checkout.LoyaltyAccount = {
   status: 'ACTIVE',
   availablePoints: '1240',
   pendingPoints: '0',
-  tier: { name: 'Gold', earnMultiplierBps: 15_000, progress: '1 200 more to Platinum' },
+  tier: {
+    name: 'Gold',
+    earnMultiplierBps: 15_000,
+    progress: '1 200 more to Platinum',
+  },
   nextExpiration: null,
   storeCredit: null,
   sources: [
@@ -74,7 +80,8 @@ const view = (data: Parameters<typeof LoyaltySectionView>[0]['data']) => (
     messages={{
       Checkout: {
         'loyalty-title': 'Rewards',
-        'loyalty-points': '{count, plural, one {{points} point} other {{points} points}}',
+        'loyalty-points':
+          '{count, plural, one {{points} point} other {{points} points}}',
         'loyalty-tier': '{tier} · {multiplier}',
         'loyalty-redeem-points': 'Redeem points',
         'loyalty-available': 'Balance: {balance}',
@@ -122,7 +129,10 @@ describe('LoyaltySectionView', () => {
     // The header shows the balance; the switch does not repeat it.
     expect(screen.queryByText('Balance: 1,240 points')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('switch', { name: 'Redeem points' }));
-    expect(api.setLoyaltyRedemption).toHaveBeenCalledWith({ source: 'POINTS', points: null });
+    expect(api.setLoyaltyRedemption).toHaveBeenCalledWith({
+      source: 'POINTS',
+      points: null,
+    });
   });
 
   it('shows the applied redemption and replaces nothing when a reward is applied', () => {
@@ -137,11 +147,18 @@ describe('LoyaltySectionView', () => {
       expiresAt: null,
     };
     state.checkout = checkout({ loyaltyRedemption: applied });
-    render(view({
+    render(
+      view({
         signedIn: true,
         redemption: applied,
-        selection: { source: 'POINTS', points: null, amount: null, rewardId: null },
-      }));
+        selection: {
+          source: 'POINTS',
+          points: null,
+          amount: null,
+          rewardId: null,
+        },
+      })
+    );
 
     expect(screen.getByText(/Redeemed 500 points/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
@@ -176,7 +193,9 @@ describe('LoyaltySectionView', () => {
     const toggle = screen.getByRole('switch', { name: 'Redeem points' });
     expect(toggle).toBeDisabled();
     expect(toggle).not.toBeChecked();
-    expect(screen.getByText('The order is too small to redeem')).toBeInTheDocument();
+    expect(
+      screen.getByText('The order is too small to redeem')
+    ).toBeInTheDocument();
   });
 
   it('shows the saved source as not applied when the calculation did not apply it', () => {
@@ -200,7 +219,10 @@ describe('LoyaltySectionView', () => {
       storeCredit: {
         availableAmount: uah(120),
         pendingAmount: uah(0),
-        nextExpiration: { amount: uah(20), expiresAt: new Date('2026-10-31T00:00:00Z') },
+        nextExpiration: {
+          amount: uah(20),
+          expiresAt: new Date('2026-10-31T00:00:00Z'),
+        },
       },
       sources: [
         {

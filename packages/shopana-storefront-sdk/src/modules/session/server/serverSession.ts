@@ -235,7 +235,9 @@ export class StorefrontSessionServer {
     ];
   }
 
-  readRefreshCookie(cookies: Map<string, string>): Promise<RefreshCookie | null> {
+  readRefreshCookie(
+    cookies: Map<string, string>
+  ): Promise<RefreshCookie | null> {
     return unseal<RefreshCookie>(
       this.config.sessionSecret,
       REFRESH_COOKIE,

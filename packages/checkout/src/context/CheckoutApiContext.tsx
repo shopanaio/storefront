@@ -3,9 +3,9 @@
 /**
  * CheckoutApiContext: provides checkoutId and CheckoutApi.
  */
-import React, { createContext, useContext, useMemo } from 'react';
 import type { CheckoutApi } from '#checkout/api/interface';
 import { useCreateCheckoutApi } from '#checkout/api/useCreateCheckoutApi';
+import React, { createContext, useContext } from 'react';
 
 export interface CheckoutApiContextValue {
   api: CheckoutApi;

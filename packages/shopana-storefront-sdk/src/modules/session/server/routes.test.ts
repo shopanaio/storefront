@@ -92,7 +92,10 @@ async function call(
 ): Promise<Response> {
   const action = new URL(path, origin).pathname.split('/')[2];
   const handler = method === 'GET' ? handlers.GET : handlers.POST;
-  const response = await handler(request(jar, method, path, init), context(action));
+  const response = await handler(
+    request(jar, method, path, init),
+    context(action)
+  );
   jar.apply(response);
   return response;
 }
@@ -170,7 +173,9 @@ describe('storefront session handlers', () => {
     const login = await call(jar, 'GET', '/auth/login?returnTo=/checkout');
     expect(login.status).toBe(302);
     const authorize = new URL(login.headers.get('location')!);
-    expect(authorize.href.startsWith(`${iamBase}/oauth2/authorize?`)).toBe(true);
+    expect(authorize.href.startsWith(`${iamBase}/oauth2/authorize?`)).toBe(
+      true
+    );
     expect(authorize.searchParams.get('client_id')).toBe('storefront');
     expect(authorize.searchParams.get('code_challenge_method')).toBe('S256');
     expect(authorize.searchParams.get('redirect_uri')).toBe(config.redirectUri);
@@ -184,7 +189,9 @@ describe('storefront session handlers', () => {
     expect(callback.status).toBe(302);
     expect(callback.headers.get('location')).toBe(`${origin}/checkout`);
 
-    const exchange = iamCalls.find((entry) => entry.url.endsWith('/oauth2/token'))!;
+    const exchange = iamCalls.find((entry) =>
+      entry.url.endsWith('/oauth2/token')
+    )!;
     const headers = new Headers(exchange.init.headers);
     expect(headers.get('authorization')).toBe(
       `Basic ${btoa('storefront:s3cret+value')}`
@@ -194,15 +201,25 @@ describe('storefront session handlers', () => {
     expect(body.get('code_verifier')).toBeTruthy();
 
     const setCookies = callback.headers.getSetCookie();
-    const access = setCookies.find((cookie) => cookie.startsWith('shopana_at='))!;
-    const refresh = setCookies.find((cookie) => cookie.startsWith('shopana_rt='))!;
+    const access = setCookies.find((cookie) =>
+      cookie.startsWith('shopana_at=')
+    )!;
+    const refresh = setCookies.find((cookie) =>
+      cookie.startsWith('shopana_rt=')
+    )!;
     expect(access).toContain('HttpOnly');
     expect(access).toContain('Secure');
     expect(access).not.toContain(tok('access', 1));
     expect(refresh).toContain('Path=/auth');
     expect(refresh).not.toContain(tok('refresh', 1));
-    expect(setCookies.some((cookie) => cookie.startsWith('shopana_signed_in=1'))).toBe(true);
-    expect(setCookies.some((cookie) => cookie.startsWith('shopana_auth_event=signed-in'))).toBe(true);
+    expect(
+      setCookies.some((cookie) => cookie.startsWith('shopana_signed_in=1'))
+    ).toBe(true);
+    expect(
+      setCookies.some((cookie) =>
+        cookie.startsWith('shopana_auth_event=signed-in')
+      )
+    ).toBe(true);
 
     const state = await readServerAuthState(jar.header('/'));
     expect(state.accessToken).toBe(tok('access', 1));
@@ -217,19 +234,32 @@ describe('storefront session handlers', () => {
   it('rejects a callback whose state does not match the transaction', async () => {
     const jar = new Jar();
     await call(jar, 'GET', '/auth/login?returnTo=/checkout');
-    const callback = await call(jar, 'GET', '/auth/callback?code=code-1&state=forged');
-    expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=failed`);
+    const callback = await call(
+      jar,
+      'GET',
+      '/auth/callback?code=code-1&state=forged'
+    );
+    expect(callback.headers.get('location')).toBe(
+      `${origin}/checkout?auth=failed`
+    );
     expect(jar.has('shopana_at')).toBe(false);
     expect(jar.has('__Host-shopana_auth_tx')).toBe(true);
-    expect(iamCalls.some((entry) => entry.url.endsWith('/oauth2/token'))).toBe(false);
+    expect(iamCalls.some((entry) => entry.url.endsWith('/oauth2/token'))).toBe(
+      false
+    );
   });
 
   it('ignores an error of a callback without the transaction state', async () => {
     const jar = new Jar();
     await call(jar, 'GET', '/auth/login?returnTo=/checkout');
-    for (const query of ['error=account_not_linked', 'error=account_not_linked&state=x']) {
+    for (const query of [
+      'error=account_not_linked',
+      'error=account_not_linked&state=x',
+    ]) {
       const callback = await call(jar, 'GET', `/auth/callback?${query}`);
-      expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=failed`);
+      expect(callback.headers.get('location')).toBe(
+        `${origin}/checkout?auth=failed`
+      );
       expect(jar.has('__Host-shopana_auth_tx')).toBe(true);
     }
   });
@@ -237,13 +267,17 @@ describe('storefront session handlers', () => {
   it('returns a cancelled sign-in to the page it started from', async () => {
     const jar = new Jar();
     const login = await call(jar, 'GET', '/auth/login?returnTo=/checkout');
-    const state = new URL(login.headers.get('location')!).searchParams.get('state');
+    const state = new URL(login.headers.get('location')!).searchParams.get(
+      'state'
+    );
     const callback = await call(
       jar,
       'GET',
       `/auth/callback?error=access_denied&state=${state}`
     );
-    expect(callback.headers.get('location')).toBe(`${origin}/checkout?auth=cancelled`);
+    expect(callback.headers.get('location')).toBe(
+      `${origin}/checkout?auth=cancelled`
+    );
     expect(jar.has('__Host-shopana_auth_tx')).toBe(false);
   });
 
@@ -252,13 +286,17 @@ describe('storefront session handlers', () => {
     for (const error of ['account_not_linked', 'server_error']) {
       const jar = new Jar();
       const login = await call(jar, 'GET', '/auth/login?returnTo=/checkout');
-      const state = new URL(login.headers.get('location')!).searchParams.get('state');
+      const state = new URL(login.headers.get('location')!).searchParams.get(
+        'state'
+      );
       const callback = await call(
         jar,
         'GET',
         `/auth/callback?error=${error}&state=${state}`
       );
-      results.push(new URL(callback.headers.get('location')!).searchParams.get('auth'));
+      results.push(
+        new URL(callback.headers.get('location')!).searchParams.get('auth')
+      );
     }
     expect(results).toEqual(['accountNotLinked', 'failed']);
   });
@@ -277,7 +315,9 @@ describe('storefront session handlers', () => {
     });
     jar.apply(
       new Response(null, {
-        headers: { 'set-cookie': `${name}=${encodeURIComponent(transaction)}; Path=/` },
+        headers: {
+          'set-cookie': `${name}=${encodeURIComponent(transaction)}; Path=/`,
+        },
       })
     );
 
@@ -287,9 +327,9 @@ describe('storefront session handlers', () => {
 
     expect((await token.json()).session.loginMethod).toBe('email');
     expect((await refresh.json()).session.loginMethod).toBe('email');
-    expect((await readServerAuthState(jar.header('/'))).session?.loginMethod).toBe(
-      'email'
-    );
+    expect(
+      (await readServerAuthState(jar.header('/'))).session?.loginMethod
+    ).toBe('email');
   });
 
   it('has no identifier for a sign-in on the IAM pages', async () => {
@@ -301,17 +341,31 @@ describe('storefront session handlers', () => {
 
   it('keeps returnTo on this storefront', async () => {
     const jar = new Jar();
-    const login = await call(jar, 'GET', '/auth/login?returnTo=//evil.example/x');
-    lastNonce = new URL(login.headers.get('location')!).searchParams.get('nonce')!;
-    const state = new URL(login.headers.get('location')!).searchParams.get('state');
-    const callback = await call(jar, 'GET', `/auth/callback?code=c&state=${state}`);
+    const login = await call(
+      jar,
+      'GET',
+      '/auth/login?returnTo=//evil.example/x'
+    );
+    lastNonce = new URL(login.headers.get('location')!).searchParams.get(
+      'nonce'
+    )!;
+    const state = new URL(login.headers.get('location')!).searchParams.get(
+      'state'
+    );
+    const callback = await call(
+      jar,
+      'GET',
+      `/auth/callback?code=c&state=${state}`
+    );
     expect(callback.headers.get('location')).toBe(`${origin}/`);
   });
 
   it('hands the access token only to same-origin session requests', async () => {
     const jar = new Jar();
     await signIn(jar);
-    const crossSite = await call(jar, 'GET', '/auth/token', { sameOrigin: false });
+    const crossSite = await call(jar, 'GET', '/auth/token', {
+      sameOrigin: false,
+    });
     expect(crossSite.status).toBe(403);
     const token = await call(jar, 'GET', '/auth/token');
     expect(token.status).toBe(200);
@@ -356,7 +410,9 @@ describe('storefront session handlers', () => {
     expect(redirectUrl.startsWith(`${iamBase}/oauth2/end-session?`)).toBe(true);
     const revoked = iamCalls
       .filter((entry) => entry.url.endsWith('/oauth2/revoke'))
-      .map((entry) => new URLSearchParams(String(entry.init.body)).get('token'));
+      .map((entry) =>
+        new URLSearchParams(String(entry.init.body)).get('token')
+      );
     expect(revoked.sort()).toEqual([tok('access', 1), tok('refresh', 1)]);
     const cleared = logout.headers.getSetCookie();
     expect(cleared.some((cookie) => cookie.startsWith('cartId=;'))).toBe(true);
@@ -366,7 +422,11 @@ describe('storefront session handlers', () => {
 
   it('marks a page request whose access token expired for a browser refresh', async () => {
     const state = await readServerAuthState('shopana_signed_in=1; cartId=abc');
-    expect(state).toEqual({ accessToken: null, session: null, refreshPending: true });
+    expect(state).toEqual({
+      accessToken: null,
+      session: null,
+      refreshPending: true,
+    });
   });
 });
 
@@ -375,19 +435,25 @@ describe('endUserIp', () => {
     new Request(`${origin}/auth/token`, { headers });
 
   it('ignores the entries the client put in front of the proxy', () => {
-    expect(endUserIp(request({ 'x-forwarded-for': '198.51.100.9, 203.0.113.7' }))).toBe(
+    expect(
+      endUserIp(request({ 'x-forwarded-for': '198.51.100.9, 203.0.113.7' }))
+    ).toBe('203.0.113.7');
+  });
+
+  it('counts the trusted proxies from the right', () => {
+    const forwarded = {
+      'x-forwarded-for': '198.51.100.9, 203.0.113.7, 10.0.0.1',
+    };
+    expect(endUserIp(request(forwarded), 2)).toBe('203.0.113.7');
+    expect(endUserIp(request({ 'x-forwarded-for': '203.0.113.7' }), 2)).toBe(
       '203.0.113.7'
     );
   });
 
-  it('counts the trusted proxies from the right', () => {
-    const forwarded = { 'x-forwarded-for': '198.51.100.9, 203.0.113.7, 10.0.0.1' };
-    expect(endUserIp(request(forwarded), 2)).toBe('203.0.113.7');
-    expect(endUserIp(request({ 'x-forwarded-for': '203.0.113.7' }), 2)).toBe('203.0.113.7');
-  });
-
   it('falls back to X-Real-IP without X-Forwarded-For', () => {
-    expect(endUserIp(request({ 'x-real-ip': '203.0.113.7' }))).toBe('203.0.113.7');
+    expect(endUserIp(request({ 'x-real-ip': '203.0.113.7' }))).toBe(
+      '203.0.113.7'
+    );
     expect(endUserIp(request({}))).toBeUndefined();
   });
 });

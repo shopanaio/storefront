@@ -1,41 +1,43 @@
-import { gid } from "./fixture-helpers.js";
-import { clone, inferTypeName } from "./helpers.js";
+import { gid } from './fixture-helpers.js';
+import { clone, inferTypeName } from './helpers.js';
 
 const collectionEntries = (state) => [
-  ["Category", state.categories],
-  ["Collection", state.collections],
-  ["Facet", state.facets],
-  ["Product", state.products],
-  ["ProductVariant", state.productVariants],
-  ["ProductComponentConfiguration", state.productComponentConfigurations],
-  ["Checkout", state.checkouts],
-  ["Customer", state.customers],
-  ["MediaImage", state.images],
-  ["OnlineStoreNavigationMenu", state.navigationMenus],
-  ["OnlineStorePage", state.pages],
-  ["Order", state.orders],
-  ["OrderReturnRequest", state.orderReturnRequests],
-  ["Market", state.markets],
-  ["StorePolicy", state.storePolicies],
-  ["Review", state.reviews],
-  ["ProductQuestion", state.productQuestions],
-  ["ProductQuestionAnswer", state.productQuestionAnswers],
-  ["ReviewMedia", state.reviewMedia],
-  ["ReviewReply", state.reviewReplies],
-  ["ReviewRequest", state.reviewRequests],
-  ["ReviewRatingCriterion", state.reviewRatingCriteria],
-  ["ProductQuestionSubscription", state.productQuestionSubscriptions],
-  ["ReviewContentVote", state.reviewContentVotes],
-  ["ReviewContentReport", state.reviewContentReports],
+  ['Category', state.categories],
+  ['Collection', state.collections],
+  ['Facet', state.facets],
+  ['Product', state.products],
+  ['ProductVariant', state.productVariants],
+  ['ProductComponentConfiguration', state.productComponentConfigurations],
+  ['Checkout', state.checkouts],
+  ['Customer', state.customers],
+  ['MediaImage', state.images],
+  ['OnlineStoreNavigationMenu', state.navigationMenus],
+  ['OnlineStorePage', state.pages],
+  ['Order', state.orders],
+  ['OrderReturnRequest', state.orderReturnRequests],
+  ['Market', state.markets],
+  ['StorePolicy', state.storePolicies],
+  ['Review', state.reviews],
+  ['ProductQuestion', state.productQuestions],
+  ['ProductQuestionAnswer', state.productQuestionAnswers],
+  ['ReviewMedia', state.reviewMedia],
+  ['ReviewReply', state.reviewReplies],
+  ['ReviewRequest', state.reviewRequests],
+  ['ReviewRatingCriterion', state.reviewRatingCriteria],
+  ['ProductQuestionSubscription', state.productQuestionSubscriptions],
+  ['ReviewContentVote', state.reviewContentVotes],
+  ['ReviewContentReport', state.reviewContentReports],
 ];
 
 export class MockStore {
   constructor({ data, now }) {
-    if (!data || typeof data !== "object") {
-      throw new TypeError("Mock fixtures must provide a data object.");
+    if (!data || typeof data !== 'object') {
+      throw new TypeError('Mock fixtures must provide a data object.');
     }
     if (!Number.isFinite(Date.parse(now))) {
-      throw new TypeError("Mock fixtures must provide a valid ISO timestamp in now.");
+      throw new TypeError(
+        'Mock fixtures must provide a valid ISO timestamp in now.'
+      );
     }
 
     this.state = clone(data);
@@ -46,7 +48,7 @@ export class MockStore {
     this.state.productRecommendations ??= [];
     for (const customer of this.state.customers ?? []) {
       customer.revision ??= 1;
-      customer.accountStatus ??= "REGISTERED";
+      customer.accountStatus ??= 'REGISTERED';
       customer.createdAt ??= now;
       customer.updatedAt ??= now;
       if (customer.emailAddress) customer.emailAddress.verified ??= true;
@@ -76,7 +78,8 @@ export class MockStore {
 
   replay(scope, key, operation) {
     const cacheKey = `${scope}:${key}`;
-    if (key && this.idempotency.has(cacheKey)) return this.idempotency.get(cacheKey);
+    if (key && this.idempotency.has(cacheKey))
+      return this.idempotency.get(cacheKey);
     const result = operation();
     if (key) this.idempotency.set(cacheKey, result);
     return result;
@@ -86,13 +89,16 @@ export class MockStore {
     this.entityIndex.clear();
     const visited = new WeakSet();
     const visit = (value) => {
-      if (!value || typeof value !== "object" || visited.has(value)) return;
+      if (!value || typeof value !== 'object' || visited.has(value)) return;
       visited.add(value);
-      if (typeof value.id === "string") {
+      if (typeof value.id === 'string') {
         const typeName = inferTypeName(value.id);
         if (typeName) value.__typename ??= typeName;
         const indexed = this.entityIndex.get(value.id);
-        if (!indexed || Object.keys(value).length > Object.keys(indexed).length) {
+        if (
+          !indexed ||
+          Object.keys(value).length > Object.keys(indexed).length
+        ) {
           this.entityIndex.set(value.id, value);
         }
       }
@@ -107,7 +113,11 @@ export class MockStore {
   }
 
   all(typeName) {
-    return collectionEntries(this.state).find(([candidate]) => candidate === typeName)?.[1] ?? [];
+    return (
+      collectionEntries(this.state).find(
+        ([candidate]) => candidate === typeName
+      )?.[1] ?? []
+    );
   }
 
   get(id) {
@@ -123,41 +133,50 @@ export class MockStore {
   }
 
   currentCustomer(request) {
-    if (request?.headers.get("x-mock-anonymous") === "true") return null;
-    const requested = request?.headers.get("x-mock-customer-id");
+    if (request?.headers.get('x-mock-anonymous') === 'true') return null;
+    const requested = request?.headers.get('x-mock-customer-id');
     if (!requested) return null;
 
-    return this.state.customers.find((customer) =>
-      customer.id === requested
-      || customer.id.endsWith(`/${requested}`)
-      || customer.emailAddress?.emailAddress === requested) ?? null;
+    return (
+      this.state.customers.find(
+        (customer) =>
+          customer.id === requested ||
+          customer.id.endsWith(`/${requested}`) ||
+          customer.emailAddress?.emailAddress === requested
+      ) ?? null
+    );
   }
 
   customerByEmail(email) {
     const normalized = email.trim().toLowerCase();
-    return this.state.customers.find(
-      (customer) =>
-        customer.emailAddress?.emailAddress?.trim().toLowerCase() === normalized
-    ) ?? null;
+    return (
+      this.state.customers.find(
+        (customer) =>
+          customer.emailAddress?.emailAddress?.trim().toLowerCase() ===
+          normalized
+      ) ?? null
+    );
   }
 
   provisionCustomer(applicationUser) {
     const existing = this.customerByEmail(applicationUser.email);
     if (existing) return existing;
 
-    const firstName = applicationUser.firstName
-      ?? applicationUser.name.trim().split(/\s+/u)[0]
-      ?? "Mock";
-    const lastName = applicationUser.lastName
-      ?? applicationUser.name.trim().split(/\s+/u).slice(1).join(" ")
-      ?? "";
+    const firstName =
+      applicationUser.firstName ??
+      applicationUser.name.trim().split(/\s+/u)[0] ??
+      'Mock';
+    const lastName =
+      applicationUser.lastName ??
+      applicationUser.name.trim().split(/\s+/u).slice(1).join(' ') ??
+      '';
     const customer = {
-      id: gid("Customer", applicationUser.id),
+      id: gid('Customer', applicationUser.id),
       revision: 1,
-      accountStatus: "REGISTERED",
+      accountStatus: 'REGISTERED',
       firstName,
       lastName,
-      displayName: [firstName, lastName].filter(Boolean).join(" "),
+      displayName: [firstName, lastName].filter(Boolean).join(' '),
       emailAddress: {
         emailAddress: applicationUser.email,
         verified: applicationUser.emailVerified,
@@ -179,10 +198,12 @@ export class MockStore {
   }
 
   ownerCustomerId(entity) {
-    return entity?.customerId
-      ?? entity?.customerIdentity?.customerId
-      ?? entity?.author?.customerId
-      ?? null;
+    return (
+      entity?.customerId ??
+      entity?.customerIdentity?.customerId ??
+      entity?.author?.customerId ??
+      null
+    );
   }
 
   owns(customer, entity) {
@@ -191,14 +212,15 @@ export class MockStore {
 
   touchCheckout(checkout) {
     checkout.updatedAt = this.now();
-    checkout.resultRevision = `checkout-${checkout.id.split("/").at(-1)}-${Date.parse(checkout.updatedAt)}`;
-    if (checkout.loyaltyRedemption) checkout.loyaltyRedemption.revision = checkout.resultRevision;
+    checkout.resultRevision = `checkout-${checkout.id.split('/').at(-1)}-${Date.parse(checkout.updatedAt)}`;
+    if (checkout.loyaltyRedemption)
+      checkout.loyaltyRedemption.revision = checkout.resultRevision;
     this.reindex();
     return checkout;
   }
 
   touchContent(content) {
-    if (Object.hasOwn(content, "revision")) content.revision += 1;
+    if (Object.hasOwn(content, 'revision')) content.revision += 1;
     content.updatedAt = this.now();
     content.metrics.updatedAt = content.updatedAt;
     this.reindex();

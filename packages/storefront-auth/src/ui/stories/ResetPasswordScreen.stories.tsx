@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { resetPassword, type ResetPasswordArgs } from './definitions/resetPassword';
+import {
+  resetPassword,
+  type ResetPasswordArgs,
+} from './definitions/resetPassword';
 import { BOARD_GLOBALS } from './frames';
 
 /**

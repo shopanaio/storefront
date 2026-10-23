@@ -9,7 +9,9 @@ const api = vi.hoisted(() => ({
   removePromoCode: vi.fn<(input: { code: string }) => Promise<void>>(),
 }));
 
-vi.mock('#checkout/context/CheckoutApiContext', () => ({ useCheckoutApi: () => api }));
+vi.mock('#checkout/context/CheckoutApiContext', () => ({
+  useCheckoutApi: () => api,
+}));
 vi.mock('#checkout/context/CheckoutDataContext', () => ({
   useCheckoutData: () => ({ checkout: null }),
 }));
@@ -17,7 +19,9 @@ vi.mock('#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount', () => ({
   useLoyaltyAccount: () => ({ account: null }),
 }));
 vi.mock('#checkout/ui/useConfirm', () => ({ useConfirm: () => vi.fn() }));
-vi.mock('#checkout/components/notices/SectionIssues', () => ({ SectionIssues: () => null }));
+vi.mock('#checkout/components/notices/SectionIssues', () => ({
+  SectionIssues: () => null,
+}));
 
 const view = (data: PromoFormData = { codes: [] }) => (
   <NextIntlClientProvider
@@ -45,7 +49,9 @@ describe('PromoSectionView', () => {
 
   it('SC-slxn: the code being typed survives the summary leaving the page during a renewal', () => {
     const first = render(view());
-    fireEvent.change(screen.getByLabelText('Promo code'), { target: { value: 'WELCOME' } });
+    fireEvent.change(screen.getByLabelText('Promo code'), {
+      target: { value: 'WELCOME' },
+    });
 
     // The summary is not rendered while the renewed checkout loads.
     first.unmount();
@@ -60,18 +66,28 @@ describe('PromoSectionView', () => {
     );
     rerender(
       view({
-        codes: [{ code: 'SAVE10', status: 'REJECTED', message: 'Spend $50 more to use it' }],
+        codes: [
+          {
+            code: 'SAVE10',
+            status: 'REJECTED',
+            message: 'Spend $50 more to use it',
+          },
+        ],
       })
     );
 
-    expect(within(screen.getByRole('list')).getByText('SAVE10')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('list')).getByText('SAVE10')
+    ).toBeInTheDocument();
     expect(screen.getByText('Spend $50 more to use it')).toBeInTheDocument();
     expect(api.removePromoCode).not.toHaveBeenCalled();
   });
 
   it('SC-08s8: a code added but not applied is kept, and the field is cleared', async () => {
     render(view());
-    fireEvent.change(screen.getByLabelText('Promo code'), { target: { value: 'SAVE10' } });
+    fireEvent.change(screen.getByLabelText('Promo code'), {
+      target: { value: 'SAVE10' },
+    });
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     });
@@ -82,9 +98,13 @@ describe('PromoSectionView', () => {
   });
 
   it('SC-2t9f: a delivery code entered before the delivery is shown as pending', () => {
-    render(view({ codes: [{ code: 'FREESHIP', status: 'PENDING', message: null }] }));
+    render(
+      view({ codes: [{ code: 'FREESHIP', status: 'PENDING', message: null }] })
+    );
 
-    expect(within(screen.getByRole('list')).getByText('FREESHIP')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('list')).getByText('FREESHIP')
+    ).toBeInTheDocument();
     expect(screen.getByText('Waits for a condition')).toBeInTheDocument();
     expect(api.removePromoCode).not.toHaveBeenCalled();
   });

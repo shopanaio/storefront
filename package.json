@@ -23,7 +23,9 @@
     "build-storybook:theme": "yarn workspace @shopana/brand-bite-crunch build-storybook",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:packages": "yarn workspace @shopana/brand-sdk build && yarn workspace @shopana/storefront-sdk build && yarn workspace @shopana/storefront-ui build && yarn workspace @shopana/storefront-auth build",
+    "typecheck": "yarn build:packages && node ./scripts/typecheck.mjs"
   },
   "devDependencies": {
     "@atlaskit/eslint-plugin-design-system": "^13.27.0",

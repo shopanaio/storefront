@@ -5,7 +5,10 @@
   "license": "MIT",
   "type": "module",
   "imports": {
-    "#checkout/*": "./src/*"
+    "#checkout/*": {
+      "types": "./src/*.js",
+      "default": "./src/*"
+    }
   },
   "exports": {
     ".": "./src/index.ts",

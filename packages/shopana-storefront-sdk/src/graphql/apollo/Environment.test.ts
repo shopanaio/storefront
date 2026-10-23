@@ -1,4 +1,20 @@
-import { ApolloLink, gql, Observable } from '@apollo/client';
+import { Kind, type DocumentNode } from 'graphql';
+const pingQuery: DocumentNode = {
+  kind: Kind.DOCUMENT,
+  definitions: [
+    {
+      kind: Kind.OPERATION_DEFINITION,
+      operation: 'query' as import('graphql').OperationTypeNode,
+      selectionSet: {
+        kind: Kind.SELECTION_SET,
+        selections: [
+          { kind: Kind.FIELD, name: { kind: Kind.NAME, value: 'ping' } },
+        ],
+      },
+    },
+  ],
+};
+import { ApolloLink, Observable } from '@apollo/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { ApolloEnvironmentConfig } from './types';
 
@@ -43,11 +59,7 @@ it('keeps the same visitor when a new browser client and an SSR client load the 
       links: [captureHeaders(headers)],
     });
     await client.query({
-      query: gql`
-        {
-          ping
-        }
-      `,
+      query: pingQuery,
       fetchPolicy: 'network-only',
     });
     client.stop();
@@ -67,11 +79,7 @@ it('keeps the same visitor when a new browser client and an SSR client load the 
     links: [captureHeaders(headers)],
   });
   await serverClient.query({
-    query: gql`
-      {
-        ping
-      }
-    `,
+    query: pingQuery,
     fetchPolicy: 'network-only',
   });
   expect(headers[2]['x-shopana-storefront-visitor-id']).toBe(visitorId);
@@ -121,11 +129,7 @@ it('refreshes the session once and repeats a request the gateway rejected for it
   const { createApolloClient } = await import('./Environment');
   const client = createApolloClient(config, { links: [gateway] });
   const result = await client.query({
-    query: gql`
-      {
-        ping
-      }
-    `,
+    query: pingQuery,
     fetchPolicy: 'network-only',
   });
   expect(result.data).toEqual({ ping: 'pong' });

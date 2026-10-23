@@ -33,7 +33,9 @@ export const RETURN_PARAM_CHECKOUT = 'checkout';
 export const RETURN_PARAM_PLACEMENT = 'placement';
 export const RETURN_PARAM_TOKEN = 'token';
 
-export type ReadPlacement = (locator: PlacementLocator) => Promise<PlacementResult | null>;
+export type ReadPlacement = (
+  locator: PlacementLocator
+) => Promise<PlacementResult | null>;
 
 export interface ReturnParams {
   checkoutId: string | null;
@@ -52,7 +54,11 @@ export const PLACEMENT_TOKEN_PLACEHOLDER = '{placementToken}';
  * byte-for-byte, because the template is part of the idempotency request hash. The backend puts
  * the placement id and token into it, so the return page works in any browser or device.
  */
-export function buildReturnUrl(origin: string, returnPath: string, checkoutId: string): string {
+export function buildReturnUrl(
+  origin: string,
+  returnPath: string,
+  checkoutId: string
+): string {
   const url = new URL(returnPath, origin);
   url.search = '';
   url.hash = '';
@@ -93,13 +99,19 @@ function isFinalReadError(error: unknown): boolean {
 
 export function readReturnParams(search: string): ReturnParams {
   const params = new URLSearchParams(search);
-  const placementId = filled(params.get(RETURN_PARAM_PLACEMENT), PLACEMENT_ID_PLACEHOLDER);
+  const placementId = filled(
+    params.get(RETURN_PARAM_PLACEMENT),
+    PLACEMENT_ID_PLACEHOLDER
+  );
   return {
     checkoutId: params.get(RETURN_PARAM_CHECKOUT),
     locator: placementId
       ? {
           placementId,
-          placementToken: filled(params.get(RETURN_PARAM_TOKEN), PLACEMENT_TOKEN_PLACEHOLDER),
+          placementToken: filled(
+            params.get(RETURN_PARAM_TOKEN),
+            PLACEMENT_TOKEN_PLACEHOLDER
+          ),
         }
       : null,
   };
@@ -129,7 +141,10 @@ export function resolveRecoveryLocator(
 ): PlacementLocator | null {
   const journal = attemptLocator(attempt);
   if (!params.locator) return journal;
-  if (!params.locator.placementToken && journal?.placementId === params.locator.placementId) {
+  if (
+    !params.locator.placementToken &&
+    journal?.placementId === params.locator.placementId
+  ) {
     return { ...params.locator, placementToken: journal.placementToken };
   }
   return params.locator;

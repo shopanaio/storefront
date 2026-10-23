@@ -111,7 +111,8 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     const state = storeObject.getState();
     const unsubscribe = storefrontSession.subscribe((change) => {
       const actions = storeObject.getState();
-      if (change.type === 'session') actions.setSession(toSession(change.session));
+      if (change.type === 'session')
+        actions.setSession(toSession(change.session));
       else if (change.type === 'expired') actions.expireSession();
       else actions.setSession(null);
     });
@@ -129,7 +130,9 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     }
     const url = new URL(window.location.href);
     if (url.searchParams.has(AUTH_RESULT_PARAM)) {
-      state.setAuthResult(parseAuthResult(url.searchParams.get(AUTH_RESULT_PARAM)));
+      state.setAuthResult(
+        parseAuthResult(url.searchParams.get(AUTH_RESULT_PARAM))
+      );
       url.searchParams.delete(AUTH_RESULT_PARAM);
       window.history.replaceState(
         window.history.state,

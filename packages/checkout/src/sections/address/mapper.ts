@@ -1,5 +1,8 @@
 import type { Checkout } from '#checkout/types/entity';
-import type { DeliveryAddressesAddDto, DeliveryAddressesUpdateDto } from '#checkout/api/dto';
+import type {
+  DeliveryAddressesAddDto,
+  DeliveryAddressesUpdateDto,
+} from '#checkout/api/dto';
 import type { CheckoutDeliveryAddressInput } from '#checkout/graphql/operations';
 import type { AddressFormData } from './types';
 import { toDeliveryAddress } from '#checkout/sections/delivery/mapper';
@@ -17,7 +20,8 @@ export function mapCheckoutToAddressFormData(
   }
 
   const groups = checkout.deliveryGroups;
-  const saved = groups.find((group) => group.deliveryAddress)?.deliveryAddress ?? null;
+  const saved =
+    groups.find((group) => group.deliveryAddress)?.deliveryAddress ?? null;
   const address = toDeliveryAddress(saved);
   const addressIds = [
     ...new Set(
@@ -29,7 +33,9 @@ export function mapCheckoutToAddressFormData(
   const unaddressed = groups.filter((group) => !group.deliveryAddress?.id);
   const unaddressedLineIds =
     groups.length > 0
-      ? unaddressed.flatMap((group) => group.checkoutLines.map((line) => line.id))
+      ? unaddressed.flatMap((group) =>
+          group.checkoutLines.map((line) => line.id)
+        )
       : checkout.lines.map((line) => line.id);
 
   return {

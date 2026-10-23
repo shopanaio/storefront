@@ -17,7 +17,9 @@ export const defaultSessionState: Partial<SessionStore> = {
 };
 
 type SessionStoreSet = (
-  partial: Partial<SessionStore> | ((state: SessionStore) => Partial<SessionStore>)
+  partial:
+    | Partial<SessionStore>
+    | ((state: SessionStore) => Partial<SessionStore>)
 ) => void;
 
 function sessionStoreState(

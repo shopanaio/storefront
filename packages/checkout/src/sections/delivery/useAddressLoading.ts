@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { CheckoutEvent, OperationKey, onCheckoutEvent } from '#checkout/state/checkoutBus';
+import {
+  CheckoutEvent,
+  OperationKey,
+  onCheckoutEvent,
+} from '#checkout/state/checkoutBus';
 
 const ADDRESS_OPERATIONS = new Set<OperationKey>([
   OperationKey.AddDeliveryAddresses,
@@ -15,11 +19,14 @@ export function useAddressLoading(): boolean {
 
   useEffect(() => {
     let inflight = 0;
-    const offStart = onCheckoutEvent(CheckoutEvent.OperationStart, ({ key }) => {
-      if (!ADDRESS_OPERATIONS.has(key)) return;
-      inflight += 1;
-      setLoading(true);
-    });
+    const offStart = onCheckoutEvent(
+      CheckoutEvent.OperationStart,
+      ({ key }) => {
+        if (!ADDRESS_OPERATIONS.has(key)) return;
+        inflight += 1;
+        setLoading(true);
+      }
+    );
     const offEnd = onCheckoutEvent(CheckoutEvent.OperationEnd, ({ key }) => {
       if (!ADDRESS_OPERATIONS.has(key)) return;
       inflight = Math.max(0, inflight - 1);

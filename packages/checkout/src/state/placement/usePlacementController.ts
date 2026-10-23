@@ -65,7 +65,11 @@ import type { CurrencyCode } from '#checkout/graphql/operations';
  * checkout is opened again.
  */
 export function usePlacementController(checkoutId: string | null) {
-  const { checkout, loaded: checkoutLoaded, refetch: refetchCheckout } = useCheckoutData();
+  const {
+    checkout,
+    loaded: checkoutLoaded,
+    refetch: refetchCheckout,
+  } = useCheckoutData();
   const { submitCheckout } = useCheckoutApi();
   const readPlacement = useReadPlacement();
   const returnPath = useCheckoutTheme().useCheckoutReturnPath();

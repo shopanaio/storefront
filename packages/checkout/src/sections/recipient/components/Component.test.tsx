@@ -6,7 +6,9 @@ import { RecipientSectionView } from './Component';
 const mocks = vi.hoisted(() => ({ saveDeliveryRecipient: vi.fn() }));
 
 vi.mock('#checkout/context/CheckoutApiContext', () => ({
-  useCheckoutApi: () => ({ saveDeliveryRecipient: mocks.saveDeliveryRecipient }),
+  useCheckoutApi: () => ({
+    saveDeliveryRecipient: mocks.saveDeliveryRecipient,
+  }),
 }));
 vi.mock('#checkout/components/contact/ContactSelect', () => ({
   ContactSelect: () => <div>recipient form</div>,
@@ -28,7 +30,11 @@ const other = (groups: string[]): RecipientFormData => ({
 });
 
 const view = (data: RecipientFormData) => (
-  <NextIntlClientProvider locale="en" messages={{ Checkout: {} }} onError={() => {}}>
+  <NextIntlClientProvider
+    locale="en"
+    messages={{ Checkout: {} }}
+    onError={() => {}}
+  >
     <RecipientSectionView data={data} />
   </NextIntlClientProvider>
 );

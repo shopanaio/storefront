@@ -15,4 +15,3 @@ export function Block<TSettings = any>({
     </BlockErrorBoundary>
   );
 }
-

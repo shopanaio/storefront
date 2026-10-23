@@ -34,7 +34,10 @@ interface BrandProviderProps {
  * Provider for brand configuration
  * Provides logo component through context
  */
-export const BrandProvider = ({ children, brandConfig }: BrandProviderProps) => {
+export const BrandProvider = ({
+  children,
+  brandConfig,
+}: BrandProviderProps) => {
   const value: BrandContextValue = {
     LogoComponent: brandConfig.components.logo,
     generalSettings: brandConfig.generalSettings,

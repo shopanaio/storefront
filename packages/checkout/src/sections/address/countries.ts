@@ -41,7 +41,8 @@ export const ADDRESS_FIELDS: ReadonlySet<AddressField> = new Set([
   'POSTAL_CODE',
 ]);
 
-type ApiCountry = StorefrontDeliveryCountriesQuery['checkoutDeliveryCountries'][number];
+type ApiCountry =
+  StorefrontDeliveryCountriesQuery['checkoutDeliveryCountries'][number];
 
 export function mapDeliveryCountry(country: ApiCountry): DeliveryCountry {
   const format = country.addressFormat;
@@ -86,7 +87,10 @@ export function pickDeliveryCountry(
 }
 
 /** Whether a postal code matches the country pattern; without a pattern any value passes. */
-export function isValidPostalCode(format: AddressFormat, value: string): boolean {
+export function isValidPostalCode(
+  format: AddressFormat,
+  value: string
+): boolean {
   if (!format.postalCodePattern) return true;
   try {
     return new RegExp(format.postalCodePattern, 'i').test(value.trim());

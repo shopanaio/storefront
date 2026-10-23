@@ -84,13 +84,17 @@ export const RedemptionPart = ({
     [setLoyaltyRedemption]
   );
   const chooseMaximum = (source: Checkout.LoyaltySource) =>
-    choose(source === 'POINTS' ? { source, points: null } : { source, amount: null });
+    choose(
+      source === 'POINTS' ? { source, points: null } : { source, amount: null }
+    );
 
   const details = (option: Checkout.LoyaltySourceOption) => (
     <RedemptionDetails
       option={option}
       redemption={redemption?.source === option.source ? redemption : null}
-      failed={failedSource === option.source && redemption?.source !== option.source}
+      failed={
+        failedSource === option.source && redemption?.source !== option.source
+      }
       busy={busy}
       editing={editing}
       currencyCode={currencyCode}
@@ -138,12 +142,16 @@ export const RedemptionPart = ({
 
   return (
     <Flex vertical gap={8} className={styles.root}>
-      <Typography.Text className={styles.title}>{t('loyalty-source-title')}</Typography.Text>
+      <Typography.Text className={styles.title}>
+        {t('loyalty-source-title')}
+      </Typography.Text>
       <Radio.Group
         value={selected ?? NONE}
         disabled={busy}
         onChange={(event) => {
-          const value = event.target.value as Checkout.LoyaltySource | typeof NONE;
+          const value = event.target.value as
+            | Checkout.LoyaltySource
+            | typeof NONE;
           void (value === NONE ? choose(null) : chooseMaximum(value));
         }}
         className={styles.radios}
@@ -151,7 +159,10 @@ export const RedemptionPart = ({
         {options.map((option) => {
           const on = selected === option.source;
           return (
-            <OptionWave key={option.source} disabled={on || busy || orderTooSmall}>
+            <OptionWave
+              key={option.source}
+              disabled={on || busy || orderTooSmall}
+            >
               <div className={styles.option} data-selected={on || undefined}>
                 <Radio
                   value={option.source}
@@ -176,13 +187,18 @@ export const RedemptionPart = ({
                     )}
                   </Flex>
                 </Radio>
-                {on ? <div className={styles.optionBody}>{details(option)}</div> : null}
+                {on ? (
+                  <div className={styles.optionBody}>{details(option)}</div>
+                ) : null}
               </div>
             </OptionWave>
           );
         })}
         <OptionWave disabled={selected === null || busy}>
-          <div className={styles.option} data-selected={selected === null || undefined}>
+          <div
+            className={styles.option}
+            data-selected={selected === null || undefined}
+          >
             <Radio value={NONE} className={styles.radio}>
               {t('loyalty-source-none')}
             </Radio>
@@ -277,7 +293,9 @@ const RedemptionDetails = ({
                 points: points(redemption.points),
                 amount: money(redemption.discount),
               })
-            : t('loyalty-redeemed-amount', { amount: money(redemption.discount) })}
+            : t('loyalty-redeemed-amount', {
+                amount: money(redemption.discount),
+              })}
         </span>
         <Typography.Text type="secondary" className={styles.note}>
           {maximum ? `${t('loyalty-redeemed-maximum')} ` : null}
@@ -384,7 +402,9 @@ const AmountField = ({
     <Flex vertical gap={8} className={styles.amount}>
       <FloatingLabelInput
         label={t(
-          option.source === 'POINTS' ? 'loyalty-amount-points' : 'loyalty-amount-money'
+          option.source === 'POINTS'
+            ? 'loyalty-amount-points'
+            : 'loyalty-amount-money'
         )}
         value={draft}
         inputMode={option.source === 'POINTS' ? 'numeric' : 'decimal'}
@@ -433,7 +453,12 @@ const LinkButton = ({
 }) => {
   const { styles } = useStyles();
   return (
-    <button type="button" className={styles.link} onClick={onClick} disabled={disabled}>
+    <button
+      type="button"
+      className={styles.link}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   );

@@ -83,9 +83,7 @@ export interface RuntimePageContext<
   pageType: TPageType;
   request: SDKRequestContext;
   routeParams: Readonly<Record<string, string | undefined>>;
-  searchParams: Readonly<
-    Record<string, string | string[] | undefined>
-  >;
+  searchParams: Readonly<Record<string, string | string[] | undefined>>;
   services: RuntimePageServices;
 }
 
@@ -190,11 +188,8 @@ type RuntimePageModuleMap = {
   [TKey in PageType]: () => Promise<RuntimePageModule<TKey>>;
 };
 
-export function defineRuntimePages<
-  const TModules extends RuntimePageModuleMap,
->(
-  modules: TModules &
-    Record<Exclude<keyof TModules, PageType>, never>
+export function defineRuntimePages<const TModules extends RuntimePageModuleMap>(
+  modules: TModules & Record<Exclude<keyof TModules, PageType>, never>
 ): TModules;
 ```
 
@@ -280,16 +275,16 @@ query, mapping, metadata, and template failures propagate unchanged; only a
 successfully imported value that violates the registry contract becomes an
 invariant error.
 
-| Situation | Behavior |
-| --- | --- |
-| Registry key is missing | Throw `RuntimeInvariantError` |
-| Module has no valid default definition | Throw `RuntimeInvariantError` |
-| Definition page type differs from registry key | Throw `RuntimeInvariantError` |
-| Dynamic import, query, mapping, metadata, or template load fails | Propagate the error |
-| Renderable `loadData()` returns `not-found` | Call Next `notFound()` |
-| Route resolves directly to `404` | Call Next `notFound()` without loading a renderable definition |
-| Optional `generateMetadata` is absent | Return an empty metadata object |
-| 404 definition fails | Propagate to the global error boundary |
+| Situation                                                        | Behavior                                                       |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| Registry key is missing                                          | Throw `RuntimeInvariantError`                                  |
+| Module has no valid default definition                           | Throw `RuntimeInvariantError`                                  |
+| Definition page type differs from registry key                   | Throw `RuntimeInvariantError`                                  |
+| Dynamic import, query, mapping, metadata, or template load fails | Propagate the error                                            |
+| Renderable `loadData()` returns `not-found`                      | Call Next `notFound()`                                         |
+| Route resolves directly to `404`                                 | Call Next `notFound()` without loading a renderable definition |
+| Optional `generateMetadata` is absent                            | Return an empty metadata object                                |
+| 404 definition fails                                             | Propagate to the global error boundary                         |
 
 `loadTemplate()` never returns `null`. A missing template is a programming
 error, not a user-facing missing entity.
@@ -377,15 +372,9 @@ resolve reserved route
 ```
 
 ```tsx
-const content = (
-  <Builder template={template} data={data} pageType={pageType} />
-);
+const content = <Builder template={template} data={data} pageType={pageType} />;
 
-return Provider ? (
-  <Provider data={data}>{content}</Provider>
-) : (
-  content
-);
+return Provider ? <Provider data={data}>{content}</Provider> : content;
 ```
 
 ## 8. Theme-owned GraphQL documents
@@ -444,15 +433,12 @@ Each queried page definition:
 5. carries typed fragment references required by client consumers.
 
 ```ts
-const preloaded = await context.services.loadQuery(
-  ProductPageQueryDocument,
-  {
-    handle: context.routeParams.handle!,
-    reviewsFirst: PRODUCT_REVIEWS_PAGE_SIZE,
-    reviewsAfter: null,
-    reviewsSort: PRODUCT_REVIEWS_DEFAULT_SORT,
-  }
-);
+const preloaded = await context.services.loadQuery(ProductPageQueryDocument, {
+  handle: context.routeParams.handle!,
+  reviewsFirst: PRODUCT_REVIEWS_PAGE_SIZE,
+  reviewsAfter: null,
+  reviewsSort: PRODUCT_REVIEWS_DEFAULT_SORT,
+});
 
 if (!preloaded.data.product) {
   return { status: 'not-found' };
@@ -486,9 +472,7 @@ Pages that need no query explicitly return ready theme-owned data such as
 The SDK provides an infrastructure-only client component:
 
 ```tsx
-<ApolloCacheHydrator
-  state={data.hydration.state}
->
+<ApolloCacheHydrator state={data.hydration.state}>
   {children}
 </ApolloCacheHydrator>
 ```
@@ -523,9 +507,7 @@ Theme providers apply hydration once around every connection consumer:
 ```tsx
 function ProductPageProvider({ data, children }) {
   return (
-    <ApolloCacheHydrator
-      state={data.hydration.state}
-    >
+    <ApolloCacheHydrator state={data.hydration.state}>
       {children}
     </ApolloCacheHydrator>
   );
@@ -565,12 +547,12 @@ src/graphql/pagination/
 
 Mappings:
 
-| Descriptor | Theme operation |
-| --- | --- |
-| `CategoryPagination` | `CategoryPaginationQueryDocument` |
-| `CollectionPagination` | `CollectionPaginationQueryDocument` |
+| Descriptor                 | Theme operation                         |
+| -------------------------- | --------------------------------------- |
+| `CategoryPagination`       | `CategoryPaginationQueryDocument`       |
+| `CollectionPagination`     | `CollectionPaginationQueryDocument`     |
 | `ProductReviewsPagination` | `ProductReviewsPaginationQueryDocument` |
-| `SearchPagination` | `SearchPaginationQueryDocument` |
+| `SearchPagination`         | `SearchPaginationQueryDocument`         |
 
 ### One lifecycle per connection
 
@@ -768,9 +750,7 @@ export interface PaginationQueryDescriptor<
 > {
   query: TypedDocumentNode<TData, TVariables>;
   getConnection(data: TData): TConnection | null | undefined;
-  getNextVariables(
-    context: PaginationContext<TVariables>
-  ): TVariables;
+  getNextVariables(context: PaginationContext<TVariables>): TVariables;
 }
 
 export function usePaginationQuery<
@@ -778,11 +758,7 @@ export function usePaginationQuery<
   TVariables extends OperationVariables,
   TConnection extends CursorConnection,
 >(
-  descriptor: PaginationQueryDescriptor<
-    TData,
-    TVariables,
-    TConnection
-  >,
+  descriptor: PaginationQueryDescriptor<TData, TVariables, TConnection>,
   variables: TVariables
 ) {
   // Generic useQuery/fetchMore lifecycle only.

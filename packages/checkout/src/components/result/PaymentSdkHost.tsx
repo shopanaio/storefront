@@ -23,7 +23,10 @@ export const PaymentSdkHost = ({
   const loader = useMemo(
     () =>
       action.sdk
-        ? moduleRegistry.resolve<PaymentSdkModuleApi>(ProviderModuleType.PaymentSdk, action.sdk)
+        ? moduleRegistry.resolve<PaymentSdkModuleApi>(
+            ProviderModuleType.PaymentSdk,
+            action.sdk
+          )
         : undefined,
     [action.sdk]
   );
@@ -40,7 +43,8 @@ export const PaymentSdkHost = ({
         if (!cancelled) setApi(module);
       })
       .catch(() => {
-        if (!cancelled) setPhase({ name: 'rejected', code: CLIENT_SDK_UNAVAILABLE_CODE });
+        if (!cancelled)
+          setPhase({ name: 'rejected', code: CLIENT_SDK_UNAVAILABLE_CODE });
       });
     return () => {
       cancelled = true;
@@ -49,5 +53,7 @@ export const PaymentSdkHost = ({
 
   if (!api) return null;
   const { Component } = api;
-  return <Component action={action} onComplete={onSettled} onCancel={onSettled} />;
+  return (
+    <Component action={action} onComplete={onSettled} onCancel={onSettled} />
+  );
 };

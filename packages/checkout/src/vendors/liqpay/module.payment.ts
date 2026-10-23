@@ -1,7 +1,4 @@
-import {
-  ProviderModuleApi,
-  ProviderModuleType,
-} from '#checkout/vendors/types';
+import { ProviderModuleApi, ProviderModuleType } from '#checkout/vendors/types';
 import { createPaymentProvider } from '#checkout/vendors/shared/createPaymentProvider';
 import { loadLiqPayMessages } from './i18n';
 import { LiqPayLogo } from './components/Logo';

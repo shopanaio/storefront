@@ -10,7 +10,10 @@ export default defineConfig({
   resolve: {
     // The screens are tested against the sources of the shared primitives, not their build.
     alias: {
-      '@shopana/storefront-ui': path.join(packageDir, '../storefront-ui/src/index.ts'),
+      '@shopana/storefront-ui': path.join(
+        packageDir,
+        '../storefront-ui/src/index.ts'
+      ),
     },
   },
   test: {

@@ -45,7 +45,9 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
   const balances = [
     withPoints ? points(account.availablePoints) : null,
     storeCredit
-      ? t('loyalty-store-credit-balance', { amount: money(storeCredit.availableAmount) })
+      ? t('loyalty-store-credit-balance', {
+          amount: money(storeCredit.availableAmount),
+        })
       : null,
   ].filter((part): part is string => part !== null);
   const empty =
@@ -130,7 +132,11 @@ export const LoyaltyHeader = ({ account }: LoyaltyHeaderProps) => {
             {tier.progress}
           </Typography.Text>
           <Tooltip title={t('loyalty-progress-hint')}>
-            <button type="button" className={styles.info} aria-label={t('loyalty-progress-hint')}>
+            <button
+              type="button"
+              className={styles.info}
+              aria-label={t('loyalty-progress-hint')}
+            >
               <TbInfoCircle size={14} aria-hidden="true" />
             </button>
           </Tooltip>
@@ -165,7 +171,12 @@ interface StatusPillProps {
  * A change of the balance ahead, as a pill: what expires (a warning) and what is still coming
  * (a gain). The amount leads; the tooltip says what it means.
  */
-const StatusPill = ({ tone, amount, text, hint }: Omit<StatusPillProps, 'id'>) => {
+const StatusPill = ({
+  tone,
+  amount,
+  text,
+  hint,
+}: Omit<StatusPillProps, 'id'>) => {
   const { styles } = useStyles();
   // The tones of the checkout banners: a warning for what expires, a gain for what is coming.
   const { accent } = useBannerTone(tone === 'expiring' ? 'warning' : 'success');

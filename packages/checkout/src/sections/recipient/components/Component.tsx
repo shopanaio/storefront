@@ -27,9 +27,17 @@ export interface RecipientSectionViewProps {
   holdInvalid?: (held: boolean) => void;
 }
 
-const EMPTY_RECIPIENT = { firstName: '', lastName: '', middleName: '', phone: '' };
+const EMPTY_RECIPIENT = {
+  firstName: '',
+  lastName: '',
+  middleName: '',
+  phone: '',
+};
 
-export const RecipientSectionView = ({ data, holdInvalid }: RecipientSectionViewProps) => {
+export const RecipientSectionView = ({
+  data,
+  holdInvalid,
+}: RecipientSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
   const { saveDeliveryRecipient } = useCheckoutApi();
@@ -52,12 +60,16 @@ export const RecipientSectionView = ({ data, holdInvalid }: RecipientSectionView
   useEffect(() => {
     useCheckoutStore
       .getState()
-      .setSectionRequired(SectionId.Recipient, Boolean(data) && !isRecipientSelf);
+      .setSectionRequired(
+        SectionId.Recipient,
+        Boolean(data) && !isRecipientSelf
+      );
   }, [data, isRecipientSelf]);
 
   // Another person receives the order, but the checkout has no recipient yet: the order must
   // not go to the customer meanwhile.
-  const missingRecipient = Boolean(data) && !isRecipientSelf && data?.self === true;
+  const missingRecipient =
+    Boolean(data) && !isRecipientSelf && data?.self === true;
   useEffect(() => {
     holdInvalid?.(missingRecipient);
   }, [missingRecipient, holdInvalid]);
@@ -77,7 +89,10 @@ export const RecipientSectionView = ({ data, holdInvalid }: RecipientSectionView
 
   /** The recipient the buyer saved last: groups that lose it on a regrouping get it back. */
   const [knownRecipient, setKnownRecipient] = useState(savedRecipient);
-  if (savedRecipient && JSON.stringify(savedRecipient) !== JSON.stringify(knownRecipient)) {
+  if (
+    savedRecipient &&
+    JSON.stringify(savedRecipient) !== JSON.stringify(knownRecipient)
+  ) {
     setKnownRecipient(savedRecipient);
   }
 
@@ -87,12 +102,19 @@ export const RecipientSectionView = ({ data, holdInvalid }: RecipientSectionView
    * the section invalid until the buyer fills it. A save of the buyer waiting in the queue
    * replaces this one.
    */
-  const missingGroups = !isRecipientSelf ? (data?.groupIdsWithoutRecipient ?? []).join(',') : '';
+  const missingGroups = !isRecipientSelf
+    ? (data?.groupIdsWithoutRecipient ?? []).join(',')
+    : '';
   useEffect(() => {
     if (!missingGroups) return;
-    saveDeliveryRecipient(knownRecipient ?? EMPTY_RECIPIENT).catch((error: unknown) => {
-      console.error('Failed to add the recipient to the delivery groups:', error);
-    });
+    saveDeliveryRecipient(knownRecipient ?? EMPTY_RECIPIENT).catch(
+      (error: unknown) => {
+        console.error(
+          'Failed to add the recipient to the delivery groups:',
+          error
+        );
+      }
+    );
     // Runs for a new set of groups without the recipient, not for every recipient change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [missingGroups, saveDeliveryRecipient]);

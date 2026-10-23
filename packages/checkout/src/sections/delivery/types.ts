@@ -68,4 +68,3 @@ export type DeliveryProviderMethodsRecord = Record<
   DeliveryProviderCode,
   DeliveryMethod[]
 >;
-

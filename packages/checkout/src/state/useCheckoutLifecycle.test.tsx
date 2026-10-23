@@ -4,7 +4,11 @@ import { useCheckoutLifecycle } from '#checkout/state/useCheckoutLifecycle';
 import { useRenewalStore } from '#checkout/state/renewal';
 import { usePlacementStore } from '#checkout/state/placement/placementStore';
 import { attemptStorageKey } from '#checkout/state/placement/attemptJournal';
-import { CheckoutEvent, emitCheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
+import {
+  CheckoutEvent,
+  emitCheckoutEvent,
+  onCheckoutEvent,
+} from '#checkout/state/checkoutBus';
 
 const mocks = vi.hoisted(() => ({
   createCart: vi.fn(),
@@ -12,9 +16,12 @@ const mocks = vi.hoisted(() => ({
   checkout: null as Record<string, unknown> | null,
 }));
 
-vi.mock('@shopana/storefront-sdk/modules/cart/react/hooks/useCreateCart', () => ({
-  default: () => ({ createCart: mocks.createCart }),
-}));
+vi.mock(
+  '@shopana/storefront-sdk/modules/cart/react/hooks/useCreateCart',
+  () => ({
+    default: () => ({ createCart: mocks.createCart }),
+  })
+);
 vi.mock('#checkout/context/CheckoutDataContext', () => ({
   useCheckoutData: () => ({ checkout: mocks.checkout, refetch: mocks.refetch }),
 }));
@@ -48,7 +55,10 @@ describe('useCheckoutLifecycle', () => {
   });
 
   it('replaces a checkout the server reports expired', async () => {
-    mocks.checkout = checkout({ status: 'EXPIRED', expiresAt: new Date(NOW - 1) });
+    mocks.checkout = checkout({
+      status: 'EXPIRED',
+      expiresAt: new Date(NOW - 1),
+    });
     renderHook(() => useCheckoutLifecycle('checkout-1'));
     await act(async () => undefined);
     expect(mocks.createCart).toHaveBeenCalledTimes(1);
@@ -75,7 +85,9 @@ describe('useCheckoutLifecycle', () => {
     mocks.checkout = checkout();
     renderHook(() => useCheckoutLifecycle('checkout-1'));
     await act(async () => {
-      await emitCheckoutEvent(CheckoutEvent.CheckoutClosed, { code: 'CHECKOUT_EXPIRED' });
+      await emitCheckoutEvent(CheckoutEvent.CheckoutClosed, {
+        code: 'CHECKOUT_EXPIRED',
+      });
     });
     expect(mocks.createCart).toHaveBeenCalledTimes(1);
   });
@@ -99,7 +111,10 @@ describe('useCheckoutLifecycle', () => {
         updatedAt: NOW,
       })
     );
-    mocks.checkout = checkout({ status: 'EXPIRED', expiresAt: new Date(NOW - 1) });
+    mocks.checkout = checkout({
+      status: 'EXPIRED',
+      expiresAt: new Date(NOW - 1),
+    });
     renderHook(() => useCheckoutLifecycle('checkout-1'));
     await act(async () => undefined);
     expect(mocks.createCart).not.toHaveBeenCalled();

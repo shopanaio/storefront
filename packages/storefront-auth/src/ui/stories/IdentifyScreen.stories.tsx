@@ -16,5 +16,9 @@ export default meta;
 type StoryObject = StoryObj<typeof meta>;
 
 export const Default: StoryObject = {};
-export const CheckoutGuest: StoryObject = { args: { context: 'checkoutGuest' } };
-export const CheckoutRequired: StoryObject = { args: { context: 'checkoutRequired' } };
+export const CheckoutGuest: StoryObject = {
+  args: { context: 'checkoutGuest' },
+};
+export const CheckoutRequired: StoryObject = {
+  args: { context: 'checkoutRequired' },
+};

@@ -77,4 +77,3 @@ export interface ShopConfig {
 export type WeightUnit = ShopConfig['weightUnit'];
 
 export type MeasurementUnit = ShopConfig['measurementUnit'];
-

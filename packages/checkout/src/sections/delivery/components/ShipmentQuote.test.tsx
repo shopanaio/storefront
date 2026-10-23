@@ -7,7 +7,9 @@ import { ShipmentQuote } from './ShipmentQuote';
 
 const uah = (amount: number) => ({ amount, currencyCode: 'UAH' });
 
-const shipment = (shipping: Checkout.DeliveryGroupShipping): QuotedShipment => ({
+const shipment = (
+  shipping: Checkout.DeliveryGroupShipping
+): QuotedShipment => ({
   shipping,
   estimatedMinDeliveryAt: null,
   estimatedMaxDeliveryAt: null,
@@ -23,7 +25,8 @@ const view = (shipments: QuotedShipment[]) =>
           shipping: 'Доставка',
           'shipping-free': 'Безкоштовно',
           'shipping-carrier-rates': 'За тарифами перевізника',
-          'shipping-amount-and-carrier-rates': '{amount} + за тарифами перевізника',
+          'shipping-amount-and-carrier-rates':
+            '{amount} + за тарифами перевізника',
           'shipping-free-because': 'Безкоштовна доставка: {reasons}',
           'shipping-free-reason-tier': 'рівень «{title}»',
           'shipping-free-reason-reward': 'нагорода «{title}»',
@@ -51,7 +54,9 @@ describe('ShipmentQuote', () => {
 
     expect(struck()?.textContent).toMatch(/80/);
     expect(screen.getByText(/Безкоштовно/)).toBeInTheDocument();
-    expect(screen.getByText('Безкоштовна доставка: рівень «Gold»')).toBeInTheDocument();
+    expect(
+      screen.getByText('Безкоштовна доставка: рівень «Gold»')
+    ).toBeInTheDocument();
   });
 
   it('shows a carrier charge free shipping pays as free, with the carrier rates struck', () => {
@@ -61,7 +66,11 @@ describe('ShipmentQuote', () => {
         originalPrice: null,
         payer: 'MERCHANT',
         total: uah(0),
-        freeShipping: { source: 'LOYALTY_REWARD', title: 'Free delivery', code: null },
+        freeShipping: {
+          source: 'LOYALTY_REWARD',
+          title: 'Free delivery',
+          code: null,
+        },
       }),
     ]);
 
@@ -79,12 +88,18 @@ describe('ShipmentQuote', () => {
         originalPrice: uah(95),
         payer: 'MERCHANT',
         total: uah(0),
-        freeShipping: { source: 'DISCOUNT', title: 'Літо без доставки', code: 'SUMMER' },
+        freeShipping: {
+          source: 'DISCOUNT',
+          title: 'Літо без доставки',
+          code: 'SUMMER',
+        },
       }),
     ]);
 
     expect(struck()?.textContent).toMatch(/95/);
-    expect(screen.getByText('Безкоштовна доставка: Літо без доставки')).toBeInTheDocument();
+    expect(
+      screen.getByText('Безкоштовна доставка: Літо без доставки')
+    ).toBeInTheDocument();
   });
 
   it('keeps the carrier rates when the recipient pays the carrier', () => {

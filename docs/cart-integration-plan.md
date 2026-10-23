@@ -17,6 +17,7 @@
 ## Overview
 
 The Cart module is located in `packages/shopana-storefront-sdk/src/modules/cart`. It is a full-featured cart management solution with support for:
+
 - Framework-agnostic core logic
 - React adapters: hooks, context, providers
 - Next.js-specific SSR loaders
@@ -32,15 +33,18 @@ The Cart module is located in `packages/shopana-storefront-sdk/src/modules/cart`
 **Location:** `/src/providers/cart/`
 
 **Files:**
+
 - `cart-context.tsx` - old cart context
 - `cart-provider.shopana.tsx` - Shopana provider
 - `cart-provider.shopify.tsx` - Shopify provider
 - `index.ts` - provider selection through `cmsPick`
 
 **Hooks in use:**
+
 - `/src/hooks/cart/` - existing cart hooks
 
 **Problems with the current implementation:**
+
 - Duplicated logic between providers
 - Tight coupling to application Relay fragments
 - No single source of truth
@@ -126,6 +130,7 @@ interface CartStore {
 #### 2. `CartProvider`
 
 React provider that:
+
 - Initializes the store
 - Loads the cart from cookies on mount
 - Manages the cart lifecycle
@@ -135,6 +140,7 @@ React provider that:
 #### 3. Hooks
 
 Hooks for cart operations:
+
 - `useCart()` - get current cart state
 - `useAddItemToCart()` - add products
 - `useRemoveItemFromCart()` - remove products
@@ -348,6 +354,7 @@ Hooks for cart operations:
 **Goal:** adapt all cart UI components.
 
 **Tasks:**
+
 - Inventory components: `CartButton`, `CartIcon`, `CartDrawer`, `CartSheet`, `CartItem`, `CartSummary`, `CheckoutButton`, `MiniCart`
 - Update each component to read cart data from the SDK
 - Update add-to-cart forms to use `useAddItemToCart`
@@ -379,6 +386,7 @@ export function CartButton() {
 **Goal:** cover the new implementation with tests.
 
 **Tasks:**
+
 - Create SDK mocks
 - Update existing test expectations
 - Add integration tests for the cart provider and add-to-cart flow
@@ -388,6 +396,7 @@ export function CartButton() {
 **Goal:** improve performance and UX.
 
 **Tasks:**
+
 - Implement optimistic updates for mutations
 - Add error handling
 - Add analytics wrappers for cart actions
@@ -397,15 +406,15 @@ export function CartButton() {
 
 ### Old API to New API Mapping
 
-| Old API | New API (SDK) | Notes |
-| --- | --- | --- |
-| `useCartContext()` | `useCartContext()` | Compatible, but with new types |
-| `useCart()` | `useCart()` | Returns `{ cart, loading, loaded, error }` |
-| `useAddToCart()` | `useAddItemToCart()` | New name, similar API |
-| `useRemoveFromCart()` | `useRemoveItemFromCart()` | New name |
-| `useUpdateQuantity()` | `useUpdateCartLineQuantity()` | More explicit name |
-| `useClearCart()` | `useClearCart()` | Compatible |
-| `cartKey` fragment | `cart` model | SDK uses data mapping |
+| Old API               | New API (SDK)                 | Notes                                      |
+| --------------------- | ----------------------------- | ------------------------------------------ |
+| `useCartContext()`    | `useCartContext()`            | Compatible, but with new types             |
+| `useCart()`           | `useCart()`                   | Returns `{ cart, loading, loaded, error }` |
+| `useAddToCart()`      | `useAddItemToCart()`          | New name, similar API                      |
+| `useRemoveFromCart()` | `useRemoveItemFromCart()`     | New name                                   |
+| `useUpdateQuantity()` | `useUpdateCartLineQuantity()` | More explicit name                         |
+| `useClearCart()`      | `useClearCart()`              | Compatible                                 |
+| `cartKey` fragment    | `cart` model                  | SDK uses data mapping                      |
 
 ### Per-Component Migration Checklist
 
@@ -431,12 +440,14 @@ export function CartButton() {
 ### Unit Tests
 
 Test:
+
 - Cart hooks in isolation
 - Zustand store
 - Data mapping
 - Utilities: `cartId`, `cartMath`
 
 Tools:
+
 - Vitest
 - `@testing-library/react`
 - `@testing-library/react-hooks`
@@ -444,6 +455,7 @@ Tools:
 ### Integration Tests
 
 Test:
+
 - `CartProvider` initialization
 - Cart loading from cookies
 - Add, remove, update, replace, and clear cart flows
@@ -452,6 +464,7 @@ Test:
 ### E2E Tests
 
 Test:
+
 - Add product to cart from product page
 - Add product to cart from listing
 - Open cart drawer
@@ -482,6 +495,7 @@ Test:
 ## Final Result
 
 After the migration:
+
 - The root app uses the SDK Cart module
 - Cart state has one source of truth
 - UI components no longer depend on old cart providers

@@ -15,9 +15,9 @@ describe('ModuleRegistry access', () => {
     });
 
     expect(registry.matchPath('page', '/account')?.requiresSession).toBe(true);
-    expect(registry.matchPath('page', '/account/orders/1')?.requiresSession).toBe(
-      true
-    );
+    expect(
+      registry.matchPath('page', '/account/orders/1')?.requiresSession
+    ).toBe(true);
     expect(
       registry.matchPath('page', '/account/reset-password')?.requiresSession
     ).toBe(false);
@@ -25,9 +25,16 @@ describe('ModuleRegistry access', () => {
 
   it('keeps a module without access open', () => {
     const registry = new ModuleRegistry();
-    registry.register({ type: 'page', slug: 'checkout', path: '/checkout', loader });
+    registry.register({
+      type: 'page',
+      slug: 'checkout',
+      path: '/checkout',
+      loader,
+    });
 
-    expect(registry.matchPath('page', '/checkout')?.requiresSession).toBe(false);
+    expect(registry.matchPath('page', '/checkout')?.requiresSession).toBe(
+      false
+    );
   });
 
   it('refuses a closed module that matches the home page', () => {

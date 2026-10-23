@@ -35,7 +35,9 @@ describe('ImageFan', () => {
 
   it('keeps its proportions at any size', () => {
     const fan = (size: number) => {
-      const { container, unmount } = render(<ImageFan images={images(3)} size={size} />);
+      const { container, unmount } = render(
+        <ImageFan images={images(3)} size={size} />
+      );
       const box = container.firstElementChild as HTMLElement;
       const cards = [...box.children] as HTMLElement[];
       const result = {
@@ -49,7 +51,10 @@ describe('ImageFan', () => {
     const large = fan(100);
     expect(large.width).toBeCloseTo(small.width * 2);
     expect(large.transforms[2]).toBe(
-      small.transforms[2].replace(/(-?[\d.]+)px/g, (_, value) => `${Number(value) * 2}px`)
+      small.transforms[2].replace(
+        /(-?[\d.]+)px/g,
+        (_, value) => `${Number(value) * 2}px`
+      )
     );
   });
 

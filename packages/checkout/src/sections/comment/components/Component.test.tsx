@@ -45,24 +45,34 @@ describe('CommentSectionView', () => {
 
     // A checkout answer still carries the old note.
     rerender(view('Call me'));
-    expect(screen.getByLabelText('Order note')).toHaveValue('Call me before noon');
+    expect(screen.getByLabelText('Order note')).toHaveValue(
+      'Call me before noon'
+    );
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_500);
     });
     expect(mocks.updateCustomerNote).toHaveBeenCalledTimes(2);
-    expect(mocks.updateCustomerNote).toHaveBeenLastCalledWith({ note: 'Call me before noon' });
-    expect(screen.getByLabelText('Order note')).toHaveValue('Call me before noon');
+    expect(mocks.updateCustomerNote).toHaveBeenLastCalledWith({
+      note: 'Call me before noon',
+    });
+    expect(screen.getByLabelText('Order note')).toHaveValue(
+      'Call me before noon'
+    );
   });
 
   it('sends the note being typed at once when the order is placed', () => {
     mocks.updateCustomerNote.mockResolvedValue(undefined);
     render(view('Call me'));
-    fireEvent.change(screen.getByLabelText('Order note'), { target: { value: 'Ring twice' } });
+    fireEvent.change(screen.getByLabelText('Order note'), {
+      target: { value: 'Ring twice' },
+    });
 
     flushPendingInputs();
 
-    expect(mocks.updateCustomerNote).toHaveBeenCalledWith({ note: 'Ring twice' });
+    expect(mocks.updateCustomerNote).toHaveBeenCalledWith({
+      note: 'Ring twice',
+    });
   });
 
   it('cancel closes the field and removes the saved note', () => {

@@ -44,7 +44,9 @@ export function DirectoryNotice({
     );
   }
   if (empty) {
-    return <Typography.Text type="secondary">{t('form.empty')}</Typography.Text>;
+    return (
+      <Typography.Text type="secondary">{t('form.empty')}</Typography.Text>
+    );
   }
   return null;
 }

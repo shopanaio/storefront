@@ -378,9 +378,9 @@ components:
           type: integer
     ApplicationAuthErrorResponse:
       oneOf:
-        - $ref: "#/components/schemas/ApplicationAuthError"
-        - $ref: "#/components/schemas/BetterAuthError"
-        - $ref: "#/components/schemas/OAuthError"
+        - $ref: '#/components/schemas/ApplicationAuthError'
+        - $ref: '#/components/schemas/BetterAuthError'
+        - $ref: '#/components/schemas/OAuthError'
     ApplicationAuthError:
       type: object
       additionalProperties: false
@@ -529,7 +529,7 @@ components:
           type: string
           nullable: true
         user:
-          $ref: "#/components/schemas/ApplicationUser"
+          $ref: '#/components/schemas/ApplicationUser'
     PasswordSignUpRequest:
       type: object
       additionalProperties: false
@@ -821,7 +821,7 @@ components:
               - S256
     OpenIdProviderMetadata:
       allOf:
-        - $ref: "#/components/schemas/AuthorizationServerMetadata"
+        - $ref: '#/components/schemas/AuthorizationServerMetadata'
         - type: object
           required:
             - userinfo_endpoint
@@ -870,9 +870,9 @@ components:
               x:
                 type: string
     User:
-      $ref: "#/components/schemas/ApplicationUser"
+      $ref: '#/components/schemas/ApplicationUser'
     Session:
-      $ref: "#/components/schemas/ApplicationSession"
+      $ref: '#/components/schemas/ApplicationSession'
   parameters:
     HeadlessTransaction:
       name: transaction
@@ -938,13 +938,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/HeadlessStepResult"
+            $ref: '#/components/schemas/HeadlessStepResult'
     HeadlessError:
       description: Headless request failed
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/HeadlessError"
+            $ref: '#/components/schemas/HeadlessError'
     ApplicationAuthError:
       description: Application authentication request failed
       headers:
@@ -954,13 +954,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ApplicationAuthErrorResponse"
+            $ref: '#/components/schemas/ApplicationAuthErrorResponse'
     OAuthError:
       description: OAuth protocol error
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/OAuthError"
+            $ref: '#/components/schemas/OAuthError'
     RateLimitError:
       description: Request rate limit exceeded
       headers:
@@ -971,13 +971,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/OAuthError"
+            $ref: '#/components/schemas/OAuthError'
     InvalidCredentials:
       description: Email or password is invalid
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/OAuthError"
+            $ref: '#/components/schemas/OAuthError'
           example:
             error: invalid_credentials
             error_description: Email or password is invalid
@@ -986,7 +986,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/OAuthError"
+            $ref: '#/components/schemas/OAuthError'
           example:
             error: invalid_signup
             error_description: Account could not be created
@@ -995,7 +995,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/GenericMessageResponse"
+            $ref: '#/components/schemas/GenericMessageResponse'
 security:
   - apiKeyCookie: []
 servers:
@@ -1019,7 +1019,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: token
           in: query
           required: true
@@ -1032,7 +1032,7 @@ paths:
             type: string
             format: uri
       responses:
-        "200":
+        '200':
           description: Email verified
           content:
             application/json:
@@ -1041,21 +1041,21 @@ paths:
                 properties:
                   user:
                     type: object
-                    $ref: "#/components/schemas/ApplicationUser"
+                    $ref: '#/components/schemas/ApplicationUser'
                   status:
                     type: boolean
                     description: Indicates if the email was verified successfully
                 required:
                   - status
                   - user
-        "302":
+        '302':
           description: Redirect to callbackURL when it was supplied
           headers:
             Location:
               schema:
                 type: string
                 format: uri
-        "400":
+        '400':
           content:
             application/json:
               schema:
@@ -1066,7 +1066,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1077,7 +1077,7 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-        "403":
+        '403':
           content:
             application/json:
               schema:
@@ -1086,7 +1086,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -1095,7 +1095,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1104,7 +1104,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1114,7 +1114,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Verify an application user's email
       x-feature-condition: emailVerificationEnabled
   /auth/applications/{applicationId}/reset-password/{token}:
@@ -1126,7 +1126,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: token
           in: path
           required: true
@@ -1140,7 +1140,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
@@ -1149,7 +1149,7 @@ paths:
                 properties:
                   token:
                     type: string
-        "400":
+        '400':
           content:
             application/json:
               schema:
@@ -1160,7 +1160,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1171,7 +1171,7 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-        "403":
+        '403':
           content:
             application/json:
               schema:
@@ -1180,7 +1180,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -1189,7 +1189,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1198,7 +1198,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1216,17 +1216,17 @@ paths:
       security:
         - applicationSessionCookie: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: Active application-scoped sessions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ApplicationSession"
-        "400":
+                  $ref: '#/components/schemas/ApplicationSession'
+        '400':
           content:
             application/json:
               schema:
@@ -1237,7 +1237,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1248,8 +1248,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "403":
+          $ref: '#/components/responses/ApplicationAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -1258,8 +1258,8 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "404":
+          $ref: '#/components/responses/ApplicationAuthError'
+        '404':
           content:
             application/json:
               schema:
@@ -1268,7 +1268,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1277,7 +1277,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1287,7 +1287,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: List the current application user's active sessions
   /auth/applications/{applicationId}/revoke-session:
     post:
@@ -1298,7 +1298,7 @@ paths:
       security:
         - applicationSessionCookie: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         content:
           application/json:
@@ -1313,7 +1313,7 @@ paths:
               additionalProperties: false
         required: true
       responses:
-        "200":
+        '200':
           description: Revocation request processed
           content:
             application/json:
@@ -1325,8 +1325,8 @@ paths:
                     description: Indicates if the session was revoked successfully
                 required:
                   - status
-                $ref: "#/components/schemas/StatusResponse"
-        "400":
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
           content:
             application/json:
               schema:
@@ -1337,7 +1337,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1348,8 +1348,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "403":
+          $ref: '#/components/responses/ApplicationAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -1358,8 +1358,8 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "404":
+          $ref: '#/components/responses/ApplicationAuthError'
+        '404':
           content:
             application/json:
               schema:
@@ -1368,7 +1368,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1377,7 +1377,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1387,7 +1387,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Revoke one session belonging to the current user
   /auth/applications/{applicationId}/sign-out:
     post:
@@ -1398,7 +1398,7 @@ paths:
       security:
         - applicationSessionCookie: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         content:
           application/json:
@@ -1406,7 +1406,7 @@ paths:
               type: object
               properties: {}
       responses:
-        "200":
+        '200':
           description: Signed out and session cookie cleared
           content:
             application/json:
@@ -1417,7 +1417,7 @@ paths:
                     type: boolean
                 required:
                   - success
-        "400":
+        '400':
           content:
             application/json:
               schema:
@@ -1428,7 +1428,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1439,7 +1439,7 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-        "403":
+        '403':
           content:
             application/json:
               schema:
@@ -1448,7 +1448,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -1457,7 +1457,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1466,7 +1466,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1476,7 +1476,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Revoke the current application session
   /auth/applications/{applicationId}/oauth2/authorize:
     get:
@@ -1491,7 +1491,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: response_type
           in: query
           required: true
@@ -1561,7 +1561,7 @@ paths:
               - login consent
               - select_account consent
       responses:
-        "302":
+        '302':
           description: Continue authentication or return the authorization result
           headers:
             Location:
@@ -1570,7 +1570,7 @@ paths:
                 type: string
                 format: uri
               required: true
-        "400":
+        '400':
           description: Invalid request
           content:
             application/json:
@@ -1585,8 +1585,8 @@ paths:
                     type: string
                 required:
                   - error
-          $ref: "#/components/responses/OAuthError"
-        "401":
+          $ref: '#/components/responses/OAuthError'
+        '401':
           content:
             application/json:
               schema:
@@ -1597,7 +1597,7 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-        "403":
+        '403':
           content:
             application/json:
               schema:
@@ -1606,8 +1606,8 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-          $ref: "#/components/responses/OAuthError"
-        "404":
+          $ref: '#/components/responses/OAuthError'
+        '404':
           content:
             application/json:
               schema:
@@ -1616,7 +1616,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1625,8 +1625,8 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
+          $ref: '#/components/responses/RateLimitError'
+        '500':
           content:
             application/json:
               schema:
@@ -1636,7 +1636,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Start an OAuth authorization-code flow
   /auth/applications/{applicationId}/oauth2/consent:
     post:
@@ -1647,7 +1647,7 @@ paths:
       security:
         - applicationSessionCookie: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         content:
           application/json:
@@ -1665,7 +1665,7 @@ paths:
                 - accept
         required: true
       responses:
-        "200":
+        '200':
           description: Consent processed
           content:
             application/json:
@@ -1678,8 +1678,8 @@ paths:
                     description: The URI to redirect to, either with an authorization code or an error
                 required:
                   - redirect_uri
-                $ref: "#/components/schemas/OAuthRedirectResponse"
-        "400":
+                $ref: '#/components/schemas/OAuthRedirectResponse'
+        '400':
           content:
             application/json:
               schema:
@@ -1690,7 +1690,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1701,8 +1701,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "403":
+          $ref: '#/components/responses/ApplicationAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -1711,7 +1711,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -1720,7 +1720,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1729,7 +1729,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1739,7 +1739,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Submit consent for an authenticated application user
       x-internal-flow: true
   /auth/applications/{applicationId}/oauth2/continue:
@@ -1751,7 +1751,7 @@ paths:
       security:
         - applicationSessionCookie: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         content:
           application/json:
@@ -1769,7 +1769,7 @@ paths:
               additionalProperties: false
         required: true
       responses:
-        "200":
+        '200':
           description: Authorization flow continued
           content:
             application/json:
@@ -1782,8 +1782,8 @@ paths:
                     description: The URI to redirect to, either with an authorization code or an error
                 required:
                   - redirect_uri
-                $ref: "#/components/schemas/OAuthRedirectResponse"
-        "400":
+                $ref: '#/components/schemas/OAuthRedirectResponse'
+        '400':
           content:
             application/json:
               schema:
@@ -1794,7 +1794,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -1805,8 +1805,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/ApplicationAuthError"
-        "403":
+          $ref: '#/components/responses/ApplicationAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -1815,7 +1815,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -1824,7 +1824,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1833,7 +1833,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -1843,7 +1843,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Continue a session-bound OAuth flow
       x-internal-flow: true
   /auth/applications/{applicationId}/oauth2/token:
@@ -1859,7 +1859,7 @@ paths:
         - {}
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         required: true
         content:
@@ -1903,9 +1903,9 @@ paths:
                 - grant_type
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/OAuthTokenRequest"
+              $ref: '#/components/schemas/OAuthTokenRequest'
       responses:
-        "200":
+        '200':
           description: Token response
           content:
             application/json:
@@ -1936,13 +1936,13 @@ paths:
                   - access_token
                   - token_type
                   - expires_in
-                $ref: "#/components/schemas/OAuthTokenResponse"
+                $ref: '#/components/schemas/OAuthTokenResponse'
           headers:
             Cache-Control:
               schema:
                 type: string
                 example: no-store
-        "400":
+        '400':
           description: Invalid request or error response
           content:
             application/json:
@@ -1957,8 +1957,8 @@ paths:
                     type: string
                 required:
                   - error
-          $ref: "#/components/responses/OAuthError"
-        "401":
+          $ref: '#/components/responses/OAuthError'
+        '401':
           content:
             application/json:
               schema:
@@ -1969,8 +1969,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/OAuthError"
-        "403":
+          $ref: '#/components/responses/OAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -1979,7 +1979,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -1988,7 +1988,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -1997,8 +1997,8 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-          $ref: "#/components/responses/RateLimitError"
-        "500":
+          $ref: '#/components/responses/RateLimitError'
+        '500':
           content:
             application/json:
               schema:
@@ -2008,7 +2008,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Exchange an authorization code or refresh token
   /auth/applications/{applicationId}/oauth2/introspect:
     post:
@@ -2020,7 +2020,7 @@ paths:
         - oauthClientBasic: []
         - {}
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         required: true
         content:
@@ -2050,9 +2050,9 @@ paths:
                 - token
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/OAuthTokenInspectionRequest"
+              $ref: '#/components/schemas/OAuthTokenInspectionRequest'
       responses:
-        "200":
+        '200':
           description: RFC 7662 token state; inactive responses expose no internal reason.
           content:
             application/json:
@@ -2097,8 +2097,8 @@ paths:
                     description: JWT ID
                 required:
                   - active
-                $ref: "#/components/schemas/OAuthIntrospectionResponse"
-        "400":
+                $ref: '#/components/schemas/OAuthIntrospectionResponse'
+        '400':
           description: Invalid request or error response
           content:
             application/json:
@@ -2113,8 +2113,8 @@ paths:
                     type: string
                 required:
                   - error
-          $ref: "#/components/responses/OAuthError"
-        "401":
+          $ref: '#/components/responses/OAuthError'
+        '401':
           content:
             application/json:
               schema:
@@ -2125,8 +2125,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/OAuthError"
-        "403":
+          $ref: '#/components/responses/OAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -2135,7 +2135,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -2144,7 +2144,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -2153,7 +2153,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -2163,7 +2163,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Introspect an access or refresh token
   /auth/applications/{applicationId}/oauth2/revoke:
     post:
@@ -2175,7 +2175,7 @@ paths:
         - oauthClientBasic: []
         - {}
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       requestBody:
         required: true
         content:
@@ -2202,16 +2202,16 @@ paths:
                 - token
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/OAuthTokenInspectionRequest"
+              $ref: '#/components/schemas/OAuthTokenInspectionRequest'
       responses:
-        "200":
+        '200':
           description: Revocation accepted; body is empty.
           content:
             application/json:
               schema:
                 type: object
                 description: Empty object on success
-        "400":
+        '400':
           description: Invalid request or error response
           content:
             application/json:
@@ -2226,8 +2226,8 @@ paths:
                     type: string
                 required:
                   - error
-          $ref: "#/components/responses/OAuthError"
-        "401":
+          $ref: '#/components/responses/OAuthError'
+        '401':
           content:
             application/json:
               schema:
@@ -2238,8 +2238,8 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-          $ref: "#/components/responses/OAuthError"
-        "403":
+          $ref: '#/components/responses/OAuthError'
+        '403':
           content:
             application/json:
               schema:
@@ -2248,7 +2248,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -2257,7 +2257,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -2266,7 +2266,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -2276,19 +2276,20 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Revoke an access or refresh token
   /auth/applications/{applicationId}/oauth2/end-session:
     get:
       tags:
         - OAuth
-      description: RP-Initiated Logout endpoint. Allows clients to notify the OP that the End-User has
+      description:
+        RP-Initiated Logout endpoint. Allows clients to notify the OP that the End-User has
         logged out.
       operationId: endApplicationOpenIdSession
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: id_token_hint
           in: query
           required: true
@@ -2311,7 +2312,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Logout completed
           content:
             application/json:
@@ -2325,14 +2326,14 @@ paths:
                   message:
                     type: string
                     description: Success message
-        "302":
+        '302':
           description: Redirect to the registered post-logout URI
           headers:
             Location:
               schema:
                 type: string
                 format: uri
-        "400":
+        '400':
           content:
             application/json:
               schema:
@@ -2343,7 +2344,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -2354,7 +2355,7 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-        "403":
+        '403':
           content:
             application/json:
               schema:
@@ -2363,7 +2364,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -2372,7 +2373,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -2381,7 +2382,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -2391,7 +2392,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Perform RP-initiated logout
   /auth/applications/{applicationId}/jwks:
     get:
@@ -2402,9 +2403,9 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: JSON Web Key Set
           content:
             application/json:
@@ -2458,8 +2459,8 @@ paths:
                         - alg
                 required:
                   - keys
-                $ref: "#/components/schemas/JsonWebKeySet"
-        "400":
+                $ref: '#/components/schemas/JsonWebKeySet'
+        '400':
           content:
             application/json:
               schema:
@@ -2470,7 +2471,7 @@ paths:
                 required:
                   - message
           description: Bad Request. Usually due to missing parameters, or invalid parameters.
-        "401":
+        '401':
           content:
             application/json:
               schema:
@@ -2481,7 +2482,7 @@ paths:
                 required:
                   - message
           description: Unauthorized. Due to missing or invalid authentication.
-        "403":
+        '403':
           content:
             application/json:
               schema:
@@ -2490,7 +2491,7 @@ paths:
                   message:
                     type: string
           description: Forbidden. You do not have permission to access this resource or to perform this action.
-        "404":
+        '404':
           content:
             application/json:
               schema:
@@ -2499,7 +2500,7 @@ paths:
                   message:
                     type: string
           description: Not Found. The requested resource was not found.
-        "429":
+        '429':
           content:
             application/json:
               schema:
@@ -2508,7 +2509,7 @@ paths:
                   message:
                     type: string
           description: Too Many Requests. You have exceeded the rate limit. Try again later.
-        "500":
+        '500':
           content:
             application/json:
               schema:
@@ -2518,7 +2519,7 @@ paths:
                     type: string
           description: Internal Server Error. This is a problem with the server that you cannot fix.
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
       summary: Get application public signing keys
   /.well-known/oauth-authorization-server/auth/applications/{applicationId}:
     get:
@@ -2527,16 +2528,16 @@ paths:
       operationId: getApplicationOAuthAuthorizationServerMetadata
       summary: Get RFC 8414 authorization-server metadata
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: OAuth authorization-server metadata
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthorizationServerMetadata"
+                $ref: '#/components/schemas/AuthorizationServerMetadata'
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
   /auth/applications/{applicationId}/.well-known/oauth-authorization-server:
     get:
       tags:
@@ -2545,16 +2546,16 @@ paths:
       summary: Get issuer-relative authorization-server metadata
       description: The canonical RFC 8414 external URL is the root well-known path above.
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: OAuth authorization-server metadata
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthorizationServerMetadata"
+                $ref: '#/components/schemas/AuthorizationServerMetadata'
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
   /auth/applications/{applicationId}/.well-known/openid-configuration:
     get:
       tags:
@@ -2562,16 +2563,16 @@ paths:
       operationId: getApplicationOpenIdConfiguration
       summary: Get OpenID Provider metadata
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: OpenID Provider metadata
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OpenIdProviderMetadata"
+                $ref: '#/components/schemas/OpenIdProviderMetadata'
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
   /auth/applications/{applicationId}/oauth2/userinfo:
     get:
       tags:
@@ -2581,20 +2582,20 @@ paths:
       security:
         - accessToken: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: Claims allowed by the granted scopes
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OpenIdUserInfo"
-        "401":
-          $ref: "#/components/responses/OAuthError"
-        "403":
-          $ref: "#/components/responses/OAuthError"
+                $ref: '#/components/schemas/OpenIdUserInfo'
+        '401':
+          $ref: '#/components/responses/OAuthError'
+        '403':
+          $ref: '#/components/responses/OAuthError'
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
     post:
       tags:
         - OAuth
@@ -2603,20 +2604,20 @@ paths:
       security:
         - accessToken: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
       responses:
-        "200":
+        '200':
           description: Claims allowed by the granted scopes
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OpenIdUserInfo"
-        "401":
-          $ref: "#/components/responses/OAuthError"
-        "403":
-          $ref: "#/components/responses/OAuthError"
+                $ref: '#/components/schemas/OpenIdUserInfo'
+        '401':
+          $ref: '#/components/responses/OAuthError'
+        '403':
+          $ref: '#/components/responses/OAuthError'
         default:
-          $ref: "#/components/responses/ApplicationAuthError"
+          $ref: '#/components/responses/ApplicationAuthError'
   /auth/applications/{applicationId}/headless/v1/configuration:
     get:
       tags:
@@ -2630,11 +2631,11 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       responses:
-        "200":
+        '200':
           description: Effective configuration
           headers:
             ETag:
@@ -2643,13 +2644,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeadlessConfiguration"
-        "304":
+                $ref: '#/components/schemas/HeadlessConfiguration'
+        '304':
           description: Configuration revision unchanged
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions:
     post:
       tags:
@@ -2663,30 +2664,30 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessTransactionStartRequest"
+              $ref: '#/components/schemas/HeadlessTransactionStartRequest'
       responses:
-        "201":
+        '201':
           description: Transaction created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeadlessTransactionStarted"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
+                $ref: '#/components/schemas/HeadlessTransactionStarted'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/sign-in:
     post:
       tags:
@@ -2697,33 +2698,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessPasswordSignInRequest"
+              $ref: '#/components/schemas/HeadlessPasswordSignInRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/password/sign-up:
     post:
       tags:
@@ -2734,33 +2735,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessPasswordSignUpRequest"
+              $ref: '#/components/schemas/HeadlessPasswordSignUpRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-otp/send:
     post:
       tags:
@@ -2771,33 +2772,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessEmailOtpSendRequest"
+              $ref: '#/components/schemas/HeadlessEmailOtpSendRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/email-otp/verify:
     post:
       tags:
@@ -2808,33 +2809,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessEmailOtpVerifyRequest"
+              $ref: '#/components/schemas/HeadlessEmailOtpVerifyRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/phone-otp/send:
     post:
       tags:
@@ -2845,33 +2846,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessPhoneOtpSendRequest"
+              $ref: '#/components/schemas/HeadlessPhoneOtpSendRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/phone-otp/verify:
     post:
       tags:
@@ -2882,33 +2883,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessPhoneOtpVerifyRequest"
+              $ref: '#/components/schemas/HeadlessPhoneOtpVerifyRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/transactions/{transaction}/social/start:
     post:
       tags:
@@ -2919,33 +2920,33 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessSocialStartRequest"
+              $ref: '#/components/schemas/HeadlessSocialStartRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/social/launch:
     get:
       tags:
@@ -2956,14 +2957,14 @@ paths:
         Opened by the end-user browser. Consumes the one-time ticket and the
         transaction, then redirects to the provider. A reused ticket is rejected.
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: ticket
           in: query
           required: true
           schema:
             type: string
       responses:
-        "303":
+        '303':
           description: Redirect to the social provider
         default:
           description: HTML error page
@@ -2977,14 +2978,14 @@ paths:
         Redirects the browser to the transaction `redirect_uri` with `error`
         (`access_denied`, `account_not_linked` or `server_error`), `state` and `iss`.
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: ref
           in: query
           required: true
           schema:
             type: string
       responses:
-        "303":
+        '303':
           description: Redirect to the client redirect URI
         default:
           description: HTML error page
@@ -3002,31 +3003,31 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessPasswordForgotRequest"
+              $ref: '#/components/schemas/HeadlessPasswordForgotRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/password/reset:
     post:
       tags:
@@ -3040,17 +3041,17 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessPasswordResetRequest"
+              $ref: '#/components/schemas/HeadlessPasswordResetRequest'
       responses:
-        "200":
+        '200':
           description: Password set
           content:
             application/json:
@@ -3064,16 +3065,16 @@ paths:
                     type: string
                     enum:
                       - password_reset
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/password/reset-link:
     get:
       tags:
@@ -3086,14 +3087,14 @@ paths:
         signed `ref` outlives the reset token.
       x-feature-condition: passwordResetAllowed
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: ref
           in: query
           required: true
           schema:
             type: string
       responses:
-        "303":
+        '303':
           description: Redirect to the storefront page
         default:
           description: HTML error page
@@ -3111,31 +3112,31 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessTransaction"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessTransaction'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessEmailVerificationResendRequest"
+              $ref: '#/components/schemas/HeadlessEmailVerificationResendRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/email-verification/link:
     get:
       tags:
@@ -3150,7 +3151,7 @@ paths:
         counts as spent). The signed `ref` outlives the verification token.
       x-feature-condition: emailVerificationEnabled
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: ref
           in: query
           required: true
@@ -3162,7 +3163,7 @@ paths:
           schema:
             type: string
       responses:
-        "303":
+        '303':
           description: Redirect to the storefront page
         default:
           description: HTML error page
@@ -3175,21 +3176,21 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserAccessToken"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserAccessToken'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       responses:
-        "200":
+        '200':
           description: Connections
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeadlessAccountConnections"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+                $ref: '#/components/schemas/HeadlessAccountConnections'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/account/connections/link:
     post:
       tags:
@@ -3204,31 +3205,31 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserAccessToken"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserAccessToken'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessAccountLinkRequest"
+              $ref: '#/components/schemas/HeadlessAccountLinkRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/HeadlessStepResult"
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "429":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '200':
+          $ref: '#/components/responses/HeadlessStepResult'
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '429':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/account/connections/unlink:
     post:
       tags:
@@ -3242,18 +3243,18 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserAccessToken"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserAccessToken'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessAccountUnlinkRequest"
+              $ref: '#/components/schemas/HeadlessAccountUnlinkRequest'
       responses:
-        "200":
+        '200':
           description: Connection removed
           content:
             application/json:
@@ -3267,18 +3268,18 @@ paths:
                     type: string
                     enum:
                       - unlinked
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
-        "403":
-          $ref: "#/components/responses/HeadlessError"
-        "404":
-          $ref: "#/components/responses/HeadlessError"
-        "409":
-          $ref: "#/components/responses/HeadlessError"
-        "503":
-          $ref: "#/components/responses/HeadlessError"
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'
+        '403':
+          $ref: '#/components/responses/HeadlessError'
+        '404':
+          $ref: '#/components/responses/HeadlessError'
+        '409':
+          $ref: '#/components/responses/HeadlessError'
+        '503':
+          $ref: '#/components/responses/HeadlessError'
   /auth/applications/{applicationId}/headless/v1/account/connections/launch:
     get:
       tags:
@@ -3287,14 +3288,14 @@ paths:
       summary: Browser navigation that starts the provider redirect of an account link
       description: Consumes the one-time ticket from `link`; a second navigation is rejected.
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: ticket
           in: query
           required: true
           schema:
             type: string
       responses:
-        "303":
+        '303':
           description: Redirect to the provider, or to `return_uri` with `connection_error`
         default:
           description: HTML error page
@@ -3309,7 +3310,7 @@ paths:
         the provider account is stored for the user, otherwise with
         `connection_error`. An unreadable provider state also returns here.
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: '#/components/parameters/ApplicationId'
         - name: ref
           in: query
           required: true
@@ -3321,7 +3322,7 @@ paths:
           schema:
             type: string
       responses:
-        "303":
+        '303':
           description: Redirect to the storefront page
         default:
           description: HTML error page
@@ -3335,17 +3336,17 @@ paths:
       security:
         - oauthClientBasic: []
       parameters:
-        - $ref: "#/components/parameters/ApplicationId"
-        - $ref: "#/components/parameters/HeadlessEndUserIp"
-        - $ref: "#/components/parameters/HeadlessEndUserAgent"
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/HeadlessEndUserIp'
+        - $ref: '#/components/parameters/HeadlessEndUserAgent'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HeadlessLogoutRequest"
+              $ref: '#/components/schemas/HeadlessLogoutRequest'
       responses:
-        "200":
+        '200':
           description: Session revoked or already absent
           content:
             application/json:
@@ -3359,7 +3360,7 @@ paths:
                     type: string
                     enum:
                       - logged_out
-        "400":
-          $ref: "#/components/responses/HeadlessError"
-        "401":
-          $ref: "#/components/responses/HeadlessError"
+        '400':
+          $ref: '#/components/responses/HeadlessError'
+        '401':
+          $ref: '#/components/responses/HeadlessError'

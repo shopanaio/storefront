@@ -38,7 +38,9 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
    * option and its input is saved, as in the delivery section.
    */
   const quote = useShippingQuote(checkout);
-  const arrivesBy = quote ? estimateLabel(null, quote.estimatedMaxDeliveryAt) : null;
+  const arrivesBy = quote
+    ? estimateLabel(null, quote.estimatedMaxDeliveryAt)
+    : null;
   const freeReason = quote ? reasonLabel(quote.freeShipping) : null;
   const discount = checkout.cost.merchandiseDiscountAmount;
 
@@ -58,8 +60,15 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
       </Flex>
       <Flex justify="space-between">
         <Text className={styles.lineLabel}>{t('shipping')}</Text>
-        <Text className={styles.lineValue} type={quote ? undefined : 'secondary'}>
-          {quote ? <ShippingPriceValue price={quote.price} /> : t('shipping-not-selected')}
+        <Text
+          className={styles.lineValue}
+          type={quote ? undefined : 'secondary'}
+        >
+          {quote ? (
+            <ShippingPriceValue price={quote.price} />
+          ) : (
+            t('shipping-not-selected')
+          )}
         </Text>
       </Flex>
       {freeReason && (
@@ -123,7 +132,11 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
  * sign in for it in a highlighted box; without customer accounts a guest cannot earn, so nothing
  * is shown.
  */
-export const LoyaltyEarningLine = ({ earning }: { earning: Checkout.LoyaltyEarning }) => {
+export const LoyaltyEarningLine = ({
+  earning,
+}: {
+  earning: Checkout.LoyaltyEarning;
+}) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const { customerAccountsEnabled } = useCheckoutTheme();

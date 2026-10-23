@@ -22,7 +22,9 @@ export function useIsSectionValid(sectionKey: SectionId): boolean {
  * Returns list of missing required sections considering delivery groups and providers state.
  */
 export function useMissingRequiredSections(): Array<SectionId> {
-  return useCheckoutStore(useShallow((state) => computeMissingRequiredSections(state)));
+  return useCheckoutStore(
+    useShallow((state) => computeMissingRequiredSections(state))
+  );
 }
 
 /**

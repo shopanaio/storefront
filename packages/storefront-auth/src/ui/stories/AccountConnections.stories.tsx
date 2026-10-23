@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { accountConnections, type AccountConnectionsArgs } from './definitions/accountConnections';
+import {
+  accountConnections,
+  type AccountConnectionsArgs,
+} from './definitions/accountConnections';
 import { BOARD_GLOBALS } from './frames';
 
 /** Board SdkAccountConnections: social accounts in the profile (`useAccountConnections`). */

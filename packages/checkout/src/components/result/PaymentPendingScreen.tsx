@@ -26,7 +26,9 @@ export const PaymentPendingScreen = ({
     <PlacementScreen brand={brand}>
       <Result
         icon={<Spin size="large" />}
-        title={t(redirecting ? 'redirecting-to-payment' : 'awaiting-payment-title')}
+        title={t(
+          redirecting ? 'redirecting-to-payment' : 'awaiting-payment-title'
+        )}
         subTitle={redirecting ? null : t('awaiting-payment-description')}
         extra={
           redirecting ? null : (

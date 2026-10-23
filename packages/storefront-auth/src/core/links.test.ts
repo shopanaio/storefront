@@ -26,7 +26,11 @@ describe('links from IAM', () => {
   });
 
   it('removes only the reset token from the address bar', () => {
-    history.replaceState(null, '', '/account/reset-password?token=reset-token&lang=uk#form');
+    history.replaceState(
+      null,
+      '',
+      '/account/reset-password?token=reset-token&lang=uk#form'
+    );
 
     clearPasswordResetLink();
 

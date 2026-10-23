@@ -73,7 +73,14 @@ export function useClaimAccountCart() {
     };
     window.dispatchEvent(new CustomEvent(CART_CLAIMED_EVENT, { detail }));
     return detail;
-  }, [client, cartIdUtils, enqueueMutation, setCartKey, setId, waitForMutations]);
+  }, [
+    client,
+    cartIdUtils,
+    enqueueMutation,
+    setCartKey,
+    setId,
+    waitForMutations,
+  ]);
 }
 
 /** Runs the account cart attachment once after each completed sign-in. */

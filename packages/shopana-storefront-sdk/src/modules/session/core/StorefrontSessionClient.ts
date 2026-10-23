@@ -123,7 +123,9 @@ export class StorefrontSessionClient {
    * Ends the session on the server: the tokens are revoked and the session and cart cookies
    * cleared. Returns the IAM end-session URL to leave for, when IAM sign-out is configured.
    */
-  async signOut(options: { cartCookieName?: string } = {}): Promise<string | null> {
+  async signOut(
+    options: { cartCookieName?: string } = {}
+  ): Promise<string | null> {
     const response = await fetch(`${this.basePath}/logout`, {
       method: 'POST',
       credentials: 'same-origin',

@@ -165,7 +165,9 @@ export function createCartStore(
       const nextLines = [...base.lines];
 
       for (const replacement of input.lines) {
-        const srcIdx = nextLines.findIndex((line) => line.id === replacement.lineId);
+        const srcIdx = nextLines.findIndex(
+          (line) => line.id === replacement.lineId
+        );
         if (srcIdx < 0) continue;
 
         const source = nextLines[srcIdx];
@@ -192,7 +194,8 @@ export function createCartStore(
           price?.currencyCode || base.cost.totalAmount.currencyCode;
         const targetIdx = nextLines.findIndex(
           (line) =>
-            line.purchasableId === replacement.purchasableId && line.id !== source.id
+            line.purchasableId === replacement.purchasableId &&
+            line.id !== source.id
         );
 
         if (targetIdx >= 0) {

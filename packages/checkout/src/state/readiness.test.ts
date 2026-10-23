@@ -42,15 +42,27 @@ describe('checkoutReadiness', () => {
   });
 
   it('treats a checkout past expiresAt as expired', () => {
-    const readiness = checkoutReadiness(checkout({ expiresAt: new Date(NOW) }), NOW);
+    const readiness = checkoutReadiness(
+      checkout({ expiresAt: new Date(NOW) }),
+      NOW
+    );
     expect(readiness).toMatchObject({ canPlace: false, expired: true });
-    expect(checkoutReadiness(checkout({ status: 'ABANDONED' }), NOW).expired).toBe(true);
+    expect(
+      checkoutReadiness(checkout({ status: 'ABANDONED' }), NOW).expired
+    ).toBe(true);
   });
 
   it('splits blocking issues from notices', () => {
     const stop = issue({ effect: 'STOP', severity: 'ERROR' });
     const warning = issue({ code: 'PRICE_CHANGED' });
-    const readiness = checkoutReadiness(checkout({ issues: [stop, warning] }), NOW);
-    expect(readiness).toMatchObject({ canPlace: false, blocking: [stop], notices: [warning] });
+    const readiness = checkoutReadiness(
+      checkout({ issues: [stop, warning] }),
+      NOW
+    );
+    expect(readiness).toMatchObject({
+      canPlace: false,
+      blocking: [stop],
+      notices: [warning],
+    });
   });
 });

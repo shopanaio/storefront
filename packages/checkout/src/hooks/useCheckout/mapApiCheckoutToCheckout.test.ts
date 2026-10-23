@@ -205,7 +205,8 @@ describe('mapApiCheckoutToCheckout', () => {
     expect(checkout.status).toBe('READY');
     expect(checkout.expiresAt).toEqual(new Date('2026-10-18T12:00:00.000Z'));
     expect(
-      mapApiCheckoutToCheckout(createApiCheckout({ expiresAt: 'not a date' })).expiresAt
+      mapApiCheckoutToCheckout(createApiCheckout({ expiresAt: 'not a date' }))
+        .expiresAt
     ).toBeNull();
     expect(checkout.valid).toBe(false);
     expect(checkout.channelCode).toBe('web');
@@ -434,7 +435,11 @@ describe('mapApiCheckoutToCheckout', () => {
   });
 
   it('maps the saved delivery input and the replaced group ids', () => {
-    const input = { type: 'WAREHOUSE', settlementRef: 's-1', warehouseRef: 'w-1' };
+    const input = {
+      type: 'WAREHOUSE',
+      settlementRef: 's-1',
+      warehouseRef: 'w-1',
+    };
     const checkout = mapApiCheckoutToCheckout(
       createApiCheckout({
         deliveryGroups: [
@@ -748,6 +753,8 @@ describe('mapApiCheckoutToCheckout', () => {
       amount: { amount: 250, currencyCode: 'UAH' },
       rewardId: 'reward-1',
     });
-    expect(mapApiCheckoutToCheckout(createApiCheckout()).loyaltySelection).toBeNull();
+    expect(
+      mapApiCheckoutToCheckout(createApiCheckout()).loyaltySelection
+    ).toBeNull();
   });
 });

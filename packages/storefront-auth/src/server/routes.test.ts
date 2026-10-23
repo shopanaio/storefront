@@ -1,6 +1,6 @@
 // @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StorefrontAuthServerConfig } from '@shopana/storefront-sdk/modules/session/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHeadlessAuthRouteHandlers } from './routes';
 
 const origin = 'https://shop.example.test';

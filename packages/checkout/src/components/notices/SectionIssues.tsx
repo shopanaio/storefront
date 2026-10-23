@@ -25,7 +25,10 @@ export const SectionIssues = ({ sections }: { sections: SectionId[] }) => {
   const undeliverableCount = useUndeliverableLines().length;
   if (!attempted || !readiness || readiness.expired) return null;
   const items = new Map<string, boolean>();
-  for (const issue of visibleBlockingIssues(readiness.blocking, undeliverableCount)) {
+  for (const issue of visibleBlockingIssues(
+    readiness.blocking,
+    undeliverableCount
+  )) {
     const section = issueSection(issue);
     if (section === null || !sections.includes(section)) continue;
     const message = issueMessage(issue);

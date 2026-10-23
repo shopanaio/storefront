@@ -21,9 +21,7 @@ import type { BannerItem } from '#checkout/state/banners/banners';
 import { useCheckoutTheme } from '#checkout/theme';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
-import {
-  useLoyaltyWrites,
-} from '#checkout/sections/loyalty/selection';
+import { useLoyaltyWrites } from '#checkout/sections/loyalty/selection';
 import { usePointsLabel } from '#checkout/sections/loyalty/format';
 import { formatMoney } from '#checkout/ui/Money';
 import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyAccount';
@@ -82,11 +80,13 @@ export function useCheckoutBanners(): BannerItem[] {
   const rewardId = checkout?.loyaltySelection?.rewardId ?? null;
   const { account: loyaltyAccount } = useLoyaltyAccount();
   const rewardVoucher =
-    loyaltyAccount?.rewards.find((reward) => reward.id === rewardId)?.voucherCode ?? null;
+    loyaltyAccount?.rewards.find((reward) => reward.id === rewardId)
+      ?.voucherCode ?? null;
 
   // A failed removal of lines that cannot be delivered ends with them (another address).
   useEffect(() => {
-    if (undeliverableCount === 0) clearSaveError(UNDELIVERABLE_REMOVE_ERROR_KEY);
+    if (undeliverableCount === 0)
+      clearSaveError(UNDELIVERABLE_REMOVE_ERROR_KEY);
   }, [undeliverableCount, clearSaveError]);
 
   return useMemo(
@@ -120,7 +120,8 @@ export function useCheckoutBanners(): BannerItem[] {
           focusTerms: () => focusAnchor(TERMS_ANCHOR, { focus: false }),
           dismiss,
           // A failed write is reported by its own banner; the action needs no handling here.
-          dropRedemption: () => void api.setLoyaltyRedemption(null).catch(() => undefined),
+          dropRedemption: () =>
+            void api.setLoyaltyRedemption(null).catch(() => undefined),
           dropReward: () =>
             void api
               .setLoyaltyReward(
@@ -128,7 +129,8 @@ export function useCheckoutBanners(): BannerItem[] {
                 rewardId ? { id: rewardId, voucherCode: rewardVoucher } : null
               )
               .catch(() => undefined),
-          refreshLoyalty: () => void api.refreshLoyalty().catch(() => undefined),
+          refreshLoyalty: () =>
+            void api.refreshLoyalty().catch(() => undefined),
           signIn: onSignIn,
         },
         t

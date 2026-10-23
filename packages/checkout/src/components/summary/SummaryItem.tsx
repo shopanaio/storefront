@@ -73,7 +73,12 @@ export const SummaryItem = ({
         </Flex>
       </Flex>
       {priced && (
-        <Money strong as={Text} money={line.cost.totalAmount} className={styles.price} />
+        <Money
+          strong
+          as={Text}
+          money={line.cost.totalAmount}
+          className={styles.price}
+        />
       )}
     </Flex>
   );

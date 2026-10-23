@@ -3,10 +3,7 @@
  * Should be mounted once in the CheckoutController.
  */
 import { useEffect } from 'react';
-import {
-  CheckoutEvent,
-  onCheckoutEvent,
-} from '#checkout/state/checkoutBus';
+import { CheckoutEvent, onCheckoutEvent } from '#checkout/state/checkoutBus';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 
 /**

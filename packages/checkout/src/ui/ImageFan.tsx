@@ -67,7 +67,8 @@ const cos = (angle: number) => Math.cos((angle * Math.PI) / 180);
  * outer top corner swings out to the side, rises, and its outer bottom corner drops.
  */
 const swing = (angle: number) => (cos(angle) - 1) / 2 + sin(angle);
-const rise = (angle: number, lift: number) => sin(angle) / 2 - (1 - cos(angle)) + lift;
+const rise = (angle: number, lift: number) =>
+  sin(angle) / 2 - (1 - cos(angle)) + lift;
 const drop = (angle: number, lift: number) => sin(angle) / 2 - lift;
 /**
  * How far the cards reach past the front one, up and down. The box keeps this room on both
@@ -85,7 +86,10 @@ const LEFT_ROOM = LEFT_PEEK + swing(LEFT_ANGLE);
 const RIGHT_ROOM = RIGHT_PEEK + swing(RIGHT_ANGLE);
 
 /** Shift, turn and lift of each card, front first: one card stands; two lean right; three spread. */
-const POSES: Record<number, Array<[shift: number, turn: number, lift?: number]>> = {
+const POSES: Record<
+  number,
+  Array<[shift: number, turn: number, lift?: number]>
+> = {
   1: [[0, 0]],
   2: [
     [0, 0],
@@ -120,7 +124,10 @@ export function ImageFan({
   const width = left + size + (shown.length > 1 ? RIGHT_ROOM * size : 0);
 
   return (
-    <span className={cx(styles.fan, bleed && styles.bleed, className)} style={{ width }}>
+    <span
+      className={cx(styles.fan, bleed && styles.bleed, className)}
+      style={{ width }}
+    >
       {shown.map((image, index) => {
         const [shift, turn, lift = 0] = poses[index];
         return (
@@ -133,7 +140,11 @@ export function ImageFan({
               transform: `translate(${shift * size}px, ${-lift * size}px) rotate(${turn}deg)`,
             }}
           >
-            <ProductImage src={image.src} alt={image.alt} className={styles.image} />
+            <ProductImage
+              src={image.src}
+              alt={image.alt}
+              className={styles.image}
+            />
           </span>
         );
       })}

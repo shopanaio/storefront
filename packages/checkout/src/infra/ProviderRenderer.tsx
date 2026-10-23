@@ -115,7 +115,14 @@ export const ProviderRenderer = ({
           warnMissingPaymentModule(provider, method.code, 'method')
         );
     }
-  }, [moduleType, found, config, availableMethods, renderableMethods, provider]);
+  }, [
+    moduleType,
+    found,
+    config,
+    availableMethods,
+    renderableMethods,
+    provider,
+  ]);
 
   if (!Component || !config) {
     if (!found && moduleType === ProviderModuleType.Delivery) {

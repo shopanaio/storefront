@@ -1,7 +1,4 @@
-import {
-  ProviderModuleApi,
-  ProviderModuleType,
-} from '#checkout/vendors/types';
+import { ProviderModuleApi, ProviderModuleType } from '#checkout/vendors/types';
 import { createPaymentProvider } from '#checkout/vendors/shared/createPaymentProvider';
 import { loadNovaPoshtaMessages, NOVA_POSHTA_SCOPE } from './i18n';
 import { NOVA_POSHTA } from './address';

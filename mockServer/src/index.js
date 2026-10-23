@@ -1,4 +1,4 @@
-export { createMockServer } from "./server.js";
+export { createMockServer } from './server.js';
 export {
   contentMetrics,
   emptyViewerState,
@@ -7,4 +7,4 @@ export {
   postalAddress,
   richText,
   richTextDocument,
-} from "./fixture-helpers.js";
+} from './fixture-helpers.js';

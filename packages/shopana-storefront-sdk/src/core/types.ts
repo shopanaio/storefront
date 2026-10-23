@@ -1,8 +1,4 @@
-import type {
-  ComponentType,
-  LazyExoticComponent,
-  ReactNode,
-} from 'react';
+import type { ComponentType, LazyExoticComponent, ReactNode } from 'react';
 import type {
   BlockSettingsSchema,
   EmptyBlockSettings,
@@ -41,9 +37,7 @@ export interface BlockInstance<TSettings = any> extends BlockProps<TSettings> {
   component: BlockComponent<TSettings>;
 }
 
-export interface BlockConfig<
-  TSettings extends object = EmptyBlockSettings,
-> {
+export interface BlockConfig<TSettings extends object = EmptyBlockSettings> {
   component: BlockComponent<TSettings>;
   settings: TSettings;
   /** Metadata consumed by a Shopify-like theme editor. */
@@ -105,14 +99,11 @@ export interface PageBuilderProps<TData = any> {
 }
 
 export type PageDataLoader<TData = any> = (
-  ctx: TemplateParams,
+  ctx: TemplateParams
 ) => Promise<TData>;
 
-export type MetadataBuilder<
-  TData = any,
-  TMetadata = Record<string, any>,
-> = (
-  ctx: TemplateParams & { resolved?: TData },
+export type MetadataBuilder<TData = any, TMetadata = Record<string, any>> = (
+  ctx: TemplateParams & { resolved?: TData }
 ) => Promise<TMetadata> | TMetadata;
 
 export interface TemplateRegistration<TData = any> {

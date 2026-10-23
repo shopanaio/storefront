@@ -16,7 +16,8 @@
     "./ui/primitives": "./dist/ui/primitives/index.js",
     "./server": "./dist/server/index.js",
     "./testing": "./dist/testing/index.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./stories": "./dist/ui/stories/definitions/index.js"
   },
   "scripts": {
     "prebuild": "rimraf dist",

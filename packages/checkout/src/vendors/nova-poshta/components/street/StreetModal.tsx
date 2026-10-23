@@ -68,7 +68,9 @@ export const StreetModal = ({
           <DirectoryNotice
             loading={streets.loading}
             error={streets.error}
-            empty={debouncedTerm.trim().length > 0 && streets.items.length === 0}
+            empty={
+              debouncedTerm.trim().length > 0 && streets.items.length === 0
+            }
             onRetry={streets.retry}
           />
           {streets.items.map((item) => (

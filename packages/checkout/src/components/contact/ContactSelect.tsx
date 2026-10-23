@@ -175,11 +175,7 @@ export const ContactSelect = ({
         )}
       </SelectCard>
 
-      <DrawerBase
-        open={open}
-        onClose={() => setOpen(false)}
-        title={title}
-      >
+      <DrawerBase open={open} onClose={() => setOpen(false)} title={title}>
         <FormProvider {...methods}>
           <Flex
             vertical
@@ -261,9 +257,13 @@ export const ContactSelect = ({
                   required: t('required-field'),
                   validate: {
                     possible: (value) =>
-                      !value || isPossiblePhone(value) || t('phone-invalid-length'),
+                      !value ||
+                      isPossiblePhone(value) ||
+                      t('phone-invalid-length'),
                     valid: (value) =>
-                      !value || isValidPhone(value) || t('phone-invalid-format'),
+                      !value ||
+                      isValidPhone(value) ||
+                      t('phone-invalid-format'),
                   },
                 }}
                 render={({ field }) => (
@@ -287,7 +287,8 @@ export const ContactSelect = ({
                 name="email"
                 control={control}
                 rules={{
-                  validate: (value) => !value || isEmail(value) || t('email-invalid-format'),
+                  validate: (value) =>
+                    !value || isEmail(value) || t('email-invalid-format'),
                 }}
                 render={({ field }) => (
                   <FloatingLabelInput

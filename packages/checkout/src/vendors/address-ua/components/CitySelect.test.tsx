@@ -10,7 +10,10 @@ const renderSelect = (onSubmit: () => void) =>
   render(
     <MockedProvider mocks={[]}>
       <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
-        <CitySelect city={{ name: 'Київ', settlementRef: KYIV }} onSubmit={onSubmit} />
+        <CitySelect
+          city={{ name: 'Київ', settlementRef: KYIV }}
+          onSubmit={onSubmit}
+        />
       </NextIntlClientProvider>
     </MockedProvider>
   );
@@ -37,7 +40,9 @@ describe('CitySelect', () => {
     renderSelect(onSubmit);
     fireEvent.click(screen.getByRole('button', { name: /Київ/ }));
     // The search field opens with the city name; clearing it shows the popular cities.
-    fireEvent.change(await screen.findByDisplayValue('Київ'), { target: { value: '' } });
+    fireEvent.change(await screen.findByDisplayValue('Київ'), {
+      target: { value: '' },
+    });
     fireEvent.click(await screen.findByRole('button', { name: 'Київ' }));
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -46,8 +51,12 @@ describe('CitySelect', () => {
     const onSubmit = vi.fn();
     renderSelect(onSubmit);
     fireEvent.click(screen.getByRole('button', { name: /Київ/ }));
-    fireEvent.change(await screen.findByDisplayValue('Київ'), { target: { value: '' } });
+    fireEvent.change(await screen.findByDisplayValue('Київ'), {
+      target: { value: '' },
+    });
     fireEvent.click(await screen.findByRole('button', { name: 'Львів' }));
-    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ name: 'Львів' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Львів' })
+    );
   });
 });

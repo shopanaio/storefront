@@ -1,7 +1,4 @@
-import {
-  ProviderModuleApi,
-  ProviderModuleType,
-} from '#checkout/vendors/types';
+import { ProviderModuleApi, ProviderModuleType } from '#checkout/vendors/types';
 import { NPProvider } from './components/Provider';
 import { NPLogo as LogoComponent } from './components/Logo';
 import { createShippingMethod } from './components/methods/ShippingMethod';

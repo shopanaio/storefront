@@ -148,7 +148,9 @@ export function collectBanners(
     onClick: handlers.retryPlacement,
   };
   const goTo = (section: SectionId): BannerAction => ({
-    label: t(section === SectionId.Loyalty ? 'loyalty-banner-go' : 'banner-go-to'),
+    label: t(
+      section === SectionId.Loyalty ? 'loyalty-banner-go' : 'banner-go-to'
+    ),
     onClick: () => handlers.focusSection(section),
   });
   const review: BannerAction = {
@@ -246,8 +248,14 @@ export function collectBanners(
       } else if (key === 'placement-error-disclosures-changed') {
         action = { label: t('banner-review'), onClick: handlers.focusTerms };
       } else if (key === 'placement-error-loyalty') {
-        action = { label: t('loyalty-banner-refresh'), onClick: handlers.refreshLoyalty };
-      } else if (key === 'sign-in-required' || key === 'loyalty-banner-sign-in') {
+        action = {
+          label: t('loyalty-banner-refresh'),
+          onClick: handlers.refreshLoyalty,
+        };
+      } else if (
+        key === 'sign-in-required' ||
+        key === 'loyalty-banner-sign-in'
+      ) {
         action = { label: t('loyalty-sign-in'), onClick: handlers.signIn };
       }
       items.push({

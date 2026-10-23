@@ -20,7 +20,9 @@ export type LineWithPrice = model.Cart['lines'][number];
 /**
  * Compute totals for a single cart line
  */
-export const computeLineTotals = (line: LineWithPrice): LineWithPrice['cost'] => {
+export const computeLineTotals = (
+  line: LineWithPrice
+): LineWithPrice['cost'] => {
   const unit = parseAmount(line.cost.unitPrice?.amount ?? 0);
   const quantity = parseAmount(line.quantity);
   const subtotal = unit * quantity;
@@ -29,7 +31,8 @@ export const computeLineTotals = (line: LineWithPrice): LineWithPrice['cost'] =>
   return {
     unitPrice: {
       amount: unit,
-      currencyCode: line.cost.unitPrice?.currencyCode || line.cost.totalAmount.currencyCode,
+      currencyCode:
+        line.cost.unitPrice?.currencyCode || line.cost.totalAmount.currencyCode,
     },
     compareAtUnitPrice: line.cost.compareAtUnitPrice || null,
     subtotalAmount: {
@@ -47,13 +50,25 @@ export const computeLineTotals = (line: LineWithPrice): LineWithPrice['cost'] =>
  * Compute cart totals from all lines
  */
 export const computeCartTotals = (cart: model.Cart): model.Cart['cost'] => {
-  const currency = cart.cost.totalAmount.currencyCode || cart.cost.subtotalAmount.currencyCode;
-  const subtotal = cart.lines.reduce((acc, l) => acc + parseAmount(l.cost.subtotalAmount.amount), 0);
-  const localDiscount = cart.lines.reduce(
-    (acc, l) => acc + Math.max(parseAmount(l.cost.subtotalAmount.amount) - parseAmount(l.cost.totalAmount.amount), 0),
+  const currency =
+    cart.cost.totalAmount.currencyCode || cart.cost.subtotalAmount.currencyCode;
+  const subtotal = cart.lines.reduce(
+    (acc, l) => acc + parseAmount(l.cost.subtotalAmount.amount),
     0
   );
-  const discount = parseAmount(cart.cost.totalDiscountAmount?.amount ?? localDiscount);
+  const localDiscount = cart.lines.reduce(
+    (acc, l) =>
+      acc +
+      Math.max(
+        parseAmount(l.cost.subtotalAmount.amount) -
+          parseAmount(l.cost.totalAmount.amount),
+        0
+      ),
+    0
+  );
+  const discount = parseAmount(
+    cart.cost.totalDiscountAmount?.amount ?? localDiscount
+  );
   const shipping = parseAmount(cart.cost.totalShippingAmount?.amount ?? 0);
   const tax = parseAmount(cart.cost.totalTaxAmount?.amount ?? 0);
   const total = subtotal - discount + shipping + tax;
@@ -85,7 +100,14 @@ export const recalcCart = (cart: model.Cart): model.Cart => {
     ...line,
     cost: computeLineTotals(line),
   }));
-  const totalQuantity = lines.reduce((acc, l) => acc + parseAmount(l.quantity), 0);
-  const cost = computeCartTotals({ ...cart, lines, totalQuantity } as model.Cart);
+  const totalQuantity = lines.reduce(
+    (acc, l) => acc + parseAmount(l.quantity),
+    0
+  );
+  const cost = computeCartTotals({
+    ...cart,
+    lines,
+    totalQuantity,
+  } as model.Cart);
   return { ...cart, lines, totalQuantity, cost };
 };

@@ -5,7 +5,13 @@ import { Button, Flex, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import clsx from 'clsx';
 import { FloatingLabelInput } from '@shopana/storefront-ui';
-import { TbCheck, TbClockHour4, TbExclamationMark, TbTicket, TbX } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbClockHour4,
+  TbExclamationMark,
+  TbTicket,
+  TbX,
+} from 'react-icons/tb';
 import { useTranslations } from 'next-intl';
 import type { PromoFormData } from '../types';
 import { usePromoDraft } from '../draft';
@@ -15,7 +21,11 @@ import { useLoyaltyAccount } from '#checkout/hooks/useLoyaltyAccount/useLoyaltyA
 import { useConfirm } from '#checkout/ui/useConfirm';
 import { SectionIssues } from '#checkout/components/notices/SectionIssues';
 import { SectionId } from '#checkout/state/interface';
-import { isPromoEntered, promoErrorCode, promoErrorMessageKey } from '../promoErrors';
+import {
+  isPromoEntered,
+  promoErrorCode,
+  promoErrorMessageKey,
+} from '../promoErrors';
 
 export interface PromoSectionViewProps {
   /** Current form data */
@@ -38,7 +48,8 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const { account } = useLoyaltyAccount();
   const rewardId = checkout?.loyaltySelection?.rewardId ?? null;
   const rewardCode =
-    account?.rewards.find((reward) => reward.id === rewardId)?.voucherCode ?? null;
+    account?.rewards.find((reward) => reward.id === rewardId)?.voucherCode ??
+    null;
   const confirm = useConfirm();
   const codes = useMemo(() => data?.codes ?? [], [data?.codes]);
 
@@ -50,7 +61,12 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const handleApply = useCallback(async () => {
     const value = code.trim();
     if (!value || applying) return;
-    if (isPromoEntered(codes.map((item) => item.code), value)) {
+    if (
+      isPromoEntered(
+        codes.map((item) => item.code),
+        value
+      )
+    ) {
       setCode('');
       return;
     }
@@ -88,7 +104,10 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
       try {
         if (rewardId && rewardCode && isPromoEntered([rewardCode], promoCode)) {
           // The code of the chosen reward goes with the reward: both are given up together.
-          await setLoyaltyReward(null, { id: rewardId, voucherCode: rewardCode });
+          await setLoyaltyReward(null, {
+            id: rewardId,
+            voucherCode: rewardCode,
+          });
         } else {
           await removePromoCode({ code: promoCode });
         }
@@ -138,7 +157,10 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
               role="listitem"
               align="center"
               gap={8}
-              className={clsx(styles.tag, status !== 'APPLIED' && styles.notApplied)}
+              className={clsx(
+                styles.tag,
+                status !== 'APPLIED' && styles.notApplied
+              )}
             >
               <span
                 className={clsx(
@@ -163,7 +185,9 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
                 {entered}
               </Typography.Text>
               {rewardCode && isPromoEntered([rewardCode], entered) ? (
-                <span className={styles.rewardPill}>{t('loyalty-reward-code')}</span>
+                <span className={styles.rewardPill}>
+                  {t('loyalty-reward-code')}
+                </span>
               ) : null}
               <Button
                 type="text"
@@ -189,7 +213,10 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
               >
                 <span className={styles.reasonCode}>{entered}</span>{' '}
                 <span>
-                  {message ?? t(status === 'PENDING' ? 'promo-pending' : 'promo-rejected')}
+                  {message ??
+                    t(
+                      status === 'PENDING' ? 'promo-pending' : 'promo-rejected'
+                    )}
                 </span>
               </Typography.Text>
             ))}

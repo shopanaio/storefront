@@ -92,7 +92,10 @@ async function login(
   server: StorefrontSessionServer
 ): Promise<Response> {
   const url = new URL(request.url);
-  const returnTo = safeReturnTo(url.searchParams.get('returnTo'), server.origin);
+  const returnTo = safeReturnTo(
+    url.searchParams.get('returnTo'),
+    server.origin
+  );
   const prompt = url.searchParams.get('prompt') ?? undefined;
   const transaction: TransactionCookie = {
     state: randomBase64Url(32),
@@ -214,7 +217,10 @@ async function refreshSession(
   }
   try {
     const issued = await server.sessionCookies(
-      await server.refresh(refresh, endUserIp(request, server.config.trustedProxyHops))
+      await server.refresh(
+        refresh,
+        endUserIp(request, server.config.trustedProxyHops)
+      )
     );
     return json(200, { session: issued.session }, issued.setCookies);
   } catch (error) {
@@ -288,7 +294,10 @@ export function rejectCrossSite(
 }
 
 /** Only a path of this storefront; anything else returns to the home page. */
-export function safeReturnTo(value: string | null | undefined, origin: string): string {
+export function safeReturnTo(
+  value: string | null | undefined,
+  origin: string
+): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
   try {
     const url = new URL(value, origin);
@@ -320,7 +329,10 @@ export function transactionCookieName(server: StorefrontSessionServer): string {
  * `trustedProxyHops` from the right. A proxy appends the address it saw, so entries left of it
  * come from the client and may be forged. Without `X-Forwarded-For`, `X-Real-IP` of the proxy.
  */
-export function endUserIp(request: Request, trustedProxyHops = 1): string | undefined {
+export function endUserIp(
+  request: Request,
+  trustedProxyHops = 1
+): string | undefined {
   const forwarded = (request.headers.get('x-forwarded-for') ?? '')
     .split(',')
     .map((entry) => entry.trim())
@@ -332,12 +344,19 @@ export function endUserIp(request: Request, trustedProxyHops = 1): string | unde
 }
 
 function redirect(location: string, setCookies: string[]): Response {
-  const headers = new Headers({ Location: location, 'Cache-Control': 'no-store' });
+  const headers = new Headers({
+    Location: location,
+    'Cache-Control': 'no-store',
+  });
   setCookies.forEach((cookie) => headers.append('Set-Cookie', cookie));
   return new Response(null, { status: 302, headers });
 }
 
-function json(status: number, body: unknown, setCookies: string[] = []): Response {
+function json(
+  status: number,
+  body: unknown,
+  setCookies: string[] = []
+): Response {
   const headers = new Headers({
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',

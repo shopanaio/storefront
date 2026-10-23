@@ -13,7 +13,10 @@ import type {
 } from '#checkout/graphql/operations';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
-import { useCheckoutAuth, useSaveCheckoutInput } from '#checkout/hooks/useCheckoutAuth';
+import {
+  useCheckoutAuth,
+  useSaveCheckoutInput,
+} from '#checkout/hooks/useCheckoutAuth';
 import { useCheckoutSignIn } from '#checkout/context/CheckoutSignInContext';
 import { useLoginIdentifier } from '@shopana/storefront-auth/ui';
 import { mockSession, type MockSessionOptions } from './mockAuth';
@@ -456,7 +459,8 @@ export function mockCheckout(initial: Partial<CheckoutMockState> = {}) {
     };
   });
   const auth = mockSession(initial.session, {
-    useCustomer: () => useMockState().checkout?.customerIdentity.customer ?? null,
+    useCustomer: () =>
+      useMockState().checkout?.customerIdentity.customer ?? null,
     setCustomer: (customer, phone) => {
       const { checkout } = state;
       if (!checkout) return;

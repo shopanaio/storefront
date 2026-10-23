@@ -16,7 +16,11 @@ vi.mock('./DeliveryMethodList', () => ({
 }));
 vi.mock('./ShipmentLines', () => ({ ShipmentLines: () => null }));
 
-const method = (handle: string, code: string, data?: unknown): DeliveryMethod => ({
+const method = (
+  handle: string,
+  code: string,
+  data?: unknown
+): DeliveryMethod => ({
   handle,
   code,
   title: code,
@@ -82,7 +86,9 @@ describe('Shipments', () => {
     renderShipments([group('g1', [a], a), group('g2', [b], b)]);
 
     expect(listedGroups()).toEqual(['g1,g2']);
-    expect(screen.getAllByText('Checkout.delivery-shipment-split')).toHaveLength(2);
+    expect(
+      screen.getAllByText('Checkout.delivery-shipment-split')
+    ).toHaveLength(2);
   });
 
   it('starts a shipment apart when the same method goes to another branch', () => {
@@ -99,13 +105,19 @@ describe('Shipments', () => {
     const b = method('b1', 'warehouse');
     const c = method('c1', 'warehouse');
     const courier = method('b2', 'courier');
-    renderShipments([group('g1', [a], a), group('g2', [b, courier], b), group('g3', [c], c)]);
+    renderShipments([
+      group('g1', [a], a),
+      group('g2', [b, courier], b),
+      group('g3', [c], c),
+    ]);
 
     fireEvent.click(screen.getAllByText('Checkout.delivery-shipment-split')[1]);
 
     expect(listedGroups()).toEqual(['g1,g3', 'g2']);
     // The shipment apart offers its own methods, also ones the others lack.
-    expect(screen.getAllByTestId('method-list')[1].dataset.methods).toBe('b1,b2');
+    expect(screen.getAllByTestId('method-list')[1].dataset.methods).toBe(
+      'b1,b2'
+    );
   });
 
   it('puts a shipment back with the method of the others', () => {
@@ -116,7 +128,9 @@ describe('Shipments', () => {
     fireEvent.click(screen.getByText('Checkout.delivery-shipment-merge'));
 
     expect(listedGroups()).toEqual(['g1,g2']);
-    expect(screen.getByTestId('method-list').dataset.initial).toBe('nova-poshta\nwarehouse');
+    expect(screen.getByTestId('method-list').dataset.initial).toBe(
+      'nova-poshta\nwarehouse'
+    );
   });
 
   it('offers no way back to a shipment that shares no method with the others', () => {

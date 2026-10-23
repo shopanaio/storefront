@@ -61,8 +61,10 @@ describe('DoorForm', () => {
 
     first.unmount();
     render(doorForm(draft, onSubmit));
-    expect(screen.getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(
-      ['12', '5', 'Call me']
-    );
+    expect(
+      screen
+        .getAllByRole('textbox')
+        .map((input) => (input as HTMLInputElement).value)
+    ).toEqual(['12', '5', 'Call me']);
   });
 });

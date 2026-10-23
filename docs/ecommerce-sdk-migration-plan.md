@@ -11,6 +11,7 @@
 ## Overview
 
 Create a new monorepo package named `@shopana/storefront-sdk`. The package should contain:
+
 - GraphQL hooks based on Relay
 - Relay infrastructure: environment and SSR helpers
 - Zustand stores: cart, session, app
@@ -190,6 +191,7 @@ cp -r storefront/src/hooks/* packages/ecommerce-sdk/src/hooks/
 ```
 
 Hook categories:
+
 - `auth/` - `useSignIn`, `useSignUp`, `useSignOut`, `useForgotPassword`, `useResetPassword`
 - `cart/` - `useAddItemToCart`, `useCart`, `useUpdateCartLineQuantity`, `useRemoveItemFromCart`
 - `category/` - `useCategoryClientQuery`, `loadCategoryServerQuery`, `useFilters`
@@ -211,6 +213,7 @@ hooks/cart/useAddItemToCart/
 ### 2.2 Relay Infrastructure
 
 Files:
+
 - `relay/Environment.ts` - Relay environment with query response cache
 - `relay/loadSerializableQuery.ts` - SSR loading
 - `relay/useSerializablePreloadedQuery.ts` - client preload
@@ -225,6 +228,7 @@ cp -r storefront/src/relay/* packages/ecommerce-sdk/src/relay/
 ### 2.3 Zustand Stores
 
 Files:
+
 - `store/cartStore.ts` - optimistic updates, versioning, cart operations
 - `store/sessionStore.ts` - user session state
 - `store/appStore.ts` - currency and locale only
@@ -237,6 +241,7 @@ cp -r storefront/src/store/* packages/ecommerce-sdk/src/store/
 ```
 
 Important refactor for `appStore.ts`:
+
 - Keep `currency` and `locale`
 - Remove UI state such as `isMobileMenuOpen`, `isSearchOpen`, `isSidebarOpen`, and similar flags
 
@@ -251,6 +256,7 @@ cp -r storefront/src/queries/* packages/ecommerce-sdk/src/queries/
 ### 2.5 Providers
 
 Files:
+
 - `providers/cart-context.tsx`
 - `providers/session-context.tsx`
 
@@ -290,6 +296,7 @@ import type { Cart } from '../types';
 ```
 
 Replacement rules:
+
 - `@src/store/*` -> relative `../store/*` or `../../store/*`
 - `@src/hooks/*` -> relative paths inside SDK
 - `@src/relay/*` -> relative `../relay/*`
@@ -299,6 +306,7 @@ Replacement rules:
 ### 3.2 Remove Dependency on `next-intl`
 
 Problem:
+
 - Hooks use `useLocale()` from `next-intl`
 - SDK should not depend on a specific i18n library
 
@@ -319,6 +327,7 @@ function useProduct(handle: string, locale: string) {
 ### 3.3 Environment Variables to Configuration
 
 Problem:
+
 - Code uses `process.env.NEXT_PUBLIC_*`
 - SDK should work in different applications
 
@@ -423,6 +432,7 @@ Create category-specific indexes for each hook group.
 ### 5.3 Other Module Exports
 
 Create indexes for:
+
 - `src/relay/index.ts`
 - `src/store/index.ts`
 - `src/providers/index.ts`
@@ -438,6 +448,7 @@ yarn build
 ### 6.2 Check Output
 
 Expected output:
+
 - `dist/`
 - `dist/index.js` and `dist/index.d.ts`
 - `dist/hooks/`, `dist/relay/`, `dist/store/`, and related folders
@@ -476,6 +487,7 @@ This creates a symlink for the new package.
 **File:** `packages/ecommerce-sdk/README.md`
 
 It should include:
+
 - Package description
 - Installation
 - SDK initialization
@@ -539,6 +551,7 @@ After the SDK package is created:
 ## Contacts and Help
 
 If problems occur:
+
 - Check TypeScript errors with `yarn build`
 - Check Relay generation with `yarn relay`
 - Check dependencies with `yarn install`

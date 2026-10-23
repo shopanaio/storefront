@@ -1,5 +1,5 @@
 import { Collapse, Flex, Radio, Typography } from 'antd';
-import { FC, ReactNode, useRef } from 'react';
+import { FC, ReactNode, useId } from 'react';
 import { createStyles } from 'antd-style';
 import { selectedDeclarations } from '#checkout/ui/selected';
 import clsx from 'clsx';
@@ -28,12 +28,12 @@ export const CheckoutMethodPanel = ({
   component: Component,
   componentProps = {},
 }: CheckoutMethodPanelProps) => {
-  const codeRef = useRef(Math.random().toString(36).substring(2, 15));
+  const code = useId();
   const { styles } = useStyles();
   return (
     <OptionWave disabled={isActive}>
       <Collapse
-        activeKey={isActive ? codeRef.current : ''}
+        activeKey={isActive ? code : ''}
         // A click on the active method changes nothing, so nothing is sent again (SC-83ef).
         onChange={() => {
           if (!isActive) {
@@ -51,7 +51,7 @@ export const CheckoutMethodPanel = ({
         <Panel
           forceRender
           showArrow={false}
-          key={codeRef.current}
+          key={code}
           header={
             <Flex justify="space-between" align="center" gap={12}>
               <Flex gap={8} className={styles.main}>

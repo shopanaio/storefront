@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useCartLineItem } from './useCartSelectors';
 
@@ -12,11 +12,13 @@ export interface UseIsInCartReturn {
   cartItemId: string;
 }
 
-const useIsInTheCart = (input: UseIsInCartProps): { isInCart: boolean; quantity: number; cartItemId: string } => {
+const useIsInTheCart = (
+  input: UseIsInCartProps
+): { isInCart: boolean; quantity: number; cartItemId: string } => {
   const cartLine = useCartLineItem(input.purchasableId);
 
   if (!cartLine) {
-    return { isInCart: false, quantity: 0, cartItemId: "" };
+    return { isInCart: false, quantity: 0, cartItemId: '' };
   }
 
   return {

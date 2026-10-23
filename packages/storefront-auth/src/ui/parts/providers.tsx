@@ -82,6 +82,8 @@ export function socialProviderView(provider: string): SocialProviderView {
     const Icon = known.icon;
     return { provider, name: known.name, icon: <Icon /> };
   }
-  const name = provider ? provider[0]!.toUpperCase() + provider.slice(1) : provider;
+  const name = provider
+    ? provider[0]!.toUpperCase() + provider.slice(1)
+    : provider;
   return { provider, name, icon: <Initial letter={name.slice(0, 1)} /> };
 }

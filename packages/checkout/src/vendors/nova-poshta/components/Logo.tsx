@@ -10,10 +10,10 @@ export const NPLogo = ({
   size?: number;
   showText?: boolean;
 }) => {
-  const color = "#ED1C24";
+  const color = '#ED1C24';
   const width = showText ? size * (210 / 75) : size;
   const height = size;
-  const viewBox = showText ? "0 0 210 75" : "0 0 75 75";
+  const viewBox = showText ? '0 0 210 75' : '0 0 75 75';
 
   return (
     <svg width={width} height={height} viewBox={viewBox} fill="none">

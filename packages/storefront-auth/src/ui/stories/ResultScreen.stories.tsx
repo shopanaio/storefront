@@ -13,4 +13,6 @@ export default meta;
 type StoryObject = StoryObj<typeof meta>;
 
 export const VerifyEmailLink: StoryObject = {};
-export const SocialRedirect: StoryObject = { args: { board: 'socialRedirect' } };
+export const SocialRedirect: StoryObject = {
+  args: { board: 'socialRedirect' },
+};

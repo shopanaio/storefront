@@ -12,15 +12,15 @@
 
   vars:
     # Image configuration
-    storefront_image_tag: "{{ image_tag }}"
-    storefront_image_name: "{{ shopana_ghcr_registry }}/{{ shopana_ghcr_owner }}/storefront:{{ storefront_image_tag }}"
+    storefront_image_tag: '{{ image_tag }}'
+    storefront_image_name: '{{ shopana_ghcr_registry }}/{{ shopana_ghcr_owner }}/storefront:{{ storefront_image_tag }}'
 
     # Build-time arguments (can be overridden via -e)
-    storefront_build_cms: "{{ CMS }}"
-    storefront_build_graphql_url: "{{ SHOPANA_GRAPHQL_URL }}"
-    storefront_build_api_key: "{{ SHOPANA_API_KEY }}"
-    storefront_build_app_url: "{{ NEXT_PUBLIC_APP_URL }}"
-    storefront_build_port: "{{ PORT }}"
+    storefront_build_cms: '{{ CMS }}'
+    storefront_build_graphql_url: '{{ SHOPANA_GRAPHQL_URL }}'
+    storefront_build_api_key: '{{ SHOPANA_API_KEY }}'
+    storefront_build_app_url: '{{ NEXT_PUBLIC_APP_URL }}'
+    storefront_build_port: '{{ PORT }}'
 
   tasks:
     - name: Ensure required variables are provided
@@ -34,12 +34,12 @@
 
     - name: Check if storefront directory exists
       ansible.builtin.stat:
-        path: "{{ root_dir }}"
+        path: '{{ root_dir }}'
       register: storefront_dir_stat
 
     - name: Fail if storefront directory doesn't exist
       ansible.builtin.fail:
-        msg: "Storefront source directory not found: {{ root_dir }}"
+        msg: 'Storefront source directory not found: {{ root_dir }}'
       when: not storefront_dir_stat.stat.exists
 
     - name: Check if Docker is running
@@ -51,7 +51,7 @@
 
     - name: Fail if Docker is not running
       ansible.builtin.fail:
-        msg: "Docker is not running locally. Please start Docker daemon."
+        msg: 'Docker is not running locally. Please start Docker daemon.'
       when: docker_info.rc != 0
 
     - name: Build and push block with error handling
@@ -59,13 +59,13 @@
         - name: Show build information
           ansible.builtin.debug:
             msg:
-              - "🔨 Building storefront"
-              - "  Image: {{ storefront_image_name }}"
-              - "  Platform: {{ docker_platform }}"
-              - "  Build Context: {{ root_dir }}"
-              - "  CMS: {{ storefront_build_cms }}"
-              - "  GRAPHQL_URL: {{ storefront_build_graphql_url }}"
-              - "  NEXT_PUBLIC_APP_URL: {{ storefront_build_app_url }}"
+              - '🔨 Building storefront'
+              - '  Image: {{ storefront_image_name }}'
+              - '  Platform: {{ docker_platform }}'
+              - '  Build Context: {{ root_dir }}'
+              - '  CMS: {{ storefront_build_cms }}'
+              - '  GRAPHQL_URL: {{ storefront_build_graphql_url }}'
+              - '  NEXT_PUBLIC_APP_URL: {{ storefront_build_app_url }}'
 
         - name: Build storefront image
           ansible.builtin.command:
@@ -79,7 +79,7 @@
               {{ '--build-arg SHOPANA_API_KEY=' + storefront_build_api_key if storefront_build_api_key | length > 0 else '' }}
               -t {{ storefront_image_name }}
               {{ root_dir }}
-            chdir: "{{ root_dir }}"
+            chdir: '{{ root_dir }}'
           changed_when: true
 
         - name: Push storefront image
@@ -92,24 +92,24 @@
         - name: Show success message
           ansible.builtin.debug:
             msg:
-              - "✅ Storefront image built and pushed successfully"
-              - "📦 Image: {{ storefront_image_name }}"
-              - ""
-              - "🚀 To deploy:"
-              - "  ansible-playbook playbooks/storefront/deploy.yml -i hosts.ini --limit shopana_sandbox"
+              - '✅ Storefront image built and pushed successfully'
+              - '📦 Image: {{ storefront_image_name }}'
+              - ''
+              - '🚀 To deploy:'
+              - '  ansible-playbook playbooks/storefront/deploy.yml -i hosts.ini --limit shopana_sandbox'
 
       rescue:
         - name: Show error details
           ansible.builtin.debug:
             msg:
-              - "❌ Build or push failed!"
-              - "Task: {{ ansible_failed_task.name }}"
-              - "Error: {{ ansible_failed_result.msg }}"
-              - "{% if ansible_failed_result.stderr is defined and ansible_failed_result.stderr | length > 0 %}Stderr: {{ ansible_failed_result.stderr }}{% endif %}"
+              - '❌ Build or push failed!'
+              - 'Task: {{ ansible_failed_task.name }}'
+              - 'Error: {{ ansible_failed_result.msg }}'
+              - '{% if ansible_failed_result.stderr is defined and ansible_failed_result.stderr | length > 0 %}Stderr: {{ ansible_failed_result.stderr }}{% endif %}'
 
         - name: Fail with message
           ansible.builtin.fail:
-            msg: "Build and push failed. See error details above."
+            msg: 'Build and push failed. See error details above.'
 
       always:
         - name: Logout from GitHub Container Registry

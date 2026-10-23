@@ -85,7 +85,11 @@ export function useEstimateLabel() {
  * shipping is free. Shown only for options the API accepted with their input, so the price is
  * the one the order takes.
  */
-export const ShipmentQuote = ({ shipments }: { shipments: QuotedShipment[] }) => {
+export const ShipmentQuote = ({
+  shipments,
+}: {
+  shipments: QuotedShipment[];
+}) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const estimateLabel = useEstimateLabel();
@@ -94,7 +98,10 @@ export const ShipmentQuote = ({ shipments }: { shipments: QuotedShipment[] }) =>
   if (!quote) {
     return null;
   }
-  const estimate = estimateLabel(quote.estimatedMinDeliveryAt, quote.estimatedMaxDeliveryAt);
+  const estimate = estimateLabel(
+    quote.estimatedMinDeliveryAt,
+    quote.estimatedMaxDeliveryAt
+  );
   const reason = reasonLabel(quote.freeShipping);
   return (
     <Flex vertical align="flex-start">

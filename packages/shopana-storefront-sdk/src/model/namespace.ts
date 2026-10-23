@@ -110,8 +110,10 @@ export namespace model {
   export type CartLoyaltyEarning = CartTypes.CartLoyaltyEarning;
   export type CheckoutLoyaltyRedemption = CartTypes.CheckoutLoyaltyRedemption;
   export type Collection = import('../modules/storefront').Collection;
-  export type CheckoutPlacement = import('../modules/storefront').CheckoutPlacement;
-  export type ImageTransformInput = import('../modules/storefront').ImageTransformInput;
+  export type CheckoutPlacement =
+    import('../modules/storefront').CheckoutPlacement;
+  export type ImageTransformInput =
+    import('../modules/storefront').ImageTransformInput;
 
   // Product Variant
   export type StockStatus = VariantTypes.StockStatus;
@@ -126,7 +128,8 @@ export namespace model {
   export type ProductGroup = ProductGroupTypes.ProductGroup;
 
   // Product Option
-  export type ProductOptionDisplayType = ProductOptionTypes.ProductOptionDisplayType;
+  export type ProductOptionDisplayType =
+    ProductOptionTypes.ProductOptionDisplayType;
   export type ProductOptionValue = ProductOptionTypes.ProductOptionValue;
   export type ProductOption = ProductOptionTypes.ProductOption;
   export type ProductOptionType = ProductOptionTypes.ProductOptionType;
@@ -148,9 +151,14 @@ export namespace model {
   export type Product = ProductTypes.Product;
 
   // Product Recommendation
-  export type ProductRecommendationSource = ProductRecommendationTypes.ProductRecommendationSource;
-  export type ProductRecommendation = ProductRecommendationTypes.ProductRecommendation;
-  export type ProductRecommendationEdge = ProductRecommendationTypes.ProductRecommendationEdge;
-  export type ProductRecommendationConnection = ProductRecommendationTypes.ProductRecommendationConnection;
-  export type ProductRecommendationPagination = ProductRecommendationTypes.ProductRecommendationPagination;
+  export type ProductRecommendationSource =
+    ProductRecommendationTypes.ProductRecommendationSource;
+  export type ProductRecommendation =
+    ProductRecommendationTypes.ProductRecommendation;
+  export type ProductRecommendationEdge =
+    ProductRecommendationTypes.ProductRecommendationEdge;
+  export type ProductRecommendationConnection =
+    ProductRecommendationTypes.ProductRecommendationConnection;
+  export type ProductRecommendationPagination =
+    ProductRecommendationTypes.ProductRecommendationPagination;
 }

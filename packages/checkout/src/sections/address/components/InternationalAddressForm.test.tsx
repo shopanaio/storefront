@@ -9,7 +9,14 @@ const gb: DeliveryCountry = {
   code: 'GB',
   name: 'United Kingdom',
   addressFormat: {
-    rows: [['FIRST_NAME', 'LAST_NAME'], ['ADDRESS1'], ['ADDRESS2'], ['CITY'], ['POSTAL_CODE'], ['PHONE']],
+    rows: [
+      ['FIRST_NAME', 'LAST_NAME'],
+      ['ADDRESS1'],
+      ['ADDRESS2'],
+      ['CITY'],
+      ['POSTAL_CODE'],
+      ['PHONE'],
+    ],
     required: ['FIRST_NAME', 'LAST_NAME', 'ADDRESS1', 'CITY', 'POSTAL_CODE'],
     provinceLabel: null,
     postalCodeLabel: 'POSTCODE',
@@ -34,7 +41,11 @@ const messages = {
 function renderForm(onSubmit = vi.fn()) {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <InternationalAddressForm address={null} country={gb} onSubmit={onSubmit} />
+      <InternationalAddressForm
+        address={null}
+        country={gb}
+        onSubmit={onSubmit}
+      />
     </NextIntlClientProvider>
   );
   return onSubmit;
@@ -100,7 +111,11 @@ describe('InternationalAddressForm', () => {
     const onSubmit = vi.fn();
     const view = (address: ProviderDeliveryAddress) => (
       <NextIntlClientProvider locale="en" messages={messages}>
-        <InternationalAddressForm address={address} country={gb} onSubmit={onSubmit} />
+        <InternationalAddressForm
+          address={address}
+          country={gb}
+          onSubmit={onSubmit}
+        />
       </NextIntlClientProvider>
     );
     const { rerender } = render(view(saved('10 Downing St')));

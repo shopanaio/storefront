@@ -4,13 +4,26 @@ import { addressMutations, mapCheckoutToAddressFormData } from './mapper';
 
 const line = (id: string) => ({ id }) as Checkout.Line;
 const address = (id: string) =>
-  ({ id, countryCode: 'UA', city: 'Київ', data: {} }) as unknown as Checkout.DeliveryAddress;
+  ({
+    id,
+    countryCode: 'UA',
+    city: 'Київ',
+    data: {},
+  }) as unknown as Checkout.DeliveryAddress;
 const group = (
   id: string,
   lines: Checkout.Line[],
   deliveryAddress: Checkout.DeliveryAddress | null
-) => ({ id, checkoutLines: lines, deliveryAddress }) as unknown as Checkout.DeliveryGroup;
-const checkout = (deliveryGroups: Checkout.DeliveryGroup[], lines: Checkout.Line[] = []) =>
+) =>
+  ({
+    id,
+    checkoutLines: lines,
+    deliveryAddress,
+  }) as unknown as Checkout.DeliveryGroup;
+const checkout = (
+  deliveryGroups: Checkout.DeliveryGroup[],
+  lines: Checkout.Line[] = []
+) =>
   ({
     lines,
     deliveryGroups,
@@ -35,7 +48,9 @@ describe('mapCheckoutToAddressFormData', () => {
   });
 
   it('adds the address for every line before the checkout has groups', () => {
-    const data = mapCheckoutToAddressFormData(checkout([], [line('l1'), line('l2')]));
+    const data = mapCheckoutToAddressFormData(
+      checkout([], [line('l1'), line('l2')])
+    );
 
     expect(data?.addressIds).toEqual([]);
     expect(data?.unaddressedLineIds).toEqual(['l1', 'l2']);
@@ -44,7 +59,10 @@ describe('mapCheckoutToAddressFormData', () => {
 
   it('shows the saved address even when the first group has none yet', () => {
     const data = mapCheckoutToAddressFormData(
-      checkout([group('g1', [line('l1')], null), group('g2', [line('l2')], address('a2'))])
+      checkout([
+        group('g1', [line('l1')], null),
+        group('g2', [line('l2')], address('a2')),
+      ])
     );
 
     expect(data?.address?.addressId).toBe('a2');
@@ -56,21 +74,30 @@ describe('addressMutations', () => {
   const value = { countryCode: 'UA', city: 'Львів' } as const;
 
   it('adds the first address to every line', () => {
-    expect(addressMutations({ addressIds: [], unaddressedLineIds: ['l1'] }, value)).toEqual({
+    expect(
+      addressMutations({ addressIds: [], unaddressedLineIds: ['l1'] }, value)
+    ).toEqual({
       update: null,
       add: { addresses: [{ address: value, checkoutLineIds: ['l1'] }] },
     });
   });
 
   it('updates a saved address instead of adding it again', () => {
-    expect(addressMutations({ addressIds: ['a1'], unaddressedLineIds: [] }, value)).toEqual({
+    expect(
+      addressMutations({ addressIds: ['a1'], unaddressedLineIds: [] }, value)
+    ).toEqual({
       update: { updates: [{ addressId: 'a1', address: value }] },
       add: null,
     });
   });
 
   it('updates the saved address and adds it to the lines of a group split off later', () => {
-    expect(addressMutations({ addressIds: ['a1'], unaddressedLineIds: ['l2'] }, value)).toEqual({
+    expect(
+      addressMutations(
+        { addressIds: ['a1'], unaddressedLineIds: ['l2'] },
+        value
+      )
+    ).toEqual({
       update: { updates: [{ addressId: 'a1', address: value }] },
       add: { addresses: [{ address: value, checkoutLineIds: ['l2'] }] },
     });

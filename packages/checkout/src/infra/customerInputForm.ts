@@ -57,7 +57,11 @@ const typesOf = (schema: JsonSchema): string[] => {
     return Array.isArray(schema.type) ? schema.type : [schema.type];
   }
   if (schema.enum?.length) {
-    return [...new Set(schema.enum.map((value) => (value === null ? 'null' : typeof value)))];
+    return [
+      ...new Set(
+        schema.enum.map((value) => (value === null ? 'null' : typeof value))
+      ),
+    ];
   }
   if (schema.properties || schema.oneOf || schema.anyOf) {
     return ['object'];
@@ -66,7 +70,9 @@ const typesOf = (schema: JsonSchema): string[] => {
 };
 
 export const humanize = (key: string) => {
-  const words = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ');
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ');
   return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
 };
 
@@ -80,10 +86,20 @@ function discriminatorOf(branches: JsonSchema[]): string | null {
   );
 }
 
-function objectModel(input: JsonSchema, root: JsonSchema, path: string[]): ObjectModel {
+function objectModel(
+  input: JsonSchema,
+  root: JsonSchema,
+  path: string[]
+): ObjectModel {
   const schema = resolveSchema(input, root);
   const required = new Set(schema.required ?? []);
-  const model: ObjectModel = { path, nodes: [], consts: {}, choice: null, supported: true };
+  const model: ObjectModel = {
+    path,
+    nodes: [],
+    consts: {},
+    choice: null,
+    supported: true,
+  };
 
   for (const [key, raw] of Object.entries(schema.properties ?? {})) {
     const property = resolveSchema(raw, root);
@@ -109,7 +125,13 @@ function objectModel(input: JsonSchema, root: JsonSchema, path: string[]): Objec
       });
     } else if (main.length === 1 && main[0] === 'object') {
       const inner = objectModel(property, root, at);
-      model.nodes.push({ kind: 'group', path: at, title, required: isRequired, model: inner });
+      model.nodes.push({
+        kind: 'group',
+        path: at,
+        title,
+        required: isRequired,
+        model: inner,
+      });
       if (!inner.supported && isRequired) {
         model.supported = false;
       }
@@ -185,7 +207,11 @@ function fieldValue(node: FieldNode, entry: unknown): unknown {
 }
 
 /** The branch picked for an object, by its discriminator value. */
-export const pickedBranch = (choice: Choice, values: FormValues, path: string[]) => {
+export const pickedBranch = (
+  choice: Choice,
+  values: FormValues,
+  path: string[]
+) => {
   const picked = values[pathKey([...path, choice.discriminator])];
   return choice.branches.find((branch) => branch.value === picked) ?? null;
 };
@@ -212,7 +238,9 @@ function objectValue(
       }
     }
   }
-  const branch = model.choice ? pickedBranch(model.choice, values, model.path) : null;
+  const branch = model.choice
+    ? pickedBranch(model.choice, values, model.path)
+    : null;
   if (branch) {
     const inner = objectValue(branch.model, values);
     Object.assign(value, inner.value);

@@ -68,7 +68,10 @@ export const StreetAutocomplete = ({
   const [editing, setEditing] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const { searchTerm, setSearchTerm, debouncedTerm } = useSearchInput();
-  const streets = useStreetSearch(editing ? settlementRef : null, debouncedTerm);
+  const streets = useStreetSearch(
+    editing ? settlementRef : null,
+    debouncedTerm
+  );
 
   const items = streets.items;
   const active = Math.min(activeIndex, Math.max(items.length - 1, 0));

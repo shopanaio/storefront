@@ -84,9 +84,18 @@ export const Themed: Story = {
   decorators: [
     (Story) => (
       <BannerProvider
-        styles={{ root: { borderRadius: 4, borderWidth: 2 }, title: { fontWeight: 700 } }}
+        styles={{
+          root: { borderRadius: 4, borderWidth: 2 },
+          title: { fontWeight: 700 },
+        }}
         icons={{ action: LuSparkles }}
-        tones={{ action: { background: '#fff7e6', border: '#ffa940', accent: '#d46b08' } }}
+        tones={{
+          action: {
+            background: '#fff7e6',
+            border: '#ffa940',
+            accent: '#d46b08',
+          },
+        }}
       >
         <Story />
       </BannerProvider>

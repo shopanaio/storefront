@@ -34,7 +34,12 @@ export interface FoldToggleProps {
 }
 
 /** The arrow of every folding block of the checkout: down while folded, up while open. */
-export const FoldToggle = ({ open, controls, label, onClick }: FoldToggleProps) => {
+export const FoldToggle = ({
+  open,
+  controls,
+  label,
+  onClick,
+}: FoldToggleProps) => {
   const { styles, cx } = useStyles();
   return (
     <Button
@@ -44,7 +49,12 @@ export const FoldToggle = ({ open, controls, label, onClick }: FoldToggleProps) 
       aria-expanded={open}
       aria-controls={controls}
       aria-label={label}
-      icon={<TbChevronDown size={20} className={cx(styles.chevron, open && styles.chevronUp)} />}
+      icon={
+        <TbChevronDown
+          size={20}
+          className={cx(styles.chevron, open && styles.chevronUp)}
+        />
+      }
       onClick={(event) => {
         event.stopPropagation();
         onClick();

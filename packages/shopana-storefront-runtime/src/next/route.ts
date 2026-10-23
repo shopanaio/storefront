@@ -39,7 +39,10 @@ export function resolveRuntimeRoute<T = unknown>(
   locale?: string
 ): RuntimeRouteResolution<T> {
   const pathnameWithoutLocale = stripLocalePrefix(pathname, locale);
-  const moduleMatch = moduleRegistry.matchPath<T>('page', pathnameWithoutLocale);
+  const moduleMatch = moduleRegistry.matchPath<T>(
+    'page',
+    pathnameWithoutLocale
+  );
 
   if (moduleMatch) {
     return {

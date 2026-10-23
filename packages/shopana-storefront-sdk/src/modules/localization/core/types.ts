@@ -13,4 +13,3 @@ export interface LocalizationState {
   getLocaleUrl: (localeCode: string) => string;
   changeLocale: (localeCode: string) => void;
 }
-

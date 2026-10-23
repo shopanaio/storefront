@@ -1,8 +1,5 @@
 import { moduleRegistry } from '@shopana/storefront-sdk/registry';
-import {
-  ProviderConfig,
-  ProviderModuleType,
-} from '#checkout/vendors/types';
+import { ProviderConfig, ProviderModuleType } from '#checkout/vendors/types';
 
 /**
  * Resolve provider method-level schema from the module registry.

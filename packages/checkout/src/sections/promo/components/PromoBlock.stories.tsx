@@ -2,10 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fireEvent, userEvent, within } from 'storybook/test';
 import { makeCheckout } from '#checkout/stories/fixtures';
 import { CheckoutFormPage } from '#checkout/stories/CheckoutFormPage';
-import {
-  mockCheckout,
-  recalculate,
-} from '#checkout/stories/mockCheckout';
+import { mockCheckout, recalculate } from '#checkout/stories/mockCheckout';
 import type { CheckoutMockState } from '#checkout/stories/mockCheckout';
 import { promoCode } from '#checkout/stories/promoFixtures';
 import { withCheckout } from '#checkout/stories/withCheckout';

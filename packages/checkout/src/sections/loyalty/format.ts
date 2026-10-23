@@ -12,7 +12,10 @@ export function formatPointsNumber(locale: string, points: string): string {
 
 /** Day and month of a date in the locale, e.g. `31.10`. */
 export function formatShortDate(locale: string, date: Date): string {
-  return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(date);
 }
 
 /**

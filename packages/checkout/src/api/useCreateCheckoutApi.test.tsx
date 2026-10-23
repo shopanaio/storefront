@@ -222,12 +222,19 @@ describe('useCreateCheckoutApi loyalty', () => {
       await result.current.setLoyaltyRedemption(null);
     });
 
-    expect(loyaltyCalls()).toEqual([{ mutation: 'remove', input: { checkoutId: 'c1' } }]);
+    expect(loyaltyCalls()).toEqual([
+      { mutation: 'remove', input: { checkoutId: 'c1' } },
+    ]);
   });
 
   it('K2: "retry" sends the saved choice that the calculation did not apply', async () => {
     mocks.cached = loyaltyCheckout({
-      loyaltySelection: { source: 'POINTS', points: '300', amount: null, rewardId: 'r1' },
+      loyaltySelection: {
+        source: 'POINTS',
+        points: '300',
+        amount: null,
+        rewardId: 'r1',
+      },
     });
     const { result } = renderHook(() => useCreateCheckoutApi());
 
@@ -238,14 +245,25 @@ describe('useCreateCheckoutApi loyalty', () => {
     expect(loyaltyCalls()).toEqual([
       {
         mutation: 'update',
-        input: { checkoutId: 'c1', source: 'POINTS', points: '300', amount: null, rewardId: 'r1' },
+        input: {
+          checkoutId: 'c1',
+          source: 'POINTS',
+          points: '300',
+          amount: null,
+          rewardId: 'r1',
+        },
       },
     ]);
   });
 
   it('K3: a reward keeps the points that the order is too small for', async () => {
     mocks.cached = loyaltyCheckout({
-      loyaltySelection: { source: 'POINTS', points: null, amount: null, rewardId: null },
+      loyaltySelection: {
+        source: 'POINTS',
+        points: null,
+        amount: null,
+        rewardId: null,
+      },
     });
     const { result } = renderHook(() => useCreateCheckoutApi());
 
@@ -256,7 +274,13 @@ describe('useCreateCheckoutApi loyalty', () => {
     expect(loyaltyCalls()).toEqual([
       {
         mutation: 'update',
-        input: { checkoutId: 'c1', source: 'POINTS', points: null, amount: null, rewardId: 'r1' },
+        input: {
+          checkoutId: 'c1',
+          source: 'POINTS',
+          points: null,
+          amount: null,
+          rewardId: 'r1',
+        },
       },
     ]);
   });
@@ -275,21 +299,41 @@ describe('useCreateCheckoutApi loyalty', () => {
       writes = Promise.all([
         result.current.setLoyaltyRedemption({ source: 'POINTS', points: null }),
         result.current.setLoyaltyReward({ id: 'r1', voucherCode: null }),
-        result.current.setLoyaltyRedemption({ source: 'STORE_CREDIT', amount: '80' }),
+        result.current.setLoyaltyRedemption({
+          source: 'STORE_CREDIT',
+          amount: '80',
+        }),
       ]);
       gate.resolve();
       await writes;
     });
 
     expect(loyaltyCalls().map(({ input }) => input)).toEqual([
-      { checkoutId: 'c1', source: 'POINTS', points: null, amount: null, rewardId: null },
-      { checkoutId: 'c1', source: 'STORE_CREDIT', points: null, amount: '80', rewardId: 'r1' },
+      {
+        checkoutId: 'c1',
+        source: 'POINTS',
+        points: null,
+        amount: null,
+        rewardId: null,
+      },
+      {
+        checkoutId: 'c1',
+        source: 'STORE_CREDIT',
+        points: null,
+        amount: '80',
+        rewardId: 'r1',
+      },
     ]);
   });
 
   it('V1: a refresh never replaces a waiting choice of the buyer', async () => {
     mocks.cached = loyaltyCheckout({
-      loyaltySelection: { source: 'POINTS', points: '300', amount: null, rewardId: null },
+      loyaltySelection: {
+        source: 'POINTS',
+        points: '300',
+        amount: null,
+        rewardId: null,
+      },
     });
     const gate = deferred();
     mocks.send.mockImplementationOnce(async () => {
@@ -351,7 +395,8 @@ describe('useCreateCheckoutApi loyalty', () => {
   it('S5: takes the voucher code back when the reward was not saved', async () => {
     mocks.cached = loyaltyCheckout();
     mocks.send.mockImplementation(async (mutation) => {
-      if (mutation === updateLoyaltyRedemptionMutation) throw new Error('offline');
+      if (mutation === updateLoyaltyRedemptionMutation)
+        throw new Error('offline');
       return placed;
     });
     const { result } = renderHook(() => useCreateCheckoutApi());
@@ -366,7 +411,13 @@ describe('useCreateCheckoutApi loyalty', () => {
       { mutation: 'addPromo', input: { checkoutId: 'c1', code: 'GIFT-1' } },
       {
         mutation: 'update',
-        input: { checkoutId: 'c1', source: null, points: null, amount: null, rewardId: 'r1' },
+        input: {
+          checkoutId: 'c1',
+          source: null,
+          points: null,
+          amount: null,
+          rewardId: 'r1',
+        },
       },
       { mutation: 'removePromo', input: { checkoutId: 'c1', code: 'GIFT-1' } },
     ]);
@@ -386,7 +437,12 @@ describe('useCreateCheckoutApi loyalty', () => {
       }) as Checkout.LoyaltyRedemption;
     mocks.cached = loyaltyCheckout({
       loyaltyRedemption: quote(50, new Date(Date.now() + 10_000)),
-      loyaltySelection: { source: 'POINTS', points: null, amount: null, rewardId: null },
+      loyaltySelection: {
+        source: 'POINTS',
+        points: null,
+        amount: null,
+        rewardId: null,
+      },
     });
     mocks.send.mockImplementation(async (mutation) => {
       if (mutation === updateLoyaltyRedemptionMutation) {
@@ -394,7 +450,12 @@ describe('useCreateCheckoutApi loyalty', () => {
         mocks.cached = loyaltyCheckout({
           updatedAt: new Date('2026-10-20T10:01:00Z'),
           loyaltyRedemption: quote(40, new Date(Date.now() + 600_000)),
-          loyaltySelection: { source: 'POINTS', points: null, amount: null, rewardId: null },
+          loyaltySelection: {
+            source: 'POINTS',
+            points: null,
+            amount: null,
+            rewardId: null,
+          },
         });
       }
       return placed;

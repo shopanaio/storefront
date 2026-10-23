@@ -29,7 +29,11 @@ export interface PaymentSectionViewProps {
 export const PaymentSectionView = ({ data }: PaymentSectionViewProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
-  const { paymentMethods = [], selectedPaymentMethod, resetReason } = data ?? {};
+  const {
+    paymentMethods = [],
+    selectedPaymentMethod,
+    resetReason,
+  } = data ?? {};
   const { selectPaymentMethod } = useCheckoutApi();
 
   /**

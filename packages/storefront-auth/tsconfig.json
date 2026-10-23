@@ -22,7 +22,6 @@
     "node_modules",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/*.stories.tsx",
-    "src/ui/stories"
+    "**/*.stories.tsx"
   ]
 }

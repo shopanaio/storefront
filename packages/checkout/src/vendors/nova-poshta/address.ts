@@ -17,7 +17,8 @@ export function settlementAddressData(settlement: Settlement) {
 export function readSettlementRef(
   address: ProviderDeliveryAddress | null | undefined
 ): string | null {
-  const carriers = (address?.data as { carriers?: unknown } | null | undefined)?.carriers;
+  const carriers = (address?.data as { carriers?: unknown } | null | undefined)
+    ?.carriers;
   const hint =
     carriers && typeof carriers === 'object'
       ? (carriers as Record<string, unknown>)[NOVA_POSHTA]

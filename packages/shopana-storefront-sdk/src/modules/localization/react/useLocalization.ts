@@ -12,4 +12,3 @@ export function useLocalization() {
 
   return localization;
 }
-

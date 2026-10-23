@@ -8,7 +8,12 @@ import {
   type FlowScreen,
 } from './navigation';
 
-const otpSent: AuthStep = { type: 'otpSent', channel: 'email', resendAfter: 60, expiresIn: 600 };
+const otpSent: AuthStep = {
+  type: 'otpSent',
+  channel: 'email',
+  resendAfter: 60,
+  expiresIn: 600,
+};
 const identify: FlowScreen = { name: 'identify' };
 const password: FlowScreen = { name: 'password', notice: null };
 const signUp: FlowScreen = { name: 'signUp' };
@@ -32,7 +37,9 @@ describe('reactToStep', () => {
   });
 
   it('keeps the code screen when the code is sent again', () => {
-    expect(reactToStep({ name: 'code', purpose: 'signIn' }, otpSent)).toEqual({ type: 'none' });
+    expect(reactToStep({ name: 'code', purpose: 'signIn' }, otpSent)).toEqual({
+      type: 'none',
+    });
   });
 
   it('sends a verification code for an unconfirmed email confirmed by code', () => {
@@ -67,22 +74,39 @@ describe('reactToStep', () => {
       screen: { name: 'forgot', sent: true, resent: false },
     });
     expect(
-      reactToStep({ name: 'forgot', sent: true, resent: false }, { type: 'resetLinkSent' })
-    ).toEqual({ type: 'update', screen: { name: 'forgot', sent: true, resent: true } });
+      reactToStep(
+        { name: 'forgot', sent: true, resent: false },
+        { type: 'resetLinkSent' }
+      )
+    ).toEqual({
+      type: 'update',
+      screen: { name: 'forgot', sent: true, resent: true },
+    });
   });
 
   it('marks the verification email as sent again', () => {
     expect(
-      reactToStep({ name: 'password', notice: 'verificationLink' }, { type: 'verificationSent' })
-    ).toEqual({ type: 'update', screen: { name: 'password', notice: 'verificationResent' } });
+      reactToStep(
+        { name: 'password', notice: 'verificationLink' },
+        { type: 'verificationSent' }
+      )
+    ).toEqual({
+      type: 'update',
+      screen: { name: 'password', notice: 'verificationResent' },
+    });
     expect(
-      reactToStep({ name: 'verifyLink', sent: false }, { type: 'verificationSent' })
+      reactToStep(
+        { name: 'verifyLink', sent: false },
+        { type: 'verificationSent' }
+      )
     ).toEqual({ type: 'update', screen: { name: 'verifyLink', sent: true } });
   });
 
   it('completes on a session', () => {
     expect(
-      reactToStep({ name: 'code', purpose: 'signIn' }, { type: 'completed' } as AuthStep)
+      reactToStep({ name: 'code', purpose: 'signIn' }, {
+        type: 'completed',
+      } as AuthStep)
     ).toEqual({ type: 'completed' });
   });
 });
@@ -100,21 +124,36 @@ describe('flowReducer', () => {
   it('returns to a screen already on the stack instead of looping', () => {
     let state = initialFlow();
     state = flowReducer(state, { type: 'open', screen: password });
-    state = flowReducer(state, { type: 'open', screen: { name: 'forgot', sent: false, resent: false } });
-    state = flowReducer(state, { type: 'open', screen: { name: 'password', notice: null } });
-    expect(state.stack.map((screen) => screen.name)).toEqual(['identify', 'password']);
+    state = flowReducer(state, {
+      type: 'open',
+      screen: { name: 'forgot', sent: false, resent: false },
+    });
+    state = flowReducer(state, {
+      type: 'open',
+      screen: { name: 'password', notice: null },
+    });
+    expect(state.stack.map((screen) => screen.name)).toEqual([
+      'identify',
+      'password',
+    ]);
   });
 
   it('starts over on the first screen', () => {
     let state = initialFlow('password');
-    state = flowReducer(state, { type: 'open', screen: { name: 'code', purpose: 'verifyEmail' } });
+    state = flowReducer(state, {
+      type: 'open',
+      screen: { name: 'code', purpose: 'verifyEmail' },
+    });
     state = flowReducer(state, { type: 'restart' });
     expect(state.stack).toEqual([identify]);
   });
 
   it('offers no way back while signing in or leaving for a provider', () => {
     let state = initialFlow();
-    state = flowReducer(state, { type: 'open', screen: { name: 'social', provider: 'google' } });
+    state = flowReducer(state, {
+      type: 'open',
+      screen: { name: 'social', provider: 'google' },
+    });
     expect(canGoBack(state)).toBe(false);
   });
 

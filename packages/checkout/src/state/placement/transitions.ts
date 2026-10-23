@@ -1,6 +1,12 @@
-import type { AttemptJournal, PlacementAttempt } from '#checkout/state/placement/attemptJournal';
+import type {
+  AttemptJournal,
+  PlacementAttempt,
+} from '#checkout/state/placement/attemptJournal';
 import type { PlacementPhase } from '#checkout/state/placement/placementStore';
-import type { PlacementOutcome, PlacementResult } from '#checkout/state/placement/types';
+import type {
+  PlacementOutcome,
+  PlacementResult,
+} from '#checkout/state/placement/types';
 import { DISCLOSURES_CHANGED_CODE } from '#checkout/state/placement/outcome';
 
 /**

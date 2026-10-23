@@ -19,7 +19,7 @@
   connection: local
   gather_facts: false
   vars_files:
-    - "{{ playbook_dir }}/sandbox.vars.yml"
+    - '{{ playbook_dir }}/sandbox.vars.yml'
 
   tasks:
     - name: Ensure required variables are provided
@@ -63,21 +63,21 @@
           - gh
           - workflow
           - run
-          - "{{ workflow_file | basename }}"
+          - '{{ workflow_file | basename }}'
           - -R
-          - "{{ gh_repo_owner }}/{{ gh_repo_name }}"
+          - '{{ gh_repo_owner }}/{{ gh_repo_name }}'
           - --ref
-          - "{{ gh_ref }}"
+          - '{{ gh_ref }}'
           - -f
-          - "image_tag={{ image_tag }}"
+          - 'image_tag={{ image_tag }}'
           - -f
-          - "cms={{ CMS }}"
+          - 'cms={{ CMS }}'
           - -f
-          - "shopana_graphql_url={{ SHOPANA_GRAPHQL_URL }}"
+          - 'shopana_graphql_url={{ SHOPANA_GRAPHQL_URL }}'
           - -f
-          - "port={{ PORT }}"
+          - 'port={{ PORT }}'
           - -f
-          - "shopana_api_key={{ SHOPANA_API_KEY }}"
+          - 'shopana_api_key={{ SHOPANA_API_KEY }}'
 
     - name: Add NEXT_PUBLIC_APP_URL arg when provided
       ansible.builtin.set_fact:
@@ -95,7 +95,7 @@
 
     - name: Trigger workflow run via gh
       ansible.builtin.command:
-        argv: "{{ gh_argv }}"
+        argv: '{{ gh_argv }}'
       register: trigger_out
       changed_when: true
 
@@ -110,10 +110,10 @@
     - name: Show workflow run info
       ansible.builtin.debug:
         msg:
-          - "🚀 Workflow dispatched"
-          - "Repository: {{ gh_repo_owner }}/{{ gh_repo_name }}"
-          - "Ref: {{ gh_ref }}"
-          - "Workflow: {{ workflow_file }}"
+          - '🚀 Workflow dispatched'
+          - 'Repository: {{ gh_repo_owner }}/{{ gh_repo_name }}'
+          - 'Ref: {{ gh_ref }}'
+          - 'Workflow: {{ workflow_file }}'
           - "Run URL: {{ gh_run_url | default('n/a') }}"
           - "Run ID: {{ gh_run_id | default('n/a') }}"
 

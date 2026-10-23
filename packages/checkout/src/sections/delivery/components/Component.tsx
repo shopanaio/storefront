@@ -46,7 +46,10 @@ export const DeliverySectionView = ({ data }: DeliverySectionViewProps) => {
   const addressLoading = useAddressLoading();
 
   return (
-    <LoadingBoundary pending={addressLoading} fallback={<DeliveryMethodsSkeleton />}>
+    <LoadingBoundary
+      pending={addressLoading}
+      fallback={<DeliveryMethodsSkeleton />}
+    >
       <Flex vertical gap={12}>
         <UndeliverableLines />
         {deliverable.length === 1 ? (

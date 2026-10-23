@@ -49,7 +49,7 @@ export interface ProviderMethodBase {
  */
 export function buildSelectedProviderMethodSchema<
   T extends ProviderMethodBase,
-  S extends yup.ObjectSchema<any, any, any, any>
+  S extends yup.ObjectSchema<any, any, any, any>,
 >(params: {
   moduleType: ProviderModuleType;
   baseSchema: S;
@@ -77,35 +77,35 @@ export function buildSelectedProviderMethodSchema<
 
   const enhanced = baseSchema
     .required(requiredMsg)
-    .test('is-selected', notSelectedMsg, (value) => value !== null && value !== undefined)
     .test(
-      'by-provider-method',
-      invalidMsg,
-      async function (selectedMethod) {
-        if (!selectedMethod) {
-          return false;
-        }
-
-        const { code, provider, data, customerInputContract } =
-          selectedMethod as T;
-
-        if (requireMethodModule) {
-          const config = await resolveProviderConfig(moduleType, provider);
-          if (!config?.methods.some((m) => m.code === code)) {
-            return this.createError({ message: unavailableMsg });
-          }
-        }
-
-        if (
-          checkInput &&
-          validateCustomerInput(customerInputContract, data).length > 0
-        ) {
-          return this.createError({ message: invalidMsg });
-        }
-
-        return true;
+      'is-selected',
+      notSelectedMsg,
+      (value) => value !== null && value !== undefined
+    )
+    .test('by-provider-method', invalidMsg, async function (selectedMethod) {
+      if (!selectedMethod) {
+        return false;
       }
-    );
+
+      const { code, provider, data, customerInputContract } =
+        selectedMethod as T;
+
+      if (requireMethodModule) {
+        const config = await resolveProviderConfig(moduleType, provider);
+        if (!config?.methods.some((m) => m.code === code)) {
+          return this.createError({ message: unavailableMsg });
+        }
+      }
+
+      if (
+        checkInput &&
+        validateCustomerInput(customerInputContract, data).length > 0
+      ) {
+        return this.createError({ message: invalidMsg });
+      }
+
+      return true;
+    });
 
   return enhanced as S;
 }

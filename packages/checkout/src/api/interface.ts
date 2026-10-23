@@ -35,7 +35,9 @@ export interface CheckoutApi {
    * Gives every delivery group the recipient (`null`: removes it), by the checkout as it is
    * when the save starts. A waiting recipient save is replaced by this one.
    */
-  saveDeliveryRecipient: (recipient: CheckoutRecipientInput | null) => Promise<void>;
+  saveDeliveryRecipient: (
+    recipient: CheckoutRecipientInput | null
+  ) => Promise<void>;
   updateCustomerNote: (input: CustomerNoteUpdateDto) => Promise<void>;
   /**
    * Adds a promo code. The checkout keeps the code whether it applies or not and reports its

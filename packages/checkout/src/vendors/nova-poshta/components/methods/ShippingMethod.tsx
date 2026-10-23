@@ -23,7 +23,10 @@ interface NovaPoshtaPublicData {
  * unknown; when the merchant pays, or free shipping pays the carrier for this option, there is
  * nothing to say here.
  */
-function useCarrierEstimate(publicData: unknown, waived: boolean): string | null {
+function useCarrierEstimate(
+  publicData: unknown,
+  waived: boolean
+): string | null {
   const t = useTranslations('Modules.novaPoshta');
   const locale = useLocale();
   const data = (publicData ?? {}) as NovaPoshtaPublicData;
@@ -49,7 +52,9 @@ function useCarrierEstimate(publicData: unknown, waived: boolean): string | null
  * A title the API gives in words wins; today the app returns the service code there. The
  * description is the carrier price estimate, never a price of the order.
  */
-export function createShippingMethod(code: ServiceCode): FC<ProviderMethodComponentProps> {
+export function createShippingMethod(
+  code: ServiceCode
+): FC<ProviderMethodComponentProps> {
   const type = SERVICE_RECEIVING_TYPE[code];
   function NovaPoshtaShippingMethod({
     title,

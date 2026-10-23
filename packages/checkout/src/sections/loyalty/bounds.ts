@@ -13,16 +13,20 @@ export interface RedemptionBounds {
 
 const smallestPoints = (values: (string | null | undefined)[]): string | null =>
   values
-    .filter((value): value is string => typeof value === 'string' && /^\d+$/.test(value))
-    .reduce<string | null>(
-      (smallest, value) =>
-        smallest === null || BigInt(value) < BigInt(smallest) ? value : smallest,
-      null
-    );
+    .filter(
+      (value): value is string =>
+        typeof value === 'string' && /^\d+$/.test(value)
+    )
+    .reduce<
+      string | null
+    >((smallest, value) => (smallest === null || BigInt(value) < BigInt(smallest) ? value : smallest), null);
 
-const smallestAmount = (values: (number | null | undefined)[]): string | null => {
+const smallestAmount = (
+  values: (number | null | undefined)[]
+): string | null => {
   const known = values.filter(
-    (value): value is number => typeof value === 'number' && Number.isFinite(value)
+    (value): value is number =>
+      typeof value === 'number' && Number.isFinite(value)
   );
   return known.length > 0 ? String(Math.min(...known)) : null;
 };
@@ -78,18 +82,28 @@ export function isAtMaximum(
   option: Checkout.LoyaltySourceOption,
   redemption: Checkout.LoyaltyRedemption
 ): boolean {
-  if (redemption.requestedPoints === null && redemption.requestedAmount === null) return true;
+  if (
+    redemption.requestedPoints === null &&
+    redemption.requestedAmount === null
+  )
+    return true;
   const { max } = redemptionBounds(option, redemption);
   if (redemption.source === 'POINTS') {
     if (redemption.points === null) return false;
     const applied = BigInt(redemption.points);
-    if (redemption.requestedPoints !== null && applied < BigInt(redemption.requestedPoints)) {
+    if (
+      redemption.requestedPoints !== null &&
+      applied < BigInt(redemption.requestedPoints)
+    ) {
       return true;
     }
     return max !== null && applied >= BigInt(max);
   }
   const applied = redemption.discount.amount;
-  if (redemption.requestedAmount !== null && applied < redemption.requestedAmount.amount) {
+  if (
+    redemption.requestedAmount !== null &&
+    applied < redemption.requestedAmount.amount
+  ) {
     return true;
   }
   return max !== null && applied >= Number(max);
@@ -110,7 +124,9 @@ export function parseRedemptionInput(
 ): string | null {
   const value = raw.trim().replace(/\s/g, '');
   if (source === 'POINTS') {
-    return POINTS_INPUT.test(value) && BigInt(value) > 0n ? BigInt(value).toString() : null;
+    return POINTS_INPUT.test(value) && BigInt(value) > 0n
+      ? BigInt(value).toString()
+      : null;
   }
   if (!AMOUNT_INPUT.test(value)) return null;
   const normalized = value.replace(',', '.');
@@ -125,13 +141,15 @@ export function checkRedemptionInput(
 ): AmountError | null {
   if (value === null) return { code: 'invalid' };
   if (source === 'POINTS') {
-    if (BigInt(value) < BigInt(bounds.min)) return { code: 'too-small', min: bounds.min };
+    if (BigInt(value) < BigInt(bounds.min))
+      return { code: 'too-small', min: bounds.min };
     if (bounds.max !== null && BigInt(value) > BigInt(bounds.max)) {
       return { code: 'too-large', max: bounds.max };
     }
     return null;
   }
-  if (Number(value) < Number(bounds.min)) return { code: 'too-small', min: bounds.min };
+  if (Number(value) < Number(bounds.min))
+    return { code: 'too-small', min: bounds.min };
   if (bounds.max !== null && Number(value) > Number(bounds.max)) {
     return { code: 'too-large', max: bounds.max };
   }

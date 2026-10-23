@@ -50,7 +50,11 @@ const byValidity = (a: Checkout.LoyaltyReward, b: Checkout.LoyaltyReward) =>
  * neither reads their kind beyond the icon nor computes their value. The nearest to expire come
  * first; the applied one is marked and its discount is in the totals.
  */
-export const RewardsPart = ({ rewards, appliedId, appliedProblem }: RewardsPartProps) => {
+export const RewardsPart = ({
+  rewards,
+  appliedId,
+  appliedProblem,
+}: RewardsPartProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
   const { setLoyaltyReward } = useCheckoutApi();
@@ -89,7 +93,12 @@ export const RewardsPart = ({ rewards, appliedId, appliedProblem }: RewardsPartP
       <Typography.Text strong type="secondary" className={styles.label}>
         {t('loyalty-rewards-title')}
       </Typography.Text>
-      <Flex vertical gap={8} role="list" aria-label={t('loyalty-rewards-title')}>
+      <Flex
+        vertical
+        gap={8}
+        role="list"
+        aria-label={t('loyalty-rewards-title')}
+      >
         {visible.map((reward) => (
           <RewardCard
             key={reward.id}
@@ -142,7 +151,9 @@ const RewardCard = ({
   // Free shipping is never applied by hand: the server applies it and the shipping line names it.
   const automatic = reward.kind === 'FREE_SHIPPING';
   const validUntil = reward.validUntil
-    ? t('loyalty-reward-valid-until', { date: formatShortDate(locale, reward.validUntil) })
+    ? t('loyalty-reward-valid-until', {
+        date: formatShortDate(locale, reward.validUntil),
+      })
     : null;
   const details = applied
     ? [t('loyalty-reward-applied'), validUntil]
@@ -159,7 +170,10 @@ const RewardCard = ({
         problem ? styles.problem : undefined
       )}
     >
-      <span className={cx(styles.icon, problem ? styles.iconMuted : undefined)} aria-hidden="true">
+      <span
+        className={cx(styles.icon, problem ? styles.iconMuted : undefined)}
+        aria-hidden="true"
+      >
         <Icon size={18} />
       </span>
       <Flex vertical className={styles.text}>
@@ -189,7 +203,11 @@ const RewardCard = ({
           {t('loyalty-reward-remove')}
         </button>
       ) : automatic ? null : (
-        <Button loading={pending} disabled={disabled && !pending} onClick={onApply}>
+        <Button
+          loading={pending}
+          disabled={disabled && !pending}
+          onClick={onApply}
+        >
           {t('apply')}
         </Button>
       )}

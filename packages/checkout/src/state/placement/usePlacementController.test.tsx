@@ -310,36 +310,39 @@ describe('usePlacementController', () => {
   it.each([
     ['SC-q2tn', 'CHECKOUT_TOTAL_CHANGED', ['input', 'expectedTotal']],
     ['SC-fz14', 'CHECKOUT_SHIPPING_CHANGED', ['input', 'checkoutId']],
-  ])('%s: %s keeps the checkout open and reads it again', async (_scenario, code, field) => {
-    mocks.refetch.mockResolvedValue(undefined);
-    mocks.submitCheckout.mockResolvedValue({
-      ...paid,
-      placementId: null,
-      placementState: null,
-      orderId: null,
-      status: null,
-      userErrors: [
-        {
+  ])(
+    '%s: %s keeps the checkout open and reads it again',
+    async (_scenario, code, field) => {
+      mocks.refetch.mockResolvedValue(undefined);
+      mocks.submitCheckout.mockResolvedValue({
+        ...paid,
+        placementId: null,
+        placementState: null,
+        orderId: null,
+        status: null,
+        userErrors: [
+          {
+            code,
+            field,
+            message: 'The checkout total changed.',
+            retryable: false,
+          },
+        ],
+      });
+
+      renderHook(() => usePlacementController('checkout-1'));
+
+      await waitFor(() =>
+        expect(usePlacementStore.getState().phase).toEqual({
+          name: 'rejected',
           code,
-          field,
-          message: 'The checkout total changed.',
-          retryable: false,
-        },
-      ],
-    });
-
-    renderHook(() => usePlacementController('checkout-1'));
-
-    await waitFor(() =>
-      expect(usePlacementStore.getState().phase).toEqual({
-        name: 'rejected',
-        code,
-      })
-    );
-    // Nothing was placed: the next press sends the new total with a new key.
-    expect(storedAttempt()).toBeNull();
-    expect(mocks.refetch).toHaveBeenCalledTimes(1);
-  });
+        })
+      );
+      // Nothing was placed: the next press sends the new total with a new key.
+      expect(storedAttempt()).toBeNull();
+      expect(mocks.refetch).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it('BR-q2tm: a new attempt sends the total the buyer sees', async () => {
     window.localStorage.clear();

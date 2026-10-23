@@ -78,6 +78,8 @@ export function readInput<T extends CustomerInput['type']>(
   }
   const input = data as CustomerInput;
   return input.type === type && input.settlementRef === settlementRef
-    ? (input as T extends 'DOOR' ? DoorDraft : Extract<CustomerInput, { type: T }>)
+    ? (input as T extends 'DOOR'
+        ? DoorDraft
+        : Extract<CustomerInput, { type: T }>)
     : null;
 }

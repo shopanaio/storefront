@@ -19,7 +19,10 @@ export const AccountConnections = (props: AccountConnectionsProps) => (
   </AuthIntlProvider>
 );
 
-const AccountConnectionsContent = ({ onReauthenticate, returnTo }: AccountConnectionsProps) => {
+const AccountConnectionsContent = ({
+  onReauthenticate,
+  returnTo,
+}: AccountConnectionsProps) => {
   const connections = useAccountConnections();
   const [provider, setProvider] = useState<string | null>(null);
 

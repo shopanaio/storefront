@@ -76,7 +76,8 @@ function answer(
           __typename: 'NovaPoshtaSettlementPage',
           // Only the cities the carrier is known for: the others have no ref yet.
           items: popularCities.filter(
-            (city) => city.ref && matches(variables.query, city.name, city.present)
+            (city) =>
+              city.ref && matches(variables.query, city.name, city.present)
           ),
           hasNextPage: false,
         },
@@ -173,7 +174,10 @@ function createClient({
  * countries, answering as `parameters.directory` says.
  */
 // Any args: the decorator wraps stories of every component.
-export const withDirectory: Decorator<any> = (Story, { parameters, id }) => {
+export const withDirectory: Decorator<any> = function WithDirectory(
+  Story,
+  { parameters, id }
+) {
   const scenario = (parameters.directory ?? {}) as DirectoryScenario;
   // A new client per story, so no story reads answers cached by another.
   // eslint-disable-next-line react-hooks/exhaustive-deps

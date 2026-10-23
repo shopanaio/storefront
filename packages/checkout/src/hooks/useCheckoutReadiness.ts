@@ -8,5 +8,8 @@ import type { CheckoutReadiness } from '#checkout/state/readiness';
 export function useCheckoutReadiness(): CheckoutReadiness | null {
   const { checkout } = useCheckoutData();
   const now = useNow(checkout?.expiresAt);
-  return useMemo(() => (checkout ? checkoutReadiness(checkout, now) : null), [checkout, now]);
+  return useMemo(
+    () => (checkout ? checkoutReadiness(checkout, now) : null),
+    [checkout, now]
+  );
 }

@@ -1,10 +1,10 @@
 'use client';
 
-import { Divider, Flex, Skeleton, Typography } from 'antd';
-import { createStyles } from 'antd-style';
 import { mq } from '@shopana/storefront-ui';
-import { BrandHeader } from './BrandHeader';
+import { Flex, Skeleton, Typography } from 'antd';
+import { createStyles } from 'antd-style';
 import React, { useEffect, useState } from 'react';
+import { BrandHeader } from './BrandHeader';
 
 const { Text } = Typography;
 
@@ -44,31 +44,30 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
   return (
     <div className={styles.overlay}>
       <div className={styles.container}>
-      <div className={styles.main}>
-        <Flex className={styles.left} vertical>
-          <BrandHeader>{brand}</BrandHeader>
-          <Flex vertical gap={16}>
-            <Text className={styles.sectionTitle} strong>
-              <Skeleton.Input size="small" style={{ width: 150 }} />
-            </Text>
-            <Skeleton paragraph={{ rows: 3 }} title={false} />
-            <Skeleton paragraph={{ rows: 3 }} title={false} />
-          </Flex>
-        </Flex>
-
-        <Flex className={styles.rightContainer}>
-          <Flex vertical gap={12} className={styles.right}>
-            <Skeleton paragraph={{ rows:5 }} />
-            <Flex vertical gap={12} className={styles.actionsRight}>
-              <Skeleton.Button size="large" style={{ width: 220 }} />
-              <Skeleton.Input size="small" style={{ width: 180 }} />
+        <div className={styles.main}>
+          <Flex className={styles.left} vertical>
+            <BrandHeader>{brand}</BrandHeader>
+            <Flex vertical gap={16}>
+              <Text className={styles.sectionTitle} strong>
+                <Skeleton.Input size="small" style={{ width: 150 }} />
+              </Text>
+              <Skeleton paragraph={{ rows: 3 }} title={false} />
+              <Skeleton paragraph={{ rows: 3 }} title={false} />
             </Flex>
-            <Skeleton paragraph={{ rows: 3 }} title={false} />
-
           </Flex>
-        </Flex>
+
+          <Flex className={styles.rightContainer}>
+            <Flex vertical gap={12} className={styles.right}>
+              <Skeleton paragraph={{ rows: 5 }} />
+              <Flex vertical gap={12} className={styles.actionsRight}>
+                <Skeleton.Button size="large" style={{ width: 220 }} />
+                <Skeleton.Input size="small" style={{ width: 180 }} />
+              </Flex>
+              <Skeleton paragraph={{ rows: 3 }} title={false} />
+            </Flex>
+          </Flex>
+        </div>
       </div>
-    </div>
     </div>
   );
 };

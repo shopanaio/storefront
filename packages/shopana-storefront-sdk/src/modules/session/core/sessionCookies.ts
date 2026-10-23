@@ -27,7 +27,11 @@ export const AUTH_RESULT_PARAM = 'auth';
  */
 export type AuthResult = 'cancelled' | 'accountNotLinked' | 'failed';
 
-const AUTH_RESULTS: readonly AuthResult[] = ['cancelled', 'accountNotLinked', 'failed'];
+const AUTH_RESULTS: readonly AuthResult[] = [
+  'cancelled',
+  'accountNotLinked',
+  'failed',
+];
 
 export function parseAuthResult(value: string | null): AuthResult | null {
   return AUTH_RESULTS.find((result) => result === value) ?? null;

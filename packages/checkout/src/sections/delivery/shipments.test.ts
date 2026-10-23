@@ -33,7 +33,9 @@ const merchant = (
 });
 
 /** Shipping of a carrier-direct option the recipient pays on delivery. */
-const recipient = (estimate: model.Money | null): Checkout.DeliveryGroupShipping => ({
+const recipient = (
+  estimate: model.Money | null
+): Checkout.DeliveryGroupShipping => ({
   paymentModel: 'CARRIER_DIRECT',
   originalPrice: estimate,
   payer: 'RECIPIENT',
@@ -45,7 +47,11 @@ const shipment = (
   shipping: Checkout.DeliveryGroupShipping,
   estimatedMinDeliveryAt: Date | null = null,
   estimatedMaxDeliveryAt: Date | null = null
-): QuotedShipment => ({ shipping, estimatedMinDeliveryAt, estimatedMaxDeliveryAt });
+): QuotedShipment => ({
+  shipping,
+  estimatedMinDeliveryAt,
+  estimatedMaxDeliveryAt,
+});
 
 const method = (
   handle: string,
@@ -84,12 +90,19 @@ const group = (
 });
 
 const fedex = (handle: string) =>
-  method(handle, 'ground', { provider: 'test-fedex', carrierCode: 'test-fedex' });
+  method(handle, 'ground', {
+    provider: 'test-fedex',
+    carrierCode: 'test-fedex',
+  });
 
 describe('shipments', () => {
   it('offers the methods every shipment has, in the order of the first', () => {
     const groups = [
-      group('g1', [fedex('f1'), method('a1', 'warehouse'), method('a2', 'postomat')]),
+      group('g1', [
+        fedex('f1'),
+        method('a1', 'warehouse'),
+        method('a2', 'postomat'),
+      ]),
       group('g2', [method('b1', 'postomat'), method('b2', 'warehouse')]),
     ];
 
@@ -103,7 +116,9 @@ describe('shipments', () => {
     expect(commonSelectionKey([group('g1', [a], a), group('g2', [b], b)])).toBe(
       methodKey(a)
     );
-    expect(commonSelectionKey([group('g1', [a], a), group('g2', [b])])).toBeNull();
+    expect(
+      commonSelectionKey([group('g1', [a], a), group('g2', [b])])
+    ).toBeNull();
   });
 
   it('shows the selection by shipment when the shipments have different methods', () => {
@@ -111,12 +126,19 @@ describe('shipments', () => {
     const b = method('b1', 'warehouse');
     const f = fedex('f1');
 
-    expect(selectionsDiffer([group('g1', [a], a), group('g2', [b])])).toBe(false);
-    expect(selectionsDiffer([group('g1', [a], a), group('g2', [b, f], f)])).toBe(true);
-    // A method only one shipment offers cannot be shown in the shared list.
-    expect(selectionsDiffer([group('g1', [a, fedex('f0')], fedex('f0')), group('g2', [b])])).toBe(
-      true
+    expect(selectionsDiffer([group('g1', [a], a), group('g2', [b])])).toBe(
+      false
     );
+    expect(
+      selectionsDiffer([group('g1', [a], a), group('g2', [b, f], f)])
+    ).toBe(true);
+    // A method only one shipment offers cannot be shown in the shared list.
+    expect(
+      selectionsDiffer([
+        group('g1', [a, fedex('f0')], fedex('f0')),
+        group('g2', [b]),
+      ])
+    ).toBe(true);
   });
 
   it('shows the selection by shipment when the same method goes to different branches', () => {
@@ -137,7 +159,9 @@ describe('shipments', () => {
       ])
     ).toBe(false);
     // A shipment with nothing selected yet blocks the order by itself.
-    expect(selectionsDiffer([group('g1', [a], a), group('g2', [b])])).toBe(false);
+    expect(selectionsDiffer([group('g1', [a], a), group('g2', [b])])).toBe(
+      false
+    );
   });
 
   it('knows the price only once the API accepted the input', () => {
@@ -189,7 +213,9 @@ describe('shipments', () => {
 
 describe('shippingQuote', () => {
   it('sums what is charged at checkout', () => {
-    expect(shippingQuote([shipment(merchant(80)), shipment(merchant(60.5))])?.price).toEqual({
+    expect(
+      shippingQuote([shipment(merchant(80)), shipment(merchant(60.5))])?.price
+    ).toEqual({
       kind: 'amount',
       amount: uah(140.5),
       original: null,
@@ -205,22 +231,38 @@ describe('shippingQuote', () => {
   });
 
   it('strikes the price free shipping took off and says why', () => {
-    const tier: Checkout.FreeShipping = { source: 'LOYALTY_TIER', title: 'Gold', code: null };
+    const tier: Checkout.FreeShipping = {
+      source: 'LOYALTY_TIER',
+      title: 'Gold',
+      code: null,
+    };
     const quote = shippingQuote([
       shipment(merchant(0, { originalPrice: uah(80), freeShipping: tier })),
       shipment(merchant(0, { originalPrice: uah(60), freeShipping: tier })),
     ]);
-    expect(quote?.price).toEqual({ kind: 'free', original: uah(140), carrierWaived: false });
+    expect(quote?.price).toEqual({
+      kind: 'free',
+      original: uah(140),
+      carrierWaived: false,
+    });
     expect(quote?.freeShipping).toEqual([tier]);
   });
 
   it('strikes the price of a shipment made free next to one still charged', () => {
-    const promo: Checkout.FreeShipping = { source: 'DISCOUNT', title: 'Summer', code: 'SUN' };
+    const promo: Checkout.FreeShipping = {
+      source: 'DISCOUNT',
+      title: 'Summer',
+      code: 'SUN',
+    };
     const quote = shippingQuote([
       shipment(merchant(0, { originalPrice: uah(80), freeShipping: promo })),
       shipment(merchant(60)),
     ]);
-    expect(quote?.price).toEqual({ kind: 'amount', amount: uah(60), original: uah(140) });
+    expect(quote?.price).toEqual({
+      kind: 'amount',
+      amount: uah(60),
+      original: uah(140),
+    });
     expect(quote?.freeShipping).toEqual([promo]);
   });
 
@@ -269,8 +311,16 @@ describe('shippingQuote', () => {
   });
 
   it('names each reason once', () => {
-    const tier: Checkout.FreeShipping = { source: 'LOYALTY_TIER', title: 'Gold', code: null };
-    const promo: Checkout.FreeShipping = { source: 'DISCOUNT', title: 'Summer', code: null };
+    const tier: Checkout.FreeShipping = {
+      source: 'LOYALTY_TIER',
+      title: 'Gold',
+      code: null,
+    };
+    const promo: Checkout.FreeShipping = {
+      source: 'DISCOUNT',
+      title: 'Summer',
+      code: null,
+    };
     const quote = shippingQuote([
       shipment(merchant(0, { originalPrice: uah(80), freeShipping: tier })),
       shipment(merchant(0, { originalPrice: uah(80), freeShipping: promo })),
@@ -302,7 +352,11 @@ describe('undeliverableLines', () => {
     deliveryMethods: unknown[],
     deliveryAddress: Checkout.DeliveryAddress | null = address
   ) =>
-    ({ checkoutLines: lines, deliveryMethods, deliveryAddress }) as unknown as Checkout.DeliveryGroup;
+    ({
+      checkoutLines: lines,
+      deliveryMethods,
+      deliveryAddress,
+    }) as unknown as Checkout.DeliveryGroup;
 
   it('lists cart lines of groups with no option for the address', () => {
     const component = line('component');
@@ -333,7 +387,9 @@ describe('initialSplitGroupIds', () => {
   it('keeps every shipment together when they have the same method and input', () => {
     const a = method('a1', 'warehouse', { data: branch('5') });
     const b = method('b1', 'warehouse', { data: branch('5') });
-    expect(initialSplitGroupIds([group('g1', [a], a), group('g2', [b], b)])).toEqual([]);
+    expect(
+      initialSplitGroupIds([group('g1', [a], a), group('g2', [b], b)])
+    ).toEqual([]);
   });
 
   it('takes apart a shipment whose method or branch differs from the first one', () => {
@@ -353,12 +409,16 @@ describe('initialSplitGroupIds', () => {
   it('keeps a shipment with nothing selected with the others', () => {
     const a = method('a1', 'warehouse');
     const b = method('b1', 'warehouse');
-    expect(initialSplitGroupIds([group('g1', [a]), group('g2', [b], b)])).toEqual([]);
+    expect(
+      initialSplitGroupIds([group('g1', [a]), group('g2', [b], b)])
+    ).toEqual([]);
   });
 
   it('takes apart every shipment but the first when they share no method', () => {
     const a = method('a1', 'warehouse');
     const b = method('b1', 'courier');
-    expect(initialSplitGroupIds([group('g1', [a]), group('g2', [b])])).toEqual(['g2']);
+    expect(initialSplitGroupIds([group('g1', [a]), group('g2', [b])])).toEqual([
+      'g2',
+    ]);
   });
 });

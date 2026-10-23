@@ -109,7 +109,9 @@ const DEFAULT_THEME: CheckoutTheme = {
 };
 
 /** The checkout defaults with what the theme sets. */
-export function resolveCheckoutTheme(adapter: CheckoutThemeAdapter = {}): CheckoutTheme {
+export function resolveCheckoutTheme(
+  adapter: CheckoutThemeAdapter = {}
+): CheckoutTheme {
   const defined = Object.fromEntries(
     Object.entries(adapter).filter(([, value]) => value !== undefined)
   ) as Partial<CheckoutTheme>;

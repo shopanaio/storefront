@@ -2,7 +2,10 @@
  * Global validation helper hook that exposes derived submission readiness
  * and missing required sections using checkout selectors.
  */
-import { useCanSubmit, useMissingRequiredSections } from '#checkout/state/selectors';
+import {
+  useCanSubmit,
+  useMissingRequiredSections,
+} from '#checkout/state/selectors';
 
 export function useGlobalValidation() {
   const canSubmit = useCanSubmit();

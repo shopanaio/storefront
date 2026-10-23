@@ -18,7 +18,10 @@ export interface ClosedPageGuardProps {
  * the back button to return to it. A sign-out on this page is not followed: the sign-out
  * itself leaves for IAM end-session or its own address.
  */
-export function ClosedPageGuard({ redirectTo, children }: ClosedPageGuardProps) {
+export function ClosedPageGuard({
+  redirectTo,
+  children,
+}: ClosedPageGuardProps) {
   const { sessionClient } = useSessionContext();
   const status = useSessionStatus();
   const signedOut = useRef(false);

@@ -29,14 +29,20 @@ function sourceOptions(
   redemption: Checkout.LoyaltyRedemption | null
 ): Checkout.LoyaltySourceOption[] {
   const options = [...(account?.sources ?? [])];
-  if (redemption && !options.some((option) => option.source === redemption.source)) {
+  if (
+    redemption &&
+    !options.some((option) => option.source === redemption.source)
+  ) {
     options.push({
       source: redemption.source,
       availablePoints: redemption.availablePoints,
       availableAmount: redemption.availableAmount,
       minimum: {
         points: redemption.source === 'POINTS' ? '1' : null,
-        amount: { amount: 0, currencyCode: redemption.availableAmount.currencyCode },
+        amount: {
+          amount: 0,
+          currencyCode: redemption.availableAmount.currencyCode,
+        },
       },
       maximumPerOrder: null,
     });
@@ -61,36 +67,55 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
 
   const issues = loyaltyIssues(checkout);
   const rewardIssue =
-    issues.find((item) => item.kind === 'reward' || item.kind === 'rewardInactive') ?? null;
+    issues.find(
+      (item) => item.kind === 'reward' || item.kind === 'rewardInactive'
+    ) ?? null;
   // The order fell below the minimum: the source is kept and applies again once the order grows.
   const orderTooSmall = issues.some((item) => item.kind === 'dropped');
   // A saved source the calculation did not apply; the checkout issue says why, in the banner.
   const selectedSource = data.selection?.source ?? null;
-  const failedSource = !data.redemption && !orderTooSmall ? selectedSource : null;
+  const failedSource =
+    !data.redemption && !orderTooSmall ? selectedSource : null;
   const rewardId = data.selection?.rewardId ?? null;
   const active = account?.status === 'ACTIVE' ? account : null;
   const options = sourceOptions(active, data.redemption);
   const showRedemption = options.length > 0 || failedSource !== null;
-  if (failedSource && !options.some((option) => option.source === failedSource)) {
-    const known = account?.sources.find((option) => option.source === failedSource);
+  if (
+    failedSource &&
+    !options.some((option) => option.source === failedSource)
+  ) {
+    const known = account?.sources.find(
+      (option) => option.source === failedSource
+    );
     if (known) options.push(known);
   }
 
   const label = (
-    <Typography.Text id={headingId} strong type="secondary" className={styles.label}>
+    <Typography.Text
+      id={headingId}
+      strong
+      type="secondary"
+      className={styles.label}
+    >
       {t('loyalty-title')}
     </Typography.Text>
   );
   let body;
   // Loading shows the skeleton only when the checkout already says there is a program: it loads
   // before the account, and a skeleton that then vanishes would make the summary jump.
-  const programKnown = Boolean(checkout.loyaltyEarning || data.redemption || data.selection);
+  const programKnown = Boolean(
+    checkout.loyaltyEarning || data.redemption || data.selection
+  );
   if (skeleton) {
     if (!programKnown) return null;
     body = (
       <Flex vertical gap={8}>
         {label}
-        <div className={styles.card} aria-busy="true" aria-label={t('loyalty-loading')}>
+        <div
+          className={styles.card}
+          aria-busy="true"
+          aria-label={t('loyalty-loading')}
+        >
           <LoyaltySkeleton />
         </div>
       </Flex>
@@ -99,8 +124,15 @@ export const LoyaltySectionView = ({ data }: LoyaltySectionViewProps) => {
     body = (
       <Flex vertical gap={8}>
         {label}
-        <Flex align="center" justify="space-between" gap={12} className={styles.quiet}>
-          <Typography.Text type="secondary">{t('loyalty-load-failed')}</Typography.Text>
+        <Flex
+          align="center"
+          justify="space-between"
+          gap={12}
+          className={styles.quiet}
+        >
+          <Typography.Text type="secondary">
+            {t('loyalty-load-failed')}
+          </Typography.Text>
           <button type="button" className={styles.link} onClick={refetch}>
             {t('loyalty-reload')}
           </button>

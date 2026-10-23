@@ -121,9 +121,9 @@ describe('validateCustomerInput', () => {
 describe('contract helpers', () => {
   it('reads the schema and the branch by type', () => {
     expect(contractSchema(novaPoshtaContract)?.oneOf).toHaveLength(3);
-    expect(
-      contractBranch(novaPoshtaContract, 'POSTOMAT')?.required
-    ).toContain('warehouseRef');
+    expect(contractBranch(novaPoshtaContract, 'POSTOMAT')?.required).toContain(
+      'warehouseRef'
+    );
     expect(contractBranch(novaPoshtaContract, 'LOCKER')).toBeNull();
   });
 
@@ -132,16 +132,28 @@ describe('contract helpers', () => {
       schema: {
         $defs: { code: { type: 'string', minLength: 2 } },
         allOf: [
-          { type: 'object', properties: { code: { $ref: '#/$defs/code' } }, required: ['code'] },
           {
             type: 'object',
-            properties: { boxes: { type: 'array', items: { type: 'integer', exclusiveMinimum: 0 }, maxItems: 2 } },
+            properties: { code: { $ref: '#/$defs/code' } },
+            required: ['code'],
+          },
+          {
+            type: 'object',
+            properties: {
+              boxes: {
+                type: 'array',
+                items: { type: 'integer', exclusiveMinimum: 0 },
+                maxItems: 2,
+              },
+            },
           },
         ],
       },
     };
 
-    expect(validateCustomerInput(contract, { code: 'AB', boxes: [1, 2] })).toEqual([]);
+    expect(
+      validateCustomerInput(contract, { code: 'AB', boxes: [1, 2] })
+    ).toEqual([]);
     expect(validateCustomerInput(contract, { code: 'A' })).toEqual([
       { path: 'code', keyword: 'minLength' },
     ]);
@@ -154,8 +166,17 @@ describe('contract helpers', () => {
 
   it('merges allOf parts and refs into one schema for forms', () => {
     const root = {
-      $defs: { street: { type: 'object', properties: { street: { type: 'string' } }, required: ['street'] } },
-      allOf: [{ $ref: '#/$defs/street' }, { properties: { flat: { type: 'string' } } }],
+      $defs: {
+        street: {
+          type: 'object',
+          properties: { street: { type: 'string' } },
+          required: ['street'],
+        },
+      },
+      allOf: [
+        { $ref: '#/$defs/street' },
+        { properties: { flat: { type: 'string' } } },
+      ],
     } as const;
 
     const resolved = resolveSchema(root as never, root as never);
@@ -163,4 +184,3 @@ describe('contract helpers', () => {
     expect(resolved.required).toEqual(['street']);
   });
 });
-

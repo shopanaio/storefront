@@ -10,7 +10,9 @@ const [command, ...args] = process.argv.slice(2);
 const supportedCommands = new Set(['init', 'dev', 'build', 'start']);
 
 if (!supportedCommands.has(command)) {
-  console.error('Usage: storefront-runtime <init|dev|build|start> [...next args]');
+  console.error(
+    'Usage: storefront-runtime <init|dev|build|start> [...next args]'
+  );
   process.exitCode = 1;
 } else if (command === 'init') {
   const { runtimeDir, overrides } = await initRuntime();

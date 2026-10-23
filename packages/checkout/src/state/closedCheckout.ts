@@ -15,7 +15,10 @@ export function closedCheckoutCode(error: unknown): string | null {
     return null;
   }
   for (const item of error) {
-    const code = typeof item === 'object' && item !== null ? Reflect.get(item, 'code') : null;
+    const code =
+      typeof item === 'object' && item !== null
+        ? Reflect.get(item, 'code')
+        : null;
     if (typeof code === 'string' && CLOSED_CHECKOUT_CODES.has(code)) {
       return code;
     }

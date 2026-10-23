@@ -13,7 +13,10 @@ import type { Checkout } from '#checkout/types/entity';
  */
 export function useUndeliverableLines(): Checkout.Line[] {
   const { checkout } = useCheckoutData();
-  return useMemo(() => (checkout ? undeliverableLines(checkout) : []), [checkout]);
+  return useMemo(
+    () => (checkout ? undeliverableLines(checkout) : []),
+    [checkout]
+  );
 }
 
 /**
