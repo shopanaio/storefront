@@ -1,0 +1,445 @@
+fragment SdkPlacementFields on PlaceOrderPayload {
+  __typename
+  placementId
+  placementState
+  checkoutId
+  resultRevision
+  orderId
+  status
+  paymentCollectionId
+  paymentSessionId
+  paymentOperationId
+  customerAction {
+    sdk
+    params
+    type
+    url
+    title
+    instructions
+    expiresAt
+    data
+  }
+  paymentFailure {
+    category
+    code
+    message
+    retryable
+    providerCode
+  }
+  userErrors {
+    code
+    field
+    message
+    retryable
+  }
+}
+mutation SdkPlaceOrder($input: PlaceOrderInput!) {
+  placeOrder(input: $input) {
+    ...SdkPlacementFields
+  }
+}
+query SdkCheckoutPlacement($id: ID!) {
+  checkoutPlacement(id: $id) {
+    ...SdkPlacementFields
+  }
+}
+mutation SdkLoyaltyRedemptionUpdate(
+  $input: CheckoutLoyaltyRedemptionUpdateInput!
+) {
+  checkoutLoyaltyRedemptionUpdate(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}
+mutation SdkLoyaltyRedemptionRemove(
+  $input: CheckoutLoyaltyRedemptionRemoveInput!
+) {
+  checkoutLoyaltyRedemptionRemove(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}
+fragment SdkCollectionFields on Collection {
+  __typename
+  id
+  handle
+  name
+  type
+  defaultSort
+  defaultSortDirection
+  activeFrom
+  activeTo
+  publishedAt
+  createdAt
+  updatedAt
+  listingUpdatedAt
+  description {
+    text
+    html
+    json
+  }
+  excerpt {
+    text
+    html
+    json
+  }
+  seo {
+    title
+    description
+    openGraph {
+      title
+      description
+      image {
+        id
+        ... on MediaImage {
+          image {
+            url(transform: $imageTransform)
+          }
+        }
+      }
+    }
+  }
+  featuredMedia {
+    id
+    ... on MediaImage {
+      image {
+        id
+        url(transform: $imageTransform)
+        altText
+        width
+        height
+      }
+    }
+  }
+}
+query SdkCollectionById($id: ID!, $imageTransform: ImageTransformInput) {
+  collection(id: $id) {
+    ...SdkCollectionFields
+  }
+}
+query SdkCollectionByHandle(
+  $handle: String!
+  $imageTransform: ImageTransformInput
+) {
+  collectionByHandle(handle: $handle) {
+    ...SdkCollectionFields
+  }
+}
+query SdkCollectionProducts(
+  $id: ID!
+  $first: Int
+  $after: Cursor
+  $query: String
+  $filters: [ListingFilterInput!]
+  $sort: ListingSort
+) {
+  collection(id: $id) {
+    id
+    products(
+      first: $first
+      after: $after
+      query: $query
+      filters: $filters
+      sort: $sort
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          handle
+          title
+          selectedOrFirstAvailableVariant {
+            id
+            handle
+            title
+            price {
+              amount
+              currencyCode
+            }
+            compareAtPrice {
+              amount
+              currencyCode
+            }
+            availableForSale
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+      sort
+      availableSorts
+      filters {
+        id
+        label
+        type
+        presentation
+        selectionMode
+        priceRange {
+          min {
+            amount
+            currencyCode
+          }
+          max {
+            amount
+            currencyCode
+          }
+          selectedMin {
+            amount
+            currencyCode
+          }
+          selectedMax {
+            amount
+            currencyCode
+          }
+        }
+        facet {
+          id
+          slug
+          label
+        }
+        values {
+          id
+          label
+          count
+          selected
+          input
+          facetValue {
+            id
+            label
+          }
+        }
+      }
+    }
+  }
+}
+query SdkCollectionMedia(
+  $id: ID!
+  $first: Int
+  $after: Cursor
+  $last: Int
+  $before: Cursor
+  $imageTransform: ImageTransformInput
+) {
+  collection(id: $id) {
+    id
+    media(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        cursor
+        node {
+          id
+          ... on MediaImage {
+            image {
+              id
+              url(transform: $imageTransform)
+              altText
+              width
+              height
+            }
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+    }
+  }
+}
+query SdkProductOptions($id: ID!, $imageTransform: ImageTransformInput) {
+  product(id: $id) {
+    id
+    options {
+      id
+      handle
+      name
+      position
+      type {
+        id
+        name
+        handle
+      }
+      optionValues {
+        id
+        handle
+        name
+        position
+        swatch {
+          type
+          color
+          secondaryColor
+          image {
+            id
+            ... on MediaImage {
+              image {
+                url(transform: $imageTransform)
+              }
+            }
+          }
+          metadata
+        }
+      }
+    }
+  }
+}
+query SdkImage($id: ID!, $transform: ImageTransformInput) {
+  node(id: $id) {
+    id
+    ... on MediaImage {
+      image {
+        id
+        url(transform: $transform)
+        altText
+        width
+        height
+        thumbhash
+      }
+    }
+  }
+}
+query SdkOnlineStorePage($handle: String!, $locale: LocaleCode) {
+  onlineStorePageByHandle(handle: $handle) {
+    id
+    handle
+    publishedAt
+    content(locale: $locale) {
+      locale
+      title
+      description {
+        text
+        html
+        json
+      }
+      excerpt {
+        text
+        html
+        json
+      }
+      seo {
+        title
+        description
+        openGraph {
+          title
+          description
+          image {
+            id
+            image {
+              url
+            }
+          }
+        }
+      }
+    }
+  }
+}
+query SdkReviewMedia($id: ID!) {
+  node(id: $id) {
+    id
+    ... on ReviewMedia {
+      revision
+      sortIndex
+      caption
+      status
+      createdAt
+      updatedAt
+      media {
+        id
+        ... on MediaImage {
+          image {
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+    }
+  }
+}
+query SdkProductComparison($id: ID!) {
+  product(id: $id) {
+    id
+    comparison {
+      key
+      title
+      columns(first: 100) {
+        nodes {
+          key
+          position
+          product {
+            id
+          }
+          variant {
+            id
+          }
+          savedForComparison
+        }
+        groups {
+          key
+          name
+          rows {
+            key
+            name
+            description
+            cells {
+              status
+              feature {
+                id
+                name
+                values {
+                  id
+                  name
+                }
+              }
+              selectedOption {
+                name
+                value
+                option {
+                  id
+                  name
+                  type {
+                    id
+                    name
+                    handle
+                  }
+                }
+                optionValue {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+        totalCount
+      }
+    }
+  }
+}

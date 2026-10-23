@@ -1,0 +1,15 @@
+mutation StorefrontUpdateCustomerIdentityMutation(
+  $input: CheckoutCustomerIdentityUpdateInput!
+) {
+  checkoutCustomerIdentityUpdate(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

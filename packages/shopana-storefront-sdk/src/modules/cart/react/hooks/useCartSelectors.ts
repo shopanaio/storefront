@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useCartStore } from '../context/CartContext';
 import { useShallow } from 'zustand/shallow';
@@ -54,8 +54,10 @@ export function useCartLoadingState() {
  */
 export function useIsInCart(purchasableId: string): boolean {
   const useStore = useCartStore();
-  return useStore((s) =>
-    s.cart?.lines?.some((line) => line?.purchasableId === purchasableId) ?? false
+  return useStore(
+    (s) =>
+      s.cart?.lines?.some((line) => line?.purchasableId === purchasableId) ??
+      false
   );
 }
 
@@ -70,7 +72,8 @@ export function useCartLineId(purchasableId: string): string | null {
   const useStore = useCartStore();
   return useStore(
     (s) =>
-      s.cart?.lines?.find((line) => line?.purchasableId === purchasableId)?.id ?? null
+      s.cart?.lines?.find((line) => line?.purchasableId === purchasableId)
+        ?.id ?? null
   );
 }
 
@@ -85,7 +88,8 @@ export function useCartLineQuantity(purchasableId: string): number {
   const useStore = useCartStore();
   return useStore(
     (s) =>
-      s.cart?.lines?.find((line) => line?.purchasableId === purchasableId)?.quantity ?? 0
+      s.cart?.lines?.find((line) => line?.purchasableId === purchasableId)
+        ?.quantity ?? 0
   );
 }
 
@@ -102,7 +106,9 @@ export function useCartLineQuantity(purchasableId: string): number {
 export function useCartLine(purchasableId: string) {
   const useStore = useCartStore();
   return useStore(
-    (s) => s.cart?.lines?.find((line) => line?.purchasableId === purchasableId) ?? null
+    (s) =>
+      s.cart?.lines?.find((line) => line?.purchasableId === purchasableId) ??
+      null
   );
 }
 
@@ -120,7 +126,9 @@ export function useCartLineItem(purchasableId: string) {
   const useStore = useCartStore();
   return useStore(
     useShallow((s) => {
-      const item = s.cart?.lines?.find((line) => line?.purchasableId === purchasableId);
+      const item = s.cart?.lines?.find(
+        (line) => line?.purchasableId === purchasableId
+      );
 
       return item
         ? {
@@ -131,4 +139,19 @@ export function useCartLineItem(purchasableId: string) {
         : null;
     })
   );
+}
+
+export function useCartStatus() {
+  const useStore = useCartStore();
+  return useStore((state) => state.cart?.status ?? null);
+}
+
+export function useCartExpiresAt() {
+  const useStore = useCartStore();
+  return useStore((state) => state.cart?.expiresAt ?? null);
+}
+
+export function useCartLoyaltyRedemption() {
+  const useStore = useCartStore();
+  return useStore((state) => state.cart?.loyaltyRedemption ?? null);
 }

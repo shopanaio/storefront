@@ -12,9 +12,20 @@ export {
   useSession,
   useUser,
   useIsAuthenticated,
+  useSessionStatus,
+  useSessionExpired,
+  useSignInPending,
+  useAuthResult,
+  useLoginMethod,
   type SessionProviderProps,
   type SessionContextValue,
 } from './context/SessionContext';
+
+// Components
+export {
+  ClosedPageGuard,
+  type ClosedPageGuardProps,
+} from './components/ClosedPageGuard';
 
 // Hooks
 export * from './hooks';

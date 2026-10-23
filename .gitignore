@@ -4,7 +4,9 @@
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
 .next
+.runtime
 next-env.d.ts
+!packages/shopana-storefront-runtime/templates/next-env.d.ts
 package-lock.json
 
 # Node artifact files
@@ -58,7 +60,16 @@ src/relay/queries/__generated__
 
 .env
 tsconfig.tsbuildinfo
+schema.shopana.graphql
 
 public/embed/
 
 external/
+
+# Storybook
+storybook-static
+*storybook.log
+
+# Themes are separate repositories checked out on demand
+/themes/*
+!/themes/README.md

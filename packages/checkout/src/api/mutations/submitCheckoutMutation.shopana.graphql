@@ -1,0 +1,5 @@
+mutation StorefrontSubmitCheckoutMutation($input: PlaceOrderInput!) {
+  placeOrder(input: $input) {
+    ...StorefrontPlaceOrderPayloadFragment
+  }
+}

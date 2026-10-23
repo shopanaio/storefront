@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "rootDir": "./src/next",
+    "outDir": "./dist/next"
+  },
+  "include": ["src/next/**/*.ts", "src/next/**/*.tsx"]
+}

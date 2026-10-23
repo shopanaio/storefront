@@ -30,7 +30,14 @@ export interface ProductOptionValue {
 /**
  * ProductOption - group of product options (e.g., Color, Size)
  */
+export interface ProductOptionType {
+  id: string;
+  name: string;
+  handle: string;
+}
+
 export interface ProductOption {
+  type: ProductOptionType | null;
   /** Global unique identifier */
   id: string;
   /** URL-friendly handle (e.g., "color", "size") */

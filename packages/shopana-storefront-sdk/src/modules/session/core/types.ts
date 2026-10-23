@@ -1,51 +1,18 @@
 import { model } from '../../../model/namespace';
 
 /**
- * Session data structure
+ * Session data structure. The access token is not part of it: the browser keeps it in memory
+ * inside the session client and never in React state or cookies it can read.
  */
+/**
+ * The identifier the buyer signed in with: an email (password, email code or a social provider)
+ * or a phone (SMS code). Known for a headless sign-in only; a hosted storefront has none.
+ */
+export type LoginMethod = 'email' | 'phone';
+
 export interface Session {
   user: model.User | null;
-  token?: string;
+  /** When the current access token expires (ISO 8601). */
   expiresAt?: string;
-}
-
-/**
- * Input for sign in
- */
-export interface SignInInput {
-  email: string;
-  password: string;
-}
-
-/**
- * Input for sign up
- */
-export interface SignUpInput {
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-/**
- * Input for password reset request
- */
-export interface ForgotPasswordInput {
-  email: string;
-}
-
-/**
- * Input for password reset
- */
-export interface ResetPasswordInput {
-  resetToken: string;
-  newPassword: string;
-}
-
-/**
- * Options for mutation callbacks
- */
-export interface MutationOptions {
-  onSuccess?: () => void;
-  onError?: (error?: any) => void;
+  loginMethod?: LoginMethod;
 }

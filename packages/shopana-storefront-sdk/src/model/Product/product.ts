@@ -6,6 +6,8 @@ import type { ProductOption } from './ProductOption';
 import type { ProductFeature } from './ProductFeature';
 import type { ProductRating } from './ProductRating';
 import type { ReviewConnection } from '../Review';
+import type { RichText } from '../RichText';
+import type { ProductRecommendationConnection } from './ProductRecommendation';
 
 /**
  * ProductFull interface - represents a complete product with all data
@@ -24,7 +26,7 @@ export interface Product {
   title: string;
 
   /** Full product description */
-  description: string;
+  description: RichText | null;
 
   /** Short description or product annotation */
   excerpt: string;
@@ -50,6 +52,12 @@ export interface Product {
 
   /** Product reviews */
   reviews?: ReviewConnection;
+
+  /** Merchant-curated and automatically ranked related products. */
+  relatedProducts?: ProductRecommendationConnection;
+
+  /** Products customers frequently bought together with this product. */
+  frequentlyBoughtTogether?: ProductRecommendationConnection;
 
   /** Tags associated with the product */
   tags: TagConnection;

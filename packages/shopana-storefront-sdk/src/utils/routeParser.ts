@@ -45,11 +45,13 @@ const routePatterns: Array<{ pageType: PageType; pattern: string }> = [
 ];
 
 // Build matchers from patterns
-const routes: RouteDefinition[] = routePatterns.map(({ pageType, pattern }) => ({
-  pageType,
-  pattern,
-  matcher: match(pattern, { decode: decodeURIComponent, end: true }),
-}));
+const routes: RouteDefinition[] = routePatterns.map(
+  ({ pageType, pattern }) => ({
+    pageType,
+    pattern,
+    matcher: match(pattern, { decode: decodeURIComponent, end: true }),
+  })
+);
 
 // Regex to match locale prefix (2-3 letter code like /ru, /en, /rus, etc.)
 const LOCALE_REGEX = /^\/([a-z]{2,3})(?=\/|$)/;

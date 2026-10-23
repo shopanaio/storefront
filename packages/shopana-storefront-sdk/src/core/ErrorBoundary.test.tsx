@@ -31,7 +31,7 @@ describe('ErrorBoundary', () => {
       render(
         <ErrorBoundary>
           <WorkingComponent />
-        </ErrorBoundary>,
+        </ErrorBoundary>
       );
 
       expect(screen.getByTestId('working')).toBeInTheDocument();
@@ -39,12 +39,14 @@ describe('ErrorBoundary', () => {
 
     it('catches errors and renders null', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <ErrorBoundary>
           <ErrorComponent />
-        </ErrorBoundary>,
+        </ErrorBoundary>
       );
 
       expect(screen.queryByTestId('working')).not.toBeInTheDocument();
@@ -54,12 +56,14 @@ describe('ErrorBoundary', () => {
 
     it('logs error when component throws', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <ErrorBoundary componentName="TestComponent">
           <ErrorComponent message="Custom error" />
-        </ErrorBoundary>,
+        </ErrorBoundary>
       );
 
       expect(mockLogError).toHaveBeenCalledWith(
@@ -71,7 +75,7 @@ describe('ErrorBoundary', () => {
           extra: expect.objectContaining({
             info: expect.any(Object),
           }),
-        }),
+        })
       );
 
       consoleSpy.mockRestore();
@@ -83,7 +87,7 @@ describe('ErrorBoundary', () => {
           <div data-testid="child1">Child 1</div>
           <div data-testid="child2">Child 2</div>
           <div data-testid="child3">Child 3</div>
-        </ErrorBoundary>,
+        </ErrorBoundary>
       );
 
       expect(screen.getByTestId('child1')).toBeInTheDocument();
@@ -93,7 +97,9 @@ describe('ErrorBoundary', () => {
 
     it('isolates error to boundary scope', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <div>
@@ -101,7 +107,7 @@ describe('ErrorBoundary', () => {
             <ErrorComponent />
           </ErrorBoundary>
           <div data-testid="outside">Outside boundary</div>
-        </div>,
+        </div>
       );
 
       // Component outside boundary should still render
@@ -116,7 +122,7 @@ describe('ErrorBoundary', () => {
       render(
         <SectionErrorBoundary sectionId="hero">
           <WorkingComponent />
-        </SectionErrorBoundary>,
+        </SectionErrorBoundary>
       );
 
       expect(screen.getByTestId('working')).toBeInTheDocument();
@@ -124,12 +130,14 @@ describe('ErrorBoundary', () => {
 
     it('catches section errors and renders null', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <SectionErrorBoundary sectionId="hero">
           <ErrorComponent />
-        </SectionErrorBoundary>,
+        </SectionErrorBoundary>
       );
 
       expect(screen.queryByTestId('working')).not.toBeInTheDocument();
@@ -139,19 +147,21 @@ describe('ErrorBoundary', () => {
 
     it('logs error with section ID', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <SectionErrorBoundary sectionId="hero-section">
           <ErrorComponent />
-        </SectionErrorBoundary>,
+        </SectionErrorBoundary>
       );
 
       expect(mockLogError).toHaveBeenCalledWith(
         'Component render error',
         expect.objectContaining({
           component: 'hero-section',
-        }),
+        })
       );
 
       consoleSpy.mockRestore();
@@ -159,19 +169,21 @@ describe('ErrorBoundary', () => {
 
     it('uses default component name when sectionId is not provided', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <SectionErrorBoundary>
           <ErrorComponent />
-        </SectionErrorBoundary>,
+        </SectionErrorBoundary>
       );
 
       expect(mockLogError).toHaveBeenCalledWith(
         'Component render error',
         expect.objectContaining({
           component: 'Section',
-        }),
+        })
       );
 
       consoleSpy.mockRestore();
@@ -179,7 +191,9 @@ describe('ErrorBoundary', () => {
 
     it('allows multiple sections with independent error boundaries', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <div>
@@ -192,7 +206,7 @@ describe('ErrorBoundary', () => {
           <SectionErrorBoundary sectionId="section3">
             <div data-testid="section3">Section 3</div>
           </SectionErrorBoundary>
-        </div>,
+        </div>
       );
 
       // Section 1 should not render (error)
@@ -210,7 +224,7 @@ describe('ErrorBoundary', () => {
       render(
         <BlockErrorBoundary blockId="text-block">
           <WorkingComponent />
-        </BlockErrorBoundary>,
+        </BlockErrorBoundary>
       );
 
       expect(screen.getByTestId('working')).toBeInTheDocument();
@@ -218,12 +232,14 @@ describe('ErrorBoundary', () => {
 
     it('catches block errors and renders null', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <BlockErrorBoundary blockId="text-block">
           <ErrorComponent />
-        </BlockErrorBoundary>,
+        </BlockErrorBoundary>
       );
 
       expect(screen.queryByTestId('working')).not.toBeInTheDocument();
@@ -233,19 +249,21 @@ describe('ErrorBoundary', () => {
 
     it('logs error with block ID', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <BlockErrorBoundary blockId="image-block">
           <ErrorComponent />
-        </BlockErrorBoundary>,
+        </BlockErrorBoundary>
       );
 
       expect(mockLogError).toHaveBeenCalledWith(
         'Component render error',
         expect.objectContaining({
           component: 'image-block',
-        }),
+        })
       );
 
       consoleSpy.mockRestore();
@@ -253,19 +271,21 @@ describe('ErrorBoundary', () => {
 
     it('uses default component name when blockId is not provided', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <BlockErrorBoundary>
           <ErrorComponent />
-        </BlockErrorBoundary>,
+        </BlockErrorBoundary>
       );
 
       expect(mockLogError).toHaveBeenCalledWith(
         'Component render error',
         expect.objectContaining({
           component: 'Block',
-        }),
+        })
       );
 
       consoleSpy.mockRestore();
@@ -273,7 +293,9 @@ describe('ErrorBoundary', () => {
 
     it('allows multiple blocks with independent error boundaries', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <div>
@@ -286,7 +308,7 @@ describe('ErrorBoundary', () => {
           <BlockErrorBoundary blockId="block3">
             <div data-testid="block3">Block 3</div>
           </BlockErrorBoundary>
-        </div>,
+        </div>
       );
 
       // Blocks 1 and 3 should render
@@ -302,7 +324,9 @@ describe('ErrorBoundary', () => {
   describe('Nested Error Boundaries', () => {
     it('handles nested section and block error boundaries', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <SectionErrorBoundary sectionId="parent-section">
@@ -312,7 +336,7 @@ describe('ErrorBoundary', () => {
             </BlockErrorBoundary>
             <div data-testid="section-other">Other content</div>
           </div>
-        </SectionErrorBoundary>,
+        </SectionErrorBoundary>
       );
 
       // Section should still render
@@ -326,14 +350,16 @@ describe('ErrorBoundary', () => {
 
     it('catches error at nearest boundary', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <SectionErrorBoundary sectionId="outer">
           <BlockErrorBoundary blockId="inner">
             <ErrorComponent />
           </BlockErrorBoundary>
-        </SectionErrorBoundary>,
+        </SectionErrorBoundary>
       );
 
       // Error should be caught by BlockErrorBoundary (inner), not SectionErrorBoundary
@@ -341,7 +367,7 @@ describe('ErrorBoundary', () => {
         'Component render error',
         expect.objectContaining({
           component: 'inner',
-        }),
+        })
       );
 
       consoleSpy.mockRestore();

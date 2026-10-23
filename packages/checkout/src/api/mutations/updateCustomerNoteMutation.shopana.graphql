@@ -1,0 +1,15 @@
+mutation StorefrontUpdateCustomerNoteMutation(
+  $input: CheckoutCustomerNoteUpdateInput!
+) {
+  checkoutCustomerNoteUpdate(input: $input) {
+    checkout {
+      ...StorefrontUseCheckoutFragment
+    }
+    errors: userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

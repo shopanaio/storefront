@@ -1,0 +1,6 @@
+{
+  "payment": {
+    "name": "Card payment online",
+    "description": "Via LiqPay"
+  }
+}

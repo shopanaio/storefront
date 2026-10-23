@@ -1,0 +1,9 @@
+query SdkLoadAccountCartQuery {
+  customer {
+    id
+    checkout {
+      id
+      ...SdkCartFragment_cart
+    }
+  }
+}

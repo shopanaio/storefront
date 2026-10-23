@@ -6,6 +6,11 @@ export const MOCK_LOCALES: Record<string, Locale> = {
     name: 'English',
     direction: 'ltr',
   },
+  uk: {
+    code: 'uk',
+    name: 'Українська',
+    direction: 'ltr',
+  },
 };
 
 export const MOCK_CURRENCIES: Record<string, Currency> = {
@@ -21,10 +26,10 @@ export const MOCK_CURRENCIES: Record<string, Currency> = {
 
 export const mockShopConfig: ShopConfig = {
   name: 'Shopana Demo Store',
-  domain: 'demo.shopana.io',
-  email: 'info@shopana.io',
+  domain: 'store.example.com',
+  email: 'info@example.com',
   locale: MOCK_LOCALES.en,
-  availableLocales: [MOCK_LOCALES.en],
+  availableLocales: [MOCK_LOCALES.en, MOCK_LOCALES.uk],
   currency: MOCK_CURRENCIES.USD,
   availableCurrencies: [MOCK_CURRENCIES.USD],
   timezone: 'UTC',
@@ -46,4 +51,3 @@ export const mockShopConfig: ShopConfig = {
     inventory: true,
   },
 };
-

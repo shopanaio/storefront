@@ -1,0 +1,13 @@
+mutation SdkAddPromoCodeMutation($input: CheckoutPromoCodeAddInput!) {
+  checkoutPromoCodeAdd(input: $input) {
+    checkout {
+      ...SdkCartFragment_cart
+    }
+    userErrors {
+      code
+      field
+      message
+      retryable
+    }
+  }
+}

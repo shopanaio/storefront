@@ -1,20 +1,18 @@
-"use client";
-
-import { useMutation } from 'react-relay';
+'use client';
+import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import { useCartStoreApi, useCartSetters } from '../context/CartContext';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
-
 import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
 import { RemoveFromCartInput } from '../../core/types';
-
 const useRemoveItemFromCart = () => {
+  const { setCartKey, enqueueMutation, getConfirmedLineId } = useCartSetters();
+  const cartStore = useCartStoreApi();
   const cartId = useCartIdOnly();
+
   const actions = useCartActions();
-
-  const [commitRemoveLine, isInFlight] = useMutation<any>(
-    removeFromCartMutation
-  );
-
+  const [commitRemoveLine, isInFlight] = useMutation(removeFromCartMutation);
   return {
     removeFromCart: async (
       input: RemoveFromCartInput,
@@ -22,52 +20,56 @@ const useRemoveItemFromCart = () => {
         onSuccess?: () => void;
         onError?: () => void;
       }
-    ): Promise<any> => {
+    ): Promise<unknown> => {
       // If no cart in cookie or context — just exit
       if (!cartId) {
         console.warn('[useRemoveItemFromCart] No cart to remove from');
         return null;
       }
-
-      return new Promise((resolve, reject) => {
-        const { checkoutLinesDelete } = actions;
-        const { revert } = checkoutLinesDelete({ lineIds: [input.lineId] });
-        commitRemoveLine({
-          variables: {
-            input: {
-              checkoutId: cartId,
-              lineIds: [input.lineId],
-            },
-          },
-          onCompleted: (response, errors) => {
-            if (errors && errors.length > 0) {
-              revert();
-              options?.onError?.();
-              return reject(errors);
-            } else if (
-              response?.checkoutMutation?.checkoutLinesDelete?.errors &&
-              response.checkoutMutation.checkoutLinesDelete.errors.length > 0
-            ) {
-              revert();
-              options?.onError?.();
-              return reject(
-                response.checkoutMutation.checkoutLinesDelete.errors
-              );
-            } else {
-              options?.onSuccess?.();
-              return resolve(response);
-            }
-          },
-          onError: (err) => {
-            revert();
-            options?.onError?.();
-            return reject(err);
-          },
-        });
-      });
+      const purchasableId = cartStore.cart?.lines.find(
+        (line) => line.id === input.lineId
+      )?.purchasableId;
+      const optimisticEdit = () => {
+        const lineId = resolveCartLineId(
+          cartStore.cart,
+          input.lineId,
+          purchasableId
+        );
+        if (lineId) actions.checkoutLinesDelete({ lineIds: [lineId] });
+      };
+      return enqueueMutation(
+        () =>
+          new Promise((resolve, reject) => {
+            commitRemoveLine({
+              variables: {
+                input: {
+                  checkoutId: cartId,
+                  lineIds: [getConfirmedLineId(input.lineId, purchasableId)],
+                },
+              },
+              onCompleted: (response, errors) => {
+                if (errors && errors.length > 0) {
+                  options?.onError?.();
+                  return reject(errors);
+                } else if (response.checkoutLinesDelete.errors.length > 0) {
+                  options?.onError?.();
+                  return reject(response.checkoutLinesDelete.errors);
+                } else {
+                  setCartKey(response.checkoutLinesDelete.checkout);
+                  options?.onSuccess?.();
+                  return resolve(response);
+                }
+              },
+              onError: (err) => {
+                options?.onError?.();
+                return reject(err);
+              },
+            });
+          }),
+        { optimisticEdit }
+      );
     },
     loading: isInFlight,
   };
 };
-
 export default useRemoveItemFromCart;

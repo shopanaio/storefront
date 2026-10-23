@@ -1,269 +1,234 @@
 'use client';
 
 import React, {
-  Suspense,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
+  useRef,
 } from 'react';
-import { PreloadedQuery, readInlineData, useFragment, usePreloadedQuery, useQueryLoader } from 'react-relay';
+import { useQuery } from '@apollo/client/react';
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { CartContextProvider } from '../context/CartContext';
 import type { CartStore } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartConfig } from '../../core/config';
+import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import {
+  createCartMutationQueue,
+  type MutationQueueOptions,
+} from '../../core/utils/mutationQueue';
 import { createCartIdUtils } from '../../core/utils/cartId';
-import { loadCartQuery } from '../../core/graphql/queries/loadCartQuery';
-import type { loadCartQuery as LoadCartQueryType } from '../../core/graphql/queries/__generated__/loadCartQuery.graphql';
-import type { CartFragment_cart$key } from '../../core/graphql/fragments/__generated__/CartFragment_cart.graphql';
-import { CartFragment_cart } from '../../core/graphql/fragments/CartFragment';
-import { CartLineFragment_line } from '../hooks/useCartLineFragment';
 import type { CartStoreZustand } from '../store/CartStoreZustand';
+import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
+import {
+  SdkLoadCartQueryDocument,
+  type SdkCartFragment_CartFragment,
+  type SdkLoadCartQuery,
+  type SdkLoadCartQueryVariables,
+} from '../../../../graphql/apollo/generated/operations';
+import type { SerializableApolloQuery } from '../../../../graphql/apollo/loadSerializableQuery';
 
 export interface CartProviderProps {
   children: React.ReactNode;
-  /**
-   * Cart store - can be either:
-   * - CartStoreZustand object from createCartStoreZustand() (recommended)
-   * - CartStore object (legacy)
-   */
   store: CartStoreZustand | CartStore;
   config: CartConfig;
-  /**
-   * Optional initial cart data from server (SSR)
-   */
-  initialCartData?: PreloadedQuery<LoadCartQueryType> | null;
-}
-
-type LoadCartQueryReference = PreloadedQuery<LoadCartQueryType>;
-
-/**
- * Check if store is CartStoreZustand (new format) or CartStore (legacy)
- */
-function isCartStoreZustand(store: any): store is CartStoreZustand {
-  return store && typeof store === 'object' && 'store' in store && 'useStore' in store;
+  initialCart?: SdkCartFragment_CartFragment | null;
+  /** @deprecated Prefer initialCart or hydration through Apollo cache. */
+  initialCartData?: SerializableApolloQuery<
+    SdkLoadCartQuery,
+    SdkLoadCartQueryVariables
+  > | null;
 }
 
 /**
- * Internal component to sync cart fragment data to Zustand store
- * Reads Relay fragment and denormalizes data before storing in Zustand
+ * Whether the server says the cart does not exist: no checkout for the id, or a `NOT_FOUND`
+ * error. A network or any other error says nothing about the cart.
  */
-const CartDataStoreController: React.FC<{
-  cartKey: CartFragment_cart$key | null;
-  store: CartStore;
-  isCartLoaded: boolean;
-}> = ({ cartKey, store, isCartLoaded }) => {
-  // Read fragment data from Relay
-  const cart = useFragment<CartFragment_cart$key>(
-    CartFragment_cart,
-    cartKey
-  );
+function isCartMissing(
+  data: SdkLoadCartQuery | undefined,
+  error: unknown
+): boolean {
+  if (error) {
+    return (
+      CombinedGraphQLErrors.is(error) &&
+      error.errors.some((item) => item.extensions?.code === 'NOT_FOUND')
+    );
+  }
+  return data !== undefined && !data.checkout;
+}
 
-  // Denormalize cart data (read inline data for lines)
-  const cartData = useMemo(() => {
-    if (!cart) {
-      return null;
-    }
-    return {
-      ...cart,
-      lines: (cart?.lines || [])?.map((cartLineRef: any) =>
-        readInlineData(CartLineFragment_line, cartLineRef)
-      ),
-    };
-  }, [cart]);
+function isCartStoreZustand(
+  store: CartStoreZustand | CartStore
+): store is CartStoreZustand {
+  return 'store' in store && 'useStore' in store;
+}
 
-  // Sync denormalized data to Zustand store
-  useEffect(() => {
-    if (cartData) {
-      store.setCart(cartData as any);
-    } else if (cartKey === null && isCartLoaded) {
-      // Only clear store when cart is known to be empty after loading
-      store.setCart(null);
-    }
-  }, [cartData, cartKey, isCartLoaded, store]);
-
-  return null;
-};
-
-/**
- * Internal component to handle cart query loading
- */
-const CartDataHandler: React.FC<{
-  queryReference: LoadCartQueryReference;
-  onCartData: (cart: CartFragment_cart$key) => void;
-  onCartNotFound: () => void;
-}> = ({ queryReference, onCartData, onCartNotFound }) => {
-  const cartData = usePreloadedQuery<LoadCartQueryType>(
-    loadCartQuery,
-    queryReference
-  );
-
-  useEffect(() => {
-    const checkout = cartData?.checkoutQuery?.checkout;
-
-    if (checkout) {
-      onCartData(checkout);
-    } else {
-      console.log('[CartProvider] Cart not found');
-      onCartNotFound();
-    }
-  }, [cartData, onCartData, onCartNotFound]);
-
-  return null;
-};
-
-/**
- * Cart Provider Component
- *
- * Provides cart state management with automatic loading from cookies.
- * Works with both client-side and server-side rendering.
- *
- * @example
- * ```tsx
- * import { CartProvider, createCartStoreZustand } from '@shopana/storefront-sdk/modules/cart/react';
- *
- * const cartStore = createCartStoreZustand();
- *
- * function App() {
- *   return (
- *     <CartProvider
- *       store={cartStore}
- *       config={{
- *         defaultCurrency: 'USD',
- *         defaultLocale: 'en',
- *       }}
- *     >
- *       {children}
- *     </CartProvider>
- *   );
- * }
- * ```
- */
 export const CartProvider: React.FC<CartProviderProps> = ({
   children,
   store: storeProp,
   config: userConfig,
+  initialCart,
   initialCartData,
 }) => {
-  // Extract store and useStore from prop
   const { storeObject, useStoreHook } = useMemo(() => {
     if (isCartStoreZustand(storeProp)) {
-      // New format: { store, useStore }
-      return {
-        storeObject: storeProp.store,
-        useStoreHook: storeProp.useStore,
-      };
-    } else {
-      // Legacy format: just CartStore object
-      // Create a dummy useStore that throws error if used
-      const dummyUseStore = (() => {
-        throw new Error(
-          'useCartStore with selectors requires CartStoreZustand. ' +
-          'Please update your code to use createCartStoreZustand() and pass the result to CartProvider.'
-        );
-      }) as any;
-      return {
-        storeObject: storeProp,
-        useStoreHook: dummyUseStore,
-      };
+      return { storeObject: storeProp.store, useStoreHook: storeProp.useStore };
     }
+    const unsupportedUseStore = (() => {
+      throw new Error(
+        'Selector-based cart access requires createCartStoreZustand().'
+      );
+    }) as unknown as CartStoreZustand['useStore'];
+    return { storeObject: storeProp, useStoreHook: unsupportedUseStore };
   }, [storeProp]);
 
-  // Merge user config with defaults
-  const config = createCartConfig(userConfig);
-
-  // Create cart ID utils
-  const cartIdUtils = createCartIdUtils({
-    cookieName: config.cookieName,
-    cookieOptions: config.cookieOptions,
+  const config = useMemo(() => createCartConfig(userConfig), [userConfig]);
+  const cartIdUtils = useMemo(
+    () =>
+      createCartIdUtils({
+        cookieName: config.cookieName,
+        cookieOptions: config.cookieOptions,
+      }),
+    [config.cookieName, config.cookieOptions]
+  );
+  const initialCheckout = initialCart ?? initialCartData?.data.checkout ?? null;
+  const [cartKey, setCartKey] = useState<SdkCartFragment_CartFragment | null>(
+    initialCheckout
+  );
+  const [cartId, setCartId] = useState<string | null>(
+    initialCheckout?.id ?? null
+  );
+  const confirmed = useRef({
+    checkout: initialCheckout,
+    cart: storeObject.cart,
   });
+  const reconcileMutations = useCallback(
+    (optimisticEdits: ReadonlyArray<() => void>) => {
+      setCartKey(confirmed.current.checkout);
+      storeObject.setCart(confirmed.current.cart);
+      for (const edit of optimisticEdits) edit();
+    },
+    [storeObject]
+  );
+  // The queue stores this callback and invokes it after each mutation settles.
+  // eslint-disable-next-line react-hooks/refs
+  const [mutationQueue] = useState(() =>
+    createCartMutationQueue(reconcileMutations)
+  );
+  const enqueueMutation = useCallback(
+    <T,>(operation: () => Promise<T>, options?: MutationQueueOptions) =>
+      mutationQueue.run(operation, options),
+    [mutationQueue]
+  );
+  const waitForMutations = useCallback(
+    () => mutationQueue.idle(),
+    [mutationQueue]
+  );
+  const cartUpdateListeners = useRef(
+    new Set<(checkout: SdkCartFragment_CartFragment | null) => void>()
+  );
+  const subscribeCartUpdates = useCallback(
+    (listener: (checkout: SdkCartFragment_CartFragment | null) => void) => {
+      cartUpdateListeners.current.add(listener);
+      return () => {
+        cartUpdateListeners.current.delete(listener);
+      };
+    },
+    []
+  );
+  const cookieCartId = cartId ?? cartIdUtils.getCartIdFromCookie();
+  const shouldLoad =
+    !initialCheckout && !storeObject.cart && Boolean(cookieCartId);
+  const query = useQuery(SdkLoadCartQueryDocument, {
+    variables: { checkoutId: cookieCartId ?? '' },
+    skip: !shouldLoad,
+  });
+  // A failed load that does not say the cart is missing keeps the cart id: the cart still
+  // exists, the page shows the error with a retry, and writes go to that cart.
+  const cartError =
+    shouldLoad &&
+    !query.loading &&
+    query.error &&
+    !isCartMissing(query.data, query.error)
+      ? query.error
+      : null;
+  const { refetch } = query;
+  const retryCart = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
-  const [queryReference, loadQuery, disposeQuery] =
-    useQueryLoader<LoadCartQueryType>(loadCartQuery);
-  const [cartKey, setCartKey] = useState<CartFragment_cart$key | null>(null);
-  const [cartId, setCartId] = useState<string | null>(null);
-  const [isCartLoading, setIsCartLoading] = useState(false);
-  const [isCartLoaded, setIsCartLoaded] = useState(false);
-  const isLoadingRef = useRef(false);
-  const loadedRef = useRef(false);
-
-  // Load cart on mount
   useEffect(() => {
-    // If we already have initial cart data from SSR
-    // or store already has cart (hydrated), skip auto-loading from cookies
-    // to avoid double fetch and state flicker on hydration.
-    if (initialCartData || storeObject.cart) {
-      return;
-    }
-
-    if (loadedRef.current || isLoadingRef.current) return;
-
-    // Try to get cart ID from cookies
-    const savedCartId = cartIdUtils.getCartIdFromCookie();
-
-    if (!savedCartId) {
-      // No saved cart: consider cart as loaded with empty state
-      setCartKey(null);
+    const checkout = query.data?.checkout ?? initialCheckout;
+    if (checkout) {
+      // Keep the public mutable cart-key contract synchronized with Apollo results.
+      if (mutationQueue.pending === 0) {
+        const cart = mapShopanaCheckoutToEntityCart(checkout);
+        confirmed.current = { checkout, cart };
+        setCartKey(checkout);
+        setCartId(checkout.id);
+        storeObject.setCart(cart);
+      }
+    } else if (!shouldLoad && !storeObject.cart) {
+      storeObject.setCart(null);
+    } else if (
+      !query.loading &&
+      shouldLoad &&
+      isCartMissing(query.data, query.error)
+    ) {
+      // Only the server saying the cart does not exist drops it: a failed request keeps
+      // the cart and its cookie, so a retry loads it again.
+      cartIdUtils.removeCartIdCookie();
+      confirmed.current = { checkout: null, cart: null };
       setCartId(null);
-      setIsCartLoading(false);
-      setIsCartLoaded(true);
-      loadedRef.current = true;
-      return;
+      setCartKey(null);
+      storeObject.setCart(null);
     }
+  }, [
+    cartIdUtils,
+    initialCheckout,
+    query.data,
+    query.error,
+    query.loading,
+    shouldLoad,
+    storeObject,
+    mutationQueue,
+  ]);
 
-    setCartId(savedCartId);
-    isLoadingRef.current = true;
-    setIsCartLoading(true);
+  const handleSetCartKey = useCallback(
+    (checkout: SdkCartFragment_CartFragment | null) => {
+      const cart = checkout ? mapShopanaCheckoutToEntityCart(checkout) : null;
+      confirmed.current = { checkout, cart };
+      if (checkout) setCartId(checkout.id);
+      cartUpdateListeners.current.forEach((listener) => listener(checkout));
+      if (mutationQueue.pending > 0) return;
+      setCartKey(checkout);
+      storeObject.setCart(cart);
+    },
+    [storeObject, mutationQueue]
+  );
 
-    // Load cart data
-    loadQuery({ checkoutId: savedCartId }, { fetchPolicy: 'network-only' });
-  }, [loadQuery, cartIdUtils, initialCartData, storeObject]);
-
-  const handleCartData = useCallback((cart: CartFragment_cart$key) => {
-    setCartKey(cart);
-    // Set cartId from the cart fragment (important for SSR hydration)
-    // Relay stores the ID in __id for fragment references
-    const id = (cart as any)?.id ?? (cart as any)?.__id;
-    if (id) {
-      setCartId(id);
-    }
-    setIsCartLoading(false);
-    setIsCartLoaded(true);
-    isLoadingRef.current = false;
-    loadedRef.current = true;
-  }, []);
-
-  const handleCartNotFound = useCallback(() => {
-    isLoadingRef.current = false;
-    setIsCartLoading(false);
-    setCartKey(null);
-    setCartId(null);
-    setIsCartLoaded(true);
-    loadedRef.current = true;
-    // Remove invalid cart ID from cookies
-    cartIdUtils.removeCartIdCookie();
-  }, [cartIdUtils]);
+  const getConfirmedLineId = useCallback(
+    (lineId: string, purchasableId: string | undefined) => {
+      const id = resolveCartLineId(
+        confirmed.current.cart,
+        lineId,
+        purchasableId
+      );
+      if (!id) throw new Error('Cart line is unavailable');
+      return id;
+    },
+    []
+  );
 
   const handleSetCartId = useCallback(
     (id: string | null) => {
       setCartId(id);
-      if (id) {
-        cartIdUtils.setCartIdCookie(id);
-      } else {
-        cartIdUtils.removeCartIdCookie();
-      }
+      if (id) cartIdUtils.setCartIdCookie(id);
+      else cartIdUtils.removeCartIdCookie();
     },
     [cartIdUtils]
   );
-
-  useEffect(() => {
-    return () => {
-      if (disposeQuery) {
-        disposeQuery();
-      }
-    };
-  }, [disposeQuery]);
 
   return (
     <CartContextProvider
@@ -271,34 +236,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       useStore={useStoreHook}
       config={config}
       cartKey={cartKey}
-      setCartKey={setCartKey}
-      cartId={cartId}
+      setCartKey={handleSetCartKey}
+      enqueueMutation={enqueueMutation}
+      waitForMutations={waitForMutations}
+      subscribeCartUpdates={subscribeCartUpdates}
+      getConfirmedLineId={getConfirmedLineId}
+      cartId={cartId ?? (cartError ? cookieCartId : null)}
       setId={handleSetCartId}
-      isCartLoading={isCartLoading}
-      isCartLoaded={isCartLoaded}
+      isCartLoading={query.loading}
+      isCartLoaded={!query.loading && !cartError}
+      cartError={cartError}
+      retryCart={retryCart}
     >
-      <Suspense fallback={null}>
-        {queryReference && (
-          <CartDataHandler
-            queryReference={queryReference}
-            onCartData={handleCartData}
-            onCartNotFound={handleCartNotFound}
-          />
-        )}
-        {initialCartData && (
-          <CartDataHandler
-            queryReference={initialCartData}
-            onCartData={handleCartData}
-            onCartNotFound={handleCartNotFound}
-          />
-        )}
-      </Suspense>
       {children}
-      <CartDataStoreController
-        cartKey={cartKey}
-        store={storeObject}
-        isCartLoaded={isCartLoaded}
-      />
     </CartContextProvider>
   );
 };

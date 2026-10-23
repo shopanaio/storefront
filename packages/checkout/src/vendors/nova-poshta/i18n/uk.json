@@ -1,0 +1,49 @@
+{
+  "shipping": {
+    "services": {
+      "warehouse": "Відділення Нової Пошти",
+      "doors": "Кур'єр Нової Пошти",
+      "postomat": "Поштомат Нової Пошти"
+    },
+    "estimate": "Орієнтовно {amount}",
+    "estimate_pending": "Вартість за тарифами перевізника уточнюється"
+  },
+  "payment": {
+    "cod": "Післяплата",
+    "cod_description": "Оплата під час отримання товару"
+  },
+  "form": {
+    "city_required_warning": "Будь ласка, спочатку оберіть місто",
+    "WAREHOUSE": "Відділення",
+    "POSTOMAT": "Поштомат",
+    "search_point": "Номер або адреса",
+    "street": "Вулиця",
+    "search_street": "Назва вулиці",
+    "building": "Будинок",
+    "apartment": "Квартира",
+    "comment": "Коментар для кур'єра",
+    "loading": "Завантаження…",
+    "empty": "Нічого не знайдено",
+    "load_more": "Показати ще",
+    "point_closed": "Тимчасово не приймає відправлення"
+  },
+  "errors": {
+    "unavailable": "Довідник Нової Пошти тимчасово недоступний",
+    "invalid": "Уточніть запит",
+    "failed": "Не вдалося завантажити дані",
+    "retry": "Повторити"
+  },
+  "schedule": {
+    "days": {
+      "Monday": "Пн",
+      "Tuesday": "Вт",
+      "Wednesday": "Ср",
+      "Thursday": "Чт",
+      "Friday": "Пт",
+      "Saturday": "Сб",
+      "Sunday": "Нд"
+    },
+    "not_specified": "Розклад не вказано"
+  },
+  "pickup_from_here": "Забрати звідси"
+}

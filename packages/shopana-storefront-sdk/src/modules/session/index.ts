@@ -6,6 +6,10 @@
 
 // Core types
 export * from './core/types';
+export * from './core/IamApplicationClient';
+export * from './core/StorefrontSessionClient';
+export * from './core/sessionCookies';
+export * from './core/closedPageRedirect';
 
 // Store
 export * from './store/SessionStore';
@@ -14,5 +18,4 @@ export { createSessionStore } from './store/createSessionStore';
 // React
 export * from './react';
 
-// Next.js loaders
-export { loadSessionServerQuery, type LoadSessionServerQueryOptions } from './next/loaders/loadSessionServerQuery';
+// Server-only parts live in './next' (loaders) and './server' (session handlers).

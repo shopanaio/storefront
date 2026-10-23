@@ -7,6 +7,9 @@ import type * as MediaTypes from './Media';
 // Money
 import type * as MoneyTypes from './Money';
 
+// Rich text
+import type * as RichTextTypes from './RichText';
+
 // Tag
 import type * as TagTypes from './Tag';
 
@@ -47,6 +50,9 @@ import type * as ProductRatingTypes from './Product/ProductRating';
 // Product
 import type * as ProductTypes from './Product/product';
 
+// Product Recommendation
+import type * as ProductRecommendationTypes from './Product/ProductRecommendation';
+
 /**
  * Model namespace containing all model types
  * Usage: import { model } from '@shopana/storefront-sdk'
@@ -63,6 +69,9 @@ export namespace model {
 
   // Money
   export type Money = MoneyTypes.Money;
+
+  // Rich text
+  export type RichText = RichTextTypes.RichText;
 
   // Tag
   export type Tag = TagTypes.Tag;
@@ -93,6 +102,18 @@ export namespace model {
   export type CartPurchasable = CartTypes.CartPurchasable;
   export type CartLine = CartTypes.CartLine;
   export type Cart = CartTypes.Cart;
+  export type CartLineOption = CartTypes.CartLineOption;
+  export type CartLineChild = CartTypes.CartLineChild;
+  export type CartIssue = CartTypes.CartIssue;
+  export type CartNotification = CartTypes.CartNotification;
+  export type CartPromoCode = CartTypes.CartPromoCode;
+  export type CartLoyaltyEarning = CartTypes.CartLoyaltyEarning;
+  export type CheckoutLoyaltyRedemption = CartTypes.CheckoutLoyaltyRedemption;
+  export type Collection = import('../modules/storefront').Collection;
+  export type CheckoutPlacement =
+    import('../modules/storefront').CheckoutPlacement;
+  export type ImageTransformInput =
+    import('../modules/storefront').ImageTransformInput;
 
   // Product Variant
   export type StockStatus = VariantTypes.StockStatus;
@@ -107,12 +128,15 @@ export namespace model {
   export type ProductGroup = ProductGroupTypes.ProductGroup;
 
   // Product Option
-  export type ProductOptionDisplayType = ProductOptionTypes.ProductOptionDisplayType;
+  export type ProductOptionDisplayType =
+    ProductOptionTypes.ProductOptionDisplayType;
   export type ProductOptionValue = ProductOptionTypes.ProductOptionValue;
   export type ProductOption = ProductOptionTypes.ProductOption;
+  export type ProductOptionType = ProductOptionTypes.ProductOptionType;
 
   // Product Feature
   export type ProductFeatureValue = ProductFeatureTypes.ProductFeatureValue;
+  export type ProductFeatureGroup = ProductFeatureTypes.ProductFeatureGroup;
   export type ProductFeature = ProductFeatureTypes.ProductFeature;
 
   // Product Swatch
@@ -125,4 +149,16 @@ export namespace model {
 
   // Product
   export type Product = ProductTypes.Product;
+
+  // Product Recommendation
+  export type ProductRecommendationSource =
+    ProductRecommendationTypes.ProductRecommendationSource;
+  export type ProductRecommendation =
+    ProductRecommendationTypes.ProductRecommendation;
+  export type ProductRecommendationEdge =
+    ProductRecommendationTypes.ProductRecommendationEdge;
+  export type ProductRecommendationConnection =
+    ProductRecommendationTypes.ProductRecommendationConnection;
+  export type ProductRecommendationPagination =
+    ProductRecommendationTypes.ProductRecommendationPagination;
 }

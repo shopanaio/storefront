@@ -1,0 +1,115 @@
+{
+  "name": "@shopana/storefront",
+  "version": "0.1.0",
+  "description": "Next.js App Router runtime and framework facades for Shopana storefront themes.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "nextjs",
+    "runtime"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/shopana-storefront-runtime#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/shopana-storefront-runtime"
+  },
+  "private": false,
+  "type": "module",
+  "files": [
+    "bin",
+    "dist",
+    "src/init.js",
+    "src/init.d.ts",
+    "templates"
+  ],
+  "bin": {
+    "storefront-runtime": "./bin/storefront-runtime.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/init.d.ts",
+      "import": "./src/init.js",
+      "default": "./src/init.js"
+    },
+    "./next/auth": {
+      "types": "./dist/next/auth.d.ts",
+      "default": "./dist/next/auth.js"
+    },
+    "./next/auth-headless": {
+      "types": "./dist/next/auth-headless.d.ts",
+      "default": "./dist/next/auth-headless.js"
+    },
+    "./next/headers": {
+      "types": "./dist/next/headers.d.ts",
+      "default": "./dist/next/headers.js"
+    },
+    "./next/dynamic": {
+      "types": "./dist/next/dynamic.d.ts",
+      "default": "./dist/next/dynamic.js"
+    },
+    "./next/image": {
+      "types": "./dist/next/image.d.ts",
+      "default": "./dist/next/image.js"
+    },
+    "./next/layout": {
+      "types": "./dist/next/layout.d.ts",
+      "default": "./dist/next/layout.js"
+    },
+    "./next/link": {
+      "types": "./dist/next/link.d.ts",
+      "default": "./dist/next/link.js"
+    },
+    "./next/middleware": {
+      "types": "./dist/next/middleware.d.ts",
+      "default": "./dist/next/middleware.js"
+    },
+    "./next/navigation": {
+      "types": "./dist/next/navigation.d.ts",
+      "default": "./dist/next/navigation.js"
+    },
+    "./next/not-found": {
+      "types": "./dist/next/not-found.d.ts",
+      "default": "./dist/next/not-found.js"
+    },
+    "./next/page": {
+      "types": "./dist/next/page.d.ts",
+      "default": "./dist/next/page.js"
+    },
+    "./next/page-definition": {
+      "types": "./dist/next/page-definition.d.ts",
+      "default": "./dist/next/page-definition.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/fix-esm-imports.mjs dist",
+    "prepack": "yarn build",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "@apollo/client": "^4.0.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@shopana/storefront-auth": "^0.1.0",
+    "@shopana/storefront-sdk": "^0.1.0",
+    "next": "^16.0.5",
+    "next-intl": "^4.5.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/webpack-env": "^1.18.8",
+    "next": "16.0.5",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

@@ -9,8 +9,49 @@ import type { UseBoundStore, StoreApi } from 'zustand';
  */
 export const defaultSessionState: Partial<SessionStore> = {
   session: null,
+  status: 'loading',
+  expired: false,
+  signInPending: false,
+  authResult: null,
   refreshSession: () => {},
 };
+
+type SessionStoreSet = (
+  partial:
+    | Partial<SessionStore>
+    | ((state: SessionStore) => Partial<SessionStore>)
+) => void;
+
+function sessionStoreState(
+  set: SessionStoreSet,
+  initialSession?: Session | null
+): SessionStore {
+  return {
+    session: initialSession || null,
+    status: initialSession ? 'authenticated' : 'loading',
+    expired: false,
+    signInPending: false,
+    authResult: null,
+    setSession: (session) =>
+      set((state) => ({
+        session,
+        status: session ? 'authenticated' : 'anonymous',
+        expired: session ? false : state.expired,
+        authResult: session ? null : state.authResult,
+      })),
+    expireSession: () =>
+      set({
+        session: null,
+        status: 'anonymous',
+        expired: true,
+        signInPending: false,
+      }),
+    setSignInPending: (signInPending) => set({ signInPending }),
+    setAuthResult: (authResult) => set({ authResult }),
+    refreshSession: () => {},
+    setRefreshSession: (fn) => set({ refreshSession: fn }),
+  };
+}
 
 /**
  * Creates a Zustand vanilla session store instance
@@ -19,12 +60,9 @@ export const defaultSessionState: Partial<SessionStore> = {
  * @returns Zustand store instance
  */
 export const createSessionStoreVanilla = (initialSession?: Session | null) => {
-  return createStore<SessionStore>()((set) => ({
-    session: initialSession || null,
-    setSession: (session) => set({ session }),
-    refreshSession: () => {},
-    setRefreshSession: (fn) => set({ refreshSession: fn }),
-  }));
+  return createStore<SessionStore>()((set) =>
+    sessionStoreState(set, initialSession)
+  );
 };
 
 /**
@@ -41,7 +79,9 @@ export interface SessionStoreZustand {
  * @param initialSession - Optional initial session state
  * @returns Object with store and useStore hook
  */
-export const createSessionStoreZustand = (initialSession?: Session | null): SessionStoreZustand => {
+export const createSessionStoreZustand = (
+  initialSession?: Session | null
+): SessionStoreZustand => {
   const store = createSessionStoreVanilla(initialSession);
 
   // Create a Zustand hook using create() from the vanilla store
@@ -62,9 +102,6 @@ export const createSessionStoreZustand = (initialSession?: Session | null): Sess
  * Global session store instance (client-side only)
  * This is a singleton for use outside of React context
  */
-export const useSession = create<SessionStore>()((set) => ({
-  session: null,
-  setSession: (session) => set({ session }),
-  refreshSession: () => {},
-  setRefreshSession: (fn) => set({ refreshSession: fn }),
-}));
+export const useSession = create<SessionStore>()((set) =>
+  sessionStoreState(set)
+);

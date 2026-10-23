@@ -26,11 +26,13 @@ describe('Block', () => {
         component={MockBlockComponent}
         id="text-block"
         settings={{ text: 'Hello World' }}
-      />,
+      />
     );
 
     expect(screen.getByTestId('block-text-block')).toBeInTheDocument();
-    expect(screen.getByText('Block text-block: Hello World')).toBeInTheDocument();
+    expect(
+      screen.getByText('Block text-block: Hello World')
+    ).toBeInTheDocument();
   });
 
   it('passes all props to block component', () => {
@@ -46,11 +48,13 @@ describe('Block', () => {
         component={TestBlock}
         id="test-id"
         settings={{ key: 'value', number: 123 }}
-      />,
+      />
     );
 
     expect(screen.getByText('ID: test-id')).toBeInTheDocument();
-    expect(screen.getByText('Settings: {"key":"value","number":123}')).toBeInTheDocument();
+    expect(
+      screen.getByText('Settings: {"key":"value","number":123}')
+    ).toBeInTheDocument();
   });
 
   it('handles block component errors with ErrorBoundary', () => {
@@ -62,7 +66,7 @@ describe('Block', () => {
         component={ErrorThrowingBlockComponent}
         id="error-block"
         settings={{}}
-      />,
+      />
     );
 
     // ErrorBoundary should catch the error and render null
@@ -78,13 +82,7 @@ describe('Block', () => {
       </div>
     );
 
-    render(
-      <Block
-        component={TestBlock}
-        id="empty-settings"
-        settings={{}}
-      />,
-    );
+    render(<Block component={TestBlock} id="empty-settings" settings={{}} />);
 
     expect(screen.getByText('Settings: 0')).toBeInTheDocument();
   });
@@ -120,7 +118,7 @@ describe('Block', () => {
             ],
           },
         }}
-      />,
+      />
     );
 
     expect(screen.getByText('Complex Block')).toBeInTheDocument();
@@ -146,7 +144,7 @@ describe('Block', () => {
           id="block3"
           settings={{ text: 'Third' }}
         />
-      </>,
+      </>
     );
 
     const blocks = container.querySelectorAll('[data-testid^="block-"]');
@@ -180,7 +178,7 @@ describe('Block', () => {
           price: 99.99,
           enabled: false,
         }}
-      />,
+      />
     );
 
     expect(screen.getByText('Count: 5')).toBeInTheDocument();

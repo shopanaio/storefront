@@ -9,7 +9,10 @@ vi.mock('../utils/logger', () => ({
 }));
 
 // Mock section components
-const MockSectionComponent = ({ id, settings }: SectionProps<{ title: string }>) => (
+const MockSectionComponent = ({
+  id,
+  settings,
+}: SectionProps<{ title: string }>) => (
   <div data-testid={`section-${id}`}>
     Section {id}: {settings.title}
   </div>
@@ -27,7 +30,7 @@ describe('Section', () => {
         id="hero"
         settings={{ title: 'Hero Section' }}
         data={{ test: 'data' }}
-      />,
+      />
     );
 
     expect(screen.getByTestId('section-hero')).toBeInTheDocument();
@@ -59,7 +62,7 @@ describe('Section', () => {
         settings={{ key: 'value' }}
         blocks={mockBlocks}
         data={{ name: 'Test Data' }}
-      />,
+      />
     );
 
     expect(screen.getByText('ID: test-id')).toBeInTheDocument();
@@ -78,11 +81,13 @@ describe('Section', () => {
         id="error-section"
         settings={{}}
         data={{}}
-      />,
+      />
     );
 
     // ErrorBoundary should catch the error and render null
-    expect(screen.queryByTestId('section-error-section')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('section-error-section')
+    ).not.toBeInTheDocument();
 
     consoleSpy.mockRestore();
   });
@@ -95,12 +100,7 @@ describe('Section', () => {
     );
 
     render(
-      <Section
-        component={TestSection}
-        id="no-blocks"
-        settings={{}}
-        data={{}}
-      />,
+      <Section component={TestSection} id="no-blocks" settings={{}} data={{}} />
     );
 
     expect(screen.getByText('Blocks: undefined')).toBeInTheDocument();
@@ -108,9 +108,7 @@ describe('Section', () => {
 
   it('renders with empty blocks array', () => {
     const TestSection = ({ blocks }: SectionProps) => (
-      <div data-testid="test-section">
-        Blocks count: {blocks?.length ?? 0}
-      </div>
+      <div data-testid="test-section">Blocks count: {blocks?.length ?? 0}</div>
     );
 
     render(
@@ -120,7 +118,7 @@ describe('Section', () => {
         settings={{}}
         blocks={[]}
         data={{}}
-      />,
+      />
     );
 
     expect(screen.getByText('Blocks count: 0')).toBeInTheDocument();
@@ -155,7 +153,7 @@ describe('Section', () => {
           },
         }}
         data={{}}
-      />,
+      />
     );
 
     expect(screen.getByText('Complex')).toBeInTheDocument();

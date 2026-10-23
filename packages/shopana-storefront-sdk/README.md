@@ -1,419 +1,312 @@
 # @shopana/storefront-sdk
 
-Type-safe, code-first page builder framework for Next.js (App Router, RSC‑first) inspired by Shopify Liquid templates, but implemented entirely in TypeScript and React.
+Infrastructure and shared domain primitives for Shopana storefront themes.
 
-`@shopana/storefront-sdk` lets you build e‑commerce pages by composing templates (TypeScript objects) with your own layouts, sections, and blocks, while keeping all data strictly typed end‑to‑end.
+The SDK owns:
 
----
+- Apollo client creation for server requests and the browser;
+- the shared `createApolloCache()` policies for Shopana schema fields;
+- serializable query loading and normalized cache extraction;
+- initial page-snapshot hydration through `ApolloCacheHydrator`;
+- generic `definePaginationQuery()` and `usePaginationQuery()` lifecycles;
+- cart, session, mutations, shared domain entities, and Builder primitives.
 
-## Features
+The SDK does not own a theme's page queries, page data models, metadata,
+providers, URL parameter semantics, or concrete pagination descriptors. Those
+belong to the active theme and are supplied to the generic SDK APIs through
+typed GraphQL documents.
 
-- **RSC‑first rendering** – builder and pages run on the server, sending fully rendered HTML; client JS is loaded only where it is really needed.
-- **Code‑first templates** – pages are defined as TypeScript files that import layouts, sections, and blocks directly.
-- **Islands architecture** – everything except the page shell is built as client components (`'use client'`).
-- **Dynamic imports** – internal templates and user sections/blocks are loaded on demand so the bundle stays small.
-- **Strong typing** – template configuration, component props, and page data are validated by TypeScript at build time.
-- **Error boundaries** – layouts, sections and blocks are wrapped in error boundaries so one broken block does not break the whole page.
-- **E‑commerce‑ready** – reserved entities (Product, Collection, Cart), standard page types, and SDK hooks for accessing data.
+## Entry points
 
----
+The package exports its public modules explicitly (see `exports` in `package.json`): the root
+entry, `graphql/apollo`, `registry`, `config`, the `modules/*` entries of the cart, session,
+account, localization and storefront API, `next/apollo/*`, `core/*`, and the cart hooks
+(`modules/cart/react/hooks/*`). Other files are internal.
 
-## When to use this package
-
-Use `@shopana/storefront-sdk` when you need:
-
-- a highly performant, maintainable e‑commerce frontend on Next.js App Router;
-- a **code‑first** alternative to visual/JSON page builders;
-- strong typing and clear contracts between data, templates, and components.
-
-You **do not**:
-
-- write your own router for `/[[...slug]]`;
-- implement server data loading from scratch;
-- roll your own page builder infrastructure.
-
-You **do**:
-
-- define templates in `/templates/*.ts`;
-- implement layouts, sections, and blocks in your app;
-- use the provided types and SDK hooks from `@shopana/storefront-sdk`.
-
-For a deep dive into the architecture, see `ARCHITECTURE.md`. For the current implementation roadmap, see `IMPLEMENTATION_PLAN.md`.
-
----
-
-## Installation
-
-Designed for Next.js 14/15/16 (App Router) and React 18/19.
-
-```bash
-npm install @shopana/storefront-sdk
-# or
-yarn add @shopana/storefront-sdk
-```
-
-Key peer dependencies (see `package.json` for exact versions):
-
-- `next` `^14.0.0 || ^15.0.0 || ^16.0.0`
-- `react` `^18.0.0 || ^19.0.0`
-- `react-dom` `^18.0.0 || ^19.0.0`
-
-Runtime dependencies:
-
-- `@shopana/entity` – shared e‑commerce entity types (Product, Collection, Cart, …)
-- `path-to-regexp` – routing helpers for URL pattern matching
-
-In the full project setup, Relay (`relay-runtime`) is used in the server SDK to fetch data, but it is not a direct peer of this package.
-
----
-
-## Core concepts
-
-The framework follows a familiar e‑commerce hierarchy:
-
-1. **Blocks** – small reusable UI components (button, price, image).
-2. **Sections** – compositions of blocks (Hero, ProductDetails, RelatedProducts).
-3. **Layouts** – page wrappers that render sections via `children`.
-4. **Templates** – TypeScript objects that wire layouts, sections, blocks, and data types.
-
-Data flow:
-
-```text
-Template (imports layout, sections, blocks)
-  ↓
-Builder (receives template + data + pageType)
-  ↓
-Layout component (receives children)
-  ↓
-Section components (receive settings + blocks + data)
-  ↓
-Block components (receive settings)
-```
-
----
-
-## Recommended project structure
-
-In your Next.js app, a typical structure might look like this:
-
-```text
-app/
-  [[...slug]]/
-    page.tsx              # RSC page that uses the Builder
-
-layout/
-  MainLayout.tsx          # main site layout
-  AuthLayout.tsx          # example of a dedicated layout
-
-sections/
-  HeroSection.tsx
-  ProductHero.tsx
-  ProductDetails.tsx
-
-blocks/
-  Button.tsx
-  Image.tsx
-  Price.tsx
-
-templates/
-  index.ts                # home
-  product.ts
-  collection.ts
-  search.ts
-  blog.ts
-  article.ts
-  page.ts
-  cart.ts
-  list-collections.ts
-  404.ts
-```
-
-The framework expects all reserved template files to exist in `templates/`, even if they are minimal placeholders at first.
-
----
-
-## Routing and reserved pages
-
-The framework is designed around a single catch‑all route `app/[[...slug]]/page.tsx` which:
-
-- parses the URL (Shopify‑style) into `pageType` and `params`;
-- picks the appropriate template based on `pageType`;
-- loads page data on the server and passes it to the `Builder`.
-
-Default reserved paths:
-
-- `/` → `index` (home)
-- `/products/[handle]` → `product`
-- `/collections/[handle]` → `collection`
-- `/search` → `search`
-- `/blogs` → `blog`
-- `/blogs/[handle]` → `article`
-- `/pages/[handle]` → `page`
-- `/cart` → `cart`
-- `/collections` → `list-collections`
-- `*` (fallback 404) → `404`
-
-Each reserved route should have a corresponding template in `templates/*.ts`.
-
----
-
-## Templates: defining pages
-
-A template is a plain TypeScript file which:
-
-- imports your layout, sections, and blocks;
-- defines the order of sections and blocks;
-- provides `settings` for each component;
-- is typed using `PageTemplate` from the core.
-
-Example of a minimal home page template:
+The theme editor renders with antd, an optional peer dependency, and is published separately:
 
 ```ts
-// templates/index.ts
-import type { PageTemplate } from '@shopana/storefront-sdk/core';
+import {
+  ThemeEditorApp,
+  ThemeEditorLayout,
+} from '@shopana/storefront-sdk/editor';
+```
 
-import MainLayout from '@/layout/MainLayout';
-import HeroSection from '@/sections/HeroSection';
-import FeaturesSection from '@/sections/FeaturesSection';
-import Button from '@/blocks/Button';
-import Image from '@/blocks/Image';
+Errors the storefront packages catch go through `logError` of
+`@shopana/storefront-sdk/utils/logger`; without a logger they are written to the console.
+Plug in an error tracker once, at the start of the app:
 
-const template: PageTemplate = {
-  layout: {
-    component: MainLayout,
+```ts
+import { configureLogger } from '@shopana/storefront-sdk/utils/logger';
+
+configureLogger((level, message, options) => {
+  errorTracker.capture(options?.error ?? message, { level, ...options });
+});
+```
+
+## Section settings
+
+`SectionConfig<TSettings>` accepts a strictly typed editor `schema`. A control
+ID must be a key of `TSettings`, and its value type must match the control. For
+example, `checkbox` can target only a boolean setting and `range` only a number.
+
+Entity pickers use `type: 'entity_picker'`, declare a supported entity type, and
+persist only the selected entity's stable `handle` or `id`. Hydrated API
+entities never become part of a template. Category, product, article, blog, and
+page pickers use handles by default. Navigation menus and navigation items can
+store either handles or Relay IDs through `valueField`; a navigation-item picker
+can also be limited to a menu with `navigationMenuId`.
+
+```ts
+interface Settings {
+  categoryHandle: string;
+  showPagination: boolean;
+}
+
+const section = {
+  component: ProductSection,
+  settings: {
+    categoryHandle: 'electronics',
+    showPagination: true,
   },
-  sections: {
-    order: ['hero-main', 'features'],
-    'hero-main': {
-      component: HeroSection,
-      settings: {
-        title: 'Welcome to Shopana',
+  schema: {
+    name: 'Products',
+    settings: [
+      {
+        type: 'entity_picker',
+        entity: 'category',
+        id: 'categoryHandle',
+        label: 'Category',
       },
-      blocks: {
-        order: ['hero-image', 'hero-cta'],
-        'hero-image': {
-          component: Image,
-          settings: { src: '/hero.jpg', alt: 'Hero' },
-        },
-        'hero-cta': {
-          component: Button,
-          settings: { label: 'Shop now' },
-        },
+      {
+        type: 'checkbox',
+        id: 'showPagination',
+        label: 'Show pagination',
       },
-    },
-    features: {
-      component: FeaturesSection,
-      settings: {},
-    },
+    ],
   },
-};
-
-export default template;
+} satisfies SectionConfig<Settings>;
 ```
 
-If the settings or data types do not match the component props, TypeScript will fail compilation.
+A navigation-item relation may store its menu-local handle and be scoped to one
+menu:
 
----
-
-## Layout components
-
-Layouts receive fully rendered sections via `children` and wrap them in the page chrome.
-
-```tsx
-// layout/MainLayout.tsx
-'use client';
-
-import type { LayoutProps } from '@shopana/storefront-sdk/core';
-
-export default function MainLayout({ children }: LayoutProps) {
-  return (
-    <main>
-      {/* Header / Navigation */}
-      {children}
-      {/* Footer */}
-    </main>
-  );
+```ts
+{
+  type: 'entity_picker',
+  entity: 'navigation_menu_item',
+  valueField: 'handle',
+  navigationMenuId: 'gid://shopana/OnlineStoreNavigationMenu/main-menu',
+  id: 'navigationItemHandle',
+  label: 'Navigation item',
 }
 ```
 
-You can define multiple layouts (e.g. an auth layout) and reference them from different templates.
+Blocks use the same control union and type guarantees:
 
----
-
-## Sections and blocks
-
-Sections and blocks are your client components that receive configuration and page data.
-
-### Section example
-
-```tsx
-// sections/HeroSection.tsx
-'use client';
-
-import type { SectionProps } from '@shopana/storefront-sdk/core';
-import { Block } from '@shopana/storefront-sdk';
-import type { HomeTemplateData } from '@shopana/storefront-sdk/sdk';
-
-interface HeroSettings {
-  title: string;
-}
-
-export default function HeroSection({
-  id,
-  settings,
-  blocks,
-  data,
-}: SectionProps<HeroSettings, HomeTemplateData>) {
-  return (
-    <section id={id}>
-      <h1>{settings.title}</h1>
-      {blocks?.map((block) => (
-        <Block key={block.id} {...block} />
-      ))}
-    </section>
-  );
-}
-```
-
-### Block example
-
-```tsx
-// blocks/Button.tsx
-'use client';
-
-import type { BlockProps } from '@shopana/storefront-sdk/core';
-
-interface ButtonSettings {
+```ts
+interface ButtonBlockSettings {
   label: string;
+  style: 'primary' | 'secondary';
 }
 
-export default function Button({ id, settings }: BlockProps<ButtonSettings>) {
-  return (
-    <button id={id} className="btn">
-      {settings.label}
-    </button>
-  );
-}
+const buttonBlock = {
+  component: ButtonBlock,
+  settings: { label: 'Shop now', style: 'primary' },
+  schema: {
+    name: 'Button',
+    settings: [
+      { type: 'text', id: 'label', label: 'Label' },
+      {
+        type: 'select',
+        id: 'style',
+        label: 'Style',
+        options: [
+          { value: 'primary', label: 'Primary' },
+          { value: 'secondary', label: 'Secondary' },
+        ],
+      },
+    ],
+  },
+} satisfies BlockConfig<ButtonBlockSettings>;
 ```
 
-The internal `Section` and `Block` components provided by this package wrap your components in error boundaries and handle framework‑level concerns.
+## Apollo pagination
 
----
-
-## Page data and entity types
-
-Core domain entities live in `@shopana/entity` and are used as the single source of truth for e‑commerce data:
-
-- `ProductEntity`
-- `CollectionEntity`
-- `CartEntity`
-
-Example page data types built on top of those entities:
+Create a descriptor next to the theme operation:
 
 ```ts
-// src/types.ts (inside this package)
-export interface ProductTemplateData {
-  product: ProductEntity;
-  relatedProducts: ProductEntity[];
-}
+import { definePaginationQuery } from '@shopana/storefront-sdk/graphql/apollo';
+import { ProductReviewsPaginationQueryDocument } from '@codegen/apollo/storefront-operations';
 
-export interface CollectionTemplateData {
-  collection: CollectionEntity;
-  products: ProductEntity[];
-}
-``>
-
-The server SDK (using Relay) loads data and types it with these interfaces. Sections receive strongly typed data through `SectionProps<Settings, PageData>`.
-
----
-
-## Contexts and SDK hooks
-
-On top of page data and global shop configuration, the framework provides React contexts and hooks:
-
-- `TemplateDataProvider` / `useTemplateData` – current page type and data (`pageType`, `data`);
-- `ShopProvider` / `useShop` – global shop configuration (name, locale, currency, feature flags, etc.);
-- convenience hooks (e.g. `useProduct`, `useCollection`, …) – shortcuts for accessing current page entities without refetching.
-
-Example usage:
-
-```tsx
-// sections/ProductHero.tsx
-'use client';
-
-import type { SectionProps } from '@shopana/storefront-sdk/core';
-import { useShop } from '@shopana/storefront-sdk/sdk';
-import type { ProductTemplateData } from '@shopana/storefront-sdk/sdk';
-
-interface ProductHeroSettings {
-  title?: string;
-}
-
-export default function ProductHero({
-  id,
-  settings,
-  data,
-}: SectionProps<ProductHeroSettings, ProductTemplateData>) {
-  const shop = useShop();
-
-  return (
-    <section id={id}>
-      <h1>{settings.title ?? data.product.title}</h1>
-      <p>{shop.name}</p>
-    </section>
-  );
-}
+export const ProductReviewsPagination = definePaginationQuery({
+  query: ProductReviewsPaginationQueryDocument,
+  getConnection: (data) => data.product?.reviews,
+  getNextVariables: ({ variables, count, endCursor }) => ({
+    ...variables,
+    first: count,
+    after: endCursor,
+  }),
+});
 ```
 
-The data is loaded once on the server and passed to client components via context, so no extra client‑side fetching is required.
+`usePaginationQuery()` keeps the complete active variables for the current
+logical list. A refetch resets `after` to `null`; subsequent `loadNext()` calls
+continue with those refetched variables. Operation-variable identity is
+canonicalized recursively, so object key order does not create a new logical
+list.
 
----
+The SDK cache registers connection semantics using real Shopana schema fields:
 
-## Public core types
+- `Category.products`, keyed by `sort` and `filters`;
+- `Product.questions`, keyed by `sort`;
+- `Product.reviews`, keyed by `sort`;
+- `Query.searchProducts`, keyed by `query`, `sort`, and `filters`.
 
-From `@shopana/storefront-sdk/core` you get the main building‑block types:
+Page and pagination operations can have different names. They share initial
+results by selecting the same normalized parent, field arguments, connection
+fragment, and node fragments.
 
-- `PageType` – union of reserved page types:
-  `'home' | 'product' | 'collection' | 'search' | 'blog' | 'article' | 'page' | 'cart' | 'list-collections' | '404'`
-- `BlockProps<TSettings>`
-- `SectionProps<TSettings, TData>`
-- `LayoutProps`
-- `PageTemplate<TData, TLayoutSettings>`
+## Page hydration
 
-Internal types such as `TemplateParams`, `BlockInstance`, `SectionCollection`, `PageBuilderProps`, `PageDataLoader`, `TemplateRegistration`, etc. are used inside the package and are not meant to be part of the public API surface.
+The runtime query service extracts one cumulative request snapshot. A theme
+Provider applies it once before descendant Apollo hooks render:
 
----
+```tsx
+<ApolloCacheHydrator state={data.hydration.state}>
+  {children}
+</ApolloCacheHydrator>
+```
 
-## Getting started (checklist)
+The hydrator merges the current browser cache followed by the incoming page
+snapshot. Incoming fields win, while browser records absent from the snapshot
+remain intact. Ordinary rerenders do not replay the snapshot.
 
-1. **Install dependencies**
-   Add `@shopana/storefront-sdk` to your Next.js App Router project and ensure peer dependencies are satisfied.
+## Account cart after a sign-in
 
-2. **Create layout components**
-   Implement at least one main layout (e.g. `layout/MainLayout.tsx`) and export it as default.
+After each sign-in the account cart replaces or absorbs the guest cart of the
+browser, then `CART_CLAIMED_EVENT` is dispatched on `window` with the account
+checkout and the merged guest checkout, if any. Modules use the public entry
+`@shopana/storefront-sdk/modules/cart/react`:
 
-3. **Create basic blocks and sections**
-   Build reusable blocks (Button, Image, Price, …) and sections (HeroSection, ProductHero, ProductDetails, …) using `BlockProps` and `SectionProps`.
+```tsx
+import { useCartClaimed } from '@shopana/storefront-sdk/modules/cart/react';
 
-4. **Define templates in `templates/*.ts`**
-   Create TypeScript files for all reserved page types (home, product, collection, cart, etc.) and describe their structure via `PageTemplate`.
+useCartClaimed(({ checkoutId, mergedFromCheckoutId }) => setClaimed(true));
+```
 
-5. **Wire the Builder into `app/[[...slug]]/page.tsx`**
-   Use the framework’s routing and Builder helpers (see source and tests) or mirror the patterns described in `ARCHITECTURE.md`.
+`useClaimAccountCart()` from the same entry claims the cart on request, e.g.
+after placement answered `CHECKOUT_CLAIM_REQUIRED`.
 
-6. **Hook up the server SDK and Relay**
-   Configure your data layer using Relay and your back‑end, and return page data in the shape expected by the template types.
+## Closed module pages
 
----
+A page module declares `access: { session: 'required' }` in `registerModule()`
+to close its pages to visitors without a session; `publicPaths` keeps some of
+them open (path-to-regexp patterns over the same locale-free pathname as
+`path`):
 
-## Documentation and status
+```ts
+registerModule({
+  type: 'page',
+  slug: 'account',
+  path: '/account{/*path}',
+  access: { session: 'required', publicPaths: ['/account/reset-password'] },
+  loader: async () => import('./page/page'),
+});
+```
 
-- **Architecture** – see `ARCHITECTURE.md` for a full technical description of the data flow and internal components.
-- **Implementation plan** – see `IMPLEMENTATION_PLAN.md` for the current task tracker and feature status.
-- **Tests** – refer to tests in `src/**` (for example `src/core/Builder.test.tsx`) for usage patterns and contracts.
+Such a visitor goes to the home page of the same locale
+(`buildClosedPageRedirect()`), with the `?auth=` result of a sign-in that did
+not complete carried over:
 
----
+- the runtime answers the request with a redirect before the module loads; a
+  request whose access token expired while the browser still has a session is
+  admitted, since the browser refreshes it;
+- `ClosedPageGuard`, which the runtime wraps around an admitted page, leaves
+  once with `location.replace` when the browser finds the session missing (a
+  rejected refresh, a session ended in another tab). A sign-out on the page is
+  not followed: `useSignOut()` leaves for its own address.
 
-## License
+The home page is never closed: `registerModule()` refuses a closed module that
+matches `/`, and the runtime refuses a redirect to a closed page, so a redirect
+cannot lead back to a closed page.
 
-MIT, as specified in the package `license` field and repository root.
+## Account product actions
+
+`useAccountProductActions({ productId, variantId })` from
+`@shopana/storefront-sdk/modules/account/react` reads and changes the wishlist
+and comparisons of the signed-in customer for one product page. Both are
+customer-owned: without a session nothing is queried, `requiresSignIn` is true
+and the setters do nothing, so the theme asks for a sign-in first.
+
+`setWishlisted(productId, wishlisted)` and `setCompared(variantId, compared)`
+take the wanted state instead of toggling it. An action asked for before a
+sign-in (`useAuthAction` of `@shopana/storefront-auth/react`) can therefore run
+after it without undoing what the account already has: adding a saved product
+or a compared variant again leaves it as it is.
+
+## Code generation
+
+SDK GraphQL documents live only under `packages/shopana-storefront-sdk/src`.
+The workspace `codegen` command acquires one root `schema.shopana.graphql`
+artifact, then generates SDK and active-theme operations independently from
+that same artifact. Generated files are never edited manually.
+
+## Current Storefront schema API
+
+`createStorefrontApi(client)` is available from the package root and
+`@shopana/storefront-sdk/modules/storefront`. It uses the caller's Apollo client,
+authentication and normalized cache. In React, use `useStorefrontApi()` from
+`@shopana/storefront-sdk/modules/storefront/react`.
+
+```ts
+const api = createStorefrontApi(client);
+const collection = await api.loadCollectionByHandle({ handle: 'summer' });
+const products = await api.loadCollectionProducts({
+  id: collection!.id,
+  first: 20,
+  sort: 'NEWEST',
+});
+const options = await api.loadProductOptions({ id: productId });
+const image = await api.loadImage({
+  id: mediaId,
+  transform: {
+    fit: 'CONTAIN',
+    gravity: 'CENTER',
+    quality: 80,
+    preferredContentType: 'AVIF',
+  },
+});
+```
+
+Collection products support cursors, search, filters and sorting. Subsequent
+pages are fetched from the server and merged into the collection's cached
+connection; search/filter/sort combinations have separate cache entries.
+Collection media supports both pagination directions and nullable media nodes.
+`loadProductOptions` maps options to the domain model, including nullable
+`ProductOption.type` and swatches. The API also exposes page descriptions and
+excerpts, review-media revisions, and comparison cells with their original
+feature or selected-option objects.
+
+The cart model and shared cart fragment include `status`, `expiresAt`, `valid`,
+`resultRevision`, `loyaltyRedemption` and `loyaltyRewardEntitlementId`. Cart and
+loyalty timestamps map to `Date`; loyalty money maps to numeric domain money.
+`useCartStatus`, `useCartExpiresAt` and `useCartLoyaltyRedemption` are available
+from the cart selectors module.
+
+`updateLoyaltyRedemption` and `removeLoyaltyRedemption` accept the schema inputs,
+including points and reward-entitlement selection. Their React counterpart,
+`useLoyaltyRedemption` from the cart hooks module, obtains the active cart ID and
+updates the cart context after successful mutations. Business errors throw
+`StorefrontMutationError` with the original `userErrors`.
+
+`placeOrder` requires a caller-generated idempotency key. Preserve this key when
+retrying the same attempt. `loadCheckoutPlacement` refreshes placement status
+from the server, including `placementState` and the full customer action.
+`handlePlaceOrderCustomerAction(action, handlers)` dispatches `CLIENT_SDK`,
+`REDIRECT` or `INSTRUCTIONS` to app-supplied handlers. The app owns payment SDK
+integration, navigation and instructions presentation.
+
+Internal localization `source*` fields are inaccessible and are not selected by
+SDK operations. Theme integration is a separate step; these APIs do not change
+a theme's queries or UI.

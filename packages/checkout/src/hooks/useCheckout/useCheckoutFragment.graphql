@@ -1,0 +1,323 @@
+fragment StorefrontCheckoutMoney on Money {
+  amount
+  currencyCode
+}
+
+fragment StorefrontCheckoutLineFields on CheckoutLine {
+  id
+  title
+  sku
+  quantity
+  cost {
+    unitPrice {
+      ...StorefrontCheckoutMoney
+    }
+    compareAtUnitPrice {
+      ...StorefrontCheckoutMoney
+    }
+    subtotalAmount {
+      ...StorefrontCheckoutMoney
+    }
+    totalAmount {
+      ...StorefrontCheckoutMoney
+    }
+    discountAmount {
+      ...StorefrontCheckoutMoney
+    }
+    taxAmount {
+      ...StorefrontCheckoutMoney
+    }
+  }
+  originalPrice {
+    ...StorefrontCheckoutMoney
+  }
+  priceConfig {
+    type
+    amount
+    percent
+  }
+  image {
+    id
+    image {
+      url
+    }
+  }
+  purchasable {
+    ... on ProductVariant {
+      id
+      handle
+      sku
+      title
+      product {
+        id
+        title
+        handle
+      }
+    }
+  }
+  purchasableId
+  purchase {
+    type
+  }
+  attributes
+  tag {
+    id
+    slug
+    unique
+  }
+  componentItemId
+}
+
+fragment StorefrontCheckoutDeliveryOption on CheckoutDeliveryOption {
+  handle
+  code
+  title
+  description
+  deliveryMethodType
+  carrierCode
+  publicData
+  cost {
+    ...StorefrontCheckoutMoney
+  }
+  paymentModel
+  carrierEstimatedCost {
+    ...StorefrontCheckoutMoney
+  }
+  estimatedMinDeliveryAt
+  estimatedMaxDeliveryAt
+  phoneRequired
+  customerInputContract
+}
+
+fragment StorefrontCheckoutPaymentMethod on CheckoutPaymentMethod {
+  handle
+  code
+  title
+  providerCode
+  flow
+}
+
+fragment StorefrontCheckoutSelectionResetReason on CheckoutSelectionResetReason {
+  code
+  message
+}
+
+fragment StorefrontUseCheckoutFragment on Checkout {
+  __typename
+  id
+  channelCode
+  localeCode
+  currencyCode
+  resultRevision
+  status
+  guestCheckoutAllowed
+  expiresAt
+  valid
+  issues {
+    code
+    message
+    severity
+    effect
+    field
+    lineId
+    retryable
+  }
+  createdAt
+  updatedAt
+  totalQuantity
+  cost {
+    subtotalAmount {
+      ...StorefrontCheckoutMoney
+    }
+    totalAmount {
+      ...StorefrontCheckoutMoney
+    }
+    totalDiscountAmount {
+      ...StorefrontCheckoutMoney
+    }
+    merchandiseDiscountAmount {
+      ...StorefrontCheckoutMoney
+    }
+    totalShippingAmount {
+      ...StorefrontCheckoutMoney
+    }
+    totalTaxAmount {
+      ...StorefrontCheckoutMoney
+    }
+    loyaltyAmount {
+      ...StorefrontCheckoutMoney
+    }
+  }
+  loyaltyRedemption {
+    source
+    requestedPoints
+    requestedAmount {
+      ...StorefrontCheckoutMoney
+    }
+    points
+    availablePoints
+    availableAmount {
+      ...StorefrontCheckoutMoney
+    }
+    discount {
+      ...StorefrontCheckoutMoney
+    }
+    expiresAt
+  }
+  loyaltyRewardId
+  loyaltySelection {
+    source
+    points
+    amount {
+      ...StorefrontCheckoutMoney
+    }
+    rewardId
+  }
+  loyaltyEarning {
+    state
+    points
+    amount {
+      ...StorefrontCheckoutMoney
+    }
+    presentation {
+      headline
+      description
+    }
+  }
+  disclosures {
+    version
+    acceptanceMode
+    parts {
+      __typename
+      ... on CheckoutDisclosureText {
+        text
+      }
+      ... on CheckoutDisclosurePolicyLink {
+        policyType
+        handle
+        title
+        path
+      }
+    }
+  }
+  lines {
+    ...StorefrontCheckoutLineFields
+    children {
+      ...StorefrontCheckoutLineFields
+      children {
+        ...StorefrontCheckoutLineFields
+      }
+    }
+  }
+  promoCodes {
+    code
+    status
+    reason
+    message
+    appliedAt
+    discountType
+    value
+    provider
+  }
+  customerIdentity {
+    countryCode
+    customer {
+      id
+      displayName
+      firstName
+      lastName
+      emailAddress {
+        emailAddress
+      }
+    }
+    email
+    firstName
+    lastName
+    middleName
+    phone
+  }
+  customerNote
+  deliveryGroups {
+    id
+    replacesGroupIds
+    checkoutLines {
+      id
+    }
+    deliveryAddress {
+      id
+      address1
+      address2
+      city
+      countryCode
+      data
+      postalCode
+      provinceCode
+      name
+      phone
+      country
+      province
+      formatted
+      formattedArea
+    }
+    options {
+      ...StorefrontCheckoutDeliveryOption
+    }
+    recipient {
+      email
+      firstName
+      lastName
+      middleName
+      phone
+    }
+    selection {
+      status
+      previousOptionHandle
+      resetReason {
+        ...StorefrontCheckoutSelectionResetReason
+      }
+      option {
+        ...StorefrontCheckoutDeliveryOption
+      }
+      customerInput
+    }
+    shipping {
+      paymentModel
+      originalPrice {
+        ...StorefrontCheckoutMoney
+      }
+      payer
+      total {
+        ...StorefrontCheckoutMoney
+      }
+      freeShipping {
+        source
+        title
+        code
+      }
+    }
+  }
+  payment {
+    payableAmount {
+      ...StorefrontCheckoutMoney
+    }
+    methods {
+      ...StorefrontCheckoutPaymentMethod
+    }
+    selection {
+      status
+      previousMethodHandle
+      resetReason {
+        ...StorefrontCheckoutSelectionResetReason
+      }
+      method {
+        ...StorefrontCheckoutPaymentMethod
+      }
+    }
+  }
+  notifications {
+    id
+    code
+    severity
+    isDismissed
+  }
+}

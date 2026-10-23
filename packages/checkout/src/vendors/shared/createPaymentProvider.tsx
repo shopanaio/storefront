@@ -1,0 +1,50 @@
+'use client';
+
+import { Flex } from 'antd';
+import { ProviderComponentProps } from '#checkout/vendors/types';
+
+/**
+ * Builds the provider-level component of a payment module.
+ *
+ * Renders, in the order received, every available method that the module
+ * declares, each with its own method component. The checkout gives it the module's messages
+ * (`messages` of the module).
+ */
+export function createPaymentProvider() {
+  function PaymentProvider({
+    availableMethods,
+    selectedMethod,
+    config,
+    onSelectMethod,
+    onUpdateMethodData,
+    provider,
+  }: ProviderComponentProps) {
+    return (
+      <Flex vertical gap={12}>
+        {availableMethods.map((method) => {
+          const methodConfig = config.methods.find(
+            (m) => m.code === method.code
+          );
+          if (!methodConfig) {
+            return null;
+          }
+
+          const MethodComponent = methodConfig.Component;
+          return (
+            <MethodComponent
+              key={method.handle}
+              isActive={selectedMethod?.handle === method.handle}
+              onActive={() => onSelectMethod?.({ ...method, provider })}
+              data={method.data}
+              title={method.title}
+              description={method.description}
+              onSubmit={(data) => onUpdateMethodData?.(method.handle, data)}
+            />
+          );
+        })}
+      </Flex>
+    );
+  }
+
+  return PaymentProvider;
+}

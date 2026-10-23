@@ -1,44 +1,235 @@
 {
   "name": "@shopana/storefront-sdk",
   "version": "0.1.0",
+  "description": "Data, session, cart and composition primitives for Shopana storefront themes.",
+  "keywords": [
+    "shopana",
+    "storefront",
+    "sdk",
+    "apollo",
+    "graphql",
+    "react"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/shopanaio/storefront/tree/main/packages/shopana-storefront-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/shopanaio/storefront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shopanaio/storefront.git",
+    "directory": "packages/shopana-storefront-sdk"
+  },
   "private": false,
-  "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
-    "src/next"
+    "dist"
   ],
   "exports": {
-    "./next/page": "./src/next/page.tsx",
-    "./next/layout": "./src/next/layout.tsx",
-    "./next/not-found": "./src/next/not-found.tsx",
-    "./next/middleware": "./src/next/middleware.ts",
-    "./next/headers": "./src/next/headers.ts",
-    "./registry": "./src/registry/index.ts",
-    "./package.json": "./package.json",
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./App": {
+      "types": "./dist/App.d.ts",
+      "default": "./dist/App.js"
+    },
+    "./config/index": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    },
+    "./editor": {
+      "types": "./dist/editor/index.d.ts",
+      "default": "./dist/editor/index.js"
+    },
+    "./editor/ThemeEditorApp": {
+      "types": "./dist/editor/ThemeEditorApp.d.ts",
+      "default": "./dist/editor/ThemeEditorApp.js"
+    },
+    "./editor/ThemeEditorLayout": {
+      "types": "./dist/editor/ThemeEditorLayout.d.ts",
+      "default": "./dist/editor/ThemeEditorLayout.js"
+    },
+    "./graphql/apollo": {
+      "types": "./dist/graphql/apollo/index.d.ts",
+      "default": "./dist/graphql/apollo/index.js"
+    },
+    "./graphql/apollo/cache": {
+      "types": "./dist/graphql/apollo/cache.d.ts",
+      "default": "./dist/graphql/apollo/cache.js"
+    },
+    "./graphql/apollo/loadSerializableQuery": {
+      "types": "./dist/graphql/apollo/loadSerializableQuery.d.ts",
+      "default": "./dist/graphql/apollo/loadSerializableQuery.js"
+    },
+    "./graphql/apollo/types": {
+      "types": "./dist/graphql/apollo/types.d.ts",
+      "default": "./dist/graphql/apollo/types.js"
+    },
+    "./modules/account/react": {
+      "types": "./dist/modules/account/react/index.d.ts",
+      "default": "./dist/modules/account/react/index.js"
+    },
+    "./modules/cart/core/config": {
+      "types": "./dist/modules/cart/core/config.d.ts",
+      "default": "./dist/modules/cart/core/config.js"
+    },
+    "./modules/cart/core/types": {
+      "types": "./dist/modules/cart/core/types.d.ts",
+      "default": "./dist/modules/cart/core/types.js"
+    },
+    "./modules/cart/core/utils/idempotencyKey": {
+      "types": "./dist/modules/cart/core/utils/idempotencyKey.d.ts",
+      "default": "./dist/modules/cart/core/utils/idempotencyKey.js"
+    },
+    "./modules/cart/core/utils/mutationQueue": {
+      "types": "./dist/modules/cart/core/utils/mutationQueue.d.ts",
+      "default": "./dist/modules/cart/core/utils/mutationQueue.js"
+    },
+    "./modules/cart/next": {
+      "types": "./dist/modules/cart/next/index.d.ts",
+      "default": "./dist/modules/cart/next/index.js"
+    },
+    "./modules/cart/next/loaders/loadCartServerQuery": {
+      "types": "./dist/modules/cart/next/loaders/loadCartServerQuery.d.ts",
+      "default": "./dist/modules/cart/next/loaders/loadCartServerQuery.js"
+    },
+    "./modules/cart/react": {
+      "types": "./dist/modules/cart/react/index.d.ts",
+      "default": "./dist/modules/cart/react/index.js"
+    },
+    "./modules/cart/react/context/CartContext": {
+      "types": "./dist/modules/cart/react/context/CartContext.d.ts",
+      "default": "./dist/modules/cart/react/context/CartContext.js"
+    },
+    "./modules/cart/react/providers/CartProvider": {
+      "types": "./dist/modules/cart/react/providers/CartProvider.d.ts",
+      "default": "./dist/modules/cart/react/providers/CartProvider.js"
+    },
+    "./modules/cart/react/store/CartStoreZustand": {
+      "types": "./dist/modules/cart/react/store/CartStoreZustand.d.ts",
+      "default": "./dist/modules/cart/react/store/CartStoreZustand.js"
+    },
+    "./modules/cart/store/CartStore": {
+      "types": "./dist/modules/cart/store/CartStore.d.ts",
+      "default": "./dist/modules/cart/store/CartStore.js"
+    },
+    "./modules/localization/core/types": {
+      "types": "./dist/modules/localization/core/types.d.ts",
+      "default": "./dist/modules/localization/core/types.js"
+    },
+    "./modules/localization/react/index": {
+      "types": "./dist/modules/localization/react/index.d.ts",
+      "default": "./dist/modules/localization/react/index.js"
+    },
+    "./modules/session": {
+      "types": "./dist/modules/session/index.d.ts",
+      "default": "./dist/modules/session/index.js"
+    },
+    "./modules/session/core/closedPageRedirect": {
+      "types": "./dist/modules/session/core/closedPageRedirect.d.ts",
+      "default": "./dist/modules/session/core/closedPageRedirect.js"
+    },
+    "./modules/session/next/loaders/loadSessionServerQuery": {
+      "types": "./dist/modules/session/next/loaders/loadSessionServerQuery.d.ts",
+      "default": "./dist/modules/session/next/loaders/loadSessionServerQuery.js"
+    },
+    "./modules/session/react": {
+      "types": "./dist/modules/session/react/index.d.ts",
+      "default": "./dist/modules/session/react/index.js"
+    },
+    "./modules/session/react/components/ClosedPageGuard": {
+      "types": "./dist/modules/session/react/components/ClosedPageGuard.d.ts",
+      "default": "./dist/modules/session/react/components/ClosedPageGuard.js"
+    },
+    "./modules/session/server": {
+      "types": "./dist/modules/session/server/index.d.ts",
+      "default": "./dist/modules/session/server/index.js"
+    },
+    "./modules/storefront/index": {
+      "types": "./dist/modules/storefront/index.d.ts",
+      "default": "./dist/modules/storefront/index.js"
+    },
+    "./next/apollo/client": {
+      "types": "./dist/next/apollo/client.d.ts",
+      "default": "./dist/next/apollo/client.js"
+    },
+    "./next/apollo/loadSerializableQuery": {
+      "types": "./dist/next/apollo/loadSerializableQuery.d.ts",
+      "default": "./dist/next/apollo/loadSerializableQuery.js"
+    },
+    "./next/apollo/server": {
+      "types": "./dist/next/apollo/server.d.ts",
+      "default": "./dist/next/apollo/server.js"
+    },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "default": "./dist/registry/index.js"
+    },
+    "./shop/mockShopConfig": {
+      "types": "./dist/shop/mockShopConfig.d.ts",
+      "default": "./dist/shop/mockShopConfig.js"
+    },
+    "./shop/types": {
+      "types": "./dist/shop/types.d.ts",
+      "default": "./dist/shop/types.js"
+    },
+    "./utils/routeParser": {
+      "types": "./dist/utils/routeParser.d.ts",
+      "default": "./dist/utils/routeParser.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    },
+    "./modules/localization/react": {
+      "types": "./dist/modules/localization/react/index.d.ts",
+      "default": "./dist/modules/localization/react/index.js"
+    },
+    "./modules/storefront": {
+      "types": "./dist/modules/storefront/index.d.ts",
+      "default": "./dist/modules/storefront/index.js"
+    },
+    "./utils/logger": {
+      "types": "./dist/utils/logger.d.ts",
+      "default": "./dist/utils/logger.js"
+    },
+    "./core/*": {
+      "types": "./dist/core/*.d.ts",
+      "default": "./dist/core/*.js"
+    },
+    "./modules/cart/react/hooks/*": {
+      "types": "./dist/modules/cart/react/hooks/*.d.ts",
+      "default": "./dist/modules/cart/react/hooks/*.js"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
-    "relay": "CMS=shopana ../../node_modules/.bin/relay-compiler relay.shopana.json",
-    "build": "yarn relay && tsc -p tsconfig.json && node scripts/copy-generated.cjs",
+    "prebuild": "rimraf dist",
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-imports.mjs dist",
+    "prepack": "yarn build",
     "dev": "tsc -p tsconfig.json --watch",
     "clean": "rimraf dist",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "js-cookie": "^3.0.0",
-    "next": "^14.0.0 || ^15.0.0 || ^16.0.0",
-    "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0",
-    "react-relay": "^18.0.0 || ^19.0.0 || ^20.0.0",
-    "relay-runtime": "^18.0.0 || ^19.0.0 || ^20.0.0",
-    "zustand": "^4.0.0 || ^5.0.0"
+    "@apollo/client": "^4.0.0",
+    "@apollo/client-integration-nextjs": "^0.14.0",
+    "antd": "^6.0.0",
+    "graphql": "^16.0.0",
+    "next": "^15.2.3 || ^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rxjs": "^7.3.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^6.1.0",
+    "@graphql-codegen/typed-document-node": "^7.1.0",
+    "@graphql-codegen/typescript": "^5.0.5",
+    "@graphql-codegen/typescript-operations": "^5.0.5",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
@@ -46,8 +237,9 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "^18.0.0 || ^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "antd": "^6.0.0",
     "jsdom": "^26.0.0",
-    "next": "16.0.0",
+    "next": "16.0.5",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "rimraf": "^6.0.1",
@@ -55,6 +247,13 @@
     "vitest": "^3.0.5"
   },
   "dependencies": {
-    "path-to-regexp": "^8.3.0"
+    "path-to-regexp": "^8.3.0",
+    "js-cookie": "^3.0.5",
+    "zustand": "^5.0.6"
+  },
+  "peerDependenciesMeta": {
+    "antd": {
+      "optional": true
+    }
   }
 }

@@ -1,0 +1,97 @@
+fragment SdkCartLineFragment_line on CheckoutLine {
+  __typename
+  id
+  title
+  sku
+  quantity
+  cost {
+    unitPrice {
+      currencyCode
+      amount
+    }
+    compareAtUnitPrice {
+      currencyCode
+      amount
+    }
+    subtotalAmount {
+      currencyCode
+      amount
+    }
+    totalAmount {
+      currencyCode
+      amount
+    }
+  }
+  purchasableId
+  purchasable {
+    ... on ProductVariant {
+      id
+      title
+      handle
+      product {
+        id
+        title
+        handle
+      }
+      cover: featuredMedia {
+        id
+        ... on MediaImage {
+          image {
+            url
+          }
+        }
+      }
+      price {
+        amount
+        currencyCode
+      }
+      compareAtPrice {
+        amount
+        currencyCode
+      }
+      isAvailable: availableForSale
+      currentlyNotInStock
+      quantityAvailable
+      inventoryItem {
+        inventoryPolicy
+      }
+      selectedOptions {
+        name
+        value
+        option {
+          id
+          handle
+          name
+        }
+        optionValue {
+          id
+          handle
+          name
+        }
+      }
+    }
+  }
+  children {
+    id
+    title
+    quantity
+  }
+  image {
+    id
+    image {
+      url
+      width
+      height
+      altText
+    }
+  }
+  purchase {
+    type
+  }
+  attributes
+  tag {
+    id
+    slug
+    unique
+  }
+}

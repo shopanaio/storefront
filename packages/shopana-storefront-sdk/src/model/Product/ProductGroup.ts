@@ -36,10 +36,22 @@ export interface ProductGroupNode {
  * ProductGroupItem - item within a product group
  */
 export interface ProductGroupItem {
+  /** Component item identifier required when the selection is added to checkout. */
+  id: string;
   /** The product node */
   node: ProductGroupNode;
+  /** Whether the item is selected by the resolved configuration */
+  selected: boolean;
+  /** Whether this individual item is required */
+  required: boolean;
+  /** Whether this item can currently be purchased */
+  availableForSale: boolean;
+  /** Resolved initial quantity */
+  quantity: number;
+  /** Minimum quantity allowed */
+  minQuantity: number;
   /** Maximum quantity allowed */
-  maxQuantity?: number;
+  maxQuantity?: number | null;
   /** Price configuration for this item */
   price: ProductGroupPrice;
 }
@@ -56,6 +68,10 @@ export interface ProductGroup {
   isRequired: boolean;
   /** Whether multiple items can be selected */
   isMultiple: boolean;
+  /** Minimum number of selections allowed */
+  minSelection?: number | null;
+  /** Maximum number of selections allowed */
+  maxSelection?: number | null;
   /** Items in this group */
   items: Array<ProductGroupItem>;
 }

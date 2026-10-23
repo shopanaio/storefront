@@ -1,0 +1,5 @@
+query StorefrontLoadCheckoutQuery($checkoutId: ID!) {
+  checkout(id: $checkoutId) {
+    ...StorefrontUseCheckoutFragment
+  }
+}

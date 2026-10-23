@@ -1,0 +1,11 @@
+query StorefrontStorePolicyQuery($handle: String!) {
+  storePolicy(handle: $handle) {
+    id
+    handle
+    path
+    title
+    body {
+      html
+    }
+  }
+}

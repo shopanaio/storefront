@@ -1,15 +1,15 @@
-import type { RelayEnvironmentConfig } from '../graphql/relay/types';
+import type { ApolloEnvironmentConfig } from '../graphql/apollo/types';
 
-let cachedEnvironmentConfig: RelayEnvironmentConfig | null = null;
+let cachedEnvironmentConfig: ApolloEnvironmentConfig | null = null;
 
-export function setEnvironmentConfig(config: RelayEnvironmentConfig) {
+export function setEnvironmentConfig(config: ApolloEnvironmentConfig) {
   cachedEnvironmentConfig = config;
 }
 
-export function getEnvironmentConfig(): RelayEnvironmentConfig {
+export function getEnvironmentConfig(): ApolloEnvironmentConfig {
   if (!cachedEnvironmentConfig) {
     throw new Error(
-      'Environment config is not set. Ensure AppProvider is mounted in your root layout.',
+      'Environment config is not set. Ensure AppProvider is mounted in your root layout.'
     );
   }
 

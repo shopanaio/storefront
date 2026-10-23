@@ -1,0 +1,5 @@
+query StorefrontCheckoutPlacementQuery($placementId: ID!, $token: String) {
+  checkoutPlacement(id: $placementId, token: $token) {
+    ...StorefrontPlaceOrderPayloadFragment
+  }
+}

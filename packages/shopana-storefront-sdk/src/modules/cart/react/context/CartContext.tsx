@@ -4,8 +4,9 @@ import React, { createContext, useContext, useMemo } from 'react';
 import type { CartStore, CartActions } from '../../store/CartStore';
 import type { CartConfig } from '../../core/config';
 import { createCartIdUtils } from '../../core/utils/cartId';
-import type { CartStoreZustand } from '../store/CartStoreZustand';
 import type { UseBoundStore, StoreApi } from 'zustand';
+import type { MutationQueueOptions } from '../../core/utils/mutationQueue';
+import type { SdkCartFragment_CartFragment } from '../../../../graphql/apollo/generated/operations';
 
 /**
  * Cart context value providing store, config, and utilities
@@ -33,14 +34,35 @@ export interface CartContextValue {
   cartIdUtils: ReturnType<typeof createCartIdUtils>;
 
   /**
-   * Cart fragment key for Relay
+   * Current normalized cart data
    */
   cartKey: any | null;
 
   /**
-   * Set cart fragment key
+   * Set normalized cart data
    */
   setCartKey: (key: any | null) => void;
+  /**
+   * Runs a write of the cart or its checkout after the writes queued before it; a waiting
+   * write with the same `key` is replaced by this one.
+   */
+  enqueueMutation: <T>(
+    operation: () => Promise<T>,
+    options?: MutationQueueOptions
+  ) => Promise<T>;
+  /** Resolves once every write queued so far has settled. */
+  waitForMutations: () => Promise<void>;
+  /**
+   * Calls `listener` with the checkout each confirmed cart write returns (lines added,
+   * changed or removed). Returns the unsubscribe function.
+   */
+  subscribeCartUpdates: (
+    listener: (checkout: SdkCartFragment_CartFragment | null) => void
+  ) => () => void;
+  getConfirmedLineId: (
+    lineId: string,
+    purchasableId: string | undefined
+  ) => string;
 
   /**
    * Current cart ID
@@ -61,9 +83,36 @@ export interface CartContextValue {
    * Has cart finished loading
    */
   isCartLoaded: boolean;
+
+  /**
+   * Why the cart could not be loaded, when the server did not say it is missing. The cart id
+   * is kept: the cart still exists and a retry loads it.
+   */
+  cartError: unknown;
+
+  /** Loads the cart again after `cartError`. */
+  retryCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
+
+type StableCartContextValue = Pick<
+  CartContextValue,
+  | 'store'
+  | 'useStore'
+  | 'config'
+  | 'cartIdUtils'
+  | 'setCartKey'
+  | 'setId'
+  | 'enqueueMutation'
+  | 'waitForMutations'
+  | 'subscribeCartUpdates'
+  | 'getConfirmedLineId'
+>;
+
+const StableCartContext = createContext<StableCartContextValue | undefined>(
+  undefined
+);
 
 export interface CartContextProviderProps {
   children: React.ReactNode;
@@ -72,10 +121,33 @@ export interface CartContextProviderProps {
   config: Required<CartConfig>;
   cartKey: any | null;
   setCartKey: (key: any | null) => void;
+  /**
+   * Runs a write of the cart or its checkout after the writes queued before it; a waiting
+   * write with the same `key` is replaced by this one.
+   */
+  enqueueMutation: <T>(
+    operation: () => Promise<T>,
+    options?: MutationQueueOptions
+  ) => Promise<T>;
+  /** Resolves once every write queued so far has settled. */
+  waitForMutations: () => Promise<void>;
+  /**
+   * Calls `listener` with the checkout each confirmed cart write returns (lines added,
+   * changed or removed). Returns the unsubscribe function.
+   */
+  subscribeCartUpdates: (
+    listener: (checkout: SdkCartFragment_CartFragment | null) => void
+  ) => () => void;
+  getConfirmedLineId: (
+    lineId: string,
+    purchasableId: string | undefined
+  ) => string;
   cartId: string | null;
   setId: (id: string | null) => void;
   isCartLoading: boolean;
   isCartLoaded: boolean;
+  cartError: unknown;
+  retryCart: () => Promise<void>;
 }
 
 /**
@@ -91,10 +163,16 @@ export function CartContextProvider({
   config,
   cartKey,
   setCartKey,
+  enqueueMutation,
+  waitForMutations,
+  subscribeCartUpdates,
+  getConfirmedLineId,
   cartId,
   setId,
   isCartLoading,
   isCartLoaded,
+  cartError,
+  retryCart,
 }: CartContextProviderProps) {
   // Create cart ID utils with config
   const cartIdUtils = useMemo(
@@ -114,10 +192,16 @@ export function CartContextProvider({
       cartIdUtils,
       cartKey,
       setCartKey,
+      enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
+      getConfirmedLineId,
       cartId,
       setId,
       isCartLoading,
       isCartLoaded,
+      cartError,
+      retryCart,
     }),
     [
       store,
@@ -126,14 +210,59 @@ export function CartContextProvider({
       cartIdUtils,
       cartKey,
       setCartKey,
+      enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
+      getConfirmedLineId,
       cartId,
       setId,
       isCartLoading,
       isCartLoaded,
+      cartError,
+      retryCart,
     ]
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  const stableValue = useMemo<StableCartContextValue>(
+    () => ({
+      store,
+      useStore,
+      config,
+      cartIdUtils,
+      setCartKey,
+      enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
+      getConfirmedLineId,
+      setId,
+    }),
+    [
+      store,
+      useStore,
+      config,
+      cartIdUtils,
+      setCartKey,
+      setId,
+      enqueueMutation,
+      waitForMutations,
+      subscribeCartUpdates,
+      getConfirmedLineId,
+    ]
+  );
+
+  return (
+    <StableCartContext.Provider value={stableValue}>
+      <CartContext.Provider value={value}>{children}</CartContext.Provider>
+    </StableCartContext.Provider>
+  );
+}
+
+function useStableCartContext(): StableCartContextValue {
+  const context = useContext(StableCartContext);
+  if (!context) {
+    throw new Error('Cart hooks must be used within CartProvider');
+  }
+  return context;
 }
 
 /**
@@ -170,8 +299,34 @@ export function useCartContext(): CartContextValue {
  * @throws Error if used outside CartProvider
  */
 export function useCartStore() {
-  const { useStore } = useCartContext();
+  const { useStore } = useStableCartContext();
   return useStore;
+}
+
+/** Returns the stable cart store object without subscribing to cart state. */
+export function useCartStoreApi(): CartStore {
+  const { store } = useStableCartContext();
+  return store;
+}
+
+/** Returns stable cart setters without subscribing to cart metadata. */
+export function useCartSetters() {
+  const {
+    setCartKey,
+    setId,
+    enqueueMutation,
+    waitForMutations,
+    subscribeCartUpdates,
+    getConfirmedLineId,
+  } = useStableCartContext();
+  return {
+    setCartKey,
+    setId,
+    enqueueMutation,
+    waitForMutations,
+    subscribeCartUpdates,
+    getConfirmedLineId,
+  };
 }
 
 /**
@@ -189,7 +344,7 @@ export function useCartStore() {
  * @throws Error if used outside CartProvider
  */
 export function useCartActions(): CartActions {
-  const { store } = useCartContext();
+  const { store } = useStableCartContext();
   return store as CartActions;
 }
 
@@ -199,7 +354,7 @@ export function useCartActions(): CartActions {
  * @throws Error if used outside CartProvider
  */
 export function useCartConfig(): Required<CartConfig> {
-  const { config } = useCartContext();
+  const { config } = useStableCartContext();
   return config;
 }
 
@@ -209,6 +364,6 @@ export function useCartConfig(): Required<CartConfig> {
  * @throws Error if used outside CartProvider
  */
 export function useCartIdUtils(): ReturnType<typeof createCartIdUtils> {
-  const { cartIdUtils } = useCartContext();
+  const { cartIdUtils } = useStableCartContext();
   return cartIdUtils;
 }

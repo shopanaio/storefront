@@ -6,7 +6,14 @@ import type { Session } from '../core/types';
  */
 export const defaultSessionState: SessionStore = {
   session: null,
+  status: 'loading',
+  expired: false,
+  signInPending: false,
+  authResult: null,
   setSession: () => {},
+  expireSession: () => {},
+  setSignInPending: () => {},
+  setAuthResult: () => {},
   refreshSession: () => {},
   setRefreshSession: () => {},
 };
@@ -26,6 +33,7 @@ export function createSessionStore(
   const initialState: SessionStore = {
     ...defaultSessionState,
     session: initialSession || null,
+    status: initialSession ? 'authenticated' : 'loading',
   };
 
   // Set initial state
@@ -36,7 +44,28 @@ export function createSessionStore(
     storeImpl.setState((state) => ({
       ...state,
       session,
+      status: session ? 'authenticated' : 'anonymous',
+      expired: session ? false : state.expired,
+      authResult: session ? null : state.authResult,
     }));
+  };
+
+  const expireSession = () => {
+    storeImpl.setState((state) => ({
+      ...state,
+      session: null,
+      status: 'anonymous',
+      expired: true,
+      signInPending: false,
+    }));
+  };
+
+  const setSignInPending = (signInPending: boolean) => {
+    storeImpl.setState((state) => ({ ...state, signInPending }));
+  };
+
+  const setAuthResult = (authResult: SessionStore['authResult']) => {
+    storeImpl.setState((state) => ({ ...state, authResult }));
   };
 
   const refreshSession = () => {
@@ -58,7 +87,22 @@ export function createSessionStore(
     get session() {
       return storeImpl.getState().session;
     },
+    get status() {
+      return storeImpl.getState().status;
+    },
+    get expired() {
+      return storeImpl.getState().expired;
+    },
+    get signInPending() {
+      return storeImpl.getState().signInPending;
+    },
+    get authResult() {
+      return storeImpl.getState().authResult;
+    },
     setSession,
+    expireSession,
+    setSignInPending,
+    setAuthResult,
     refreshSession,
     setRefreshSession,
   };

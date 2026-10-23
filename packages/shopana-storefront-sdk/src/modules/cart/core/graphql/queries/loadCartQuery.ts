@@ -1,16 +1,8 @@
-import { graphql } from "react-relay";
+import { SdkLoadCartQueryDocument } from '../../../../../graphql/apollo/generated/operations';
 import '../fragments/CartFragment';
 
 /**
  * Query for loading cart by checkout ID
  * Uses checkoutQuery to fetch checkout data
  */
-export const loadCartQuery = graphql`
-  query loadCartQuery($checkoutId: ID!) {
-    checkoutQuery {
-      checkout(id: $checkoutId) {
-        ...CartFragment_cart
-      }
-    }
-  }
-`;
+export const loadCartQuery = SdkLoadCartQueryDocument;

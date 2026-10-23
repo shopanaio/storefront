@@ -14,4 +14,3 @@ export function useShop(): ShopConfig {
 
   return config;
 }
-

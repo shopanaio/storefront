@@ -1,0 +1,18 @@
+query StorefrontDeliveryCountriesQuery($localeCode: String) {
+  checkoutDeliveryCountries(localeCode: $localeCode) {
+    code
+    name
+    addressFormat {
+      rows
+      required
+      provinceLabel
+      postalCodeLabel
+      postalCodePattern
+      postalCodeExample
+      provinces {
+        code
+        name
+      }
+    }
+  }
+}

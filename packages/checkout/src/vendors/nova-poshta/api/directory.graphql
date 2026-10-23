@@ -1,0 +1,91 @@
+fragment StorefrontNovaPoshtaSettlement on NovaPoshtaSettlement {
+  ref
+  cityRef
+  name
+  present
+  area
+  region
+  settlementType
+  warehouseCount
+  addressDeliveryAllowed
+}
+
+fragment StorefrontNovaPoshtaWarehouse on NovaPoshtaWarehouse {
+  ref
+  kind
+  number
+  description
+  shortAddress
+  selectable
+  settlementRef
+  schedule {
+    day
+    hours
+  }
+}
+
+fragment StorefrontNovaPoshtaStreet on NovaPoshtaSettlementStreet {
+  ref
+  settlementRef
+  name
+  present
+  streetType
+}
+
+query StorefrontNovaPoshtaSettlementsQuery(
+  $query: String!
+  $page: Int!
+  $limit: Int!
+) {
+  novaPoshtaSettlements(query: $query, page: $page, limit: $limit) {
+    items {
+      ...StorefrontNovaPoshtaSettlement
+    }
+    hasNextPage
+  }
+}
+
+query StorefrontNovaPoshtaWarehousesQuery(
+  $settlementRef: ID!
+  $query: String
+  $page: Int!
+  $limit: Int!
+) {
+  novaPoshtaWarehouses(
+    settlementRef: $settlementRef
+    query: $query
+    page: $page
+    limit: $limit
+  ) {
+    items {
+      ...StorefrontNovaPoshtaWarehouse
+    }
+    totalCount
+    page
+    hasNextPage
+  }
+}
+
+query StorefrontNovaPoshtaSettlementStreetsQuery(
+  $settlementRef: ID!
+  $query: String!
+  $limit: Int!
+) {
+  novaPoshtaSettlementStreets(
+    settlementRef: $settlementRef
+    query: $query
+    limit: $limit
+  ) {
+    items {
+      ...StorefrontNovaPoshtaStreet
+    }
+  }
+}
+
+query StorefrontNovaPoshtaWarehouseQuery($ref: ID!) {
+  novaPoshtaWarehouses(ref: $ref, limit: 1) {
+    items {
+      ...StorefrontNovaPoshtaWarehouse
+    }
+  }
+}

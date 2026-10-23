@@ -1,7 +1,12 @@
 'use client';
 
 import { createContext, useContext, ComponentType } from 'react';
-import type { LogoProps, BrandConfig } from './types';
+import type {
+  LogoProps,
+  BrandConfig,
+  ColorScheme,
+  GeneralSettings,
+} from './types';
 
 /**
  * Brand context interface
@@ -11,6 +16,8 @@ interface BrandContextValue {
    * Logo component from brand configuration
    */
   LogoComponent: ComponentType<LogoProps>;
+  /** Global theme settings shared by all layouts, sections, and blocks. */
+  generalSettings: GeneralSettings;
 }
 
 const BrandContext = createContext<BrandContextValue | undefined>(undefined);
@@ -27,9 +34,13 @@ interface BrandProviderProps {
  * Provider for brand configuration
  * Provides logo component through context
  */
-export const BrandProvider = ({ children, brandConfig }: BrandProviderProps) => {
+export const BrandProvider = ({
+  children,
+  brandConfig,
+}: BrandProviderProps) => {
   const value: BrandContextValue = {
     LogoComponent: brandConfig.components.logo,
+    generalSettings: brandConfig.generalSettings,
   };
 
   return (
@@ -50,4 +61,21 @@ export const useBrand = () => {
   }
 
   return context;
+};
+
+/** Resolve a section's color-scheme token against the global theme settings. */
+export const useColorScheme = (schemeId?: string): ColorScheme => {
+  const { generalSettings } = useBrand();
+  const { defaultScheme, schemes } = generalSettings.colors;
+  const resolvedSchemeId =
+    schemeId && schemes[schemeId] ? schemeId : defaultScheme;
+  const scheme = schemes[resolvedSchemeId];
+
+  if (!scheme) {
+    throw new Error(
+      `Color scheme "${resolvedSchemeId}" is not defined in general settings`
+    );
+  }
+
+  return scheme;
 };

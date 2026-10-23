@@ -1,20 +1,25 @@
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { updateCartLineQuantityMutation as CartLineQuantityMutationType } from '../../core/graphql/mutations/__generated__/updateCartLineQuantityMutation.graphql';
+'use client';
+import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import { useCartStoreApi, useCartSetters } from '../context/CartContext';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
 import { useCartActions } from '../context/CartContext';
 import { useCartIdOnly } from './useCartSelectors';
-
 const useUpdateCartLineQuantity = () => {
+  const { setCartKey, enqueueMutation, getConfirmedLineId } = useCartSetters();
+  const cartStore = useCartStoreApi();
   const cartId = useCartIdOnly();
-  const actions = useCartActions();
-  const [commit, isInFlight] = useMutation<CartLineQuantityMutationType>(
-    updateCartLineQuantityMutation
-  );
 
+  const actions = useCartActions();
+  const [commit, isInFlight] = useMutation(updateCartLineQuantityMutation);
   const updateQuantity = async (
-    { cartItemId, quantity }: { cartItemId: string; quantity: number },
+    {
+      cartItemId,
+      quantity,
+    }: {
+      cartItemId: string;
+      quantity: number;
+    },
     options?: {
       onSuccess?: () => void;
       onError?: () => void;
@@ -25,51 +30,54 @@ const useUpdateCartLineQuantity = () => {
       console.warn('[useUpdateCartLineQuantity] No cart to update');
       return null;
     }
-    const { revert } = checkoutLinesUpdate({
-      lines: [{ lineId: cartItemId, quantity }],
-    });
-    return new Promise((resolve, reject) => {
-      commit({
-        variables: {
-          input: {
-            checkoutId: cartId,
-            lines: [
-              {
-                lineId: cartItemId,
-                quantity,
+    const purchasableId = cartStore.cart?.lines.find(
+      (line) => line.id === cartItemId
+    )?.purchasableId;
+    const optimisticEdit = () => {
+      const lineId = resolveCartLineId(
+        cartStore.cart,
+        cartItemId,
+        purchasableId
+      );
+      if (lineId) checkoutLinesUpdate({ lines: [{ lineId, quantity }] });
+    };
+    return enqueueMutation(
+      () =>
+        new Promise((resolve, reject) => {
+          commit({
+            variables: {
+              input: {
+                checkoutId: cartId,
+                lines: [
+                  {
+                    lineId: getConfirmedLineId(cartItemId, purchasableId),
+                    quantity,
+                  },
+                ],
               },
-            ],
-          },
-        },
-        onCompleted: (response, errors) => {
-          if (errors && errors.length > 0) {
-            revert();
-            options?.onError?.();
-            return reject(errors);
-          } else if (
-            response?.checkoutMutation?.checkoutLinesUpdate?.errors &&
-            response.checkoutMutation.checkoutLinesUpdate.errors.length > 0
-          ) {
-            revert();
-            options?.onError?.();
-            return reject(response.checkoutMutation.checkoutLinesUpdate.errors);
-          } else {
-            options?.onSuccess?.();
-            return resolve(
-              response?.checkoutMutation?.checkoutLinesUpdate?.checkout
-            );
-          }
-        },
-        onError: (err) => {
-          revert();
-          options?.onError?.();
-          return reject(err);
-        },
-      });
-    });
+            },
+            onCompleted: (response, errors) => {
+              if (errors && errors.length > 0) {
+                options?.onError?.();
+                return reject(errors);
+              } else if (response.checkoutLinesUpdate.errors.length > 0) {
+                options?.onError?.();
+                return reject(response.checkoutLinesUpdate.errors);
+              } else {
+                setCartKey(response.checkoutLinesUpdate.checkout);
+                options?.onSuccess?.();
+                return resolve(response.checkoutLinesUpdate.checkout);
+              }
+            },
+            onError: (err) => {
+              options?.onError?.();
+              return reject(err);
+            },
+          });
+        }),
+      { optimisticEdit }
+    );
   };
-
   return { updateQuantity, loading: isInFlight };
 };
-
 export default useUpdateCartLineQuantity;

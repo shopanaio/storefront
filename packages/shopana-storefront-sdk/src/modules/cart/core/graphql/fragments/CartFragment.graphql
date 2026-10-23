@@ -1,0 +1,116 @@
+fragment SdkCartFragment_cart on Checkout {
+  __typename
+  id
+  channelCode
+  localeCode
+  currencyCode
+  resultRevision
+  valid
+  status
+  expiresAt
+  loyaltyRewardId
+  loyaltyRedemption {
+    quoteId
+    revision
+    accountId
+    programId
+    programCode
+    programVersion
+    source
+    requestedPoints
+    requestedAmount {
+      amount
+      currencyCode
+    }
+    points
+    availablePoints
+    availableAmount {
+      amount
+      currencyCode
+    }
+    discount {
+      amount
+      currencyCode
+    }
+    payableAfterLoyalty {
+      amount
+      currencyCode
+    }
+    expiresAt
+  }
+  issues {
+    code
+    message
+    severity
+    effect
+    field
+    lineId
+    retryable
+  }
+  createdAt
+  updatedAt
+  totalQuantity
+  cost {
+    subtotalAmount {
+      currencyCode
+      amount
+    }
+    totalDiscountAmount {
+      currencyCode
+      amount
+    }
+    totalTaxAmount {
+      currencyCode
+      amount
+    }
+    totalAmount {
+      currencyCode
+      amount
+    }
+    totalShippingAmount {
+      currencyCode
+      amount
+    }
+    merchandiseDiscountAmount {
+      currencyCode
+      amount
+    }
+    loyaltyAmount {
+      currencyCode
+      amount
+    }
+  }
+  guestCheckoutAllowed
+  promoCodes {
+    code
+    status
+    reason
+    message
+  }
+  loyaltyEarning {
+    state
+    points
+    amount {
+      currencyCode
+      amount
+    }
+    presentation {
+      headline
+      description
+    }
+  }
+  customerNote
+  notifications {
+    code
+    severity
+    isDismissed
+  }
+  tags {
+    id
+    slug
+    unique
+  }
+  lines {
+    ...SdkCartLineFragment_line
+  }
+}

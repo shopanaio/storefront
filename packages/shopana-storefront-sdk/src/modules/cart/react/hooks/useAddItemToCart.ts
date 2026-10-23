@@ -1,23 +1,23 @@
-"use client";
-
-import { useMutation } from 'react-relay';
-import type { addToCartMutation as AddCartLineMutationType } from '../../core/graphql/mutations/__generated__/addToCartMutation.graphql';
+'use client';
+import { useCartSetters } from '../context/CartContext';
+import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { addToCartMutation } from '../../core/graphql/mutations/addToCartMutation';
-
-import { useCartActions, useCartConfig } from '../context/CartContext';
+import {
+  useCartActions,
+  useCartConfig,
+  useCartIdUtils,
+  useCartStoreApi,
+} from '../context/CartContext';
 import useCreateCart from './useCreateCart';
-import { useCartIdOnly } from './useCartSelectors';
-import { AddToCartInput } from '../../core/types';
-
+import type { AddToCartInput } from '../../core/types';
 const useAddItemToCart = () => {
+  const { setCartKey, enqueueMutation } = useCartSetters();
   const { createCart } = useCreateCart();
-  const cartId = useCartIdOnly();
+  const cartStore = useCartStoreApi();
+  const cartIdUtils = useCartIdUtils();
   const actions = useCartActions();
-  const { defaultCurrency, defaultLocale } = useCartConfig();
-  const [commitAddLine, isInFlight] = useMutation<AddCartLineMutationType>(
-    addToCartMutation
-  );
-
+  const { defaultLocale } = useCartConfig();
+  const [commitAddLine, isInFlight] = useMutation(addToCartMutation);
   return {
     addToCart: async (
       input: AddToCartInput,
@@ -29,18 +29,21 @@ const useAddItemToCart = () => {
       const { purchasableId, purchasableSnapshot, quantity } = input;
       const { onError, onSuccess } = options || {};
       const { checkoutLinesAdd } = actions;
+      // A cart that is still loading or failed to load keeps its cookie: the line goes there,
+      // and only a shopper without a cart gets a new one.
+      const cartId = cartStore.cart?.id ?? cartIdUtils.getCartIdFromCookie();
 
-      // If no cart — create new one
       if (!cartId) {
-        return await createCart(
+        return createCart(
           {
-            currencyCode: purchasableSnapshot.price.currencyCode as any,
+            currencyCode: purchasableSnapshot.price.currencyCode,
             localeCode: defaultLocale,
             items: [
               {
                 purchasableId,
                 quantity,
                 tagSlug: input.tagSlug,
+                children: input.children,
               },
             ],
             tags: input.tags,
@@ -48,69 +51,68 @@ const useAddItemToCart = () => {
           options
         );
       }
-
-      // If cart exists — add product through mutation
-
-      const { revert } = checkoutLinesAdd({
-        lines: [
-          {
-            purchasableId: purchasableId,
-            quantity: quantity,
-          },
-        ],
-        pricing: {
-          [purchasableId]: {
-            unitPrice: purchasableSnapshot.price.amount,
-            compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode: purchasableSnapshot.price.currencyCode,
-          },
-        },
-      });
-
-      return new Promise((resolve, reject) => {
-        commitAddLine({
-          variables: {
-            input: {
-              checkoutId: cartId,
-              lines: [
-                {
-                  purchasableId: input.purchasableId,
-                  quantity: input.quantity,
-                  tagSlug: input.tagSlug,
-                },
-              ],
+      const optimisticEdit = () =>
+        checkoutLinesAdd({
+          lines: [
+            {
+              purchasableId,
+              quantity,
+              children: input.children,
+            },
+          ],
+          pricing: {
+            [purchasableId]: {
+              unitPrice: purchasableSnapshot.price.amount,
+              compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
+              currencyCode: purchasableSnapshot.price.currencyCode,
             },
           },
-          // no Relay optimistic updater — Zustand обеспечивает мгновенный UI
-          onCompleted: (response, errors) => {
-            if (errors && errors.length > 0) {
-              revert();
-              onError?.();
-              return reject(errors);
-            } else if (
-              response?.checkoutMutation?.checkoutLinesAdd?.errors &&
-              response.checkoutMutation.checkoutLinesAdd.errors.length > 0
-            ) {
-              revert();
-              onError?.();
-              return reject(response.checkoutMutation.checkoutLinesAdd.errors);
-            } else {
-              onSuccess?.();
-              return resolve(
-                response?.checkoutMutation?.checkoutLinesAdd?.checkout
-              );
-            }
-          },
-          onError: (err) => {
-            revert();
-            onError?.();
-            reject(err);
-          },
         });
-      });
+      return enqueueMutation(
+        () =>
+          new Promise((resolve, reject) => {
+            commitAddLine({
+              variables: {
+                input: {
+                  checkoutId: cartId,
+                  lines: [
+                    {
+                      purchasableId,
+                      quantity,
+                      tagSlug: input.tagSlug,
+                      children: input.children?.map((child) => ({
+                        componentItemId: child.componentItemId,
+                        purchasableId: child.purchasableId,
+                        quantity: child.quantity,
+                        attributes: child.attributes,
+                      })),
+                    },
+                  ],
+                },
+              },
+              onCompleted: (response, errors) => {
+                if (errors && errors.length > 0) {
+                  onError?.();
+                  return reject(errors);
+                }
+                if (response.checkoutLinesAdd.errors.length > 0) {
+                  onError?.();
+                  return reject(response.checkoutLinesAdd.errors);
+                }
+                setCartKey(response.checkoutLinesAdd.checkout);
+                onSuccess?.();
+                return resolve(response.checkoutLinesAdd.checkout);
+              },
+              onError: (error) => {
+                onError?.();
+                reject(error);
+              },
+            });
+          }),
+        { optimisticEdit }
+      );
     },
     isInFlight,
   };
 };
-
 export default useAddItemToCart;

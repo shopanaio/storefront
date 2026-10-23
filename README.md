@@ -1,115 +1,64 @@
-## Shopana Storefront UI
+# Shopana Storefront
 
-### Links
+Packages for building Next.js storefronts on the [Shopana](https://github.com/shopanaio) storefront
+API. A storefront is a theme: a complete runnable application composed from these packages.
 
-- [Next.js 14](https://nextjs.org/)
-- [Ant Design v5](https://ant.design/components/overview/)
-- [Ant Design CSS-in-JS](https://github.com/ant-design/antd-style)
-- [Ant Design Style](https://github.com/ant-design/antd-style)
-- [Relay](https://relay.dev/)
+> **Status: beta.** APIs may change between minor versions until 1.0.
 
-## What it is
+## Packages
 
-A storefront template built with Next.js 14 + Relay that can work with two CMS providers: Shopana and Shopify. Below is a beginner-friendly, step-by-step guide on how to set up the environment, generate schemas/types, compile Relay, and run the project for a specific CMS.
+| Package                                                      | Description                                          |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| [`@shopana/storefront`](packages/shopana-storefront-runtime) | Next.js App Router runtime CLI and framework facades |
+| [`@shopana/storefront-sdk`](packages/shopana-storefront-sdk) | Data, session, cart and composition primitives       |
+| [`@shopana/storefront-auth`](packages/storefront-auth)       | Headless customer sign-in and sign-up                |
+| [`@shopana/storefront-ui`](packages/storefront-ui)           | Form and overlay primitives                          |
+| [`@shopana/checkout`](packages/checkout)                     | Checkout flow and registration API                   |
+| [`@shopana/brand-sdk`](packages/brand-sdk) (private)         | Theme contract                                       |
+| [`@shopana/mock-server`](mockServer) (private)               | GraphQL mock engine for theme development            |
 
 ## Requirements
 
-- Node.js ≥ 18.17
-- Yarn (recommended)
+- Node.js 22 (see `.nvmrc`)
+- Yarn 1
 
-## Installation
+## Setup
 
 ```bash
-git clone <your-fork-or-repo-url>
-cd storefront-ui
 yarn install
+yarn build:packages
 ```
 
-## Environment variables (.env)
+## Themes
 
-Copy `.env.sample` to `.env` at the project root and choose one of the options depending on the CMS.
-
-### Shopana
+Themes are separate repositories checked out under `themes/<name>`; see
+[themes/README.md](themes/README.md) and [docs/brand-configuration.md](docs/brand-configuration.md).
+With a theme checked out, the root commands run it:
 
 ```bash
-SHOPANA_GRAPHQL_URL="https://sandbox.shopana.io/api/client/graphql/query"
-SHOPANA_API_KEY="your-shopana-api-key"
+yarn runtime:init
+yarn dev
+yarn build
+yarn start
+yarn storybook:theme
 ```
 
-### Shopify
+`runtime:init` generates the theme's `.runtime` directory. Generated runtime files must not be
+edited directly.
+
+## Development
 
 ```bash
-SHOPIFY_GRAPHQL_URL="https://your-store.myshopify.com/api/2025-07/graphql.json"
-SHOPIFY_API_KEY="your-shopify-storefront-access-token"
+yarn lint           # ESLint
+yarn format:check   # Prettier
+yarn typecheck      # builds the packages, then type-checks every workspace
+yarn test           # unit tests of the packages
+yarn storybook      # Storybook of the packages
+yarn codegen        # regenerates GraphQL and OpenAPI types (needs SHOPANA_GRAPHQL_URL)
 ```
 
-## Generate GraphQL schema and types
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-These commands perform API introspection and save the schema to `schema.shopana.graphql` or `schema.shopify.graphql`, and generate TypeScript types in `codegen/schema-client.ts` (Shopana) and/or `codegen/shopify-storefront-api.ts` (Shopify):
+## License
 
-```bash
-yarn codegen:shopana
-yarn codegen:shopify
-```
-
-Important: the commands read variables from `.env`. Make sure you set correct values for the chosen provider.
-
-## Compile Relay artifacts
-
-The Relay compiler reads `relay.<cms>.json` configs and generates `__generated__` artifacts next to GraphQL operations.
-
-```bash
-# For Shopana
-yarn relay:shopana
-
-# For Shopify
-yarn relay:shopify
-```
-
-In dev scripts, this command is run automatically before the server starts.
-
-## Run in development mode
-
-```bash
-# Shopana
-yarn dev:shopana
-
-# Shopify
-yarn dev:shopify
-```
-
-What `yarn dev:<cms>` does:
-
-- compiles Relay for the selected CMS;
-- runs `next dev` with `CMS=<cms>`;
-- uses `NEXT_PUBLIC_*` variables from `.env` for the Relay network layer (see `src/relay/Environment.ts`).
-
-## Switching between CMS
-
-1. Update `.env` for the new CMS (URL, keys).
-2. Regenerate schema and types: `yarn codegen:<cms>`.
-3. Rebuild Relay artifacts: `yarn relay:<cms>`.
-4. Restart the dev server (`yarn dev:<cms>`) or rebuild for production.
-
-## Storybook
-
-```bash
-yarn storybook
-```
-
-##
-
-TODO:
-
-- * Cart replacing item (replace box / show color on the button)
-
-- Show box in the cart as a separate item
-- product activity no app bar
-- image skeleton with pretty svg and size
-- Mobile Search only on the home plage
-- np api
-
-- * Cover Dropdown option
-
-- make decimal number - calculate sale and groups on fe
-- pg search
+[Apache-2.0](LICENSE)
