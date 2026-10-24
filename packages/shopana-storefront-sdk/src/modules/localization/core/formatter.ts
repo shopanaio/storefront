@@ -85,8 +85,15 @@ function currencyOptions(
   options: Intl.NumberFormatOptions = {}
 ): Intl.NumberFormatOptions {
   // Codes Intl does not know (crypto, custom) are shown as a decimal followed by the code.
+  // The narrow symbol is the default: the regular symbol differs between ICU builds (Node
+  // renders UAH in `uk` as "₴", Chromium as "грн"), which breaks hydration of SSR prices.
   return isSupportedCurrency(money.currencyCode)
-    ? { style: 'currency', currency: money.currencyCode, ...options }
+    ? {
+        style: 'currency',
+        currency: money.currencyCode,
+        currencyDisplay: 'narrowSymbol',
+        ...options,
+      }
     : {
         style: 'decimal',
         minimumFractionDigits: options.minimumFractionDigits ?? 2,
