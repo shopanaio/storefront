@@ -21,6 +21,7 @@ const defaultGeneratedFiles = [
   'app/not-found.tsx',
   'app/[locale]/[[...slug]]/layout.tsx',
   'app/[locale]/[[...slug]]/page.tsx',
+  'app/[locale]/[[...slug]]/error.tsx',
   'app/auth/[action]/route.ts',
   'app/auth/headless/[action]/route.ts',
   'src/i18n/request.ts',

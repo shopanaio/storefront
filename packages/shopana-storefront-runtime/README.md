@@ -8,6 +8,7 @@ The package owns the framework route implementations and the `init` generator.
 The consuming storefront keeps its customizable code under `src/`:
 
 - `src/runtime/layout.tsx` and `src/runtime/middleware.ts` provide app-level integration;
+- `src/runtime/error.tsx` is the client error page rendered when a page fails (`error` and `reset` props);
 - `src/runtime/pages` contains the complete lazy reserved-page registry and definitions;
 - `src/layouts` contains page layouts;
 - `src/templates` contains page templates;
