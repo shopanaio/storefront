@@ -115,6 +115,25 @@ export async function loadRuntimePageContent({
 const MAX_CACHED_PAGES = 8;
 const pageCache = new Map<string, Promise<RuntimePageContent>>();
 
+/** The cached load of a page, started on first ask; a failed load is dropped to retry. */
+function cachedPageContent(
+  options: LoadRuntimePageContentOptions
+): Promise<RuntimePageContent> {
+  const { href } = options;
+  let promise = pageCache.get(href);
+
+  if (!promise) {
+    promise = loadRuntimePageContent(options);
+    promise.catch(() => pageCache.delete(href));
+    pageCache.set(href, promise);
+    if (pageCache.size > MAX_CACHED_PAGES) {
+      pageCache.delete(pageCache.keys().next().value as string);
+    }
+  }
+
+  return promise;
+}
+
 /**
  * Suspends until the page at `href` is loaded, then returns it. Wrap the caller in
  * Suspense (loading) and an error boundary (failed queries). A page stays cached by
@@ -125,16 +144,20 @@ export function useRuntimePageContent(
   pages: RuntimePageModuleMap
 ): RuntimePageContent {
   const client = useApolloClient();
-  let promise = pageCache.get(href);
+  return use(cachedPageContent({ href, pages, client }));
+}
 
-  if (!promise) {
-    promise = loadRuntimePageContent({ href, pages, client });
-    promise.catch(() => pageCache.delete(href));
-    pageCache.set(href, promise);
-    if (pageCache.size > MAX_CACHED_PAGES) {
-      pageCache.delete(pageCache.keys().next().value as string);
-    }
+/**
+ * Starts loading the page at `href` without waiting for it, e.g. while a screen animates
+ * in; `useRuntimePageContent` later picks up the same load. Off when `enabled` is false.
+ */
+export function usePreloadRuntimePageContent(
+  href: string,
+  pages: RuntimePageModuleMap,
+  enabled = true
+): void {
+  const client = useApolloClient();
+  if (enabled && typeof window !== 'undefined') {
+    void cachedPageContent({ href, pages, client }).catch(() => undefined);
   }
-
-  return use(promise);
 }
