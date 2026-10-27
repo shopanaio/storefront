@@ -146,18 +146,3 @@ export function useRuntimePageContent(
   const client = useApolloClient();
   return use(cachedPageContent({ href, pages, client }));
 }
-
-/**
- * Starts loading the page at `href` without waiting for it, e.g. while a screen animates
- * in; `useRuntimePageContent` later picks up the same load. Off when `enabled` is false.
- */
-export function usePreloadRuntimePageContent(
-  href: string,
-  pages: RuntimePageModuleMap,
-  enabled = true
-): void {
-  const client = useApolloClient();
-  if (enabled && typeof window !== 'undefined') {
-    void cachedPageContent({ href, pages, client }).catch(() => undefined);
-  }
-}

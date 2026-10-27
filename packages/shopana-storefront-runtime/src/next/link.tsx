@@ -36,38 +36,71 @@ const isOwnClick = (
   download !== undefined;
 
 /**
- * `next/link` that keeps the active locale in storefront paths. Inside a NavigationScope a
- * plain click goes to the scope first; the anchor keeps its real href for crawlers, new
- * tabs and long-press menus, and is not prefetched since the scope loads pages itself.
+ * `next/link` that keeps the active locale in storefront paths. Inside a NavigationScope it
+ * is a plain anchor with no Next router behind it (no prefetch, no router click handling):
+ * a plain click goes to the scope, and the real href stays for crawlers, new tabs and
+ * long-press menus. A click the scope does not take is followed by the browser.
  */
 const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  { href, onClick, prefetch, replace, target, download, ...props },
+  {
+    href,
+    onClick,
+    replace,
+    target,
+    download,
+    // Next router options: meaningless for a plain anchor.
+    prefetch,
+    scroll,
+    shallow,
+    passHref,
+    legacyBehavior,
+    locale,
+    onNavigate: onNextNavigate,
+    ...props
+  },
   ref
 ) {
   const { buildHref, stripLocale } = useLocalization();
   const onNavigate = useNavigationScope();
   const localizedHref = buildHref(href);
 
+  if (!onNavigate) {
+    return (
+      <NextLink
+        ref={ref}
+        href={localizedHref}
+        onClick={onClick}
+        replace={replace}
+        target={target}
+        download={download}
+        prefetch={prefetch}
+        scroll={scroll}
+        shallow={shallow}
+        passHref={passHref}
+        legacyBehavior={legacyBehavior}
+        locale={locale}
+        onNavigate={onNextNavigate}
+        {...props}
+      />
+    );
+  }
+
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
-    if (!onNavigate || event.defaultPrevented) return;
-    if (isOwnClick(event, target, download)) return;
+    if (event.defaultPrevented || isOwnClick(event, target, download)) return;
 
     const navigationTarget = createNavigationTarget(localizedHref, stripLocale, {
       replace: Boolean(replace),
       source: 'link',
     });
-    // Next's own click handler skips a prevented click.
     if (navigationTarget && onNavigate(navigationTarget)) event.preventDefault();
   };
 
   return (
-    <NextLink
+    <a
       ref={ref}
       href={localizedHref}
       onClick={handleClick}
-      prefetch={onNavigate ? false : prefetch}
-      replace={replace}
       target={target}
       download={download}
       {...props}
