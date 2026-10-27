@@ -3,6 +3,8 @@
 import React from 'react';
 import type { NormalizedCacheObject } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
+// Loaded before hydration so the app's popstate listener is added ahead of the router's.
+import './routing/browserHistory';
 import { CartProvider } from './modules/cart/react/providers/CartProvider';
 import { AccountCartSync } from './modules/cart/react/providers/AccountCartSync';
 import { createCartStoreZustand } from './modules/cart/react/store/CartStoreZustand';
