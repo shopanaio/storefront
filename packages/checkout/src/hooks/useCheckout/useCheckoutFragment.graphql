@@ -184,6 +184,12 @@ fragment StorefrontUseCheckoutFragment on Checkout {
       description
     }
   }
+  freeShippingProgress {
+    status
+    maximumShippingPrice {
+      ...StorefrontCheckoutMoney
+    }
+  }
   disclosures {
     version
     acceptanceMode

@@ -194,6 +194,7 @@ export const defaultCheckout: Checkout.Checkout = {
   loyaltyRewardId: null,
   loyaltySelection: null,
   loyaltyEarning: null,
+  freeShippingOffer: null,
   disclosures: null,
   notifications: [],
 };

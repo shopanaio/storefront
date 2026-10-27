@@ -1,7 +1,7 @@
 import { Button, Flex, Divider, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import { useTranslations } from 'next-intl';
-import { Money } from '#checkout/ui/Money';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatMoney, Money } from '#checkout/ui/Money';
 import type { Checkout } from '#checkout/types/entity';
 import { useCheckoutTheme } from '#checkout/theme';
 import { useCheckoutAuth } from '#checkout/hooks/useCheckoutAuth';
@@ -28,6 +28,7 @@ interface SummaryTotalsProps {
  */
 export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   const t = useTranslations('Checkout');
+  const locale = useLocale();
   const { styles } = useStyles();
 
   const estimateLabel = useEstimateLabel();
@@ -42,6 +43,13 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
     ? estimateLabel(null, quote.estimatedMaxDeliveryAt)
     : null;
   const freeReason = quote ? reasonLabel(quote.freeShipping) : null;
+  /**
+   * Before delivery is chosen, free shipping the cart reached: free for any delivery without a
+   * price limit, otherwise only for delivery up to the limit (BR-fz10).
+   */
+  const offer = quote ? null : checkout.freeShippingOffer;
+  const freeForAny = offer !== null && offer.maximumShippingPrice === null;
+  const freeUpTo = offer?.maximumShippingPrice ?? null;
   const discount = checkout.cost.merchandiseDiscountAmount;
 
   const hasTax = () => {
@@ -62,15 +70,24 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
         <Text className={styles.lineLabel}>{t('shipping')}</Text>
         <Text
           className={styles.lineValue}
-          type={quote ? undefined : 'secondary'}
+          type={quote ? undefined : freeForAny ? 'success' : 'secondary'}
         >
           {quote ? (
             <ShippingPriceValue price={quote.price} />
+          ) : freeForAny ? (
+            t('shipping-free')
           ) : (
             t('shipping-not-selected')
           )}
         </Text>
       </Flex>
+      {freeUpTo && (
+        <Text type="success" className={styles.note}>
+          {t('shipping-free-up-to', {
+            amount: formatMoney(locale, freeUpTo),
+          })}
+        </Text>
+      )}
       {freeReason && (
         <Text type="success" className={styles.note}>
           {freeReason}

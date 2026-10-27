@@ -130,6 +130,7 @@
     "shipping-carrier-rates": "За тарифами перевізника",
     "shipping-amount-and-carrier-rates": "{amount} + за тарифами перевізника",
     "shipping-not-selected": "Після вибору доставки",
+    "shipping-free-up-to": "Безкоштовно для доставки до {amount}",
     "shipping-free-because": "Безкоштовна доставка: {reasons}",
     "shipping-free-reason-tier": "рівень «{title}»",
     "shipping-free-reason-reward": "нагорода «{title}»",

@@ -72,6 +72,11 @@ export namespace Checkout {
     /** What placing the order is expected to earn; `null` when nothing or unknown. */
     loyaltyEarning: LoyaltyEarning | null;
     /**
+     * Free shipping the cart has reached before delivery is chosen; `null` when no promotion or
+     * loyalty grant offers it. Whether it covers the chosen delivery is in its `shipping`.
+     */
+    freeShippingOffer: FreeShippingOffer | null;
+    /**
      * Legal notice the buyer accepts by placing the order; `null` when the store links no
      * published policy, and then nothing is shown.
      */
@@ -416,6 +421,12 @@ export namespace Checkout {
     | 'DISCOUNT'
     | 'LOYALTY_TIER'
     | 'LOYALTY_REWARD';
+
+  /** Free shipping the cart reached: a promotion threshold or a loyalty grant. */
+  export interface FreeShippingOffer {
+    /** Shipping price it covers at most; `null` covers any delivery. */
+    maximumShippingPrice: model.Money | null;
+  }
 
   /** Why the shipping of a group is free; the server applies it on its own. */
   export interface FreeShipping {

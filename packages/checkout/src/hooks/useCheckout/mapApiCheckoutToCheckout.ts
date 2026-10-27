@@ -292,6 +292,16 @@ const mapLoyaltyEarning = (
         description: earning.presentation.description ?? null,
       }
     : null;
+const mapFreeShippingOffer = (
+  progress: ApiCheckout['freeShippingProgress']
+): Checkout.FreeShippingOffer | null =>
+  progress?.status === 'SATISFIED'
+    ? {
+        maximumShippingPrice: progress.maximumShippingPrice
+          ? mapMoney(progress.maximumShippingPrice)
+          : null,
+      }
+    : null;
 const mapDisclosures = (
   disclosures: ApiCheckout['disclosures']
 ): Checkout.Disclosures | null =>
@@ -419,6 +429,7 @@ export function mapApiCheckoutToCheckout(
     loyaltyRewardId: apiCheckout.loyaltyRewardId ?? null,
     loyaltySelection: mapLoyaltySelection(apiCheckout.loyaltySelection),
     loyaltyEarning: mapLoyaltyEarning(apiCheckout.loyaltyEarning),
+    freeShippingOffer: mapFreeShippingOffer(apiCheckout.freeShippingProgress),
     disclosures: mapDisclosures(apiCheckout.disclosures),
     notifications: apiCheckout.notifications.map((notification) => ({
       id: notification.id,

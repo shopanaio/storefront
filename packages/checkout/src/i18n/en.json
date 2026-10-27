@@ -130,6 +130,7 @@
     "shipping-carrier-rates": "Carrier rates",
     "shipping-amount-and-carrier-rates": "{amount} + carrier rates",
     "shipping-not-selected": "After choosing delivery",
+    "shipping-free-up-to": "Free for delivery up to {amount}",
     "shipping-free-because": "Free shipping: {reasons}",
     "shipping-free-reason-tier": "{title} tier",
     "shipping-free-reason-reward": "reward “{title}”",
