@@ -22,6 +22,11 @@ export function DataGate({ open, children }: DataGateProps) {
   );
 }
 
+/** Whether the DataGate around is open; true without one. */
+export function useDataGateOpen(): boolean {
+  return useContext(DataGateContext);
+}
+
 export interface DataBoundaryProps {
   /** The section as far as it can render without its queries: a skeleton, or cached data. */
   fallback: ReactNode;

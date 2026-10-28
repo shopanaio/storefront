@@ -3,11 +3,6 @@
  * page loader. Imported by the generated route modules for their server exports only.
  */
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type {
-  DocumentNode,
-  NormalizedCacheObject,
-  OperationVariables,
-} from '@apollo/client';
 import {
   createContext,
   data,
@@ -25,8 +20,7 @@ import {
   type StorefrontLocale,
   type StorefrontLocales,
 } from '@shopana/storefront-sdk/routing';
-import { createApolloCache } from '@shopana/storefront-sdk/graphql/apollo/cache';
-import { loadAppProps } from '@shopana/storefront-sdk/server/app';
+import { loadAppData } from '@shopana/storefront-sdk/server/app';
 import {
   createServerRequestScope,
   provideServerRequestStorage,
@@ -37,7 +31,6 @@ import { toSearchRecord, loadPageModules } from '../core/page-client';
 import {
   assertSerializablePageData,
   type RuntimePageContext,
-  type RuntimePageServices,
   type RuntimeRenderablePageType,
 } from '../core/page-definition';
 import {
@@ -110,49 +103,20 @@ export function createRuntimeMiddleware(
   };
 }
 
-/** The root loader: the store, languages, cart, session and preloaded layout queries. */
+/**
+ * The root loader: the store, languages, cart, session and preloaded layout queries. Their
+ * queries stay in the request client, whose cache the document carries at its end.
+ */
 export async function loadRuntimeRoot(
   app: RuntimeAppDefinition
 ): Promise<RuntimeRootData> {
   return {
-    app: await loadAppProps({
+    app: await loadAppData({
       environmentConfig: app.environmentConfig,
       routing: app.routing,
       cartConfig: app.cartConfig,
       preload: app.preload,
     }),
-  };
-}
-
-/**
- * Page services that keep what the page queried, for the page's own cache snapshot. The
- * request client also holds the root queries (store, cart, session, menus), which the root
- * loader already sends: the page sends only its own, normalized the same way.
- */
-function recordQueries(services: RuntimePageServices) {
-  const results: Array<{
-    query: DocumentNode;
-    variables: OperationVariables;
-    data: unknown;
-  }> = [];
-
-  return {
-    services: {
-      ...services,
-      async loadQuery(document, variables) {
-        const result = await services.loadQuery(document, variables);
-        results.push({ query: document, variables, data: result.data });
-        return result;
-      },
-    } satisfies RuntimePageServices,
-
-    snapshot(): NormalizedCacheObject {
-      const cache = createApolloCache();
-      for (const { query, variables, data } of results) {
-        cache.writeQuery({ query, variables, data });
-      }
-      return cache.extract() as NormalizedCacheObject;
-    },
   };
 }
 
@@ -189,10 +153,8 @@ export function createRuntimePageLoader(
 
   async function loadPage(
     pageType: RuntimeRenderablePageType,
-    pageContext: RuntimePageContext<RuntimeRenderablePageType>
+    context: RuntimePageContext<RuntimeRenderablePageType>
   ) {
-    const queries = recordQueries(pageContext.services);
-    const context = { ...pageContext, services: queries.services };
     const [{ definition }] = await Promise.all([
       loadPageModules(route.pages, pageType),
       loadRouteLayout(route, pageType, { isModule: false }),
@@ -212,7 +174,6 @@ export function createRuntimePageLoader(
       kind: 'page',
       pageType,
       data: result.data,
-      cacheState: definition.preload ? queries.snapshot() : null,
       metadata:
         (await definition.generateMetadata?.(context, result.data)) ?? {},
     } satisfies RuntimePageData;

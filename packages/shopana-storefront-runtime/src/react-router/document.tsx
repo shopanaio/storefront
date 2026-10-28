@@ -17,13 +17,18 @@ import { ApolloProvider } from '@apollo/client/react';
 import { useRouteLoaderData } from 'react-router';
 import { AppProviders } from '@shopana/storefront-sdk/AppProviders';
 import { createApolloClient } from '@shopana/storefront-sdk/graphql/apollo';
+import {
+  takeApolloState,
+  rememberRenderedApolloClient,
+} from './apollo-ssr-state';
 import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
-import { peekApolloRequestClient } from '@shopana/storefront-sdk/server/requestClient';
-import type { ServerAppProps } from '@shopana/storefront-sdk/server/app';
+import { peekApolloRequestClientOf } from '@shopana/storefront-sdk/server/requestClient';
+import { useServerRequestScope } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import type { RuntimeAppDefinition } from './app';
-import type { RuntimeRootData } from './route-data';
+import type { RuntimeAppProps, RuntimeRootData } from './route-data';
 
 export { Links, Meta, Scripts, ScrollRestoration } from 'react-router';
+export type { RuntimeAppProps } from './route-data';
 
 const RuntimeAppContext = createContext<RuntimeAppDefinition | null>(null);
 
@@ -60,7 +65,7 @@ export function getDefaultLocaleSegment(): string {
   return defaultLocaleSegment;
 }
 
-function rememberLocales(locales: ServerAppProps['locales']) {
+function rememberLocales(locales: RuntimeAppProps['locales']) {
   knownLocaleSegments = locales.locales.map((locale) =>
     locale.segment.toLowerCase()
   );
@@ -96,37 +101,37 @@ export function useLocaleSegments(): readonly string[] {
  * The root data of the request (store, locale, languages, cart, session), or null when the
  * root loader failed and the root error boundary renders.
  */
-export function useRuntimeApp(): ServerAppProps | null {
+export function useRuntimeApp(): RuntimeAppProps | null {
   const data = useRouteLoaderData('root') as RuntimeRootData | undefined;
   return data?.app ?? null;
 }
 
 function RuntimeApolloProvider({
   environmentConfig,
-  app,
+  locale,
   children,
 }: {
   environmentConfig: ApolloEnvironmentConfig;
-  app: ServerAppProps;
+  locale: string;
   children: ReactNode;
 }) {
   // The server render reads the request client of the loaders: their queries are in its
-  // cache, and anything else it runs goes out with the request's session. The browser starts
-  // from the snapshot of the root loader; each page adds its own.
+  // cache, and anything else it runs goes out with the request's session. Its cache, as the
+  // render leaves it, ends the document, and the browser starts from it.
+  const scope = useServerRequestScope();
   // One browser client per page load, made on the first call: StrictMode calls this twice,
   // and the client loader must write into the cache the pages read.
   const [client] = useState(() => {
-    const requestClient = peekApolloRequestClient(environmentConfig);
-    if (requestClient) return requestClient;
     if (typeof window === 'undefined') {
-      return createApolloClient(environmentConfig, {
-        initialState: app.apolloInitialState,
-        locale: app.locale.tag,
-      });
+      const serverClient =
+        (scope && peekApolloRequestClientOf(scope, environmentConfig)) ??
+        createApolloClient(environmentConfig, { locale });
+      if (scope) rememberRenderedApolloClient(scope, serverClient);
+      return serverClient;
     }
     browserApolloClient ??= createApolloClient(environmentConfig, {
-      initialState: app.apolloInitialState,
-      locale: app.locale.tag,
+      initialState: takeApolloState(),
+      locale,
     });
     return browserApolloClient;
   });
@@ -153,17 +158,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
   if (!app) return <>{children}</>;
 
-  const { apolloInitialState, ...props } = app;
-  void apolloInitialState;
-
   return (
     <RuntimeApolloProvider
       key={app.locale.tag}
       environmentConfig={runtimeApp.environmentConfig}
-      app={app}
+      locale={app.locale.tag}
     >
       <AppProviders
-        {...props}
+        {...app}
         environmentConfig={runtimeApp.environmentConfig}
         cartConfig={runtimeApp.cartConfig}
       >

@@ -40,6 +40,16 @@ export function peekApolloRequestClient(
   config: ApolloEnvironmentConfig
 ): ApolloClient | null {
   const scope = getServerRequestScope();
-  if (!scope) return null;
+  return scope ? peekApolloRequestClientOf(scope, config) : null;
+}
+
+/**
+ * `peekApolloRequestClient` of a given request scope: for a server render that holds its
+ * request's scope itself, as work React resumes later may run outside the async context.
+ */
+export function peekApolloRequestClientOf(
+  scope: ServerRequestScope,
+  config: ApolloEnvironmentConfig
+): ApolloClient | null {
   return createdClients.get(scope)?.get(apolloEnvironmentKey(config)) ?? null;
 }

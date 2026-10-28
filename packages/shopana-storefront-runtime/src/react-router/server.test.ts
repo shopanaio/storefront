@@ -201,29 +201,16 @@ describe('createRuntimePageLoader', () => {
       kind: 'page',
       pageType: 'home',
       data: { home: true },
-      cacheState: null,
       metadata: { title: 'Home' },
     });
   });
 
-  it('sends the queries of the preload only, not the whole request cache', async () => {
+  it('runs the preload and sends no cache with the page: the document carries it', async () => {
     stubApi();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const page = (await load('/uk/products/socks')) as RuntimePageData;
     expect(page).toMatchObject({ kind: 'page', data: { handle: 'socks' } });
-    // Normalized as the browser cache does (the storefront cache policies).
-    expect(page.kind === 'page' && page.cacheState).toEqual({
-      'Product:{"id":"p1"}': {
-        __typename: 'Product',
-        id: 'p1',
-        handle: 'socks',
-        title: 'Socks',
-      },
-      ROOT_QUERY: {
-        __typename: 'Query',
-        'productByHandle({"handle":"socks"})': { __ref: 'Product:{"id":"p1"}' },
-      },
-    });
+    expect(page).not.toHaveProperty('cacheState');
   });
 
   it('answers a page its preload or a PageNotFoundError finds missing with the 404 page', async () => {

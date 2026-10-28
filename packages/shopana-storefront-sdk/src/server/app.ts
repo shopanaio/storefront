@@ -26,26 +26,29 @@ export interface LoadAppPropsOptions {
   apolloInitialState?: NormalizedCacheObject;
 }
 
-/** What the server hands the root providers: plain data, safe to send to the browser. */
-export type ServerAppProps = Omit<
+/** The root data of the request: plain data, safe to send to the browser. */
+export type ServerAppData = Omit<
   AppProvidersProps,
-  'children' | 'environmentConfig' | 'cartConfig'
-> & {
+  'children' | 'environmentConfig' | 'cartConfig' | 'apolloInitialState'
+>;
+
+/** What the server hands the root providers: the root data with the cache snapshot. */
+export type ServerAppProps = ServerAppData & {
   apolloInitialState: NormalizedCacheObject;
 };
 
 /**
  * Loads the store and its languages, the cart, the session and the preloaded layout queries
- * with the request-scoped client, and returns them with the cache snapshot for the root
- * providers. The request locale is the one the runtime middleware resolved.
+ * with the request-scoped client. Their queries stay in that client's cache; a runtime that
+ * sends the cache itself (React Router, at the end of the document) needs no snapshot. The
+ * request locale is the one the runtime middleware resolved.
  */
-export async function loadAppProps({
+export async function loadAppData({
   environmentConfig,
   routing,
   cartConfig,
   preload,
-  apolloInitialState,
-}: LoadAppPropsOptions): Promise<ServerAppProps> {
+}: Omit<LoadAppPropsOptions, 'apolloInitialState'>): Promise<ServerAppData> {
   setEnvironmentConfig(environmentConfig);
   const serverCookies =
     (await readServerRequestHeaders()).get('cookie') ?? undefined;
@@ -66,15 +69,27 @@ export async function loadAppProps({
     ]);
 
   return {
-    apolloInitialState: mergeApolloCacheStates(
-      client.extract() as NormalizedCacheObject,
-      apolloInitialState
-    ),
     store: storefrontContext.store,
     locale: storefrontContext.locale,
     locales: storefrontContext.locales,
     localePrefix: routing.localePrefix,
     initialCartId: preloadedCartQuery?.variables.checkoutId,
     initialSession,
+  };
+}
+
+/** `loadAppData` with the snapshot of the request client's cache, for the root providers. */
+export async function loadAppProps({
+  apolloInitialState,
+  ...options
+}: LoadAppPropsOptions): Promise<ServerAppProps> {
+  const data = await loadAppData(options);
+  const client = await getApolloRequestClient(options.environmentConfig);
+  return {
+    apolloInitialState: mergeApolloCacheStates(
+      client.extract() as NormalizedCacheObject,
+      apolloInitialState
+    ),
+    ...data,
   };
 }

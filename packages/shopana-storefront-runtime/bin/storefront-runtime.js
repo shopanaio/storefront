@@ -54,6 +54,12 @@ function withEnvFiles(env, mode) {
   return { ...fromFiles, ...env };
 }
 
+/** Sets `X-Forwarded-For` of direct requests in React Router's servers, as Next.js does. */
+const forwardedForPreload = [
+  '--import',
+  new URL('./forwarded-for.js', import.meta.url).href,
+];
+
 /** The framework CLI call of a command: Next.js, or React Router and its server. */
 function frameworkCommand(framework, runtimeDir) {
   if (framework === 'next') {
@@ -66,6 +72,7 @@ function frameworkCommand(framework, runtimeDir) {
   if (command !== 'start') {
     return {
       args: [
+        ...forwardedForPreload,
         resolvePackageBin('@react-router/dev', 'react-router'),
         command,
         runtimeDir,
@@ -81,6 +88,7 @@ function frameworkCommand(framework, runtimeDir) {
     // The server finds the browser assets of the build relative to its working directory.
     cwd: runtimeDir,
     args: [
+      ...forwardedForPreload,
       resolvePackageBin('@react-router/serve', 'react-router-serve'),
       'build/server/index.js',
       ...rest,

@@ -198,14 +198,22 @@ What the runtime does, as the Next.js app does:
   request scope with the storefront locale header, which the SDK server modules read
   (`runtimeRequestLocale` is the matched locale for later middleware and loaders);
 - the root loader returns `loadAppProps()` of the SDK (store, languages, cart, session,
-  preloaded menus and the cache snapshot); it runs with the document and again only after a
+  preloaded menus) without its cache snapshot; it runs with the document and again only after a
   form submission or for another locale. `AppProvider` renders the SDK providers over a plain
   `ApolloProvider`, which on the server is the request client of the loaders;
 - the page loader resolves the address to a module page or a reserved page, runs `loadData`
   and `preload` with the request client, computes the metadata, and answers a missing page with
   the theme's 404 page (in the 404 layout) and status 404. The page renders under its layout,
-  which stays mounted between pages, with the snapshot of its own `preload` queries applied
-  first (the root queries come with the root data);
+  which stays mounted between pages;
+- the loaders send no cache of their own: their queries stay in the request client, and the
+  document carries the cache that client ended the server render with (the loaders' queries
+  and those the sections ran while rendering) before `</body>`. The browser's client starts
+  from it, so hydration queries nothing again. A Suspense boundary whose content is ready goes out in
+  place (no fallback first, whatever its size: `progressiveChunkSize` is unlimited), so a page in
+  a boundary (a mobile app screen) paints at once; the price is a larger first chunk, as a
+  large ready boundary is no longer sent after the shell. The render reads its request through React
+  (`useServerRequestHeaders` of `@shopana/storefront-sdk/core/ServerRequestScope`), which work React resumes after a
+  suspension keeps;
 - after hydration the app is a single-page app: a client navigation asks the server nothing.
   The page's loader runs in the browser: it resolves the address, loads the page's modules
   and layout and runs `loadData` with the app's Apollo client (`preload` stays on the server;
@@ -256,5 +264,12 @@ cookies. The handlers read the server environment:
 - `STOREFRONT_TRUSTED_PROXY_HOPS` (optional, 1 by default), the number of proxies in front of
   the storefront that append to `X-Forwarded-For`. The buyer address sent to IAM is the entry
   this many hops from the right; entries the client added further left are ignored.
+
+Under React Router the CLI preloads into the dev server and `react-router-serve` what Next.js
+does itself: a request that reached the storefront directly, with no proxy in front, gets
+`X-Forwarded-For` from its connection; a forwarded one keeps the header its proxies wrote.
+A request with the header set is taken as forwarded, so a storefront open to the internet
+with no proxy in front trusts whatever address a client writes there: in production it runs
+behind the proxies `STOREFRONT_TRUSTED_PROXY_HOPS` counts.
 
 The locale routing leaves `/auth/*` to these handlers.
