@@ -28,10 +28,19 @@ function isNextNavigationError(error: unknown): boolean {
   );
 }
 
+/** A response thrown to end the page: React Router's `redirect()` and the like. */
+function isThrownResponse(error: unknown): boolean {
+  return typeof Response !== 'undefined' && error instanceof Response;
+}
+
 /**
  * Errors that are not a failure of the section they come from but a decision about the whole
  * page: a section boundary rethrows them instead of hiding the section.
  */
 export function isPageLevelError(error: unknown): boolean {
-  return isPageNotFoundError(error) || isNextNavigationError(error);
+  return (
+    isPageNotFoundError(error) ||
+    isNextNavigationError(error) ||
+    isThrownResponse(error)
+  );
 }

@@ -1,12 +1,12 @@
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
 import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
-import { getRequestContext } from '@shopana/storefront/next/headers';
+import { getRequestContext } from './headers';
 import {
   assertSerializablePageData,
   type RuntimePageModuleMap,
-} from './page-definition';
-import { loadNotFoundDefinition } from './page-registry';
-import { createRuntimePageServices } from './page-services';
+} from '../core/page-definition';
+import { loadNotFoundDefinition } from '../core/page-registry';
+import { createRuntimePageServices } from '../core/page-services';
 
 export interface CreateRuntimeNotFoundOptions {
   environmentConfig: ApolloEnvironmentConfig;

@@ -1,16 +1,23 @@
 import type { NormalizedCacheObject, OperationVariables } from '@apollo/client';
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
-import type { Metadata } from 'next';
-
-export type { Metadata };
 import type { ComponentType, ReactNode } from 'react';
 import type {
   PageTemplate,
   PageType,
 } from '@shopana/storefront-sdk/core/types';
 import type { SerializableApolloQuery } from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
-import type { SDKRequestContext } from './headers';
+import type { RuntimeMetadata } from './metadata';
+import type { SDKRequestContext } from './request-context';
 import { runtimeDefinitionBrand } from './page-definition-brand';
+
+export type {
+  RuntimeMetadata,
+  RuntimeMetadataImage,
+  RuntimeMetadataImages,
+  RuntimeOpenGraph,
+  RuntimeTwitter,
+} from './metadata';
+export type { SDKRequestContext } from './request-context';
 
 export type RuntimeRenderablePageType = Exclude<PageType, '404'>;
 
@@ -78,7 +85,7 @@ export interface RuntimePageDefinition<
   generateMetadata?(
     context: RuntimePageContext<TPageType>,
     data: TData
-  ): Promise<Metadata> | Metadata;
+  ): Promise<RuntimeMetadata> | RuntimeMetadata;
 
   Provider?: ComponentType<RuntimePageProviderProps<TData>>;
 }
@@ -278,6 +285,6 @@ export function assertSerializablePageData(
     pageType,
     registryKey: pageType,
     valuePath,
-    detail: 'page data must contain only plain RSC-serializable values',
+    detail: 'page data must contain only plain serializable values',
   });
 }

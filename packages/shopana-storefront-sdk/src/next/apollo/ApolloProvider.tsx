@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import type { NormalizedCacheObject } from '@apollo/client';
 import { ApolloNextAppProvider } from '@apollo/client-integration-nextjs';
-import { createApolloClient } from '../../graphql/apollo/Environment';
+import { createNextApolloClient } from './createNextApolloClient';
 import type { ApolloEnvironmentConfig } from '../../graphql/apollo/types';
 
 export interface ApolloAppProviderProps {
@@ -25,7 +25,7 @@ export function ApolloAppProvider({
   locale,
 }: ApolloAppProviderProps) {
   const makeClient = useCallback(
-    () => createApolloClient(environmentConfig, { initialState, locale }),
+    () => createNextApolloClient(environmentConfig, { initialState, locale }),
     [environmentConfig, initialState, locale]
   );
 

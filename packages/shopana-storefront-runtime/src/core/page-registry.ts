@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react';
-import type { Metadata } from 'next';
 import type {
   PageTemplate,
   PageType,
 } from '@shopana/storefront-sdk/core/types';
+import type { RuntimeMetadata } from './metadata';
 import {
   RuntimeInvariantError,
   type RuntimeNotFoundContext,
@@ -28,7 +28,7 @@ interface ErasedRenderableDefinition {
   generateMetadata?(
     context: RuntimePageContext<RuntimeRenderablePageType>,
     data: any
-  ): Promise<Metadata> | Metadata;
+  ): Promise<RuntimeMetadata> | RuntimeMetadata;
   Provider?: ComponentType<RuntimePageProviderProps<any>>;
 }
 

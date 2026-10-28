@@ -9,22 +9,16 @@ import {
 } from 'next/navigation';
 import { useMemo } from 'react';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
-import type { HrefTarget } from '@shopana/storefront-sdk/routing';
+import type {
+  StorefrontRouteParams,
+  StorefrontRouter,
+} from '../core/facade-types';
 import {
   createNavigationTarget,
   useNavigationScope,
   useScopePage,
-} from './navigation-scope';
+} from '../core/navigation-scope';
 
-type NextRouter = ReturnType<typeof useNextRouter>;
-type NavigateOptions = Parameters<NextRouter['push']>[1];
-type PrefetchOptions = Parameters<NextRouter['prefetch']>[1];
-
-export interface StorefrontRouter extends Omit<NextRouter, 'push' | 'replace' | 'prefetch'> {
-  push(href: HrefTarget, options?: NavigateOptions): void;
-  replace(href: HrefTarget, options?: NavigateOptions): void;
-  prefetch(href: HrefTarget, options?: PrefetchOptions): void;
-}
 
 /**
  * Router whose navigations keep the active locale in storefront paths. Inside a
@@ -48,7 +42,6 @@ export function useRouter(): StorefrontRouter {
     };
 
     return {
-      ...router,
       push: (href, options) => {
         const localizedHref = buildHref(href);
         if (!takenByScope(localizedHref, false)) {
@@ -61,8 +54,8 @@ export function useRouter(): StorefrontRouter {
           router.replace(localizedHref, options);
         }
       },
-      prefetch: (href, options) => {
-        if (!onNavigate) router.prefetch(buildHref(href), options);
+      prefetch: (href) => {
+        if (!onNavigate) router.prefetch(buildHref(href));
       },
       back: () => (onNavigate ? window.history.back() : router.back()),
       forward: () => (onNavigate ? window.history.forward() : router.forward()),
@@ -104,10 +97,7 @@ export function useSearchParams(): ReadonlyURLSearchParams {
  * with `href` the slug is that page's own path, the locale stays the Next router's.
  */
 export function useParams<
-  T extends Record<string, string | string[] | undefined> = Record<
-    string,
-    string | string[] | undefined
-  >,
+  T extends StorefrontRouteParams = StorefrontRouteParams,
 >(): T {
   const params = useNextParams<T>();
   const page = useScopePage();

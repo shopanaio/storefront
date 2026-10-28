@@ -3,7 +3,7 @@
 import { Button, Flex, Result, Skeleton } from 'antd';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
-import { useRouter } from '@shopana/storefront/next/navigation';
+import { useRouter } from '@shopana/storefront/navigation';
 import {
   usePlacedOrderNumber,
   type PlacedOrderLoyalty,

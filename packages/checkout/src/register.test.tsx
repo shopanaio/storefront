@@ -3,7 +3,7 @@ import { createRuntimeLayout } from '@shopana/storefront/next/layout';
 import { registerCheckoutModule } from './register';
 
 const request = vi.hoisted(() => ({ pathname: '/checkout' }));
-vi.mock('@shopana/storefront/next/headers', () => ({
+vi.mock('@shopana/storefront/headers', () => ({
   getRequestContext: async () => request,
 }));
 

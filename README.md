@@ -1,21 +1,23 @@
 # Shopana Storefront
 
-Packages for building Next.js storefronts on the [Shopana](https://github.com/shopanaio) storefront
-API. A storefront is a theme: a complete runnable application composed from these packages.
+Packages for building storefronts on the [Shopana](https://github.com/shopanaio) storefront API.
+A storefront is a theme: a complete runnable application composed from these packages, built with
+Next.js (App Router) or React Router (framework mode, the React line of Remix) from the same theme
+code.
 
 > **Status: beta.** APIs may change between minor versions until 1.0.
 
 ## Packages
 
-| Package                                                      | Description                                          |
-| ------------------------------------------------------------ | ---------------------------------------------------- |
-| [`@shopana/storefront`](packages/shopana-storefront-runtime) | Next.js App Router runtime CLI and framework facades |
-| [`@shopana/storefront-sdk`](packages/shopana-storefront-sdk) | Data, session, cart and composition primitives       |
-| [`@shopana/storefront-auth`](packages/storefront-auth)       | Headless customer sign-in and sign-up                |
-| [`@shopana/storefront-ui`](packages/storefront-ui)           | Form and overlay primitives                          |
-| [`@shopana/checkout`](packages/checkout)                     | Checkout flow and registration API                   |
-| [`@shopana/brand-sdk`](packages/brand-sdk) (private)         | Theme contract                                       |
-| [`@shopana/mock-server`](mockServer) (private)               | GraphQL mock engine for theme development            |
+| Package                                                      | Description                                        |
+| ------------------------------------------------------------ | -------------------------------------------------- |
+| [`@shopana/storefront`](packages/shopana-storefront-runtime) | Next.js and React Router runtimes, CLI and facades |
+| [`@shopana/storefront-sdk`](packages/shopana-storefront-sdk) | Data, session, cart and composition primitives     |
+| [`@shopana/storefront-auth`](packages/storefront-auth)       | Headless customer sign-in and sign-up              |
+| [`@shopana/storefront-ui`](packages/storefront-ui)           | Form and overlay primitives                        |
+| [`@shopana/checkout`](packages/checkout)                     | Checkout flow and registration API                 |
+| [`@shopana/brand-sdk`](packages/brand-sdk) (private)         | Theme contract                                     |
+| [`@shopana/mock-server`](mockServer) (private)               | GraphQL mock engine for theme development          |
 
 ## Requirements
 
@@ -43,8 +45,9 @@ yarn start
 yarn storybook:theme
 ```
 
-`runtime:init` generates the theme's `.runtime` directory. Generated runtime files must not be
-edited directly.
+`runtime:init` generates the theme's `.runtime` directory for the framework of the theme
+(`storefront.framework` in its `package.json`: `next`, the default, or `react-router`). Generated
+runtime files must not be edited directly.
 
 ## Development
 

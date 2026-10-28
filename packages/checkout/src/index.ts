@@ -1,4 +1,4 @@
-import dynamic from '@shopana/storefront/next/dynamic';
+import dynamic from '@shopana/storefront/dynamic';
 
 export { usePlacedOrderNumber } from './hooks/usePlacedOrderNumber';
 

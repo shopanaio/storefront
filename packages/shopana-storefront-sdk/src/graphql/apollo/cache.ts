@@ -5,7 +5,7 @@ import type {
   StoreObject,
   TypePolicy,
 } from '@apollo/client';
-import { InMemoryCache } from '@apollo/client-integration-nextjs';
+import { InMemoryCache } from '@apollo/client';
 import { cursorConnectionPolicy } from './pagination/cursorPagination';
 import { possibleTypes } from './generated/possibleTypes';
 
@@ -70,27 +70,47 @@ function handleLookupPolicy(
   };
 }
 
-/** Restored snapshots (SSR state, page hydration) skip key fields: their handles are indexed here. */
-class StorefrontCache extends InMemoryCache {
-  readonly #handles: HandleIndex;
+/** An `InMemoryCache` class: Apollo's own, or the one of a framework integration. */
+export type InMemoryCacheClass = new (
+  config: InMemoryCacheConfig
+) => InMemoryCache;
 
-  constructor(config: InMemoryCacheConfig, handles: HandleIndex) {
-    super(config);
-    this.#handles = handles;
-  }
+const storefrontCacheClasses = new WeakMap<
+  InMemoryCacheClass,
+  new (config: InMemoryCacheConfig, handles: HandleIndex) => InMemoryCache
+>();
 
-  override restore(data: NormalizedCacheObject): this {
-    for (const record of Object.values(data)) {
-      if (
-        record &&
-        typeof record === 'object' &&
-        HANDLE_TYPENAMES.has(String(record.__typename))
-      ) {
-        indexHandle(this.#handles, record as StoreObject);
+/**
+ * The cache class over `Base`. Restored snapshots (SSR state, page hydration) skip key fields:
+ * their handles are indexed here.
+ */
+function storefrontCacheClass(Base: InMemoryCacheClass) {
+  let StorefrontCache = storefrontCacheClasses.get(Base);
+  if (!StorefrontCache) {
+    StorefrontCache = class extends Base {
+      readonly #handles: HandleIndex;
+
+      constructor(config: InMemoryCacheConfig, handles: HandleIndex) {
+        super(config);
+        this.#handles = handles;
       }
-    }
-    return super.restore(data);
+
+      override restore(data: NormalizedCacheObject): this {
+        for (const record of Object.values(data)) {
+          if (
+            record &&
+            typeof record === 'object' &&
+            HANDLE_TYPENAMES.has(String(record.__typename))
+          ) {
+            indexHandle(this.#handles, record as StoreObject);
+          }
+        }
+        return super.restore(data);
+      }
+    };
+    storefrontCacheClasses.set(Base, StorefrontCache);
   }
+  return StorefrontCache;
 }
 
 /**
@@ -99,7 +119,8 @@ class StorefrontCache extends InMemoryCache {
  * exactly the same normalization rules on both sides of the RSC boundary.
  */
 export function createApolloCache(
-  overrides: InMemoryCacheConfig = {}
+  overrides: InMemoryCacheConfig = {},
+  Base: InMemoryCacheClass = InMemoryCache
 ): InMemoryCache {
   const handles: HandleIndex = new Map();
   const baseTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
@@ -178,6 +199,7 @@ export function createApolloCache(
     };
   }
 
+  const StorefrontCache = storefrontCacheClass(Base);
   return new StorefrontCache(
     {
       ...overrides,
