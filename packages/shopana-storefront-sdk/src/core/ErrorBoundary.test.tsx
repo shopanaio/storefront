@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { Component, type ReactNode } from 'react';
+import { PageNotFoundError } from './PageNotFoundError';
 import {
   ErrorBoundary,
   SectionErrorBoundary,
@@ -370,6 +372,58 @@ describe('ErrorBoundary', () => {
         })
       );
 
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('page-level errors', () => {
+    class OuterBoundary extends Component<
+      { children: ReactNode },
+      { error: unknown }
+    > {
+      state = { error: null as unknown };
+      static getDerivedStateFromError(error: unknown) {
+        return { error };
+      }
+      render() {
+        if (!this.state.error) return this.props.children;
+        return <div data-testid="outer">{(this.state.error as Error).name}</div>;
+      }
+    }
+
+    const Throws = ({ error }: { error: unknown }) => {
+      throw error;
+    };
+
+    it.each([
+      ['a missing page', new PageNotFoundError(), 'PageNotFoundError'],
+      [
+        'Next not-found',
+        Object.assign(new Error('NEXT_HTTP_ERROR_FALLBACK;404'), {
+          digest: 'NEXT_HTTP_ERROR_FALLBACK;404',
+        }),
+        'Error',
+      ],
+      [
+        'Next redirect',
+        Object.assign(new Error('NEXT_REDIRECT'), {
+          digest: 'NEXT_REDIRECT;replace;/x;307;',
+        }),
+        'Error',
+      ],
+    ])('passes %s on to the boundary above the section', (_, error, name) => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      render(
+        <OuterBoundary>
+          <SectionErrorBoundary sectionId="listing">
+            <Throws error={error} />
+          </SectionErrorBoundary>
+        </OuterBoundary>
+      );
+
+      expect(screen.getByTestId('outer')).toHaveTextContent(name);
+      expect(mockLogError).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
   });

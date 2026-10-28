@@ -3,6 +3,7 @@
 import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
 import { logError } from '../utils/logger';
+import { isPageLevelError } from './PageNotFoundError';
 
 interface BaseErrorBoundaryProps {
   children: ReactNode;
@@ -11,6 +12,8 @@ interface BaseErrorBoundaryProps {
 
 interface BaseErrorBoundaryState {
   hasError: boolean;
+  /** A page-level error (see `isPageLevelError`), rethrown to the boundaries above. */
+  pageError: unknown;
 }
 
 class BaseErrorBoundary extends Component<
@@ -19,20 +22,22 @@ class BaseErrorBoundary extends Component<
 > {
   public state: BaseErrorBoundaryState = {
     hasError: false,
+    pageError: null,
   };
 
-  static getDerivedStateFromError(): BaseErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: unknown): BaseErrorBoundaryState {
+    return { hasError: true, pageError: isPageLevelError(error) ? error : null };
   }
 
   componentDidUpdate(prevProps: BaseErrorBoundaryProps) {
     // Reset error state when children change (e.g., client-side navigation)
     if (this.state.hasError && prevProps.children !== this.props.children) {
-      this.setState({ hasError: false });
+      this.setState({ hasError: false, pageError: null });
     }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (isPageLevelError(error)) return;
     logError('Component render error', {
       error,
       component: this.props.componentName,
@@ -42,6 +47,7 @@ class BaseErrorBoundary extends Component<
   }
 
   render() {
+    if (this.state.pageError) throw this.state.pageError;
     if (this.state.hasError) {
       return null;
     }
