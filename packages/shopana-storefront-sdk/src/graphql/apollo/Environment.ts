@@ -1,17 +1,15 @@
 import {
+  ApolloClient,
   ApolloLink,
   CombinedGraphQLErrors,
   HttpLink,
+  type InMemoryCache,
   Observable,
   ServerError,
 } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import type { FormattedExecutionResult } from 'graphql';
-import {
-  ApolloClient,
-  SSRMultipartLink,
-} from '@apollo/client-integration-nextjs';
-import { createApolloCache } from './cache';
+import { createApolloCache, type InMemoryCacheClass } from './cache';
 import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
 import {
@@ -102,13 +100,37 @@ function createSessionRetryLink(): ApolloLink {
   );
 }
 
+/** What a framework integration changes in the client: its client class, its server links. */
+export interface ApolloClientIntegration<TClient extends ApolloClient> {
+  /** The cache class the client needs; Apollo's `InMemoryCache` by default. */
+  InMemoryCache?: InMemoryCacheClass;
+  createClient(options: { cache: InMemoryCache; link: ApolloLink }): TClient;
+  /** Links in front of the HTTP link on the server (streaming SSR transport). */
+  serverLinks?: () => ApolloLink[];
+}
+
+const plainIntegration: ApolloClientIntegration<ApolloClient> = {
+  createClient: (options) => new ApolloClient(options),
+};
+
 /**
- * Creates the Apollo client used by both the Next.js RSC preloader and the
- * browser provider. A new instance must be created for every server request.
+ * Creates the Apollo client of the storefront: on the server for one request (a new instance
+ * for every request), in the browser once. Without an integration it is a plain Apollo client,
+ * as React Router renders with; Next.js passes its streaming integration.
  */
 export function createApolloClient(
   config: ApolloEnvironmentConfig,
-  options: CreateApolloClientOptions = {}
+  options?: CreateApolloClientOptions
+): ApolloClient;
+export function createApolloClient<TClient extends ApolloClient>(
+  config: ApolloEnvironmentConfig,
+  options: CreateApolloClientOptions,
+  integration: ApolloClientIntegration<TClient>
+): TClient;
+export function createApolloClient(
+  config: ApolloEnvironmentConfig,
+  options: CreateApolloClientOptions = {},
+  integration: ApolloClientIntegration<ApolloClient> = plainIntegration
 ): ApolloClient {
   const authLink = new SetContextLink(async (previousContext) => {
     const headers = {
@@ -148,7 +170,7 @@ export function createApolloClient(
 
   // Files are uploaded from the browser only (customer media), as a multipart request.
   const transportLinks = IS_SERVER
-    ? [new SSRMultipartLink({ stripDefer: true }), httpLink]
+    ? [...(integration.serverLinks?.() ?? []), httpLink]
     : [
         ApolloLink.split(
           (operation) => hasUploadVariables(operation.variables),
@@ -157,12 +179,15 @@ export function createApolloClient(
         ),
       ];
 
-  const cache = createApolloCache(options.cacheConfig);
+  const cache = createApolloCache(
+    options.cacheConfig,
+    integration.InMemoryCache
+  );
   if (options.initialState) {
     cache.restore(options.initialState);
   }
 
-  return new ApolloClient({
+  return integration.createClient({
     cache,
     link: ApolloLink.from([
       ...(IS_SERVER ? [] : [createSessionRetryLink()]),

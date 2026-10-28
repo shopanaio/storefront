@@ -4,10 +4,10 @@ import type {
   TypedDocumentNode,
 } from '@apollo/client';
 import { registerApolloClient } from '@apollo/client-integration-nextjs';
-import { createApolloClient } from '../../graphql/apollo/Environment';
 import { loadSerializableQuery } from '../../graphql/apollo/loadSerializableQuery';
-import { readServerAuthState } from '../../modules/session/server';
-import { STOREFRONT_LOCALE_HEADER } from '../../modules/localization/core/constants';
+import { readRequestAuth } from '../../server/apollo';
+import { apolloEnvironmentKey } from '../../server/requestClient';
+import { createNextApolloClient } from './createNextApolloClient';
 import type {
   ApolloEnvironmentConfig,
   CreateApolloClientOptions,
@@ -18,45 +18,28 @@ export type ApolloServerClientOptions = Omit<
   'serverCookies' | 'initialState' | 'accessToken' | 'locale'
 >;
 
-/** Cookies, the session access token and the locale of the current server request. */
-async function readRequestAuth(): Promise<
-  Pick<CreateApolloClientOptions, 'serverCookies' | 'accessToken' | 'locale'>
-> {
-  const { headers } = await import('next/headers');
-  const requestHeaders = await headers();
-  const serverCookies = requestHeaders.get('cookie') ?? undefined;
-  const locale = requestHeaders.get(STOREFRONT_LOCALE_HEADER) ?? undefined;
-  const { accessToken } = await readServerAuthState(serverCookies);
-  return { serverCookies, accessToken, locale };
-}
-
 const requestClientRegistrations = new Map<
   string,
   ReturnType<typeof registerApolloClient>
 >();
 
-function environmentKey(config: ApolloEnvironmentConfig): string {
-  return JSON.stringify([
-    config.graphqlUrl,
-    config.apiKeyHeader,
-    config.apiKey,
-  ]);
-}
-
 function getDefaultRegistration(environmentConfig: ApolloEnvironmentConfig) {
-  const key = environmentKey(environmentConfig);
+  const key = apolloEnvironmentKey(environmentConfig);
   const existing = requestClientRegistrations.get(key);
   if (existing) return existing;
 
   const registration = registerApolloClient(async () =>
-    createApolloClient(environmentConfig, await readRequestAuth())
+    createNextApolloClient(environmentConfig, await readRequestAuth())
   );
   requestClientRegistrations.set(key, registration);
   return registration;
 }
 
-/** Returns the shared Apollo Client for the current Next.js server request. */
-export function getApolloRequestClient(
+/**
+ * The client of the current Next.js server request; `getApolloRequestClient` of
+ * `@shopana/storefront-sdk/server/apollo` answers with it under Next.js.
+ */
+export function getNextApolloRequestClient(
   environmentConfig: ApolloEnvironmentConfig
 ) {
   return getDefaultRegistration(environmentConfig).getClient();
@@ -75,7 +58,7 @@ export function createApolloNextClient(
   }
 
   return registerApolloClient(async () =>
-    createApolloClient(environmentConfig, {
+    createNextApolloClient(environmentConfig, {
       ...clientOptions,
       ...(await readRequestAuth()),
     })

@@ -36,6 +36,14 @@
       "types": "./dist/App.d.ts",
       "default": "./dist/App.js"
     },
+    "./AppProvider": {
+      "types": "./dist/AppProvider.d.ts",
+      "default": "./dist/AppProvider.js"
+    },
+    "./AppProviders": {
+      "types": "./dist/AppProviders.d.ts",
+      "default": "./dist/AppProviders.js"
+    },
     "./config/index": {
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
@@ -55,6 +63,10 @@
     "./graphql/apollo": {
       "types": "./dist/graphql/apollo/index.d.ts",
       "default": "./dist/graphql/apollo/index.js"
+    },
+    "./graphql/apollo/ApolloCacheHydrator": {
+      "types": "./dist/graphql/apollo/ApolloCacheHydrator.d.ts",
+      "default": "./dist/graphql/apollo/ApolloCacheHydrator.js"
     },
     "./graphql/apollo/cache": {
       "types": "./dist/graphql/apollo/cache.d.ts",
@@ -167,6 +179,22 @@
     "./registry": {
       "types": "./dist/registry/index.d.ts",
       "default": "./dist/registry/index.js"
+    },
+    "./server/app": {
+      "types": "./dist/server/app.d.ts",
+      "default": "./dist/server/app.js"
+    },
+    "./server/apollo": {
+      "types": "./dist/server/apollo.d.ts",
+      "default": "./dist/server/apollo.js"
+    },
+    "./server/requestClient": {
+      "types": "./dist/server/requestClient.d.ts",
+      "default": "./dist/server/requestClient.js"
+    },
+    "./server/requestScope": {
+      "types": "./dist/server/requestScope.d.ts",
+      "default": "./dist/server/requestScope.js"
     },
     "./utils/routeParser": {
       "types": "./dist/utils/routeParser.d.ts",
@@ -288,6 +316,12 @@
   },
   "peerDependenciesMeta": {
     "antd": {
+      "optional": true
+    },
+    "@apollo/client-integration-nextjs": {
+      "optional": true
+    },
+    "next": {
       "optional": true
     }
   }

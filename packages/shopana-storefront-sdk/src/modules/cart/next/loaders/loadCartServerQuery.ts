@@ -11,7 +11,8 @@ import {
   type SdkLoadCartQueryVariables,
 } from '../../../../graphql/apollo/generated/operations';
 import type { ApolloClient } from '@apollo/client';
-import { getApolloRequestClient } from '../../../../next/apollo/server';
+import { getApolloRequestClient } from '../../../../server/apollo';
+import { readServerRequestHeaders } from '../../../../server/requestScope';
 import { readServerAuthState } from '../../../session/server';
 export interface LoadCartServerQueryOptions {
   /**
@@ -28,8 +29,7 @@ export interface LoadCartServerQueryOptions {
   serverCookies?: string;
 }
 /**
- * Load cart data on server (Next.js)
- * Use this in Server Components to prefetch cart data
+ * Load cart data on the server, in a Next.js server component or a React Router loader
  *
  * @param options - Configuration options
  * @returns Preloaded query or null if no cart ID
@@ -53,9 +53,7 @@ export async function loadCartServerQuery(
   const { environmentConfig, cartConfig } = options;
   let cookie = options.serverCookies;
   if (!options.client && cookie === undefined) {
-    // Dynamic import to avoid bundling next/headers in client code
-    const { headers } = await import('next/headers');
-    cookie = (await headers()).get('cookie') ?? undefined;
+    cookie = (await readServerRequestHeaders()).get('cookie') ?? undefined;
   }
   // Create cart ID utils with cart config
   const cartIdUtils = createCartIdUtils({

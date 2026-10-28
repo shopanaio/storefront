@@ -21,13 +21,33 @@ typed GraphQL documents.
 The package exports its public modules explicitly (see `exports` in `package.json`): the root
 entry, `react`, `routing`, `graphql/apollo`, `registry`, `config`, the `modules/*` entries of the
 cart, session, account, customer, store, content, localization and storefront API,
-`next/apollo/*`, `core/*`, and the cart hooks (`modules/cart/react/hooks/*`). Other files are
-internal.
+`server/*`, `next/apollo/*`, `core/*`, and the cart hooks (`modules/cart/react/hooks/*`). Other
+files are internal.
+
+## Frameworks
+
+The SDK runs under Next.js and React Router (the `@shopana/storefront` runtime generates either
+app). Only the root providers and the server request differ:
+
+- `App` and `AppProvider` (a server component) are the Next.js root: the Apollo Next.js
+  integration with streaming SSR and RSC cache hydration. `AppProviders` are the storefront
+  providers below Apollo; the React Router runtime puts them under a plain `ApolloProvider`.
+- `server/app` `loadAppProps()` loads the root data of a request (store, languages, cart,
+  session, preloaded menus and the cache snapshot); `AppProvider` renders it, a React Router root
+  loader returns it.
+- `server/apollo` `getApolloRequestClient()` is the Apollo client of the current server request,
+  shared by its loaders and server components.
+- `server/requestScope` is the server request of a framework without request-bound APIs: a
+  runtime runs each request in a scope (`provideServerRequestStorage` with an
+  `AsyncLocalStorage`), and the server modules (request client, store context, cart and locale
+  of the request) read their headers and per-request values from it. Without a scope they use
+  Next.js `headers()` and React `cache`.
+- `graphql/apollo/ApolloCacheHydrator` applies a page snapshot to the client of either framework.
 
 ## Store, languages and links
 
-`AppProvider` loads the store (`store`) with the request-scoped client; there is no static shop
-configuration. Languages and currency come from the store: there are no markets.
+`AppProvider` (`loadAppProps` under React Router) loads the store (`store`) with the
+request-scoped client; there is no static shop configuration. Languages and currency come from the store: there are no markets.
 
 ```tsx
 <AppProvider

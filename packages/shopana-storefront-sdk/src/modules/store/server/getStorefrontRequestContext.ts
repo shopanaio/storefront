@@ -1,7 +1,11 @@
-import { cache } from 'react';
 import type { SdkStoreFragment } from '../../../graphql/apollo/generated/operations';
 import type { ApolloEnvironmentConfig } from '../../../graphql/apollo/types';
-import { getApolloRequestClient } from '../../../next/apollo/server';
+import { getApolloRequestClient } from '../../../server/apollo';
+import { apolloEnvironmentKey } from '../../../server/requestClient';
+import {
+  cacheForRequest,
+  readServerRequestHeaders,
+} from '../../../server/requestScope';
 import { STOREFRONT_LOCALE_HEADER } from '../../localization/core/constants';
 import type { StorefrontLocale } from '../../localization/core/locale';
 import type { StorefrontLocales } from '../../localization/core/types';
@@ -22,12 +26,13 @@ export interface StorefrontRequestContext {
  * Store and languages of the current server request, loaded once per request with the
  * request-scoped client; layouts, metadata and `AppProvider` share the result.
  */
-export const getStorefrontRequestContext = cache(
+export const getStorefrontRequestContext = cacheForRequest(
   async (
     environmentConfig: ApolloEnvironmentConfig
   ): Promise<StorefrontRequestContext> => {
-    const { headers } = await import('next/headers');
-    const requestLocale = (await headers()).get(STOREFRONT_LOCALE_HEADER);
+    const requestLocale = (await readServerRequestHeaders()).get(
+      STOREFRONT_LOCALE_HEADER
+    );
     const locales = await loadStorefrontLocales(environmentConfig);
     const client = await getApolloRequestClient(environmentConfig);
     const { store } = await loadStorefrontContext(client);
@@ -36,5 +41,6 @@ export const getStorefrontRequestContext = cache(
       locale: resolveStorefrontLocale(locales, requestLocale),
       locales,
     };
-  }
+  },
+  apolloEnvironmentKey
 );

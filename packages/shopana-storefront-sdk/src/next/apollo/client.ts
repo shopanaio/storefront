@@ -4,10 +4,6 @@ export {
   ApolloAppProvider,
   type ApolloAppProviderProps,
 } from './ApolloProvider';
-export {
-  ApolloCacheHydrator,
-  type ApolloCacheHydratorProps,
-} from './ApolloCacheHydrator';
 export type { TransportedQueryRef } from '@apollo/client-integration-nextjs';
 
 export {

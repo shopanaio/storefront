@@ -411,6 +411,13 @@ describe('ErrorBoundary', () => {
         }),
         'Error',
       ],
+      [
+        'a React Router redirect',
+        Object.assign(new Response(null, { status: 307 }), {
+          name: 'Response',
+        }),
+        'Response',
+      ],
     ])('passes %s on to the boundary above the section', (_, error, name) => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

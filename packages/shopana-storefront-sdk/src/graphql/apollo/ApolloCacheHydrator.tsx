@@ -4,7 +4,7 @@ import type { NormalizedCacheObject } from '@apollo/client';
 import { useApolloClient } from '@apollo/client/react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { mergeApolloCacheStates } from '../../graphql/apollo/cache';
+import { mergeApolloCacheStates } from './cache';
 
 export interface ApolloCacheHydratorProps {
   state: NormalizedCacheObject;

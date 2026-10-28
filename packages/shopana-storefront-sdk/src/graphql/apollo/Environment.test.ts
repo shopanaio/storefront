@@ -18,12 +18,6 @@ import { ApolloLink, Observable } from '@apollo/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { ApolloEnvironmentConfig } from './types';
 
-vi.mock('@apollo/client-integration-nextjs', async () => {
-  const { ApolloClient, ApolloLink, InMemoryCache } =
-    await import('@apollo/client');
-  return { ApolloClient, InMemoryCache, SSRMultipartLink: ApolloLink };
-});
-
 const config: ApolloEnvironmentConfig = {
   graphqlUrl: 'https://api.example.test/graphql',
   apiKeyHeader: 'x-shopana-storefront-access-token',

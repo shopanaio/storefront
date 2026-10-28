@@ -2,10 +2,14 @@
 // Usage: import { model } from '@shopana/storefront-sdk'
 export { model } from './model/namespace';
 
-// Re-export main AppProvider
-export { App } from './App';
-export { AppProvider, type AppPreloadConfig } from './AppProvider';
-export { useLocalization, useFormatter, Money } from './modules/localization/react';
+// The root providers are framework-specific: `@shopana/storefront-sdk/App` and `/AppProvider`
+// (Next.js), `/AppProviders` under another framework integration.
+export type { AppPreloadConfig } from './server/app';
+export {
+  useLocalization,
+  useFormatter,
+  Money,
+} from './modules/localization/react';
 export { useStore, type Store } from './modules/store/react';
 export type {
   LocalizationState,
