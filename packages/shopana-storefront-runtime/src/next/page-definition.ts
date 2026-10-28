@@ -48,12 +48,33 @@ export interface RuntimePageDefinition<
 > {
   readonly pageType: TPageType;
 
+  /**
+   * The page data from its address: what the template renders with. Runs on the server for
+   * the page it renders and on the client for a page an app opens itself (a mobile stack),
+   * which renders as soon as this returns. So it reads the route and leaves Apollo queries to
+   * the sections, which load them under their own skeletons; data the page cannot render
+   * without (a CMS document) may still be fetched here. Answering without a promise lets a
+   * client page with loaded modules render without suspending.
+   */
   loadData(
     context: RuntimePageContext<TPageType>
+  ): RuntimePageDataResult<TData> | Promise<RuntimePageDataResult<TData>>;
+
+  /**
+   * Server only: runs the Apollo queries the sections read in the request client, so the
+   * server render and hydration find them in the cache and no section shows a skeleton.
+   * Returns the data to render with: `not-found` for a 404 response, or the data corrected
+   * by what the API accepted (a stale filter dropped). On the client the sections run the
+   * same queries themselves and render a missing page with `PageNotFound`.
+   */
+  preload?(
+    context: RuntimePageContext<TPageType>,
+    data: TData
   ): Promise<RuntimePageDataResult<TData>>;
 
   loadTemplate(): Promise<PageTemplate<TData>>;
 
+  /** Server only, with the data `preload` returned; its queries hit the request cache. */
   generateMetadata?(
     context: RuntimePageContext<TPageType>,
     data: TData

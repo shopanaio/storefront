@@ -19,6 +19,10 @@ interface ErasedRenderableDefinition {
   readonly pageType: RuntimeRenderablePageType;
   loadData(
     context: RuntimePageContext<RuntimeRenderablePageType>
+  ): RuntimePageDataResult<any> | Promise<RuntimePageDataResult<any>>;
+  preload?(
+    context: RuntimePageContext<RuntimeRenderablePageType>,
+    data: any
   ): Promise<RuntimePageDataResult<any>>;
   loadTemplate(): Promise<PageTemplate<any>>;
   generateMetadata?(
@@ -48,6 +52,8 @@ function isDefinition(value: unknown): value is ErasedDefinition {
     typeof candidate.pageType === 'string' &&
     typeof candidate.loadData === 'function' &&
     typeof candidate.loadTemplate === 'function' &&
+    (candidate.preload === undefined ||
+      typeof candidate.preload === 'function') &&
     (candidate.generateMetadata === undefined ||
       typeof candidate.generateMetadata === 'function') &&
     (candidate.Provider === undefined ||

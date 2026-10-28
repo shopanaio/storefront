@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
 import { ClosedPageGuard } from '@shopana/storefront-sdk/modules/session/react/components/ClosedPageGuard';
+import { ApolloCacheHydrator } from '@shopana/storefront-sdk/next/apollo/client';
 import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
 import {
   type DynamicModulePageProps,
@@ -113,7 +114,11 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
         searchParams: parseStableSearchParamsRecord(searchParamsKey),
         services,
       };
-      const result = await definition.loadData(context);
+      const loaded = await definition.loadData(context);
+      const result =
+        loaded.status === 'ready' && definition.preload
+          ? await definition.preload(context, loaded.data)
+          : loaded;
 
       if (result.status === 'ready' && process.env.NODE_ENV !== 'production') {
         assertSerializablePageData(pageType, result.data);
@@ -241,8 +246,19 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
       <Builder template={template} data={data} pageType={pageType} />
     );
     const Provider = execution.definition.Provider;
+    const page = Provider ? (
+      <Provider data={data}>{content}</Provider>
+    ) : (
+      content
+    );
+    if (!execution.definition.preload) return page;
 
-    return Provider ? <Provider data={data}>{content}</Provider> : content;
+    // What the preload put in the request client, applied before the sections read it.
+    return (
+      <ApolloCacheHydrator state={await services.extractCacheState()}>
+        {page}
+      </ApolloCacheHydrator>
+    );
   }
 
   return { Page, generateMetadata };

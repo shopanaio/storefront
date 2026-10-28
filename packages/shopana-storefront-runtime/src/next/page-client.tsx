@@ -4,7 +4,13 @@
  * Pages loaded programmatically on the client, the way `page.tsx` renders them on the
  * server: route → page definition → `loadData` → template → `Builder`. For apps that move
  * between pages without the Next router (a mobile stack): the first page still comes from
- * the server render, the following ones from here.
+ * the server render, the following ones from here. `preload` stays on the server: a page is
+ * ready once its data and template are, and its sections load their queries themselves,
+ * rendering what the Apollo cache already has.
+ *
+ * Page definitions and templates are code-split; `preloadRuntimePages` loads them ahead of
+ * time. With both loaded and a `loadData` that answers at once (it reads only the address),
+ * a page renders in the same render that asks for it, without suspending.
  */
 import type {
   ApolloClient,
@@ -13,13 +19,21 @@ import type {
 import { useApolloClient } from '@apollo/client/react';
 import { use, type ReactNode } from 'react';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
-import type { PageType } from '@shopana/storefront-sdk/core/types';
+import type { PageTemplate, PageType } from '@shopana/storefront-sdk/core/types';
 import type {
+  RuntimePageDataResult,
   RuntimePageModuleMap,
   RuntimePageServices,
+  RuntimeRenderablePageType,
 } from './page-definition';
 import { loadRenderableDefinition } from './page-registry';
 import { resolveRuntimeRoute } from './route';
+
+export {
+  PageNotFound,
+  PageNotFoundError,
+  isPageNotFoundError,
+} from './page-not-found';
 
 export type RuntimePageContent =
   | { status: 'ready'; pageType: PageType; element: ReactNode }
@@ -27,11 +41,98 @@ export type RuntimePageContent =
   /** Module pages (src/modules) render only on the server. */
   | { status: 'unsupported' };
 
-export interface LoadRuntimePageContentOptions {
+interface LoadRuntimePageContentOptions {
   /** Path and search without the locale segment, e.g. `/products/socks?variant=2`. */
   href: string;
   pages: RuntimePageModuleMap;
   client: ApolloClient;
+}
+
+/**
+ * A promise that carries its outcome the way React's `use` reads it: a settled one returns
+ * its value in the same render instead of suspending.
+ */
+type TrackedPromise<T> = Promise<T> & {
+  status?: 'pending' | 'fulfilled' | 'rejected';
+  value?: T;
+  reason?: unknown;
+};
+
+function track<T>(promise: Promise<T>): TrackedPromise<T> {
+  const tracked = promise as TrackedPromise<T>;
+  tracked.status = 'pending';
+  tracked.then(
+    (value) => {
+      tracked.status = 'fulfilled';
+      tracked.value = value;
+    },
+    (reason: unknown) => {
+      tracked.status = 'rejected';
+      tracked.reason = reason;
+    }
+  );
+  return tracked;
+}
+
+function fulfilled<T>(value: T): TrackedPromise<T> {
+  const promise = Promise.resolve(value) as TrackedPromise<T>;
+  promise.status = 'fulfilled';
+  promise.value = value;
+  return promise;
+}
+
+function isPromise<T>(value: T | Promise<T>): value is Promise<T> {
+  return typeof (value as Promise<T> | null)?.then === 'function';
+}
+
+type Definition = Awaited<ReturnType<typeof loadRenderableDefinition>>;
+
+interface PageModules {
+  definition: Definition;
+  template: PageTemplate<unknown>;
+}
+
+/** Definition and template loads of each page type, per registry; a failed one is dropped. */
+const moduleLoads = new WeakMap<
+  RuntimePageModuleMap,
+  Map<RuntimeRenderablePageType, TrackedPromise<PageModules>>
+>();
+
+function loadPageModules(
+  pages: RuntimePageModuleMap,
+  pageType: RuntimeRenderablePageType
+): TrackedPromise<PageModules> {
+  let loads = moduleLoads.get(pages);
+  if (!loads) {
+    loads = new Map();
+    moduleLoads.set(pages, loads);
+  }
+
+  let load = loads.get(pageType);
+  if (!load) {
+    const pageLoads = loads;
+    load = track(
+      loadRenderableDefinition(pages, pageType).then(async (definition) => ({
+        definition,
+        template: await definition.loadTemplate(),
+      }))
+    );
+    load.catch(() => pageLoads.delete(pageType));
+    loads.set(pageType, load);
+  }
+  return load;
+}
+
+/**
+ * Loads the definitions and templates of the site pages, so later client page loads find
+ * them ready. Call it once the app is idle after it starts; failures are left to the page
+ * load that needs the module.
+ */
+export function preloadRuntimePages(pages: RuntimePageModuleMap): void {
+  for (const pageType of Object.keys(pages) as PageType[]) {
+    if (pageType === '404') continue;
+    loadPageModules(pages, pageType).catch(() => {});
+  }
 }
 
 /**
@@ -63,43 +164,17 @@ function toSearchRecord(searchParams: URLSearchParams) {
   return record;
 }
 
-/** Loads one page's data and template and returns it ready to render. */
-export async function loadRuntimePageContent({
-  href,
-  pages,
-  client,
-}: LoadRuntimePageContentOptions): Promise<RuntimePageContent> {
-  const url = new URL(href, window.location.origin);
-  const resolution = resolveRuntimeRoute(url.pathname);
-
-  if (resolution.kind === 'module') return { status: 'unsupported' };
-
-  const { pageType, params: routeParams } = resolution.route;
-  if (pageType === '404') return { status: 'not-found' };
-
-  const definition = await loadRenderableDefinition(pages, pageType);
-  const result = await definition.loadData({
-    pageType,
-    request: {
-      url: url.href,
-      pathname: url.pathname,
-      search: url.search,
-      host: url.host,
-      searchParams: url.searchParams,
-    },
-    routeParams,
-    searchParams: toSearchRecord(url.searchParams),
-    services: createClientPageServices(client),
-  });
-
+function renderPage(
+  pageType: RuntimeRenderablePageType,
+  { definition, template }: PageModules,
+  result: RuntimePageDataResult<unknown>
+): RuntimePageContent {
   if (result.status === 'not-found') return { status: 'not-found' };
 
-  const template = await definition.loadTemplate();
   const content = (
     <Builder template={template} data={result.data} pageType={pageType} />
   );
   const Provider = definition.Provider;
-
   return {
     status: 'ready',
     pageType,
@@ -111,14 +186,61 @@ export async function loadRuntimePageContent({
   };
 }
 
+/**
+ * Loads one page's data and template; no Apollo query waits. Settled at once when the page
+ * modules are loaded and `loadData` answers without a promise.
+ */
+function loadRuntimePageContent({
+  href,
+  pages,
+  client,
+}: LoadRuntimePageContentOptions): TrackedPromise<RuntimePageContent> {
+  const url = new URL(href, window.location.origin);
+  const resolution = resolveRuntimeRoute(url.pathname);
+
+  if (resolution.kind === 'module') return fulfilled({ status: 'unsupported' });
+
+  const { pageType, params: routeParams } = resolution.route;
+  if (pageType === '404') return fulfilled({ status: 'not-found' });
+
+  const loadData = (definition: Definition) =>
+    definition.loadData({
+      pageType,
+      request: {
+        url: url.href,
+        pathname: url.pathname,
+        search: url.search,
+        host: url.host,
+        searchParams: url.searchParams,
+      },
+      routeParams,
+      searchParams: toSearchRecord(url.searchParams),
+      services: createClientPageServices(client),
+    });
+
+  const modules = loadPageModules(pages, pageType);
+  if (modules.status === 'fulfilled' && modules.value) {
+    const loaded = modules.value;
+    const result = loadData(loaded.definition);
+    if (!isPromise(result)) return fulfilled(renderPage(pageType, loaded, result));
+    return track(result.then((data) => renderPage(pageType, loaded, data)));
+  }
+
+  return track(
+    modules.then(async (loaded) =>
+      renderPage(pageType, loaded, await loadData(loaded.definition))
+    )
+  );
+}
+
 /** Recently opened pages; a stack revisits them on back, so a few are kept. */
 const MAX_CACHED_PAGES = 8;
-const pageCache = new Map<string, Promise<RuntimePageContent>>();
+const pageCache = new Map<string, TrackedPromise<RuntimePageContent>>();
 
 /** The cached load of a page, started on first ask; a failed load is dropped to retry. */
 function cachedPageContent(
   options: LoadRuntimePageContentOptions
-): Promise<RuntimePageContent> {
+): TrackedPromise<RuntimePageContent> {
   const { href } = options;
   let promise = pageCache.get(href);
 
@@ -135,9 +257,10 @@ function cachedPageContent(
 }
 
 /**
- * Suspends until the page at `href` is loaded, then returns it. Wrap the caller in
- * Suspense (loading) and an error boundary (failed queries). A page stays cached by
- * `href`, so going back to it renders at once.
+ * The page at `href`, rendered at once when its modules are loaded (see
+ * `preloadRuntimePages`) and its data needs no network; otherwise it suspends until they
+ * are. Wrap the caller in Suspense (loading) and an error boundary (failed loads). A page
+ * stays cached by `href`, so going back to it renders at once.
  */
 export function useRuntimePageContent(
   href: string,
