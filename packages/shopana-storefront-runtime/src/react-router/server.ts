@@ -15,8 +15,6 @@ import {
   loadStorefrontLocales,
   resolveStorefrontLocale,
 } from '@shopana/storefront-sdk/modules/localization/server';
-import { buildClosedPageRedirect } from '@shopana/storefront-sdk/modules/session/core/closedPageRedirect';
-import { readServerAuthState } from '@shopana/storefront-sdk/modules/session/server';
 import {
   STOREFRONT_LOCALE_HEADER,
   splitLocaleFromPathname,
@@ -29,6 +27,7 @@ import {
   provideServerRequestStorage,
   type ServerRequestScope,
 } from '@shopana/storefront-sdk/server/requestScope';
+import { admitClosedPage } from '../core/closed-page';
 import { toSearchRecord, loadPageModules } from '../core/page-client';
 import {
   assertSerializablePageData,
@@ -56,7 +55,7 @@ import type { RuntimePageData, RuntimeRootData } from './route-data';
 
 export type { RuntimePageData, RuntimeRootData };
 
-/** A middleware of the theme (`src/runtime/middleware.ts`), run after the runtime's. */
+/** A middleware of the theme (`src/runtime/route-middleware.ts`), run after the runtime's. */
 export type RuntimeMiddleware = MiddlewareFunction<Response>;
 
 const storage = new AsyncLocalStorage<ServerRequestScope>();
@@ -116,36 +115,6 @@ export async function loadRuntimeRoot(
       preload: app.preload,
     }),
   };
-}
-
-/**
- * Admits a request to a module page closed to visitors without a session, or sends it to the
- * home page. Returns the home page address for the browser guard of the admitted page.
- */
-async function admitClosedPage(
-  request: SDKRequestContext,
-  cookie: string | null,
-  segment: string
-): Promise<string> {
-  const redirectTo = buildClosedPageRedirect({
-    pathname: request.pathname,
-    search: request.search,
-    locale: segment,
-  });
-  const target = resolveRuntimeRoute(
-    new URL(redirectTo, 'http://storefront.local').pathname,
-    segment
-  );
-  // The registry refuses a closed home page; this keeps a redirect loop impossible even so.
-  if (target.kind === 'module' && target.match.requiresSession) {
-    throw new Error(
-      `Closed page "${request.pathname}" redirects to the closed page "${redirectTo}"`
-    );
-  }
-
-  const auth = await readServerAuthState(cookie);
-  if (!auth.session && !auth.refreshPending) throw redirect(redirectTo);
-  return redirectTo;
 }
 
 /**
@@ -225,23 +194,25 @@ export function createRuntimePageLoader(
       if (resolution.kind === 'module') {
         const { match } = resolution;
         // Before the module loads: a closed page renders nothing for a visitor without a session.
-        const closedPageRedirect = match.requiresSession
+        const closedPage = match.requiresSession
           ? await admitClosedPage(
               request,
               incoming.headers.get('cookie'),
               localeSegment
             )
           : null;
+        if (closedPage && !closedPage.admitted) {
+          throw redirect(closedPage.redirectTo);
+        }
         const segments = resolution.pathname.split('/').filter(Boolean);
         const props = {
           params: { locale: localeSegment, module: segments },
           searchParams,
           pathParams: match.params ? { ...match.params } : {},
         };
-        const [, , payload] = await Promise.all([
+        const [{ payload }] = await Promise.all([
           loadModulePage(match.record),
           loadModuleLayout(route, match.record),
-          match.record.loader(),
         ]);
         const generate = getModuleMetadataGenerator(payload);
 
@@ -250,7 +221,7 @@ export function createRuntimePageLoader(
           slug: match.record.slug,
           pathname: resolution.pathname,
           props,
-          closedPageRedirect,
+          closedPageRedirect: closedPage?.redirectTo ?? null,
           metadata: generate
             ? await generate({ ...props, services })
             : buildModuleMetadata(match.record.slug),

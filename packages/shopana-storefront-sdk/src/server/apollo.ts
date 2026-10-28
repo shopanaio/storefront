@@ -6,6 +6,7 @@ import type {
 } from '../graphql/apollo/types';
 import { STOREFRONT_LOCALE_HEADER } from '../modules/localization/core/constants';
 import { readServerAuthState } from '../modules/session/server';
+import { getFrameworkApolloRequestClient } from '#server-framework';
 import {
   apolloEnvironmentKey,
   rememberApolloRequestClient,
@@ -48,6 +49,5 @@ export async function getApolloRequestClient(
   config: ApolloEnvironmentConfig
 ): Promise<ApolloClient> {
   if (getServerRequestScope()) return scopedRequestClient(config);
-  const { getNextApolloRequestClient } = await import('../next/apollo/server');
-  return getNextApolloRequestClient(config);
+  return getFrameworkApolloRequestClient(config);
 }

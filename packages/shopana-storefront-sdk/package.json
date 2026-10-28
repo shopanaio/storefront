@@ -27,6 +27,13 @@
   "files": [
     "dist"
   ],
+  "imports": {
+    "#server-framework": {
+      "types": "./dist/server/framework/next.d.ts",
+      "react-router": "./dist/server/framework/none.js",
+      "default": "./dist/server/framework/next.js"
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

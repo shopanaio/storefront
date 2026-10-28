@@ -26,10 +26,12 @@ export function localePrefixRedirect(
   routing: StorefrontRoutingConfig
 ): string | null {
   const defaultSegment = locales.defaultLocale.segment;
-  const { pathname } = splitLocaleFromPathname(
+  // Leading slashes collapse: `/en//evil.com` must not become the protocol-relative URL
+  // `//evil.com` of another site.
+  const pathname = splitLocaleFromPathname(
     url.pathname,
     segment ? [segment] : []
-  );
+  ).pathname.replace(/^\/{2,}/, '/');
   if (routing.localePrefix === 'as-needed' && segment === defaultSegment) {
     return `${pathname}${url.search}`;
   }

@@ -20,8 +20,15 @@ export interface CreateRuntimeViteConfigOptions {
    * of the working directory (the theme package the CLI runs in) by default.
    */
   runtimeDir?: string;
-  /** Merged over the runtime config: plugins are appended, other options override. */
+  /**
+   * The theme's Vite options: plugins, conditions, aliases, `ssr.noExternal` and defines are
+   * added to the runtime's, other options override them.
+   */
   config?: UserConfig;
+}
+
+function toList<T>(value: T | T[] | undefined): T[] {
+  return value === undefined ? [] : Array.isArray(value) ? value : [value];
 }
 
 function publicEnvDefines(): Record<string, string> {
@@ -54,16 +61,30 @@ export function createRuntimeViteConfig({
     for (const [name, value] of Object.entries(loadEnv(mode, rootDir, ''))) {
       process.env[name] ??= value;
     }
-    const { plugins = [], resolve, ssr, environments, ...rest } = config;
+    const {
+      plugins = [],
+      resolve,
+      ssr,
+      environments,
+      define,
+      ...rest
+    } = config;
+    const publicEnv = publicEnvDefines();
 
+    // The theme's options extend these: its own conditions, aliases and defines are added, and
+    // never take away the runtime condition, the theme aliases or the public variables.
     return {
+      ...rest,
       root: runtimeDir,
       envDir: rootDir,
-      publicDir: path.join(rootDir, 'public'),
+      publicDir: rest.publicDir ?? path.join(rootDir, 'public'),
       plugins: [reactRouter(), ...plugins],
       resolve: {
-        conditions: [RUNTIME_CONDITION, ...defaultClientConditions],
         ...resolve,
+        conditions: [
+          RUNTIME_CONDITION,
+          ...(resolve?.conditions ?? defaultClientConditions),
+        ],
         alias: {
           '@src': path.join(rootDir, 'src'),
           '@codegen': path.join(rootDir, 'codegen'),
@@ -71,28 +92,36 @@ export function createRuntimeViteConfig({
         },
       },
       ssr: {
-        noExternal: [/^@shopana\//],
         ...ssr,
+        noExternal:
+          ssr?.noExternal === true
+            ? true
+            : [/^@shopana\//, ...toList(ssr?.noExternal)],
         resolve: {
-          conditions: [RUNTIME_CONDITION, ...defaultServerConditions],
-          externalConditions: [RUNTIME_CONDITION],
           ...ssr?.resolve,
+          conditions: [
+            RUNTIME_CONDITION,
+            ...(ssr?.resolve?.conditions ?? defaultServerConditions),
+          ],
+          externalConditions: [
+            RUNTIME_CONDITION,
+            ...(ssr?.resolve?.externalConditions ?? []),
+          ],
         },
       },
-      define: { ...publicEnvDefines(), ...rest.define },
+      define: { ...define, ...publicEnv },
       environments: {
         ...environments,
         client: {
           ...environments?.client,
           define: {
-            ...publicEnvDefines(),
-            'process.env': '{}',
-            ...rest.define,
+            ...define,
             ...environments?.client?.define,
+            ...publicEnv,
+            'process.env': '{}',
           },
         },
       },
-      ...rest,
     };
   };
 }

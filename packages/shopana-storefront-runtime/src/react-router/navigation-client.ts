@@ -20,6 +20,15 @@ import {
   useScopePage,
 } from '../core/navigation-scope';
 
+/** A path segment decoded; one with broken percent-encoding stays as it is. */
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 /** An absolute URL the router cannot move to: another site. */
 function isOtherSite(href: string): boolean {
   return (
@@ -114,7 +123,7 @@ export function useParams<
   const pathname = usePathname();
   const { locale } = useLocalization();
   return useMemo(() => {
-    const slug = pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const slug = pathname.split('/').filter(Boolean).map(decodeSegment);
     return {
       locale: locale.segment,
       slug: slug.length ? slug : undefined,

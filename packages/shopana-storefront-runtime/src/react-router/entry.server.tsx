@@ -10,6 +10,7 @@ import {
   type RenderToPipeableStreamOptions,
 } from 'react-dom/server';
 import { ServerRouter, type EntryContext } from 'react-router';
+import { readRenderRedirect, REDIRECT_STATUSES } from './render-redirect';
 
 /** How long the server streams pending Suspense content before it gives up on it. */
 export const streamTimeout = 5_000;
@@ -45,6 +46,23 @@ export default function handleRequest(
       {
         [readyOption]() {
           shellRendered = true;
+          // A `redirect()` the render ran into before anything was sent: an HTTP redirect.
+          const redirect = REDIRECT_STATUSES.has(responseStatusCode)
+            ? readRenderRedirect()
+            : null;
+          if (redirect) {
+            clearTimeout(timeoutId);
+            timeoutId = undefined;
+            abort();
+            responseHeaders.set('Location', redirect.location);
+            resolve(
+              new Response(null, {
+                status: redirect.status,
+                headers: responseHeaders,
+              })
+            );
+            return;
+          }
           const body = new PassThrough({
             final(callback) {
               clearTimeout(timeoutId);

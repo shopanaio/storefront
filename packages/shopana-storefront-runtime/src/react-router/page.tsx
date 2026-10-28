@@ -8,6 +8,7 @@
  * snapshot of its `preload` applied first.
  */
 import { Fragment, use, useMemo, type ReactNode } from 'react';
+import type { ApolloClient } from '@apollo/client';
 import { useApolloClient } from '@apollo/client/react';
 import {
   isRouteErrorResponse,
@@ -114,7 +115,16 @@ async function preloadPageModules(
   ]);
 }
 
-const notFoundDataLoads = new Map<string, TrackedPromise<unknown>>();
+/**
+ * The 404 data loads of the client-side not-found page, by the Apollo client that loads them:
+ * on the server the client of one request (its data is that visitor's, and it goes with the
+ * request), in the browser the app's client. A few addresses are kept per client.
+ */
+const notFoundDataLoads = new WeakMap<
+  ApolloClient,
+  Map<string, TrackedPromise<unknown>>
+>();
+const MAX_NOT_FOUND_LOADS = 8;
 
 export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
   const { ErrorPage, ...route } = options;
@@ -176,7 +186,12 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
     const client = useApolloClient();
     const location = useLocation();
     const href = `${location.pathname}${location.search}`;
-    let load = notFoundDataLoads.get(href);
+    let loads = notFoundDataLoads.get(client);
+    if (!loads) {
+      loads = new Map();
+      notFoundDataLoads.set(client, loads);
+    }
+    let load = loads.get(href);
     if (!load) {
       const url = new URL(href, 'http://storefront.local');
       const request: SDKRequestContext = {
@@ -195,8 +210,12 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
           })
         )
       );
-      load.catch(() => notFoundDataLoads.delete(href));
-      notFoundDataLoads.set(href, load);
+      const clientLoads = loads;
+      load.catch(() => clientLoads.delete(href));
+      loads.set(href, load);
+      if (loads.size > MAX_NOT_FOUND_LOADS) {
+        loads.delete(loads.keys().next().value as string);
+      }
     }
     return <NotFoundView data={use(load)} />;
   }

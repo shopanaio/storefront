@@ -97,7 +97,9 @@ describe('initRuntime for React Router', () => {
     await writeTheme(
       { name: 'theme', storefront: { framework: 'react-router' } },
       {
-        'src/runtime/middleware.ts': 'export default [];',
+        'src/runtime/route-middleware.ts': 'export default [];',
+        // The Next.js middleware of the theme is not React Router's.
+        'src/runtime/middleware.ts': 'export default function middleware() {}',
         'vite.config.ts': 'export default {};',
       }
     );
@@ -111,7 +113,7 @@ describe('initRuntime for React Router', () => {
     ).toBe("export { default } from '../vite.config.ts';\n");
     expect(
       await readFile(path.join(result.runtimeDir, 'app/middleware.ts'), 'utf8')
-    ).toBe("export { default } from '@src/runtime/middleware';\n");
+    ).toBe("export { default } from '@src/runtime/route-middleware';\n");
   });
 
   it('removes the files of the framework the theme left', async () => {

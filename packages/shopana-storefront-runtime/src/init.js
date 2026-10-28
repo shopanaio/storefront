@@ -87,11 +87,15 @@ const frameworkLayouts = {
   },
 };
 
-/** The theme's own middleware of a React Router storefront, run after the runtime's. */
+/**
+ * The theme's own middleware of a React Router storefront, run after the runtime's. Not
+ * `src/runtime/middleware.ts`: that is the Next.js middleware of a theme, a function of
+ * another contract.
+ */
 const themeMiddlewareCandidates = [
-  'src/runtime/middleware.ts',
-  'src/runtime/middleware.tsx',
-  'src/runtime/middleware.js',
+  'src/runtime/route-middleware.ts',
+  'src/runtime/route-middleware.tsx',
+  'src/runtime/route-middleware.js',
 ];
 
 /**
@@ -286,7 +290,7 @@ async function writeThemeMiddleware(rootDir, runtimeDir) {
   }
 
   const contents = matches.length
-    ? "export { default } from '@src/runtime/middleware';\n"
+    ? "export { default } from '@src/runtime/route-middleware';\n"
     : [
         "import type { RuntimeMiddleware } from '@shopana/storefront/react-router/server';",
         '',

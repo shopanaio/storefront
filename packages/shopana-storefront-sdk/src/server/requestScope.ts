@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { readFrameworkRequestHeaders } from '#server-framework';
 
 /** The part of the request headers server code reads. */
 export interface ServerRequestHeaders {
@@ -50,8 +51,7 @@ export function getServerRequestScope(): ServerRequestScope | undefined {
 export async function readServerRequestHeaders(): Promise<ServerRequestHeaders> {
   const scope = getServerRequestScope();
   if (scope) return scope.headers;
-  const { headers } = await import('next/headers');
-  return headers();
+  return readFrameworkRequestHeaders();
 }
 
 /**

@@ -67,6 +67,8 @@ export function loadRouteLayout(
 }
 
 export interface ModulePageModules {
+  /** What the module's loader returned: the page component and its `generateMetadata`. */
+  payload: unknown;
   Component: ComponentType<DynamicModulePageProps>;
   /** The module's own layout; null when it renders in the storefront layout. */
   Layout: PageLayoutComponent | null;
@@ -88,6 +90,7 @@ export function loadModulePage(
       record.layoutLoader?.(),
     ]);
     return {
+      payload,
       Component: getComponentFromModule(
         payload as ModuleExport<DynamicModulePageProps>
       ),

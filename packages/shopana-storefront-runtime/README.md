@@ -132,7 +132,8 @@ session routes. The theme provides:
   `AppProvider` props;
 - `src/runtime/layout.tsx`, the document: `<html>` with `Meta`, `Links`, the app in
   `AppProvider` and `Scripts`, plus optional `meta` and `links` for every page;
-- optionally `src/runtime/middleware.ts`, React Router middleware run after the runtime's.
+- optionally `src/runtime/route-middleware.ts`, React Router middleware run after the
+  runtime's (`src/runtime/middleware.ts` stays the Next.js middleware).
 
 ```ts
 // src/runtime/app.ts
@@ -183,7 +184,7 @@ export default function RootLayout({
 ```
 
 ```ts
-// src/runtime/middleware.ts (optional)
+// src/runtime/route-middleware.ts (optional)
 import type { RuntimeMiddleware } from '@shopana/storefront/react-router/server';
 
 const middleware: RuntimeMiddleware[] = [];

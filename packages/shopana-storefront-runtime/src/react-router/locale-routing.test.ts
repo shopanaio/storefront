@@ -13,7 +13,7 @@ const redirect = (
   segment: string | null,
   localePrefix: 'as-needed' | 'always'
 ) =>
-  localePrefixRedirect(new URL(href, 'https://shop.test'), segment, locales, {
+  localePrefixRedirect(new URL(`https://shop.test${href}`), segment, locales, {
     localePrefix,
   });
 
@@ -33,6 +33,16 @@ describe('localePrefixRedirect', () => {
     );
     expect(redirect('/', null, 'always')).toBe('/en');
     expect(redirect('/en/products/socks', 'en', 'always')).toBeNull();
+  });
+});
+
+describe('localePrefixRedirect on other sites', () => {
+  it('never answers a protocol-relative address', () => {
+    expect(redirect('/en//evil.com', 'en', 'as-needed')).toBe('/evil.com');
+    expect(redirect('/en///evil.com/x?y=1', 'en', 'as-needed')).toBe(
+      '/evil.com/x?y=1'
+    );
+    expect(redirect('//evil.com', null, 'always')).toBe('/en/evil.com');
   });
 });
 

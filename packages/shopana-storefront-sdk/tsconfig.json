@@ -18,7 +18,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "#server-framework": ["./src/server/framework/next.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": [

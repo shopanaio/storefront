@@ -7,6 +7,11 @@ import {
   useRevalidator,
   useRouteError,
 } from 'react-router';
+import {
+  readRenderRedirect,
+  REDIRECT_STATUSES,
+  type RenderRedirect,
+} from './render-redirect';
 
 /** The theme's error page (`src/runtime/error.tsx`), with the props of Next.js `error.tsx`. */
 export type RuntimeErrorPage = ComponentType<{
@@ -14,18 +19,13 @@ export type RuntimeErrorPage = ComponentType<{
   reset: () => void;
 }>;
 
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-
-/** A `redirect()` thrown while rendering: the browser follows it. */
-export function getThrownRedirect(error: unknown): string | null {
-  if (
-    error instanceof Response &&
-    REDIRECT_STATUSES.has(error.status) &&
-    error.headers.has('Location')
-  ) {
-    return error.headers.get('Location');
+/** A `redirect()` thrown while rendering. */
+export function getThrownRedirect(error: unknown): RenderRedirect | null {
+  if (!(error instanceof Response) || !REDIRECT_STATUSES.has(error.status)) {
+    return null;
   }
-  return null;
+  const location = error.headers.get('Location');
+  return location ? { location, status: error.status } : null;
 }
 
 function toError(error: unknown): Error {
@@ -42,8 +42,22 @@ function toError(error: unknown): Error {
 export function RouteErrorPage({ ErrorPage }: { ErrorPage: RuntimeErrorPage }) {
   const error = useRouteError();
   const revalidator = useRevalidator();
-  const redirectTo = getThrownRedirect(error);
-  if (redirectTo) return <Navigate to={redirectTo} replace />;
+  // In the browser the thrown response itself. On the server React Router keeps only its
+  // status: the entry answers with the redirect `redirect()` kept, and content streamed after
+  // the response started refreshes to it, as Next.js does.
+  const redirect =
+    getThrownRedirect(error) ??
+    (isRouteErrorResponse(error) && REDIRECT_STATUSES.has(error.status)
+      ? readRenderRedirect()
+      : null);
+  if (redirect) {
+    return (
+      <>
+        <meta httpEquiv="refresh" content={`0;url=${redirect.location}`} />
+        <Navigate to={redirect.location} replace />
+      </>
+    );
+  }
 
   return (
     <ErrorPage
