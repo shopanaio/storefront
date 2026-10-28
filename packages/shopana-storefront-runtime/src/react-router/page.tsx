@@ -18,6 +18,7 @@
  */
 import {
   Fragment,
+  memo,
   use,
   useEffect,
   useMemo,
@@ -357,9 +358,13 @@ export interface RuntimePageProps {
  * A page from the data the page route loaded for it, without the route: for an app that keeps
  * its own screens over the router's history (a mobile stack), each screen showing the page of
  * its entry while the router has moved on. The metadata of a page the browser loaded follows
- * as on the route; a missing page or an error goes to the boundary around.
+ * as on the route; a missing page or an error goes to the boundary around. Memoized: a screen
+ * rendered again with the same page (a router update elsewhere) leaves the page as it is.
  */
-export function RuntimePage({ pages, page }: RuntimePageProps) {
+export const RuntimePage = memo(function RuntimePage({
+  pages,
+  page,
+}: RuntimePageProps) {
   return (
     <>
       {usePageElement(pages, page)}
@@ -368,7 +373,7 @@ export function RuntimePage({ pages, page }: RuntimePageProps) {
       ) : null}
     </>
   );
-}
+});
 
 /** An address the browser resolves a page for, as the server loader reads it. */
 interface ClientAddress {

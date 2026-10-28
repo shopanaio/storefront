@@ -1,11 +1,10 @@
 'use client';
 
-import { useContext, useMemo } from 'react';
+import { use, useContext, useMemo } from 'react';
 import {
   UNSAFE_DataRouterContext as DataRouterContext,
-  useLocation,
+  UNSAFE_LocationContext as LocationContext,
   useNavigate,
-  useSearchParams as useRouterSearchParams,
 } from 'react-router';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
 import { isAbsoluteUrl } from '@shopana/storefront-sdk/routing';
@@ -93,10 +92,12 @@ export function useRouter(): StorefrontRouter {
  * of a stack) that page's own, the router's otherwise.
  */
 export function usePathname(): string {
-  const { pathname } = useLocation();
   const { stripLocale } = useLocalization();
   const page = useScopePage();
-  return page ? page.pathname : stripLocale(pathname);
+  // A scope's page answers alone, without the router's location: reading it would render
+  // the screen again on every move of the router (`use` reads a context conditionally).
+  if (page) return page.pathname;
+  return stripLocale(use(LocationContext).location.pathname);
 }
 
 /**
@@ -104,14 +105,10 @@ export function usePathname(): string {
  * page's own, the router's otherwise.
  */
 export function useSearchParams(): ReadonlySearchParams {
-  const [searchParams] = useRouterSearchParams();
   const page = useScopePage();
-  const pageSearch = page?.search ?? null;
-  return useMemo(
-    () =>
-      pageSearch === null ? searchParams : new URLSearchParams(pageSearch),
-    [pageSearch, searchParams]
-  );
+  // As usePathname: the router's location only outside a scope.
+  const search = page ? page.search : use(LocationContext).location.search;
+  return useMemo(() => new URLSearchParams(search), [search]);
 }
 
 /**
