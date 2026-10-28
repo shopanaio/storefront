@@ -7,11 +7,16 @@
  * mounted from page to page; the page under it is new for every address, with the cache
  * snapshot of its `preload` applied first.
  *
+ * After hydration the app runs as a single-page app: a client navigation asks the server
+ * nothing. Its loader resolves the address in the browser, loads the page's modules and runs
+ * `loadData` with the app's Apollo client; `preload` stays on the server, the sections load
+ * their queries under their skeletons. The metadata follows once known.
+ *
  * A page a section finds missing while rendering (`notFound()`, `PageNotFound`) renders the 404
  * page in the page's boundary, under the layout of the page, the same on the server (status
  * 404) and in the browser. A 404 the loader answers renders in the 404 layout.
  */
-import { Fragment, use, useMemo, type ReactNode } from 'react';
+import { Fragment, use, useEffect, useMemo, type ReactNode } from 'react';
 import type { ApolloClient } from '@apollo/client';
 import { useApolloClient } from '@apollo/client/react';
 import {
@@ -26,6 +31,7 @@ import {
 } from 'react-router';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
 import { ApolloCacheHydrator } from '@shopana/storefront-sdk/graphql/apollo/ApolloCacheHydrator';
+import { buildClosedPageRedirect } from '@shopana/storefront-sdk/modules/session/core/closedPageRedirect';
 import { ClosedPageGuard } from '@shopana/storefront-sdk/modules/session/react/components/ClosedPageGuard';
 import { splitLocaleFromPathname } from '@shopana/storefront-sdk/routing';
 import { getServerRequestScope } from '@shopana/storefront-sdk/server/requestScope';
@@ -33,14 +39,33 @@ import {
   createClientPageServices,
   loadPageModules,
   renderPageElement,
+  toSearchRecord,
   track,
   type TrackedPromise,
 } from '../core/page-client';
+import {
+  buildModuleMetadata,
+  getModuleMetadataGenerator,
+} from '../core/module-page';
+import type { RuntimeMetadata } from '../core/metadata';
+import type {
+  RuntimePageModuleMap,
+  RuntimePageServices,
+} from '../core/page-definition';
 import type { SDKRequestContext } from '../core/request-context';
 import { resolveRuntimeRoute } from '../core/route';
-import { getKnownLocaleSegments, useLocaleSegments } from './document';
+import {
+  getBrowserApolloClient,
+  getDefaultLocaleSegment,
+  getKnownLocaleSegments,
+  useLocaleSegments,
+} from './document';
 import { RouteErrorPage, type RuntimeErrorPage } from './error';
-import { mergeMetaDescriptors, toMetaDescriptors } from './metadata';
+import {
+  applyDocumentMetadata,
+  mergeMetaDescriptors,
+  toMetaDescriptors,
+} from './metadata';
 import { isNotFoundSignal } from './not-found-response';
 import { readRenderStatus, recordRenderStatus } from './render-status';
 import {
@@ -119,31 +144,16 @@ function loadAddressLayout(
   return loadRouteLayout(route, resolution.pageType, { isModule: false });
 }
 
-/** Loads the modules a page renders with, so a client navigation renders without suspending. */
-async function preloadPageModules(
-  route: RuntimePageRouteDefinition,
-  page: RuntimePageData
-): Promise<void> {
-  await Promise.all([
-    loadPageLayout(route, page),
-    page.kind === 'page'
-      ? loadPageModules(route.pages, page.pageType)
-      : page.kind === 'module'
-        ? loadModulePage(moduleRecord(page.pathname))
-        : loadNotFoundModules(route.pages),
-  ]);
-}
-
 /** The page itself, from loaded modules. */
 function usePageElement(
-  route: RuntimePageRouteDefinition,
+  pages: RuntimePageModuleMap,
   page: RuntimePageData
 ): ReactNode {
   const client = useApolloClient();
   const services = useMemo(() => createClientPageServices(client), [client]);
 
   if (page.kind === 'page') {
-    const modules = use(loadPageModules(route.pages, page.pageType));
+    const modules = use(loadPageModules(pages, page.pageType));
     const element = renderPageElement(page.pageType, modules, page.data);
     return page.cacheState ? (
       <ApolloCacheHydrator state={page.cacheState}>
@@ -166,7 +176,7 @@ function usePageElement(
     );
   }
 
-  const { definition, template } = use(loadNotFoundModules(route.pages));
+  const { definition, template } = use(loadNotFoundModules(pages));
   const content = (
     <Builder template={template} data={page.data} pageType="404" />
   );
@@ -248,7 +258,76 @@ function RenderedNotFound({ route }: { route: RuntimePageRouteDefinition }) {
   // The server entry answers 404 when this renders before the response.
   recordRenderStatus(404);
   const data = useNotFoundData(route);
-  return usePageElement(route, { kind: 'not-found', data, metadata: {} });
+  return usePageElement(route.pages, {
+    kind: 'not-found',
+    data,
+    metadata: {},
+  });
+}
+
+/** The request of an address the browser loads a page for itself. */
+function requestOfUrl(url: URL): SDKRequestContext {
+  return {
+    url: url.href,
+    pathname: url.pathname,
+    search: url.search,
+    host: url.host,
+    searchParams: url.searchParams,
+  };
+}
+
+/**
+ * Metadata computed after the call returns, so the page renders without waiting for it; a
+ * failure leaves the route's tags (a section shows the page's own error).
+ */
+function laterMetadata(
+  generate: () => Promise<RuntimeMetadata> | RuntimeMetadata
+): Promise<RuntimeMetadata> {
+  const pending = Promise.resolve().then(generate);
+  pending.catch(() => {});
+  return pending;
+}
+
+/** Puts the metadata of a page the browser loaded into the document while the page shows. */
+function PendingMetadata({ load }: { load: Promise<RuntimeMetadata> }) {
+  useEffect(() => {
+    let active = true;
+    let restore: (() => void) | null = null;
+    load.then(
+      (metadata) => {
+        if (active) restore = applyDocumentMetadata(metadata);
+      },
+      () => {}
+    );
+    return () => {
+      active = false;
+      restore?.();
+    };
+  }, [load]);
+  return null;
+}
+
+export interface RuntimePageProps {
+  pages: RuntimePageModuleMap;
+  /** What the page route loaded for an address (see `useRouterPage`). */
+  page: RuntimePageData;
+}
+
+/**
+ * A page from the data the page route loaded for it, without the route: for an app that keeps
+ * its own screens over the router's history (a mobile stack), each screen showing the page of
+ * its entry while the router has moved on. The metadata of a page the browser loaded follows
+ * as on the route; a missing page or an error goes to the boundary around.
+ */
+export function RuntimePage({ pages, page }: RuntimePageProps) {
+  return (
+    <>
+      {usePageElement(pages, page)}
+      {page.pendingMetadata ? (
+        <PendingMetadata load={page.pendingMetadata} />
+      ) : null}
+    </>
+  );
 }
 
 /** The page in its layout, or alone without one. */
@@ -306,7 +385,10 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
     const { pathname, search } = useLocation();
     return (
       <Fragment key={`${pathname}${search}`}>
-        {usePageElement(route, page)}
+        {usePageElement(route.pages, page)}
+        {page.pendingMetadata ? (
+          <PendingMetadata load={page.pendingMetadata} />
+        ) : null}
       </Fragment>
     );
   }
@@ -318,23 +400,104 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
     return <RouteErrorPage ErrorPage={ErrorPage} />;
   }
 
+  /** The theme's 404 page, with its data loaded in the browser. */
+  async function clientNotFound(
+    request: SDKRequestContext,
+    services: RuntimePageServices
+  ): Promise<RuntimePageData> {
+    const [modules] = await Promise.all([
+      loadNotFoundModules(route.pages),
+      loadRouteLayout(route, '404', { isModule: false }),
+    ]);
+    const data = await modules.definition.loadData({
+      pageType: '404',
+      request,
+      services,
+    });
+    return { kind: 'not-found', data, metadata: {} };
+  }
+
   /**
-   * On a client navigation: the server data, and the modules to render it with. The modules of
-   * a reserved page start loading with the data, from the page type of the address (an
-   * optimization: without the store languages yet, the address is not split).
+   * A client navigation, without the server: the page of the address with its modules and
+   * layout loaded and its `loadData` run with the app's Apollo client, as the server loader
+   * resolves it. A page closed to visitors without a session is left to its browser guard.
+   * The first page comes from the server render (no `hydrate`).
    */
-  async function clientLoader({ url, serverLoader }: ClientLoaderFunctionArgs) {
-    const { pathname } = splitLocaleFromPathname(
+  async function clientLoader({
+    url,
+  }: ClientLoaderFunctionArgs): Promise<RuntimePageData> {
+    const { locale: segment } = splitLocaleFromPathname(
       url.pathname,
       getKnownLocaleSegments()
     );
-    const expected = resolveRuntimeRoute(pathname);
-    if (expected.kind === 'sdk' && expected.pageType !== '404') {
-      loadPageModules(route.pages, expected.pageType).catch(() => {});
+    const localeSegment = segment ?? getDefaultLocaleSegment();
+    const resolution = resolveRuntimeRoute(url.pathname, segment ?? undefined);
+    const request = requestOfUrl(url);
+    const searchParams = toSearchRecord(url.searchParams);
+    const services = createClientPageServices(getBrowserApolloClient());
+
+    if (resolution.kind === 'module') {
+      const { match } = resolution;
+      const props = {
+        params: {
+          locale: localeSegment,
+          module: resolution.pathname.split('/').filter(Boolean),
+        },
+        searchParams,
+        pathParams: match.params ? { ...match.params } : {},
+      };
+      const [{ payload }] = await Promise.all([
+        loadModulePage(match.record),
+        loadModuleLayout(route, match.record),
+      ]);
+      const generate = getModuleMetadataGenerator(payload);
+      return {
+        kind: 'module',
+        slug: match.record.slug,
+        pathname: resolution.pathname,
+        props,
+        closedPageRedirect: match.requiresSession
+          ? buildClosedPageRedirect({
+              pathname: url.pathname,
+              search: url.search,
+              locale: localeSegment,
+            })
+          : null,
+        metadata: generate ? {} : buildModuleMetadata(match.record.slug),
+        pendingMetadata: generate
+          ? laterMetadata(() => generate({ ...props, services }))
+          : null,
+      };
     }
-    const page = (await serverLoader()) as RuntimePageData;
-    await preloadPageModules(route, page);
-    return page;
+
+    const { pageType, params: routeParams } = resolution.route;
+    if (pageType === '404') return clientNotFound(request, services);
+
+    const [{ definition }] = await Promise.all([
+      loadPageModules(route.pages, pageType),
+      loadRouteLayout(route, pageType, { isModule: false }),
+    ]);
+    const context = {
+      pageType,
+      request,
+      routeParams: { ...routeParams },
+      searchParams,
+      services,
+    };
+    const loaded = await definition.loadData(context);
+    if (loaded.status === 'not-found') return clientNotFound(request, services);
+
+    const { generateMetadata } = definition;
+    return {
+      kind: 'page',
+      pageType,
+      data: loaded.data,
+      cacheState: null,
+      metadata: {},
+      pendingMetadata: generateMetadata
+        ? laterMetadata(() => generateMetadata(context, loaded.data))
+        : null,
+    };
   }
 
   /** The theme's `<meta>` from the root, under the page's own metadata. */

@@ -1,5 +1,5 @@
 import { useState, useDeferredValue, useEffect, useMemo } from 'react';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 
 export const useSearchInput = (delay = 300) => {
   const [searchTerm, setSearchTerm] = useState('');

@@ -205,8 +205,13 @@ What the runtime does, as the Next.js app does:
   and `preload` with the request client, computes the metadata, and answers a missing page with
   the theme's 404 page (in the 404 layout) and status 404. The page renders under its layout,
   which stays mounted between pages, with the snapshot of its own `preload` queries applied
-  first (the root queries come with the root data). A client navigation loads the data on the
-  server and the page's modules in parallel;
+  first (the root queries come with the root data);
+- after hydration the app is a single-page app: a client navigation asks the server nothing.
+  The page's loader runs in the browser: it resolves the address, loads the page's modules
+  and layout and runs `loadData` with the app's Apollo client (`preload` stays on the server;
+  the sections load their queries under their skeletons). The metadata is computed while the
+  page shows and then put into the document (title and `<meta>` tags). A page closed to
+  visitors without a session is left to its browser guard;
 - `notFound()` and `PageNotFound` while rendering end in the 404 page under the page's layout,
   with status 404 when the server renders it before the response (always for crawlers and
   `HEAD`; content streamed later shows it in the browser with `noindex`); `redirect()` answers

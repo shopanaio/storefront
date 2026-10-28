@@ -10,7 +10,8 @@ import {
 } from '#checkout/state/banners/bannerStore';
 import type { OperationVariables, TypedDocumentNode } from '@apollo/client';
 import { useCallback, useRef, useEffect } from 'react';
-import { debounce, type DebouncedFunc } from 'lodash';
+import debounce from 'lodash/debounce';
+import type { DebouncedFunc } from 'lodash';
 import {
   emitCheckoutEvent,
   CheckoutEvent,

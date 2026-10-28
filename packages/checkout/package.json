@@ -91,7 +91,6 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@types/lodash": "^4.17.20",
     "@types/nprogress": "^0.2.3",
-    "@types/webpack-env": "^1.18.8",
     "@vitejs/plugin-react": "^4.3.4",
     "antd": "^6.0.0",
     "antd-style": "^3.7.1",

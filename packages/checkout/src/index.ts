@@ -1,4 +1,8 @@
 import dynamic from '@shopana/storefront/dynamic';
+// The checkout vendors register themselves on import, under every bundler.
+import './vendors/address-ua/register';
+import './vendors/liqpay/register';
+import './vendors/nova-poshta/register';
 
 export { usePlacedOrderNumber } from './hooks/usePlacedOrderNumber';
 
@@ -21,14 +25,3 @@ export const CheckoutReturnPage = dynamic(
   () => import('./page/return').then((m) => m.CheckoutReturnPageClient),
   { ssr: false }
 );
-
-/**
- * Auto-discover and register all checkout vendors.
- * This runs at server-side where require.context works with Turbopack.
- */
-const vendorsContext = require.context(
-  './vendors',
-  true,
-  /register\.(t|j)sx?$/
-);
-vendorsContext.keys().forEach((key) => vendorsContext(key));

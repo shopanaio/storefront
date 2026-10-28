@@ -12,6 +12,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import type { ApolloClient } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import { useRouteLoaderData } from 'react-router';
 import { AppProviders } from '@shopana/storefront-sdk/AppProviders';
@@ -42,20 +43,43 @@ export function RuntimeAppScope({
 }
 
 /**
- * Locale segments (lower case) of the store languages of the last root data, for the
- * revalidation of the root and the module preload of client navigations. Set after the first
- * render: a navigation started before it (from an effect of a child, during hydration) finds
- * no languages, which costs only the early module preload; a locale switch is a full page load
- * anyway (`switchLocale`).
+ * The locales of the last root data, for the revalidation of the root and the client loader of
+ * the pages: segments (lower case) of the store languages and the default one. Set after the
+ * first render: a navigation started before it (from an effect of a child, during hydration)
+ * finds none; a locale switch is a full page load anyway (`switchLocale`).
  */
 let knownLocaleSegments: readonly string[] = [];
+let defaultLocaleSegment = '';
 
 export function getKnownLocaleSegments(): readonly string[] {
   return knownLocaleSegments;
 }
 
-function rememberLocaleSegments(segments: readonly string[]) {
-  knownLocaleSegments = segments.map((segment) => segment.toLowerCase());
+/** The segment of the store default language, the `locale` param of an unprefixed address. */
+export function getDefaultLocaleSegment(): string {
+  return defaultLocaleSegment;
+}
+
+function rememberLocales(locales: ServerAppProps['locales']) {
+  knownLocaleSegments = locales.locales.map((locale) =>
+    locale.segment.toLowerCase()
+  );
+  defaultLocaleSegment = locales.defaultLocale.segment;
+}
+
+/**
+ * The Apollo client of the app in the browser, for the client loader of the pages, which runs
+ * outside React. One per page load: another locale is a full page load.
+ */
+let browserApolloClient: ApolloClient | null = null;
+
+export function getBrowserApolloClient(): ApolloClient {
+  if (!browserApolloClient) {
+    throw new Error(
+      'The Apollo client of the app is created with the root layout'
+    );
+  }
+  return browserApolloClient;
 }
 
 /** Locale segments of the root data, for code that renders under it. */
@@ -89,14 +113,23 @@ function RuntimeApolloProvider({
   // The server render reads the request client of the loaders: their queries are in its
   // cache, and anything else it runs goes out with the request's session. The browser starts
   // from the snapshot of the root loader; each page adds its own.
-  const [client] = useState(
-    () =>
-      peekApolloRequestClient(environmentConfig) ??
-      createApolloClient(environmentConfig, {
+  // One browser client per page load, made on the first call: StrictMode calls this twice,
+  // and the client loader must write into the cache the pages read.
+  const [client] = useState(() => {
+    const requestClient = peekApolloRequestClient(environmentConfig);
+    if (requestClient) return requestClient;
+    if (typeof window === 'undefined') {
+      return createApolloClient(environmentConfig, {
         initialState: app.apolloInitialState,
         locale: app.locale.tag,
-      })
-  );
+      });
+    }
+    browserApolloClient ??= createApolloClient(environmentConfig, {
+      initialState: app.apolloInitialState,
+      locale: app.locale.tag,
+    });
+    return browserApolloClient;
+  });
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 }
 
@@ -108,10 +141,9 @@ function RuntimeApolloProvider({
 export function AppProvider({ children }: { children: ReactNode }) {
   const runtimeApp = useContext(RuntimeAppContext);
   const app = useRuntimeApp();
-  const locales = app?.locales.locales;
+  const locales = app?.locales;
   useEffect(() => {
-    if (locales)
-      rememberLocaleSegments(locales.map((locale) => locale.segment));
+    if (locales) rememberLocales(locales);
   }, [locales]);
 
   if (!runtimeApp) {

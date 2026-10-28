@@ -99,6 +99,10 @@
       "types": "./dist/react-router/app.d.ts",
       "default": "./dist/react-router/app.js"
     },
+    "./react-router/app-history": {
+      "types": "./dist/react-router/app-history.d.ts",
+      "default": "./dist/react-router/app-history.js"
+    },
     "./react-router/auth": {
       "types": "./dist/react-router/auth.d.ts",
       "default": "./dist/react-router/auth.js"

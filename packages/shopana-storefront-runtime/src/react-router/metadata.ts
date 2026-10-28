@@ -136,3 +136,51 @@ export function mergeMetaDescriptors(
     ...page,
   ];
 }
+
+/**
+ * Puts the metadata of a page the browser loaded itself into the document, over the tags the
+ * route rendered: the title and the `<meta name|property>` tags (links stay as they are, they
+ * matter to crawlers, which get the server's pages). Returns the undo, which restores what the
+ * route rendered, so the next page starts from it.
+ */
+export function applyDocumentMetadata(metadata: RuntimeMetadata): () => void {
+  const undo: Array<() => void> = [];
+  for (const descriptor of toMetaDescriptors(metadata)) {
+    const record = descriptor as Record<string, unknown>;
+    if ('title' in record) {
+      const previous = document.title;
+      document.title = String(record.title);
+      undo.push(() => {
+        document.title = previous;
+      });
+      continue;
+    }
+    const attribute =
+      typeof record.name === 'string'
+        ? 'name'
+        : typeof record.property === 'string'
+          ? 'property'
+          : null;
+    if (!attribute || typeof record.content !== 'string') continue;
+    const key = record[attribute] as string;
+    const existing = document.head.querySelector<HTMLMetaElement>(
+      `meta[${attribute}="${CSS.escape(key)}"]`
+    );
+    if (existing) {
+      const previous = existing.content;
+      existing.content = record.content;
+      undo.push(() => {
+        existing.content = previous;
+      });
+    } else {
+      const element = document.createElement('meta');
+      element.setAttribute(attribute, key);
+      element.content = record.content;
+      document.head.append(element);
+      undo.push(() => element.remove());
+    }
+  }
+  return () => {
+    for (const step of undo.reverse()) step();
+  };
+}

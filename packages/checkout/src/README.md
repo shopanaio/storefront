@@ -109,7 +109,7 @@ The sign-in screens come from `@shopana/storefront-auth/ui` (a peer dependency, 
 
 - Types and contracts: `vendors/types.ts` — `ProviderModuleType` (payment/delivery), `ProviderConfig`, `ProviderMethodConfig`, `ProviderModuleApi`, and component props.
 - Module registry: `@shopana/storefront-sdk/registry` — modules register by `type` and `slug`; the slug is the provider code from the API (`providerCode`).
-- Providers autoload: `index.ts` — `require.context` loads every `vendors/*/register.*`.
+- Providers: `index.ts` imports every `vendors/*/register.*`; a new vendor adds its import there.
 - Provider render: `infra/ProviderRenderer.tsx` — resolves a provider by `moduleType` and `provider` from the registry, loads the module asynchronously, and renders it, passing `onSelectMethod`, `onUpdateMethodData`, and `deliveryAddress`.
 - Config resolve: `infra/resolveProviderConfig.ts` — loads the provider `config` to check that a payment method has a module.
 - Provider modules:
