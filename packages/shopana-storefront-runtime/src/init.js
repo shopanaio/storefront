@@ -62,6 +62,7 @@ const frameworkLayouts = {
   },
   'react-router': {
     defaultGeneratedFiles: [
+      'app/entry.client.tsx',
       'app/entry.server.tsx',
       'app/root.tsx',
       'app/routes.ts',

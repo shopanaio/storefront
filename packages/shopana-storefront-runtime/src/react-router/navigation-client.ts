@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import {
+  UNSAFE_DataRouterContext as DataRouterContext,
   useLocation,
   useNavigate,
-  useRevalidator,
   useSearchParams as useRouterSearchParams,
 } from 'react-router';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
@@ -45,7 +45,9 @@ function isOtherSite(href: string): boolean {
  */
 export function useRouter(): StorefrontRouter {
   const navigate = useNavigate();
-  const revalidator = useRevalidator();
+  // The router itself, not `useRevalidator`: that hook reads the navigation state, and every
+  // component with a router (every product card) would render again on each navigation.
+  const router = useContext(DataRouterContext)?.router;
   const { buildHref, stripLocale } = useLocalization();
   const onNavigate = useNavigationScope();
 
@@ -81,9 +83,9 @@ export function useRouter(): StorefrontRouter {
       back: () => (onNavigate ? window.history.back() : void navigate(-1)),
       forward: () => (onNavigate ? window.history.forward() : void navigate(1)),
       refresh: () =>
-        onNavigate ? window.location.reload() : void revalidator.revalidate(),
+        onNavigate ? window.location.reload() : void router?.revalidate(),
     };
-  }, [buildHref, navigate, onNavigate, revalidator, stripLocale]);
+  }, [buildHref, navigate, onNavigate, router, stripLocale]);
 }
 
 /**

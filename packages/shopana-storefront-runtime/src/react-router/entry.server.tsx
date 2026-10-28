@@ -13,6 +13,7 @@ import {
 import { ServerRouter, type EntryContext } from 'react-router';
 import { getServerRequestScope } from '@shopana/storefront-sdk/server/requestScope';
 import { apolloStateScript } from './apollo-ssr-state';
+import { hydratedPageOf, hydratedPageScript } from './hydration';
 import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import { isNotFoundSignal } from './not-found-response';
 import {
@@ -31,7 +32,7 @@ export function handleError(error: unknown, { request }: { request: Request }) {
   console.error(error);
 }
 
-/** Where the document ends: the Apollo state goes in before it. */
+/** Where the document ends: the Apollo state and the hydrated page go in before it. */
 const BODY_END = Buffer.from('</body>');
 
 /** How many bytes at the end of `data` are the start of `</body>`, cut off by the chunk. */
@@ -107,7 +108,8 @@ export default function handleRequest(
           }
 
           // Once React is done, the cache the app rendered with (the server render's queries
-          // included) goes in before `</body>`, for the browser to hydrate from. Held back
+          // included) and the page it rendered go in before `</body>`, for the browser to
+          // hydrate from (the client entry loads the page's code first). Held back
           // meanwhile: `</body>` and what follows it, or the end of a chunk that may begin it
           // (the tag can be split between two chunks).
           let closing: Buffer | null = null;
@@ -136,7 +138,10 @@ export default function handleRequest(
             },
             flush(callback) {
               stopTimeout();
-              const state = scope ? apolloStateScript(scope) : '';
+              const { loaderData, errors } = routerContext.staticHandlerContext;
+              const state =
+                (scope ? apolloStateScript(scope) : '') +
+                hydratedPageScript(hydratedPageOf(loaderData, errors));
               if (closing) {
                 if (state) this.push(state);
                 callback(null, closing);

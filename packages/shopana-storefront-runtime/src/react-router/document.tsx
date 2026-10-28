@@ -28,6 +28,7 @@ import type { RuntimeAppDefinition } from './app';
 import type { RuntimeAppProps, RuntimeRootData } from './route-data';
 
 export { Links, Meta, Scripts, ScrollRestoration } from 'react-router';
+export { waitBeforeHydration } from './hydration';
 export type { RuntimeAppProps } from './route-data';
 
 const RuntimeAppContext = createContext<RuntimeAppDefinition | null>(null);

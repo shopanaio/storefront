@@ -75,6 +75,7 @@ describe('initRuntime for React Router', () => {
 
     expect(result.framework).toBe('react-router');
     expect(await listFiles(result.runtimeDir)).toEqual([
+      'app/entry.client.tsx',
       'app/entry.server.tsx',
       'app/middleware.ts',
       'app/page-route.ts',

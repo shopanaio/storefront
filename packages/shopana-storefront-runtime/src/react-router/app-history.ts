@@ -7,7 +7,7 @@
  * client loader), and the app shows it in that screen. Back and forward are router moves the
  * app follows by the location.
  */
-import { useContext, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import {
   UNSAFE_DataRouterContext as DataRouterContext,
   useLocation,
@@ -56,6 +56,37 @@ export function useAppHistory(): AppHistory {
     }),
     [key, pathname, search, state, routerNavigate]
   );
+}
+
+/**
+ * Calls `listener` with the entry each move of the router goes to, as the move starts: before
+ * the router loads the page of the entry and renders it, so the app follows a back or a
+ * forward at once (pops its screen). Once per entry; the listener may change between renders.
+ */
+export function useAppHistoryMoves(
+  listener: (location: AppHistoryLocation) => void
+): void {
+  const router = useContext(DataRouterContext)?.router;
+  const latest = useRef(listener);
+  useEffect(() => {
+    latest.current = listener;
+  });
+
+  useEffect(() => {
+    if (!router) return;
+    let lastKey = router.state.location.key;
+    return router.subscribe((state) => {
+      const {
+        key,
+        pathname,
+        search,
+        state: entryState,
+      } = state.navigation.location ?? state.location;
+      if (key === lastKey) return;
+      lastKey = key;
+      latest.current({ key, pathname, search, state: entryState });
+    });
+  }, [router]);
 }
 
 export interface RouterPage {

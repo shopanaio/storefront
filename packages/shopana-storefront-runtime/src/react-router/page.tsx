@@ -86,6 +86,7 @@ import {
   type RuntimePageRouteDefinition,
 } from './page-modules';
 import type { RuntimePageData } from './route-data';
+import type { HydratedPage } from './hydration';
 
 export type {
   LoadRuntimeLayout,
@@ -124,7 +125,7 @@ function isNotFoundError(error: unknown): boolean {
 /** The layout of a page: its type's, a module's own, the 404 page's. */
 function loadPageLayout(
   route: RuntimePageRouteDefinition,
-  page: RuntimePageData
+  page: HydratedPage
 ): TrackedPromise<PageLayoutComponent | null> {
   if (page.kind === 'page') {
     return loadRouteLayout(route, page.pageType, { isModule: false });
@@ -133,6 +134,31 @@ function loadPageLayout(
     return loadModuleLayout(route, moduleRecord(page.pathname));
   }
   return loadRouteLayout(route, '404', { isModule: false });
+}
+
+/** The modules of a page: its type's page and template, a module's page, the 404 page's. */
+function loadPageModulesOf(
+  pages: RuntimePageModuleMap,
+  page: HydratedPage
+): TrackedPromise<unknown> {
+  if (page.kind === 'page') return loadPageModules(pages, page.pageType);
+  if (page.kind === 'module')
+    return loadModulePage(moduleRecord(page.pathname));
+  return loadNotFoundModules(pages);
+}
+
+/**
+ * The code the server's page rendered with, loaded before hydration (see `hydration`): the
+ * page's modules and its layout, so the render reads them at once.
+ */
+export async function preloadHydratedPage(
+  route: RuntimePageRouteDefinition,
+  page: HydratedPage
+): Promise<void> {
+  await Promise.all([
+    loadPageModulesOf(route.pages, page),
+    loadPageLayout(route, page),
+  ]);
 }
 
 /**

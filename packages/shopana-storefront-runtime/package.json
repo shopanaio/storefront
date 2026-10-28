@@ -115,6 +115,10 @@
       "types": "./dist/react-router/document.d.ts",
       "default": "./dist/react-router/document.js"
     },
+    "./react-router/entry.client": {
+      "types": "./dist/react-router/entry.client.d.ts",
+      "default": "./dist/react-router/entry.client.js"
+    },
     "./react-router/entry.server": {
       "types": "./dist/react-router/entry.server.d.ts",
       "default": "./dist/react-router/entry.server.js"
