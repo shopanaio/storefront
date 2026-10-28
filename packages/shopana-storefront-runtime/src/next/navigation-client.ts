@@ -1,107 +1,155 @@
 'use client';
 
-import {
-  ReadonlyURLSearchParams,
-  useParams as useNextParams,
-  usePathname as useNextPathname,
-  useRouter as useNextRouter,
-  useSearchParams as useNextSearchParams,
-} from 'next/navigation';
-import { useMemo } from 'react';
+/**
+ * The storefront's navigation hooks, same names and shapes as Next's, with no Next router
+ * behind them: the storefront history (SDK, TanStack history) is the only owner of the
+ * browser history on the client, and the Next router only rendered the first page on the
+ * server. Moves render on the client in the storefront page or an app moving pages itself (see
+ * page-rendering).
+ */
+import { useMemo, useSyncExternalStore } from 'react';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
-import type { HrefTarget } from '@shopana/storefront-sdk/routing';
+import {
+  getStorefrontHistory,
+  peekStorefrontHistory,
+  subscribeStorefrontHistory,
+  type HistoryLocation,
+  type HrefTarget,
+} from '@shopana/storefront-sdk/routing';
+import { useInitialLocation } from './initial-location';
+import { isServerOnlyPage } from './page-rendering';
 import {
   createNavigationTarget,
   useNavigationScope,
   useScopePage,
 } from './navigation-scope';
 
-type NextRouter = ReturnType<typeof useNextRouter>;
-type NavigateOptions = Parameters<NextRouter['push']>[1];
-type PrefetchOptions = Parameters<NextRouter['prefetch']>[1];
+/** URLSearchParams that throw on change, as Next's: the address changes through the router. */
+export class ReadonlyURLSearchParams extends URLSearchParams {
+  private static readonly error = 'ReadonlyURLSearchParams: change the address with the router';
 
-export interface StorefrontRouter extends Omit<NextRouter, 'push' | 'replace' | 'prefetch'> {
+  append(): void {
+    throw new Error(ReadonlyURLSearchParams.error);
+  }
+  delete(): void {
+    throw new Error(ReadonlyURLSearchParams.error);
+  }
+  set(): void {
+    throw new Error(ReadonlyURLSearchParams.error);
+  }
+  sort(): void {
+    throw new Error(ReadonlyURLSearchParams.error);
+  }
+}
+
+export interface NavigateOptions {
+  /** False keeps the scroll position when the move opens another page. */
+  scroll?: boolean;
+}
+
+export interface StorefrontRouter {
   push(href: HrefTarget, options?: NavigateOptions): void;
   replace(href: HrefTarget, options?: NavigateOptions): void;
-  prefetch(href: HrefTarget, options?: PrefetchOptions): void;
+  back(): void;
+  forward(): void;
+  /** Loads the document at its address again: no RSC refresh, the Next router is not here. */
+  refresh(): void;
+  /** Pages load on the client from the runtime's page registry; nothing to prefetch. */
+  prefetch(href: HrefTarget): void;
 }
 
-/**
- * Router whose navigations keep the active locale in storefront paths. Inside a
- * NavigationScope (an app moving pages itself) no call reaches the Next router: push and
- * replace go to the scope, back and forward walk the browser history, refresh reloads the
- * page at its real address, and prefetching is off.
- */
-export function useRouter(): StorefrontRouter {
-  const router = useNextRouter();
-  const { buildHref, stripLocale } = useLocalization();
-  const onNavigate = useNavigationScope();
-
-  return useMemo(() => {
-    const takenByScope = (href: string, replace: boolean) => {
-      if (!onNavigate) return false;
-      const target = createNavigationTarget(href, stripLocale, {
-        replace,
-        source: 'router',
-      });
-      return target !== null && onNavigate(target);
-    };
-
-    return {
-      ...router,
-      push: (href, options) => {
-        const localizedHref = buildHref(href);
-        if (!takenByScope(localizedHref, false)) {
-          router.push(localizedHref, options);
-        }
-      },
-      replace: (href, options) => {
-        const localizedHref = buildHref(href);
-        if (!takenByScope(localizedHref, true)) {
-          router.replace(localizedHref, options);
-        }
-      },
-      prefetch: (href, options) => {
-        if (!onNavigate) router.prefetch(buildHref(href), options);
-      },
-      back: () => (onNavigate ? window.history.back() : router.back()),
-      forward: () => (onNavigate ? window.history.forward() : router.forward()),
-      refresh: () => (onNavigate ? window.location.reload() : router.refresh()),
-    };
-  }, [buildHref, onNavigate, router, stripLocale]);
-}
+// Reading creates nothing: the history is created by the subscription (and UnclaimedMoves).
+const getHistoryLocation = () => peekStorefrontHistory()?.location ?? null;
+const getServerHistoryLocation = () => null;
 
 /**
- * Current pathname without the locale segment: inside a NavigationScope with `href` (a screen
- * of a stack) that page's own, the Next router's otherwise.
+ * The current entry of the storefront history: address, the state it was written with, key
+ * and index. Null on the server, during hydration and on a page without StorefrontHistory
+ * (Storybook, tests).
  */
-export function usePathname(): string {
-  const pathname = useNextPathname();
-  const { stripLocale } = useLocalization();
-  const page = useScopePage();
-  return page ? page.pathname : stripLocale(pathname);
-}
-
-/**
- * Current search params: inside a NavigationScope with `href` (a screen of a stack) that
- * page's own, the Next router's otherwise. Same type as Next's.
- */
-export function useSearchParams(): ReadonlyURLSearchParams {
-  const searchParams = useNextSearchParams();
-  const page = useScopePage();
-  const pageSearch = page?.search ?? null;
-  return useMemo(
-    () =>
-      pageSearch === null
-        ? searchParams
-        : new ReadonlyURLSearchParams(new URLSearchParams(pageSearch)),
-    [pageSearch, searchParams]
+export function useHistoryLocation(): HistoryLocation | null {
+  return useSyncExternalStore(
+    subscribeStorefrontHistory,
+    getHistoryLocation,
+    getServerHistoryLocation
   );
 }
 
 /**
- * Route params of the storefront route (`[locale]/[[...slug]]`): inside a NavigationScope
- * with `href` the slug is that page's own path, the locale stays the Next router's.
+ * The page the hooks answer for, path and search without the locale segment (the origin is a
+ * placeholder): a screen's own page (a NavigationScope with `href`), else the storefront
+ * history's address, else the address the document was requested at (server, hydration).
+ */
+export function usePage(): URL {
+  const scopePage = useScopePage();
+  const location = useHistoryLocation();
+  const initial = useInitialLocation();
+  const { stripLocale } = useLocalization();
+  const href = location?.href ?? initial;
+  return useMemo(() => {
+    if (scopePage) return scopePage;
+    const url = new URL(href, 'http://page.local');
+    return new URL(`${stripLocale(url.pathname)}${url.search}`, 'http://page.local');
+  }, [scopePage, href, stripLocale]);
+}
+
+/**
+ * Router whose navigations keep the active locale in storefront paths and go through the
+ * storefront history. Inside a NavigationScope (an app moving pages itself) push and replace
+ * go to the scope first; a move the scope does not take loads its page.
+ */
+export function useRouter(): StorefrontRouter {
+  const { buildHref, stripLocale } = useLocalization();
+  const onNavigate = useNavigationScope();
+
+  return useMemo(() => {
+    const move = (href: HrefTarget, replace: boolean, options?: NavigateOptions) => {
+      const localizedHref = buildHref(href);
+      if (onNavigate) {
+        const target = createNavigationTarget(localizedHref, stripLocale, {
+          replace,
+          source: 'router',
+        });
+        if (!target || !onNavigate(target)) window.location.assign(localizedHref);
+        return;
+      }
+      const history = getStorefrontHistory();
+      const url = new URL(localizedHref, window.location.href);
+      if (!history || isServerOnlyPage(stripLocale(url.pathname))) {
+        if (replace) window.location.replace(localizedHref);
+        else window.location.assign(localizedHref);
+        return;
+      }
+      const state = options?.scroll === false ? { scroll: false } : undefined;
+      if (replace) history.replace(localizedHref, state);
+      else history.push(localizedHref, state);
+    };
+
+    return {
+      push: (href, options) => move(href, false, options),
+      replace: (href, options) => move(href, true, options),
+      back: () => window.history.back(),
+      forward: () => window.history.forward(),
+      refresh: () => window.location.reload(),
+      prefetch: () => {},
+    };
+  }, [buildHref, onNavigate, stripLocale]);
+}
+
+/** Current pathname without the locale segment (see usePage). */
+export function usePathname(): string {
+  return usePage().pathname;
+}
+
+/** Current search params (see usePage). */
+export function useSearchParams(): ReadonlyURLSearchParams {
+  const search = usePage().search;
+  return useMemo(() => new ReadonlyURLSearchParams(search), [search]);
+}
+
+/**
+ * Route params of the storefront route (`[locale]/[[...slug]]`): the active locale's segment
+ * and the slug of the page of usePathname.
  */
 export function useParams<
   T extends Record<string, string | string[] | undefined> = Record<
@@ -109,12 +157,10 @@ export function useParams<
     string | string[] | undefined
   >,
 >(): T {
-  const params = useNextParams<T>();
-  const page = useScopePage();
-  const pagePathname = page?.pathname ?? null;
+  const { locale } = useLocalization();
+  const pathname = usePage().pathname;
   return useMemo(() => {
-    if (pagePathname === null) return params;
-    const slug = pagePathname.split('/').filter(Boolean);
-    return { ...params, slug: slug.length ? slug : undefined } as T;
-  }, [pagePathname, params]);
+    const slug = pathname.split('/').filter(Boolean);
+    return { locale: locale.segment, slug: slug.length ? slug : undefined } as unknown as T;
+  }, [locale.segment, pathname]);
 }

@@ -37,4 +37,16 @@ export type {
   StorefrontRoutingConfig,
 } from '../modules/localization/core/types';
 export { STOREFRONT_LOCALE_HEADER } from '../modules/localization/core/constants';
-export { browserHistory, listenPopState } from './browserHistory';
+export {
+  getStorefrontHistory,
+  peekStorefrontHistory,
+  subscribeStorefrontHistory,
+  type HistoryLocation,
+  type RouterHistory,
+  type StorefrontHistoryUpdate,
+} from './storefrontHistory';
+export {
+  historyGateScript,
+  type HistoryGate,
+  type HistoryGateWrite,
+} from './historyGate';

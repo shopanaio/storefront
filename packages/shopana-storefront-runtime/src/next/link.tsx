@@ -1,24 +1,31 @@
 'use client';
 
-import NextLink from 'next/link';
 import {
   forwardRef,
   type ComponentPropsWithoutRef,
   type MouseEvent,
 } from 'react';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
-import type { HrefTarget } from '@shopana/storefront-sdk/routing';
+import {
+  getStorefrontHistory,
+  type HrefTarget,
+} from '@shopana/storefront-sdk/routing';
 import {
   createNavigationTarget,
   useNavigationScope,
 } from './navigation-scope';
+import { isServerOnlyPage } from './page-rendering';
 
-export type LinkProps = Omit<ComponentPropsWithoutRef<typeof NextLink>, 'href'> & {
+export type LinkProps = Omit<ComponentPropsWithoutRef<'a'>, 'href'> & {
   /**
    * A pathname without the locale segment, a named route (`{ route, params, query }`) or an
    * absolute URL. Storefront paths get the locale segment of the active locale.
    */
   href: HrefTarget;
+  /** The move replaces the current history entry instead of adding one. */
+  replace?: boolean;
+  /** False keeps the scroll position when the move opens another page. */
+  scroll?: boolean;
 };
 
 /** A click the browser should handle itself: new tab or window, download, other button. */
@@ -36,54 +43,19 @@ const isOwnClick = (
   download !== undefined;
 
 /**
- * `next/link` that keeps the active locale in storefront paths. Inside a NavigationScope it
- * is a plain anchor with no Next router behind it (no prefetch, no router click handling):
- * a plain click goes to the scope, and the real href stays for crawlers, new tabs and
- * long-press menus. A click the scope does not take is followed by the browser.
+ * An anchor that keeps the active locale in storefront paths, with no Next router behind it:
+ * a plain click on a page of this site goes to the NavigationScope around it (the mobile
+ * stack) or else to the storefront history, and the storefront page renders it on the client. The real
+ * href stays for crawlers, new tabs and long-press menus; a click nothing takes is followed
+ * by the browser.
  */
 const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  {
-    href,
-    onClick,
-    replace,
-    target,
-    download,
-    // Next router options: meaningless for a plain anchor.
-    prefetch,
-    scroll,
-    shallow,
-    passHref,
-    legacyBehavior,
-    locale,
-    onNavigate: onNextNavigate,
-    ...props
-  },
+  { href, onClick, replace, scroll, target, download, ...props },
   ref
 ) {
   const { buildHref, stripLocale } = useLocalization();
   const onNavigate = useNavigationScope();
   const localizedHref = buildHref(href);
-
-  if (!onNavigate) {
-    return (
-      <NextLink
-        ref={ref}
-        href={localizedHref}
-        onClick={onClick}
-        replace={replace}
-        target={target}
-        download={download}
-        prefetch={prefetch}
-        scroll={scroll}
-        shallow={shallow}
-        passHref={passHref}
-        legacyBehavior={legacyBehavior}
-        locale={locale}
-        onNavigate={onNextNavigate}
-        {...props}
-      />
-    );
-  }
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
@@ -93,7 +65,20 @@ const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       replace: Boolean(replace),
       source: 'link',
     });
-    if (navigationTarget && onNavigate(navigationTarget)) event.preventDefault();
+    if (!navigationTarget) return;
+
+    if (onNavigate) {
+      if (onNavigate(navigationTarget)) event.preventDefault();
+      return;
+    }
+
+    // A page only the server renders (a module page): the browser loads it.
+    const history = getStorefrontHistory();
+    if (!history || isServerOnlyPage(stripLocale(navigationTarget.url.pathname))) return;
+    event.preventDefault();
+    const state = scroll === false ? { scroll: false } : undefined;
+    if (replace) history.replace(localizedHref, state);
+    else history.push(localizedHref, state);
   };
 
   return (

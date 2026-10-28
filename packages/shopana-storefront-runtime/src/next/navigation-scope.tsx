@@ -2,14 +2,15 @@
 
 /**
  * Hands the storefront's in-site navigation to the app around it. Inside a NavigationScope,
- * `Link` clicks and `useRouter()` moves go to `onNavigate` first; when it takes the move, the
- * Next router does nothing. A nested scope with `href` marks the page a subtree shows (one
- * screen of a stack), and `usePathname`, `useSearchParams` and `useParams` answer for that
- * page instead of the address the Next router last saw. Without a scope everything behaves
- * as before, so the same templates serve a page-per-route site and an app with its own
- * navigation (a mobile stack).
+ * `Link` clicks and `useRouter()` moves go to `onNavigate` first; a move it does not take
+ * loads its page. A nested scope with `href` marks the page a subtree shows (one screen of a
+ * stack), and `usePathname`, `useSearchParams` and `useParams` answer for that page instead
+ * of the storefront history's address. Without a scope moves go to the storefront history
+ * and the storefront page renders them on the client, so the same templates serve the site
+ * and an app with its own navigation (a mobile stack).
  */
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useClaimPageRendering } from './page-rendering';
 
 export interface NavigationTarget {
   /** Path, search and hash without the locale segment, e.g. `/products/socks?variant=2`. */
@@ -21,7 +22,7 @@ export interface NavigationTarget {
   source: 'link' | 'router';
 }
 
-/** Returns true when the app made the move; false lets the Next router make it. */
+/** Returns true when the app made the move; false loads the page at the target address. */
 export type NavigationHandler = (target: NavigationTarget) => boolean;
 
 interface NavigationScopeValue {
@@ -52,6 +53,8 @@ export function NavigationScope({
   children,
 }: NavigationScopeProps) {
   const parent = useContext(NavigationScopeContext);
+  // A scope with its own handler is an app moving pages itself: it renders the moves.
+  useClaimPageRendering(onNavigate !== undefined);
   const value = useMemo(
     () => ({
       onNavigate: onNavigate ?? parent.onNavigate,

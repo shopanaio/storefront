@@ -2,7 +2,7 @@
  * Reserved storefront pages are loaded from the active theme. Module pages
  * keep their independent registry and execution path.
  */
-import React, { cache } from 'react';
+import React, { cache, type ComponentType, type ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
@@ -56,6 +56,11 @@ export interface CreateRuntimePageOptions {
   environmentConfig: ApolloEnvironmentConfig;
   pages: RuntimePageModuleMap;
   modulesContext?: ReturnType<typeof require.context>;
+  /**
+   * The client side of a storefront page (a client component around RuntimeClientPage): it
+   * shows the page rendered here and renders the pages the storefront history moves to.
+   */
+  ClientPage: ComponentType<{ initial: ReactNode }>;
 }
 
 function getComponentFromModule(
@@ -92,7 +97,7 @@ function getModuleMetadataGenerator(
 export type { SDKRequestContext };
 
 export function createRuntimePage(options: CreateRuntimePageOptions) {
-  const { environmentConfig, modulesContext, pages } = options;
+  const { environmentConfig, modulesContext, pages, ClientPage } = options;
   const services = createRuntimePageServices(environmentConfig);
 
   if (modulesContext) {
@@ -251,13 +256,17 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     ) : (
       content
     );
-    if (!execution.definition.preload) return page;
+    if (!execution.definition.preload) return <ClientPage initial={page} />;
 
     // What the preload put in the request client, applied before the sections read it.
     return (
-      <ApolloCacheHydrator state={await services.extractCacheState()}>
-        {page}
-      </ApolloCacheHydrator>
+      <ClientPage
+        initial={
+          <ApolloCacheHydrator state={await services.extractCacheState()}>
+            {page}
+          </ApolloCacheHydrator>
+        }
+      />
     );
   }
 

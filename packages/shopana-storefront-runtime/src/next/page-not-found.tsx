@@ -2,7 +2,6 @@
 
 import { notFound } from 'next/navigation';
 import { PageNotFoundError } from '@shopana/storefront-sdk/core/PageNotFoundError';
-import { useNavigationScope } from './navigation-scope';
 
 export {
   PageNotFoundError,
@@ -10,14 +9,12 @@ export {
 } from '@shopana/storefront-sdk/core/PageNotFoundError';
 
 /**
- * Rendered by a section whose query finds no page (the entity of the address is gone). The
- * server answers that from `preload` with a 404 before rendering, so this is for a page loaded
- * on the client: inside a NavigationScope a PageNotFoundError goes to the app's boundary
- * around the page, so a missing page stays on its screen; outside one Next renders its
- * not-found page. Section boundaries pass both on.
+ * Rendered by a section whose query finds no page (the entity of the address is gone). On the
+ * server Next renders its not-found page. On the client, where pages render without the Next
+ * router (a storefront page, a stack screen), a PageNotFoundError goes to the boundary around the
+ * page, so a missing page stays in its place. Section boundaries pass both on.
  */
 export function PageNotFound(): never {
-  const scoped = useNavigationScope() !== null;
-  if (scoped) throw new PageNotFoundError();
+  if (typeof window !== 'undefined') throw new PageNotFoundError();
   notFound();
 }

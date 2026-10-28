@@ -72,6 +72,10 @@
       "types": "./dist/next/navigation.d.ts",
       "default": "./dist/next/navigation.js"
     },
+    "./next/storefront-history": {
+      "types": "./dist/next/storefront-history.d.ts",
+      "default": "./dist/next/storefront-history.js"
+    },
     "./next/not-found": {
       "types": "./dist/next/not-found.d.ts",
       "default": "./dist/next/not-found.js"
@@ -87,6 +91,10 @@
     "./next/page-client": {
       "types": "./dist/next/page-client.d.ts",
       "default": "./dist/next/page-client.js"
+    },
+    "./next/client-page": {
+      "types": "./dist/next/client-page.d.ts",
+      "default": "./dist/next/client-page.js"
     },
     "./package.json": "./package.json"
   },
