@@ -8,6 +8,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -40,7 +41,13 @@ export function RuntimeAppScope({
   );
 }
 
-/** Store languages of the last root data, for the root route's revalidation. */
+/**
+ * Locale segments (lower case) of the store languages of the last root data, for the
+ * revalidation of the root and the module preload of client navigations. Set after the first
+ * render: a navigation started before it (from an effect of a child, during hydration) finds
+ * no languages, which costs only the early module preload; a locale switch is a full page load
+ * anyway (`switchLocale`).
+ */
 let knownLocaleSegments: readonly string[] = [];
 
 export function getKnownLocaleSegments(): readonly string[] {
@@ -48,7 +55,17 @@ export function getKnownLocaleSegments(): readonly string[] {
 }
 
 function rememberLocaleSegments(segments: readonly string[]) {
-  knownLocaleSegments = segments;
+  knownLocaleSegments = segments.map((segment) => segment.toLowerCase());
+}
+
+/** Locale segments of the root data, for code that renders under it. */
+export function useLocaleSegments(): readonly string[] {
+  const app = useRuntimeApp();
+  return useMemo(
+    () =>
+      app?.locales.locales.map((locale) => locale.segment.toLowerCase()) ?? [],
+    [app]
+  );
 }
 
 /**

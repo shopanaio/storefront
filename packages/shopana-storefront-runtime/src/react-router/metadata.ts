@@ -94,22 +94,35 @@ export function toMetaDescriptors(
   return tags;
 }
 
-/** The identity of a descriptor: a later one with the same identity replaces it. */
+/**
+ * The identity of a descriptor: the page's descriptors replace the root's with the same one.
+ * Repeated tags share one identity, so the page's set replaces the root's whole set: its
+ * images (`og:image*`, `twitter:image*`) and its language alternates per language.
+ */
 function descriptorKey(descriptor: MetaDescriptor): string | null {
   const record = descriptor as Record<string, unknown>;
   if ('title' in record) return 'title';
-  if (typeof record.name === 'string') return `name:${record.name}`;
+  if (typeof record.name === 'string') {
+    return record.name.startsWith('twitter:image')
+      ? 'name:twitter:image'
+      : `name:${record.name}`;
+  }
   if (typeof record.property === 'string') {
-    // Image tags repeat: they never replace each other.
     return record.property.startsWith('og:image')
-      ? null
+      ? 'property:og:image'
       : `property:${record.property}`;
   }
   if (record.rel === 'canonical') return 'canonical';
+  if (record.rel === 'alternate' && typeof record.hrefLang === 'string') {
+    return `alternate:${record.hrefLang.toLowerCase()}`;
+  }
   return null;
 }
 
-/** The root's descriptors under the page's: the page wins for a title, name or property. */
+/**
+ * The root's descriptors under the page's: the page wins for a title, a name, a property, the
+ * canonical address, a language alternate and the images.
+ */
 export function mergeMetaDescriptors(
   parent: readonly MetaDescriptor[],
   page: readonly MetaDescriptor[]

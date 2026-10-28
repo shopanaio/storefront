@@ -43,11 +43,13 @@ function dynamic<TProps = object>(
     };
   });
   const { loading, ssr = true } = options;
+  // A component, so `loading` runs only when the fallback shows.
+  const Loading = () => <>{loading?.()}</>;
 
   function DynamicComponent(props: TProps) {
     const hydrated = useHydrated();
-    const fallback = loading ? loading() : null;
-    if (!ssr && !hydrated) return <>{fallback}</>;
+    const fallback = <Loading />;
+    if (!ssr && !hydrated) return fallback;
     return (
       <Suspense fallback={fallback}>
         <Lazy {...(props as object)} />

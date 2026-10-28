@@ -11,7 +11,7 @@ import {
   readRenderRedirect,
   REDIRECT_STATUSES,
   type RenderRedirect,
-} from './render-redirect';
+} from './render-status';
 
 /** The theme's error page (`src/runtime/error.tsx`), with the props of Next.js `error.tsx`. */
 export type RuntimeErrorPage = ComponentType<{
@@ -51,10 +51,13 @@ export function RouteErrorPage({ ErrorPage }: { ErrorPage: RuntimeErrorPage }) {
       ? readRenderRedirect()
       : null);
   if (redirect) {
+    // The router moves in the browser only; the server render refreshes to the address.
     return (
       <>
         <meta httpEquiv="refresh" content={`0;url=${redirect.location}`} />
-        <Navigate to={redirect.location} replace />
+        {typeof window === 'undefined' ? null : (
+          <Navigate to={redirect.location} replace />
+        )}
       </>
     );
   }

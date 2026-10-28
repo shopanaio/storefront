@@ -1,6 +1,6 @@
 import { redirect as routerRedirect } from 'react-router';
-import { PageNotFoundError } from '@shopana/storefront-sdk/core/PageNotFoundError';
-import { recordRenderRedirect } from './render-redirect';
+import { notFoundResponse } from './not-found-response';
+import { recordRenderRedirect } from './render-status';
 
 export {
   useParams,
@@ -27,7 +27,7 @@ export {
  * theme's 404 page.
  */
 export function notFound(): never {
-  throw new PageNotFoundError();
+  throw notFoundResponse();
 }
 
 /**

@@ -3,6 +3,11 @@
  * page loader. Imported by the generated route modules for their server exports only.
  */
 import { AsyncLocalStorage } from 'node:async_hooks';
+import type {
+  DocumentNode,
+  NormalizedCacheObject,
+  OperationVariables,
+} from '@apollo/client';
 import {
   createContext,
   data,
@@ -10,7 +15,6 @@ import {
   type LoaderFunctionArgs,
   type MiddlewareFunction,
 } from 'react-router';
-import { isPageNotFoundError } from '@shopana/storefront-sdk/core/PageNotFoundError';
 import {
   loadStorefrontLocales,
   resolveStorefrontLocale,
@@ -21,6 +25,7 @@ import {
   type StorefrontLocale,
   type StorefrontLocales,
 } from '@shopana/storefront-sdk/routing';
+import { createApolloCache } from '@shopana/storefront-sdk/graphql/apollo/cache';
 import { loadAppProps } from '@shopana/storefront-sdk/server/app';
 import {
   createServerRequestScope,
@@ -32,6 +37,7 @@ import { toSearchRecord, loadPageModules } from '../core/page-client';
 import {
   assertSerializablePageData,
   type RuntimePageContext,
+  type RuntimePageServices,
   type RuntimeRenderablePageType,
 } from '../core/page-definition';
 import {
@@ -43,6 +49,7 @@ import type { SDKRequestContext } from '../core/request-context';
 import { resolveRuntimeRoute } from '../core/route';
 import type { RuntimeAppDefinition } from './app';
 import { getRequestContext } from './headers';
+import { isNotFoundSignal } from './not-found-response';
 import { isLocalizedPath, localePrefixRedirect } from './locale-routing';
 import {
   loadModuleLayout,
@@ -118,6 +125,38 @@ export async function loadRuntimeRoot(
 }
 
 /**
+ * Page services that keep what the page queried, for the page's own cache snapshot. The
+ * request client also holds the root queries (store, cart, session, menus), which the root
+ * loader already sends: the page sends only its own, normalized the same way.
+ */
+function recordQueries(services: RuntimePageServices) {
+  const results: Array<{
+    query: DocumentNode;
+    variables: OperationVariables;
+    data: unknown;
+  }> = [];
+
+  return {
+    services: {
+      ...services,
+      async loadQuery(document, variables) {
+        const result = await services.loadQuery(document, variables);
+        results.push({ query: document, variables, data: result.data });
+        return result;
+      },
+    } satisfies RuntimePageServices,
+
+    snapshot(): NormalizedCacheObject {
+      const cache = createApolloCache();
+      for (const { query, variables, data } of results) {
+        cache.writeQuery({ query, variables, data });
+      }
+      return cache.extract() as NormalizedCacheObject;
+    },
+  };
+}
+
+/**
  * The loader of the page route: resolves the address to a module page or a reserved page,
  * runs the definition's `loadData` and `preload` with the request client, and answers a missing
  * page with the theme's 404 page and status. Metadata is computed here, on the server, from the
@@ -150,8 +189,10 @@ export function createRuntimePageLoader(
 
   async function loadPage(
     pageType: RuntimeRenderablePageType,
-    context: RuntimePageContext<RuntimeRenderablePageType>
+    pageContext: RuntimePageContext<RuntimeRenderablePageType>
   ) {
+    const queries = recordQueries(pageContext.services);
+    const context = { ...pageContext, services: queries.services };
     const [{ definition }] = await Promise.all([
       loadPageModules(route.pages, pageType),
       loadRouteLayout(route, pageType, { isModule: false }),
@@ -171,9 +212,7 @@ export function createRuntimePageLoader(
       kind: 'page',
       pageType,
       data: result.data,
-      cacheState: definition.preload
-        ? await services.extractCacheState()
-        : null,
+      cacheState: definition.preload ? queries.snapshot() : null,
       metadata:
         (await definition.generateMetadata?.(context, result.data)) ?? {},
     } satisfies RuntimePageData;
@@ -241,7 +280,7 @@ export function createRuntimePageLoader(
       });
       return page ?? notFound(request);
     } catch (error) {
-      if (isPageNotFoundError(error)) return notFound(request);
+      if (isNotFoundSignal(error)) return notFound(request);
       throw error;
     }
   };

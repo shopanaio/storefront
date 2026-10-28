@@ -20,8 +20,8 @@ export const frameworks = ['next', 'react-router'];
 
 /**
  * What each framework generates: the default files (templates/<framework>/<file>), the root
- * files a theme may override them with, and whether the theme `public` directory is linked
- * into the runtime (Vite serves it from the theme itself).
+ * files a theme may override them with, whether the theme `public` directory is linked into
+ * the runtime (Vite serves it from the theme itself), and the outputs of its builds.
  */
 const frameworkLayouts = {
   next: {
@@ -58,6 +58,7 @@ const frameworkLayouts = {
       },
     ],
     linksPublicDirectory: true,
+    buildOutputs: ['.next'],
   },
   'react-router': {
     defaultGeneratedFiles: [
@@ -84,6 +85,7 @@ const frameworkLayouts = {
       },
     ],
     linksPublicDirectory: false,
+    buildOutputs: ['build', '.react-router'],
   },
 };
 
@@ -336,8 +338,17 @@ export async function initRuntime(options = {}) {
     await realpath(rootDir),
     await realpath(runtimeDir)
   );
+  // The builds of the framework stay (its incremental caches); those of another framework go,
+  // so `start` cannot serve a build the theme left behind.
+  const otherBuildOutputs = Object.entries(frameworkLayouts).flatMap(
+    ([name, { buildOutputs }]) => (name === framework ? [] : buildOutputs)
+  );
   await Promise.all(
-    [...generatorOwnedPaths, ...obsoleteGeneratedPaths].map((relativePath) =>
+    [
+      ...generatorOwnedPaths,
+      ...obsoleteGeneratedPaths,
+      ...otherBuildOutputs,
+    ].map((relativePath) =>
       rm(path.join(runtimeDir, relativePath), { force: true, recursive: true })
     )
   );

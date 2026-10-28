@@ -59,6 +59,13 @@ export function createRuntimeRoot({
     return <RouteErrorPage ErrorPage={ErrorPage} />;
   }
 
+  /**
+   * The root data is the starting state of the providers, like the root layout of Next.js,
+   * which a client navigation does not render again: from then on the cart and the session are
+   * stores of the browser (the cart provider and its mutations, the session client with its
+   * refresh and the sign-out of other tabs), not root data. It loads again for a submission,
+   * `router.refresh()` and another locale.
+   */
   function shouldRevalidate({
     currentUrl,
     nextUrl,

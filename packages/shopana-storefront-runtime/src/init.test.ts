@@ -119,6 +119,8 @@ describe('initRuntime for React Router', () => {
   it('removes the files of the framework the theme left', async () => {
     await writeTheme({ name: 'theme' }, { 'public/logo.svg': '<svg/>' });
     const next = await initRuntime({ rootDir });
+    await mkdir(path.join(next.runtimeDir, '.next'), { recursive: true });
+    await writeFile(path.join(next.runtimeDir, '.next/BUILD_ID'), 'old');
     expect(await listFiles(next.runtimeDir)).toContain(
       'app/[locale]/[[...slug]]/page.tsx'
     );
@@ -133,5 +135,19 @@ describe('initRuntime for React Router', () => {
     expect(files).not.toContain('next.config.js');
     expect(files).not.toContain('middleware.ts');
     expect(files).not.toContain('public/logo.svg');
+    expect(files.some((file) => file.startsWith('.next/'))).toBe(false);
+
+    // Its own build stays from one generation to the next.
+    await mkdir(path.join(reactRouter.runtimeDir, 'build/server'), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(reactRouter.runtimeDir, 'build/server/index.js'),
+      ''
+    );
+    await initRuntime({ rootDir });
+    expect(await listFiles(reactRouter.runtimeDir)).toContain(
+      'build/server/index.js'
+    );
   });
 });

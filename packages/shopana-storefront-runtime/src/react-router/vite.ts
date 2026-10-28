@@ -4,6 +4,8 @@ import {
   defaultClientConditions,
   defaultServerConditions,
   loadEnv,
+  type Alias,
+  type AliasOptions,
   type UserConfig,
   type UserConfigFnObject,
 } from 'vite';
@@ -25,6 +27,16 @@ export interface CreateRuntimeViteConfigOptions {
    * added to the runtime's, other options override them.
    */
   config?: UserConfig;
+}
+
+/** Vite aliases in their list form; the object form is a list of prefixes. */
+function toAliasList(alias: AliasOptions | undefined): Alias[] {
+  if (!alias) return [];
+  if (Array.isArray(alias)) return [...alias];
+  return Object.entries(alias).map(([find, replacement]) => ({
+    find,
+    replacement: replacement as string,
+  }));
 }
 
 function toList<T>(value: T | T[] | undefined): T[] {
@@ -85,11 +97,11 @@ export function createRuntimeViteConfig({
           RUNTIME_CONDITION,
           ...(resolve?.conditions ?? defaultClientConditions),
         ],
-        alias: {
-          '@src': path.join(rootDir, 'src'),
-          '@codegen': path.join(rootDir, 'codegen'),
-          ...(resolve?.alias as Record<string, string> | undefined),
-        },
+        alias: [
+          { find: '@src', replacement: path.join(rootDir, 'src') },
+          { find: '@codegen', replacement: path.join(rootDir, 'codegen') },
+          ...toAliasList(resolve?.alias),
+        ],
       },
       ssr: {
         ...ssr,

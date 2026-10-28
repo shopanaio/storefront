@@ -64,19 +64,44 @@ describe('mergeMetaDescriptors', () => {
           { name: 'description', content: 'Store' },
           { name: 'viewport', content: 'width=device-width' },
           { property: 'og:image', content: '/store.png' },
+          { property: 'og:image:width', content: '1200' },
+          { tagName: 'link', rel: 'alternate', hrefLang: 'uk', href: '/uk' },
+          { tagName: 'link', rel: 'alternate', hrefLang: 'en', href: '/' },
         ],
         [
           { title: 'Socks' },
           { name: 'description', content: 'Socks' },
           { property: 'og:image', content: '/socks.png' },
+          { property: 'og:image', content: '/socks-2.png' },
+          {
+            tagName: 'link',
+            rel: 'alternate',
+            hrefLang: 'uk',
+            href: '/uk/products/socks',
+          },
         ]
       )
     ).toEqual([
       { name: 'viewport', content: 'width=device-width' },
-      { property: 'og:image', content: '/store.png' },
+      { tagName: 'link', rel: 'alternate', hrefLang: 'en', href: '/' },
       { title: 'Socks' },
       { name: 'description', content: 'Socks' },
       { property: 'og:image', content: '/socks.png' },
+      { property: 'og:image', content: '/socks-2.png' },
+      {
+        tagName: 'link',
+        rel: 'alternate',
+        hrefLang: 'uk',
+        href: '/uk/products/socks',
+      },
+    ]);
+  });
+
+  it('keeps the root images when the page has none', () => {
+    const root = [{ property: 'og:image', content: '/store.png' }];
+    expect(mergeMetaDescriptors(root, [{ title: 'Socks' }])).toEqual([
+      ...root,
+      { title: 'Socks' },
     ]);
   });
 });

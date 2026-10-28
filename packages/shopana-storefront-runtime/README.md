@@ -203,11 +203,15 @@ What the runtime does, as the Next.js app does:
   `ApolloProvider`, which on the server is the request client of the loaders;
 - the page loader resolves the address to a module page or a reserved page, runs `loadData`
   and `preload` with the request client, computes the metadata, and answers a missing page with
-  the theme's 404 page and status 404. The page renders under its layout, which stays mounted
-  between pages, with the snapshot of its `preload` applied first. A client navigation loads the
-  data on the server and the page's modules in parallel;
-- `notFound()` and `PageNotFound` end in the 404 page, `redirect()` in a redirect, and any other
-  error in `src/runtime/error.tsx` (`reset` loads the data again);
+  the theme's 404 page (in the 404 layout) and status 404. The page renders under its layout,
+  which stays mounted between pages, with the snapshot of its own `preload` queries applied
+  first (the root queries come with the root data). A client navigation loads the data on the
+  server and the page's modules in parallel;
+- `notFound()` and `PageNotFound` while rendering end in the 404 page under the page's layout,
+  with status 404 when the server renders it before the response (always for crawlers and
+  `HEAD`; content streamed later shows it in the browser with `noindex`); `redirect()` answers
+  an HTTP redirect, or the browser follows it; any other error renders
+  `src/runtime/error.tsx` (`reset` loads the data again) under the layout of the address;
 - module pages are plain components (not async server components) and render on the server
   and in the browser, with page services over the Apollo client of the page.
 

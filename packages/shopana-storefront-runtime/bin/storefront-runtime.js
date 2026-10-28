@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { parseEnv } from 'node:util';
 import { initRuntime, readRuntimeFramework } from '../src/init.js';
 
 const require = createRequire(import.meta.url);
@@ -38,12 +38,20 @@ function takePortArgs(commandArgs) {
 }
 
 /**
- * The environment with the theme's `.env` files of `mode` under it, as Next.js and the Vite dev
- * server read them; variables already set win. React Router's server does not read them.
+ * The environment with the theme's `.env` files of `mode` under it, in the order Next.js and
+ * the Vite dev server read them (a later file wins); variables already set win over all of
+ * them. React Router's server does not read them itself.
  */
-async function withEnvFiles(env, mode) {
-  const { loadEnv } = await import(pathToFileURL(require.resolve('vite')).href);
-  return { ...loadEnv(mode, process.cwd(), ''), ...env };
+function withEnvFiles(env, mode) {
+  const files = ['.env', '.env.local', `.env.${mode}`, `.env.${mode}.local`];
+  const fromFiles = {};
+  for (const file of files) {
+    const filePath = path.join(process.cwd(), file);
+    if (existsSync(filePath)) {
+      Object.assign(fromFiles, parseEnv(readFileSync(filePath, 'utf8')));
+    }
+  }
+  return { ...fromFiles, ...env };
 }
 
 /** The framework CLI call of a command: Next.js, or React Router and its server. */
@@ -109,7 +117,7 @@ if (!supportedCommands.has(command)) {
 
   const call = frameworkCommand(framework, runtimeDir);
   const env = call.loadsEnvFiles
-    ? await withEnvFiles(call.env, 'production')
+    ? withEnvFiles(call.env, 'production')
     : call.env;
   const child = spawn(process.execPath, call.args, {
     cwd: call.cwd,
