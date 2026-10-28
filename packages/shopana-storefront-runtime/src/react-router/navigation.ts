@@ -8,6 +8,7 @@ export {
   useRouter,
   useSearchParams,
 } from './navigation-client';
+export { useServerInsertedHTML } from './server-inserted-html';
 export type {
   NavigateOptions,
   ReadonlySearchParams,

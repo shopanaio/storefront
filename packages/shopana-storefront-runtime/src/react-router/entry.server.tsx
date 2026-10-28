@@ -6,16 +6,22 @@
 import { Transform } from 'node:stream';
 import { createReadableStreamFromReadable } from '@react-router/node';
 import { isbot } from 'isbot';
+import { createElement, Fragment } from 'react';
 import {
   renderToPipeableStream,
+  renderToStaticMarkup,
   type RenderToPipeableStreamOptions,
 } from 'react-dom/server';
 import { ServerRouter, type EntryContext } from 'react-router';
-import { getServerRequestScope } from '@shopana/storefront-sdk/server/requestScope';
+import {
+  getServerRequestScope,
+  type ServerRequestScope,
+} from '@shopana/storefront-sdk/server/requestScope';
 import { apolloStateScript } from './apollo-ssr-state';
 import { hydratedPageOf, hydratedPageScript } from './hydration';
 import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import { isNotFoundSignal } from './not-found-response';
+import { serverInsertedHTMLCallbacks } from './server-inserted-html';
 import {
   readRenderRedirect,
   readRenderStatus,
@@ -34,6 +40,18 @@ export function handleError(error: unknown, { request }: { request: Request }) {
 
 /** Where the document ends: the Apollo state and the hydrated page go in before it. */
 const BODY_END = Buffer.from('</body>');
+
+/** Where the head ends: HTML the render asks for with the shell goes in before it. */
+const HEAD_END = Buffer.from('</head>');
+
+/** The HTML the render's `useServerInsertedHTML` callbacks return now. */
+function insertedHTML(scope: ServerRequestScope): string {
+  const callbacks = serverInsertedHTMLCallbacks(scope);
+  if (callbacks.length === 0) return '';
+  return renderToStaticMarkup(
+    createElement(Fragment, null, ...callbacks.map((callback) => callback()))
+  );
+}
 
 /** How many bytes at the end of `data` are the start of `</body>`, cut off by the chunk. */
 function bodyEndPrefixLength(data: Buffer): number {
@@ -114,30 +132,66 @@ export default function handleRequest(
           // (the tag can be split between two chunks).
           let closing: Buffer | null = null;
           let partial: Buffer | null = null;
+          // React writes each flush of its own in one go: what arrives within a tick is a
+          // whole part of the document, and the HTML the render asks for goes in ahead of it
+          // (into `<head>` until it is sent), never inside a tag.
+          let queued: Buffer[] = [];
+          let batch: ReturnType<typeof setImmediate> | undefined;
+          let headSent = false;
+          let headHTML = '';
+          const send = (stream: Transform, chunk: Buffer) => {
+            // More document after `</body>`: the state goes at its very end instead.
+            if (closing) {
+              stream.push(closing);
+              closing = null;
+            }
+            const data = partial ? Buffer.concat([partial, chunk]) : chunk;
+            partial = null;
+            const end = data.lastIndexOf(BODY_END);
+            let out: Buffer;
+            if (end === -1) {
+              const held = bodyEndPrefixLength(data);
+              if (held > 0) partial = data.subarray(data.length - held);
+              out = data.subarray(0, data.length - held);
+            } else {
+              closing = data.subarray(end);
+              out = data.subarray(0, end);
+            }
+            if (out.length > 0) stream.push(out);
+          };
+          const sendBatch = (stream: Transform) => {
+            batch = undefined;
+            if (queued.length === 0) return;
+            let data = Buffer.concat(queued);
+            queued = [];
+            const html = scope ? insertedHTML(scope) : '';
+            if (headSent) {
+              if (html) data = Buffer.concat([Buffer.from(html), data]);
+            } else {
+              headHTML += html;
+              const headEnd = data.indexOf(HEAD_END);
+              if (headEnd !== -1) {
+                headSent = true;
+                data = Buffer.concat([
+                  data.subarray(0, headEnd),
+                  Buffer.from(headHTML),
+                  data.subarray(headEnd),
+                ]);
+                headHTML = '';
+              }
+            }
+            send(stream, data);
+          };
           const body = new Transform({
             transform(chunk: Buffer, _encoding, callback) {
-              // More document after `</body>`: the state goes at its very end instead.
-              if (closing) {
-                this.push(closing);
-                closing = null;
-              }
-              const data = partial ? Buffer.concat([partial, chunk]) : chunk;
-              partial = null;
-              const end = data.lastIndexOf(BODY_END);
-              let send: Buffer;
-              if (end === -1) {
-                const held = bodyEndPrefixLength(data);
-                if (held > 0) partial = data.subarray(data.length - held);
-                send = data.subarray(0, data.length - held);
-              } else {
-                closing = data.subarray(end);
-                send = data.subarray(0, end);
-              }
-              if (send.length > 0) callback(null, send);
-              else callback();
+              queued.push(chunk);
+              batch ??= setImmediate(() => sendBatch(this));
+              callback();
             },
             flush(callback) {
               stopTimeout();
+              if (batch) clearImmediate(batch);
+              sendBatch(this);
               const { loaderData, errors } = routerContext.staticHandlerContext;
               const state =
                 (scope ? apolloStateScript(scope) : '') +

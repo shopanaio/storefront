@@ -1,5 +1,6 @@
 // Server-safe: callable from server components, unlike the hooks of the client module.
 export { notFound, permanentRedirect, redirect } from 'next/navigation';
+export { useServerInsertedHTML } from 'next/navigation';
 export {
   useParams,
   usePathname,

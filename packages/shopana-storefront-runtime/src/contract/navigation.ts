@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type {
   ReadonlySearchParams,
   StorefrontRouteParams,
@@ -47,3 +48,10 @@ export declare function redirect(url: string): never;
 
 /** Ends rendering or loading with a permanent redirect to `url` (already localized). */
 export declare function permanentRedirect(url: string): never;
+
+/**
+ * Server render only: `callback` is asked for HTML each time a part of the document is sent,
+ * and what it returns goes out with that part (the shell, then each Suspense boundary
+ * streamed later). Css-in-js sends the styles the part's components inserted this way.
+ */
+export declare function useServerInsertedHTML(callback: () => ReactNode): void;
