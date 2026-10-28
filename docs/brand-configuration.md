@@ -10,7 +10,9 @@ A theme package owns:
 - static assets (`public`);
 - GraphQL documents and generated theme operations (`codegen`);
 - Storybook and widget scripts;
-- the root `next.config.js` override;
+- its framework (`storefront.framework` in `package.json`: `next` by default, or
+  `react-router`) and the root config overrides of that framework (`next.config.js`;
+  `vite.config.ts`, `react-router.config.ts`);
 - its generated `.runtime` directory.
 
 The workspace root delegates its commands to the checked-out theme;
@@ -30,8 +32,12 @@ The runtime CLI is executed with the theme package as its working directory:
 yarn runtime:init
 ```
 
-This creates `themes/<name>/.runtime`; `@src` and `@codegen` resolve against
-that same package.
+This creates `themes/<name>/.runtime`, the app of the theme's framework; `@src`
+and `@codegen` resolve against that same package. Theme code imports framework
+APIs only through the `@shopana/storefront` facades (`link`, `navigation`,
+`image`, `dynamic`, `headers`, `page-client`, `page-definition`), so it runs
+under either framework; only the root files of `src/runtime` are framework
+specific (see the runtime package README).
 
 ## Checkout integration
 

@@ -7,30 +7,32 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
 import { ClosedPageGuard } from '@shopana/storefront-sdk/modules/session/react/components/ClosedPageGuard';
-import { ApolloCacheHydrator } from '@shopana/storefront-sdk/next/apollo/client';
+import { ApolloCacheHydrator } from '@shopana/storefront-sdk/graphql/apollo/ApolloCacheHydrator';
 import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
-import {
-  type DynamicModulePageProps,
-  type ModuleExport,
+import type {
+  DynamicModulePageProps,
+  ModuleExport,
 } from '@shopana/storefront-sdk/registry';
-import {
-  getRequestContext,
-  type SDKRequestContext,
-} from '@shopana/storefront/next/headers';
+import { getRequestContext, type SDKRequestContext } from './headers';
 import { admitClosedPage } from './closed-page';
 import {
   assertSerializablePageData,
   type RuntimePageModuleMap,
   type RuntimeRenderablePageType,
-} from './page-definition';
+} from '../core/page-definition';
 import {
   parseStableRouteParamsRecord,
   parseStableSearchParamsRecord,
   stableSerializeRuntimeRecord,
-} from './page-record';
-import { loadRenderableDefinition } from './page-registry';
-import { createRuntimePageServices } from './page-services';
-import { resolveRuntimeRoute } from './route';
+} from '../core/page-record';
+import { loadRenderableDefinition } from '../core/page-registry';
+import {
+  buildModuleMetadata,
+  getComponentFromModule,
+  getModuleMetadataGenerator,
+} from '../core/module-page';
+import { createRuntimePageServices } from '../core/page-services';
+import { resolveRuntimeRoute } from '../core/route';
 
 type SlugParam = string[] | undefined;
 
@@ -42,51 +44,10 @@ interface PageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-function buildModuleMetadata(slug: string): Metadata {
-  const title = slug
-    .split(/[-_]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-
-  return { title: title || 'Page' };
-}
-
 export interface CreateRuntimePageOptions {
   environmentConfig: ApolloEnvironmentConfig;
   pages: RuntimePageModuleMap;
   modulesContext?: ReturnType<typeof require.context>;
-}
-
-function getComponentFromModule(
-  input: ModuleExport<DynamicModulePageProps>
-): React.ComponentType<DynamicModulePageProps> {
-  if (
-    input &&
-    typeof input === 'object' &&
-    'default' in (input as Record<string, unknown>)
-  ) {
-    return (input as { default: React.ComponentType<DynamicModulePageProps> })
-      .default;
-  }
-  return input as React.ComponentType<DynamicModulePageProps>;
-}
-
-/** A module page module may export `generateMetadata(props)` next to its default component. */
-type ModuleMetadataGenerator = (
-  props: DynamicModulePageProps
-) => Promise<Metadata> | Metadata;
-
-function getModuleMetadataGenerator(
-  input: unknown
-): ModuleMetadataGenerator | null {
-  if (input && typeof input === 'object' && 'generateMetadata' in input) {
-    const generate = (input as { generateMetadata: unknown }).generateMetadata;
-    if (typeof generate === 'function') {
-      return generate as ModuleMetadataGenerator;
-    }
-  }
-  return null;
 }
 
 export type { SDKRequestContext };

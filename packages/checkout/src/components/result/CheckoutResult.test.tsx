@@ -7,7 +7,7 @@ const placed = vi.hoisted(() => ({
   value: { number: '1001', loyalty: null as unknown, loading: false },
 }));
 
-vi.mock('@shopana/storefront/next/navigation', () => ({
+vi.mock('@shopana/storefront/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock('#checkout/theme', () => ({

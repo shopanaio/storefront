@@ -2,7 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import { PageNotFoundError } from '@shopana/storefront-sdk/core/PageNotFoundError';
-import { useNavigationScope } from './navigation-scope';
+import { useNavigationScope } from '../core/navigation-scope';
 
 export {
   PageNotFoundError,

@@ -1,7 +1,7 @@
 import { Button, Flex, Result } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@shopana/storefront/next/navigation';
+import { useRouter } from '@shopana/storefront/navigation';
 import useCartId from '@shopana/storefront-sdk/modules/cart/react/hooks/useCartId';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useCheckoutTheme } from '#checkout/theme';

@@ -3,7 +3,7 @@
 import { Button, Result, Spin } from 'antd';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
-import { useRouter } from '@shopana/storefront/next/navigation';
+import { useRouter } from '@shopana/storefront/navigation';
 import { useCheckoutTheme } from '#checkout/theme';
 import { PlacementScreen } from '#checkout/components/result/PlacementScreen';
 

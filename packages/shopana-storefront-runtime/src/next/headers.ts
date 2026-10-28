@@ -1,5 +1,6 @@
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { cache } from 'react';
+import type { SDKRequestContext } from '../core/request-context';
 import {
   SDK_URL_HEADER,
   SDK_PATHNAME_HEADER,
@@ -7,15 +8,8 @@ import {
   SDK_HOST_HEADER,
 } from './middleware';
 
-export * from 'next/headers';
-
-export interface SDKRequestContext {
-  url: string;
-  pathname: string;
-  search: string;
-  host: string;
-  searchParams: URLSearchParams;
-}
+export { cookies, headers };
+export type { SDKRequestContext };
 
 /**
  * Gets the request URL context from headers set by SDK middleware.
@@ -24,7 +18,7 @@ export interface SDKRequestContext {
  * @example
  * ```tsx
  * // In a server component
- * import { getRequestContext } from '@shopana/storefront/next/headers';
+ * import { getRequestContext } from '@shopana/storefront/headers';
  *
  * export default async function Page() {
  *   const ctx = await getRequestContext();

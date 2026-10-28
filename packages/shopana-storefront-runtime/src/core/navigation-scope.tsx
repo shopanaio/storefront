@@ -3,11 +3,11 @@
 /**
  * Hands the storefront's in-site navigation to the app around it. Inside a NavigationScope,
  * `Link` clicks and `useRouter()` moves go to `onNavigate` first; when it takes the move, the
- * Next router does nothing. A nested scope with `href` marks the page a subtree shows (one
- * screen of a stack), and `usePathname`, `useSearchParams` and `useParams` answer for that
- * page instead of the address the Next router last saw. Without a scope everything behaves
- * as before, so the same templates serve a page-per-route site and an app with its own
- * navigation (a mobile stack).
+ * framework router (Next.js or React Router) does nothing. A nested scope with `href` marks
+ * the page a subtree shows (one screen of a stack), and `usePathname`, `useSearchParams` and
+ * `useParams` answer for that page instead of the address the router last saw. Without a
+ * scope everything behaves as before, so the same templates serve a page-per-route site and
+ * an app with its own navigation (a mobile stack).
  */
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
@@ -21,7 +21,7 @@ export interface NavigationTarget {
   source: 'link' | 'router';
 }
 
-/** Returns true when the app made the move; false lets the Next router make it. */
+/** Returns true when the app made the move; false lets the framework router make it. */
 export type NavigationHandler = (target: NavigationTarget) => boolean;
 
 interface NavigationScopeValue {

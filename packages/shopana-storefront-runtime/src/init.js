@@ -16,47 +16,99 @@ const packageDir = path.resolve(
   '..'
 );
 
-const defaultGeneratedFiles = [
-  'app/layout.tsx',
-  'app/not-found.tsx',
-  'app/[locale]/[[...slug]]/layout.tsx',
-  'app/[locale]/[[...slug]]/page.tsx',
-  'app/[locale]/[[...slug]]/error.tsx',
-  'app/auth/[action]/route.ts',
-  'app/auth/headless/[action]/route.ts',
-  'src/i18n/request.ts',
-  'next-env.d.ts',
-  'tsconfig.json',
+export const frameworks = ['next', 'react-router'];
+
+/**
+ * What each framework generates: the default files (templates/<framework>/<file>), the root
+ * files a theme may override them with, and whether the theme `public` directory is linked
+ * into the runtime (Vite serves it from the theme itself).
+ */
+const frameworkLayouts = {
+  next: {
+    defaultGeneratedFiles: [
+      'app/layout.tsx',
+      'app/not-found.tsx',
+      'app/[locale]/[[...slug]]/layout.tsx',
+      'app/[locale]/[[...slug]]/page.tsx',
+      'app/[locale]/[[...slug]]/error.tsx',
+      'app/auth/[action]/route.ts',
+      'app/auth/headless/[action]/route.ts',
+      'src/i18n/request.ts',
+      'next-env.d.ts',
+      'tsconfig.json',
+    ],
+    overrideGroups: [
+      {
+        kind: 'nextConfig',
+        candidates: ['next.config.js', 'next.config.mjs', 'next.config.ts'],
+        defaultTemplate: 'next.config.js',
+      },
+      {
+        kind: 'routing',
+        candidates: ['middleware.js', 'middleware.ts', 'proxy.js', 'proxy.ts'],
+        defaultTemplate: 'middleware.ts',
+      },
+      {
+        kind: 'instrumentation',
+        candidates: ['instrumentation.js', 'instrumentation.ts'],
+      },
+      {
+        kind: 'instrumentationClient',
+        candidates: ['instrumentation-client.js', 'instrumentation-client.ts'],
+      },
+    ],
+    linksPublicDirectory: true,
+  },
+  'react-router': {
+    defaultGeneratedFiles: [
+      'app/entry.server.tsx',
+      'app/root.tsx',
+      'app/routes.ts',
+      'app/page-route.ts',
+      'app/routes/layout.tsx',
+      'app/routes/page.tsx',
+      'app/routes/auth.ts',
+      'app/routes/auth-headless.ts',
+      'tsconfig.json',
+    ],
+    overrideGroups: [
+      {
+        kind: 'viteConfig',
+        candidates: ['vite.config.js', 'vite.config.mjs', 'vite.config.ts'],
+        defaultTemplate: 'vite.config.ts',
+      },
+      {
+        kind: 'reactRouterConfig',
+        candidates: ['react-router.config.js', 'react-router.config.ts'],
+        defaultTemplate: 'react-router.config.ts',
+      },
+    ],
+    linksPublicDirectory: false,
+  },
+};
+
+/** The theme's own middleware of a React Router storefront, run after the runtime's. */
+const themeMiddlewareCandidates = [
+  'src/runtime/middleware.ts',
+  'src/runtime/middleware.tsx',
+  'src/runtime/middleware.js',
 ];
 
-const overrideGroups = [
-  {
-    kind: 'nextConfig',
-    candidates: ['next.config.js', 'next.config.mjs', 'next.config.ts'],
-    defaultTemplate: 'next.config.js',
-  },
-  {
-    kind: 'routing',
-    candidates: ['middleware.js', 'middleware.ts', 'proxy.js', 'proxy.ts'],
-    defaultTemplate: 'middleware.ts',
-  },
-  {
-    kind: 'instrumentation',
-    candidates: ['instrumentation.js', 'instrumentation.ts'],
-  },
-  {
-    kind: 'instrumentationClient',
-    candidates: ['instrumentation-client.js', 'instrumentation-client.ts'],
-  },
-];
-
-const generatedOverridePaths = overrideGroups.flatMap(
-  ({ candidates }) => candidates
-);
+/**
+ * Everything any framework generates: removed before generating, so a theme that changes its
+ * framework keeps no files of the other one.
+ */
 const generatorOwnedPaths = [
-  ...defaultGeneratedFiles,
-  ...generatedOverridePaths,
+  'app',
   'public',
+  ...new Set(
+    Object.values(frameworkLayouts).flatMap(
+      ({ defaultGeneratedFiles, overrideGroups }) => [
+        ...defaultGeneratedFiles.filter((file) => !file.startsWith('app/')),
+        ...overrideGroups.flatMap(({ candidates }) => candidates),
+      ]
+    )
+  ),
 ];
 const obsoleteGeneratedPaths = ['i18n'];
 
@@ -84,10 +136,40 @@ function assertRuntimeDirectoryIsChild(rootDir, runtimeDir) {
   }
 }
 
-async function writeGeneratedFile(runtimeDir, relativePath, templatePath) {
+/**
+ * The framework of the storefront: `options.framework`, else `storefront.framework` of the
+ * theme `package.json`, else Next.js.
+ */
+export async function readRuntimeFramework(rootDir, framework) {
+  let selected = framework;
+
+  if (selected === undefined) {
+    const packageFile = path.join(rootDir, 'package.json');
+    if (await exists(packageFile)) {
+      const manifest = JSON.parse(await readFile(packageFile, 'utf8'));
+      selected = manifest.storefront?.framework;
+    }
+  }
+
+  selected ??= 'next';
+  if (!frameworks.includes(selected)) {
+    throw new Error(
+      `Unknown storefront framework "${selected}". Use one of: ${frameworks.join(', ')}.`
+    );
+  }
+  return selected;
+}
+
+async function writeGeneratedFile(
+  runtimeDir,
+  framework,
+  relativePath,
+  templatePath
+) {
   const source = path.join(
     packageDir,
     'templates',
+    framework,
     templatePath ?? relativePath
   );
   const target = path.join(runtimeDir, relativePath);
@@ -108,7 +190,11 @@ async function writeOverrideWrapper(rootDir, runtimeDir, override) {
   const specifier = toImportSpecifier(target, source);
   let contents;
 
-  if (override.kind === 'nextConfig') {
+  if (
+    override.kind === 'nextConfig' ||
+    override.kind === 'viteConfig' ||
+    override.kind === 'reactRouterConfig'
+  ) {
     contents = `export { default } from '${specifier}';\n`;
   } else if (override.kind === 'routing') {
     const exportName = override.file.startsWith('proxy.')
@@ -160,7 +246,7 @@ async function writeOverrideWrapper(rootDir, runtimeDir, override) {
   await writeFile(target, contents);
 }
 
-async function detectOverrides(rootDir) {
+async function detectOverrides(rootDir, overrideGroups) {
   const overrides = [];
 
   for (const group of overrideGroups) {
@@ -185,6 +271,30 @@ async function detectOverrides(rootDir) {
   }
 
   return overrides;
+}
+
+/** `app/middleware.ts` of a React Router runtime: the theme's middleware, or none. */
+async function writeThemeMiddleware(rootDir, runtimeDir) {
+  const matches = [];
+  for (const candidate of themeMiddlewareCandidates) {
+    if (await exists(path.join(rootDir, candidate))) matches.push(candidate);
+  }
+  if (matches.length > 1) {
+    throw new Error(
+      `Conflicting theme middleware: ${matches.join(', ')}. Keep exactly one.`
+    );
+  }
+
+  const contents = matches.length
+    ? "export { default } from '@src/runtime/middleware';\n"
+    : [
+        "import type { RuntimeMiddleware } from '@shopana/storefront/react-router/server';",
+        '',
+        'const middleware: RuntimeMiddleware[] = [];',
+        'export default middleware;',
+        '',
+      ].join('\n');
+  await writeFile(path.join(runtimeDir, 'app/middleware.ts'), contents);
 }
 
 async function linkPublicDirectory(rootDir, runtimeDir) {
@@ -213,7 +323,9 @@ export async function initRuntime(options = {}) {
   const runtimeDir = path.resolve(rootDir, options.runtimeDir ?? '.runtime');
   assertRuntimeDirectoryIsChild(rootDir, runtimeDir);
 
-  const overrides = await detectOverrides(rootDir);
+  const framework = await readRuntimeFramework(rootDir, options.framework);
+  const layout = frameworkLayouts[framework];
+  const overrides = await detectOverrides(rootDir, layout.overrideGroups);
 
   await mkdir(runtimeDir, { recursive: true });
   assertRuntimeDirectoryIsChild(
@@ -226,12 +338,12 @@ export async function initRuntime(options = {}) {
     )
   );
   await Promise.all(
-    defaultGeneratedFiles.map((relativePath) =>
-      writeGeneratedFile(runtimeDir, relativePath)
+    layout.defaultGeneratedFiles.map((relativePath) =>
+      writeGeneratedFile(runtimeDir, framework, relativePath)
     )
   );
 
-  for (const group of overrideGroups) {
+  for (const group of layout.overrideGroups) {
     const override = overrides.find(({ kind }) => kind === group.kind);
 
     if (override) {
@@ -239,17 +351,24 @@ export async function initRuntime(options = {}) {
     } else if (group.defaultTemplate) {
       await writeGeneratedFile(
         runtimeDir,
+        framework,
         group.defaultTemplate,
         group.defaultTemplate
       );
     }
   }
 
-  await linkPublicDirectory(rootDir, runtimeDir);
+  if (framework === 'react-router') {
+    await writeThemeMiddleware(rootDir, runtimeDir);
+  }
+  if (layout.linksPublicDirectory) {
+    await linkPublicDirectory(rootDir, runtimeDir);
+  }
 
   return {
     rootDir,
     runtimeDir,
+    framework,
     overrides: overrides.map((override) => ({
       ...override,
       source: path.join(rootDir, override.file),

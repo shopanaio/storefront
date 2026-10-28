@@ -2,8 +2,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { buildClosedPageRedirect } from '@shopana/storefront-sdk/modules/session/core/closedPageRedirect';
 import { readServerAuthState } from '@shopana/storefront-sdk/modules/session/server';
-import type { SDKRequestContext } from './headers';
-import { resolveRuntimeRoute } from './route';
+import type { SDKRequestContext } from '../core/request-context';
+import { resolveRuntimeRoute } from '../core/route';
 
 /**
  * Admits a request to a module page closed to visitors without a session, or sends it to the

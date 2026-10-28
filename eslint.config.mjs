@@ -128,7 +128,12 @@ export default defineConfig([
             {
               name: 'next',
               message:
-                'Import Next.js APIs through @shopana/storefront/next/*.',
+                'Import framework APIs through the @shopana/storefront facades.',
+            },
+            {
+              name: 'react-router',
+              message:
+                'Import framework APIs through the @shopana/storefront facades.',
             },
             {
               name: 'react-relay',
@@ -146,9 +151,9 @@ export default defineConfig([
               message: 'Relay has been removed.',
             },
             {
-              group: ['next/*'],
+              group: ['next/*', 'react-router/*', '@react-router/*'],
               message:
-                'Import Next.js APIs through @shopana/storefront/next/*.',
+                'Import framework APIs through the @shopana/storefront facades.',
             },
           ],
         },

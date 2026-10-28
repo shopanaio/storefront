@@ -4,8 +4,8 @@
  * from the consuming storefront's source tree.
  */
 import type { ReactNode } from 'react';
-import { getRequestContext } from '@shopana/storefront/next/headers';
-import { resolveRuntimeRoute, type RuntimePageType } from './route';
+import { getRequestContext } from './headers';
+import { resolveRuntimeRoute, type RuntimePageType } from '../core/route';
 
 interface LayoutProps {
   children: ReactNode;

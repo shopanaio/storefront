@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useRouter } from '@shopana/storefront/next/navigation';
+import { useRouter } from '@shopana/storefront/navigation';
 import { useCheckoutTheme } from '#checkout/theme';
 import { useIsCheckoutMissing } from '#checkout/hooks/useIsCheckoutMissing';
 import { useSessionExpired } from '@shopana/storefront-sdk/modules/session/react';
