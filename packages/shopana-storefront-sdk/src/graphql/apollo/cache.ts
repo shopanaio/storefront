@@ -7,6 +7,7 @@ import type {
 } from '@apollo/client';
 import { InMemoryCache } from '@apollo/client';
 import { cursorConnectionPolicy } from './pagination/cursorPagination';
+import { objectTypes } from './generated/objectTypes';
 import { possibleTypes } from './generated/possibleTypes';
 
 /** Root fields that find one entity by its handle, by the type of the entity. */
@@ -123,7 +124,7 @@ export function createApolloCache(
   Base: InMemoryCacheClass = InMemoryCache
 ): InMemoryCache {
   const handles: HandleIndex = new Map();
-  const baseTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
+  const ownTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
     Collection: {
       keyFields: handleKeyFields(handles),
       fields: {
@@ -184,6 +185,19 @@ export function createApolloCache(
       },
     },
   };
+  // An object written without an id (its type has none, or the query does not select it)
+  // stays inside its parent, and Apollo replaces it with what the next query writes there:
+  // the fields only the other query asked for are lost, and that query goes to the network
+  // again. Merged instead. A reference, a list or an object of another type is still
+  // replaced, so only the same object of the same parent field merges.
+  const baseTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
+    ...Object.fromEntries(
+      objectTypes.map((typename) => [typename, { merge: true }])
+    ),
+  };
+  for (const [typename, policy] of Object.entries(ownTypePolicies)) {
+    baseTypePolicies[typename] = { ...baseTypePolicies[typename], ...policy };
+  }
 
   const typePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
     ...baseTypePolicies,

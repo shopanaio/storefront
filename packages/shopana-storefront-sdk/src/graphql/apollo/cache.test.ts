@@ -179,3 +179,125 @@ describe('entities without id', () => {
     );
   });
 });
+
+describe('objects without id', () => {
+  const PAGE_SUMMARY = gql`
+    query PageSummary($handle: String!) {
+      productByHandle(handle: $handle) {
+        __typename
+        id
+        reviewSummary {
+          __typename
+          criteria {
+            __typename
+            reviewCount
+          }
+          ratingBreakdown {
+            __typename
+            rating5Count
+          }
+        }
+        featuredMedia {
+          __typename
+          id
+          image {
+            __typename
+            url
+            width
+          }
+        }
+      }
+    }
+  `;
+  const CARD_SUMMARY = gql`
+    query CardSummary($handle: String!) {
+      productByHandle(handle: $handle) {
+        __typename
+        id
+        reviewSummary {
+          __typename
+          reviewCount
+          averageRating
+        }
+        featuredMedia {
+          __typename
+          id
+          image {
+            __typename
+            url
+          }
+        }
+      }
+    }
+  `;
+  const page = (id: string, url: string) => ({
+    productByHandle: {
+      __typename: 'Product',
+      id,
+      reviewSummary: {
+        __typename: 'ProductReviewSummary',
+        criteria: [{ __typename: 'ProductReviewCriterionSummary', reviewCount: 2 }],
+        ratingBreakdown: {
+          __typename: 'ProductReviewRatingBreakdown',
+          rating5Count: 2,
+        },
+      },
+      featuredMedia: {
+        __typename: 'MediaImage',
+        id: `${id}-media`,
+        image: { __typename: 'Image', url, width: 1200 },
+      },
+    },
+  });
+  const card = (id: string, url: string) => ({
+    productByHandle: {
+      __typename: 'Product',
+      id,
+      reviewSummary: {
+        __typename: 'ProductReviewSummary',
+        reviewCount: 2,
+        averageRating: 5,
+      },
+      featuredMedia: {
+        __typename: 'MediaImage',
+        id: `${id}-media`,
+        image: { __typename: 'Image', url },
+      },
+    },
+  });
+
+  it('merge what another query writes into the same field instead of losing fields', () => {
+    const cache = createApolloCache();
+    const variables = { handle: 'bone' };
+    cache.writeQuery({ query: PAGE_SUMMARY, variables, data: page('p1', 'a.jpg') });
+    cache.writeQuery({ query: CARD_SUMMARY, variables, data: card('p1', 'a.jpg') });
+
+    expect(cache.readQuery({ query: PAGE_SUMMARY, variables })).toEqual(
+      page('p1', 'a.jpg')
+    );
+    expect(cache.readQuery({ query: CARD_SUMMARY, variables })).toEqual(
+      card('p1', 'a.jpg')
+    );
+  });
+
+  it('stay with their own parent', () => {
+    const cache = createApolloCache();
+    cache.writeQuery({
+      query: PAGE_SUMMARY,
+      variables: { handle: 'bone' },
+      data: page('p1', 'a.jpg'),
+    });
+    cache.writeQuery({
+      query: CARD_SUMMARY,
+      variables: { handle: 'ball' },
+      data: card('p2', 'b.jpg'),
+    });
+
+    expect(
+      cache.readQuery({ query: CARD_SUMMARY, variables: { handle: 'bone' } })
+    ).toBeNull();
+    expect(
+      cache.readQuery({ query: PAGE_SUMMARY, variables: { handle: 'ball' } })
+    ).toBeNull();
+  });
+});
