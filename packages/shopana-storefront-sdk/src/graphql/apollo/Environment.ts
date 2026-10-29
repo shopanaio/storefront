@@ -10,6 +10,7 @@ import {
 import { SetContextLink } from '@apollo/client/link/context';
 import type { FormattedExecutionResult } from 'graphql';
 import { createApolloCache, type InMemoryCacheClass } from './cache';
+import { createQueryResultHoldLink } from './queryResultHold';
 import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
 import {
@@ -190,7 +191,11 @@ export function createApolloClient(
   return integration.createClient({
     cache,
     link: ApolloLink.from([
-      ...(IS_SERVER ? [] : [createSessionRetryLink()]),
+      // First: a held result waits for the hold to end whatever the links after it do with
+      // it (a session retry runs inside).
+      ...(IS_SERVER
+        ? []
+        : [createQueryResultHoldLink(), createSessionRetryLink()]),
       authLink,
       ...(options.links ?? []),
       ...transportLinks,

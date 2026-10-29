@@ -19,7 +19,7 @@ describe('DataBoundary', () => {
     expect(screen.getByText('products')).toBeInTheDocument();
   });
 
-  it('holds its children back on the fallback while the gate is closed', () => {
+  it('shows the fallback while the gate is closed, the children rendered hidden', () => {
     const { rerender } = render(
       <DataGate open={false}>
         <DataBoundary fallback={<p>skeleton</p>}>
@@ -28,8 +28,9 @@ describe('DataBoundary', () => {
       </DataGate>
     );
 
-    expect(screen.getByText('skeleton')).toBeInTheDocument();
-    expect(screen.queryByText('products')).not.toBeInTheDocument();
+    expect(screen.getByText('skeleton')).toBeVisible();
+    // Rendered, so its queries start, but not shown.
+    expect(screen.getByText('products')).not.toBeVisible();
 
     rerender(
       <DataGate open>
@@ -39,7 +40,8 @@ describe('DataBoundary', () => {
       </DataGate>
     );
 
-    expect(screen.getByText('products')).toBeInTheDocument();
+    expect(screen.getByText('products')).toBeVisible();
+    expect(screen.queryByText('skeleton')).not.toBeInTheDocument();
   });
 
   it('shows the fallback while its children suspend', () => {
