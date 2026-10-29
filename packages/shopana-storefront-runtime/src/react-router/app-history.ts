@@ -49,7 +49,8 @@ export function useAppHistory(): AppHistory {
         void routerNavigate(href, {
           replace,
           state: entryState,
-          // Screens scroll in their own containers.
+          // Not to the top, should a ScrollRestoration be around: the app restores its
+          // screens' positions itself.
           preventScrollReset: true,
         }),
       go: (delta) => void routerNavigate(delta),
