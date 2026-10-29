@@ -180,22 +180,28 @@ function loadAddressLayout(
   return loadRouteLayout(route, resolution.pageType, { isModule: false });
 }
 
-/** The page itself, from loaded modules. */
+/** The page itself, from loaded modules, then `end` (see `RuntimePageProps`). */
 function usePageElement(
   pages: RuntimePageModuleMap,
-  page: RuntimePageData
+  page: RuntimePageData,
+  end?: ReactNode
 ): ReactNode {
   const client = useApolloClient();
   const services = useMemo(() => createClientPageServices(client), [client]);
 
   if (page.kind === 'page') {
     const modules = use(loadPageModules(pages, page.pageType));
-    return renderPageElement(page.pageType, modules, page.data);
+    return renderPageElement(page.pageType, modules, page.data, end);
   }
 
   if (page.kind === 'module') {
     const { Component } = use(loadModulePage(moduleRecord(page.pathname)));
-    const element = <Component {...page.props} services={services} />;
+    const element = (
+      <>
+        <Component {...page.props} services={services} />
+        {end}
+      </>
+    );
     return page.closedPageRedirect ? (
       <ClosedPageGuard redirectTo={page.closedPageRedirect}>
         {element}
@@ -207,7 +213,7 @@ function usePageElement(
 
   const { definition, template } = use(loadNotFoundModules(pages));
   const content = (
-    <Builder template={template} data={page.data} pageType="404" />
+    <Builder template={template} data={page.data} pageType="404" end={end} />
   );
   const Provider = definition.Provider;
   return (
@@ -352,6 +358,12 @@ export interface RuntimePageProps {
   pages: RuntimePageModuleMap;
   /** What the page route loaded for an address (see `useRouterPage`). */
   page: RuntimePageData;
+  /**
+   * What ends the page after its content (the site's footer): part of the page, so a page
+   * with a template skeleton shows it with the loaded page, not under the skeleton. Kept
+   * stable (an element made once): a new one renders the memoized page again.
+   */
+  end?: ReactNode;
 }
 
 /**
@@ -364,10 +376,11 @@ export interface RuntimePageProps {
 export const RuntimePage = memo(function RuntimePage({
   pages,
   page,
+  end,
 }: RuntimePageProps) {
   return (
     <>
-      {usePageElement(pages, page)}
+      {usePageElement(pages, page, end)}
       {page.pendingMetadata ? (
         <PendingMetadata load={page.pendingMetadata} />
       ) : null}

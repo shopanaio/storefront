@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import type { PageTemplate, SectionProps, BlockProps } from './types';
 import { Builder } from './Builder';
 
@@ -298,5 +298,70 @@ describe('Builder', () => {
 
     expect(screen.getByTestId('section-with-blocks')).toBeInTheDocument();
     expect(screen.getByText('Blocks count: 0')).toBeInTheDocument();
+  });
+
+  it('shows the template skeleton for the whole page while a section loads', async () => {
+    let title: string | null = null;
+    let resolve!: () => void;
+    const loaded = new Promise<void>((done) => {
+      resolve = done;
+    });
+    const LoadingSection = ({ id }: SectionProps) => {
+      if (title === null) throw loaded;
+      return <div data-testid={`section-${id}`}>{title}</div>;
+    };
+    const template: PageTemplate<{ name: string }> = {
+      sections: {
+        order: ['loaded', 'loading'],
+        loaded: { component: MockSection, settings: { title: 'Loaded' } },
+        loading: { component: LoadingSection, settings: {} },
+      },
+      skeleton: ({ data }) => <div data-testid="skeleton">{data.name}</div>,
+    };
+
+    render(
+      <Builder
+        template={template}
+        data={{ name: 'Test' }}
+        pageType="product"
+        end={<footer data-testid="end" />}
+      />
+    );
+
+    expect(screen.getByTestId('skeleton')).toHaveTextContent('Test');
+    expect(screen.queryByTestId('section-loaded')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('end')).not.toBeInTheDocument();
+
+    await act(async () => {
+      title = 'Ready';
+      resolve();
+    });
+
+    expect(await screen.findByTestId('section-loading')).toHaveTextContent(
+      'Ready'
+    );
+    expect(screen.getByTestId('section-loaded')).toBeInTheDocument();
+    expect(screen.getByTestId('end')).toBeInTheDocument();
+    expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
+  });
+
+  it('renders the end after the sections', () => {
+    const template: PageTemplate = {
+      sections: {
+        order: ['hero'],
+        hero: { component: MockSection, settings: { title: 'Hero' } },
+      },
+    };
+
+    const { container } = render(
+      <Builder
+        template={template}
+        data={{}}
+        pageType="home"
+        end={<footer data-testid="end" />}
+      />
+    );
+
+    expect(container.lastElementChild).toBe(screen.getByTestId('end'));
   });
 });

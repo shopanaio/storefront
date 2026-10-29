@@ -4,6 +4,7 @@ import type {
   SectionConfig,
   SectionCollection,
 } from './types';
+import { DataBoundary } from './DataBoundary';
 import { TemplateDataProvider } from './TemplateDataContext';
 import { Section, type SectionEditorBlockConfig } from './Section';
 
@@ -81,21 +82,44 @@ function resolveSections<TData>(
     .filter(Boolean);
 }
 
+/**
+ * The sections of a page template with its data, then `end`. A template with a `skeleton`
+ * loads as one: the skeleton stands for the whole page, `end` included, until every section
+ * has its data (a DataBoundary around them); a DataBoundary of a section inside still covers
+ * what loads later there.
+ */
 export function Builder<TData>({
   template,
   data,
   pageType,
   fallback,
+  end,
 }: PageBuilderProps<TData>) {
   const sections = resolveSections(template.sections, data, pageType);
 
   if (!sections.length && fallback) {
-    return <>{fallback}</>;
+    return (
+      <>
+        {fallback}
+        {end}
+      </>
+    );
   }
 
+  const Skeleton = template.skeleton;
   return (
     <TemplateDataProvider value={{ pageType, data }}>
-      {sections}
+      {Skeleton ? (
+        <DataBoundary fallback={<Skeleton data={data} />}>
+          {sections}
+          {end}
+        </DataBoundary>
+      ) : (
+        <>
+          {sections}
+          {end}
+        </>
+      )}
     </TemplateDataProvider>
   );
 }

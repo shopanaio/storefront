@@ -12,14 +12,14 @@
  * time. With both loaded and a `loadData` that answers at once (it reads only the address),
  * a page renders in the same render that asks for it, without suspending.
  */
-import type {
-  ApolloClient,
-  NormalizedCacheObject,
-} from '@apollo/client';
+import type { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import { useApolloClient } from '@apollo/client/react';
 import { use, type ReactNode } from 'react';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
-import type { PageTemplate, PageType } from '@shopana/storefront-sdk/core/types';
+import type {
+  PageTemplate,
+  PageType,
+} from '@shopana/storefront-sdk/core/types';
 import type {
   RuntimePageDataResult,
   RuntimePageModuleMap,
@@ -133,7 +133,9 @@ export function preloadRuntimePages(pages: RuntimePageModuleMap): void {
  * Query results land in the browser cache the page's hooks read from, so there is no
  * snapshot to hand over: the cache state stays empty and hydration merges nothing.
  */
-export function createClientPageServices(client: ApolloClient): RuntimePageServices {
+export function createClientPageServices(
+  client: ApolloClient
+): RuntimePageServices {
   return {
     async loadQuery(document, variables) {
       const result = await client.query({ query: document, variables });
@@ -159,13 +161,19 @@ export function toSearchRecord(searchParams: URLSearchParams) {
   return record;
 }
 
-/** The page of `pageType` rendered with its data: the template through Builder, in its Provider. */
+/**
+ * The page of `pageType` rendered with its data: the template through Builder, then `end`
+ * (see Builder), in its Provider.
+ */
 export function renderPageElement(
   pageType: RuntimeRenderablePageType,
   { definition, template }: PageModules,
-  data: unknown
+  data: unknown,
+  end?: ReactNode
 ): ReactNode {
-  const content = <Builder template={template} data={data} pageType={pageType} />;
+  const content = (
+    <Builder template={template} data={data} pageType={pageType} end={end} />
+  );
   const Provider = definition.Provider;
   return Provider ? <Provider data={data}>{content}</Provider> : content;
 }
@@ -219,7 +227,8 @@ function loadRuntimePageContent({
   if (modules.status === 'fulfilled' && modules.value) {
     const loaded = modules.value;
     const result = loadData(loaded.definition);
-    if (!isPromise(result)) return fulfilled(renderPage(pageType, loaded, result));
+    if (!isPromise(result))
+      return fulfilled(renderPage(pageType, loaded, result));
     return track(result.then((data) => renderPage(pageType, loaded, data)));
   }
 

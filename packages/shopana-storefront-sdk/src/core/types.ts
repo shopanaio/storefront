@@ -87,8 +87,18 @@ export interface SectionCollection<TData = any> {
   [sectionId: string]: SectionConfig<any, TData> | string[];
 }
 
+export interface PageTemplateSkeletonProps<TData = any> {
+  data: TData;
+}
+
 export interface PageTemplate<TData = any> {
   sections: SectionCollection<TData>;
+  /**
+   * The whole page while its sections load their data (see Builder): for a page whose
+   * sections load it together, a product or a listing. It may read the Apollo cache
+   * (cache-only) to show what is known. Without it each section shows its own fallback.
+   */
+  skeleton?: ComponentType<PageTemplateSkeletonProps<TData>>;
 }
 
 export type Template<TData = any> = PageTemplate<TData>;
@@ -98,6 +108,11 @@ export interface PageBuilderProps<TData = any> {
   data: TData;
   pageType: PageType;
   fallback?: ReactNode;
+  /**
+   * What ends the page after its sections (the site's footer): part of the page, so with a
+   * `skeleton` it shows with the loaded page, not under the skeleton.
+   */
+  end?: ReactNode;
 }
 
 export type PageDataLoader<TData = any> = (
