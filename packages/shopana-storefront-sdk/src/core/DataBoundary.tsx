@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, Suspense, useContext, type ReactNode } from 'react';
-import { AwayBoundary, useAwayEnabled } from './AwayBoundary';
 import { ProgressiveReveal } from './Progressive';
 
 const DataGateContext = createContext(true);
@@ -32,11 +31,6 @@ export function useDataGateOpen(): boolean {
 export interface DataBoundaryProps {
   /** The section as far as it can render without its queries: a skeleton, or cached data. */
   fallback: ReactNode;
-  /**
-   * Freeze the section while it is away from the screen (see AwayBoundary), `fallback` at its
-   * last height in its place. By default as an AwayProvider around says (off without one).
-   */
-  away?: boolean;
   children: ReactNode;
 }
 
@@ -47,25 +41,14 @@ export interface DataBoundaryProps {
  * fallback may itself read the cache (cache-only) to show what is known before the query.
  *
  * Under a ProgressiveProvider the section waits its turn to show, `fallback` in its place
- * (see ProgressiveReveal); under an AwayProvider it freezes while away from the screen.
+ * (see ProgressiveReveal).
  */
-export function DataBoundary({
-  fallback,
-  away: ownAway,
-  children,
-}: DataBoundaryProps) {
+export function DataBoundary({ fallback, children }: DataBoundaryProps) {
   const open = useContext(DataGateContext);
-  const providedAway = useAwayEnabled();
-  const away = ownAway ?? providedAway;
   if (!open) return <>{fallback}</>;
-  const section = <Suspense fallback={fallback}>{children}</Suspense>;
   return (
     <ProgressiveReveal fallback={fallback}>
-      {away ? (
-        <AwayBoundary placeholder={fallback}>{section}</AwayBoundary>
-      ) : (
-        section
-      )}
+      <Suspense fallback={fallback}>{children}</Suspense>
     </ProgressiveReveal>
   );
 }
