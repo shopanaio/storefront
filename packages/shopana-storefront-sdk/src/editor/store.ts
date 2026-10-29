@@ -129,7 +129,8 @@ export function createThemeEditorStore(
             name: block.schema?.name ?? block.id,
             schema: block.schema,
             initialSettings: clone(block.settings),
-            settings: existingBlock?.settings ?? clone(block.settings),
+            // The block's own object until edited, as the section's below.
+            settings: existingBlock?.settings ?? block.settings,
           };
         });
 
@@ -138,7 +139,11 @@ export function createThemeEditorStore(
           name: input.schema?.name ?? input.id,
           schema: input.schema,
           initialSettings: clone(input.settings),
-          settings: existingSection?.settings ?? clone(input.settings),
+          // The section's own object until edited, not a copy: every edit makes a new object
+          // (updateSectionSetting, resetSection), so it is never changed in place. A section
+          // reading its settings from the store gets the same object back on registration and
+          // renders nothing again for it (see Section).
+          settings: existingSection?.settings ?? input.settings,
           blockOrder,
           blocks,
         };
