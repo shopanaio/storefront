@@ -4,12 +4,26 @@ const HANDLE_HEIGHT = 4;
 const HANDLE_OFFSET_TOP = 8;
 const DRAWER_CONTENT_OFFSET_TOP = HANDLE_HEIGHT + HANDLE_OFFSET_TOP;
 const DRAWER_OFFSET_X = 12;
+/** A bottom sheet never stands taller than this share of the screen. */
+const SHEET_MAX_HEIGHT = '90dvh';
 
 /** `zIndex` is the overlay's; the content lies one above it. */
 export const useStyles = createStyles(
   ({ css, token }, { zIndex }: { zIndex: number }) => ({
     body: css`
       height: 100%;
+    `,
+    // A bottom sheet's content shrinks to the cap; its own body scrolls inside.
+    frame: css`
+      display: flex;
+      flex-direction: column;
+      max-height: calc(${SHEET_MAX_HEIGHT} - ${DRAWER_CONTENT_OFFSET_TOP}px);
+    `,
+    bodyVertical: css`
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
     `,
     overlay: css`
       position: fixed;
@@ -22,6 +36,7 @@ export const useStyles = createStyles(
       }
     `,
     handle: css`
+      flex-shrink: 0;
       margin: 0 auto;
       width: 32px;
       height: ${HANDLE_HEIGHT}px;

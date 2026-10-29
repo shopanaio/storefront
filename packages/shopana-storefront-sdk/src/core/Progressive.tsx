@@ -86,7 +86,7 @@ function QueuedReveal({
   fallback: ReactNode;
   children: ReactNode;
 }) {
-  const marker = useRef<HTMLDivElement>(null);
+  const marker = useRef<HTMLTemplateElement>(null);
   const [shown, setShown] = useState(false);
 
   useLayoutEffect(() => {
@@ -103,12 +103,15 @@ function QueuedReveal({
   }, [queue, shown]);
 
   return (
-    // `display: contents`: no box of its own, only a place in the document for the order.
-    <div ref={marker} style={{ display: 'contents' }}>
+    <>
+      {/* The part's place in the document, for the order: an empty element without a box,
+          next to the part rather than around it, so the part stays a child of its page's
+          container for the page's styles (`.sections > *`). */}
+      <template ref={marker} />
       {shown ? null : fallback}
       {/* The same Activity before and after: what it rendered hidden is what shows. */}
       <Activity mode={shown ? 'visible' : 'hidden'}>{children}</Activity>
-    </div>
+    </>
   );
 }
 

@@ -191,11 +191,7 @@ export const DrawerBase = ({
         >
           {renderHeader()}
           <div
-            className={cx(
-              styles.body,
-              !isHorizontal && styles.bodySheet,
-              classNames?.body
-            )}
+            className={cx(styles.body, classNames?.body)}
             style={{
               ...(!isHorizontal && minHeight ? { minHeight } : undefined),
               ...partStyles?.body,
@@ -302,6 +298,8 @@ const useStyles = createStyles(({ css, token }) => ({
   layout: css`
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     height: 100%;
     background-color: ${token.colorBgElevated};
     overflow: hidden;
@@ -336,10 +334,6 @@ const useStyles = createStyles(({ css, token }) => ({
       calc(${token.paddingSM}px + var(--safe-area-right, 0px))
       calc(${token.padding}px + var(--safe-area-bottom, 0px))
       calc(${token.paddingSM}px + var(--safe-area-left, 0px));
-  `,
-  // A bottom sheet is as tall as its content, up to most of the screen.
-  bodySheet: css`
-    max-height: 80dvh;
   `,
   footer: css`
     flex-shrink: 0;

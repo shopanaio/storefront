@@ -195,7 +195,14 @@ export const Sheet = ({
     ? { 'aria-labelledby': labelledBy, 'aria-label': label }
     : {};
   const body = (
-    <div className={cx(styles.body, classNames?.body)} style={partStyles?.body}>
+    <div
+      className={cx(
+        styles.body,
+        isVertical && styles.bodyVertical,
+        classNames?.body
+      )}
+      style={partStyles?.body}
+    >
       <DrawerLayerContext.Provider value={layer}>
         {children}
       </DrawerLayerContext.Provider>
@@ -255,7 +262,7 @@ export const Sheet = ({
           </Drawer.Title>
           {isVertical ? (
             <AnimateHeight duration={300} height={height} disableDisplayNone>
-              <div ref={setMeasured}>
+              <div ref={setMeasured} className={styles.frame}>
                 <div
                   className={cx(styles.handle, classNames?.handle)}
                   style={partStyles?.handle}

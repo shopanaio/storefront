@@ -18,6 +18,20 @@ export function waitBeforeHydration(load: Promise<unknown>): void {
   waits.push(load.catch(() => {}));
 }
 
+/**
+ * Settles once the browser has parsed the whole document. The client entry is an async module:
+ * it can run while the server still streams, before the inline scripts at the document's end
+ * (the Apollo cache, the hydrated page) have run.
+ */
+export function documentParsed(): Promise<void> {
+  if (document.readyState !== 'loading') return Promise.resolve();
+  return new Promise((resolve) => {
+    document.addEventListener('DOMContentLoaded', () => resolve(), {
+      once: true,
+    });
+  });
+}
+
 /** Settles once everything hydration waits for is loaded or failed. */
 export async function hydrationReady(): Promise<void> {
   await Promise.all(waits);
@@ -65,7 +79,7 @@ export function hydratedPageScript(page: HydratedPage | null): string {
   return `<script>window.${GLOBAL_KEY}=${json}</script>`;
 }
 
-/** The page the document carried (its inline scripts ran before the app's modules). */
+/** The page the document carried; read once it is parsed (see `documentParsed`). */
 export function readHydratedPage(): HydratedPage | null {
   if (typeof window === 'undefined') return null;
   return (window as unknown as PageGlobal)[GLOBAL_KEY] ?? null;

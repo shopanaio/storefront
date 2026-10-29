@@ -217,7 +217,8 @@ const useStyles = createStyles(({ css, token }) => ({
   sheet: css`
     display: flex;
     flex-direction: column;
-    max-height: 90dvh;
+    flex: 1 1 auto;
+    min-height: 0;
   `,
   sheetHeader: css`
     flex-shrink: 0;

@@ -36,8 +36,8 @@ export function apolloStateScript(scope: ServerRequestScope): string {
 
 /**
  * The state the document carried, taken once: the global is cleared, the browser's client
- * holds it from then on. The document's inline scripts run as it is parsed, before the
- * deferred module scripts of the app, so it is there when the app starts.
+ * holds it from then on. The client entry hydrates once the document is parsed, so the
+ * script at its end has run.
  */
 export function takeApolloState(): NormalizedCacheObject | undefined {
   if (typeof window === 'undefined') return undefined;
