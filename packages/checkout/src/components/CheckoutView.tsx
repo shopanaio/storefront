@@ -14,6 +14,7 @@ import { useCheckoutSignIn } from '#checkout/context/CheckoutSignInContext';
 import { usePreloadModules } from '#checkout/infra/preloadModules';
 import { useCheckoutTheme } from '#checkout/theme';
 import { SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
+import { useHeldPending } from '#checkout/ui/LoadingBoundary';
 
 export type CheckoutViewProps = Pick<CheckoutProps, 'brand'> & {
   onSubmit: (e: React.FormEvent) => void;
@@ -33,6 +34,9 @@ export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
   // Below lg the lines of the order lead the page, over the form; the rest of the summary goes
   // under the form, and the order comment with it, over the totals.
   const stacked = useBreakpointDown('lg');
+  // An expired account checkout has no data to wait for: the sign-in shows at once (S6). Data
+  // already here (a checkout opened again) shows at once too, with no skeleton.
+  const loading = useHeldPending(!checkout && !signInRequired);
 
   return (
     <div className={styles.wrapper}>
@@ -72,8 +76,11 @@ export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
           </>
         }
       />
-      {/* An expired account checkout has no data to wait for: the sign-in shows at once (S6). */}
-      <CheckoutSkeleton brand={brand} isReady={!!checkout || signInRequired} />
+      {loading ? (
+        <div className={styles.skeleton}>
+          <CheckoutSkeleton header={<BrandHeader>{brand}</BrandHeader>} />
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -86,6 +93,13 @@ const useStyles = createStyles(({ css, token }) => {
       /* Text that sets no size of its own takes the checkout's, not the host page's. */
       font-size: ${token.fontSize}px;
       line-height: ${token.lineHeight};
+    `,
+    // Over the form while the data loads: the form renders under it, laid out by the time it shows.
+    skeleton: css`
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      overflow: hidden;
     `,
     actions: css`
       display: contents;

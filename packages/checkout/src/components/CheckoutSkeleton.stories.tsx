@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withCheckout } from '#checkout/stories/withCheckout';
+import { BrandBar } from './BrandBar';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
 
 const meta = {
@@ -7,7 +8,7 @@ const meta = {
   component: CheckoutSkeleton,
   decorators: [withCheckout],
   parameters: { layout: 'fullscreen' },
-  args: { brand: <strong>Storefront</strong>, isReady: false },
+  args: { header: <BrandBar><strong>Storefront</strong></BrandBar> },
 } satisfies Meta<typeof CheckoutSkeleton>;
 
 export default meta;

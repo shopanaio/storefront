@@ -11,15 +11,7 @@ export const Checkout = dynamic(
   { ssr: false }
 );
 
-export const CheckoutSkeleton = dynamic(
-  () => import('./components/CheckoutSkeleton').then((m) => m.CheckoutSkeleton),
-  { ssr: false }
-);
-
-export const CheckoutPage = dynamic(
-  () => import('./page/client').then((m) => m.CheckoutPageClient),
-  { ssr: false }
-);
+export { CheckoutPage, preloadCheckoutPage } from './page/CheckoutPage';
 
 export const CheckoutReturnPage = dynamic(
   () => import('./page/return').then((m) => m.CheckoutReturnPageClient),

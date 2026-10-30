@@ -3,70 +3,48 @@
 import { mq } from '@shopana/storefront-ui';
 import { Flex, Skeleton, Typography } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { useEffect, useState } from 'react';
-import { BrandHeader } from './BrandHeader';
+import type React from 'react';
 
 const { Text } = Typography;
 
-/**
- * Skeleton for the Checkout page that mirrors the two-column layout.
- * Manages its own visibility logic: shows for at least 1 second, then hides when isReady.
- */
 export interface CheckoutSkeletonProps {
-  /** Optional brand component to be displayed in the left column */
-  brand?: React.ReactNode;
-  /** When true, indicates that the data (e.g., cart) is loaded and ready */
-  isReady?: boolean;
+  /** Over the form: the bar of the store's brand. */
+  header?: React.ReactNode;
 }
 
+/**
+ * Skeleton of the checkout page that mirrors its two columns, in the page's flow: the page
+ * shows it while the checkout loads, and the checkout over its form while its data loads.
+ */
 export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
-  brand,
-  isReady = false,
+  header,
 }) => {
   const { styles } = useStyles();
-  const [minDelayPassed, setMinDelayPassed] = useState(false);
-
-  // Ensure skeleton shows for at least 1 second
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinDelayPassed(true);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const shouldShow = !isReady || !minDelayPassed;
-
-  if (!shouldShow) {
-    return null;
-  }
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <Flex className={styles.left} vertical>
-            <BrandHeader>{brand}</BrandHeader>
-            <Flex vertical gap={16}>
-              <Text className={styles.sectionTitle} strong>
-                <Skeleton.Input size="small" style={{ width: 150 }} />
-              </Text>
-              <Skeleton paragraph={{ rows: 3 }} title={false} />
-              <Skeleton paragraph={{ rows: 3 }} title={false} />
-            </Flex>
+    <div className={styles.container}>
+      <div className={styles.main}>
+        <Flex className={styles.left} vertical>
+          {header}
+          <Flex vertical gap={16}>
+            <Text className={styles.sectionTitle} strong>
+              <Skeleton.Input size="small" style={{ width: 150 }} />
+            </Text>
+            <Skeleton paragraph={{ rows: 3 }} title={false} />
+            <Skeleton paragraph={{ rows: 3 }} title={false} />
           </Flex>
+        </Flex>
 
-          <Flex className={styles.rightContainer}>
-            <Flex vertical gap={12} className={styles.right}>
-              <Skeleton paragraph={{ rows: 5 }} />
-              <Flex vertical gap={12} className={styles.actionsRight}>
-                <Skeleton.Button size="large" style={{ width: 220 }} />
-                <Skeleton.Input size="small" style={{ width: 180 }} />
-              </Flex>
-              <Skeleton paragraph={{ rows: 3 }} title={false} />
+        <Flex className={styles.rightContainer}>
+          <Flex vertical gap={12} className={styles.right}>
+            <Skeleton paragraph={{ rows: 5 }} />
+            <Flex vertical gap={12} className={styles.actionsRight}>
+              <Skeleton.Button size="large" style={{ width: 220 }} />
+              <Skeleton.Input size="small" style={{ width: 180 }} />
             </Flex>
+            <Skeleton paragraph={{ rows: 3 }} title={false} />
           </Flex>
-        </div>
+        </Flex>
       </div>
     </div>
   );
@@ -74,19 +52,11 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
 
 const useStyles = createStyles(({ token, css }) => {
   return {
-    overlay: css`
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 10;
-      background-color: ${token.colorBgContainer};
-    `,
     container: css`
       display: flex;
       flex-direction: column;
       width: 100%;
+      background-color: ${token.colorBgContainer};
       /* checkout layout variables */
       --checkout-content-max: 1280px;
       /* make left column slightly wider than right */
@@ -105,6 +75,7 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 100dvh;
 
       ${mq.lg} {
         display: grid;
