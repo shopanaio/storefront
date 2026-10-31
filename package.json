@@ -12,6 +12,7 @@
   "scripts": {
     "runtime:init": "node ./scripts/theme.mjs runtime:init",
     "dev": "node ./scripts/theme.mjs dev",
+    "dev:internal": "node ./scripts/theme.mjs dev:internal",
     "build": "node ./scripts/theme.mjs build",
     "start": "node ./scripts/theme.mjs start",
     "codegen": "node ./scripts/codegen.mjs",
