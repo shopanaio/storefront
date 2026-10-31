@@ -3,7 +3,7 @@ import { createStyles } from 'antd-style';
 const HANDLE_HEIGHT = 4;
 const HANDLE_OFFSET_TOP = 8;
 const DRAWER_CONTENT_OFFSET_TOP = HANDLE_HEIGHT + HANDLE_OFFSET_TOP;
-const DRAWER_OFFSET_X = 12;
+const DRAWER_OFFSET_X = 16;
 /** A bottom sheet never stands taller than this share of the screen. */
 const SHEET_MAX_HEIGHT = '90dvh';
 
