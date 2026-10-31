@@ -10,6 +10,7 @@
 import { useContext, useEffect, useMemo, useRef } from 'react';
 import {
   UNSAFE_DataRouterContext as DataRouterContext,
+  useFetcher,
   useLocation,
   useMatches,
   useNavigate,
@@ -122,4 +123,29 @@ export function useRouterPage(): RouterPage | null {
     page: error === undefined ? (match.loaderData as RuntimePageData) : null,
     error,
   };
+}
+
+/**
+ * The page of an address loaded by its page route without a move (a page an app shows over the
+ * one on screen, in a modal): the route's loader runs as for a navigation, the address and the
+ * history stay. A loader that throws reaches the route's error boundary, as with any fetcher.
+ * `href` is the full path, the locale segment included. The fetcher is keyed by the address,
+ * so a page shown again has its page at once. Null while it loads the first time.
+ */
+export function useRouterPageAt(
+  href: string
+): Pick<RouterPage, 'page' | 'error'> | null {
+  const fetcher = useFetcher<RuntimePageData>({ key: `page:${href}` });
+  const latest = useRef(fetcher);
+  latest.current = fetcher;
+
+  useEffect(() => {
+    const { data, state, load } = latest.current;
+    if (data === undefined && state === 'idle') void load(href);
+  }, [href]);
+
+  if (fetcher.data === undefined) return null;
+  return isRuntimePageData(fetcher.data)
+    ? { page: fetcher.data, error: undefined }
+    : { page: null, error: fetcher.data };
 }
