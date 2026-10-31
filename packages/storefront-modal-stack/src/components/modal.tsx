@@ -29,7 +29,10 @@ interface StyleProps {
 }
 
 const useStyles = createStyles(
-  ({ css, token }, { hasChildren, depth, totalCount }: StyleProps) => {
+  (
+    { css, token, prefixCls },
+    { hasChildren, depth, totalCount }: StyleProps
+  ) => {
     const scale = hasChildren ? 1 - SCALE_FACTOR * depth : 1;
     const translateY = hasChildren ? -token.paddingXS * depth : 0;
     // Only show active item (depth=0) and the one behind it (depth=1)
@@ -37,6 +40,8 @@ const useStyles = createStyles(
     const opacity = depth >= 2 ? 0 : 1;
     // Active modal (depth=0) gets 24px top padding when there's more than one modal in stack
     const topPadding = depth === 0 && totalCount > 1 ? 24 : token.padding;
+    // Phones: every modal takes the whole screen, without offsets and rounded corners.
+    const mobile = `@media (max-width: ${token.screenSMMax}px)`;
 
     return {
       wrapper: css`
@@ -51,6 +56,16 @@ const useStyles = createStyles(
           opacity ${token.motionDurationMid} ease-out;
         pointer-events: ${hasChildren ? 'none' : 'auto'};
         opacity: ${opacity};
+
+        ${mobile} {
+          padding: 0;
+
+          .${prefixCls}-modal {
+            max-width: 100vw;
+            margin: 0;
+            padding: 0;
+          }
+        }
       `,
       container: css`
         height: calc(100vh - ${topPadding + token.padding}px);
@@ -58,6 +73,12 @@ const useStyles = createStyles(
         padding: 0 !important;
         background-color: ${token.colorBgLayout} !important;
         overflow: hidden;
+
+        ${mobile} {
+          height: 100dvh;
+          width: 100vw;
+          border-radius: 0 !important;
+        }
       `,
       body: css`
         height: 100%;
@@ -280,7 +301,7 @@ export const ModalStackItem = ({
         transitionName="modal-stack-slide-up"
         maskTransitionName="modal-stack-fade"
         mask={level === 0}
-        width={`calc(100vw - ${token.padding * 2}px)`}
+        width={{ xs: '100vw', md: `calc(100vw - ${token.padding * 2}px)` }}
         classNames={{
           wrapper: styles.wrapper,
           container: styles.container,
