@@ -13,28 +13,20 @@ import { createApolloCache, type InMemoryCacheClass } from './cache';
 import { createQueryResultHoldLink } from './queryResultHold';
 import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
+import { readCookie } from '../../core/cookiePolicy';
 import {
-  readCookie,
-  resolveCookieAttributes,
-  serializeCookie,
-} from '../../core/cookiePolicy';
+  ensureVisitorId,
+  VISITOR_COOKIE_NAME,
+  VISITOR_ID_HEADER,
+} from '../../core/visitor';
 import type {
   ApolloEnvironmentConfig,
   CreateApolloClientOptions,
 } from './types';
 
 const IS_SERVER = typeof window === 'undefined';
-const VISITOR_COOKIE_NAME = 'shopana_storefront_visitor_id';
-const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 /** The gateway rejects the whole request when the bearer token is not valid (anymore). */
 const CUSTOMER_INVALID_CODE = 'STOREFRONT_CUSTOMER_INVALID';
-
-function getCookieValue(
-  cookieName: string,
-  serverCookies?: string
-): string | null {
-  return readCookie(IS_SERVER ? serverCookies : document.cookie, cookieName);
-}
 
 function hasCustomerInvalidError(
   errors: FormattedExecutionResult['errors']
@@ -143,17 +135,10 @@ export function createApolloClient(
       ? (options.accessToken ?? null)
       : await storefrontSession.getAccessToken();
 
-    let visitorId = getCookieValue(VISITOR_COOKIE_NAME, options.serverCookies);
-    if (!visitorId && !IS_SERVER) {
-      visitorId = crypto.randomUUID();
-      document.cookie = serializeCookie(VISITOR_COOKIE_NAME, visitorId, {
-        ...resolveCookieAttributes(config.cookiePolicy, {
-          secure: window.location.protocol === 'https:',
-        }),
-        maxAge: VISITOR_COOKIE_MAX_AGE,
-      });
-    }
-    if (visitorId) headers['x-shopana-storefront-visitor-id'] = visitorId;
+    const visitorId = IS_SERVER
+      ? readCookie(options.serverCookies, VISITOR_COOKIE_NAME)
+      : ensureVisitorId(config.cookiePolicy);
+    if (visitorId) headers[VISITOR_ID_HEADER] = visitorId;
     // The gateway picks the content language from Accept-Language (lz20).
     if (options.locale) headers['Accept-Language'] = options.locale;
 
