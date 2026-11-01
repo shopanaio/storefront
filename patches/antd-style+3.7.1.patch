@@ -1,0 +1,170 @@
+diff --git a/node_modules/antd-style/es/factories/createStyles/index.js b/node_modules/antd-style/es/factories/createStyles/index.js
+index 5863d89..2547f17 100644
+--- a/node_modules/antd-style/es/factories/createStyles/index.js
++++ b/node_modules/antd-style/es/factories/createStyles/index.js
+@@ -7,6 +7,19 @@ import { useContext, useMemo } from 'react';
+ import { createCSS, serializeCSS } from "../../core";
+ import { isReactCssResult } from "../../utils";
+ import { convertResponsiveStyleToString, useMediaQueryMap } from "./response";
++// The theme's parts, split once per theme: every useStyles of every component reads them.
++var splitThemes = new WeakMap();
++var splitTheme = function splitTheme(theme) {
++  var split = splitThemes.get(theme);
++  if (!split) {
++    split = {
++      token: _objectWithoutProperties(theme, _excluded),
++      rest: _objectWithoutProperties(theme, _excluded2)
++    };
++    splitThemes.set(theme, split);
++  }
++  return split;
++};
+ /**
+  * 创建样式基础写法
+  */
+@@ -43,7 +56,7 @@ export var createStylesFactory = function createStylesFactory(_ref) {
+             isDarkMode = theme.isDarkMode,
+             prefixCls = theme.prefixCls,
+             iconPrefixCls = theme.iconPrefixCls,
+-            token = _objectWithoutProperties(theme, _excluded);
++            token = splitTheme(theme).token;
+ 
+           // 创建响应式断点选择器的工具函数
+           // @ts-ignore
+@@ -104,7 +117,7 @@ export var createStylesFactory = function createStylesFactory(_ref) {
+       return useMemo(function () {
+         var prefixCls = theme.prefixCls,
+           iconPrefixCls = theme.iconPrefixCls,
+-          res = _objectWithoutProperties(theme, _excluded2);
++          res = splitTheme(theme).rest;
+         return {
+           styles: styles,
+           cx: cx,
+diff --git a/node_modules/antd-style/es/factories/createUseTheme.js b/node_modules/antd-style/es/factories/createUseTheme.js
+index afbe6d9..c55112f 100644
+--- a/node_modules/antd-style/es/factories/createUseTheme.js
++++ b/node_modules/antd-style/es/factories/createUseTheme.js
+@@ -4,6 +4,26 @@ import { DEFAULT_THEME_CONTEXT } from "../functions/setupStyled";
+ import { useAntdTheme } from "../hooks/useAntdTheme";
+ import { useThemeMode } from "../hooks/useThemeMode";
+ import { ConfigProvider } from 'antd';
++// One theme object per styled theme: useStyles memoizes on it, and a new one per call copies
++// the theme and computes the styles again on every render.
++var mergedThemes = new WeakMap();
++var mergeStyledTheme = function mergeStyledTheme(styledTheme, prefixCls, iconPrefixCls) {
++  var byPrefix = mergedThemes.get(styledTheme);
++  if (!byPrefix) {
++    byPrefix = new Map();
++    mergedThemes.set(styledTheme, byPrefix);
++  }
++  var key = prefixCls + "|" + iconPrefixCls;
++  var merged = byPrefix.get(key);
++  if (!merged) {
++    merged = _objectSpread(_objectSpread({}, styledTheme), {}, {
++      prefixCls: prefixCls,
++      iconPrefixCls: iconPrefixCls
++    });
++    byPrefix.set(key, merged);
++  }
++  return merged;
++};
+ export var createUseTheme = function createUseTheme(options) {
+   return function () {
+     var StyleEngineContext = options.StyleEngineContext;
+@@ -33,9 +53,6 @@ export var createUseTheme = function createUseTheme(options) {
+     if (!styledTheme || Object.keys(styledTheme).length === 0) {
+       return initTheme;
+     }
+-    return _objectSpread(_objectSpread({}, styledTheme), {}, {
+-      prefixCls: prefixCls,
+-      iconPrefixCls: iconPrefixCls
+-    });
++    return mergeStyledTheme(styledTheme, prefixCls, iconPrefixCls);
+   };
+ };
+\ No newline at end of file
+diff --git a/node_modules/antd-style/lib/factories/createStyles/index.js b/node_modules/antd-style/lib/factories/createStyles/index.js
+index 570cf7e..690994c 100644
+--- a/node_modules/antd-style/lib/factories/createStyles/index.js
++++ b/node_modules/antd-style/lib/factories/createStyles/index.js
+@@ -14,6 +14,19 @@ var _utils = require("../../utils");
+ var _response = require("./response");
+ var _excluded = ["stylish", "appearance", "isDarkMode", "prefixCls", "iconPrefixCls"],
+   _excluded2 = ["prefixCls", "iconPrefixCls"];
++// The theme's parts, split once per theme: every useStyles of every component reads them.
++var splitThemes = new WeakMap();
++var splitTheme = function splitTheme(theme) {
++  var split = splitThemes.get(theme);
++  if (!split) {
++    split = {
++      token: (0, _objectWithoutProperties2.default)(theme, _excluded),
++      rest: (0, _objectWithoutProperties2.default)(theme, _excluded2)
++    };
++    splitThemes.set(theme, split);
++  }
++  return split;
++};
+ /**
+  * 创建样式基础写法
+  */
+@@ -50,7 +63,7 @@ var createStylesFactory = exports.createStylesFactory = function createStylesFac
+             isDarkMode = theme.isDarkMode,
+             prefixCls = theme.prefixCls,
+             iconPrefixCls = theme.iconPrefixCls,
+-            token = (0, _objectWithoutProperties2.default)(theme, _excluded);
++            token = splitTheme(theme).token;
+ 
+           // 创建响应式断点选择器的工具函数
+           // @ts-ignore
+@@ -111,7 +124,7 @@ var createStylesFactory = exports.createStylesFactory = function createStylesFac
+       return (0, _react.useMemo)(function () {
+         var prefixCls = theme.prefixCls,
+           iconPrefixCls = theme.iconPrefixCls,
+-          res = (0, _objectWithoutProperties2.default)(theme, _excluded2);
++          res = splitTheme(theme).rest;
+         return {
+           styles: styles,
+           cx: cx,
+diff --git a/node_modules/antd-style/lib/factories/createUseTheme.js b/node_modules/antd-style/lib/factories/createUseTheme.js
+index dfcc9b9..03d1925 100644
+--- a/node_modules/antd-style/lib/factories/createUseTheme.js
++++ b/node_modules/antd-style/lib/factories/createUseTheme.js
+@@ -11,6 +11,26 @@ var _setupStyled = require("../functions/setupStyled");
+ var _useAntdTheme = require("../hooks/useAntdTheme");
+ var _useThemeMode = require("../hooks/useThemeMode");
+ var _antd = require("antd");
++// One theme object per styled theme: useStyles memoizes on it, and a new one per call copies
++// the theme and computes the styles again on every render.
++var mergedThemes = new WeakMap();
++var mergeStyledTheme = function mergeStyledTheme(styledTheme, prefixCls, iconPrefixCls) {
++  var byPrefix = mergedThemes.get(styledTheme);
++  if (!byPrefix) {
++    byPrefix = new Map();
++    mergedThemes.set(styledTheme, byPrefix);
++  }
++  var key = prefixCls + "|" + iconPrefixCls;
++  var merged = byPrefix.get(key);
++  if (!merged) {
++    merged = (0, _objectSpread2.default)((0, _objectSpread2.default)({}, styledTheme), {}, {
++      prefixCls: prefixCls,
++      iconPrefixCls: iconPrefixCls
++    });
++    byPrefix.set(key, merged);
++  }
++  return merged;
++};
+ var createUseTheme = exports.createUseTheme = function createUseTheme(options) {
+   return function () {
+     var StyleEngineContext = options.StyleEngineContext;
+@@ -40,9 +60,6 @@ var createUseTheme = exports.createUseTheme = function createUseTheme(options) {
+     if (!styledTheme || Object.keys(styledTheme).length === 0) {
+       return initTheme;
+     }
+-    return (0, _objectSpread2.default)((0, _objectSpread2.default)({}, styledTheme), {}, {
+-      prefixCls: prefixCls,
+-      iconPrefixCls: iconPrefixCls
+-    });
++    return mergeStyledTheme(styledTheme, prefixCls, iconPrefixCls);
+   };
+ };
+\ No newline at end of file
