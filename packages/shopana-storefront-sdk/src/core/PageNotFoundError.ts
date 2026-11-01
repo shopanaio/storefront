@@ -11,7 +11,9 @@ export class PageNotFoundError extends Error {
   }
 }
 
-export function isPageNotFoundError(error: unknown): error is PageNotFoundError {
+export function isPageNotFoundError(
+  error: unknown
+): error is PageNotFoundError {
   return error instanceof PageNotFoundError;
 }
 

@@ -88,7 +88,7 @@ if (process.argv.includes('--use-existing-schema')) {
     path.join(themeDir, 'schema.shopana.graphql'),
     'utf8'
   );
-  await writeFile(schemaFile, `${existingSchema.trimEnd()}\n`);
+  await writeFile(schemaFile, existingSchema);
   console.warn(
     'Using the existing Shopana schema artifact; no schema request was made.'
   );
@@ -124,3 +124,23 @@ await run('yarn', [
   '--config',
   'packages/checkout/codegen.ts',
 ]);
+await run('yarn', [
+  'prettier',
+  '--write',
+  'mockServer/src/openapi/application-auth.d.ts',
+  'packages/shopana-storefront-sdk/src/openapi/application-auth.ts',
+  'packages/shopana-storefront-sdk/src/graphql/apollo/generated/*.ts',
+  'packages/checkout/src/graphql/operations.ts',
+]);
+if (themeDir) {
+  await run(
+    'yarn',
+    [
+      'prettier',
+      '--write',
+      'codegen/schema-client.ts',
+      'codegen/apollo/storefront-operations.ts',
+    ],
+    themeDir
+  );
+}

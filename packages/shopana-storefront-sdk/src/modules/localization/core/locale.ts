@@ -16,9 +16,10 @@ export interface StorefrontLocale {
 export function localeCodeToTag(code: string): string {
   const [language, ...rest] = code.split(/[_-]/);
   if (!rest.length) return language.toLowerCase();
-  return [language.toLowerCase(), ...rest.map((part) => part.toUpperCase())].join(
-    '-'
-  );
+  return [
+    language.toLowerCase(),
+    ...rest.map((part) => part.toUpperCase()),
+  ].join('-');
 }
 
 export function localeCodeToSegment(code: string): string {

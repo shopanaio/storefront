@@ -11,12 +11,20 @@ import http from 'node:http';
 import https from 'node:https';
 
 /** The events a server hands a request to its handler with (`Expect` headers included). */
-const REQUEST_EVENTS = new Set(['request', 'checkContinue', 'checkExpectation']);
+const REQUEST_EVENTS = new Set([
+  'request',
+  'checkContinue',
+  'checkExpectation',
+]);
 
 // `https.Server` is a TLS server, not an `http.Server`: both are patched.
 for (const Server of [http.Server, https.Server]) {
   const emit = Server.prototype.emit;
-  Server.prototype.emit = function emitWithForwardedFor(event, request, ...rest) {
+  Server.prototype.emit = function emitWithForwardedFor(
+    event,
+    request,
+    ...rest
+  ) {
     if (
       REQUEST_EVENTS.has(event) &&
       !request.headers['x-forwarded-for'] &&

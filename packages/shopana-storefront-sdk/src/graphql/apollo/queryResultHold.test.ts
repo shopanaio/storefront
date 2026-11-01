@@ -1,21 +1,22 @@
-import { ApolloLink, gql, Observable } from '@apollo/client';
+import { parse } from 'graphql';
+import { ApolloLink, Observable } from '@apollo/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createQueryResultHoldLink, holdQueryResults } from './queryResultHold';
 
-const QUERY = gql`
+const QUERY = parse(`
   query Product {
     product {
       id
     }
   }
-`;
-const MUTATION = gql`
+`);
+const MUTATION = parse(`
   mutation AddToCart {
     addToCart {
       id
     }
   }
-`;
+`);
 
 /** The results the link delivers for `query`, the network answering at once. */
 function run(query: typeof QUERY) {

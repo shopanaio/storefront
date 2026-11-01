@@ -26,7 +26,10 @@ class BaseErrorBoundary extends Component<
   };
 
   static getDerivedStateFromError(error: unknown): BaseErrorBoundaryState {
-    return { hasError: true, pageError: isPageLevelError(error) ? error : null };
+    return {
+      hasError: true,
+      pageError: isPageLevelError(error) ? error : null,
+    };
   }
 
   componentDidUpdate(prevProps: BaseErrorBoundaryProps) {

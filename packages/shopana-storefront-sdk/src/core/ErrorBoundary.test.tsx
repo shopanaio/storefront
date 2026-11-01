@@ -387,7 +387,9 @@ describe('ErrorBoundary', () => {
       }
       render() {
         if (!this.state.error) return this.props.children;
-        return <div data-testid="outer">{(this.state.error as Error).name}</div>;
+        return (
+          <div data-testid="outer">{(this.state.error as Error).name}</div>
+        );
       }
     }
 
@@ -419,7 +421,9 @@ describe('ErrorBoundary', () => {
         'Response',
       ],
     ])('passes %s on to the boundary above the section', (_, error, name) => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(
         <OuterBoundary>

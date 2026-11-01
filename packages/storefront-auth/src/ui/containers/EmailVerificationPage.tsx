@@ -47,7 +47,9 @@ const EmailVerificationContent = ({
   verifyPath: verifyPathOption,
   search,
 }: Omit<EmailVerificationPageProps, 'className'>) => {
-  const { verifyPath } = useLocalizedAuthPaths({ verifyPath: verifyPathOption });
+  const { verifyPath } = useLocalizedAuthPaths({
+    verifyPath: verifyPathOption,
+  });
   const auth = useAuth();
   const link = useLocationLink(
     readEmailVerificationLink,

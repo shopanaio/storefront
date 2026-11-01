@@ -135,17 +135,16 @@ export function useRouterPage(): RouterPage | null {
 export function useRouterPageAt(
   href: string
 ): Pick<RouterPage, 'page' | 'error'> | null {
-  const fetcher = useFetcher<RuntimePageData>({ key: `page:${href}` });
-  const latest = useRef(fetcher);
-  latest.current = fetcher;
+  const { data, state, load } = useFetcher<RuntimePageData>({
+    key: `page:${href}`,
+  });
 
   useEffect(() => {
-    const { data, state, load } = latest.current;
     if (data === undefined && state === 'idle') void load(href);
-  }, [href]);
+  }, [data, state, load, href]);
 
-  if (fetcher.data === undefined) return null;
-  return isRuntimePageData(fetcher.data)
-    ? { page: fetcher.data, error: undefined }
-    : { page: null, error: fetcher.data };
+  if (data === undefined) return null;
+  return isRuntimePageData(data)
+    ? { page: data, error: undefined }
+    : { page: null, error: data };
 }

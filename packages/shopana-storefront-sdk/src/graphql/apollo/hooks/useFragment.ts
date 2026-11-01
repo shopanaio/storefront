@@ -12,15 +12,16 @@ export function useFragment<
   fragment: DocumentNode | TypedDocumentNode<TData, TVariables>,
   from: TData | null | undefined
 ): TData | null {
+  const fragmentName = fragment.definitions.find(
+    (definition) => definition.kind === 'FragmentDefinition'
+  )?.name.value;
   const result = useApolloFragment<TData, TVariables>({
     fragment,
+    fragmentName,
     from: from ?? null,
   });
 
   if (process.env.NODE_ENV !== 'production' && !result.complete && from) {
-    const fragmentName = fragment.definitions.find(
-      (definition) => definition.kind === 'FragmentDefinition'
-    )?.name.value;
     console.warn(
       `Apollo fragment ${fragmentName ?? '<anonymous>'} is incomplete`,
       result.missing

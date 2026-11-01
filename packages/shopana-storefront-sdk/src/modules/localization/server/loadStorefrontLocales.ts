@@ -18,7 +18,11 @@ const pending = new Map<string, Promise<StorefrontLocales>>();
 const query = print(SdkStorefrontLocalesDocument);
 
 function environmentKey(config: ApolloEnvironmentConfig): string {
-  return JSON.stringify([config.graphqlUrl, config.apiKeyHeader, config.apiKey]);
+  return JSON.stringify([
+    config.graphqlUrl,
+    config.apiKeyHeader,
+    config.apiKey,
+  ]);
 }
 
 export function toStorefrontLocales(
@@ -97,5 +101,7 @@ export function resolveStorefrontLocale(
   locales: StorefrontLocales,
   segment: string | null | undefined
 ) {
-  return findStorefrontLocale(locales.locales, segment) ?? locales.defaultLocale;
+  return (
+    findStorefrontLocale(locales.locales, segment) ?? locales.defaultLocale
+  );
 }

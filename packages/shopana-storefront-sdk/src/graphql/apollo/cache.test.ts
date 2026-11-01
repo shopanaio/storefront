@@ -1,4 +1,5 @@
-import { gql, type NormalizedCacheObject } from '@apollo/client';
+import { parse } from 'graphql';
+import { type NormalizedCacheObject } from '@apollo/client';
 import { describe, expect, it, vi } from 'vitest';
 import { createApolloCache } from './cache';
 
@@ -7,7 +8,7 @@ vi.mock('@apollo/client-integration-nextjs', async () => {
   return { InMemoryCache };
 });
 
-const CATEGORY_LISTING = gql`
+const CATEGORY_LISTING = parse(`
   query CategoryListing($handle: String!) {
     categoryByHandle(handle: $handle) {
       __typename
@@ -26,9 +27,9 @@ const CATEGORY_LISTING = gql`
       }
     }
   }
-`;
+`);
 
-const PRODUCT_TITLE = gql`
+const PRODUCT_TITLE = parse(`
   query ProductTitle($handle: String!) {
     productByHandle(handle: $handle) {
       __typename
@@ -36,9 +37,9 @@ const PRODUCT_TITLE = gql`
       title
     }
   }
-`;
+`);
 
-const PRODUCT_PAGE = gql`
+const PRODUCT_PAGE = parse(`
   query ProductPage($handle: String!) {
     productByHandle(handle: $handle) {
       __typename
@@ -47,7 +48,7 @@ const PRODUCT_PAGE = gql`
       description
     }
   }
-`;
+`);
 
 const listing = {
   categoryByHandle: {
@@ -84,7 +85,11 @@ describe('handle lookups', () => {
     expect(
       cache.readQuery({ query: PRODUCT_TITLE, variables: { handle: 'bone' } })
     ).toEqual({
-      productByHandle: { __typename: 'Product', id: 'product-1', title: 'Bone' },
+      productByHandle: {
+        __typename: 'Product',
+        id: 'product-1',
+        title: 'Bone',
+      },
     });
   });
 
@@ -107,7 +112,11 @@ describe('handle lookups', () => {
         returnPartialData: true,
       }).result
     ).toEqual({
-      productByHandle: { __typename: 'Product', id: 'product-1', title: 'Bone' },
+      productByHandle: {
+        __typename: 'Product',
+        id: 'product-1',
+        title: 'Bone',
+      },
     });
   });
 
@@ -124,7 +133,11 @@ describe('handle lookups', () => {
     expect(
       cache.readQuery({ query: PRODUCT_TITLE, variables: { handle: 'bone' } })
     ).toEqual({
-      productByHandle: { __typename: 'Product', id: 'product-1', title: 'Bone' },
+      productByHandle: {
+        __typename: 'Product',
+        id: 'product-1',
+        title: 'Bone',
+      },
     });
   });
 
@@ -152,7 +165,7 @@ describe('handle lookups', () => {
 
 describe('entities without id', () => {
   it('keep a vendor selected without id inside its product', () => {
-    const query = gql`
+    const query = parse(`
       query ProductVendor($handle: String!) {
         productByHandle(handle: $handle) {
           __typename
@@ -163,7 +176,7 @@ describe('entities without id', () => {
           }
         }
       }
-    `;
+    `);
     const cache = createApolloCache();
     const data = {
       productByHandle: {
@@ -181,7 +194,7 @@ describe('entities without id', () => {
 });
 
 describe('objects without id', () => {
-  const PAGE_SUMMARY = gql`
+  const PAGE_SUMMARY = parse(`
     query PageSummary($handle: String!) {
       productByHandle(handle: $handle) {
         __typename
@@ -208,8 +221,8 @@ describe('objects without id', () => {
         }
       }
     }
-  `;
-  const CARD_SUMMARY = gql`
+  `);
+  const CARD_SUMMARY = parse(`
     query CardSummary($handle: String!) {
       productByHandle(handle: $handle) {
         __typename
@@ -229,14 +242,16 @@ describe('objects without id', () => {
         }
       }
     }
-  `;
+  `);
   const page = (id: string, url: string) => ({
     productByHandle: {
       __typename: 'Product',
       id,
       reviewSummary: {
         __typename: 'ProductReviewSummary',
-        criteria: [{ __typename: 'ProductReviewCriterionSummary', reviewCount: 2 }],
+        criteria: [
+          { __typename: 'ProductReviewCriterionSummary', reviewCount: 2 },
+        ],
         ratingBreakdown: {
           __typename: 'ProductReviewRatingBreakdown',
           rating5Count: 2,
@@ -269,8 +284,16 @@ describe('objects without id', () => {
   it('merge what another query writes into the same field instead of losing fields', () => {
     const cache = createApolloCache();
     const variables = { handle: 'bone' };
-    cache.writeQuery({ query: PAGE_SUMMARY, variables, data: page('p1', 'a.jpg') });
-    cache.writeQuery({ query: CARD_SUMMARY, variables, data: card('p1', 'a.jpg') });
+    cache.writeQuery({
+      query: PAGE_SUMMARY,
+      variables,
+      data: page('p1', 'a.jpg'),
+    });
+    cache.writeQuery({
+      query: CARD_SUMMARY,
+      variables,
+      data: card('p1', 'a.jpg'),
+    });
 
     expect(cache.readQuery({ query: PAGE_SUMMARY, variables })).toEqual(
       page('p1', 'a.jpg')

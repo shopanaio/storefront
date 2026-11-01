@@ -19,7 +19,6 @@ import {
   useScopePage,
 } from '../core/navigation-scope';
 
-
 /**
  * Router whose navigations keep the active locale in storefront paths. Inside a
  * NavigationScope (an app moving pages itself) no call reaches the Next router: push and

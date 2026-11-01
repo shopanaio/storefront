@@ -41,7 +41,8 @@ const useStyles = createStyles(
     // Hide items at depth >= 2
     const opacity = depth >= 2 ? 0 : 1;
     // Active modal (depth=0) gets 24px top padding when there's more than one modal in stack
-    const topPadding = depth === 0 && totalCount > 1 ? Math.max(24, inset) : inset;
+    const topPadding =
+      depth === 0 && totalCount > 1 ? Math.max(24, inset) : inset;
     // Phones: every modal takes the whole screen, without offsets and rounded corners.
     const mobile = `@media (max-width: ${token.screenSMMax}px)`;
 

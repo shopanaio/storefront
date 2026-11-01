@@ -128,7 +128,10 @@ export function createFormatter({
       ...(currencyDisplay ? { currencyDisplay } : {}),
       ...(whole ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}),
     });
-    return withUnknownCode(money, numberFormatter(locale, options).format(amount));
+    return withUnknownCode(
+      money,
+      numberFormatter(locale, options).format(amount)
+    );
   };
 
   return {
@@ -137,9 +140,10 @@ export function createFormatter({
     formatMoney,
     moneyParts(money) {
       const amount = toAmount(money);
-      const parts = numberFormatter(locale, currencyOptions(money)).formatToParts(
-        amount
-      );
+      const parts = numberFormatter(
+        locale,
+        currencyOptions(money)
+      ).formatToParts(amount);
       const supported = isSupportedCurrency(money.currencyCode);
       if (!supported) {
         parts.push(
