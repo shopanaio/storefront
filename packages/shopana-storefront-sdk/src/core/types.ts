@@ -18,6 +18,7 @@ export type PageType =
   | 'cart'
   | 'list-collections'
   | 'vendor'
+  | 'selection'
   | '404';
 
 export interface TemplateParams {

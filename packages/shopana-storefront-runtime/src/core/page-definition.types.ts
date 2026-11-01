@@ -72,6 +72,11 @@ const vendor = defineRuntimePage({
   loadData: async () => ({ status: 'ready', data: null }),
   loadTemplate: async () => ({ sections: { order: [] } }),
 });
+const selection = defineRuntimePage({
+  pageType: 'selection',
+  loadData: async () => ({ status: 'ready', data: null }),
+  loadTemplate: async () => ({ sections: { order: [] } }),
+});
 const notFound = defineRuntimeNotFound({
   pageType: '404',
   loadData: async () => null,
@@ -90,6 +95,7 @@ const validModules = {
   cart: async () => ({ default: cart }),
   'list-collections': async () => ({ default: listCollections }),
   vendor: async () => ({ default: vendor }),
+  selection: async () => ({ default: selection }),
   '404': async () => ({ default: notFound }),
 };
 
@@ -108,6 +114,7 @@ defineRuntimePages({
   cart: validModules.cart,
   'list-collections': validModules['list-collections'],
   vendor: validModules.vendor,
+  selection: validModules.selection,
 });
 
 // @ts-expect-error extra registry keys are forbidden

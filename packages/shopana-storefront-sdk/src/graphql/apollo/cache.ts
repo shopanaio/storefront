@@ -154,6 +154,15 @@ export function createApolloCache(
     Vendor: {
       keyFields: handleKeyFields(handles),
     },
+    // No id: the collection stays under `Query.dynamicCollection`, keyed by its rules. Merged,
+    // not replaced: the rules labels and the products of one set of rules come in separate
+    // queries, and each would drop the other's fields (and refetch them) on every write.
+    DynamicCollection: {
+      merge: true,
+      fields: {
+        products: cursorConnectionPolicy(['query', 'sort', 'filters']),
+      },
+    },
     Query: {
       fields: {
         searchProducts: cursorConnectionPolicy(['query', 'sort', 'filters']),
