@@ -11,6 +11,7 @@ import type { SessionStoreZustand } from '../store/SessionStoreZustand';
 import type { UseBoundStore, StoreApi } from 'zustand';
 import type { ApplicationAuthConfig } from '../../../../graphql/apollo/types';
 import type { CookiePolicy } from '../../../../core/cookiePolicy';
+import { useHydrated } from '../../../../core/Hydrated';
 import { IamApplicationClient } from '../../core/IamApplicationClient';
 import {
   storefrontSession,
@@ -114,7 +115,11 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     [applicationAuth]
   );
 
+  // The store's readers render at once on its update: it waits for the page to hydrate in slices.
+  const hydrated = useHydrated();
+
   React.useEffect(() => {
+    if (!hydrated) return;
     const state = storeObject.getState();
     const unsubscribe = storefrontSession.subscribe((change) => {
       const actions = storeObject.getState();
@@ -154,7 +159,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
       state.setSession(null);
     }
     return unsubscribe;
-  }, [storeObject, cookiePolicy]);
+  }, [storeObject, cookiePolicy, hydrated]);
 
   const value = useMemo<SessionContextValue>(
     () => ({

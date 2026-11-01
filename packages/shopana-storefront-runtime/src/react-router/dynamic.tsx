@@ -1,27 +1,12 @@
 'use client';
 
-import {
-  lazy,
-  Suspense,
-  useSyncExternalStore,
-  type ComponentType,
-} from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
+import { useHydrated } from '@shopana/storefront-sdk/core/Hydrated';
 import type {
   Dynamic,
   DynamicLoader,
   DynamicOptions,
 } from '../core/facade-types';
-
-const subscribe = () => () => {};
-
-/** False on the server and while hydrating, true once the app runs in the browser. */
-function useHydrated(): boolean {
-  return useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false
-  );
-}
 
 /**
  * `next/dynamic` over `React.lazy`: the component loads on first render, in its own chunk.

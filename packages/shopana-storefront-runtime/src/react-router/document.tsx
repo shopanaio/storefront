@@ -23,6 +23,7 @@ import {
 } from './apollo-ssr-state';
 import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/apollo/types';
 import { peekApolloRequestClientOf } from '@shopana/storefront-sdk/server/requestClient';
+import { HydratedProvider } from '@shopana/storefront-sdk/core/Hydrated';
 import { useServerRequestScope } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import type { RuntimeAppDefinition } from './app';
 import type { RuntimeAppProps, RuntimeRootData } from './route-data';
@@ -43,7 +44,7 @@ export function RuntimeAppScope({
 }) {
   return (
     <RuntimeAppContext.Provider value={app}>
-      {children}
+      <HydratedProvider>{children}</HydratedProvider>
     </RuntimeAppContext.Provider>
   );
 }
