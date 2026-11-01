@@ -82,6 +82,8 @@ export interface IModalStackDefinition<
   owner?: string;
   component: ModalStackComponent;
   url?: IModalUrlCodec<T>;
+  /** The modal's distance from the screen's edges from `md`, in px; the theme's padding by default. */
+  inset?: number;
 }
 
 /**

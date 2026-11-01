@@ -26,12 +26,14 @@ interface StyleProps {
   hasChildren: boolean;
   depth: number;
   totalCount: number;
+  /** The distance from the screen's edges, in px. */
+  inset: number;
 }
 
 const useStyles = createStyles(
   (
     { css, token, prefixCls },
-    { hasChildren, depth, totalCount }: StyleProps
+    { hasChildren, depth, totalCount, inset }: StyleProps
   ) => {
     const scale = hasChildren ? 1 - SCALE_FACTOR * depth : 1;
     const translateY = hasChildren ? -token.paddingXS * depth : 0;
@@ -39,7 +41,7 @@ const useStyles = createStyles(
     // Hide items at depth >= 2
     const opacity = depth >= 2 ? 0 : 1;
     // Active modal (depth=0) gets 24px top padding when there's more than one modal in stack
-    const topPadding = depth === 0 && totalCount > 1 ? 24 : token.padding;
+    const topPadding = depth === 0 && totalCount > 1 ? Math.max(24, inset) : inset;
     // Phones: every modal takes the whole screen, without offsets and rounded corners.
     const mobile = `@media (max-width: ${token.screenSMMax}px)`;
 
@@ -48,7 +50,7 @@ const useStyles = createStyles(
         display: flex;
         align-items: flex-start;
         justify-content: center;
-        padding: ${topPadding}px ${token.padding}px ${token.padding}px;
+        padding: ${topPadding}px ${inset}px ${inset}px;
         transform: scale(${scale}) translateY(${translateY}px);
         transform-origin: top center;
         transition:
@@ -68,8 +70,8 @@ const useStyles = createStyles(
         }
       `,
       container: css`
-        height: calc(100vh - ${topPadding + token.padding}px);
-        width: calc(100vw - ${token.padding * 2}px);
+        height: calc(100vh - ${topPadding + inset}px);
+        width: calc(100vw - ${inset * 2}px);
         padding: 0 !important;
         background-color: ${token.colorBgLayout} !important;
         overflow: hidden;
@@ -190,8 +192,9 @@ export const ModalStackItem = ({
   const depth = totalCount - level - 1;
   const definition = modalStackRegistry.get(type);
   const closeBlocked = isSaving || descendantSaving;
+  const inset = definition?.inset ?? token.padding;
 
-  const { styles } = useStyles({ hasChildren, depth, totalCount });
+  const { styles } = useStyles({ hasChildren, depth, totalCount, inset });
 
   const clearAfterClose = (open: boolean) => {
     if (open) {
@@ -301,7 +304,7 @@ export const ModalStackItem = ({
         transitionName="modal-stack-slide-up"
         maskTransitionName="modal-stack-fade"
         mask={level === 0}
-        width={{ xs: '100vw', md: `calc(100vw - ${token.padding * 2}px)` }}
+        width={{ xs: '100vw', md: `calc(100vw - ${inset * 2}px)` }}
         classNames={{
           wrapper: styles.wrapper,
           container: styles.container,
