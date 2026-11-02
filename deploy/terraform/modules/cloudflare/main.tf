@@ -50,3 +50,5 @@ output "tunnel_token" {
 }
 output "app_url" { value = "https://${local.hostname}" }
 output "graphql_url" { value = "https://${local.hostname}/graphql" }
+output "iam_url" { value = var.auth_origin == null ? "" : "https://${local.hostname}" }
+output "pet_assistant_url" { value = var.pet_assistant_origin == null ? "" : "https://${local.hostname}/apps/pet-assistant/v1" }

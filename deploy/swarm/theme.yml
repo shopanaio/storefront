@@ -4,6 +4,9 @@ services:
   theme:
     image: ${THEME_IMAGE:?Set THEME_IMAGE to a release tag or digest}
     command: ['node', '/run/configs/start.cjs']
+    environment:
+      NEXT_PUBLIC_IAM_URL: ${NEXT_PUBLIC_IAM_URL:-}
+      NEXT_PUBLIC_IAM_APPLICATION_ID: ${NEXT_PUBLIC_IAM_APPLICATION_ID:-}
     networks: [frontend]
     configs:
       - source: server_launcher

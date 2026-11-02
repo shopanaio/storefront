@@ -28,6 +28,18 @@ run "production_same_origin" {
     condition     = alltrue([for rule in slice(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress, 0, 5) : rule.hostname == "example.com"])
     error_message = "Every application route must share the production origin."
   }
+  assert {
+    condition     = output.iam_url == "https://example.com" && output.pet_assistant_url == "https://example.com/apps/pet-assistant/v1"
+    error_message = "IAM and agent API URLs must use the same origin as the theme."
+  }
+  assert {
+    condition     = can(regex(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[1].path, "/auth/applications/app-id/oauth2/token")) && !can(regex(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[1].path, "/auth/callback"))
+    error_message = "IAM token calls must reach IAM; the callback must stay on the theme."
+  }
+  assert {
+    condition     = can(regex(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[3].path, "/apps/pet-assistant/v1/copilotkit/agent/default/run")) && can(regex(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[3].path, "/apps/pet-assistant/v1/threads"))
+    error_message = "Both streaming agent requests and thread APIs must reach the assistant."
+  }
 }
 
 run "stage_without_optional_backends" {
@@ -44,5 +56,9 @@ run "stage_without_optional_backends" {
   assert {
     condition     = length(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress) == 3
     error_message = "Disabled IAM and assistant must not expose backend routes."
+  }
+  assert {
+    condition     = output.iam_url == "" && output.pet_assistant_url == ""
+    error_message = "Disabled backends must emit empty public URLs."
   }
 }

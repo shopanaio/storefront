@@ -15,3 +15,5 @@ output "tunnel_token" {
 }
 output "app_url" { value = module.edge.app_url }
 output "graphql_url" { value = module.edge.graphql_url }
+output "iam_url" { value = module.edge.iam_url }
+output "pet_assistant_url" { value = module.edge.pet_assistant_url }

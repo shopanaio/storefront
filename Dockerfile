@@ -29,9 +29,14 @@ RUN THEME_PACKAGE=$(node -p "require('./themes/' + process.env.STOREFRONT_THEME 
     mkdir -p "themes/$STOREFRONT_THEME/node_modules"
 
 FROM node:22-bookworm-slim AS runtime
+# Session handlers read these dynamically from process.env, outside Vite's public defines.
+ARG NEXT_PUBLIC_IAM_URL
+ARG NEXT_PUBLIC_IAM_APPLICATION_ID
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=3000 \
+    NEXT_PUBLIC_IAM_URL=${NEXT_PUBLIC_IAM_URL} \
+    NEXT_PUBLIC_IAM_APPLICATION_ID=${NEXT_PUBLIC_IAM_APPLICATION_ID} \
     NODE_OPTIONS=--import=/app/forwarded-for.mjs
 WORKDIR /app
 COPY --from=production-dependencies /app/node_modules ./node_modules

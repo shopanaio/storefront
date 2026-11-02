@@ -22,4 +22,8 @@ run "free_plan_and_dynamic_bypass" {
     condition     = cloudflare_bot_management.this.fight_mode == false && cloudflare_ruleset.frontend_security.rules[0].action == "managed_challenge"
     error_message = "Use a scoped frontend challenge, not zone-wide Bot Fight Mode."
   }
+  assert {
+    condition     = strcontains(cloudflare_ruleset.frontend_security.rules[0].expression, "/apps/") && strcontains(cloudflare_ruleset.frontend_security.rules[0].expression, "/.well-known/")
+    error_message = "Agent streaming and IAM discovery must not receive frontend challenges."
+  }
 }

@@ -96,6 +96,19 @@ terraform -chdir=deploy/terraform/environments/stage apply release.tfplan
 `graphql_url`, `tunnel_id` и sensitive `tunnel_token`. State содержит connector token:
 доступ к нему должен быть ограничен. Не публикуйте state, plans или raw output токена.
 
+Также доступны `iam_url` и `pet_assistant_url` для `NEXT_PUBLIC_IAM_URL` и
+`NEXT_PUBLIC_PET_ASSISTANT_URL`. API агента использует `.../apps/pet-assistant/v1`, включая
+`/threads`, `/files` и streaming `/copilotkit/...`. Все эти пути проходят на backend
+без CDN-кэша и frontend challenge; bearer token и visitor headers передаются без изменения.
+Тема получает access token через свой `/auth/token`, добавляет его к запросам агента,
+а confidential client secret и refresh token остаются на сервере.
+
+`NEXT_PUBLIC_IAM_URL` и `NEXT_PUBLIC_IAM_APPLICATION_ID` нужны также в runtime окружении:
+OAuth-обработчики читают их динамически из `process.env`. Dockerfile сохраняет значения
+сборки в итоговом образе, а Swarm явно передаёт их из экспортированного `build.env`.
+Application ID, client ID, resource и зарегистрированные redirect URI должны принадлежать
+одному IAM application соответствующего окружения.
+
 ## Сборка каждого окружения
 
 В `deploy/environments/<environment>` скопируйте `build.env.example`, `deploy.env.example`
