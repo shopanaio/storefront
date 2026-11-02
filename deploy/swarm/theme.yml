@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  theme:
+    image: ${THEME_IMAGE:?Set THEME_IMAGE to a release tag or digest}
+    command: ['node', '/run/configs/start.cjs']
+    networks: [frontend]
+    configs:
+      - source: server_launcher
+        target: /run/configs/start.cjs
+    secrets:
+      - source: server_env
+        target: server-env
+        uid: '1000'
+        gid: '1000'
+        mode: 0400
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    stop_grace_period: 30s
+    deploy:
+      replicas: 2
+      placement:
+        max_replicas_per_node: 1
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+        monitor: 90s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      resources:
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  cloudflared:
+    image: ${CLOUDFLARED_IMAGE:?Set CLOUDFLARED_IMAGE to a version tag or digest}
+    command:
+      - tunnel
+      - --no-autoupdate
+      - --metrics
+      - 127.0.0.1:2000
+      - run
+      - --token-file
+      - /run/secrets/tunnel-token
+    networks: [frontend, backend]
+    secrets:
+      - source: tunnel
+        target: tunnel-token
+    healthcheck:
+      test: ['CMD', 'cloudflared', 'tunnel', '--metrics', '127.0.0.1:2000', 'ready']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    deploy:
+      replicas: 2
+      placement:
+        max_replicas_per_node: 1
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      resources:
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  frontend:
+    driver: overlay
+  backend:
+    external: true
+    name: ${BACKEND_NETWORK:?Set BACKEND_NETWORK to the internal edge overlay network}
+
+configs:
+  server_launcher:
+    file: ../runtime/start.cjs
+    name: ${LAUNCHER_CONFIG:?Set LAUNCHER_CONFIG to a content-versioned name}
+
+secrets:
+  tunnel:
+    external: true
+    name: ${TUNNEL_SECRET:?Set TUNNEL_SECRET}
+  server_env:
+    external: true
+    name: ${SERVER_ENV_SECRET:?Set SERVER_ENV_SECRET}

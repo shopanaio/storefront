@@ -77,3 +77,14 @@ storybook-static
 # Yarn
 .yarn/*
 !.yarn/releases
+
+# Deployment inputs and Terraform local artifacts
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+**/backend.hcl
+*.tfvars
+deploy/environments/*/build.env
+deploy/environments/*/deploy.env
+deploy/environments/*/server-env.json
