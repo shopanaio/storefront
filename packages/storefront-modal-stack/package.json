@@ -19,7 +19,6 @@
     "url": "git+https://github.com/shopanaio/storefront.git",
     "directory": "packages/storefront-modal-stack"
   },
-  "private": false,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

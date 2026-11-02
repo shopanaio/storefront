@@ -20,7 +20,6 @@
     "url": "git+https://github.com/shopanaio/storefront.git",
     "directory": "packages/shopana-storefront-sdk"
   },
-  "private": false,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -322,10 +321,10 @@
     "zustand": "^5.0.6"
   },
   "peerDependenciesMeta": {
-    "antd": {
+    "@apollo/client-integration-nextjs": {
       "optional": true
     },
-    "@apollo/client-integration-nextjs": {
+    "antd": {
       "optional": true
     },
     "next": {

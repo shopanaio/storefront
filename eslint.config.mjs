@@ -13,6 +13,7 @@ const graphqlSchema = existsSync('schema.shopana.graphql')
 export default defineConfig([
   {
     ignores: [
+      '.yarn/**',
       '**/.runtime/**',
       '**/dist/**',
       '**/storybook-static/**',

@@ -24,7 +24,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - run: yarn format:check
 
   lint:
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - run: yarn lint
 
   build:
@@ -50,7 +50,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - run: yarn typecheck
 
   test:
@@ -72,6 +72,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: yarn install --frozen-lockfile
+      - run: yarn install --immutable
       - run: yarn build:packages
       - run: yarn workspace ${{ matrix.workspace }} test

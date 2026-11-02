@@ -19,7 +19,6 @@
     "url": "git+https://github.com/shopanaio/storefront.git",
     "directory": "packages/checkout"
   },
-  "private": false,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -85,6 +84,7 @@
   },
   "devDependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@graphql-codegen/cli": "^6.1.0",
     "@shopana/storefront-auth": "0.1.0",
     "@shopana/storefront-ui": "0.1.0",
     "@testing-library/dom": "10.4.0",

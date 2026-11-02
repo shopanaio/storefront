@@ -36,6 +36,7 @@
     "@apollo/client": "^4.0.9",
     "@apollo/client-integration-nextjs": "^0.14.5",
     "@atlaskit/eslint-plugin-design-system": "^13.27.0",
+    "@graphql-codegen/cli": "^6.1.0",
     "@graphql-eslint/eslint-plugin": "^4.4.0",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@storybook/addon-a11y": "10.1.0",
@@ -67,7 +68,10 @@
     "zustand": "^5.0.6"
   },
   "resolutions": {
+    "@babel/core": "7.29.7",
+    "@babel/helper-compilation-targets": "7.29.7",
     "@types/react": "19.2.2"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "packageManager": "yarn@4.18.1"
 }

@@ -73,3 +73,7 @@ storybook-static
 # Themes are separate repositories checked out on demand
 /themes/*
 !/themes/README.md
+
+# Yarn
+.yarn/*
+!.yarn/releases

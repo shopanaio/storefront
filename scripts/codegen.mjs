@@ -133,14 +133,16 @@ await run('yarn', [
   'packages/checkout/src/graphql/operations.ts',
 ]);
 if (themeDir) {
-  await run(
-    'yarn',
-    [
-      'prettier',
-      '--write',
-      'codegen/schema-client.ts',
-      'codegen/apollo/storefront-operations.ts',
-    ],
-    themeDir
-  );
+  await run('yarn', [
+    'prettier',
+    '--write',
+    path.relative(
+      workspaceDir,
+      path.join(themeDir, 'codegen/schema-client.ts')
+    ),
+    path.relative(
+      workspaceDir,
+      path.join(themeDir, 'codegen/apollo/storefront-operations.ts')
+    ),
+  ]);
 }

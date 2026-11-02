@@ -16,3 +16,4 @@ public
 storybook-static
 
 .runtime
+.yarn
