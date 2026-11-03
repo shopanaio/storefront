@@ -18526,7 +18526,12 @@ export type SdkNavigationTargetFragment = {
   readonly resourceId?: string | null;
   readonly url: any;
   readonly resource?:
-    | { readonly __typename: 'Category'; readonly id: string }
+    | {
+        readonly __typename: 'Category';
+        readonly handle: string;
+        readonly name: string;
+        readonly id: string;
+      }
     | { readonly __typename: 'Checkout'; readonly id: string }
     | { readonly __typename: 'CheckoutLine'; readonly id: string }
     | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -18622,7 +18627,12 @@ export type SdkNavigationMenuItemFieldsFragment = {
     readonly resourceId?: string | null;
     readonly url: any;
     readonly resource?:
-      | { readonly __typename: 'Category'; readonly id: string }
+      | {
+          readonly __typename: 'Category';
+          readonly handle: string;
+          readonly name: string;
+          readonly id: string;
+        }
       | { readonly __typename: 'Checkout'; readonly id: string }
       | { readonly __typename: 'CheckoutLine'; readonly id: string }
       | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -18744,7 +18754,12 @@ export type SdkNavigationMenuFragment = {
                 readonly resourceId?: string | null;
                 readonly url: any;
                 readonly resource?:
-                  | { readonly __typename: 'Category'; readonly id: string }
+                  | {
+                      readonly __typename: 'Category';
+                      readonly handle: string;
+                      readonly name: string;
+                      readonly id: string;
+                    }
                   | { readonly __typename: 'Checkout'; readonly id: string }
                   | { readonly __typename: 'CheckoutLine'; readonly id: string }
                   | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -18955,7 +18970,12 @@ export type SdkNavigationMenuFragment = {
             readonly resourceId?: string | null;
             readonly url: any;
             readonly resource?:
-              | { readonly __typename: 'Category'; readonly id: string }
+              | {
+                  readonly __typename: 'Category';
+                  readonly handle: string;
+                  readonly name: string;
+                  readonly id: string;
+                }
               | { readonly __typename: 'Checkout'; readonly id: string }
               | { readonly __typename: 'CheckoutLine'; readonly id: string }
               | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -19130,7 +19150,12 @@ export type SdkNavigationMenuFragment = {
         readonly resourceId?: string | null;
         readonly url: any;
         readonly resource?:
-          | { readonly __typename: 'Category'; readonly id: string }
+          | {
+              readonly __typename: 'Category';
+              readonly handle: string;
+              readonly name: string;
+              readonly id: string;
+            }
           | { readonly __typename: 'Checkout'; readonly id: string }
           | { readonly __typename: 'CheckoutLine'; readonly id: string }
           | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -19293,7 +19318,12 @@ export type SdkNavigationMenuByHandleQuery = {
                   readonly resourceId?: string | null;
                   readonly url: any;
                   readonly resource?:
-                    | { readonly __typename: 'Category'; readonly id: string }
+                    | {
+                        readonly __typename: 'Category';
+                        readonly handle: string;
+                        readonly name: string;
+                        readonly id: string;
+                      }
                     | { readonly __typename: 'Checkout'; readonly id: string }
                     | {
                         readonly __typename: 'CheckoutLine';
@@ -19528,7 +19558,12 @@ export type SdkNavigationMenuByHandleQuery = {
               readonly resourceId?: string | null;
               readonly url: any;
               readonly resource?:
-                | { readonly __typename: 'Category'; readonly id: string }
+                | {
+                    readonly __typename: 'Category';
+                    readonly handle: string;
+                    readonly name: string;
+                    readonly id: string;
+                  }
                 | { readonly __typename: 'Checkout'; readonly id: string }
                 | { readonly __typename: 'CheckoutLine'; readonly id: string }
                 | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -19718,7 +19753,12 @@ export type SdkNavigationMenuByHandleQuery = {
           readonly resourceId?: string | null;
           readonly url: any;
           readonly resource?:
-            | { readonly __typename: 'Category'; readonly id: string }
+            | {
+                readonly __typename: 'Category';
+                readonly handle: string;
+                readonly name: string;
+                readonly id: string;
+              }
             | { readonly __typename: 'Checkout'; readonly id: string }
             | { readonly __typename: 'CheckoutLine'; readonly id: string }
             | { readonly __typename: 'CheckoutTag'; readonly id: string }
@@ -26571,6 +26611,23 @@ export const SdkNavigationTargetFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Category' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -26633,6 +26690,23 @@ export const SdkNavigationMenuItemFieldsFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Category' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -26783,6 +26857,23 @@ export const SdkNavigationMenuFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Category' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -44994,6 +45085,23 @@ export const SdkNavigationMenuByHandleDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Category' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },

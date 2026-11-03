@@ -5,6 +5,10 @@ fragment SdkNavigationTarget on OnlineStoreNavigationTarget {
   resource {
     __typename
     id
+    ... on Category {
+      handle
+      name
+    }
   }
 }
 

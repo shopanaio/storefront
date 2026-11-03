@@ -2,6 +2,7 @@ import { parse } from 'graphql';
 import { type NormalizedCacheObject } from '@apollo/client';
 import { describe, expect, it, vi } from 'vitest';
 import { createApolloCache } from './cache';
+import { SdkNavigationTargetFragmentDoc } from './generated/operations';
 
 vi.mock('@apollo/client-integration-nextjs', async () => {
   const { InMemoryCache } = await import('@apollo/client');
@@ -74,6 +75,41 @@ const listing = {
 };
 
 describe('handle lookups', () => {
+  it('answers home category names from the navigation target without another query', () => {
+    const cache = createApolloCache();
+    cache.writeFragment({
+      id: 'navigation-target:dogs',
+      fragment: SdkNavigationTargetFragmentDoc,
+      data: {
+        __typename: 'OnlineStoreNavigationTarget',
+        type: 'CATEGORY',
+        resourceId: 'category-1',
+        url: '/categories/dogs',
+        resource: {
+          __typename: 'Category',
+          id: 'category-1',
+          handle: 'dogs',
+          name: 'Dogs',
+        },
+      },
+    });
+    expect(
+      cache.readQuery({
+        query: parse(`query($handle: String!) {
+          categoryByHandle(handle: $handle) { __typename id name handle }
+        }`),
+        variables: { handle: 'dogs' },
+      })
+    ).toEqual({
+      categoryByHandle: {
+        __typename: 'Category',
+        id: 'category-1',
+        name: 'Dogs',
+        handle: 'dogs',
+      },
+    });
+  });
+
   it('answers productByHandle from a product another query cached', () => {
     const cache = createApolloCache();
     cache.writeQuery({
