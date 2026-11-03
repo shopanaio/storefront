@@ -5254,16 +5254,11 @@ export type OnlineStoreNavigationMenu = Node & {
   readonly handle: Scalars['String']['output'];
   /** The globally unique Relay ID of the menu. */
   readonly id: Scalars['ID']['output'];
-  /** Top-level menu items in merchant-defined order. */
-  readonly items: OnlineStoreNavigationMenuItemConnection;
-};
-
-/** A storefront navigation menu owned by the Online Store app. */
-export type OnlineStoreNavigationMenuItemsArgs = {
-  after?: InputMaybe<Scalars['Cursor']['input']>;
-  before?: InputMaybe<Scalars['Cursor']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
+  /**
+   * Top-level menu items in merchant-defined order. The whole level is returned:
+   * menu size is bounded on write.
+   */
+  readonly items: ReadonlyArray<OnlineStoreNavigationMenuItem>;
 };
 
 /** A Relay connection containing navigation menus. */
@@ -5284,8 +5279,8 @@ export type OnlineStoreNavigationMenuEdge = {
 /** A localized item in an ordered navigation tree. */
 export type OnlineStoreNavigationMenuItem = Node & {
   readonly __typename: 'OnlineStoreNavigationMenuItem';
-  /** Direct children in merchant-defined order. */
-  readonly children: OnlineStoreNavigationMenuItemConnection;
+  /** Direct children in merchant-defined order. The whole level is returned. */
+  readonly children: ReadonlyArray<OnlineStoreNavigationMenuItem>;
   /** Stable handle, unique among items with the same parent. */
   readonly handle: Scalars['String']['output'];
   /** The globally unique Relay ID of the item. */
@@ -5304,31 +5299,8 @@ export type OnlineStoreNavigationMenuItem = Node & {
 };
 
 /** A localized item in an ordered navigation tree. */
-export type OnlineStoreNavigationMenuItemChildrenArgs = {
-  after?: InputMaybe<Scalars['Cursor']['input']>;
-  before?: InputMaybe<Scalars['Cursor']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** A localized item in an ordered navigation tree. */
 export type OnlineStoreNavigationMenuItemLabelArgs = {
   locale?: InputMaybe<LocaleCode>;
-};
-
-/** A Relay connection containing one ordered level of a menu tree. */
-export type OnlineStoreNavigationMenuItemConnection = Connection & {
-  readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-  readonly edges: ReadonlyArray<OnlineStoreNavigationMenuItemEdge>;
-  readonly nodes: ReadonlyArray<OnlineStoreNavigationMenuItem>;
-  readonly pageInfo: PageInfo;
-  readonly totalCount: Scalars['Int']['output'];
-};
-
-export type OnlineStoreNavigationMenuItemEdge = {
-  readonly __typename: 'OnlineStoreNavigationMenuItemEdge';
-  readonly cursor: Scalars['Cursor']['output'];
-  readonly node: OnlineStoreNavigationMenuItem;
 };
 
 /** A normalized, frontend-ready navigation destination. */
