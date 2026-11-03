@@ -12,6 +12,8 @@ import {
 export interface StorefrontAuthServerConfig {
   /** IAM origin, for example https://iam.example.com. */
   iamUrl: string;
+  /** Browser-facing storefront URL; independent of the registered OAuth callback. */
+  appUrl: string;
   applicationId: string;
   clientId: string;
   clientSecret: string;
@@ -51,6 +53,7 @@ const DEFAULT_SCOPES: readonly ApplicationAuthScope[] = [
 
 const ENV = {
   iamUrl: 'NEXT_PUBLIC_IAM_URL',
+  appUrl: 'NEXT_PUBLIC_APP_URL',
   applicationId: 'NEXT_PUBLIC_IAM_APPLICATION_ID',
   clientId: 'IAM_OAUTH_CLIENT_ID',
   clientSecret: 'IAM_OAUTH_CLIENT_SECRET',
@@ -77,6 +80,7 @@ export function readStorefrontAuthServerConfig(
 
   const required = [
     'iamUrl',
+    'appUrl',
     'clientId',
     'clientSecret',
     'resource',
@@ -110,6 +114,7 @@ export function readStorefrontAuthServerConfig(
 
   return {
     iamUrl: value('iamUrl')!.replace(/\/$/, ''),
+    appUrl: new URL(value('appUrl')!).origin,
     applicationId: value('applicationId')!,
     clientId: value('clientId')!,
     clientSecret: value('clientSecret')!,

@@ -356,3 +356,9 @@ mocked(useAuth).mockImplementation(auth.useAuth);
 Storybook in this workspace renders the same board definitions from the sources
 (`src/ui/stories/definitions`, aliased as `@shopana/storefront-auth/stories`); they are not an
 entry of the package.
+
+`NEXT_PUBLIC_APP_URL` задаёт origin браузера и атрибут Secure для cookies независимо от
+зарегистрированного `IAM_OAUTH_REDIRECT_URI`. Это позволяет локальной теме обращаться к
+удалённому IAM через headless OTP. Социальный вход требует доступного зарегистрированного
+callback. В режиме разработки Vite передаёт адрес прямого подключения в `X-Forwarded-For`,
+заменяя входящие заголовки; в развёрнутом приложении адрес передаёт доверенный proxy.

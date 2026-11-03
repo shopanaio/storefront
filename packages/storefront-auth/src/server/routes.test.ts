@@ -6,6 +6,8 @@ import { createHeadlessAuthRouteHandlers } from './routes';
 const origin = 'https://shop.example.test';
 const config: StorefrontAuthServerConfig = {
   iamUrl: 'https://iam.example.test',
+  appUrl: origin,
+  cookiePolicy: 'first-party',
   applicationId: 'app-1',
   clientId: 'storefront',
   clientSecret: 'secret',

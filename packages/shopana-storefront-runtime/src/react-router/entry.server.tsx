@@ -22,6 +22,7 @@ import { hydratedPageOf, hydratedPageScript } from './hydration';
 import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import { isNotFoundSignal } from './not-found-response';
 import { serverInsertedHTMLCallbacks } from './server-inserted-html';
+import { publicEnvironmentScript } from './public-env';
 import {
   readRenderRedirect,
   readRenderStatus,
@@ -138,7 +139,7 @@ export default function handleRequest(
           let queued: Buffer[] = [];
           let batch: ReturnType<typeof setImmediate> | undefined;
           let headSent = false;
-          let headHTML = '';
+          let headHTML = publicEnvironmentScript();
           const send = (stream: Transform, chunk: Buffer) => {
             // More document after `</body>`: the state goes at its very end instead.
             if (closing) {
@@ -206,6 +207,7 @@ export default function handleRequest(
             },
           });
           responseHeaders.set('Content-Type', 'text/html');
+          responseHeaders.set('Cache-Control', 'private, no-store');
           pipe(body);
           resolve(
             new Response(createReadableStreamFromReadable(body), {

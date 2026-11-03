@@ -242,9 +242,11 @@ export default createRuntimeViteConfig({
 ```
 
 The Vite config makes the theme package the source root (`@src`, `@codegen`, `public`, `.env`
-files) and inlines the `NEXT_PUBLIC_*` and `PUBLIC_*` variables into both builds, as Next.js
-does, so the storefront config reads the same names under both runtimes; `start` reads the
-theme's `.env` files for the server.
+files). React Router reads `NEXT_PUBLIC_*` and `PUBLIC_*` settings at runtime and sends their
+values in the SSR document before client modules execute. Build-time keys and URLs are never
+inlined. The client reads the runtime public environment; all other server settings stay private.
+`start` reads the theme's `.env` files for the server. Key rotation or a URL change requires a
+container restart/rolling update, not a rebuild.
 
 ## Customer sessions
 

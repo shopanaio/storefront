@@ -133,88 +133,62 @@ terraform -chdir=deploy/terraform/environments/stage apply release.tfplan
 Тема получает access token через свой `/auth/token`, добавляет его к запросам агента,
 а confidential client secret и refresh token остаются на сервере.
 
-`NEXT_PUBLIC_IAM_URL` и `NEXT_PUBLIC_IAM_APPLICATION_ID` нужны также в runtime окружении:
-OAuth-обработчики читают их динамически из `process.env`. Dockerfile сохраняет значения
-сборки в итоговом образе, а Swarm явно передаёт их из экспортированного `build.env`.
+Все настройки подключения — runtime-конфигурация: `NEXT_PUBLIC_*`, OAuth client credentials
+и session secret задаются в `server-env.json`. Публичная часть передаётся браузеру в SSR HTML,
+остальные значения остаются серверными. Смена ключа или URL не требует нового билда.
 Application ID, client ID, resource и зарегистрированные redirect URI должны принадлежать
 одному IAM application соответствующего окружения.
 
-## Сборка каждого окружения
-
-### GitHub Actions
+## Сборка образа
 
 Workflow `.github/workflows/build-theme.yml` находится в приватном репозитории
-`shopanaio/storefront-brand-bite-and-crunch`. Он выполняется на push ветки и поддерживает
-ручной `workflow_dispatch` с выбором окружения и commit/ref публичного framework.
-Так `GITHUB_TOKEN` читает исходники своей темы без cross-repository PAT или deploy key.
-Framework checkout закреплён на SHA, а образ получает tag с SHA темы и framework.
+`shopanaio/storefront-brand-bite-and-crunch`. Он запускается при push ветки и поддерживает
+ручной `workflow_dispatch` с выбором commit/ref framework. Секреты и environment-specific
+variables в Actions не нужны. `GITHUB_TOKEN` используется только для checkout своей темы
+и публикации в GHCR; публичный framework checkout закреплён на SHA.
 
-Образ публикуется в `ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme` для
-`linux/amd64`, как backend `internal`. Полный digest выводится в summary сборки;
-его можно использовать как `THEME_IMAGE` в Swarm.
+Один образ `linux/amd64` публикуется в `ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme`.
+Tag содержит SHA темы и framework, summary — immutable digest для `THEME_IMAGE`.
+Один и тот же digest используется в stage и production; конфигурация задаётся при deploy.
 
-В Actions environment `stage` задаются:
+```sh
+docker buildx build --platform linux/amd64 --push \
+  -t ghcr.io/YOUR_ORG/THEME:RELEASE .
+```
 
-- secret `SHOPANA_API_KEY`: только PUBLIC Headless access token;
-- variable `NEXT_PUBLIC_APP_URL`: `https://pet.shopana.dev`;
-- variable `NEXT_PUBLIC_IAM_APPLICATION_ID`: IAM application ID магазина;
-- при необходимости variables `NEXT_PUBLIC_GRAPHQL_URL`, `NEXT_PUBLIC_IAM_URL`,
-  `NEXT_PUBLIC_PET_ASSISTANT_URL`, `NEXT_PUBLIC_CART_COOKIE_NAME`,
-  `NEXT_PUBLIC_STOREFRONT_COOKIE_POLICY`.
-
-Stage URL по умолчанию — `pet.shopana.dev`; service URL формируются в том же origin.
-Без IAM application ID вход покупателей отключён. Production требует собственный
-`NEXT_PUBLIC_APP_URL` и environment secrets/variables. Серверные OAuth secrets и session key
-в сборку не передаются — только в runtime Docker secrets.
-
-Push запускает проверку workflow на feature-ветке без изменения `main`. Для ручного запуска
-через кнопку/CLI GitHub требует, чтобы workflow был доступен на default branch:
+Ручной запуск после появления workflow на default branch:
 
 ```sh
 gh workflow run build-theme.yml --repo shopanaio/storefront-brand-bite-and-crunch \
-  --ref <theme-branch> -f environment=stage
+  --ref <theme-branch>
 ```
 
-### Локальная сборка
+В `deploy/environments/<environment>` скопируйте `deploy.env.example` и
+`server-env.json.example` в файлы без `.example`. Они игнорируются Git и Docker build context.
+В `deploy.env` задайте digest одного и того же образа, имена Docker secrets и backend network.
+В `server-env.json` задайте PUBLIC Headless token, URL окружения, IAM application/client IDs,
+OAuth client secret и случайный session secret длиной минимум 32 символа.
+Runtime URL должны совпадать с Terraform outputs. Отключая IAM/ассистент, очистите их
+публичные переменные и удалите ненужные OAuth keys из JSON.
 
-В `deploy/environments/<environment>` скопируйте `build.env.example`, `deploy.env.example`
-и `server-env.json.example` в файлы без `.example`. Они игнорируются Git и Docker build context.
-В `build.env` задайте URL своего окружения и **PUBLIC**, а не PRIVATE Headless token.
-URL должны совпадать с Terraform outputs. Отключая IAM/ассистент в Terraform, очистите их
-публичные переменные и удалите ненужные OAuth keys из server-env JSON.
-
-```sh
-PROFILE=stage
-set -a
-. "./deploy/environments/$PROFILE/build.env"
-. "./deploy/environments/$PROFILE/deploy.env"
-set +a
-
-docker buildx build --platform linux/amd64 --push -t "$THEME_IMAGE" \
-  --build-arg STOREFRONT_THEME \
-  --build-arg NEXT_PUBLIC_APP_URL \
-  --build-arg NEXT_PUBLIC_GRAPHQL_URL \
-  --build-arg NEXT_PUBLIC_API_KEY \
-  --build-arg NEXT_PUBLIC_IAM_URL \
-  --build-arg NEXT_PUBLIC_IAM_APPLICATION_ID \
-  --build-arg NEXT_PUBLIC_PET_ASSISTANT_URL \
-  --build-arg NEXT_PUBLIC_CART_COOKIE_NAME .
-```
-
-Публичные URL встраиваются в bundle: для production нужен отдельный образ. В server-env JSON
-задайте случайный session secret длиной минимум 32 символа, серверный OAuth client secret,
-resource и callback. Зарегистрируйте в IAM origin `https://<hostname>`, callback
+Зарегистрируйте в IAM origin `https://<hostname>`, callback
 `https://<hostname>/auth/callback` и post-logout URI `https://<hostname>/`.
-Проверьте public base URL/issuer конфигурации IAM: discovery и redirect должны возвращать
-нужные публичные URL. Tunnel не переписывает JSON discovery или заголовки `Location` backend.
+Проверьте public base URL/issuer IAM: Tunnel не переписывает JSON discovery или `Location`.
 
 ## Secrets и запуск stack
 
 Следующие команды выполняются Docker CLI, подключённым к manager нужного Swarm. Используйте
-профиль из предыдущего шага и своё активное Docker context. Создавайте versioned secrets один
-раз; для ротации задайте новые имена в `deploy.env` и повторите deploy.
+профиль окружения и своё активное Docker context. Создавайте versioned secrets один
+раз; для ротации задайте новые имена в `deploy.env` и повторите deploy с тем же `THEME_IMAGE`.
+После изменения Headless token, OAuth secret или URL создайте новую версию `SERVER_ENV_SECRET`:
+Swarm выполнит rolling update контейнеров. Пересборка образа не требуется.
 
 ```sh
+PROFILE=stage
+set -a
+. "./deploy/environments/$PROFILE/deploy.env"
+set +a
+
 terraform -chdir="deploy/terraform/environments/$PROFILE" output -raw tunnel_token \
   | docker secret create "$TUNNEL_SECRET" -
 docker secret create "$SERVER_ENV_SECRET" "deploy/environments/$PROFILE/server-env.json"

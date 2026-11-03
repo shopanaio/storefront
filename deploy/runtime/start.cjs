@@ -4,6 +4,14 @@ const { spawn } = require('node:child_process');
 
 const values = JSON.parse(readFileSync('/run/secrets/server-env', 'utf8'));
 const allowed = new Set([
+  'NEXT_PUBLIC_API_KEY',
+  'NEXT_PUBLIC_APP_URL',
+  'NEXT_PUBLIC_GRAPHQL_URL',
+  'NEXT_PUBLIC_PET_ASSISTANT_URL',
+  'NEXT_PUBLIC_IAM_URL',
+  'NEXT_PUBLIC_IAM_APPLICATION_ID',
+  'NEXT_PUBLIC_CART_COOKIE_NAME',
+  'NEXT_PUBLIC_STOREFRONT_COOKIE_POLICY',
   'STOREFRONT_SESSION_SECRET',
   'STOREFRONT_COOKIE_POLICY',
   'STOREFRONT_TRUSTED_PROXY_HOPS',
@@ -19,8 +27,22 @@ for (const [key, value] of Object.entries(values)) {
   }
   process.env[key] = value;
 }
+if (
+  !/^shpna_sfpub_v1_[A-Za-z0-9_-]{22}_[A-Za-z0-9_-]{43}$/.test(
+    process.env.NEXT_PUBLIC_API_KEY ?? ''
+  )
+) {
+  throw new Error(
+    'NEXT_PUBLIC_API_KEY must contain a PUBLIC Headless access token'
+  );
+}
+for (const key of ['NEXT_PUBLIC_APP_URL', 'NEXT_PUBLIC_GRAPHQL_URL']) {
+  if (!process.env[key]) throw new Error(`${key} is required at runtime`);
+}
 if ((process.env.STOREFRONT_SESSION_SECRET?.length ?? 0) < 32) {
-  throw new Error('STOREFRONT_SESSION_SECRET must contain at least 32 characters');
+  throw new Error(
+    'STOREFRONT_SESSION_SECRET must contain at least 32 characters'
+  );
 }
 const child = spawn(
   process.execPath,

@@ -162,7 +162,7 @@ export class StorefrontSessionServer {
 
   constructor(readonly config: StorefrontAuthServerConfig) {
     this.iam = new IamOAuthServerClient(config);
-    this.origin = new URL(config.redirectUri).origin;
+    this.origin = new URL(config.appUrl).origin;
     this.secure = this.origin.startsWith('https:');
     this.cookieAttributes = resolveCookieAttributes(config.cookiePolicy, {
       secure: this.secure,

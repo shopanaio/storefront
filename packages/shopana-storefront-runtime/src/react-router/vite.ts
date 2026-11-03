@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { reactRouter } from '@react-router/dev/vite';
+import { PUBLIC_ENV_GLOBAL } from './public-env';
 import {
   defaultClientConditions,
   defaultServerConditions,
@@ -12,9 +13,6 @@ import {
 
 /** The export condition that resolves `@shopana/storefront/*` facades to React Router. */
 export const RUNTIME_CONDITION = 'react-router';
-
-/** Prefixes of the environment variables inlined into the browser bundle. */
-export const PUBLIC_ENV_PREFIXES = ['NEXT_PUBLIC_', 'PUBLIC_'] as const;
 
 export interface CreateRuntimeViteConfigOptions {
   /**
@@ -43,23 +41,12 @@ function toList<T>(value: T | T[] | undefined): T[] {
   return value === undefined ? [] : Array.isArray(value) ? value : [value];
 }
 
-function publicEnvDefines(): Record<string, string> {
-  const defines: Record<string, string> = {};
-  for (const [name, value] of Object.entries(process.env)) {
-    if (PUBLIC_ENV_PREFIXES.some((prefix) => name.startsWith(prefix))) {
-      defines[`process.env.${name}`] = JSON.stringify(value);
-    }
-  }
-  return defines;
-}
-
 /**
  * The Vite config of a storefront under React Router. The theme package is the source root:
  * `@src` and `@codegen` resolve in it, its `public` directory is served, and its `.env` files
- * fill `process.env` for the dev server. As under Next.js, the `NEXT_PUBLIC_*` and `PUBLIC_*`
- * variables are inlined into both builds at build time (the names the storefront config reads
- * under both runtimes); the browser bundle has an empty `process.env` otherwise, and the server
- * reads the rest at run time. The `react-router` export condition selects
+ * fill `process.env` for the dev server. Public settings come from the server environment at
+ * runtime and are sent in the document before browser modules execute. No deployment keys or
+ * URLs are embedded at build time. The `react-router` export condition selects
  * the React Router implementation of the storefront facades, and the `@shopana` packages are
  * bundled into the server build, so the runtime and the SDK share one module instance.
  */
@@ -69,7 +56,7 @@ export function createRuntimeViteConfig({
 }: CreateRuntimeViteConfigOptions = {}): UserConfigFnObject {
   const rootDir = path.dirname(path.resolve(runtimeDir));
 
-  return ({ mode }) => {
+  return ({ mode, command }) => {
     for (const [name, value] of Object.entries(loadEnv(mode, rootDir, ''))) {
       process.env[name] ??= value;
     }
@@ -81,16 +68,35 @@ export function createRuntimeViteConfig({
       define,
       ...rest
     } = config;
-    const publicEnv = publicEnvDefines();
 
     // The theme's options extend these: its own conditions, aliases and defines are added, and
-    // never take away the runtime condition, the theme aliases or the public variables.
+    // never take away the runtime condition or the theme aliases.
     return {
       ...rest,
       root: runtimeDir,
       envDir: rootDir,
       publicDir: rest.publicDir ?? path.join(rootDir, 'public'),
-      plugins: [reactRouter(), ...plugins],
+      plugins: [
+        reactRouter(),
+        ...(command === 'serve'
+          ? [
+              {
+                name: 'shopana-dev-client-address',
+                configureServer(server) {
+                  server.middlewares.use((request, _response, next) => {
+                    // The dev server is the direct peer: never trust forwarded client headers.
+                    delete request.headers['x-forwarded-for'];
+                    delete request.headers['x-real-ip'];
+                    const address = request.socket.remoteAddress;
+                    if (address) request.headers['x-forwarded-for'] = address;
+                    next();
+                  });
+                },
+              } satisfies import('vite').Plugin,
+            ]
+          : []),
+        ...plugins,
+      ],
       resolve: {
         ...resolve,
         conditions: [
@@ -121,7 +127,7 @@ export function createRuntimeViteConfig({
           ],
         },
       },
-      define: { ...define, ...publicEnv },
+      define,
       environments: {
         ...environments,
         client: {
@@ -129,8 +135,7 @@ export function createRuntimeViteConfig({
           define: {
             ...define,
             ...environments?.client?.define,
-            ...publicEnv,
-            'process.env': '{}',
+            'process.env': `globalThis.${PUBLIC_ENV_GLOBAL}`,
           },
         },
       },

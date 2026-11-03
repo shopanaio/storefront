@@ -8,6 +8,7 @@ import { seal } from './sealedCookie';
 const origin = 'https://shop.example.test';
 const config: StorefrontAuthServerConfig = {
   iamUrl: 'https://iam.example.test',
+  appUrl: origin,
   applicationId: 'app-1',
   clientId: 'storefront',
   clientSecret: 's3cret value',
@@ -456,5 +457,41 @@ describe('endUserIp', () => {
       '203.0.113.7'
     );
     expect(endUserIp(request({}))).toBeUndefined();
+  });
+});
+
+describe('storefront origin independent of OAuth callback', () => {
+  it('uses the browser origin and HTTP cookies for local headless sign-in', async () => {
+    const { StorefrontSessionServer } = await import('./serverSession');
+    const server = new StorefrontSessionServer({
+      ...config,
+      appUrl: 'http://localhost:3001',
+      redirectUri: 'https://stage.example/auth/callback',
+    });
+    expect(server.origin).toBe('http://localhost:3001');
+    expect(server.secure).toBe(false);
+    const { rejectCrossSite } = await import('./routes');
+    expect(
+      rejectCrossSite(
+        new Request('http://localhost:3001/auth/token', {
+          headers: {
+            'x-shopana-session': '1',
+            origin: 'http://localhost:3001',
+          },
+        }),
+        server
+      )
+    ).toBeNull();
+    expect(
+      rejectCrossSite(
+        new Request('http://localhost:3001/auth/token', {
+          headers: {
+            'x-shopana-session': '1',
+            origin: 'https://stage.example',
+          },
+        }),
+        server
+      )?.status
+    ).toBe(403);
   });
 });

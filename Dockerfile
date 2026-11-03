@@ -8,18 +8,9 @@ COPY . .
 RUN corepack enable && yarn install --immutable && yarn cache clean --all
 
 ARG STOREFRONT_THEME=brand-bite-crunch
-ARG NEXT_PUBLIC_GRAPHQL_URL
-ARG NEXT_PUBLIC_API_KEY
-ARG NEXT_PUBLIC_APP_URL
-ARG NEXT_PUBLIC_PET_ASSISTANT_URL
-ARG NEXT_PUBLIC_IAM_URL
-ARG NEXT_PUBLIC_IAM_APPLICATION_ID
-ARG NEXT_PUBLIC_CART_COOKIE_NAME=shopana_cart_id
-ARG NEXT_PUBLIC_STOREFRONT_COOKIE_POLICY=first-party
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
 ENV NODE_ENV=production
-RUN test -n "$NEXT_PUBLIC_GRAPHQL_URL" && test -n "$NEXT_PUBLIC_API_KEY" && \
-    NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
+RUN NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
     test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js"
 
 FROM build AS production-dependencies
@@ -29,14 +20,9 @@ RUN THEME_PACKAGE=$(node -p "require('./themes/' + process.env.STOREFRONT_THEME 
     mkdir -p "themes/$STOREFRONT_THEME/node_modules"
 
 FROM node:22-bookworm-slim AS runtime
-# Session handlers read these dynamically from process.env, outside Vite's public defines.
-ARG NEXT_PUBLIC_IAM_URL
-ARG NEXT_PUBLIC_IAM_APPLICATION_ID
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=3000 \
-    NEXT_PUBLIC_IAM_URL=${NEXT_PUBLIC_IAM_URL} \
-    NEXT_PUBLIC_IAM_APPLICATION_ID=${NEXT_PUBLIC_IAM_APPLICATION_ID} \
     NODE_OPTIONS=--import=/app/forwarded-for.mjs
 WORKDIR /app
 COPY --from=production-dependencies /app/node_modules ./node_modules
