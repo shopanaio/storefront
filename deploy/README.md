@@ -1,11 +1,26 @@
 # Тема: Cloudflare Free, Tunnel и Docker Swarm
 
-Схема повторяет соглашения `internal`: Terraform Cloud remote state, Cloudflare provider
+Схема повторяет соглашения `internal`: Cloudflare provider
 `5.19.1`, отдельные окружения, connector token как Docker secret, два connector на разных нодах
 и `cloudflared tunnel ready` для healthcheck. Образ connector закреплён на `2026.10.2`.
+Terraform выполняется локально; у каждого профиля свой local state. Terraform Cloud и
+`terraform login` не требуются.
 
-Здесь под основным доменом понимается apex, например `example.com`. Production использует
-`https://example.com`, stage — `https://stage.example.com`. Укажите свой домен в inputs.
+Stage темы использует **`https://pet.shopana.dev`** в существующей Cloudflare-зоне `shopana.dev`.
+Это самостоятельный hostname stage: дополнительный префикс `stage.` не добавляется.
+Поле `hostname` задаётся явно для каждого окружения; production пока оставлен шаблоном
+`example.com` и не занимает основной адрес админки `shopana.dev`.
+
+| Stage URL | Назначение |
+| --- | --- |
+| `https://pet.shopana.dev` | Тема и публичная база IAM |
+| `https://pet.shopana.dev/graphql` | Storefront API |
+| `https://pet.shopana.dev/apps/pet-assistant/v1` | API агента и streaming |
+| `https://pet.shopana.dev/auth/callback` | OAuth callback темы |
+
+Account/zone IDs в stage-примере взяты из Terraform `internal`; новая зона не создаётся.
+Тема получает собственные Tunnel и DNS record в отдельном local state stage-профиля.
+Основной домен и записи backend по-прежнему принадлежат Terraform `internal`.
 
 ## Маршрутизация без Traefik
 
@@ -29,7 +44,9 @@
 
 ## Что используется на Free
 
-Общий профиль `terraform/zone` управляет настройками сразу для apex и `stage.<domain>`:
+Общий профиль `terraform/zone` управляет настройками только для списка `hostnames`.
+Для текущего stage это `["pet.shopana.dev"]`: админка `shopana.dev`, API и другие поддомены
+не включены в выражения CDN/WAF.
 
 | Трафик | Политика CDN |
 | --- | --- |
@@ -42,7 +59,7 @@
 Изображения с других доменов этим CDN-профилем не кэшируются.
 
 Антиробот — **1 из 5 бесплатных WAF custom rules**: Managed Challenge для GET/HEAD страниц
-обоих hostname, кроме проверенных Cloudflare ботов. Первый визит человека также может получить
+перечисленных hostname, кроме проверенных Cloudflare ботов. Первый визит человека также может получить
 проверку; после успешной проверки Cloudflare использует clearance cookie. API, IAM, callbacks,
 ассистент, React Router `.data` и статика исключены. Это защита страниц, а не rate limit API.
 
@@ -68,9 +85,7 @@ Free Managed Ruleset и базовая DDoS-защита Cloudflare остают
 - Отдельные Headless PUBLIC tokens и OAuth clients/redirect URI для production и stage.
 - `CLOUDFLARE_API_TOKEN` с Tunnel Write для аккаунта, DNS Write и Zone WAF/Bot Management
   permissions для зоны; права должны позволять читать connector token. Токен задаётся через
-  окружение, не через versioned файлы. Для remote state нужны Terraform Cloud organization,
-  отдельные workspaces и `TF_TOKEN_app_terraform_io`. При удалённом выполнении Terraform
-  задайте Cloudflare token как sensitive environment variable workspace.
+  окружение, не через versioned файлы. Для текущего этапа Tunnel/DNS права CDN/WAF не нужны.
 
 ## Terraform
 
@@ -80,17 +95,32 @@ Free Managed Ruleset и базовая DDoS-защита Cloudflare остают
 Для каждого из `deploy/terraform/zone`, `deploy/terraform/environments/stage`,
 `deploy/terraform/environments/production` скопируйте `backend.hcl.example` в `backend.hcl`,
 `terraform.tfvars.example` в `terraform.tfvars` и заполните значения. Для обоих окружений
-используйте одинаковые `root_domain`/zone ID, но собственные origins backend.
+укажите собственные `hostname` и origins backend. Если окружения находятся в одной Cloudflare-зоне,
+используйте её существующий zone ID и перечислите нужные hostname в общем профиле `zone`.
+Stage-примеры уже содержат `pet.shopana.dev` и account/zone IDs из `internal`.
+Local state каждого профиля хранится в его `.state/terraform.tfstate`, например
+`deploy/terraform/environments/stage/.state/terraform.tfstate`. Эти файлы игнорируются Git.
+Храните их резервные копии в защищённом месте: state содержит connector token и определяет
+владение созданными ресурсами. State backend `internal` не используется и не изменяется.
+
+Перед применением общего профиля проверьте доступ токена к Rulesets API: чтения зоны и DNS
+недостаточно. Для CDN нужны Cache Rules/Cache Settings permissions, для защиты — Zone WAF,
+для изменения Bot Fight Mode — соответствующие Bot Management permissions. Если list rulesets
+возвращает 403, сначала дополните права и проверьте существующие entry points.
+
+**Текущий этап: только Tunnel и DNS для `pet.shopana.dev`.** Профиль `terraform/zone`
+отложен: Cache Rules, WAF и Bot Management сейчас не применяются. Они не входят в stage-профиль,
+поэтому его можно планировать и применять независимо от дополнительных прав на CDN/WAF.
 
 ```sh
-terraform -chdir=deploy/terraform/zone init -backend-config=backend.hcl
-terraform -chdir=deploy/terraform/zone plan -out=release.tfplan
-terraform -chdir=deploy/terraform/zone apply release.tfplan
-
+umask 077
 terraform -chdir=deploy/terraform/environments/stage init -backend-config=backend.hcl
 terraform -chdir=deploy/terraform/environments/stage plan -out=release.tfplan
 terraform -chdir=deploy/terraform/environments/stage apply release.tfplan
 ```
+
+После отдельного решения включить CDN/WAF выполните `init`, `plan`, `apply` для
+`deploy/terraform/zone`; до этого настройки зоны остаются существующими.
 
 Для production замените `stage` на `production`. Обе конфигурации выводят `app_url`,
 `graphql_url`, `tunnel_id` и sensitive `tunnel_token`. State содержит connector token:
@@ -110,6 +140,42 @@ Application ID, client ID, resource и зарегистрированные redi
 одному IAM application соответствующего окружения.
 
 ## Сборка каждого окружения
+
+### GitHub Actions
+
+Workflow `.github/workflows/build-theme.yml` находится в приватном репозитории
+`shopanaio/storefront-brand-bite-and-crunch`. Он выполняется на push ветки и поддерживает
+ручной `workflow_dispatch` с выбором окружения и commit/ref публичного framework.
+Так `GITHUB_TOKEN` читает исходники своей темы без cross-repository PAT или deploy key.
+Framework checkout закреплён на SHA, а образ получает tag с SHA темы и framework.
+
+Образ публикуется в `ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme` для
+`linux/amd64`, как backend `internal`. Полный digest выводится в summary сборки;
+его можно использовать как `THEME_IMAGE` в Swarm.
+
+В Actions environment `stage` задаются:
+
+- secret `SHOPANA_API_KEY`: только PUBLIC Headless access token;
+- variable `NEXT_PUBLIC_APP_URL`: `https://pet.shopana.dev`;
+- variable `NEXT_PUBLIC_IAM_APPLICATION_ID`: IAM application ID магазина;
+- при необходимости variables `NEXT_PUBLIC_GRAPHQL_URL`, `NEXT_PUBLIC_IAM_URL`,
+  `NEXT_PUBLIC_PET_ASSISTANT_URL`, `NEXT_PUBLIC_CART_COOKIE_NAME`,
+  `NEXT_PUBLIC_STOREFRONT_COOKIE_POLICY`.
+
+Stage URL по умолчанию — `pet.shopana.dev`; service URL формируются в том же origin.
+Без IAM application ID вход покупателей отключён. Production требует собственный
+`NEXT_PUBLIC_APP_URL` и environment secrets/variables. Серверные OAuth secrets и session key
+в сборку не передаются — только в runtime Docker secrets.
+
+Push запускает проверку workflow на feature-ветке без изменения `main`. Для ручного запуска
+через кнопку/CLI GitHub требует, чтобы workflow был доступен на default branch:
+
+```sh
+gh workflow run build-theme.yml --repo shopanaio/storefront-brand-bite-and-crunch \
+  --ref <theme-branch> -f environment=stage
+```
+
+### Локальная сборка
 
 В `deploy/environments/<environment>` скопируйте `build.env.example`, `deploy.env.example`
 и `server-env.json.example` в файлы без `.example`. Они игнорируются Git и Docker build context.

@@ -1,5 +1,5 @@
 locals {
-  hosts = "http.host in {${jsonencode(var.root_domain)} ${jsonencode("stage.${var.root_domain}")}}"
+  hosts = "http.host in {${join(" ", [for hostname in sort(tolist(var.hostnames)) : jsonencode(hostname)])}}"
   # Only dedicated static namespaces. Never cache React Router data, API or HTML by extension.
   static = join(" or ", [
     for prefix in ["/assets/", "/images/", "/embed/", "/error-game/"] :
@@ -12,7 +12,7 @@ locals {
   public_file = "http.request.uri.path in {\"/favicon.ico\" \"/manifest.webmanifest\" \"/robots.txt\" \"/sitemap.xml\"}"
 }
 
-# There can only be one zone entry point per phase: both environments belong in this state.
+# There can only be one zone entry point per phase: all managed frontend hostnames belong in this state.
 resource "cloudflare_ruleset" "cache" {
   zone_id = var.zone_id
   name    = "Storefront CDN (Free)"

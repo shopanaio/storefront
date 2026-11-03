@@ -1,11 +1,15 @@
 mock_provider "cloudflare" {}
 variables {
-  zone_id     = "11111111111111111111111111111111"
-  root_domain = "example.com"
+  zone_id   = "11111111111111111111111111111111"
+  hostnames = ["pet.shopana.dev"]
 }
 
 run "free_plan_and_dynamic_bypass" {
   command = plan
+  assert {
+    condition     = cloudflare_ruleset.cache.rules[0].expression == "http.host in {\"pet.shopana.dev\"}"
+    error_message = "Theme rules must target pet.shopana.dev only, preserving the admin and backend hostnames."
+  }
   assert {
     condition     = length(cloudflare_ruleset.cache.rules) == 3 && length(cloudflare_ruleset.frontend_security.rules) == 1
     error_message = "Stay within Free's 10 Cache Rules and 5 custom WAF rules."

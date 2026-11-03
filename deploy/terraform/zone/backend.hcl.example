@@ -1,2 +1,1 @@
-organization = "YOUR_TERRAFORM_CLOUD_ORGANIZATION"
-workspaces { name = "shopana-theme-cloudflare-zone" }
+path = ".state/terraform.tfstate"

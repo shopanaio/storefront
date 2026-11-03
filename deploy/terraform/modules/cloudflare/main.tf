@@ -1,7 +1,3 @@
-locals {
-  hostname = var.environment == "production" ? var.root_domain : "stage.${var.root_domain}"
-}
-
 resource "cloudflare_zero_trust_tunnel_cloudflared" "this" {
   account_id = var.account_id
   name       = "shopana-theme-${var.environment}"
@@ -13,16 +9,16 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
   tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.this.id
   config = {
     ingress = concat(
-      [{ hostname = local.hostname, path = "^/graphql/?$", service = var.storefront_api_origin }],
+      [{ hostname = var.hostname, path = "^/graphql/?$", service = var.storefront_api_origin }],
       var.auth_origin == null ? [] : [
-        { hostname = local.hostname, path = "^/auth/applications/[^/]+/.*$", service = var.auth_origin },
-        { hostname = local.hostname, path = "^/\\.well-known/oauth-authorization-server/auth/applications/[^/]+$", service = var.auth_origin }
+        { hostname = var.hostname, path = "^/auth/applications/[^/]+/.*$", service = var.auth_origin },
+        { hostname = var.hostname, path = "^/\\.well-known/oauth-authorization-server/auth/applications/[^/]+$", service = var.auth_origin }
       ],
       var.pet_assistant_origin == null ? [] : [
-        { hostname = local.hostname, path = "^/apps/pet-assistant/v1(/.*)?$", service = var.pet_assistant_origin }
+        { hostname = var.hostname, path = "^/apps/pet-assistant/v1(/.*)?$", service = var.pet_assistant_origin }
       ],
       [
-        { hostname = local.hostname, service = var.theme_origin },
+        { hostname = var.hostname, service = var.theme_origin },
         { service = "http_status:404" }
       ]
     )
@@ -31,7 +27,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
 
 resource "cloudflare_dns_record" "theme" {
   zone_id = var.zone_id
-  name    = local.hostname
+  name    = var.hostname
   type    = "CNAME"
   content = "${cloudflare_zero_trust_tunnel_cloudflared.this.id}.cfargotunnel.com"
   proxied = true
@@ -48,7 +44,7 @@ output "tunnel_token" {
   value     = data.cloudflare_zero_trust_tunnel_cloudflared_token.this.token
   sensitive = true
 }
-output "app_url" { value = "https://${local.hostname}" }
-output "graphql_url" { value = "https://${local.hostname}/graphql" }
-output "iam_url" { value = var.auth_origin == null ? "" : "https://${local.hostname}" }
-output "pet_assistant_url" { value = var.pet_assistant_origin == null ? "" : "https://${local.hostname}/apps/pet-assistant/v1" }
+output "app_url" { value = "https://${var.hostname}" }
+output "graphql_url" { value = "https://${var.hostname}/graphql" }
+output "iam_url" { value = var.auth_origin == null ? "" : "https://${var.hostname}" }
+output "pet_assistant_url" { value = var.pet_assistant_origin == null ? "" : "https://${var.hostname}/apps/pet-assistant/v1" }

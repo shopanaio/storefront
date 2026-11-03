@@ -3,7 +3,7 @@ mock_provider "cloudflare" {}
 variables {
   account_id            = "00000000000000000000000000000000"
   zone_id               = "11111111111111111111111111111111"
-  root_domain           = "example.com"
+  hostname              = "example.com"
   storefront_api_origin = "http://gateway-storefront:4000"
   auth_origin           = "http://runtime-monolith:10010"
   pet_assistant_origin  = "http://runtime-monolith:10096"
@@ -46,12 +46,13 @@ run "stage_without_optional_backends" {
   command = plan
   variables {
     environment          = "stage"
+    hostname             = "pet.shopana.dev"
     auth_origin          = null
     pet_assistant_origin = null
   }
   assert {
-    condition     = output.app_url == "https://stage.example.com" && cloudflare_dns_record.theme.name == "stage.example.com"
-    error_message = "Stage must use stage.<root_domain>."
+    condition     = output.app_url == "https://pet.shopana.dev" && cloudflare_dns_record.theme.name == "pet.shopana.dev"
+    error_message = "Stage must use its explicit hostname without adding a stage prefix."
   }
   assert {
     condition     = length(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress) == 3
@@ -60,5 +61,21 @@ run "stage_without_optional_backends" {
   assert {
     condition     = output.iam_url == "" && output.pet_assistant_url == ""
     error_message = "Disabled backends must emit empty public URLs."
+  }
+}
+
+run "pet_hostname_is_stage" {
+  command = plan
+  variables {
+    environment = "stage"
+    hostname    = "pet.shopana.dev"
+  }
+  assert {
+    condition     = output.app_url == "https://pet.shopana.dev" && output.graphql_url == "https://pet.shopana.dev/graphql" && output.iam_url == "https://pet.shopana.dev" && output.pet_assistant_url == "https://pet.shopana.dev/apps/pet-assistant/v1"
+    error_message = "All stage endpoints must use pet.shopana.dev without a nested stage prefix."
+  }
+  assert {
+    condition     = cloudflare_dns_record.theme.name == "pet.shopana.dev" && cloudflare_zero_trust_tunnel_cloudflared.this.name == "shopana-theme-stage"
+    error_message = "The pet hostname must belong to the stage tunnel."
   }
 }

@@ -7,11 +7,11 @@ variable "environment" {
 }
 variable "account_id" { type = string }
 variable "zone_id" { type = string }
-variable "root_domain" {
+variable "hostname" {
   type = string
   validation {
-    condition     = can(regex("^[a-z0-9][a-z0-9.-]*\\.[a-z]{2,}$", var.root_domain))
-    error_message = "Use a lowercase apex domain without a scheme or path."
+    condition     = can(regex("^[a-z0-9][a-z0-9.-]*\\.[a-z]{2,}$", var.hostname))
+    error_message = "Use a lowercase hostname without a scheme or path."
   }
 }
 variable "theme_origin" {

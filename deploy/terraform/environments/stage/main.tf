@@ -3,7 +3,7 @@ module "edge" {
   environment           = "stage"
   account_id            = var.cloudflare_account_id
   zone_id               = var.cloudflare_zone_id
-  root_domain           = var.root_domain
+  hostname              = var.hostname
   storefront_api_origin = var.storefront_api_origin
   auth_origin           = var.auth_origin
   pet_assistant_origin  = var.pet_assistant_origin

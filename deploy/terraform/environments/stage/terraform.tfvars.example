@@ -1,6 +1,6 @@
-cloudflare_account_id = "REPLACE_ME"
-cloudflare_zone_id    = "REPLACE_ME"
-root_domain           = "example.com"
+cloudflare_account_id = "cc7ae7ff865300352762364bad3847fb"
+cloudflare_zone_id    = "7277c80d30cde81128f4c34646f90af0"
+hostname              = "pet.shopana.dev"
 # Origins must resolve from cloudflared on the backend overlay network.
 storefront_api_origin = "http://shopana-stage-app_gateway-storefront:4000"
 auth_origin           = "http://shopana-stage-app_runtime-monolith:10010"

@@ -88,3 +88,4 @@ storybook-static
 deploy/environments/*/build.env
 deploy/environments/*/deploy.env
 deploy/environments/*/server-env.json
+deploy/**/.state/
