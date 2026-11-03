@@ -11,32 +11,154 @@ Stage темы использует **`https://pet.shopana.dev`** в сущес�
 Поле `hostname` задаётся явно для каждого окружения; production пока оставлен шаблоном
 `example.com` и не занимает основной адрес админки `shopana.dev`.
 
-| Stage URL | Назначение |
-| --- | --- |
-| `https://pet.shopana.dev` | Тема и публичная база IAM |
-| `https://pet.shopana.dev/graphql` | Storefront API |
-| `https://pet.shopana.dev/apps/pet-assistant/v1` | API агента и streaming |
-| `https://pet.shopana.dev/auth/callback` | OAuth callback темы |
+## Деплой в существующий Swarm internal
+
+На серверах остаётся **один Swarm**. Стеки `shopana-stage-platform` и
+`shopana-stage-app` принадлежат internal; тема разворачивается отдельным стеком
+`shopana-theme-stage`. Повторять `docker swarm init`, создавать серверы или переносить
+backend services в стек темы не нужно. Скрипт ниже не выполняет эти операции и не
+изменяет существующие стеки backend.
+
+```text
+Swarm internal
+├── shopana-stage-platform
+├── shopana-stage-app ─────────────────── shopana-stage-edge
+└── shopana-theme-stage                              │
+    ├── cloudflared × 2 ──────────────────────────────┘
+    └── theme × 2
+        └── shopana-theme-stage_frontend (общая с cloudflared)
+```
+
+Команды выполняются из корня этого репозитория на рабочем компьютере. Docker CLI
+подключается по SSH к существующему manager; Terraform читает свой локальный state.
+На manager нужен Docker, на рабочем компьютере — Node.js 22+, Docker CLI, Terraform
+и SSH-доступ. SSH-пользователь должен иметь права управлять Docker.
+
+```sh
+docker context create internal-stage --docker 'host=ssh://root@MANAGER_IP'
+docker --context internal-stage node ls
+docker --context internal-stage stack ls
+
+# Идемпотентно создаёт локальные файлы с правами 0600 и случайный session secret.
+# Уже существующие файлы и session secret сохраняются.
+node scripts/deploy-theme.mjs init stage
+```
+
+Заполните `deploy/environments/stage/server-env.json`: PUBLIC Headless token именно
+stage-магазина, IAM application ID, OAuth client ID/secret и resource. URL уже заданы
+для `pet.shopana.dev`. Зарегистрируйте этот origin и оба redirect URI в IAM application.
+Файлы игнорируются Git; скрипт не копирует ключи из локального backend или в GitHub Actions.
+`deploy.env` уже содержит digest опубликованного образа. Для ротации увеличивайте версию
+`SERVER_ENV_SECRET` или `TUNNEL_SECRET`; существующие secrets никогда не перезаписываются.
+
+Для приватного GHCR авторизуйтесь токеном с `read:packages` и доступом к package.
+Не передавайте токен как аргумент командной строки и не записывайте его в deploy.env:
+
+```sh
+printf '%s' "$GHCR_READ_TOKEN" | docker --context internal-stage login ghcr.io \
+  --username "$GITHUB_USER" --password-stdin
+
+node scripts/deploy-theme.mjs check stage --context internal-stage
+node scripts/deploy-theme.mjs deploy stage --context internal-stage
+node scripts/deploy-theme.mjs status stage --context internal-stage
+```
+
+`check` выполняет только чтение: проверяет runtime-настройки и Terraform outputs,
+существующий manager и overlay, минимум три ready/active linux/amd64-ноды, подключение
+backend services к edge-сети, proxy hops, IAM public URL и доступность образа в registry.
+Docker context требуется явно: скрипт не переключает глобальный context.
+
+`deploy` сначала повторяет проверки, затем читает tunnel token из local Terraform state,
+создаёт Docker secrets через stdin, создаёт config с хэшем launcher и выполняет
+`docker stack deploy --with-registry-auth`. Повторный запуск с тем же содержимым secrets
+безопасен; несовпадение содержимого требует нового имени версии. Старые secrets/configs
+сохраняются для отката. Скрипт не выполняет Terraform apply и не включает Cache/WAF.
+
+Если приватный образ заранее перенесён через artifact Actions, сначала проверьте его digest и
+загрузите на **все** подходящие узлы. После этого используйте `check` и `deploy` с дополнительным
+`--preloaded`. В этом режиме скрипт проверяет точный linux/amd64 digest в кэше manager и передаёт
+`--resolve-image never`; оператор отвечает за предварительную загрузку остальных узлов. Сборка
+образа не повторяется. Workflow темы поддерживает `mode=export` и `image_digest` для такого переноса.
+
+Для service-managed клиента магазина берите зарегистрированный callback из
+`customersQuery.storefrontAuthClient`. Headless OTP допускает callback другого origin: он
+используется при серверном обмене кода, а origin cookies задаёт `NEXT_PUBLIC_APP_URL`.
+Preflight проверяет OAuth credentials через canonical IAM и запрещает такой режим при включённых
+social providers. Пустой `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI` оставляет выход локальным для темы.
+Социальному входу нужен доступный callback на origin самой темы.
+
+Скрипт ждёт обе пары реплик `2/2`, завершения обновления и 90 секунд работы задач,
+считает rollback ошибкой и выполняет публичный smoke: SSR, отсутствие private secrets
+в HTML, same-origin GraphQL и canonical IAM discovery/issuer. Таймаут ожидания — 10 минут.
+Healthcheck контейнера читает статический `manifest.webmanifest`, чтобы запуск реплик не
+зависел от SSR-запросов к каталогу и не создавал их каждые несколько секунд при прогреве.
+Полную готовность SSR отдельно проверяет публичный smoke после стабилизации стека.
+Повторить HTTP-проверку отдельно:
+
+```sh
+node scripts/deploy-theme.mjs smoke stage
+```
+
+Login, logout, cookies и streaming агента дополнительно проверьте в браузере с реальным
+пользователем. Эти действия публичный smoke без пользовательской сессии не доказывает.
+
+### Совместимость с backend internal
+
+API темы используют существующий Traefik: `shopana-stage-platform_traefik:8080`.
+Tunnel сохраняет публичный адрес `pet.shopana.dev`, но задаёт origin Host
+`api.shopana.dev` для GraphQL и `apps.shopana.dev` для агента. Эти Host выбирают уже
+существующие Traefik routers; входящие browser Origin и bearer headers сохраняются.
+Параметры origin и Host заданы явно в Terraform.
+
+Для gateway сохраняется `STOREFRONT_TRUSTED_PROXY_HOPS=2` (Cloudflare → Traefik),
+для самой темы — `1` (Cloudflare → theme). Traefik уже доверяет forwarded headers из
+edge-сети `10.81.0.0/16`. `check` проверяет gateway hops, подключение Traefik/backend
+к edge-сети и совпадение IAM public URL.
+
+Авторизация использует существующий `https://auth.shopana.dev` и его issuer.
+`/auth/login`, `/auth/callback`, `/auth/token`, `/auth/refresh`, `/auth/logout` остаются
+BFF-маршрутами темы на `pet.shopana.dev`. IAM application должен разрешать origin темы,
+callback и post-logout URI; OAuth secret остаётся в Docker secret темы. Общие настройки
+бекенда и его issuer менять не требуется.
+
+Диагностика и точечный откат сервисов темы:
+
+```sh
+docker --context internal-stage service logs --tail 100 shopana-theme-stage_theme
+docker --context internal-stage service logs --tail 100 shopana-theme-stage_cloudflared
+docker --context internal-stage service rollback shopana-theme-stage_theme
+```
+
+Логи могут содержать данные запросов; не публикуйте их без проверки. Откат сервиса
+восстанавливает его предыдущий image/config/secret. Для согласованного возврата всего
+стека укажите предыдущие digest и имена secrets в deploy.env и повторите deploy.
+
+| Stage URL                                       | Назначение                           |
+| ----------------------------------------------- | ------------------------------------ |
+| `https://pet.shopana.dev`                       | Тема                                 |
+| `https://pet.shopana.dev/graphql`               | Storefront API через Traefik         |
+| `https://pet.shopana.dev/apps/pet-assistant/v1` | API агента и streaming через Traefik |
+| `https://auth.shopana.dev`                      | Канонический IAM origin/issuer       |
+| `https://pet.shopana.dev/auth/callback`         | OAuth callback темы                  |
 
 Account/zone IDs в stage-примере взяты из Terraform `internal`; новая зона не создаётся.
 Тема получает собственные Tunnel и DNS record в отдельном local state stage-профиля.
 Основной домен и записи backend по-прежнему принадлежат Terraform `internal`.
 
-## Маршрутизация без Traefik
+## Маршрутизация через существующий Traefik
 
 ```text
-Браузер → Cloudflare CDN/WAF → Tunnel → cloudflared
-                                       ├─ /graphql                → storefront gateway
-                                       ├─ /auth/applications/...   → IAM
-                                       ├─ /.well-known/oauth-...   → IAM discovery
-                                       ├─ /apps/pet-assistant/v1... → Pet Assistant
-                                       └─ остальные пути          → theme:3000
+pet.shopana.dev → Cloudflare → Tunnel → cloudflared
+                                       ├─ /graphql → Traefik (Host: api.shopana.dev) → gateway
+                                       ├─ /apps/pet-assistant/v1... → Traefik (Host: apps.shopana.dev) → агент
+                                       └─ остальные пути → theme:3000
+
+auth.shopana.dev → существующий Tunnel/Traefik internal → IAM
 ```
 
-Порядок правил задан в Terraform. `/auth/login`, `/auth/callback` и `/auth/logout` остаются
-маршрутами самой темы. Origins backend — приватные DNS-имена сервисов в overlay-сети `internal`,
-как `shopana-stage-app_gateway-storefront:4000`. `cloudflared` подключён и к этой сети, и к
-отдельной frontend-сети stack. Тема подключена только к frontend-сети.
+Порядок правил задан в Terraform. IAM не проксируется через домен темы.
+`cloudflared` темы подключён к backend edge overlay и отдельной frontend-сети;
+сама тема подключена только к frontend-сети. Traefik принадлежит platform stack internal.
 
 Один и тот же публичный URL `https://<hostname>/graphql` используется браузером и SSR. Он
 проходит через Cloudflare, поэтому нодам нужны исходящий HTTPS и доступ к публичному hostname.
@@ -48,10 +170,10 @@ Account/zone IDs в stage-примере взяты из Terraform `internal`; �
 Для текущего stage это `["pet.shopana.dev"]`: админка `shopana.dev`, API и другие поддомены
 не включены в выражения CDN/WAF.
 
-| Трафик | Политика CDN |
-| --- | --- |
-| HTML, React Router data, API, сессии, личный кабинет | Bypass |
-| `/assets/` — fingerprinted JS/CSS и импортированные Vite assets | Edge/browser TTL 1 год |
+| Трафик                                                                    | Политика CDN                               |
+| ------------------------------------------------------------------------- | ------------------------------------------ |
+| HTML, React Router data, API, сессии, личный кабинет                      | Bypass                                     |
+| `/assets/` — fingerprinted JS/CSS и импортированные Vite assets           | Edge/browser TTL 1 год                     |
 | `/images/`, `/embed/`, `/error-game/`, favicon, manifest, robots, sitemap | Edge TTL 2 часа; browser headers из origin |
 
 Это **3 из 10 бесплатных Cache Rules**. Query string остаётся частью стандартного cache key.
@@ -95,13 +217,16 @@ Free Managed Ruleset и базовая DDoS-защита Cloudflare остают
 Для каждого из `deploy/terraform/zone`, `deploy/terraform/environments/stage`,
 `deploy/terraform/environments/production` скопируйте `backend.hcl.example` в `backend.hcl`,
 `terraform.tfvars.example` в `terraform.tfvars` и заполните значения. Для обоих окружений
-укажите собственные `hostname` и origins backend. Если окружения находятся в одной Cloudflare-зоне,
+укажите собственные `hostname`, origins Traefik, Host headers его routers и canonical IAM URL. Если окружения находятся в одной Cloudflare-зоне,
 используйте её существующий zone ID и перечислите нужные hostname в общем профиле `zone`.
 Stage-примеры уже содержат `pet.shopana.dev` и account/zone IDs из `internal`.
 Local state каждого профиля хранится в его `.state/terraform.tfstate`, например
 `deploy/terraform/environments/stage/.state/terraform.tfstate`. Эти файлы игнорируются Git.
 Храните их резервные копии в защищённом месте: state содержит connector token и определяет
 владение созданными ресурсами. State backend `internal` не используется и не изменяется.
+
+После изменения маршрутов stage повторите `plan`/`apply` этого профиля перед deploy темы;
+это обновляет существующий tunnel config, не создаёт новый Swarm и не включает CDN/WAF.
 
 Перед применением общего профиля проверьте доступ токена к Rulesets API: чтения зоны и DNS
 недостаточно. Для CDN нужны Cache Rules/Cache Settings permissions, для защиты — Zone WAF,
@@ -128,7 +253,7 @@ terraform -chdir=deploy/terraform/environments/stage apply release.tfplan
 
 Также доступны `iam_url` и `pet_assistant_url` для `NEXT_PUBLIC_IAM_URL` и
 `NEXT_PUBLIC_PET_ASSISTANT_URL`. API агента использует `.../apps/pet-assistant/v1`, включая
-`/threads`, `/files` и streaming `/copilotkit/...`. Все эти пути проходят на backend
+`/threads`, `/files` и streaming `/copilotkit/...`. Все эти пути проходят через существующий Traefik на backend
 без CDN-кэша и frontend challenge; bearer token и visitor headers передаются без изменения.
 Тема получает access token через свой `/auth/token`, добавляет его к запросам агента,
 а confidential client secret и refresh token остаются на сервере.
@@ -177,32 +302,12 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 
 ## Secrets и запуск stack
 
-Следующие команды выполняются Docker CLI, подключённым к manager нужного Swarm. Используйте
-профиль окружения и своё активное Docker context. Создавайте versioned secrets один
-раз; для ротации задайте новые имена в `deploy.env` и повторите deploy с тем же `THEME_IMAGE`.
-После изменения Headless token, OAuth secret или URL создайте новую версию `SERVER_ENV_SECRET`:
-Swarm выполнит rolling update контейнеров. Пересборка образа не требуется.
-
-```sh
-PROFILE=stage
-set -a
-. "./deploy/environments/$PROFILE/deploy.env"
-set +a
-
-terraform -chdir="deploy/terraform/environments/$PROFILE" output -raw tunnel_token \
-  | docker secret create "$TUNNEL_SECRET" -
-docker secret create "$SERVER_ENV_SECRET" "deploy/environments/$PROFILE/server-env.json"
-
-# Content-addressed config: изменения launcher создают новый Docker config.
-LAUNCHER_HASH=$(shasum -a 256 deploy/runtime/start.cjs | cut -c1-12)
-export LAUNCHER_CONFIG="shopana-theme-$PROFILE-launcher-$LAUNCHER_HASH"
-
-docker network inspect "$BACKEND_NETWORK" >/dev/null
-docker compose -f deploy/swarm/theme.yml config --quiet
-docker stack config -c deploy/swarm/theme.yml >/dev/null
-docker stack deploy --with-registry-auth -c deploy/swarm/theme.yml "shopana-theme-$PROFILE"
-docker stack services "shopana-theme-$PROFILE"
-```
+Используйте `scripts/deploy-theme.mjs deploy` из раздела выше: он проверяет совместимость
+backend, создаёт versioned secrets с метками содержимого и запускает отдельный stack.
+Для ротации задайте новые имена secrets в `deploy.env` и повторите deploy с тем же
+`THEME_IMAGE`. Swarm выполнит rolling update контейнеров; пересборка образа не требуется.
+Secrets, ранее созданные вручную без метки содержимого, скрипт не переиспользует:
+для первого управляемого деплоя задайте новые имена версий.
 
 Connector получает только tunnel secret, тема — только server-env JSON. Launcher читает secret,
 проверяет имена серверных переменных и длину session secret, запускает сервер и передаёт сигналы.
@@ -211,12 +316,11 @@ API token Cloudflare в контейнеры не передаётся.
 ## Проверка после деплоя
 
 - В `docker stack services` обе реплики темы и обе реплики connector должны быть `2/2`.
-- Откройте домен в браузере: пройдите challenge, проверьте главную, категорию, товар и login.
+- Откройте домен в браузере: проверьте главную, категорию, товар, login и streaming агента.
 - В Network браузера GraphQL должен идти на `https://<тот же hostname>/graphql` без CORS.
-- На повторном запросе публичного `/assets/<hash>.js` ожидается `CF-Cache-Status: HIT`
-  после прогрева; HTML и `/graphql` не должны становиться `HIT`.
-- Запросы без браузерного clearance могут получить challenge вместо HTML: учитывайте это
-  при публичных smoke tests. Healthcheck темы ходит прямо в контейнер и проверяет SSR.
+- Cache Rules/WAF пока отложены: `HIT` и challenge не являются условиями текущего деплоя.
+  HTML и `/graphql` не должны становиться `HIT`. Healthcheck темы ходит прямо в контейнер
+  и проверяет SSR.
 
 Без Cloudflare credentials, настоящего домена и `terraform apply` проверяются только схемы,
 план с mock provider и локальная конфигурация stack. Проверка реального edge выполняется

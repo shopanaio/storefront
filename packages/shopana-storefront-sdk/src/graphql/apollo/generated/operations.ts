@@ -5254,16 +5254,11 @@ export type OnlineStoreNavigationMenu = Node & {
   readonly handle: Scalars['String']['output'];
   /** The globally unique Relay ID of the menu. */
   readonly id: Scalars['ID']['output'];
-  /** Top-level menu items in merchant-defined order. */
-  readonly items: OnlineStoreNavigationMenuItemConnection;
-};
-
-/** A storefront navigation menu owned by the Online Store app. */
-export type OnlineStoreNavigationMenuItemsArgs = {
-  after?: InputMaybe<Scalars['Cursor']['input']>;
-  before?: InputMaybe<Scalars['Cursor']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
+  /**
+   * Top-level menu items in merchant-defined order. The whole level is returned:
+   * menu size is bounded on write.
+   */
+  readonly items: ReadonlyArray<OnlineStoreNavigationMenuItem>;
 };
 
 /** A Relay connection containing navigation menus. */
@@ -5284,8 +5279,8 @@ export type OnlineStoreNavigationMenuEdge = {
 /** A localized item in an ordered navigation tree. */
 export type OnlineStoreNavigationMenuItem = Node & {
   readonly __typename: 'OnlineStoreNavigationMenuItem';
-  /** Direct children in merchant-defined order. */
-  readonly children: OnlineStoreNavigationMenuItemConnection;
+  /** Direct children in merchant-defined order. The whole level is returned. */
+  readonly children: ReadonlyArray<OnlineStoreNavigationMenuItem>;
   /** Stable handle, unique among items with the same parent. */
   readonly handle: Scalars['String']['output'];
   /** The globally unique Relay ID of the item. */
@@ -5304,31 +5299,8 @@ export type OnlineStoreNavigationMenuItem = Node & {
 };
 
 /** A localized item in an ordered navigation tree. */
-export type OnlineStoreNavigationMenuItemChildrenArgs = {
-  after?: InputMaybe<Scalars['Cursor']['input']>;
-  before?: InputMaybe<Scalars['Cursor']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** A localized item in an ordered navigation tree. */
 export type OnlineStoreNavigationMenuItemLabelArgs = {
   locale?: InputMaybe<LocaleCode>;
-};
-
-/** A Relay connection containing one ordered level of a menu tree. */
-export type OnlineStoreNavigationMenuItemConnection = Connection & {
-  readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-  readonly edges: ReadonlyArray<OnlineStoreNavigationMenuItemEdge>;
-  readonly nodes: ReadonlyArray<OnlineStoreNavigationMenuItem>;
-  readonly pageInfo: PageInfo;
-  readonly totalCount: Scalars['Int']['output'];
-};
-
-export type OnlineStoreNavigationMenuItemEdge = {
-  readonly __typename: 'OnlineStoreNavigationMenuItemEdge';
-  readonly cursor: Scalars['Cursor']['output'];
-  readonly node: OnlineStoreNavigationMenuItem;
 };
 
 /** A normalized, frontend-ready navigation destination. */
@@ -18724,246 +18696,579 @@ export type SdkNavigationMenuFragment = {
   readonly __typename: 'OnlineStoreNavigationMenu';
   readonly id: string;
   readonly handle: string;
-  readonly items: {
-    readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-    readonly nodes: ReadonlyArray<{
+  readonly items: ReadonlyArray<{
+    readonly __typename: 'OnlineStoreNavigationMenuItem';
+    readonly id: string;
+    readonly handle: string;
+    readonly label?: string | null;
+    readonly openInNewTab: boolean;
+    readonly children: ReadonlyArray<{
       readonly __typename: 'OnlineStoreNavigationMenuItem';
       readonly id: string;
       readonly handle: string;
       readonly label?: string | null;
       readonly openInNewTab: boolean;
-      readonly children: {
-        readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-        readonly nodes: ReadonlyArray<{
+      readonly children: ReadonlyArray<{
+        readonly __typename: 'OnlineStoreNavigationMenuItem';
+        readonly id: string;
+        readonly handle: string;
+        readonly label?: string | null;
+        readonly openInNewTab: boolean;
+        readonly target: {
+          readonly __typename: 'OnlineStoreNavigationTarget';
+          readonly type: OnlineStoreNavigationTargetType;
+          readonly resourceId?: string | null;
+          readonly url: any;
+          readonly resource?:
+            | {
+                readonly __typename: 'Category';
+                readonly handle: string;
+                readonly name: string;
+                readonly id: string;
+              }
+            | { readonly __typename: 'Checkout'; readonly id: string }
+            | { readonly __typename: 'CheckoutLine'; readonly id: string }
+            | { readonly __typename: 'CheckoutTag'; readonly id: string }
+            | { readonly __typename: 'Collection'; readonly id: string }
+            | {
+                readonly __typename: 'CustomerAddress';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerDataRequest';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxExemption';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxIdentifier';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerWishlist';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerWishlistItem';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ExternalVideo';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Facet'; readonly id: string }
+            | { readonly __typename: 'FacetSwatch'; readonly id: string }
+            | { readonly __typename: 'FacetValue'; readonly id: string }
+            | { readonly __typename: 'GenericFile'; readonly id: string }
+            | {
+                readonly __typename: 'InventoryItem';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'LoyaltyAvailableReward';
+                readonly id: string;
+              }
+            | { readonly __typename: 'MediaImage'; readonly id: string }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenu';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenuItem';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OnlineStorePage';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Order'; readonly id: string }
+            | {
+                readonly __typename: 'OrderDeliveryAddress';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OrderDeliveryGroup';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OrderFulfillment';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderLine'; readonly id: string }
+            | {
+                readonly __typename: 'OrderPaymentTransaction';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderRefund'; readonly id: string }
+            | {
+                readonly __typename: 'OrderReturnRequest';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OrderShipment';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OrderTrackingEvent';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderVoid'; readonly id: string }
+            | { readonly __typename: 'Pet'; readonly id: string }
+            | {
+                readonly __typename: 'PetProductSelection';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Product'; readonly id: string }
+            | {
+                readonly __typename: 'ProductFeature';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductFeatureGroup';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductFeatureValue';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductOption';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductOptionType';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestion';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestionAnswer';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestionSubscription';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductVariant';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Review'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewContentExternalReference';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentPublication';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentReport';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentRevision';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentTranslation';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentVote';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewMedia'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewModerationCase';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationEvent';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationSignal';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterion';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterionAssignment';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewReply'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewRequest';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRequestEvent';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewStoreConfiguration';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Store'; readonly id: string }
+            | { readonly __typename: 'StorePolicy'; readonly id: string }
+            | { readonly __typename: 'Tag'; readonly id: string }
+            | { readonly __typename: 'Vendor'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+        };
+      }>;
+      readonly target: {
+        readonly __typename: 'OnlineStoreNavigationTarget';
+        readonly type: OnlineStoreNavigationTargetType;
+        readonly resourceId?: string | null;
+        readonly url: any;
+        readonly resource?:
+          | {
+              readonly __typename: 'Category';
+              readonly handle: string;
+              readonly name: string;
+              readonly id: string;
+            }
+          | { readonly __typename: 'Checkout'; readonly id: string }
+          | { readonly __typename: 'CheckoutLine'; readonly id: string }
+          | { readonly __typename: 'CheckoutTag'; readonly id: string }
+          | { readonly __typename: 'Collection'; readonly id: string }
+          | { readonly __typename: 'CustomerAddress'; readonly id: string }
+          | {
+              readonly __typename: 'CustomerDataRequest';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'CustomerTaxExemption';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'CustomerTaxIdentifier';
+              readonly id: string;
+            }
+          | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+          | {
+              readonly __typename: 'CustomerWishlistItem';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ExternalVideo'; readonly id: string }
+          | { readonly __typename: 'Facet'; readonly id: string }
+          | { readonly __typename: 'FacetSwatch'; readonly id: string }
+          | { readonly __typename: 'FacetValue'; readonly id: string }
+          | { readonly __typename: 'GenericFile'; readonly id: string }
+          | { readonly __typename: 'InventoryItem'; readonly id: string }
+          | {
+              readonly __typename: 'LoyaltyAvailableReward';
+              readonly id: string;
+            }
+          | { readonly __typename: 'MediaImage'; readonly id: string }
+          | { readonly __typename: 'Model3d'; readonly id: string }
+          | {
+              readonly __typename: 'OnlineStoreNavigationMenu';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'OnlineStoreNavigationMenuItem';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+          | { readonly __typename: 'Order'; readonly id: string }
+          | {
+              readonly __typename: 'OrderDeliveryAddress';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'OrderDeliveryGroup';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+          | { readonly __typename: 'OrderLine'; readonly id: string }
+          | {
+              readonly __typename: 'OrderPaymentTransaction';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OrderRefund'; readonly id: string }
+          | {
+              readonly __typename: 'OrderReturnRequest';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OrderShipment'; readonly id: string }
+          | {
+              readonly __typename: 'OrderTrackingEvent';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OrderVoid'; readonly id: string }
+          | { readonly __typename: 'Pet'; readonly id: string }
+          | {
+              readonly __typename: 'PetProductSelection';
+              readonly id: string;
+            }
+          | { readonly __typename: 'Product'; readonly id: string }
+          | { readonly __typename: 'ProductFeature'; readonly id: string }
+          | {
+              readonly __typename: 'ProductFeatureGroup';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ProductFeatureValue';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ProductOption'; readonly id: string }
+          | {
+              readonly __typename: 'ProductOptionType';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ProductOptionValue';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ProductQuestion'; readonly id: string }
+          | {
+              readonly __typename: 'ProductQuestionAnswer';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ProductQuestionSubscription';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ProductVariant'; readonly id: string }
+          | { readonly __typename: 'Review'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewContentExternalReference';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentPublication';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentReport';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentRevision';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentTranslation';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentVote';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewMedia'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewModerationCase';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewModerationEvent';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewModerationSignal';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewRatingCriterion';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewRatingCriterionAssignment';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewReply'; readonly id: string }
+          | { readonly __typename: 'ReviewRequest'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewRequestEvent';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewStoreConfiguration';
+              readonly id: string;
+            }
+          | { readonly __typename: 'Store'; readonly id: string }
+          | { readonly __typename: 'StorePolicy'; readonly id: string }
+          | { readonly __typename: 'Tag'; readonly id: string }
+          | { readonly __typename: 'Vendor'; readonly id: string }
+          | { readonly __typename: 'Video'; readonly id: string }
+          | null;
+      };
+    }>;
+    readonly target: {
+      readonly __typename: 'OnlineStoreNavigationTarget';
+      readonly type: OnlineStoreNavigationTargetType;
+      readonly resourceId?: string | null;
+      readonly url: any;
+      readonly resource?:
+        | {
+            readonly __typename: 'Category';
+            readonly handle: string;
+            readonly name: string;
+            readonly id: string;
+          }
+        | { readonly __typename: 'Checkout'; readonly id: string }
+        | { readonly __typename: 'CheckoutLine'; readonly id: string }
+        | { readonly __typename: 'CheckoutTag'; readonly id: string }
+        | { readonly __typename: 'Collection'; readonly id: string }
+        | { readonly __typename: 'CustomerAddress'; readonly id: string }
+        | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
+        | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+        | {
+            readonly __typename: 'CustomerTaxIdentifier';
+            readonly id: string;
+          }
+        | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+        | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+        | { readonly __typename: 'ExternalVideo'; readonly id: string }
+        | { readonly __typename: 'Facet'; readonly id: string }
+        | { readonly __typename: 'FacetSwatch'; readonly id: string }
+        | { readonly __typename: 'FacetValue'; readonly id: string }
+        | { readonly __typename: 'GenericFile'; readonly id: string }
+        | { readonly __typename: 'InventoryItem'; readonly id: string }
+        | {
+            readonly __typename: 'LoyaltyAvailableReward';
+            readonly id: string;
+          }
+        | { readonly __typename: 'MediaImage'; readonly id: string }
+        | { readonly __typename: 'Model3d'; readonly id: string }
+        | {
+            readonly __typename: 'OnlineStoreNavigationMenu';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'OnlineStoreNavigationMenuItem';
+            readonly id: string;
+          }
+        | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+        | { readonly __typename: 'Order'; readonly id: string }
+        | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+        | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+        | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+        | { readonly __typename: 'OrderLine'; readonly id: string }
+        | {
+            readonly __typename: 'OrderPaymentTransaction';
+            readonly id: string;
+          }
+        | { readonly __typename: 'OrderRefund'; readonly id: string }
+        | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+        | { readonly __typename: 'OrderShipment'; readonly id: string }
+        | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+        | { readonly __typename: 'OrderVoid'; readonly id: string }
+        | { readonly __typename: 'Pet'; readonly id: string }
+        | { readonly __typename: 'PetProductSelection'; readonly id: string }
+        | { readonly __typename: 'Product'; readonly id: string }
+        | { readonly __typename: 'ProductFeature'; readonly id: string }
+        | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
+        | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+        | { readonly __typename: 'ProductOption'; readonly id: string }
+        | { readonly __typename: 'ProductOptionType'; readonly id: string }
+        | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+        | { readonly __typename: 'ProductQuestion'; readonly id: string }
+        | {
+            readonly __typename: 'ProductQuestionAnswer';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'ProductQuestionSubscription';
+            readonly id: string;
+          }
+        | { readonly __typename: 'ProductVariant'; readonly id: string }
+        | { readonly __typename: 'Review'; readonly id: string }
+        | {
+            readonly __typename: 'ReviewContentExternalReference';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'ReviewContentPublication';
+            readonly id: string;
+          }
+        | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+        | {
+            readonly __typename: 'ReviewContentRevision';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'ReviewContentTranslation';
+            readonly id: string;
+          }
+        | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+        | { readonly __typename: 'ReviewMedia'; readonly id: string }
+        | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+        | {
+            readonly __typename: 'ReviewModerationEvent';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'ReviewModerationSignal';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'ReviewRatingCriterion';
+            readonly id: string;
+          }
+        | {
+            readonly __typename: 'ReviewRatingCriterionAssignment';
+            readonly id: string;
+          }
+        | { readonly __typename: 'ReviewReply'; readonly id: string }
+        | { readonly __typename: 'ReviewRequest'; readonly id: string }
+        | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+        | {
+            readonly __typename: 'ReviewStoreConfiguration';
+            readonly id: string;
+          }
+        | { readonly __typename: 'Store'; readonly id: string }
+        | { readonly __typename: 'StorePolicy'; readonly id: string }
+        | { readonly __typename: 'Tag'; readonly id: string }
+        | { readonly __typename: 'Vendor'; readonly id: string }
+        | { readonly __typename: 'Video'; readonly id: string }
+        | null;
+    };
+  }>;
+};
+
+export type SdkNavigationMenuByHandleQueryVariables = Exact<{
+  handle: Scalars['String']['input'];
+}>;
+
+export type SdkNavigationMenuByHandleQuery = {
+  readonly __typename: 'Query';
+  readonly onlineStoreNavigationMenuByHandle?: {
+    readonly __typename: 'OnlineStoreNavigationMenu';
+    readonly id: string;
+    readonly handle: string;
+    readonly items: ReadonlyArray<{
+      readonly __typename: 'OnlineStoreNavigationMenuItem';
+      readonly id: string;
+      readonly handle: string;
+      readonly label?: string | null;
+      readonly openInNewTab: boolean;
+      readonly children: ReadonlyArray<{
+        readonly __typename: 'OnlineStoreNavigationMenuItem';
+        readonly id: string;
+        readonly handle: string;
+        readonly label?: string | null;
+        readonly openInNewTab: boolean;
+        readonly children: ReadonlyArray<{
           readonly __typename: 'OnlineStoreNavigationMenuItem';
           readonly id: string;
           readonly handle: string;
           readonly label?: string | null;
           readonly openInNewTab: boolean;
-          readonly children: {
-            readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-            readonly nodes: ReadonlyArray<{
-              readonly __typename: 'OnlineStoreNavigationMenuItem';
-              readonly id: string;
-              readonly handle: string;
-              readonly label?: string | null;
-              readonly openInNewTab: boolean;
-              readonly target: {
-                readonly __typename: 'OnlineStoreNavigationTarget';
-                readonly type: OnlineStoreNavigationTargetType;
-                readonly resourceId?: string | null;
-                readonly url: any;
-                readonly resource?:
-                  | {
-                      readonly __typename: 'Category';
-                      readonly handle: string;
-                      readonly name: string;
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'Checkout'; readonly id: string }
-                  | { readonly __typename: 'CheckoutLine'; readonly id: string }
-                  | { readonly __typename: 'CheckoutTag'; readonly id: string }
-                  | { readonly __typename: 'Collection'; readonly id: string }
-                  | {
-                      readonly __typename: 'CustomerAddress';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'CustomerDataRequest';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'CustomerTaxExemption';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'CustomerTaxIdentifier';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'CustomerWishlist';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'CustomerWishlistItem';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ExternalVideo';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'Facet'; readonly id: string }
-                  | { readonly __typename: 'FacetSwatch'; readonly id: string }
-                  | { readonly __typename: 'FacetValue'; readonly id: string }
-                  | { readonly __typename: 'GenericFile'; readonly id: string }
-                  | {
-                      readonly __typename: 'InventoryItem';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'LoyaltyAvailableReward';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'MediaImage'; readonly id: string }
-                  | { readonly __typename: 'Model3d'; readonly id: string }
-                  | {
-                      readonly __typename: 'OnlineStoreNavigationMenu';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'OnlineStoreNavigationMenuItem';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'OnlineStorePage';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'Order'; readonly id: string }
-                  | {
-                      readonly __typename: 'OrderDeliveryAddress';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'OrderDeliveryGroup';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'OrderFulfillment';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'OrderLine'; readonly id: string }
-                  | {
-                      readonly __typename: 'OrderPaymentTransaction';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'OrderRefund'; readonly id: string }
-                  | {
-                      readonly __typename: 'OrderReturnRequest';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'OrderShipment';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'OrderTrackingEvent';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'OrderVoid'; readonly id: string }
-                  | { readonly __typename: 'Pet'; readonly id: string }
-                  | {
-                      readonly __typename: 'PetProductSelection';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'Product'; readonly id: string }
-                  | {
-                      readonly __typename: 'ProductFeature';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductFeatureGroup';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductFeatureValue';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductOption';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductOptionType';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductOptionValue';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductQuestion';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductQuestionAnswer';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductQuestionSubscription';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ProductVariant';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'Review'; readonly id: string }
-                  | {
-                      readonly __typename: 'ReviewContentExternalReference';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewContentPublication';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewContentReport';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewContentRevision';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewContentTranslation';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewContentVote';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'ReviewMedia'; readonly id: string }
-                  | {
-                      readonly __typename: 'ReviewModerationCase';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewModerationEvent';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewModerationSignal';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewRatingCriterion';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewRatingCriterionAssignment';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'ReviewReply'; readonly id: string }
-                  | {
-                      readonly __typename: 'ReviewRequest';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewRequestEvent';
-                      readonly id: string;
-                    }
-                  | {
-                      readonly __typename: 'ReviewStoreConfiguration';
-                      readonly id: string;
-                    }
-                  | { readonly __typename: 'Store'; readonly id: string }
-                  | { readonly __typename: 'StorePolicy'; readonly id: string }
-                  | { readonly __typename: 'Tag'; readonly id: string }
-                  | { readonly __typename: 'Vendor'; readonly id: string }
-                  | { readonly __typename: 'Video'; readonly id: string }
-                  | null;
-              };
-            }>;
-          };
           readonly target: {
             readonly __typename: 'OnlineStoreNavigationTarget';
             readonly type: OnlineStoreNavigationTargetType;
@@ -18977,10 +19282,19 @@ export type SdkNavigationMenuFragment = {
                   readonly id: string;
                 }
               | { readonly __typename: 'Checkout'; readonly id: string }
-              | { readonly __typename: 'CheckoutLine'; readonly id: string }
-              | { readonly __typename: 'CheckoutTag'; readonly id: string }
+              | {
+                  readonly __typename: 'CheckoutLine';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'CheckoutTag';
+                  readonly id: string;
+                }
               | { readonly __typename: 'Collection'; readonly id: string }
-              | { readonly __typename: 'CustomerAddress'; readonly id: string }
+              | {
+                  readonly __typename: 'CustomerAddress';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'CustomerDataRequest';
                   readonly id: string;
@@ -18993,17 +19307,32 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'CustomerTaxIdentifier';
                   readonly id: string;
                 }
-              | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+              | {
+                  readonly __typename: 'CustomerWishlist';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'CustomerWishlistItem';
                   readonly id: string;
                 }
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'ExternalVideo';
+                  readonly id: string;
+                }
               | { readonly __typename: 'Facet'; readonly id: string }
-              | { readonly __typename: 'FacetSwatch'; readonly id: string }
+              | {
+                  readonly __typename: 'FacetSwatch';
+                  readonly id: string;
+                }
               | { readonly __typename: 'FacetValue'; readonly id: string }
-              | { readonly __typename: 'GenericFile'; readonly id: string }
-              | { readonly __typename: 'InventoryItem'; readonly id: string }
+              | {
+                  readonly __typename: 'GenericFile';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'InventoryItem';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'LoyaltyAvailableReward';
                   readonly id: string;
@@ -19018,7 +19347,10 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'OnlineStoreNavigationMenuItem';
                   readonly id: string;
                 }
-              | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+              | {
+                  readonly __typename: 'OnlineStorePage';
+                  readonly id: string;
+                }
               | { readonly __typename: 'Order'; readonly id: string }
               | {
                   readonly __typename: 'OrderDeliveryAddress';
@@ -19028,18 +19360,27 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'OrderDeliveryGroup';
                   readonly id: string;
                 }
-              | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderFulfillment';
+                  readonly id: string;
+                }
               | { readonly __typename: 'OrderLine'; readonly id: string }
               | {
                   readonly __typename: 'OrderPaymentTransaction';
                   readonly id: string;
                 }
-              | { readonly __typename: 'OrderRefund'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderRefund';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'OrderReturnRequest';
                   readonly id: string;
                 }
-              | { readonly __typename: 'OrderShipment'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderShipment';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'OrderTrackingEvent';
                   readonly id: string;
@@ -19051,7 +19392,10 @@ export type SdkNavigationMenuFragment = {
                   readonly id: string;
                 }
               | { readonly __typename: 'Product'; readonly id: string }
-              | { readonly __typename: 'ProductFeature'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductFeature';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'ProductFeatureGroup';
                   readonly id: string;
@@ -19060,7 +19404,10 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'ProductFeatureValue';
                   readonly id: string;
                 }
-              | { readonly __typename: 'ProductOption'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductOption';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'ProductOptionType';
                   readonly id: string;
@@ -19069,7 +19416,10 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'ProductOptionValue';
                   readonly id: string;
                 }
-              | { readonly __typename: 'ProductQuestion'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductQuestion';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'ProductQuestionAnswer';
                   readonly id: string;
@@ -19078,7 +19428,10 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'ProductQuestionSubscription';
                   readonly id: string;
                 }
-              | { readonly __typename: 'ProductVariant'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductVariant';
+                  readonly id: string;
+                }
               | { readonly __typename: 'Review'; readonly id: string }
               | {
                   readonly __typename: 'ReviewContentExternalReference';
@@ -19104,7 +19457,10 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'ReviewContentVote';
                   readonly id: string;
                 }
-              | { readonly __typename: 'ReviewMedia'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewMedia';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'ReviewModerationCase';
                   readonly id: string;
@@ -19125,8 +19481,14 @@ export type SdkNavigationMenuFragment = {
                   readonly __typename: 'ReviewRatingCriterionAssignment';
                   readonly id: string;
                 }
-              | { readonly __typename: 'ReviewReply'; readonly id: string }
-              | { readonly __typename: 'ReviewRequest'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewReply';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewRequest';
+                  readonly id: string;
+                }
               | {
                   readonly __typename: 'ReviewRequestEvent';
                   readonly id: string;
@@ -19136,14 +19498,210 @@ export type SdkNavigationMenuFragment = {
                   readonly id: string;
                 }
               | { readonly __typename: 'Store'; readonly id: string }
-              | { readonly __typename: 'StorePolicy'; readonly id: string }
+              | {
+                  readonly __typename: 'StorePolicy';
+                  readonly id: string;
+                }
               | { readonly __typename: 'Tag'; readonly id: string }
               | { readonly __typename: 'Vendor'; readonly id: string }
               | { readonly __typename: 'Video'; readonly id: string }
               | null;
           };
         }>;
-      };
+        readonly target: {
+          readonly __typename: 'OnlineStoreNavigationTarget';
+          readonly type: OnlineStoreNavigationTargetType;
+          readonly resourceId?: string | null;
+          readonly url: any;
+          readonly resource?:
+            | {
+                readonly __typename: 'Category';
+                readonly handle: string;
+                readonly name: string;
+                readonly id: string;
+              }
+            | { readonly __typename: 'Checkout'; readonly id: string }
+            | { readonly __typename: 'CheckoutLine'; readonly id: string }
+            | { readonly __typename: 'CheckoutTag'; readonly id: string }
+            | { readonly __typename: 'Collection'; readonly id: string }
+            | {
+                readonly __typename: 'CustomerAddress';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerDataRequest';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxExemption';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxIdentifier';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerWishlist';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerWishlistItem';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | { readonly __typename: 'Facet'; readonly id: string }
+            | { readonly __typename: 'FacetSwatch'; readonly id: string }
+            | { readonly __typename: 'FacetValue'; readonly id: string }
+            | { readonly __typename: 'GenericFile'; readonly id: string }
+            | { readonly __typename: 'InventoryItem'; readonly id: string }
+            | {
+                readonly __typename: 'LoyaltyAvailableReward';
+                readonly id: string;
+              }
+            | { readonly __typename: 'MediaImage'; readonly id: string }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenu';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenuItem';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OnlineStorePage';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Order'; readonly id: string }
+            | {
+                readonly __typename: 'OrderDeliveryAddress';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OrderDeliveryGroup';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OrderFulfillment';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderLine'; readonly id: string }
+            | {
+                readonly __typename: 'OrderPaymentTransaction';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderRefund'; readonly id: string }
+            | {
+                readonly __typename: 'OrderReturnRequest';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderShipment'; readonly id: string }
+            | {
+                readonly __typename: 'OrderTrackingEvent';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderVoid'; readonly id: string }
+            | { readonly __typename: 'Pet'; readonly id: string }
+            | {
+                readonly __typename: 'PetProductSelection';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Product'; readonly id: string }
+            | { readonly __typename: 'ProductFeature'; readonly id: string }
+            | {
+                readonly __typename: 'ProductFeatureGroup';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductFeatureValue';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ProductOption'; readonly id: string }
+            | {
+                readonly __typename: 'ProductOptionType';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductOptionValue';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestion';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestionAnswer';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestionSubscription';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ProductVariant'; readonly id: string }
+            | { readonly __typename: 'Review'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewContentExternalReference';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentPublication';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentReport';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentRevision';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentTranslation';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentVote';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewMedia'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewModerationCase';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationEvent';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationSignal';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterion';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterionAssignment';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewReply'; readonly id: string }
+            | { readonly __typename: 'ReviewRequest'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewRequestEvent';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewStoreConfiguration';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Store'; readonly id: string }
+            | { readonly __typename: 'StorePolicy'; readonly id: string }
+            | { readonly __typename: 'Tag'; readonly id: string }
+            | { readonly __typename: 'Vendor'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+        };
+      }>;
       readonly target: {
         readonly __typename: 'OnlineStoreNavigationTarget';
         readonly type: OnlineStoreNavigationTargetType;
@@ -19161,14 +19719,23 @@ export type SdkNavigationMenuFragment = {
           | { readonly __typename: 'CheckoutTag'; readonly id: string }
           | { readonly __typename: 'Collection'; readonly id: string }
           | { readonly __typename: 'CustomerAddress'; readonly id: string }
-          | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
-          | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+          | {
+              readonly __typename: 'CustomerDataRequest';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'CustomerTaxExemption';
+              readonly id: string;
+            }
           | {
               readonly __typename: 'CustomerTaxIdentifier';
               readonly id: string;
             }
           | { readonly __typename: 'CustomerWishlist'; readonly id: string }
-          | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+          | {
+              readonly __typename: 'CustomerWishlistItem';
+              readonly id: string;
+            }
           | { readonly __typename: 'ExternalVideo'; readonly id: string }
           | { readonly __typename: 'Facet'; readonly id: string }
           | { readonly __typename: 'FacetSwatch'; readonly id: string }
@@ -19191,7 +19758,10 @@ export type SdkNavigationMenuFragment = {
             }
           | { readonly __typename: 'OnlineStorePage'; readonly id: string }
           | { readonly __typename: 'Order'; readonly id: string }
-          | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+          | {
+              readonly __typename: 'OrderDeliveryAddress';
+              readonly id: string;
+            }
           | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
           | { readonly __typename: 'OrderFulfillment'; readonly id: string }
           | { readonly __typename: 'OrderLine'; readonly id: string }
@@ -19205,11 +19775,20 @@ export type SdkNavigationMenuFragment = {
           | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
           | { readonly __typename: 'OrderVoid'; readonly id: string }
           | { readonly __typename: 'Pet'; readonly id: string }
-          | { readonly __typename: 'PetProductSelection'; readonly id: string }
+          | {
+              readonly __typename: 'PetProductSelection';
+              readonly id: string;
+            }
           | { readonly __typename: 'Product'; readonly id: string }
           | { readonly __typename: 'ProductFeature'; readonly id: string }
-          | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
-          | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+          | {
+              readonly __typename: 'ProductFeatureGroup';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ProductFeatureValue';
+              readonly id: string;
+            }
           | { readonly __typename: 'ProductOption'; readonly id: string }
           | { readonly __typename: 'ProductOptionType'; readonly id: string }
           | { readonly __typename: 'ProductOptionValue'; readonly id: string }
@@ -19232,7 +19811,10 @@ export type SdkNavigationMenuFragment = {
               readonly __typename: 'ReviewContentPublication';
               readonly id: string;
             }
-          | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewContentReport';
+              readonly id: string;
+            }
           | {
               readonly __typename: 'ReviewContentRevision';
               readonly id: string;
@@ -19243,7 +19825,10 @@ export type SdkNavigationMenuFragment = {
             }
           | { readonly __typename: 'ReviewContentVote'; readonly id: string }
           | { readonly __typename: 'ReviewMedia'; readonly id: string }
-          | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewModerationCase';
+              readonly id: string;
+            }
           | {
               readonly __typename: 'ReviewModerationEvent';
               readonly id: string;
@@ -19275,637 +19860,6 @@ export type SdkNavigationMenuFragment = {
           | null;
       };
     }>;
-  };
-};
-
-export type SdkNavigationMenuByHandleQueryVariables = Exact<{
-  handle: Scalars['String']['input'];
-}>;
-
-export type SdkNavigationMenuByHandleQuery = {
-  readonly __typename: 'Query';
-  readonly onlineStoreNavigationMenuByHandle?: {
-    readonly __typename: 'OnlineStoreNavigationMenu';
-    readonly id: string;
-    readonly handle: string;
-    readonly items: {
-      readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-      readonly nodes: ReadonlyArray<{
-        readonly __typename: 'OnlineStoreNavigationMenuItem';
-        readonly id: string;
-        readonly handle: string;
-        readonly label?: string | null;
-        readonly openInNewTab: boolean;
-        readonly children: {
-          readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-          readonly nodes: ReadonlyArray<{
-            readonly __typename: 'OnlineStoreNavigationMenuItem';
-            readonly id: string;
-            readonly handle: string;
-            readonly label?: string | null;
-            readonly openInNewTab: boolean;
-            readonly children: {
-              readonly __typename: 'OnlineStoreNavigationMenuItemConnection';
-              readonly nodes: ReadonlyArray<{
-                readonly __typename: 'OnlineStoreNavigationMenuItem';
-                readonly id: string;
-                readonly handle: string;
-                readonly label?: string | null;
-                readonly openInNewTab: boolean;
-                readonly target: {
-                  readonly __typename: 'OnlineStoreNavigationTarget';
-                  readonly type: OnlineStoreNavigationTargetType;
-                  readonly resourceId?: string | null;
-                  readonly url: any;
-                  readonly resource?:
-                    | {
-                        readonly __typename: 'Category';
-                        readonly handle: string;
-                        readonly name: string;
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Checkout'; readonly id: string }
-                    | {
-                        readonly __typename: 'CheckoutLine';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'CheckoutTag';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Collection'; readonly id: string }
-                    | {
-                        readonly __typename: 'CustomerAddress';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'CustomerDataRequest';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'CustomerTaxExemption';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'CustomerTaxIdentifier';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'CustomerWishlist';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'CustomerWishlistItem';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ExternalVideo';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Facet'; readonly id: string }
-                    | {
-                        readonly __typename: 'FacetSwatch';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'FacetValue'; readonly id: string }
-                    | {
-                        readonly __typename: 'GenericFile';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'InventoryItem';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'LoyaltyAvailableReward';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'MediaImage'; readonly id: string }
-                    | { readonly __typename: 'Model3d'; readonly id: string }
-                    | {
-                        readonly __typename: 'OnlineStoreNavigationMenu';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OnlineStoreNavigationMenuItem';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OnlineStorePage';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Order'; readonly id: string }
-                    | {
-                        readonly __typename: 'OrderDeliveryAddress';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OrderDeliveryGroup';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OrderFulfillment';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'OrderLine'; readonly id: string }
-                    | {
-                        readonly __typename: 'OrderPaymentTransaction';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OrderRefund';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OrderReturnRequest';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OrderShipment';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'OrderTrackingEvent';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'OrderVoid'; readonly id: string }
-                    | { readonly __typename: 'Pet'; readonly id: string }
-                    | {
-                        readonly __typename: 'PetProductSelection';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Product'; readonly id: string }
-                    | {
-                        readonly __typename: 'ProductFeature';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductFeatureGroup';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductFeatureValue';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductOption';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductOptionType';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductOptionValue';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductQuestion';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductQuestionAnswer';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductQuestionSubscription';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ProductVariant';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Review'; readonly id: string }
-                    | {
-                        readonly __typename: 'ReviewContentExternalReference';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewContentPublication';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewContentReport';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewContentRevision';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewContentTranslation';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewContentVote';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewMedia';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewModerationCase';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewModerationEvent';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewModerationSignal';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewRatingCriterion';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewRatingCriterionAssignment';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewReply';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewRequest';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewRequestEvent';
-                        readonly id: string;
-                      }
-                    | {
-                        readonly __typename: 'ReviewStoreConfiguration';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Store'; readonly id: string }
-                    | {
-                        readonly __typename: 'StorePolicy';
-                        readonly id: string;
-                      }
-                    | { readonly __typename: 'Tag'; readonly id: string }
-                    | { readonly __typename: 'Vendor'; readonly id: string }
-                    | { readonly __typename: 'Video'; readonly id: string }
-                    | null;
-                };
-              }>;
-            };
-            readonly target: {
-              readonly __typename: 'OnlineStoreNavigationTarget';
-              readonly type: OnlineStoreNavigationTargetType;
-              readonly resourceId?: string | null;
-              readonly url: any;
-              readonly resource?:
-                | {
-                    readonly __typename: 'Category';
-                    readonly handle: string;
-                    readonly name: string;
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'Checkout'; readonly id: string }
-                | { readonly __typename: 'CheckoutLine'; readonly id: string }
-                | { readonly __typename: 'CheckoutTag'; readonly id: string }
-                | { readonly __typename: 'Collection'; readonly id: string }
-                | {
-                    readonly __typename: 'CustomerAddress';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'CustomerDataRequest';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'CustomerTaxExemption';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'CustomerTaxIdentifier';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'CustomerWishlist';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'CustomerWishlistItem';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'ExternalVideo'; readonly id: string }
-                | { readonly __typename: 'Facet'; readonly id: string }
-                | { readonly __typename: 'FacetSwatch'; readonly id: string }
-                | { readonly __typename: 'FacetValue'; readonly id: string }
-                | { readonly __typename: 'GenericFile'; readonly id: string }
-                | { readonly __typename: 'InventoryItem'; readonly id: string }
-                | {
-                    readonly __typename: 'LoyaltyAvailableReward';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'MediaImage'; readonly id: string }
-                | { readonly __typename: 'Model3d'; readonly id: string }
-                | {
-                    readonly __typename: 'OnlineStoreNavigationMenu';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'OnlineStoreNavigationMenuItem';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'OnlineStorePage';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'Order'; readonly id: string }
-                | {
-                    readonly __typename: 'OrderDeliveryAddress';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'OrderDeliveryGroup';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'OrderFulfillment';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'OrderLine'; readonly id: string }
-                | {
-                    readonly __typename: 'OrderPaymentTransaction';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'OrderRefund'; readonly id: string }
-                | {
-                    readonly __typename: 'OrderReturnRequest';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'OrderShipment'; readonly id: string }
-                | {
-                    readonly __typename: 'OrderTrackingEvent';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'OrderVoid'; readonly id: string }
-                | { readonly __typename: 'Pet'; readonly id: string }
-                | {
-                    readonly __typename: 'PetProductSelection';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'Product'; readonly id: string }
-                | { readonly __typename: 'ProductFeature'; readonly id: string }
-                | {
-                    readonly __typename: 'ProductFeatureGroup';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ProductFeatureValue';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'ProductOption'; readonly id: string }
-                | {
-                    readonly __typename: 'ProductOptionType';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ProductOptionValue';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ProductQuestion';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ProductQuestionAnswer';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ProductQuestionSubscription';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'ProductVariant'; readonly id: string }
-                | { readonly __typename: 'Review'; readonly id: string }
-                | {
-                    readonly __typename: 'ReviewContentExternalReference';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewContentPublication';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewContentReport';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewContentRevision';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewContentTranslation';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewContentVote';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'ReviewMedia'; readonly id: string }
-                | {
-                    readonly __typename: 'ReviewModerationCase';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewModerationEvent';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewModerationSignal';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewRatingCriterion';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewRatingCriterionAssignment';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'ReviewReply'; readonly id: string }
-                | { readonly __typename: 'ReviewRequest'; readonly id: string }
-                | {
-                    readonly __typename: 'ReviewRequestEvent';
-                    readonly id: string;
-                  }
-                | {
-                    readonly __typename: 'ReviewStoreConfiguration';
-                    readonly id: string;
-                  }
-                | { readonly __typename: 'Store'; readonly id: string }
-                | { readonly __typename: 'StorePolicy'; readonly id: string }
-                | { readonly __typename: 'Tag'; readonly id: string }
-                | { readonly __typename: 'Vendor'; readonly id: string }
-                | { readonly __typename: 'Video'; readonly id: string }
-                | null;
-            };
-          }>;
-        };
-        readonly target: {
-          readonly __typename: 'OnlineStoreNavigationTarget';
-          readonly type: OnlineStoreNavigationTargetType;
-          readonly resourceId?: string | null;
-          readonly url: any;
-          readonly resource?:
-            | {
-                readonly __typename: 'Category';
-                readonly handle: string;
-                readonly name: string;
-                readonly id: string;
-              }
-            | { readonly __typename: 'Checkout'; readonly id: string }
-            | { readonly __typename: 'CheckoutLine'; readonly id: string }
-            | { readonly __typename: 'CheckoutTag'; readonly id: string }
-            | { readonly __typename: 'Collection'; readonly id: string }
-            | { readonly __typename: 'CustomerAddress'; readonly id: string }
-            | {
-                readonly __typename: 'CustomerDataRequest';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'CustomerTaxExemption';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'CustomerTaxIdentifier';
-                readonly id: string;
-              }
-            | { readonly __typename: 'CustomerWishlist'; readonly id: string }
-            | {
-                readonly __typename: 'CustomerWishlistItem';
-                readonly id: string;
-              }
-            | { readonly __typename: 'ExternalVideo'; readonly id: string }
-            | { readonly __typename: 'Facet'; readonly id: string }
-            | { readonly __typename: 'FacetSwatch'; readonly id: string }
-            | { readonly __typename: 'FacetValue'; readonly id: string }
-            | { readonly __typename: 'GenericFile'; readonly id: string }
-            | { readonly __typename: 'InventoryItem'; readonly id: string }
-            | {
-                readonly __typename: 'LoyaltyAvailableReward';
-                readonly id: string;
-              }
-            | { readonly __typename: 'MediaImage'; readonly id: string }
-            | { readonly __typename: 'Model3d'; readonly id: string }
-            | {
-                readonly __typename: 'OnlineStoreNavigationMenu';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'OnlineStoreNavigationMenuItem';
-                readonly id: string;
-              }
-            | { readonly __typename: 'OnlineStorePage'; readonly id: string }
-            | { readonly __typename: 'Order'; readonly id: string }
-            | {
-                readonly __typename: 'OrderDeliveryAddress';
-                readonly id: string;
-              }
-            | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
-            | { readonly __typename: 'OrderFulfillment'; readonly id: string }
-            | { readonly __typename: 'OrderLine'; readonly id: string }
-            | {
-                readonly __typename: 'OrderPaymentTransaction';
-                readonly id: string;
-              }
-            | { readonly __typename: 'OrderRefund'; readonly id: string }
-            | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
-            | { readonly __typename: 'OrderShipment'; readonly id: string }
-            | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
-            | { readonly __typename: 'OrderVoid'; readonly id: string }
-            | { readonly __typename: 'Pet'; readonly id: string }
-            | {
-                readonly __typename: 'PetProductSelection';
-                readonly id: string;
-              }
-            | { readonly __typename: 'Product'; readonly id: string }
-            | { readonly __typename: 'ProductFeature'; readonly id: string }
-            | {
-                readonly __typename: 'ProductFeatureGroup';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ProductFeatureValue';
-                readonly id: string;
-              }
-            | { readonly __typename: 'ProductOption'; readonly id: string }
-            | { readonly __typename: 'ProductOptionType'; readonly id: string }
-            | { readonly __typename: 'ProductOptionValue'; readonly id: string }
-            | { readonly __typename: 'ProductQuestion'; readonly id: string }
-            | {
-                readonly __typename: 'ProductQuestionAnswer';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ProductQuestionSubscription';
-                readonly id: string;
-              }
-            | { readonly __typename: 'ProductVariant'; readonly id: string }
-            | { readonly __typename: 'Review'; readonly id: string }
-            | {
-                readonly __typename: 'ReviewContentExternalReference';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewContentPublication';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewContentReport';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewContentRevision';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewContentTranslation';
-                readonly id: string;
-              }
-            | { readonly __typename: 'ReviewContentVote'; readonly id: string }
-            | { readonly __typename: 'ReviewMedia'; readonly id: string }
-            | {
-                readonly __typename: 'ReviewModerationCase';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewModerationEvent';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewModerationSignal';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewRatingCriterion';
-                readonly id: string;
-              }
-            | {
-                readonly __typename: 'ReviewRatingCriterionAssignment';
-                readonly id: string;
-              }
-            | { readonly __typename: 'ReviewReply'; readonly id: string }
-            | { readonly __typename: 'ReviewRequest'; readonly id: string }
-            | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
-            | {
-                readonly __typename: 'ReviewStoreConfiguration';
-                readonly id: string;
-              }
-            | { readonly __typename: 'Store'; readonly id: string }
-            | { readonly __typename: 'StorePolicy'; readonly id: string }
-            | { readonly __typename: 'Tag'; readonly id: string }
-            | { readonly __typename: 'Vendor'; readonly id: string }
-            | { readonly __typename: 'Video'; readonly id: string }
-            | null;
-        };
-      }>;
-    };
   } | null;
 };
 
@@ -26733,96 +26687,32 @@ export const SdkNavigationMenuFragmentDoc = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'items' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'first' },
-                value: { kind: 'IntValue', value: '50' },
-              },
-            ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
+                },
+                {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'nodes' },
+                  name: { kind: 'Name', value: 'children' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
                       {
                         kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkNavigationMenuItemFields',
-                        },
+                        name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
                       },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'children' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'first' },
-                            value: { kind: 'IntValue', value: '50' },
-                          },
-                        ],
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'nodes' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'FragmentSpread',
-                                    name: {
-                                      kind: 'Name',
-                                      value: 'SdkNavigationMenuItemFields',
-                                    },
-                                  },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'children' },
-                                    arguments: [
-                                      {
-                                        kind: 'Argument',
-                                        name: { kind: 'Name', value: 'first' },
-                                        value: {
-                                          kind: 'IntValue',
-                                          value: '50',
-                                        },
-                                      },
-                                    ],
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'nodes',
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: {
-                                                  kind: 'Name',
-                                                  value:
-                                                    'SdkNavigationMenuItemFields',
-                                                },
-                                              },
-                                            ],
-                                          },
-                                        },
-                                      ],
-                                    },
-                                  },
-                                ],
-                              },
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
                             },
                           ],
                         },
@@ -45153,96 +45043,32 @@ export const SdkNavigationMenuByHandleDocument = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'items' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'first' },
-                value: { kind: 'IntValue', value: '50' },
-              },
-            ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
+                },
+                {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'nodes' },
+                  name: { kind: 'Name', value: 'children' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
                       {
                         kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkNavigationMenuItemFields',
-                        },
+                        name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
                       },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'children' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'first' },
-                            value: { kind: 'IntValue', value: '50' },
-                          },
-                        ],
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'nodes' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'FragmentSpread',
-                                    name: {
-                                      kind: 'Name',
-                                      value: 'SdkNavigationMenuItemFields',
-                                    },
-                                  },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'children' },
-                                    arguments: [
-                                      {
-                                        kind: 'Argument',
-                                        name: { kind: 'Name', value: 'first' },
-                                        value: {
-                                          kind: 'IntValue',
-                                          value: '50',
-                                        },
-                                      },
-                                    ],
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'nodes',
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: {
-                                                  kind: 'Name',
-                                                  value:
-                                                    'SdkNavigationMenuItemFields',
-                                                },
-                                              },
-                                            ],
-                                          },
-                                        },
-                                      ],
-                                    },
-                                  },
-                                ],
-                              },
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'SdkNavigationMenuItemFields' },
                             },
                           ],
                         },

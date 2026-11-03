@@ -155,8 +155,6 @@ export const objectTypes: readonly string[] = [
   'OnlineStoreNavigationMenuConnection',
   'OnlineStoreNavigationMenuEdge',
   'OnlineStoreNavigationMenuItem',
-  'OnlineStoreNavigationMenuItemConnection',
-  'OnlineStoreNavigationMenuItemEdge',
   'OnlineStoreNavigationTarget',
   'OnlineStoreOpenGraphMetadata',
   'OnlineStorePage',

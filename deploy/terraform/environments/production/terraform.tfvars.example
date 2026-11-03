@@ -1,7 +1,9 @@
 cloudflare_account_id = "REPLACE_ME"
 cloudflare_zone_id    = "REPLACE_ME"
 hostname              = "example.com"
-# Origins must resolve from cloudflared on the backend overlay network.
-storefront_api_origin = "http://shopana-production-app_gateway-storefront:4000"
-auth_origin           = "http://shopana-production-app_runtime-monolith:10010"
-pet_assistant_origin  = "http://shopana-production-app_runtime-monolith:10096"
+# Both API paths enter the existing internal Traefik on the edge overlay.
+storefront_api_origin      = "http://shopana-production-platform_traefik:8080"
+storefront_api_host_header = "api.example.com"
+pet_assistant_origin      = "http://shopana-production-platform_traefik:8080"
+pet_assistant_host_header = "apps.example.com"
+iam_public_url            = "https://auth.example.com"

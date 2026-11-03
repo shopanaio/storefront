@@ -17,7 +17,6 @@ export const possibleTypes: Record<string, readonly string[]> = {
     'LoyaltyAvailableRewardConnection',
     'LoyaltyTransactionConnection',
     'OnlineStoreNavigationMenuConnection',
-    'OnlineStoreNavigationMenuItemConnection',
     'OnlineStorePageConnection',
     'OrderConnection',
     'OrderReturnRequestConnection',

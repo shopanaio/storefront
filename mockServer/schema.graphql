@@ -1562,14 +1562,10 @@ type OnlineStoreNavigationMenu implements Node
   """
   handle: String!
   """
-  Top-level menu items in merchant-defined order.
+  Top-level menu items in merchant-defined order. The whole level is returned:
+  menu size is bounded on write.
   """
-  items(
-    first: Int
-    after: Cursor
-    last: Int
-    before: Cursor
-  ): OnlineStoreNavigationMenuItemConnection!
+  items: [OnlineStoreNavigationMenuItem!]!
 }
 
 """
@@ -1598,14 +1594,9 @@ type OnlineStoreNavigationMenuItem implements Node
   target: OnlineStoreNavigationTarget!
   openInNewTab: Boolean!
   """
-  Direct children in merchant-defined order.
+  Direct children in merchant-defined order. The whole level is returned.
   """
-  children(
-    first: Int
-    after: Cursor
-    last: Int
-    before: Cursor
-  ): OnlineStoreNavigationMenuItemConnection!
+  children: [OnlineStoreNavigationMenuItem!]!
 }
 
 """
@@ -1651,27 +1642,6 @@ type OnlineStoreNavigationMenuEdge
   @join__type(graph: APPS_ONLINE_STORE_STOREFRONT) {
   cursor: Cursor!
   node: OnlineStoreNavigationMenu!
-}
-
-"""
-A Relay connection containing one ordered level of a menu tree.
-"""
-type OnlineStoreNavigationMenuItemConnection implements Connection
-  @join__type(graph: APPS_ONLINE_STORE_STOREFRONT)
-  @join__implements(
-    graph: APPS_ONLINE_STORE_STOREFRONT
-    interface: "Connection"
-  ) {
-  edges: [OnlineStoreNavigationMenuItemEdge!]!
-  nodes: [OnlineStoreNavigationMenuItem!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type OnlineStoreNavigationMenuItemEdge
-  @join__type(graph: APPS_ONLINE_STORE_STOREFRONT) {
-  cursor: Cursor!
-  node: OnlineStoreNavigationMenuItem!
 }
 
 """

@@ -573,14 +573,12 @@ const specialFields = (store) => ({
     absoluteAssetUrl(image.url, context.request),
   'OrderLine.imageUrl': (line, _args, context) =>
     absoluteAssetUrl(line.imageUrl, context.request),
-  'OnlineStoreNavigationMenu.items': (menu, args) =>
-    connection(menu.items, args),
+  'OnlineStoreNavigationMenu.items': (menu) => menu.items ?? [],
   'OnlineStoreNavigationMenuItem.menu': (item) =>
     findContaining(store.state.navigationMenus, item.id, 'items'),
   'OnlineStoreNavigationMenuItem.parent': (item) =>
     findParentItem(store.state.navigationMenus, item.id),
-  'OnlineStoreNavigationMenuItem.children': (item, args) =>
-    connection(item.children, args),
+  'OnlineStoreNavigationMenuItem.children': (item) => item.children ?? [],
   'OnlineStoreNavigationMenuItem.label': (item, { locale }) => {
     const requestedLocale = locale ?? store.state.store.defaultLocale;
     if (!store.state.store.locales.includes(requestedLocale)) return null;

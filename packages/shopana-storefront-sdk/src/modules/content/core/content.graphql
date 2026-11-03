@@ -25,18 +25,12 @@ fragment SdkNavigationMenuItemFields on OnlineStoreNavigationMenuItem {
 fragment SdkNavigationMenu on OnlineStoreNavigationMenu {
   id
   handle
-  items(first: 50) {
-    nodes {
+  items {
+    ...SdkNavigationMenuItemFields
+    children {
       ...SdkNavigationMenuItemFields
-      children(first: 50) {
-        nodes {
-          ...SdkNavigationMenuItemFields
-          children(first: 50) {
-            nodes {
-              ...SdkNavigationMenuItemFields
-            }
-          }
-        }
+      children {
+        ...SdkNavigationMenuItemFields
       }
     }
   }

@@ -7,11 +7,9 @@ import {
 } from '../../../graphql/apollo/generated/operations';
 
 export type NavigationMenu = SdkNavigationMenuFragment;
-export type NavigationMenuItem = NavigationMenu['items']['nodes'][number];
-export type NavigationMenuGroup =
-  NavigationMenuItem['children']['nodes'][number];
-export type NavigationMenuLink =
-  NavigationMenuGroup['children']['nodes'][number];
+export type NavigationMenuItem = NavigationMenu['items'][number];
+export type NavigationMenuGroup = NavigationMenuItem['children'][number];
+export type NavigationMenuLink = NavigationMenuGroup['children'][number];
 
 const EMPTY_ITEMS: readonly NavigationMenuItem[] = [];
 
@@ -28,7 +26,7 @@ export function useNavigationMenu(handle: string | null | undefined) {
   const menu = query.data?.onlineStoreNavigationMenuByHandle ?? null;
   return {
     menu,
-    items: menu?.items.nodes ?? EMPTY_ITEMS,
+    items: menu?.items ?? EMPTY_ITEMS,
     loading: query.loading,
     error: query.error,
   };

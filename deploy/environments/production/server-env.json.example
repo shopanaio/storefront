@@ -3,7 +3,7 @@
   "NEXT_PUBLIC_APP_URL": "https://example.com",
   "NEXT_PUBLIC_GRAPHQL_URL": "https://example.com/graphql",
   "NEXT_PUBLIC_PET_ASSISTANT_URL": "https://example.com/apps/pet-assistant/v1",
-  "NEXT_PUBLIC_IAM_URL": "https://example.com",
+  "NEXT_PUBLIC_IAM_URL": "https://auth.example.com",
   "NEXT_PUBLIC_IAM_APPLICATION_ID": "REPLACE_WITH_APPLICATION_ID",
   "NEXT_PUBLIC_CART_COOKIE_NAME": "shopana_cart_production",
   "NEXT_PUBLIC_STOREFRONT_COOKIE_POLICY": "first-party",
