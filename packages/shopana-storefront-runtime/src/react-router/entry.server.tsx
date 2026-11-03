@@ -31,7 +31,7 @@ import {
 } from './render-status';
 
 /** How long the server streams pending Suspense content before it gives up on it. */
-export const streamTimeout = 30_000;
+export const streamTimeout = 5_000;
 
 /** Server errors are logged, but not a page found missing: it is answered with a 404. */
 export function handleError(error: unknown, { request }: { request: Request }) {
