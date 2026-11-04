@@ -519,10 +519,11 @@ export const buildListingFilters = (
     priceFilters,
     variantsById
   );
-  const prices = priceProducts.flatMap((product) => [
-    Number(product.priceRange?.minVariantPrice?.amount ?? 0),
-    Number(product.priceRange?.maxVariantPrice?.amount ?? 0),
-  ]);
+  const prices = priceProducts.flatMap((product) =>
+    (product.variantIds ?? [])
+      .map((id) => Number(variantsById.get(id)?.price?.amount))
+      .filter(Number.isFinite)
+  );
   const selectedPrice = inputFilters.find(({ price }) => price)?.price;
   const configuredFacets = facets.length
     ? facets

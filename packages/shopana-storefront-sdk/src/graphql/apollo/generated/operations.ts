@@ -6610,7 +6610,6 @@ export type Product = Node & {
   readonly __typename: 'Product';
   readonly availableForSale: Scalars['Boolean']['output'];
   readonly categories: CategoryConnection;
-  readonly compareAtPriceRange?: Maybe<ProductPriceRange>;
   /**
    * Fully prepared comparison for this product in the current storefront context.
    *
@@ -6649,7 +6648,6 @@ export type Product = Node & {
   readonly options: ReadonlyArray<ProductOption>;
   /** Verified fact card of the product. Null: no card, or the Pet Assistant App is not active. */
   readonly petFacts?: Maybe<PetProductFacts>;
-  readonly priceRange?: Maybe<ProductPriceRange>;
   readonly primaryCategory?: Maybe<Category>;
   readonly publishedAt: Scalars['DateTime']['output'];
   /** Published question and answer aggregates for this product. */
@@ -7211,13 +7209,6 @@ export type ProductOptionValueSwatch = {
   readonly metadata?: Maybe<Scalars['JSON']['output']>;
   readonly secondaryColor?: Maybe<Scalars['Color']['output']>;
   readonly type: ProductOptionSwatchType;
-};
-
-/** The lowest and highest current variant prices for a product. */
-export type ProductPriceRange = {
-  readonly __typename: 'ProductPriceRange';
-  readonly maxVariantPrice: Money;
-  readonly minVariantPrice: Money;
 };
 
 export type ProductQuestion = Node &
