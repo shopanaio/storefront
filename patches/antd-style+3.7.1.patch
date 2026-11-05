@@ -40,8 +40,39 @@ index 5863d89..2547f17 100644
          return {
            styles: styles,
            cx: cx,
+diff --git a/node_modules/antd-style/es/factories/createStyles/response.js b/node_modules/antd-style/es/factories/createStyles/response.js
+index 3cbd5a0..4f60933 100644
+--- a/node_modules/antd-style/es/factories/createStyles/response.js
++++ b/node_modules/antd-style/es/factories/createStyles/response.js
+@@ -3,9 +3,12 @@ import { serializeCSS } from "../../core";
+ import { useAntdToken } from "../../hooks";
+ import { isReactCssResult } from "../../utils";
+ import { convertBreakpointToResponsive } from "../../utils/responsive";
+-import { useMemo } from 'react';
++// One map per token: useStyles reads it for every component.
++var mediaQueryMaps = new WeakMap();
+ export var useMediaQueryMap = function useMediaQueryMap() {
+   var token = useAntdToken();
++  var map = mediaQueryMaps.get(token);
++  if (map) return map;
+   var breakpoints = {
+     xs: "@media (max-width: ".concat(token.screenXSMax, "px)"),
+     sm: "@media (max-width: ".concat(token.screenSMMax, "px)"),
+@@ -14,9 +17,9 @@ export var useMediaQueryMap = function useMediaQueryMap() {
+     xl: "@media (max-width: ".concat(token.screenXLMax, "px)"),
+     xxl: "@media (min-width: ".concat(token.screenXXLMin, "px)")
+   };
+-  return useMemo(function () {
+-    return convertBreakpointToResponsive(breakpoints);
+-  }, [token]);
++  map = convertBreakpointToResponsive(breakpoints);
++  mediaQueryMaps.set(token, map);
++  return map;
+ };
+ 
+ /**
 diff --git a/node_modules/antd-style/es/factories/createUseTheme.js b/node_modules/antd-style/es/factories/createUseTheme.js
-index afbe6d9..c55112f 100644
+index afbe6d9..16b24a4 100644
 --- a/node_modules/antd-style/es/factories/createUseTheme.js
 +++ b/node_modules/antd-style/es/factories/createUseTheme.js
 @@ -4,6 +4,26 @@ import { DEFAULT_THEME_CONTEXT } from "../functions/setupStyled";
@@ -71,8 +102,26 @@ index afbe6d9..c55112f 100644
  export var createUseTheme = function createUseTheme(options) {
    return function () {
      var StyleEngineContext = options.StyleEngineContext;
-@@ -33,9 +53,6 @@ export var createUseTheme = function createUseTheme(options) {
-     if (!styledTheme || Object.keys(styledTheme).length === 0) {
+@@ -22,20 +42,20 @@ export var createUseTheme = function createUseTheme(options) {
+     // 只有当用户在 createInstance 中传入与 ant 不一样的 prefixCls 时，才会使用用户的 prefixCls
+     // 否则其他情况下都优先使用 antd 的 prefixCls
+     var prefixCls = outPrefixCls && outPrefixCls !== 'ant' ? outPrefixCls : antdPrefixCls;
++    //  如果是个空值，说明没有套 Provider，返回 antdTheme 的默认值
++    // A theme already merged has keys: Object.keys lists the whole theme for every component.
++    var withoutProvider = !styledTheme || !mergedThemes.has(styledTheme) && Object.keys(styledTheme).length === 0;
++    // Only without a provider: under one, this copy of the whole theme would go unused.
+     var initTheme = useMemo(function () {
++      if (!withoutProvider) return undefined;
+       return _objectSpread(_objectSpread(_objectSpread(_objectSpread({}, antdTheme), themeState), defaultCustomTheme), {}, {
+         prefixCls: prefixCls,
+         iconPrefixCls: iconPrefixCls
+       });
+-    }, [antdTheme, themeState, defaultCustomTheme, prefixCls, iconPrefixCls]);
+-
+-    //  如果是个空值，说明没有套 Provider，返回 antdTheme 的默认值
+-    if (!styledTheme || Object.keys(styledTheme).length === 0) {
++    }, [withoutProvider, antdTheme, themeState, defaultCustomTheme, prefixCls, iconPrefixCls]);
++    if (withoutProvider) {
        return initTheme;
      }
 -    return _objectSpread(_objectSpread({}, styledTheme), {}, {
@@ -81,6 +130,104 @@ index afbe6d9..c55112f 100644
 -    });
 +    return mergeStyledTheme(styledTheme, prefixCls, iconPrefixCls);
    };
+ };
+\ No newline at end of file
+diff --git a/node_modules/antd-style/es/hooks/getAntdStylish.js b/node_modules/antd-style/es/hooks/getAntdStylish.js
+new file mode 100644
+index 0000000..fe5af5a
+--- /dev/null
++++ b/node_modules/antd-style/es/hooks/getAntdStylish.js
+@@ -0,0 +1,25 @@
++import { serializeCSS } from "../core";
++import { createAntdStylish } from "../stylish/button";
++import { convertStylishToString } from "../utils/convertStylish";
++// One stylish per token and theme mode: on the server useMemo lives for one render, so each
++// component would serialize it again.
++var stylishes = new WeakMap();
++export function getAntdStylish(token, appearance, isDarkMode) {
++  var byMode = stylishes.get(token);
++  if (!byMode) {
++    byMode = new Map();
++    stylishes.set(token, byMode);
++  }
++  var key = appearance + "|" + isDarkMode;
++  var stylish = byMode.get(key);
++  if (!stylish) {
++    stylish = convertStylishToString(createAntdStylish({
++      token: token,
++      css: serializeCSS,
++      appearance: appearance,
++      isDarkMode: isDarkMode
++    }));
++    byMode.set(key, stylish);
++  }
++  return stylish;
++}
+diff --git a/node_modules/antd-style/es/hooks/useAntdStylish.js b/node_modules/antd-style/es/hooks/useAntdStylish.js
+index 9a143a9..cebfb4f 100644
+--- a/node_modules/antd-style/es/hooks/useAntdStylish.js
++++ b/node_modules/antd-style/es/hooks/useAntdStylish.js
+@@ -1,7 +1,4 @@
+-import { useMemo } from 'react';
+-import { serializeCSS } from "../core";
+-import { createAntdStylish } from "../stylish/button";
+-import { convertStylishToString } from "../utils/convertStylish";
++import { getAntdStylish } from "./getAntdStylish";
+ import { useAntdToken } from "./useAntdToken";
+ import { useThemeMode } from "./useThemeMode";
+ export var useAntdStylish = function useAntdStylish() {
+@@ -9,12 +6,5 @@ export var useAntdStylish = function useAntdStylish() {
+   var _useThemeMode = useThemeMode(),
+     appearance = _useThemeMode.appearance,
+     isDarkMode = _useThemeMode.isDarkMode;
+-  return useMemo(function () {
+-    return convertStylishToString(createAntdStylish({
+-      token: token,
+-      css: serializeCSS,
+-      appearance: appearance,
+-      isDarkMode: isDarkMode
+-    }));
+-  }, [token, appearance, isDarkMode]);
++  return getAntdStylish(token, appearance, isDarkMode);
+ };
+\ No newline at end of file
+diff --git a/node_modules/antd-style/es/hooks/useAntdTheme.js b/node_modules/antd-style/es/hooks/useAntdTheme.js
+index 40d5c83..aa32b2e 100644
+--- a/node_modules/antd-style/es/hooks/useAntdTheme.js
++++ b/node_modules/antd-style/es/hooks/useAntdTheme.js
+@@ -1,13 +1,27 @@
+ import _objectSpread from "@babel/runtime/helpers/esm/objectSpread2";
+-import { useMemo } from 'react';
+-import { useAntdStylish } from "./useAntdStylish";
++import { getAntdStylish } from "./getAntdStylish";
+ import { useAntdToken } from "./useAntdToken";
++import { useThemeMode } from "./useThemeMode";
++// One copy per token and stylish, shared by the components: on the server useMemo lives for one
++// render, so each component would copy the token again.
++var antdThemes = new WeakMap();
+ export var useAntdTheme = function useAntdTheme() {
+   var token = useAntdToken();
+-  var stylish = useAntdStylish();
+-  return useMemo(function () {
+-    return _objectSpread(_objectSpread({}, token), {}, {
++  var _useThemeMode = useThemeMode(),
++    appearance = _useThemeMode.appearance,
++    isDarkMode = _useThemeMode.isDarkMode;
++  var stylish = getAntdStylish(token, appearance, isDarkMode);
++  var byStylish = antdThemes.get(token);
++  if (!byStylish) {
++    byStylish = new WeakMap();
++    antdThemes.set(token, byStylish);
++  }
++  var theme = byStylish.get(stylish);
++  if (!theme) {
++    theme = _objectSpread(_objectSpread({}, token), {}, {
+       stylish: stylish
+     });
+-  }, [token, stylish]);
++    byStylish.set(stylish, theme);
++  }
++  return theme;
  };
 \ No newline at end of file
 diff --git a/node_modules/antd-style/lib/factories/createStyles/index.js b/node_modules/antd-style/lib/factories/createStyles/index.js
@@ -125,8 +272,39 @@ index 570cf7e..690994c 100644
          return {
            styles: styles,
            cx: cx,
+diff --git a/node_modules/antd-style/lib/factories/createStyles/response.js b/node_modules/antd-style/lib/factories/createStyles/response.js
+index 80d9536..2901557 100644
+--- a/node_modules/antd-style/lib/factories/createStyles/response.js
++++ b/node_modules/antd-style/lib/factories/createStyles/response.js
+@@ -10,9 +10,12 @@ var _core = require("../../core");
+ var _hooks = require("../../hooks");
+ var _utils = require("../../utils");
+ var _responsive = require("../../utils/responsive");
+-var _react = require("react");
++// One map per token: useStyles reads it for every component.
++var mediaQueryMaps = new WeakMap();
+ var useMediaQueryMap = exports.useMediaQueryMap = function useMediaQueryMap() {
+   var token = (0, _hooks.useAntdToken)();
++  var map = mediaQueryMaps.get(token);
++  if (map) return map;
+   var breakpoints = {
+     xs: "@media (max-width: ".concat(token.screenXSMax, "px)"),
+     sm: "@media (max-width: ".concat(token.screenSMMax, "px)"),
+@@ -21,9 +24,9 @@ var useMediaQueryMap = exports.useMediaQueryMap = function useMediaQueryMap() {
+     xl: "@media (max-width: ".concat(token.screenXLMax, "px)"),
+     xxl: "@media (min-width: ".concat(token.screenXXLMin, "px)")
+   };
+-  return (0, _react.useMemo)(function () {
+-    return (0, _responsive.convertBreakpointToResponsive)(breakpoints);
+-  }, [token]);
++  map = (0, _responsive.convertBreakpointToResponsive)(breakpoints);
++  mediaQueryMaps.set(token, map);
++  return map;
+ };
+ 
+ /**
 diff --git a/node_modules/antd-style/lib/factories/createUseTheme.js b/node_modules/antd-style/lib/factories/createUseTheme.js
-index dfcc9b9..03d1925 100644
+index dfcc9b9..6b1a454 100644
 --- a/node_modules/antd-style/lib/factories/createUseTheme.js
 +++ b/node_modules/antd-style/lib/factories/createUseTheme.js
 @@ -11,6 +11,26 @@ var _setupStyled = require("../functions/setupStyled");
@@ -156,8 +334,26 @@ index dfcc9b9..03d1925 100644
  var createUseTheme = exports.createUseTheme = function createUseTheme(options) {
    return function () {
      var StyleEngineContext = options.StyleEngineContext;
-@@ -40,9 +60,6 @@ var createUseTheme = exports.createUseTheme = function createUseTheme(options) {
-     if (!styledTheme || Object.keys(styledTheme).length === 0) {
+@@ -29,20 +49,20 @@ var createUseTheme = exports.createUseTheme = function createUseTheme(options) {
+     // 只有当用户在 createInstance 中传入与 ant 不一样的 prefixCls 时，才会使用用户的 prefixCls
+     // 否则其他情况下都优先使用 antd 的 prefixCls
+     var prefixCls = outPrefixCls && outPrefixCls !== 'ant' ? outPrefixCls : antdPrefixCls;
++    //  如果是个空值，说明没有套 Provider，返回 antdTheme 的默认值
++    // A theme already merged has keys: Object.keys lists the whole theme for every component.
++    var withoutProvider = !styledTheme || !mergedThemes.has(styledTheme) && Object.keys(styledTheme).length === 0;
++    // Only without a provider: under one, this copy of the whole theme would go unused.
+     var initTheme = (0, _react.useMemo)(function () {
++      if (!withoutProvider) return undefined;
+       return (0, _objectSpread2.default)((0, _objectSpread2.default)((0, _objectSpread2.default)((0, _objectSpread2.default)({}, antdTheme), themeState), defaultCustomTheme), {}, {
+         prefixCls: prefixCls,
+         iconPrefixCls: iconPrefixCls
+       });
+-    }, [antdTheme, themeState, defaultCustomTheme, prefixCls, iconPrefixCls]);
+-
+-    //  如果是个空值，说明没有套 Provider，返回 antdTheme 的默认值
+-    if (!styledTheme || Object.keys(styledTheme).length === 0) {
++    }, [withoutProvider, antdTheme, themeState, defaultCustomTheme, prefixCls, iconPrefixCls]);
++    if (withoutProvider) {
        return initTheme;
      }
 -    return (0, _objectSpread2.default)((0, _objectSpread2.default)({}, styledTheme), {}, {
@@ -166,5 +362,114 @@ index dfcc9b9..03d1925 100644
 -    });
 +    return mergeStyledTheme(styledTheme, prefixCls, iconPrefixCls);
    };
+ };
+\ No newline at end of file
+diff --git a/node_modules/antd-style/lib/hooks/getAntdStylish.js b/node_modules/antd-style/lib/hooks/getAntdStylish.js
+new file mode 100644
+index 0000000..b51a4ce
+--- /dev/null
++++ b/node_modules/antd-style/lib/hooks/getAntdStylish.js
+@@ -0,0 +1,31 @@
++"use strict";
++
++Object.defineProperty(exports, "__esModule", {
++  value: true
++});
++exports.getAntdStylish = getAntdStylish;
++var _core = require("../core");
++var _button = require("../stylish/button");
++var _convertStylish = require("../utils/convertStylish");
++// One stylish per token and theme mode: on the server useMemo lives for one render, so each
++// component would serialize it again.
++var stylishes = new WeakMap();
++function getAntdStylish(token, appearance, isDarkMode) {
++  var byMode = stylishes.get(token);
++  if (!byMode) {
++    byMode = new Map();
++    stylishes.set(token, byMode);
++  }
++  var key = appearance + "|" + isDarkMode;
++  var stylish = byMode.get(key);
++  if (!stylish) {
++    stylish = (0, _convertStylish.convertStylishToString)((0, _button.createAntdStylish)({
++      token: token,
++      css: _core.serializeCSS,
++      appearance: appearance,
++      isDarkMode: isDarkMode
++    }));
++    byMode.set(key, stylish);
++  }
++  return stylish;
++}
+diff --git a/node_modules/antd-style/lib/hooks/useAntdStylish.js b/node_modules/antd-style/lib/hooks/useAntdStylish.js
+index 51d385d..c21a854 100644
+--- a/node_modules/antd-style/lib/hooks/useAntdStylish.js
++++ b/node_modules/antd-style/lib/hooks/useAntdStylish.js
+@@ -4,10 +4,7 @@ Object.defineProperty(exports, "__esModule", {
+   value: true
+ });
+ exports.useAntdStylish = void 0;
+-var _react = require("react");
+-var _core = require("../core");
+-var _button = require("../stylish/button");
+-var _convertStylish = require("../utils/convertStylish");
++var _getAntdStylish = require("./getAntdStylish");
+ var _useAntdToken = require("./useAntdToken");
+ var _useThemeMode2 = require("./useThemeMode");
+ var useAntdStylish = exports.useAntdStylish = function useAntdStylish() {
+@@ -15,12 +12,5 @@ var useAntdStylish = exports.useAntdStylish = function useAntdStylish() {
+   var _useThemeMode = (0, _useThemeMode2.useThemeMode)(),
+     appearance = _useThemeMode.appearance,
+     isDarkMode = _useThemeMode.isDarkMode;
+-  return (0, _react.useMemo)(function () {
+-    return (0, _convertStylish.convertStylishToString)((0, _button.createAntdStylish)({
+-      token: token,
+-      css: _core.serializeCSS,
+-      appearance: appearance,
+-      isDarkMode: isDarkMode
+-    }));
+-  }, [token, appearance, isDarkMode]);
++  return (0, _getAntdStylish.getAntdStylish)(token, appearance, isDarkMode);
+ };
+\ No newline at end of file
+diff --git a/node_modules/antd-style/lib/hooks/useAntdTheme.js b/node_modules/antd-style/lib/hooks/useAntdTheme.js
+index f47f238..e7a9d12 100644
+--- a/node_modules/antd-style/lib/hooks/useAntdTheme.js
++++ b/node_modules/antd-style/lib/hooks/useAntdTheme.js
+@@ -6,15 +6,29 @@ Object.defineProperty(exports, "__esModule", {
+ });
+ exports.useAntdTheme = void 0;
+ var _objectSpread2 = _interopRequireDefault(require("@babel/runtime/helpers/objectSpread2"));
+-var _react = require("react");
+-var _useAntdStylish = require("./useAntdStylish");
++var _getAntdStylish = require("./getAntdStylish");
+ var _useAntdToken = require("./useAntdToken");
++var _useThemeMode2 = require("./useThemeMode");
++// One copy per token and stylish, shared by the components: on the server useMemo lives for one
++// render, so each component would copy the token again.
++var antdThemes = new WeakMap();
+ var useAntdTheme = exports.useAntdTheme = function useAntdTheme() {
+   var token = (0, _useAntdToken.useAntdToken)();
+-  var stylish = (0, _useAntdStylish.useAntdStylish)();
+-  return (0, _react.useMemo)(function () {
+-    return (0, _objectSpread2.default)((0, _objectSpread2.default)({}, token), {}, {
++  var _useThemeMode = (0, _useThemeMode2.useThemeMode)(),
++    appearance = _useThemeMode.appearance,
++    isDarkMode = _useThemeMode.isDarkMode;
++  var stylish = (0, _getAntdStylish.getAntdStylish)(token, appearance, isDarkMode);
++  var byStylish = antdThemes.get(token);
++  if (!byStylish) {
++    byStylish = new WeakMap();
++    antdThemes.set(token, byStylish);
++  }
++  var theme = byStylish.get(stylish);
++  if (!theme) {
++    theme = (0, _objectSpread2.default)((0, _objectSpread2.default)({}, token), {}, {
+       stylish: stylish
+     });
+-  }, [token, stylish]);
++    byStylish.set(stylish, theme);
++  }
++  return theme;
  };
 \ No newline at end of file
