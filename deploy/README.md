@@ -200,8 +200,9 @@ Free Managed Ruleset и базовая DDoS-защита Cloudflare остают
 
 - Домен уже делегирован Cloudflare; зона имеет Free plan и активный Universal SSL.
 - Используется существующий Swarm `internal` с доступной backend edge overlay-сетью.
-  Для двух реплик с `max_replicas_per_node: 1` и rolling update `start-first` нужны минимум
-  **три подходящие ноды** с достаточными ресурсами. VM и Swarm этот Terraform не создаёт.
+  Для двух реплик connector с `max_replicas_per_node: 1` и rolling update `start-first` нужны минимум
+  **три подходящие ноды** с достаточными ресурсами. Тема обновляется `stop-first`: на время
+  обновления работает одна реплика, зато обновление не зависит от свободного места на ноде. VM и Swarm этот Terraform не создаёт.
 - Собранные образы доступны всем нодам в registry, с release tag или digest. Архитектура
   сборки должна совпадать с архитектурой нод.
 - Отдельные Headless PUBLIC tokens и OAuth clients/redirect URI для production и stage.
@@ -261,6 +262,16 @@ terraform -chdir=deploy/terraform/environments/stage apply release.tfplan
 Все настройки подключения — runtime-конфигурация: `NEXT_PUBLIC_*`, OAuth client credentials
 и session secret задаются в `server-env.json`. Публичная часть передаётся браузеру в SSR HTML,
 остальные значения остаются серверными. Смена ключа или URL не требует нового билда.
+
+`STOREFRONT_SERVER_GRAPHQL_URL` — внутренний адрес шлюза для серверных запросов темы (на stage
+`http://gateway-storefront:4000/graphql`, сервис доступен через сеть `BACKEND_NETWORK`). Браузер и
+боты по-прежнему ходят на `NEXT_PUBLIC_GRAPHQL_URL`; этот адрес в браузер не передаётся. Без
+переменной сервер тоже ходит на публичный адрес. Мимо Cloudflare и Traefik тема сама задаёт
+`X-Forwarded-For: <адрес покупателя>, storefront-server` и `User-Agent` покупателя: шлюз с
+`STOREFRONT_TRUSTED_PROXY_HOPS=2` читает адрес покупателя тем же правилом. Адрес берётся по
+`STOREFRONT_TRUSTED_PROXY_HOPS` темы, поэтому подделанные клиентом записи до шлюза не доходят.
+Не подключайте подсеть `BACKEND_NETWORK` к `STOREFRONT_TRUSTED_FORWARDER_CIDRS`: в ней же работает
+Traefik, и шлюз начнёт отвечать `STOREFRONT_BUYER_IP_INVALID` на все запросы браузера.
 Application ID, client ID, resource и зарегистрированные redirect URI должны принадлежать
 одному IAM application соответствующего окружения.
 

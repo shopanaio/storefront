@@ -14,6 +14,7 @@ import { createApolloCache, type InMemoryCacheClass } from './cache';
 import { RequestResultCache } from './requestResultCache';
 import { clientNormalization } from './serverSwitches';
 import { createQueryResultHoldLink } from './queryResultHold';
+import { serverGraphqlUrl } from './serverEndpoint';
 import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
 import { readCookie } from '../../core/cookiePolicy';
@@ -131,6 +132,7 @@ export function createApolloClient(
   const authLink = new SetContextLink(async (previousContext) => {
     const headers = {
       ...(previousContext.headers as Record<string, string> | undefined),
+      ...(IS_SERVER ? options.gatewayHeaders : undefined),
       [config.apiKeyHeader]: config.apiKey,
     };
 
@@ -153,7 +155,7 @@ export function createApolloClient(
   });
 
   const httpLink = new HttpLink({
-    uri: config.graphqlUrl,
+    uri: IS_SERVER ? serverGraphqlUrl(config) : config.graphqlUrl,
     credentials: 'include',
   });
 

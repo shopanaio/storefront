@@ -103,6 +103,24 @@ test('runtime URLs match Terraform and OAuth callbacks use HTTPS', () => {
   );
 });
 
+test('the server GraphQL address is optional and must be an HTTP URL', () => {
+  validateRuntime(
+    {
+      ...values,
+      STOREFRONT_SERVER_GRAPHQL_URL: 'http://gateway-storefront:4000/graphql',
+    },
+    outputs
+  );
+  assert.throws(
+    () =>
+      validateRuntime(
+        { ...values, STOREFRONT_SERVER_GRAPHQL_URL: 'gateway-storefront:4000' },
+        outputs
+      ),
+    /STOREFRONT_SERVER_GRAPHQL_URL/
+  );
+});
+
 test('existing two-hop backend and canonical IAM pass; a direct one-hop gateway is rejected', () => {
   validateBackend(
     service('STOREFRONT_TRUSTED_PROXY_HOPS=2'),

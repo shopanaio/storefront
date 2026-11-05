@@ -21,7 +21,7 @@ code.
 
 ## Requirements
 
-- Node.js 22 (see `.nvmrc`)
+- Node.js 24 (see `.nvmrc`)
 - Yarn 1
 
 ## Setup

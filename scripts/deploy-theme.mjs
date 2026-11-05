@@ -76,6 +76,11 @@ export function validateRuntime(values, outputs) {
     if (values[key] !== outputs[output])
       fail(`${key} must match Terraform output ${output}`);
   }
+  if (
+    values.STOREFRONT_SERVER_GRAPHQL_URL &&
+    !/^https?:\/\/[^/\s]+\/\S*$/.test(values.STOREFRONT_SERVER_GRAPHQL_URL)
+  )
+    fail('STOREFRONT_SERVER_GRAPHQL_URL must be an absolute HTTP URL.');
   if (values.STOREFRONT_TRUSTED_PROXY_HOPS !== '1')
     fail(
       'The theme requires one trusted proxy hop for its direct Tunnel ingress.'
@@ -289,7 +294,7 @@ async function main() {
   );
   if (eligible.length < 3)
     fail(
-      'At least three ready, active linux/amd64 nodes are required for start-first updates.'
+      'At least three ready, active linux/amd64 nodes are required for start-first connector updates.'
     );
   const network = JSON.parse(
     docker('network', 'inspect', settings.BACKEND_NETWORK)

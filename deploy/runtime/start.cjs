@@ -7,6 +7,7 @@ const allowed = new Set([
   'NEXT_PUBLIC_API_KEY',
   'NEXT_PUBLIC_APP_URL',
   'NEXT_PUBLIC_GRAPHQL_URL',
+  'STOREFRONT_SERVER_GRAPHQL_URL',
   'NEXT_PUBLIC_PET_ASSISTANT_URL',
   'NEXT_PUBLIC_IAM_URL',
   'NEXT_PUBLIC_IAM_APPLICATION_ID',
@@ -38,6 +39,12 @@ if (
 }
 for (const key of ['NEXT_PUBLIC_APP_URL', 'NEXT_PUBLIC_GRAPHQL_URL']) {
   if (!process.env[key]) throw new Error(`${key} is required at runtime`);
+}
+if (
+  process.env.STOREFRONT_SERVER_GRAPHQL_URL &&
+  !/^https?:\/\/[^/\s]+\/\S*$/.test(process.env.STOREFRONT_SERVER_GRAPHQL_URL)
+) {
+  throw new Error('STOREFRONT_SERVER_GRAPHQL_URL must be an absolute HTTP URL');
 }
 if ((process.env.STOREFRONT_SESSION_SECRET?.length ?? 0) < 32) {
   throw new Error(

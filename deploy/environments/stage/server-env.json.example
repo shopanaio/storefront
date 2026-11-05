@@ -2,6 +2,7 @@
   "NEXT_PUBLIC_API_KEY": "REPLACE_WITH_PUBLIC_HEADLESS_ACCESS_TOKEN",
   "NEXT_PUBLIC_APP_URL": "https://pet.shopana.dev",
   "NEXT_PUBLIC_GRAPHQL_URL": "https://pet.shopana.dev/graphql",
+  "STOREFRONT_SERVER_GRAPHQL_URL": "http://gateway-storefront:4000/graphql",
   "NEXT_PUBLIC_PET_ASSISTANT_URL": "https://pet.shopana.dev/apps/pet-assistant/v1",
   "NEXT_PUBLIC_IAM_URL": "https://auth.shopana.dev",
   "NEXT_PUBLIC_IAM_APPLICATION_ID": "REPLACE_WITH_APPLICATION_ID",

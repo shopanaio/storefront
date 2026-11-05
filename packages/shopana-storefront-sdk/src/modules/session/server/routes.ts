@@ -13,6 +13,7 @@ import { randomBase64Url, sha256Base64Url } from './encoding';
 import { decodeJwtPayload } from './iamOAuth';
 import { seal, unseal, type SealedPayload } from './sealedCookie';
 import type { LoginMethod } from '../core/types';
+import type { ServerRequestHeaders } from '../../../server/requestScope';
 import {
   getStorefrontSessionServer,
   isFresh,
@@ -330,7 +331,7 @@ export function transactionCookieName(server: StorefrontSessionServer): string {
  * come from the client and may be forged. Without `X-Forwarded-For`, `X-Real-IP` of the proxy.
  */
 export function endUserIp(
-  request: Request,
+  request: { headers: ServerRequestHeaders },
   trustedProxyHops = 1
 ): string | undefined {
   const forwarded = (request.headers.get('x-forwarded-for') ?? '')

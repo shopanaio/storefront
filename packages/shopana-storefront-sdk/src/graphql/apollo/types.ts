@@ -50,6 +50,8 @@ export interface CreateApolloClientOptions {
    * browser client takes its token from the session client instead.
    */
   accessToken?: string | null;
+  /** Visitor headers of a server request that goes to the gateway directly. */
+  gatewayHeaders?: Record<string, string>;
   /** What the server sent: a normalized snapshot, or its whole responses. */
   initialState?: NormalizedCacheObject | readonly RequestQueryResult[];
   /** Active storefront locale tag sent as `Accept-Language`, for example `uk` or `pt-BR`. */

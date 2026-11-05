@@ -25,6 +25,11 @@ describe('public runtime environment', () => {
       NEXT_PUBLIC_GRAPHQL_URL: 'https://pet.shopana.dev/graphql',
     });
     expect(first.script).not.toContain('private-');
+    expect(
+      publicEnvironmentScript({
+        STOREFRONT_SERVER_GRAPHQL_URL: 'http://gateway.internal:4000/graphql',
+      })
+    ).not.toContain('gateway.internal');
     expect(render('public-key-two').values).toHaveProperty(
       'NEXT_PUBLIC_API_KEY',
       'public-key-two'

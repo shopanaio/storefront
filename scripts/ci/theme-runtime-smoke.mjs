@@ -76,6 +76,32 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
     const serverPort = 4310 + index;
     const origin = `http://127.0.0.1:${publicPort}`;
     const key = `shpna_sfpub_v1_${letter.repeat(22)}_${letter.repeat(43)}`;
+    const gatewayPort = 4320 + index;
+    const gatewayRequests = [];
+    const gateway = createServer((incoming, outgoing) => {
+      gatewayRequests.push(incoming.headers);
+      const upstream = request(
+        {
+          hostname: '127.0.0.1',
+          port: 4105,
+          path: incoming.url,
+          method: incoming.method,
+          headers: incoming.headers,
+        },
+        (response) => {
+          outgoing.writeHead(response.statusCode, response.headers);
+          response.pipe(outgoing);
+        }
+      );
+      upstream.on('error', () => {
+        outgoing.writeHead(502);
+        outgoing.end();
+      });
+      incoming.pipe(upstream);
+    });
+    proxies.push(gateway);
+    await new Promise((done) => gateway.listen(gatewayPort, '0.0.0.0', done));
+    const serverGraphqlUrl = `http://localhost:${gatewayPort}/graphql`;
     const proxy = createServer((incoming, outgoing) => {
       const port =
         incoming.url?.split('?')[0] === '/graphql' ? 4105 : serverPort;
@@ -104,6 +130,7 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
       PORT: String(serverPort),
       NEXT_PUBLIC_APP_URL: origin,
       NEXT_PUBLIC_GRAPHQL_URL: `${origin}/graphql`,
+      STOREFRONT_SERVER_GRAPHQL_URL: serverGraphqlUrl,
       NEXT_PUBLIC_API_KEY: key,
       NEXT_PUBLIC_CART_COOKIE_NAME: `runtime_${letter}`,
       IAM_OAUTH_CLIENT_SECRET: 'private-oauth-must-not-reach-html',
@@ -124,6 +151,24 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
       context.__shopanaPublicEnv.NEXT_PUBLIC_GRAPHQL_URL,
       `${origin}/graphql`
     );
+    assert(!html.includes(serverGraphqlUrl), 'Server address reached SSR HTML');
+    assert(
+      !('STOREFRONT_SERVER_GRAPHQL_URL' in context.__shopanaPublicEnv),
+      'Server address reached the public settings'
+    );
+    assert(gatewayRequests.length > 0, 'SSR did not use the server address');
+    gatewayRequests.length = 0;
+    await fetch(origin, {
+      headers: {
+        'x-forwarded-for': '198.51.100.66, 203.0.113.7',
+        'user-agent': 'theme-smoke-agent',
+      },
+    }).then((page) => page.text());
+    const direct = gatewayRequests.find(
+      (headers) => headers['user-agent'] === 'theme-smoke-agent'
+    );
+    assert(direct, 'SSR did not forward the visitor to the gateway');
+    assert.equal(direct['x-forwarded-for'], '203.0.113.7, storefront-server');
     assert(!html.includes('private-oauth-must-not-reach-html'));
     assert(!html.includes('private-session-must-not-reach-html'));
     const moduleScript = html.search(/<script[^>]*type="module"/);

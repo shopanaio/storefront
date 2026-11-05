@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-bookworm-slim AS build
+FROM node:24-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS build
 WORKDIR /app
 
 # Build from the workspace root with the theme checked out under themes/.
@@ -19,7 +19,7 @@ RUN THEME_PACKAGE=$(node -p "require('./themes/' + process.env.STOREFRONT_THEME 
     yarn cache clean --all && \
     mkdir -p "themes/$STOREFRONT_THEME/node_modules"
 
-FROM node:22-bookworm-slim AS runtime
+FROM node:24-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS runtime
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=3000 \

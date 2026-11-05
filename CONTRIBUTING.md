@@ -4,7 +4,7 @@ Thanks for helping improve Shopana Storefront.
 
 ## Getting started
 
-1. Use Node.js 22 (`nvm use`) and Yarn 1.
+1. Use Node.js 24 (`nvm use`) and Yarn 1.
 2. `yarn install`
 3. `yarn build:packages`
 

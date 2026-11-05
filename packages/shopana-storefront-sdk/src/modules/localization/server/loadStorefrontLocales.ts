@@ -3,6 +3,7 @@ import {
   SdkStorefrontLocalesDocument,
   type SdkStorefrontLocalesQuery,
 } from '../../../graphql/apollo/generated/operations';
+import { serverGraphqlUrl } from '../../../graphql/apollo/serverEndpoint';
 import type { ApolloEnvironmentConfig } from '../../../graphql/apollo/types';
 import { STOREFRONT_LOCALES_TTL_MS } from '../core/constants';
 import { findStorefrontLocale, toStorefrontLocale } from '../core/locale';
@@ -43,7 +44,7 @@ export function toStorefrontLocales(
 async function fetchStorefrontLocales(
   config: ApolloEnvironmentConfig
 ): Promise<StorefrontLocales> {
-  const response = await fetch(config.graphqlUrl, {
+  const response = await fetch(serverGraphqlUrl(config), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
