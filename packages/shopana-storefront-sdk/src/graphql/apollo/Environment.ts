@@ -4,12 +4,15 @@ import {
   CombinedGraphQLErrors,
   HttpLink,
   type InMemoryCache,
+  type NormalizedCacheObject,
   Observable,
   ServerError,
 } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import type { FormattedExecutionResult } from 'graphql';
 import { createApolloCache, type InMemoryCacheClass } from './cache';
+import { RequestResultCache } from './requestResultCache';
+import { clientNormalization } from './serverSwitches';
 import { createQueryResultHoldLink } from './queryResultHold';
 import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
@@ -165,12 +168,20 @@ export function createApolloClient(
         ),
       ];
 
-  const cache = createApolloCache(
-    options.cacheConfig,
-    integration.InMemoryCache
-  );
-  if (options.initialState) {
-    cache.restore(options.initialState);
+  // The browser takes what the server sent, whatever the server's switch is: a list of whole
+  // responses, or a normalized snapshot.
+  const { initialState } = options;
+  const cache =
+    IS_SERVER && clientNormalization && integration === plainIntegration
+      ? // A plain Apollo client takes any cache; only an integration needs its InMemoryCache.
+        (new RequestResultCache() as unknown as InMemoryCache)
+      : createApolloCache(
+          options.cacheConfig,
+          integration.InMemoryCache,
+          Array.isArray(initialState) ? initialState : undefined
+        );
+  if (initialState && !Array.isArray(initialState)) {
+    cache.restore(initialState as NormalizedCacheObject);
   }
 
   return integration.createClient({

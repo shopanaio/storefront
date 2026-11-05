@@ -1,6 +1,10 @@
 export { createApolloClient } from './Environment';
 export { createApolloCache, mergeApolloCacheStates } from './cache';
 export {
+  readRequestResults,
+  type RequestQueryResult,
+} from './requestResultCache';
+export {
   loadSerializableQuery,
   type SerializableApolloQuery,
 } from './loadSerializableQuery';

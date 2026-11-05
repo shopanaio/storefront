@@ -1,12 +1,20 @@
 import type {
+  Cache,
+  DocumentNode,
   FieldPolicy,
   InMemoryCacheConfig,
   NormalizedCacheObject,
+  OperationVariables,
   StoreObject,
   TypePolicy,
 } from '@apollo/client';
 import { InMemoryCache } from '@apollo/client';
 import { cursorConnectionPolicy } from './pagination/cursorPagination';
+import {
+  indexRequestResults,
+  queryResultKey,
+  type RequestQueryResult,
+} from './requestResultCache';
 import { objectTypes } from './generated/objectTypes';
 import { possibleTypes } from './generated/possibleTypes';
 
@@ -78,22 +86,88 @@ export type InMemoryCacheClass = new (
 
 const storefrontCacheClasses = new WeakMap<
   InMemoryCacheClass,
-  new (config: InMemoryCacheConfig, handles: HandleIndex) => InMemoryCache
+  new (
+    config: InMemoryCacheConfig,
+    handles: HandleIndex,
+    results: readonly RequestQueryResult[]
+  ) => InMemoryCache
 >();
 
 /**
  * The cache class over `Base`. Restored snapshots (SSR state, page hydration) skip key fields:
- * their handles are indexed here.
+ * their handles are indexed here. Whole responses of the server (`results`) are written when a
+ * query first asks for its own, so their documents need not be in the page's first code, and
+ * through key fields, so their handles index themselves.
  */
 function storefrontCacheClass(Base: InMemoryCacheClass) {
   let StorefrontCache = storefrontCacheClasses.get(Base);
   if (!StorefrontCache) {
     StorefrontCache = class extends Base {
       readonly #handles: HandleIndex;
+      readonly #pending: Map<string, RequestQueryResult>;
 
-      constructor(config: InMemoryCacheConfig, handles: HandleIndex) {
+      constructor(
+        config: InMemoryCacheConfig,
+        handles: HandleIndex,
+        results: readonly RequestQueryResult[]
+      ) {
         super(config);
         this.#handles = handles;
+        this.#pending = indexRequestResults(results);
+      }
+
+      // Not `#private`: compiled down, such a method could not call `super`.
+      private writePending(
+        query: DocumentNode,
+        variables: unknown,
+        id?: string
+      ) {
+        if (this.#pending.size === 0) return;
+        const key = queryResultKey(query, variables, id);
+        const result = key && this.#pending.get(key);
+        if (!key || !result) return;
+        this.#pending.delete(key);
+        // No broadcast: this runs inside a read, in a render, and the data is what the server
+        // rendered with.
+        super.write({
+          dataId: 'ROOT_QUERY',
+          query,
+          variables: variables as OperationVariables,
+          result: result.d,
+          broadcast: false,
+        });
+      }
+
+      override read<TData>(options: Cache.ReadOptions<TData>) {
+        this.writePending(
+          options.query,
+          options.variables,
+          options.rootId ?? options.id
+        );
+        return super.read(options);
+      }
+
+      override diff<TData>(options: Cache.DiffOptions<TData>) {
+        this.writePending(options.query, options.variables, options.id);
+        return super.diff(options);
+      }
+
+      override write<TData>(options: Cache.WriteOptions<TData>) {
+        // A newer answer of the query: the server's must not overwrite it later.
+        if (this.#pending.size > 0) {
+          const key = queryResultKey(
+            options.query,
+            options.variables,
+            options.dataId
+          );
+          if (key) this.#pending.delete(key);
+        }
+        return super.write(options);
+      }
+
+      override reset(options?: Cache.ResetOptions) {
+        this.#pending.clear();
+        return super.reset(options);
       }
 
       override restore(data: NormalizedCacheObject): this {
@@ -121,7 +195,8 @@ function storefrontCacheClass(Base: InMemoryCacheClass) {
  */
 export function createApolloCache(
   overrides: InMemoryCacheConfig = {},
-  Base: InMemoryCacheClass = InMemoryCache
+  Base: InMemoryCacheClass = InMemoryCache,
+  results: readonly RequestQueryResult[] = []
 ): InMemoryCache {
   const handles: HandleIndex = new Map();
   const ownTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
@@ -225,6 +300,10 @@ export function createApolloCache(
   const StorefrontCache = storefrontCacheClass(Base);
   return new StorefrontCache(
     {
+      // A server cache lives for one request, so remembering results between reads saves
+      // little and costs a dependency graph. The browser's cache lives as long as the page,
+      // and its hooks rely on stable results.
+      resultCaching: typeof window !== 'undefined',
       ...overrides,
       // Fragments on interfaces and unions (`... on Media`) match only with the schema types.
       possibleTypes: Object.fromEntries(
@@ -234,7 +313,8 @@ export function createApolloCache(
       ),
       typePolicies,
     },
-    handles
+    handles,
+    results
   );
 }
 

@@ -5,7 +5,18 @@ import type {
 } from '@apollo/client';
 import { useFragment as useApolloFragment } from '@apollo/client/react';
 
-export function useFragment<
+/**
+ * On the server the parent's data already holds the fragment (nothing is masked), and a server
+ * cache of whole responses has no entities to read it from.
+ */
+function useServerFragment<TData>(
+  _fragment: unknown,
+  from: TData | null | undefined
+): TData | null {
+  return from ?? null;
+}
+
+function useCacheFragment<
   TData,
   TVariables extends OperationVariables = OperationVariables,
 >(
@@ -30,3 +41,6 @@ export function useFragment<
 
   return from ? (result.data as TData) : null;
 }
+
+export const useFragment =
+  typeof window === 'undefined' ? useServerFragment : useCacheFragment;

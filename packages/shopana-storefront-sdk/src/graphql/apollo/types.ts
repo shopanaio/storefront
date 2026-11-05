@@ -1,4 +1,5 @@
 import type { CookiePolicy } from '../../core/cookiePolicy';
+import type { RequestQueryResult } from './requestResultCache';
 import type {
   ApolloLink,
   InMemoryCacheConfig,
@@ -49,7 +50,8 @@ export interface CreateApolloClientOptions {
    * browser client takes its token from the session client instead.
    */
   accessToken?: string | null;
-  initialState?: NormalizedCacheObject;
+  /** What the server sent: a normalized snapshot, or its whole responses. */
+  initialState?: NormalizedCacheObject | readonly RequestQueryResult[];
   /** Active storefront locale tag sent as `Accept-Language`, for example `uk` or `pt-BR`. */
   locale?: string;
   cacheConfig?: InMemoryCacheConfig;

@@ -1,4 +1,8 @@
 import type { ApolloClient, NormalizedCacheObject } from '@apollo/client';
+import {
+  readRequestResults,
+  type RequestQueryResult,
+} from '@shopana/storefront-sdk/graphql/apollo';
 import type { ServerRequestScope } from '@shopana/storefront-sdk/server/requestScope';
 
 /**
@@ -9,7 +13,9 @@ import type { ServerRequestScope } from '@shopana/storefront-sdk/server/requestS
  */
 const GLOBAL_KEY = '__shopanaApolloState';
 
-type StateGlobal = { [GLOBAL_KEY]?: NormalizedCacheObject };
+type ApolloState = NormalizedCacheObject | RequestQueryResult[];
+
+type StateGlobal = { [GLOBAL_KEY]?: ApolloState };
 
 /** The client the app of a request renders with: the one whose cache goes to the browser. */
 const renderedClients = new WeakMap<ServerRequestScope, ApolloClient>();
@@ -30,7 +36,9 @@ export function apolloStateScript(scope: ServerRequestScope): string {
   const client = renderedClients.get(scope);
   if (!client) return '';
   // `<` escaped: the JSON cannot close the script or open a comment.
-  const json = JSON.stringify(client.extract()).replace(/</g, '\\u003c');
+  const json = JSON.stringify(
+    readRequestResults(client) ?? client.extract()
+  ).replace(/</g, '\\u003c');
   return `<script>window.${GLOBAL_KEY}=${json}</script>`;
 }
 
@@ -39,7 +47,7 @@ export function apolloStateScript(scope: ServerRequestScope): string {
  * holds it from then on. The client entry hydrates once the document is parsed, so the
  * script at its end has run.
  */
-export function takeApolloState(): NormalizedCacheObject | undefined {
+export function takeApolloState(): ApolloState | undefined {
   if (typeof window === 'undefined') return undefined;
   const global = window as unknown as StateGlobal;
   const state = global[GLOBAL_KEY];
