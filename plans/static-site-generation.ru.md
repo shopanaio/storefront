@@ -31,9 +31,10 @@ DigitalOcean не требуется; App Platform, Spaces и snapshot-плат�
 «Хостинг» и отклонены.
 
 **Инвалидация: точечная по триггеру плюс полная по расписанию, и то и другое.** Точечная
-перегенерация идёт от событий internal (`productUpdated`, `categoryUpdated`, `pageUpdated`, …) через
-новый исходящий вебхук `storefront.invalidate`; соответствие «сущность → страницы» builder строит
-сам из нормализованного кеша Apollo каждой отрендеренной страницы. Полная пересборка нужна при
+перегенерация идёт от событий internal (`productUpdated`, `categoryUpdated`, `pageUpdated`, …):
+тема подписывается на обычные вебхуки internal со списком топиков. Соответствие «сущность →
+страницы» координатор темы строит из нормализованного кеша Apollo каждой отрендеренной страницы.
+Рендер выполняется в GitHub Actions (`plans/static-invalidation-and-ci-builds.ru.md`). Полная пересборка нужна при
 смене макета (меню, настройки магазина, локали, новый образ темы) и как страховка раз в сутки.
 Отдельно нужны таймеры: промо и окна коллекций меняют вывод по времени без каких-либо событий.
 
@@ -395,65 +396,19 @@ R2 без Cloudflare-зоны) его не даёт.
 
 Payload событий содержит id и причины, не состояние; builder всегда перечитывает данные.
 
-### Исходящий вебхук из internal
+### Вебхуки internal и координатор в теме
 
-Сегодня исходящие вебхуки есть только у notifications и принимают только событийные типы
-уведомлений (`services/notifications/src/scripts/webhook/NotificationWebhookCreateScript.ts:21`).
-Предлагается не расширять notifications, а добавить в `apps/online-store` (владелец витринного
-контента) обработчик публикации:
+Заменено планом `plans/static-invalidation-and-ci-builds.ru.md`. Отдельного сообщения
+`storefront.invalidate` нет. Тема подписывается в admin на обычные вебхуки internal со списком
+топиков (сервис `webhooks`, `internal/plans/webhooks-service.ru.md`). Роль `static coordinator`
+того же образа (сервис `theme-static`, одна реплика) хранит индекс зависимостей страниц и очередь.
+Рендер выполняется только в GitHub Actions: координатор ставит workflow через REST API, а job
+забирает задания под аренду.
 
-- `@BatchEventHandler` на перечисленные выше типы, по образцу
-  `services/listing/src/handlers/ListingProductBatchEventHandlers.ts:32`; батчи по организации,
-  повтор с backoff уже дают durable-доставку.
-- Таблица `online_store.publish_targets (store_id, url, secret_version, status)` и admin-мутация
-  для регистрации URL builder-а (один магазин один статический сайт, несколько target на
-  stage/production).
-- Сообщение `storefront.invalidate` с телом
-  `{ storeId, occurredAt, changes: [{ type: 'product', id, reasons, affectedCategoryIds }, …] }`,
-  подпись по схеме notifications (`x-shopana-timestamp`, `x-shopana-signature: v1=…`,
-  `x-shopana-delivery-id`, код в `DeliveryExecutionScript.ts:135`), повтор при не-2xx.
-- Полная пересборка отдельный тип `storefront.rebuild` на `storeUpdated`,
-  `storeLocalesUpdated`, `navigationMenu*`.
-
-Кеш по тегам (`packages/cache/src/tags.ts`, доставка `cacheDeliveryWorkflow` в
-`packages/workflow-runtime/src/cache/InvalidationDelivery.ts:15`) не подходит как источник: тегов
-для каталога и контента нет, а доставка знает только строку тега без причин. Но словарь тегов
-стоит выровнять: индекс страниц builder-а и будущие теги `catalog:product:<id>`,
-`catalog:category:<id>`, `onlineStore:page:<id>` именуются по одной схеме `${service}:${name}:${id}`,
-чтобы один и тот же идентификатор означал одно и то же в Redis-кеше, в вебхуке и в индексе статики.
-
-### Builder внутри Node-приложения темы
-
-Builder это роль того же Docker-образа темы, а не отдельный проект: у образа уже есть серверный
-бандл, env, доступ к GraphQL и IAM. В стеке Swarm появляется второй сервис из того же образа,
-`theme-builder`, с одной репликой и командой `storefront-runtime static service`; сервис `theme`
-(SSR-фолбэк и auth) остаётся с двумя репликами. Одна реплика builder-а снимает вопрос блокировок
-очереди.
-
-- `POST /hooks/invalidate` принимает `storefront.invalidate`, проверяет подпись, кладёт
-  изменения в очередь; `POST /hooks/rebuild`, `POST /admin/render` (список путей),
-  `GET /status`, `GET /manifest`.
-- Очередь и индекс в SQLite (`better-sqlite3`) на volume сервиса: таблицы `pages`
-  (path, locale, hash, rendered_at, build_id, valid_until), `page_entities` (entity_key → path),
-  `jobs` (path, priority, reason, not_before), `timers`.
-- Коалесценция: окно 10 с, один job на путь, приоритет «товар > листинг > остальное», лимит
-  параллельности к GraphQL.
-- Таймеры: по каждой странице хранится `valid_until` (минимум по промо, лояльности, окнам
-  коллекций); по наступлении страница ставится в очередь.
-- Сверка: раз в час сравнивает `updatedAt` товаров, категорий, коллекций, страниц
-  (`Query.products`, `categories`, `vendors`, `onlineStorePages`) с `rendered_at` и догоняет
-  пропущенные вебхуки, аналог `cache.reconcileInvalidations` в internal.
-- Промах как триггер: сервис `theme`, отрендерив адрес, которого нет в статике, вызывает
-  `POST /admin/render` у builder-а. Повторный запрос уже статический, по сути ISR.
-- Публикация: `PutObject` в R2 по S3 API (HTML, JSON, manifest), затем purge Cloudflare по URL
-  пакетами по 30 (HTML и JSON страницы). Полная пересборка, запущенная по `storefront.rebuild`
-  или по расписанию, выполняется тем же сервисом; полная сборка при релизе образа идёт в GitHub
-  Actions (см. «Хостинг»).
-
-Тот же код доступен как CLI для разработки и CI:
-`storefront-runtime static build` (полная генерация в каталог или в R2),
-`storefront-runtime static render /products/x /categories/y`, `storefront-runtime static publish`,
-`storefront-runtime static serve` (локальная раздача каталога с логикой Worker-а, без Cloudflare).
+CLI для разработки и CI: `storefront-runtime static build` (полная генерация в каталог или в R2),
+`storefront-runtime static render /products/x /categories/y`, `storefront-runtime static run`
+(клиент аренды координатора), `storefront-runtime static serve` (локальная раздача каталога с
+логикой Worker-а).
 
 ### Что правильно: по триггеру или по расписанию
 
@@ -480,7 +435,7 @@ Builder это роль того же Docker-образа темы, а не от
                                └──► Tunnel → theme (SSR-фолбэк, auth-BFF) → gateway
               Cloudflare CDN ───────► R2 custom domain: /assets/*, /public/* (без Worker)
               Cloudflare CDN ───────► Tunnel → gateway: /graphql (GET кешируется, POST нет)
-internal events → storefront.invalidate → theme-builder → R2 + purge по URL
+internal webhooks → theme-static (индекс, очередь) → GitHub Actions → R2 + purge по URL
 GitHub Actions (ночь, релиз образа) → полная сборка → R2 + purge all
 ```
 
@@ -514,20 +469,11 @@ cookie-политики не меняется: hostname тот же, cookie firs
 - R2: один бакет на окружение, custom domain вида `static.<hostname>` для ассетов или тот же
   hostname через Worker; учётные данные S3 API для builder-а и GitHub Actions.
 
-### Полная сборка в GitHub Actions
+### Сборка в GitHub Actions
 
-Workflow в репозитории темы, по cron ночью (таймзона магазина) и по событию публикации образа
-`ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme`:
-
-1. Запускает контейнер образа с production-env (серверный GraphQL URL, приватный storefront-токен,
-   ключи R2, токен purge).
-2. `storefront-runtime static build --publish r2`: полная генерация, загрузка только изменившихся
-   объектов (сравнение хэшей с manifest в R2), новый `manifest.json`, удаление устаревших объектов
-   старше 7 дней.
-3. `purge_everything` и smoke против CDN.
-
-Builder-сервис в Swarm делает то же по `storefront.rebuild`, но релиз образа удобнее закрыть в
-CI: там же, где образ собирается.
+Все сборки, полные и точечные, выполняет workflow `static-site.yml` в репозитории темы. Его
+запускают координатор через `workflow_dispatch`, ночной cron и деплой нового образа. Протокол
+аренды, inputs и авторизация описаны в `plans/static-invalidation-and-ci-builds.ru.md`.
 
 ### Стоимость
 
@@ -594,10 +540,8 @@ entities, validUntil }`), пул воркеров, CSS-pruning, запись в 
 
 ### `internal`
 
-1. `apps/online-store`: обработчик публикации (`@BatchEventHandler` на события каталога,
-   контента, скидок, лояльности, отзывов), таблица target-ов, admin-мутация, подписанный
-   исходящий вебхук `storefront.invalidate` / `storefront.rebuild`; спецификация в
-   `specs/canonical/services/apps/` с BR/SC по правилам `specs/AGENTS.md`.
+1. Сервис `webhooks` с подпиской endpoint на список топиков и admin UI
+   (`internal/plans/webhooks-service.ru.md`); тема создаёт endpoint со своим списком топиков.
 2. Gateway: плагин `Cache-Control` для `GET` persisted documents из allow-list и маршрут
    `/graphql/<locale>`; persisted documents в Hive/Mesh конфиге.
 3. Опционально: теги `catalog:*`, `onlineStore:*` в `packages/cache/src/tags.ts` и их `touch` в
@@ -613,7 +557,7 @@ entities, validUntil }`), пул воркеров, CSS-pruning, запись в 
    SSR-origin), деплой через Terraform или wrangler в CI.
 2. `deploy/terraform/modules/frontend-edge`: R2 bucket и custom domain, Worker route, новые Cache
    Rules.
-3. `deploy/swarm/theme.yml`: сервис `theme-builder` из того же образа с volume для SQLite;
+3. `deploy/swarm/theme.yml`: сервис `theme-static` (координатор) из того же образа с volume для SQLite;
    `deploy-theme.mjs` учитывает его в `check`, `deploy`, `status`.
 4. Секреты builder-а и CI: ключи R2, токен Cloudflare purge, секрет подписи вебхука, серверный
    GraphQL URL и приватный storefront-токен (`shopana-storefront-private-token`), чтобы gateway
@@ -634,7 +578,7 @@ Mock-сервер `@shopana/mock-server` участвует только в ра
 - **Персонализация.** Вход через mock IAM (`x-mock-customer-id`): после гидратации баллы
   лояльности обновляются на тировые, счётчик корзины и аккаунт появляются, `viewer*` поля
   подгружаются.
-- **Инвалидация.** Подписанный `storefront.invalidate` с `productUpdated` → перегенерация только
+- **Инвалидация.** Подписанный вебхук `productUpdated` → перегенерация только
   ожидаемых страниц (по индексу), purge вызван для HTML и JSON; `navigationMenuUpdated` → полная
   пересборка; таймер `validUntil` → перегенерация страниц с промо.
 - **Worker.** Тесты на `workerd`/miniflare: переписывание ключей, фолбэк на origin, деградация в
@@ -673,10 +617,10 @@ _Готово, когда_ `pet.shopana.dev` отдаёт статику из CD
 этого момента stage живёт в режиме «полная пересборка по расписанию».
 
 **5. Точечная инвалидация (1–1,5 недели, обе стороны).**
-Internal: обработчик в `apps/online-store`, таблица target-ов, admin-мутация, спецификация, e2e в
-`e2e/tests` по правилам `e2e/AGENTS.md`. Storefront: роль builder, индекс сущностей, очередь,
-таймеры, сверка, публикация в R2 и purge, `theme-builder` в стеке. _Готово, когда_ правка товара в
-админке stage обновляет страницу в CDN не позднее минуты, а тест инвалидации на mock-сервере
+Internal: сервис `webhooks` (`internal/plans/webhooks-service.ru.md`). Storefront: координатор,
+индекс зависимостей, очередь, таймеры, сверка, workflow `static-site.yml`, `theme-static` в стеке
+(`plans/static-invalidation-and-ci-builds.ru.md`). _Готово, когда_ правка товара в
+админке stage обновляет страницу в CDN не позднее двух минут, а тест инвалидации на mock-сервере
 проходит.
 
 **6. Кеш GraphQL `GET` на CDN (неделя).**
