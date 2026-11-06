@@ -179,13 +179,23 @@ CREATE TABLE webhook_receipts (
 | Бит | Аспект       | Поля (пример для `Product`)                                         | Причины `productUpdated.reasons` |
 | --- | ------------ | ------------------------------------------------------------------- | -------------------------------- |
 | 1   | `content`    | `title`, `handle`, `description`, `seo`, `tags`, `options`           | `content`, `seo`, `options`, `tags`, прочие и неизвестные |
-| 2   | `pricing`    | `priceRange`, `compareAtPriceRange`, `variants.price`, промо-бейдж   | `pricing`, `variant`             |
+| 2   | `pricing`    | `priceRange`, `compareAtPriceRange`, `variants.price`, `variants.compareAtPrice` | `pricing`, `variant`             |
 | 4   | `inventory`  | `availableForSale`, `quantityAvailable`                             | `inventory`, `variant`           |
 | 8   | `media`      | `featuredImage`, `media`                                            | `media`                          |
 | 16  | `membership` | только у list и query: состав списка                                | `category`, `collection`, `vendor`, `publication`, `status` |
 | 32  | `reviews`    | `reviewsSummary`, `rating`, `reviews`                               | топики `review*`, `productQuestion*` |
 | 64  | `loyalty`    | `loyaltyOpportunity`                                                | топики `loyaltyProgram*`         |
 | 128 | `translation`| любое переводимое поле в нелокали по умолчанию                      | `resourceTranslationsUpdated`    |
+| 256 | `promotions` | `ProductVariant.promotions`, корневое `storefrontPromotions`        | топики `discount*`               |
+
+`pricing` и `promotions` — разные аспекты. Catalog и listing отдают базовую цену варианта без
+скидок: `price` и `compareAtPrice` берутся из состояния варианта
+(`internal/services/catalog/src/resolvers/storefront/ProductVariantResolver.ts:71`), а сортировка,
+фильтр и правила динамических коллекций по цене работают по той же цене. Скидка вычисляется
+только в checkout. Pricing в storefront отдаёт лишь описание автоматических акций
+(`ProductVariant.promotions`, `Query.storefrontPromotions`): бейдж, тексты, тип и размер,
+`startsAt`/`endsAt`. Поэтому изменение скидки никогда не меняет цены и состав листингов. Оно
+меняет только бейджи и баннеры акций.
 
 Пример: товар в карточке категории даёт `entity Product:A` с маской `content|pricing|inventory|media`.
 Тот же товар в хлебных крошках или в «недавно смотрели» даёт только `content`. Изменение
@@ -229,7 +239,7 @@ CREATE TABLE webhook_receipts (
 | `tag*`                                                           | `Query#dynamicCollection` с `membership` (теги видны только через правила и фильтры)                                            |
 | `pageCreated/Updated/Deleted`                                    | своя страница `/pages/:handle` (`gone` при удалении); entity `OnlineStorePage:<id>`                                             |
 | `navigationMenu*`, `storeUpdated`, `storeLocalesUpdated`, `storeConfigurationUpdated` | `full`                                                                                     |
-| `discount*`                                                      | `full` с аспектом `pricing`: все страницы, где есть хотя бы одна зависимость с битом `pricing` (у скидки нет списка товаров в событии) |
+| `discount*`                                                      | все страницы с аспектом `promotions`: бейджи `ProductVariant.promotions` и баннеры `Query#storefrontPromotions`. В событии нет списка вариантов, поэтому затронуты все такие страницы; цены и листинги не трогаются |
 | `review*`, `productQuestion*`                                    | `Product:<data.productId>` entity с `reviews`; `Product:<id>#reviews` list                                                      |
 | `reviewStoreConfigurationUpdated`, `loyaltyProgram*`             | все страницы с аспектом `reviews` / `loyalty`                                                                                   |
 | `resourceTranslationsUpdated`                                    | entity `<resourceType>:<resourceId>` с `translation`, только локали из `data.locales`                                           |
@@ -524,9 +534,14 @@ admin UI. От темы нужен только endpoint в admin со спис�
 - **Задержка 1–1,5 минуты** против секунд у builder-а в Swarm. Для цен и остатков это
   компенсирует слой 2 (GET persisted documents с коротким TTL) и клиентское уточнение остатков из
   исходного плана.
-- **Скидки.** Без списка товаров в событии `discount*` перерисовывает все страницы с `pricing`, то
-  есть почти весь сайт. Это решается, если `discountUpdated` начнёт сообщать затронутые
-  товары или категории. Это доработка pricing, она не входит в первую версию.
+- **Скидки.** В `discount*` нет списка затронутых вариантов, поэтому событие перерисовывает все
+  страницы с аспектом `promotions`. Цены и листинги оно не трогает: скидка к цене применяется только
+  в checkout. Если бейджи акций выводятся на карточках листингов, это почти все листинги и товары.
+  Есть два способа сузить:
+  - `discountUpdated` сообщает затронутые варианты или категории (доработка pricing);
+  - тема грузит бейджи клиентом через слой 2, как промо в шапке из исходного плана.
+
+  Первая версия обходится без обоих.
 - **Единственная реплика координатора.** Пока он недоступен, вебхуки получают ошибку соединения
   от Tunnel, и internal повторяет их до 35 часов. Сайт продолжает отдаваться из R2. Отдельное HA
   не требуется.
