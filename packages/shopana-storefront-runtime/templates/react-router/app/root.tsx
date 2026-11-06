@@ -7,8 +7,9 @@ import runtimeApp from '@src/runtime/app';
 import ErrorPage from '@src/runtime/error';
 import * as layout from '@src/runtime/layout';
 import themeMiddleware from './middleware';
+import pwa from './pwa';
 
-const root = createRuntimeRoot({ app: runtimeApp, layout, ErrorPage });
+const root = createRuntimeRoot({ app: runtimeApp, layout, ErrorPage, pwa });
 
 export const middleware = [
   createRuntimeMiddleware(runtimeApp),

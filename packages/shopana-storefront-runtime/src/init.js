@@ -33,6 +33,8 @@ const frameworkLayouts = {
       'app/[locale]/[[...slug]]/error.tsx',
       'app/auth/[action]/route.ts',
       'app/auth/headless/[action]/route.ts',
+      'app/manifest.webmanifest/route.ts',
+      'app/sw.js/route.ts',
       'src/i18n/request.ts',
       'next-env.d.ts',
       'tsconfig.json',
@@ -55,6 +57,8 @@ const frameworkLayouts = {
       {
         kind: 'instrumentationClient',
         candidates: ['instrumentation-client.js', 'instrumentation-client.ts'],
+        // Registers the service worker; an override registers it itself.
+        defaultTemplate: 'instrumentation-client.ts',
       },
     ],
     linksPublicDirectory: true,
@@ -71,6 +75,8 @@ const frameworkLayouts = {
       'app/routes/page.tsx',
       'app/routes/auth.ts',
       'app/routes/auth-headless.ts',
+      'app/routes/manifest.ts',
+      'app/routes/sw.ts',
       'tsconfig.json',
     ],
     overrideGroups: [
@@ -95,6 +101,15 @@ const frameworkLayouts = {
  * `src/runtime/middleware.ts`: that is the Next.js middleware of a theme, a function of
  * another contract.
  */
+const themePwaCandidates = [
+  'src/runtime/pwa.ts',
+  'src/runtime/pwa.tsx',
+  'src/runtime/pwa.js',
+];
+
+/** Addresses the runtime serves itself: a file of the theme's `public` would shadow them. */
+const runtimePublicPaths = ['manifest.webmanifest', 'sw.js'];
+
 const themeMiddlewareCandidates = [
   'src/runtime/route-middleware.ts',
   'src/runtime/route-middleware.tsx',
@@ -304,6 +319,41 @@ async function writeThemeMiddleware(rootDir, runtimeDir) {
   await writeFile(path.join(runtimeDir, 'app/middleware.ts'), contents);
 }
 
+/** `app/pwa.ts`: the theme's part of the installable app, or none (the store's manifest). */
+async function writeThemePwa(rootDir, runtimeDir) {
+  const matches = [];
+  for (const candidate of themePwaCandidates) {
+    if (await exists(path.join(rootDir, candidate))) matches.push(candidate);
+  }
+  if (matches.length > 1) {
+    throw new Error(
+      `Conflicting theme PWA definitions: ${matches.join(', ')}. Keep exactly one.`
+    );
+  }
+
+  const contents = matches.length
+    ? "export { default } from '@src/runtime/pwa';\n"
+    : [
+        "import { defineRuntimePwa } from '@shopana/storefront/pwa';",
+        '',
+        'export default defineRuntimePwa({});',
+        '',
+      ].join('\n');
+  await mkdir(path.join(runtimeDir, 'app'), { recursive: true });
+  await writeFile(path.join(runtimeDir, 'app/pwa.ts'), contents);
+}
+
+async function assertNoRuntimePublicFiles(rootDir) {
+  for (const file of runtimePublicPaths) {
+    if (await exists(path.join(rootDir, 'public', file))) {
+      throw new Error(
+        `public/${file} shadows the ${file} the runtime serves. Remove it; the manifest ` +
+          'comes from the store and src/runtime/pwa.ts.'
+      );
+    }
+  }
+}
+
 async function linkPublicDirectory(rootDir, runtimeDir) {
   const source = path.join(rootDir, 'public');
   const target = path.join(runtimeDir, 'public');
@@ -333,6 +383,7 @@ export async function initRuntime(options = {}) {
   const framework = await readRuntimeFramework(rootDir, options.framework);
   const layout = frameworkLayouts[framework];
   const overrides = await detectOverrides(rootDir, layout.overrideGroups);
+  await assertNoRuntimePublicFiles(rootDir);
 
   await mkdir(runtimeDir, { recursive: true });
   assertRuntimeDirectoryIsChild(
@@ -374,6 +425,7 @@ export async function initRuntime(options = {}) {
     }
   }
 
+  await writeThemePwa(rootDir, runtimeDir);
   if (framework === 'react-router') {
     await writeThemeMiddleware(rootDir, runtimeDir);
   }

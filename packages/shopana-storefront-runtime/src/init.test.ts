@@ -79,12 +79,15 @@ describe('initRuntime for React Router', () => {
       'app/entry.server.tsx',
       'app/middleware.ts',
       'app/page-route.ts',
+      'app/pwa.ts',
       'app/root.tsx',
       'app/routes.ts',
       'app/routes/auth-headless.ts',
       'app/routes/auth.ts',
       'app/routes/layout.tsx',
+      'app/routes/manifest.ts',
       'app/routes/page.tsx',
+      'app/routes/sw.ts',
       'react-router.config.ts',
       'tsconfig.json',
       'vite.config.ts',
@@ -92,6 +95,30 @@ describe('initRuntime for React Router', () => {
     expect(
       await readFile(path.join(result.runtimeDir, 'app/middleware.ts'), 'utf8')
     ).toContain('const middleware: RuntimeMiddleware[] = [];');
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/pwa.ts'), 'utf8')
+    ).toContain('defineRuntimePwa({})');
+  });
+
+  it("uses the theme's PWA definition", async () => {
+    await writeTheme(
+      { name: 'theme', storefront: { framework: 'react-router' } },
+      { 'src/runtime/pwa.ts': 'export default {};\n' }
+    );
+    const result = await initRuntime({ rootDir });
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/pwa.ts'), 'utf8')
+    ).toBe("export { default } from '@src/runtime/pwa';\n");
+  });
+
+  it('refuses a public file over an address the runtime serves', async () => {
+    await writeTheme(
+      { name: 'theme', storefront: { framework: 'react-router' } },
+      { 'public/manifest.webmanifest': '{}' }
+    );
+    await expect(initRuntime({ rootDir })).rejects.toThrow(
+      'public/manifest.webmanifest shadows'
+    );
   });
 
   it('uses the theme middleware and root config overrides', async () => {

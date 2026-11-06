@@ -70,6 +70,10 @@
       "types": "./dist/core/page-definition.d.ts",
       "default": "./dist/core/page-definition.js"
     },
+    "./pwa": {
+      "types": "./dist/pwa.d.ts",
+      "default": "./dist/pwa.js"
+    },
     "./next/auth": {
       "types": "./dist/next/auth.d.ts",
       "default": "./dist/next/auth.js"
@@ -93,6 +97,10 @@
     "./next/page": {
       "types": "./dist/next/page.d.ts",
       "default": "./dist/next/page.js"
+    },
+    "./next/pwa": {
+      "types": "./dist/next/pwa.d.ts",
+      "default": "./dist/next/pwa.js"
     },
     "./react-router/app": {
       "types": "./dist/react-router/app.d.ts",
@@ -125,6 +133,10 @@
     "./react-router/page": {
       "types": "./dist/react-router/page.d.ts",
       "default": "./dist/react-router/page.js"
+    },
+    "./react-router/pwa": {
+      "types": "./dist/react-router/pwa.d.ts",
+      "default": "./dist/react-router/pwa.js"
     },
     "./react-router/root": {
       "types": "./dist/react-router/root.d.ts",

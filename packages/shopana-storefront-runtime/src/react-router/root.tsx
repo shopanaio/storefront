@@ -7,9 +7,13 @@ import {
   type MetaFunction,
   type ShouldRevalidateFunctionArgs,
 } from 'react-router';
+import { MANIFEST_PATH, type RuntimePwaDefinition } from '../core/pwa';
 import type { RuntimeAppDefinition } from './app';
 import { getKnownLocaleSegments, RuntimeAppScope } from './document';
 import { RouteErrorPage, type RuntimeErrorPage } from './error';
+import { mergeMetaDescriptors } from './metadata';
+import { pwaMetaDescriptors } from './pwa-meta';
+import type { RuntimeRootData } from './route-data';
 
 /** The theme's root layout module (`src/runtime/layout.tsx`). */
 export interface RuntimeLayoutModule {
@@ -25,6 +29,8 @@ export interface CreateRuntimeRootOptions {
   app: RuntimeAppDefinition;
   layout: RuntimeLayoutModule;
   ErrorPage: RuntimeErrorPage;
+  /** The theme's part of the installable app (`src/runtime/pwa.ts`). */
+  pwa: RuntimePwaDefinition;
 }
 
 function firstSegment(url: URL): string {
@@ -40,6 +46,7 @@ export function createRuntimeRoot({
   app,
   layout,
   ErrorPage,
+  pwa,
 }: CreateRuntimeRootOptions) {
   const ThemeLayout = layout.default;
 
@@ -84,8 +91,18 @@ export function createRuntimeRoot({
     return locale(currentUrl) !== locale(nextUrl);
   }
 
-  const meta: MetaFunction = (args) => layout.meta?.(args) ?? [];
-  const links: LinksFunction = () => layout.links?.() ?? [];
+  /** The app's tags under the theme's: a theme tag with the same name replaces the app's. */
+  const meta: MetaFunction = (args) => {
+    const store = (args.loaderData as RuntimeRootData | undefined)?.app?.store;
+    return mergeMetaDescriptors(
+      store ? pwaMetaDescriptors(store, pwa) : [],
+      layout.meta?.(args) ?? []
+    );
+  };
+  const links: LinksFunction = () => [
+    { rel: 'manifest', href: MANIFEST_PATH },
+    ...(layout.links?.() ?? []),
+  ];
 
   return { Layout, App, ErrorBoundary, shouldRevalidate, meta, links };
 }

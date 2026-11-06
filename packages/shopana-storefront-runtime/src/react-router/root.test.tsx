@@ -13,6 +13,7 @@ const root = createRuntimeRoot({
   },
   layout: { default: ({ children }) => children },
   ErrorPage: () => null,
+  pwa: {},
 });
 
 const revalidates = (
