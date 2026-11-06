@@ -2,6 +2,7 @@ import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/ap
 import type { CartConfig } from '@shopana/storefront-sdk/modules/cart/core/config';
 import type { StorefrontRoutingConfig } from '@shopana/storefront-sdk/routing';
 import type { AppPreloadConfig } from '@shopana/storefront-sdk/server/app';
+import type { RuntimeTitleTemplate } from '../core/site';
 
 /**
  * The storefront app of a React Router theme (`src/runtime/app.ts`): what the Next.js runtime
@@ -15,6 +16,11 @@ export interface RuntimeAppDefinition {
   routing: StorefrontRoutingConfig;
   cartConfig: CartConfig;
   preload?: AppPreloadConfig;
+  /**
+   * The title of a page with the store in it ("Socks — Shop" for "Socks"). A page without a
+   * title has the title of the theme layout's `meta`.
+   */
+  titleTemplate?: RuntimeTitleTemplate;
 }
 
 export function defineRuntimeApp<const TApp extends RuntimeAppDefinition>(

@@ -1,9 +1,14 @@
 import type { MetaDescriptor } from 'react-router';
-import type {
-  RuntimeMetadata,
-  RuntimeMetadataImage,
-  RuntimeMetadataImages,
+import { splitLocaleFromPathname } from '@shopana/storefront-sdk/routing';
+import {
+  jsonLdList,
+  openGraphProductProperties,
+  type RuntimeMetadata,
+  type RuntimeMetadataImage,
+  type RuntimeMetadataImages,
 } from '../core/metadata';
+import { withSiteMetadata, type RuntimeTitleTemplate } from '../core/site';
+import type { RuntimeRootData } from './route-data';
 
 function imageList(images: RuntimeMetadataImages | undefined) {
   if (!images) return [];
@@ -61,22 +66,43 @@ export function toMetaDescriptors(
   }
 
   if (openGraph) {
+    property('og:type', openGraph.type);
     property('og:title', openGraph.title);
     property('og:description', openGraph.description);
     property('og:url', openGraph.url);
     property('og:site_name', openGraph.siteName);
     property('og:locale', openGraph.locale);
+    for (const locale of openGraph.alternateLocales ?? []) {
+      property('og:locale:alternate', locale);
+    }
     for (const image of imageList(openGraph.images)) {
       property('og:image', image.url);
       property('og:image:width', image.width);
       property('og:image:height', image.height);
       property('og:image:alt', image.alt);
     }
+    const { article, product } = openGraph;
+    if (article) {
+      property('article:published_time', article.publishedTime);
+      property('article:modified_time', article.modifiedTime);
+      property('article:section', article.section);
+      for (const author of article.authors ?? []) {
+        property('article:author', author);
+      }
+      for (const tag of article.tags ?? []) property('article:tag', tag);
+    }
+    for (const [name, content] of openGraphProductProperties(product)) {
+      property(name, content);
+    }
   }
 
   if (twitter) {
     const images = imageList(twitter.images);
-    named('twitter:card', images.length ? 'summary_large_image' : 'summary');
+    // Without an image of its own the page leaves the card to the root's tags (and its image).
+    named(
+      'twitter:card',
+      twitter.card ?? (images.length ? 'summary_large_image' : undefined)
+    );
     named('twitter:title', twitter.title);
     named('twitter:description', twitter.description);
     for (const image of images) {
@@ -91,13 +117,26 @@ export function toMetaDescriptors(
     }
   }
 
+  for (const document of jsonLdList(metadata.jsonLd)) {
+    tags.push({ 'script:ld+json': document } as MetaDescriptor);
+  }
+
   return tags;
 }
+
+/** Repeated properties: the page's set replaces the root's whole set. */
+const REPEATED_PROPERTIES = [
+  'og:image',
+  'og:locale:alternate',
+  'article:author',
+  'article:tag',
+];
 
 /**
  * The identity of a descriptor: the page's descriptors replace the root's with the same one.
  * Repeated tags share one identity, so the page's set replaces the root's whole set: its
- * images (`og:image*`, `twitter:image*`) and its language alternates per language.
+ * images (`og:image*`, `twitter:image*`), Open Graph locales, authors and tags, and its
+ * schema.org documents; language alternates are one per language.
  */
 function descriptorKey(descriptor: MetaDescriptor): string | null {
   const record = descriptor as Record<string, unknown>;
@@ -108,10 +147,12 @@ function descriptorKey(descriptor: MetaDescriptor): string | null {
       : `name:${record.name}`;
   }
   if (typeof record.property === 'string') {
-    return record.property.startsWith('og:image')
-      ? 'property:og:image'
-      : `property:${record.property}`;
+    const repeated = REPEATED_PROPERTIES.find((name) =>
+      (record.property as string).startsWith(name)
+    );
+    return `property:${repeated ?? record.property}`;
   }
+  if ('script:ld+json' in record) return 'script:ld+json';
   if (record.rel === 'canonical') return 'canonical';
   if (record.rel === 'alternate' && typeof record.hrefLang === 'string') {
     return `alternate:${record.hrefLang.toLowerCase()}`;
@@ -183,4 +224,28 @@ export function applyDocumentMetadata(metadata: RuntimeMetadata): () => void {
   return () => {
     for (const step of undo.reverse()) step();
   };
+}
+
+/**
+ * The page's metadata with the site's (see `withSiteMetadata`), from the root data: the
+ * store, the languages and the public origin. Without root data (the root error page) the
+ * page's own.
+ */
+export function pageSiteMetadata(
+  metadata: RuntimeMetadata | null | undefined,
+  root: RuntimeRootData | null | undefined,
+  pathname: string,
+  titleTemplate: RuntimeTitleTemplate | undefined
+): RuntimeMetadata | null | undefined {
+  if (!root?.app) return metadata;
+  const { store, locale, locales, localePrefix } = root.app;
+  return withSiteMetadata(metadata, {
+    site: { origin: root.origin, locale, locales, localePrefix },
+    store,
+    pathname: splitLocaleFromPathname(
+      pathname,
+      locales.locales.map((item) => item.segment)
+    ).pathname,
+    titleTemplate,
+  });
 }

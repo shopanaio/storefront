@@ -25,6 +25,7 @@ import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/ap
 import { peekApolloRequestClientOf } from '@shopana/storefront-sdk/server/requestClient';
 import { HydratedProvider } from '@shopana/storefront-sdk/core/Hydrated';
 import { useServerRequestScope } from '@shopana/storefront-sdk/core/ServerRequestScope';
+import type { RuntimeSite } from '../core/site';
 import type { RuntimeAppDefinition } from './app';
 import type { RuntimeAppProps, RuntimeRootData } from './route-data';
 
@@ -57,6 +58,8 @@ export function RuntimeAppScope({
  */
 let knownLocaleSegments: readonly string[] = [];
 let defaultLocaleSegment = '';
+let knownLocales: RuntimeAppProps['locales'] | null = null;
+let knownLocalePrefix: RuntimeAppProps['localePrefix'] = 'as-needed';
 
 export function getKnownLocaleSegments(): readonly string[] {
   return knownLocaleSegments;
@@ -67,11 +70,32 @@ export function getDefaultLocaleSegment(): string {
   return defaultLocaleSegment;
 }
 
-function rememberLocales(locales: RuntimeAppProps['locales']) {
+/**
+ * The site of a page the browser loads itself, in the language of its locale segment: the
+ * browser's origin and the languages of the last root data. Null before the first render.
+ */
+export function getClientSite(localeSegment: string): RuntimeSite | null {
+  if (!knownLocales || typeof window === 'undefined') return null;
+  const locale =
+    knownLocales.locales.find(
+      (item) => item.segment.toLowerCase() === localeSegment.toLowerCase()
+    ) ?? knownLocales.defaultLocale;
+  return {
+    origin: window.location.origin,
+    locale,
+    locales: knownLocales,
+    localePrefix: knownLocalePrefix,
+  };
+}
+
+function rememberLocales(app: RuntimeAppProps) {
+  const { locales } = app;
   knownLocaleSegments = locales.locales.map((locale) =>
     locale.segment.toLowerCase()
   );
   defaultLocaleSegment = locales.defaultLocale.segment;
+  knownLocales = locales;
+  knownLocalePrefix = app.localePrefix;
 }
 
 /**
@@ -104,8 +128,18 @@ export function useLocaleSegments(): readonly string[] {
  * root loader failed and the root error boundary renders.
  */
 export function useRuntimeApp(): RuntimeAppProps | null {
+  return useRuntimeRoot()?.app ?? null;
+}
+
+/** The root data (the app's and the public origin), or null on the root error page. */
+export function useRuntimeRoot(): RuntimeRootData | null {
   const data = useRouteLoaderData('root') as RuntimeRootData | undefined;
-  return data?.app ?? null;
+  return data?.app ? data : null;
+}
+
+/** The theme's app definition (`src/runtime/app.ts`), under the root layout. */
+export function useRuntimeAppDefinition(): RuntimeAppDefinition | null {
+  return useContext(RuntimeAppContext);
 }
 
 function RuntimeApolloProvider({
@@ -148,10 +182,9 @@ function RuntimeApolloProvider({
 export function AppProvider({ children }: { children: ReactNode }) {
   const runtimeApp = useContext(RuntimeAppContext);
   const app = useRuntimeApp();
-  const locales = app?.locales;
   useEffect(() => {
-    if (locales) rememberLocales(locales);
-  }, [locales]);
+    if (app) rememberLocales(app);
+  }, [app]);
 
   if (!runtimeApp) {
     throw new Error(

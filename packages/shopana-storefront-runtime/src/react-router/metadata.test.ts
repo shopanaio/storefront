@@ -49,6 +49,36 @@ describe('toMetaDescriptors', () => {
     ]);
   });
 
+  it('renders Open Graph types, product tags and schema.org documents', () => {
+    expect(
+      toMetaDescriptors({
+        openGraph: {
+          type: 'product',
+          alternateLocales: ['en'],
+          product: {
+            price: { amount: '120.00', currency: 'UAH' },
+            availability: 'in stock',
+          },
+        },
+        twitter: { card: 'summary' },
+        jsonLd: { '@context': 'https://schema.org', '@type': 'Product' },
+      })
+    ).toEqual([
+      { property: 'og:type', content: 'product' },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'product:price:amount', content: '120.00' },
+      { property: 'product:price:currency', content: 'UAH' },
+      { property: 'product:availability', content: 'in stock' },
+      { name: 'twitter:card', content: 'summary' },
+      {
+        'script:ld+json': {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+        },
+      },
+    ]);
+  });
+
   it('renders nothing without metadata', () => {
     expect(toMetaDescriptors(undefined)).toEqual([]);
     expect(toMetaDescriptors({ title: null, description: '' })).toEqual([]);

@@ -74,6 +74,10 @@
       "types": "./dist/pwa.d.ts",
       "default": "./dist/pwa.js"
     },
+    "./seo": {
+      "types": "./dist/seo.d.ts",
+      "default": "./dist/seo.js"
+    },
     "./next/auth": {
       "types": "./dist/next/auth.d.ts",
       "default": "./dist/next/auth.js"
@@ -101,6 +105,10 @@
     "./next/pwa": {
       "types": "./dist/next/pwa.d.ts",
       "default": "./dist/next/pwa.js"
+    },
+    "./next/seo": {
+      "types": "./dist/next/seo.d.ts",
+      "default": "./dist/next/seo.js"
     },
     "./react-router/app": {
       "types": "./dist/react-router/app.d.ts",
@@ -137,6 +145,10 @@
     "./react-router/pwa": {
       "types": "./dist/react-router/pwa.d.ts",
       "default": "./dist/react-router/pwa.js"
+    },
+    "./react-router/seo": {
+      "types": "./dist/react-router/seo.d.ts",
+      "default": "./dist/react-router/seo.js"
     },
     "./react-router/root": {
       "types": "./dist/react-router/root.d.ts",

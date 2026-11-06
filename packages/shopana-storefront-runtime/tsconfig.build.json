@@ -8,6 +8,7 @@
   },
   "include": [
     "src/pwa.ts",
+    "src/seo.ts",
     "src/core/**/*.ts",
     "src/core/**/*.tsx",
     "src/next/**/*.ts",

@@ -87,7 +87,11 @@ describe('initRuntime for React Router', () => {
       'app/routes/layout.tsx',
       'app/routes/manifest.ts',
       'app/routes/page.tsx',
+      'app/routes/robots.ts',
+      'app/routes/sitemap-file.ts',
+      'app/routes/sitemap.ts',
       'app/routes/sw.ts',
+      'app/seo.ts',
       'react-router.config.ts',
       'tsconfig.json',
       'vite.config.ts',
@@ -98,6 +102,20 @@ describe('initRuntime for React Router', () => {
     expect(
       await readFile(path.join(result.runtimeDir, 'app/pwa.ts'), 'utf8')
     ).toContain('defineRuntimePwa({})');
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/seo.ts'), 'utf8')
+    ).toContain('defineRuntimeSeo({})');
+  });
+
+  it("uses the theme's SEO definition", async () => {
+    await writeTheme(
+      { name: 'theme', storefront: { framework: 'react-router' } },
+      { 'src/runtime/seo.ts': 'export default {};\n' }
+    );
+    const result = await initRuntime({ rootDir });
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/seo.ts'), 'utf8')
+    ).toBe("export { default } from '@src/runtime/seo';\n");
   });
 
   it("uses the theme's PWA definition", async () => {

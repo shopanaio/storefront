@@ -8,15 +8,20 @@ import type {
 import type { SerializableApolloQuery } from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
 import type { RuntimeMetadata } from './metadata';
 import type { SDKRequestContext } from './request-context';
+import type { RuntimeSiteContext } from './site';
 import { runtimeDefinitionBrand } from './page-definition-brand';
 
 export type {
+  RuntimeJsonLd,
   RuntimeMetadata,
   RuntimeMetadataImage,
   RuntimeMetadataImages,
   RuntimeOpenGraph,
+  RuntimeOpenGraphArticle,
+  RuntimeOpenGraphProduct,
   RuntimeTwitter,
 } from './metadata';
+export type { RuntimeSiteContext } from './site';
 export type { SDKRequestContext } from './request-context';
 
 export type RuntimeRenderablePageType = Exclude<PageType, '404'>;
@@ -38,6 +43,8 @@ export interface RuntimePageContext<
   routeParams: Readonly<Record<string, string | undefined>>;
   searchParams: Readonly<Record<string, string | string[] | undefined>>;
   services: RuntimePageServices;
+  /** The public site and the page's language: absolute addresses for metadata. */
+  site: RuntimeSiteContext;
 }
 
 export type RuntimePageDataResult<TData> =
@@ -81,7 +88,10 @@ export interface RuntimePageDefinition<
 
   loadTemplate(): Promise<PageTemplate<TData>>;
 
-  /** Server only, with the data `preload` returned; its queries hit the request cache. */
+  /**
+   * With the data `preload` returned on the server, where its queries hit the request cache
+   * and its `jsonLd` reaches search engines; also in the browser after a client navigation.
+   */
   generateMetadata?(
     context: RuntimePageContext<TPageType>,
     data: TData

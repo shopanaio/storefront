@@ -4,7 +4,11 @@ import runtimeApp from '@src/runtime/app';
 import ErrorPage from '@src/runtime/error';
 import { pageRoute } from '../page-route';
 
-const route = createRuntimePageRoute({ ...pageRoute, ErrorPage });
+const route = createRuntimePageRoute({
+  ...pageRoute,
+  ErrorPage,
+  titleTemplate: runtimeApp.titleTemplate,
+});
 
 export const loader = createRuntimePageLoader(runtimeApp, pageRoute);
 export const clientLoader = route.clientLoader;

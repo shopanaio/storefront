@@ -56,6 +56,12 @@ import {
   getModuleMetadataGenerator,
 } from '../core/module-page';
 import type { RuntimeMetadata } from '../core/metadata';
+import {
+  addressSite,
+  createSiteContext,
+  type RuntimeSite,
+  type RuntimeTitleTemplate,
+} from '../core/site';
 import type {
   RuntimePageDataResult,
   RuntimePageModuleMap,
@@ -66,14 +72,18 @@ import type { SDKRequestContext } from '../core/request-context';
 import { resolveRuntimeRoute } from '../core/route';
 import {
   getBrowserApolloClient,
+  getClientSite,
   getDefaultLocaleSegment,
   getKnownLocaleSegments,
   useLocaleSegments,
+  useRuntimeAppDefinition,
+  useRuntimeRoot,
 } from './document';
 import { RouteErrorPage, type RuntimeErrorPage } from './error';
 import {
   applyDocumentMetadata,
   mergeMetaDescriptors,
+  pageSiteMetadata,
   toMetaDescriptors,
 } from './metadata';
 import { isNotFoundSignal } from './not-found-response';
@@ -86,7 +96,7 @@ import {
   type PageLayoutComponent,
   type RuntimePageRouteDefinition,
 } from './page-modules';
-import type { RuntimePageData } from './route-data';
+import type { RuntimePageData, RuntimeRootData } from './route-data';
 import type { HydratedPage } from './hydration';
 
 export type {
@@ -95,11 +105,14 @@ export type {
   RuntimePageRouteDefinition,
 } from './page-modules';
 
-export interface CreateRuntimePageRouteOptions extends RuntimePageRouteDefinition {
+export interface CreateRuntimeLayoutRouteOptions extends RuntimePageRouteDefinition {
   ErrorPage: RuntimeErrorPage;
 }
 
-export type CreateRuntimeLayoutRouteOptions = CreateRuntimePageRouteOptions;
+export interface CreateRuntimePageRouteOptions extends CreateRuntimeLayoutRouteOptions {
+  /** The app's title template (`RuntimeAppDefinition.titleTemplate`). */
+  titleTemplate?: RuntimeTitleTemplate;
+}
 
 function moduleRecord(pathname: string) {
   const resolution = resolveRuntimeRoute(pathname);
@@ -336,13 +349,21 @@ function laterMetadata(
  */
 function PendingMetadata({ load }: { load: () => Promise<RuntimeMetadata> }) {
   const open = useDataGateOpen();
+  const root = useRuntimeRoot();
+  const titleTemplate = useRuntimeAppDefinition()?.titleTemplate;
+  // The address the page showed at: a screen of a stack under a later address keeps its own.
+  const location = useLocation();
+  const [pathname] = useState(location.pathname);
   useEffect(() => {
     if (!open) return;
     let active = true;
     let restore: (() => void) | null = null;
     load().then(
       (metadata) => {
-        if (active) restore = applyDocumentMetadata(metadata);
+        if (!active) return;
+        restore = applyDocumentMetadata(
+          pageSiteMetadata(metadata, root, pathname, titleTemplate) ?? {}
+        );
       },
       () => {}
     );
@@ -350,7 +371,7 @@ function PendingMetadata({ load }: { load: () => Promise<RuntimeMetadata> }) {
       active = false;
       restore?.();
     };
-  }, [load, open]);
+  }, [load, open, root, pathname, titleTemplate]);
   return null;
 }
 
@@ -420,14 +441,30 @@ type RenderableDefinition = Awaited<
   ReturnType<typeof loadPageModules>
 >['definition'];
 
+/**
+ * The site of a page the browser loads: the browser's origin and the address's language.
+ * Before the root data is known (a navigation during hydration) the address alone.
+ */
+function clientSite({ url, localeSegment }: ClientAddress): RuntimeSite {
+  return getClientSite(localeSegment) ?? addressSite(url, localeSegment);
+}
+
 function pageContext(
-  { request, searchParams, resolution }: ClientAddress,
+  address: ClientAddress,
   pageType: RuntimeRenderablePageType,
   services: RuntimePageServices
 ) {
+  const { request, searchParams, resolution } = address;
   const routeParams =
     resolution.kind === 'sdk' ? { ...resolution.route.params } : {};
-  return { pageType, request, routeParams, searchParams, services };
+  return {
+    pageType,
+    request,
+    routeParams,
+    searchParams,
+    services,
+    site: createSiteContext(clientSite(address)),
+  };
 }
 
 /**
@@ -660,7 +697,7 @@ export function createRuntimeLayoutRoute({
 }
 
 export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
-  const { ErrorPage, ...route } = options;
+  const { ErrorPage, titleTemplate, ...route } = options;
 
   function Page() {
     const page = useLoaderData() as RuntimePageData;
@@ -735,12 +772,32 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
     return readyPageData(pageType, definition, context, loaded.data);
   }
 
-  /** The theme's `<meta>` from the root, under the page's own metadata. */
-  const meta: MetaFunction = ({ loaderData, matches }) =>
-    mergeMetaDescriptors(
-      matches[0]?.meta ?? [],
-      toMetaDescriptors((loaderData as RuntimePageData | undefined)?.metadata)
+  /**
+   * The theme's `<meta>` from the root, under the page's own metadata with the site's: the
+   * title in the app's template, the canonical address, the page in each language, Open
+   * Graph and Twitter tags, and the page's schema.org documents.
+   */
+  const meta: MetaFunction = ({ loaderData, matches, location }) => {
+    const rootMeta = matches[0]?.meta ?? [];
+    const page = loaderData as RuntimePageData | undefined;
+    // The error page has the root's tags; a missing page stays out of search results.
+    if (!page) return rootMeta;
+    if (page.kind === 'not-found') {
+      return mergeMetaDescriptors(
+        rootMeta,
+        toMetaDescriptors({ robots: 'noindex' })
+      );
+    }
+    const root = matches.find((match) => match.id === 'root')?.loaderData as
+      | RuntimeRootData
+      | undefined;
+    return mergeMetaDescriptors(
+      rootMeta,
+      toMetaDescriptors(
+        pageSiteMetadata(page.metadata, root, location.pathname, titleTemplate)
+      )
     );
+  };
 
   return { Page, ErrorBoundary, clientLoader, meta };
 }

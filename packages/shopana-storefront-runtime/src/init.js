@@ -35,6 +35,9 @@ const frameworkLayouts = {
       'app/auth/headless/[action]/route.ts',
       'app/manifest.webmanifest/route.ts',
       'app/sw.js/route.ts',
+      'app/robots.txt/route.ts',
+      'app/sitemap.xml/route.ts',
+      'app/sitemaps/[file]/route.ts',
       'src/i18n/request.ts',
       'next-env.d.ts',
       'tsconfig.json',
@@ -77,6 +80,9 @@ const frameworkLayouts = {
       'app/routes/auth-headless.ts',
       'app/routes/manifest.ts',
       'app/routes/sw.ts',
+      'app/routes/robots.ts',
+      'app/routes/sitemap.ts',
+      'app/routes/sitemap-file.ts',
       'tsconfig.json',
     ],
     overrideGroups: [
@@ -107,8 +113,20 @@ const themePwaCandidates = [
   'src/runtime/pwa.js',
 ];
 
+const themeSeoCandidates = [
+  'src/runtime/seo.ts',
+  'src/runtime/seo.tsx',
+  'src/runtime/seo.js',
+];
+
 /** Addresses the runtime serves itself: a file of the theme's `public` would shadow them. */
-const runtimePublicPaths = ['manifest.webmanifest', 'sw.js'];
+const runtimePublicPaths = [
+  'manifest.webmanifest',
+  'sw.js',
+  'robots.txt',
+  'sitemap.xml',
+  'sitemaps',
+];
 
 const themeMiddlewareCandidates = [
   'src/runtime/route-middleware.ts',
@@ -343,12 +361,37 @@ async function writeThemePwa(rootDir, runtimeDir) {
   await writeFile(path.join(runtimeDir, 'app/pwa.ts'), contents);
 }
 
+/** `app/seo.ts`: the theme's robots rules and sitemaps, or none (all allowed, no sitemap). */
+async function writeThemeSeo(rootDir, runtimeDir) {
+  const matches = [];
+  for (const candidate of themeSeoCandidates) {
+    if (await exists(path.join(rootDir, candidate))) matches.push(candidate);
+  }
+  if (matches.length > 1) {
+    throw new Error(
+      `Conflicting theme SEO definitions: ${matches.join(', ')}. Keep exactly one.`
+    );
+  }
+
+  const contents = matches.length
+    ? "export { default } from '@src/runtime/seo';\n"
+    : [
+        "import { defineRuntimeSeo } from '@shopana/storefront/seo';",
+        '',
+        'export default defineRuntimeSeo({});',
+        '',
+      ].join('\n');
+  await mkdir(path.join(runtimeDir, 'app'), { recursive: true });
+  await writeFile(path.join(runtimeDir, 'app/seo.ts'), contents);
+}
+
 async function assertNoRuntimePublicFiles(rootDir) {
   for (const file of runtimePublicPaths) {
     if (await exists(path.join(rootDir, 'public', file))) {
       throw new Error(
         `public/${file} shadows the ${file} the runtime serves. Remove it; the manifest ` +
-          'comes from the store and src/runtime/pwa.ts.'
+          'comes from the store and src/runtime/pwa.ts, robots.txt and the sitemaps from ' +
+          'src/runtime/seo.ts.'
       );
     }
   }
@@ -426,6 +469,7 @@ export async function initRuntime(options = {}) {
   }
 
   await writeThemePwa(rootDir, runtimeDir);
+  await writeThemeSeo(rootDir, runtimeDir);
   if (framework === 'react-router') {
     await writeThemeMiddleware(rootDir, runtimeDir);
   }

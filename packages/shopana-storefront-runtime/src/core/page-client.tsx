@@ -16,6 +16,7 @@ import type { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import { useApolloClient } from '@apollo/client/react';
 import { use, type ReactNode } from 'react';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
+import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
 import type {
   PageTemplate,
   PageType,
@@ -28,6 +29,7 @@ import type {
 } from './page-definition';
 import { loadRenderableDefinition } from './page-registry';
 import { resolveRuntimeRoute } from './route';
+import { createSiteContext, type RuntimeSite } from './site';
 
 export type RuntimePageContent =
   | { status: 'ready'; pageType: PageType; element: ReactNode }
@@ -40,6 +42,8 @@ interface LoadRuntimePageContentOptions {
   href: string;
   pages: RuntimePageModuleMap;
   client: ApolloClient;
+  /** The site in the language of the app (a locale switch loads the document again). */
+  site: RuntimeSite;
 }
 
 /**
@@ -199,6 +203,7 @@ function loadRuntimePageContent({
   href,
   pages,
   client,
+  site,
 }: LoadRuntimePageContentOptions): TrackedPromise<RuntimePageContent> {
   const url = new URL(href, window.location.origin);
   const resolution = resolveRuntimeRoute(url.pathname);
@@ -221,6 +226,7 @@ function loadRuntimePageContent({
       routeParams,
       searchParams: toSearchRecord(url.searchParams),
       services: createClientPageServices(client),
+      site: createSiteContext(site),
     });
 
   const modules = loadPageModules(pages, pageType);
@@ -273,5 +279,12 @@ export function useRuntimePageContent(
   pages: RuntimePageModuleMap
 ): RuntimePageContent {
   const client = useApolloClient();
-  return use(cachedPageContent({ href, pages, client }));
+  const { locale, defaultLocale, locales, localePrefix } = useLocalization();
+  const site: RuntimeSite = {
+    origin: window.location.origin,
+    locale,
+    locales: { defaultLocale, locales },
+    localePrefix,
+  };
+  return use(cachedPageContent({ href, pages, client, site }));
 }

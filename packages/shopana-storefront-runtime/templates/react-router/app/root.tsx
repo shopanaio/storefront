@@ -1,3 +1,4 @@
+import type { LoaderFunctionArgs } from 'react-router';
 import { createRuntimeRoot } from '@shopana/storefront/react-router/root';
 import {
   createRuntimeMiddleware,
@@ -15,7 +16,8 @@ export const middleware = [
   createRuntimeMiddleware(runtimeApp),
   ...themeMiddleware,
 ];
-export const loader = () => loadRuntimeRoot(runtimeApp);
+export const loader = (args: LoaderFunctionArgs) =>
+  loadRuntimeRoot(runtimeApp, args);
 export const shouldRevalidate = root.shouldRevalidate;
 export const meta = root.meta;
 export const links = root.links;

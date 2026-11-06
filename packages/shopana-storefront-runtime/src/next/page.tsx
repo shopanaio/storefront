@@ -33,6 +33,16 @@ import {
 } from '../core/module-page';
 import { createRuntimePageServices } from '../core/page-services';
 import { resolveRuntimeRoute } from '../core/route';
+import { getStorefrontRequestContext } from '@shopana/storefront-sdk/modules/store/server';
+import type { StorefrontRoutingConfig } from '@shopana/storefront-sdk/routing';
+import {
+  jsonLdList,
+  openGraphProductProperties,
+  serializeJsonLd,
+  type RuntimeMetadata,
+} from '../core/metadata';
+import { createSiteContext, withSiteMetadata } from '../core/site';
+import { loadNextSite, toNextMetadata } from './seo';
 
 type SlugParam = string[] | undefined;
 
@@ -46,6 +56,8 @@ interface PageProps {
 
 export interface CreateRuntimePageOptions {
   environmentConfig: ApolloEnvironmentConfig;
+  /** The locale routing of the middleware: the addresses of a page in each language. */
+  routing: StorefrontRoutingConfig;
   pages: RuntimePageModuleMap;
   modulesContext?: ReturnType<typeof require.context>;
 }
@@ -53,8 +65,18 @@ export interface CreateRuntimePageOptions {
 export type { SDKRequestContext };
 
 export function createRuntimePage(options: CreateRuntimePageOptions) {
-  const { environmentConfig, modulesContext, pages } = options;
+  const { environmentConfig, modulesContext, pages, routing } = options;
   const services = createRuntimePageServices(environmentConfig);
+
+  /** The site of the request, in the language of its locale segment. */
+  const loadSite = cache(async (localeSegment: string) =>
+    loadNextSite({
+      environmentConfig,
+      routing,
+      requestUrl: (await getRequestContext()).url,
+      localeSegment: localeSegment || null,
+    })
+  );
 
   if (modulesContext) {
     modulesContext.keys().forEach((key) => modulesContext(key));
@@ -64,7 +86,8 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     async (
       pageType: RuntimeRenderablePageType,
       routeParamsKey: string,
-      searchParamsKey: string
+      searchParamsKey: string,
+      localeSegment: string
     ) => {
       const request = await getRequestContext();
       const definition = await loadRenderableDefinition(pages, pageType);
@@ -74,6 +97,7 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
         routeParams: parseStableRouteParamsRecord(routeParamsKey),
         searchParams: parseStableSearchParamsRecord(searchParamsKey),
         services,
+        site: createSiteContext(await loadSite(localeSegment)),
       };
       const loaded = await definition.loadData(context);
       const result =
@@ -89,58 +113,121 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     }
   );
 
-  async function generateMetadata({
-    params,
-    searchParams,
-  }: PageProps): Promise<Metadata> {
-    const resolvedParams = await params;
-    const resolvedSearchParams = (await searchParams) ?? {};
-    const requestContext = await getRequestContext();
-    const resolution = resolveRuntimeRoute(
-      requestContext.pathname,
-      resolvedParams.locale
-    );
-
-    if (resolution.kind === 'module') {
-      const generate = getModuleMetadataGenerator(
-        await resolution.match.record.loader()
+  /**
+   * The page's metadata with the site's (canonical address, the page in each language, Open
+   * Graph and Twitter tags), once per request: the metadata and the page's JSON-LD read it.
+   */
+  const loadPageMetadata = cache(
+    async (
+      localeSegment: string,
+      slugKey: string,
+      searchParamsKey: string
+    ): Promise<RuntimeMetadata> => {
+      const requestContext = await getRequestContext();
+      const searchParams = parseStableSearchParamsRecord(searchParamsKey);
+      const resolution = resolveRuntimeRoute(
+        requestContext.pathname,
+        localeSegment || undefined
       );
-      if (!generate) return buildModuleMetadata(resolution.match.record.slug);
-      return generate({
-        params: {
-          locale: resolvedParams.locale ?? '',
-          module: resolvedParams.slug ?? [],
-        },
-        searchParams: { ...resolvedSearchParams },
-        pathParams: resolution.match.params
-          ? { ...resolution.match.params }
-          : {},
-        services,
-      });
-    }
+      const [site, { store }] = await Promise.all([
+        loadSite(localeSegment),
+        getStorefrontRequestContext(environmentConfig),
+      ]);
+      const withSite = (metadata: RuntimeMetadata) =>
+        withSiteMetadata(metadata, {
+          site,
+          store,
+          pathname: resolution.pathname,
+        });
 
-    const { pageType, params: routeParams } = resolution.route;
-    if (pageType === '404') {
-      notFound();
-    }
+      if (resolution.kind === 'module') {
+        const generate = getModuleMetadataGenerator(
+          await resolution.match.record.loader()
+        );
+        if (!generate) {
+          return withSite(buildModuleMetadata(resolution.match.record.slug));
+        }
+        return withSite(
+          await generate({
+            params: {
+              locale: localeSegment,
+              module: JSON.parse(slugKey) as string[],
+            },
+            searchParams: { ...searchParams },
+            pathParams: resolution.match.params
+              ? { ...resolution.match.params }
+              : {},
+            services,
+          })
+        );
+      }
 
-    const execution = await loadPageExecution(
-      pageType,
-      stableSerializeRuntimeRecord(routeParams),
-      stableSerializeRuntimeRecord(resolvedSearchParams)
+      const { pageType, params: routeParams } = resolution.route;
+      if (pageType === '404') {
+        notFound();
+      }
+
+      const execution = await loadPageExecution(
+        pageType,
+        stableSerializeRuntimeRecord(routeParams),
+        searchParamsKey,
+        localeSegment
+      );
+
+      if (execution.result.status === 'not-found') {
+        notFound();
+      }
+
+      return withSite(
+        (await execution.definition.generateMetadata?.(
+          execution.context,
+          execution.result.data
+        )) ?? {}
+      );
+    }
+  );
+
+  async function metadataOf({ params, searchParams }: PageProps) {
+    const resolvedParams = await params;
+    return loadPageMetadata(
+      resolvedParams.locale ?? '',
+      JSON.stringify(resolvedParams.slug ?? []),
+      stableSerializeRuntimeRecord((await searchParams) ?? {})
     );
+  }
 
-    if (execution.result.status === 'not-found') {
-      notFound();
-    }
+  async function generateMetadata(props: PageProps): Promise<Metadata> {
+    return toNextMetadata(await metadataOf(props));
+  }
 
-    if (!execution.definition.generateMetadata) {
-      return {};
-    }
-
-    return execution.definition.generateMetadata(
-      execution.context,
-      execution.result.data
+  /**
+   * What `Metadata` cannot carry: the page's schema.org documents, and the Open Graph type and
+   * `product:*` tags of a product, which must be `<meta property>` (React puts them in the
+   * document head).
+   */
+  async function PageHead({ props }: { props: PageProps }) {
+    const metadata = await metadataOf(props);
+    const openGraph = metadata.openGraph;
+    const productProperties =
+      openGraph?.type === 'product'
+        ? [
+            ['og:type', 'product'],
+            ...openGraphProductProperties(openGraph.product),
+          ]
+        : [];
+    return (
+      <>
+        {productProperties.map(([property, content]) => (
+          <meta key={property} property={property} content={content} />
+        ))}
+        {jsonLdList(metadata.jsonLd).map((document, index) => (
+          <script
+            key={index}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: serializeJsonLd(document) }}
+          />
+        ))}
+      </>
     );
   }
 
@@ -181,7 +268,10 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
           {modulePage}
         </ClosedPageGuard>
       ) : (
-        modulePage
+        <>
+          <PageHead props={props} />
+          {modulePage}
+        </>
       );
     }
 
@@ -194,7 +284,8 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
     const execution = await loadPageExecution(
       pageType,
       stableSerializeRuntimeRecord(routeParams),
-      stableSerializeRuntimeRecord(resolvedSearchParams)
+      stableSerializeRuntimeRecord(resolvedSearchParams),
+      params.locale ?? ''
     );
 
     if (execution.result.status === 'not-found') {
@@ -207,10 +298,16 @@ export function createRuntimePage(options: CreateRuntimePageOptions) {
       <Builder template={template} data={data} pageType={pageType} />
     );
     const Provider = execution.definition.Provider;
-    const page = Provider ? (
+    const rendered = Provider ? (
       <Provider data={data}>{content}</Provider>
     ) : (
       content
+    );
+    const page = (
+      <>
+        <PageHead props={props} />
+        {rendered}
+      </>
     );
     if (!execution.definition.preload) return page;
 

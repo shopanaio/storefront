@@ -38,6 +38,8 @@ import {
   getModuleMetadataGenerator,
 } from '../core/module-page';
 import { createRuntimePageServices } from '../core/page-services';
+import { publicOrigin } from '../core/public-origin';
+import { createSiteContext } from '../core/site';
 import type { SDKRequestContext } from '../core/request-context';
 import { resolveRuntimeRoute } from '../core/route';
 import type { RuntimeAppDefinition } from './app';
@@ -104,11 +106,13 @@ export function createRuntimeMiddleware(
 }
 
 /**
- * The root loader: the store, languages, cart, session and preloaded layout queries. Their
- * queries stay in the request client, whose cache the document carries at its end.
+ * The root loader: the store, languages, cart, session and preloaded layout queries, and the
+ * public origin of the site. Their queries stay in the request client, whose cache the
+ * document carries at its end.
  */
 export async function loadRuntimeRoot(
-  app: RuntimeAppDefinition
+  app: RuntimeAppDefinition,
+  { request }: Pick<LoaderFunctionArgs, 'request'>
 ): Promise<RuntimeRootData> {
   return {
     app: await loadAppData({
@@ -117,6 +121,7 @@ export async function loadRuntimeRoot(
       cartConfig: app.cartConfig,
       preload: app.preload,
     }),
+    origin: publicOrigin(request.url),
   };
 }
 
@@ -185,8 +190,14 @@ export function createRuntimePageLoader(
     context,
   }: LoaderFunctionArgs) {
     const request = await getRequestContext();
-    const { locales, segment } = context.get(runtimeRequestLocale);
+    const { locales, locale, segment } = context.get(runtimeRequestLocale);
     const localeSegment = segment ?? locales.defaultLocale.segment;
+    const site = createSiteContext({
+      origin: publicOrigin(incoming.url),
+      locale,
+      locales,
+      localePrefix: app.routing.localePrefix,
+    });
     const resolution = resolveRuntimeRoute(url.pathname, segment ?? undefined);
     const searchParams = toSearchRecord(url.searchParams);
 
@@ -238,6 +249,7 @@ export function createRuntimePageLoader(
         routeParams: { ...routeParams },
         searchParams,
         services,
+        site,
       });
       return page ?? notFound(request);
     } catch (error) {
