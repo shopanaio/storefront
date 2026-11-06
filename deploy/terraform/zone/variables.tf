@@ -4,3 +4,11 @@ variable "challenge_frontend" {
   type    = bool
   default = true
 }
+variable "cloudflare_account_id" {
+  type    = string
+  default = null
+}
+variable "static_site_buckets" {
+  type    = map(string)
+  default = {}
+}

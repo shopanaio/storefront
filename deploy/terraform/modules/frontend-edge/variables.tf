@@ -13,3 +13,28 @@ variable "challenge_frontend" {
   default     = true
   description = "Managed Challenge for frontend page requests from unverified clients."
 }
+variable "account_id" {
+  type        = string
+  default     = null
+  description = "Cloudflare account of the static site buckets; required with static_site_buckets."
+}
+variable "static_site_buckets" {
+  type        = map(string)
+  default     = {}
+  description = "R2 bucket of the static site per environment (stage = \"shopana-storefront-static-stage\")."
+  validation {
+    condition = alltrue([
+      for bucket in values(var.static_site_buckets) : can(regex("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", bucket))
+    ])
+    error_message = "R2 bucket names are 3-63 lowercase letters, digits and hyphens."
+  }
+  validation {
+    condition     = length(var.static_site_buckets) == 0 || can(regex("^[a-f0-9]{32}$", var.account_id))
+    error_message = "static_site_buckets needs account_id, the 32-character Cloudflare account ID."
+  }
+}
+variable "static_site_location" {
+  type        = string
+  default     = "eeur"
+  description = "R2 location hint of the static site buckets: next to the Swarm nodes."
+}

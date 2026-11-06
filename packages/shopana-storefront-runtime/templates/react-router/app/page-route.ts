@@ -1,5 +1,6 @@
 import type { RuntimePageRouteDefinition } from '@shopana/storefront/react-router/page';
 import { runtimePages } from '@src/runtime/pages';
+import ShellSkeleton from './shell';
 
 // Module registrations run on the server and in the browser.
 import.meta.glob('../../src/modules/**/register.{ts,tsx,js,jsx}', {
@@ -12,4 +13,5 @@ export const pageRoute: RuntimePageRouteDefinition = {
     if (pageType === '404' && !isModule) return null;
     return (await import('@src/layouts/theme')).default;
   },
+  ShellSkeleton,
 };

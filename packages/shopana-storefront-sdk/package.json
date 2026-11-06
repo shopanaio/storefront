@@ -186,6 +186,18 @@
       "types": "./dist/registry/index.d.ts",
       "default": "./dist/registry/index.js"
     },
+    "./static": {
+      "types": "./dist/static/index.d.ts",
+      "default": "./dist/static/index.js"
+    },
+    "./static/react": {
+      "types": "./dist/static/react.d.ts",
+      "default": "./dist/static/react.js"
+    },
+    "./server/directGateway": {
+      "types": "./dist/server/directGateway.d.ts",
+      "default": "./dist/server/directGateway.js"
+    },
     "./server/app": {
       "types": "./dist/server/app.d.ts",
       "default": "./dist/server/app.js"

@@ -21,6 +21,9 @@ const allowed = new Set([
   'IAM_OAUTH_RESOURCE',
   'IAM_OAUTH_REDIRECT_URI',
   'IAM_OAUTH_POST_LOGOUT_REDIRECT_URI',
+  // The read-only S3 key of the static site bucket (STOREFRONT_STATIC_STORE, theme.yml).
+  'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
+  'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
 ]);
 for (const [key, value] of Object.entries(values)) {
   if (!allowed.has(key) || typeof value !== 'string') {
@@ -51,9 +54,26 @@ if ((process.env.STOREFRONT_SESSION_SECRET?.length ?? 0) < 32) {
     'STOREFRONT_SESSION_SECRET must contain at least 32 characters'
   );
 }
+if (
+  process.env.STOREFRONT_STATIC_STORE?.startsWith('s3://') &&
+  !(
+    process.env.STOREFRONT_STATIC_S3_ENDPOINT &&
+    process.env.STOREFRONT_STATIC_S3_ACCESS_KEY_ID &&
+    process.env.STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY
+  )
+) {
+  throw new Error(
+    'An s3:// STOREFRONT_STATIC_STORE needs STOREFRONT_STATIC_S3_ENDPOINT and its read key'
+  );
+}
+// The hybrid server of the theme image (its working directory is the theme): the static site
+// of STOREFRONT_STATIC_STORE or the image's build/static, the server render for the rest.
 const child = spawn(
   process.execPath,
-  ['/app/node_modules/@react-router/serve/bin.cjs', 'build/server/index.js'],
+  [
+    '/app/packages/shopana-storefront-runtime/bin/storefront-runtime.js',
+    'start',
+  ],
   { stdio: 'inherit', env: process.env }
 );
 for (const signal of ['SIGTERM', 'SIGINT']) {

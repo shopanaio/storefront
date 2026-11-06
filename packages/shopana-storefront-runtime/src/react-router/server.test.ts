@@ -116,11 +116,12 @@ const loader = createRuntimePageLoader(app, {
 /** A request through the runtime middleware into `handler`, as React Router runs it. */
 async function request<T>(
   href: string,
-  handler: (args: LoaderFunctionArgs) => Promise<T>
+  handler: (args: LoaderFunctionArgs) => Promise<T>,
+  headers: Record<string, string> = {}
 ): Promise<T> {
   const url = new URL(href, 'https://shop.test');
   const args = {
-    request: new Request(url, { headers: { host: 'shop.test' } }),
+    request: new Request(url, { headers: { host: 'shop.test', ...headers } }),
     url,
     params: {},
     pattern: '*',
@@ -191,6 +192,40 @@ describe('createRuntimeMiddleware', () => {
       search: '?size=m',
       host: 'shop.test',
     });
+  });
+});
+
+describe('the static render', () => {
+  it('reaches no cookie of the request', async () => {
+    stubApi();
+    const cookie = await request(
+      '/products/socks',
+      async () =>
+        (await import('./headers')).headers().then((h) => h.get('cookie')),
+      {
+        'x-shopana-static-render': 'page',
+        cookie: 'shopana_storefront_visitor_id=v1',
+      }
+    );
+    expect(cookie).toBeNull();
+  });
+
+  it('renders a closed page as a shell, never a redirect', async () => {
+    stubApi();
+    await expect(
+      request('/uk/test-account', (args) => loader(args), {
+        'x-shopana-static-render': 'shell',
+      })
+    ).resolves.toEqual({
+      kind: 'shell',
+      pathname: '/test-account',
+      metadata: { robots: 'noindex' },
+    });
+    await expect(
+      request('/cart', (args) => loader(args), {
+        'x-shopana-static-render': 'shell',
+      })
+    ).resolves.toMatchObject({ kind: 'shell', pathname: '/cart' });
   });
 });
 

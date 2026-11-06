@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   parseEnv,
+  smoke,
   validateRuntime,
   validateBackend,
   verifyHeadlessOAuth,
@@ -190,5 +191,107 @@ test('headless sign-in uses the registered callback independently from the theme
       async () => new Response(null, { status: 401 })
     ),
     /HTTP 401/
+  );
+});
+
+test('deploy inputs take the static site bucket, well formed', () => {
+  const withBucket = `${env}\nSTATIC_STORE=s3://shopana-storefront-static-stage/site\nSTATIC_ENDPOINT=https://account.r2.cloudflarestorage.com`;
+  assert.equal(
+    parseEnv(withBucket).STATIC_STORE,
+    's3://shopana-storefront-static-stage/site'
+  );
+  assert.throws(
+    () =>
+      parseEnv(
+        `${env}\nSTATIC_STORE=s3://shopana-storefront-static-stage/site`
+      ),
+    /STATIC_ENDPOINT/
+  );
+  assert.throws(
+    () =>
+      parseEnv(
+        `${env}\nSTATIC_STORE=fs:/tmp\nSTATIC_ENDPOINT=https://r2.example`
+      ),
+    /s3:\/\//
+  );
+  assert.equal(parseEnv(env).STATIC_STORE, '');
+  assert.throws(
+    () => parseEnv(`${env}\nSTATIC_ENDPOINT=https://r2.example`),
+    /set both or neither/
+  );
+});
+
+test('the smoke wants a static hit, its 304, a live miss and /__env.js', async () => {
+  const etag = '"abc"';
+  const staticHtml =
+    '<html><head><script src="/__env.js"></script><script>window.__shopanaStatic={}</script></head></html>';
+  const site =
+    (overrides = {}) =>
+    async (url, init = {}) => {
+      const { pathname } = new URL(url);
+      const headers = init.headers ?? {};
+      if (pathname in overrides) return overrides[pathname]();
+      if (pathname === '/__env.js') {
+        return new Response(
+          `globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"};`,
+          { headers: { 'cache-control': 'no-cache' } }
+        );
+      }
+      if (pathname === '/') {
+        if (headers['if-none-match'] === etag)
+          return new Response(null, { status: 304 });
+        return new Response(staticHtml, {
+          headers: {
+            'content-type': 'text/html',
+            'x-shopana-static': 'hit',
+            'cache-control': 'public, max-age=0, must-revalidate',
+            etag,
+          },
+        });
+      }
+      if (pathname.startsWith('/products/smoke-')) {
+        return new Response('<script src="/__env.js"></script>', {
+          status: 404,
+          headers: {
+            'x-shopana-static': 'miss',
+            'cache-control': 'private, no-store',
+          },
+        });
+      }
+      if (pathname === '/graphql')
+        return Response.json({ data: { __typename: 'Query' } });
+      const path = `/auth/applications/${values.NEXT_PUBLIC_IAM_APPLICATION_ID}`;
+      return Response.json({ issuer: `${values.NEXT_PUBLIC_IAM_URL}${path}` });
+    };
+  await smoke(values, site());
+  await assert.rejects(
+    smoke(
+      values,
+      site({
+        '/': () =>
+          new Response(staticHtml, {
+            headers: {
+              'content-type': 'text/html',
+              'x-shopana-static': 'miss',
+            },
+          }),
+      })
+    ),
+    /x-shopana-static: hit/
+  );
+  await assert.rejects(
+    smoke(
+      values,
+      site({
+        '/__env.js': () =>
+          new Response(
+            values.STOREFRONT_SESSION_SECRET + values.NEXT_PUBLIC_API_KEY,
+            {
+              headers: { 'cache-control': 'no-cache' },
+            }
+          ),
+      })
+    ),
+    /leaked into \/__env\.js/
   );
 });

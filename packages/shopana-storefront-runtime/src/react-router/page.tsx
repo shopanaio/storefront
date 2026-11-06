@@ -17,12 +17,17 @@
  * 404) and in the browser. A 404 the loader answers renders in the 404 layout.
  */
 import {
+  createContext,
+  createElement,
   Fragment,
   memo,
+  Suspense,
   use,
+  useContext,
   useEffect,
   useMemo,
   useState,
+  type ComponentType,
   type ReactNode,
 } from 'react';
 import type { ApolloClient } from '@apollo/client';
@@ -39,6 +44,13 @@ import {
 } from 'react-router';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
 import { useDataGateOpen } from '@shopana/storefront-sdk/core/DataBoundary';
+import { useHydrated } from '@shopana/storefront-sdk/core/Hydrated';
+import { addApolloCacheState } from '@shopana/storefront-sdk/graphql/apollo/cache';
+import {
+  browserHasSession,
+  readStaticDocument,
+  stripViewerFields,
+} from '@shopana/storefront-sdk/static';
 import { buildClosedPageRedirect } from '@shopana/storefront-sdk/modules/session/core/closedPageRedirect';
 import { ClosedPageGuard } from '@shopana/storefront-sdk/modules/session/react/components/ClosedPageGuard';
 import { splitLocaleFromPathname } from '@shopana/storefront-sdk/routing';
@@ -95,14 +107,17 @@ import {
   loadRouteLayout,
   type PageLayoutComponent,
   type RuntimePageRouteDefinition,
+  type RuntimeShellSkeletonProps,
 } from './page-modules';
 import type { RuntimePageData, RuntimeRootData } from './route-data';
 import type { HydratedPage } from './hydration';
+import { staticDataUrl } from '../static/keys';
 
 export type {
   LoadRuntimeLayout,
   PageLayoutComponent,
   RuntimePageRouteDefinition,
+  RuntimeShellSkeletonProps,
 } from './page-modules';
 
 export interface CreateRuntimeLayoutRouteOptions extends RuntimePageRouteDefinition {
@@ -147,6 +162,7 @@ function loadPageLayout(
   if (page.kind === 'module') {
     return loadModuleLayout(route, moduleRecord(page.pathname));
   }
+  if (page.kind === 'shell') return loadAddressLayout(route, page.pathname, []);
   return loadRouteLayout(route, '404', { isModule: false });
 }
 
@@ -158,6 +174,8 @@ function loadPageModulesOf(
   if (page.kind === 'page') return loadPageModules(pages, page.pageType);
   if (page.kind === 'module')
     return loadModulePage(moduleRecord(page.pathname));
+  // A shell renders its skeleton: the page's code loads with the page.
+  if (page.kind === 'shell') return track(Promise.resolve());
   return loadNotFoundModules(pages);
 }
 
@@ -206,6 +224,8 @@ function usePageElement(
     const modules = use(loadPageModules(pages, page.pageType));
     return renderPageElement(page.pageType, modules, page.data, end);
   }
+
+  if (page.kind === 'shell') return <ShellPage pages={pages} end={end} />;
 
   if (page.kind === 'module') {
     const { Component } = use(loadModulePage(moduleRecord(page.pathname)));
@@ -311,6 +331,98 @@ function RenderedNotFound({ route }: { route: RuntimePageRouteDefinition }) {
     data,
     metadata: {},
   });
+}
+
+/** The theme's skeleton of a shell, set by the layout route around the pages. */
+const ShellSkeletonContext =
+  createContext<ComponentType<RuntimeShellSkeletonProps> | null>(null);
+
+/**
+ * The pages a shell resolved in the browser, per client and address: a screen rendered again
+ * (StrictMode, a router update) finds its page here instead of loading it twice.
+ */
+const shellPageLoads = new WeakMap<
+  ApolloClient,
+  Map<string, TrackedPromise<RuntimePageData>>
+>();
+
+function loadShellPage(
+  pages: RuntimePageModuleMap,
+  client: ApolloClient,
+  href: string
+): TrackedPromise<RuntimePageData> {
+  let loads = shellPageLoads.get(client);
+  if (!loads) {
+    loads = new Map();
+    shellPageLoads.set(client, loads);
+  }
+  let load = loads.get(href);
+  if (!load) {
+    load = track(
+      loadBrowserPage(pages, new URL(href, window.location.origin), client)
+    );
+    const clientLoads = loads;
+    load.catch(() => clientLoads.delete(href));
+    loads.set(href, load);
+  }
+  return load;
+}
+
+/** The page of a shell's address, loaded by the browser as on a client navigation. */
+function ResolvedShell({
+  pages,
+  href,
+  end,
+}: {
+  pages: RuntimePageModuleMap;
+  href: string;
+  end?: ReactNode;
+}) {
+  const client = useApolloClient();
+  const page = use(loadShellPage(pages, client, href));
+  return <RuntimePage pages={pages} page={page} end={end} />;
+}
+
+/**
+ * A client page of the static site (`kind: 'shell'`): the theme's skeleton while the document
+ * hydrates (the HTML has it), then the page of the address, which the browser loads itself:
+ * its modules, its `loadData`, its metadata. A closed page's guard takes a guest away.
+ */
+function ShellPage({
+  pages,
+  end,
+}: {
+  pages: RuntimePageModuleMap;
+  end?: ReactNode;
+}) {
+  const hydrated = useHydrated();
+  const Skeleton = useContext(ShellSkeletonContext);
+  const location = useLocation();
+  const localeSegments = useLocaleSegments();
+  const resolution = resolveRuntimeRoute(
+    splitLocaleFromPathname(location.pathname, localeSegments).pathname
+  );
+  const skeleton = (
+    <>
+      {Skeleton
+        ? createElement(Skeleton, {
+            pageType: resolution.pageType,
+            pathname: resolution.pathname,
+          })
+        : null}
+      {end}
+    </>
+  );
+  if (!hydrated) return skeleton;
+  return (
+    <Suspense fallback={skeleton}>
+      <ResolvedShell
+        pages={pages}
+        href={`${location.pathname}${location.search}`}
+        end={end}
+      />
+    </Suspense>
+  );
 }
 
 /** The request of an address the browser loads a page for itself. */
@@ -649,6 +761,110 @@ export function useRuntimePageNow(
   return page;
 }
 
+/** The theme's 404 page, with its data loaded in the browser. */
+async function browserNotFound(
+  pages: RuntimePageModuleMap,
+  request: SDKRequestContext,
+  services: RuntimePageServices,
+  route?: RuntimePageRouteDefinition
+): Promise<RuntimePageData> {
+  const [modules] = await Promise.all([
+    loadNotFoundModules(pages),
+    route ? loadRouteLayout(route, '404', { isModule: false }) : null,
+  ]);
+  const data = await modules.definition.loadData({
+    pageType: '404',
+    request,
+    services,
+  });
+  return { kind: 'not-found', data, metadata: {} };
+}
+
+/**
+ * Addresses whose static data the browser's cache took already: a page visited again reads
+ * the cache, never an older snapshot over newer answers.
+ */
+const appliedStaticData = new WeakMap<ApolloClient, Set<string>>();
+
+/**
+ * The static site's data of a page (`/__static/data/*.json`, its Apollo state when the builder
+ * rendered it) in the browser's cache, before the page loads: its `loadData` and its sections
+ * find their queries there and ask the API nothing. Only in a static document; a page with no
+ * file (404) or a failed fetch loads as usual. A signed-in buyer's cache takes it without the
+ * viewer's fields: theirs are queried.
+ */
+async function applyStaticPageData(
+  client: ApolloClient,
+  url: URL
+): Promise<void> {
+  if (!readStaticDocument()) return;
+  const dataUrl = staticDataUrl(url.pathname);
+  if (!dataUrl) return;
+  let applied = appliedStaticData.get(client);
+  if (!applied) {
+    applied = new Set();
+    appliedStaticData.set(client, applied);
+  }
+  if (applied.has(dataUrl)) return;
+  applied.add(dataUrl);
+  try {
+    const response = await fetch(dataUrl, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return;
+    const state = await response.json();
+    addApolloCacheState(
+      client.cache,
+      browserHasSession() ? stripViewerFields(state) : state
+    );
+  } catch {
+    // The page loads from the API.
+  }
+}
+
+/**
+ * The page of an address the browser loads itself (a client navigation, a shell of the static
+ * site): its modules (and its layout, with the route) loaded, the static data of the address
+ * in the cache, its `loadData` run with the app's Apollo client, as the server loader resolves
+ * it. A page closed to visitors without a session is left to its browser guard.
+ */
+async function loadBrowserPage(
+  pages: RuntimePageModuleMap,
+  url: URL,
+  client: ApolloClient,
+  route?: RuntimePageRouteDefinition
+): Promise<RuntimePageData> {
+  const address = clientAddress(url);
+  const { resolution, request } = address;
+  const services = createClientPageServices(client);
+
+  if (resolution.kind === 'module') {
+    const [{ payload }] = await Promise.all([
+      loadModulePage(resolution.match.record),
+      route ? loadModuleLayout(route, resolution.match.record) : null,
+    ]);
+    return modulePageData(address, resolution, payload, services);
+  }
+
+  const { pageType } = resolution.route;
+  if (pageType === '404') {
+    return browserNotFound(pages, request, services, route);
+  }
+
+  const [{ definition }] = await Promise.all([
+    loadPageModules(pages, pageType),
+    route ? loadRouteLayout(route, pageType, { isModule: false }) : null,
+    applyStaticPageData(client, url),
+  ]);
+  const context = pageContext(address, pageType, services);
+  const loaded = await (takeStartedDataLoad(client, url) ??
+    definition.loadData(context));
+  if (loaded.status === 'not-found') {
+    return browserNotFound(pages, request, services, route);
+  }
+  return readyPageData(pageType, definition, context, loaded.data);
+}
+
 /** The page in its layout, or alone without one. */
 function LayoutFrame({
   layout: Layout,
@@ -683,9 +899,11 @@ export function createRuntimeLayoutRoute({
         : loadAddressLayout(route, pathname, localeSegments)
     );
     return (
-      <LayoutFrame layout={layout}>
-        <Outlet />
-      </LayoutFrame>
+      <ShellSkeletonContext.Provider value={route.ShellSkeleton ?? null}>
+        <LayoutFrame layout={layout}>
+          <Outlet />
+        </LayoutFrame>
+      </ShellSkeletonContext.Provider>
     );
   }
 
@@ -719,57 +937,16 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
     return <RouteErrorPage ErrorPage={ErrorPage} />;
   }
 
-  /** The theme's 404 page, with its data loaded in the browser. */
-  async function clientNotFound(
-    request: SDKRequestContext,
-    services: RuntimePageServices
-  ): Promise<RuntimePageData> {
-    const [modules] = await Promise.all([
-      loadNotFoundModules(route.pages),
-      loadRouteLayout(route, '404', { isModule: false }),
-    ]);
-    const data = await modules.definition.loadData({
-      pageType: '404',
-      request,
-      services,
-    });
-    return { kind: 'not-found', data, metadata: {} };
-  }
-
   /**
    * A client navigation, without the server: the page of the address with its modules and
    * layout loaded and its `loadData` run with the app's Apollo client, as the server loader
    * resolves it. A page closed to visitors without a session is left to its browser guard.
    * The first page comes from the server render (no `hydrate`).
    */
-  async function clientLoader({
+  function clientLoader({
     url,
   }: ClientLoaderFunctionArgs): Promise<RuntimePageData> {
-    const address = clientAddress(url);
-    const { resolution, request } = address;
-    const client = getBrowserApolloClient();
-    const services = createClientPageServices(client);
-
-    if (resolution.kind === 'module') {
-      const [{ payload }] = await Promise.all([
-        loadModulePage(resolution.match.record),
-        loadModuleLayout(route, resolution.match.record),
-      ]);
-      return modulePageData(address, resolution, payload, services);
-    }
-
-    const { pageType } = resolution.route;
-    if (pageType === '404') return clientNotFound(request, services);
-
-    const [{ definition }] = await Promise.all([
-      loadPageModules(route.pages, pageType),
-      loadRouteLayout(route, pageType, { isModule: false }),
-    ]);
-    const context = pageContext(address, pageType, services);
-    const loaded = await (takeStartedDataLoad(client, url) ??
-      definition.loadData(context));
-    if (loaded.status === 'not-found') return clientNotFound(request, services);
-    return readyPageData(pageType, definition, context, loaded.data);
+    return loadBrowserPage(route.pages, url, getBrowserApolloClient(), route);
   }
 
   /**

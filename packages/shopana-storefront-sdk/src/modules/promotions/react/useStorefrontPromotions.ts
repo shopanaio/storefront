@@ -8,6 +8,7 @@ import {
   type StorefrontPromotionKind,
 } from '../../../graphql/apollo/generated/operations';
 import { mapStorefrontPromotion } from '../core/mapStorefrontPromotion';
+import { useValidUntilRefetch } from '../../../static/useValidUntilRefetch';
 
 export interface StorefrontPromotionsState {
   /** Ordered by the merchant sort order, then by discount priority. */
@@ -24,8 +25,14 @@ const EMPTY: readonly model.StorefrontPromotion[] = [];
  * Published automatic promotions of the store, the same for every buyer. `kinds` limits the
  * result; omitted returns every kind. Promo codes are never part of it.
  */
+export interface StorefrontPromotionsOptions {
+  /** Asks nothing yet: a caller that shows the set only in the browser (after hydration). */
+  skip?: boolean;
+}
+
 export function useStorefrontPromotions(
-  kinds?: readonly StorefrontPromotionKind[]
+  kinds?: readonly StorefrontPromotionKind[],
+  { skip = false }: StorefrontPromotionsOptions = {}
 ): StorefrontPromotionsState {
   const kindsKey = kinds ? [...kinds].sort().join(',') : null;
   const variables = React.useMemo(
@@ -40,8 +47,16 @@ export function useStorefrontPromotions(
   const query = useQuery(SdkStorefrontPromotionsDocument, {
     variables,
     fetchPolicy: 'cache-first',
+    skip,
   });
   const set = query.data?.storefrontPromotions;
+  // The set changes at its next start or end without an event: asked again then (a page
+  // rendered earlier, a static one, carries the set of its render).
+  const { refetch } = query;
+  useValidUntilRefetch(
+    set?.validUntil,
+    React.useCallback(() => refetch(), [refetch])
+  );
   const promotions = React.useMemo(
     () => set?.promotions.map(mapStorefrontPromotion) ?? EMPTY,
     [set]

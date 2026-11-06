@@ -158,6 +158,10 @@
       "types": "./dist/react-router/server.d.ts",
       "default": "./dist/react-router/server.js"
     },
+    "./react-router/static-site": {
+      "types": "./dist/react-router/static-site.d.ts",
+      "default": "./dist/react-router/static-site.js"
+    },
     "./react-router/vite": {
       "types": "./dist/react-router/vite.d.ts",
       "default": "./dist/react-router/vite.js"
@@ -172,6 +176,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@react-router/express": "^8.5.1",
+    "express": "^5.2.1",
     "isbot": "^5.1.40"
   },
   "peerDependencies": {
@@ -179,7 +185,6 @@
     "@graphql-typed-document-node/core": "^3.2.0",
     "@react-router/dev": "^8.5.1",
     "@react-router/node": "^8.5.1",
-    "@react-router/serve": "^8.5.1",
     "@shopana/storefront-auth": "^0.1.0",
     "@shopana/storefront-sdk": "^0.1.0",
     "next": "^16.0.5",
@@ -194,9 +199,6 @@
       "optional": true
     },
     "@react-router/node": {
-      "optional": true
-    },
-    "@react-router/serve": {
       "optional": true
     },
     "next": {
@@ -215,7 +217,7 @@
   "devDependencies": {
     "@react-router/dev": "8.5.1",
     "@react-router/node": "8.5.1",
-    "@react-router/serve": "8.5.1",
+    "@types/express": "^5.0.3",
     "@types/node": "^24.10.1",
     "@types/webpack-env": "^1.18.8",
     "next": "16.0.5",

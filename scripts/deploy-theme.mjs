@@ -23,14 +23,18 @@ const fail = (message) => {
 // Deliberately do not source a shell file: deploy inputs must never execute code.
 export function parseEnv(source) {
   const values = {};
-  const allowed = new Set([
+  const required = [
     'THEME_IMAGE',
     'CLOUDFLARED_IMAGE',
     'BACKEND_NETWORK',
     'TUNNEL_SECRET',
     'SERVER_ENV_SECRET',
     'LAUNCHER_CONFIG',
-  ]);
+  ];
+  // The static site bucket of the environment (Terraform output static_site of zone/); without
+  // them the theme serves the static site of its image.
+  const optional = ['STATIC_STORE', 'STATIC_ENDPOINT'];
+  const allowed = new Set([...required, ...optional]);
   for (const line of source.split(/\r?\n/)) {
     if (!line.trim() || line.trimStart().startsWith('#')) continue;
     const match = /^([A-Z_]+)=([A-Za-z0-9_./:@-]+)$/.exec(line);
@@ -41,8 +45,24 @@ export function parseEnv(source) {
     }
     values[match[1]] = match[2];
   }
-  for (const key of allowed) {
+  for (const key of required) {
     if (!values[key]) fail(`Missing ${key} in deploy.env`);
+  }
+  // Set either way: `docker stack deploy` must not take them from the operator's shell.
+  for (const key of optional) values[key] ??= '';
+  if (values.STATIC_ENDPOINT && !values.STATIC_STORE)
+    fail('STATIC_ENDPOINT without STATIC_STORE: set both or neither.');
+  if (values.STATIC_STORE) {
+    if (
+      !/^s3:\/\/[a-z0-9][a-z0-9-]{1,61}[a-z0-9](\/[A-Za-z0-9._-]+)*$/.test(
+        values.STATIC_STORE
+      )
+    )
+      fail('STATIC_STORE must be s3://<bucket>/<prefix>.');
+    if (!/^https:\/\/[a-z0-9.-]+$/.test(values.STATIC_ENDPOINT ?? ''))
+      fail(
+        'STATIC_STORE needs STATIC_ENDPOINT, the https origin of the S3 API.'
+      );
   }
   if (!/@sha256:[a-f0-9]{64}$/.test(values.THEME_IMAGE)) {
     fail('THEME_IMAGE must be an immutable sha256 digest.');
@@ -270,6 +290,16 @@ async function main() {
     ])
   );
   validateRuntime(values, outputs);
+  if (
+    settings.STATIC_STORE &&
+    !(
+      values.STOREFRONT_STATIC_S3_ACCESS_KEY_ID &&
+      values.STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY
+    )
+  )
+    fail(
+      'STATIC_STORE needs the read key of its bucket in server-env.json (Terraform output static_site_read_keys of zone/).'
+    );
   if (action === 'smoke') {
     await smoke(values);
     return;
@@ -483,28 +513,89 @@ async function main() {
   );
 }
 
-async function smoke(values) {
+/**
+ * The theme on its public address (step A of the static site): a generated page from the
+ * static site (`x-shopana-static: hit`, its ETag, 304 for it, its static facts), an unknown
+ * one rendered live (`miss`, no-store), public settings from `/__env.js` only, no private value
+ * in either, same-origin GraphQL and IAM discovery.
+ */
+export async function smoke(values, fetcher = fetch) {
   const get = (path, options = {}) =>
-    fetch(new URL(path, values.NEXT_PUBLIC_APP_URL), {
+    fetcher(new URL(path, values.NEXT_PUBLIC_APP_URL), {
       ...options,
       redirect: 'manual',
       signal: AbortSignal.timeout(30_000),
     });
+  const secrets = [
+    'STOREFRONT_SESSION_SECRET',
+    'IAM_OAUTH_CLIENT_SECRET',
+    'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
+  ]
+    .map((key) => values[key])
+    .filter(Boolean);
+  const assertPrivate = (body, what) => {
+    if (secrets.some((secret) => body.includes(secret)))
+      fail(`Private runtime configuration leaked into ${what}.`);
+  };
+
+  const env = await get('/__env.js');
+  const envSource = env.ok ? await env.text() : '';
+  if (!env.ok || !/no-cache/.test(env.headers.get('cache-control') ?? ''))
+    fail(
+      `/__env.js must answer 200 with Cache-Control: no-cache (HTTP ${env.status}).`
+    );
+  if (!envSource.includes(values.NEXT_PUBLIC_API_KEY))
+    fail('/__env.js lacks the public runtime configuration.');
+  assertPrivate(envSource, '/__env.js');
+  if (
+    values.STOREFRONT_SERVER_GRAPHQL_URL &&
+    envSource.includes(values.STOREFRONT_SERVER_GRAPHQL_URL)
+  )
+    fail('The server GraphQL address leaked into /__env.js.');
+
   const page = await get('/');
   if (
     !page.ok ||
     !(page.headers.get('content-type') ?? '').includes('text/html')
   )
     fail(`Theme smoke failed: HTTP ${page.status}`);
-  if (!/no-store/.test(page.headers.get('cache-control') ?? ''))
-    fail('SSR HTML must use Cache-Control: no-store.');
+  if (page.headers.get('x-shopana-static') !== 'hit')
+    fail(
+      'The home page must come from the static site (x-shopana-static: hit).'
+    );
+  if (
+    page.headers.get('cache-control') !== 'public, max-age=0, must-revalidate'
+  )
+    fail('A static page must be revalidated on every load.');
+  const etag = page.headers.get('etag');
+  if (!etag) fail('A static page must have an ETag.');
   const html = await page.text();
-  if (!html.includes('__shopanaPublicEnv'))
-    fail('SSR runtime configuration is missing.');
-  for (const key of ['STOREFRONT_SESSION_SECRET', 'IAM_OAUTH_CLIENT_SECRET']) {
-    if (values[key] && html.includes(values[key]))
-      fail('Private runtime configuration leaked into SSR HTML.');
-  }
+  if (!html.includes('window.__shopanaStatic='))
+    fail('The static page lacks its static facts (__shopanaStatic).');
+  if (
+    !html.includes('<script src="/__env.js">') ||
+    html.includes('__shopanaPublicEnv=')
+  )
+    fail(
+      'Documents must load the public settings from /__env.js, never inline.'
+    );
+  assertPrivate(html, 'static HTML');
+  const again = await get('/', { headers: { 'if-none-match': etag } });
+  if (again.status !== 304)
+    fail(`If-None-Match must answer 304 (HTTP ${again.status}).`);
+
+  const missing = await get(`/products/smoke-${Date.now().toString(36)}`);
+  if (missing.headers.get('x-shopana-static') !== 'miss')
+    fail(
+      'A page without a file must be rendered live (x-shopana-static: miss).'
+    );
+  if (!/no-store/.test(missing.headers.get('cache-control') ?? ''))
+    fail('SSR HTML must use Cache-Control: no-store.');
+  const rendered = await missing.text();
+  if (!rendered.includes('<script src="/__env.js">'))
+    fail('SSR documents must load the public settings from /__env.js.');
+  assertPrivate(rendered, 'SSR HTML');
+
   const api = await get('/graphql', {
     method: 'POST',
     headers: {
@@ -529,7 +620,7 @@ async function smoke(values) {
     }
   }
   console.log(
-    'Smoke passed: SSR, private settings, same-origin GraphQL and canonical IAM discovery. Interactive login and agent streaming still require a browser check.'
+    'Smoke passed: static hit with ETag and 304, live render of a missing page, /__env.js, private settings, same-origin GraphQL and canonical IAM discovery. Interactive login, agent streaming and a guest navigation without /graphql requests still require a browser check.'
   );
 }
 

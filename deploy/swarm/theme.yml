@@ -4,6 +4,13 @@ services:
   theme:
     image: ${THEME_IMAGE:?Set THEME_IMAGE to a release tag or digest}
     command: ['node', '/run/configs/start.cjs']
+    environment:
+      # The static site (step A of plans/static-site-generation.ru.md): its R2 bucket over the
+      # S3 API, read with the key of the server env secret, every page checked again after the
+      # TTL (seconds). Empty: the static site of the image (build/static), when it has one.
+      STOREFRONT_STATIC_STORE: ${STATIC_STORE:-}
+      STOREFRONT_STATIC_S3_ENDPOINT: ${STATIC_ENDPOINT:-}
+      STOREFRONT_STATIC_CACHE_TTL: '10'
     # backend: server GraphQL requests reach the gateway directly (STOREFRONT_SERVER_GRAPHQL_URL).
     networks: [frontend, backend]
     configs:

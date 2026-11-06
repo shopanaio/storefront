@@ -54,6 +54,7 @@ import {
   type RuntimePageRouteDefinition,
 } from './page-modules';
 import type { RuntimePageData, RuntimeRootData } from './route-data';
+import { guestHeaders, staticRenderMode } from './static-render';
 
 export type { RuntimePageData, RuntimeRootData };
 
@@ -97,7 +98,10 @@ export function createRuntimeMiddleware(
     }
 
     const locale = resolveStorefrontLocale(locales, segment);
-    const headers = new Headers(request.headers);
+    // A static page is a guest's: the builder's request reaches no cookie of anyone.
+    const headers = staticRenderMode(request.headers)
+      ? guestHeaders(request.headers)
+      : new Headers(request.headers);
     headers.set(STOREFRONT_LOCALE_HEADER, locale.tag);
     context.set(runtimeRequestLocale, { locales, locale, segment });
 
@@ -202,6 +206,19 @@ export function createRuntimePageLoader(
     const searchParams = toSearchRecord(url.searchParams);
 
     try {
+      // A client page of the static site: its layout and a skeleton, filled in by the
+      // browser. Never a redirect: a closed page's guard runs in the browser.
+      if (staticRenderMode(incoming.headers) === 'shell') {
+        await (resolution.kind === 'module'
+          ? loadModuleLayout(route, resolution.match.record)
+          : loadRouteLayout(route, resolution.pageType, { isModule: false }));
+        return {
+          kind: 'shell',
+          pathname: resolution.pathname,
+          metadata: { robots: 'noindex' },
+        } satisfies RuntimePageData;
+      }
+
       if (resolution.kind === 'module') {
         const { match } = resolution;
         // Before the module loads: a closed page renders nothing for a visitor without a session.

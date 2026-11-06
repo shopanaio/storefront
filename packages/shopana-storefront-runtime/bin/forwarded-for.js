@@ -1,5 +1,6 @@
 /**
- * Preloaded into the React Router dev server and `react-router-serve`: a request that reached
+ * Preloaded into the React Router dev server and imported by the hybrid server of
+ * `storefront-runtime start` before it listens: a request that reached
  * the storefront directly, with no proxy in front, gets `X-Forwarded-For` from its connection,
  * as Next.js sets it. The customer session handlers send that buyer address to IAM. A request
  * a proxy forwarded keeps the header the proxies wrote (`STOREFRONT_TRUSTED_PROXY_HOPS`).

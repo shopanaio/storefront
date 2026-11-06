@@ -31,3 +31,48 @@ run "free_plan_and_dynamic_bypass" {
     error_message = "Agent streaming and IAM discovery must not receive frontend challenges."
   }
 }
+
+run "static_site_bucket_and_scoped_keys" {
+  command = plan
+  variables {
+    account_id          = "22222222222222222222222222222222"
+    static_site_buckets = { stage = "shopana-storefront-static-stage" }
+  }
+  override_module {
+    target  = module.r2_permission_groups
+    outputs = { read = "r2-read", write = "r2-write" }
+  }
+  assert {
+    condition     = cloudflare_r2_bucket.static_site["stage"].name == "shopana-storefront-static-stage"
+    error_message = "Each environment gets its own static site bucket."
+  }
+  assert {
+    condition = (
+      length(cloudflare_account_token.static_site_read["stage"].policies[0].permission_groups) == 1 &&
+      cloudflare_account_token.static_site_read["stage"].policies[0].permission_groups[0].id == "r2-read" &&
+      jsondecode(cloudflare_account_token.static_site_read["stage"].policies[0].resources) == {
+        "com.cloudflare.edge.r2.bucket.22222222222222222222222222222222_default_shopana-storefront-static-stage" = "*"
+      }
+    )
+    error_message = "The theme's key only reads, and only its own bucket."
+  }
+  assert {
+    condition = (
+      toset([for group in cloudflare_account_token.static_site_write["stage"].policies[0].permission_groups : group.id]) == toset(["r2-read", "r2-write"]) &&
+      cloudflare_account_token.static_site_write["stage"].policies[0].resources == cloudflare_account_token.static_site_read["stage"].policies[0].resources
+    )
+    error_message = "The builder's key reads and writes its own bucket only."
+  }
+  assert {
+    condition     = length(cloudflare_ruleset.cache.rules) == 3
+    error_message = "Cache Rules do not change on step A: HTML still bypasses the CDN."
+  }
+}
+
+run "static_site_bucket_needs_account" {
+  command = plan
+  variables {
+    static_site_buckets = { stage = "shopana-storefront-static-stage" }
+  }
+  expect_failures = [var.static_site_buckets]
+}

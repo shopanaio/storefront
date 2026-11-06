@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
 import { isAbsoluteUrl } from '@shopana/storefront-sdk/routing';
+import { readStaticDocument } from '@shopana/storefront-sdk/static';
 import type {
   ReadonlySearchParams,
   StorefrontRouteParams,
@@ -81,8 +82,11 @@ export function useRouter(): StorefrontRouter {
       prefetch: () => {},
       back: () => (onNavigate ? window.history.back() : void navigate(-1)),
       forward: () => (onNavigate ? window.history.forward() : void navigate(1)),
+      // A static document has no server loaders to revalidate from (`*.data`): a full load.
       refresh: () =>
-        onNavigate ? window.location.reload() : void router?.revalidate(),
+        onNavigate || readStaticDocument()
+          ? window.location.reload()
+          : void router?.revalidate(),
     };
   }, [buildHref, navigate, onNavigate, router, stripLocale]);
 }

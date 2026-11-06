@@ -7,7 +7,7 @@ import type {
 import { STOREFRONT_LOCALE_HEADER } from '../modules/localization/core/constants';
 import { readServerAuthState } from '../modules/session/server';
 import { getFrameworkApolloRequestClient } from '#server-framework';
-import { directGatewayHeaders } from './directGateway';
+import { directGatewayHeaders, privateTokenHeaders } from './directGateway';
 import {
   apolloEnvironmentKey,
   rememberApolloRequestClient,
@@ -23,6 +23,13 @@ export type RequestAuth = Pick<
   'serverCookies' | 'accessToken' | 'locale' | 'gatewayHeaders'
 >;
 
+function withHeaders(
+  ...parts: Array<Record<string, string> | undefined>
+): Record<string, string> | undefined {
+  const headers = Object.assign({}, ...parts.filter(Boolean));
+  return Object.keys(headers).length > 0 ? headers : undefined;
+}
+
 /** Cookies, the session access token, the locale and the visitor of the current server request. */
 export async function readRequestAuth(): Promise<RequestAuth> {
   const headers = await readServerRequestHeaders();
@@ -33,7 +40,10 @@ export async function readRequestAuth(): Promise<RequestAuth> {
     serverCookies,
     accessToken,
     locale,
-    gatewayHeaders: directGatewayHeaders(headers),
+    gatewayHeaders: withHeaders(
+      directGatewayHeaders(headers),
+      privateTokenHeaders()
+    ),
   };
 }
 

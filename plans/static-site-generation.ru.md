@@ -42,25 +42,27 @@ purge пропускается, потому что кеша CDN для HTML н�
 DigitalOcean не требуется; App Platform, Spaces и snapshot-платформы разобраны в разделе
 «Хостинг» и отклонены.
 
-**Инвалидация: точечная по триггеру плюс полная по расписанию, и то и другое.** Точечная
-перегенерация идёт от событий internal (`productUpdated`, `categoryUpdated`, `pageUpdated`, …):
-тема подписывается на обычные вебхуки internal со списком топиков. Соответствие «сущность →
-страницы» координатор темы строит из нормализованного кеша Apollo каждой отрендеренной страницы.
-Рендер выполняется в GitHub Actions (`plans/static-invalidation-and-ci-builds.ru.md`). Полная пересборка нужна при
-смене макета (меню, настройки магазина, локали, новый образ темы) и как страховка раз в сутки.
-Отдельно нужны таймеры: промо и окна коллекций меняют вывод по времени без каких-либо событий.
+**Инвалидация: точечная по событиям плюс полная по расписанию.** Полная пересборка остаётся
+ночью, при релизе образа и при смене макета (меню, настройки магазина, локали). Точечная
+описана в `plans/static-invalidation-and-ci-builds.ru.md`: координатор темы читает ленту событий
+internal по курсору, по индексу «зависимость → страницы» (из кеша Apollo, с масками аспектов)
+сразу рендерит свою страницу сущности и популярные страницы, а остальные помечает устаревшими и
+рендерит при первом открытии или фоновым дочистом. Остатки и промо выносятся из HTML в живые
+лёгкие запросы, цена и наличие остаются в HTML с поправкой после гидратации
+(`plans/static-volatile-data.ru.md`), публикуется только
+изменившееся по хэшу, на шаге B purge идёт по тегам Cloudflare. Рендер выполняется в GitHub
+Actions.
 
 **Кеш GraphQL для клиентских переходов, два слоя.** Для каждой страницы builder пишет
 `page-data.json` (снимок кеша Apollo после рендера), который клиентский loader подхватывает перед
 `loadData`, так что переход на уже сгенерированную страницу не ходит в API. Остальные гостевые
 запросы (подгрузка списков, фильтры, поиск, варианты, промо) идут через `GET` с persisted
-documents и кешируются Cloudflare по TTL, который отдаёт gateway. Второй слой требует кеша CDN и
-поэтому появляется только после шага B.
+documents и кешируются Cloudflare по TTL, который отдаёт gateway, и чистятся по тегам сущностей.
+Второй слой требует кеша CDN и поэтому появляется только после шага B.
 
-В internal сейчас нет ни тегов ответов, ни CDN purge, ни исходящих вебхуков по каталогу: кеш по
-тегам (`@shopana/cache`) это внутренний кеш данных Redis, вебхуки есть только у notifications и
-только по заказам и клиентам. Нужные точки расширения есть, они описаны в разделе «Изменения в
-internal».
+В internal сейчас нет ни тегов ответов, ни CDN purge, ни чтения ленты событий извне: кеш по
+тегам (`@shopana/cache`) это внутренний кеш данных Redis. Нужные изменения описаны в разделе
+«`internal`».
 
 ## Что есть сейчас
 
@@ -186,11 +188,12 @@ internal».
 | Кнопка корзины, счётчик в шапке и таб-баре         | скелетон счётчика                | `useCart` по cookie корзины                                  |
 | Кнопка аккаунта / имя покупателя                   | «Войти» (гостевое)               | `useIsAuthenticated`, затем `useCustomer`                    |
 | Сердечко вишлиста, кнопка «сравнить»               | неактивное состояние             | `useAccountProductActions`, `useProductComparisons`          |
-| «Начислим N баллов» на карточке и странице товара  | базовые баллы гостя              | повторный запрос `ProductVariant.loyalty` при наличии сессии |
+| «Начислим N баллов» на карточке и странице товара  | базовые баллы гостя              | личный лёгкий запрос `SdkViewerVariants` при наличии сессии  |
 | Баланс и тир лояльности, страница Points           | нет в статике (аккаунт оболочка) | `useLoyaltyAccount`                                          |
-| Промо-бейджи на товаре, промо в шапке              | гостевой снимок с `validUntil`   | повторный запрос по таймеру `validUntil` и при `discount*`   |
+| Промо-бейджи на товаре, промо в шапке              | нет; скелетон                    | лёгкие запросы `SdkVolatileVariant` и `SdkStorefrontPromotions` |
 | Прогресс промо и промокод в корзине                | нет (корзина оболочка)           | `Checkout.promotionProgress`, `usePromoCodes`                |
-| Остаток и «нет в наличии»                          | снимок на момент генерации       | лёгкий `GET`-запрос остатков варианта с коротким TTL         |
+| Наличие и «нет в наличии»                          | снимок на момент генерации       | поправка лёгким запросом `SdkVolatileCards` / `SdkVolatileVariant`, TTL 30 с |
+| Остаток (`quantityAvailable`)                      | нет                              | лёгкий запрос `SdkVolatileVariant`                           |
 | Голоса и жалобы на отзывах, подписка на вопросы    | поля не запрашиваются            | отдельный запрос `viewer*` с visitor id или токеном          |
 | Рекомендации по корзине, подборки ассистента       | скелетон блока                   | `cartRecommendations`, `petProductSelection`                 |
 | Поиск, `/selections/:id`                           | оболочка с layout и скелетоном   | `loadData` в браузере, как сейчас при клиентском переходе    |
@@ -328,9 +331,11 @@ handler-ом стоит middleware статики. Хранилище задаё
    персонализацию дорисовывает клиент. Отдельные статусы для `404.html` и оболочек берутся из
    manifest.
 7. Файла нет: запрос уходит в SSR, как сегодня (`private, no-store`, `x-shopana-static: miss`).
-   Если адрес относится к генерируемому семейству (товар, категория, коллекция, вендор, страница),
-   сервер сам сообщает координатору о промахе (`POST /__builder/api/builds {mode: 'paths'}`,
-   не чаще раза в минуту на адрес). Заголовок промаха от Worker для этого не нужен.
+   Промахи по адресам генерируемых семейств (товар, категория, коллекция, вендор, страница) и
+   попадания по всем HTML-адресам сервер считает в памяти и раз в 30 с отправляет координатору
+   (`POST /__builder/api/hits`). Координатор ставит рендер промахов и устаревших (dirty) страниц,
+   по которым были попадания (`plans/static-invalidation-and-ci-builds.ru.md`, «Попадания»).
+   Без адреса координатора в env отчёт не отправляется.
 8. Хранилище недоступно или ответило ошибкой: SSR, как при промахе, и предупреждение в лог. Отказ
    бакета не превращается в `5xx` сайта.
 
@@ -384,20 +389,23 @@ storefront-runtime start                 # статика из build/static, п�
   (`cache-first`), запросов к API нет. `404` на JSON означает «страницы нет в статике», дальше
   обычная клиентская загрузка. JSON отдаёт гибридный сервер на шаге A и Worker на шаге B, путь
   один и тот же.
-- **Обновление персонализации после гидратации.** Новый SDK-хук `useViewerRefresh()` в
-  `AppProviders`: когда `useIsAuthenticated` становится `true` или появляется visitor id, он
-  вызывает `cache.evict` по полям `ProductVariant.loyalty`, `Product.loyalty`,
-  `*.viewerEngagement`, `*.viewerCapabilities`, `*.viewerSubscription`,
-  `ProductComparisonColumn.savedForComparison` и `cache.gc()`, после чего активные запросы
-  перезапрашивают только эти поля. Клиентские запросы покупателя уже пропускаются без сессии и
-  используют `cache-and-network` (`modules/customer/react/internal.ts:38`).
+- **Обновление персонализации после гидратации.** SDK-хук `useViewerRefresh()` в
+  `AppProviders` без `cache.evict`: когда `useIsAuthenticated` становится `true`, он запускает
+  личный лёгкий запрос `SdkViewerVariants` (`POST` с `Authorization`, `private, no-store`) по id
+  вариантов, зарегистрированным на странице, и маленькие запросы `viewer*` отзывов и
+  `savedForComparison`. Ответы пишутся в те же нормализованные записи; до них видны гостевые
+  значения из снимка. `evict` отклонён: `ProductPageQuery` читается через `useSuspenseQuery`, и
+  Apollo перезапросил бы весь запрос, а секция ушла бы в Suspense. Подробно в
+  `plans/static-volatile-data.ru.md`, «Вошедший покупатель». Клиентские запросы покупателя уже
+  пропускаются без сессии и используют `cache-and-network` (`modules/customer/react/internal.ts:38`).
 - **Сессия.** HTML всегда гостевой (`initialSession` пуст). После гидратации `SessionContext`
   видит cookie `shopana_signed_in` и получает access-токен через `/auth/token` или `/auth/refresh`
   у Node-приложения; дальше запросы покупателя идут в gateway напрямую.
-- **Промо по времени.** `useStorefrontPromotions` сейчас `cache-first`
-  (`modules/promotions/react/useStorefrontPromotions.ts:42`); в режиме статики хук ставит таймер
-  на `validUntil` из снимка и делает `refetch` по его наступлении, то же для
-  `ProductLoyaltyPresentation.validUntil`.
+- **Остатки и промо** приходят живыми лёгкими запросами SDK (`SdkVolatileCards`,
+  `SdkVolatileVariant`, `SdkStorefrontPromotions`): батч id за кадр, `GET` persisted документа
+  без `Authorization`, кеш 30 с, повтор по `validUntil` промо и `visibilitychange`
+  (`plans/static-volatile-data.ru.md`, «Жизненный цикл лёгкого запроса»). Таймер на
+  `ProductLoyaltyPresentation.validUntil` перезапускает личный запрос.
 - **Смена локали и `router.refresh()`** в статике делают полную навигацию
   (`window.location.assign`), чтобы не требовать `.data`-ответов от сервера.
 - **Компоненты шапки** читают корзину и сессию только после монтирования (`useHydrated()`), чтобы
@@ -454,21 +462,27 @@ __static/manifest.json           (buildId, список страниц, хэши
   Список документов с разрешением на кеш публикуется gateway вместе со схемой.
 - В `createApolloClient` (`graphql/apollo/Environment.ts:118`) появляется второй `HttpLink` с
   `useGETForQueries: true` для операций из allow-list «гостевые и кешируемые». У таких запросов
-  **нет** `Authorization` и `x-shopana-storefront-visitor-id`; локаль передаётся **в URL**
-  (`/graphql/<locale>?documentId=…&variables=…`), а не только в `Accept-Language`, потому что
-  Cloudflare Free не учитывает `Vary` в ключе кеша. Запросы с сессией и мутации остаются `POST`.
+  **нет** `Authorization` и `x-shopana-storefront-visitor-id`; локаль передаётся **в query**
+  (`/graphql?locale=<locale>&documentId=…&variables=…`) вместе с `Accept-Language`, потому что
+  Cloudflare Free не учитывает `Vary` в ключе кеша, а query string входит в ключ. Gateway параметр
+  `locale` не читает, язык берётся из `Accept-Language`; клиент ставит оба из одной локали.
+  Запросы с сессией и мутации остаются `POST`.
 - Gateway (`infra/federation/gateway-storefront.config.ts`) получает `persistedDocuments` с
-  `getPersistedOperation` по манифесту codegen и `allowArbitraryDocuments: true`,
-  `graphqlEndpoint: '/graphql/:locale?'` (проверено на этапе 0) и плагин, который для `GET` с
+  `getPersistedOperation` по манифесту codegen и `allowArbitraryDocuments: true` (сделано, см.
+  этап 0) и плагин, который для `GET` с
   `documentId` из allow-list и без `Authorization` ставит `Cache-Control: public, max-age=0,
 s-maxage=<ttl>, stale-while-revalidate=<ttl*5>`. TTL по классам операций: листинги и поиск
   120 с, варианты и вопросы/отзывы 300 с, промо до `validUntil` (не больше 600 с), остатки
   30 с. Для всего остального `private, no-store`, как сейчас.
-- Cloudflare Cache Rule: `GET /graphql/*` без `Authorization` eligible for cache, Edge TTL
+- Тот же плагин ставит `Cache-Tag` по ключам сущностей ответа (`Product:<uuid>`, …), и
+  координатор чистит их по событиям (`plans/static-invalidation-and-ci-builds.ru.md`, «Purge по
+  тегам»).
+- Cloudflare Cache Rule: `GET /graphql` без `Authorization` eligible for cache, Edge TTL
   «respect origin», query string в ключе. Существующее правило bypass для `/graphql` сужается до
   `POST`.
-- Инвалидация этого слоя только по TTL: purge по тегам на Cloudflare Free нет, а множество
-  комбинаций переменных не перечислить. Точность там, где она нужна, даёт слой 1.
+- Инвалидация этого слоя: TTL плюс purge по тегам сущностей. Purge по тегу с апреля 2025 года
+  доступен на всех планах Cloudflare, включая Free (с лимитом числа запросов). Перечислять
+  комбинации переменных не нужно: тег сущности чистит все ответы, где она была.
 
 Слой 2 требует CDN перед gateway, то есть Cloudflare; CDN объектного хранилища (Spaces CDN,
 R2 без Cloudflare-зоны) его не даёт. Поэтому слой 2 делается после шага B, а на шаге A клиент
@@ -476,36 +490,25 @@ R2 без Cloudflare-зоны) его не даёт. Поэтому слой 2 �
 
 ## Инвалидация и перегенерация
 
-### Что служит источником изменений
+Устройство точечной инвалидации целиком описано в
+`plans/static-invalidation-and-ci-builds.ru.md`. Коротко:
 
-В internal все изменения уже проходят через events (`services/events`, таблица `domain_events`,
-доставка `@EventHandler`/`@BatchEventHandler` по точному типу). Для статики важны:
-
-| Событие                                                                                                        | Что перегенерировать                                                                            |
-| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `productCreated`, `productUpdated` (reasons, `affectedCategoryIds`, `affectedCollectionIds`), `productDeleted` | страница товара; страницы, где он встречается (индекс); категории и коллекции из payload        |
-| `categoryCreated`, `categoryUpdated`, `categoryDeleted`, `collection*`, `vendor*`                              | своя страница, `/collections`, страницы с этой сущностью в индексе (карточки, хлебные крошки)   |
-| `pageCreated`, `pageUpdated`, `pageDeleted`                                                                    | `/pages/:handle`                                                                                |
-| `navigationMenu*`, `storeUpdated`, `storeLocalesUpdated`                                                       | полная пересборка (меню и магазин есть в каждом документе)                                      |
-| `discount*`, `loyaltyProgram*`                                                                                 | страницы с `StorefrontPromotion`/`LoyaltyOpportunity` в индексе; сегодня это шапка, то есть все |
-| `review*`, `reviewStoreConfigurationUpdated`, `productQuestion*`                                               | страница товара (агрегаты)                                                                      |
-| `listingFacetMembershipChanged`, `facet*`, `searchSettingsUpdated`                                             | листинги (категории, коллекции, вендоры)                                                        |
-| `fileUpdated`                                                                                                  | страницы с медиа (по `MediaImage:` в индексе)                                                   |
+- **Источник:** лента событий internal, которую координатор `theme-static` читает по курсору.
+  Payload событий содержит id и причины, не состояние; рендер всегда перечитывает данные.
+- **Какие страницы:** обратный индекс «зависимость → страницы» с масками аспектов из кеша Apollo
+  каждой отрендеренной страницы; маппер событие → изменения в SDK.
+- **Когда рендерить:** своя страница сущности и популярные сразу, остальные помечаются dirty и
+  рендерятся при первом открытии (по отчётам о попаданиях от ноды и Worker-а) или фоновым
+  дочистом.
+- **Что публиковать:** только объекты с изменившимся хэшем.
+- **Быстрые данные:** остатки и промо вне HTML, наличие и цена в HTML с поправкой лёгким
+  запросом (`plans/static-volatile-data.ru.md`); события промо не вызывают рендер, `inventory`
+  только помечает страницы dirty.
+- **Purge:** на шаге A нет; на шаге B по тегам страниц, быстрых данных и сущностей GraphQL.
 
 Чтобы `discount*` и промо-метка в шапке не превращали каждое изменение скидки в полную
 пересборку, промо в layout (`useHeaderMenuItemLabel`) в режиме статики грузится клиентом через
-слой 2, а не из снимка. Тогда скидки затрагивают только страницы товаров и листинги.
-
-Payload событий содержит id и причины, не состояние; builder всегда перечитывает данные.
-
-### Вебхуки internal и координатор в теме
-
-Заменено планом `plans/static-invalidation-and-ci-builds.ru.md`. Отдельного сообщения
-`storefront.invalidate` нет. Тема подписывается в admin на обычные вебхуки internal со списком
-топиков (сервис `webhooks`, `internal/plans/webhooks-service.ru.md`). Роль `static coordinator`
-того же образа (сервис `theme-static`, одна реплика) хранит индекс зависимостей страниц и очередь.
-Рендер выполняется только в GitHub Actions: координатор ставит workflow через REST API, а job
-забирает задания под аренду.
+слой 2, а не из снимка.
 
 CLI для разработки и CI: `storefront-runtime static build` (полная генерация в каталог или в
 бакет), `storefront-runtime static render /products/x /categories/y`, `storefront-runtime static
@@ -514,20 +517,20 @@ run` (клиент аренды координатора). Локальная р
 `--static-only`. Отдельной команды `static serve` нет.
 
 На шаге A публикация в CI пишет объекты в бакет и пропускает purge (`cdn: 'none'`): новую версию
-нода увидит через `STOREFRONT_STATIC_CACHE_TTL`. С шага B включается purge Cloudflare по URL.
+нода увидит через `STOREFRONT_STATIC_CACHE_TTL`. С шага B включается purge Cloudflare по тегам.
 
 ### Что правильно: по триггеру или по расписанию
 
 Оба механизма, у каждого своя роль:
 
-- **Точечно по триггеру** основной путь: изменение товара видно на сайте через секунды, стоимость
-  несколько рендеров.
+- **Точечно по событиям** основной путь: своя страница изменённой сущности видна на сайте через
+  1–1,5 минуты, непопулярные страницы обновляются при первом открытии.
 - **Промах SSR** на гибридной ноде ставит рендер этого адреса, так что новый товар попадает в
   статику после первого посещения.
 - **Полная пересборка** при изменениях, которые входят в каждый документ (меню, магазин,
   локали, новый образ темы), и ночью как страховка от дрейфа.
-- **Сверка по `updatedAt`** страховка от потерянных вебхуков без полной пересборки.
-- **Таймеры** для изменений без событий (промо по расписанию, окна коллекций).
+- **Таймеры** для изменений без событий (окна коллекций; промо после выноса в быстрые данные
+  обходятся TTL).
 
 Оценка полной пересборки для текущих фикстур: 1 000 товаров + 145 категорий + ~330 вендоров,
 две локали ≈ 3 000 рендеров; при 150–300 мс на рендер и 8 воркерах 1–2 минуты без учёта
@@ -553,9 +556,9 @@ GitHub Actions (релиз, ночной cron) → build → static build → do
                                                           │         оболочки; кеш в памяти)
                                                           └──► SSR при промахе, /auth/*
                                                                → gateway
-internal webhooks → theme-static (индекс, очередь) → GitHub Actions → бакет (без purge)
+лента событий internal ◄── theme-static (курсор, индекс, очередь, dirty) → GitHub Actions → бакет
 GitHub Actions (ночь, релиз образа) → полная сборка → бакет (без purge)
-промах SSR на theme → theme-static → GitHub Actions → бакет
+попадания и промахи на theme → theme-static → GitHub Actions → бакет
 ```
 
 - Обе реплики темы читают один бакет, поэтому видят одну версию сайта; локальный диск реплики для
@@ -576,8 +579,9 @@ GitHub Actions (ночь, релиз образа) → полная сборка
                                └──► Tunnel → theme (гибридная нода: статика, SSR, auth-BFF)
               Cloudflare CDN ───────► R2 custom domain: /assets/*, /public/* (без Worker)
               Cloudflare CDN ───────► Tunnel → gateway: /graphql (GET кешируется, POST нет)
-internal webhooks → theme-static (индекс, очередь) → GitHub Actions → R2 + purge по URL
-GitHub Actions (ночь, релиз образа) → полная сборка → R2 + purge all
+лента событий internal ◄── theme-static → GitHub Actions → R2 + purge по тегам страниц
+theme-static → purge по тегам быстрых данных и GraphQL (без рендера)
+GitHub Actions (ночь, релиз образа) → полная сборка → R2 + purge тега прошлой сборки
 ```
 
 Нода на шаге B не меняется: на промах Worker-а она снова смотрит в бакет и при промахе рендерит
@@ -590,8 +594,14 @@ SSR. Её кеш в памяти и проверка бакета остаютс
 1. Переписывает путь в ключ функцией `staticKeyForPath` из runtime (та же, что у ноды):
    `/` → `index.html`, `/uk/products/x` → `uk/products/x/index.html`, `/__static/data/...json`
    как есть.
-2. Читает объект через R2 binding. Есть: отдаёт с `Cache-Control: public, max-age=0,
-s-maxage=86400, stale-while-revalidate=3600` и `ETag` объекта.
+2. Сначала ищет ответ в Cache API (`caches.default`). Ответ Worker-а кеш CDN сам не сохраняет:
+   Worker стоит перед кешем. Нет в кеше: читает объект через R2 binding, кладёт в Cache API с
+   `Cache-Control: public, max-age=0, s-maxage=600, stale-while-revalidate=3600`, `ETag` и
+   `Cache-Tag` из метаданных объекта (`pg:<pageKey>`, `build:<buildId>`) и отдаёт. Промах Cache
+   API отправляется координатору как попадание (`ctx.waitUntil`): так dirty-страница
+   перерендеривается после истечения `s-maxage`. Работает ли purge по тегу для объектов Cache
+   API, проверяется в начале этапа 8; если нет, HTML идёт через origin-fetch к R2 custom domain с
+   Cache Rules.
 3. Нет: `fetch` того же запроса на гибридную ноду (hostname Tunnel) с прокидыванием cookie и
    ответом как есть. Если нода недоступна, отдаёт семейную оболочку `__shell/<family>.html` со
    статусом 200 или `404.html` со статусом 404.
@@ -607,8 +617,11 @@ cookie-политики не меняется: hostname тот же, cookie firs
 - Cache Rules: HTML и `/__static/data/` eligible, «respect origin»; `/assets/` и `/public/` год,
   immutable; `GET /graphql/*` без `Authorization` eligible; `POST /graphql`, `/auth/*` bypass.
   Сейчас HTML bypass (`deploy/terraform/modules/frontend-edge/main.tf`), правило меняется.
-- Purge: `POST /zones/{zone}/purge_cache` с `files` (до 30 за вызов) из builder-а;
-  `purge_everything` после полной пересборки. Токен с правом `Cache Purge` секрет builder-а.
+- Purge по тегам: `POST /zones/{zone}/purge_cache` с `tags`, до 100 тегов в запросе, лимит
+  Free по документации 5 запросов в минуту с запасом 25 (сверить на этапе 8). Очередь purge
+  держит координатор; job чистит теги изменившихся страниц, после полной сборки чистится тег
+  `build:<buildId>` прошлой сборки, а не `purge_everything`. Токен с правом `Cache Purge` у
+  координатора и в CI.
 - Tunnel остаётся как сейчас: публичный hostname ведёт на `theme:3000` для промахов и auth, на
   Traefik для `/graphql`. Worker route перехватывает HTML и JSON раньше Tunnel.
 - R2: один бакет на окружение, custom domain вида `static.<hostname>` для ассетов или тот же
@@ -704,11 +717,11 @@ entities, validUntil }`), пул воркеров, CSS-pruning, запись в 
 
 ### `internal`
 
-1. Сервис `webhooks` с подпиской endpoint на список топиков и admin UI
-   (`internal/plans/webhooks-service.ru.md`); тема создаёт endpoint со своим списком топиков.
-2. Gateway: `persistedDocuments` (`getPersistedOperation` по манифесту, `allowArbitraryDocuments:
-   true`), `graphqlEndpoint: '/graphql/:locale?'` и плагин `Cache-Control` для `GET` persisted
-   documents из allow-list (результаты проверки на этапе 0).
+1. API чтения событий магазина по курсору и токен интеграции для координатора
+   (`plans/static-invalidation-and-ci-builds.ru.md`, «Лента событий internal»).
+2. Gateway: `persistedDocuments` с манифестом по `HIVE_STOREFRONT_PERSISTED_DOCUMENTS_URL` и
+   `allowArbitraryDocuments: true` (сделано, этап 0); плагин `Cache-Control` и `Cache-Tag` для
+   `GET` persisted documents из allow-list.
 3. Опционально: теги `catalog:*`, `onlineStore:*` в `packages/cache/src/tags.ts` и их `touch` в
    workflow-ах для согласованного словаря, не для доставки.
 4. Остатки: лёгкий запрос `productVariant { availableForSale quantityAvailable }` в allow-list с
@@ -725,7 +738,7 @@ entities, validUntil }`), пул воркеров, CSS-pruning, запись в 
 2. `deploy/swarm/theme.yml`: `STOREFRONT_STATIC_STORE`, ключ чтения и адрес координатора у
    сервиса `theme`; сервис `theme-static` (координатор) из того же образа с volume для SQLite;
    `deploy-theme.mjs` учитывает его в `check`, `deploy`, `status`.
-3. Секреты CI: ключ записи в бакет, секрет подписи вебхука, серверный GraphQL URL и приватный
+3. Секреты CI: ключ записи в бакет, серверный GraphQL URL и приватный
    storefront-токен (`shopana-storefront-private-token`), чтобы gateway не считал builder обычным
    браузером.
 
@@ -735,7 +748,7 @@ entities, validUntil }`), пул воркеров, CSS-pruning, запись в 
    SSR-origin), деплой через Terraform или wrangler в CI.
 2. `deploy/terraform/modules/frontend-edge`: custom domain R2 для ассетов, Worker route, новые
    Cache Rules.
-3. Секрет CI: токен Cloudflare purge; `cdn: 'cloudflare'` в публикации.
+3. Токен Cloudflare purge у координатора и в CI; `cdn: 'cloudflare'` в публикации.
 
 ## Тестирование
 
@@ -757,10 +770,10 @@ Mock-сервер `@shopana/mock-server` участвует только в ра
 - **Персонализация.** Вход через mock IAM (`x-mock-customer-id`): после гидратации баллы
   лояльности обновляются на тировые, счётчик корзины и аккаунт появляются, `viewer*` поля
   подгружаются.
-- **Инвалидация.** Подписанный вебхук `productUpdated` → перегенерация только
-  ожидаемых страниц (по индексу), гибридная нода отдаёт новую версию не позже TTL, на шаге B
-  purge вызван для HTML и JSON; `navigationMenuUpdated` → полная
-  пересборка; таймер `validUntil` → перегенерация страниц с промо.
+- **Инвалидация.** Событие `productUpdated` из ленты → своя страница и популярные в очереди,
+  остальные затронутые dirty; попадание по dirty → рендер; гибридная нода отдаёт новую версию не
+  позже TTL, на шаге B purge тега страницы; `navigationMenuUpdated` → полная пересборка.
+  Подробности в `plans/static-invalidation-and-ci-builds.ru.md`, «Тестирование».
 - **Worker (шаг B).** Тесты на `workerd`/miniflare: переписывание ключей, фолбэк на origin, деградация в
   оболочку, проксирование `/auth/*` с cookie.
 - **Stage.** `deploy-theme.mjs smoke` на шаге A: `x-shopana-static: hit` и `304` для
@@ -783,7 +796,8 @@ Mock-сервер `@shopana/mock-server` участвует только в ра
 | `GET` с `documentId` мутации                        | —                                    | `405`, мутации только через `POST`     |
 | `POST {documentId}`                                 | —                                    | `200`, данные                          |
 | `GET /graphql?query=…` и `allowArbitraryDocuments`  | —                                    | `200`, данные                          |
-| `GET /graphql/uk?documentId=…`                      | `404`                                | `200` с `graphqlEndpoint: '/graphql/:locale?'` |
+| `GET /graphql/uk?documentId=…`                      | `404`                                | `200` с `graphqlEndpoint: '/graphql/:locale?'`, но ломает websockets (ниже) |
+| `GET /graphql?locale=uk&documentId=…`               | —                                    | `200`, лишний параметр не мешает       |
 
 Выводы:
 
@@ -794,8 +808,15 @@ Mock-сервер `@shopana/mock-server` участвует только в ра
   codegen) и `allowArbitraryDocuments: true`: остальные клиенты и `POST` с сессией продолжают слать
   текст запроса. Без этого флага gateway отклоняет любой запрос без `documentId`.
 - Мутации по `GET` gateway отклоняет сам (`405`), отдельная защита не нужна.
-- Локаль в пути (`/graphql/<locale>`) включается через `graphqlEndpoint: '/graphql/:locale?'`,
-  при этом `/graphql` продолжает работать.
+- Локаль в пути (`graphqlEndpoint: '/graphql/:locale?'`) отклонена: CLI hive-gateway 2.11.2
+  создаёт `WebSocketServer({ path: graphqlEndpoint })`, `ws` сравнивает путь строго, и upgrade
+  на `/graphql` получает `400`. Плагин перезаписи пути тоже отклонён: request-id в gateway и
+  `storefront-access` хранятся в `WeakMap` по исходному `Request` и теряются. Локаль передаётся
+  в query: `GET /graphql?locale=uk&documentId=…`; endpoint остаётся `/graphql`.
+- Сделано в internal (не закоммичено на момент записи): `persistedDocuments` с манифестом,
+  который gateway скачивает при старте по `HIVE_STOREFRONT_PERSISTED_DOCUMENTS_URL` (без
+  переменной манифест пустой), `allowArbitraryDocuments: true`; 13 тестов в `infra/federation`
+  проходят.
 - Плагин `storefront-access` (`plugins/storefront-access/index.ts`) от метода запроса не зависит:
   `onRequest` одинаково обрабатывает `GET` и `POST`. В этой проверке он не подключался.
 
@@ -815,8 +836,9 @@ _Готово, когда_ сайт с mock-сервера открываетс�
 адреса отдаются как `hit`, остальные рендерит SSR, `/auth/*` работает, гидратация без ошибок.
 
 **4. Клиентский режим статики в SDK и теме (неделя).**
-`page-data.json` в `clientLoader`, `useViewerRefresh`, таймеры `validUntil`, скелетоны шапки,
-вынос `viewer*` полей, промо-метка меню на клиент, полная навигация при смене локали.
+`page-data.json` в `clientLoader`, `useViewerRefresh` без `evict` (личный запрос), скелетоны
+шапки, вынос `viewer*` полей, промо-метка меню на клиент, полная навигация при смене локали.
+Лёгкие запросы остатков и промо — по этапам `plans/static-volatile-data.ru.md`.
 _Готово, когда_ сценарии «гость без сети» и «персонализация после входа» проходят.
 
 **5. Статика в образе: локально и при сборке образа (2–3 дня).**
@@ -834,15 +856,18 @@ purge, обновлённый smoke. _Готово, когда_ есть циф�
 расписанию».
 
 **7. Точечная инвалидация (1–1,5 недели, обе стороны).**
-Internal: сервис `webhooks` (`internal/plans/webhooks-service.ru.md`). Storefront: координатор,
-индекс зависимостей, очередь, таймеры, сверка, промах SSR, workflow `static-site.yml`,
-`theme-static` в стеке (`plans/static-invalidation-and-ci-builds.ru.md`), публикация без purge.
-_Готово, когда_ правка товара в админке stage обновляет страницу на ноде не позднее двух минут,
-а тест инвалидации на mock-сервере проходит.
+Internal: API чтения событий по курсору. Storefront: координатор с чтением ленты, индекс
+зависимостей, eager и dirty, отчёты о попаданиях от ноды, дочист, публикация только изменившегося,
+таймеры, workflow `static-site.yml`, `theme-static` в стеке, без purge
+(`plans/static-invalidation-and-ci-builds.ru.md`). Быстрые данные вне HTML — по
+`plans/static-volatile-data.ru.md`. _Готово, когда_ правка товара в админке stage обновляет его
+страницу на ноде не позднее двух минут, непопулярный листинг с ним обновляется после открытия, а
+тесты координатора проходят.
 
 **8. Шаг B: Worker и кеш CDN перед нодой (3–4 дня).**
 Проверка Worker с R2 binding и cookie auth на тестовом hostname, Worker и его тесты, custom
-domain для ассетов, Cache Rules в Terraform, purge по URL и после полной сборки, smoke для CDN,
+domain для ассетов, Cache Rules в Terraform, Cache API с `Cache-Tag`, purge по тегам и тегу
+прошлой сборки, smoke для CDN,
 перепроверка `STOREFRONT_TRUSTED_PROXY_HOPS`. _Готово, когда_ `pet.shopana.dev` отдаёт статику
 из CDN (`cf-cache-status: HIT`), промахи и `/auth/*` идут на гибридную ноду, а правка товара
 обновляет страницу в CDN не позднее двух минут.
@@ -860,9 +885,9 @@ _Готово, когда_ подгрузка второй страницы ли
 
 ## Риски и открытые вопросы
 
-- **Устаревшие остатки и промо в HTML.** В промежутке между событием и перегенерацией страница
-  показывает старое. Клиентский запрос остатков с TTL 30 с и таймеры `validUntil` сокращают окно;
-  полная гарантия есть только в корзине и чекауте, где цены и остатки считает сервер.
+- **Устаревшие данные на dirty-страницах.** Непопулярная страница показывает прошлую версию до
+  первого открытия плюс 1–1,5 минуты. Остатки и промо после выноса в быстрые данные актуальны и
+  там; полная гарантия цен и остатков есть только в корзине и чекауте.
 - **Полная пересборка при изменении layout.** Любое изменение меню или настроек магазина это
   тысячи рендеров. Если это окажется частым, меню тоже переводится на клиентскую загрузку из слоя
   2 с коротким TTL.
@@ -889,6 +914,6 @@ _Готово, когда_ подгрузка второй страницы ли
   темы, поэтому коллекция вне меню не попадёт в статику без явного указания.
 - **Персонализированные цены в будущем.** Сейчас цен по сегментам нет; если появятся, цена
   переходит в клиентский слой по той же схеме, что и баллы лояльности, а HTML остаётся гостевым.
-- **Consistency между HTML и JSON.** Оба пишутся одной операцией и чистятся одним пакетом purge;
+- **Consistency между HTML и JSON.** Оба пишутся одной операцией и чистятся одним тегом страницы;
   в окне между ними клиент может получить новый JSON к старому HTML, это безопасно, так как
   JSON только дополняет кеш Apollo.

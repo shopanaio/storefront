@@ -1,4 +1,5 @@
 import type {
+  ApolloCache,
   Cache,
   DocumentNode,
   FieldPolicy,
@@ -165,6 +166,22 @@ function storefrontCacheClass(Base: InMemoryCacheClass) {
         return super.write(options);
       }
 
+      /** More whole responses, written as their queries ask (a static page's data). */
+      addPendingResults(results: readonly RequestQueryResult[]) {
+        for (const [key, result] of indexRequestResults(results)) {
+          this.#pending.set(key, result);
+        }
+      }
+
+      /** The whole responses not written yet, changed by `change` (the viewer's fields out). */
+      mapPendingResults(
+        change: (result: RequestQueryResult) => RequestQueryResult
+      ) {
+        for (const [key, result] of this.#pending) {
+          this.#pending.set(key, change(result));
+        }
+      }
+
       override reset(options?: Cache.ResetOptions) {
         this.#pending.clear();
         return super.reset(options);
@@ -316,6 +333,52 @@ export function createApolloCache(
     handles,
     results
   );
+}
+
+interface PendingResultsCache {
+  addPendingResults(results: readonly RequestQueryResult[]): void;
+  mapPendingResults(
+    change: (result: RequestQueryResult) => RequestQueryResult
+  ): void;
+}
+
+function hasPendingResults(
+  cache: ApolloCache
+): cache is ApolloCache & PendingResultsCache {
+  return (
+    typeof (cache as Partial<PendingResultsCache>).addPendingResults ===
+    'function'
+  );
+}
+
+/**
+ * Adds a state the server rendered with to a browser cache: a normalized one is merged into
+ * its records (`state` wins), whole responses wait for their queries.
+ */
+export function addApolloCacheState(
+  cache: ApolloCache,
+  state: NormalizedCacheObject | readonly RequestQueryResult[]
+): void {
+  if (Array.isArray(state)) {
+    if (hasPendingResults(cache)) {
+      cache.addPendingResults(state as readonly RequestQueryResult[]);
+    }
+    return;
+  }
+  cache.restore(
+    mergeApolloCacheStates(
+      cache.extract() as NormalizedCacheObject,
+      state as NormalizedCacheObject
+    )
+  );
+}
+
+/** Changes the whole responses a browser cache has not written yet. */
+export function mapPendingApolloResults(
+  cache: ApolloCache,
+  change: (result: RequestQueryResult) => RequestQueryResult
+): void {
+  if (hasPendingResults(cache)) cache.mapPendingResults(change);
 }
 
 /**

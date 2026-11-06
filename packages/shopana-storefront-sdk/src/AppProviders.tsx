@@ -23,6 +23,7 @@ import type {
   StorefrontLocales,
 } from './modules/localization/core/types';
 import { StoreProvider } from './modules/store/react/StoreContext';
+import { ViewerRefresh } from './static/useViewerRefresh';
 
 export interface AppProvidersProps {
   children: React.ReactNode;
@@ -101,6 +102,7 @@ export const AppProviders: React.FC<
           >
             {children}
             <AccountCartSync />
+            <ViewerRefresh />
           </CartProvider>
         </SessionProvider>
       </LocalizationProvider>

@@ -285,7 +285,7 @@ variables в Actions не нужны. `GITHUB_TOKEN` используется т
 
 Один образ `linux/amd64` публикуется в `ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme`.
 Tag содержит SHA темы и framework, summary — immutable digest для `THEME_IMAGE`.
-Один и тот же digest используется в stage и production; конфигурация задаётся при deploy.
+Образ несёт статику одного окружения (см. «Статика»): tag оканчивается на `-<environment>`.
 
 ```sh
 docker buildx build --platform linux/amd64 --push \
@@ -310,6 +310,33 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 Зарегистрируйте в IAM origin `https://<hostname>`, callback
 `https://<hostname>/auth/callback` и post-logout URI `https://<hostname>/`.
 Проверьте public base URL/issuer IAM: Tunnel не переписывает JSON discovery или `Location`.
+
+## Статика
+
+План `plans/static-site-generation.ru.md`, шаг A. Тема отдаёт готовый HTML гостевых страниц
+и рендерит SSR только то, чего в статике нет (`x-shopana-static: hit | miss`).
+
+- **Статика в образе.** `build-theme.yml` между `yarn build` и `docker build` выполняет
+  `storefront-runtime static build` против API выбранного окружения (`environment` workflow,
+  ночью `stage`); Dockerfile копирует `.runtime/build/static` вместе с ассетами её страниц.
+  Поэтому образ привязан к окружению: tag получает суффикс `-<environment>`. Без
+  `STATIC_STORE` в `deploy.env` тема отдаёт статику образа.
+- **Бакет.** `deploy/terraform/zone` (`static_site_buckets`, `cloudflare_account_id`) создаёт
+  бакет R2 на окружение и два ключа S3: чтение для темы (`static_site_read_keys` →
+  `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`/`..._SECRET_ACCESS_KEY` в `server-env.json`), запись для
+  GitHub Actions (`static_site_write_keys` → secrets окружения в репозитории темы). В
+  `deploy.env` задайте `STATIC_STORE` и `STATIC_ENDPOINT` из output `static_site`. Полную сборку
+  в бакет делает `static-full-build.yml` (ночью, по ручному запуску и после каждой сборки
+  образа), без purge: реплики видят новые страницы через `STOREFRONT_STATIC_CACHE_TTL` (10 с).
+- `CLOUDFLARE_API_TOKEN` профиля `zone` для бакетов дополнительно нужны права аккаунта
+  Workers R2 Storage Write (бакет), API Tokens Write (ключи) и чтение permission groups.
+  `apply` профиля `zone` применяет и его Cache Rules, WAF и Bot Management (см. «Terraform»).
+- Variables окружения GitHub Actions темы: `STOREFRONT_PUBLIC_URL`, `NEXT_PUBLIC_GRAPHQL_URL`,
+  `NEXT_PUBLIC_API_KEY`, `STOREFRONT_STATIC_STORE`, `STOREFRONT_STATIC_S3_ENDPOINT`; secrets:
+  `STOREFRONT_PRIVATE_TOKEN`, `STOREFRONT_SERVER_GRAPHQL_URL` (необязателен),
+  `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`, `STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY`.
+- `deploy-theme.mjs smoke` проверяет `hit`, `ETag` и `304` главной, `miss` и `no-store`
+  неизвестного товара, `/__env.js` и отсутствие секретов в HTML.
 
 ## Secrets и запуск stack
 

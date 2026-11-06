@@ -1,0 +1,91 @@
+query SdkStaticProducts($first: Int!, $after: Cursor) {
+  products(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticCategories($first: Int!, $after: Cursor) {
+  categories(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticVendors($first: Int!, $after: Cursor) {
+  vendors(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticOnlineStorePages($first: Int!, $after: Cursor) {
+  onlineStorePages(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticStorePolicies {
+  store {
+    id
+    policies {
+      id
+      handle
+    }
+  }
+}
+
+fragment SdkStaticMenuItem on OnlineStoreNavigationMenuItem {
+  id
+  target {
+    type
+    url
+    resource {
+      __typename
+      id
+      ... on Collection {
+        handle
+      }
+    }
+  }
+}
+
+query SdkStaticNavigationMenu($handle: String!) {
+  onlineStoreNavigationMenuByHandle(handle: $handle) {
+    id
+    items {
+      ...SdkStaticMenuItem
+      children {
+        ...SdkStaticMenuItem
+        children {
+          ...SdkStaticMenuItem
+        }
+      }
+    }
+  }
+}
