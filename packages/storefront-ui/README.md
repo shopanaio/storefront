@@ -117,10 +117,11 @@ buyer types the calling code. Check the value with `isPossiblePhone` (length) or
 
 `breakpoints` (`xs` 375 … `xxl` 1440) are the storefront's widths, not antd's. `mq.lg` and
 `mq.max.lg` are CSS at-rules; `queries.below('lg')`, `queries.phone`, `queries.drawerSheet` are
-queries for `useMediaQuery(query, { defaultValue })` and `useBreakpointDown('lg')`.
-`defaultValue` (`false` by default) is what they return on the server and during hydration: a
-host that knows the device from the user agent passes it, so a phone renders its layout from the
-first paint.
+queries for `useMediaQuery(query)` and `useBreakpointDown('lg')`. On the server and during
+hydration they answer for `viewport.assumedWidth` of `StorefrontUIProvider` (min-width and
+max-width queries in px), the width the host's server renders for; once the host sets
+`viewport.hydrated` (in a transition), they follow the window. Without `viewport` the hooks
+follow the window from the first render, as an app with nothing to hydrate.
 
 ### Banner theme
 

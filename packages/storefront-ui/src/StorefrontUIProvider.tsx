@@ -53,7 +53,19 @@ export interface StorefrontUIProviderProps {
    * its calling code; the parent's, else none and the buyer types the code.
    */
   phoneCountry?: Country;
+  /**
+   * The host's flag of hydration and the viewport width its server renders for: until
+   * `hydrated`, `useMediaQuery` answers for `assumedWidth`, the same on the server and in the
+   * hydration pass; then the window's. The parent's, else hydrated (nothing to hydrate).
+   */
+  viewport?: Viewport;
   children: ReactNode;
+}
+
+/** Whether the host has hydrated, and the width its server's HTML is for. */
+export interface Viewport {
+  hydrated: boolean;
+  assumedWidth: number;
 }
 
 /** Motion of a dialog: antd's default zoom or a fade. */
@@ -65,6 +77,7 @@ interface StorefrontUIValue {
   drawerContainer?: HTMLElement | null;
   dialogMotion: DialogMotion;
   phoneCountry?: Country;
+  viewport: Viewport;
 }
 
 const DEFAULT_TEXTS: StorefrontUITexts = {
@@ -83,6 +96,7 @@ const StorefrontUIContext = createContext<StorefrontUIValue>({
   locale: 'en',
   texts: DEFAULT_TEXTS,
   dialogMotion: 'zoom',
+  viewport: { hydrated: true, assumedWidth: 0 },
 });
 
 /**
@@ -106,6 +120,7 @@ export function StorefrontUIProvider({
   drawerContainer,
   dialogMotion,
   phoneCountry,
+  viewport,
   children,
 }: StorefrontUIProviderProps) {
   const parent = useContext(StorefrontUIContext);
@@ -126,8 +141,17 @@ export function StorefrontUIProvider({
           : drawerContainer,
       dialogMotion: dialogMotion ?? parent.dialogMotion,
       phoneCountry: phoneCountry ?? parent.phoneCountry,
+      viewport: viewport ?? parent.viewport,
     }),
-    [parent, locale, texts, drawerContainer, dialogMotion, phoneCountry]
+    [
+      parent,
+      locale,
+      texts,
+      drawerContainer,
+      dialogMotion,
+      phoneCountry,
+      viewport,
+    ]
   );
   return (
     <StorefrontUIContext.Provider value={value}>
@@ -137,8 +161,8 @@ export function StorefrontUIProvider({
 }
 
 /**
- * Locale, texts, the drawer container, the dialog motion and the phone country of the nearest
- * provider.
+ * Locale, texts, the drawer container, the dialog motion, the phone country and the viewport
+ * of the nearest provider.
  */
 export const useStorefrontUI = () => useContext(StorefrontUIContext);
 

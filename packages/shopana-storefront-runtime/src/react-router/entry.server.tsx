@@ -1,7 +1,7 @@
 /**
  * The server entry of a storefront under React Router: streams the document as React renders
- * it, and waits for all of it for crawlers and `HEAD` requests, so they get complete pages and
- * the status and redirect the render decided.
+ * it, and waits for all of it for crawlers, `HEAD` requests and the static site builder, so
+ * they get complete pages and the status and redirect the render decided.
  */
 import { Transform } from 'node:stream';
 import { createReadableStreamFromReadable } from '@react-router/node';
@@ -29,6 +29,13 @@ import {
   recordRenderStatus,
   REDIRECT_STATUSES,
 } from './render-status';
+
+/**
+ * A request with this header gets the whole document at once, as a crawler does: the static
+ * site builder asks for its pages so. The markup is the same either way; only the moment of
+ * the answer differs.
+ */
+export const FULL_DOCUMENT_HEADER = 'x-shopana-static-render';
 
 /** How long the server streams pending Suspense content before it gives up on it. */
 export const streamTimeout = 5_000;
@@ -85,10 +92,14 @@ export default function handleRequest(
     let responded = false;
     let status = responseStatusCode;
     const userAgent = request.headers.get('user-agent');
-    const readyOption: keyof RenderToPipeableStreamOptions =
-      head || (userAgent && isbot(userAgent)) || routerContext.isSpaMode
-        ? 'onAllReady'
-        : 'onShellReady';
+    const fullDocument =
+      head ||
+      request.headers.has(FULL_DOCUMENT_HEADER) ||
+      (userAgent !== null && isbot(userAgent)) ||
+      routerContext.isSpaMode;
+    const readyOption: keyof RenderToPipeableStreamOptions = fullDocument
+      ? 'onAllReady'
+      : 'onShellReady';
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined = setTimeout(
       () => abort(),

@@ -11,6 +11,7 @@ export {
   type StorefrontUITextOverrides,
   type StorefrontUITexts,
   type DialogMotion,
+  type Viewport,
 } from './StorefrontUIProvider';
 export {
   FLOATING_FIELD_HEIGHT,
@@ -29,9 +30,5 @@ export * from './phone';
 export * from './drawer';
 export * from './banner';
 export { breakpoints, mq, queries, type Breakpoint } from './breakpoints';
-export {
-  useBreakpointDown,
-  useMediaQuery,
-  type MediaQueryOptions,
-} from './useMediaQuery';
+export { useBreakpointDown, useMediaQuery } from './useMediaQuery';
 export type { DomAttributes } from './dom';
