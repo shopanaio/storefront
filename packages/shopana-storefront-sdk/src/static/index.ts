@@ -25,9 +25,18 @@ export {
   STATIC_MANIFEST_VERSION,
   type StaticDocumentInfo,
   type StaticFileKind,
+  staticServerIndex,
   type StaticManifest,
   type StaticManifestFile,
+  type StaticServerIndex,
 } from './manifest';
+export {
+  STATIC_RENDER_HEADER,
+  STATIC_RENDER_KEY_HEADER,
+  staticRenderHeaders,
+  staticRenderMode,
+  type StaticRenderMode,
+} from './render';
 export {
   createStaticResultsLink,
   provideStaticResults,

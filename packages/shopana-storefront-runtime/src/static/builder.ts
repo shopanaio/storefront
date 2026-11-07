@@ -2,28 +2,34 @@
  * The static site builder: every address of a theme's static config rendered by its server
  * build, as a guest, into a store (a directory or a bucket), with the data of each page, the
  * shells, the 404 page, `robots.txt` and the sitemaps, the assets of the build, and the
- * manifest last. A full build replaces the site; `renderStaticPaths` adds or renews pages.
+ * manifest last. A full build replaces the site: a page it no longer has is deleted with it.
+ * `renderStaticPaths` adds or renews pages. The manifest is written only over the version a
+ * writer read, so a build and a render at the same time both keep what they wrote.
  */
 import { readdir, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { ServerBuild } from 'react-router';
-import type {
-  StorefrontLocale,
-  StorefrontLocales,
+import {
+  parseRoute,
+  type StorefrontLocale,
+  type StorefrontLocales,
 } from '@shopana/storefront-sdk/routing';
 import {
   STATIC_MANIFEST_VERSION,
+  staticServerIndex,
   type StaticManifest,
   type StaticManifestFile,
 } from '@shopana/storefront-sdk/static';
 import type { StaticSiteEntry } from '../react-router/static-site';
 import type { StaticRenderMode } from '../react-router/static-render';
 import {
+  isStaticSiteKey,
   STATIC_ASSETS_PREFIX,
   STATIC_MANIFEST_KEY,
   STATIC_NOT_FOUND_KEY,
+  STATIC_SERVER_INDEX_KEY,
   STATIC_SHELL_FAMILIES,
   staticDataKeyForPath,
   staticKeyForPath,
@@ -36,10 +42,18 @@ import {
   type StaticRenderRequest,
   type StaticRenderResult,
 } from './renderer';
-import { contentHash, contentTypeOf, type StaticStore } from './store';
+import {
+  contentHash,
+  contentTypeOf,
+  StaticWriteConflict,
+  type StaticStore,
+} from './store';
 
-/** Objects of an earlier build no manifest lists any more are deleted after this. */
+/** Assets of an earlier build this one does not ship are deleted after this. */
 const RETIRED_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Writes of the manifest a writer tries before it gives up on writers in between. */
+const MANIFEST_ATTEMPTS = 5;
 
 /** The path the 404 page is rendered at: no page of any store has it. */
 const NOT_FOUND_PATH = '/__static/not-found';
@@ -130,14 +144,67 @@ function servedPath(pathname: string): string {
   return new URL(pathname, 'http://storefront.local').pathname;
 }
 
-/** Reads the manifest of a store; null without one. */
-export async function readManifest(
-  store: StaticStore
-): Promise<StaticManifest | null> {
+/** The manifest of a store as a writer read it: its version (ETag) is what it writes over. */
+interface ManifestRead {
+  /** Null without one, or with one of another version of the format. */
+  manifest: StaticManifest | null;
+  /** Null when the store has no manifest. */
+  etag: string | null;
+}
+
+/** Reads the manifest of a store. */
+export async function readManifest(store: StaticStore): Promise<ManifestRead> {
   const read = await store.read(STATIC_MANIFEST_KEY);
-  if (read.status !== 'found') return null;
+  if (read.status !== 'found') return { manifest: null, etag: null };
   const manifest = JSON.parse(read.body.toString('utf8')) as StaticManifest;
-  return manifest.version === STATIC_MANIFEST_VERSION ? manifest : null;
+  return {
+    manifest: manifest.version === STATIC_MANIFEST_VERSION ? manifest : null,
+    etag: read.etag,
+  };
+}
+
+/**
+ * Writes the manifest `next` makes of the store's current one, only over the version read
+ * (compare and swap): when another writer was first, its manifest is read again and `next`
+ * makes the manifest anew from it. Then the server's index of it.
+ */
+async function commitManifest(
+  store: StaticStore,
+  read: ManifestRead,
+  next: (current: StaticManifest | null) => StaticManifest
+): Promise<StaticManifest> {
+  let current = read;
+  for (let attempt = 1; ; attempt += 1) {
+    const manifest = next(current.manifest);
+    try {
+      await store.write(
+        STATIC_MANIFEST_KEY,
+        JSON.stringify(manifest),
+        contentTypeOf(STATIC_MANIFEST_KEY),
+        current.etag ? { ifMatch: current.etag } : { ifNoneMatch: '*' }
+      );
+    } catch (error) {
+      if (!(error instanceof StaticWriteConflict)) throw error;
+      if (attempt >= MANIFEST_ATTEMPTS) {
+        throw new Error(
+          `${store.url}: the manifest kept changing while it was written (${attempt} attempts)`
+        );
+      }
+      current = await readManifest(store);
+      continue;
+    }
+    await store.write(
+      STATIC_SERVER_INDEX_KEY,
+      JSON.stringify(staticServerIndex(manifest)),
+      contentTypeOf(STATIC_SERVER_INDEX_KEY)
+    );
+    return manifest;
+  }
+}
+
+/** The hash of a rendered page with what its static facts add to it. */
+function pageHash(html: string, dataPageTypes: readonly string[]): string {
+  return contentHash(`${html}\n${dataPageTypes.join(',')}`);
 }
 
 /** Runs `work` over `items`, `limit` at a time. */
@@ -190,8 +257,22 @@ class SiteWriter {
   constructor(
     private readonly store: StaticStore,
     private readonly previous: StaticManifest | null,
-    private readonly buildId: string
+    private readonly buildId: string,
+    private readonly dataPageTypes: readonly string[]
   ) {}
+
+  /**
+   * The files of the previous build of a page that failed now: kept as they are, so a
+   * failure of the API never takes a page away.
+   */
+  keep(key: string): boolean {
+    const file = this.previous?.files[key];
+    if (!file) return false;
+    this.files[key] = file;
+    const data = file.data && this.previous?.files[file.data];
+    if (file.data && data) this.files[file.data] = data;
+    return true;
+  }
 
   /** Whether the store has `key` with `hash` from the previous build. */
   private unchanged(key: string, hash: string): StaticManifestFile | null {
@@ -227,7 +308,7 @@ class SiteWriter {
    * content did not change keeps its file (and the moment it was rendered).
    */
   async writePage(task: RenderTask, result: StaticRenderResult): Promise<void> {
-    const hash = contentHash(result.html);
+    const hash = pageHash(result.html, this.dataPageTypes);
     const same = this.unchanged(task.key, hash);
     const renderedAt = same?.renderedAt ?? result.renderedAt;
     const dataKey =
@@ -254,6 +335,7 @@ class SiteWriter {
         locale: task.locale,
         path: task.request.path,
         validUntil: task.kind === 'page' ? result.validUntil : null,
+        dataPageTypes: [...this.dataPageTypes],
       });
       await this.store.write(task.key, html, entry.contentType);
       this.written += 1;
@@ -270,25 +352,27 @@ class SiteWriter {
 }
 
 /**
- * Retires what a build no longer has: files of the previous manifest that `files` lacks, and
- * assets of earlier builds this one does not ship. A retired object stays for a week (an HTML
+ * Retires the assets of earlier builds this one does not ship: one stays for a week (an HTML
  * in a browser's cache still names it), then goes; one that comes back is no longer retired.
  */
-async function retireStale(
+async function retireAssets(
   store: StaticStore,
-  previous: StaticManifest | null,
-  files: Record<string, StaticManifestFile>,
+  previous: Record<string, string> | undefined,
   assets: { stored: readonly string[]; current: ReadonlySet<string> },
   now: Date
 ): Promise<{ retired: Record<string, string>; removed: number }> {
-  const retired: Record<string, string> = { ...(previous?.retired ?? {}) };
-  const live = (key: string) => Boolean(files[key]) || assets.current.has(key);
-  for (const key of [...Object.keys(previous?.files ?? {}), ...assets.stored]) {
-    if (!live(key) && !retired[key]) retired[key] = now.toISOString();
+  const retired: Record<string, string> = {};
+  for (const [key, since] of Object.entries(previous ?? {})) {
+    if (key.startsWith(STATIC_ASSETS_PREFIX)) retired[key] = since;
+  }
+  for (const key of assets.stored) {
+    if (!assets.current.has(key) && !retired[key]) {
+      retired[key] = now.toISOString();
+    }
   }
   let removed = 0;
   for (const [key, since] of Object.entries(retired)) {
-    if (live(key)) {
+    if (assets.current.has(key)) {
       delete retired[key];
     } else if (now.getTime() - Date.parse(since) >= RETIRED_KEEP_MS) {
       await store.remove(key);
@@ -297,6 +381,24 @@ async function retireStale(
     }
   }
   return { retired, removed };
+}
+
+/**
+ * Deletes the files of the site the manifest does not list: a page that left the catalog, its
+ * data, a file a writer left behind. At once: the server answers whatever the store has, so a
+ * page kept would stay on sale. Only the builder's own files (`isStaticSiteKey`) are deleted.
+ */
+async function removeUnlisted(
+  store: StaticStore,
+  files: Readonly<Record<string, StaticManifestFile>>
+): Promise<number> {
+  let removed = 0;
+  for (const key of await store.list()) {
+    if (files[key] || !isStaticSiteKey(key)) continue;
+    await store.remove(key);
+    removed += 1;
+  }
+  return removed;
 }
 
 /**
@@ -360,8 +462,9 @@ async function renderSeoFiles(
 /**
  * Renders the static site of a theme: the addresses of its config in each of its languages,
  * the shells and the family shells, the 404 page, `robots.txt` and the sitemaps, and the
- * assets of the build, then the manifest. A page that answers 404 is not written (and its
- * file of an earlier build retires); a redirect is an error of the config.
+ * assets of the build, then the manifest. A page that answers 404 is not written, and the file
+ * of an earlier build goes with every other file the new manifest does not list. A page that
+ * fails keeps its earlier files. A redirect is an error of the config.
  */
 export async function buildStaticSite(
   options: StaticBuildOptions
@@ -375,7 +478,8 @@ export async function buildStaticSite(
     options.concurrency ??
     config.concurrency ??
     Math.max(1, os.availableParallelism() - 1);
-  const previous = await readManifest(store);
+  const read = await readManifest(store);
+  const previous = read.manifest;
   const { all, rendered } = await site.locales();
   const prefix = site.routing.localePrefix;
 
@@ -405,10 +509,16 @@ export async function buildStaticSite(
     });
   };
 
+  // The page types of the rendered addresses: a client navigation asks for the data of these.
+  const dataPageTypes = new Set<string>();
   for (const locale of rendered) {
     const routes = await site.routes(locale);
     logger.info(`[static] ${locale.segment}: ${routes.length} pages`);
-    for (const route of routes) addTask(route.path, locale, 'page', 'page');
+    for (const route of routes) {
+      addTask(route.path, locale, 'page', 'page');
+      const { pageType } = parseRoute(route.path);
+      if (pageType !== '404') dataPageTypes.add(pageType);
+    }
     for (const shell of config.shells ?? [])
       addTask(shell, locale, 'shell', 'shell');
   }
@@ -435,9 +545,14 @@ export async function buildStaticSite(
     );
   }
 
-  const writer = new SiteWriter(store, previous, build.assets.version);
+  const pageTypes = [...dataPageTypes].sort();
+  const writer = new SiteWriter(
+    store,
+    previous,
+    build.assets.version,
+    pageTypes
+  );
   const failed: StaticBuildReport['failed'] = [];
-  const unpublished = new Set<string>();
   const renderer = openRenderer(
     options,
     build,
@@ -446,6 +561,11 @@ export async function buildStaticSite(
   );
   let pages = 0;
   let shells = 0;
+  let kept = 0;
+  const fail = (task: RenderTask, reason: string) => {
+    failed.push({ path: task.request.path, reason });
+    if (writer.keep(task.key)) kept += 1;
+  };
   try {
     await forEachLimited(tasks, concurrency, async (task) => {
       try {
@@ -457,30 +577,19 @@ export async function buildStaticSite(
           return;
         }
         if (task.kind === 'page' && result.status === 404) {
-          // The API does not show the page to a guest: no file, and an earlier one goes now,
-          // the server renders the address (its 404) instead.
+          // The API does not show the page to a guest: no file, an earlier one goes with the
+          // files the manifest does not list, and the server renders the address (its 404).
           logger.warn(`[static] ${task.request.path}: 404, not published`);
-          const earlier = previous?.files[task.key];
-          if (earlier) {
-            await store.remove(task.key);
-            if (earlier.data) await store.remove(earlier.data);
-            unpublished.add(task.key);
-            if (earlier.data) unpublished.add(earlier.data);
-          }
           return;
         }
-        failed.push({
-          path: task.request.path,
-          reason:
-            result.status >= 300 && result.status < 400
-              ? `redirects to ${result.location} (the config names a non-canonical address)`
-              : `answered ${result.status}`,
-        });
+        fail(
+          task,
+          result.status >= 300 && result.status < 400
+            ? `redirects to ${result.location} (the config names a non-canonical address)`
+            : `answered ${result.status}`
+        );
       } catch (error) {
-        failed.push({
-          path: task.request.path,
-          reason: error instanceof Error ? error.message : String(error),
-        });
+        fail(task, error instanceof Error ? error.message : String(error));
       }
     });
   } finally {
@@ -494,36 +603,40 @@ export async function buildStaticSite(
     logger
   );
   const assets = await publishAssets(options.runtimeDir, store);
-  const { retired, removed } = await retireStale(
+  const { retired, removed: removedAssets } = await retireAssets(
     store,
-    previous && {
-      ...previous,
-      files: Object.fromEntries(
-        Object.entries(previous.files).filter(([key]) => !unpublished.has(key))
-      ),
-    },
-    writer.files,
+    previous?.retired,
     assets,
     started
   );
-  const manifest: StaticManifest = {
-    version: STATIC_MANIFEST_VERSION,
-    buildId: build.assets.version,
-    builtAt: started.toISOString(),
-    locales: all.locales.map((locale) => locale.segment.toLowerCase()),
-    files: writer.files,
-    retired,
-  };
-  await store.write(
-    STATIC_MANIFEST_KEY,
-    JSON.stringify(manifest),
-    contentTypeOf(STATIC_MANIFEST_KEY)
-  );
+  const manifest = await commitManifest(store, read, (current) => {
+    const files = { ...writer.files };
+    // A page rendered since this build began (`static render`) is newer than this build's.
+    for (const [key, file] of Object.entries(current?.files ?? {})) {
+      const renderedAt = Date.parse(file.renderedAt);
+      if (
+        renderedAt > started.getTime() &&
+        (!files[key] || renderedAt > Date.parse(files[key].renderedAt))
+      ) {
+        files[key] = file;
+      }
+    }
+    return {
+      version: STATIC_MANIFEST_VERSION,
+      buildId: build.assets.version,
+      builtAt: started.toISOString(),
+      locales: all.locales.map((locale) => locale.segment.toLowerCase()),
+      dataPageTypes: pageTypes,
+      files,
+      retired,
+    };
+  });
+  const removed = removedAssets + (await removeUnlisted(store, manifest.files));
   const report: StaticBuildReport = {
     pages,
     shells,
     skipped: writer.skipped,
-    removed: removed + unpublished.size,
+    removed,
     failed,
     durationMs: now().getTime() - started.getTime(),
     manifest,
@@ -531,8 +644,8 @@ export async function buildStaticSite(
   logger.info(
     `[static] ${pages} pages, ${shells} shells, ${writer.written} files written, ` +
       `${writer.skipped} unchanged, ${assets.written} assets added, ` +
-      `${removed + unpublished.size} old files removed, ` +
-      `${failed.length} failed in ${(report.durationMs / 1000).toFixed(1)} s to ${store.url}`
+      `${removed} old files removed, ${failed.length} failed (${kept} kept from the last build) ` +
+      `in ${(report.durationMs / 1000).toFixed(1)} s to ${store.url}`
   );
   for (const failure of failed) {
     logger.error(`[static] ${failure.path}: ${failure.reason}`);
@@ -542,7 +655,8 @@ export async function buildStaticSite(
 
 /**
  * Renders some addresses again (as served: `/uk/products/x`) into a site the store has: their
- * files and data renewed, the manifest updated. A page that now answers 404 leaves the site.
+ * files and data renewed, the manifest updated. A page of the site that now answers 404 leaves
+ * it; an address the site has no page of and that answers 404 is left alone.
  */
 export async function renderStaticPaths(
   options: StaticBuildOptions & { paths: readonly string[] }
@@ -551,22 +665,28 @@ export async function renderStaticPaths(
   const started = now();
   const build = options.build ?? (await loadBuild(options.runtimeDir));
   const site = staticSiteOf(build);
-  const previous = await readManifest(store);
+  const read = await readManifest(store);
+  const previous = read.manifest;
   if (!previous) {
     throw new Error(
       `${store.url} has no static site: run "static build" first`
     );
   }
   const { all } = await site.locales();
-  const writer = new SiteWriter(store, previous, build.assets.version);
+  const writer = new SiteWriter(
+    store,
+    previous,
+    build.assets.version,
+    previous.dataPageTypes
+  );
   const renderer = createStaticRenderer(build, {
     origin: options.origin,
     now: options.now,
   });
   const failed: StaticBuildReport['failed'] = [];
-  const files = { ...previous.files };
+  /** Keys of pages that left the site, and their data. */
+  const gone = new Set<string>();
   let pages = 0;
-  let removed = 0;
 
   await forEachLimited(
     options.paths,
@@ -618,15 +738,15 @@ export async function renderStaticPaths(
         pages += 1;
         return;
       }
-      if (result.status === 404 && files[key]) {
-        const dataKey = files[key].data;
-        delete files[key];
+      if (result.status === 404) {
+        const file = previous.files[key];
+        if (!file) return;
+        gone.add(key);
         await store.remove(key);
-        if (dataKey) {
-          delete files[dataKey];
-          await store.remove(dataKey);
+        if (file.data) {
+          gone.add(file.data);
+          await store.remove(file.data);
         }
-        removed += 1;
         return;
       }
       failed.push({ path: served, reason: `answered ${result.status}` });
@@ -634,16 +754,19 @@ export async function renderStaticPaths(
   );
 
   await publishAssets(options.runtimeDir, store);
-  const manifest: StaticManifest = {
-    ...previous,
-    buildId: build.assets.version,
-    files: { ...files, ...writer.files },
-  };
-  await store.write(
-    STATIC_MANIFEST_KEY,
-    JSON.stringify(manifest),
-    contentTypeOf(STATIC_MANIFEST_KEY)
-  );
+  const manifest = await commitManifest(store, read, (current) => {
+    const base = current ?? previous;
+    const files = { ...base.files };
+    for (const key of gone) delete files[key];
+    return {
+      ...base,
+      buildId: build.assets.version,
+      files: { ...files, ...writer.files },
+    };
+  });
+  const removed = [...gone].filter(
+    (key) => previous.files[key]?.kind === 'page'
+  ).length;
   const report: StaticBuildReport = {
     pages,
     shells: 0,
@@ -663,8 +786,8 @@ export async function renderStaticPaths(
 
 /**
  * Copies a static site from one store to another (a directory to the bucket): the files of
- * its manifest and its assets, the manifest last; files the target's earlier site had and this
- * one has not retire as in a full build.
+ * its manifest and its assets, the manifest last. Files of the target's earlier site this one
+ * has not are deleted, its old assets retire as in a full build.
  */
 export async function publishStaticSite({
   from,
@@ -677,9 +800,10 @@ export async function publishStaticSite({
   logger?: Pick<Console, 'info'>;
   now?: () => Date;
 }): Promise<{ written: number; skipped: number; removed: number }> {
-  const manifest = await readManifest(from);
+  const { manifest } = await readManifest(from);
   if (!manifest) throw new Error(`${from.url} has no static site`);
-  const previous = await readManifest(to);
+  const target = await readManifest(to);
+  const previous = target.manifest;
   let written = 0;
   let skipped = 0;
   for (const [key, file] of Object.entries(manifest.files)) {
@@ -703,18 +827,18 @@ export async function publishStaticSite({
       written += 1;
     }
   }
-  const { retired, removed } = await retireStale(
+  const { retired, removed: removedAssets } = await retireAssets(
     to,
-    previous,
-    manifest.files,
+    previous?.retired,
     { stored, current },
     now()
   );
-  await to.write(
-    STATIC_MANIFEST_KEY,
-    JSON.stringify({ ...manifest, retired }),
-    contentTypeOf(STATIC_MANIFEST_KEY)
-  );
+  // The site published is the source's whole: it replaces whatever the target has now.
+  const published = await commitManifest(to, target, () => ({
+    ...manifest,
+    retired,
+  }));
+  const removed = removedAssets + (await removeUnlisted(to, published.files));
   logger.info(
     `[static] ${written} files published, ${skipped} unchanged, ${removed} old files removed: ${from.url} → ${to.url}`
   );

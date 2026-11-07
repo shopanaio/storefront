@@ -29,12 +29,34 @@ export type StaticRead =
   | { status: 'not-modified'; etag: string }
   | { status: 'missing' };
 
+/** A write that takes place only over the object a writer read (the manifest). */
+export interface StaticWriteOptions {
+  /** Only over the object of this ETag. */
+  ifMatch?: string;
+  /** `*`: only where there is no object yet. */
+  ifNoneMatch?: '*';
+}
+
+/** The object changed since the writer read it: another writer was first. */
+export class StaticWriteConflict extends Error {
+  constructor(key: string) {
+    super(`${key} changed since it was read`);
+    this.name = 'StaticWriteConflict';
+  }
+}
+
 export interface StaticStore {
   /** `fs:<dir>` or `s3://<bucket>/<prefix>`. */
   readonly url: string;
   readonly kind: 'fs' | 's3';
   read(key: string, options?: { ifNoneMatch?: string }): Promise<StaticRead>;
-  write(key: string, body: Buffer | string, contentType: string): Promise<void>;
+  /** Throws `StaticWriteConflict` when a condition of `options` does not hold. */
+  write(
+    key: string,
+    body: Buffer | string,
+    contentType: string,
+    options?: StaticWriteOptions
+  ): Promise<void>;
   remove(key: string): Promise<void>;
   /** Every key under `prefix`. */
   list(prefix?: string): Promise<string[]>;
@@ -103,41 +125,92 @@ function assertKey(key: string): void {
   }
 }
 
+/** The suffix of a file being written: never a key of the site. */
+const TEMPORARY_SUFFIX = '.tmp';
+
+/** Files whose ETag a directory store remembers at most. */
+const MAX_KNOWN_ETAGS = 100_000;
+
+const isMissingFile = (error: unknown) => {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === 'ENOENT' || code === 'EISDIR' || code === 'ENOTDIR';
+};
+
 /**
- * The directory store: reads the file of a key on every request; its ETag is the hash of the
- * content, the one the builder's manifest lists.
+ * The directory store: reads the file of a key on every request. Its ETag is the hash of the
+ * file, computed once per version of it (its inode, size and time): a request it matches is
+ * answered without reading the file. A conditional write checks the file just before it
+ * replaces it, which keeps apart writers of one site that do not run at the same instant.
  */
 export function createFsStore(dir: string): StaticStore {
   const root = path.resolve(dir);
+  const etags = new Map<string, { version: string; etag: string }>();
+  const versionOf = (stats: { ino: number; size: number; mtimeMs: number }) =>
+    `${stats.ino}:${stats.size}:${stats.mtimeMs}`;
+
+  const currentEtag = async (file: string): Promise<string | null> => {
+    try {
+      return quoteEtag(contentHash(await readFile(file)));
+    } catch (error) {
+      if (isMissingFile(error)) return null;
+      throw error;
+    }
+  };
+
   return {
     url: `fs:${root}`,
     kind: 'fs',
     async read(key, { ifNoneMatch } = {}) {
       assertKey(key);
-      let body: Buffer;
+      const file = path.join(root, key);
+      let version: string;
       try {
-        body = await readFile(path.join(root, key));
+        const stats = await stat(file);
+        if (!stats.isFile()) return { status: 'missing' };
+        version = versionOf(stats);
       } catch (error) {
-        const code = (error as NodeJS.ErrnoException).code;
-        if (code === 'ENOENT' || code === 'EISDIR' || code === 'ENOTDIR') {
-          return { status: 'missing' };
-        }
+        if (isMissingFile(error)) return { status: 'missing' };
         throw error;
       }
-      const etag = quoteEtag(contentHash(body));
+      const known = etags.get(key);
+      if (known?.version === version && etagMatches(ifNoneMatch, known.etag)) {
+        return { status: 'not-modified', etag: known.etag };
+      }
+      let body: Buffer;
+      try {
+        body = await readFile(file);
+      } catch (error) {
+        if (isMissingFile(error)) return { status: 'missing' };
+        throw error;
+      }
+      let etag = known?.version === version ? known.etag : null;
+      if (!etag) {
+        etag = quoteEtag(contentHash(body));
+        if (etags.size >= MAX_KNOWN_ETAGS) etags.clear();
+        etags.set(key, { version, etag });
+      }
       if (etagMatches(ifNoneMatch, etag)) {
         return { status: 'not-modified', etag };
       }
       return { status: 'found', body, etag, contentType: contentTypeOf(key) };
     },
-    async write(key, body) {
+    async write(key, body, _contentType, options = {}) {
       assertKey(key);
       const file = path.join(root, key);
       await mkdir(path.dirname(file), { recursive: true });
       // Whole or not at all: a server reading the directory never sees half a file.
-      const temporary = `${file}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`;
+      const temporary = `${file}.${process.pid}.${randomBytes(6).toString('hex')}${TEMPORARY_SUFFIX}`;
       try {
         await writeFile(temporary, body);
+        if (options.ifMatch !== undefined || options.ifNoneMatch) {
+          const current = await currentEtag(file);
+          if (
+            (options.ifNoneMatch && current !== null) ||
+            (options.ifMatch !== undefined && current !== options.ifMatch)
+          ) {
+            throw new StaticWriteConflict(key);
+          }
+        }
         await rename(temporary, file);
       } catch (error) {
         await rm(temporary, { force: true });
@@ -161,7 +234,9 @@ export function createFsStore(dir: string): StaticStore {
         for (const entry of entries) {
           const full = path.join(dirPath, entry.name);
           if (entry.isDirectory()) await walk(full);
-          else keys.push(path.relative(root, full).split(path.sep).join('/'));
+          else if (!entry.name.endsWith(TEMPORARY_SUFFIX)) {
+            keys.push(path.relative(root, full).split(path.sep).join('/'));
+          }
         }
       };
       await walk(root);
@@ -249,15 +324,24 @@ export function createS3Store(
         contentType: response.headers.get('content-type') ?? contentTypeOf(key),
       };
     },
-    async write(key, body, contentType) {
+    async write(key, body, contentType, options = {}) {
       assertKey(key);
       const response = await client.send({
         method: 'PUT',
         key: full(key),
-        headers: { 'content-type': contentType },
+        headers: {
+          'content-type': contentType,
+          ...(options.ifMatch !== undefined
+            ? { 'if-match': options.ifMatch }
+            : {}),
+          ...(options.ifNoneMatch
+            ? { 'if-none-match': options.ifNoneMatch }
+            : {}),
+        },
         body: typeof body === 'string' ? body : new Uint8Array(body),
       });
       await response.body?.cancel();
+      if (response.status === 412) throw new StaticWriteConflict(key);
       if (!response.ok) {
         throw new Error(
           `Writing ${key} to s3://${bucket} failed: ${response.status}`

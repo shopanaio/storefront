@@ -5,13 +5,20 @@ import { data, type ServerBuild } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { StaticManifest } from '@shopana/storefront-sdk/static';
 import type { StaticSiteEntry } from '../react-router/static-site';
-import { buildStaticSite, localizedPath, renderStaticPaths } from './builder';
-import { createFsStore } from './store';
+import {
+  buildStaticSite,
+  localizedPath,
+  publishStaticSite,
+  renderStaticPaths,
+} from './builder';
+import { createFsStore, type StaticStore } from './store';
 
 let dir: string;
 let catalog: Record<string, { title: string; endsAt?: string }>;
 /** Products still listed whose page the API no longer shows a guest. */
 let unpublished: Set<string>;
+/** Products whose page the API fails to render now. */
+let broken: Set<string>;
 
 const en = { code: 'en', tag: 'en', segment: 'en', name: 'English' };
 const uk = { code: 'uk', tag: 'uk', segment: 'uk', name: 'Українська' };
@@ -100,6 +107,7 @@ function fakeBuild(): ServerBuild {
             const pathname = new URL(request.url).pathname;
             if (pathname === '/' || pathname === '/uk')
               return { title: 'home' };
+            if (broken.has(handle)) throw new Error('API down');
             const product = unpublished.has(handle)
               ? undefined
               : catalog[handle];
@@ -134,6 +142,7 @@ beforeEach(async () => {
     hats: { title: 'Hats' },
   };
   unpublished = new Set();
+  broken = new Set();
 });
 
 afterEach(async () => {
@@ -142,10 +151,13 @@ afterEach(async () => {
 
 const quiet = { info: () => {}, warn: () => {}, error: () => {} };
 
-async function build(now = new Date('2026-11-06T10:00:00Z')) {
+async function build(
+  now = new Date('2026-11-06T10:00:00Z'),
+  store: StaticStore = createFsStore(path.join(dir, 'build/static'))
+) {
   return buildStaticSite({
     runtimeDir: dir,
-    store: createFsStore(path.join(dir, 'build/static')),
+    store,
     origin: 'https://shop.example',
     inProcess: true,
     build: fakeBuild(),
@@ -174,7 +186,7 @@ describe('the static site builder', () => {
     // The unused emotion rule is gone; the static facts are in the head.
     expect(page).toContain('<style data-emotion="acss a">.acss-a{x:y}</style>');
     expect(page).toContain(
-      '<script>window.__shopanaStatic={"buildId":"build-1","renderedAt":"2026-11-06T10:00:00.000Z","locale":"uk","path":"/uk/products/socks","validUntil":"2099-01-01T00:00:00.000Z"}</script></head>'
+      '<script>window.__shopanaStatic={"buildId":"build-1","renderedAt":"2026-11-06T10:00:00.000Z","locale":"uk","path":"/uk/products/socks","validUntil":"2099-01-01T00:00:00.000Z","dataPageTypes":["home","product"]}</script></head>'
     );
     expect(
       JSON.parse(await read('__static/data/uk/products/socks.json'))
@@ -194,6 +206,14 @@ describe('the static site builder', () => {
       await read('__static/manifest.json')
     ) as StaticManifest;
     expect(manifest.locales).toEqual(['en', 'uk']);
+    expect(manifest.dataPageTypes).toEqual(['home', 'product']);
+    // The server reads its small index, never the manifest.
+    expect(JSON.parse(await read('__static/server.json'))).toEqual({
+      version: 1,
+      buildId: 'build-1',
+      locales: ['en', 'uk'],
+      statuses: { '404.html': 404 },
+    });
     expect(manifest.files['404.html'].status).toBe(404);
     expect(manifest.files['products/socks/index.html']).toMatchObject({
       kind: 'page',
@@ -215,18 +235,101 @@ describe('the static site builder', () => {
     expect(report.skipped).toBeGreaterThan(0);
   });
 
-  it('retires the files of pages that left, and deletes them a week later', async () => {
+  it('deletes the files of a page that left the catalog at once', async () => {
     await build();
     delete catalog.hats;
+    // A file of the site no manifest lists (a writer that stopped halfway), and one that is no
+    // file of the site at all.
+    await writeFile(path.join(dir, 'build/static/products/orphan.html'), 'x');
+    await mkdir(path.join(dir, 'build/static/products/orphan'), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(dir, 'build/static/products/orphan/index.html'),
+      'stale'
+    );
     const later = await build(new Date('2026-11-07T10:00:00Z'));
     expect(later.manifest.files['products/hats/index.html']).toBeUndefined();
-    expect(later.manifest.retired?.['products/hats/index.html']).toBe(
-      '2026-11-07T10:00:00.000Z'
-    );
-    expect(await read('products/hats/index.html')).toContain('Hats');
-    const week = await build(new Date('2026-11-14T10:00:00Z'));
-    expect(week.removed).toBeGreaterThan(0);
+    expect(later.manifest.retired).toEqual({});
     await expect(read('products/hats/index.html')).rejects.toThrow();
+    await expect(read('__static/data/products/hats.json')).rejects.toThrow();
+    await expect(read('products/orphan/index.html')).rejects.toThrow();
+    expect(await read('products/orphan.html')).toBe('x');
+    expect(later.removed).toBe(5);
+  });
+
+  it('keeps the earlier files of a page that fails now', async () => {
+    await build();
+    broken.add('socks');
+    const later = await build(new Date('2026-11-07T10:00:00Z'));
+    expect(later.failed.map((failure) => failure.path)).toEqual([
+      '/products/socks',
+      '/uk/products/socks',
+    ]);
+    expect(later.manifest.files['products/socks/index.html']).toMatchObject({
+      renderedAt: '2026-11-06T10:00:00.000Z',
+    });
+    expect(
+      later.manifest.files['__static/data/products/socks.json']
+    ).toBeDefined();
+    expect(await read('products/socks/index.html')).toContain('Socks');
+  });
+
+  it('keeps a page rendered while a full build ran', async () => {
+    await build();
+    const fsStore = createFsStore(path.join(dir, 'build/static'));
+    // A render of one page lands between the full build's read and write of the manifest.
+    let rendered = false;
+    const store: StaticStore = {
+      ...fsStore,
+      async write(key, body, contentType, options) {
+        if (key === '__static/manifest.json' && !rendered) {
+          rendered = true;
+          catalog.boots = { title: 'Boots' };
+          await renderStaticPaths({
+            runtimeDir: dir,
+            store: fsStore,
+            origin: 'https://shop.example',
+            build: fakeBuild(),
+            logger: quiet,
+            now: () => new Date('2026-11-07T10:30:00Z'),
+            paths: ['/products/boots'],
+          });
+        }
+        return fsStore.write(key, body, contentType, options);
+      },
+    };
+    const later = await build(new Date('2026-11-07T10:00:00Z'), store);
+    expect(later.manifest.files['products/boots/index.html']).toMatchObject({
+      renderedAt: '2026-11-07T10:30:00.000Z',
+    });
+    expect(await read('products/boots/index.html')).toContain('Boots');
+    const manifest = JSON.parse(
+      await read('__static/manifest.json')
+    ) as StaticManifest;
+    expect(manifest.files['products/boots/index.html']).toBeDefined();
+    expect(manifest.files['uk/products/socks/index.html']).toBeDefined();
+  });
+
+  it('publishes a site to another store and deletes what the target had besides', async () => {
+    await build();
+    const target = createFsStore(path.join(dir, 'published'));
+    await target.write('products/gone/index.html', 'gone', 'text/html');
+    await target.write('notes.txt', 'mine', 'text/plain');
+    const published = await publishStaticSite({
+      from: createFsStore(path.join(dir, 'build/static')),
+      to: target,
+      logger: quiet,
+    });
+    expect(published.removed).toBe(1);
+    expect((await target.read('products/gone/index.html')).status).toBe(
+      'missing'
+    );
+    expect((await target.read('notes.txt')).status).toBe('found');
+    expect((await target.read('__static/server.json')).status).toBe('found');
+    expect((await target.read('uk/products/socks/index.html')).status).toBe(
+      'found'
+    );
   });
 
   it('renders some addresses again into the site', async () => {
@@ -239,8 +342,9 @@ describe('the static site builder', () => {
       origin: 'https://shop.example',
       build: fakeBuild(),
       logger: quiet,
-      paths: ['/uk/products/socks', '/products/boots'],
+      paths: ['/uk/products/socks', '/products/boots', '/products/never'],
     });
+    // An address the site never had a page of that answers 404 is no failure.
     expect(report.failed).toEqual([]);
     expect(await read('uk/products/socks/index.html')).toContain('Wool socks');
     expect(await read('products/boots/index.html')).toContain('Boots');

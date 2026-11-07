@@ -16,6 +16,7 @@ import {
 import { getRequestContext } from './headers';
 import type { RuntimePageData } from './route-data';
 import { createRuntimeMiddleware, createRuntimePageLoader } from './server';
+import { staticRenderHeaders } from './static-render';
 
 const app = {
   environmentConfig: {
@@ -203,18 +204,60 @@ describe('the static render', () => {
       async () =>
         (await import('./headers')).headers().then((h) => h.get('cookie')),
       {
-        'x-shopana-static-render': 'page',
+        ...staticRenderHeaders('page'),
         cookie: 'shopana_storefront_visitor_id=v1',
       }
     );
     expect(cookie).toBeNull();
   });
 
+  it('is a static render only with the key of this process', async () => {
+    stubApi();
+    const cookie = await request(
+      '/products/socks',
+      async () =>
+        (await import('./headers')).headers().then((h) => h.get('cookie')),
+      {
+        'x-shopana-static-render': 'page',
+        'x-shopana-static-render-key': 'guessed',
+        cookie: 'shopana_storefront_visitor_id=v1',
+      }
+    );
+    expect(cookie).toBe('shopana_storefront_visitor_id=v1');
+  });
+
+  it('sends the private token with the static render only', async () => {
+    vi.stubEnv('STOREFRONT_PRIVATE_TOKEN', 'private-token-0123456789');
+    try {
+      const tokens = async (headers: Record<string, string>) => {
+        stubApi();
+        await request('/products/socks', (args) => loader(args), headers);
+        return vi
+          .mocked(fetch)
+          .mock.calls.map(
+            ([, init]) =>
+              new Headers((init as RequestInit).headers).get(
+                'shopana-storefront-private-token'
+              ) ?? null
+          );
+      };
+      expect(await tokens(staticRenderHeaders('page'))).toContain(
+        'private-token-0123456789'
+      );
+      expect(await tokens({})).not.toContain('private-token-0123456789');
+      expect(await tokens({ 'x-shopana-static-render': 'page' })).not.toContain(
+        'private-token-0123456789'
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('renders a closed page as a shell, never a redirect', async () => {
     stubApi();
     await expect(
       request('/uk/test-account', (args) => loader(args), {
-        'x-shopana-static-render': 'shell',
+        ...staticRenderHeaders('shell'),
       })
     ).resolves.toEqual({
       kind: 'shell',
@@ -223,7 +266,7 @@ describe('the static render', () => {
     });
     await expect(
       request('/cart', (args) => loader(args), {
-        'x-shopana-static-render': 'shell',
+        ...staticRenderHeaders('shell'),
       })
     ).resolves.toMatchObject({ kind: 'shell', pathname: '/cart' });
   });

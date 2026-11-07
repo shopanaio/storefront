@@ -192,14 +192,19 @@ storefront-runtime start                     # static pages as hits, the rest re
 storefront-runtime start --static-only       # no server render: family shells and 404.html
 ```
 
-The builder renders with the `x-shopana-static-render` header: the whole document at once, no
-cookie (no cart, session or visitor id), client pages (`shells`) as their layout and the
+The builder renders with the `x-shopana-static-render` header and the key of its own process
+(`staticRenderHeaders`; a request from outside is never a static render): the whole document
+at once, no cookie (no cart, session or visitor id), client pages (`shells`) as their layout and the
 theme's skeleton (`src/runtime/shell.tsx`), emotion rules the page does not use dropped,
 `window.__shopanaStatic` in the head. It writes each page's HTML and its Apollo state
 (`__static/data/*.json`), the family shells (`__shell/*.html`), `404.html`, `robots.txt`, the
-sitemaps, the build's assets and `__static/manifest.json` (hashes, entities, `validUntil`). A
-page whose content did not change keeps its file. Requests go to the API of
-`STOREFRONT_SERVER_GRAPHQL_URL` (else `NEXT_PUBLIC_GRAPHQL_URL`) with
+sitemaps, the build's assets, `__static/manifest.json` (hashes, entities, `validUntil`) and its
+small index for the server, `__static/server.json`. A page whose content did not change keeps
+its file; one that failed keeps its earlier files; a file the new manifest does not list (a
+page that left the catalog, its data) is deleted at once, an asset of an earlier build a week
+later. The manifest is written only over the version the writer read, so a full build and a
+`static render` at the same time keep each other's pages. Requests go to the API of
+`STOREFRONT_SERVER_GRAPHQL_URL` (else `NEXT_PUBLIC_GRAPHQL_URL`), the static renders with
 `STOREFRONT_PRIVATE_TOKEN`; `STOREFRONT_PUBLIC_URL` is the origin pages are rendered for.
 
 `start` is the runtime's own server (`express` and `@react-router/express`): the browser
@@ -207,12 +212,19 @@ build, `/__env.js` (the public settings of its environment, which every document
 static site of `STOREFRONT_STATIC_STORE` (`s3://<bucket>/<prefix>` with
 `STOREFRONT_STATIC_S3_ENDPOINT`, `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`,
 `STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY`, read through a memory cache checked again after
-`STOREFRONT_STATIC_CACHE_TTL` seconds; or `fs:<dir>`), else `build/static` when it has a
-manifest, and the server render for everything else (`x-shopana-static: hit | miss`). A store
-that fails is a miss, never an error of the site. With `STOREFRONT_STATIC_COORDINATOR_URL` (and
-its token `STOREFRONT_STATIC_COORDINATOR_TOKEN`), the server reports to the builder's
-coordinator every 30 s how often each static page was served and which pages of a generated
-family had no file (`POST /__builder/api/hits`).
+`STOREFRONT_STATIC_CACHE_TTL` seconds; or `fs:<dir>`), else `build/static` when it has an
+index, and the server render for everything else (`x-shopana-static: hit | miss`). An address
+whose query string has a parameter other than campaign and analytics ones (`sort`, `filter.*`,
+`variant`) is rendered by the server. A store that fails is a miss, never an error of the site;
+a bucket that failed is left alone for a while (2 s up to a minute) instead of being waited for.
+With `STOREFRONT_STATIC_COORDINATOR_URL` (and its token `STOREFRONT_STATIC_COORDINATOR_TOKEN`),
+the server reports to the builder's coordinator every 30 s how often each static page was served
+and which pages of a generated family it rendered without a file (`POST /__builder/api/hits`).
+
+A client navigation of a static document renders at once, as from the API, and its queries
+take their answers from the static data of the address (`/__static/data/*.json`) when it has
+them, for the page types the builder rendered: a query the data lacks, an answer that would
+change what the cache holds, and a signed-in buyer's viewer fields go to the API.
 
 ## React Router
 

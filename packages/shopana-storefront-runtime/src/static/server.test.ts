@@ -6,7 +6,7 @@ import type { Server } from 'node:http';
 import type { RequestHandler } from 'express';
 import type { ServerBuild } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { StaticManifest } from '@shopana/storefront-sdk/static';
+import type { StaticServerIndex } from '@shopana/storefront-sdk/static';
 import { createCachedStore } from './memory-cache';
 import { createStorefrontServer, resolveServerStore } from './server';
 import {
@@ -21,9 +21,14 @@ let dir: string;
 let server: Server | null = null;
 
 const ssr = vi.fn<RequestHandler>((request, response) => {
-  // The server render: a non-canonical address redirects, the rest renders.
+  // The server render: a non-canonical address redirects, an unknown product is its 404, the
+  // rest renders.
   if (request.path.startsWith('/en/')) {
     response.redirect(307, request.path.slice(3));
+    return;
+  }
+  if (request.path.startsWith('/uk/products/made-up')) {
+    response.status(404).type('html').send('<p>ssr 404</p>');
     return;
   }
   response
@@ -33,20 +38,11 @@ const ssr = vi.fn<RequestHandler>((request, response) => {
     .send(`<p>ssr ${request.method} ${request.originalUrl}</p>`);
 });
 
-const manifest: StaticManifest = {
+const index: StaticServerIndex = {
   version: 1,
   buildId: 'b1',
-  builtAt: '2026-11-06T00:00:00.000Z',
   locales: ['en', 'uk'],
-  files: {
-    '404.html': {
-      kind: 'not-found',
-      status: 404,
-      contentType: 'text/html; charset=utf-8',
-      hash: 'x',
-      renderedAt: '2026-11-06T00:00:00.000Z',
-    },
-  },
+  statuses: { '404.html': 404 },
 };
 
 async function writeSite(files: Record<string, string>) {
@@ -86,7 +82,7 @@ beforeEach(async () => {
   await writeSite({
     'build/client/assets/new.js': 'new',
     'build/client/favicon.ico': 'icon',
-    'build/static/__static/manifest.json': JSON.stringify(manifest),
+    'build/static/__static/server.json': JSON.stringify(index),
     'build/static/index.html': '<p>home</p>',
     'build/static/uk/products/x/index.html': '<p>x</p>',
     'build/static/__static/data/uk/products/x.json': '{"ROOT_QUERY":{}}',
@@ -107,7 +103,8 @@ afterEach(async () => {
 describe('the hybrid server', () => {
   it('answers a generated page from the static site, and 304 for its ETag', async () => {
     const get = await serve();
-    const response = await get('/uk/products/x?sort=price');
+    // Campaign parameters render nothing: the address without them.
+    const response = await get('/uk/products/x?utm_source=mail&gclid=1');
     expect(response.status).toBe(200);
     expect(response.headers.get('x-shopana-static')).toBe('hit');
     expect(response.headers.get('cache-control')).toBe(
@@ -123,6 +120,21 @@ describe('the hybrid server', () => {
     expect(again.status).toBe(304);
     expect(again.headers.get('x-shopana-static')).toBe('hit');
     expect(ssr).not.toHaveBeenCalled();
+  });
+
+  it('renders an address whose parameters may change the page', async () => {
+    const get = await serve();
+    for (const query of [
+      'sort=price',
+      'filter.color=red',
+      'variant=xl&utm_source=mail',
+    ]) {
+      const response = await get(`/uk/products/x?${query}`);
+      expect(response.headers.get('x-shopana-static')).toBe('miss');
+      expect(await response.text()).toBe(
+        `<p>ssr GET /uk/products/x?${query}</p>`
+      );
+    }
   });
 
   it('answers HEAD from the static site without a body', async () => {
@@ -165,6 +177,14 @@ describe('the hybrid server', () => {
     const found = await get('/__static/data/uk/products/x.json');
     expect(found.status).toBe(200);
     expect(await found.json()).toEqual({ ROOT_QUERY: {} });
+    const etag = found.headers.get('etag') ?? '';
+    const again = await get('/__static/data/uk/products/x.json', {
+      headers: { 'If-None-Match': etag },
+    });
+    expect(again.status).toBe(304);
+    expect(again.headers.get('cache-control')).toBe(
+      'public, max-age=0, must-revalidate'
+    );
     const missing = await get('/__static/data/uk/products/y.json');
     expect(missing.status).toBe(404);
     expect(ssr).not.toHaveBeenCalled();
@@ -177,6 +197,13 @@ describe('the hybrid server', () => {
     const body = await response.text();
     expect(body).toContain('"NEXT_PUBLIC_API_KEY":"public"');
     expect(body).not.toContain('secret');
+    const etag = response.headers.get('etag');
+    expect(etag).toBe(quoteEtag(contentHash(body)));
+    const again = await get('/__env.js', {
+      headers: { 'If-None-Match': etag ?? '' },
+    });
+    expect(again.status).toBe(304);
+    expect(await again.text()).toBe('');
   });
 
   it('serves the assets of the build, and those of earlier builds from the store', async () => {
@@ -258,6 +285,9 @@ describe('the hybrid server', () => {
       await get('/uk/products/x');
       await get('/uk/products/new');
       await get('/uk/products/new');
+      // A made-up address the server answers with its 404: never a page to add.
+      await get('/uk/products/made-up');
+      await get(`/uk/products/${'x'.repeat(300)}`);
       await get('/cart');
       expect(fetchCoordinator).not.toHaveBeenCalled();
       vi.advanceTimersByTime(30_000);
@@ -284,11 +314,15 @@ describe('the hybrid server', () => {
   it('renders a request from outside that carries the builder header as any other', async () => {
     const get = await serve();
     const response = await get('/uk/products/none', {
-      headers: { 'x-shopana-static-render': 'shell' },
+      headers: {
+        'x-shopana-static-render': 'shell',
+        'x-shopana-static-render-key': 'guessed',
+      },
     });
     expect(response.headers.get('x-shopana-static')).toBe('miss');
     const [request] = ssr.mock.calls[0];
     expect(request.headers['x-shopana-static-render']).toBeUndefined();
+    expect(request.headers['x-shopana-static-render-key']).toBeUndefined();
   });
 
   it('serves no static page at an address with an empty segment', async () => {
@@ -313,11 +347,11 @@ describe('the hybrid server', () => {
 });
 
 describe('the store of the server', () => {
-  it('takes build/static when it has a manifest, and nothing otherwise', async () => {
+  it('takes build/static when it has an index, and nothing otherwise', async () => {
     expect((await resolveServerStore(dir, {}))?.url).toBe(
       `fs:${path.join(dir, 'build/static')}`
     );
-    await rm(path.join(dir, 'build/static/__static/manifest.json'));
+    await rm(path.join(dir, 'build/static/__static/server.json'));
     expect(await resolveServerStore(dir, {})).toBeNull();
   });
 

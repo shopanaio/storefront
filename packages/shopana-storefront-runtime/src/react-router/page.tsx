@@ -796,10 +796,15 @@ const usedStaticData = new WeakMap<ApolloClient, Set<string>>();
  * rendered its page with) as the source of the answers of its queries (`provideStaticResults`).
  * Started, never waited for: the page renders at once, as from the API, its sections under
  * their skeletons, and their queries take their answers from the data when it comes. Only in
- * a static document; an address with no file (404) or a failed fetch is answered by the API.
+ * a static document, and only for a page type the builder rendered pages of (never a cart, an
+ * account, a search); an address with no file (404) or a failed fetch is answered by the API.
  */
-function startStaticPageData(client: ApolloClient, url: URL): void {
-  if (!readStaticDocument()) return;
+function startStaticPageData(
+  client: ApolloClient,
+  url: URL,
+  pageType: string
+): void {
+  if (!readStaticDocument()?.dataPageTypes.includes(pageType)) return;
   const dataUrl = staticDataUrl(url.pathname);
   if (!dataUrl) return;
   let used = usedStaticData.get(client);
@@ -852,7 +857,7 @@ async function loadBrowserPage(
     return browserNotFound(pages, request, services, route);
   }
 
-  if (staticData) startStaticPageData(client, url);
+  if (staticData) startStaticPageData(client, url, pageType);
   const [{ definition }] = await Promise.all([
     loadPageModules(pages, pageType),
     route ? loadRouteLayout(route, pageType, { isModule: false }) : null,

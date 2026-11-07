@@ -9,7 +9,7 @@ import {
   type StaticPageIndex,
 } from '@shopana/storefront-sdk/static';
 import {
-  STATIC_RENDER_HEADER,
+  staticRenderHeaders,
   type StaticRenderMode,
 } from '../react-router/static-render';
 import { assertNoPrivateValues, pruneEmotionStyles } from './postprocess';
@@ -70,7 +70,7 @@ export function createStaticRenderer(
       const response = await handle(
         new Request(new URL(path, origin), {
           headers: {
-            [STATIC_RENDER_HEADER]: mode,
+            ...staticRenderHeaders(mode),
             'Accept-Language': localeTag,
             Accept: 'text/html',
             Host: host,

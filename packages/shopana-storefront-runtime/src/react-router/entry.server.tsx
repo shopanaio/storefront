@@ -23,7 +23,7 @@ import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerR
 import { isNotFoundSignal } from './not-found-response';
 import { serverInsertedHTMLCallbacks } from './server-inserted-html';
 import { PUBLIC_ENV_SCRIPT_TAG } from './public-env';
-import { STATIC_RENDER_HEADER } from './static-render';
+import { staticRenderMode } from './static-render';
 import {
   readRenderRedirect,
   readRenderStatus,
@@ -90,7 +90,7 @@ export default function handleRequest(
       head ||
       // The static site builder: the whole guest document at once, as a crawler gets it. The
       // markup is the same either way; only the moment of the answer differs.
-      request.headers.has(STATIC_RENDER_HEADER) ||
+      staticRenderMode(request.headers) !== null ||
       (userAgent !== null && isbot(userAgent)) ||
       routerContext.isSpaMode;
     const readyOption: keyof RenderToPipeableStreamOptions = fullDocument

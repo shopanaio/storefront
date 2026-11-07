@@ -23,6 +23,6 @@ themes/*/output
 **/*.tfstate*
 **/*.tfvars
 **/*.tfplan
-# The static site the workflow generated before the image build (see Dockerfile).
-!themes/*/.runtime/build/static
-!themes/*/.runtime/build/static/**
+# The theme build the workflow rendered the static site with (see Dockerfile).
+!themes/*/.runtime/build
+!themes/*/.runtime/build/**

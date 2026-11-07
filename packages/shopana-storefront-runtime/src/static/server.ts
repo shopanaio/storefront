@@ -9,13 +9,17 @@
  *    data requests (`*.data`), `/__builder/*`. The builder's render header is the builder's
  *    alone: a request from outside loses it.
  * 4. `/__static/data/*.json` from the store, or 404: never rendered.
- * 5. The HTML of an address from its key (`staticKeyForPath`), the query string aside.
- * 6. A file: 200 (its own status for `404.html` and the shells), its ETag, revalidated on
- *    every load, `x-shopana-static: hit`; 304 for `If-None-Match`. No cookie is read: the HTML
- *    is a guest's, the browser personalizes it.
+ * 5. The HTML of an address from its key (`staticKeyForPath`). A query string of campaign
+ *    and analytics parameters only is the address without it; any other parameter (`sort`,
+ *    `filter.*`, `variant`) may change the page, so the server renders it (`miss`).
+ * 6. A file: 200 (its own status for `404.html`), its ETag, revalidated on every load,
+ *    `x-shopana-static: hit`; 304 for `If-None-Match`. No cookie is read: the HTML is a
+ *    guest's, the browser personalizes it. The statuses and languages come from the small
+ *    index of the site (`__static/server.json`), never its whole manifest.
  * 7. No file: the server render, as without a static site (`x-shopana-static: miss`). The
  *    builder's coordinator, when there is one, hears every 30 s how often each page was served
- *    and which pages of a generated family had no file (`POST /__builder/api/hits`).
+ *    and which pages of a generated family had no file while the server rendered them
+ *    (`POST /__builder/api/hits`).
  * 8. A store that fails: the server render, and a warning. A bucket down is never a 5xx.
  *
  * `staticOnly` renders nothing: a missing page gets the shell of its family or `404.html`.
@@ -29,24 +33,31 @@ import express, {
 } from 'express';
 import { createRequestHandler } from '@react-router/express';
 import type { ServerBuild } from 'react-router';
-import type { StaticManifest } from '@shopana/storefront-sdk/static';
+import type { StaticServerIndex } from '@shopana/storefront-sdk/static';
 import {
   PUBLIC_ENV_PATH,
   publicEnvironmentSource,
 } from '../react-router/public-env';
-import { STATIC_RENDER_HEADER } from '../react-router/static-render';
 import {
+  STATIC_RENDER_HEADER,
+  STATIC_RENDER_KEY_HEADER,
+} from '../react-router/static-render';
+import {
+  isStaticQuery,
   STATIC_ASSETS_PREFIX,
   STATIC_DATA_PREFIX,
-  STATIC_MANIFEST_KEY,
   STATIC_NOT_FOUND_KEY,
+  STATIC_SERVER_INDEX_KEY,
   staticKeyForPath,
   staticShellKeyForPath,
 } from './keys';
 import { createCachedStore } from './memory-cache';
 import {
+  contentHash,
+  etagMatches,
   isDirectory,
   openStaticStore,
+  quoteEtag,
   type StaticRead,
   type StaticStore,
 } from './store';
@@ -72,9 +83,13 @@ const GENERATED_FAMILIES = new Set([
 const HITS_REPORT_INTERVAL_MS = 30_000;
 /** Distinct keys a report holds at most: addresses are the visitors' to choose. */
 const MAX_REPORTED_KEYS = 10_000;
+/** Pages of a report without a file at most. */
+const MAX_REPORTED_MISSES = 1_000;
+/** A handle longer than this is no page of a catalog. */
+const MAX_HANDLE_LENGTH = 200;
 
-/** A manifest read is trusted this long: a directory store is otherwise read on every request. */
-const MANIFEST_TTL_MS = 1_000;
+/** The index of the site is trusted this long: a directory is otherwise read on every request. */
+const INDEX_TTL_MS = 1_000;
 
 export interface StorefrontServerOptions {
   /** The runtime directory: `build/server/index.js`, `build/client`. */
@@ -101,7 +116,7 @@ export interface StorefrontServerOptions {
 /**
  * The store of the server, from `STOREFRONT_STATIC_STORE` (`s3://<bucket>/<prefix>` or
  * `fs:<dir>` relative to the runtime directory); without it, `build/static` of the runtime
- * directory when a build left its manifest there; else none. A bucket is read through the
+ * directory when a build left its index there; else none. A bucket is read through the
  * memory cache (`STOREFRONT_STATIC_CACHE_TTL` seconds, 10 by default).
  */
 export async function resolveServerStore(
@@ -114,16 +129,15 @@ export async function resolveServerStore(
     const dir = path.join(runtimeDir, 'build/static');
     if (!(await isDirectory(dir))) return null;
     const store = openStaticStore(`fs:${dir}`);
-    const manifest = await store.read(STATIC_MANIFEST_KEY);
-    return manifest.status === 'found' ? store : null;
+    const index = await store.read(STATIC_SERVER_INDEX_KEY);
+    return index.status === 'found' ? store : null;
   }
   const store = openStaticStore(address, {
     cwd: runtimeDir,
     env,
     fetch: options.fetch,
   });
-  // A directory is read on every request: its ETags are the hashes of the contents, the
-  // ones the manifest lists.
+  // A directory is read on every request; it hashes a file once per version of it.
   if (store.kind === 'fs') return store;
   const ttl = Number(env.STOREFRONT_STATIC_CACHE_TTL?.trim() || 10);
   return createCachedStore(store, {
@@ -133,24 +147,23 @@ export async function resolveServerStore(
   });
 }
 
-/** The manifest of a store, read at most once a second and parsed once per version of it. */
-function manifestReader(store: StaticStore, now: () => number) {
-  let parsed: { etag: string; manifest: StaticManifest } | null = null;
-  let checked: { at: number; manifest: StaticManifest | null } | null = null;
-  return async (): Promise<StaticManifest | null> => {
-    if (checked && now() - checked.at < MANIFEST_TTL_MS)
-      return checked.manifest;
-    const read = await store.read(STATIC_MANIFEST_KEY);
+/** The index of a store's site, read at most once a second and parsed once per version of it. */
+function indexReader(store: StaticStore, now: () => number) {
+  let parsed: { etag: string; index: StaticServerIndex } | null = null;
+  let checked: { at: number; index: StaticServerIndex | null } | null = null;
+  return async (): Promise<StaticServerIndex | null> => {
+    if (checked && now() - checked.at < INDEX_TTL_MS) return checked.index;
+    const read = await store.read(STATIC_SERVER_INDEX_KEY);
     if (read.status !== 'found') {
       parsed = null;
     } else if (parsed?.etag !== read.etag) {
       parsed = {
         etag: read.etag,
-        manifest: JSON.parse(read.body.toString('utf8')) as StaticManifest,
+        index: JSON.parse(read.body.toString('utf8')) as StaticServerIndex,
       };
     }
-    checked = { at: now(), manifest: parsed?.manifest ?? null };
-    return checked.manifest;
+    checked = { at: now(), index: parsed?.index ?? null };
+    return checked.index;
   };
 }
 
@@ -200,7 +213,7 @@ export async function createStorefrontServer(
         )) as ServerBuild),
       mode: env.NODE_ENV ?? 'production',
     });
-  const readManifest = store ? manifestReader(store, now) : null;
+  const readIndex = store ? indexReader(store, now) : null;
   const report = store ? hitsReporter({ env, fetch: fetchImpl, logger }) : null;
 
   const app = express();
@@ -211,6 +224,7 @@ export async function createStorefrontServer(
   app.use((request, response, next) => {
     // Only the builder renders a static page; from outside it is an ordinary request.
     delete request.headers[STATIC_RENDER_HEADER];
+    delete request.headers[STATIC_RENDER_KEY_HEADER];
     const started = now();
     response.once('finish', () => {
       logger.info(
@@ -279,11 +293,19 @@ export async function createStorefrontServer(
     response.status(404).end();
   });
 
-  // 2. The public settings of this process.
-  app.get(PUBLIC_ENV_PATH, (_request, response) => {
-    response.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+  // 2. The public settings of this process: the same for its life, so revalidated with their
+  // ETag, which a document loading them before its modules answers with a 304.
+  const envSource = publicEnvironmentSource(env);
+  const envEtag = quoteEtag(contentHash(envSource));
+  app.get(PUBLIC_ENV_PATH, (request, response) => {
     response.setHeader('Cache-Control', 'no-cache');
-    response.end(publicEnvironmentSource(env));
+    response.setHeader('ETag', envEtag);
+    if (etagMatches(request.get('if-none-match'), envEtag)) {
+      response.status(304).end();
+      return;
+    }
+    response.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+    response.end(envSource);
   });
 
   /** What a missing page gets without a server render: its family's shell or the 404 page. */
@@ -291,9 +313,9 @@ export async function createStorefrontServer(
     request: ExpressRequest,
     response: ExpressResponse,
     pathname: string,
-    manifest: StaticManifest | null
+    index: StaticServerIndex | null
   ) => {
-    const shellKey = staticShellKeyForPath(pathname, manifest?.locales ?? []);
+    const shellKey = staticShellKeyForPath(pathname, index?.locales ?? []);
     for (const [key, status] of [
       [shellKey, 200],
       [STATIC_NOT_FOUND_KEY, 404],
@@ -337,7 +359,10 @@ export async function createStorefrontServer(
           return;
         }
         if (read.status === 'not-modified') {
-          response.status(304).setHeader('ETag', read.etag).end();
+          response.status(304);
+          response.setHeader('ETag', read.etag);
+          response.setHeader('Cache-Control', STATIC_CACHE_CONTROL);
+          response.end();
           return;
         }
       } catch (error) {
@@ -356,7 +381,7 @@ export async function createStorefrontServer(
           request,
           response,
           pathname,
-          await readManifest!().catch(() => null)
+          await readIndex!().catch(() => null)
         );
         return;
       }
@@ -364,15 +389,22 @@ export async function createStorefrontServer(
       return;
     }
 
-    let manifest: StaticManifest | null = null;
+    // 5. A parameter the page may render (sort, filters, a variant): the server renders it.
+    if (!staticOnly && !isStaticQuery(searchOf(request))) {
+      response.setHeader(STATIC_RESPONSE_HEADER, 'miss');
+      next();
+      return;
+    }
+
+    let index: StaticServerIndex | null = null;
     try {
-      manifest = await readManifest!();
+      index = await readIndex!();
       // 5–6. The file of the address.
       const read = await store.read(key, {
         ifNoneMatch: request.get('if-none-match') ?? undefined,
       });
       if (read.status === 'found') {
-        const status = manifest?.files[key]?.status ?? 200;
+        const status = index?.statuses[key] ?? 200;
         report?.hit(key);
         sendObject(request, response, read, status, STATIC_CACHE_CONTROL);
         return;
@@ -396,11 +428,15 @@ export async function createStorefrontServer(
     // 7. No file: the server render.
     response.setHeader(STATIC_RESPONSE_HEADER, 'miss');
     if (staticOnly) {
-      await sendFallback(request, response, pathname, manifest);
+      await sendFallback(request, response, pathname, index);
       return;
     }
-    if (isGeneratedFamily(pathname, manifest?.locales ?? [])) {
-      report?.miss(key);
+    if (report && isGeneratedPage(pathname, index?.locales ?? [])) {
+      // A page the builder should add is one the server rendered: an address made up by a
+      // visitor is its 404, never reported.
+      response.once('finish', () => {
+        if (response.statusCode === 200) report.miss(key);
+      });
     }
     next();
   });
@@ -409,8 +445,19 @@ export async function createStorefrontServer(
   return app;
 }
 
-/** Whether an address is of a family whose pages the builder renders (`/uk/products/x`). */
-function isGeneratedFamily(
+/** The query string of a request. */
+function searchOf(request: ExpressRequest): URLSearchParams {
+  const query = request.originalUrl.indexOf('?');
+  return new URLSearchParams(
+    query === -1 ? '' : request.originalUrl.slice(query + 1)
+  );
+}
+
+/**
+ * Whether an address is a page of a family the builder renders: its family and one handle
+ * (`/uk/products/x`), of a length a catalog has.
+ */
+function isGeneratedPage(
   pathname: string,
   localeSegments: readonly string[]
 ): boolean {
@@ -418,14 +465,19 @@ function isGeneratedFamily(
   const unlocalized = localeSegments.includes(segments[0]?.toLowerCase() ?? '')
     ? segments.slice(1)
     : segments;
-  return unlocalized.length >= 2 && GENERATED_FAMILIES.has(unlocalized[0]);
+  return (
+    unlocalized.length === 2 &&
+    GENERATED_FAMILIES.has(unlocalized[0]) &&
+    unlocalized[1].length <= MAX_HANDLE_LENGTH
+  );
 }
 
 /**
  * The report to the builder's coordinator, when the environment names one
  * (`STOREFRONT_STATIC_COORDINATOR_URL`): how often each static page was served and which pages
- * of a generated family had no file, sent every 30 s (`POST /__builder/api/hits`, the
- * coordinator's `STOREFRONT_STATIC_COORDINATOR_TOKEN`). A report that fails is dropped.
+ * of a generated family had no file, sent every 30 s while there is something to tell
+ * (`POST /__builder/api/hits`, the coordinator's `STOREFRONT_STATIC_COORDINATOR_TOKEN`). A
+ * report that fails is dropped.
  */
 function hitsReporter({
   env,
@@ -441,9 +493,15 @@ function hitsReporter({
   const token = env.STOREFRONT_STATIC_COORDINATOR_TOKEN?.trim();
   let hits = new Map<string, number>();
   let misses = new Set<string>();
+  let timer: ReturnType<typeof setInterval> | null = null;
 
   const flush = () => {
-    if (hits.size === 0 && misses.size === 0) return;
+    if (hits.size === 0 && misses.size === 0) {
+      // Nothing came in: no timer until something does.
+      if (timer) clearInterval(timer);
+      timer = null;
+      return;
+    }
     const body = JSON.stringify({
       hits: Object.fromEntries(hits),
       ...(misses.size > 0 ? { misses: [...misses] } : {}),
@@ -466,15 +524,22 @@ function hitsReporter({
         );
       });
   };
-  setInterval(flush, HITS_REPORT_INTERVAL_MS).unref();
+  const scheduled = () => {
+    if (timer) return;
+    timer = setInterval(flush, HITS_REPORT_INTERVAL_MS);
+    timer.unref();
+  };
 
   return {
     hit(key: string) {
       if (!hits.has(key) && hits.size >= MAX_REPORTED_KEYS) return;
       hits.set(key, (hits.get(key) ?? 0) + 1);
+      scheduled();
     },
     miss(key: string) {
-      if (misses.size < MAX_REPORTED_KEYS) misses.add(key);
+      if (misses.size >= MAX_REPORTED_MISSES) return;
+      misses.add(key);
+      scheduled();
     },
     flush,
   };

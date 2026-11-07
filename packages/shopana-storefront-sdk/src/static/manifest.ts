@@ -1,7 +1,8 @@
 /**
- * The manifest of a static site (`__static/manifest.json`): what the builder wrote in its last
- * full build, read by the hybrid server (statuses, hashes) and, later, by the invalidation of
- * single pages (entities, `validUntil`).
+ * The manifest of a static site (`__static/manifest.json`): every file the builder wrote, with
+ * its hash, entities and `validUntil`, for the builder itself (unchanged pages, renders of
+ * single pages, publishing) and, later, the invalidation of single pages. The hybrid server
+ * reads only its small index (`__static/server.json`, `StaticServerIndex`).
  */
 export const STATIC_MANIFEST_VERSION = 1;
 
@@ -48,13 +49,43 @@ export interface StaticManifest {
   builtAt: string;
   /** URL segments of the store languages: the server tells a locale segment from a page's. */
   locales: string[];
+  /** Page types whose addresses have static data (`StaticDocumentInfo.dataPageTypes`). */
+  dataPageTypes: string[];
   /** Files by key (their path in the store). */
   files: Record<string, StaticManifestFile>;
   /**
-   * Keys of earlier builds no build lists any more, with when they left: deleted a week
-   * later, while cached HTML and open tabs may still ask for them.
+   * Assets of earlier builds this one does not ship, with when they left: deleted a week
+   * later, while cached HTML and open tabs may still ask for them. A page, its data or any
+   * other file no build lists any more is deleted at once.
    */
   retired?: Record<string, string>;
+}
+
+/**
+ * What the hybrid server needs of a static site (`__static/server.json`), written with every
+ * manifest: small whatever the size of the catalog.
+ */
+export interface StaticServerIndex {
+  version: typeof STATIC_MANIFEST_VERSION;
+  buildId: string;
+  /** URL segments of the store languages. */
+  locales: string[];
+  /** The status of each file answered with another than 200 (`404.html`). */
+  statuses: Record<string, number>;
+}
+
+/** The server index of a manifest. */
+export function staticServerIndex(manifest: StaticManifest): StaticServerIndex {
+  return {
+    version: manifest.version,
+    buildId: manifest.buildId,
+    locales: manifest.locales,
+    statuses: Object.fromEntries(
+      Object.entries(manifest.files)
+        .filter(([, file]) => file.status !== 200)
+        .map(([key, file]) => [key, file.status])
+    ),
+  };
 }
 
 /** What a static document tells the browser about itself (`window.__shopanaStatic`). */
@@ -66,6 +97,11 @@ export interface StaticDocumentInfo {
   path: string;
   /** When the page's data changes by itself, if known. */
   validUntil?: string | null;
+  /**
+   * Page types whose addresses the builder rendered with their data: a client navigation
+   * asks the static site for the data of these only (never of a cart, an account, a search).
+   */
+  dataPageTypes: string[];
 }
 
 export const STATIC_DOCUMENT_GLOBAL = '__shopanaStatic';

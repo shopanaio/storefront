@@ -4,8 +4,10 @@
  * of it. Pure, without Node built-ins: the browser and a worker import it too.
  */
 
-/** The manifest of the last build. */
+/** The manifest of the last build: the builder's. */
 export const STATIC_MANIFEST_KEY = '__static/manifest.json';
+/** What the hybrid server reads of the manifest (`StaticServerIndex`), small at any size. */
+export const STATIC_SERVER_INDEX_KEY = '__static/server.json';
 /** The data of each page (its Apollo state), for client navigations. */
 export const STATIC_DATA_PREFIX = '__static/data/';
 /** The theme's 404 page. */
@@ -17,6 +19,22 @@ export const STATIC_ASSETS_PREFIX = 'assets/';
 
 /** Files of search engines the builder writes beside the pages. */
 const SEO_FILE = /^\/(?:robots\.txt|sitemap\.xml|sitemaps\/[^/]+\.xml)$/;
+
+/**
+ * Whether a key is a file the builder writes for its pages (an HTML, its data, a shell, the
+ * 404 page, a file of search engines): what a build deletes when it no longer lists it.
+ * Assets, the manifest and anything else in the store are never such a file.
+ */
+export function isStaticSiteKey(key: string): boolean {
+  return (
+    key === 'index.html' ||
+    key.endsWith('/index.html') ||
+    key === STATIC_NOT_FOUND_KEY ||
+    (key.startsWith(STATIC_DATA_PREFIX) && key.endsWith('.json')) ||
+    (key.startsWith(STATIC_SHELL_PREFIX) && key.endsWith('.html')) ||
+    SEO_FILE.test(`/${key}`)
+  );
+}
 
 /** An address with a file extension is a file, not a page (`/favicon.ico`, `/x.data`). */
 const FILE_EXTENSION = /\.[a-z0-9]+$/i;
@@ -119,4 +137,39 @@ export function staticShellKeyForPath(
   if (unlocalized.length < 2) return null;
   const family = STATIC_SHELL_FAMILIES[unlocalized[0]];
   return family ? staticShellKey(family) : null;
+}
+
+/**
+ * Query parameters a page renders nothing of: links of campaigns and ads, analytics. Any other
+ * parameter may change what the page shows (`sort`, `filter.*`, `variant`, `q`), so its address
+ * is rendered by the server, never answered with the HTML rendered without it.
+ */
+const IGNORED_QUERY_PARAMS: ReadonlySet<string> = new Set([
+  'gclid',
+  'gbraid',
+  'wbraid',
+  'dclid',
+  'fbclid',
+  'msclkid',
+  'yclid',
+  'ttclid',
+  'twclid',
+  'igshid',
+  'li_fat_id',
+  'mc_cid',
+  'mc_eid',
+  'srsltid',
+  '_ga',
+  '_gl',
+  'ref',
+]);
+
+/** Whether a query string leaves the page as the builder rendered it: none, or tracking only. */
+export function isStaticQuery(search: URLSearchParams): boolean {
+  for (const name of search.keys()) {
+    if (!name.startsWith('utm_') && !IGNORED_QUERY_PARAMS.has(name)) {
+      return false;
+    }
+  }
+  return true;
 }

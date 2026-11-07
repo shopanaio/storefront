@@ -318,7 +318,8 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 
 - **Статика в образе.** `build-theme.yml` между `yarn build` и `docker build` выполняет
   `storefront-runtime static build` против API выбранного окружения (`environment` workflow,
-  ночью `stage`); Dockerfile копирует `.runtime/build/static` вместе с ассетами её страниц.
+  ночью `stage`); Dockerfile берёт в образ ту же `.runtime/build` (server, client, static), которой
+  статика отрендерена, а не пересобирает тему.
   Поэтому образ привязан к окружению: tag получает суффикс `-<environment>`. Без
   `STATIC_STORE` в `deploy.env` тема отдаёт статику образа.
 - **Бакет.** `deploy/terraform/zone` (`static_site_buckets`, `cloudflare_account_id`) создаёт

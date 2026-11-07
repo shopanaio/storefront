@@ -6,6 +6,7 @@ import { createApolloCache } from '../graphql/apollo/cache';
 import { SIGNED_IN_COOKIE } from '../modules/session/core/sessionCookies';
 import { enumerateStaticRoutes } from './enumerate';
 import { indexStaticPage } from './entities';
+import { staticRenderHeaders, staticRenderMode } from './render';
 import {
   createStaticResultsLink,
   provideStaticResults,
@@ -458,10 +459,41 @@ describe('the static data of a page as the source of its queries', () => {
     expect(calls).toEqual(['Product']);
   });
 
+  it('leaves an answer that would change what the cache holds to the API', async () => {
+    const { client, calls } = staticClient();
+    // The cache has the store from the API, after the build.
+    client.cache.writeQuery({
+      query: shop,
+      data: { store: { __typename: 'Store', id: 's', name: 'Live' } },
+    });
+    provideStaticResults(Promise.resolve(normalized));
+    const result = await client.query({
+      query: shop,
+      fetchPolicy: 'network-only',
+    });
+    expect(result.data?.store.name).toBe('Live');
+    expect(calls).toEqual(['Shop']);
+  });
+
   it('goes to the API when the data fails', async () => {
     const { client, calls } = staticClient();
     provideStaticResults(Promise.reject(new Error('offline')));
     expect((await client.query({ query: shop })).data?.store.name).toBe('Live');
     expect(calls).toEqual(['Shop']);
+  });
+});
+
+describe('the static render of this process', () => {
+  it('is known by the key of the process only', () => {
+    const headers = new Headers(staticRenderHeaders('shell'));
+    expect(staticRenderMode(headers)).toBe('shell');
+    expect(staticRenderMode(new Headers(staticRenderHeaders('page')))).toBe(
+      'page'
+    );
+    headers.set('x-shopana-static-render-key', 'guessed');
+    expect(staticRenderMode(headers)).toBeNull();
+    expect(
+      staticRenderMode(new Headers({ 'x-shopana-static-render': 'page' }))
+    ).toBeNull();
   });
 });

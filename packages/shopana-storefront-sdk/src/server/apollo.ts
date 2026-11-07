@@ -7,6 +7,7 @@ import type {
 import { STOREFRONT_LOCALE_HEADER } from '../modules/localization/core/constants';
 import { readServerAuthState } from '../modules/session/server';
 import { getFrameworkApolloRequestClient } from '#server-framework';
+import { staticRenderMode } from '../static/render';
 import { directGatewayHeaders, privateTokenHeaders } from './directGateway';
 import {
   apolloEnvironmentKey,
@@ -42,7 +43,8 @@ export async function readRequestAuth(): Promise<RequestAuth> {
     locale,
     gatewayHeaders: withHeaders(
       directGatewayHeaders(headers),
-      privateTokenHeaders()
+      // The private token is the static site builder's alone: its renders, never a buyer's.
+      staticRenderMode(headers) ? privateTokenHeaders() : undefined
     ),
   };
 }

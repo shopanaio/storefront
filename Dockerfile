@@ -10,15 +10,20 @@ RUN corepack enable && yarn install --immutable && yarn cache clean --all
 ARG STOREFRONT_THEME=brand-bite-crunch
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
 ENV NODE_ENV=production
-# The static site the workflow generated before this build (`storefront-runtime static build`
-# into .runtime/build/static) is kept aside while the theme builds again. It carries the assets
-# its pages name, so a page of it hydrates whatever hashes this build gives. Without one the
-# image renders every page.
-RUN mkdir -p /static && \
-    if [ -d "themes/$STOREFRONT_THEME/.runtime/build/static" ]; then \
-      mv "themes/$STOREFRONT_THEME/.runtime/build/static" /static/static; \
+# The build the workflow rendered the static site with (`storefront-runtime static build` into
+# .runtime/build/static) is the theme build of the image: kept aside while the packages build,
+# then put back, so the pages of the static site and the server and browser builds that answer
+# them are one build (its assets, its React Router version). Without one the image builds the
+# theme itself and renders every page.
+RUN if [ -f "themes/$STOREFRONT_THEME/.runtime/build/static/__static/server.json" ]; then \
+      test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js" && \
+      mv "themes/$STOREFRONT_THEME/.runtime/build" /prebuilt; \
     fi
 RUN NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
+    if [ -d /prebuilt ]; then \
+      rm -rf "themes/$STOREFRONT_THEME/.runtime/build" && \
+      mv /prebuilt "themes/$STOREFRONT_THEME/.runtime/build"; \
+    fi && \
     test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js"
 
 FROM build AS production-dependencies
@@ -39,7 +44,6 @@ ARG STOREFRONT_THEME=brand-bite-crunch
 COPY --from=build /app/themes/${STOREFRONT_THEME}/package.json ./themes/${STOREFRONT_THEME}/package.json
 COPY --from=production-dependencies /app/themes/${STOREFRONT_THEME}/node_modules ./themes/${STOREFRONT_THEME}/node_modules
 COPY --from=build /app/themes/${STOREFRONT_THEME}/.runtime/build ./themes/${STOREFRONT_THEME}/.runtime/build
-COPY --from=build /static/ ./themes/${STOREFRONT_THEME}/.runtime/build/
 # The hybrid server (`storefront-runtime start`): the workspace link of @shopana/storefront in
 # node_modules points here.
 COPY --from=build /app/packages/shopana-storefront-runtime/package.json ./packages/shopana-storefront-runtime/package.json

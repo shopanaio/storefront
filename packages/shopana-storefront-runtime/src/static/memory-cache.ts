@@ -5,7 +5,9 @@
  * no body while the object is the same. A missing object is remembered as long. So a page
  * published to the bucket shows on every replica within the TTL, with no purge. A bucket that
  * fails while an entry is due keeps the entry for another TTL: a known page stays served and
- * the bucket is not asked again on every request.
+ * the bucket is not asked again on every request. After a failure the bucket is left alone for
+ * a while (2 s, doubled on each failure in a row up to a minute): a page it is not known for
+ * fails at once, so the server renders it instead of waiting for a bucket that is down.
  */
 import {
   etagMatches,
@@ -31,6 +33,18 @@ export interface CachedStoreOptions {
 /** Bytes an entry without a body counts: its key and its bookkeeping. */
 const ENTRY_OVERHEAD = 256;
 
+/** How long the bucket is left alone after a failure, at first and at most. */
+const BACKOFF_MIN_MS = 2_000;
+const BACKOFF_MAX_MS = 60_000;
+
+/** The bucket failed a moment ago: the server renders the page instead. */
+export class StaticStoreUnavailable extends Error {
+  constructor(url: string) {
+    super(`${url} failed a moment ago and is left alone for now`);
+    this.name = 'StaticStoreUnavailable';
+  }
+}
+
 export function createCachedStore(
   store: StaticStore,
   { ttlMs, maxBytes, now = Date.now }: CachedStoreOptions
@@ -39,6 +53,9 @@ export function createCachedStore(
   const entries = new Map<string, Entry>();
   const pending = new Map<string, Promise<Entry>>();
   let bytes = 0;
+  /** Until when the bucket is left alone, and for how long the next failure leaves it. */
+  let downUntil = 0;
+  let backoffMs = BACKOFF_MIN_MS;
 
   const remember = (key: string, entry: Entry) => {
     const previous = entries.get(key);
@@ -62,11 +79,15 @@ export function createCachedStore(
         cached?.object ? { ifNoneMatch: cached.object.etag } : {}
       );
     } catch (error) {
+      downUntil = now() + backoffMs;
+      backoffMs = Math.min(backoffMs * 2, BACKOFF_MAX_MS);
       if (!cached) throw error;
       const kept = { ...cached, checkedAt: now() };
       remember(key, kept);
       return kept;
     }
+    downUntil = 0;
+    backoffMs = BACKOFF_MIN_MS;
     const checkedAt = now();
     let entry: Entry;
     if (read.status === 'not-modified' && cached?.object) {
@@ -94,6 +115,12 @@ export function createCachedStore(
       return Promise.resolve(cached);
     }
     let request = pending.get(key);
+    if (!request && now() < downUntil) {
+      // The bucket failed a moment ago: what is known is served, the rest is rendered.
+      return cached
+        ? Promise.resolve(cached)
+        : Promise.reject(new StaticStoreUnavailable(store.url));
+    }
     if (!request) {
       request = refresh(key, cached).finally(() => pending.delete(key));
       pending.set(key, request);

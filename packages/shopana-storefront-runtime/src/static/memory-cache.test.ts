@@ -112,7 +112,38 @@ describe('the memory of a bucket', () => {
       etag: '"1"',
     });
     expect(failing).toHaveBeenCalledTimes(1);
-    await expect(cached.read('b')).rejects.toThrow('bucket down');
+    // Right after the failure an unknown object is not waited for: the server renders it.
+    await expect(cached.read('b')).rejects.toThrow('left alone');
+    expect(failing).toHaveBeenCalledTimes(1);
     expect(reads).toHaveLength(1);
+  });
+
+  it('leaves a failing bucket alone for longer each time, and trusts it again once it answers', async () => {
+    const objects = new Map([['a', { body: 'one', etag: '"1"' }]]);
+    const { store } = fakeStore(objects);
+    const healthy = store.read;
+    const failing = vi.fn(async () => {
+      throw new Error('bucket down');
+    });
+    store.read = failing;
+    let now = 0;
+    const cached = createCachedStore(store, {
+      ttlMs: 10_000,
+      maxBytes: 1_000_000,
+      now: () => now,
+    });
+    await expect(cached.read('a')).rejects.toThrow('bucket down');
+    now = 1_999;
+    await expect(cached.read('a')).rejects.toThrow('left alone');
+    now = 2_000;
+    await expect(cached.read('a')).rejects.toThrow('bucket down');
+    // The second failure in a row: 4 s.
+    now = 5_999;
+    await expect(cached.read('a')).rejects.toThrow('left alone');
+    expect(failing).toHaveBeenCalledTimes(2);
+    store.read = healthy;
+    now = 6_000;
+    expect((await cached.read('a')).status).toBe('found');
+    expect((await cached.read('b')).status).toBe('missing');
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { signS3Request } from './s3';
-import { createS3Store } from './store';
+import { createS3Store, StaticWriteConflict } from './store';
 
 const env = {
   STOREFRONT_STATIC_S3_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
@@ -85,6 +85,31 @@ describe('the bucket store', () => {
     });
     expect(await store.list('assets/')).toEqual(['assets/a.js', 'assets/b.js']);
     expect(tokens).toEqual([null, 't&2']);
+  });
+
+  it('writes over the version it read only, and tells a conflict', async () => {
+    const sent: Array<Record<string, string>> = [];
+    const store = createS3Store('site', 'stage', {
+      env,
+      fetch: (async (_url: URL, init: RequestInit) => {
+        const headers = init.headers as Record<string, string>;
+        sent.push(headers);
+        return new Response(null, {
+          status: headers['if-match'] === '"v1"' ? 200 : 412,
+        });
+      }) as unknown as typeof globalThis.fetch,
+    });
+    await store.write('__static/manifest.json', '{}', 'application/json', {
+      ifMatch: '"v1"',
+    });
+    await expect(
+      store.write('__static/manifest.json', '{}', 'application/json', {
+        ifNoneMatch: '*',
+      })
+    ).rejects.toBeInstanceOf(StaticWriteConflict);
+    expect(sent[0]['if-match']).toBe('"v1"');
+    expect(sent[0].authorization).toContain('if-match');
+    expect(sent[1]['if-none-match']).toBe('*');
   });
 
   it('fails without its credentials', () => {

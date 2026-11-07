@@ -9,9 +9,11 @@
 import {
   ApolloLink,
   Observable,
+  type ApolloCache,
   type DocumentNode,
   type NormalizedCacheObject,
   type OperationVariables,
+  type StoreObject,
 } from '@apollo/client';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createApolloCache } from '../graphql/apollo/cache';
@@ -92,6 +94,53 @@ export function provideStaticResults(state: Promise<StaticState | null>): void {
   });
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+/**
+ * Whether the fields of `value` the cache record has hold other values there. Fields under an
+ * alias or with arguments are named otherwise in the record and are not compared; an entity
+ * inside (a reference in the record) is compared on its own.
+ */
+function differs(
+  value: Record<string, unknown>,
+  record: Record<string, unknown>
+): boolean {
+  for (const [field, incoming] of Object.entries(value)) {
+    if (!(field in record)) continue;
+    const stored = record[field];
+    if (!isRecord(incoming) && !Array.isArray(incoming)) {
+      if (stored !== incoming) return true;
+    } else if (isRecord(incoming) && isRecord(stored) && !('__ref' in stored)) {
+      if (differs(incoming, stored)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether an answer of the static site would change an entity the cache holds already: what
+ * the cache has came later than the build (the API, a newer page), so the API answers.
+ */
+function conflictsWithCache(cache: ApolloCache, data: unknown): boolean {
+  const records = cache.extract() as NormalizedCacheObject;
+  const seen = new Set<object>();
+  const visit = (value: unknown): boolean => {
+    if (!value || typeof value !== 'object' || seen.has(value)) return false;
+    seen.add(value);
+    if (Array.isArray(value)) return value.some(visit);
+    const object = value as Record<string, unknown>;
+    const id =
+      typeof object.__typename === 'string'
+        ? cache.identify(object as StoreObject)
+        : undefined;
+    const record = id ? records[id] : undefined;
+    if (isRecord(record) && differs(object, record)) return true;
+    return Object.values(object).some(visit);
+  };
+  return visit(data);
+}
+
 const isQuery = (operation: ApolloLink.Operation) => {
   const definition = getMainDefinition(operation.query);
   return (
@@ -102,9 +151,9 @@ const isQuery = (operation: ApolloLink.Operation) => {
 
 /**
  * Answers queries from the static source (`provideStaticResults`) when it has their answer;
- * every other operation, and every query it cannot answer, goes on to the API. A buyer with a
- * session never gets the guest's values of the viewer's fields: such an answer is the API's.
- * Browser only.
+ * every other operation, and every query it cannot answer, goes on to the API. So does an
+ * answer that would change what the cache holds (it came after the build), and, for a buyer
+ * with a session, one that shows the viewer's fields: theirs are not the guest's. Browser only.
  */
 export function createStaticResultsLink(): ApolloLink {
   return new ApolloLink((operation, forward) => {
@@ -117,7 +166,8 @@ export function createStaticResultsLink(): ApolloLink {
         .then((answers) => {
           const data = answers?.take(operation.query, operation.variables);
           if (data === undefined) return undefined;
-          return browserHasSession() && showsViewerFields(data)
+          if (browserHasSession() && showsViewerFields(data)) return undefined;
+          return conflictsWithCache(operation.client.cache, data)
             ? undefined
             : data;
         })
