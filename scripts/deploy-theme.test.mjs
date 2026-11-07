@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   parseEnv,
+  requestFullBuild,
+  smoke,
+  validateStaticEnv,
   validateRuntime,
   validateBackend,
   verifyHeadlessOAuth,
@@ -12,7 +15,8 @@ CLOUDFLARED_IMAGE=cloudflare/cloudflared:2026.10.2
 BACKEND_NETWORK=shopana-stage-edge
 TUNNEL_SECRET=theme-tunnel-v1
 SERVER_ENV_SECRET=theme-runtime-v1
-LAUNCHER_CONFIG=theme-launcher-abc`;
+LAUNCHER_CONFIG=theme-launcher-abc
+STATIC_ENV_SECRET=theme-static-v1`;
 const outputs = {
   app_url: 'https://pet.shopana.dev',
   graphql_url: 'https://pet.shopana.dev/graphql',
@@ -191,4 +195,232 @@ test('headless sign-in uses the registered callback independently from the theme
     ),
     /HTTP 401/
   );
+});
+
+test('deploy inputs take the static site bucket, well formed', () => {
+  const withBucket = `${env}\nSTATIC_STORE=s3://shopana-storefront-static-stage/site\nSTATIC_ENDPOINT=https://account.r2.cloudflarestorage.com`;
+  assert.equal(
+    parseEnv(withBucket).STATIC_STORE,
+    's3://shopana-storefront-static-stage/site'
+  );
+  assert.throws(
+    () =>
+      parseEnv(
+        `${env}\nSTATIC_STORE=s3://shopana-storefront-static-stage/site`
+      ),
+    /STATIC_ENDPOINT/
+  );
+  assert.throws(
+    () =>
+      parseEnv(
+        `${env}\nSTATIC_STORE=fs:/tmp\nSTATIC_ENDPOINT=https://r2.example`
+      ),
+    /s3:\/\//
+  );
+  assert.equal(parseEnv(env).STATIC_STORE, '');
+  assert.throws(
+    () => parseEnv(`${env}\nSTATIC_ENDPOINT=https://r2.example`),
+    /set both or neither/
+  );
+});
+
+test('the smoke wants a static hit, its 304, a live miss and /__env.js', async () => {
+  const etag = '"abc"';
+  const staticHtml =
+    '<html><head><script src="/__env.js"></script><script>window.__shopanaStatic={}</script></head></html>';
+  const site =
+    (overrides = {}) =>
+    async (url, init = {}) => {
+      const { pathname } = new URL(url);
+      const headers = init.headers ?? {};
+      if (pathname in overrides) return overrides[pathname]();
+      if (pathname === '/__env.js') {
+        return new Response(
+          `globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"};`,
+          { headers: { 'cache-control': 'no-cache' } }
+        );
+      }
+      if (pathname === '/') {
+        if (headers['if-none-match'] === etag)
+          return new Response(null, { status: 304 });
+        return new Response(staticHtml, {
+          headers: {
+            'content-type': 'text/html',
+            'x-shopana-static': 'hit',
+            'cache-control': 'public, max-age=0, must-revalidate',
+            etag,
+          },
+        });
+      }
+      if (pathname.startsWith('/products/smoke-')) {
+        return new Response('<script src="/__env.js"></script>', {
+          status: 404,
+          headers: {
+            'x-shopana-static': 'miss',
+            'cache-control': 'private, no-store',
+          },
+        });
+      }
+      if (pathname === '/graphql')
+        return Response.json({ data: { __typename: 'Query' } });
+      if (pathname === '/__builder/api/health')
+        return Response.json({ ok: true });
+      const path = `/auth/applications/${values.NEXT_PUBLIC_IAM_APPLICATION_ID}`;
+      return Response.json({ issuer: `${values.NEXT_PUBLIC_IAM_URL}${path}` });
+    };
+  await smoke(values, site());
+  await assert.rejects(
+    smoke(
+      values,
+      site({
+        '/': () =>
+          new Response(staticHtml, {
+            headers: {
+              'content-type': 'text/html',
+              'x-shopana-static': 'miss',
+            },
+          }),
+      })
+    ),
+    /x-shopana-static: hit/
+  );
+  await assert.rejects(
+    smoke(
+      values,
+      site({
+        '/__env.js': () =>
+          new Response(
+            values.STOREFRONT_SESSION_SECRET + values.NEXT_PUBLIC_API_KEY,
+            {
+              headers: { 'cache-control': 'no-cache' },
+            }
+          ),
+      })
+    ),
+    /leaked into \/__env\.js/
+  );
+});
+
+test('the coordinator secret holds known keys and the token of the theme', () => {
+  const token = 't'.repeat(40);
+  const staticValues = {
+    STATIC_OPERATOR_TOKEN: 'o'.repeat(40),
+    STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
+    SHOPANA_EVENTS_REFRESH_TOKEN: 'refresh',
+  };
+  validateStaticEnv(staticValues, {
+    ...values,
+    STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
+  });
+  assert.throws(
+    () => validateStaticEnv(staticValues, values),
+    /must be the same/
+  );
+  assert.throws(
+    () =>
+      validateStaticEnv(
+        { ...staticValues, OTHER: 'x' },
+        {
+          ...values,
+          STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
+        }
+      ),
+    /Unsupported/
+  );
+  assert.throws(
+    () =>
+      validateStaticEnv(
+        { ...staticValues, STATIC_OPERATOR_TOKEN: 'short' },
+        { ...values, STOREFRONT_STATIC_COORDINATOR_TOKEN: token }
+      ),
+    /32 characters/
+  );
+  assert.throws(
+    () => parseEnv(env.replace(/\nSTATIC_ENV_SECRET=.*/, '')),
+    /STATIC_ENV_SECRET/
+  );
+});
+
+test('a new image asks the coordinator for a full build', async () => {
+  const calls = [];
+  const requestId = await requestFullBuild(
+    'https://pet.shopana.dev',
+    'operator',
+    'ghcr.io/x@sha256:1',
+    async (url, init) => {
+      calls.push({ url: String(url), init });
+      return Response.json({ requestId: 'b-1' }, { status: 202 });
+    }
+  );
+  assert.equal(requestId, 'b-1');
+  assert.equal(calls[0].url, 'https://pet.shopana.dev/__builder/api/builds');
+  assert.equal(calls[0].init.headers.authorization, 'Bearer operator');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    mode: 'full',
+    image: 'ghcr.io/x@sha256:1',
+    reason: 'deploy',
+  });
+});
+
+test('the CDN smoke wants a HIT of a page it has seen, never of auth', async () => {
+  const etag = '"abc"';
+  const staticHtml =
+    '<html><head><script src="/__env.js"></script><script>window.__shopanaStatic={}</script></head></html>';
+  let pages = 0;
+  const fetcher = async (url, init = {}) => {
+    const { pathname } = new URL(url);
+    if (pathname === '/__env.js')
+      return new Response(
+        `globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"};`,
+        { headers: { 'cache-control': 'no-cache' } }
+      );
+    if (pathname === '/') {
+      if (init.headers?.['if-none-match'] === etag)
+        return new Response(null, { status: 304 });
+      pages += 1;
+      return new Response(staticHtml, {
+        headers: {
+          'content-type': 'text/html',
+          'x-shopana-static': 'hit',
+          'cache-control': 'public, max-age=0, must-revalidate',
+          'cf-cache-status': pages > 1 ? 'HIT' : 'MISS',
+          etag,
+        },
+      });
+    }
+    if (pathname === '/auth/login')
+      return new Response(null, {
+        status: 302,
+        headers: { 'cf-cache-status': 'DYNAMIC' },
+      });
+    if (pathname.startsWith('/products/smoke-'))
+      return new Response('<script src="/__env.js"></script>', {
+        status: 404,
+        headers: {
+          'x-shopana-static': 'miss',
+          'cache-control': 'private, no-store',
+        },
+      });
+    if (pathname === '/graphql')
+      return Response.json({ data: { __typename: 'Query' } });
+    if (pathname === '/__builder/api/health')
+      return Response.json({ ok: true });
+    const path = `/auth/applications/${values.NEXT_PUBLIC_IAM_APPLICATION_ID}`;
+    return Response.json({ issuer: `${values.NEXT_PUBLIC_IAM_URL}${path}` });
+  };
+  await smoke(values, fetcher, { cdn: true });
+  pages = -10;
+  await assert.rejects(
+    smoke(values, fetcher, { cdn: true }),
+    /cf-cache-status/
+  );
+});
+
+test('behind the CDN worker the theme may trust two hops', () => {
+  const twoHops = { ...values, STOREFRONT_TRUSTED_PROXY_HOPS: '2' };
+  assert.throws(
+    () => validateRuntime(twoHops, outputs),
+    /one trusted proxy hop/
+  );
+  validateRuntime(twoHops, outputs, { cdn: true });
 });

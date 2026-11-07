@@ -1,4 +1,5 @@
 import type {
+  ApolloCache,
   Cache,
   DocumentNode,
   FieldPolicy,
@@ -165,6 +166,15 @@ function storefrontCacheClass(Base: InMemoryCacheClass) {
         return super.write(options);
       }
 
+      /** The whole responses not written yet, changed by `change` (the viewer's fields out). */
+      mapPendingResults(
+        change: (result: RequestQueryResult) => RequestQueryResult
+      ) {
+        for (const [key, result] of this.#pending) {
+          this.#pending.set(key, change(result));
+        }
+      }
+
       override reset(options?: Cache.ResetOptions) {
         this.#pending.clear();
         return super.reset(options);
@@ -316,6 +326,29 @@ export function createApolloCache(
     handles,
     results
   );
+}
+
+interface PendingResultsCache {
+  mapPendingResults(
+    change: (result: RequestQueryResult) => RequestQueryResult
+  ): void;
+}
+
+function hasPendingResults(
+  cache: ApolloCache
+): cache is ApolloCache & PendingResultsCache {
+  return (
+    typeof (cache as Partial<PendingResultsCache>).mapPendingResults ===
+    'function'
+  );
+}
+
+/** Changes the whole responses a browser cache has not written yet. */
+export function mapPendingApolloResults(
+  cache: ApolloCache,
+  change: (result: RequestQueryResult) => RequestQueryResult
+): void {
+  if (hasPendingResults(cache)) cache.mapPendingResults(change);
 }
 
 /**

@@ -24193,6 +24193,2453 @@ export type SdkProductComparisonQuery = {
   } | null;
 };
 
+export type SdkVolatileCardFieldsFragment = {
+  readonly __typename: 'ProductVariant';
+  readonly id: string;
+  readonly availableForSale: boolean;
+  readonly price?: {
+    readonly __typename: 'Money';
+    readonly amount: any;
+    readonly currencyCode: CurrencyCode;
+  } | null;
+  readonly compareAtPrice?: {
+    readonly __typename: 'Money';
+    readonly amount: any;
+    readonly currencyCode: CurrencyCode;
+  } | null;
+  readonly product: { readonly __typename: 'Product'; readonly id: string };
+};
+
+export type SdkVolatileVariantFieldsFragment = {
+  readonly __typename: 'ProductVariant';
+  readonly id: string;
+  readonly availableForSale: boolean;
+  readonly currentlyNotInStock: boolean;
+  readonly quantityAvailable?: number | null;
+  readonly price?: {
+    readonly __typename: 'Money';
+    readonly amount: any;
+    readonly currencyCode: CurrencyCode;
+  } | null;
+  readonly compareAtPrice?: {
+    readonly __typename: 'Money';
+    readonly amount: any;
+    readonly currencyCode: CurrencyCode;
+  } | null;
+  readonly product: {
+    readonly __typename: 'Product';
+    readonly id: string;
+    readonly availableForSale: boolean;
+  };
+  readonly promotions: {
+    readonly __typename: 'StorefrontPromotionPresentation';
+    readonly validUntil?: string | null;
+    readonly revision: string;
+    readonly promotions: ReadonlyArray<{
+      readonly __typename: 'StorefrontPromotion';
+      readonly key: string;
+    }>;
+  };
+};
+
+export type SdkVolatileCardsQueryVariables = Exact<{
+  ids: ReadonlyArray<Scalars['ID']['input']>;
+  withPrice: Scalars['Boolean']['input'];
+}>;
+
+export type SdkVolatileCardsQuery = {
+  readonly __typename: 'Query';
+  readonly nodes: ReadonlyArray<
+    | { readonly __typename: 'Category' }
+    | { readonly __typename: 'Checkout' }
+    | { readonly __typename: 'CheckoutLine' }
+    | { readonly __typename: 'CheckoutTag' }
+    | { readonly __typename: 'Collection' }
+    | { readonly __typename: 'CustomerAddress' }
+    | { readonly __typename: 'CustomerDataRequest' }
+    | { readonly __typename: 'CustomerTaxExemption' }
+    | { readonly __typename: 'CustomerTaxIdentifier' }
+    | { readonly __typename: 'CustomerWishlist' }
+    | { readonly __typename: 'CustomerWishlistItem' }
+    | { readonly __typename: 'ExternalVideo' }
+    | { readonly __typename: 'Facet' }
+    | { readonly __typename: 'FacetSwatch' }
+    | { readonly __typename: 'FacetValue' }
+    | { readonly __typename: 'GenericFile' }
+    | { readonly __typename: 'InventoryItem' }
+    | { readonly __typename: 'LoyaltyAvailableReward' }
+    | { readonly __typename: 'MediaImage' }
+    | { readonly __typename: 'Model3d' }
+    | { readonly __typename: 'OnlineStoreNavigationMenu' }
+    | { readonly __typename: 'OnlineStoreNavigationMenuItem' }
+    | { readonly __typename: 'OnlineStorePage' }
+    | { readonly __typename: 'Order' }
+    | { readonly __typename: 'OrderDeliveryAddress' }
+    | { readonly __typename: 'OrderDeliveryGroup' }
+    | { readonly __typename: 'OrderFulfillment' }
+    | { readonly __typename: 'OrderLine' }
+    | { readonly __typename: 'OrderPaymentTransaction' }
+    | { readonly __typename: 'OrderRefund' }
+    | { readonly __typename: 'OrderReturnRequest' }
+    | { readonly __typename: 'OrderShipment' }
+    | { readonly __typename: 'OrderTrackingEvent' }
+    | { readonly __typename: 'OrderVoid' }
+    | { readonly __typename: 'Pet' }
+    | { readonly __typename: 'PetProductSelection' }
+    | { readonly __typename: 'Product' }
+    | { readonly __typename: 'ProductFeature' }
+    | { readonly __typename: 'ProductFeatureGroup' }
+    | { readonly __typename: 'ProductFeatureValue' }
+    | { readonly __typename: 'ProductOption' }
+    | { readonly __typename: 'ProductOptionType' }
+    | { readonly __typename: 'ProductOptionValue' }
+    | { readonly __typename: 'ProductQuestion' }
+    | { readonly __typename: 'ProductQuestionAnswer' }
+    | { readonly __typename: 'ProductQuestionSubscription' }
+    | {
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly availableForSale: boolean;
+        readonly price?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly compareAtPrice?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly product: {
+          readonly __typename: 'Product';
+          readonly id: string;
+        };
+      }
+    | { readonly __typename: 'Review' }
+    | { readonly __typename: 'ReviewContentExternalReference' }
+    | { readonly __typename: 'ReviewContentPublication' }
+    | { readonly __typename: 'ReviewContentReport' }
+    | { readonly __typename: 'ReviewContentRevision' }
+    | { readonly __typename: 'ReviewContentTranslation' }
+    | { readonly __typename: 'ReviewContentVote' }
+    | { readonly __typename: 'ReviewMedia' }
+    | { readonly __typename: 'ReviewModerationCase' }
+    | { readonly __typename: 'ReviewModerationEvent' }
+    | { readonly __typename: 'ReviewModerationSignal' }
+    | { readonly __typename: 'ReviewRatingCriterion' }
+    | { readonly __typename: 'ReviewRatingCriterionAssignment' }
+    | { readonly __typename: 'ReviewReply' }
+    | { readonly __typename: 'ReviewRequest' }
+    | { readonly __typename: 'ReviewRequestEvent' }
+    | { readonly __typename: 'ReviewStoreConfiguration' }
+    | { readonly __typename: 'Store' }
+    | { readonly __typename: 'StorePolicy' }
+    | { readonly __typename: 'Tag' }
+    | { readonly __typename: 'Vendor' }
+    | { readonly __typename: 'Video' }
+    | null
+  >;
+};
+
+export type SdkVolatileVariantQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+  siblings: ReadonlyArray<Scalars['ID']['input']>;
+  withPrice: Scalars['Boolean']['input'];
+}>;
+
+export type SdkVolatileVariantQuery = {
+  readonly __typename: 'Query';
+  readonly variant?:
+    | { readonly __typename: 'Category' }
+    | { readonly __typename: 'Checkout' }
+    | { readonly __typename: 'CheckoutLine' }
+    | { readonly __typename: 'CheckoutTag' }
+    | { readonly __typename: 'Collection' }
+    | { readonly __typename: 'CustomerAddress' }
+    | { readonly __typename: 'CustomerDataRequest' }
+    | { readonly __typename: 'CustomerTaxExemption' }
+    | { readonly __typename: 'CustomerTaxIdentifier' }
+    | { readonly __typename: 'CustomerWishlist' }
+    | { readonly __typename: 'CustomerWishlistItem' }
+    | { readonly __typename: 'ExternalVideo' }
+    | { readonly __typename: 'Facet' }
+    | { readonly __typename: 'FacetSwatch' }
+    | { readonly __typename: 'FacetValue' }
+    | { readonly __typename: 'GenericFile' }
+    | { readonly __typename: 'InventoryItem' }
+    | { readonly __typename: 'LoyaltyAvailableReward' }
+    | { readonly __typename: 'MediaImage' }
+    | { readonly __typename: 'Model3d' }
+    | { readonly __typename: 'OnlineStoreNavigationMenu' }
+    | { readonly __typename: 'OnlineStoreNavigationMenuItem' }
+    | { readonly __typename: 'OnlineStorePage' }
+    | { readonly __typename: 'Order' }
+    | { readonly __typename: 'OrderDeliveryAddress' }
+    | { readonly __typename: 'OrderDeliveryGroup' }
+    | { readonly __typename: 'OrderFulfillment' }
+    | { readonly __typename: 'OrderLine' }
+    | { readonly __typename: 'OrderPaymentTransaction' }
+    | { readonly __typename: 'OrderRefund' }
+    | { readonly __typename: 'OrderReturnRequest' }
+    | { readonly __typename: 'OrderShipment' }
+    | { readonly __typename: 'OrderTrackingEvent' }
+    | { readonly __typename: 'OrderVoid' }
+    | { readonly __typename: 'Pet' }
+    | { readonly __typename: 'PetProductSelection' }
+    | { readonly __typename: 'Product' }
+    | { readonly __typename: 'ProductFeature' }
+    | { readonly __typename: 'ProductFeatureGroup' }
+    | { readonly __typename: 'ProductFeatureValue' }
+    | { readonly __typename: 'ProductOption' }
+    | { readonly __typename: 'ProductOptionType' }
+    | { readonly __typename: 'ProductOptionValue' }
+    | { readonly __typename: 'ProductQuestion' }
+    | { readonly __typename: 'ProductQuestionAnswer' }
+    | { readonly __typename: 'ProductQuestionSubscription' }
+    | {
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly availableForSale: boolean;
+        readonly currentlyNotInStock: boolean;
+        readonly quantityAvailable?: number | null;
+        readonly price?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly compareAtPrice?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly product: {
+          readonly __typename: 'Product';
+          readonly id: string;
+          readonly availableForSale: boolean;
+        };
+        readonly promotions: {
+          readonly __typename: 'StorefrontPromotionPresentation';
+          readonly validUntil?: string | null;
+          readonly revision: string;
+          readonly promotions: ReadonlyArray<{
+            readonly __typename: 'StorefrontPromotion';
+            readonly key: string;
+          }>;
+        };
+      }
+    | { readonly __typename: 'Review' }
+    | { readonly __typename: 'ReviewContentExternalReference' }
+    | { readonly __typename: 'ReviewContentPublication' }
+    | { readonly __typename: 'ReviewContentReport' }
+    | { readonly __typename: 'ReviewContentRevision' }
+    | { readonly __typename: 'ReviewContentTranslation' }
+    | { readonly __typename: 'ReviewContentVote' }
+    | { readonly __typename: 'ReviewMedia' }
+    | { readonly __typename: 'ReviewModerationCase' }
+    | { readonly __typename: 'ReviewModerationEvent' }
+    | { readonly __typename: 'ReviewModerationSignal' }
+    | { readonly __typename: 'ReviewRatingCriterion' }
+    | { readonly __typename: 'ReviewRatingCriterionAssignment' }
+    | { readonly __typename: 'ReviewReply' }
+    | { readonly __typename: 'ReviewRequest' }
+    | { readonly __typename: 'ReviewRequestEvent' }
+    | { readonly __typename: 'ReviewStoreConfiguration' }
+    | { readonly __typename: 'Store' }
+    | { readonly __typename: 'StorePolicy' }
+    | { readonly __typename: 'Tag' }
+    | { readonly __typename: 'Vendor' }
+    | { readonly __typename: 'Video' }
+    | null;
+  readonly siblings: ReadonlyArray<
+    | { readonly __typename: 'Category' }
+    | { readonly __typename: 'Checkout' }
+    | { readonly __typename: 'CheckoutLine' }
+    | { readonly __typename: 'CheckoutTag' }
+    | { readonly __typename: 'Collection' }
+    | { readonly __typename: 'CustomerAddress' }
+    | { readonly __typename: 'CustomerDataRequest' }
+    | { readonly __typename: 'CustomerTaxExemption' }
+    | { readonly __typename: 'CustomerTaxIdentifier' }
+    | { readonly __typename: 'CustomerWishlist' }
+    | { readonly __typename: 'CustomerWishlistItem' }
+    | { readonly __typename: 'ExternalVideo' }
+    | { readonly __typename: 'Facet' }
+    | { readonly __typename: 'FacetSwatch' }
+    | { readonly __typename: 'FacetValue' }
+    | { readonly __typename: 'GenericFile' }
+    | { readonly __typename: 'InventoryItem' }
+    | { readonly __typename: 'LoyaltyAvailableReward' }
+    | { readonly __typename: 'MediaImage' }
+    | { readonly __typename: 'Model3d' }
+    | { readonly __typename: 'OnlineStoreNavigationMenu' }
+    | { readonly __typename: 'OnlineStoreNavigationMenuItem' }
+    | { readonly __typename: 'OnlineStorePage' }
+    | { readonly __typename: 'Order' }
+    | { readonly __typename: 'OrderDeliveryAddress' }
+    | { readonly __typename: 'OrderDeliveryGroup' }
+    | { readonly __typename: 'OrderFulfillment' }
+    | { readonly __typename: 'OrderLine' }
+    | { readonly __typename: 'OrderPaymentTransaction' }
+    | { readonly __typename: 'OrderRefund' }
+    | { readonly __typename: 'OrderReturnRequest' }
+    | { readonly __typename: 'OrderShipment' }
+    | { readonly __typename: 'OrderTrackingEvent' }
+    | { readonly __typename: 'OrderVoid' }
+    | { readonly __typename: 'Pet' }
+    | { readonly __typename: 'PetProductSelection' }
+    | { readonly __typename: 'Product' }
+    | { readonly __typename: 'ProductFeature' }
+    | { readonly __typename: 'ProductFeatureGroup' }
+    | { readonly __typename: 'ProductFeatureValue' }
+    | { readonly __typename: 'ProductOption' }
+    | { readonly __typename: 'ProductOptionType' }
+    | { readonly __typename: 'ProductOptionValue' }
+    | { readonly __typename: 'ProductQuestion' }
+    | { readonly __typename: 'ProductQuestionAnswer' }
+    | { readonly __typename: 'ProductQuestionSubscription' }
+    | {
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly availableForSale: boolean;
+      }
+    | { readonly __typename: 'Review' }
+    | { readonly __typename: 'ReviewContentExternalReference' }
+    | { readonly __typename: 'ReviewContentPublication' }
+    | { readonly __typename: 'ReviewContentReport' }
+    | { readonly __typename: 'ReviewContentRevision' }
+    | { readonly __typename: 'ReviewContentTranslation' }
+    | { readonly __typename: 'ReviewContentVote' }
+    | { readonly __typename: 'ReviewMedia' }
+    | { readonly __typename: 'ReviewModerationCase' }
+    | { readonly __typename: 'ReviewModerationEvent' }
+    | { readonly __typename: 'ReviewModerationSignal' }
+    | { readonly __typename: 'ReviewRatingCriterion' }
+    | { readonly __typename: 'ReviewRatingCriterionAssignment' }
+    | { readonly __typename: 'ReviewReply' }
+    | { readonly __typename: 'ReviewRequest' }
+    | { readonly __typename: 'ReviewRequestEvent' }
+    | { readonly __typename: 'ReviewStoreConfiguration' }
+    | { readonly __typename: 'Store' }
+    | { readonly __typename: 'StorePolicy' }
+    | { readonly __typename: 'Tag' }
+    | { readonly __typename: 'Vendor' }
+    | { readonly __typename: 'Video' }
+    | null
+  >;
+};
+
+export type SdkLoyaltyOpportunityCopyFragment = {
+  readonly __typename: 'LoyaltyOpportunityCopy';
+  readonly headline: string;
+  readonly description?: string | null;
+  readonly badge?: string | null;
+  readonly accessibilityLabel: string;
+  readonly terms: ReadonlyArray<string>;
+};
+
+export type SdkLoyaltyOpportunityFragment = {
+  readonly __typename: 'LoyaltyOpportunity';
+  readonly key: string;
+  readonly type: LoyaltyOpportunityType;
+  readonly state: LoyaltyOpportunityState;
+  readonly remainingUses?: any | null;
+  readonly validUntil?: string | null;
+  readonly reward:
+    | {
+        readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+        readonly kind: LoyaltyRewardKind;
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      }
+    | {
+        readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+        readonly kind: LoyaltyRewardKind;
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      }
+    | {
+        readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+        readonly kind: LoyaltyRewardKind;
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      }
+    | {
+        readonly __typename: 'LoyaltyMoneyRewardPresentation';
+        readonly accuracy: LoyaltyValueAccuracy;
+        readonly kind: LoyaltyRewardKind;
+        readonly amount: {
+          readonly __typename: 'LoyaltyMoneyRange';
+          readonly minimum: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+          readonly maximum: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+        };
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      }
+    | {
+        readonly __typename: 'LoyaltyPercentageRewardPresentation';
+        readonly kind: LoyaltyRewardKind;
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      }
+    | {
+        readonly __typename: 'LoyaltyPointsRewardPresentation';
+        readonly accuracy: LoyaltyValueAccuracy;
+        readonly kind: LoyaltyRewardKind;
+        readonly points: {
+          readonly __typename: 'LoyaltyUnsignedRange';
+          readonly minimum: any;
+          readonly maximum: any;
+        };
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      }
+    | {
+        readonly __typename: 'LoyaltyVoucherRewardPresentation';
+        readonly kind: LoyaltyRewardKind;
+        readonly copy: {
+          readonly __typename: 'LoyaltyOpportunityCopy';
+          readonly headline: string;
+          readonly description?: string | null;
+          readonly badge?: string | null;
+          readonly accessibilityLabel: string;
+          readonly terms: ReadonlyArray<string>;
+        };
+      };
+  readonly presentation: {
+    readonly __typename: 'LoyaltyOpportunityCopy';
+    readonly headline: string;
+    readonly description?: string | null;
+    readonly badge?: string | null;
+    readonly accessibilityLabel: string;
+    readonly terms: ReadonlyArray<string>;
+  };
+};
+
+export type SdkLoyaltyPresentationFragment = {
+  readonly __typename: 'ProductLoyaltyPresentation';
+  readonly evaluatedAt: string;
+  readonly validUntil?: string | null;
+  readonly revision: string;
+  readonly primaryOpportunity?: {
+    readonly __typename: 'LoyaltyOpportunity';
+    readonly key: string;
+    readonly type: LoyaltyOpportunityType;
+    readonly state: LoyaltyOpportunityState;
+    readonly remainingUses?: any | null;
+    readonly validUntil?: string | null;
+    readonly reward:
+      | {
+          readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyMoneyRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
+          readonly kind: LoyaltyRewardKind;
+          readonly amount: {
+            readonly __typename: 'LoyaltyMoneyRange';
+            readonly minimum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+            readonly maximum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+          };
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyPercentageRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyPointsRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
+          readonly kind: LoyaltyRewardKind;
+          readonly points: {
+            readonly __typename: 'LoyaltyUnsignedRange';
+            readonly minimum: any;
+            readonly maximum: any;
+          };
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyVoucherRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        };
+    readonly presentation: {
+      readonly __typename: 'LoyaltyOpportunityCopy';
+      readonly headline: string;
+      readonly description?: string | null;
+      readonly badge?: string | null;
+      readonly accessibilityLabel: string;
+      readonly terms: ReadonlyArray<string>;
+    };
+  } | null;
+  readonly purchaseOpportunity?: {
+    readonly __typename: 'LoyaltyOpportunity';
+    readonly key: string;
+    readonly type: LoyaltyOpportunityType;
+    readonly state: LoyaltyOpportunityState;
+    readonly remainingUses?: any | null;
+    readonly validUntil?: string | null;
+    readonly reward:
+      | {
+          readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyMoneyRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
+          readonly kind: LoyaltyRewardKind;
+          readonly amount: {
+            readonly __typename: 'LoyaltyMoneyRange';
+            readonly minimum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+            readonly maximum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+          };
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyPercentageRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyPointsRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
+          readonly kind: LoyaltyRewardKind;
+          readonly points: {
+            readonly __typename: 'LoyaltyUnsignedRange';
+            readonly minimum: any;
+            readonly maximum: any;
+          };
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyVoucherRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        };
+    readonly presentation: {
+      readonly __typename: 'LoyaltyOpportunityCopy';
+      readonly headline: string;
+      readonly description?: string | null;
+      readonly badge?: string | null;
+      readonly accessibilityLabel: string;
+      readonly terms: ReadonlyArray<string>;
+    };
+  } | null;
+  readonly reviewOpportunity?: {
+    readonly __typename: 'LoyaltyOpportunity';
+    readonly key: string;
+    readonly type: LoyaltyOpportunityType;
+    readonly state: LoyaltyOpportunityState;
+    readonly remainingUses?: any | null;
+    readonly validUntil?: string | null;
+    readonly reward:
+      | {
+          readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyMoneyRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
+          readonly kind: LoyaltyRewardKind;
+          readonly amount: {
+            readonly __typename: 'LoyaltyMoneyRange';
+            readonly minimum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+            readonly maximum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+          };
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyPercentageRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyPointsRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
+          readonly kind: LoyaltyRewardKind;
+          readonly points: {
+            readonly __typename: 'LoyaltyUnsignedRange';
+            readonly minimum: any;
+            readonly maximum: any;
+          };
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        }
+      | {
+          readonly __typename: 'LoyaltyVoucherRewardPresentation';
+          readonly kind: LoyaltyRewardKind;
+          readonly copy: {
+            readonly __typename: 'LoyaltyOpportunityCopy';
+            readonly headline: string;
+            readonly description?: string | null;
+            readonly badge?: string | null;
+            readonly accessibilityLabel: string;
+            readonly terms: ReadonlyArray<string>;
+          };
+        };
+    readonly presentation: {
+      readonly __typename: 'LoyaltyOpportunityCopy';
+      readonly headline: string;
+      readonly description?: string | null;
+      readonly badge?: string | null;
+      readonly accessibilityLabel: string;
+      readonly terms: ReadonlyArray<string>;
+    };
+  } | null;
+};
+
+export type SdkViewerLoyaltyQueryVariables = Exact<{
+  ids: ReadonlyArray<Scalars['ID']['input']>;
+}>;
+
+export type SdkViewerLoyaltyQuery = {
+  readonly __typename: 'Query';
+  readonly nodes: ReadonlyArray<
+    | { readonly __typename: 'Category' }
+    | { readonly __typename: 'Checkout' }
+    | { readonly __typename: 'CheckoutLine' }
+    | { readonly __typename: 'CheckoutTag' }
+    | { readonly __typename: 'Collection' }
+    | { readonly __typename: 'CustomerAddress' }
+    | { readonly __typename: 'CustomerDataRequest' }
+    | { readonly __typename: 'CustomerTaxExemption' }
+    | { readonly __typename: 'CustomerTaxIdentifier' }
+    | { readonly __typename: 'CustomerWishlist' }
+    | { readonly __typename: 'CustomerWishlistItem' }
+    | { readonly __typename: 'ExternalVideo' }
+    | { readonly __typename: 'Facet' }
+    | { readonly __typename: 'FacetSwatch' }
+    | { readonly __typename: 'FacetValue' }
+    | { readonly __typename: 'GenericFile' }
+    | { readonly __typename: 'InventoryItem' }
+    | { readonly __typename: 'LoyaltyAvailableReward' }
+    | { readonly __typename: 'MediaImage' }
+    | { readonly __typename: 'Model3d' }
+    | { readonly __typename: 'OnlineStoreNavigationMenu' }
+    | { readonly __typename: 'OnlineStoreNavigationMenuItem' }
+    | { readonly __typename: 'OnlineStorePage' }
+    | { readonly __typename: 'Order' }
+    | { readonly __typename: 'OrderDeliveryAddress' }
+    | { readonly __typename: 'OrderDeliveryGroup' }
+    | { readonly __typename: 'OrderFulfillment' }
+    | { readonly __typename: 'OrderLine' }
+    | { readonly __typename: 'OrderPaymentTransaction' }
+    | { readonly __typename: 'OrderRefund' }
+    | { readonly __typename: 'OrderReturnRequest' }
+    | { readonly __typename: 'OrderShipment' }
+    | { readonly __typename: 'OrderTrackingEvent' }
+    | { readonly __typename: 'OrderVoid' }
+    | { readonly __typename: 'Pet' }
+    | { readonly __typename: 'PetProductSelection' }
+    | {
+        readonly __typename: 'Product';
+        readonly id: string;
+        readonly loyalty?: {
+          readonly __typename: 'ProductLoyaltyPresentation';
+          readonly evaluatedAt: string;
+          readonly validUntil?: string | null;
+          readonly revision: string;
+          readonly primaryOpportunity?: {
+            readonly __typename: 'LoyaltyOpportunity';
+            readonly key: string;
+            readonly type: LoyaltyOpportunityType;
+            readonly state: LoyaltyOpportunityState;
+            readonly remainingUses?: any | null;
+            readonly validUntil?: string | null;
+            readonly reward:
+              | {
+                  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                };
+            readonly presentation: {
+              readonly __typename: 'LoyaltyOpportunityCopy';
+              readonly headline: string;
+              readonly description?: string | null;
+              readonly badge?: string | null;
+              readonly accessibilityLabel: string;
+              readonly terms: ReadonlyArray<string>;
+            };
+          } | null;
+          readonly purchaseOpportunity?: {
+            readonly __typename: 'LoyaltyOpportunity';
+            readonly key: string;
+            readonly type: LoyaltyOpportunityType;
+            readonly state: LoyaltyOpportunityState;
+            readonly remainingUses?: any | null;
+            readonly validUntil?: string | null;
+            readonly reward:
+              | {
+                  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                };
+            readonly presentation: {
+              readonly __typename: 'LoyaltyOpportunityCopy';
+              readonly headline: string;
+              readonly description?: string | null;
+              readonly badge?: string | null;
+              readonly accessibilityLabel: string;
+              readonly terms: ReadonlyArray<string>;
+            };
+          } | null;
+          readonly reviewOpportunity?: {
+            readonly __typename: 'LoyaltyOpportunity';
+            readonly key: string;
+            readonly type: LoyaltyOpportunityType;
+            readonly state: LoyaltyOpportunityState;
+            readonly remainingUses?: any | null;
+            readonly validUntil?: string | null;
+            readonly reward:
+              | {
+                  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                };
+            readonly presentation: {
+              readonly __typename: 'LoyaltyOpportunityCopy';
+              readonly headline: string;
+              readonly description?: string | null;
+              readonly badge?: string | null;
+              readonly accessibilityLabel: string;
+              readonly terms: ReadonlyArray<string>;
+            };
+          } | null;
+        } | null;
+      }
+    | { readonly __typename: 'ProductFeature' }
+    | { readonly __typename: 'ProductFeatureGroup' }
+    | { readonly __typename: 'ProductFeatureValue' }
+    | { readonly __typename: 'ProductOption' }
+    | { readonly __typename: 'ProductOptionType' }
+    | { readonly __typename: 'ProductOptionValue' }
+    | { readonly __typename: 'ProductQuestion' }
+    | { readonly __typename: 'ProductQuestionAnswer' }
+    | { readonly __typename: 'ProductQuestionSubscription' }
+    | {
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly loyalty?: {
+          readonly __typename: 'ProductLoyaltyPresentation';
+          readonly evaluatedAt: string;
+          readonly validUntil?: string | null;
+          readonly revision: string;
+          readonly primaryOpportunity?: {
+            readonly __typename: 'LoyaltyOpportunity';
+            readonly key: string;
+            readonly type: LoyaltyOpportunityType;
+            readonly state: LoyaltyOpportunityState;
+            readonly remainingUses?: any | null;
+            readonly validUntil?: string | null;
+            readonly reward:
+              | {
+                  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                };
+            readonly presentation: {
+              readonly __typename: 'LoyaltyOpportunityCopy';
+              readonly headline: string;
+              readonly description?: string | null;
+              readonly badge?: string | null;
+              readonly accessibilityLabel: string;
+              readonly terms: ReadonlyArray<string>;
+            };
+          } | null;
+          readonly purchaseOpportunity?: {
+            readonly __typename: 'LoyaltyOpportunity';
+            readonly key: string;
+            readonly type: LoyaltyOpportunityType;
+            readonly state: LoyaltyOpportunityState;
+            readonly remainingUses?: any | null;
+            readonly validUntil?: string | null;
+            readonly reward:
+              | {
+                  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                };
+            readonly presentation: {
+              readonly __typename: 'LoyaltyOpportunityCopy';
+              readonly headline: string;
+              readonly description?: string | null;
+              readonly badge?: string | null;
+              readonly accessibilityLabel: string;
+              readonly terms: ReadonlyArray<string>;
+            };
+          } | null;
+          readonly reviewOpportunity?: {
+            readonly __typename: 'LoyaltyOpportunity';
+            readonly key: string;
+            readonly type: LoyaltyOpportunityType;
+            readonly state: LoyaltyOpportunityState;
+            readonly remainingUses?: any | null;
+            readonly validUntil?: string | null;
+            readonly reward:
+              | {
+                  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyFreeShippingRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMemberBenefitRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPercentageRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
+                  readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                }
+              | {
+                  readonly __typename: 'LoyaltyVoucherRewardPresentation';
+                  readonly kind: LoyaltyRewardKind;
+                  readonly copy: {
+                    readonly __typename: 'LoyaltyOpportunityCopy';
+                    readonly headline: string;
+                    readonly description?: string | null;
+                    readonly badge?: string | null;
+                    readonly accessibilityLabel: string;
+                    readonly terms: ReadonlyArray<string>;
+                  };
+                };
+            readonly presentation: {
+              readonly __typename: 'LoyaltyOpportunityCopy';
+              readonly headline: string;
+              readonly description?: string | null;
+              readonly badge?: string | null;
+              readonly accessibilityLabel: string;
+              readonly terms: ReadonlyArray<string>;
+            };
+          } | null;
+        } | null;
+      }
+    | { readonly __typename: 'Review' }
+    | { readonly __typename: 'ReviewContentExternalReference' }
+    | { readonly __typename: 'ReviewContentPublication' }
+    | { readonly __typename: 'ReviewContentReport' }
+    | { readonly __typename: 'ReviewContentRevision' }
+    | { readonly __typename: 'ReviewContentTranslation' }
+    | { readonly __typename: 'ReviewContentVote' }
+    | { readonly __typename: 'ReviewMedia' }
+    | { readonly __typename: 'ReviewModerationCase' }
+    | { readonly __typename: 'ReviewModerationEvent' }
+    | { readonly __typename: 'ReviewModerationSignal' }
+    | { readonly __typename: 'ReviewRatingCriterion' }
+    | { readonly __typename: 'ReviewRatingCriterionAssignment' }
+    | { readonly __typename: 'ReviewReply' }
+    | { readonly __typename: 'ReviewRequest' }
+    | { readonly __typename: 'ReviewRequestEvent' }
+    | { readonly __typename: 'ReviewStoreConfiguration' }
+    | { readonly __typename: 'Store' }
+    | { readonly __typename: 'StorePolicy' }
+    | { readonly __typename: 'Tag' }
+    | { readonly __typename: 'Vendor' }
+    | { readonly __typename: 'Video' }
+    | null
+  >;
+};
+
+export type SdkStaticProductsQueryVariables = Exact<{
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkStaticProductsQuery = {
+  readonly __typename: 'Query';
+  readonly products: {
+    readonly __typename: 'ProductConnection';
+    readonly pageInfo: {
+      readonly __typename: 'PageInfo';
+      readonly hasNextPage: boolean;
+      readonly endCursor?: string | null;
+    };
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'Product';
+      readonly id: string;
+      readonly handle: string;
+    }>;
+  };
+};
+
+export type SdkStaticCategoriesQueryVariables = Exact<{
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkStaticCategoriesQuery = {
+  readonly __typename: 'Query';
+  readonly categories: {
+    readonly __typename: 'CategoryConnection';
+    readonly pageInfo: {
+      readonly __typename: 'PageInfo';
+      readonly hasNextPage: boolean;
+      readonly endCursor?: string | null;
+    };
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'Category';
+      readonly id: string;
+      readonly handle: string;
+    }>;
+  };
+};
+
+export type SdkStaticVendorsQueryVariables = Exact<{
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkStaticVendorsQuery = {
+  readonly __typename: 'Query';
+  readonly vendors: {
+    readonly __typename: 'VendorConnection';
+    readonly pageInfo: {
+      readonly __typename: 'PageInfo';
+      readonly hasNextPage: boolean;
+      readonly endCursor?: string | null;
+    };
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'Vendor';
+      readonly id: string;
+      readonly handle: string;
+    }>;
+  };
+};
+
+export type SdkStaticOnlineStorePagesQueryVariables = Exact<{
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+}>;
+
+export type SdkStaticOnlineStorePagesQuery = {
+  readonly __typename: 'Query';
+  readonly onlineStorePages: {
+    readonly __typename: 'OnlineStorePageConnection';
+    readonly pageInfo: {
+      readonly __typename: 'PageInfo';
+      readonly hasNextPage: boolean;
+      readonly endCursor?: string | null;
+    };
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'OnlineStorePage';
+      readonly id: string;
+      readonly handle: string;
+    }>;
+  };
+};
+
+export type SdkStaticStorePoliciesQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type SdkStaticStorePoliciesQuery = {
+  readonly __typename: 'Query';
+  readonly store: {
+    readonly __typename: 'Store';
+    readonly id: string;
+    readonly policies: ReadonlyArray<{
+      readonly __typename: 'StorePolicy';
+      readonly id: string;
+      readonly handle: string;
+    }>;
+  };
+};
+
+export type SdkStaticMenuItemFragment = {
+  readonly __typename: 'OnlineStoreNavigationMenuItem';
+  readonly id: string;
+  readonly target: {
+    readonly __typename: 'OnlineStoreNavigationTarget';
+    readonly type: OnlineStoreNavigationTargetType;
+    readonly url: any;
+    readonly resource?:
+      | { readonly __typename: 'Category'; readonly id: string }
+      | { readonly __typename: 'Checkout'; readonly id: string }
+      | { readonly __typename: 'CheckoutLine'; readonly id: string }
+      | { readonly __typename: 'CheckoutTag'; readonly id: string }
+      | {
+          readonly __typename: 'Collection';
+          readonly handle: string;
+          readonly id: string;
+        }
+      | { readonly __typename: 'CustomerAddress'; readonly id: string }
+      | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
+      | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+      | { readonly __typename: 'CustomerTaxIdentifier'; readonly id: string }
+      | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+      | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+      | { readonly __typename: 'ExternalVideo'; readonly id: string }
+      | { readonly __typename: 'Facet'; readonly id: string }
+      | { readonly __typename: 'FacetSwatch'; readonly id: string }
+      | { readonly __typename: 'FacetValue'; readonly id: string }
+      | { readonly __typename: 'GenericFile'; readonly id: string }
+      | { readonly __typename: 'InventoryItem'; readonly id: string }
+      | { readonly __typename: 'LoyaltyAvailableReward'; readonly id: string }
+      | { readonly __typename: 'MediaImage'; readonly id: string }
+      | { readonly __typename: 'Model3d'; readonly id: string }
+      | {
+          readonly __typename: 'OnlineStoreNavigationMenu';
+          readonly id: string;
+        }
+      | {
+          readonly __typename: 'OnlineStoreNavigationMenuItem';
+          readonly id: string;
+        }
+      | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+      | { readonly __typename: 'Order'; readonly id: string }
+      | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+      | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+      | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+      | { readonly __typename: 'OrderLine'; readonly id: string }
+      | { readonly __typename: 'OrderPaymentTransaction'; readonly id: string }
+      | { readonly __typename: 'OrderRefund'; readonly id: string }
+      | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+      | { readonly __typename: 'OrderShipment'; readonly id: string }
+      | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+      | { readonly __typename: 'OrderVoid'; readonly id: string }
+      | { readonly __typename: 'Pet'; readonly id: string }
+      | { readonly __typename: 'PetProductSelection'; readonly id: string }
+      | { readonly __typename: 'Product'; readonly id: string }
+      | { readonly __typename: 'ProductFeature'; readonly id: string }
+      | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
+      | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+      | { readonly __typename: 'ProductOption'; readonly id: string }
+      | { readonly __typename: 'ProductOptionType'; readonly id: string }
+      | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+      | { readonly __typename: 'ProductQuestion'; readonly id: string }
+      | { readonly __typename: 'ProductQuestionAnswer'; readonly id: string }
+      | {
+          readonly __typename: 'ProductQuestionSubscription';
+          readonly id: string;
+        }
+      | { readonly __typename: 'ProductVariant'; readonly id: string }
+      | { readonly __typename: 'Review'; readonly id: string }
+      | {
+          readonly __typename: 'ReviewContentExternalReference';
+          readonly id: string;
+        }
+      | { readonly __typename: 'ReviewContentPublication'; readonly id: string }
+      | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+      | { readonly __typename: 'ReviewContentRevision'; readonly id: string }
+      | { readonly __typename: 'ReviewContentTranslation'; readonly id: string }
+      | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+      | { readonly __typename: 'ReviewMedia'; readonly id: string }
+      | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+      | { readonly __typename: 'ReviewModerationEvent'; readonly id: string }
+      | { readonly __typename: 'ReviewModerationSignal'; readonly id: string }
+      | { readonly __typename: 'ReviewRatingCriterion'; readonly id: string }
+      | {
+          readonly __typename: 'ReviewRatingCriterionAssignment';
+          readonly id: string;
+        }
+      | { readonly __typename: 'ReviewReply'; readonly id: string }
+      | { readonly __typename: 'ReviewRequest'; readonly id: string }
+      | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+      | { readonly __typename: 'ReviewStoreConfiguration'; readonly id: string }
+      | { readonly __typename: 'Store'; readonly id: string }
+      | { readonly __typename: 'StorePolicy'; readonly id: string }
+      | { readonly __typename: 'Tag'; readonly id: string }
+      | { readonly __typename: 'Vendor'; readonly id: string }
+      | { readonly __typename: 'Video'; readonly id: string }
+      | null;
+  };
+};
+
+export type SdkStaticNavigationMenuQueryVariables = Exact<{
+  handle: Scalars['String']['input'];
+}>;
+
+export type SdkStaticNavigationMenuQuery = {
+  readonly __typename: 'Query';
+  readonly onlineStoreNavigationMenuByHandle?: {
+    readonly __typename: 'OnlineStoreNavigationMenu';
+    readonly id: string;
+    readonly items: ReadonlyArray<{
+      readonly __typename: 'OnlineStoreNavigationMenuItem';
+      readonly id: string;
+      readonly children: ReadonlyArray<{
+        readonly __typename: 'OnlineStoreNavigationMenuItem';
+        readonly id: string;
+        readonly children: ReadonlyArray<{
+          readonly __typename: 'OnlineStoreNavigationMenuItem';
+          readonly id: string;
+          readonly target: {
+            readonly __typename: 'OnlineStoreNavigationTarget';
+            readonly type: OnlineStoreNavigationTargetType;
+            readonly url: any;
+            readonly resource?:
+              | { readonly __typename: 'Category'; readonly id: string }
+              | { readonly __typename: 'Checkout'; readonly id: string }
+              | { readonly __typename: 'CheckoutLine'; readonly id: string }
+              | { readonly __typename: 'CheckoutTag'; readonly id: string }
+              | {
+                  readonly __typename: 'Collection';
+                  readonly handle: string;
+                  readonly id: string;
+                }
+              | { readonly __typename: 'CustomerAddress'; readonly id: string }
+              | {
+                  readonly __typename: 'CustomerDataRequest';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'CustomerTaxExemption';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'CustomerTaxIdentifier';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+              | {
+                  readonly __typename: 'CustomerWishlistItem';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | { readonly __typename: 'Facet'; readonly id: string }
+              | { readonly __typename: 'FacetSwatch'; readonly id: string }
+              | { readonly __typename: 'FacetValue'; readonly id: string }
+              | { readonly __typename: 'GenericFile'; readonly id: string }
+              | { readonly __typename: 'InventoryItem'; readonly id: string }
+              | {
+                  readonly __typename: 'LoyaltyAvailableReward';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'MediaImage'; readonly id: string }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | {
+                  readonly __typename: 'OnlineStoreNavigationMenu';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'OnlineStoreNavigationMenuItem';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+              | { readonly __typename: 'Order'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderDeliveryAddress';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'OrderDeliveryGroup';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+              | { readonly __typename: 'OrderLine'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderPaymentTransaction';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderRefund'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderReturnRequest';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderShipment'; readonly id: string }
+              | {
+                  readonly __typename: 'OrderTrackingEvent';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'OrderVoid'; readonly id: string }
+              | { readonly __typename: 'Pet'; readonly id: string }
+              | {
+                  readonly __typename: 'PetProductSelection';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'Product'; readonly id: string }
+              | { readonly __typename: 'ProductFeature'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductFeatureGroup';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ProductFeatureValue';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ProductOption'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductOptionType';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ProductOptionValue';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ProductQuestion'; readonly id: string }
+              | {
+                  readonly __typename: 'ProductQuestionAnswer';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ProductQuestionSubscription';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ProductVariant'; readonly id: string }
+              | { readonly __typename: 'Review'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewContentExternalReference';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentPublication';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentReport';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentRevision';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentTranslation';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewContentVote';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ReviewMedia'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewModerationCase';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewModerationEvent';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewModerationSignal';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewRatingCriterion';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewRatingCriterionAssignment';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'ReviewReply'; readonly id: string }
+              | { readonly __typename: 'ReviewRequest'; readonly id: string }
+              | {
+                  readonly __typename: 'ReviewRequestEvent';
+                  readonly id: string;
+                }
+              | {
+                  readonly __typename: 'ReviewStoreConfiguration';
+                  readonly id: string;
+                }
+              | { readonly __typename: 'Store'; readonly id: string }
+              | { readonly __typename: 'StorePolicy'; readonly id: string }
+              | { readonly __typename: 'Tag'; readonly id: string }
+              | { readonly __typename: 'Vendor'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+          };
+        }>;
+        readonly target: {
+          readonly __typename: 'OnlineStoreNavigationTarget';
+          readonly type: OnlineStoreNavigationTargetType;
+          readonly url: any;
+          readonly resource?:
+            | { readonly __typename: 'Category'; readonly id: string }
+            | { readonly __typename: 'Checkout'; readonly id: string }
+            | { readonly __typename: 'CheckoutLine'; readonly id: string }
+            | { readonly __typename: 'CheckoutTag'; readonly id: string }
+            | {
+                readonly __typename: 'Collection';
+                readonly handle: string;
+                readonly id: string;
+              }
+            | { readonly __typename: 'CustomerAddress'; readonly id: string }
+            | {
+                readonly __typename: 'CustomerDataRequest';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxExemption';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'CustomerTaxIdentifier';
+                readonly id: string;
+              }
+            | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+            | {
+                readonly __typename: 'CustomerWishlistItem';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | { readonly __typename: 'Facet'; readonly id: string }
+            | { readonly __typename: 'FacetSwatch'; readonly id: string }
+            | { readonly __typename: 'FacetValue'; readonly id: string }
+            | { readonly __typename: 'GenericFile'; readonly id: string }
+            | { readonly __typename: 'InventoryItem'; readonly id: string }
+            | {
+                readonly __typename: 'LoyaltyAvailableReward';
+                readonly id: string;
+              }
+            | { readonly __typename: 'MediaImage'; readonly id: string }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenu';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'OnlineStoreNavigationMenuItem';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+            | { readonly __typename: 'Order'; readonly id: string }
+            | {
+                readonly __typename: 'OrderDeliveryAddress';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+            | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+            | { readonly __typename: 'OrderLine'; readonly id: string }
+            | {
+                readonly __typename: 'OrderPaymentTransaction';
+                readonly id: string;
+              }
+            | { readonly __typename: 'OrderRefund'; readonly id: string }
+            | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+            | { readonly __typename: 'OrderShipment'; readonly id: string }
+            | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+            | { readonly __typename: 'OrderVoid'; readonly id: string }
+            | { readonly __typename: 'Pet'; readonly id: string }
+            | {
+                readonly __typename: 'PetProductSelection';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Product'; readonly id: string }
+            | { readonly __typename: 'ProductFeature'; readonly id: string }
+            | {
+                readonly __typename: 'ProductFeatureGroup';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductFeatureValue';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ProductOption'; readonly id: string }
+            | { readonly __typename: 'ProductOptionType'; readonly id: string }
+            | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+            | { readonly __typename: 'ProductQuestion'; readonly id: string }
+            | {
+                readonly __typename: 'ProductQuestionAnswer';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ProductQuestionSubscription';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ProductVariant'; readonly id: string }
+            | { readonly __typename: 'Review'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewContentExternalReference';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentPublication';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentReport';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentRevision';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewContentTranslation';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+            | { readonly __typename: 'ReviewMedia'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewModerationCase';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationEvent';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewModerationSignal';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterion';
+                readonly id: string;
+              }
+            | {
+                readonly __typename: 'ReviewRatingCriterionAssignment';
+                readonly id: string;
+              }
+            | { readonly __typename: 'ReviewReply'; readonly id: string }
+            | { readonly __typename: 'ReviewRequest'; readonly id: string }
+            | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+            | {
+                readonly __typename: 'ReviewStoreConfiguration';
+                readonly id: string;
+              }
+            | { readonly __typename: 'Store'; readonly id: string }
+            | { readonly __typename: 'StorePolicy'; readonly id: string }
+            | { readonly __typename: 'Tag'; readonly id: string }
+            | { readonly __typename: 'Vendor'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+        };
+      }>;
+      readonly target: {
+        readonly __typename: 'OnlineStoreNavigationTarget';
+        readonly type: OnlineStoreNavigationTargetType;
+        readonly url: any;
+        readonly resource?:
+          | { readonly __typename: 'Category'; readonly id: string }
+          | { readonly __typename: 'Checkout'; readonly id: string }
+          | { readonly __typename: 'CheckoutLine'; readonly id: string }
+          | { readonly __typename: 'CheckoutTag'; readonly id: string }
+          | {
+              readonly __typename: 'Collection';
+              readonly handle: string;
+              readonly id: string;
+            }
+          | { readonly __typename: 'CustomerAddress'; readonly id: string }
+          | { readonly __typename: 'CustomerDataRequest'; readonly id: string }
+          | { readonly __typename: 'CustomerTaxExemption'; readonly id: string }
+          | {
+              readonly __typename: 'CustomerTaxIdentifier';
+              readonly id: string;
+            }
+          | { readonly __typename: 'CustomerWishlist'; readonly id: string }
+          | { readonly __typename: 'CustomerWishlistItem'; readonly id: string }
+          | { readonly __typename: 'ExternalVideo'; readonly id: string }
+          | { readonly __typename: 'Facet'; readonly id: string }
+          | { readonly __typename: 'FacetSwatch'; readonly id: string }
+          | { readonly __typename: 'FacetValue'; readonly id: string }
+          | { readonly __typename: 'GenericFile'; readonly id: string }
+          | { readonly __typename: 'InventoryItem'; readonly id: string }
+          | {
+              readonly __typename: 'LoyaltyAvailableReward';
+              readonly id: string;
+            }
+          | { readonly __typename: 'MediaImage'; readonly id: string }
+          | { readonly __typename: 'Model3d'; readonly id: string }
+          | {
+              readonly __typename: 'OnlineStoreNavigationMenu';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'OnlineStoreNavigationMenuItem';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OnlineStorePage'; readonly id: string }
+          | { readonly __typename: 'Order'; readonly id: string }
+          | { readonly __typename: 'OrderDeliveryAddress'; readonly id: string }
+          | { readonly __typename: 'OrderDeliveryGroup'; readonly id: string }
+          | { readonly __typename: 'OrderFulfillment'; readonly id: string }
+          | { readonly __typename: 'OrderLine'; readonly id: string }
+          | {
+              readonly __typename: 'OrderPaymentTransaction';
+              readonly id: string;
+            }
+          | { readonly __typename: 'OrderRefund'; readonly id: string }
+          | { readonly __typename: 'OrderReturnRequest'; readonly id: string }
+          | { readonly __typename: 'OrderShipment'; readonly id: string }
+          | { readonly __typename: 'OrderTrackingEvent'; readonly id: string }
+          | { readonly __typename: 'OrderVoid'; readonly id: string }
+          | { readonly __typename: 'Pet'; readonly id: string }
+          | { readonly __typename: 'PetProductSelection'; readonly id: string }
+          | { readonly __typename: 'Product'; readonly id: string }
+          | { readonly __typename: 'ProductFeature'; readonly id: string }
+          | { readonly __typename: 'ProductFeatureGroup'; readonly id: string }
+          | { readonly __typename: 'ProductFeatureValue'; readonly id: string }
+          | { readonly __typename: 'ProductOption'; readonly id: string }
+          | { readonly __typename: 'ProductOptionType'; readonly id: string }
+          | { readonly __typename: 'ProductOptionValue'; readonly id: string }
+          | { readonly __typename: 'ProductQuestion'; readonly id: string }
+          | {
+              readonly __typename: 'ProductQuestionAnswer';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ProductQuestionSubscription';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ProductVariant'; readonly id: string }
+          | { readonly __typename: 'Review'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewContentExternalReference';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentPublication';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewContentReport'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewContentRevision';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewContentTranslation';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewContentVote'; readonly id: string }
+          | { readonly __typename: 'ReviewMedia'; readonly id: string }
+          | { readonly __typename: 'ReviewModerationCase'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewModerationEvent';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewModerationSignal';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewRatingCriterion';
+              readonly id: string;
+            }
+          | {
+              readonly __typename: 'ReviewRatingCriterionAssignment';
+              readonly id: string;
+            }
+          | { readonly __typename: 'ReviewReply'; readonly id: string }
+          | { readonly __typename: 'ReviewRequest'; readonly id: string }
+          | { readonly __typename: 'ReviewRequestEvent'; readonly id: string }
+          | {
+              readonly __typename: 'ReviewStoreConfiguration';
+              readonly id: string;
+            }
+          | { readonly __typename: 'Store'; readonly id: string }
+          | { readonly __typename: 'StorePolicy'; readonly id: string }
+          | { readonly __typename: 'Tag'; readonly id: string }
+          | { readonly __typename: 'Vendor'; readonly id: string }
+          | { readonly __typename: 'Video'; readonly id: string }
+          | null;
+      };
+    }>;
+  } | null;
+};
+
+export type SdkStaticNodeHandleQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+export type SdkStaticNodeHandleQuery = {
+  readonly __typename: 'Query';
+  readonly node?:
+    | {
+        readonly __typename: 'Category';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'Checkout' }
+    | { readonly __typename: 'CheckoutLine' }
+    | { readonly __typename: 'CheckoutTag' }
+    | {
+        readonly __typename: 'Collection';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'CustomerAddress' }
+    | { readonly __typename: 'CustomerDataRequest' }
+    | { readonly __typename: 'CustomerTaxExemption' }
+    | { readonly __typename: 'CustomerTaxIdentifier' }
+    | { readonly __typename: 'CustomerWishlist' }
+    | { readonly __typename: 'CustomerWishlistItem' }
+    | { readonly __typename: 'ExternalVideo' }
+    | { readonly __typename: 'Facet' }
+    | { readonly __typename: 'FacetSwatch' }
+    | { readonly __typename: 'FacetValue' }
+    | { readonly __typename: 'GenericFile' }
+    | { readonly __typename: 'InventoryItem' }
+    | { readonly __typename: 'LoyaltyAvailableReward' }
+    | { readonly __typename: 'MediaImage' }
+    | { readonly __typename: 'Model3d' }
+    | { readonly __typename: 'OnlineStoreNavigationMenu' }
+    | { readonly __typename: 'OnlineStoreNavigationMenuItem' }
+    | {
+        readonly __typename: 'OnlineStorePage';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'Order' }
+    | { readonly __typename: 'OrderDeliveryAddress' }
+    | { readonly __typename: 'OrderDeliveryGroup' }
+    | { readonly __typename: 'OrderFulfillment' }
+    | { readonly __typename: 'OrderLine' }
+    | { readonly __typename: 'OrderPaymentTransaction' }
+    | { readonly __typename: 'OrderRefund' }
+    | { readonly __typename: 'OrderReturnRequest' }
+    | { readonly __typename: 'OrderShipment' }
+    | { readonly __typename: 'OrderTrackingEvent' }
+    | { readonly __typename: 'OrderVoid' }
+    | { readonly __typename: 'Pet' }
+    | { readonly __typename: 'PetProductSelection' }
+    | {
+        readonly __typename: 'Product';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'ProductFeature' }
+    | { readonly __typename: 'ProductFeatureGroup' }
+    | { readonly __typename: 'ProductFeatureValue' }
+    | { readonly __typename: 'ProductOption' }
+    | { readonly __typename: 'ProductOptionType' }
+    | { readonly __typename: 'ProductOptionValue' }
+    | { readonly __typename: 'ProductQuestion' }
+    | { readonly __typename: 'ProductQuestionAnswer' }
+    | { readonly __typename: 'ProductQuestionSubscription' }
+    | { readonly __typename: 'ProductVariant' }
+    | { readonly __typename: 'Review' }
+    | { readonly __typename: 'ReviewContentExternalReference' }
+    | { readonly __typename: 'ReviewContentPublication' }
+    | { readonly __typename: 'ReviewContentReport' }
+    | { readonly __typename: 'ReviewContentRevision' }
+    | { readonly __typename: 'ReviewContentTranslation' }
+    | { readonly __typename: 'ReviewContentVote' }
+    | { readonly __typename: 'ReviewMedia' }
+    | { readonly __typename: 'ReviewModerationCase' }
+    | { readonly __typename: 'ReviewModerationEvent' }
+    | { readonly __typename: 'ReviewModerationSignal' }
+    | { readonly __typename: 'ReviewRatingCriterion' }
+    | { readonly __typename: 'ReviewRatingCriterionAssignment' }
+    | { readonly __typename: 'ReviewReply' }
+    | { readonly __typename: 'ReviewRequest' }
+    | { readonly __typename: 'ReviewRequestEvent' }
+    | { readonly __typename: 'ReviewStoreConfiguration' }
+    | { readonly __typename: 'Store' }
+    | { readonly __typename: 'StorePolicy' }
+    | { readonly __typename: 'Tag' }
+    | {
+        readonly __typename: 'Vendor';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'Video' }
+    | null;
+};
+
 export const SdkStorefrontPromotionFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -28831,6 +31278,731 @@ export const SdkCollectionFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<SdkCollectionFieldsFragment, unknown>;
+export const SdkVolatileCardFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkVolatileCardFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkVolatileCardFieldsFragment, unknown>;
+export const SdkVolatileVariantFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkVolatileVariantFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'currentlyNotInStock' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'quantityAvailable' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'promotions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'promotions' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkVolatileVariantFieldsFragment, unknown>;
+export const SdkLoyaltyOpportunityCopyFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunityCopy' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'accessibilityLabel' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkLoyaltyOpportunityCopyFragment, unknown>;
+export const SdkLoyaltyOpportunityFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunity' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'remainingUses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reward' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'copy' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkLoyaltyOpportunityCopy',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyPointsRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyMoneyRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'presentation' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunityCopy' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'accessibilityLabel' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkLoyaltyOpportunityFragment, unknown>;
+export const SdkLoyaltyPresentationFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyPresentation' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductLoyaltyPresentation' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'primaryOpportunity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchaseOpportunity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reviewOpportunity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'evaluatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunityCopy' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'accessibilityLabel' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunity' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'remainingUses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reward' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'copy' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkLoyaltyOpportunityCopy',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyPointsRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyMoneyRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'presentation' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkLoyaltyPresentationFragment, unknown>;
+export const SdkStaticMenuItemFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStaticMenuItem' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenuItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'target' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resource' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: '__typename' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'Collection' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'handle' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkStaticMenuItemFragment, unknown>;
 export const SdkAccountProductActionsQueryDocument = {
   kind: 'Document',
   definitions: [
@@ -55484,4 +58656,1496 @@ export const SdkProductComparisonDocument = {
 } as unknown as DocumentNode<
   SdkProductComparisonQuery,
   SdkProductComparisonQueryVariables
+>;
+export const SdkVolatileCardsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkVolatileCards' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ids' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {
+                  kind: 'NamedType',
+                  name: { kind: 'Name', value: 'ID' },
+                },
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'withPrice' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'Boolean' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'nodes' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ids' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'ids' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkVolatileCardFields' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkVolatileCardFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkVolatileCardsQuery,
+  SdkVolatileCardsQueryVariables
+>;
+export const SdkVolatileVariantDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkVolatileVariant' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'siblings' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {
+                  kind: 'NamedType',
+                  name: { kind: 'Name', value: 'ID' },
+                },
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'withPrice' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'Boolean' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'variant' },
+            name: { kind: 'Name', value: 'node' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkVolatileVariantFields',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'siblings' },
+            name: { kind: 'Name', value: 'nodes' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ids' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'siblings' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'availableForSale' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkVolatileVariantFields' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'currentlyNotInStock' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'quantityAvailable' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: {
+                      kind: 'Variable',
+                      name: { kind: 'Name', value: 'withPrice' },
+                    },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'promotions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'promotions' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkVolatileVariantQuery,
+  SdkVolatileVariantQueryVariables
+>;
+export const SdkViewerLoyaltyDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkViewerLoyalty' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ids' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {
+                  kind: 'NamedType',
+                  name: { kind: 'Name', value: 'ID' },
+                },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'nodes' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ids' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'ids' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'ProductVariant' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'loyalty' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkLoyaltyPresentation',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Product' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'loyalty' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkLoyaltyPresentation',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunityCopy' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'accessibilityLabel' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'LoyaltyOpportunity' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'remainingUses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reward' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'copy' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkLoyaltyOpportunityCopy',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyPointsRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyMoneyRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'presentation' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunityCopy' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkLoyaltyPresentation' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductLoyaltyPresentation' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'primaryOpportunity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'purchaseOpportunity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reviewOpportunity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkLoyaltyOpportunity' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'evaluatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkViewerLoyaltyQuery,
+  SdkViewerLoyaltyQueryVariables
+>;
+export const SdkStaticProductsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticProducts' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'products' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'first' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'after' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'hasNextPage' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'endCursor' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticProductsQuery,
+  SdkStaticProductsQueryVariables
+>;
+export const SdkStaticCategoriesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticCategories' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'categories' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'first' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'after' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'hasNextPage' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'endCursor' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticCategoriesQuery,
+  SdkStaticCategoriesQueryVariables
+>;
+export const SdkStaticVendorsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticVendors' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vendors' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'first' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'after' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'hasNextPage' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'endCursor' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticVendorsQuery,
+  SdkStaticVendorsQueryVariables
+>;
+export const SdkStaticOnlineStorePagesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticOnlineStorePages' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'after' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onlineStorePages' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'first' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'after' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'hasNextPage' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'endCursor' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticOnlineStorePagesQuery,
+  SdkStaticOnlineStorePagesQueryVariables
+>;
+export const SdkStaticStorePoliciesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticStorePolicies' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'store' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'policies' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticStorePoliciesQuery,
+  SdkStaticStorePoliciesQueryVariables
+>;
+export const SdkStaticNavigationMenuDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticNavigationMenu' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'handle' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onlineStoreNavigationMenuByHandle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'handle' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'handle' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkStaticMenuItem' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'children' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStaticMenuItem',
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'children' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'FragmentSpread',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'SdkStaticMenuItem',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStaticMenuItem' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'OnlineStoreNavigationMenuItem' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'target' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resource' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: '__typename' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'Collection' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'handle' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticNavigationMenuQuery,
+  SdkStaticNavigationMenuQueryVariables
+>;
+export const SdkStaticNodeHandleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticNodeHandle' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'node' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Product' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Category' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Collection' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Vendor' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OnlineStorePage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticNodeHandleQuery,
+  SdkStaticNodeHandleQueryVariables
 >;

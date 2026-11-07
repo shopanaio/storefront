@@ -1,0 +1,18 @@
+# The CDN worker of the static site (step B, plans/static-coordinator.ru.md). Deployed by
+# `wrangler deploy --env <stage|production>`; its routes, the custom domain of the bucket and
+# the Cache Rules are Terraform's (deploy/terraform/modules/frontend-edge, `static_cdn`).
+name = "storefront-static"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+[env.stage]
+name = "storefront-static-stage"
+vars = { SITE_PREFIX = "site", COORDINATOR_URL = "https://pet.shopana.dev" }
+r2_buckets = [{ binding = "SITE", bucket_name = "shopana-storefront-static-stage" }]
+# wrangler secret put COORDINATOR_TOKEN --env stage  (STOREFRONT_STATIC_COORDINATOR_TOKEN)
+
+[env.production]
+name = "storefront-static-production"
+vars = { SITE_PREFIX = "site", COORDINATOR_URL = "REPLACE_WITH_THE_PRODUCTION_ORIGIN" }
+r2_buckets = [{ binding = "SITE", bucket_name = "shopana-storefront-static-production" }]

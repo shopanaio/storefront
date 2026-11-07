@@ -92,6 +92,8 @@ describe('initRuntime for React Router', () => {
       'app/routes/sitemap.ts',
       'app/routes/sw.ts',
       'app/seo.ts',
+      'app/shell.tsx',
+      'app/static-site.ts',
       'react-router.config.ts',
       'tsconfig.json',
       'vite.config.ts',
@@ -105,6 +107,46 @@ describe('initRuntime for React Router', () => {
     expect(
       await readFile(path.join(result.runtimeDir, 'app/seo.ts'), 'utf8')
     ).toContain('defineRuntimeSeo({})');
+  });
+
+  it('has no static site and no shell skeleton without the theme files', async () => {
+    await writeTheme({
+      name: 'theme',
+      storefront: { framework: 'react-router' },
+    });
+    const result = await initRuntime({ rootDir });
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/static-site.ts'), 'utf8')
+    ).toBe('export const staticSite = null;\n');
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/shell.tsx'), 'utf8')
+    ).toContain('const ShellSkeleton = undefined;');
+  });
+
+  it("reads the theme's static site config and shell skeleton", async () => {
+    await writeTheme(
+      { name: 'theme', storefront: { framework: 'react-router' } },
+      {
+        'static.config.ts': 'export default {};\n',
+        'src/runtime/shell.tsx': 'export default () => null;\n',
+      }
+    );
+    const result = await initRuntime({ rootDir });
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/static-site.ts'), 'utf8')
+    ).toBe(
+      [
+        "import { createStaticSiteEntry } from '@shopana/storefront/react-router/static-site';",
+        "import runtimeApp from '@src/runtime/app';",
+        "import config from '../../static.config';",
+        '',
+        'export const staticSite = createStaticSiteEntry(runtimeApp, config);',
+        '',
+      ].join('\n')
+    );
+    expect(
+      await readFile(path.join(result.runtimeDir, 'app/shell.tsx'), 'utf8')
+    ).toBe("export { default } from '@src/runtime/shell';\n");
   });
 
   it("uses the theme's SEO definition", async () => {

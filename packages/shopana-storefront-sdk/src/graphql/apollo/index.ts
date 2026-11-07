@@ -28,3 +28,13 @@ export type {
   CursorPageInfo,
   PaginationQueryDescriptor,
 } from './pagination/types';
+export {
+  type CacheableClass,
+  canonicalJson,
+  createPersistedGetLink,
+  GUEST_CACHEABLE_OPERATIONS,
+  persistedDocumentId,
+  persistedDocumentOf,
+  persistedDocumentText,
+  VIEWER_CONTEXT,
+} from './persisted';

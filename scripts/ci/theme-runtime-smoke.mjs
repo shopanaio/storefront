@@ -137,28 +137,55 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
       STOREFRONT_SESSION_SECRET:
         'private-session-must-not-reach-html-0123456789',
     });
-    const response = await ready(origin);
-    assert.equal(response.headers.get('cache-control'), 'private, no-store');
-    const html = await response.text();
-    const config = html.match(
-      /<script>globalThis\.__shopanaPublicEnv=([\s\S]*?)<\/script>/
-    );
-    assert(config, 'Runtime settings are missing from SSR HTML');
+    await ready(`${origin}/__env.js`);
+    // The public settings come from the server's environment, at /__env.js only.
+    const env = await fetch(`${origin}/__env.js`);
+    assert.equal(env.headers.get('cache-control'), 'no-cache');
     const context = {};
-    runInNewContext(`globalThis.__shopanaPublicEnv=${config[1]}`, context);
+    runInNewContext(await env.text(), context);
     assert.equal(context.__shopanaPublicEnv.NEXT_PUBLIC_API_KEY, key);
     assert.equal(
       context.__shopanaPublicEnv.NEXT_PUBLIC_GRAPHQL_URL,
       `${origin}/graphql`
     );
-    assert(!html.includes(serverGraphqlUrl), 'Server address reached SSR HTML');
     assert(
       !('STOREFRONT_SERVER_GRAPHQL_URL' in context.__shopanaPublicEnv),
       'Server address reached the public settings'
     );
+    // The home page of the image's static site (build/static, rendered by the workflow).
+    const home = await fetch(origin);
+    assert.equal(home.headers.get('x-shopana-static'), 'hit');
+    assert.equal(
+      home.headers.get('cache-control'),
+      'public, max-age=0, must-revalidate'
+    );
+    const staticHtml = await home.text();
+    assert(
+      staticHtml.includes('<script src="/__env.js">') &&
+        !staticHtml.includes('__shopanaPublicEnv='),
+      'The static page must load the public settings from /__env.js'
+    );
+    assert(
+      !staticHtml.includes(serverGraphqlUrl) &&
+        !staticHtml.includes('private-oauth-must-not-reach-html') &&
+        !staticHtml.includes('private-session-must-not-reach-html'),
+      'Private settings reached the static HTML'
+    );
+    // A page the image's static site has no file of: the server renders it.
+    const response = await fetch(`${origin}/products/theme-smoke-missing`);
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    assert.equal(response.headers.get('x-shopana-static'), 'miss');
+    const html = await response.text();
+    assert(
+      !html.includes('__shopanaPublicEnv='),
+      'Runtime settings must not be inline in the HTML'
+    );
+    const envScript = html.indexOf('<script src="/__env.js"></script>');
+    assert(envScript !== -1, 'The HTML does not load /__env.js');
+    assert(!html.includes(serverGraphqlUrl), 'Server address reached SSR HTML');
     assert(gatewayRequests.length > 0, 'SSR did not use the server address');
     gatewayRequests.length = 0;
-    await fetch(origin, {
+    await fetch(`${origin}/products/theme-smoke-missing`, {
       headers: {
         'x-forwarded-for': '198.51.100.66, 203.0.113.7',
         'user-agent': 'theme-smoke-agent',
@@ -173,11 +200,11 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
     assert(!html.includes('private-session-must-not-reach-html'));
     const moduleScript = html.search(/<script[^>]*type="module"/);
     assert(
-      moduleScript === -1 || config.index < moduleScript,
+      moduleScript === -1 || envScript < moduleScript,
       'Runtime settings must precede browser module execution'
     );
     console.log(
-      `PASS: same image serves runtime key ${letter} and URL ${origin}; private settings stay server-side.`
+      `PASS: same image serves runtime key ${letter} and URL ${origin} from /__env.js with the image's static site; private settings stay server-side.`
     );
   }
 } catch (error) {

@@ -22,20 +22,14 @@ import { hydratedPageOf, hydratedPageScript } from './hydration';
 import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import { isNotFoundSignal } from './not-found-response';
 import { serverInsertedHTMLCallbacks } from './server-inserted-html';
-import { publicEnvironmentScript } from './public-env';
+import { PUBLIC_ENV_SCRIPT_TAG } from './public-env';
+import { staticRenderMode } from './static-render';
 import {
   readRenderRedirect,
   readRenderStatus,
   recordRenderStatus,
   REDIRECT_STATUSES,
 } from './render-status';
-
-/**
- * A request with this header gets the whole document at once, as a crawler does: the static
- * site builder asks for its pages so. The markup is the same either way; only the moment of
- * the answer differs.
- */
-export const FULL_DOCUMENT_HEADER = 'x-shopana-static-render';
 
 /** How long the server streams pending Suspense content before it gives up on it. */
 export const streamTimeout = 5_000;
@@ -94,7 +88,9 @@ export default function handleRequest(
     const userAgent = request.headers.get('user-agent');
     const fullDocument =
       head ||
-      request.headers.has(FULL_DOCUMENT_HEADER) ||
+      // The static site builder: the whole guest document at once, as a crawler gets it. The
+      // markup is the same either way; only the moment of the answer differs.
+      staticRenderMode(request.headers) !== null ||
       (userAgent !== null && isbot(userAgent)) ||
       routerContext.isSpaMode;
     const readyOption: keyof RenderToPipeableStreamOptions = fullDocument
@@ -150,7 +146,9 @@ export default function handleRequest(
           let queued: Buffer[] = [];
           let batch: ReturnType<typeof setImmediate> | undefined;
           let headSent = false;
-          let headHTML = publicEnvironmentScript();
+          // The public settings come from the server that answers `/__env.js`, never inline:
+          // a static document lives longer than one environment.
+          let headHTML = PUBLIC_ENV_SCRIPT_TAG;
           const send = (stream: Transform, chunk: Buffer) => {
             // More document after `</body>`: the state goes at its very end instead.
             if (closing) {
