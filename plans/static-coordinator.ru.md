@@ -5,6 +5,11 @@
 вне HTML, рендер в GitHub Actions, Worker и кеш CDN (шаг B), кеш GraphQL `GET`. Заменяет прежние
 отдельные планы инвалидации и быстрых данных и разделы основного плана о шаге B и слое 2.
 
+**Состояние.** Этапы 1, 2 (часть SDK), 4, 5, 6 (часть этого репозитория) и 7 (в коде, без деплоя)
+реализованы в `phl/static-pages-generation`; изменения темы (этап 2, `static-site.yml` этапа 6) не
+сделаны — раздел «Реализация». Этап 3 (internal) считается готовым, этап 0 не выполнялся:
+параметры вынесены в env со значениями по умолчанию из плана.
+
 Все оптимизации проектируются и делаются сразу, а не «сначала просто, потом быстро»: классы полей,
 аспекты, eager/dirty/lazy, попадания, дочист, схлопывание, публикация по хэшу, purge по тегам. Каждая
 из них меняет схему индекса, протокол аренды, формат ответа gateway или фрагменты темы, и добавлять
@@ -114,9 +119,7 @@ Worker отдаёт HTML из R2 через кеш CDN, а координато�
 **Internal** (сделано, на момент записи не закоммичено): лента событий `webhooksQuery.eventFeed`,
 `persistedDocuments` в gateway с `allowArbitraryDocuments: true`.
 
-**Нет:** координатора и сервиса `theme-static`, `static run`, `extractPageDeps`, аспектов, маппера,
-классов полей, лёгких запросов, `GET`-линка, плагина кеша в gateway, Worker-а, Cache Rules для HTML
-и purge.
+**Сделано по этому плану** — раздел «Реализация» в конце.
 
 ## Поток
 
@@ -224,8 +227,9 @@ webhooksQuery {
 
 ## Индекс: структура данных
 
-SQLite (`better-sqlite3`, WAL) на volume `theme-static-data`; единственный писатель — процесс
-координатора.
+SQLite (встроенный `node:sqlite`, WAL; нативной зависимости нет, Node ≥ 22.13) на volume
+`theme-static-data`; единственный писатель — процесс координатора. Схема мигрируется при старте
+(`PRAGMA user_version`, `coordinator/db.ts`).
 
 ```sql
 -- Известные страницы.
@@ -269,17 +273,24 @@ CREATE TABLE page_hits (                    -- попадания по дням
   PRIMARY KEY (page_id, day)
 ) WITHOUT ROWID;
 
+-- Сущности layout-а (магазин, меню): их изменение — полная сборка.
+CREATE TABLE layout_deps (dep_key TEXT PRIMARY KEY, seen_at INTEGER NOT NULL) WITHOUT ROWID;
+
 CREATE TABLE jobs (
   id          INTEGER PRIMARY KEY,
   locale      TEXT NOT NULL,
-  target      TEXT NOT NULL,                -- 'path:/products/x' или 'owner:Product:<uuid>'
+  target      TEXT NOT NULL,                -- 'path:/products/x', 'owner:Product:<uuid>' или 'full'
   priority    INTEGER NOT NULL,             -- 0 своя, 1 популярные и dirty с попаданием, 2 таймеры и промахи, 3 дочист
   reasons     TEXT NOT NULL,                -- JSON, до 20
   created_at  INTEGER NOT NULL,
   not_before  INTEGER NOT NULL,
   state       TEXT NOT NULL,                -- 'queued' | 'leased'
   lease_id    TEXT,
-  attempts    INTEGER NOT NULL DEFAULT 0
+  attempts    INTEGER NOT NULL DEFAULT 0,
+  api_id      TEXT,                         -- global id сущности задания owner: (из события)
+  route       TEXT,                         -- тип страницы задания owner:
+  request_id  TEXT,                         -- запрос POST /builds, поставивший задание
+  last_error  TEXT
 );
 CREATE UNIQUE INDEX jobs_queued_target ON jobs (locale, target) WHERE state = 'queued';
 CREATE INDEX jobs_ready ON jobs (state, not_before, priority);
@@ -311,6 +322,14 @@ CREATE TABLE event_log (
   event_id TEXT PRIMARY KEY, topic TEXT, occurred_at INTEGER, received_at INTEGER,
   changes INTEGER, eager INTEGER, dirty INTEGER, purged INTEGER
 );
+
+CREATE TABLE build_requests (               -- запросы POST /builds
+  request_id TEXT PRIMARY KEY, mode TEXT NOT NULL, reason TEXT, image TEXT, created_at INTEGER NOT NULL
+);
+
+CREATE TABLE settings (                     -- currentImage, последняя полная сборка, дочист,
+  key TEXT PRIMARY KEY, value TEXT NOT NULL -- повёрнутый refresh-токен ленты, язык по умолчанию
+) WITHOUT ROWID;
 ```
 
 Объём: около 3 000 страниц на текущих фикстурах (1 000 товаров, 145 категорий, около 330 вендоров,
@@ -377,17 +396,27 @@ CREATE TABLE event_log (
    тем же правилам.
 4. `DynamicCollection` без id — `query` `Query#dynamicCollection`: его правила ссылаются на
    категории, теги и вендоров, состав может изменить любой товар.
-5. Объекты, общие для каждой страницы (`Store`, меню шапки и подвала), — layout-ключи. В
-   `page_deps` не пишутся (иначе у каждой страницы одни и те же тысячи строк); их изменения дают
-   полную сборку.
+5. Объекты, общие для каждой страницы (`Store`, меню шапки и подвала, `Localization`), и всё, что
+   достижимо только через них (категории меню), — layout-ключи. В `page_deps` не пишутся (иначе у
+   каждой страницы одни и те же тысячи строк): job возвращает их отдельно (`layout`), координатор
+   хранит в `layout_deps`, и изменение такой сущности ставит полную сборку.
+6. Поля варианта засчитываются и его товару (`Product:<uuid>`): события называют товары.
+7. Owner страницы — сущность корневого `*ByHandle` (`productByHandle`, `categoryByHandle`, …).
 
 Результат возвращается job-ом в `deps` уже нормализованным: `[{ key, kind, aspects }]`.
 
 ## Событие → изменения → страницы
 
 `mapEventToChanges(envelope) → Change[]`, где
-`Change = { key, kinds, aspects, own?: { route, owner }, gone?, full?, lazy?, locales?, purgeTags? }`.
-Чистая функция в SDK с таблицей по топикам:
+`Change = { key, kinds, aspects, own?: { route, owner, id }, gone?, full?, lazy?, locales?, purgeTags? }`
+(`id` — global id сущности из события: по нему job нового или переименованного товара находит
+адрес через `SdkStaticNodeHandle`). Чистая функция в SDK с таблицей по топикам (`events.ts`).
+Контракт конверта, на который опирается маппер: id сущности — `data.<entity>Id`, `data.<entity>.id`
+или `data.id` в любой форме global id (`gid://shopana/<Type>/<id>` текстом или base64url,
+`<Type>:<id>` в base64url); `productUpdated.data.reasons`, `affectedCategoryIds`,
+`affectedCollectionIds`, `affectedVendorIds`/`vendorId`; `resourceTranslationsUpdated.data`:
+`resourceId`, `resourceType`, `locales`. Ключ `*` — все зависимости своих видов с аспектом маски,
+пустой ключ — ни одной страницы (только `purgeTags`).
 
 | Топик                                                                                 | Изменения                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -446,6 +475,9 @@ Dirty-страница становится заданием:
   фасеты и переводы дают dirty с eager по верху посещаемости.
 - **Отставание кешей API.** Задание получает `not_before = received_at + STATIC_READ_LAG_MS` (по
   умолчанию 0; значение по замеру этапа 0).
+- **Задание `owner:`.** Своя страница известной сущности ставится как `owner:<key>` с её путём:
+  рендер находит адрес заново, и если handle изменился, старый путь уходит в `gone`. Без страницы в
+  индексе (новая сущность) — `owner:<key>` во всех языках индекса.
 - **Промах** из отчёта ноды ставит рендер адреса с приоритетом 2 (`path:`), если страницы нет в
   индексе или она `gone`.
 
@@ -502,12 +534,7 @@ query SdkVolatileCards($ids: [ID!]!, $withPrice: Boolean!) {
 }
 
 # Страница товара: выбранный вариант целиком, остальным только наличие для свотчей опций.
-query SdkVolatileVariant(
-  $id: ID!
-  $siblings: [ID!]!
-  $withPrice: Boolean!
-  $locale: String
-) {
+query SdkVolatileVariant($id: ID!, $siblings: [ID!]!, $withPrice: Boolean!) {
   variant: node(id: $id) {
     ... on ProductVariant {
       id
@@ -557,8 +584,12 @@ query SdkStorefrontPromotions($kinds: [StorefrontPromotionKind!]) {
 
 - Состав фиксирован SDK; тема полей не дописывает. Запросы в allow-list gateway через манифест
   persisted documents SDK.
-- `$locale` в `SdkVolatileVariant` нужен только для ключа кеша CDN (язык ответа gateway берёт из
-  `Accept-Language`); убирается, если после проверки в ответе нет локализованного.
+- Язык в ключе кеша CDN — параметр `locale` в URL `GET`-линка (`?locale=…&documentId=…`), не
+  переменная запроса: неиспользуемая переменная — ошибка валидации GraphQL. Язык ответа gateway
+  берёт из `Accept-Language`.
+- Поля запросов — фрагменты `SdkVolatileCardFields` и `SdkVolatileVariantFields`
+  (`modules/volatile/core/operations.graphql`); их же читают `useVolatileCard` и
+  `useVolatileVariant` через `useFragment`.
 - Промо варианта приходят ключами, тексты — из общего `storefrontPromotions`, соединение по `key`.
 - id сортируются, режутся по 100 (около 6 КБ в URL при лимите Cloudflare 16 КБ): один набор — один
   URL — одна запись кеша.
@@ -668,27 +699,28 @@ gateway), летучее в `__static/data` с коротким TTL (ломае�
 нет. Второй слой — личный лёгкий запрос:
 
 ```graphql
-query SdkViewerVariants($ids: [ID!]!) {
+query SdkViewerLoyalty($ids: [ID!]!) {
   nodes(ids: $ids) {
     ... on ProductVariant {
       id
       loyalty {
-        purchaseOpportunity {
-          key
-          state
-          presentation {
-            badge
-            headline
-          }
-          reward {
-            kind
-          }
-        }
+        ...SdkLoyaltyPresentation
+      }
+    }
+    ... on Product {
+      id
+      loyalty {
+        ...SdkLoyaltyPresentation
       }
     }
   }
 }
 ```
+
+`SdkLoyaltyPresentation` (primary, purchase, review opportunity со всеми полями, `validUntil`,
+`revision`) тема спредит в своих фрагментах вместо своей выборки `loyalty`: личный ответ заменяет
+гостевой поле в поле. Батч берёт id вариантов и товаров, зарегистрированных карточками и
+страницей товара.
 
 1. HTML гостевой: базовые баллы из снимка.
 2. После гидратации — гостевой батч.
@@ -697,10 +729,13 @@ query SdkViewerVariants($ids: [ID!]!) {
 4. Ответ пишется в `ProductVariant:<id>.loyalty`, бейдж перерисовывает `useFragment`.
 5. Вход и выход перезапускают личный батч; при выходе — гостевой запрос `loyalty`.
 
-`ViewerRefresh` перестаёт перезапрашивать запросы целиком: сейчас он делает `refetch` каждого
-активного запроса с полями зрителя, то есть на странице товара весь `ProductPageQuery` с сотней
-вариантов. Он становится триггером личного батча; `savedForComparison` — своим маленьким запросом по
-колонкам. `VIEWER_FIELDS` остаётся для link-а статических ответов.
+`ViewerRefresh` больше не перезапрашивает запросы с `loyalty`: на странице товара `ProductPageQuery`
+с сотней вариантов не уходит в API. Он ставит личный батч (`VolatileBatcher.setViewer`) и
+перезапрашивает только активные запросы с остальными полями зрителя (`VIEWER_REFETCH_FIELDS`:
+`viewer*` отзывов, `savedForComparison`) — это и есть маленькие запросы `ContentViewerQuery` темы
+и `SdkProductComparison` колонок. Отдельного запроса `savedForComparison` нет: колонки сравнения
+без id, и запрос с частью их полей заменил бы список колонок в кеше. `VIEWER_FIELDS` остаётся для
+link-а статических ответов.
 
 Сегментные промо в будущем — отдельным полем схемы (`ProductVariant.viewerPromotions` в pricing), не
 тем же `promotions`: гостевой кешируемый ответ не должен отдать промо чужого сегмента, а гостевое и
@@ -713,13 +748,18 @@ query SdkViewerVariants($ids: [ID!]!) {
 влезает в данные страницы: подгрузка листинга по курсору, фильтры и сортировка, поиск, страницы
 вариантов, вопросы и отзывы, промо, остатки.
 
-- Codegen темы и SDK включает persisted documents (client preset, `documentMode: 'documentId'`):
-  клиент шлёт `documentId` и переменные. Список документов с разрешением на кеш публикуется
-  gateway вместе со схемой.
-- `GET`-линк из раздела «Быстрые данные» используется для всего allow-list «гостевые и
-  кешируемые». У таких запросов нет `Authorization` и visitor id; локаль в query
-  (`/graphql?locale=<locale>&documentId=…&variables=…`) вместе с `Accept-Language`, потому что
-  Cloudflare Free не учитывает `Vary`. Запросы с сессией и мутации остаются `POST`.
+- Persisted documents SDK: id документа — SHA-256 его текста так, как его отправляет Apollo (с
+  добавленными `__typename`, `persistedDocumentOf`). Сборка SDK пишет манифест для gateway:
+  `dist/persisted-documents.json` (`{ id: текст }`, все операции SDK) и
+  `dist/persisted-documents.cache.json` (`{ id: { operationName, class } }`, allow-list
+  `GUEST_CACHEABLE_OPERATIONS`). Тот же id браузер считает сам (`crypto.subtle`), поэтому
+  отдельного сгенерированного файла с id нет. Codegen темы включает то же для её документов.
+- `GET`-линк (`createPersistedGetLink`, перед ссылкой сессии и visitor id) используется для всего
+  allow-list «гостевые и кешируемые». У таких запросов нет `Authorization`, visitor id и cookie
+  (`credentials: 'omit'`); локаль в query (`/graphql?locale=<locale>&documentId=…&variables=…`,
+  переменные в каноническом JSON с отсортированными ключами) вместе с `Accept-Language`, потому что
+  Cloudflare Free не учитывает `Vary`. Запросы с флагом контекста `shopanaViewer`, с сессией и
+  мутации остаются `POST`.
 - Тот же плагин gateway: TTL по классам операций — листинги и поиск 120 с, варианты, вопросы и
   отзывы 300 с, промо до `validUntil` (не больше 600 с), остатки 30 с; для остального
   `private, no-store`. `Cache-Tag` по ключам сущностей ответа (`Product:<uuid>`, …), их чистит
@@ -744,7 +784,9 @@ theme-static → purge тегов быстрых данных и GraphQL (без
 
 Нода на шаге B не меняется: на промах Worker-а она снова смотрит в бакет и при промахе рендерит SSR.
 
-**Worker** (`deploy/worker/`, 30–50 строк, маршрут только на HTML-адреса и `/__static/data/*`):
+**Worker** (`deploy/worker/src/worker.ts`; маршрут `<hostname>/*` и маршруты без Worker-а для
+`/assets/*`, `/graphql*`, `/auth/*`, `/__builder/*`, `/__env.js`, `/apps/*`, `/.well-known/*`,
+`/cdn-cgi/*`):
 
 1. Ключ — `staticKeyForPath` из runtime (та же функция, что у ноды; `keys.ts` без Node built-ins).
    Query string обрабатывается так же, как у ноды: адрес с параметром, который меняет страницу
@@ -759,12 +801,17 @@ stale-while-revalidate=3600`, `ETag` и `Cache-Tag` из метаданных о
    недоступна — семейная оболочка `__shell/<family>.html` (200) или `404.html` (404).
 4. `/auth/*` и `/auth/headless/*` — на ноду без кеша, с `Set-Cookie` обратно.
 
-Worker выполняется на каждый запрос маршрута, поэтому ассеты и `public/` идут с R2 custom domain по
-Cache Rules. Hostname тот же, cookie first-party. `STOREFRONT_TRUSTED_PROXY_HOPS` перепроверяется на
+Worker выполняется на каждый запрос маршрута, поэтому ассеты идут с R2 custom domain
+`static.<hostname>` через origin rule `/assets/*` (без Worker-а), hostname тот же, cookie
+first-party. Файлы `public/` (`/favicon.ico`) Worker отдаёт из префикса `public/` бакета через тот
+же Cache API (`s-maxage=7200`): путь `/favicon.ico` не совпадает с ключом бакета, и перезапись пути
+стоила бы ещё одного правила. `STOREFRONT_TRUSTED_PROXY_HOPS` перепроверяется на
 stage (с Worker-ом может стать 2): ошибка ломает лимиты и антифрод IAM.
 
-**Builder на шаге B** пишет в метаданные объектов HTML и данных `Cache-Tag: pg:<pageKey>,
-build:<buildId>` (`pageKey` — 16 символов хэша `locale + path`), копирует `public/` в бакет.
+**Builder на шаге B** (`publish.cdn: 'cloudflare'`) пишет в метаданные объектов HTML и данных
+`x-amz-meta-cache-tag: pg:<pageKey>,build:<buildId>` (`pageKey` — 16 символов SHA-256
+`locale + '\n' + path`), Worker отдаёт их как `Cache-Tag`; копирует `public/` в бакет под
+`public/`.
 
 **Cloudflare.**
 
@@ -847,9 +894,15 @@ build:<buildId>` (`pageKey` — 16 символов хэша `locale + path`), �
    manifest и ретайр ассетов (как `buildStaticSite`), `complete` с `{fullBuild: true, seenPages}`;
    координатор переводит в `gone` страницы вне сборки и снимает все dirty; шаг B — purge
    `build:<buildId>` прошлой сборки.
-4. Локальный режим без координатора: `static run --events <файл>` читает события из NDJSON, строит
-   индекс в памяти из manifest и рендерит затронутые страницы в каталог. Для разработки маппера и
-   аспектов.
+4. Локальный режим без координатора: `static run --events <файл>` читает события из NDJSON, берёт
+   зависимости каждой страницы manifest из её данных (`extractPageDeps`), сопоставляет изменения
+   (`changeReaches`), печатает, что было бы eager, dirty, новыми страницами, полной сборкой и purge,
+   и рендерит затронутое в store. Для разработки маппера и аспектов.
+5. «Не изменилось» решается по хэшам прошлого manifest (он и есть источник хэшей аренды): страница,
+   чьи HTML и данные совпали, не пишется и не чистится (`unchanged`).
+6. Аутентификация job: OIDC-токен GitHub (`ACTIONS_ID_TOKEN_REQUEST_URL`, audience
+   `shopana-static-coordinator`, обновление каждые 4 минуты), для ручного запуска —
+   `STATIC_OPERATOR_TOKEN`.
 
 ## GitHub Actions
 
@@ -1120,3 +1173,89 @@ Playwright — отдельно, по разрешению.
 - **Proxy hops на шаге B.** Ошибка в `STOREFRONT_TRUSTED_PROXY_HOPS` ломает лимиты и антифрод IAM.
 - **Приватность.** Гостевой лёгкий запрос никогда не несёт visitor id и токен (тест линка); личные
   поля никогда не попадают в гостевые запросы.
+
+## Реализация
+
+Ветка `phl/static-pages-generation`, PR #3. Что сделано по этапам и где.
+
+**Этап 1 — SDK, данные** (`packages/shopana-storefront-sdk/src/static/`).
+
+- `fieldClasses.ts`: `VOLATILE_FIELDS`, `CORRECTABLE_FIELDS` и общий механизм таблиц (`stripFields`,
+  `findFields`, `showsFields`); `VIEWER_FIELDS` в `viewer.ts` на нём же. `stripVolatileFields`
+  на обоих форматах state выбрасывает и записи нормализованного кеша, до которых доходили только
+  выброшенные поля.
+- `graphql/apollo/fieldAspects.ts`: `STATIC_ASPECTS`, `STATIC_FIELD_ASPECTS`, `mergeFieldAspects`;
+  `fieldAspects` в `StaticSiteConfig`.
+- `deps.ts`: `extractPageDeps(state, { fieldAspects, translated })` → `{ deps, layout, owner }`.
+- `events.ts`: `STATIC_EVENT_TOPICS`, `mapEventToChanges`, `changeReaches`, `STATIC_OWNER_PATHS`;
+  `globalId.ts` — декодер global id; `entities.ts` не видит промо (state сначала без летучих полей).
+- `eventFeed.ts`: клиент ленты (`createEventFeedClient`) и источник access-токена по refresh-токену
+  (`refreshTokenSource`, OAuth 2 `refresh_token` на `SHOPANA_EVENTS_TOKEN_URL`; повёрнутый
+  refresh-токен координатор хранит в `settings`).
+
+**Этап 2 — SDK, быстрые данные** (`packages/shopana-storefront-sdk/src/modules/volatile/`).
+
+- Запросы `SdkVolatileCards`, `SdkVolatileVariant`, `SdkViewerLoyalty` и фрагменты
+  `SdkLoyaltyPresentation` и др. (`core/operations.graphql`).
+- `VolatileBatcher` (кадр, сортировка, по 100, не чаще 30 с, таймер `validUntil` промо варианта,
+  `visibilitychange`, `refresh` для ошибки корзины, личный батч только с сессией и флагом
+  `shopanaViewer`) и `VolatileDataProvider` в `AppProviders`; хуки `useVolatileCard`,
+  `useVolatileVariant` (`ready` — полнота фрагмента в кеше, поэтому `false` на сервере и при
+  гидратации), `useRefreshVolatile`. `withPrice` — `volatilePrices` статического документа
+  (`true` для статики в образе, builder ставит его для store `fs`).
+- `graphql/apollo/persisted.ts`: id документов, `GET`-линк, allow-list; манифест для gateway
+  пишет `scripts/persisted-documents.mjs` при сборке SDK.
+- `useViewerRefresh` — личный батч и перезапрос только запросов с `VIEWER_REFETCH_FIELDS`.
+- `useValidUntilRefetch` остаётся в `useStorefrontPromotions` (общий набор промо), таймер промо
+  варианта — в провайдере.
+- **Не сделано (тема):** репозиторий `storefront-brand-bite-and-crunch` не был доступен сессии
+  реализации. Остаются пункты 1–5 раздела «Тема»: убрать `quantityAvailable` и `promotions` из
+  фрагментов (до этого builder отказывается публиковать такие страницы —
+  `StaticVolatileFieldsError`), регистрация id и `useVolatileVariant`/`useVolatileCard` в
+  карточке, секции товара и колонках сравнения, `SdkLoyaltyPresentation` во фрагментах `loyalty`,
+  скелетон промо, `fieldAspects`, тест покрытия аспектов полями фрагментов.
+
+**Этап 4 — builder и `static run`** (`packages/shopana-storefront-runtime/src/static/`).
+
+- `renderer.ts`: отказ при летучем поле, `deps` в результате рендера.
+- `builder.ts`: `renderStaticPages` (по адресу или по `owner`, `published | unchanged | gone |
+failed`, хэши, зависимости, теги изменившихся страниц, purge), `onPage` полной сборки, теги CDN в
+  метаданных, `public/` в бакет, purge `build:<id>` после полной сборки.
+- `run.ts`: клиент аренды (`createCoordinatorClient`, `jobTokenSource`), `runStaticJobs`
+  (`--budget`, heartbeat раз в минуту, результаты пачками по 200), `--events`
+  (`planStaticEvents`, `runStaticEvents`); `purge.ts` — purge тегов Cloudflare.
+
+**Этап 5 — координатор** (`src/static/coordinator/`): `db.ts` (схема и миграции), `state.ts`
+(события, eager/dirty/lazy, layout, попадания, таймеры, дочист, схлопывание, аренды, результаты,
+полная сборка, dead jobs, запросы операторов, статус), `feed.ts` (цикл ленты, `CURSOR_EXPIRED` и
+`CURSOR_INVALID` → полная сборка), `dispatcher.ts`, `github.ts` (GitHub App, dispatch, OIDC по
+JWKS), `purgeQueue.ts` (5 в минуту, запас 25, по 100), `snapshots.ts`, `http.ts` (REST API),
+`main.ts` (`storefront-runtime static coordinator`, конфигурация из env). Таймер накопления
+dispatch стартует с первого задания после пустой очереди и не сбрасывается dispatch-ем.
+
+**Этап 6 — stage, шаг A (этот репозиторий):** `theme-static` в `deploy/swarm/theme.yml` (volume,
+метка ноды `shopana.static`, healthcheck), `deploy/runtime/start-static.cjs` и `static-env.json`,
+internal token в `server-env.json`, `/__builder/*` в Tunnel (`static_coordinator_origin`) и в
+исключениях Cache Rules/challenge, `deploy-theme.mjs` (секрет, ожидание `1/1`, smoke health,
+полная сборка после нового образа), `/data` в Dockerfile. **Не сделано (тема):**
+`.github/workflows/static-site.yml` вместо `static-full-build.yml`; текст workflow — раздел
+«Workflow `static-site.yml`» выше.
+
+**Этап 7 — шаг B в коде:** `deploy/worker/` (Worker, `wrangler.toml`, тесты на Node с фейками
+R2 и Cache API вместо miniflare: его нет в зависимостях workspace), `static_cdn` в Terraform
+`zone` (маршруты Worker-а, custom domain бакета, origin rule ассетов, Cache Rules HTML и
+`GET /graphql`), `STATIC_CDN=on` в `deploy-theme.mjs` (smoke `HIT`, два hops). Ничего не
+применено и не задеплоено.
+
+**Тесты.** SDK: `static/coordinator.test.ts` (классы полей, global id, зависимости в обоих
+форматах, маппер по всем топикам, клиент ленты), `modules/volatile/volatile.test.tsx` (батч,
+`ready`, личный батч, `GET`-линк, `ViewerRefresh`). Runtime: `builder.test.ts` (результаты и
+зависимости, `unchanged`, отказ при летучем поле, `owner` и смена handle, теги и purge, `static
+run`, OIDC-токен job, `--events`), `purge.test.ts`, `coordinator/coordinator.test.ts` (события,
+попадания, результаты, схлопывание, dead jobs, истечение аренды, полная сборка, таймеры, дочист,
+dispatch, цикл ленты, очередь purge, снимки, GitHub App и OIDC, REST API, запуск сервиса). Worker:
+`deploy/worker/src/worker.test.ts`. Terraform: `terraform test` модулей `cloudflare` и
+`frontend-edge` с mock provider. `scripts/deploy-theme.test.mjs`.
+
+**Не проверено:** всё, что требует stage, internal и Cloudflare (этап 0, «Готово, когда» этапов 6
+и 7), e2e и браузер, рендер реальной темы.
