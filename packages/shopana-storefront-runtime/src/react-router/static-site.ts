@@ -13,6 +13,7 @@ import type {
 import { privateTokenHeaders } from '@shopana/storefront-sdk/server/directGateway';
 import {
   enumerateStaticRoutes,
+  resolveStaticOwnerPath,
   type StaticRoute,
   type StaticSiteConfig,
 } from '@shopana/storefront-sdk/static';
@@ -28,6 +29,15 @@ export interface StaticSiteEntry {
   }>;
   /** The addresses of the config in one language, without the locale segment. */
   routes(locale: StorefrontLocale): Promise<StaticRoute[]>;
+  /**
+   * The address of the page of an entity (its API id) of a page type, without the locale
+   * segment: null when the API shows it to no guest.
+   */
+  ownerPath(
+    locale: StorefrontLocale,
+    id: string,
+    route: string
+  ): Promise<string | null>;
 }
 
 export function createStaticSiteEntry(
@@ -54,6 +64,13 @@ export function createStaticSiteEntry(
               return locale;
             });
       return { all, rendered };
+    },
+    ownerPath(locale, id, route) {
+      const client = createApolloClient(app.environmentConfig, {
+        locale: locale.tag,
+        gatewayHeaders: privateTokenHeaders(),
+      });
+      return resolveStaticOwnerPath(client, id, route);
     },
     routes(locale) {
       const client = createApolloClient(app.environmentConfig, {

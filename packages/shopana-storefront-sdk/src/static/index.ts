@@ -11,6 +11,7 @@ export {
 } from './config';
 export {
   enumerateStaticRoutes,
+  resolveStaticOwnerPath,
   type StaticEnumerateOptions,
   type StaticRoute,
 } from './enumerate';
@@ -81,12 +82,16 @@ export {
   type EventFeedPage,
 } from './eventFeed';
 export {
+  changeInLocale,
+  changeReaches,
   mapEventToChanges,
   productPurgeTag,
   PROMOTION_PURGE_TAGS,
   STATIC_EVENT_TOPICS,
+  STATIC_OWNER_PATHS,
   type StaticChange,
   type StaticEventEnvelope,
+  type StaticIndexedDep,
   type StaticOwnPage,
 } from './events';
 export {

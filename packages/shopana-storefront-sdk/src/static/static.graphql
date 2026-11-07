@@ -89,3 +89,31 @@ query SdkStaticNavigationMenu($handle: String!) {
     }
   }
 }
+
+# The handle of an entity whose page a render of its owner looks for (its handle may have
+# changed, or the page is new).
+query SdkStaticNodeHandle($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on Product {
+      id
+      handle
+    }
+    ... on Category {
+      id
+      handle
+    }
+    ... on Collection {
+      id
+      handle
+    }
+    ... on Vendor {
+      id
+      handle
+    }
+    ... on OnlineStorePage {
+      id
+      handle
+    }
+  }
+}

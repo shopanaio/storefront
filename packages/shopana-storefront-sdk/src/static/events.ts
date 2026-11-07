@@ -78,7 +78,20 @@ export interface StaticOwnPage {
   route: string;
   /** The key of the entity (`Product:<uuid>`). */
   owner: string;
+  /** Its id in the API (a global id), to find its page when the index has none. */
+  id: string;
 }
+
+/** The address of the page of an entity by its handle, by page type. */
+export const STATIC_OWNER_PATHS: Readonly<
+  Record<string, (handle: string) => string>
+> = {
+  product: (handle) => `/products/${handle}`,
+  category: (handle) => `/categories/${handle}`,
+  collection: (handle) => `/collections/${handle}`,
+  vendor: (handle) => `/vendors/${handle}`,
+  page: (handle) => `/pages/${handle}`,
+};
 
 /** One change of the static site an event makes. */
 export interface StaticChange {
@@ -229,7 +242,7 @@ function productChanges(
   const id = idOf(data, 'product');
   if (!id) return [];
   const key = entityKey('Product', id);
-  const own: StaticOwnPage = { route: 'product', owner: key };
+  const own: StaticOwnPage = { route: 'product', owner: key, id };
   const categories = keysOf('Category', data.affectedCategoryIds);
   const collections = keysOf('Collection', data.affectedCollectionIds);
   const vendors = keysOf('Vendor', [
@@ -315,7 +328,7 @@ function ownedChanges(
   if (!id) return [];
   const key = entityKey(typename, id);
   const route = OWN_ROUTES[typename];
-  const own = route ? { route, owner: key } : undefined;
+  const own = route ? { route, owner: key, id } : undefined;
   if (action === 'Deleted') {
     return [
       {
@@ -456,4 +469,37 @@ export function mapEventToChanges(
 /** The mask of aspect names, for tests and the operator API. */
 export function changeAspects(aspects: readonly StaticAspect[]): number {
   return aspects.reduce((mask, aspect) => mask | STATIC_ASPECTS[aspect], 0);
+}
+
+/** A dependency of a page as the index has it. */
+export interface StaticIndexedDep {
+  key: string;
+  kind: StaticDepKind;
+  aspects: number;
+}
+
+/**
+ * Whether a change reaches a dependency of a page in a language: its key (or any key for
+ * `*`), one of its kinds, one of its aspects, and the language when the change names some.
+ */
+export function changeReaches(
+  change: StaticChange,
+  dep: StaticIndexedDep,
+  locale: string
+): boolean {
+  if (!change.key || change.aspects === 0) return false;
+  if (change.key !== '*' && change.key !== dep.key) return false;
+  if (!change.kinds.includes(dep.kind)) return false;
+  if ((change.aspects & dep.aspects) === 0) return false;
+  return changeInLocale(change, locale);
+}
+
+/** Whether a change is of a language (a URL segment; its BCP 47 tag matches its language). */
+export function changeInLocale(change: StaticChange, locale: string): boolean {
+  if (!change.locales?.length) return true;
+  const segment = locale.toLowerCase();
+  return change.locales.some((wanted) => {
+    const tag = wanted.toLowerCase();
+    return tag === segment || tag.split('-')[0] === segment.split('-')[0];
+  });
 }

@@ -26341,6 +26341,105 @@ export type SdkStaticNavigationMenuQuery = {
   } | null;
 };
 
+export type SdkStaticNodeHandleQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+export type SdkStaticNodeHandleQuery = {
+  readonly __typename: 'Query';
+  readonly node?:
+    | {
+        readonly __typename: 'Category';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'Checkout' }
+    | { readonly __typename: 'CheckoutLine' }
+    | { readonly __typename: 'CheckoutTag' }
+    | {
+        readonly __typename: 'Collection';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'CustomerAddress' }
+    | { readonly __typename: 'CustomerDataRequest' }
+    | { readonly __typename: 'CustomerTaxExemption' }
+    | { readonly __typename: 'CustomerTaxIdentifier' }
+    | { readonly __typename: 'CustomerWishlist' }
+    | { readonly __typename: 'CustomerWishlistItem' }
+    | { readonly __typename: 'ExternalVideo' }
+    | { readonly __typename: 'Facet' }
+    | { readonly __typename: 'FacetSwatch' }
+    | { readonly __typename: 'FacetValue' }
+    | { readonly __typename: 'GenericFile' }
+    | { readonly __typename: 'InventoryItem' }
+    | { readonly __typename: 'LoyaltyAvailableReward' }
+    | { readonly __typename: 'MediaImage' }
+    | { readonly __typename: 'Model3d' }
+    | { readonly __typename: 'OnlineStoreNavigationMenu' }
+    | { readonly __typename: 'OnlineStoreNavigationMenuItem' }
+    | {
+        readonly __typename: 'OnlineStorePage';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'Order' }
+    | { readonly __typename: 'OrderDeliveryAddress' }
+    | { readonly __typename: 'OrderDeliveryGroup' }
+    | { readonly __typename: 'OrderFulfillment' }
+    | { readonly __typename: 'OrderLine' }
+    | { readonly __typename: 'OrderPaymentTransaction' }
+    | { readonly __typename: 'OrderRefund' }
+    | { readonly __typename: 'OrderReturnRequest' }
+    | { readonly __typename: 'OrderShipment' }
+    | { readonly __typename: 'OrderTrackingEvent' }
+    | { readonly __typename: 'OrderVoid' }
+    | { readonly __typename: 'Pet' }
+    | { readonly __typename: 'PetProductSelection' }
+    | {
+        readonly __typename: 'Product';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'ProductFeature' }
+    | { readonly __typename: 'ProductFeatureGroup' }
+    | { readonly __typename: 'ProductFeatureValue' }
+    | { readonly __typename: 'ProductOption' }
+    | { readonly __typename: 'ProductOptionType' }
+    | { readonly __typename: 'ProductOptionValue' }
+    | { readonly __typename: 'ProductQuestion' }
+    | { readonly __typename: 'ProductQuestionAnswer' }
+    | { readonly __typename: 'ProductQuestionSubscription' }
+    | { readonly __typename: 'ProductVariant' }
+    | { readonly __typename: 'Review' }
+    | { readonly __typename: 'ReviewContentExternalReference' }
+    | { readonly __typename: 'ReviewContentPublication' }
+    | { readonly __typename: 'ReviewContentReport' }
+    | { readonly __typename: 'ReviewContentRevision' }
+    | { readonly __typename: 'ReviewContentTranslation' }
+    | { readonly __typename: 'ReviewContentVote' }
+    | { readonly __typename: 'ReviewMedia' }
+    | { readonly __typename: 'ReviewModerationCase' }
+    | { readonly __typename: 'ReviewModerationEvent' }
+    | { readonly __typename: 'ReviewModerationSignal' }
+    | { readonly __typename: 'ReviewRatingCriterion' }
+    | { readonly __typename: 'ReviewRatingCriterionAssignment' }
+    | { readonly __typename: 'ReviewReply' }
+    | { readonly __typename: 'ReviewRequest' }
+    | { readonly __typename: 'ReviewRequestEvent' }
+    | { readonly __typename: 'ReviewStoreConfiguration' }
+    | { readonly __typename: 'Store' }
+    | { readonly __typename: 'StorePolicy' }
+    | { readonly __typename: 'Tag' }
+    | {
+        readonly __typename: 'Vendor';
+        readonly id: string;
+        readonly handle: string;
+      }
+    | { readonly __typename: 'Video' }
+    | null;
+};
+
 export const SdkStorefrontPromotionFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -59404,4 +59503,137 @@ export const SdkStaticNavigationMenuDocument = {
 } as unknown as DocumentNode<
   SdkStaticNavigationMenuQuery,
   SdkStaticNavigationMenuQueryVariables
+>;
+export const SdkStaticNodeHandleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkStaticNodeHandle' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'node' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'id' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Product' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Category' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Collection' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'Vendor' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OnlineStorePage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'handle' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkStaticNodeHandleQuery,
+  SdkStaticNodeHandleQueryVariables
 >;

@@ -1,6 +1,8 @@
+import type { ApolloClient } from '@apollo/client';
 import {
   SdkStaticCategoriesDocument,
   SdkStaticNavigationMenuDocument,
+  SdkStaticNodeHandleDocument,
   SdkStaticOnlineStorePagesDocument,
   SdkStaticProductsDocument,
   SdkStaticStorePoliciesDocument,
@@ -18,6 +20,7 @@ import type {
   StaticPageFamily,
   StaticSiteConfig,
 } from './config';
+import { STATIC_OWNER_PATHS } from './events';
 
 /**
  * Nodes per request: the most a connection of the Storefront API returns (`first` is 1 to 100
@@ -242,4 +245,25 @@ export async function enumerateStaticRoutes(
     for (const handle of handles) add(family, buildPath(route, { handle }));
   }
   return [...routes.values()];
+}
+
+/**
+ * The address of the page of an entity (its API id) of a page type, without the locale
+ * segment, as a guest finds it now: null when the API shows the entity to no guest or the page
+ * type has no page of an entity.
+ */
+export async function resolveStaticOwnerPath(
+  client: ApolloClient,
+  id: string,
+  route: string
+): Promise<string | null> {
+  const toPath = STATIC_OWNER_PATHS[route];
+  if (!toPath) return null;
+  const { data } = await client.query({
+    query: SdkStaticNodeHandleDocument,
+    variables: { id },
+    fetchPolicy: 'no-cache',
+  });
+  const node = data?.node as { handle?: string } | null | undefined;
+  return node?.handle ? toPath(node.handle) : null;
 }

@@ -35,7 +35,16 @@ export interface StaticWriteOptions {
   ifMatch?: string;
   /** `*`: only where there is no object yet. */
   ifNoneMatch?: '*';
+  /**
+   * Tags of the CDN's cache for the object (`pg:<pageKey>`, `build:<buildId>`): kept in its
+   * metadata (`x-amz-meta-cache-tag`), which the CDN worker answers as `Cache-Tag`. A
+   * directory has none.
+   */
+  cacheTags?: readonly string[];
 }
+
+/** The metadata of an object that holds its tags of the CDN's cache. */
+export const CACHE_TAG_METADATA = 'cache-tag';
 
 /** The object changed since the writer read it: another writer was first. */
 export class StaticWriteConflict extends Error {
@@ -336,6 +345,12 @@ export function createS3Store(
             : {}),
           ...(options.ifNoneMatch
             ? { 'if-none-match': options.ifNoneMatch }
+            : {}),
+          ...(options.cacheTags?.length
+            ? {
+                [`x-amz-meta-${CACHE_TAG_METADATA}`]:
+                  options.cacheTags.join(','),
+              }
             : {}),
         },
         body: typeof body === 'string' ? body : new Uint8Array(body),

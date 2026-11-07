@@ -328,7 +328,11 @@ describe('mapEventToChanges', () => {
       key: `Product:${uuidA}`,
       kinds: [STATIC_DEP_KINDS.entity],
       aspects: STATIC_ASPECTS.pricing,
-      own: { route: 'product', owner: `Product:${uuidA}` },
+      own: {
+        route: 'product',
+        owner: `Product:${uuidA}`,
+        id: gidOf('Product', uuidA),
+      },
       purgeTags: [`sf-p-${uuidA}`],
     });
     expect(changes.map((change) => change.key)).toContain(

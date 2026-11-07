@@ -8,6 +8,11 @@
  * - `static render <path>... [--out <dir>] [--store <url>]`: some addresses again, into a site
  *   built before.
  * - `static publish --from <url> --to <url>`: a built site copied to another store.
+ * - `static run --coordinator <url> [--request-id <id>] [--run-id <id>] [--run-attempt <n>]
+ *   [--budget 35m] [--capacity 500]`: a job of the coordinator in GitHub Actions: leases,
+ *   renders, publishes what changed, returns the results.
+ * - `static run --events <file.ndjson>`: the pages events change in a built site, rendered
+ *   without a coordinator (the mapper and the aspects on real snapshots).
  *
  * Stores are `fs:<dir>` or `s3://<bucket>/<prefix>`. Requests go to the API of the theme's
  * environment (`STOREFRONT_SERVER_GRAPHQL_URL`), as a guest.
@@ -22,6 +27,14 @@ import {
   renderStaticPaths,
   type StaticBuildReport,
 } from './builder';
+import { purgerFromEnv } from './purge';
+import {
+  createCoordinatorClient,
+  jobTokenSource,
+  readEventsFile,
+  runStaticEvents,
+  runStaticJobs,
+} from './run';
 import { openStaticStore, type StaticStore } from './store';
 
 interface ParsedArgs {
@@ -108,8 +121,17 @@ export interface StaticCommandContext {
 }
 
 const USAGE =
-  'Usage: storefront-runtime static <build | render <path>... | publish --from <store> --to <store>> ' +
-  '[--out <dir>] [--store <fs:dir | s3://bucket/prefix>] [--concurrency <n>]';
+  'Usage: storefront-runtime static <build | render <path>... | publish --from <store> --to <store> | ' +
+  'run (--coordinator <url> | --events <file>)> ' +
+  '[--out <dir>] [--store <fs:dir | s3://bucket/prefix>] [--concurrency <n>] [--budget 35m]';
+
+/** A duration of the CLI: `35m`, `90s`, `1h`, or milliseconds. */
+export function parseDuration(value: string): number {
+  const match = /^(\d+(?:\.\d+)?)(ms|s|m|h)?$/.exec(value.trim());
+  if (!match) throw new Error(`${value} is no duration (35m, 90s, 1h)`);
+  const units = { ms: 1, s: 1000, m: 60_000, h: 3_600_000 } as const;
+  return Number(match[1]) * units[(match[2] ?? 'ms') as keyof typeof units];
+}
 
 function concurrencyOf(parsed: ParsedArgs): number | undefined {
   const value = parsed.options.get('concurrency');
@@ -136,6 +158,7 @@ export async function runStaticCommand(
         store: await targetStore(parsed, context),
         origin: staticOrigin(context.env),
         concurrency: concurrencyOf(parsed),
+        purger: purgerFromEnv(context.env),
       });
       return report.failed.length > 0 ? 1 : 0;
     case 'render':
@@ -149,6 +172,7 @@ export async function runStaticCommand(
         origin: staticOrigin(context.env),
         concurrency: concurrencyOf(parsed),
         paths: parsed.positional,
+        purger: purgerFromEnv(context.env),
       });
       return report.failed.length > 0 ? 1 : 0;
     case 'publish': {
@@ -166,6 +190,50 @@ export async function runStaticCommand(
         to: openStaticStore(to, { cwd: context.themeDir, env: context.env }),
       });
       return 0;
+    }
+    case 'run': {
+      const events = parsed.options.get('events');
+      const store = await targetStore(parsed, context);
+      const common = {
+        runtimeDir: context.runtimeDir,
+        store,
+        origin: staticOrigin(context.env),
+        concurrency: concurrencyOf(parsed),
+        purger: purgerFromEnv(context.env),
+      };
+      if (events) {
+        await runStaticEvents({
+          ...common,
+          events: await readEventsFile(path.resolve(context.themeDir, events)),
+        });
+        return 0;
+      }
+      const url =
+        parsed.options.get('coordinator') ?? context.env.COORDINATOR_URL;
+      if (!url) {
+        console.error(USAGE);
+        return 1;
+      }
+      const attempt = parsed.options.get('run-attempt');
+      const run = await runStaticJobs({
+        ...common,
+        coordinator: createCoordinatorClient({
+          url,
+          token: jobTokenSource(context.env),
+        }),
+        requestId: parsed.options.get('request-id'),
+        runId: parsed.options.get('run-id') ?? context.env.GITHUB_RUN_ID,
+        runAttempt: attempt
+          ? Number(attempt)
+          : context.env.GITHUB_RUN_ATTEMPT
+            ? Number(context.env.GITHUB_RUN_ATTEMPT)
+            : undefined,
+        budgetMs: parseDuration(parsed.options.get('budget') ?? '35m'),
+        capacity: parsed.options.get('capacity')
+          ? Number(parsed.options.get('capacity'))
+          : undefined,
+      });
+      return run.failed > 0 ? 1 : 0;
     }
     default:
       console.error(USAGE);
