@@ -6,7 +6,7 @@ locals {
     "starts_with(http.request.uri.path, ${jsonencode(prefix)})"
   ])
   dynamic = join(" or ", [
-    for prefix in ["/graphql", "/auth/", "/account", "/api/", "/apps/", "/.well-known/", "/cdn-cgi/"] :
+    for prefix in ["/graphql", "/auth/", "/account", "/api/", "/apps/", "/.well-known/", "/cdn-cgi/", "/__builder/"] :
     "starts_with(http.request.uri.path, ${jsonencode(prefix)})"
   ])
   public_file = "http.request.uri.path in {\"/favicon.ico\" \"/manifest.webmanifest\" \"/robots.txt\" \"/sitemap.xml\"}"

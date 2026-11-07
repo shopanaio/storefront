@@ -30,10 +30,25 @@ export function parseEnv(source) {
     'TUNNEL_SECRET',
     'SERVER_ENV_SECRET',
     'LAUNCHER_CONFIG',
+    // The coordinator of the static site (theme-static): its secrets (static-env.json).
+    'STATIC_ENV_SECRET',
   ];
   // The static site bucket of the environment (Terraform output static_site of zone/); without
   // them the theme serves the static site of its image.
-  const optional = ['STATIC_STORE', 'STATIC_ENDPOINT'];
+  // The coordinator (plans/static-coordinator.ru.md): the GitHub App of its dispatches, the admin
+  // API and store of its event feed, the zone of its purges (step B).
+  const optional = [
+    'STATIC_STORE',
+    'STATIC_ENDPOINT',
+    'STATIC_GITHUB_REPOSITORY',
+    'STATIC_GITHUB_APP_ID',
+    'STATIC_GITHUB_INSTALLATION_ID',
+    'SHOPANA_ADMIN_GRAPHQL_URL',
+    'SHOPANA_STORE_NAME',
+    'SHOPANA_EVENTS_TOKEN_URL',
+    'SHOPANA_EVENTS_CLIENT_ID',
+    'CLOUDFLARE_ZONE_ID',
+  ];
   const allowed = new Set([...required, ...optional]);
   for (const line of source.split(/\r?\n/)) {
     if (!line.trim() || line.trimStart().startsWith('#')) continue;
@@ -68,6 +83,74 @@ export function parseEnv(source) {
     fail('THEME_IMAGE must be an immutable sha256 digest.');
   }
   return values;
+}
+
+/** Keys the coordinator's secret may hold (deploy/runtime/start-static.cjs). */
+const STATIC_ENV_KEYS = new Set([
+  'SHOPANA_EVENTS_REFRESH_TOKEN',
+  'STATIC_OPERATOR_TOKEN',
+  'STOREFRONT_STATIC_COORDINATOR_TOKEN',
+  'STATIC_GITHUB_APP_PRIVATE_KEY',
+  'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
+  'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
+  'CLOUDFLARE_PURGE_TOKEN',
+]);
+
+/**
+ * The coordinator's secret (static-env.json): known keys, long tokens, and the internal token
+ * the theme reports hits with (server-env.json) the same.
+ */
+export function validateStaticEnv(staticValues, values) {
+  if (
+    !staticValues ||
+    Array.isArray(staticValues) ||
+    typeof staticValues !== 'object'
+  )
+    fail('Coordinator settings must be an object.');
+  for (const [key, value] of Object.entries(staticValues)) {
+    if (!STATIC_ENV_KEYS.has(key))
+      fail(`Unsupported coordinator setting ${key}`);
+    if (typeof value !== 'string' || /REPLACE_WITH/.test(value))
+      fail(`Fill coordinator setting ${key}`);
+  }
+  for (const key of [
+    'STATIC_OPERATOR_TOKEN',
+    'STOREFRONT_STATIC_COORDINATOR_TOKEN',
+  ]) {
+    if ((staticValues[key]?.length ?? 0) < 32)
+      fail(`${key} must have at least 32 characters.`);
+  }
+  if (
+    values.STOREFRONT_STATIC_COORDINATOR_TOKEN !==
+    staticValues.STOREFRONT_STATIC_COORDINATOR_TOKEN
+  )
+    fail(
+      'STOREFRONT_STATIC_COORDINATOR_TOKEN of server-env.json and static-env.json must be the same.'
+    );
+}
+
+/**
+ * A full build of the static site through the coordinator's API, after a new image: its pages
+ * are rendered with the assets of that image.
+ */
+export async function requestFullBuild(
+  appUrl,
+  operatorToken,
+  image,
+  fetcher = fetch
+) {
+  const response = await fetcher(new URL('/__builder/api/builds', appUrl), {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${operatorToken}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ mode: 'full', image, reason: 'deploy' }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (response.status !== 202)
+    fail(`The coordinator refused the full build (HTTP ${response.status}).`);
+  return (await response.json()).requestId;
 }
 
 export function validateRuntime(values, outputs) {
@@ -217,7 +300,11 @@ async function main() {
   const directory = resolve(root, 'deploy/environments', profile);
   const envPath = resolve(directory, 'deploy.env');
   const runtimePath = resolve(directory, 'server-env.json');
+  const staticPath = resolve(directory, 'static-env.json');
   const launcher = readFileSync(resolve(root, 'deploy/runtime/start.cjs'));
+  const staticLauncher = readFileSync(
+    resolve(root, 'deploy/runtime/start-static.cjs')
+  );
   const stack = `shopana-theme-${profile}`;
   if (action === 'init') {
     if (!existsSync(envPath)) {
@@ -230,16 +317,31 @@ async function main() {
         { mode: 0o600, flag: 'wx' }
       );
     }
+    // The internal token of hits is in both secrets: the theme sends it, the coordinator takes it.
+    const internalToken = existsSync(runtimePath)
+      ? readJson(runtimePath).STOREFRONT_STATIC_COORDINATOR_TOKEN
+      : randomBytes(48).toString('base64url');
     if (!existsSync(runtimePath)) {
       const values = readJson(`${runtimePath}.example`);
       values.STOREFRONT_SESSION_SECRET = randomBytes(48).toString('base64url');
+      values.STOREFRONT_STATIC_COORDINATOR_TOKEN = internalToken;
       writeFileSync(runtimePath, `${JSON.stringify(values, null, 2)}\n`, {
         mode: 0o600,
         flag: 'wx',
       });
     }
+    if (!existsSync(staticPath)) {
+      const values = readJson(`${staticPath}.example`);
+      values.STATIC_OPERATOR_TOKEN = randomBytes(48).toString('base64url');
+      values.STOREFRONT_STATIC_COORDINATOR_TOKEN =
+        internalToken ?? 'REPLACE_WITH_THE_TOKEN_OF_SERVER_ENV';
+      writeFileSync(staticPath, `${JSON.stringify(values, null, 2)}\n`, {
+        mode: 0o600,
+        flag: 'wx',
+      });
+    }
     console.log(
-      `Prepared deploy/environments/${profile}/{deploy.env,server-env.json}; fill the remaining runtime credentials. Existing files were preserved.`
+      `Prepared deploy/environments/${profile}/{deploy.env,server-env.json,static-env.json}; fill the remaining runtime credentials. Existing files were preserved.`
     );
     return;
   }
@@ -259,7 +361,11 @@ async function main() {
   }
   const settings = parseEnv(readFileSync(envPath, 'utf8'));
   settings.LAUNCHER_CONFIG = `${stack}-launcher-${hash(launcher).slice(0, 12)}`;
+  settings.STATIC_LAUNCHER_CONFIG = `${stack}-static-launcher-${hash(staticLauncher).slice(0, 12)}`;
+  settings.STATIC_ENVIRONMENT = profile;
   const values = readJson(runtimePath);
+  const staticValues = readJson(staticPath);
+  validateStaticEnv(staticValues, values);
   const run = (binary, args, options = {}) => {
     try {
       return execFileSync(binary, args, {
@@ -304,6 +410,16 @@ async function main() {
     await smoke(values);
     return;
   }
+  if (
+    settings.STATIC_STORE &&
+    !(
+      staticValues.STOREFRONT_STATIC_S3_ACCESS_KEY_ID &&
+      staticValues.STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY
+    )
+  )
+    fail(
+      'STATIC_STORE needs a key of its bucket in static-env.json for the snapshots of the index.'
+    );
   if (!context)
     fail(
       'Pass --context NAME explicitly; the current/default Docker context is never used.'
@@ -425,7 +541,29 @@ async function main() {
   const token = terraform('output', '-raw', 'tunnel_token').trim();
   if (!token) fail('The local Terraform state has no tunnel token.');
   ensureSecret(settings.SERVER_ENV_SECRET, readFileSync(runtimePath));
+  ensureSecret(settings.STATIC_ENV_SECRET, readFileSync(staticPath));
   ensureSecret(settings.TUNNEL_SECRET, token);
+  // The image the theme ran before: a new one is rendered whole by the coordinator.
+  let previousImage = null;
+  try {
+    previousImage = JSON.parse(
+      execFileSync(
+        'docker',
+        [
+          '--context',
+          context,
+          'service',
+          'inspect',
+          `${stack}_theme`,
+          '--format',
+          '{{json .Spec.TaskTemplate.ContainerSpec.Image}}',
+        ],
+        { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'] }
+      )
+    );
+  } catch {
+    // The first deploy of the stack.
+  }
   docker(
     'stack',
     'deploy',
@@ -437,17 +575,24 @@ async function main() {
     'deploy/swarm/theme.yml',
     stack
   );
-  console.log(`Deployed ${stack}; waiting up to 10 minutes for both services.`);
+  console.log(`Deployed ${stack}; waiting up to 10 minutes for its services.`);
+  const replicas = {
+    [`${stack}_theme`]: '2/2',
+    [`${stack}_cloudflared`]: '2/2',
+    [`${stack}_theme-static`]: '1/1',
+  };
   const deadline = Date.now() + 600_000;
   while (Date.now() < deadline) {
     const services = JSON.parse(
-      docker('service', 'inspect', `${stack}_theme`, `${stack}_cloudflared`)
+      docker('service', 'inspect', ...Object.keys(replicas))
     );
-    if (
-      services.find((service) => service.Spec.Name === `${stack}_theme`).Spec
-        .TaskTemplate.ContainerSpec.Image !== settings.THEME_IMAGE
-    )
-      fail('The theme service did not adopt the requested digest.');
+    for (const name of [`${stack}_theme`, `${stack}_theme-static`]) {
+      if (
+        services.find((service) => service.Spec.Name === name).Spec.TaskTemplate
+          .ContainerSpec.Image !== settings.THEME_IMAGE
+      )
+        fail(`${name} did not adopt the requested digest.`);
+    }
     for (const service of services) {
       if (
         [
@@ -473,10 +618,14 @@ async function main() {
       (service) =>
         !service.UpdateStatus || service.UpdateStatus.State === 'completed'
     );
+    const lines = summary.split('\n');
     if (
       stable &&
-      summary.split('\n').length === 2 &&
-      summary.split('\n').every((line) => line.endsWith(' 2/2'))
+      lines.length === Object.keys(replicas).length &&
+      lines.every((line) => {
+        const [name, count] = line.split(' ');
+        return replicas[name] === count;
+      })
     ) {
       const tasks = JSON.parse(
         docker(
@@ -494,7 +643,7 @@ async function main() {
         )
       );
       if (
-        tasks.length === 4 &&
+        tasks.length === 5 &&
         tasks.every(
           (task) =>
             task.Status.State === 'running' &&
@@ -503,6 +652,16 @@ async function main() {
       ) {
         console.log(summary);
         await smoke(values);
+        if (previousImage !== settings.THEME_IMAGE) {
+          const requestId = await requestFullBuild(
+            values.NEXT_PUBLIC_APP_URL,
+            staticValues.STATIC_OPERATOR_TOKEN,
+            settings.THEME_IMAGE
+          );
+          console.log(
+            `New image: full build ${requestId} queued by the coordinator.`
+          );
+        }
         return;
       }
     }
@@ -596,6 +755,12 @@ export async function smoke(values, fetcher = fetch) {
     fail('SSR documents must load the public settings from /__env.js.');
   assertPrivate(rendered, 'SSR HTML');
 
+  const coordinator = await get('/__builder/api/health');
+  if (!coordinator.ok || (await coordinator.json()).ok !== true)
+    fail(
+      `The coordinator must answer /__builder/api/health (HTTP ${coordinator.status}).`
+    );
+
   const api = await get('/graphql', {
     method: 'POST',
     headers: {
@@ -620,7 +785,7 @@ export async function smoke(values, fetcher = fetch) {
     }
   }
   console.log(
-    'Smoke passed: static hit with ETag and 304, live render of a missing page, /__env.js, private settings, same-origin GraphQL and canonical IAM discovery. Interactive login, agent streaming and a guest navigation without /graphql requests still require a browser check.'
+    'Smoke passed: static hit with ETag and 304, live render of a missing page, /__env.js, private settings, the coordinator, same-origin GraphQL and canonical IAM discovery. Interactive login, agent streaming and a guest navigation without /graphql requests still require a browser check.'
   );
 }
 

@@ -50,6 +50,9 @@ COPY --from=build /app/packages/shopana-storefront-runtime/package.json ./packag
 COPY --from=build /app/packages/shopana-storefront-runtime/bin ./packages/shopana-storefront-runtime/bin
 COPY --from=build /app/packages/shopana-storefront-runtime/dist ./packages/shopana-storefront-runtime/dist
 COPY --from=build /app/packages/shopana-storefront-runtime/src/init.js ./packages/shopana-storefront-runtime/src/init.js
+# The volume of the coordinator of the static site (theme-static): a new named volume takes the
+# owner of the directory it is mounted on.
+RUN mkdir -p /data && chown node:node /data
 WORKDIR /app/themes/${STOREFRONT_THEME}
 USER node
 EXPOSE 3000

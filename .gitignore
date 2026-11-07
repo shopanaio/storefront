@@ -87,4 +87,5 @@ storybook-static
 *.tfvars
 deploy/environments/*/*.env
 deploy/environments/*/server-env.json
+deploy/environments/*/static-env.json
 deploy/**/.state/

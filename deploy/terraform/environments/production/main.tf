@@ -9,6 +9,7 @@ module "edge" {
   pet_assistant_origin       = var.pet_assistant_origin
   storefront_api_host_header = var.storefront_api_host_header
   pet_assistant_host_header  = var.pet_assistant_host_header
+  static_coordinator_origin  = var.static_coordinator_origin
 }
 output "tunnel_id" { value = module.edge.tunnel_id }
 output "tunnel_token" {
@@ -16,6 +17,7 @@ output "tunnel_token" {
   sensitive = true
 }
 output "app_url" { value = module.edge.app_url }
+output "static_coordinator_url" { value = module.edge.static_coordinator_url }
 output "graphql_url" { value = module.edge.graphql_url }
 output "iam_url" { value = module.edge.iam_url }
 output "pet_assistant_url" { value = module.edge.pet_assistant_url }

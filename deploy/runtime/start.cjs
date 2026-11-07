@@ -24,6 +24,8 @@ const allowed = new Set([
   // The read-only S3 key of the static site bucket (STOREFRONT_STATIC_STORE, theme.yml).
   'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
   'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
+  // The internal token of the reports of hits to the coordinator (theme-static).
+  'STOREFRONT_STATIC_COORDINATOR_TOKEN',
 ]);
 for (const [key, value] of Object.entries(values)) {
   if (!allowed.has(key) || typeof value !== 'string') {

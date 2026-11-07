@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   parseEnv,
+  requestFullBuild,
   smoke,
+  validateStaticEnv,
   validateRuntime,
   validateBackend,
   verifyHeadlessOAuth,
@@ -13,7 +15,8 @@ CLOUDFLARED_IMAGE=cloudflare/cloudflared:2026.10.2
 BACKEND_NETWORK=shopana-stage-edge
 TUNNEL_SECRET=theme-tunnel-v1
 SERVER_ENV_SECRET=theme-runtime-v1
-LAUNCHER_CONFIG=theme-launcher-abc`;
+LAUNCHER_CONFIG=theme-launcher-abc
+STATIC_ENV_SECRET=theme-static-v1`;
 const outputs = {
   app_url: 'https://pet.shopana.dev',
   graphql_url: 'https://pet.shopana.dev/graphql',
@@ -260,6 +263,8 @@ test('the smoke wants a static hit, its 304, a live miss and /__env.js', async (
       }
       if (pathname === '/graphql')
         return Response.json({ data: { __typename: 'Query' } });
+      if (pathname === '/__builder/api/health')
+        return Response.json({ ok: true });
       const path = `/auth/applications/${values.NEXT_PUBLIC_IAM_APPLICATION_ID}`;
       return Response.json({ issuer: `${values.NEXT_PUBLIC_IAM_URL}${path}` });
     };
@@ -294,4 +299,65 @@ test('the smoke wants a static hit, its 304, a live miss and /__env.js', async (
     ),
     /leaked into \/__env\.js/
   );
+});
+
+test('the coordinator secret holds known keys and the token of the theme', () => {
+  const token = 't'.repeat(40);
+  const staticValues = {
+    STATIC_OPERATOR_TOKEN: 'o'.repeat(40),
+    STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
+    SHOPANA_EVENTS_REFRESH_TOKEN: 'refresh',
+  };
+  validateStaticEnv(staticValues, {
+    ...values,
+    STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
+  });
+  assert.throws(
+    () => validateStaticEnv(staticValues, values),
+    /must be the same/
+  );
+  assert.throws(
+    () =>
+      validateStaticEnv(
+        { ...staticValues, OTHER: 'x' },
+        {
+          ...values,
+          STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
+        }
+      ),
+    /Unsupported/
+  );
+  assert.throws(
+    () =>
+      validateStaticEnv(
+        { ...staticValues, STATIC_OPERATOR_TOKEN: 'short' },
+        { ...values, STOREFRONT_STATIC_COORDINATOR_TOKEN: token }
+      ),
+    /32 characters/
+  );
+  assert.throws(
+    () => parseEnv(env.replace(/\nSTATIC_ENV_SECRET=.*/, '')),
+    /STATIC_ENV_SECRET/
+  );
+});
+
+test('a new image asks the coordinator for a full build', async () => {
+  const calls = [];
+  const requestId = await requestFullBuild(
+    'https://pet.shopana.dev',
+    'operator',
+    'ghcr.io/x@sha256:1',
+    async (url, init) => {
+      calls.push({ url: String(url), init });
+      return Response.json({ requestId: 'b-1' }, { status: 202 });
+    }
+  );
+  assert.equal(requestId, 'b-1');
+  assert.equal(calls[0].url, 'https://pet.shopana.dev/__builder/api/builds');
+  assert.equal(calls[0].init.headers.authorization, 'Bearer operator');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    mode: 'full',
+    image: 'ghcr.io/x@sha256:1',
+    reason: 'deploy',
+  });
 });
