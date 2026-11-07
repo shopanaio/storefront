@@ -250,16 +250,22 @@ describe('the index of a static page', () => {
           startsAt: '2026-11-01T00:00:00Z',
           endsAt: '2026-11-08T00:00:00Z',
         },
+        'Collection:c1': {
+          __typename: 'Collection',
+          id: 'c1',
+          activeTo: '2026-11-07T00:00:00Z',
+        },
         ROOT_QUERY: {
           'storefrontPromotions({"kinds":null})': {
-            validUntil: '2026-11-07T00:00:00Z',
+            validUntil: '2026-11-06T12:00:00Z',
           },
         },
       },
       new Date('2026-11-06T00:00:00Z')
     );
+    // Promotions are volatile: neither their objects nor their moments are the page's.
     expect(index).toEqual({
-      entities: ['Product:p1', 'ProductVariant:v1', 'StorefrontPromotion:x'],
+      entities: ['Collection:c1', 'Product:p1', 'ProductVariant:v1'],
       validUntil: '2026-11-07T00:00:00.000Z',
     });
   });

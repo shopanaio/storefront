@@ -2,8 +2,13 @@
  * What a rendered page is made of, read from the Apollo state the document carries (a
  * normalized cache, or the whole responses of the server's queries): the entities of the
  * catalog and the content it shows, for the index of which pages an event changes, and the
- * moment its data changes by itself (a promotion that starts or ends).
+ * moment its data changes by itself (a collection whose window opens or closes).
  */
+import {
+  isTableField,
+  stripVolatileFields,
+  VOLATILE_FIELDS,
+} from './fieldClasses';
 
 /** Types whose change makes a page stale; others (connections, money) live inside them. */
 export const STATIC_ENTITY_TYPENAMES: ReadonlySet<string> = new Set([
@@ -14,19 +19,28 @@ export const STATIC_ENTITY_TYPENAMES: ReadonlySet<string> = new Set([
   'Vendor',
   'OnlineStorePage',
   'OnlineStoreNavigationMenu',
-  'StorefrontPromotion',
   'StorePolicy',
   'Store',
   'MediaImage',
 ]);
 
-/** Fields of a moment the page's data changes at without an event. */
+/**
+ * Fields of a moment the page's data changes at without an event: windows of collections and
+ * other content. Promotions are volatile (`VOLATILE_FIELDS`): no static page has them, their
+ * moments are the browser's (`modules/volatile`).
+ */
 const TIME_FIELDS: ReadonlySet<string> = new Set([
   'validUntil',
   'endsAt',
   'startsAt',
   'activeFrom',
   'activeTo',
+]);
+
+/** Objects of promotions: their moments are no moments of a static page. */
+const PROMOTION_TYPENAMES: ReadonlySet<string> = new Set([
+  'StorefrontPromotion',
+  'StorefrontPromotionPresentation',
 ]);
 
 export interface StaticPageIndex {
@@ -64,6 +78,9 @@ export function indexStaticPage(
     if (isReference(value)) return;
     const record = value as Record<string, unknown>;
     const typename = record.__typename;
+    if (typeof typename === 'string' && PROMOTION_TYPENAMES.has(typename)) {
+      return;
+    }
     if (
       typeof typename === 'string' &&
       STATIC_ENTITY_TYPENAMES.has(typename) &&
@@ -72,6 +89,15 @@ export function indexStaticPage(
       entities.add(`${typename}:${record.id}`);
     }
     for (const [field, fieldValue] of Object.entries(record)) {
+      if (
+        isTableField(
+          VOLATILE_FIELDS,
+          typeof typename === 'string' ? typename : undefined,
+          field
+        )
+      ) {
+        continue;
+      }
       // Arguments are part of a normalized field's name: `validUntil({...})` is still one.
       const name = field.replace(/[({:].*$/, '');
       if (TIME_FIELDS.has(name) && typeof fieldValue === 'string') {
@@ -87,7 +113,8 @@ export function indexStaticPage(
       visit(fieldValue);
     }
   };
-  visit(state);
+  // Promotions and stock are no part of a static page, whatever the state still has.
+  visit(stripVolatileFields(state));
 
   return {
     entities: [...entities].sort(),

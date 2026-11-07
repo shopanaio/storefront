@@ -1,4 +1,5 @@
 import type { ApolloClient } from '@apollo/client';
+import type { StaticFieldAspects } from '../graphql/apollo/fieldAspects';
 import type { StorefrontLocale } from '../modules/localization/core/locale';
 
 /**
@@ -34,6 +35,12 @@ export interface StaticSiteConfig {
   /** Pages a worker renders before it is replaced by a new one (module state, caches). */
   pagesPerWorker?: number;
   publish?: StaticPublishConfig;
+  /**
+   * Aspects of the theme's own fields (`STATIC_FIELD_ASPECTS`): which part of an entity each
+   * field of its fragments shows, so an event of another part renders none of its pages. A
+   * field without an entry is `content`.
+   */
+  fieldAspects?: StaticFieldAspects;
 }
 
 export interface StaticPublishConfig {
@@ -42,8 +49,12 @@ export interface StaticPublishConfig {
    * (`s3://<bucket>/<prefix>`), written over the S3 API.
    */
   store: 'fs' | 's3';
-  /** CDN purge after publishing; `none` while no CDN caches HTML. */
-  cdn: 'none';
+  /**
+   * The CDN in front of the site: `cloudflare` tags every page and its data
+   * (`Cache-Tag: pg:<pageKey>, build:<buildId>`) and purges the tags of what a render changed
+   * (`CLOUDFLARE_PURGE_TOKEN`, `CLOUDFLARE_ZONE_ID`); `none` while no CDN caches HTML.
+   */
+  cdn: 'none' | 'cloudflare';
 }
 
 /** The page families the builder knows: a page type (or a module page) and its addresses. */

@@ -50,3 +50,59 @@ export {
   stripViewerFields,
   VIEWER_FIELDS,
 } from './viewer';
+export {
+  ALL_STATIC_ASPECTS,
+  aspectMask,
+  aspectNames,
+  fieldAspectMask,
+  mergeFieldAspects,
+  STATIC_ASPECTS,
+  STATIC_FIELD_ASPECTS,
+  type StaticAspect,
+  type StaticFieldAspects,
+} from '../graphql/apollo/fieldAspects';
+export {
+  extractPageDeps,
+  STATIC_DEP_KINDS,
+  type ExtractPageDepsOptions,
+  type StaticDepKind,
+  type StaticPageDep,
+  type StaticPageDeps,
+} from './deps';
+export {
+  createEventFeedClient,
+  EventFeedError,
+  refreshTokenSource,
+  type AccessTokenSource,
+  type EventFeedClient,
+  type EventFeedEntry,
+  type EventFeedErrorCode,
+  type EventFeedPage,
+} from './eventFeed';
+export {
+  mapEventToChanges,
+  productPurgeTag,
+  PROMOTION_PURGE_TAGS,
+  STATIC_EVENT_TOPICS,
+  type StaticChange,
+  type StaticEventEnvelope,
+  type StaticOwnPage,
+} from './events';
+export {
+  CORRECTABLE_FIELDS,
+  type FieldTable,
+  fieldName,
+  findFields,
+  findVolatileFields,
+  isTableField,
+  showsFields,
+  stripFields,
+  stripVolatileFields,
+  VOLATILE_FIELDS,
+} from './fieldClasses';
+export {
+  decodeGlobalId,
+  entityKey,
+  rawId,
+  type DecodedGlobalId,
+} from './globalId';
