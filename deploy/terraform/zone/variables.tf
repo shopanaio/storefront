@@ -12,3 +12,12 @@ variable "static_site_buckets" {
   type    = map(string)
   default = {}
 }
+
+# Step B (plans/static-coordinator.ru.md): hostname => { environment, worker }. Empty on step A.
+variable "static_cdn" {
+  type = map(object({
+    environment = string
+    worker      = string
+  }))
+  default = {}
+}

@@ -361,3 +361,66 @@ test('a new image asks the coordinator for a full build', async () => {
     reason: 'deploy',
   });
 });
+
+test('the CDN smoke wants a HIT of a page it has seen, never of auth', async () => {
+  const etag = '"abc"';
+  const staticHtml =
+    '<html><head><script src="/__env.js"></script><script>window.__shopanaStatic={}</script></head></html>';
+  let pages = 0;
+  const fetcher = async (url, init = {}) => {
+    const { pathname } = new URL(url);
+    if (pathname === '/__env.js')
+      return new Response(
+        `globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"};`,
+        { headers: { 'cache-control': 'no-cache' } }
+      );
+    if (pathname === '/') {
+      if (init.headers?.['if-none-match'] === etag)
+        return new Response(null, { status: 304 });
+      pages += 1;
+      return new Response(staticHtml, {
+        headers: {
+          'content-type': 'text/html',
+          'x-shopana-static': 'hit',
+          'cache-control': 'public, max-age=0, must-revalidate',
+          'cf-cache-status': pages > 1 ? 'HIT' : 'MISS',
+          etag,
+        },
+      });
+    }
+    if (pathname === '/auth/login')
+      return new Response(null, {
+        status: 302,
+        headers: { 'cf-cache-status': 'DYNAMIC' },
+      });
+    if (pathname.startsWith('/products/smoke-'))
+      return new Response('<script src="/__env.js"></script>', {
+        status: 404,
+        headers: {
+          'x-shopana-static': 'miss',
+          'cache-control': 'private, no-store',
+        },
+      });
+    if (pathname === '/graphql')
+      return Response.json({ data: { __typename: 'Query' } });
+    if (pathname === '/__builder/api/health')
+      return Response.json({ ok: true });
+    const path = `/auth/applications/${values.NEXT_PUBLIC_IAM_APPLICATION_ID}`;
+    return Response.json({ issuer: `${values.NEXT_PUBLIC_IAM_URL}${path}` });
+  };
+  await smoke(values, fetcher, { cdn: true });
+  pages = -10;
+  await assert.rejects(
+    smoke(values, fetcher, { cdn: true }),
+    /cf-cache-status/
+  );
+});
+
+test('behind the CDN worker the theme may trust two hops', () => {
+  const twoHops = { ...values, STOREFRONT_TRUSTED_PROXY_HOPS: '2' };
+  assert.throws(
+    () => validateRuntime(twoHops, outputs),
+    /one trusted proxy hop/
+  );
+  validateRuntime(twoHops, outputs, { cdn: true });
+});

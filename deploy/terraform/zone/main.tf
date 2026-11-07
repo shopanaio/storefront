@@ -5,6 +5,7 @@ module "frontend_edge" {
   challenge_frontend  = var.challenge_frontend
   account_id          = var.cloudflare_account_id
   static_site_buckets = var.static_site_buckets
+  static_cdn          = var.static_cdn
 }
 
 output "static_site" { value = module.frontend_edge.static_site }

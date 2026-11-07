@@ -48,6 +48,8 @@ export function parseEnv(source) {
     'SHOPANA_EVENTS_TOKEN_URL',
     'SHOPANA_EVENTS_CLIENT_ID',
     'CLOUDFLARE_ZONE_ID',
+    // Step B: `on` when the CDN worker answers the pages (deploy/worker, Terraform static_cdn).
+    'STATIC_CDN',
   ];
   const allowed = new Set([...required, ...optional]);
   for (const line of source.split(/\r?\n/)) {
@@ -79,6 +81,8 @@ export function parseEnv(source) {
         'STATIC_STORE needs STATIC_ENDPOINT, the https origin of the S3 API.'
       );
   }
+  if (values.STATIC_CDN && values.STATIC_CDN !== 'on')
+    fail('STATIC_CDN is on or empty.');
   if (!/@sha256:[a-f0-9]{64}$/.test(values.THEME_IMAGE)) {
     fail('THEME_IMAGE must be an immutable sha256 digest.');
   }
@@ -153,7 +157,7 @@ export async function requestFullBuild(
   return (await response.json()).requestId;
 }
 
-export function validateRuntime(values, outputs) {
+export function validateRuntime(values, outputs, { cdn = false } = {}) {
   if (!values || Array.isArray(values) || typeof values !== 'object')
     fail('Runtime settings must be an object.');
   for (const [key, value] of Object.entries(values)) {
@@ -184,9 +188,15 @@ export function validateRuntime(values, outputs) {
     !/^https?:\/\/[^/\s]+\/\S*$/.test(values.STOREFRONT_SERVER_GRAPHQL_URL)
   )
     fail('STOREFRONT_SERVER_GRAPHQL_URL must be an absolute HTTP URL.');
-  if (values.STOREFRONT_TRUSTED_PROXY_HOPS !== '1')
+  // Behind the CDN worker (step B) a request may reach the node through one hop more.
+  if (
+    values.STOREFRONT_TRUSTED_PROXY_HOPS !== '1' &&
+    !(cdn && values.STOREFRONT_TRUSTED_PROXY_HOPS === '2')
+  )
     fail(
-      'The theme requires one trusted proxy hop for its direct Tunnel ingress.'
+      cdn
+        ? 'Behind the CDN worker the theme trusts one or two proxy hops (measured on stage).'
+        : 'The theme requires one trusted proxy hop for its direct Tunnel ingress.'
     );
   if (values.NEXT_PUBLIC_IAM_URL) {
     for (const key of [
@@ -395,7 +405,7 @@ async function main() {
       terraform('output', '-raw', name).trim(),
     ])
   );
-  validateRuntime(values, outputs);
+  validateRuntime(values, outputs, { cdn: settings.STATIC_CDN === 'on' });
   if (
     settings.STATIC_STORE &&
     !(
@@ -407,7 +417,7 @@ async function main() {
       'STATIC_STORE needs the read key of its bucket in server-env.json (Terraform output static_site_read_keys of zone/).'
     );
   if (action === 'smoke') {
-    await smoke(values);
+    await smoke(values, fetch, { cdn: settings.STATIC_CDN === 'on' });
     return;
   }
   if (
@@ -651,7 +661,7 @@ async function main() {
         )
       ) {
         console.log(summary);
-        await smoke(values);
+        await smoke(values, fetch, { cdn: settings.STATIC_CDN === 'on' });
         if (previousImage !== settings.THEME_IMAGE) {
           const requestId = await requestFullBuild(
             values.NEXT_PUBLIC_APP_URL,
@@ -678,7 +688,7 @@ async function main() {
  * one rendered live (`miss`, no-store), public settings from `/__env.js` only, no private value
  * in either, same-origin GraphQL and IAM discovery.
  */
-export async function smoke(values, fetcher = fetch) {
+export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
   const get = (path, options = {}) =>
     fetcher(new URL(path, values.NEXT_PUBLIC_APP_URL), {
       ...options,
@@ -742,6 +752,19 @@ export async function smoke(values, fetcher = fetch) {
   const again = await get('/', { headers: { 'if-none-match': etag } });
   if (again.status !== 304)
     fail(`If-None-Match must answer 304 (HTTP ${again.status}).`);
+  if (cdn) {
+    // Step B: the second load of a page comes from the cache of the CDN, auth never does.
+    const cached = await get('/');
+    await cached.body?.cancel();
+    if (cached.headers.get('cf-cache-status') !== 'HIT')
+      fail(
+        `The CDN must answer a page it has seen (cf-cache-status: ${cached.headers.get('cf-cache-status')}).`
+      );
+    const login = await get('/auth/login');
+    await login.body?.cancel();
+    if (login.headers.get('cf-cache-status') === 'HIT')
+      fail('/auth/login must never come from the cache of the CDN.');
+  }
 
   const missing = await get(`/products/smoke-${Date.now().toString(36)}`);
   if (missing.headers.get('x-shopana-static') !== 'miss')

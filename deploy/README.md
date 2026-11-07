@@ -375,6 +375,26 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 - Состояние: `GET /__builder/api/status` (очередь, dirty, курсор и его отставание, аренды,
   `currentImage`, последняя полная сборка, очередь purge, `dead_jobs`).
 
+### Шаг B: Worker и кеш CDN
+
+Не включён: включается после недели шага A на stage (`plans/static-coordinator.ru.md`, этап 7).
+
+- `deploy/worker/` — Worker статики: HTML и `/__static/data/*` из R2 через Cache API
+  (`s-maxage=600, stale-while-revalidate=3600`, `Cache-Tag` из метаданных объекта), промах — на
+  ноду через Tunnel, недоступная нода — семейная оболочка или `404.html`, `/auth/*`, `/__env.js`,
+  `/__builder/*` — на ноду без кеша. Деплой `wrangler deploy --env <stage|production>` из
+  `deploy/worker`, секрет `wrangler secret put COORDINATOR_TOKEN --env <env>` (internal token).
+  Тесты: `npx vitest run --root deploy/worker`.
+- Terraform `zone`: `static_cdn = { "<hostname>" = { environment, worker } }` создаёт маршрут
+  Worker-а и маршруты без Worker-а для ассетов, GraphQL, auth и координатора, custom domain
+  бакета `static.<hostname>` и origin rule для `/assets/*` на него, Cache Rules для HTML и
+  гостевого `GET /graphql` по `Cache-Control` origin.
+- `publish.cdn: 'cloudflare'` в `static.config.ts`: builder пишет теги в метаданные, копирует
+  `public/` в бакет, job чистит `pg:<pageKey>` изменившихся страниц; `CLOUDFLARE_PURGE_TOKEN` и
+  `CLOUDFLARE_ZONE_ID` у job и у координатора (очередь purge `sf-*`).
+- `STATIC_CDN=on` в `deploy.env`: `smoke` ждёт `cf-cache-status: HIT` второй загрузки страницы и
+  не-`HIT` у `/auth/login`; `STOREFRONT_TRUSTED_PROXY_HOPS` может стать `2` (проверить на stage).
+
 ## Secrets и запуск stack
 
 Используйте `scripts/deploy-theme.mjs deploy` из раздела выше: он проверяет совместимость

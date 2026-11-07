@@ -76,3 +76,32 @@ run "static_site_bucket_needs_account" {
   }
   expect_failures = [var.static_site_buckets]
 }
+
+run "step_b_cdn_worker_assets_and_cache_rules" {
+  command = plan
+  variables {
+    account_id          = "22222222222222222222222222222222"
+    static_site_buckets = { stage = "shopana-storefront-static-stage" }
+    static_cdn          = { "pet.shopana.dev" = { environment = "stage", worker = "storefront-static-stage" } }
+  }
+  override_module {
+    target  = module.r2_permission_groups
+    outputs = { read = "r2-read", write = "r2-write" }
+  }
+  assert {
+    condition     = cloudflare_workers_route.static_site["pet.shopana.dev"].pattern == "pet.shopana.dev/*" && cloudflare_workers_route.static_site["pet.shopana.dev"].script == "storefront-static-stage"
+    error_message = "The worker answers the pages of the hostname."
+  }
+  assert {
+    condition     = contains(keys(cloudflare_workers_route.static_bypass), "pet.shopana.dev/assets/*") && contains(keys(cloudflare_workers_route.static_bypass), "pet.shopana.dev/auth/*") && contains(keys(cloudflare_workers_route.static_bypass), "pet.shopana.dev/__builder/*") && cloudflare_workers_route.static_bypass["pet.shopana.dev/graphql*"].script == null
+    error_message = "Assets, GraphQL, auth and the coordinator never run the worker."
+  }
+  assert {
+    condition     = cloudflare_r2_custom_domain.static_assets["pet.shopana.dev"].domain == "static.pet.shopana.dev" && cloudflare_ruleset.origin[0].rules[0].action_parameters.origin.host == "static.pet.shopana.dev"
+    error_message = "Assets come from the bucket's custom domain."
+  }
+  assert {
+    condition     = length(cloudflare_ruleset.cache.rules) == 5 && cloudflare_ruleset.cache.rules[4].ref == "static_graphql_get" && strcontains(cloudflare_ruleset.cache.rules[4].expression, "authorization") && cloudflare_ruleset.cache.rules[3].action_parameters.edge_ttl.mode == "respect_origin"
+    error_message = "HTML and guest GET /graphql follow the origin's Cache-Control; the bypass stays for the rest."
+  }
+}

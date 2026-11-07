@@ -38,3 +38,18 @@ variable "static_site_location" {
   default     = "eeur"
   description = "R2 location hint of the static site buckets: next to the Swarm nodes."
 }
+
+# Step B of plans/static-coordinator.ru.md: the CDN in front of the node. Per hostname: the
+# environment of its bucket (a key of static_site_buckets) and the name of its worker
+# (deploy/worker, `wrangler deploy --env <environment>`). Empty: step A, HTML bypasses the CDN.
+variable "static_cdn" {
+  type = map(object({
+    environment = string
+    worker      = string
+  }))
+  default = {}
+  validation {
+    condition     = alltrue([for hostname, cdn in var.static_cdn : contains(keys(var.static_site_buckets), cdn.environment)])
+    error_message = "Each static_cdn hostname needs the bucket of its environment in static_site_buckets."
+  }
+}
