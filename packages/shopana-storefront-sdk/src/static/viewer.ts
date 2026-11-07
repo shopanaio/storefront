@@ -41,22 +41,32 @@ export function stripViewerFields<
   return stripFields(state, VIEWER_FIELDS);
 }
 
+/**
+ * Viewer fields asked for again with the queries that show them: the viewer's loyalty comes
+ * with its own light query (`SdkViewerLoyalty`), so a query that shows only that is not asked
+ * again whole.
+ */
+export const VIEWER_REFETCH_FIELDS: FieldTable = {
+  ProductComparisonColumn: VIEWER_FIELDS.ProductComparisonColumn,
+  '*': VIEWER_FIELDS['*'],
+};
+
 /** Whether a query's data shows a field of the viewer, at any depth. */
 export function showsViewerFields(value: unknown): boolean {
   return showsFields(value, VIEWER_FIELDS);
 }
 
 /**
- * Asks the API again for the queries on screen that show the viewer's fields: with the session
- * or the visitor the browser has now, their values are the buyer's (loyalty points by tier,
- * votes, subscriptions). What the page shows stays until the answers come, so nothing
- * flashes back to a skeleton. Resolves with the number of queries asked again.
+ * Asks the API again for the queries on screen that show the viewer's fields other than
+ * loyalty (votes, subscriptions, saved comparisons): with the session or the visitor the
+ * browser has now, their values are the buyer's. What the page shows stays until the answers
+ * come, so nothing flashes back to a skeleton. Resolves with the number of queries asked again.
  */
 export async function refetchViewerQueries(
   client: ApolloClient
 ): Promise<number> {
   const queries = [...client.getObservableQueries('active')].filter((query) =>
-    showsViewerFields(query.getCurrentResult().data)
+    showsFields(query.getCurrentResult().data, VIEWER_REFETCH_FIELDS)
   );
   await Promise.all(queries.map((query) => query.refetch().catch(() => null)));
   return queries.length;

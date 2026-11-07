@@ -323,30 +323,41 @@ describe("the viewer's fields", () => {
     ]);
   });
 
-  it('asks again only the queries that show them', async () => {
+  it('asks again only the queries that show them, loyalty not', async () => {
     const { client, calls } = clientOf((operation) =>
-      operation === 'Loyalty'
+      operation === 'Votes'
         ? {
-            product: {
-              __typename: 'Product',
-              id: 'p',
-              loyalty: {
-                __typename: 'ProductLoyaltyPresentation',
-                revision: 1,
-              },
+            review: {
+              __typename: 'Review',
+              id: 'r',
+              viewerEngagement: { __typename: 'Engagement', voted: false },
             },
           }
-        : { store: { __typename: 'Store', id: 's', name: 'Shop' } }
+        : operation === 'Loyalty'
+          ? {
+              product: {
+                __typename: 'Product',
+                id: 'p',
+                loyalty: {
+                  __typename: 'ProductLoyaltyPresentation',
+                  revision: 1,
+                },
+              },
+            }
+          : { store: { __typename: 'Store', id: 's', name: 'Shop' } }
     );
     const watch = (query: string) =>
       client.watchQuery({ query: parse(query) }).subscribe(() => {});
-    const a = watch('query Loyalty { product { id loyalty { revision } } }');
+    const a = watch('query Votes { review { id viewerEngagement { voted } } }');
     const b = watch('query Store { store { id name } }');
-    await vi.waitFor(() => expect(calls).toHaveLength(2));
+    // The viewer's loyalty comes with its own light query (`SdkViewerLoyalty`).
+    const c = watch('query Loyalty { product { id loyalty { revision } } }');
+    await vi.waitFor(() => expect(calls).toHaveLength(3));
     expect(await refetchViewerQueries(client)).toBe(1);
-    expect(calls).toEqual(['Loyalty', 'Store', 'Loyalty']);
+    expect(calls).toEqual(['Votes', 'Store', 'Loyalty', 'Votes']);
     a.unsubscribe();
     b.unsubscribe();
+    c.unsubscribe();
   });
 });
 

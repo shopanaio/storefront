@@ -102,6 +102,11 @@ export interface StaticDocumentInfo {
    * asks the static site for the data of these only (never of a cart, an account, a search).
    */
   dataPageTypes: string[];
+  /**
+   * Prices come with the fast data too: the HTML of a static site in an image changes only
+   * with the image, a bucket's within minutes of a change of a price.
+   */
+  volatilePrices?: boolean;
 }
 
 export const STATIC_DOCUMENT_GLOBAL = '__shopanaStatic';

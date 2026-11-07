@@ -1,0 +1,132 @@
+# Fast data: what changes without events (stock, promotions) and what a static page shows with
+# its last known value (prices, availability), asked for by the browser after hydration. Guest
+# queries are persisted documents the gateway caches (`GET`, `s-maxage`); the viewer's goes as
+# a `POST` with the session. Their selections are fixed by the SDK: themes do not add fields.
+
+# What a card of a listing shows of its variant.
+fragment SdkVolatileCardFields on ProductVariant {
+  id
+  availableForSale
+  price @include(if: $withPrice) {
+    amount
+    currencyCode
+  }
+  compareAtPrice @include(if: $withPrice) {
+    amount
+    currencyCode
+  }
+  product {
+    id
+  }
+}
+
+# What the page of a product shows of its selected variant.
+fragment SdkVolatileVariantFields on ProductVariant {
+  id
+  availableForSale
+  currentlyNotInStock
+  quantityAvailable
+  price @include(if: $withPrice) {
+    amount
+    currencyCode
+  }
+  compareAtPrice @include(if: $withPrice) {
+    amount
+    currencyCode
+  }
+  product {
+    id
+    availableForSale
+  }
+  promotions {
+    validUntil
+    revision
+    promotions {
+      key
+    }
+  }
+}
+
+# Listings: only what a card shows. Not localized: the language is no part of its key.
+query SdkVolatileCards($ids: [ID!]!, $withPrice: Boolean!) {
+  nodes(ids: $ids) {
+    ... on ProductVariant {
+      ...SdkVolatileCardFields
+    }
+  }
+}
+
+# The page of a product: the selected variant whole, its siblings' availability for the swatches.
+query SdkVolatileVariant($id: ID!, $siblings: [ID!]!, $withPrice: Boolean!) {
+  variant: node(id: $id) {
+    ... on ProductVariant {
+      ...SdkVolatileVariantFields
+    }
+  }
+  siblings: nodes(ids: $siblings) {
+    ... on ProductVariant {
+      id
+      availableForSale
+    }
+  }
+}
+
+fragment SdkLoyaltyOpportunityCopy on LoyaltyOpportunityCopy {
+  headline
+  description
+  badge
+  accessibilityLabel
+  terms
+}
+
+fragment SdkLoyaltyOpportunity on LoyaltyOpportunity {
+  key
+  type
+  state
+  remainingUses
+  validUntil
+  reward {
+    kind
+    copy {
+      ...SdkLoyaltyOpportunityCopy
+    }
+  }
+  presentation {
+    ...SdkLoyaltyOpportunityCopy
+  }
+}
+
+# The loyalty of a product or a variant as the SDK asks for it: a theme spreads this fragment,
+# so the viewer's answer replaces the guest's field for field.
+fragment SdkLoyaltyPresentation on ProductLoyaltyPresentation {
+  primaryOpportunity {
+    ...SdkLoyaltyOpportunity
+  }
+  purchaseOpportunity {
+    ...SdkLoyaltyOpportunity
+  }
+  reviewOpportunity {
+    ...SdkLoyaltyOpportunity
+  }
+  evaluatedAt
+  validUntil
+  revision
+}
+
+# The viewer's loyalty (points by tier, state, remaining uses): with the session only.
+query SdkViewerLoyalty($ids: [ID!]!) {
+  nodes(ids: $ids) {
+    ... on ProductVariant {
+      id
+      loyalty {
+        ...SdkLoyaltyPresentation
+      }
+    }
+    ... on Product {
+      id
+      loyalty {
+        ...SdkLoyaltyPresentation
+      }
+    }
+  }
+}

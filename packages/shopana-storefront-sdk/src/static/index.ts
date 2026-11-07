@@ -47,6 +47,7 @@ export {
   isViewerField,
   refetchViewerQueries,
   showsViewerFields,
+  VIEWER_REFETCH_FIELDS,
   stripViewerFields,
   VIEWER_FIELDS,
 } from './viewer';
