@@ -24583,7 +24583,21 @@ export type SdkLoyaltyOpportunityFragment = {
       }
     | {
         readonly __typename: 'LoyaltyMoneyRewardPresentation';
+        readonly accuracy: LoyaltyValueAccuracy;
         readonly kind: LoyaltyRewardKind;
+        readonly amount: {
+          readonly __typename: 'LoyaltyMoneyRange';
+          readonly minimum: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+          readonly maximum: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          };
+        };
         readonly copy: {
           readonly __typename: 'LoyaltyOpportunityCopy';
           readonly headline: string;
@@ -24607,7 +24621,13 @@ export type SdkLoyaltyOpportunityFragment = {
       }
     | {
         readonly __typename: 'LoyaltyPointsRewardPresentation';
+        readonly accuracy: LoyaltyValueAccuracy;
         readonly kind: LoyaltyRewardKind;
+        readonly points: {
+          readonly __typename: 'LoyaltyUnsignedRange';
+          readonly minimum: any;
+          readonly maximum: any;
+        };
         readonly copy: {
           readonly __typename: 'LoyaltyOpportunityCopy';
           readonly headline: string;
@@ -24690,7 +24710,21 @@ export type SdkLoyaltyPresentationFragment = {
         }
       | {
           readonly __typename: 'LoyaltyMoneyRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
           readonly kind: LoyaltyRewardKind;
+          readonly amount: {
+            readonly __typename: 'LoyaltyMoneyRange';
+            readonly minimum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+            readonly maximum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+          };
           readonly copy: {
             readonly __typename: 'LoyaltyOpportunityCopy';
             readonly headline: string;
@@ -24714,7 +24748,13 @@ export type SdkLoyaltyPresentationFragment = {
         }
       | {
           readonly __typename: 'LoyaltyPointsRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
           readonly kind: LoyaltyRewardKind;
+          readonly points: {
+            readonly __typename: 'LoyaltyUnsignedRange';
+            readonly minimum: any;
+            readonly maximum: any;
+          };
           readonly copy: {
             readonly __typename: 'LoyaltyOpportunityCopy';
             readonly headline: string;
@@ -24791,7 +24831,21 @@ export type SdkLoyaltyPresentationFragment = {
         }
       | {
           readonly __typename: 'LoyaltyMoneyRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
           readonly kind: LoyaltyRewardKind;
+          readonly amount: {
+            readonly __typename: 'LoyaltyMoneyRange';
+            readonly minimum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+            readonly maximum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+          };
           readonly copy: {
             readonly __typename: 'LoyaltyOpportunityCopy';
             readonly headline: string;
@@ -24815,7 +24869,13 @@ export type SdkLoyaltyPresentationFragment = {
         }
       | {
           readonly __typename: 'LoyaltyPointsRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
           readonly kind: LoyaltyRewardKind;
+          readonly points: {
+            readonly __typename: 'LoyaltyUnsignedRange';
+            readonly minimum: any;
+            readonly maximum: any;
+          };
           readonly copy: {
             readonly __typename: 'LoyaltyOpportunityCopy';
             readonly headline: string;
@@ -24892,7 +24952,21 @@ export type SdkLoyaltyPresentationFragment = {
         }
       | {
           readonly __typename: 'LoyaltyMoneyRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
           readonly kind: LoyaltyRewardKind;
+          readonly amount: {
+            readonly __typename: 'LoyaltyMoneyRange';
+            readonly minimum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+            readonly maximum: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            };
+          };
           readonly copy: {
             readonly __typename: 'LoyaltyOpportunityCopy';
             readonly headline: string;
@@ -24916,7 +24990,13 @@ export type SdkLoyaltyPresentationFragment = {
         }
       | {
           readonly __typename: 'LoyaltyPointsRewardPresentation';
+          readonly accuracy: LoyaltyValueAccuracy;
           readonly kind: LoyaltyRewardKind;
+          readonly points: {
+            readonly __typename: 'LoyaltyUnsignedRange';
+            readonly minimum: any;
+            readonly maximum: any;
+          };
           readonly copy: {
             readonly __typename: 'LoyaltyOpportunityCopy';
             readonly headline: string;
@@ -25046,7 +25126,21 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25070,7 +25164,13 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25147,7 +25247,21 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25171,7 +25285,13 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25248,7 +25368,21 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25272,7 +25406,13 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25368,7 +25508,21 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25392,7 +25546,13 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25469,7 +25629,21 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25493,7 +25667,13 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25570,7 +25750,21 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyMoneyRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly amount: {
+                    readonly __typename: 'LoyaltyMoneyRange';
+                    readonly minimum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                    readonly maximum: {
+                      readonly __typename: 'Money';
+                      readonly amount: any;
+                      readonly currencyCode: CurrencyCode;
+                    };
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -25594,7 +25788,13 @@ export type SdkViewerLoyaltyQuery = {
                 }
               | {
                   readonly __typename: 'LoyaltyPointsRewardPresentation';
+                  readonly accuracy: LoyaltyValueAccuracy;
                   readonly kind: LoyaltyRewardKind;
+                  readonly points: {
+                    readonly __typename: 'LoyaltyUnsignedRange';
+                    readonly minimum: any;
+                    readonly maximum: any;
+                  };
                   readonly copy: {
                     readonly __typename: 'LoyaltyOpportunityCopy';
                     readonly headline: string;
@@ -31355,6 +31555,110 @@ export const SdkLoyaltyOpportunityFragmentDoc = {
                     ],
                   },
                 },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyPointsRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyMoneyRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -31510,6 +31814,110 @@ export const SdkLoyaltyPresentationFragmentDoc = {
                           kind: 'Name',
                           value: 'SdkLoyaltyOpportunityCopy',
                         },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyPointsRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyMoneyRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
                       },
                     ],
                   },
@@ -58837,6 +59245,110 @@ export const SdkViewerLoyaltyDocument = {
                           kind: 'Name',
                           value: 'SdkLoyaltyOpportunityCopy',
                         },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyPointsRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: {
+                      kind: 'Name',
+                      value: 'LoyaltyMoneyRewardPresentation',
+                    },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'minimum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'maximum' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'accuracy' },
                       },
                     ],
                   },

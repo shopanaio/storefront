@@ -42,7 +42,7 @@ export function useVolatileCard(
   const fragment = useFragment({
     fragment: SdkVolatileCardFieldsFragmentDoc,
     from: variantId ? { __typename: 'ProductVariant', id: variantId } : null,
-    variables: { withPrice: true },
+    variables: { withPrice: batcher?.withPrice ?? false },
   });
   const data = fragment.data as
     | Partial<SdkVolatileCardFieldsFragment>
@@ -96,7 +96,7 @@ export function useVolatileVariant(
   const fragment = useFragment({
     fragment: SdkVolatileVariantFieldsFragmentDoc,
     from: variantId ? { __typename: 'ProductVariant', id: variantId } : null,
-    variables: { withPrice: false },
+    variables: { withPrice: batcher?.withPrice ?? false },
   });
   const ready = Boolean(variantId) && fragment.complete;
   const data = fragment.data as

@@ -99,10 +99,14 @@ export class VolatileBatcher {
   private readonly setTimer: (run: () => void, delay: number) => unknown;
   private readonly clearTimer: (timer: unknown) => void;
 
+  /** Prices come with the fast data (`withPrice` of its queries). */
+  readonly withPrice: boolean;
+
   constructor(
     private readonly client: ApolloClient,
     private readonly options: VolatileBatcherOptions
   ) {
+    this.withPrice = options.withPrice;
     this.now = options.now ?? Date.now;
     this.schedule =
       options.schedule ??

@@ -90,14 +90,35 @@ fragment SdkLoyaltyOpportunity on LoyaltyOpportunity {
     copy {
       ...SdkLoyaltyOpportunityCopy
     }
+    ... on LoyaltyPointsRewardPresentation {
+      points {
+        minimum
+        maximum
+      }
+      accuracy
+    }
+    ... on LoyaltyMoneyRewardPresentation {
+      amount {
+        minimum {
+          amount
+          currencyCode
+        }
+        maximum {
+          amount
+          currencyCode
+        }
+      }
+      accuracy
+    }
   }
   presentation {
     ...SdkLoyaltyOpportunityCopy
   }
 }
 
-# The loyalty of a product or a variant as the SDK asks for it: a theme spreads this fragment,
-# so the viewer's answer replaces the guest's field for field.
+# The loyalty of a product or a variant as the SDK asks for it: a superset of what a theme
+# shows (its fragments select a part of it, or spread it), so the viewer's answer replaces the
+# guest's values field for field.
 fragment SdkLoyaltyPresentation on ProductLoyaltyPresentation {
   primaryOpportunity {
     ...SdkLoyaltyOpportunity

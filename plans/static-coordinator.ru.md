@@ -5,9 +5,8 @@
 вне HTML, рендер в GitHub Actions, Worker и кеш CDN (шаг B), кеш GraphQL `GET`. Заменяет прежние
 отдельные планы инвалидации и быстрых данных и разделы основного плана о шаге B и слое 2.
 
-**Состояние.** Этапы 1, 2 (часть SDK), 4, 5, 6 (часть этого репозитория) и 7 (в коде, без деплоя)
-реализованы в `phl/static-pages-generation`; изменения темы (этап 2, `static-site.yml` этапа 6) не
-сделаны — раздел «Реализация». Этап 3 (internal) считается готовым, этап 0 не выполнялся:
+**Состояние.** Этапы 1, 2, 4, 5, 6 и 7 (в коде, без деплоя) реализованы в ветках
+`phl/static-pages-generation` этого репозитория и темы — раздел «Реализация». Этап 3 (internal) считается готовым, этап 0 не выполнялся:
 параметры вынесены в env со значениями по умолчанию из плана.
 
 Все оптимизации проектируются и делаются сразу, а не «сначала просто, потом быстро»: классы полей,
@@ -717,9 +716,10 @@ query SdkViewerLoyalty($ids: [ID!]!) {
 }
 ```
 
-`SdkLoyaltyPresentation` (primary, purchase, review opportunity со всеми полями, `validUntil`,
-`revision`) тема спредит в своих фрагментах вместо своей выборки `loyalty`: личный ответ заменяет
-гостевой поле в поле. Батч берёт id вариантов и товаров, зарегистрированных карточками и
+`SdkLoyaltyPresentation` (primary, purchase, review opportunity со всеми полями, награды баллами и
+деньгами, `validUntil`, `revision`) — надмножество того, что показывает тема: объекты лояльности без
+id сливаются в кеше, и личный ответ заменяет гостевые значения поле в поле, даже если фрагменты темы
+выбирают только часть. Батч берёт id вариантов и товаров, зарегистрированных карточками и
 страницей товара.
 
 1. HTML гостевой: базовые баллы из снимка.
@@ -1208,12 +1208,18 @@ Playwright — отдельно, по разрешению.
 - `useViewerRefresh` — личный батч и перезапрос только запросов с `VIEWER_REFETCH_FIELDS`.
 - `useValidUntilRefetch` остаётся в `useStorefrontPromotions` (общий набор промо), таймер промо
   варианта — в провайдере.
-- **Не сделано (тема):** репозиторий `storefront-brand-bite-and-crunch` не был доступен сессии
-  реализации. Остаются пункты 1–5 раздела «Тема»: убрать `quantityAvailable` и `promotions` из
-  фрагментов (до этого builder отказывается публиковать такие страницы —
-  `StaticVolatileFieldsError`), регистрация id и `useVolatileVariant`/`useVolatileCard` в
-  карточке, секции товара и колонках сравнения, `SdkLoyaltyPresentation` во фрагментах `loyalty`,
-  скелетон промо, `fieldAspects`, тест покрытия аспектов полями фрагментов.
+- Хуки читают фрагменты с `withPrice` батчера: полнота фрагмента совпадает с тем, что приходит.
+- **Тема** (`storefront-brand-bite-and-crunch`, `3688c6e`): `quantityAvailable` и `promotions` убраны
+  из `ProductPageVariantFragment` и фрагмента карточки; `useVariantFastData` (на `useVolatileVariant`)
+  даёт странице товара предел количества при `DENY` и промо после гидратации, `ProductPromotions`
+  показывает до ответа скелетон одной строки (без JS скрыт `<noscript>`-стилем); карточки листинга и
+  колонки сравнения регистрируют варианты (`useVolatileCard`), колонки берут из ответа наличие и
+  цену. Наличие и цены самой страницы и карточек ответ поправляет в кеше, их запросы перерисовываются
+  сами. `fieldAspects` в `static.config.ts` (сравнение, «часто покупают вместе», комплектация,
+  `inventoryItem`, элементы комплекта). Тест `src/staticFields.test.ts`: ни один документ темы не
+  выбирает летучие поля, каждое поле цены, наличия и медиа сущности имеет свой аспект (он нашёл
+  `featuredMedia` категорий и коллекций без аспекта — добавлено в SDK). `HomeSlideshowProductCard`
+  с жёстким `isAvailable: true` нигде не использовался — удалён.
 
 **Этап 4 — builder и `static run`** (`packages/shopana-storefront-runtime/src/static/`).
 
@@ -1237,9 +1243,14 @@ dispatch стартует с первого задания после пусто
 метка ноды `shopana.static`, healthcheck), `deploy/runtime/start-static.cjs` и `static-env.json`,
 internal token в `server-env.json`, `/__builder/*` в Tunnel (`static_coordinator_origin`) и в
 исключениях Cache Rules/challenge, `deploy-theme.mjs` (секрет, ожидание `1/1`, smoke health,
-полная сборка после нового образа), `/data` в Dockerfile. **Не сделано (тема):**
-`.github/workflows/static-site.yml` вместо `static-full-build.yml`; текст workflow — раздел
-«Workflow `static-site.yml`» выше.
+полная сборка после нового образа), `/data` в Dockerfile. В теме (`545cd33`)
+`.github/workflows/static-site.yml` заменил `static-full-build.yml`: `docker run` образа из входа
+или `currentImage` координатора, `static run --store … --coordinator …`; `full` и `paths` сначала
+регистрируются `POST /builds`. Все значения — из переменных и секретов окружения GitHub
+(`COORDINATOR_URL`, `STOREFRONT_PUBLIC_URL`, `NEXT_PUBLIC_GRAPHQL_URL`, `NEXT_PUBLIC_API_KEY`,
+`STOREFRONT_STATIC_STORE`, `STOREFRONT_STATIC_S3_ENDPOINT`, `CLOUDFLARE_ZONE_ID`; секреты
+`STOREFRONT_SERVER_GRAPHQL_URL`, `STOREFRONT_PRIVATE_TOKEN`, ключ записи бакета,
+`CLOUDFLARE_PURGE_TOKEN`), в файле workflow их нет. Ночью — полная сборка stage.
 
 **Этап 7 — шаг B в коде:** `deploy/worker/` (Worker, `wrangler.toml`, тесты на Node с фейками
 R2 и Cache API вместо miniflare: его нет в зависимостях workspace), `static_cdn` в Terraform
@@ -1258,4 +1269,6 @@ dispatch, цикл ленты, очередь purge, снимки, GitHub App и
 `frontend-edge` с mock provider. `scripts/deploy-theme.test.mjs`.
 
 **Не проверено:** всё, что требует stage, internal и Cloudflare (этап 0, «Готово, когда» этапов 6
-и 7), e2e и браузер, рендер реальной темы.
+и 7), e2e и браузер, рендер реальной темы (`static build` против mock-сервера), запуск
+`static-site.yml`. Образ темы должен быть собран с ревизией фреймворка, где есть `static run`:
+`build-theme.yml` закрепляет свою ревизию `shopanaio/storefront`.
