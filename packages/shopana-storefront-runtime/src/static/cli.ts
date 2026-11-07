@@ -13,6 +13,7 @@
  *   renders, publishes what changed, returns the results.
  * - `static run --events <file.ndjson>`: the pages events change in a built site, rendered
  *   without a coordinator (the mapper and the aspects on real snapshots).
+ * - `static coordinator [--port 3100] [--data <dir>]`: the coordinator (`theme-static`).
  *
  * Stores are `fs:<dir>` or `s3://<bucket>/<prefix>`. Requests go to the API of the theme's
  * environment (`STOREFRONT_SERVER_GRAPHQL_URL`), as a guest.
@@ -122,7 +123,7 @@ export interface StaticCommandContext {
 
 const USAGE =
   'Usage: storefront-runtime static <build | render <path>... | publish --from <store> --to <store> | ' +
-  'run (--coordinator <url> | --events <file>)> ' +
+  'run (--coordinator <url> | --events <file>) | coordinator> ' +
   '[--out <dir>] [--store <fs:dir | s3://bucket/prefix>] [--concurrency <n>] [--budget 35m]';
 
 /** A duration of the CLI: `35m`, `90s`, `1h`, or milliseconds. */
@@ -234,6 +235,16 @@ export async function runStaticCommand(
           : undefined,
       });
       return run.failed > 0 ? 1 : 0;
+    }
+    case 'coordinator': {
+      const { startStaticCoordinator } = await import('./coordinator/main');
+      const port = parsed.options.get('port');
+      await startStaticCoordinator({
+        env: context.env,
+        port: port ? Number(port) : undefined,
+        dataDir: parsed.options.get('data'),
+      });
+      return 0;
     }
     default:
       console.error(USAGE);
