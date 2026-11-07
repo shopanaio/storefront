@@ -65,7 +65,10 @@ export function stripViewerFields<
 }
 
 /** Whether a query's data shows a field of the viewer, at any depth. */
-function showsViewerFields(value: unknown, seen = new Set<object>()): boolean {
+export function showsViewerFields(
+  value: unknown,
+  seen = new Set<object>()
+): boolean {
   if (!value || typeof value !== 'object' || seen.has(value)) return false;
   seen.add(value);
   if (Array.isArray(value)) {

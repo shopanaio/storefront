@@ -14,6 +14,7 @@ import { createApolloCache, type InMemoryCacheClass } from './cache';
 import { RequestResultCache } from './requestResultCache';
 import { clientNormalization } from './serverSwitches';
 import { createQueryResultHoldLink } from './queryResultHold';
+import { createStaticResultsLink } from '../../static/results';
 import { serverGraphqlUrl } from './serverEndpoint';
 import { createUploadLink, hasUploadVariables } from './uploadLink';
 import { storefrontSession } from '../../modules/session/core/StorefrontSessionClient';
@@ -190,10 +191,15 @@ export function createApolloClient(
     cache,
     link: ApolloLink.from([
       // First: a held result waits for the hold to end whatever the links after it do with
-      // it (a session retry runs inside).
+      // it (a session retry runs inside). A query the static site answers (a client
+      // navigation of a static document) asks the API nothing.
       ...(IS_SERVER
         ? []
-        : [createQueryResultHoldLink(), createSessionRetryLink()]),
+        : [
+            createQueryResultHoldLink(),
+            createSessionRetryLink(),
+            createStaticResultsLink(),
+          ]),
       authLink,
       ...(options.links ?? []),
       ...transportLinks,

@@ -29,9 +29,15 @@ export {
   type StaticManifestFile,
 } from './manifest';
 export {
+  createStaticResultsLink,
+  provideStaticResults,
+  type StaticState,
+} from './results';
+export {
   browserHasSession,
   isViewerField,
   refetchViewerQueries,
+  showsViewerFields,
   stripViewerFields,
   VIEWER_FIELDS,
 } from './viewer';

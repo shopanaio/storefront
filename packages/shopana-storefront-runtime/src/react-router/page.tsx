@@ -45,11 +45,10 @@ import {
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
 import { useDataGateOpen } from '@shopana/storefront-sdk/core/DataBoundary';
 import { useHydrated } from '@shopana/storefront-sdk/core/Hydrated';
-import { addApolloCacheState } from '@shopana/storefront-sdk/graphql/apollo/cache';
 import {
-  browserHasSession,
+  provideStaticResults,
   readStaticDocument,
-  stripViewerFields,
+  type StaticState,
 } from '@shopana/storefront-sdk/static';
 import { buildClosedPageRedirect } from '@shopana/storefront-sdk/modules/session/core/closedPageRedirect';
 import { ClosedPageGuard } from '@shopana/storefront-sdk/modules/session/react/components/ClosedPageGuard';
@@ -358,8 +357,11 @@ function loadShellPage(
   }
   let load = loads.get(href);
   if (!load) {
+    // A shell's own address has no static data: the builder rendered no page there.
     load = track(
-      loadBrowserPage(pages, new URL(href, window.location.origin), client)
+      loadBrowserPage(pages, new URL(href, window.location.origin), client, {
+        staticData: false,
+      })
     );
     const clientLoads = loads;
     load.catch(() => clientLoads.delete(href));
@@ -780,59 +782,58 @@ async function browserNotFound(
   return { kind: 'not-found', data, metadata: {} };
 }
 
-/**
- * Addresses whose static data the browser's cache took already: a page visited again reads
- * the cache, never an older snapshot over newer answers.
- */
-const appliedStaticData = new WeakMap<ApolloClient, Set<string>>();
+/** How long the static data of an address may take before its queries ask the API. */
+const STATIC_DATA_TIMEOUT_MS = 10_000;
 
 /**
- * The static site's data of a page (`/__static/data/*.json`, its Apollo state when the builder
- * rendered it) in the browser's cache, before the page loads: its `loadData` and its sections
- * find their queries there and ask the API nothing. Only in a static document; a page with no
- * file (404) or a failed fetch loads as usual. A signed-in buyer's cache takes it without the
- * viewer's fields: theirs are queried.
+ * Addresses whose static data this page load used already: a page visited again reads its
+ * cache or the API, never an older snapshot over newer answers.
  */
-async function applyStaticPageData(
-  client: ApolloClient,
-  url: URL
-): Promise<void> {
+const usedStaticData = new WeakMap<ApolloClient, Set<string>>();
+
+/**
+ * The static site's data of an address (`/__static/data/*.json`, the Apollo state the builder
+ * rendered its page with) as the source of the answers of its queries (`provideStaticResults`).
+ * Started, never waited for: the page renders at once, as from the API, its sections under
+ * their skeletons, and their queries take their answers from the data when it comes. Only in
+ * a static document; an address with no file (404) or a failed fetch is answered by the API.
+ */
+function startStaticPageData(client: ApolloClient, url: URL): void {
   if (!readStaticDocument()) return;
   const dataUrl = staticDataUrl(url.pathname);
   if (!dataUrl) return;
-  let applied = appliedStaticData.get(client);
-  if (!applied) {
-    applied = new Set();
-    appliedStaticData.set(client, applied);
+  let used = usedStaticData.get(client);
+  if (!used) {
+    used = new Set();
+    usedStaticData.set(client, used);
   }
-  if (applied.has(dataUrl)) return;
-  applied.add(dataUrl);
-  try {
-    const response = await fetch(dataUrl, {
+  if (used.has(dataUrl)) return;
+  used.add(dataUrl);
+  provideStaticResults(
+    fetch(dataUrl, {
       headers: { Accept: 'application/json' },
-    });
-    if (!response.ok) return;
-    const state = await response.json();
-    addApolloCacheState(
-      client.cache,
-      browserHasSession() ? stripViewerFields(state) : state
-    );
-  } catch {
-    // The page loads from the API.
-  }
+      signal: AbortSignal.timeout(STATIC_DATA_TIMEOUT_MS),
+    }).then((response) =>
+      response.ok ? (response.json() as Promise<StaticState>) : null
+    )
+  );
 }
 
 /**
  * The page of an address the browser loads itself (a client navigation, a shell of the static
- * site): its modules (and its layout, with the route) loaded, the static data of the address
- * in the cache, its `loadData` run with the app's Apollo client, as the server loader resolves
- * it. A page closed to visitors without a session is left to its browser guard.
+ * site): its modules (and its layout, with the route) loaded, its `loadData` run with the
+ * app's Apollo client, as the server loader resolves it; in a static document its queries
+ * are answered from the static data of the address. A page closed to visitors without a
+ * session is left to its browser guard.
  */
 async function loadBrowserPage(
   pages: RuntimePageModuleMap,
   url: URL,
   client: ApolloClient,
-  route?: RuntimePageRouteDefinition
+  {
+    route,
+    staticData = true,
+  }: { route?: RuntimePageRouteDefinition; staticData?: boolean } = {}
 ): Promise<RuntimePageData> {
   const address = clientAddress(url);
   const { resolution, request } = address;
@@ -851,10 +852,10 @@ async function loadBrowserPage(
     return browserNotFound(pages, request, services, route);
   }
 
+  if (staticData) startStaticPageData(client, url);
   const [{ definition }] = await Promise.all([
     loadPageModules(pages, pageType),
     route ? loadRouteLayout(route, pageType, { isModule: false }) : null,
-    applyStaticPageData(client, url),
   ]);
   const context = pageContext(address, pageType, services);
   const loaded = await (takeStartedDataLoad(client, url) ??
@@ -946,7 +947,9 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
   function clientLoader({
     url,
   }: ClientLoaderFunctionArgs): Promise<RuntimePageData> {
-    return loadBrowserPage(route.pages, url, getBrowserApolloClient(), route);
+    return loadBrowserPage(route.pages, url, getBrowserApolloClient(), {
+      route,
+    });
   }
 
   /**

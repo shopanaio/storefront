@@ -2,12 +2,15 @@ import { ApolloClient, ApolloLink, Observable } from '@apollo/client';
 import { parse } from 'graphql';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  addApolloCacheState,
-  createApolloCache,
-} from '../graphql/apollo/cache';
+import { createApolloCache } from '../graphql/apollo/cache';
+import { SIGNED_IN_COOKIE } from '../modules/session/core/sessionCookies';
 import { enumerateStaticRoutes } from './enumerate';
 import { indexStaticPage } from './entities';
+import {
+  createStaticResultsLink,
+  provideStaticResults,
+  type StaticState,
+} from './results';
 import { useValidUntilRefetch } from './useValidUntilRefetch';
 import { refetchViewerQueries, stripViewerFields } from './viewer';
 
@@ -340,29 +343,125 @@ describe("the viewer's fields", () => {
   });
 });
 
-describe('the static data of a page in the browser cache', () => {
-  it('merges a normalized state and waits whole responses for their queries', () => {
-    const cache = createApolloCache();
-    cache.restore({ 'Store:s': { __typename: 'Store', id: 's', name: 'Old' } });
-    addApolloCacheState(cache, {
-      'Store:s': { __typename: 'Store', id: 's', currency: 'UAH' },
-    });
-    expect(cache.extract()['Store:s']).toEqual({
-      __typename: 'Store',
-      id: 's',
-      name: 'Old',
-      currency: 'UAH',
-    });
+describe('the static data of a page as the source of its queries', () => {
+  const shop = parse('query Shop { store { __typename id name } }');
+  const product = parse(
+    'query Product($handle: String!) { productByHandle(handle: $handle) { __typename id title loyalty { points } } }'
+  );
 
-    const query = parse('query Shop { store { __typename id name } }');
-    addApolloCacheState(cache, [
-      {
-        o: 'Shop',
-        d: { store: { __typename: 'Store', id: 's', name: 'New' } },
-      },
-    ]);
-    expect(cache.readQuery({ query })).toEqual({
-      store: { __typename: 'Store', id: 's', name: 'New' },
+  /** A client whose queries the static source answers before the API. */
+  function staticClient() {
+    const calls: string[] = [];
+    const client = new ApolloClient({
+      cache: createApolloCache(),
+      link: ApolloLink.from([
+        createStaticResultsLink(),
+        new ApolloLink(
+          (operation) =>
+            new Observable((observer) => {
+              calls.push(operation.operationName ?? '');
+              observer.next({
+                data:
+                  operation.operationName === 'Shop'
+                    ? { store: { __typename: 'Store', id: 's', name: 'Live' } }
+                    : {
+                        productByHandle: {
+                          __typename: 'Product',
+                          id: 'p',
+                          title: 'Live socks',
+                          loyalty: { __typename: 'Loyalty', points: 7 },
+                        },
+                      },
+              });
+              observer.complete();
+            })
+        ),
+      ]),
     });
+    return { client, calls };
+  }
+
+  const normalized: StaticState = {
+    ROOT_QUERY: { __typename: 'Query', store: { __ref: 'Store:s' } },
+    'Store:s': { __typename: 'Store', id: 's', name: 'Static' },
+  };
+
+  afterEach(() => {
+    provideStaticResults(Promise.resolve(null));
+    document.cookie = `${SIGNED_IN_COOKIE}=; max-age=0`;
+  });
+
+  it('answers a query from a normalized state once, then from the API', async () => {
+    const { client, calls } = staticClient();
+    let resolve!: (state: StaticState) => void;
+    provideStaticResults(new Promise((done) => (resolve = done)));
+    // Asked before the data came: it waits for it, the API is not asked.
+    const first = client.query({ query: shop, fetchPolicy: 'network-only' });
+    resolve(normalized);
+    expect((await first).data).toEqual({
+      store: { __typename: 'Store', id: 's', name: 'Static' },
+    });
+    expect(calls).toEqual([]);
+    const again = await client.query({
+      query: shop,
+      fetchPolicy: 'network-only',
+    });
+    expect(again.data?.store.name).toBe('Live');
+    expect(calls).toEqual(['Shop']);
+  });
+
+  it('answers whole responses, and sends what the state lacks to the API', async () => {
+    const { client, calls } = staticClient();
+    provideStaticResults(
+      Promise.resolve([
+        {
+          o: 'Shop',
+          d: { store: { __typename: 'Store', id: 's', name: 'Static' } },
+        },
+      ])
+    );
+    expect((await client.query({ query: shop })).data?.store.name).toBe(
+      'Static'
+    );
+    const missing = await client.query({
+      query: product,
+      variables: { handle: 'socks' },
+    });
+    expect(missing.data?.productByHandle?.title).toBe('Live socks');
+    expect(calls).toEqual(['Product']);
+  });
+
+  it("asks the API for a signed-in buyer's viewer fields", async () => {
+    const { client, calls } = staticClient();
+    document.cookie = `${SIGNED_IN_COOKIE}=1`;
+    provideStaticResults(
+      Promise.resolve([
+        {
+          o: 'Product',
+          v: { handle: 'socks' },
+          d: {
+            productByHandle: {
+              __typename: 'Product',
+              id: 'p',
+              title: 'Static socks',
+              loyalty: { __typename: 'Loyalty', points: 1 },
+            },
+          },
+        },
+      ])
+    );
+    const result = await client.query({
+      query: product,
+      variables: { handle: 'socks' },
+    });
+    expect(result.data?.productByHandle?.loyalty?.points).toBe(7);
+    expect(calls).toEqual(['Product']);
+  });
+
+  it('goes to the API when the data fails', async () => {
+    const { client, calls } = staticClient();
+    provideStaticResults(Promise.reject(new Error('offline')));
+    expect((await client.query({ query: shop })).data?.store.name).toBe('Live');
+    expect(calls).toEqual(['Shop']);
   });
 });
