@@ -41,9 +41,9 @@ export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
   return (
     <div className={styles.wrapper}>
       <CheckoutColumns
+        header={<BrandHeader>{brand}</BrandHeader>}
         left={
           <>
-            <BrandHeader>{brand}</BrandHeader>
             {stacked && checkout ? <SummaryLines checkout={checkout} /> : null}
             {signInRequired ? (
               <CheckoutSignInColumn />

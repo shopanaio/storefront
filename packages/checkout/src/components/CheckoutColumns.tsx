@@ -4,7 +4,9 @@ import type { ReactNode } from 'react';
 import { mq } from '@shopana/storefront-ui';
 
 interface CheckoutColumnsProps {
-  /** The form: brand, sections and, on desktop, the actions. */
+  /** The bar of the store's brand over both columns. */
+  header: ReactNode;
+  /** The form: sections and, on desktop, the actions. */
   left: ReactNode;
   /** The order summary and, on a phone, the actions under it. */
   right: ReactNode;
@@ -14,10 +16,15 @@ interface CheckoutColumnsProps {
  * Columns of the checkout page: the form on the left, the summary on a grey background on the
  * right, sticky on desktop. On a phone the summary goes under the form.
  */
-export const CheckoutColumns = ({ left, right }: CheckoutColumnsProps) => {
+export const CheckoutColumns = ({
+  header,
+  left,
+  right,
+}: CheckoutColumnsProps) => {
   const { styles } = useStyles();
   return (
     <div className={styles.container}>
+      {header}
       <div className={styles.main}>
         <Flex className={styles.left}>{left}</Flex>
         <div className={styles.rightContainer}>
@@ -33,6 +40,7 @@ const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     flex-direction: column;
     width: 100%;
+    min-height: 100dvh;
     /* checkout layout variables */
     --checkout-content-max: 1280px;
     /* make left column slightly wider than right */
@@ -53,11 +61,11 @@ const useStyles = createStyles(({ token, css }) => ({
       background-color: ${token.colorBgContainer};
     }
   `,
+  // The page under the brand bar fills the rest of the window.
   main: css`
     display: flex;
     flex-direction: column;
-    height: 100%;
-    min-height: 100dvh;
+    flex: 1 0 auto;
 
     ${mq.lg} {
       display: grid;
@@ -75,7 +83,7 @@ const useStyles = createStyles(({ token, css }) => ({
     flex-direction: column;
     /* Between the blocks of the form: contact, delivery, payment. */
     gap: ${token.marginLG}px;
-    border-right: 2px solid ${token.colorBorder};
+    border-right: 1px solid ${token.colorBorderSecondary};
     padding: ${token.padding}px;
 
     ${mq.lg} {

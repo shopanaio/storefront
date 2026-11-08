@@ -1,14 +1,11 @@
 'use client';
 
 import { Button, Flex, Typography } from 'antd';
-import { TbShoppingCart } from 'react-icons/tb';
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
-import { useCheckoutTheme } from '#checkout/theme';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { LINES_ANCHOR } from '#checkout/ui/focusAnchor';
-import { Badge } from '#checkout/ui/Badge';
 import { Fold, FoldToggle } from '#checkout/ui/Fold';
 import { ImageFan, linesToFanImages } from '#checkout/ui/ImageFan';
 import { Money } from '#checkout/ui/Money';
@@ -31,14 +28,11 @@ interface SummaryLinesProps {
 /**
  * The title of the order summary over its lines. Beside the form the lines are listed; under it,
  * on a phone, they fold into their pictures with the total, and the title and the arrow unfold
- * them. Starts unfolded when a line cannot be delivered (R7). The theme's cart opens from the
- * button beside the title.
+ * them. Starts unfolded when a line cannot be delivered (R7).
  */
 export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
-  const { useOpenCart } = useCheckoutTheme();
-  const openCartDrawer = useOpenCart();
   const undeliverable = new Set(useUndeliverableLines().map((line) => line.id));
   // Below lg the lines lead the page, over the form (CheckoutView).
   const stacked = useBreakpointDown('lg');
@@ -71,33 +65,19 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
     </Flex>
   );
 
-  const action = openCartDrawer ? (
-    <Button
-      color="default"
-      variant="text"
-      onClick={(event) => {
-        event.stopPropagation();
-        openCartDrawer();
-      }}
-      icon={<TbShoppingCart size={20} />}
-    />
-  ) : null;
-
   const title = (
     <Flex align="center" gap={8} className={styles.title}>
       <SectionTitle>{t('order-summary')}</SectionTitle>
-      <Badge count={checkout.totalQuantity} variant="primary" />
     </Flex>
   );
 
   if (!stacked) {
     const hasHidden = lines.length > VISIBLE_LINES;
     return (
-      <Flex id={LINES_ANCHOR} vertical gap={8}>
-        <Flex align="center" gap={8}>
-          {title}
-          {action}
-        </Flex>
+      // The title row and its gap as those of the contact section beside it (its "Log in" is
+      // a control tall), so the title and the first card line up with the form's.
+      <Flex id={LINES_ANCHOR} vertical gap={6}>
+        <div className={styles.titleRow}>{title}</div>
         <Flex vertical gap={8}>
           {items(showAll ? lines : lines.slice(0, VISIBLE_LINES))}
           {hasHidden ? (
@@ -193,6 +173,11 @@ const useStyles = createStyles(({ css, token }) => ({
   title: css`
     flex: 1;
     min-width: 0;
+  `,
+  titleRow: css`
+    display: flex;
+    align-items: center;
+    min-height: ${token.controlHeight}px;
   `,
   header: css`
     cursor: pointer;

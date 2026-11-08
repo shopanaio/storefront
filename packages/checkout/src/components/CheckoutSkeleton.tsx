@@ -8,7 +8,7 @@ import type React from 'react';
 const { Text } = Typography;
 
 export interface CheckoutSkeletonProps {
-  /** Over the form: the bar of the store's brand. */
+  /** Over both columns: the bar of the store's brand. */
   header?: React.ReactNode;
 }
 
@@ -23,9 +23,9 @@ export const CheckoutSkeleton: React.FC<CheckoutSkeletonProps> = ({
 
   return (
     <div className={styles.container}>
+      {header}
       <div className={styles.main}>
         <Flex className={styles.left} vertical>
-          {header}
           <Flex vertical gap={16}>
             <Text className={styles.sectionTitle} strong>
               <Skeleton.Input size="small" style={{ width: 150 }} />
@@ -56,6 +56,7 @@ const useStyles = createStyles(({ token, css }) => {
       display: flex;
       flex-direction: column;
       width: 100%;
+      min-height: 100dvh;
       background-color: ${token.colorBgContainer};
       /* checkout layout variables */
       --checkout-content-max: 1280px;
@@ -71,11 +72,11 @@ const useStyles = createStyles(({ token, css }) => {
         var(--checkout-content-max) * var(--checkout-right-ratio)
       );
     `,
+    // The page under the brand bar fills the rest of the window.
     main: css`
       display: flex;
       flex-direction: column;
-      height: 100%;
-      min-height: 100dvh;
+      flex: 1 0 auto;
 
       ${mq.lg} {
         display: grid;
@@ -89,7 +90,7 @@ const useStyles = createStyles(({ token, css }) => {
       width: 100%;
       flex-direction: column;
       gap: ${token.marginMD}px;
-      border-right: 2px solid ${token.colorBorder};
+      border-right: 1px solid ${token.colorBorderSecondary};
       padding: ${token.padding}px;
 
       ${mq.lg} {
@@ -114,7 +115,6 @@ const useStyles = createStyles(({ token, css }) => {
         max-width: var(--checkout-right-max);
         position: sticky;
         padding: ${token.paddingXL}px;
-        min-height: 100vh;
         top: 0;
       }
     `,
