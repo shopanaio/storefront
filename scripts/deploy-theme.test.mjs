@@ -5,7 +5,25 @@ import {
   validateRuntime,
   validateBackend,
   verifyHeadlessOAuth,
+  hasReadyReplicas,
 } from './deploy-theme.mjs';
+
+test('Docker replica limits do not hide a converged stack', () => {
+  assert.equal(
+    hasReadyReplicas(
+      'theme 2/2 (max 2 per node)\ncloudflared 2/2 (max 1 per node)'
+    ),
+    true
+  );
+  assert.equal(hasReadyReplicas('theme 2/2\ncloudflared 2/2'), true);
+  assert.equal(
+    hasReadyReplicas(
+      'theme 1/2 (max 2 per node)\ncloudflared 2/2 (max 1 per node)'
+    ),
+    false
+  );
+  assert.equal(hasReadyReplicas('theme 2/2'), false);
+});
 
 const env = `THEME_IMAGE=ghcr.io/shopanaio/theme@sha256:${'a'.repeat(64)}
 CLOUDFLARED_IMAGE=cloudflare/cloudflared:2026.10.2

@@ -20,6 +20,14 @@ const fail = (message) => {
   throw new Error(message);
 };
 
+export function hasReadyReplicas(summary) {
+  const lines = summary.trim().split('\n');
+  return (
+    lines.length === 2 &&
+    lines.every((line) => / 2\/2(?: \(max \d+ per node\))?$/.test(line))
+  );
+}
+
 // Deliberately do not source a shell file: deploy inputs must never execute code.
 export function parseEnv(source) {
   const values = {};
@@ -148,7 +156,7 @@ export async function verifyHeadlessOAuth(values, fetcher = fetch) {
 export function validateBackend(gateway, runtime, traefik, networkId, values) {
   for (const [name, service] of [
     ['gateway-storefront', gateway],
-    ['runtime-monolith', runtime],
+    ['runtime-core-api', runtime],
     ['traefik', traefik],
   ]) {
     if (
@@ -306,7 +314,7 @@ async function main() {
       'service',
       'inspect',
       `shopana-${profile}-app_gateway-storefront`,
-      `shopana-${profile}-app_runtime-monolith`,
+      `shopana-${profile}-app_runtime-core-api`,
       `shopana-${profile}-platform_traefik`
     )
   );
@@ -443,11 +451,7 @@ async function main() {
       (service) =>
         !service.UpdateStatus || service.UpdateStatus.State === 'completed'
     );
-    if (
-      stable &&
-      summary.split('\n').length === 2 &&
-      summary.split('\n').every((line) => line.endsWith(' 2/2'))
-    ) {
+    if (stable && hasReadyReplicas(summary)) {
       const tasks = JSON.parse(
         docker(
           'inspect',

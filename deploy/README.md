@@ -11,6 +11,26 @@ Stage темы использует **`https://pet.shopana.dev`** в сущес�
 Поле `hostname` задаётся явно для каждого окружения; production пока оставлен шаблоном
 `example.com` и не занимает основной адрес админки `shopana.dev`.
 
+### Размещение на новом stage 7 ноября 2026 года
+
+Нода `shopana-stage-theme` присоединена как worker к существующему Swarm. Ей назначены
+метки `shopana.runtime=theme` и `shopana.environment=stage`; обе реплики темы закреплены
+на этой ноде. Два connector используют разные ноды кластера. Проверка backend обращается
+к текущему сервису `shopana-stage-app_runtime-core-api`.
+
+Версия из [Actions run 42309556180](https://github.com/shopanaio/storefront-brand-bite-and-crunch/actions/runs/42309556180)
+использует commit темы `229bcc2cf4da5826e34788899c4e8123bc5afb5b` и образ:
+
+```text
+ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme@sha256:1df5b75db6bf36b00731d21c94460fdfffd7e18f5951e029e330ca2a910381bf
+```
+
+Runtime-конфигурация подключает магазин `bite-and-crunch`; публичный адрес темы,
+GraphQL и API ассистента используют `pet.shopana.dev`. Секреты находятся в игнорируемом
+`deploy/environments/stage/server-env.json` и передаются в Docker secret. Trusted origin
+OAuth-клиента — `https://pet.shopana.dev`, callback — `https://pet.shopana.dev/auth/callback`,
+post-logout URI — `https://pet.shopana.dev/`.
+
 ## Деплой в существующий Swarm internal
 
 На серверах остаётся **один Swarm**. Стеки `shopana-stage-platform` и
