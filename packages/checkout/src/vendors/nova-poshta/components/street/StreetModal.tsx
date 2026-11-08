@@ -5,8 +5,8 @@ import { useStreetSearch } from '../../api/directory';
 import { StreetModalItem } from './StreetModalItem';
 import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
-import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
-import { SearchDrawerHeader } from '#checkout/ui/SearchDrawerHeader';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
+import { CheckoutDialog } from '#checkout/ui/CheckoutDialog';
 import { useSearchInput } from '#checkout/hooks/useSearchInput';
 import type { Street } from '../../types';
 
@@ -48,20 +48,19 @@ export const StreetModal = ({
         invert
         disabled={!settlementRef}
       />
-      <DrawerBase
-        // The list comes as the buyer types: the sheet keeps its height meanwhile.
+      <CheckoutDialog
+        // The list comes as the buyer types: the dialog keeps its height meanwhile.
         minHeight="60dvh"
         open={isStreetModalVisible}
         onClose={() => setIsStreetModalVisible(false)}
-        header={
-          <SearchDrawerHeader title={t('street')}>
-            <FloatingLabelInput
-              label={t('search_street')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              disabled={!settlementRef}
-            />
-          </SearchDrawerHeader>
+        title={t('street')}
+        search={
+          <FloatingLabelInput
+            label={t('search_street')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={!settlementRef}
+          />
         }
       >
         <Flex vertical gap={4}>
@@ -81,7 +80,7 @@ export const StreetModal = ({
             />
           ))}
         </Flex>
-      </DrawerBase>
+      </CheckoutDialog>
     </>
   );
 };

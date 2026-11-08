@@ -7,8 +7,8 @@ import { formatSchedule } from '../../schedule';
 import { WarehouseModalItem } from './WarehouseModalItem';
 import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
-import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
-import { SearchDrawerHeader } from '#checkout/ui/SearchDrawerHeader';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
+import { CheckoutDialog } from '#checkout/ui/CheckoutDialog';
 
 interface Props {
   /** Branches or postomats: the list shows only points of this kind. */
@@ -59,20 +59,19 @@ export const WarehouseModal = ({
         onClick={() => setOpen(true)}
         disabled={!settlementRef}
       />
-      <DrawerBase
-        // The list comes as the buyer types: the sheet keeps its height meanwhile.
+      <CheckoutDialog
+        // The list comes as the buyer types: the dialog keeps its height meanwhile.
         minHeight="60dvh"
         open={open}
         onClose={close}
-        header={
-          <SearchDrawerHeader title={t(`form.${kind}`)}>
-            <FloatingLabelInput
-              label={t('form.search_point')}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              disabled={!settlementRef}
-            />
-          </SearchDrawerHeader>
+        title={t(`form.${kind}`)}
+        search={
+          <FloatingLabelInput
+            label={t('form.search_point')}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            disabled={!settlementRef}
+          />
         }
       >
         <Flex vertical gap={4}>
@@ -99,7 +98,7 @@ export const WarehouseModal = ({
             </Button>
           )}
         </Flex>
-      </DrawerBase>
+      </CheckoutDialog>
     </>
   );
 };

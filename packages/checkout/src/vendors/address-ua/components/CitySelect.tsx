@@ -11,8 +11,8 @@ import { CityOption } from './CityOption';
 import { TbX } from 'react-icons/tb';
 import { PiMapPinDuotone, PiMapPin } from 'react-icons/pi';
 import { SelectCard } from '#checkout/ui/SelectCard';
-import { DrawerBase, FloatingLabelInput } from '@shopana/storefront-ui';
-import { SearchDrawerHeader } from '#checkout/ui/SearchDrawerHeader';
+import { FloatingLabelInput } from '@shopana/storefront-ui';
+import { CheckoutDialog } from '#checkout/ui/CheckoutDialog';
 
 /** The picked city as the address keeps it: its name, its oblast and the settlement hint. */
 export interface PickedCity {
@@ -99,29 +99,28 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
           </Flex>
         )}
       </SelectCard>
-      <DrawerBase
-        // The list comes as the buyer types: the sheet keeps its height meanwhile.
+      <CheckoutDialog
+        // The list comes as the buyer types: the dialog keeps its height meanwhile.
         minHeight="60dvh"
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
-        header={
-          <SearchDrawerHeader title={t('choose-your-city')}>
-            <FloatingLabelInput
-              label={t('city')}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              suffix={
-                searchValue && (
-                  <TbX
-                    size={20}
-                    color={token.colorIcon}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setSearchValue('')}
-                  />
-                )
-              }
-            />
-          </SearchDrawerHeader>
+        title={t('choose-your-city')}
+        search={
+          <FloatingLabelInput
+            label={t('city')}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            suffix={
+              searchValue && (
+                <TbX
+                  size={20}
+                  color={token.colorIcon}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSearchValue('')}
+                />
+              )
+            }
+          />
         }
       >
         <Flex vertical gap={16}>
@@ -172,7 +171,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
             </Flex>
           )}
         </Flex>
-      </DrawerBase>
+      </CheckoutDialog>
     </>
   );
 };

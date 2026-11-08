@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
-  DrawerBase,
   FloatingLabelInput,
   PhoneInput,
   formatPhoneInternational,
@@ -15,6 +14,7 @@ import {
   isValidPhone,
 } from '@shopana/storefront-ui';
 import { StickyButton } from '#checkout/ui/StickyButton';
+import { CheckoutDialog } from '#checkout/ui/CheckoutDialog';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import {
   PiLockSimple,
@@ -175,7 +175,7 @@ export const ContactSelect = ({
         )}
       </SelectCard>
 
-      <DrawerBase open={open} onClose={() => setOpen(false)} title={title}>
+      <CheckoutDialog open={open} onClose={() => setOpen(false)} title={title}>
         <FormProvider {...methods}>
           <Flex
             vertical
@@ -321,7 +321,7 @@ export const ContactSelect = ({
             </StickyButton>
           </Flex>
         </FormProvider>
-      </DrawerBase>
+      </CheckoutDialog>
     </>
   );
 };
