@@ -16,7 +16,8 @@ import type { CheckoutThemeAdapter } from '#checkout/theme';
 /**
  * Type scale of the checkout: text one step over the antd default (15 and 13), with the large
  * and extra large sizes kept, so titles and the total stay as they are, secondary texts one
- * tone darker, and one corner radius. The rest of the tokens come from the host.
+ * tone darker, one corner radius and the spacing of the method panels, whatever padding the
+ * host gives its collapses. The rest of the tokens come from the host.
  */
 const CHECKOUT_TOKENS: ThemeConfig = {
   token: {
@@ -31,6 +32,13 @@ const CHECKOUT_TOKENS: ThemeConfig = {
     // and panels (8) more than the others (6).
     borderRadius: 8,
     borderRadiusLG: 8,
+  },
+  components: {
+    Collapse: {
+      headerPadding: '12px 16px',
+      contentPadding: '16px',
+      borderlessContentPadding: '4px 16px 16px',
+    },
   },
 };
 
