@@ -11,7 +11,7 @@ import { CheckoutAuthDialog } from './CheckoutAuth';
 export interface CheckoutSignInProviderProps {
   /** The sign-in stands in place of the contact (`useSignInRequired`). */
   required: boolean;
-  /** The drawer is open from the start (a story of it). */
+  /** The dialog is open from the start (a story of it). */
   defaultOpen?: boolean;
   children: ReactNode;
 }
@@ -19,7 +19,7 @@ export interface CheckoutSignInProviderProps {
 /**
  * The one sign-in of the checkout page and `requestSignIn()` for everything that leads to it.
  * While the sign-in is required it is the inline form in place of the contact; otherwise, with
- * customer accounts (`theme.customerAccountsEnabled`), the sign-in drawer mounted here.
+ * customer accounts (`theme.customerAccountsEnabled`), the sign-in dialog mounted here.
  */
 export const CheckoutSignInProvider = ({
   required,
@@ -29,17 +29,17 @@ export const CheckoutSignInProvider = ({
   const { customerAccountsEnabled } = useCheckoutTheme();
   const inlineRef = useRef<AuthInlineHandle>(null);
   const [open, setOpen] = useState(defaultOpen);
-  const drawer = customerAccountsEnabled && !required;
+  const dialog = customerAccountsEnabled && !required;
 
   const requestSignIn = useCallback(() => {
     if (required) {
       const inline = inlineRef.current;
       inline?.element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       inline?.focus({ preventScroll: true });
-    } else if (drawer) {
+    } else if (dialog) {
       setOpen(true);
     }
-  }, [required, drawer]);
+  }, [required, dialog]);
   const close = useCallback(() => setOpen(false), []);
 
   const value = useMemo<CheckoutSignInValue>(
@@ -49,7 +49,7 @@ export const CheckoutSignInProvider = ({
   return (
     <CheckoutSignInContext.Provider value={value}>
       {children}
-      {drawer ? <CheckoutAuthDialog open={open} onClose={close} /> : null}
+      {dialog ? <CheckoutAuthDialog open={open} onClose={close} /> : null}
     </CheckoutSignInContext.Provider>
   );
 };

@@ -6,7 +6,7 @@ import { Banner } from '@shopana/storefront-ui';
 import { useTranslations } from 'next-intl';
 import { WarehouseModal } from '../warehouse/WarehouseModal';
 import { useWarehouse } from '../../api/directory';
-import { readSettlementRef } from '../../address';
+import { readSettlement } from '../../address';
 import { pointInput, readInput } from '../../customerInput';
 import type { PointInput, PointView, Warehouse } from '../../types';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
@@ -30,7 +30,8 @@ export function PointForm({
 }: PointFormProps) {
   const t = useTranslations('Modules.novaPoshta.form');
   const { styles } = useStyles();
-  const settlementRef = readSettlementRef(deliveryAddress);
+  const settlement = readSettlement(deliveryAddress);
+  const settlementRef = settlement?.settlementRef ?? null;
   const input = readInput(data, type, settlementRef);
   const stored = input ? ((view as PointView | undefined) ?? null) : null;
   // Picked in another browser or before the storage was cleared: the point is read by its ref.
@@ -48,7 +49,7 @@ export function PointForm({
       : null);
 
   const handleChangeWarehouse = (warehouse: Warehouse) => {
-    if (!settlementRef) {
+    if (!settlement) {
       return;
     }
     const pointView: PointView = {
@@ -56,7 +57,7 @@ export function PointForm({
       shortAddress: warehouse.shortAddress,
       schedule: warehouse.schedule,
     };
-    onSubmit(pointInput(type, settlementRef, warehouse.ref), pointView);
+    onSubmit(pointInput(type, settlement, warehouse.ref), pointView);
   };
 
   return (

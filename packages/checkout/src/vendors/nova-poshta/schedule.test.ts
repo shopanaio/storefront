@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { formatSchedule } from './schedule';
 
 const day = (name: string, hours: string) => ({
-  __typename: 'NovaPoshtaScheduleDay' as const,
   day: name,
   hours,
 });

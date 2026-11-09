@@ -2,6 +2,11 @@ import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import type { Decorator } from '@storybook/react-vite';
 import { Observable } from 'rxjs';
+import { NovaPoshtaDirectoryProvider } from '#checkout/vendors/nova-poshta/api/directory';
+import {
+  DirectoryFailure,
+  type NovaPoshtaDirectory,
+} from '#checkout/vendors/nova-poshta/api/carrier';
 import { popularCities } from '#checkout/vendors/nova-poshta/popularCities';
 import type { Warehouse } from '#checkout/vendors/nova-poshta/types';
 import { KYIV_POINTS, KYIV_STREETS } from './deliveryFixtures';
@@ -15,14 +20,6 @@ export interface DirectoryScenario {
   failure?: 'unavailable' | 'invalid' | 'failed';
   latency?: number | 'never';
 }
-
-const FAILURE_CODES = {
-  unavailable: 'PROVIDER_UNAVAILABLE',
-  invalid: 'DIRECTORY_QUERY_INVALID',
-  failed: 'INTERNAL_SERVER_ERROR',
-} as const;
-
-const PAGE_SIZE = 50;
 
 /** How long an answer takes by default, so the loading states show. */
 const DEFAULT_LATENCY_MS = 300;
@@ -60,138 +57,120 @@ const UKRAINE = {
   },
 };
 
-/** The answer of the storefront API to a directory query of the stories. */
-function answer(
-  operationName: string,
-  variables: Record<string, unknown>,
-  points: Warehouse[]
-) {
-  switch (operationName) {
-    case 'StorefrontDeliveryCountriesQuery':
-      return { checkoutDeliveryCountries: [UKRAINE] };
-    case 'StorefrontNovaPoshtaSettlementsQuery':
-      return {
-        novaPoshtaSettlements: {
-          __typename: 'NovaPoshtaSettlementPage',
-          // Only the cities the carrier is known for: the others have no ref yet.
-          items: popularCities.filter(
-            (city) =>
-              city.ref && matches(variables.query, city.name, city.present)
-          ),
-          hasNextPage: false,
-        },
-      };
-    case 'StorefrontNovaPoshtaWarehousesQuery': {
-      const found = points.filter((item) =>
-        matches(variables.query, item.number, item.shortAddress)
-      );
-      const page = Number(variables.page ?? 1);
-      return {
-        novaPoshtaWarehouses: {
-          __typename: 'NovaPoshtaWarehousePage',
-          items: found.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-          totalCount: found.length,
-          page,
-          hasNextPage: found.length > page * PAGE_SIZE,
-        },
-      };
-    }
-    case 'StorefrontNovaPoshtaWarehouseQuery':
-      return {
-        novaPoshtaWarehouses: {
-          __typename: 'NovaPoshtaWarehousePage',
-          items: points.filter((item) => item.ref === variables.ref),
-        },
-      };
-    case 'StorefrontNovaPoshtaSettlementStreetsQuery':
-      return {
-        novaPoshtaSettlementStreets: {
-          __typename: 'NovaPoshtaSettlementStreetPage',
-          items: KYIV_STREETS.filter((street) =>
-            matches(variables.query, street.name, street.present)
-          ),
-        },
-      };
-    default:
-      return null;
-  }
+/** The answer of the storefront API to a query of the stories. */
+function answer(operationName: string) {
+  return operationName === 'StorefrontDeliveryCountriesQuery'
+    ? { checkoutDeliveryCountries: [UKRAINE] }
+    : null;
 }
 
-/** A client of the storefront API that answers only the queries the stories make. */
-function createClient({
+/** How long an answer of the scenario takes; `never` keeps it loading. */
+function delay(latency: DirectoryScenario['latency']) {
+  return new Promise<void>((resolve) => {
+    if (latency !== 'never') {
+      setTimeout(
+        resolve,
+        typeof latency === 'number' ? latency : DEFAULT_LATENCY_MS
+      );
+    }
+  });
+}
+
+/** The Nova Poshta directory that answers as the scenario says. */
+function createDirectory({
   points = KYIV_POINTS,
   failure,
   latency = DEFAULT_LATENCY_MS,
-}: DirectoryScenario) {
+}: DirectoryScenario): NovaPoshtaDirectory {
+  const respond = async <T,>(value: () => T) => {
+    await delay(latency);
+    if (failure) {
+      throw new DirectoryFailure(failure);
+    }
+    return value();
+  };
+  return {
+    settlements: ({ query }) =>
+      respond(() => ({
+        // Only the cities the carrier is known for: the others have no ref yet.
+        items: popularCities.filter(
+          (city) => city.ref && matches(query, city.name, city.present)
+        ),
+        page: 1,
+        hasNextPage: false,
+      })),
+    warehouses: ({ ref, query, page, limit }) =>
+      respond(() => {
+        const found = ref
+          ? points.filter((item) => item.ref === ref)
+          : points.filter((item) =>
+              matches(query, item.number, item.shortAddress)
+            );
+        return {
+          items: found.slice((page - 1) * limit, page * limit),
+          page,
+          hasNextPage: found.length > page * limit,
+        };
+      }),
+    streets: ({ query }) =>
+      respond(() =>
+        KYIV_STREETS.filter((street) =>
+          matches(query, street.name, street.present)
+        )
+      ),
+  };
+}
+
+/** A client of the storefront API that answers only the queries the stories make. */
+function createClient() {
   const link = new ApolloLink(
     (operation) =>
       new Observable((observer) => {
-        const data = answer(
-          operation.operationName ?? '',
-          operation.variables,
-          points
-        );
-        // The scenario is about the directory: the delivery countries always answer.
-        const directory =
-          operation.operationName !== 'StorefrontDeliveryCountriesQuery';
-        if (latency === 'never' && directory) {
-          return;
-        }
-        const timer = setTimeout(
-          () => {
-            if (!data) {
-              observer.error(
-                new Error(`Not mocked: ${operation.operationName}`)
-              );
-              return;
-            }
-            observer.next(
-              failure && directory
-                ? {
-                    data: null,
-                    errors: [
-                      {
-                        message: 'Directory failed',
-                        extensions: { code: FAILURE_CODES[failure] },
-                      },
-                    ],
-                  }
-                : { data }
-            );
-            observer.complete();
-          },
-          typeof latency === 'number' ? latency : DEFAULT_LATENCY_MS
-        );
+        const data = answer(operation.operationName ?? '');
+        const timer = setTimeout(() => {
+          if (!data) {
+            observer.error(new Error(`Not mocked: ${operation.operationName}`));
+            return;
+          }
+          observer.next({ data });
+          observer.complete();
+        }, DEFAULT_LATENCY_MS);
         return () => clearTimeout(timer);
       })
   );
   return new ApolloClient({ link, cache: new InMemoryCache() });
 }
 
-/**
- * Renders a story with the storefront API of the Nova Poshta directory and the delivery
- * countries, answering as `parameters.directory` says.
- */
-/** One client per story, so no story reads answers cached by another. */
-const clients = new Map<string, ReturnType<typeof createClient>>();
-const clientOf = (storyId: string, scenario: DirectoryScenario) => {
-  let client = clients.get(storyId);
-  if (!client) {
-    client = createClient(scenario);
-    clients.set(storyId, client);
+/** One client and directory per story, so no story reads answers cached by another. */
+const stories = new Map<
+  string,
+  { client: ReturnType<typeof createClient>; directory: NovaPoshtaDirectory }
+>();
+const storyOf = (storyId: string, scenario: DirectoryScenario) => {
+  let story = stories.get(storyId);
+  if (!story) {
+    story = { client: createClient(), directory: createDirectory(scenario) };
+    stories.set(storyId, story);
   }
-  return client;
+  return story;
 };
+
+/**
+ * Renders a story with the Nova Poshta directory, answering as `parameters.directory` says,
+ * and the storefront API of the delivery countries.
+ */
 
 export const withDirectory: Decorator = function WithDirectory(
   Story,
   { parameters, id }
 ) {
   const scenario = (parameters.directory ?? {}) as DirectoryScenario;
-  const client = clientOf(id, scenario);
+  const { client, directory } = storyOf(id, scenario);
   return (
     <ApolloProvider client={client}>
-      <Story />
+      <NovaPoshtaDirectoryProvider directory={directory}>
+        <Story />
+      </NovaPoshtaDirectoryProvider>
     </ApolloProvider>
   );
 };

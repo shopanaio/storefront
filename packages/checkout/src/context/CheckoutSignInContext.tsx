@@ -8,12 +8,12 @@ import type { AuthInlineHandle } from '@shopana/storefront-auth/ui';
 export interface CheckoutSignInValue {
   /**
    * The sign-in stands in place of the contact and the other sections (A1–A2, S6;
-   * `useSignInRequired`); otherwise it is a drawer over the page.
+   * `useSignInRequired`); otherwise it is a dialog over the page.
    */
   required: boolean;
   /**
    * Leads the buyer to the sign-in from anywhere on the page ("Log in", the points the order
-   * earns, a loyalty banner): opens the drawer, or brings the inline form into view and focuses
+   * earns, a loyalty banner): opens the dialog, or brings the inline form into view and focuses
    * its field. Nothing without customer accounts.
    */
   requestSignIn: () => void;

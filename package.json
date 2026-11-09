@@ -6,7 +6,8 @@
     "packages": [
       "packages/*",
       "themes/*",
-      "mockServer"
+      "mockServer",
+      "vendor/carrier-api"
     ]
   },
   "scripts": {
@@ -27,7 +28,8 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "build:packages": "yarn workspace @shopana/brand-sdk build && yarn workspace @shopana/storefront-sdk build && yarn workspace @shopana/storefront-ui build && yarn workspace @shopana/storefront-auth build && yarn workspace @shopana/storefront build && yarn workspace @shopana/storefront-modal-stack build && yarn workspace @shopana/checkout build",
+    "build:carrier": "cd vendor/carrier-api/packages/novaposhta-api-client && rm -rf dist && ../../../../node_modules/.bin/esbuild src/index.ts --bundle --platform=neutral --format=esm --target=es2020 --outfile=dist/index.js && ../../../../node_modules/.bin/tsc --emitDeclarationOnly && cd ../novaposhta-transport-fetch && rm -rf dist && ../../../../node_modules/.bin/tsc -p tsconfig.json",
+    "build:packages": "yarn build:carrier && yarn workspace @shopana/brand-sdk build && yarn workspace @shopana/storefront-sdk build && yarn workspace @shopana/storefront-ui build && yarn workspace @shopana/storefront-auth build && yarn workspace @shopana/storefront build && yarn workspace @shopana/storefront-modal-stack build && yarn workspace @shopana/checkout build",
     "typecheck": "yarn build:packages && node ./scripts/typecheck.mjs",
     "test": "yarn workspace @shopana/storefront-sdk test && yarn workspace @shopana/storefront-ui test && yarn workspace @shopana/storefront-modal-stack test && yarn workspace @shopana/storefront-auth test && yarn workspace @shopana/checkout test && yarn workspace @shopana/storefront test && yarn workspace @shopana/mock-server test"
   },

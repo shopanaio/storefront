@@ -71,6 +71,8 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.2",
+    "@shopana/novaposhta-api-client": "workspace:*",
+    "@shopana/novaposhta-transport-fetch": "workspace:*",
     "clsx": "^2.1.1",
     "dompurify": "^3.2.6",
     "emittery": "^1.2.0",

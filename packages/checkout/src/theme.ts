@@ -52,7 +52,7 @@ export interface CheckoutThemeAdapter {
   Auth?: ComponentType<CheckoutAuthProps>;
   /**
    * Whether the store has customer accounts: the one switch of the sign-in in the checkout.
-   * Only then the checkout shows "Log in", the sign-in drawer and the invitation to sign in for
+   * Only then the checkout shows "Log in", the sign-in dialog and the invitation to sign in for
    * the points the order earns. A store that takes orders from accounts only shows its sign-in
    * in place of the contact regardless.
    */

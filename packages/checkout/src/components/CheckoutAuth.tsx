@@ -23,9 +23,10 @@ export const CheckoutAuth = ({ className }: CheckoutAuthControlProps) => {
 };
 
 /**
- * Sign-in of the guest checkout (G1–G3): a drawer on the right, a bottom sheet on a phone. It
- * starts from the email or phone of the contact and closes once signed in (G4). Back from a
- * social provider without a session, it is open to say why until closed.
+ * Sign-in of the guest checkout (G1–G3), as the store's: a dialog with no header over its
+ * screens (they link to one another), a bottom sheet on a phone. It starts from the email or
+ * phone of the contact and closes once signed in (G4). Back from a social provider without a
+ * session, it is open to say why until closed.
  */
 export const CheckoutAuthDialog = ({
   open,
@@ -39,7 +40,7 @@ export const CheckoutAuthDialog = ({
   return (
     <CheckoutAuthUI>
       <AuthDialog
-        presentation="drawer"
+        renderHeader={noHeader}
         context="checkoutGuest"
         open={open || Boolean(result)}
         onClose={() => {
@@ -51,3 +52,5 @@ export const CheckoutAuthDialog = ({
     </CheckoutAuthUI>
   );
 };
+
+const noHeader = () => null;

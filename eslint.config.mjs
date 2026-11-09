@@ -14,6 +14,7 @@ export default defineConfig([
   {
     ignores: [
       '.yarn/**',
+      'vendor/**',
       '**/.runtime/**',
       '**/dist/**',
       '**/storybook-static/**',

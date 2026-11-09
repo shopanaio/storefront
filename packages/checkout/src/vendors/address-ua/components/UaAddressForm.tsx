@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { AddressModuleProps } from '#checkout/vendors/types';
 import {
-  readSettlementRef,
+  readSettlement,
   settlementAddressData,
 } from '#checkout/vendors/nova-poshta/address';
 import type { Settlement } from '#checkout/vendors/nova-poshta/types';
@@ -21,7 +21,7 @@ export function UaAddressForm({
   country,
   onSubmit,
 }: AddressModuleProps) {
-  const settlementRef = readSettlementRef(address);
+  const settlementRef = readSettlement(address)?.settlementRef ?? null;
   const cityName = address?.city ?? null;
   const provinceCode = address?.provinceCode ?? null;
   const { provinces } = country.addressFormat;

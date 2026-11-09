@@ -9,7 +9,7 @@ import { CheckoutFormPage } from './CheckoutFormPage';
 export function CheckoutGatePage({
   signInOpen = false,
 }: {
-  /** The sign-in drawer is open from the start. */
+  /** The sign-in dialog is open from the start. */
   signInOpen?: boolean;
 }) {
   const { checkout } = useCheckoutData();

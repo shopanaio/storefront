@@ -1,3 +1,4 @@
+import type { SettlementHint } from './address';
 import type {
   CustomerInput,
   DoorDraft,
@@ -14,32 +15,43 @@ export const SERVICE_RECEIVING_TYPE: Record<ServiceCode, ReceivingType> = {
   postomat: 'POSTOMAT',
 };
 
+/**
+ * Branch or postomat input. Every ref comes from the carrier directory as the browser read it;
+ * the backend takes them as they are.
+ */
 export function pointInput(
   type: PointInput['type'],
-  settlementRef: string,
+  settlement: SettlementHint,
   warehouseRef: string
 ): PointInput {
-  return { type, settlementRef, warehouseRef };
+  return {
+    type,
+    settlementRef: settlement.settlementRef,
+    cityRef: settlement.cityRef,
+    warehouseRef,
+  };
 }
 
 /**
- * Courier input. `streetName` is the street `name` from the directory: the carrier finds
- * a settlement street only by name, so the backend checks `streetRef` with it. Empty
- * optional fields are left out (`additionalProperties: false`, no empty strings).
+ * Courier input. `streetRef` and `streetName` are the street `ref` and `name` from the
+ * directory. Empty optional fields are left out (`additionalProperties: false`, no empty
+ * strings).
  */
-export function doorInput(fields: {
-  settlementRef: string;
-  streetRef: string;
-  streetName: string;
-  building: string;
-  apartment?: string;
-  comment?: string;
-}): DoorInput {
+export function doorInput(
+  fields: SettlementHint & {
+    streetRef: string;
+    streetName: string;
+    building: string;
+    apartment?: string;
+    comment?: string;
+  }
+): DoorInput {
   const apartment = fields.apartment?.trim();
   const comment = fields.comment?.trim();
   return {
     type: 'DOOR',
     settlementRef: fields.settlementRef,
+    cityRef: fields.cityRef,
     streetRef: fields.streetRef,
     streetName: fields.streetName,
     building: fields.building.trim(),
@@ -49,15 +61,17 @@ export function doorInput(fields: {
 }
 
 /** Courier fields typed before a street is picked, kept as the draft of the form. */
-export function doorDraft(fields: {
-  settlementRef: string;
-  building: string;
-  apartment: string;
-  comment: string;
-}): DoorDraft {
+export function doorDraft(
+  fields: SettlementHint & {
+    building: string;
+    apartment: string;
+    comment: string;
+  }
+): DoorDraft {
   return {
     type: 'DOOR',
     settlementRef: fields.settlementRef,
+    cityRef: fields.cityRef,
     building: fields.building,
     ...(fields.apartment ? { apartment: fields.apartment } : {}),
     ...(fields.comment ? { comment: fields.comment } : {}),

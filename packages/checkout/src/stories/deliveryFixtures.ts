@@ -5,6 +5,7 @@ import type {
   DoorInput,
   PointInput,
   ServiceCode,
+  Street,
   Warehouse,
 } from '#checkout/vendors/nova-poshta/types';
 import { defaultCheckout, uah } from './fixtures';
@@ -34,17 +35,14 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 const schedule = (weekdays: string, saturday: string, sunday: string) => [
   ...WEEKDAYS.map((day) => ({
-    __typename: 'NovaPoshtaScheduleDay' as const,
     day,
     hours: weekdays,
   })),
   {
-    __typename: 'NovaPoshtaScheduleDay' as const,
     day: 'Saturday',
     hours: saturday,
   },
   {
-    __typename: 'NovaPoshtaScheduleDay' as const,
     day: 'Sunday',
     hours: sunday,
   },
@@ -56,7 +54,6 @@ const point = (
   shortAddress: string,
   selectable = true
 ): Warehouse => ({
-  __typename: 'NovaPoshtaWarehouse',
   ref: `${kind.toLowerCase()}-${number}`,
   kind,
   number,
@@ -86,14 +83,15 @@ export const KYIV_STREETS = [
   ['street-khreshchatyk', 'Хрещатик', 'вул. Хрещатик'],
   ['street-saksahanskoho', 'Саксаганського', 'вул. Саксаганського'],
   ['street-shevchenka', 'Тараса Шевченка', 'бульв. Тараса Шевченка'],
-].map(([ref, name, present]) => ({
-  __typename: 'NovaPoshtaSettlementStreet' as const,
-  ref,
-  settlementRef: KYIV.ref,
-  name,
-  present,
-  streetType: null,
-}));
+].map(
+  ([ref, name, present]): Street => ({
+    ref,
+    settlementRef: KYIV.ref,
+    name,
+    present,
+    streetType: null,
+  })
+);
 
 const contractBranch = (type: 'WAREHOUSE' | 'POSTOMAT' | 'DOOR') =>
   type === 'DOOR'
@@ -103,6 +101,7 @@ const contractBranch = (type: 'WAREHOUSE' | 'POSTOMAT' | 'DOOR') =>
         required: [
           'type',
           'settlementRef',
+          'cityRef',
           'streetRef',
           'streetName',
           'building',
@@ -110,6 +109,7 @@ const contractBranch = (type: 'WAREHOUSE' | 'POSTOMAT' | 'DOOR') =>
         properties: {
           type: { const: 'DOOR' },
           settlementRef: { type: 'string', minLength: 1 },
+          cityRef: { type: 'string', minLength: 1 },
           streetRef: { type: 'string', minLength: 1 },
           streetName: { type: 'string', minLength: 1 },
           building: { type: 'string', minLength: 1, maxLength: 50 },
@@ -120,10 +120,11 @@ const contractBranch = (type: 'WAREHOUSE' | 'POSTOMAT' | 'DOOR') =>
     : {
         type: 'object',
         additionalProperties: false,
-        required: ['type', 'settlementRef', 'warehouseRef'],
+        required: ['type', 'settlementRef', 'cityRef', 'warehouseRef'],
         properties: {
           type: { const: type },
           settlementRef: { type: 'string', minLength: 1 },
+          cityRef: { type: 'string', minLength: 1 },
           warehouseRef: { type: 'string', minLength: 1 },
         },
       };
@@ -201,6 +202,7 @@ export const npOptions = (payer: Payer = 'RECIPIENT') => [
 export const branchInput: PointInput = {
   type: 'WAREHOUSE',
   settlementRef: KYIV.ref,
+  cityRef: KYIV.cityRef,
   warehouseRef: KYIV_POINTS[1].ref,
 };
 
@@ -208,6 +210,7 @@ export const branchInput: PointInput = {
 export const lockerInput: PointInput = {
   type: 'POSTOMAT',
   settlementRef: KYIV.ref,
+  cityRef: KYIV.cityRef,
   warehouseRef: KYIV_POINTS[5].ref,
 };
 
@@ -215,6 +218,7 @@ export const lockerInput: PointInput = {
 export const courierInput: DoorInput = {
   type: 'DOOR',
   settlementRef: KYIV.ref,
+  cityRef: KYIV.cityRef,
   streetRef: KYIV_STREETS[0].ref,
   streetName: KYIV_STREETS[0].name,
   building: '22',

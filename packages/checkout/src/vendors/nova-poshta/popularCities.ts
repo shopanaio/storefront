@@ -7,7 +7,6 @@ const city = (
   area: string,
   warehouseCount: number
 ): Settlement => ({
-  __typename: 'NovaPoshtaSettlement',
   ref,
   cityRef,
   name,

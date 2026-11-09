@@ -4,19 +4,33 @@ import type { Settlement } from './types';
 /** Carrier code of the Nova Poshta app. */
 export const NOVA_POSHTA = 'nova-poshta';
 
-/**
- * Nova Poshta hint of a delivery address: the settlement picked in the directory, in the
- * carrier's own space `address.data.carriers["nova-poshta"]` (R8, B7). A new city replaces
- * the whole `data`, so hints of every carrier are dropped with it.
- */
-export function settlementAddressData(settlement: Settlement) {
-  return { carriers: { [NOVA_POSHTA]: { settlementRef: settlement.ref } } };
+/** Settlement of the address hint: what the customer input is built from. */
+export interface SettlementHint {
+  settlementRef: string;
+  cityRef: string;
 }
 
-/** Settlement ref of the address hint, or `null` when the address has none. */
-export function readSettlementRef(
+/**
+ * Nova Poshta hint of a delivery address: the settlement picked in the directory and the
+ * carrier city that serves it, in the carrier's own space `address.data.carriers["nova-poshta"]`
+ * (R8, B7). The backend takes them as they are. A new city replaces the whole `data`, so hints
+ * of every carrier are dropped with it.
+ */
+export function settlementAddressData(settlement: Settlement) {
+  return {
+    carriers: {
+      [NOVA_POSHTA]: {
+        settlementRef: settlement.ref,
+        cityRef: settlement.cityRef,
+      },
+    },
+  };
+}
+
+/** Settlement of the address hint, or `null` when the address has no full hint. */
+export function readSettlement(
   address: ProviderDeliveryAddress | null | undefined
-): string | null {
+): SettlementHint | null {
   const carriers = (address?.data as { carriers?: unknown } | null | undefined)
     ?.carriers;
   const hint =
@@ -26,6 +40,14 @@ export function readSettlementRef(
   if (!hint || typeof hint !== 'object') {
     return null;
   }
-  const ref = (hint as { settlementRef?: unknown }).settlementRef;
-  return typeof ref === 'string' && ref.length > 0 ? ref : null;
+  const { settlementRef, cityRef } = hint as {
+    settlementRef?: unknown;
+    cityRef?: unknown;
+  };
+  return typeof settlementRef === 'string' &&
+    settlementRef.length > 0 &&
+    typeof cityRef === 'string' &&
+    cityRef.length > 0
+    ? { settlementRef, cityRef }
+    : null;
 }

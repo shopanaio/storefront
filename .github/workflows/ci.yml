@@ -20,6 +20,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the carrier API client submodule
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --depth=1 -- vendor/carrier-api
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -33,6 +37,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the carrier API client submodule
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --depth=1 -- vendor/carrier-api
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -46,6 +54,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the carrier API client submodule
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --depth=1 -- vendor/carrier-api
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -68,6 +80,10 @@ jobs:
           - '@shopana/mock-server'
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the carrier API client submodule
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: \
+            submodule update --init --depth=1 -- vendor/carrier-api
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc

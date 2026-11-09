@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MockedProvider } from '@apollo/client/testing/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { StorefrontNovaPoshtaSettlementStreetsQueryDocument } from '#checkout/graphql/operations';
+import type { NovaPoshtaDirectory } from '../../api/carrier';
+import { NovaPoshtaDirectoryProvider } from '../../api/directory';
+import type { Street } from '../../types';
 import { StreetAutocomplete, matchSegments } from './StreetAutocomplete';
 
 const SETTLEMENT = 'e718a680-4b33-11e4-ab6d-005056801329';
 
-const street = (ref: string, name: string) => ({
-  __typename: 'NovaPoshtaSettlementStreet' as const,
+const street = (ref: string, name: string): Street => ({
   ref,
   settlementRef: SETTLEMENT,
   name,
@@ -19,20 +19,15 @@ const street = (ref: string, name: string) => ({
 const KHRESHCHATYK = street('s1', 'Хрещатик');
 const KHRESHCHATYTSKA = street('s2', 'Хрещатицька');
 
-const search = {
-  request: {
-    query: StorefrontNovaPoshtaSettlementStreetsQueryDocument,
-    variables: { settlementRef: SETTLEMENT, query: 'хре', limit: 20 },
-  },
-  result: {
-    data: {
-      novaPoshtaSettlementStreets: {
-        __typename: 'NovaPoshtaSettlementStreetPage',
-        items: [KHRESHCHATYK, KHRESHCHATYTSKA],
-      },
-    },
-  },
-};
+/** The directory finds both streets by "хре" in the settlement. */
+const directory = (): NovaPoshtaDirectory => ({
+  settlements: () => Promise.reject(new Error('Not expected')),
+  warehouses: () => Promise.reject(new Error('Not expected')),
+  streets: async ({ settlementRef, query }) =>
+    settlementRef === SETTLEMENT && query === 'хре'
+      ? [KHRESHCHATYK, KHRESHCHATYTSKA]
+      : [],
+});
 
 /**
  * The menu item of a street, found by its text: jsdom gives `<mark>` no inline display, so the
@@ -47,7 +42,7 @@ const autocomplete = (
   changeStreet = vi.fn(),
   streetPresent: string | null = null
 ) => (
-  <MockedProvider mocks={[search]}>
+  <NovaPoshtaDirectoryProvider directory={directory()}>
     <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
       <StreetAutocomplete
         streetPresent={streetPresent}
@@ -55,7 +50,7 @@ const autocomplete = (
         settlementRef={SETTLEMENT}
       />
     </NextIntlClientProvider>
-  </MockedProvider>
+  </NovaPoshtaDirectoryProvider>
 );
 
 describe('matchSegments', () => {

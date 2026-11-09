@@ -53,13 +53,13 @@ const accountOnly = {
   },
 };
 
-/** G1: a guest checkout with "Log in" next to the contact; it opens the sign-in drawer. */
+/** G1: a guest checkout with "Log in" next to the contact; it opens the sign-in dialog. */
 export const GuestCheckout: Story = {
   parameters: { checkout: { checkout: guest() } },
 };
 
-/** G2: the sign-in drawer, prefilled from the contact; Phone | Email, password, providers. */
-export const GuestSignInDrawer: Story = {
+/** G2: the sign-in dialog, prefilled from the contact; Phone | Email, password, providers. */
+export const GuestSignInDialog: Story = {
   parameters: { checkout: { checkout: guest() } },
   args: { signInOpen: true },
 };
@@ -77,7 +77,7 @@ export const GuestSignInEmailOnly: Story = {
   args: { signInOpen: true },
 };
 
-/** Back from Google without a session: the drawer opens to say the sign-in was cancelled. */
+/** Back from Google without a session: the dialog opens to say the sign-in was cancelled. */
 export const GuestSocialCancelled: Story = {
   parameters: {
     checkout: { checkout: guest(), session: { authResult: 'cancelled' } },

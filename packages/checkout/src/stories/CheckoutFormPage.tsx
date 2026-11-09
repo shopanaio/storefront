@@ -15,7 +15,7 @@ export function CheckoutFormPage({
 }: {
   /** The sign-in stands in place of the contact (`useSignInRequired`). */
   signInRequired?: boolean;
-  /** The sign-in drawer is open from the start. */
+  /** The sign-in dialog is open from the start. */
   signInOpen?: boolean;
 }) {
   return (

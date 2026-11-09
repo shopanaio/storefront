@@ -1,0 +1,4 @@
+[submodule "vendor/carrier-api"]
+	path = vendor/carrier-api
+	url = git@github.com:shopanaio/carrier-api.git
+	branch = shopana-internal

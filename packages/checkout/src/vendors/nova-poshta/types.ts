@@ -1,17 +1,55 @@
 /**
- * Nova Poshta types. Directory rows come from the storefront queries of the Nova Poshta
- * app; customer input follows the app's `customerInputContract`.
+ * Nova Poshta types. Directory rows are read in the browser from the carrier API; customer
+ * input follows the `customerInputContract` of the Nova Poshta app.
  */
 
-import type {
-  StorefrontNovaPoshtaSettlementFragment,
-  StorefrontNovaPoshtaStreetFragment,
-  StorefrontNovaPoshtaWarehouseFragment,
-} from '#checkout/graphql/operations';
+/** Settlement of `searchSettlements`. */
+export interface Settlement {
+  /** Settlement ref; `settlementRef` of the customer input. */
+  ref: string;
+  /** Ref of the carrier city that serves the settlement; `cityRef` of the customer input. */
+  cityRef: string;
+  name: string;
+  /** Full name with area and region, for example "м. Київ, Київська обл.". */
+  present: string;
+  area: string | null;
+  region: string | null;
+  settlementType: string | null;
+  warehouseCount: number | null;
+  addressDeliveryAllowed: boolean | null;
+}
 
-export type Settlement = StorefrontNovaPoshtaSettlementFragment;
-export type Warehouse = StorefrontNovaPoshtaWarehouseFragment;
-export type Street = StorefrontNovaPoshtaStreetFragment;
+export interface ScheduleDay {
+  /** English weekday name as the carrier returns it, for example "Monday". */
+  day: string;
+  /** Hours as the carrier returns them, for example "08:00-21:00" or "-". */
+  hours: string;
+}
+
+/** Branch or postomat of `getWarehouses`. */
+export interface Warehouse {
+  /** Point ref; `warehouseRef` of the customer input. */
+  ref: string;
+  kind: 'WAREHOUSE' | 'POSTOMAT';
+  number: string;
+  description: string;
+  shortAddress: string;
+  /** Working and not denied for selection; only such points can be picked. */
+  selectable: boolean;
+  settlementRef: string;
+  schedule: ScheduleDay[];
+}
+
+/** Street of `searchSettlementStreets`. */
+export interface Street {
+  /** Settlement street ref; `streetRef` of the courier customer input. */
+  ref: string;
+  settlementRef: string;
+  name: string;
+  /** Name with the street type, for example "вул. Хрещатик". */
+  present: string;
+  streetType: string | null;
+}
 
 /** Receiving type of a service; the `type` of the customer input. */
 export type ReceivingType = 'WAREHOUSE' | 'POSTOMAT' | 'DOOR';
@@ -25,12 +63,14 @@ export type ServiceCode = 'warehouse' | 'doors' | 'postomat';
 export interface PointInput {
   type: 'WAREHOUSE' | 'POSTOMAT';
   settlementRef: string;
+  cityRef: string;
   warehouseRef: string;
 }
 
 export interface DoorInput {
   type: 'DOOR';
   settlementRef: string;
+  cityRef: string;
   streetRef: string;
   streetName: string;
   building: string;

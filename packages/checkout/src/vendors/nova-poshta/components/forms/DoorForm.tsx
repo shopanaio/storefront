@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { ProviderDeliveryAddress } from '#checkout/vendors/types';
 import { StreetAutocomplete } from '../street/StreetAutocomplete';
-import { readSettlementRef } from '../../address';
+import { readSettlement, type SettlementHint } from '../../address';
 import { doorDraft, doorInput, readInput } from '../../customerInput';
 import type { DoorView, Street } from '../../types';
 
@@ -53,12 +53,12 @@ const fieldsOf = (
  * contract (street and building filled in) and typing pauses.
  */
 export function DoorForm({ deliveryAddress, ...props }: DoorFormProps) {
-  const settlementRef = readSettlementRef(deliveryAddress);
+  const settlement = readSettlement(deliveryAddress);
   // A new settlement starts the courier address over and drops a pending submit.
   return (
     <CourierFields
-      key={settlementRef ?? ''}
-      settlementRef={settlementRef}
+      key={settlement?.settlementRef ?? ''}
+      settlement={settlement}
       {...props}
     />
   );
@@ -68,26 +68,29 @@ function CourierFields({
   data,
   view,
   onSubmit,
-  settlementRef,
-}: Omit<DoorFormProps, 'deliveryAddress'> & { settlementRef: string | null }) {
+  settlement,
+}: Omit<DoorFormProps, 'deliveryAddress'> & {
+  settlement: SettlementHint | null;
+}) {
+  const settlementRef = settlement?.settlementRef ?? null;
   const t = useTranslations('Modules.novaPoshta.form');
   const [fields, setFields] = useState<DoorFields>(() =>
     fieldsOf(data, view, settlementRef)
   );
 
   const submit = (next: DoorFields) => {
-    if (!settlementRef) {
+    if (!settlement) {
       return;
     }
     if (!next.street) {
       // Kept as the draft of the form until a street is picked (SC-fobt).
-      onSubmit(doorDraft({ settlementRef, ...next }));
+      onSubmit(doorDraft({ ...settlement, ...next }));
       return;
     }
     const streetView: DoorView = { streetPresent: next.street.present };
     onSubmit(
       doorInput({
-        settlementRef,
+        ...settlement,
         streetRef: next.street.ref,
         streetName: next.street.name,
         building: next.building,

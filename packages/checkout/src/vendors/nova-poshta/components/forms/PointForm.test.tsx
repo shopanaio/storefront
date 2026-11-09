@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import { MockedProvider } from '@apollo/client/testing/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { StorefrontNovaPoshtaWarehouseQueryDocument } from '#checkout/graphql/operations';
+import type { NovaPoshtaDirectory } from '../../api/carrier';
+import { NovaPoshtaDirectoryProvider } from '../../api/directory';
+import type { Warehouse } from '../../types';
 import { PointForm } from './PointForm';
 
 const SETTLEMENT = 'e718a680-4b33-11e4-ab6d-005056801329';
+const CITY = '8d5a980d-391c-11dd-90d9-001a92567626';
 const WAREHOUSE = '1ec09d88-e1c2-11e3-8c4a-0050568002cf';
 
 const address = {
@@ -16,44 +18,42 @@ const address = {
   postalCode: null,
   provinceCode: null,
   city: 'Київ',
-  data: { carriers: { 'nova-poshta': { settlementRef: SETTLEMENT } } },
+  data: {
+    carriers: { 'nova-poshta': { settlementRef: SETTLEMENT, cityRef: CITY } },
+  },
 };
 
 const input = {
   type: 'WAREHOUSE',
   settlementRef: SETTLEMENT,
+  cityRef: CITY,
   warehouseRef: WAREHOUSE,
 };
 
-const byRef = {
-  request: {
-    query: StorefrontNovaPoshtaWarehouseQueryDocument,
-    variables: { ref: WAREHOUSE },
-  },
-  result: {
-    data: {
-      novaPoshtaWarehouses: {
-        __typename: 'NovaPoshtaWarehousePage',
-        items: [
-          {
-            __typename: 'NovaPoshtaWarehouse',
-            ref: WAREHOUSE,
-            kind: 'WAREHOUSE',
-            number: '7',
-            description: 'Відділення №7',
-            shortAddress: 'Київ, Хрещатик, 1',
-            selectable: true,
-            settlementRef: SETTLEMENT,
-            schedule: [],
-          },
-        ],
-      },
-    },
-  },
+const BRANCH: Warehouse = {
+  ref: WAREHOUSE,
+  kind: 'WAREHOUSE',
+  number: '7',
+  description: 'Відділення №7',
+  shortAddress: 'Київ, Хрещатик, 1',
+  selectable: true,
+  settlementRef: SETTLEMENT,
+  schedule: [],
 };
 
+/** The directory knows one branch, read by its ref. */
+const directory = (): NovaPoshtaDirectory => ({
+  settlements: () => Promise.reject(new Error('Not expected')),
+  streets: () => Promise.reject(new Error('Not expected')),
+  warehouses: async ({ ref }) => ({
+    items: ref === WAREHOUSE ? [BRANCH] : [],
+    page: 1,
+    hasNextPage: false,
+  }),
+});
+
 const pointForm = (view?: unknown) => (
-  <MockedProvider mocks={[byRef]}>
+  <NovaPoshtaDirectoryProvider directory={directory()}>
     <NextIntlClientProvider locale="uk" messages={{}} onError={() => {}}>
       <PointForm
         type="WAREHOUSE"
@@ -63,7 +63,7 @@ const pointForm = (view?: unknown) => (
         deliveryAddress={address}
       />
     </NextIntlClientProvider>
-  </MockedProvider>
+  </NovaPoshtaDirectoryProvider>
 );
 
 describe('PointForm', () => {
