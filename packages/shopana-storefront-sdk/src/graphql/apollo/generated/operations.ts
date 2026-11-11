@@ -3156,7 +3156,8 @@ export type DynamicCollection = {
    * VENDOR set, anything else the COLLECTION set. Filter groups fixed by a rule
    * are not returned in filters. MANUAL is not available. With no query the
    * default sort is NEWEST; with a non-empty query it is RELEVANCE. A cursor is
-   * valid only for the same rules and the same matching products.
+   * valid only for the same rules, the same matching products and the same
+   * queryMode.
    */
   readonly products: ProductConnection;
   /**
@@ -3183,6 +3184,7 @@ export type DynamicCollectionProductsArgs = {
   filters?: InputMaybe<ReadonlyArray<ListingFilterInput>>;
   first?: InputMaybe<Scalars['Int']['input']>;
   query?: InputMaybe<Scalars['String']['input']>;
+  queryMode?: InputMaybe<ListingQueryMode>;
   sort?: InputMaybe<ListingSort>;
 };
 
@@ -3571,6 +3573,23 @@ export type ListingFilterInput = {
    */
   readonly vendorId?: InputMaybe<Scalars['ID']['input']>;
 };
+
+/** How a text query acts on a dynamic collection. */
+export type ListingQueryMode =
+  /**
+   * The query narrows the collection: only matching products are returned and
+   * counted.
+   */
+  | 'FILTER'
+  /**
+   * The query ranks the collection without narrowing it. totalCount, filters and
+   * appliedFilters are the same as without a query. With the RELEVANCE sort the
+   * page goes in segments: available matching products by relevance, available
+   * other products by NEWEST, then unavailable matching products and unavailable
+   * other products the same way. Other sorts keep their order. Typo tolerance is
+   * not used in this mode.
+   */
+  | 'RANK';
 
 /**
  * Deterministic storefront product sorting.
@@ -6394,6 +6413,11 @@ export type PetProductSelection = Node & {
   readonly id: Scalars['ID']['output'];
   /** Frozen search text; shown with the conditions, not editable on the page. */
   readonly query?: Maybe<Scalars['String']['output']>;
+  /**
+   * Value for the `queryMode` argument of `DynamicCollection.products`, passed unchanged with
+   * `query`: RANK puts the matching products first without cutting the others.
+   */
+  readonly queryMode: ListingQueryMode;
   /** Value for the `rules` argument of `Query.dynamicCollection`, passed unchanged. */
   readonly rules: Scalars['JSON']['output'];
   /** Neutral plain-text title in the storefront language, 3–80 characters. */
@@ -7049,6 +7073,11 @@ export type ProductConnection = Connection & {
    * vendor is pinned, and `availability` when an inStock rule is present.
    */
   readonly filters: ReadonlyArray<Filter>;
+  /**
+   * Words of the query the search left out because no product matched all of
+   * them, in query order. Empty without a query and when every word matched.
+   */
+  readonly ignoredWords: ReadonlyArray<Scalars['String']['output']>;
   /** The products contained in the returned edges. */
   readonly nodes: ReadonlyArray<Product>;
   /**
@@ -7056,6 +7085,11 @@ export type ProductConnection = Connection & {
    * arguments.
    */
   readonly pageInfo: PageInfo;
+  /**
+   * Number of products of totalCount that match the text query. Null without a
+   * query. Equals totalCount unless the query is in RANK mode.
+   */
+  readonly queryMatchCount?: Maybe<Scalars['Int']['output']>;
   /** The effective sort selected for this request. */
   readonly sort: ListingSort;
   /** The exact number of products matching every applied filter. */

@@ -235,7 +235,13 @@ export function createApolloCache(
     DynamicCollection: {
       merge: true,
       fields: {
-        products: cursorConnectionPolicy(['query', 'sort', 'filters']),
+        // FILTER and RANK pages of one query are different listings.
+        products: cursorConnectionPolicy([
+          'query',
+          'queryMode',
+          'sort',
+          'filters',
+        ]),
       },
     },
     Query: {

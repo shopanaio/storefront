@@ -360,3 +360,44 @@ describe('objects without id', () => {
     ).toBeNull();
   });
 });
+
+const DYNAMIC_LISTING = parse(`
+  query DynamicListing($rules: JSON!, $query: String, $queryMode: ListingQueryMode) {
+    dynamicCollection(rules: $rules) {
+      __typename
+      products(first: 2, query: $query, queryMode: $queryMode) {
+        __typename
+        totalCount
+      }
+    }
+  }
+`);
+
+describe('dynamic collection products', () => {
+  it('keeps the FILTER and RANK pages of one query apart', () => {
+    const cache = createApolloCache();
+    const rules = [{ category: { operator: 'IN', ids: ['category-1'] } }];
+    const write = (queryMode: string, totalCount: number) =>
+      cache.writeQuery({
+        query: DYNAMIC_LISTING,
+        variables: { rules, query: 'гастро', queryMode },
+        data: {
+          dynamicCollection: {
+            __typename: 'DynamicCollection',
+            products: { __typename: 'ProductConnection', totalCount },
+          },
+        },
+      });
+    write('FILTER', 3);
+    write('RANK', 12);
+    const read = (queryMode: string) =>
+      cache.readQuery<{
+        dynamicCollection: { products: { totalCount: number } };
+      }>({
+        query: DYNAMIC_LISTING,
+        variables: { rules, query: 'гастро', queryMode },
+      })?.dynamicCollection.products.totalCount;
+    expect(read('FILTER')).toBe(3);
+    expect(read('RANK')).toBe(12);
+  });
+});
