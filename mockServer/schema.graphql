@@ -317,13 +317,6 @@ type Query @join__type(graph: APPS_CONTACT_REQUESTS_STOREFRONT)  @join__type(gra
   """
   onlineStoreNavigationMenus(first: Int, after: Cursor, last: Int, before: Cursor) : OnlineStoreNavigationMenuConnection! @join__field(graph: APPS_ONLINE_STORE_STOREFRONT)
   """
-  A product selection created by the Pet Assistant in a chat (ADR-016 §6.3). Anyone with the link
-  may read it within the store of the request context, so a selection can be shared. Null when the
-  selection does not exist, belongs to another store, has expired, when the Pet Assistant App is
-  not active, or when the storefront credential lacks `storefront.catalog.read`.
-  """
-  petProductSelection(id: ID!) : PetProductSelection @join__field(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  """
   Returns any catalog object by its globally unique Relay ID.
   """
   node(id: ID!) : Node @join__field(graph: CATALOG_STOREFRONT)
@@ -441,7 +434,8 @@ type Query @join__type(graph: APPS_CONTACT_REQUESTS_STOREFRONT)  @join__type(gra
 
   Search uses the locale and currency from the active storefront context. The
   query must contain 1-128 Unicode code points after whitespace normalization.
-  The contextual default sort is RELEVANCE.
+  The contextual default sort is RELEVANCE. A product matches when it matches
+  at least one word of the query; products matching more words come first.
   """
   searchProducts(
     query: String!
@@ -1744,31 +1738,6 @@ type PetCategoryFacts @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
   """
   frozenFacets: [String!]!
   verifiedAt: DateTime!
-}
-
-"""
-An immutable product selection: the title written by the assistant and the frozen conditions.
-Filters and sort are not stored; they live in the page address.
-"""
-type PetProductSelection implements Node @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT, key: "id")  @join__implements(graph: APPS_PET_ASSISTANT_STOREFRONT, interface: "Node")  {
-  id: ID!
-  """
-  Neutral plain-text title in the storefront language, 3–80 characters.
-  """
-  title: String!
-  """
-  Frozen search text; shown with the conditions, not editable on the page.
-  """
-  query: String
-  """
-  Value for the `rules` argument of `Query.dynamicCollection`, passed unchanged.
-  """
-  rules: JSON!
-  createdAt: DateTime!
-  """
-  The selection is unavailable after this moment.
-  """
-  expiresAt: DateTime!
 }
 
 """
@@ -3401,9 +3370,13 @@ type CheckoutLine implements Node @join__type(graph: CHECKOUT_STOREFRONT, key: "
   """
   id: ID!
   """
-  Title of the purchasable.
+  Title of the product.
   """
   title: String!
+  """
+  Title of the variant in the checkout locale. Null when the variant has no title of its own.
+  """
+  variantTitle: String
   """
   SKU of the purchasable.
   """
@@ -4237,7 +4210,8 @@ type DynamicCollection @join__type(graph: LISTING_STOREFRONT)  {
   VENDOR set, anything else the COLLECTION set. Filter groups fixed by a rule
   are not returned in filters. MANUAL is not available. With no query the
   default sort is NEWEST; with a non-empty query it is RELEVANCE. A cursor is
-  valid only for the same rules and the same matching products.
+  valid only for the same rules, the same matching products and the same
+  queryMode.
   """
   products(
     """
@@ -4247,6 +4221,12 @@ type DynamicCollection @join__type(graph: LISTING_STOREFRONT)  {
     first: Int = 20
     after: Cursor
     query: String
+    """
+    How a non-empty query acts on the collection. FILTER keeps only products
+    matching the query. RANK keeps every product of the collection and, with the
+    RELEVANCE sort, puts matching products first. Ignored without a query.
+    """
+    queryMode: ListingQueryMode = FILTER
     filters: [ListingFilterInput!]
     sort: ListingSort
   ): ProductConnection!
@@ -4282,7 +4262,8 @@ One value of a dynamic collection rule.
 type DynamicCollectionRuleValue @join__type(graph: LISTING_STOREFRONT)  {
   """
   The value as in DynamicCollectionRuleInput, reusable without changes: a
-  global ID for ids, a { sourceHandle, valueHandle } object for values.
+  global ID for ids and handles, a { sourceHandle, valueHandle } object for
+  values.
   """
   input: JSON!
   """
@@ -4313,6 +4294,11 @@ type ProductConnection implements Connection @join__type(graph: LISTING_STOREFRO
   """
   totalCount: Int!
   """
+  Number of products of totalCount that match the text query. Null without a
+  query. Equals totalCount unless the query is in RANK mode.
+  """
+  queryMatchCount: Int
+  """
   Status of every filter of the request, in input order.
 
   A filter whose facet is not in the facet set of the listing scope is not
@@ -4329,17 +4315,32 @@ type ProductConnection implements Connection @join__type(graph: LISTING_STOREFRO
   Each count uses target-filter isolation: selections from the filter being
   counted are excluded while every other filter remains active.
 
-  Order: configured facets by their configured order, the VENDOR facet among
+  With omitted or null groups, returns FACET, VENDOR, AVAILABILITY and PRICE.
+  An empty list returns no groups. CATEGORY is opt-in and appears first.
+  Remaining order: configured facets by their configured order, the VENDOR facet among
   them (absent on a vendor page, when no VENDOR facet is enabled for the scope,
   and when no vendor has matching products), then `availability` and `price`.
   Vendor values are ordered by localized vendor name, then id.
+
+  The CATEGORY group lists published categories under one parent: the category
+  of the active categoryId filter, else the single category rule of a dynamic
+  collection, else the category of a category page, else the store roots.
+  `categories` chooses the level: CHILDREN (default) lists the direct children
+  with the count of their whole subtree; LEAVES lists the leaf categories under
+  the parent counted by their own products only, at most `limit` of them;
+  COMMON_ANCESTOR descends from the parent to the nearest common ancestor of
+  every category holding matching products and lists its children like
+  CHILDREN, so the values are the first level that splits the result.
+  Values go by count descending, then label, then id; unselected values without
+  matching products are omitted and the selected category stays at zero. Two
+  aliases of this field with different `categories` options get their own lists.
 
   In a dynamic collection, groups fixed by a rule are omitted: a FEATURE or
   OPTION facet whose source is pinned to one value, TAG values every matching
   product already carries when a rule pins tags, the VENDOR facet when one
   vendor is pinned, and `availability` when an inStock rule is present.
   """
-  filters: [Filter!]!
+  filters(groups: [ListingFilterGroup!], categories: ListingCategoryOptions) : [Filter!]!
   """
   The effective sort selected for this request.
   """
@@ -4403,7 +4404,7 @@ type Filter @join__type(graph: LISTING_STOREFRONT)  {
   type: FilterType!
   """
   The configured canonical facet represented by this filter.
-  Null for availability and price filters.
+  Null for category, availability and price filters.
   """
   facet: Facet
   """
@@ -4436,6 +4437,10 @@ type FilterPriceRange @join__type(graph: LISTING_STOREFRONT)  {
 }
 
 type FilterValue @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  Category referenced by a navigation value.
+  """
+  category: Category
   """
   Stable identifier within the parent filter.
   """
@@ -4512,11 +4517,15 @@ type FacetSwatch implements Node @join__type(graph: LISTING_STOREFRONT, key: "id
 }
 
 """
-A forward-only Relay connection over one immutable recommendation snapshot.
+A forward-only Relay connection over the product's own recommendations from its
+immutable snapshot, followed by a popularity reserve when own recommendations
+fall short of the placement minimum.
 
-The cursor pins the snapshot generation, so pagination never combines ranks
-from two different recommendation builds. Products that are no longer
-storefront-eligible are omitted at read time without changing the snapshot.
+The cursor pins the snapshot (or its absence) and the calculation run used for
+the reserve, so pagination never combines two recommendation generations.
+Products that are no longer storefront-eligible are omitted at read time
+without changing the snapshot. A product without a snapshot is served from
+the reserve only.
 """
 type ProductRecommendationConnection implements Connection @join__type(graph: LISTING_STOREFRONT)  @join__implements(graph: LISTING_STOREFRONT, interface: "Connection")  {
   """
@@ -4532,14 +4541,16 @@ type ProductRecommendationConnection implements Connection @join__type(graph: LI
   """
   pageInfo: PageInfo!
   """
-  Number of currently storefront-eligible items in the resolved snapshot.
+  Number of currently storefront-eligible items of the whole connection: own
+  recommendations and the popularity reserve.
   """
   totalCount: Int!
 }
 
 type ProductRecommendationEdge @join__type(graph: LISTING_STOREFRONT)  {
   """
-  Opaque cursor tied to the snapshot generation and published rank.
+  Opaque cursor tied to the snapshot, the reserve calculation run and the
+  position of this recommendation.
   """
   cursor: Cursor!
   """
@@ -5408,7 +5419,15 @@ Immutable customer-visible snapshot of one purchased line.
 """
 type OrderLine implements Node @join__type(graph: ORDERS_STOREFRONT)  @join__implements(graph: ORDERS_STOREFRONT, interface: "Node")  {
   id: ID!
+  """
+  Product title captured for this order line.
+  """
   title: String!
+  """
+  Variant title captured for this order line. Null when the variant had no title of its own in
+  the checkout locale.
+  """
+  variantTitle: String
   sku: String
   imageUrl: URL
   quantity: Int!
@@ -8718,6 +8737,25 @@ enum ListingSort @join__type(graph: LISTING_STOREFRONT)  {
   PRICE_DESC @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
+"""
+How a text query acts on a dynamic collection.
+"""
+enum ListingQueryMode @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  The query narrows the collection: only matching products are returned and
+  counted.
+  """
+  FILTER @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  The query ranks the collection without narrowing it. totalCount, filters and
+  appliedFilters are the same as without a query. With the RELEVANCE sort the
+  page goes in segments: available matching products by relevance, available
+  other products by NEWEST, then unavailable matching products and unavailable
+  other products the same way. Other sorts keep their order.
+  """
+  RANK @join__enumValue(graph: LISTING_STOREFRONT)
+}
+
 enum DynamicCollectionSetOperator @join__type(graph: LISTING_STOREFRONT)  {
   """
   At least one value must match.
@@ -8769,6 +8807,35 @@ enum DynamicCollectionRuleOperator @join__type(graph: LISTING_STOREFRONT)  {
   LT @join__enumValue(graph: LISTING_STOREFRONT)
   LTE @join__enumValue(graph: LISTING_STOREFRONT)
   BETWEEN @join__enumValue(graph: LISTING_STOREFRONT)
+}
+
+enum ListingFilterGroup @join__type(graph: LISTING_STOREFRONT)  {
+  CATEGORY @join__enumValue(graph: LISTING_STOREFRONT)
+  FACET @join__enumValue(graph: LISTING_STOREFRONT)
+  VENDOR @join__enumValue(graph: LISTING_STOREFRONT)
+  PRICE @join__enumValue(graph: LISTING_STOREFRONT)
+  AVAILABILITY @join__enumValue(graph: LISTING_STOREFRONT)
+}
+
+"""
+Level of the category tree the CATEGORY filter group lists.
+"""
+enum ListingCategoryLevel @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  Direct published children of the parent, each counted over its subtree.
+  """
+  CHILDREN @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  Published leaf categories under the parent, each counted by its own products.
+  """
+  LEAVES @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  Published children of the nearest common ancestor, below the parent, of every
+  category that holds matching products; each counted over its subtree. Empty
+  when the matching products share no category below the parent or all lie in
+  one leaf. Products attached to the ancestor itself produce no value.
+  """
+  COMMON_ANCESTOR @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 """
@@ -10029,9 +10096,9 @@ input CheckoutDeliveryCustomerInputClearInput @join__type(graph: CHECKOUT_STOREF
 
 input CheckoutDeliveryDestinationInput @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
-  Checkout lines assigned to this destination.
+  Checkout lines assigned to this destination. Omit for the whole cart.
   """
-  checkoutLineIds: [ID!]!
+  checkoutLineIds: [ID!]
   address: CheckoutDeliveryAddressInput!
 }
 
@@ -10556,21 +10623,21 @@ input WishlistProductRemoveInput @join__type(graph: CUSTOMERS_STOREFRONT)  {
 """
 One dynamic collection rule. Exactly one field must be provided.
 
-The shape follows the admin collection rule input, but identifiers are global
-IDs and prices are decimal major units in the storefront context currency, as
-in PriceRangeFilterInput.
+The shape follows the admin collection rule input, but categories, tags and
+vendors are given by global IDs or by handles, and prices are decimal major
+units in the storefront context currency, as in PriceRangeFilterInput.
 """
 input DynamicCollectionRuleInput @join__type(graph: LISTING_STOREFRONT)  {
   """
-  IN, ALL or NOT_IN over category global IDs. A category matches its whole subtree.
+  IN, ALL or NOT_IN over categories. A category matches its whole subtree.
   """
   category: DynamicCollectionIdRuleInput
   """
-  IN, ALL or NOT_IN over tag global IDs.
+  IN, ALL or NOT_IN over tags.
   """
   tag: DynamicCollectionIdRuleInput
   """
-  IN or NOT_IN over vendor global IDs.
+  IN or NOT_IN over vendors.
   """
   vendor: DynamicCollectionIdRuleInput
   """
@@ -10594,9 +10661,20 @@ input DynamicCollectionRuleInput @join__type(graph: LISTING_STOREFRONT)  {
   createdAtRange: DynamicCollectionDateRangeInput
 }
 
+"""
+Categories, tags or vendors of a rule. Exactly one of ids and handles must be
+provided. An unknown handle behaves as an unknown ID.
+"""
 input DynamicCollectionIdRuleInput @join__type(graph: LISTING_STOREFRONT)  {
   operator: DynamicCollectionSetOperator!
-  ids: [ID!]!
+  """
+  Global IDs.
+  """
+  ids: [ID!]
+  """
+  Storefront handles, as in the URL of the category, tag or vendor.
+  """
+  handles: [String!]
 }
 
 input DynamicCollectionValueRuleInput @join__type(graph: LISTING_STOREFRONT)  {
@@ -10634,6 +10712,18 @@ input DynamicCollectionDateRangeInput @join__type(graph: LISTING_STOREFRONT)  {
 }
 
 """
+Options of the CATEGORY filter group. Ignored when CATEGORY is not in groups.
+"""
+input ListingCategoryOptions @join__type(graph: LISTING_STOREFRONT)  {
+  level: ListingCategoryLevel = CHILDREN
+  """
+  Most values of a LEAVES list, between 1 and 100; 20 when omitted. Not used by
+  CHILDREN and COMMON_ANCESTOR, which return every child with matching products.
+  """
+  limit: Int
+}
+
+"""
 One structured listing predicate.
 
 Exactly one field must be provided. Different filter kinds are combined with
@@ -10641,6 +10731,15 @@ AND. Repeated values of the same filter are combined with OR. ProductVariant fac
 price, and availability are evaluated against the same variant.
 """
 input ListingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  A single published category. Intersects its subtree with the original listing.
+  """
+  categoryId: ID
+  """
+  The category of categoryId given by its storefront handle. An unknown handle
+  behaves as an unknown ID.
+  """
+  categoryHandle: String
   facet: FacetFilterInput
   """
   Vendor global ID. A vendor unknown to this store's listing index is ignored.
@@ -10648,6 +10747,11 @@ input ListingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
   scope (OUTSIDE_SCOPE) or the scope fixes the vendor (PINNED).
   """
   vendorId: ID
+  """
+  The vendor of vendorId given by its storefront handle. An unknown handle is
+  ignored, as an unknown vendor.
+  """
+  vendorHandle: String
   price: PriceRangeFilterInput
   availability: Availability
 }
