@@ -56,6 +56,32 @@ export const CheckoutResult = ({
   const number = orderNumber ?? placed.number;
   const loading = useHeldPending(!orderNumber && placed.loading);
 
+  const loyaltyDetails = useLoyaltyResult({
+    loyalty: placed.loyalty,
+    settled: loyaltySpent(status, paymentFlow),
+    estimate: earningEstimate,
+  });
+  const OrderPlaced = theme.OrderPlaced;
+  if (OrderPlaced) {
+    return (
+      <OrderPlaced
+        brand={brand}
+        orderNumber={number}
+        loading={loading}
+        statusText={t(paymentStatusMessageKey(status))}
+        paid={
+          status === 'PAID' ||
+          status === 'AUTHORIZED' ||
+          status === 'PAYMENT_NOT_REQUIRED'
+        }
+        details={loyaltyDetails}
+        onViewOrder={orderPath ? () => router.push(orderPath) : null}
+        onGoHome={() => router.push(homePath)}
+        labels={{ viewOrder: t('view-order'), goHome: t('go-home') }}
+      />
+    );
+  }
+
   return (
     <PlacementScreen brand={brand}>
       <Result
@@ -69,11 +95,7 @@ export const CheckoutResult = ({
               <strong>{t('order-number', { number })}</strong>
             ) : null}
             <span>{t(paymentStatusMessageKey(status))}</span>
-            <LoyaltyResult
-              loyalty={placed.loyalty}
-              settled={loyaltySpent(status, paymentFlow)}
-              estimate={earningEstimate}
-            />
+            {loyaltyDetails}
           </Flex>
         }
         extra={
@@ -120,7 +142,7 @@ export function loyaltySpent(
   return status === 'PAYMENT_PENDING' && paymentFlow === 'ON_DELIVERY';
 }
 
-const LoyaltyResult = ({
+const useLoyaltyResult = ({
   loyalty,
   settled,
   estimate,

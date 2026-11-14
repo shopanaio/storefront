@@ -1,5 +1,7 @@
 export type {
   CheckoutAuthProps,
+  CheckoutOrderPlacedProps,
+  CheckoutPaymentPendingProps,
   CheckoutSlots,
   CheckoutThemeAdapter,
 } from './theme';

@@ -21,7 +21,23 @@ export const PaymentPendingScreen = ({
 }) => {
   const t = useTranslations('Checkout');
   const router = useRouter();
-  const homePath = useCheckoutTheme().useHomePath();
+  const theme = useCheckoutTheme();
+  const homePath = theme.useHomePath();
+  const PaymentPending = theme.PaymentPending;
+  if (PaymentPending) {
+    return (
+      <PaymentPending
+        brand={brand}
+        redirecting={redirecting}
+        title={t(
+          redirecting ? 'redirecting-to-payment' : 'awaiting-payment-title'
+        )}
+        description={redirecting ? null : t('awaiting-payment-description')}
+        onGoHome={() => router.push(homePath)}
+        labels={{ goHome: t('go-home') }}
+      />
+    );
+  }
   return (
     <PlacementScreen brand={brand}>
       <Result

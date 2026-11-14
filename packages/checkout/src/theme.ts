@@ -36,11 +36,38 @@ export interface CheckoutSlots {
   beforeActions?: ComponentType;
 }
 
+/** Accepted-order view supplied by the host; checkout owns data and navigation. */
+export interface CheckoutOrderPlacedProps {
+  brand?: ReactNode;
+  orderNumber: string | null;
+  loading: boolean;
+  statusText: string;
+  paid: boolean;
+  details: ReactNode;
+  onViewOrder: (() => void) | null;
+  onGoHome: () => void;
+  labels: { viewOrder: string; goHome: string };
+}
+
+/** Waiting or payment-provider redirect view supplied by the host. */
+export interface CheckoutPaymentPendingProps {
+  brand?: ReactNode;
+  redirecting: boolean;
+  title: string;
+  description: string | null;
+  onGoHome: () => void;
+  labels: { goHome: string };
+}
+
 /**
  * What a theme changes in the checkout. Every field is optional: the checkout works without a
  * theme, and a theme sets only what it needs (its logo, its cart, locale-aware paths).
  */
 export interface CheckoutThemeAdapter {
+  /** Accepted-order screen, also used after returning from payment. */
+  OrderPlaced?: ComponentType<CheckoutOrderPlacedProps>;
+  /** Waiting and provider redirect screen, also used on the payment return page. */
+  PaymentPending?: ComponentType<CheckoutPaymentPendingProps>;
   /** Logo above the form; none by default. */
   Brand?: ComponentType;
   /**
@@ -80,6 +107,8 @@ export interface CheckoutThemeAdapter {
 
 /** The theme the checkout renders with: the adapter over the checkout defaults. */
 export interface CheckoutTheme {
+  OrderPlaced?: ComponentType<CheckoutOrderPlacedProps>;
+  PaymentPending?: ComponentType<CheckoutPaymentPendingProps>;
   Brand: ComponentType;
   Auth: ComponentType<CheckoutAuthProps>;
   customerAccountsEnabled: boolean;
