@@ -1,11 +1,7 @@
 'use client';
 
-import {
-  lazy,
-  Suspense,
-  useSyncExternalStore,
-  type ComponentProps,
-} from 'react';
+import { lazy, Suspense, type ComponentProps } from 'react';
+import { useExternalStore } from '@shopana/storefront-sdk/core/externalStore';
 import { BrandBar } from '#checkout/components/BrandBar';
 import { CheckoutSkeleton } from '#checkout/components/CheckoutSkeleton';
 
@@ -25,7 +21,7 @@ const subscribe = () => () => {};
 
 /** False on the server and while hydrating, true once the page runs in the browser. */
 const useHydrated = () =>
-  useSyncExternalStore(
+  useExternalStore(
     subscribe,
     () => true,
     () => false

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { useStore } from 'zustand';
+import { useStore } from '../core/externalStore';
 import {
   createThemeEditorStore,
   type ThemeEditorState,

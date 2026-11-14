@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from '@shopana/storefront-sdk/core/externalStore';
 
 interface PromoDraftStore {
   /** Text in the promo code field, not applied yet. */

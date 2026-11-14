@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
+import { useExternalStore } from '@shopana/storefront-sdk/core/externalStore';
 import { AuthError } from '../core/AuthError';
 import type {
   AuthConfiguration,
@@ -211,7 +212,7 @@ export function createMockAuth({
   };
 
   function useMockAuth(): UseAuthResult {
-    const current = useSyncExternalStore(
+    const current = useExternalStore(
       subscribe,
       () => state,
       () => state

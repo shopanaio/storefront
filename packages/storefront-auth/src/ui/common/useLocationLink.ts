@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
+import { useExternalStore } from '@shopana/storefront-sdk/core/externalStore';
 
 const subscribe = (onChange: () => void) => {
   window.addEventListener('popstate', onChange);
@@ -13,7 +14,7 @@ const subscribe = (onChange: () => void) => {
  * is seen: a client-side navigation of the host router to the page is not.
  */
 function useLocationSearch(search: string | undefined): string | null {
-  const current = useSyncExternalStore(
+  const current = useExternalStore(
     subscribe,
     () => window.location.search,
     () => null

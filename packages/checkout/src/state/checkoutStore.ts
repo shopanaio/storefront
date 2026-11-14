@@ -3,7 +3,7 @@
  * Holds aggregate validation state and method selections for Checkout module.
  * Emits typed events via checkoutBus on important state transitions.
  */
-import { create } from 'zustand';
+import { create } from '@shopana/storefront-sdk/core/externalStore';
 import { emitCheckoutEvent, CheckoutEvent } from '#checkout/state/checkoutBus';
 import { SectionEntry, SectionId } from '#checkout/state/interface';
 import { CheckoutState } from '#checkout/state/interface';

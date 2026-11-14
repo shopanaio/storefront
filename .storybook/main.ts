@@ -19,8 +19,12 @@ const subpathImports = Object.fromEntries(
   packages.flatMap((dir) => {
     const { imports = {} } = JSON.parse(
       readFileSync(path.join(dir, 'package.json'), 'utf8')
-    ) as { imports?: Record<string, string> };
+    ) as { imports?: Record<string, string | { default?: string }> };
     return Object.entries(imports)
+      .map(([key, value]) => [
+        key,
+        typeof value === 'string' ? value : (value.default ?? ''),
+      ])
       .filter(([key, target]) => key.endsWith('/*') && target.endsWith('/*'))
       .map(([key, target]) => [
         key.slice(0, -2),

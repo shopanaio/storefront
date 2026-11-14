@@ -9214,6 +9214,7 @@ __metadata:
   resolution: "@shopana/storefront-modal-stack@workspace:packages/storefront-modal-stack"
   dependencies:
     "@shopana/storefront": "npm:0.1.0"
+    "@shopana/storefront-sdk": "npm:0.1.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.1.0"
@@ -9235,6 +9236,7 @@ __metadata:
     zustand: "npm:^5.0.6"
   peerDependencies:
     "@shopana/storefront": ^0.1.0
+    "@shopana/storefront-sdk": ^0.1.0
     antd: ^6.0.0
     antd-style: ^3.7.1
     next-intl: ^4.0.0

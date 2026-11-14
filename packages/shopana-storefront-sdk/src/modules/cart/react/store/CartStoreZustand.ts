@@ -1,4 +1,5 @@
-import { create, UseBoundStore, StoreApi } from 'zustand';
+import type { UseBoundStore, StoreApi } from 'zustand';
+import { create } from '../../../../core/externalStore';
 import { CartStore } from '../../store/CartStore';
 import { createCartStore } from '../../store/createCartStore';
 import type { model } from '../../../../model/namespace';

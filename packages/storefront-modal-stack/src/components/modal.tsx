@@ -52,6 +52,8 @@ const useStyles = createStyles(
         align-items: flex-start;
         justify-content: center;
         padding: ${topPadding}px ${inset}px ${inset}px;
+        /* The modal is the screen's height: the wrap has nothing to scroll. */
+        overflow: hidden;
         transform: scale(${scale}) translateY(${translateY}px);
         transform-origin: top center;
         transition:

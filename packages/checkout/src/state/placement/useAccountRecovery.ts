@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useClaimAccountCart } from '@shopana/storefront-sdk/modules/cart/react';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
-import { usePlacementPhase } from '#checkout/state/placement/placementStore';
+import {
+  usePlacementPhase,
+  usePlacementStore,
+} from '#checkout/state/placement/placementStore';
 import {
   CLAIM_REQUIRED_CODE,
   GUEST_NOT_ALLOWED_CODE,
@@ -25,7 +28,25 @@ export function useAccountRecovery() {
     if (phase.name !== 'rejected' || handled.current === phase) return;
     handled.current = phase;
     if (phase.code === CLAIM_REQUIRED_CODE) {
-      void claimAccountCart().catch(() => undefined);
+      void claimAccountCart().then(
+        (claimed) => {
+          if (usePlacementStore.getState().phase !== phase) return;
+          usePlacementStore
+            .getState()
+            .setPhase(
+              claimed
+                ? { name: 'idle' }
+                : { name: 'rejected', code: 'CHECKOUT_ACCOUNT_RECOVERY_FAILED' }
+            );
+        },
+        () => {
+          if (usePlacementStore.getState().phase !== phase) return;
+          usePlacementStore.getState().setPhase({
+            name: 'rejected',
+            code: 'CHECKOUT_ACCOUNT_RECOVERY_FAILED',
+          });
+        }
+      );
     } else if (phase.code === GUEST_NOT_ALLOWED_CODE) {
       void refetch().catch(() => undefined);
     }

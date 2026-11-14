@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from '@shopana/storefront-sdk/core/externalStore';
 import type { CreateCartInput } from '@shopana/storefront-sdk/modules/cart/core/types';
 import type { AddToCartAttribute } from '@shopana/storefront-sdk/modules/cart/core/types';
 import type { Checkout } from '#checkout/types/entity';

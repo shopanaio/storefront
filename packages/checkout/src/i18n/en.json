@@ -311,6 +311,8 @@
     "country-choose": "Choose a country",
     "country-trigger": "Country: {country}, +{code}",
     "sign-in-required-earning": "Sign in to check out faster and get <b>{reward}</b> for your order.",
-    "sign-in-required-earning-store-credit": "+{amount} to store credit"
+    "sign-in-required-earning-store-credit": "+{amount} to store credit",
+    "account-cart-preparing": "Preparing the cart for your account.",
+    "account-cart-error": "Could not save the cart to your account. Please try again."
   }
 }

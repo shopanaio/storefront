@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import { create } from 'zustand';
+import { create } from '../../../../core/externalStore';
 import type { SessionStore } from '../../store/SessionStore';
 import type { Session } from '../../core/types';
 import type { UseBoundStore, StoreApi } from 'zustand';

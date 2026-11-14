@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from '@shopana/storefront-sdk/core/externalStore';
 import type { SectionId } from '#checkout/state/interface';
 
 /** A save of the buyer's input that failed; shown in the checkout banner until it succeeds. */

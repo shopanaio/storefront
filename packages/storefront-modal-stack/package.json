@@ -44,6 +44,7 @@
   },
   "peerDependencies": {
     "@shopana/storefront": "^0.1.0",
+    "@shopana/storefront-sdk": "^0.1.0",
     "antd": "^6.0.0",
     "antd-style": "^3.7.1",
     "next-intl": "^4.0.0",
@@ -57,6 +58,7 @@
   },
   "devDependencies": {
     "@shopana/storefront": "0.1.0",
+    "@shopana/storefront-sdk": "0.1.0",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

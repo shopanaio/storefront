@@ -10,6 +10,25 @@ const graphqlSchema = existsSync('schema.shopana.graphql')
   ? 'schema.shopana.graphql'
   : 'mockServer/schema.graphql';
 
+/**
+ * React's `useSyncExternalStore` renders a component again at once when its store changed after
+ * the server's render, and the page then hydrates what is left in one long task.
+ */
+const externalStorePaths = [
+  {
+    name: 'react',
+    importNames: ['useSyncExternalStore'],
+    message:
+      'Use useExternalStore from @shopana/storefront-sdk/core/externalStore: it does not render synchronously while the page hydrates.',
+  },
+  {
+    name: 'zustand',
+    importNames: ['create', 'useStore'],
+    message:
+      'Use create and useStore from @shopana/storefront-sdk/core/externalStore: they do not render synchronously while the page hydrates.',
+  },
+];
+
 export default defineConfig([
   {
     ignores: [
@@ -54,6 +73,7 @@ export default defineConfig([
               message: 'Use @shopana/storefront-sdk/graphql/apollo.',
             },
             { name: 'relay-runtime', message: 'Relay has been removed.' },
+            ...externalStorePaths,
           ],
           patterns: [
             {
@@ -146,6 +166,7 @@ export default defineConfig([
               message: 'Use @shopana/storefront-sdk/graphql/apollo.',
             },
             { name: 'relay-runtime', message: 'Relay has been removed.' },
+            ...externalStorePaths,
           ],
           patterns: [
             {

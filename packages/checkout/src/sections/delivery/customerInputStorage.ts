@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from '@shopana/storefront-sdk/core/externalStore';
 import type { DeliveryAddress, DeliveryMethod } from './types';
 import { methodKey } from './shipments';
 

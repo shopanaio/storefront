@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from '@shopana/storefront-sdk/core/externalStore';
 import { projectModalStack } from '../url/projection';
 import type {
   IModalStackItem,

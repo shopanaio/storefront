@@ -311,6 +311,8 @@
     "country-choose": "Оберіть країну",
     "country-trigger": "Країна: {country}, +{code}",
     "sign-in-required-earning": "Увійдіть, щоб прискорити оформлення та отримати <b>{reward}</b> за своє замовлення.",
-    "sign-in-required-earning-store-credit": "+{amount} на бонусний рахунок"
+    "sign-in-required-earning-store-credit": "+{amount} на бонусний рахунок",
+    "account-cart-preparing": "Підготовка кошика для вашого акаунта.",
+    "account-cart-error": "Не вдалося зберегти кошик у вашому акаунті. Спробуйте ще раз."
   }
 }

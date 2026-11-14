@@ -43,7 +43,8 @@ export function placementErrorMessageKey(code: string): string {
   ) {
     return 'placement-error-payment-unavailable';
   }
-  if (code === CLAIM_REQUIRED_CODE) return 'prices-updated';
+  if (code === CLAIM_REQUIRED_CODE) return 'account-cart-preparing';
+  if (code === 'CHECKOUT_ACCOUNT_RECOVERY_FAILED') return 'account-cart-error';
   if (code === GUEST_NOT_ALLOWED_CODE) return 'sign-in-required';
   // The selection pays with loyalty, which needs an account: the buyer signs in.
   if (code === 'LOYALTY_CUSTOMER_REQUIRED') return 'loyalty-banner-sign-in';
