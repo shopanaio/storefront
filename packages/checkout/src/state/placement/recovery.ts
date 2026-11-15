@@ -212,8 +212,9 @@ export interface PollPlacementOptions {
 }
 
 /**
- * Polls the placement until its outcome settles. No hard limit (decision 1.9): the delay grows
- * from 2 to 30 seconds and stays there; a failed read is retried on the same schedule.
+ * Polls the placement until its outcome settles. No hard limit (decision 1.9): every 1.5 s for
+ * the first minute, then the delay grows from 2 to 30 seconds and stays there; a failed read is
+ * retried on the same schedule.
  */
 export async function pollPlacement({
   read,

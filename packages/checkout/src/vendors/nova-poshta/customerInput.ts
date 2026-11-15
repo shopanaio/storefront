@@ -8,11 +8,14 @@ import type {
   ServiceCode,
 } from './types';
 
-/** Receiving type of each service: the `type` of its customer input. */
+/**
+ * Receiving type of each service: the `type` of its customer input. The order is the order the
+ * options are shown in: branch, postomat, courier.
+ */
 export const SERVICE_RECEIVING_TYPE: Record<ServiceCode, ReceivingType> = {
   warehouse: 'WAREHOUSE',
-  doors: 'DOOR',
   postomat: 'POSTOMAT',
+  doors: 'DOOR',
 };
 
 /**

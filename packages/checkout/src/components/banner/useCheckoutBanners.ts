@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCheckoutData } from '#checkout/context/CheckoutDataContext';
 import { useCheckoutReadiness } from '#checkout/hooks/useCheckoutReadiness';
-import { useSubmitAttempted } from '#checkout/hooks/useSubmitAttempted';
+import { useSubmitCount } from '#checkout/hooks/useSubmitAttempted';
 import { useUndeliverableLines } from '#checkout/hooks/useUndeliverableLines';
 import { useDefaultCartCleanup } from '#checkout/hooks/useDefaultCartCleanup';
 import { useMissingRequiredSections } from '#checkout/state/selectors';
@@ -16,7 +16,7 @@ import {
   UNDELIVERABLE_REMOVE_ERROR_KEY,
   useBannerStore,
 } from '#checkout/state/banners/bannerStore';
-import { collectBanners } from '#checkout/state/banners/banners';
+import { collectBanners, FILL_BANNER_PREFIX } from '#checkout/state/banners/banners';
 import type { BannerItem } from '#checkout/state/banners/banners';
 import { useCheckoutTheme } from '#checkout/theme';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
@@ -37,7 +37,15 @@ export function useCheckoutBanners(): BannerItem[] {
   const t = useTranslations('Checkout');
   const { checkout } = useCheckoutData();
   const readiness = useCheckoutReadiness();
-  const attempted = useSubmitAttempted();
+  const attempts = useSubmitCount();
+  const attempted = attempts > 0;
+  // The section the banner named at a press: once it is filled, or the buyer went to it, the next
+  // one waits for the next press.
+  const [pinned, setPinned] = useState<{
+    attempt: number;
+    id: string | null;
+    done: boolean;
+  } | null>(null);
   const missingSections = useMissingRequiredSections();
   const undeliverableCount = useUndeliverableLines().length;
   const requestSubmit = useCheckoutStore((state) => state.requestSubmit);
@@ -89,7 +97,7 @@ export function useCheckoutBanners(): BannerItem[] {
       clearSaveError(UNDELIVERABLE_REMOVE_ERROR_KEY);
   }, [undeliverableCount, clearSaveError]);
 
-  return useMemo(
+  const banners = useMemo(
     () =>
       collectBanners(
         {
@@ -118,6 +126,8 @@ export function useCheckoutBanners(): BannerItem[] {
           focusSummary: () => focusAnchor(LINES_ANCHOR, { focus: false }),
           // The checkbox when the buyer ticks one; otherwise the notice under the button.
           focusTerms: () => focusAnchor(TERMS_ANCHOR, { focus: false }),
+          acknowledgeAttempt: () =>
+            setPinned((state) => state && { ...state, done: true }),
           dismiss,
           // A failed write is reported by its own banner; the action needs no handling here.
           dropRedemption: () =>
@@ -162,5 +172,27 @@ export function useCheckoutBanners(): BannerItem[] {
       onSignIn,
       t,
     ]
+  );
+
+  const fillId =
+    banners.find((item) => item.id.startsWith(FILL_BANNER_PREFIX))?.id ?? null;
+  const latestFillId = useRef(fillId);
+  latestFillId.current = fillId;
+  // Each press pins the section its banner names at that moment (or none): a section that
+  // empties later in the same attempt waits for the next press.
+  useEffect(() => {
+    if (attempted) {
+      setPinned({ attempt: attempts, id: latestFillId.current, done: false });
+    }
+  }, [attempts, attempted]);
+
+  return useMemo(
+    () =>
+      fillId &&
+      pinned?.attempt === attempts &&
+      (pinned.done || pinned.id !== fillId)
+        ? banners.filter((item) => item.id !== fillId)
+        : banners,
+    [banners, pinned, attempts, fillId]
   );
 }

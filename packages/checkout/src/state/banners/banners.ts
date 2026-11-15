@@ -97,6 +97,8 @@ export interface BannerHandlers {
   focusSummary: () => void;
   /** Brings the terms of the order into view. */
   focusTerms: () => void;
+  /** The buyer went to what the banner of the last attempt named: it has done its work. */
+  acknowledgeAttempt: () => void;
   dismiss: (id: string) => void;
   /** Stops paying with points or store credit, keeping the reward. */
   dropRedemption: () => void;
@@ -129,6 +131,9 @@ const STOCK_CODES = new Set<Checkout.NotificationCode>([
   'NOT_ENOUGH_STOCK',
   'ITEM_UNAVAILABLE',
 ]);
+
+/** Id prefix of the banner naming the section to fill in. */
+export const FILL_BANNER_PREFIX = 'sections:';
 
 const CLOSED_CODES = new Set(['CHECKOUT_ABANDONED', 'CHECKOUT_EXPIRED']);
 
@@ -309,31 +314,29 @@ export function collectBanners(
           input.missingSections.includes(section) ||
           blocking.some((issue) => issueSection(issue) === section)
       );
-      if (sections.length === 1) {
-        const [section] = sections;
+      // One section at a time, the first in the order of the page; the next one comes with the
+      // next press of the button.
+      const [section] = sections;
+      if (section) {
         // A known issue of the section says better what to do than its name.
         const known = blocking.find(
           (issue) =>
             issueSection(issue) === section && !issueMessage(issue).section
         );
         items.push({
-          id: `sections:${section}`,
+          id: `${FILL_BANNER_PREFIX}${section}`,
           priority: BannerPriority.Blocking,
           tone: 'action',
           title: known
             ? issueText(t, known)
             : t('banner-fill-section', { section: t(section) }),
-          action: goTo(section),
-        });
-      } else if (sections.length > 1) {
-        items.push({
-          id: `sections:${sections.join(',')}`,
-          priority: BannerPriority.Blocking,
-          tone: 'action',
-          title: t('banner-fill-sections', {
-            sections: sections.map((section) => t(section)).join(', '),
-          }),
-          action: goTo(sections[0]),
+          action: {
+            label: goTo(section).label,
+            onClick: () => {
+              handlers.acknowledgeAttempt();
+              handlers.focusSection(section);
+            },
+          },
         });
       }
       blocking

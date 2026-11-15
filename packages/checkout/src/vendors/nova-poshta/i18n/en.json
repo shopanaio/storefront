@@ -6,6 +6,7 @@
       "postomat": "Nova Poshta parcel locker"
     },
     "estimate": "About {amount}",
+    "carrier_rates": "At carrier rates",
     "estimate_pending": "The carrier rate is being calculated"
   },
   "payment": {

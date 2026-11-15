@@ -120,7 +120,6 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
               <ImageFan
                 images={linesToFanImages(lines)}
                 bleed
-                className={styles.fan}
               />
               <Flex vertical className={styles.caption}>
                 <Text className={styles.label}>{t('total')}</Text>
@@ -183,10 +182,6 @@ const useStyles = createStyles(({ css, token }) => ({
     cursor: pointer;
   `,
   // The space around the row is inside the fold, so a folded row leaves none.
-  // The turned card on the left a little into the padding, so the fan sits by the frame.
-  fan: css`
-    margin-left: -2px;
-  `,
   folded: css`
     padding: ${token.paddingSM}px 0;
   `,

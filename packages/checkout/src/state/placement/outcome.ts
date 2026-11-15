@@ -311,7 +311,15 @@ export function isSettledOutcome(outcome: PlacementOutcome): boolean {
   );
 }
 
-/** Polling delay for the given attempt: 2 → 4 → 8 → 16 → 30 s, then 30 s without a limit (1.9). */
+/** Reads of the first minute: a provider callback settles most payments within it. */
+const FAST_POLL_ATTEMPTS = 40;
+const FAST_POLL_MS = 1500;
+
+/**
+ * Polling delay for the given attempt: every 1.5 s for the first minute, then 2 → 4 → 8 → 16 →
+ * 30 s, then 30 s without a limit (1.9).
+ */
 export function placementPollDelay(attempt: number): number {
-  return Math.min(2000 * 2 ** Math.max(0, attempt), 30000);
+  const slow = Math.max(0, attempt) - FAST_POLL_ATTEMPTS;
+  return slow < 0 ? FAST_POLL_MS : Math.min(2000 * 2 ** slow, 30000);
 }

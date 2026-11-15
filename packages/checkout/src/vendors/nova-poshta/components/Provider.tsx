@@ -4,8 +4,9 @@ import { Flex } from 'antd';
 import { ProviderComponentProps } from '#checkout/vendors/types';
 
 /**
- * Nova Poshta delivery provider: renders, in API order, every option whose service the
- * module knows, each with the form of its receiving type.
+ * Nova Poshta delivery provider: renders every option whose service the module knows, always
+ * in the order of the module's services (branch, postomat, courier), whatever the API order is,
+ * each with the form of its receiving type.
  */
 export function NPProvider({
   availableMethods,
@@ -16,9 +17,14 @@ export function NPProvider({
   provider,
   deliveryAddress,
 }: ProviderComponentProps) {
+  const position = (code: string) =>
+    config.methods.findIndex((m) => m.code === code);
+  const ordered = [...availableMethods].sort(
+    (a, b) => position(a.code) - position(b.code)
+  );
   return (
     <Flex vertical gap={12}>
-      {availableMethods.map((method) => {
+      {ordered.map((method) => {
         const methodConfig = config.methods.find((m) => m.code === method.code);
         if (!methodConfig) {
           return null;

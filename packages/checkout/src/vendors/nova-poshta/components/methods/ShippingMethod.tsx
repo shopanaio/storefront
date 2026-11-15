@@ -15,13 +15,15 @@ import type { ServiceCode } from '../../types';
 interface NovaPoshtaPublicData {
   payer?: 'Sender' | 'Recipient';
   estimatedCost?: { amountMinor: string; currencyCode: string } | null;
+  /** False when the store does not ask the carrier for the price. */
+  estimateShippingCost?: boolean;
 }
 
 /**
  * What the customer pays the carrier. The checkout never collects the Nova Poshta fee: when
  * the recipient pays, the carrier price is an estimate paid on receipt and may still be
- * unknown; when the merchant pays, or free shipping pays the carrier for this option, there is
- * nothing to say here.
+ * unknown, or not asked for at all and then paid at carrier rates; when the merchant pays, or
+ * free shipping pays the carrier for this option, there is nothing to say here.
  */
 function useCarrierEstimate(
   publicData: unknown,
@@ -32,6 +34,9 @@ function useCarrierEstimate(
   const data = (publicData ?? {}) as NovaPoshtaPublicData;
   if (waived || data.payer !== 'Recipient') {
     return null;
+  }
+  if (data.estimateShippingCost === false) {
+    return t('shipping.carrier_rates');
   }
   const cost = data.estimatedCost;
   return cost
