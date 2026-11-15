@@ -17,6 +17,9 @@ import { CardHeader } from './Headers';
 /** Below it the drawer is a bottom sheet: the breakpoint of `DrawerBase`. */
 const DRAWER_BREAKPOINT = 'lg';
 
+/** Below it the dialog is a bottom sheet: the breakpoint of `ResponsiveDialog`. */
+const DIALOG_BREAKPOINT = 'md';
+
 /**
  * The sign-in in a drawer, as the drawers of the checkout: its header carries the title of the
  * screen (rendered there by the screen) and the close button of a side panel; a bottom sheet
@@ -69,10 +72,18 @@ export const AuthDialogSurface = ({
   onClose: () => void;
   children: ReactNode;
 }) => {
-  const { styles } = useStyles();
+  const { styles, cx } = useStyles();
+  const isSheet = useBreakpointDown(DIALOG_BREAKPOINT);
   return (
-    <ResponsiveDialog open={open} onClose={onClose}>
-      <div className={styles.dialog}>{children}</div>
+    <ResponsiveDialog
+      open={open}
+      onClose={onClose}
+      breakpoint={DIALOG_BREAKPOINT}
+      classNames={isSheet ? { body: styles.sheetBody } : undefined}
+    >
+      <div className={cx(styles.dialog, isSheet && styles.dialogInSheet)}>
+        {children}
+      </div>
     </ResponsiveDialog>
   );
 };
@@ -128,6 +139,16 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-direction: column;
     gap: ${token.paddingLG}px;
     padding: ${token.paddingSM}px ${token.paddingSM}px ${token.padding}px;
+  `,
+  // The sheet is as wide as the content of the other drawers: their side padding only.
+  sheetBody: css`
+    && {
+      padding-inline: calc(${token.paddingSM}px + var(--safe-area-left, 0px))
+        calc(${token.paddingSM}px + var(--safe-area-right, 0px));
+    }
+  `,
+  dialogInSheet: css`
+    padding-inline: 0;
   `,
   card: css`
     box-sizing: border-box;

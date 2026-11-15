@@ -15,6 +15,8 @@ import { usePreloadModules } from '#checkout/infra/preloadModules';
 import { useCheckoutTheme } from '#checkout/theme';
 import { SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
 import { useHeldPending } from '#checkout/ui/LoadingBoundary';
+import { usePlacementPhase } from '#checkout/state/placement/placementStore';
+import { PlacingOverlay } from './submit/PlacingOverlay';
 
 export type CheckoutViewProps = Pick<CheckoutProps, 'brand'> & {
   onSubmit: (e: React.FormEvent) => void;
@@ -23,7 +25,8 @@ export type CheckoutViewProps = Pick<CheckoutProps, 'brand'> & {
 /**
  * Checkout view component - handles only rendering. The form on the left, the summary on the
  * right. While the sign-in is required (`useCheckoutSignIn().required`: A1–A2, S6) it stands
- * in place of the form, and the summary keeps the lines and the totals.
+ * in place of the form, and the summary keeps the lines and the totals. While the order is being
+ * placed the page is inert under a blocking overlay.
  */
 export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
   const { checkout } = useCheckoutData();
@@ -37,51 +40,57 @@ export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
   // An expired account checkout has no data to wait for: the sign-in shows at once (S6). Data
   // already here (a checkout opened again) shows at once too, with no skeleton.
   const loading = useHeldPending(!checkout && !signInRequired);
+  const placing = usePlacementPhase().name === 'placing';
 
   return (
-    <div className={styles.wrapper}>
-      <CheckoutColumns
-        header={<BrandHeader>{brand}</BrandHeader>}
-        left={
-          <>
-            {stacked && checkout ? <SummaryLines checkout={checkout} /> : null}
-            {signInRequired ? (
-              <CheckoutSignInColumn />
-            ) : (
-              <CheckoutFormSections onSubmit={onSubmit} stacked={stacked} />
-            )}
-          </>
-        }
-        right={
-          <>
-            <div id={SUMMARY_ANCHOR} className={styles.summary}>
-              {checkout ? (
-                <Summary
-                  checkout={checkout}
-                  withLines={!stacked}
-                  beforeTotals={
-                    stacked && !signInRequired ? <CommentSection /> : null
-                  }
-                  linesAndTotalsOnly={signInRequired}
-                />
+    <>
+      <div className={styles.wrapper} inert={placing}>
+        <CheckoutColumns
+          header={<BrandHeader>{brand}</BrandHeader>}
+          left={
+            <>
+              {stacked && checkout ? (
+                <SummaryLines checkout={checkout} />
               ) : null}
-            </div>
-            {signInRequired ? null : (
-              // On a phone the actions stand under the summary, out of the form they submit.
-              <div className={styles.actions}>
-                {BeforeActions ? <BeforeActions /> : null}
-                <CheckoutActions />
+              {signInRequired ? (
+                <CheckoutSignInColumn />
+              ) : (
+                <CheckoutFormSections onSubmit={onSubmit} stacked={stacked} />
+              )}
+            </>
+          }
+          right={
+            <>
+              <div id={SUMMARY_ANCHOR} className={styles.summary}>
+                {checkout ? (
+                  <Summary
+                    checkout={checkout}
+                    withLines={!stacked}
+                    beforeTotals={
+                      stacked && !signInRequired ? <CommentSection /> : null
+                    }
+                    linesAndTotalsOnly={signInRequired}
+                  />
+                ) : null}
               </div>
-            )}
-          </>
-        }
-      />
-      {loading ? (
-        <div className={styles.skeleton}>
-          <CheckoutSkeleton header={<BrandHeader>{brand}</BrandHeader>} />
-        </div>
-      ) : null}
-    </div>
+              {signInRequired ? null : (
+                // On a phone the actions stand under the summary, out of the form they submit.
+                <div className={styles.actions}>
+                  {BeforeActions ? <BeforeActions /> : null}
+                  <CheckoutActions />
+                </div>
+              )}
+            </>
+          }
+        />
+        {loading ? (
+          <div className={styles.skeleton}>
+            <CheckoutSkeleton header={<BrandHeader>{brand}</BrandHeader>} />
+          </div>
+        ) : null}
+      </div>
+      {placing ? <PlacingOverlay /> : null}
+    </>
   );
 };
 

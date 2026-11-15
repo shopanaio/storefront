@@ -97,6 +97,7 @@
     "payment-status-pending": "Payment is pending.",
     "view-order": "View order",
     "go-home": "Back to home",
+    "placing-order": "Confirming your order…",
     "redirecting-to-payment": "Redirecting to payment…",
     "awaiting-payment-title": "Waiting for payment confirmation",
     "awaiting-payment-description": "This may take a few minutes. The status updates by itself; you can come back to the checkout later.",
