@@ -106,6 +106,8 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       <CheckoutDialog
         // The list comes as the buyer types: the dialog keeps its height meanwhile.
         minHeight="60dvh"
+        // A long list to pick from: the sheet opens on the whole screen.
+        detent="full"
         open={isCityModalVisible}
         onClose={() => setIsCityModalVisible(false)}
         title={t('choose-your-city')}

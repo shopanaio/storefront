@@ -68,6 +68,8 @@ export const WarehouseModal = ({
       <CheckoutDialog
         // The list comes as the buyer types: the dialog keeps its height meanwhile.
         minHeight="60dvh"
+        // A long list to pick from: the sheet opens on the whole screen.
+        detent="full"
         open={open}
         onClose={close}
         title={t(`form.${kind}`)}

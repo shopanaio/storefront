@@ -35,6 +35,9 @@ export type DrawerDirection = 'top' | 'bottom' | 'left' | 'right';
 /** How tall a bottom sheet is over the keyboard (SheetProps.keyboardHeight). */
 export type SheetKeyboardHeight = 'full' | 'content';
 
+/** Where a bottom sheet stands as it opens (SheetProps.detent). */
+export type SheetDetent = 'content' | 'full';
+
 /** Parts of a sheet: the content panel, the overlay under it, the drag handle, the body. */
 export type SheetPart = 'root' | 'overlay' | 'handle' | 'body';
 
@@ -61,6 +64,13 @@ export interface SheetProps extends Omit<
    * by default.
    */
   keyboardHeight?: SheetKeyboardHeight;
+  /**
+   * Where a bottom sheet stands as it opens: `content` as tall as its content (standing up as
+   * a field takes the caret, see `keyboardHeight`); `full` stood up to the whole screen at once
+   * (iOS's large detent), for a long list to pick from, as it stands over the keyboard.
+   * `content` by default.
+   */
+  detent?: SheetDetent;
   /** Width of a side panel; `--components-drawer-width` or 500px by default. */
   width?: string | number;
   /**
@@ -121,6 +131,7 @@ export const Sheet = ({
   direction = 'bottom',
   fullscreen,
   keyboardHeight = 'full',
+  detent = 'content',
   width,
   title,
   container,
@@ -154,6 +165,11 @@ export const Sheet = ({
   const isHorizontal = isLeft || isRight;
   const isVertical = !isHorizontal;
 
+  // Opened at the full detent, the sheet stands up to the whole screen from its first frame
+  // (no move to it); it stays so until it has gone, as one stood up by a field.
+  const opensFull = isVertical && detent === 'full';
+  if (open && opensFull && !expanded) setExpanded(true);
+
   // Opening, the panel is as tall as its content at once: vaul slides a box of its own height,
   // no height animating under the slide. Only later changes of its content are animated.
   const [height, setHeight] = useState<Height>('auto');
@@ -178,7 +194,7 @@ export const Sheet = ({
   // fall back to the screen's as it slides away.
   const followsViewport = isVertical && (open || expanded);
   // Over the keyboard the sheet stands up to the whole screen, or stays its content's height.
-  const stretches = keyboardHeight === 'full';
+  const stretches = keyboardHeight === 'full' || opensFull;
   useEffect(
     () => (followsViewport ? retainViewportBox() : undefined),
     [followsViewport]
@@ -189,8 +205,9 @@ export const Sheet = ({
     if (!open || !isVertical || !contentNode) return;
     const expand = () => {
       if (expandedNow.current) return;
-      const panel = contentNode.querySelector<HTMLElement>('[data-sheet-panel]');
-      standFrom.current = panel ? panel.getBoundingClientRect().top : null;
+      // The top of the sheet's white: the sheet's own box (its padding over the handle is
+      // its panel's once it stands up).
+      standFrom.current = contentNode.getBoundingClientRect().top;
       setExpanded(true);
     };
     const onFocusIn = (event: FocusEvent) => {
@@ -249,6 +266,35 @@ export const Sheet = ({
     };
   }, [expanded, stretches, contentNode]);
 
+  // Over the keyboard as tall as its content, the panel rises and drops with the room under
+  // it as the keyboard comes and goes: it takes its place at once and moves to it from where
+  // it was, a transform (no transition of its room: WebKit jumps it as the keyboard is in).
+  useEffect(() => {
+    if (!expanded || stretches || !contentNode) return;
+    const panel = contentNode.querySelector<HTMLElement>('[data-sheet-panel]');
+    if (!panel) return;
+    let room = getComputedStyle(panel).paddingBottom;
+    let top = panel.getBoundingClientRect().top;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const observer = new ResizeObserver(() => {
+      const nextRoom = getComputedStyle(panel).paddingBottom;
+      if (nextRoom === room) return;
+      room = nextRoom;
+      const from = top;
+      for (const animation of panel.getAnimations()) animation.cancel();
+      top = panel.getBoundingClientRect().top;
+      const shift = from - top;
+      if (reduced.matches || Math.abs(shift) < 1) return;
+      panel.animate(
+        [{ transform: `translateY(${shift}px)` }, { transform: 'translateY(0)' }],
+        { duration: SHEET_RESIZE_MS, easing: 'ease' }
+      );
+    });
+    // Its room is padding: its border box changes, not its content box.
+    observer.observe(panel, { box: 'border-box' });
+    return () => observer.disconnect();
+  }, [expanded, stretches, contentNode]);
+
   // Stood up, the panel takes the screen's height from CSS alone (panelStanding); standing up
   // is animated once, by a transform (below).
   const standing = stretches && expanded;
@@ -293,7 +339,11 @@ export const Sheet = ({
     const panel = contentNode.querySelector<HTMLElement>('[data-sheet-panel]');
     if (from === null || !panel) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Its place at once: the room under its content does not transition from none as it
+    // stands up (it would lower the panel under the transform); it does from then on.
+    panel.style.setProperty('transition', 'none', 'important');
     const shift = from - panel.getBoundingClientRect().top;
+    requestAnimationFrame(() => panel.style.removeProperty('transition'));
     if (Math.abs(shift) < 1) return;
     panel.animate(
       [{ transform: `translateY(${shift}px)` }, { transform: 'translateY(0)' }],

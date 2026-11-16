@@ -30,14 +30,22 @@ const KEYBOARD_ATTRIBUTES = [
  */
 const FIT_TIMEOUT = 600;
 
+/** How far the field's bottom may be under the keyboard's top and still be above it, px. */
+const FIT_SLOP = 2;
+
 /**
  * Where `container` and `field` stand, while the keyboard is up: the same two frames in a row,
  * the screen has stopped moving (its own transition included). A screen under which the
- * keyboard covers its bottom has no edge at the keyboard to wait for.
+ * keyboard covers its bottom has no edge at the keyboard to wait for, yet its field stands
+ * above the keyboard: null while it does not. A transition gives its first value twice, so
+ * the screen has not stopped before it has even begun to move.
  */
 const placeOf = (container: HTMLElement, field: HTMLElement) => {
   const box = container.getBoundingClientRect();
   const rect = field.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  if (viewport && rect.bottom > viewport.offsetTop + viewport.height + FIT_SLOP)
+    return null;
   return `${Math.round(box.top)} ${Math.round(box.height)} ${Math.round(rect.top)}`;
 };
 
@@ -156,7 +164,7 @@ function focusThroughStandIn(
     frame = requestAnimationFrame(() => {
       // Fitted and still: the same place as the frame before (no transition under way).
       const place = placeOf(container, field);
-      const settled = place === lastPlace;
+      const settled = place !== null && place === lastPlace;
       lastPlace = place;
       if (settled || Date.now() >= deadline) handOver();
       else waitForFit(deadline);

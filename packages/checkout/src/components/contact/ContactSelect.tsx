@@ -182,149 +182,155 @@ export const ContactSelect = ({
 
       <CheckoutDialog open={open} onClose={() => setOpen(false)} title={title}>
         <FormProvider {...methods}>
-          <Flex
-            vertical
-            gap={12}
-            role="form"
+          {/* Enter in a field submits it; the fields are checked by the form, not the browser. */}
+          <form
             aria-label={t('contact-information-form')}
+            noValidate
+            onSubmit={(event) => {
+              // Portalled out of the checkout's form, yet React bubbles the submit to it.
+              event.stopPropagation();
+              void onDrawerSubmit(event);
+            }}
           >
-            <Controller
-              name="firstName"
-              control={control}
-              rules={{
-                required: t('required-field'),
-              }}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  label={t('first-name')}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  status={errors.firstName ? 'error' : undefined}
-                  error={errors.firstName?.message}
-                  autoComplete="given-name"
-                />
-              )}
-            />
-            <Controller
-              name="lastName"
-              control={control}
-              rules={{
-                required: t('required-field'),
-              }}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  label={t('last-name')}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  status={errors.lastName ? 'error' : undefined}
-                  error={errors.lastName?.message}
-                  autoComplete="family-name"
-                />
-              )}
-            />
-            <Controller
-              name="middleName"
-              control={control}
-              rules={{
-                required: t('required-field'),
-              }}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  label={t('middle-name')}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  status={errors.middleName ? 'error' : undefined}
-                  error={errors.middleName?.message}
-                  autoComplete="additional-name"
-                />
-              )}
-            />
-            {lockedPhone ? (
-              <div>
-                <FloatingLabelInput
-                  label={t('phone-number')}
-                  value={lockedIdentifier!.display}
-                  readOnly
-                  aria-readonly
-                  variant="filled"
-                  suffix={<PiLockSimple aria-hidden />}
-                />
-                {lockNote}
-              </div>
-            ) : (
+            <Flex vertical gap={12}>
               <Controller
-                name="phone"
+                name="firstName"
                 control={control}
                 rules={{
                   required: t('required-field'),
-                  validate: {
-                    possible: (value) =>
-                      !value ||
-                      isPossiblePhone(value) ||
-                      t('phone-invalid-length'),
-                    valid: (value) =>
-                      !value ||
-                      isValidPhone(value) ||
-                      t('phone-invalid-format'),
-                  },
-                }}
-                render={({ field }) => (
-                  <PhoneInput
-                    label={t('phone-number')}
-                    value={field.value}
-                    onChange={(value) => field.onChange(value ?? '')}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    status={errors.phone ? 'error' : undefined}
-                    error={errors.phone?.message}
-                    autoComplete="tel"
-                  />
-                )}
-              />
-            )}
-            {withEmail ? (
-              <Controller
-                name="email"
-                control={control}
-                rules={{
-                  validate: (value) =>
-                    !value || isEmail(value) || t('email-invalid-format'),
                 }}
                 render={({ field }) => (
                   <FloatingLabelInput
-                    label={t('email')}
-                    value={field.value ?? ''}
+                    label={t('first-name')}
+                    value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    status={errors.email ? 'error' : undefined}
-                    error={errors.email?.message}
-                    autoComplete="email"
-                    type="email"
+                    status={errors.firstName ? 'error' : undefined}
+                    error={errors.firstName?.message}
+                    autoComplete="given-name"
                   />
                 )}
               />
-            ) : null}
-            {lockedIdentifier?.method === 'email' ? (
-              <div>
-                <FloatingLabelInput
-                  label={t('email')}
-                  value={lockedIdentifier.display}
-                  readOnly
-                  aria-readonly
-                  variant="filled"
-                  type="email"
-                  suffix={<PiLockSimple aria-hidden />}
+              <Controller
+                name="lastName"
+                control={control}
+                rules={{
+                  required: t('required-field'),
+                }}
+                render={({ field }) => (
+                  <FloatingLabelInput
+                    label={t('last-name')}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    status={errors.lastName ? 'error' : undefined}
+                    error={errors.lastName?.message}
+                    autoComplete="family-name"
+                  />
+                )}
+              />
+              <Controller
+                name="middleName"
+                control={control}
+                rules={{
+                  required: t('required-field'),
+                }}
+                render={({ field }) => (
+                  <FloatingLabelInput
+                    label={t('middle-name')}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    status={errors.middleName ? 'error' : undefined}
+                    error={errors.middleName?.message}
+                    autoComplete="additional-name"
+                  />
+                )}
+              />
+              {lockedPhone ? (
+                <div>
+                  <FloatingLabelInput
+                    label={t('phone-number')}
+                    value={lockedIdentifier!.display}
+                    readOnly
+                    aria-readonly
+                    variant="filled"
+                    suffix={<PiLockSimple aria-hidden />}
+                  />
+                  {lockNote}
+                </div>
+              ) : (
+                <Controller
+                  name="phone"
+                  control={control}
+                  rules={{
+                    required: t('required-field'),
+                    validate: {
+                      possible: (value) =>
+                        !value ||
+                        isPossiblePhone(value) ||
+                        t('phone-invalid-length'),
+                      valid: (value) =>
+                        !value ||
+                        isValidPhone(value) ||
+                        t('phone-invalid-format'),
+                    },
+                  }}
+                  render={({ field }) => (
+                    <PhoneInput
+                      label={t('phone-number')}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value ?? '')}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      status={errors.phone ? 'error' : undefined}
+                      error={errors.phone?.message}
+                      autoComplete="tel"
+                    />
+                  )}
                 />
-                {lockNote}
-              </div>
-            ) : null}
-            <StickyButton onClick={onDrawerSubmit} loading={saving}>
-              {t('save')}
-            </StickyButton>
-          </Flex>
+              )}
+              {withEmail ? (
+                <Controller
+                  name="email"
+                  control={control}
+                  rules={{
+                    validate: (value) =>
+                      !value || isEmail(value) || t('email-invalid-format'),
+                  }}
+                  render={({ field }) => (
+                    <FloatingLabelInput
+                      label={t('email')}
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      status={errors.email ? 'error' : undefined}
+                      error={errors.email?.message}
+                      autoComplete="email"
+                      type="email"
+                    />
+                  )}
+                />
+              ) : null}
+              {lockedIdentifier?.method === 'email' ? (
+                <div>
+                  <FloatingLabelInput
+                    label={t('email')}
+                    value={lockedIdentifier.display}
+                    readOnly
+                    aria-readonly
+                    variant="filled"
+                    type="email"
+                    suffix={<PiLockSimple aria-hidden />}
+                  />
+                  {lockNote}
+                </div>
+              ) : null}
+              <StickyButton htmlType="submit" loading={saving}>
+                {t('save')}
+              </StickyButton>
+            </Flex>
+          </form>
         </FormProvider>
       </CheckoutDialog>
     </>

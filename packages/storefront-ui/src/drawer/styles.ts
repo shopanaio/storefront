@@ -199,7 +199,8 @@ export const useStyles = createStyles(
     `,
     /*
      * Over the keyboard as tall as its content (its height, the content's, plus the rooms over
-     * and under it): it rises with the room under it as the keyboard comes up, smoothly; down
+     * and under it): it rises with the room under it as the keyboard comes up (Sheet moves it
+     * there with a transform); down
      * to the bottom of its box from the top it rose to (Sheet's --sheet-detent-top), so it
      * stays there as the keyboard goes down.
      */
@@ -211,9 +212,7 @@ export const useStyles = createStyles(
           100% - var(--sheet-detent-top, 100%) - var(--sheet-padding-top) -
             ${KEYBOARD_OVERLAP}
         );
-        transition:
-          height ${SHEET_RESIZE_MS}ms ease,
-          padding-bottom ${SHEET_RESIZE_MS}ms ease !important;
+        transition: height ${SHEET_RESIZE_MS}ms ease !important;
       }
     `,
     contentHorizontal: css`

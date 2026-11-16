@@ -20,6 +20,7 @@ import { useBreakpointDown } from '../useMediaQuery';
 import {
   Sheet,
   type DrawerDirection,
+  type SheetDetent,
   type SheetKeyboardHeight,
 } from './Sheet';
 
@@ -84,6 +85,8 @@ export interface DrawerBaseProps extends Omit<
   minHeight?: string;
   /** How tall the bottom sheet is over the keyboard (see `Sheet`); `full` by default. */
   keyboardHeight?: SheetKeyboardHeight;
+  /** Where the bottom sheet stands as it opens (see `Sheet`); `content` by default. */
+  detent?: SheetDetent;
   /** Element the drawer is portalled into (see `Sheet`). */
   container?: HTMLElement | null;
   classNames?: Partial<Record<DrawerBasePart, string>>;
@@ -135,6 +138,7 @@ export const DrawerBase = ({
   width,
   minHeight,
   keyboardHeight,
+  detent,
   container,
   className,
   style,
@@ -230,6 +234,7 @@ export const DrawerBase = ({
         width={width}
         fullscreen={isSheet && isHorizontal}
         keyboardHeight={keyboardHeight}
+        detent={detent}
         container={container}
         className={classNames?.sheet}
         style={partStyles?.sheet}

@@ -8,6 +8,7 @@ import { LuX } from 'react-icons/lu';
 import {
   DrawerBase,
   useBreakpointDown,
+  type SheetDetent,
   type SheetKeyboardHeight,
 } from '@shopana/storefront-ui';
 
@@ -24,6 +25,8 @@ export interface CheckoutDialogProps {
   minHeight?: string;
   /** How tall the bottom sheet is over the keyboard (see `DrawerBase`). */
   keyboardHeight?: SheetKeyboardHeight;
+  /** Where the bottom sheet stands as it opens (see `DrawerBase`). */
+  detent?: SheetDetent;
   children: ReactNode;
 }
 
@@ -39,6 +42,7 @@ export const CheckoutDialog = ({
   search,
   minHeight,
   keyboardHeight,
+  detent,
   children,
 }: CheckoutDialogProps) => {
   const { styles } = useStyles();
@@ -51,6 +55,7 @@ export const CheckoutDialog = ({
       <DrawerBase
         minHeight={minHeight}
         keyboardHeight={keyboardHeight}
+        detent={detent}
         open={open}
         onClose={onClose}
         title={title}
