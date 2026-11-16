@@ -3312,6 +3312,11 @@ type CheckoutLine implements Node @join__type(graph: CHECKOUT_STOREFRONT, key: "
   """
   cost: CheckoutLineCost!
   """
+  Discounts that make up `cost.discountAmount`, in the order pricing applied them: automatic
+  discounts and promo codes alike.
+  """
+  discountAllocations: [CheckoutDiscountAllocation!]!
+  """
   Original price before any adjustments (e.g., child price config).
   """
   originalPrice: Money!
@@ -3553,6 +3558,43 @@ type CheckoutFreeShippingProgress @join__type(graph: CHECKOUT_STOREFRONT)  {
   delivery or while IN_PROGRESS.
   """
   appliesToSelectedDelivery: Boolean
+}
+
+"""
+A discount the last pricing of the checkout applied, as the buyer sees it.
+"""
+type CheckoutDiscountApplication @join__type(graph: CHECKOUT_STOREFRONT)  {
+  method: CheckoutDiscountMethod!
+  discountClass: CheckoutDiscountClass!
+  """
+  Buyer-facing promotion headline.
+  """
+  title: String!
+  """
+  The code the buyer entered; null for an automatic discount.
+  """
+  code: String
+  """
+  Buyer-facing view of the discount; null once the discount is deleted.
+  """
+  promotion: StorefrontPromotion
+}
+
+"""
+The part of a discount that lowered the cost of a checkout line.
+"""
+type CheckoutDiscountAllocation @join__type(graph: CHECKOUT_STOREFRONT)  {
+  discountedAmount: Money!
+  """
+  Units of the line the discount covers unit by unit, as buy X get Y does; null when the discount
+  is spread over the line amount.
+  """
+  quantity: Int
+  """
+  Units of the line the discount made free; zero when it only lowered the price.
+  """
+  freeQuantity: Int!
+  discountApplication: CheckoutDiscountApplication!
 }
 
 type CheckoutAppliedPromotion @join__type(graph: CHECKOUT_STOREFRONT)  {
@@ -8500,6 +8542,11 @@ enum CheckoutDiscountClass @join__type(graph: CHECKOUT_STOREFRONT)  {
   PRODUCT @join__enumValue(graph: CHECKOUT_STOREFRONT)
   ORDER @join__enumValue(graph: CHECKOUT_STOREFRONT)
   SHIPPING @join__enumValue(graph: CHECKOUT_STOREFRONT)
+}
+
+enum CheckoutDiscountMethod @join__type(graph: CHECKOUT_STOREFRONT)  {
+  AUTOMATIC @join__enumValue(graph: CHECKOUT_STOREFRONT)
+  CODE @join__enumValue(graph: CHECKOUT_STOREFRONT)
 }
 
 """

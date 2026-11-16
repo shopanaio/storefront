@@ -131,7 +131,15 @@ export const useStyles = createStyles(
         border-radius: 0;
         background-color: transparent;
         overflow: visible;
-        --safe-area-bottom: ${VISUAL_VIEWPORT_SAFE_BOTTOM};
+      }
+
+      /* On iOS the bottom safe area is none over the keyboard (its bars stand there). On
+         Android it stays: the room under the sheet's parts does not shrink as the keyboard
+         comes up, the sheet does not drop before it stands up. */
+      @supports (-webkit-touch-callout: none) {
+        &&& {
+          --safe-area-bottom: ${VISUAL_VIEWPORT_SAFE_BOTTOM};
+        }
       }
 
       /* Under the box, down past the screen's bottom: the sheet's own white, opaque, behind

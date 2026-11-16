@@ -69,7 +69,6 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       <SelectCard
         label={t('city')}
         labelShown={!city}
-        selected={!!city}
         action={city ? t('change') : t('select')}
         onClick={() => setIsCityModalVisible(true)}
         error={missing ? t('select-city') : undefined}
@@ -82,7 +81,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
       >
         {city ? (
           // The city, and its oblast under it when the store lists it.
-          <Flex vertical align="start" gap={4}>
+          <Flex vertical align="start">
             <Typography.Text className={styles.mainText}>
               {city.name}
             </Typography.Text>
@@ -188,12 +187,10 @@ const useStyles = createStyles(({ css, token }) => {
     `,
     mainText: css`
       max-width: 300px !important;
-      line-height: 1;
       font-size: ${token.fontSize}px;
     `,
     secondaryText: css`
       font-size: ${token.fontSizeSM}px;
-      line-height: 1;
     `,
   };
 });

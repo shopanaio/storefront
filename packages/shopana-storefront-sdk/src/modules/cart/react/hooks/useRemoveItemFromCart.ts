@@ -1,5 +1,8 @@
 'use client';
-import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import {
+  cartLineWriteKey,
+  resolveCartLineId,
+} from '../../core/utils/resolveCartLineId';
 import { useCartStoreApi, useCartSetters } from '../context/CartContext';
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { removeFromCartMutation } from '../../core/graphql/mutations/removeFromCartMutation';
@@ -22,8 +25,9 @@ const useRemoveItemFromCart = () => {
   const [commitRemoveLine, isInFlight] = useMutation(removeFromCartMutation);
   return {
     /**
-     * Resolves with the confirmed cart, or null when there is no cart or the server has no
-     * such line. Rejects only with `CartMutationError`.
+     * Removes the line at once and replaces a quantity change of the line still waiting to be
+     * sent. Resolves with the confirmed cart, or null when there is no cart or the server has
+     * no such line. Rejects only with `CartMutationError`.
      */
     removeFromCart: async (
       input: RemoveFromCartInput,
@@ -45,6 +49,7 @@ const useRemoveItemFromCart = () => {
         );
         if (lineId) actions.checkoutLinesDelete({ lineIds: [lineId] });
       };
+      const line = cartLineWriteKey(input.lineId, purchasableId);
       return settleCartMutation(
         enqueueMutation(
           () =>
@@ -74,7 +79,11 @@ const useRemoveItemFromCart = () => {
                 onError: reject,
               });
             }),
-          { optimisticEdit }
+          {
+            key: line,
+            lines: [line],
+            optimisticEdit,
+          }
         ),
         options
       );

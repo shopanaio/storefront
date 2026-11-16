@@ -243,6 +243,8 @@ export const DrawerBase = ({
             className={cx(styles.body, classNames?.body)}
             data-scrollable={scrollable ? '' : undefined}
             data-drawer-body=""
+            // The sheet is dragged by its header alone: a drag here scrolls or does nothing.
+            data-vaul-no-drag=""
             onScroll={
               isBottomSheet
                 ? (event) => setScrolled(event.currentTarget.scrollTop > 0)
@@ -258,6 +260,7 @@ export const DrawerBase = ({
           {footer ? (
             <div
               className={cx(styles.footer, classNames?.footer)}
+              data-vaul-no-drag=""
               style={partStyles?.footer}
             >
               {footer}

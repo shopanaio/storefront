@@ -26,6 +26,23 @@ fragment SdkCartLineFragment_fields on CheckoutLine {
       amount
     }
   }
+  discountAllocations {
+    discountedAmount {
+      currencyCode
+      amount
+    }
+    quantity
+    freeQuantity
+    discountApplication {
+      method
+      discountClass
+      title
+      code
+      promotion {
+        ...SdkStorefrontPromotion
+      }
+    }
+  }
   purchasableId
   purchasable {
     ... on ProductVariant {

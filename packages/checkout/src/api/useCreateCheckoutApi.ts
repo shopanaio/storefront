@@ -507,6 +507,19 @@ export function useCreateCheckoutApi(): CheckoutApi {
       },
       addPromoCode: async (input) => {
         await commitAddPromo({ input: { ...input, ...mutationContext() } });
+        // A code the checkout rejects does not stay in it: it leaves at once, and the buyer is
+        // told in the promo field, without the code listed.
+        const rejected = currentCheckout().promoCodes.find(
+          (item) =>
+            item.status === 'REJECTED' && isPromoEntered([item.code], input.code)
+        );
+        if (rejected) {
+          await sendRemovePromo({
+            input: { code: rejected.code, ...mutationContext() },
+          });
+          // eslint-disable-next-line @typescript-eslint/only-throw-error -- user errors are thrown as a list, as the mutation does
+          throw [{ code: 'CHECKOUT_DISCOUNT_CODE_INVALID' }];
+        }
       },
       removePromoCode: async (input) => {
         await commitRemovePromo({ input: { ...input, ...mutationContext() } });

@@ -32,7 +32,6 @@ export interface CheckoutTagDefinition {
  */
 export interface AddToCartInput {
   purchasableId: string;
-  purchasableSnapshot: Pick<model.ProductVariant, 'compareAtPrice' | 'price'>;
   quantity: number;
   /**
    * Optional children lines to be added as a batch with the parent (bundle).
@@ -101,10 +100,6 @@ export interface ReplaceCartItemInput {
    * Target purchasable ID (product variant) to receive the quantity.
    */
   purchasableId: string;
-  /**
-   * Purchasable snapshot (price and compareAtPrice) to ensure price consistency.
-   */
-  purchasableSnapshot: Pick<model.ProductVariant, 'price' | 'compareAtPrice'>;
   /**
    * Quantity to move; if not set, moves full quantity from source line.
    * Must be greater than 0 if provided.

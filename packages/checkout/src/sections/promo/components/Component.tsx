@@ -8,7 +8,6 @@ import { FloatingLabelInput } from '@shopana/storefront-ui';
 import {
   TbCheck,
   TbClockHour4,
-  TbExclamationMark,
   TbTicket,
   TbX,
 } from 'react-icons/tb';
@@ -36,9 +35,9 @@ export interface PromoSectionViewProps {
 
 /**
  * Promo codes (stage 6): the field to add one more code and the list of entered codes, each
- * removable on its own. Only the buyer removes a code (BR-tvyl): a code the checkout does not
- * apply stays listed with the reason from the API, and one waiting for a condition (a chosen
- * delivery) is shown as pending. The code of a loyalty voucher is marked as a reward.
+ * removable on its own. Only the buyer removes a code (BR-tvyl); one waiting for a condition (a
+ * chosen delivery) is shown as pending. A rejected code is not listed: it is told in the field.
+ * The code of a loyalty voucher is marked as a reward.
  */
 export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
   const { styles } = useStyles();
@@ -73,7 +72,7 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
     setApplying(true);
     setError(null);
     try {
-      // The code is listed with its state, applied or not; the field is free for the next one.
+      // The code is listed with its state; the field is free for the next one.
       await addPromoCode({ code: value });
       setCode('');
     } catch (failure) {
@@ -165,20 +164,14 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
               <span
                 className={clsx(
                   styles.statusIcon,
-                  status === 'APPLIED'
-                    ? styles.appliedIcon
-                    : status === 'PENDING'
-                      ? styles.pendingIcon
-                      : styles.rejectedIcon
+                  status === 'APPLIED' ? styles.appliedIcon : styles.pendingIcon
                 )}
                 aria-hidden="true"
               >
                 {status === 'APPLIED' ? (
                   <TbCheck size={14} strokeWidth={3} />
-                ) : status === 'PENDING' ? (
-                  <TbClockHour4 size={14} strokeWidth={2.5} />
                 ) : (
-                  <TbExclamationMark size={14} strokeWidth={3} />
+                  <TbClockHour4 size={14} strokeWidth={2.5} />
                 )}
               </span>
               <Typography.Text strong className={styles.code}>
@@ -201,23 +194,15 @@ export const PromoSectionView = ({ data }: PromoSectionViewProps) => {
           ))}
         </Flex>
       ) : null}
-      {/* Why a code is not applied, under all the codes, each reason named by its code. */}
-      {codes.some(({ status }) => status !== 'APPLIED') ? (
+      {/* Why a code waits, under all the codes, each reason named by its code. */}
+      {codes.some(({ status }) => status === 'PENDING') ? (
         <Flex vertical gap={2}>
           {codes
-            .filter(({ status }) => status !== 'APPLIED')
-            .map(({ code: entered, status, message }) => (
-              <Typography.Text
-                key={entered}
-                type={status === 'REJECTED' ? 'warning' : 'secondary'}
-              >
+            .filter(({ status }) => status === 'PENDING')
+            .map(({ code: entered, message }) => (
+              <Typography.Text key={entered} type="secondary">
                 <span className={styles.reasonCode}>{entered}</span>{' '}
-                <span>
-                  {message ??
-                    t(
-                      status === 'PENDING' ? 'promo-pending' : 'promo-rejected'
-                    )}
-                </span>
+                <span>{message ?? t('promo-pending')}</span>
               </Typography.Text>
             ))}
         </Flex>
@@ -252,9 +237,6 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   pendingIcon: css`
     background: ${token.colorTextTertiary};
-  `,
-  rejectedIcon: css`
-    background: ${token.colorWarning};
   `,
   reasonCode: css`
     font-weight: 600;

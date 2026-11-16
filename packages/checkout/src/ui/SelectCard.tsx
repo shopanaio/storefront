@@ -18,7 +18,7 @@ export function SelectCard({
   label,
   labelShown = false,
   icon,
-  selected,
+  selected = false,
   action,
   onClick,
   disabled = false,
@@ -31,8 +31,8 @@ export function SelectCard({
   /** Whether `children` already show the label, so it is not read twice. */
   labelShown?: boolean;
   icon?: ReactNode;
-  /** A value is filled in: the card takes the look of a chosen option. */
-  selected: boolean;
+  /** A value is filled in and the card takes the look of a chosen option (a branch, a street). */
+  selected?: boolean;
   /** Text of the action: change when a value is filled in, select when not. */
   action: string;
   onClick: () => void;
@@ -121,7 +121,9 @@ const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: ${token.marginXS}px;
     min-height: 64px;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px
+    /* Two lines fill the 64px exactly; a third line makes the card taller, not the padding
+       smaller. */
+    padding: ${token.paddingSM}px ${token.paddingXS}px ${token.paddingSM}px
       ${token.paddingSM}px;
     border: 1px solid ${token.colorBorder};
     border-radius: ${token.borderRadius}px;
@@ -170,6 +172,31 @@ const useStyles = createStyles(({ css, token }) => ({
   content: css`
     flex: 1;
     min-width: 0;
+
+    /* The lines of every card, set here only so all cards look alike: the main line (the
+       field, the city) on top, the lines under it smaller, regular and lighter, all at the
+       same step. */
+    & > .ant-typography,
+    & > * > .ant-typography {
+      display: block;
+      margin: 0;
+      font-size: ${token.fontSizeSM}px !important;
+      font-weight: normal;
+      line-height: 18px !important;
+      color: ${token.colorTextTertiary} !important;
+    }
+
+    & > .ant-typography:first-child,
+    & > * > .ant-typography:first-child {
+      font-size: ${token.fontSize}px !important;
+      font-weight: 600;
+      line-height: 22px !important;
+      color: ${token.colorText} !important;
+    }
+
+    & > * {
+      gap: 0 !important;
+    }
   `,
   action: css`
     flex-shrink: 0;

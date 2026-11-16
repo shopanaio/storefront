@@ -116,6 +116,8 @@ export namespace model {
   export type CartPromotionProgress = CartTypes.CartPromotionProgress;
   export type CartFreeShippingProgress = CartTypes.CartFreeShippingProgress;
   export type CartAppliedPromotion = CartTypes.CartAppliedPromotion;
+  export type CartDiscountApplication = CartTypes.CartDiscountApplication;
+  export type CartDiscountAllocation = CartTypes.CartDiscountAllocation;
   export type CheckoutLoyaltyRedemption = CartTypes.CheckoutLoyaltyRedemption;
   export type Collection = import('../modules/storefront').Collection;
   export type CheckoutPlacement =

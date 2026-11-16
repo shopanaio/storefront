@@ -1,5 +1,8 @@
 'use client';
-import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import {
+  cartLineWriteKey,
+  resolveCartLineId,
+} from '../../core/utils/resolveCartLineId';
 import { useCartStoreApi, useCartSetters } from '../context/CartContext';
 import { useMutation } from '../../../../graphql/apollo/hooks/useMutation';
 import { updateCartLineQuantityMutation } from '../../core/graphql/mutations/updateCartLineQuantityMutation';
@@ -13,6 +16,10 @@ import {
   settleCartMutation,
 } from '../../core/errors';
 import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
+
+/** How long quantity changes of a line gather before the last one is sent. */
+const QUANTITY_DEBOUNCE_MS = 400;
+
 const useUpdateCartLineQuantity = () => {
   const { setCartKey, enqueueMutation, getConfirmedLineId } = useCartSetters();
   const cartStore = useCartStoreApi();
@@ -21,8 +28,10 @@ const useUpdateCartLineQuantity = () => {
   const actions = useCartActions();
   const [commit, isInFlight] = useMutation(updateCartLineQuantityMutation);
   /**
-   * Resolves with the confirmed cart, or null when there is no cart or the server has no such
-   * line. Rejects only with `CartMutationError`.
+   * Shows the quantity at once and sends it after a pause in the changes of the line: only the
+   * last quantity goes. Resolves with the confirmed cart, or null when there is no cart or the
+   * server has no such line. Rejects only with `CartMutationError`; a call a newer quantity
+   * replaced rejects with the `superseded` kind.
    */
   const updateQuantity = async (
     {
@@ -50,6 +59,7 @@ const useUpdateCartLineQuantity = () => {
       );
       if (lineId) checkoutLinesUpdate({ lines: [{ lineId, quantity }] });
     };
+    const line = cartLineWriteKey(cartItemId, purchasableId);
     return settleCartMutation(
       enqueueMutation(
         () =>
@@ -79,7 +89,12 @@ const useUpdateCartLineQuantity = () => {
               onError: reject,
             });
           }),
-        { optimisticEdit }
+        {
+          key: line,
+          delay: QUANTITY_DEBOUNCE_MS,
+          lines: [line],
+          optimisticEdit,
+        }
       ),
       options
     );

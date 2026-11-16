@@ -880,7 +880,36 @@ export type CheckoutDisclosures = {
   readonly version: Scalars['String']['output'];
 };
 
+/** The part of a discount that lowered the cost of a checkout line. */
+export type CheckoutDiscountAllocation = {
+  readonly __typename: 'CheckoutDiscountAllocation';
+  readonly discountApplication: CheckoutDiscountApplication;
+  readonly discountedAmount: Money;
+  /** Units of the line the discount made free; zero when it only lowered the price. */
+  readonly freeQuantity: Scalars['Int']['output'];
+  /**
+   * Units of the line the discount covers unit by unit, as buy X get Y does; null when the discount
+   * is spread over the line amount.
+   */
+  readonly quantity?: Maybe<Scalars['Int']['output']>;
+};
+
+/** A discount the last pricing of the checkout applied, as the buyer sees it. */
+export type CheckoutDiscountApplication = {
+  readonly __typename: 'CheckoutDiscountApplication';
+  /** The code the buyer entered; null for an automatic discount. */
+  readonly code?: Maybe<Scalars['String']['output']>;
+  readonly discountClass: CheckoutDiscountClass;
+  readonly method: CheckoutDiscountMethod;
+  /** Buyer-facing view of the discount; null once the discount is deleted. */
+  readonly promotion?: Maybe<StorefrontPromotion>;
+  /** Buyer-facing promotion headline. */
+  readonly title: Scalars['String']['output'];
+};
+
 export type CheckoutDiscountClass = 'ORDER' | 'PRODUCT' | 'SHIPPING';
+
+export type CheckoutDiscountMethod = 'AUTOMATIC' | 'CODE';
 
 /** Why the shipping of a delivery group is free. */
 export type CheckoutFreeShipping = {
@@ -972,6 +1001,11 @@ export type CheckoutLine = Node & {
   readonly componentItemId?: Maybe<Scalars['ID']['output']>;
   /** Cost calculations for this checkout item. */
   readonly cost: CheckoutLineCost;
+  /**
+   * Discounts that make up `cost.discountAmount`, in the order pricing applied them: automatic
+   * discounts and promo codes alike.
+   */
+  readonly discountAllocations: ReadonlyArray<CheckoutDiscountAllocation>;
   /** Global unique identifier for the checkout line. */
   readonly id: Scalars['ID']['output'];
   /** Image of the purchasable resolved by the Media subgraph. */

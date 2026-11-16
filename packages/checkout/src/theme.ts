@@ -83,6 +83,8 @@ export interface CheckoutThemeAdapter {
    * in place of the contact regardless.
    */
   customerAccountsEnabled?: boolean;
+  /** Whether the buyer can name another person as the recipient; off by default. */
+  recipientEnabled?: boolean;
   /** What the theme adds to the checkout form. */
   slots?: CheckoutSlots;
   /** Cart drawer of the store, opened by `useOpenCart`. */
@@ -111,6 +113,7 @@ export interface CheckoutTheme {
   Brand: ComponentType;
   Auth: ComponentType<CheckoutAuthProps>;
   customerAccountsEnabled: boolean;
+  recipientEnabled: boolean;
   slots: CheckoutSlots;
   CartDrawer: ComponentType;
   useHomePath: () => string;
@@ -127,6 +130,7 @@ const DEFAULT_THEME: CheckoutTheme = {
   Brand: Nothing,
   Auth: DefaultCheckoutAuth,
   customerAccountsEnabled: false,
+  recipientEnabled: false,
   slots: {},
   CartDrawer: Nothing,
   useHomePath: () => '/',

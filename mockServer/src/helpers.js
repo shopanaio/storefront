@@ -387,6 +387,8 @@ export const createCheckoutLine = ({
       taxAmount: money(tax, currencyCode),
       totalAmount: money(subtotal + tax, currencyCode),
     },
+    // The mock applies no discounts.
+    discountAllocations: [],
     originalPrice: money(compareAt, currencyCode),
     priceConfig: null,
     children: [],

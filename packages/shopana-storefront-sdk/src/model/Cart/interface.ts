@@ -62,6 +62,8 @@ export interface ConfirmedCartLine extends CartLineBase {
   children: ConfirmedCartLine[];
   /** The variant is out of stock but still sold (backorder). */
   currentlyNotInStock: boolean;
+  /** Discounts that make up `cost.discountAmount`, in the order pricing applied them. */
+  discountAllocations: CartDiscountAllocation[];
 }
 
 /**
@@ -159,6 +161,8 @@ export interface StorefrontPromotion {
   } | null;
   minimumSubtotal: Money | null;
   minimumQuantity: number | null;
+  appliesOnOneTimePurchase: boolean;
+  appliesOnSubscription: boolean;
   startsAt: Date;
   endsAt: Date | null;
   /** Storefront places the merchant chose for the promotion; at least one. */
@@ -204,6 +208,28 @@ export interface CartFreeShippingProgress {
   maximumShippingPrice: Money | null;
   /** Null without a selected delivery or while IN_PROGRESS. */
   appliesToSelectedDelivery: boolean | null;
+}
+
+/** A discount pricing applied to the cart: an automatic one or a promo code. */
+export interface CartDiscountApplication {
+  method: import('../../graphql/apollo/generated/operations').CheckoutDiscountMethod;
+  discountClass: import('../../graphql/apollo/generated/operations').CheckoutDiscountClass;
+  /** Buyer-facing promotion headline. */
+  title: string;
+  /** The code the buyer entered; null for an automatic discount. */
+  code: string | null;
+  /** Null once the discount is deleted. */
+  promotion: StorefrontPromotion | null;
+}
+
+/** The part of a discount that lowered the cost of a cart line. */
+export interface CartDiscountAllocation {
+  discountedAmount: Money;
+  /** Units the discount covers unit by unit (buy X get Y); null when spread over the line amount. */
+  quantity: number | null;
+  /** Units of the line the discount made free. */
+  freeQuantity: number;
+  discountApplication: CartDiscountApplication;
 }
 
 /** Automatic discount applied to the cart; promo codes are in `promoCodes`. */

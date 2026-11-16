@@ -1,9 +1,51 @@
 import { CartStore, StoreImplementation } from './CartStore';
 import type { model } from '../../../model/namespace';
-import { recalcCart, withQuantity } from '../core/utils/cartMath';
 
 let clientLineCounter = 0;
 const genClientLineId = () => `client:checkoutLine:${++clientLineCounter}`;
+
+type CartLine = model.Cart['lines'][number];
+
+/**
+ * A line the server has not confirmed yet: only its quantity is known. Its cost comes with the
+ * server answer; until then the cart shows no money for it.
+ */
+const createOptimisticLine = (
+  purchasableId: string,
+  quantity: number,
+  currencyCode: model.Money['currencyCode']
+): CartLine => {
+  const zero = { amount: 0, currencyCode };
+  return {
+    isOptimistic: true,
+    id: genClientLineId(),
+    purchasableId,
+    purchasable: null,
+    quantity,
+    cost: {
+      unitPrice: zero,
+      compareAtUnitPrice: null,
+      subtotalAmount: zero,
+      discountAmount: zero,
+      totalAmount: zero,
+    },
+  };
+};
+
+const withQuantity = (line: CartLine, quantity: number): CartLine => ({
+  ...line,
+  quantity: Math.max(0, quantity),
+});
+
+/**
+ * The cart with changed lines. Only quantities change on the client: the cost stays as the
+ * server calculated it until the server answers the write.
+ */
+const withLines = (cart: model.Cart, lines: CartLine[]): model.Cart => ({
+  ...cart,
+  lines,
+  totalQuantity: lines.reduce((sum, line) => sum + line.quantity, 0),
+});
 
 /**
  * Factory function to create cart store with any state manager
@@ -41,68 +83,29 @@ export function createCartStore(
       if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
-      const base = state.cart;
-      const nextLines = [...base.lines];
+      const nextLines = [...prev.lines];
 
       for (const l of input.lines) {
         const existingIndex = nextLines.findIndex(
           (x) => x.purchasableId === l.purchasableId
         );
-        const price = input.pricing?.[l.purchasableId];
-
         if (existingIndex >= 0) {
-          const existing = withQuantity(
+          nextLines[existingIndex] = withQuantity(
             nextLines[existingIndex],
-            Math.max(0, nextLines[existingIndex].quantity + l.quantity)
+            nextLines[existingIndex].quantity + l.quantity
           );
-          nextLines[existingIndex] = {
-            ...existing,
-            cost: price
-              ? {
-                  ...existing.cost,
-                  unitPrice: {
-                    amount: price.unitPrice,
-                    currencyCode: price.currencyCode,
-                  },
-                  compareAtUnitPrice:
-                    price.compareAtUnitPrice != null
-                      ? {
-                          amount: price.compareAtUnitPrice,
-                          currencyCode: price.currencyCode,
-                        }
-                      : (existing.cost.compareAtUnitPrice ?? null),
-                }
-              : existing.cost,
-          };
         } else {
-          const currencyCode =
-            price?.currencyCode || base.cost.totalAmount.currencyCode;
-          nextLines.push({
-            isOptimistic: true,
-            id: genClientLineId(),
-            purchasableId: l.purchasableId,
-            purchasable: null,
-            quantity: l.quantity,
-            cost: {
-              unitPrice: { amount: price?.unitPrice ?? 0, currencyCode },
-              compareAtUnitPrice:
-                price?.compareAtUnitPrice != null
-                  ? { amount: price.compareAtUnitPrice, currencyCode }
-                  : null,
-              subtotalAmount: { amount: 0, currencyCode },
-              discountAmount: { amount: 0, currencyCode },
-              totalAmount: { amount: 0, currencyCode },
-            },
-          });
+          nextLines.push(
+            createOptimisticLine(
+              l.purchasableId,
+              l.quantity,
+              prev.cost.totalAmount.currencyCode
+            )
+          );
         }
       }
 
-      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
-
-      impl.setState({
-        ...state,
-        cart: nextCart,
-      });
+      impl.setState({ ...state, cart: withLines(prev, nextLines) });
 
       return {
         revert: () => {
@@ -116,14 +119,9 @@ export function createCartStore(
       if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
-      const base = state.cart;
-      const nextLines = base.lines.filter((l) => !input.lineIds.includes(l.id));
-      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
+      const nextLines = prev.lines.filter((l) => !input.lineIds.includes(l.id));
 
-      impl.setState({
-        ...state,
-        cart: nextCart,
-      });
+      impl.setState({ ...state, cart: withLines(prev, nextLines) });
 
       return {
         revert: () => {
@@ -137,21 +135,16 @@ export function createCartStore(
       if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
-      const base = state.cart;
       const map = new Map(input.lines.map((l) => [l.lineId, l.quantity]));
-      const nextLines = base.lines
-        .map((l) =>
-          map.has(l.id)
-            ? withQuantity(l, Math.max(0, map.get(l.id) as number))
-            : l
-        )
+      // A line set to zero leaves the cart at once.
+      const nextLines = prev.lines
+        .map((l) => {
+          const quantity = map.get(l.id);
+          return quantity === undefined ? l : withQuantity(l, quantity);
+        })
         .filter((l) => l.quantity > 0);
-      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
 
-      impl.setState({
-        ...state,
-        cart: nextCart,
-      });
+      impl.setState({ ...state, cart: withLines(prev, nextLines) });
 
       return {
         revert: () => {
@@ -165,8 +158,7 @@ export function createCartStore(
       if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
-      const base = state.cart;
-      const nextLines = [...base.lines];
+      const nextLines = [...prev.lines];
 
       for (const replacement of input.lines) {
         const srcIdx = nextLines.findIndex(
@@ -193,9 +185,6 @@ export function createCartStore(
           nextLines.splice(srcIdx, 1);
         }
 
-        const price = input.pricing?.[replacement.purchasableId];
-        const currencyCode =
-          price?.currencyCode || base.cost.totalAmount.currencyCode;
         const targetIdx = nextLines.findIndex(
           (line) =>
             line.purchasableId === replacement.purchasableId &&
@@ -203,51 +192,22 @@ export function createCartStore(
         );
 
         if (targetIdx >= 0) {
-          const target = nextLines[targetIdx];
-          const updatedTarget = withQuantity(
-            target,
-            Math.max(0, target.quantity + requestedQty)
+          nextLines[targetIdx] = withQuantity(
+            nextLines[targetIdx],
+            nextLines[targetIdx].quantity + requestedQty
           );
-
-          if (price) {
-            updatedTarget.cost = {
-              ...target.cost,
-              unitPrice: { amount: price.unitPrice, currencyCode },
-              compareAtUnitPrice:
-                price.compareAtUnitPrice != null
-                  ? { amount: price.compareAtUnitPrice, currencyCode }
-                  : (target.cost.compareAtUnitPrice ?? null),
-            };
-          }
-
-          nextLines[targetIdx] = updatedTarget;
         } else {
-          nextLines.push({
-            isOptimistic: true,
-            id: genClientLineId(),
-            purchasableId: replacement.purchasableId,
-            purchasable: null,
-            quantity: requestedQty,
-            cost: {
-              unitPrice: { amount: price?.unitPrice ?? 0, currencyCode },
-              compareAtUnitPrice:
-                price?.compareAtUnitPrice != null
-                  ? { amount: price.compareAtUnitPrice, currencyCode }
-                  : null,
-              subtotalAmount: { amount: 0, currencyCode },
-              discountAmount: { amount: 0, currencyCode },
-              totalAmount: { amount: 0, currencyCode },
-            },
-          });
+          nextLines.push(
+            createOptimisticLine(
+              replacement.purchasableId,
+              requestedQty,
+              prev.cost.totalAmount.currencyCode
+            )
+          );
         }
       }
 
-      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
-
-      impl.setState({
-        ...state,
-        cart: nextCart,
-      });
+      impl.setState({ ...state, cart: withLines(prev, nextLines) });
 
       return {
         revert: () => {
@@ -261,27 +221,8 @@ export function createCartStore(
       if (!state.cart) return { revert: () => {} };
 
       const prev = state.cart;
-      const base = state.cart;
-      const currencyCode = base.cost.totalAmount.currencyCode;
-      const empty: model.Cart = {
-        ...base,
-        totalQuantity: 0,
-        lines: [],
-        cost: {
-          subtotalAmount: { amount: 0, currencyCode },
-          totalAmount: { amount: 0, currencyCode },
-          totalDiscountAmount: { amount: 0, currencyCode },
-          totalTaxAmount: { amount: 0, currencyCode },
-          totalShippingAmount: { amount: 0, currencyCode },
-          merchandiseDiscountAmount: { amount: 0, currencyCode },
-          loyaltyAmount: { amount: 0, currencyCode },
-        },
-      };
 
-      impl.setState({
-        ...state,
-        cart: empty,
-      });
+      impl.setState({ ...state, cart: withLines(prev, []) });
 
       return {
         revert: () => {

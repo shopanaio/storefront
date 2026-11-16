@@ -22,6 +22,8 @@ export {
   isMutationSuperseded,
 } from '../core/utils/mutationQueue';
 export {
+  useCartCostPending,
+  useCartLineCostPending,
   useCartLocalization,
   type CartLocalization,
 } from './context/CartContext';

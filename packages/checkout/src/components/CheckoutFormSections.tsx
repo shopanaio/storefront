@@ -3,6 +3,7 @@
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
 import { mq } from '@shopana/storefront-ui';
+import { useDeliveryReady } from '#checkout/hooks/useDeliveryReady';
 import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
 import { SectionId } from '#checkout/state/interface';
@@ -20,9 +21,12 @@ export interface CheckoutFormSectionsProps {
 }
 
 /**
- * The form of the checkout in the left column: contact, delivery with its recipient, payment,
- * the order comment beside the summary and, on desktop, the actions. With customer accounts
- * (`theme.customerAccountsEnabled`) "Log in" is next to the contact title.
+ * The form of the checkout in the left column: contact with the recipient
+ * (`theme.recipientEnabled`), delivery, payment, the order comment beside the summary and, on
+ * desktop, the actions. With customer accounts
+ * (`theme.customerAccountsEnabled`) "Log in" is next to the contact title. The payment is
+ * shown once the server answered with a valid delivery, with the skeletons of its methods
+ * until they load.
  */
 export const CheckoutFormSections = ({
   onSubmit,
@@ -30,7 +34,9 @@ export const CheckoutFormSections = ({
 }: CheckoutFormSectionsProps) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
-  const { customerAccountsEnabled, slots } = useCheckoutTheme();
+  const deliveryReady = useDeliveryReady();
+  const { customerAccountsEnabled, recipientEnabled, slots } =
+    useCheckoutTheme();
   const { afterContact: AfterContact, beforeActions: BeforeActions } = slots;
   return (
     <form id={CHECKOUT_FORM_ID} className={styles.form} onSubmit={onSubmit}>
@@ -48,6 +54,15 @@ export const CheckoutFormSections = ({
         <SectionRenderer slug={SectionId.Contact} />
         {customerAccountsEnabled ? <AccountDataNotice /> : null}
         <SectionIssues sections={[SectionId.Contact]} />
+        {/* Part of the contact block: who receives the order, a little apart from the contact. */}
+        {recipientEnabled ? (
+          <div className={styles.recipient}>
+            <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
+              <SectionRenderer slug={SectionId.Recipient} />
+              <SectionIssues sections={[SectionId.Recipient]} />
+            </CheckoutSection>
+          </div>
+        ) : null}
       </CheckoutSection>
 
       {AfterContact ? <AfterContact /> : null}
@@ -59,22 +74,17 @@ export const CheckoutFormSections = ({
         <SectionRenderer slug={SectionId.Address} />
         <SectionRenderer slug={SectionId.Delivery} />
         <SectionIssues sections={[SectionId.Address, SectionId.Delivery]} />
-        {/* Part of the delivery block: who receives it, a little apart from the methods. */}
-        <div className={styles.recipient}>
-          <CheckoutSection id={sectionAnchor(SectionId.Recipient)}>
-            <SectionRenderer slug={SectionId.Recipient} />
-            <SectionIssues sections={[SectionId.Recipient]} />
-          </CheckoutSection>
-        </div>
       </CheckoutSection>
 
-      <CheckoutSection
-        id={sectionAnchor(SectionId.Payment)}
-        title={t('payment')}
-      >
-        <SectionRenderer slug={SectionId.Payment} />
-        <SectionIssues sections={[SectionId.Payment]} />
-      </CheckoutSection>
+      {deliveryReady ? (
+        <CheckoutSection
+          id={sectionAnchor(SectionId.Payment)}
+          title={t('payment')}
+        >
+          <SectionRenderer slug={SectionId.Payment} />
+          <SectionIssues sections={[SectionId.Payment]} />
+        </CheckoutSection>
+      ) : null}
 
       {stacked ? null : <CommentSection />}
 

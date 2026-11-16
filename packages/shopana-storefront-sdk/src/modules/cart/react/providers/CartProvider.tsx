@@ -145,6 +145,20 @@ export const CartProvider: React.FC<CartProviderProps> = ({
     () => mutationQueue.idle(),
     [mutationQueue]
   );
+  const subscribeMutations = useCallback(
+    (listener: () => void) => mutationQueue.subscribe(listener),
+    [mutationQueue]
+  );
+  const hasPendingMutations = useCallback(
+    (line?: string) => mutationQueue.isPending(line),
+    [mutationQueue]
+  );
+  // A page being left sends the delayed writes without waiting for their delay.
+  useEffect(() => {
+    const flush = () => mutationQueue.flush();
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, [mutationQueue]);
   const cartUpdateListeners = useRef(
     new Set<(checkout: SdkCartFragment_CartFragment | null) => void>()
   );
@@ -286,7 +300,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
           });
           if (data) apply(data.checkoutLanguageCodeUpdate, 'language');
         },
-        { key: `checkout:${checkoutId}:localeCode` }
+        { key: `checkout:${checkoutId}:localeCode`, lines: 'all' }
       ).catch(fail('language'));
     }
     if (cartKey.currencyCode !== currencyCode) {
@@ -298,7 +312,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({
           });
           if (data) apply(data.checkoutCurrencyCodeUpdate, 'currency');
         },
-        { key: `checkout:${checkoutId}:currencyCode` }
+        { key: `checkout:${checkoutId}:currencyCode`, lines: 'all' }
       ).catch(fail('currency'));
     }
   }, [
@@ -321,6 +335,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({
       setCartKey={handleSetCartKey}
       enqueueMutation={enqueueMutation}
       waitForMutations={waitForMutations}
+      subscribeMutations={subscribeMutations}
+      hasPendingMutations={hasPendingMutations}
       subscribeCartUpdates={subscribeCartUpdates}
       getConfirmedLineId={getConfirmedLineId}
       cartId={cartId ?? (cartError ? cookieCartId : null)}

@@ -21,10 +21,6 @@ export interface CartStore {
       quantity: number;
       children?: Array<{ quantity: number }>;
     }>;
-    pricing?: Record<
-      string,
-      { unitPrice: number; compareAtUnitPrice?: number; currencyCode: string }
-    >;
   }): { revert(): void };
 
   checkoutLinesDelete(input: { lineIds: string[] }): { revert(): void };
@@ -35,10 +31,6 @@ export interface CartStore {
 
   checkoutLinesReplace(input: {
     lines: Array<{ lineId: string; purchasableId: string; quantity?: number }>;
-    pricing?: Record<
-      string,
-      { unitPrice: number; compareAtUnitPrice?: number; currencyCode: string }
-    >;
   }): { revert(): void };
 
   checkoutClear(): { revert(): void };

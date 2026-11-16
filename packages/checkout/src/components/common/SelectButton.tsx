@@ -59,11 +59,20 @@ export const SelectButton = ({
       className={cx(styles.card, className)}
     >
       {hasValue ? (
-        <Flex className={cx(styles.flex, invert && styles.invert)}>
-          <Typography.Text className={styles.mainText} ellipsis>
+        // The top line is the label of the card, the bottom one is smaller.
+        <Flex className={styles.flex}>
+          {invert && secondaryText ? (
+            <Typography.Text className={styles.topText} type="secondary">
+              {secondaryText}
+            </Typography.Text>
+          ) : null}
+          <Typography.Text
+            className={invert ? styles.secondaryText : styles.topText}
+            ellipsis
+          >
             {mainText}
           </Typography.Text>
-          {secondaryText && (
+          {!invert && secondaryText ? (
             <Typography.Text
               className={cx(styles.secondaryText, subtle && styles.subtle)}
               type={subtle ? undefined : 'secondary'}
@@ -71,7 +80,7 @@ export const SelectButton = ({
             >
               {secondaryText}
             </Typography.Text>
-          )}
+          ) : null}
         </Flex>
       ) : (
         <Typography.Text type="secondary">{placeholder}</Typography.Text>
@@ -88,19 +97,14 @@ const useStyles = createStyles(({ token, css }) => {
     flex: css`
       flex-direction: column;
       align-items: start;
-      gap: ${token.marginXXS}px;
     `,
-    invert: css`
-      flex-direction: column-reverse;
-    `,
-    mainText: css`
+    topText: css`
       max-width: 100% !important;
-      line-height: 1;
       font-size: ${token.fontSize}px;
     `,
     secondaryText: css`
+      max-width: 100% !important;
       font-size: ${token.fontSizeSM}px;
-      line-height: 1;
     `,
     subtle: css`
       max-width: 100% !important;

@@ -43,11 +43,14 @@ export function useClaimAccountCart() {
     let mergedFromCheckoutId: string | null = null;
     if (guestCartId) {
       try {
-        const result = await enqueueMutation(() =>
-          client.mutate({
-            mutation: SdkClaimCartMutationDocument,
-            variables: { input: { checkoutId: guestCartId } },
-          })
+        // The merge may change every line of the cart.
+        const result = await enqueueMutation(
+          () =>
+            client.mutate({
+              mutation: SdkClaimCartMutationDocument,
+              variables: { input: { checkoutId: guestCartId } },
+            }),
+          { lines: 'all' }
         );
         checkout = result.data?.checkoutClaim.checkout ?? null;
         mergedFromCheckoutId =

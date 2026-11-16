@@ -1,5 +1,8 @@
 'use client';
-import { resolveCartLineId } from '../../core/utils/resolveCartLineId';
+import {
+  cartLineWriteKey,
+  resolveCartLineId,
+} from '../../core/utils/resolveCartLineId';
 import { useCartStoreApi, useCartSetters } from '../context/CartContext';
 /**
  * Hook for replacing cart items in Shopana checkout.
@@ -52,7 +55,7 @@ const useReplaceCartItem = () => {
     input: ReplaceCartItemInput,
     options?: MutationOptions<model.Cart | null>
   ): Promise<model.Cart | null> => {
-    const { lineId, purchasableId, purchasableSnapshot, quantity } = input;
+    const { lineId, purchasableId, quantity } = input;
     const { checkoutLinesReplace } = actions;
     if (!cartId) {
       console.warn('[useReplaceCartItem] No cart to replace items in');
@@ -70,13 +73,6 @@ const useReplaceCartItem = () => {
       if (!optimisticLineId) return;
       checkoutLinesReplace({
         lines: [{ lineId: optimisticLineId, purchasableId, quantity }],
-        pricing: {
-          [purchasableId]: {
-            unitPrice: purchasableSnapshot.price.amount,
-            compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-            currencyCode: purchasableSnapshot.price.currencyCode,
-          },
-        },
       });
     };
     return settleCartMutation(
@@ -119,7 +115,13 @@ const useReplaceCartItem = () => {
               onError: reject,
             });
           }),
-        { optimisticEdit }
+        {
+          lines: [
+            cartLineWriteKey(lineId, sourcePurchasableId),
+            cartLineWriteKey(purchasableId, purchasableId),
+          ],
+          optimisticEdit,
+        }
       ),
       options
     );

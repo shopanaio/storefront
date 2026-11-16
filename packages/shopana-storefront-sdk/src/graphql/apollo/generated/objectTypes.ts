@@ -26,6 +26,8 @@ export const objectTypes: readonly string[] = [
   'CheckoutDisclosurePolicyLink',
   'CheckoutDisclosureText',
   'CheckoutDisclosures',
+  'CheckoutDiscountAllocation',
+  'CheckoutDiscountApplication',
   'CheckoutFreeShipping',
   'CheckoutFreeShippingProgress',
   'CheckoutIssue',

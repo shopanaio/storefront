@@ -880,7 +880,36 @@ export type CheckoutDisclosures = {
   readonly version: Scalars['String']['output'];
 };
 
+/** The part of a discount that lowered the cost of a checkout line. */
+export type CheckoutDiscountAllocation = {
+  readonly __typename: 'CheckoutDiscountAllocation';
+  readonly discountApplication: CheckoutDiscountApplication;
+  readonly discountedAmount: Money;
+  /** Units of the line the discount made free; zero when it only lowered the price. */
+  readonly freeQuantity: Scalars['Int']['output'];
+  /**
+   * Units of the line the discount covers unit by unit, as buy X get Y does; null when the discount
+   * is spread over the line amount.
+   */
+  readonly quantity?: Maybe<Scalars['Int']['output']>;
+};
+
+/** A discount the last pricing of the checkout applied, as the buyer sees it. */
+export type CheckoutDiscountApplication = {
+  readonly __typename: 'CheckoutDiscountApplication';
+  /** The code the buyer entered; null for an automatic discount. */
+  readonly code?: Maybe<Scalars['String']['output']>;
+  readonly discountClass: CheckoutDiscountClass;
+  readonly method: CheckoutDiscountMethod;
+  /** Buyer-facing view of the discount; null once the discount is deleted. */
+  readonly promotion?: Maybe<StorefrontPromotion>;
+  /** Buyer-facing promotion headline. */
+  readonly title: Scalars['String']['output'];
+};
+
 export type CheckoutDiscountClass = 'ORDER' | 'PRODUCT' | 'SHIPPING';
+
+export type CheckoutDiscountMethod = 'AUTOMATIC' | 'CODE';
 
 /** Why the shipping of a delivery group is free. */
 export type CheckoutFreeShipping = {
@@ -972,6 +1001,11 @@ export type CheckoutLine = Node & {
   readonly componentItemId?: Maybe<Scalars['ID']['output']>;
   /** Cost calculations for this checkout item. */
   readonly cost: CheckoutLineCost;
+  /**
+   * Discounts that make up `cost.discountAmount`, in the order pricing applied them: automatic
+   * discounts and promo codes alike.
+   */
+  readonly discountAllocations: ReadonlyArray<CheckoutDiscountAllocation>;
   /** Global unique identifier for the checkout line. */
   readonly id: Scalars['ID']['output'];
   /** Image of the purchasable resolved by the Media subgraph. */
@@ -9792,6 +9826,73 @@ export type SdkCartFragment_CartFragment = {
           readonly amount: any;
         };
       };
+      readonly discountAllocations: ReadonlyArray<{
+        readonly __typename: 'CheckoutDiscountAllocation';
+        readonly quantity?: number | null;
+        readonly freeQuantity: number;
+        readonly discountedAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly discountApplication: {
+          readonly __typename: 'CheckoutDiscountApplication';
+          readonly method: CheckoutDiscountMethod;
+          readonly discountClass: CheckoutDiscountClass;
+          readonly title: string;
+          readonly code?: string | null;
+          readonly promotion?: {
+            readonly __typename: 'StorefrontPromotion';
+            readonly key: string;
+            readonly kind: StorefrontPromotionKind;
+            readonly minimumQuantity?: number | null;
+            readonly appliesOnOneTimePurchase: boolean;
+            readonly appliesOnSubscription: boolean;
+            readonly startsAt: string;
+            readonly endsAt?: string | null;
+            readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+            readonly presentation: {
+              readonly __typename: 'StorefrontPromotionCopy';
+              readonly headline: string;
+              readonly badge: string;
+              readonly accessibilityLabel: string;
+              readonly terms?: string | null;
+              readonly description?: {
+                readonly __typename: 'RichText';
+                readonly text: string;
+                readonly html: any;
+              } | null;
+            };
+            readonly value?: {
+              readonly __typename: 'StorefrontPromotionValue';
+              readonly type: StorefrontPromotionValueType;
+              readonly percentage?: any | null;
+              readonly buyQuantity?: number | null;
+              readonly getQuantity?: number | null;
+              readonly amount?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly maximumDiscount?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly maximumShippingPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+            readonly minimumSubtotal?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          } | null;
+        };
+      }>;
       readonly purchasable: {
         readonly __typename: 'ProductVariant';
         readonly id: string;
@@ -9905,6 +10006,73 @@ export type SdkCartFragment_CartFragment = {
         readonly amount: any;
       };
     };
+    readonly discountAllocations: ReadonlyArray<{
+      readonly __typename: 'CheckoutDiscountAllocation';
+      readonly quantity?: number | null;
+      readonly freeQuantity: number;
+      readonly discountedAmount: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      };
+      readonly discountApplication: {
+        readonly __typename: 'CheckoutDiscountApplication';
+        readonly method: CheckoutDiscountMethod;
+        readonly discountClass: CheckoutDiscountClass;
+        readonly title: string;
+        readonly code?: string | null;
+        readonly promotion?: {
+          readonly __typename: 'StorefrontPromotion';
+          readonly key: string;
+          readonly kind: StorefrontPromotionKind;
+          readonly minimumQuantity?: number | null;
+          readonly appliesOnOneTimePurchase: boolean;
+          readonly appliesOnSubscription: boolean;
+          readonly startsAt: string;
+          readonly endsAt?: string | null;
+          readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly presentation: {
+            readonly __typename: 'StorefrontPromotionCopy';
+            readonly headline: string;
+            readonly badge: string;
+            readonly accessibilityLabel: string;
+            readonly terms?: string | null;
+            readonly description?: {
+              readonly __typename: 'RichText';
+              readonly text: string;
+              readonly html: any;
+            } | null;
+          };
+          readonly value?: {
+            readonly __typename: 'StorefrontPromotionValue';
+            readonly type: StorefrontPromotionValueType;
+            readonly percentage?: any | null;
+            readonly buyQuantity?: number | null;
+            readonly getQuantity?: number | null;
+            readonly amount?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly maximumDiscount?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly maximumShippingPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          } | null;
+          readonly minimumSubtotal?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        } | null;
+      };
+    }>;
     readonly purchasable: {
       readonly __typename: 'ProductVariant';
       readonly id: string;
@@ -10026,6 +10194,73 @@ export type SdkCartLineFragment_FieldsFragment = {
       readonly amount: any;
     };
   };
+  readonly discountAllocations: ReadonlyArray<{
+    readonly __typename: 'CheckoutDiscountAllocation';
+    readonly quantity?: number | null;
+    readonly freeQuantity: number;
+    readonly discountedAmount: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    };
+    readonly discountApplication: {
+      readonly __typename: 'CheckoutDiscountApplication';
+      readonly method: CheckoutDiscountMethod;
+      readonly discountClass: CheckoutDiscountClass;
+      readonly title: string;
+      readonly code?: string | null;
+      readonly promotion?: {
+        readonly __typename: 'StorefrontPromotion';
+        readonly key: string;
+        readonly kind: StorefrontPromotionKind;
+        readonly minimumQuantity?: number | null;
+        readonly appliesOnOneTimePurchase: boolean;
+        readonly appliesOnSubscription: boolean;
+        readonly startsAt: string;
+        readonly endsAt?: string | null;
+        readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly presentation: {
+          readonly __typename: 'StorefrontPromotionCopy';
+          readonly headline: string;
+          readonly badge: string;
+          readonly accessibilityLabel: string;
+          readonly terms?: string | null;
+          readonly description?: {
+            readonly __typename: 'RichText';
+            readonly text: string;
+            readonly html: any;
+          } | null;
+        };
+        readonly value?: {
+          readonly __typename: 'StorefrontPromotionValue';
+          readonly type: StorefrontPromotionValueType;
+          readonly percentage?: any | null;
+          readonly buyQuantity?: number | null;
+          readonly getQuantity?: number | null;
+          readonly amount?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly maximumDiscount?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly maximumShippingPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        } | null;
+        readonly minimumSubtotal?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+      } | null;
+    };
+  }>;
   readonly purchasable: {
     readonly __typename: 'ProductVariant';
     readonly id: string;
@@ -10155,6 +10390,73 @@ export type SdkCartLineFragment_LineFragment = {
         readonly amount: any;
       };
     };
+    readonly discountAllocations: ReadonlyArray<{
+      readonly __typename: 'CheckoutDiscountAllocation';
+      readonly quantity?: number | null;
+      readonly freeQuantity: number;
+      readonly discountedAmount: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      };
+      readonly discountApplication: {
+        readonly __typename: 'CheckoutDiscountApplication';
+        readonly method: CheckoutDiscountMethod;
+        readonly discountClass: CheckoutDiscountClass;
+        readonly title: string;
+        readonly code?: string | null;
+        readonly promotion?: {
+          readonly __typename: 'StorefrontPromotion';
+          readonly key: string;
+          readonly kind: StorefrontPromotionKind;
+          readonly minimumQuantity?: number | null;
+          readonly appliesOnOneTimePurchase: boolean;
+          readonly appliesOnSubscription: boolean;
+          readonly startsAt: string;
+          readonly endsAt?: string | null;
+          readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly presentation: {
+            readonly __typename: 'StorefrontPromotionCopy';
+            readonly headline: string;
+            readonly badge: string;
+            readonly accessibilityLabel: string;
+            readonly terms?: string | null;
+            readonly description?: {
+              readonly __typename: 'RichText';
+              readonly text: string;
+              readonly html: any;
+            } | null;
+          };
+          readonly value?: {
+            readonly __typename: 'StorefrontPromotionValue';
+            readonly type: StorefrontPromotionValueType;
+            readonly percentage?: any | null;
+            readonly buyQuantity?: number | null;
+            readonly getQuantity?: number | null;
+            readonly amount?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly maximumDiscount?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly maximumShippingPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          } | null;
+          readonly minimumSubtotal?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        } | null;
+      };
+    }>;
     readonly purchasable: {
       readonly __typename: 'ProductVariant';
       readonly id: string;
@@ -10265,6 +10567,73 @@ export type SdkCartLineFragment_LineFragment = {
       readonly amount: any;
     };
   };
+  readonly discountAllocations: ReadonlyArray<{
+    readonly __typename: 'CheckoutDiscountAllocation';
+    readonly quantity?: number | null;
+    readonly freeQuantity: number;
+    readonly discountedAmount: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    };
+    readonly discountApplication: {
+      readonly __typename: 'CheckoutDiscountApplication';
+      readonly method: CheckoutDiscountMethod;
+      readonly discountClass: CheckoutDiscountClass;
+      readonly title: string;
+      readonly code?: string | null;
+      readonly promotion?: {
+        readonly __typename: 'StorefrontPromotion';
+        readonly key: string;
+        readonly kind: StorefrontPromotionKind;
+        readonly minimumQuantity?: number | null;
+        readonly appliesOnOneTimePurchase: boolean;
+        readonly appliesOnSubscription: boolean;
+        readonly startsAt: string;
+        readonly endsAt?: string | null;
+        readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly presentation: {
+          readonly __typename: 'StorefrontPromotionCopy';
+          readonly headline: string;
+          readonly badge: string;
+          readonly accessibilityLabel: string;
+          readonly terms?: string | null;
+          readonly description?: {
+            readonly __typename: 'RichText';
+            readonly text: string;
+            readonly html: any;
+          } | null;
+        };
+        readonly value?: {
+          readonly __typename: 'StorefrontPromotionValue';
+          readonly type: StorefrontPromotionValueType;
+          readonly percentage?: any | null;
+          readonly buyQuantity?: number | null;
+          readonly getQuantity?: number | null;
+          readonly amount?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly maximumDiscount?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly maximumShippingPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        } | null;
+        readonly minimumSubtotal?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+      } | null;
+    };
+  }>;
   readonly purchasable: {
     readonly __typename: 'ProductVariant';
     readonly id: string;
@@ -10779,6 +11148,73 @@ export type SdkAddPromoCodeMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -10892,6 +11328,73 @@ export type SdkAddPromoCodeMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -11419,6 +11922,73 @@ export type SdkAddToCartMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -11532,6 +12102,73 @@ export type SdkAddToCartMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -12060,6 +12697,73 @@ export type SdkClaimCartMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -12173,6 +12877,73 @@ export type SdkClaimCartMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -12700,6 +13471,73 @@ export type SdkClearCartMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -12813,6 +13651,73 @@ export type SdkClearCartMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -13340,6 +14245,73 @@ export type SdkCreateCartMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -13453,6 +14425,73 @@ export type SdkCreateCartMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -13980,6 +15019,73 @@ export type SdkRemoveFromCartMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -14093,6 +15199,73 @@ export type SdkRemoveFromCartMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -14620,6 +15793,73 @@ export type SdkRemovePromoCodeMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -14733,6 +15973,73 @@ export type SdkRemovePromoCodeMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -15260,6 +16567,73 @@ export type SdkReplaceCartItemMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -15373,6 +16747,73 @@ export type SdkReplaceCartItemMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -15900,6 +17341,73 @@ export type SdkUpdateCartCurrencyCodeMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -16013,6 +17521,73 @@ export type SdkUpdateCartCurrencyCodeMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -16540,6 +18115,73 @@ export type SdkUpdateCartLanguageCodeMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -16653,6 +18295,73 @@ export type SdkUpdateCartLanguageCodeMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -17180,6 +18889,73 @@ export type SdkUpdateCartLineQuantityMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -17293,6 +19069,73 @@ export type SdkUpdateCartLineQuantityMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -17819,6 +19662,73 @@ export type SdkLoadAccountCartQuery = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -17932,6 +19842,73 @@ export type SdkLoadAccountCartQuery = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -18450,6 +20427,73 @@ export type SdkLoadCartQuery = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -18563,6 +20607,73 @@ export type SdkLoadCartQuery = {
           readonly amount: any;
         };
       };
+      readonly discountAllocations: ReadonlyArray<{
+        readonly __typename: 'CheckoutDiscountAllocation';
+        readonly quantity?: number | null;
+        readonly freeQuantity: number;
+        readonly discountedAmount: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        };
+        readonly discountApplication: {
+          readonly __typename: 'CheckoutDiscountApplication';
+          readonly method: CheckoutDiscountMethod;
+          readonly discountClass: CheckoutDiscountClass;
+          readonly title: string;
+          readonly code?: string | null;
+          readonly promotion?: {
+            readonly __typename: 'StorefrontPromotion';
+            readonly key: string;
+            readonly kind: StorefrontPromotionKind;
+            readonly minimumQuantity?: number | null;
+            readonly appliesOnOneTimePurchase: boolean;
+            readonly appliesOnSubscription: boolean;
+            readonly startsAt: string;
+            readonly endsAt?: string | null;
+            readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+            readonly presentation: {
+              readonly __typename: 'StorefrontPromotionCopy';
+              readonly headline: string;
+              readonly badge: string;
+              readonly accessibilityLabel: string;
+              readonly terms?: string | null;
+              readonly description?: {
+                readonly __typename: 'RichText';
+                readonly text: string;
+                readonly html: any;
+              } | null;
+            };
+            readonly value?: {
+              readonly __typename: 'StorefrontPromotionValue';
+              readonly type: StorefrontPromotionValueType;
+              readonly percentage?: any | null;
+              readonly buyQuantity?: number | null;
+              readonly getQuantity?: number | null;
+              readonly amount?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly maximumDiscount?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly maximumShippingPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+            readonly minimumSubtotal?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          } | null;
+        };
+      }>;
       readonly purchasable: {
         readonly __typename: 'ProductVariant';
         readonly id: string;
@@ -22791,6 +24902,73 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -22904,6 +25082,73 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -23431,6 +25676,73 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
               readonly amount: any;
             };
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly quantity?: number | null;
+            readonly freeQuantity: number;
+            readonly discountedAmount: {
+              readonly __typename: 'Money';
+              readonly currencyCode: CurrencyCode;
+              readonly amount: any;
+            };
+            readonly discountApplication: {
+              readonly __typename: 'CheckoutDiscountApplication';
+              readonly method: CheckoutDiscountMethod;
+              readonly discountClass: CheckoutDiscountClass;
+              readonly title: string;
+              readonly code?: string | null;
+              readonly promotion?: {
+                readonly __typename: 'StorefrontPromotion';
+                readonly key: string;
+                readonly kind: StorefrontPromotionKind;
+                readonly minimumQuantity?: number | null;
+                readonly appliesOnOneTimePurchase: boolean;
+                readonly appliesOnSubscription: boolean;
+                readonly startsAt: string;
+                readonly endsAt?: string | null;
+                readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly presentation: {
+                  readonly __typename: 'StorefrontPromotionCopy';
+                  readonly headline: string;
+                  readonly badge: string;
+                  readonly accessibilityLabel: string;
+                  readonly terms?: string | null;
+                  readonly description?: {
+                    readonly __typename: 'RichText';
+                    readonly text: string;
+                    readonly html: any;
+                  } | null;
+                };
+                readonly value?: {
+                  readonly __typename: 'StorefrontPromotionValue';
+                  readonly type: StorefrontPromotionValueType;
+                  readonly percentage?: any | null;
+                  readonly buyQuantity?: number | null;
+                  readonly getQuantity?: number | null;
+                  readonly amount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumDiscount?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                  readonly maximumShippingPrice?: {
+                    readonly __typename: 'Money';
+                    readonly amount: any;
+                    readonly currencyCode: CurrencyCode;
+                  } | null;
+                } | null;
+                readonly minimumSubtotal?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+            };
+          }>;
           readonly purchasable: {
             readonly __typename: 'ProductVariant';
             readonly id: string;
@@ -23544,6 +25856,73 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
             readonly amount: any;
           };
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly quantity?: number | null;
+          readonly freeQuantity: number;
+          readonly discountedAmount: {
+            readonly __typename: 'Money';
+            readonly currencyCode: CurrencyCode;
+            readonly amount: any;
+          };
+          readonly discountApplication: {
+            readonly __typename: 'CheckoutDiscountApplication';
+            readonly method: CheckoutDiscountMethod;
+            readonly discountClass: CheckoutDiscountClass;
+            readonly title: string;
+            readonly code?: string | null;
+            readonly promotion?: {
+              readonly __typename: 'StorefrontPromotion';
+              readonly key: string;
+              readonly kind: StorefrontPromotionKind;
+              readonly minimumQuantity?: number | null;
+              readonly appliesOnOneTimePurchase: boolean;
+              readonly appliesOnSubscription: boolean;
+              readonly startsAt: string;
+              readonly endsAt?: string | null;
+              readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly presentation: {
+                readonly __typename: 'StorefrontPromotionCopy';
+                readonly headline: string;
+                readonly badge: string;
+                readonly accessibilityLabel: string;
+                readonly terms?: string | null;
+                readonly description?: {
+                  readonly __typename: 'RichText';
+                  readonly text: string;
+                  readonly html: any;
+                } | null;
+              };
+              readonly value?: {
+                readonly __typename: 'StorefrontPromotionValue';
+                readonly type: StorefrontPromotionValueType;
+                readonly percentage?: any | null;
+                readonly buyQuantity?: number | null;
+                readonly getQuantity?: number | null;
+                readonly amount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumDiscount?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+                readonly maximumShippingPrice?: {
+                  readonly __typename: 'Money';
+                  readonly amount: any;
+                  readonly currencyCode: CurrencyCode;
+                } | null;
+              } | null;
+              readonly minimumSubtotal?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          };
+        }>;
         readonly purchasable: {
           readonly __typename: 'ProductVariant';
           readonly id: string;
@@ -24730,6 +27109,72 @@ export const SdkCartLineFragment_FieldsFragmentDoc = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -25003,6 +27448,138 @@ export const SdkCartLineFragment_FieldsFragmentDoc = {
         ],
       },
     },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'presentation' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'description' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'html' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'accessibilityLabel' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'value' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'percentage' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'amount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumDiscount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumShippingPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'buyQuantity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'getQuantity' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'minimumSubtotal' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'minimumQuantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appliesOnOneTimePurchase' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appliesOnSubscription' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<SdkCartLineFragment_FieldsFragment, unknown>;
 export const SdkCartLineFragment_LineFragmentDoc = {
@@ -25035,6 +27612,138 @@ export const SdkCartLineFragment_LineFragmentDoc = {
               ],
             },
           },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'presentation' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'description' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'html' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'accessibilityLabel' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'value' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'percentage' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'amount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumDiscount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumShippingPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'buyQuantity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'getQuantity' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'minimumSubtotal' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'minimumQuantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appliesOnOneTimePurchase' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appliesOnSubscription' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
         ],
       },
     },
@@ -25140,6 +27849,72 @@ export const SdkCartLineFragment_LineFragmentDoc = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -25955,6 +28730,138 @@ export const SdkCartFragment_CartFragmentDoc = {
     },
     {
       kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'presentation' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'description' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'html' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'accessibilityLabel' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'value' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'percentage' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'amount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumDiscount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maximumShippingPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'buyQuantity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'getQuantity' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'minimumSubtotal' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'minimumQuantity' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appliesOnOneTimePurchase' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appliesOnSubscription' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'SdkCartLineFragment_fields' },
       typeCondition: {
         kind: 'NamedType',
@@ -26055,6 +28962,72 @@ export const SdkCartFragment_CartFragmentDoc = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -26332,138 +29305,6 @@ export const SdkCartFragment_CartFragmentDoc = {
               ],
             },
           },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'StorefrontPromotion' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'presentation' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'description' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'text' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'html' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'accessibilityLabel' },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'terms' } },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'value' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'percentage' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'amount' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'amount' },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'currencyCode' },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'maximumDiscount' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'amount' },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'currencyCode' },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'maximumShippingPrice' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'amount' },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'currencyCode' },
-                      },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'buyQuantity' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'getQuantity' } },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'minimumSubtotal' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'minimumQuantity' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'appliesOnOneTimePurchase' },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'appliesOnSubscription' },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
         ],
       },
     },
@@ -29630,6 +32471,72 @@ export const SdkAddPromoCodeMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -30841,6 +33748,72 @@ export const SdkAddToCartMutationDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -32071,6 +35044,72 @@ export const SdkClaimCartMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -33282,6 +36321,72 @@ export const SdkClearCartMutationDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -34508,6 +37613,72 @@ export const SdkCreateCartMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -35726,6 +38897,72 @@ export const SdkRemoveFromCartMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -36936,6 +40173,72 @@ export const SdkRemovePromoCodeMutationDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -38161,6 +41464,72 @@ export const SdkReplaceCartItemMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -39372,6 +42741,72 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -40597,6 +44032,72 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -41815,6 +45316,72 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -42982,6 +46549,72 @@ export const SdkLoadAccountCartQueryDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -44168,6 +47801,72 @@ export const SdkLoadCartQueryDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -51624,6 +55323,72 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'purchasableId' } },
           {
             kind: 'Field',
@@ -52837,6 +56602,72 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountedAmount' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'quantity' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'discountApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'method' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'discountClass' },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'promotion' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkStorefrontPromotion',
+                              },
+                            },
+                          ],
+                        },
                       },
                     ],
                   },

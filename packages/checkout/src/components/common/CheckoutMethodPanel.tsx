@@ -101,13 +101,19 @@ const useStyles = createStyles(({ token, css }) => ({
   hiddenBody: css`
     display: none !important;
   `,
+  // The same lines as in the other cards of the checkout (SelectCard).
   title: css`
+    display: block;
     font-size: ${token.fontSize}px;
+    font-weight: 600;
+    line-height: 22px;
   `,
   description: css`
+    display: block;
     font-size: ${token.fontSizeSM}px;
-    display: inline-block;
-    margin-top: -4px;
+    font-weight: normal;
+    line-height: 18px;
+    color: ${token.colorTextTertiary} !important;
   `,
   /* The texts wrap beside the brand mark, never under it. */
   main: css`

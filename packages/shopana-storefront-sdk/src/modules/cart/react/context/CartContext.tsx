@@ -1,12 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 import type { CartStore, CartActions } from '../../store/CartStore';
 import type { ErrorLike } from '@apollo/client';
 import type { ResolvedCartConfig } from '../../core/config';
 import type { CartIdUtils } from '../../core/utils/cartId';
 import type { UseBoundStore, StoreApi } from 'zustand';
 import type { MutationQueueOptions } from '../../core/utils/mutationQueue';
+import { cartLineWriteKey } from '../../core/utils/resolveCartLineId';
 import type {
   CurrencyCode,
   SdkCartFragment_CartFragment,
@@ -65,8 +71,15 @@ export interface CartContextValue {
     operation: () => Promise<T>,
     options?: MutationQueueOptions
   ) => Promise<T>;
-  /** Resolves once every write queued so far has settled. */
+  /** Resolves once every write queued so far has settled; delayed writes are sent at once. */
   waitForMutations: () => Promise<void>;
+  /** Calls `listener` whenever a write is queued or settles. Returns the unsubscribe function. */
+  subscribeMutations: (listener: () => void) => () => void;
+  /**
+   * Whether a write is waiting or in flight: any one, or with `line` (a `cartLineWriteKey`) one
+   * that may change the cost of that line.
+   */
+  hasPendingMutations: (line?: string) => boolean;
   /**
    * Calls `listener` with the checkout each confirmed cart write returns (lines added,
    * changed or removed). Returns the unsubscribe function.
@@ -126,6 +139,8 @@ type StableCartContextValue = Pick<
   | 'setId'
   | 'enqueueMutation'
   | 'waitForMutations'
+  | 'subscribeMutations'
+  | 'hasPendingMutations'
   | 'subscribeCartUpdates'
   | 'getConfirmedLineId'
 >;
@@ -151,8 +166,15 @@ export interface CartContextProviderProps {
     operation: () => Promise<T>,
     options?: MutationQueueOptions
   ) => Promise<T>;
-  /** Resolves once every write queued so far has settled. */
+  /** Resolves once every write queued so far has settled; delayed writes are sent at once. */
   waitForMutations: () => Promise<void>;
+  /** Calls `listener` whenever a write is queued or settles. Returns the unsubscribe function. */
+  subscribeMutations: (listener: () => void) => () => void;
+  /**
+   * Whether a write is waiting or in flight: any one, or with `line` (a `cartLineWriteKey`) one
+   * that may change the cost of that line.
+   */
+  hasPendingMutations: (line?: string) => boolean;
   /**
    * Calls `listener` with the checkout each confirmed cart write returns (lines added,
    * changed or removed). Returns the unsubscribe function.
@@ -189,6 +211,8 @@ export function CartContextProvider({
   setCartKey,
   enqueueMutation,
   waitForMutations,
+  subscribeMutations,
+  hasPendingMutations,
   subscribeCartUpdates,
   getConfirmedLineId,
   cartId,
@@ -209,6 +233,8 @@ export function CartContextProvider({
       setCartKey,
       enqueueMutation,
       waitForMutations,
+      subscribeMutations,
+      hasPendingMutations,
       subscribeCartUpdates,
       getConfirmedLineId,
       cartId,
@@ -228,6 +254,8 @@ export function CartContextProvider({
       setCartKey,
       enqueueMutation,
       waitForMutations,
+      subscribeMutations,
+      hasPendingMutations,
       subscribeCartUpdates,
       getConfirmedLineId,
       cartId,
@@ -249,6 +277,8 @@ export function CartContextProvider({
       setCartKey,
       enqueueMutation,
       waitForMutations,
+      subscribeMutations,
+      hasPendingMutations,
       subscribeCartUpdates,
       getConfirmedLineId,
       setId,
@@ -263,6 +293,8 @@ export function CartContextProvider({
       setId,
       enqueueMutation,
       waitForMutations,
+      subscribeMutations,
+      hasPendingMutations,
       subscribeCartUpdates,
       getConfirmedLineId,
     ]
@@ -345,6 +377,37 @@ export function useCartSetters() {
     subscribeCartUpdates,
     getConfirmedLineId,
   };
+}
+
+/**
+ * Whether the cart cost is not confirmed yet: a write is waiting or in flight. Quantities show
+ * the buyer's changes at once, the money only what the server calculated, so amounts are shown
+ * as placeholders while this is true.
+ */
+export function useCartCostPending(): boolean {
+  const { subscribeMutations, hasPendingMutations } = useStableCartContext();
+  return useSyncExternalStore(
+    subscribeMutations,
+    hasPendingMutations,
+    () => false
+  );
+}
+
+/**
+ * Whether the cost of one line is not confirmed yet: a write that may change it is waiting or in
+ * flight. Other lines keep their amounts while one line changes.
+ */
+export function useCartLineCostPending(
+  lineId: string,
+  purchasableId: string | undefined
+): boolean {
+  const { subscribeMutations, hasPendingMutations } = useStableCartContext();
+  const line = cartLineWriteKey(lineId, purchasableId);
+  return useSyncExternalStore(
+    subscribeMutations,
+    () => hasPendingMutations(line),
+    () => false
+  );
 }
 
 /**

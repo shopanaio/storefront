@@ -51,6 +51,8 @@ export function mapStorefrontPromotion(
       : null,
     minimumSubtotal: toMoney(promotion.minimumSubtotal),
     minimumQuantity: promotion.minimumQuantity ?? null,
+    appliesOnOneTimePurchase: promotion.appliesOnOneTimePurchase,
+    appliesOnSubscription: promotion.appliesOnSubscription,
     startsAt: toDate(promotion.startsAt) ?? new Date(0),
     endsAt: toDate(promotion.endsAt),
     placements: promotion.placements,

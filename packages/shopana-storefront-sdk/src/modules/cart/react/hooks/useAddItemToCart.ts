@@ -17,6 +17,7 @@ import {
   settleCartMutation,
 } from '../../core/errors';
 import { mapShopanaCheckoutToEntityCart } from '../../core/mappers/mapShopanaToEntityCart';
+import { cartLineWriteKey } from '../../core/utils/resolveCartLineId';
 const useAddItemToCart = () => {
   const { setCartKey, enqueueMutation } = useCartSetters();
   const { createCart } = useCreateCart();
@@ -31,7 +32,7 @@ const useAddItemToCart = () => {
       input: AddToCartInput,
       options?: MutationOptions
     ): Promise<model.Cart> => {
-      const { purchasableId, purchasableSnapshot, quantity } = input;
+      const { purchasableId, quantity } = input;
       const { checkoutLinesAdd } = actions;
       // A cart that is still loading or failed to load keeps its cookie: the line goes there,
       // and only a shopper without a cart gets a new one.
@@ -64,13 +65,6 @@ const useAddItemToCart = () => {
               children: input.children,
             },
           ],
-          pricing: {
-            [purchasableId]: {
-              unitPrice: purchasableSnapshot.price.amount,
-              compareAtUnitPrice: purchasableSnapshot.compareAtPrice?.amount,
-              currencyCode: purchasableSnapshot.price.currencyCode,
-            },
-          },
         });
       return settleCartMutation(
         enqueueMutation(
@@ -111,7 +105,10 @@ const useAddItemToCart = () => {
                 onError: reject,
               });
             }),
-          { optimisticEdit }
+          {
+            lines: [cartLineWriteKey(purchasableId, purchasableId)],
+            optimisticEdit,
+          }
         ),
         options
       );

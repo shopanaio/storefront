@@ -152,14 +152,15 @@ export const Sheet = ({
   const isHorizontal = isLeft || isRight;
   const isVertical = !isHorizontal;
 
-  const [height, setHeight] = useState<Height>(0);
+  // Opening, the panel is as tall as its content at once: vaul slides a box of its own height,
+  // no height animating under the slide. Only later changes of its content are animated.
+  const [height, setHeight] = useState<Height>('auto');
   const [measured, setMeasured] = useState<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     if (!open) return;
     releaseBody.current ??= holdBodyHeight();
-    if (isVertical) setHeight('auto');
-  }, [open, isVertical]);
+  }, [open]);
 
   // An unmounted sheet gives the body back at once, whether it finished closing or not.
   useEffect(
@@ -279,11 +280,11 @@ export const Sheet = ({
     if (open) return;
     releaseBody.current?.();
     releaseBody.current = null;
-    if (isVertical) setHeight(0);
+    setHeight('auto');
     setExpanded(false);
     setStood(false);
     onExited?.();
-  }, [open, isVertical, onExited]);
+  }, [open, onExited]);
 
   const handleContentAnimationEnd = useCallback(
     (event: AnimationEvent<HTMLDivElement>) => {
@@ -364,11 +365,7 @@ export const Sheet = ({
           // overlay, closes it as a press on the overlay does.
           onClick={(event) => {
             rest.onClick?.(event);
-            if (
-              expanded &&
-              dismissible &&
-              event.target === event.currentTarget
-            )
+            if (expanded && dismissible && event.target === event.currentTarget)
               onClose();
           }}
           style={{

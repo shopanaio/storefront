@@ -54,7 +54,7 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
     <Flex vertical gap={12} className={styles.container}>
       <ContactSelect
         data={data}
-        title={t('contact')}
+        title={t('order-recipient')}
         onSubmit={onSubmit}
         withEmail={withEmail}
         lockedIdentifier={lockedIdentifier}

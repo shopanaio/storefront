@@ -152,6 +152,20 @@ const mapLine = (line: ApiLine): model.ConfirmedCartLine => {
       })) ?? [],
     children: line.children?.map(mapLine) ?? [],
     currentlyNotInStock: apiPurchasable.currentlyNotInStock ?? false,
+    discountAllocations: line.discountAllocations.map((allocation) => ({
+      discountedAmount: toMoney(allocation.discountedAmount),
+      quantity: allocation.quantity ?? null,
+      freeQuantity: allocation.freeQuantity,
+      discountApplication: {
+        method: allocation.discountApplication.method,
+        discountClass: allocation.discountApplication.discountClass,
+        title: allocation.discountApplication.title,
+        code: allocation.discountApplication.code ?? null,
+        promotion: allocation.discountApplication.promotion
+          ? mapStorefrontPromotion(allocation.discountApplication.promotion)
+          : null,
+      },
+    })),
     cost: {
       unitPrice: toMoney(line.cost.unitPrice),
       compareAtUnitPrice: line.cost.compareAtUnitPrice

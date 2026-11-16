@@ -146,8 +146,7 @@ export const ContactSelect = ({
     <>
       <SelectCard
         label={title}
-        labelShown={!hasValue}
-        selected={Boolean(hasValue)}
+        labelShown
         action={hasValue ? t('change') : t('select')}
         onClick={() => setOpen(true)}
         error={missing ? t('enter-contact-details') : undefined}
@@ -159,12 +158,14 @@ export const ContactSelect = ({
         }
       >
         {hasValue ? (
+          // The field, then who it is: the full name and the phone under it.
           <Flex vertical align="start">
-            <Typography.Text className={styles.mainText}>
+            <Typography.Text type="secondary">{title}</Typography.Text>
+            <Typography.Text className={styles.detail}>
               {fullName || t('full-name')}
             </Typography.Text>
             {formattedPhone && (
-              <Typography.Text type="secondary">
+              <Typography.Text type="secondary" className={styles.detail}>
                 {formattedPhone}
               </Typography.Text>
             )}
@@ -332,10 +333,9 @@ export const ContactSelect = ({
 
 const useStyles = createStyles(({ css, token }) => {
   return {
-    mainText: css`
+    detail: css`
       max-width: 300px !important;
-      line-height: 1;
-      font-size: ${token.fontSize}px;
+      font-size: ${token.fontSizeSM}px;
     `,
     secondaryText: css`
       font-size: ${token.fontSizeSM}px;

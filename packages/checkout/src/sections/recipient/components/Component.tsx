@@ -187,6 +187,7 @@ export const RecipientSectionView = ({
       <Flex className={styles.switchLabel}>
         <Switch
           id="is-recipient-self-switch"
+          size="small"
           checked={!isRecipientSelf}
           onChange={handleSwitchChange}
         />

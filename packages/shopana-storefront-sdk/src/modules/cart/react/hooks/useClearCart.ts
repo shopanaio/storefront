@@ -57,6 +57,7 @@ const useClearCart = (): UseClearCartReturn => {
               });
             }),
           {
+            lines: 'all',
             optimisticEdit: () => {
               actions.checkoutClear();
             },
