@@ -9906,6 +9906,10 @@ export type SdkCartFragment_CartFragment = {
           readonly id: string;
           readonly title: string;
           readonly handle: string;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
+          } | null;
         };
         readonly cover?:
           | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -10086,6 +10090,10 @@ export type SdkCartFragment_CartFragment = {
         readonly id: string;
         readonly title: string;
         readonly handle: string;
+        readonly vendor?: {
+          readonly __typename: 'Vendor';
+          readonly name: string;
+        } | null;
       };
       readonly cover?:
         | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -10274,6 +10282,10 @@ export type SdkCartLineFragment_FieldsFragment = {
       readonly id: string;
       readonly title: string;
       readonly handle: string;
+      readonly vendor?: {
+        readonly __typename: 'Vendor';
+        readonly name: string;
+      } | null;
     };
     readonly cover?:
       | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -10470,6 +10482,10 @@ export type SdkCartLineFragment_LineFragment = {
         readonly id: string;
         readonly title: string;
         readonly handle: string;
+        readonly vendor?: {
+          readonly __typename: 'Vendor';
+          readonly name: string;
+        } | null;
       };
       readonly cover?:
         | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -10647,6 +10663,10 @@ export type SdkCartLineFragment_LineFragment = {
       readonly id: string;
       readonly title: string;
       readonly handle: string;
+      readonly vendor?: {
+        readonly __typename: 'Vendor';
+        readonly name: string;
+      } | null;
     };
     readonly cover?:
       | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -11228,6 +11248,10 @@ export type SdkAddPromoCodeMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -11408,6 +11432,10 @@ export type SdkAddPromoCodeMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -12002,6 +12030,10 @@ export type SdkAddToCartMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -12182,6 +12214,10 @@ export type SdkAddToCartMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -12777,6 +12813,10 @@ export type SdkClaimCartMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -12957,6 +12997,10 @@ export type SdkClaimCartMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -13551,6 +13595,10 @@ export type SdkClearCartMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -13731,6 +13779,10 @@ export type SdkClearCartMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -14325,6 +14377,10 @@ export type SdkCreateCartMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -14505,6 +14561,10 @@ export type SdkCreateCartMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -15099,6 +15159,10 @@ export type SdkRemoveFromCartMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -15279,6 +15343,10 @@ export type SdkRemoveFromCartMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -15873,6 +15941,10 @@ export type SdkRemovePromoCodeMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -16053,6 +16125,10 @@ export type SdkRemovePromoCodeMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -16647,6 +16723,10 @@ export type SdkReplaceCartItemMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -16827,6 +16907,10 @@ export type SdkReplaceCartItemMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -17421,6 +17505,10 @@ export type SdkUpdateCartCurrencyCodeMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -17601,6 +17689,10 @@ export type SdkUpdateCartCurrencyCodeMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -18195,6 +18287,10 @@ export type SdkUpdateCartLanguageCodeMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -18375,6 +18471,10 @@ export type SdkUpdateCartLanguageCodeMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -18969,6 +19069,10 @@ export type SdkUpdateCartLineQuantityMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -19149,6 +19253,10 @@ export type SdkUpdateCartLineQuantityMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -19742,6 +19850,10 @@ export type SdkLoadAccountCartQuery = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -19922,6 +20034,10 @@ export type SdkLoadAccountCartQuery = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -20507,6 +20623,10 @@ export type SdkLoadCartQuery = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -20687,6 +20807,10 @@ export type SdkLoadCartQuery = {
           readonly id: string;
           readonly title: string;
           readonly handle: string;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
+          } | null;
         };
         readonly cover?:
           | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -24982,6 +25106,10 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -25162,6 +25290,10 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -25756,6 +25888,10 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
               readonly id: string;
               readonly title: string;
               readonly handle: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
             };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -25936,6 +26072,10 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
             readonly id: string;
             readonly title: string;
             readonly handle: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
           };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
@@ -27215,6 +27355,19 @@ export const SdkCartLineFragment_FieldsFragmentDoc = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -27961,6 +28114,19 @@ export const SdkCartLineFragment_LineFragmentDoc = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -29074,6 +29240,19 @@ export const SdkCartFragment_CartFragmentDoc = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -32577,6 +32756,19 @@ export const SdkAddPromoCodeMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -33860,6 +34052,19 @@ export const SdkAddToCartMutationDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -35150,6 +35355,19 @@ export const SdkClaimCartMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -36433,6 +36651,19 @@ export const SdkClearCartMutationDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -37719,6 +37950,19 @@ export const SdkCreateCartMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -39003,6 +39247,19 @@ export const SdkRemoveFromCartMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -40285,6 +40542,19 @@ export const SdkRemovePromoCodeMutationDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -41570,6 +41840,19 @@ export const SdkReplaceCartItemMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -42853,6 +43136,19 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -44138,6 +44434,19 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -45422,6 +45731,19 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -46661,6 +46983,19 @@ export const SdkLoadAccountCartQueryDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -47913,6 +48248,19 @@ export const SdkLoadCartQueryDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -55429,6 +55777,19 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
                             },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       },
@@ -56714,6 +57075,19 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'handle' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'vendor' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'name' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },

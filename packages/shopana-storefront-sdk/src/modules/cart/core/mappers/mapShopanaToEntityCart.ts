@@ -44,6 +44,7 @@ const createProductReference = (
     id: product.id ?? fallbackId,
     handle: product.handle,
     title: product.title,
+    vendor: product.vendor ? { name: product.vendor.name } : null,
     description: null,
     excerpt: '',
     category: null,

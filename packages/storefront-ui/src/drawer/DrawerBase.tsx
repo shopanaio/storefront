@@ -63,6 +63,11 @@ export interface DrawerBaseProps extends Omit<
    * overlay.
    */
   showCloseButton?: boolean;
+  /**
+   * Whether dragging the sheet, pressing the overlay or Escape closes it; `true` by default.
+   * Without it the drawer closes by its close button alone.
+   */
+  dismissible?: boolean;
   /** Accessible name of the close button; the `close` text of `StorefrontUIProvider`. */
   closeLabel?: string;
   /** Side the drawer slides from; bottom in a sheet and right on a wider screen by default. */
@@ -123,6 +128,7 @@ export const DrawerBase = ({
   footer,
   children,
   showCloseButton: showCloseButtonProp,
+  dismissible,
   closeLabel,
   placement,
   breakpoint = 'lg',
@@ -219,6 +225,7 @@ export const DrawerBase = ({
         open={open}
         onClose={onClose}
         onExited={onExited}
+        dismissible={dismissible}
         direction={finalPlacement}
         width={width}
         fullscreen={isSheet && isHorizontal}

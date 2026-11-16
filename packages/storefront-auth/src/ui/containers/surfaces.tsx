@@ -49,6 +49,8 @@ export const AuthDrawerSurface = ({
       onClose={onClose}
       breakpoint={breakpoint}
       width={width}
+      // A code on its way: a stray drag or press must not lose it, the close button alone closes.
+      dismissible={false}
       // A short form: over the keyboard as tall as its content.
       keyboardHeight="content"
       aria-labelledby={titleId}

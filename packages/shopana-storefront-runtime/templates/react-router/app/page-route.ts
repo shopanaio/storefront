@@ -8,8 +8,5 @@ import.meta.glob('../../src/modules/**/register.{ts,tsx,js,jsx}', {
 
 export const pageRoute: RuntimePageRouteDefinition = {
   pages: runtimePages,
-  loadLayout: async (pageType, { isModule }) => {
-    if (pageType === '404' && !isModule) return null;
-    return (await import('@src/layouts/theme')).default;
-  },
+  loadLayout: async () => (await import('@src/layouts/theme')).default,
 };

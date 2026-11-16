@@ -19,6 +19,12 @@ const DRAWER_OFFSET_X = 16;
 const SHEET_RADIUS = 28;
 /** A bottom sheet's top corners on iOS, as its own sheets, px. */
 const SHEET_RADIUS_IOS = 38;
+/**
+ * How far the keyboard (and the browser's bars over it) covers a box as tall as the screen
+ * at its largest, from its bottom.
+ */
+const KEYBOARD_OVERLAP = `max(0px, 100lvh - ${VISUAL_VIEWPORT_HEIGHT})`;
+
 /** How long a bottom sheet takes its new height, ms; its easing is `ease`. */
 export const SHEET_RESIZE_MS = 300;
 
@@ -112,18 +118,18 @@ export const useStyles = createStyles(
       }
     `,
     /*
-     * Stood up to the whole screen: the sheet is the visual viewport's box, as a screen that
-     * fits it (the part of the screen above the keyboard), clear (a press on it, over the
-     * overlay, closes the sheet: Sheet); its panel (panelExpanded) stands at its bottom, right
-     * over the keyboard, and grows up. It takes presses itself: under pointer-events none
-     * WebKit does not scroll the panel's body. The bottom safe area of its parts is none over
-     * the keyboard.
+     * Stood up: the sheet is a box as tall as the screen at its largest, from the top of the
+     * visual viewport, clear (a press on it, over the overlay, closes the sheet: Sheet). It
+     * does not follow the keyboard: the keyboard covers its bottom, as a platform's own sheet,
+     * and its panel (panelExpanded) keeps its content over the keyboard with a room under it.
+     * So the sheet itself never moves with the keyboard's steps. It takes presses itself:
+     * under pointer-events none WebKit does not scroll the panel's body.
      */
     contentExpanded: css`
       &&& {
         top: ${VISUAL_VIEWPORT_TOP};
         bottom: auto;
-        height: ${VISUAL_VIEWPORT_HEIGHT};
+        height: 100lvh;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -156,26 +162,29 @@ export const useStyles = createStyles(
         pointer-events: none;
       }
     `,
-    // The sheet's panel in its box stood up to the whole screen: what the sheet is otherwise.
+    // The sheet's panel in its box stood up: what the sheet is otherwise, its content over the
+    // keyboard (the room under it as tall as the keyboard covers, at the keyboard's pace).
     panelExpanded: css`
       flex: none;
       box-sizing: border-box;
       /* Never over the top of the box, the room at its top left. */
       max-height: calc(100% - var(--sheet-top-gap));
       padding-top: var(--sheet-padding-top);
+      padding-bottom: ${KEYBOARD_OVERLAP};
       border-top-left-radius: var(--sheet-radius);
       border-top-right-radius: var(--sheet-radius);
       background-color: ${token.colorBgElevated};
       overflow: hidden;
     `,
     /*
-     * The panel stood up: as tall as its box (the screen above the keyboard) but the room at
-     * its top, from CSS alone, over the height its animation sets inline; its content fills it.
-     * It follows the box at once as the keyboard moves, nothing animating against it.
+     * The panel stood up: as tall as its box but the room at its top, from CSS alone, over the
+     * height its animation sets inline; its content fills it above the keyboard. Its height
+     * never changes with the keyboard: only the room under its content does, smoothly.
      */
     panelStanding: css`
       &&& {
         height: calc(100% - var(--sheet-top-gap)) !important;
+        transition: padding-bottom ${SHEET_RESIZE_MS}ms ease !important;
       }
 
       & > div {
@@ -188,15 +197,23 @@ export const useStyles = createStyles(
         min-height: 0 !important;
       }
     `,
-    // Over the keyboard as tall as its content: down to the bottom of its box from the top it
-    // rose to (Sheet's --sheet-detent-top), so it stays there as the keyboard goes down.
+    /*
+     * Over the keyboard as tall as its content (its height, the content's, plus the rooms over
+     * and under it): it rises with the room under it as the keyboard comes up, smoothly; down
+     * to the bottom of its box from the top it rose to (Sheet's --sheet-detent-top), so it
+     * stays there as the keyboard goes down.
+     */
     panelFitted: css`
-      min-height: calc(100% - var(--sheet-detent-top, 100%));
-    `,
-    // Standing up, once: from the height it had to the whole screen.
-    panelStandingUp: css`
       &&& {
-        transition: height ${SHEET_RESIZE_MS}ms ease !important;
+        box-sizing: content-box;
+        max-height: none;
+        min-height: calc(
+          100% - var(--sheet-detent-top, 100%) - var(--sheet-padding-top) -
+            ${KEYBOARD_OVERLAP}
+        );
+        transition:
+          height ${SHEET_RESIZE_MS}ms ease,
+          padding-bottom ${SHEET_RESIZE_MS}ms ease !important;
       }
     `,
     contentHorizontal: css`

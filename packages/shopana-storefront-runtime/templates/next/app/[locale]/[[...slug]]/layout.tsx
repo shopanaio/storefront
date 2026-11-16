@@ -6,10 +6,7 @@ const { Layout } = createRuntimeLayout({
     true,
     /register\.(t|j)sx?$/
   ),
-  loadLayout: async (pageType, { isModule }) => {
-    if (pageType === '404' && !isModule) return null;
-    return (await import('@src/layouts/theme')).default;
-  },
+  loadLayout: async () => (await import('@src/layouts/theme')).default,
 });
 
 export default Layout;

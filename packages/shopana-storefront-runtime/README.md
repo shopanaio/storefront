@@ -37,7 +37,7 @@ The theme keeps its customizable code under `src/`:
 - `src/runtime/pages` contains the complete lazy reserved-page registry and definitions;
 - `src/runtime/error.tsx` is the client error page rendered when a page fails (`error` and
   `reset` props);
-- `src/layouts` contains page layouts (`src/layouts/theme` for every page but the 404 page);
+- `src/layouts` contains page layouts (`src/layouts/theme` for every page, the 404 page included);
 - `src/templates` contains page templates;
 - `src/modules/**/register.ts` contains dynamic module registrations;
 - the root files of the framework (below).

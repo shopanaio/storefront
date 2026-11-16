@@ -53,6 +53,9 @@ fragment SdkCartLineFragment_fields on CheckoutLine {
         id
         title
         handle
+        vendor {
+          name
+        }
       }
       cover: featuredMedia {
         id

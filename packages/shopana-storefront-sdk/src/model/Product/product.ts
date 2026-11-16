@@ -25,6 +25,9 @@ export interface Product {
   /** Product title */
   title: string;
 
+  /** Brand of the product; the title of the product often starts with its name. */
+  vendor?: { name: string } | null;
+
   /** Full product description */
   description: RichText | null;
 

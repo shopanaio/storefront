@@ -144,8 +144,10 @@ export const Sheet = ({
   const [contentNode, setContentNode] = useState<HTMLDivElement | null>(null);
   // A field of the bottom sheet has taken the caret (or a tap is giving it): the whole screen.
   const [expanded, setExpanded] = useState(false);
-  // Stood up: the panel has reached the whole screen, its one transition is over.
-  const [stood, setStood] = useState(false);
+  // Where the panel's top was as the sheet began to stand up: it moves from there (FLIP).
+  const standFrom = useRef<number | null>(null);
+  const expandedNow = useRef(false);
+  expandedNow.current = expanded;
 
   const isLeft = direction === 'left';
   const isRight = direction === 'right';
@@ -185,7 +187,12 @@ export const Sheet = ({
   // A field takes the caret, or a tap gives it to one: the sheet stands up to the whole screen.
   useEffect(() => {
     if (!open || !isVertical || !contentNode) return;
-    const expand = () => setExpanded(true);
+    const expand = () => {
+      if (expandedNow.current) return;
+      const panel = contentNode.querySelector<HTMLElement>('[data-sheet-panel]');
+      standFrom.current = panel ? panel.getBoundingClientRect().top : null;
+      setExpanded(true);
+    };
     const onFocusIn = (event: FocusEvent) => {
       if (isKeyboardField(event.target)) expand();
     };
@@ -242,8 +249,8 @@ export const Sheet = ({
     };
   }, [expanded, stretches, contentNode]);
 
-  // Stood up, the panel takes the screen's height from CSS alone (panelStanding), at once as
-  // the keyboard moves; only standing up is animated, once (panelStandingUp).
+  // Stood up, the panel takes the screen's height from CSS alone (panelStanding); standing up
+  // is animated once, by a transform (below).
   const standing = stretches && expanded;
 
   // The panel's height as the sheet is open; closing, the height animation is left as it
@@ -261,20 +268,38 @@ export const Sheet = ({
     const frozen = `${panel.offsetHeight}px`;
     panel.style.setProperty('height', frozen, 'important');
     panel.style.setProperty('min-height', frozen, 'important');
+    // As it is now: the keyboard going down does not change the room under its content.
+    panel.style.setProperty(
+      'padding-bottom',
+      getComputedStyle(panel).paddingBottom,
+      'important'
+    );
+    panel.style.setProperty('box-sizing', 'border-box', 'important');
     panel.style.setProperty('transition', 'none', 'important');
     return () => {
       panel.style.removeProperty('height');
       panel.style.removeProperty('min-height');
+      panel.style.removeProperty('padding-bottom');
+      panel.style.removeProperty('box-sizing');
       panel.style.removeProperty('transition');
     };
   }, [open, expanded, contentNode]);
-  // The transition of standing up is over, its end heard or not (a height that did not
-  // change has none): the panel follows the box at once from then on.
-  useEffect(() => {
-    if (!standing || stood) return;
-    const timer = window.setTimeout(() => setStood(true), SHEET_RESIZE_MS + 50);
-    return () => window.clearTimeout(timer);
-  }, [standing, stood]);
+  // Standing up, the panel takes its place at once and moves to it from where it was, a
+  // transform on the compositor: no height animating while the keyboard comes up.
+  useLayoutEffect(() => {
+    if (!expanded || !contentNode) return;
+    const from = standFrom.current;
+    standFrom.current = null;
+    const panel = contentNode.querySelector<HTMLElement>('[data-sheet-panel]');
+    if (from === null || !panel) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const shift = from - panel.getBoundingClientRect().top;
+    if (Math.abs(shift) < 1) return;
+    panel.animate(
+      [{ transform: `translateY(${shift}px)` }, { transform: 'translateY(0)' }],
+      { duration: SHEET_RESIZE_MS, easing: 'ease' }
+    );
+  }, [expanded, contentNode]);
 
   const handleTeardown = useCallback(() => {
     if (open) return;
@@ -282,7 +307,6 @@ export const Sheet = ({
     releaseBody.current = null;
     setHeight('auto');
     setExpanded(false);
-    setStood(false);
     onExited?.();
   }, [open, onExited]);
 
@@ -404,17 +428,8 @@ export const Sheet = ({
               className={cx(
                 expanded && styles.panelExpanded,
                 expanded && !stretches && styles.panelFitted,
-                standing && styles.panelStanding,
-                standing && !stood && styles.panelStandingUp
+                standing && styles.panelStanding
               )}
-              onTransitionEnd={(event) => {
-                if (
-                  standing &&
-                  event.target === event.currentTarget &&
-                  event.propertyName === 'height'
-                )
-                  setStood(true);
-              }}
             >
               <div
                 ref={setMeasured}

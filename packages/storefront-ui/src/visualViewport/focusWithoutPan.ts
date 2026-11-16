@@ -30,22 +30,15 @@ const KEYBOARD_ATTRIBUTES = [
  */
 const FIT_TIMEOUT = 600;
 
-/** How far the screen's bottom may be off the keyboard's top and still fit, px. */
-const FIT_SLOP = 2;
-
 /**
- * Where `container` and `field` stand when they fit above the keyboard: the container's
- * bottom at the visual viewport's, the field over it. Null while they do not.
+ * Where `container` and `field` stand, while the keyboard is up: the same two frames in a row,
+ * the screen has stopped moving (its own transition included). A screen under which the
+ * keyboard covers its bottom has no edge at the keyboard to wait for.
  */
-const fitAboveKeyboard = (container: HTMLElement, field: HTMLElement) => {
-  const viewport = window.visualViewport;
-  if (!viewport) return '';
-  const bottom = viewport.offsetTop + viewport.height;
+const placeOf = (container: HTMLElement, field: HTMLElement) => {
   const box = container.getBoundingClientRect();
   const rect = field.getBoundingClientRect();
-  if (Math.abs(box.bottom - bottom) > FIT_SLOP || rect.bottom > bottom + FIT_SLOP)
-    return null;
-  return `${Math.round(box.top)} ${Math.round(box.bottom)} ${Math.round(rect.top)}`;
+  return `${Math.round(box.top)} ${Math.round(box.height)} ${Math.round(rect.top)}`;
 };
 
 /**
@@ -63,7 +56,12 @@ function revealIn(container: HTMLElement, field: HTMLElement) {
     ) {
       const box = node.getBoundingClientRect();
       const rect = field.getBoundingClientRect();
-      if (rect.bottom > box.bottom) node.scrollTop += rect.bottom - box.bottom;
+      // Its bottom in view: over the keyboard where the keyboard covers it.
+      const viewport = window.visualViewport;
+      const bottom = viewport
+        ? Math.min(box.bottom, viewport.offsetTop + viewport.height)
+        : box.bottom;
+      if (rect.bottom > bottom) node.scrollTop += rect.bottom - bottom;
       else if (rect.top < box.top) node.scrollTop -= box.top - rect.top;
     }
     node = node.parentElement;
@@ -157,8 +155,8 @@ function focusThroughStandIn(
   const waitForFit = (deadline: number) => {
     frame = requestAnimationFrame(() => {
       // Fitted and still: the same place as the frame before (no transition under way).
-      const place = fitAboveKeyboard(container, field);
-      const settled = place !== null && place === lastPlace;
+      const place = placeOf(container, field);
+      const settled = place === lastPlace;
       lastPlace = place;
       if (settled || Date.now() >= deadline) handOver();
       else waitForFit(deadline);
