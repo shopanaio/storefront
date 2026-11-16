@@ -99,7 +99,6 @@ export const possibleTypes: Record<string, readonly string[]> = {
     'OrderTrackingEvent',
     'OrderVoid',
     'Pet',
-    'PetProductSelection',
     'Product',
     'ProductFeature',
     'ProductFeatureGroup',

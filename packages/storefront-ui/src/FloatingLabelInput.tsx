@@ -77,6 +77,9 @@ export const FloatingLabelInput = ({
     <div
       className={cx(styles.container, classNames?.root, className)}
       style={{ ...partStyles?.root, ...style }}
+      // A tap anywhere on the field (its padding, its label) takes the caret as a tap on the
+      // input: through a stand-in in a sheet, with no pan of iOS (focusFieldsWithoutPan).
+      data-field-box=""
     >
       <Input
         ref={ref}

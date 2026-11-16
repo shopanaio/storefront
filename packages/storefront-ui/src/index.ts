@@ -29,6 +29,7 @@ export { isEmail } from './validation';
 export * from './phone';
 export * from './drawer';
 export * from './banner';
+export * from './visualViewport';
 export { breakpoints, mq, queries, type Breakpoint } from './breakpoints';
 export { useBreakpointDown, useMediaQuery } from './useMediaQuery';
 export type { DomAttributes } from './dom';

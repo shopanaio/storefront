@@ -49,12 +49,11 @@ export interface CheckoutOrderPlacedProps {
   labels: { viewOrder: string; goHome: string };
 }
 
-/** Waiting or payment-provider redirect view supplied by the host. */
+/** Payment waiting view supplied by the host. */
 export interface CheckoutPaymentPendingProps {
   brand?: ReactNode;
-  redirecting: boolean;
   title: string;
-  description: string | null;
+  description: string;
   onGoHome: () => void;
   labels: { goHome: string };
 }

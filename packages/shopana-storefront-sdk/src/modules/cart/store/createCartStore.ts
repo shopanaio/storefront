@@ -1,6 +1,6 @@
 import { CartStore, StoreImplementation } from './CartStore';
 import type { model } from '../../../model/namespace';
-import { recalcCart } from '../core/utils/cartMath';
+import { recalcCart, withQuantity } from '../core/utils/cartMath';
 
 let clientLineCounter = 0;
 const genClientLineId = () => `client:checkoutLine:${++clientLineCounter}`;
@@ -51,10 +51,12 @@ export function createCartStore(
         const price = input.pricing?.[l.purchasableId];
 
         if (existingIndex >= 0) {
-          const existing = nextLines[existingIndex];
+          const existing = withQuantity(
+            nextLines[existingIndex],
+            Math.max(0, nextLines[existingIndex].quantity + l.quantity)
+          );
           nextLines[existingIndex] = {
             ...existing,
-            quantity: Math.max(0, existing.quantity + l.quantity),
             cost: price
               ? {
                   ...existing.cost,
@@ -88,13 +90,14 @@ export function createCartStore(
                   ? { amount: price.compareAtUnitPrice, currencyCode }
                   : null,
               subtotalAmount: { amount: 0, currencyCode },
+              discountAmount: { amount: 0, currencyCode },
               totalAmount: { amount: 0, currencyCode },
             },
           });
         }
       }
 
-      const nextCart = recalcCart({ ...base, lines: nextLines });
+      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
 
       impl.setState({
         ...state,
@@ -115,7 +118,7 @@ export function createCartStore(
       const prev = state.cart;
       const base = state.cart;
       const nextLines = base.lines.filter((l) => !input.lineIds.includes(l.id));
-      const nextCart = recalcCart({ ...base, lines: nextLines });
+      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
 
       impl.setState({
         ...state,
@@ -139,11 +142,11 @@ export function createCartStore(
       const nextLines = base.lines
         .map((l) =>
           map.has(l.id)
-            ? { ...l, quantity: Math.max(0, map.get(l.id) as number) }
+            ? withQuantity(l, Math.max(0, map.get(l.id) as number))
             : l
         )
         .filter((l) => l.quantity > 0);
-      const nextCart = recalcCart({ ...base, lines: nextLines });
+      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
 
       impl.setState({
         ...state,
@@ -185,7 +188,7 @@ export function createCartStore(
         const remainingQty = Math.max(availableQty - requestedQty, 0);
 
         if (remainingQty > 0) {
-          nextLines[srcIdx] = { ...source, quantity: remainingQty };
+          nextLines[srcIdx] = withQuantity(source, remainingQty);
         } else {
           nextLines.splice(srcIdx, 1);
         }
@@ -201,11 +204,10 @@ export function createCartStore(
 
         if (targetIdx >= 0) {
           const target = nextLines[targetIdx];
-          const updatedTarget = {
-            ...target,
-            quantity: Math.max(0, target.quantity + requestedQty),
-            cost: target.cost,
-          };
+          const updatedTarget = withQuantity(
+            target,
+            Math.max(0, target.quantity + requestedQty)
+          );
 
           if (price) {
             updatedTarget.cost = {
@@ -233,13 +235,14 @@ export function createCartStore(
                   ? { amount: price.compareAtUnitPrice, currencyCode }
                   : null,
               subtotalAmount: { amount: 0, currencyCode },
+              discountAmount: { amount: 0, currencyCode },
               totalAmount: { amount: 0, currencyCode },
             },
           });
         }
       }
 
-      const nextCart = recalcCart({ ...base, lines: nextLines });
+      const nextCart = recalcCart({ ...base, lines: nextLines }, base);
 
       impl.setState({
         ...state,

@@ -12,6 +12,8 @@ import { useLoginIdentifier } from '@shopana/storefront-auth/ui';
 import { useIsAuthenticated } from '@shopana/storefront-sdk/modules/session/react';
 import { ContactFormData } from '../types';
 import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
+import { useMissingAfterSubmit } from '#checkout/hooks/useMissingAfterSubmit';
+import { SectionId } from '#checkout/state/interface';
 
 export interface ContactSectionViewProps {
   /** The contact saved on the checkout. */
@@ -33,6 +35,7 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
   const withEmail = !useIsAuthenticated();
   // The identifier the buyer signed in with stays read-only (A3, A4).
   const lockedIdentifier = useLoginIdentifier();
+  const missing = useMissingAfterSubmit(SectionId.Contact);
 
   const onSubmit = useCallback(
     async (data: ContactForm) => {
@@ -55,6 +58,7 @@ export const ContactSectionView = ({ data }: ContactSectionViewProps) => {
         onSubmit={onSubmit}
         withEmail={withEmail}
         lockedIdentifier={lockedIdentifier}
+        missing={missing}
       />
     </Flex>
   );

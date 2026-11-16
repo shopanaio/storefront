@@ -17,6 +17,8 @@
     "city_required_warning": "Будь ласка, спочатку оберіть місто",
     "WAREHOUSE": "Відділення",
     "POSTOMAT": "Поштомат",
+    "select_WAREHOUSE": "Оберіть відділення",
+    "select_POSTOMAT": "Оберіть поштомат",
     "search_point": "Номер або адреса",
     "street": "Вулиця",
     "search_street": "Назва вулиці",

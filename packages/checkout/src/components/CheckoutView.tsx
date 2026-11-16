@@ -17,6 +17,7 @@ import { SUMMARY_ANCHOR } from '#checkout/ui/focusAnchor';
 import { useHeldPending } from '#checkout/ui/LoadingBoundary';
 import { usePlacementPhase } from '#checkout/state/placement/placementStore';
 import { PlacingOverlay } from './submit/PlacingOverlay';
+import { useScrollToFirstError } from './banner/useScrollToFirstError';
 
 export type CheckoutViewProps = Pick<CheckoutProps, 'brand'> & {
   onSubmit: (e: React.FormEvent) => void;
@@ -40,7 +41,10 @@ export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
   // An expired account checkout has no data to wait for: the sign-in shows at once (S6). Data
   // already here (a checkout opened again) shows at once too, with no skeleton.
   const loading = useHeldPending(!checkout && !signInRequired);
-  const placing = usePlacementPhase().name === 'placing';
+  const phase = usePlacementPhase().name;
+  // The overlay stays while the browser leaves for the payment provider.
+  const placing = phase === 'placing' || phase === 'redirecting';
+  useScrollToFirstError();
 
   return (
     <>
@@ -89,7 +93,9 @@ export const CheckoutView = ({ brand, onSubmit }: CheckoutViewProps) => {
           </div>
         ) : null}
       </div>
-      {placing ? <PlacingOverlay /> : null}
+      {placing ? (
+        <PlacingOverlay redirecting={phase === 'redirecting'} />
+      ) : null}
     </>
   );
 };

@@ -53,5 +53,6 @@ export function mapStorefrontPromotion(
     minimumQuantity: promotion.minimumQuantity ?? null,
     startsAt: toDate(promotion.startsAt) ?? new Date(0),
     endsAt: toDate(promotion.endsAt),
+    placements: promotion.placements,
   };
 }

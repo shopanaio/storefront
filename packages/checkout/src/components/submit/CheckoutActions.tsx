@@ -30,8 +30,11 @@ export const CheckoutActions = () => {
   );
 };
 
-/** Room under the stuck panel, over the edge of the screen and the home indicator. */
-const BOTTOM = 'calc(20px + env(safe-area-inset-bottom))';
+/**
+ * Room under the stuck panel: 20px, or the safe area (the home indicator, the browser's bar)
+ * where that is more, not both.
+ */
+const BOTTOM = 'max(20px, env(safe-area-inset-bottom))';
 
 const useStyles = createStyles(({ css, token }) => {
   /*

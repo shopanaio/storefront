@@ -32,7 +32,11 @@ interface CartLineBase {
   cost: {
     unitPrice: Money;
     compareAtUnitPrice: Money | null;
+    /** All units before discounts. */
     subtotalAmount: Money;
+    /** Discount applied to the line. */
+    discountAmount: Money;
+    /** All units after discounts. */
     totalAmount: Money;
   };
 }
@@ -157,6 +161,8 @@ export interface StorefrontPromotion {
   minimumQuantity: number | null;
   startsAt: Date;
   endsAt: Date | null;
+  /** Storefront places the merchant chose for the promotion; at least one. */
+  placements: readonly import('../../graphql/apollo/generated/operations').StorefrontPromotionPlacement[];
 }
 
 /** Minimum order requirement on the subtotal before discounts or on the item quantity. */

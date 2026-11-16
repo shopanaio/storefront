@@ -2,6 +2,7 @@
 export {
   Sheet,
   type DrawerDirection,
+  type SheetKeyboardHeight,
   type SheetPart,
   type SheetProps,
 } from './Sheet';

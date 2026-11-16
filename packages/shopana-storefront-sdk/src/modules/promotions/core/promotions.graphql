@@ -38,6 +38,7 @@ fragment SdkStorefrontPromotion on StorefrontPromotion {
   appliesOnSubscription
   startsAt
   endsAt
+  placements
 }
 
 query SdkStorefrontPromotions($kinds: [StorefrontPromotionKind!]) {

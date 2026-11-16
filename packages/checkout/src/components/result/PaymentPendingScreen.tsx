@@ -8,17 +8,10 @@ import { useCheckoutTheme } from '#checkout/theme';
 import { PlacementScreen } from '#checkout/components/result/PlacementScreen';
 
 /**
- * Shown while the buyer leaves for the provider or the server settles the payment. Waiting has
- * no limit (decision 1.9), so the buyer can leave: the placement goes on on the server and is
- * read again when the checkout is opened.
+ * Shown while the server settles the payment. Waiting has no limit (decision 1.9), so the buyer
+ * can leave: the placement goes on on the server and is read again when the checkout is opened.
  */
-export const PaymentPendingScreen = ({
-  redirecting = false,
-  brand,
-}: {
-  redirecting?: boolean;
-  brand?: ReactNode;
-}) => {
+export const PaymentPendingScreen = ({ brand }: { brand?: ReactNode }) => {
   const t = useTranslations('Checkout');
   const router = useRouter();
   const theme = useCheckoutTheme();
@@ -28,11 +21,8 @@ export const PaymentPendingScreen = ({
     return (
       <PaymentPending
         brand={brand}
-        redirecting={redirecting}
-        title={t(
-          redirecting ? 'redirecting-to-payment' : 'awaiting-payment-title'
-        )}
-        description={redirecting ? null : t('awaiting-payment-description')}
+        title={t('awaiting-payment-title')}
+        description={t('awaiting-payment-description')}
         onGoHome={() => router.push(homePath)}
         labels={{ goHome: t('go-home') }}
       />
@@ -42,16 +32,12 @@ export const PaymentPendingScreen = ({
     <PlacementScreen brand={brand}>
       <Result
         icon={<Spin size="large" />}
-        title={t(
-          redirecting ? 'redirecting-to-payment' : 'awaiting-payment-title'
-        )}
-        subTitle={redirecting ? null : t('awaiting-payment-description')}
+        title={t('awaiting-payment-title')}
+        subTitle={t('awaiting-payment-description')}
         extra={
-          redirecting ? null : (
-            <Button type="link" onClick={() => router.push(homePath)}>
-              {t('go-home')}
-            </Button>
-          )
+          <Button type="link" onClick={() => router.push(homePath)}>
+            {t('go-home')}
+          </Button>
         }
       />
     </PlacementScreen>

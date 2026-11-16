@@ -158,6 +158,7 @@ const mapLine = (line: ApiLine): model.ConfirmedCartLine => {
         ? toMoney(line.cost.compareAtUnitPrice)
         : null,
       subtotalAmount: toMoney(line.cost.subtotalAmount),
+      discountAmount: toMoney(line.cost.discountAmount),
       totalAmount: toMoney(line.cost.totalAmount),
     },
   };

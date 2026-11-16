@@ -17,6 +17,10 @@ fragment SdkCartLineFragment_fields on CheckoutLine {
       currencyCode
       amount
     }
+    discountAmount {
+      currencyCode
+      amount
+    }
     totalAmount {
       currencyCode
       amount

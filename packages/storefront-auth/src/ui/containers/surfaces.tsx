@@ -7,6 +7,7 @@ import {
   DrawerBase,
   ResponsiveDialog,
   useBreakpointDown,
+  type Breakpoint,
 } from '@shopana/storefront-ui';
 import {
   AuthHeadingSlotContext,
@@ -22,22 +23,23 @@ const DIALOG_BREAKPOINT = 'md';
 
 /**
  * The sign-in in a drawer, as the drawers of the checkout: its header carries the title of the
- * screen (rendered there by the screen) and the close button of a side panel; a bottom sheet
- * closes by dragging it down.
+ * screen (rendered there by the screen, as the drawer's title) and the close button. A bottom
+ * sheet below `breakpoint`.
  */
 export const AuthDrawerSurface = ({
   open,
   onClose,
   width,
+  breakpoint = DRAWER_BREAKPOINT,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   width?: number;
+  breakpoint?: Breakpoint;
   children: ReactNode;
 }) => {
   const { styles } = useStyles();
-  const isSheet = useBreakpointDown(DRAWER_BREAKPOINT);
   const titleId = useId();
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   const heading = useMemo<AuthHeadingSlot>(() => ({ slot }), [slot]);
@@ -45,13 +47,21 @@ export const AuthDrawerSurface = ({
     <DrawerBase
       open={open}
       onClose={onClose}
-      breakpoint={DRAWER_BREAKPOINT}
+      breakpoint={breakpoint}
       width={width}
+      // A short form: over the keyboard as tall as its content.
+      keyboardHeight="content"
       aria-labelledby={titleId}
       header={
         <DrawerBase.Header>
-          <div id={titleId} ref={setSlot} className={styles.title} />
-          {isSheet ? null : <DrawerBase.CloseButton />}
+          {/* The drawer's title, as DrawerBase.Title: it stands where a sheet has its title. */}
+          <div
+            id={titleId}
+            ref={setSlot}
+            data-drawer-title=""
+            className={styles.title}
+          />
+          <DrawerBase.CloseButton />
         </DrawerBase.Header>
       }
     >
@@ -62,7 +72,10 @@ export const AuthDrawerSurface = ({
   );
 };
 
-/** The sign-in in a 440px dialog of the store, a bottom sheet on a phone. */
+/**
+ * The sign-in in a 440px dialog of the store; on a phone the bottom sheet of the drawer, the
+ * title of the screen in its header.
+ */
 export const AuthDialogSurface = ({
   open,
   onClose,
@@ -74,16 +87,26 @@ export const AuthDialogSurface = ({
 }) => {
   const { styles, cx } = useStyles();
   const isSheet = useBreakpointDown(DIALOG_BREAKPOINT);
+  if (isSheet) {
+    return (
+      <AuthDrawerSurface
+        open={open}
+        onClose={onClose}
+        breakpoint={DIALOG_BREAKPOINT}
+      >
+        <div className={cx(styles.dialog, styles.dialogInSheet)}>
+          {children}
+        </div>
+      </AuthDrawerSurface>
+    );
+  }
   return (
     <ResponsiveDialog
       open={open}
       onClose={onClose}
       breakpoint={DIALOG_BREAKPOINT}
-      classNames={isSheet ? { body: styles.sheetBody } : undefined}
     >
-      <div className={cx(styles.dialog, isSheet && styles.dialogInSheet)}>
-        {children}
-      </div>
+      <div className={styles.dialog}>{children}</div>
     </ResponsiveDialog>
   );
 };
@@ -130,9 +153,12 @@ export const AuthInlineSurface = ({
 };
 
 const useStyles = createStyles(({ css, token }) => ({
+  // As DrawerBase.Title: the screen's title takes its size and weight from here.
   title: css`
     flex: 1;
     min-width: 0;
+    font-size: ${token.fontSizeXL}px;
+    font-weight: 600;
   `,
   dialog: css`
     display: flex;
@@ -140,15 +166,11 @@ const useStyles = createStyles(({ css, token }) => ({
     gap: ${token.paddingLG}px;
     padding: ${token.paddingSM}px ${token.paddingSM}px ${token.padding}px;
   `,
-  // The sheet is as wide as the content of the other drawers: their side padding only.
-  sheetBody: css`
-    && {
-      padding-inline: calc(${token.paddingSM}px + var(--safe-area-left, 0px))
-        calc(${token.paddingSM}px + var(--safe-area-right, 0px));
-    }
-  `,
+  // In the drawer's sheet: its body's padding at the sides and under it only, as the content
+  // of the other drawers.
   dialogInSheet: css`
     padding-inline: 0;
+    padding-bottom: 0;
   `,
   card: css`
     box-sizing: border-box;

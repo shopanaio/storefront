@@ -3,7 +3,7 @@ import { createStyles } from 'antd-style';
 import clsx from 'clsx';
 import { useId } from 'react';
 import type { ReactNode } from 'react';
-import { LuChevronRight } from 'react-icons/lu';
+import { LuChevronRight, LuCircleAlert } from 'react-icons/lu';
 import { OptionWave } from './OptionWave';
 import { mq, VisuallyHidden } from '@shopana/storefront-ui';
 import { selectedDeclarations } from './selected';
@@ -22,6 +22,7 @@ export function SelectCard({
   action,
   onClick,
   disabled = false,
+  error,
   className,
   children,
 }: {
@@ -37,6 +38,8 @@ export function SelectCard({
   onClick: () => void;
   /** Nothing to choose from yet (no city for a branch): the card does not open. */
   disabled?: boolean;
+  /** What the buyer has not filled in: a red border and this text under the card. */
+  error?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -44,57 +47,74 @@ export function SelectCard({
   const labelId = useId();
   const contentId = useId();
   const actionId = useId();
+  const errorId = useId();
 
   return (
-    <OptionWave disabled={disabled}>
-      <div
-        className={clsx(
-          styles.card,
-          selected && styles.selected,
-          disabled && styles.disabled,
-          className
-        )}
-        onClick={disabled ? undefined : onClick}
-      >
-        {icon ? (
-          <span className={styles.icon} aria-hidden="true">
-            {icon}
-          </span>
-        ) : null}
-        {labelShown ? null : (
-          <VisuallyHidden id={labelId}>{label}</VisuallyHidden>
-        )}
-        <div id={contentId} className={styles.content}>
-          {children}
-        </div>
-        <Button
-          variant="text"
-          color="primary"
-          icon={
-            <LuChevronRight size={18} strokeWidth={1.75} aria-hidden="true" />
-          }
-          iconPlacement="end"
-          className={styles.action}
-          disabled={disabled}
-          aria-labelledby={[labelShown ? null : labelId, contentId, actionId]
-            .filter(Boolean)
-            .join(' ')}
-          onClick={(event) => {
-            // The card opens the editor; the click is not counted twice.
-            event.stopPropagation();
-            onClick();
-          }}
+    <div className={styles.field}>
+      <OptionWave disabled={disabled}>
+        <div
+          className={clsx(
+            styles.card,
+            selected && styles.selected,
+            error && styles.error,
+            disabled && styles.disabled,
+            className
+          )}
+          onClick={disabled ? undefined : onClick}
         >
-          <span id={actionId} className={styles.actionText}>
-            {action}
-          </span>
-        </Button>
-      </div>
-    </OptionWave>
+          {icon ? (
+            <span className={styles.icon} aria-hidden="true">
+              {icon}
+            </span>
+          ) : null}
+          {labelShown ? null : (
+            <VisuallyHidden id={labelId}>{label}</VisuallyHidden>
+          )}
+          <div id={contentId} className={styles.content}>
+            {children}
+          </div>
+          <Button
+            variant="text"
+            color="primary"
+            icon={
+              <LuChevronRight size={18} strokeWidth={1.75} aria-hidden="true" />
+            }
+            iconPlacement="end"
+            className={styles.action}
+            disabled={disabled}
+            aria-labelledby={[labelShown ? null : labelId, contentId, actionId]
+              .filter(Boolean)
+              .join(' ')}
+            aria-describedby={error ? errorId : undefined}
+            aria-invalid={error ? true : undefined}
+            onClick={(event) => {
+              // The card opens the editor; the click is not counted twice.
+              event.stopPropagation();
+              onClick();
+            }}
+          >
+            <span id={actionId} className={styles.actionText}>
+              {action}
+            </span>
+          </Button>
+        </div>
+      </OptionWave>
+      {error ? (
+        <div id={errorId} className={styles.message}>
+          <LuCircleAlert size={14} strokeWidth={1.75} aria-hidden="true" />
+          {error}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 const useStyles = createStyles(({ css, token }) => ({
+  field: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${token.marginXXS}px;
+  `,
   card: css`
     box-sizing: border-box;
     display: flex;
@@ -115,6 +135,25 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   selected: css`
     ${selectedDeclarations(token)}
+  `,
+  error: css`
+    border-color: ${token.colorError};
+
+    &:hover {
+      border-color: ${token.colorErrorHover};
+    }
+  `,
+  message: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXXS}px;
+    font-size: ${token.fontSizeSM}px;
+    line-height: ${token.lineHeightSM};
+    color: ${token.colorErrorText};
+
+    & > svg {
+      flex: none;
+    }
   `,
   disabled: css`
     cursor: not-allowed;

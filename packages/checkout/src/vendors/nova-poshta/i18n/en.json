@@ -17,6 +17,8 @@
     "city_required_warning": "Please select a city first",
     "WAREHOUSE": "Branch",
     "POSTOMAT": "Parcel locker",
+    "select_WAREHOUSE": "Select a branch",
+    "select_POSTOMAT": "Select a parcel locker",
     "search_point": "Number or address",
     "street": "Street",
     "search_street": "Street name",

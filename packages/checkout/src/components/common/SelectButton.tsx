@@ -21,6 +21,8 @@ interface SelectButtonProps {
   subtle?: boolean;
   onClick: () => void;
   disabled?: boolean;
+  /** What the buyer has not filled in, shown under the card. */
+  error?: string;
   className?: string;
 }
 
@@ -38,6 +40,7 @@ export const SelectButton = ({
   subtle = false,
   onClick,
   disabled,
+  error,
   className,
 }: SelectButtonProps) => {
   const t = useTranslations('Checkout');
@@ -52,6 +55,7 @@ export const SelectButton = ({
       action={hasValue ? t('change') : t('select')}
       onClick={onClick}
       disabled={disabled}
+      error={error}
       className={cx(styles.card, className)}
     >
       {hasValue ? (

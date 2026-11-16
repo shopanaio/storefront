@@ -46,6 +46,8 @@ export interface ContactSelectProps {
    * field; an email is shown under the fields.
    */
   lockedIdentifier?: LoginIdentifier | null;
+  /** The buyer pressed "place order" without the contact: the card turns red. */
+  missing?: boolean;
 }
 
 const defaultValues: ContactForm = {
@@ -67,6 +69,7 @@ export const ContactSelect = ({
   onSubmit,
   withEmail = false,
   lockedIdentifier = null,
+  missing = false,
 }: ContactSelectProps) => {
   const { styles } = useStyles();
   const t = useTranslations('Checkout');
@@ -147,6 +150,7 @@ export const ContactSelect = ({
         selected={Boolean(hasValue)}
         action={hasValue ? t('change') : t('select')}
         onClick={() => setOpen(true)}
+        error={missing ? t('enter-contact-details') : undefined}
         icon={
           <UserIcon
             size={24}

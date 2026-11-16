@@ -126,6 +126,25 @@ const SECTION_ORDER: SectionId[] = [
   SectionId.Loyalty,
 ];
 
+/**
+ * The first section, in the order of the page, that is not filled in or has a blocking issue
+ * (loyalty issues aside): the one the banner names and the page scrolls to at a press.
+ */
+export function firstSectionToFill(
+  blocking: Checkout.Issue[],
+  missingSections: SectionId[]
+): SectionId | null {
+  return (
+    SECTION_ORDER.find(
+      (section) =>
+        missingSections.includes(section) ||
+        blocking.some(
+          (issue) => !isLoyaltyIssue(issue) && issueSection(issue) === section
+        )
+    ) ?? null
+  );
+}
+
 const STOCK_CODES = new Set<Checkout.NotificationCode>([
   'OUT_OF_STOCK',
   'NOT_ENOUGH_STOCK',
@@ -309,14 +328,9 @@ export function collectBanners(
       );
       // Loyalty issues have their own banners above.
       const blocking = allBlocking.filter((issue) => !isLoyaltyIssue(issue));
-      const sections = SECTION_ORDER.filter(
-        (section) =>
-          input.missingSections.includes(section) ||
-          blocking.some((issue) => issueSection(issue) === section)
-      );
       // One section at a time, the first in the order of the page; the next one comes with the
       // next press of the button.
-      const [section] = sections;
+      const section = firstSectionToFill(blocking, input.missingSections);
       if (section) {
         // A known issue of the section says better what to do than its name.
         const known = blocking.find(
@@ -326,7 +340,7 @@ export function collectBanners(
         items.push({
           id: `${FILL_BANNER_PREFIX}${section}`,
           priority: BannerPriority.Blocking,
-          tone: 'action',
+          tone: 'critical',
           title: known
             ? issueText(t, known)
             : t('banner-fill-section', { section: t(section) }),

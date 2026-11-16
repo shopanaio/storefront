@@ -6,11 +6,12 @@ import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 
 /**
- * Covers the checkout while `placeOrder` is in flight: the buyer can neither press nor scroll
- * anything until the placement answers. The page under it does not scroll for as long as it is
- * shown; the checkout makes itself inert, so keys do not reach it either.
+ * Covers the checkout while `placeOrder` is in flight and while the browser leaves for the
+ * payment provider: the buyer can neither press nor scroll anything. The page under it does not
+ * scroll for as long as it is shown; the checkout makes itself inert, so keys do not reach it
+ * either.
  */
-export const PlacingOverlay = () => {
+export const PlacingOverlay = ({ redirecting }: { redirecting: boolean }) => {
   const t = useTranslations('Checkout');
   const { styles } = useStyles();
 
@@ -31,7 +32,9 @@ export const PlacingOverlay = () => {
       aria-live="assertive"
     >
       <Spin size="large" />
-      <div className={styles.text}>{t('placing-order')}</div>
+      <div className={styles.text}>
+        {t(redirecting ? 'redirecting-to-payment' : 'placing-order')}
+      </div>
     </div>
   );
 };

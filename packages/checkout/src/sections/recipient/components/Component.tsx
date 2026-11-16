@@ -16,6 +16,7 @@ import { useCheckoutApi } from '#checkout/context/CheckoutApiContext';
 import type { ContactForm } from '#checkout/components/contact/ContactSelect';
 import { useCheckoutStore } from '#checkout/state/checkoutStore';
 import { SectionId } from '#checkout/state/interface';
+import { useMissingAfterSubmit } from '#checkout/hooks/useMissingAfterSubmit';
 import { logError } from '@shopana/storefront-sdk/utils/logger';
 
 /**
@@ -56,6 +57,7 @@ export const RecipientSectionView = ({
    */
   const [chosenSelf, setChosenSelf] = useState<boolean | null>(null);
   const isRecipientSelf = chosenSelf ?? data?.self ?? true;
+  const missing = useMissingAfterSubmit(SectionId.Recipient);
 
   /**
    * Update section 'required' flag based on the switch.
@@ -198,6 +200,7 @@ export const RecipientSectionView = ({
           data={contact}
           title={t('recipient')}
           onSubmit={handleContactSubmit}
+          missing={missing}
         />
       ) : null}
     </Flex>

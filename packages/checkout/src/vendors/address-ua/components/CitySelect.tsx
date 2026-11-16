@@ -13,6 +13,8 @@ import { PiMapPinDuotone, PiMapPin } from 'react-icons/pi';
 import { SelectCard } from '#checkout/ui/SelectCard';
 import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { CheckoutDialog } from '#checkout/ui/CheckoutDialog';
+import { useMissingAfterSubmit } from '#checkout/hooks/useMissingAfterSubmit';
+import { SectionId } from '#checkout/state/interface';
 
 /** The picked city as the address keeps it: its name, its oblast and the settlement hint. */
 export interface PickedCity {
@@ -59,6 +61,8 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
     setIsCityModalVisible(false);
   };
 
+  const missing = useMissingAfterSubmit(SectionId.Address) && !city;
+
   const UserIcon = city ? PiMapPinDuotone : PiMapPin;
   return (
     <>
@@ -68,6 +72,7 @@ export const CitySelect = ({ city, onSubmit }: Prop) => {
         selected={!!city}
         action={city ? t('change') : t('select')}
         onClick={() => setIsCityModalVisible(true)}
+        error={missing ? t('select-city') : undefined}
         icon={
           <UserIcon
             size={24}

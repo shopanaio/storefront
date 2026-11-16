@@ -1,11 +1,15 @@
 'use client';
 
-import { ConfigProvider, Flex, Modal } from 'antd';
+import { ConfigProvider, Modal } from 'antd';
 import { createStyles } from 'antd-style';
 import { useContext } from 'react';
 import type { ReactNode } from 'react';
 import { LuX } from 'react-icons/lu';
-import { DrawerBase, useBreakpointDown } from '@shopana/storefront-ui';
+import {
+  DrawerBase,
+  useBreakpointDown,
+  type SheetKeyboardHeight,
+} from '@shopana/storefront-ui';
 
 export interface CheckoutDialogProps {
   open: boolean;
@@ -18,6 +22,8 @@ export interface CheckoutDialogProps {
    * jump with each answer.
    */
   minHeight?: string;
+  /** How tall the bottom sheet is over the keyboard (see `DrawerBase`). */
+  keyboardHeight?: SheetKeyboardHeight;
   children: ReactNode;
 }
 
@@ -32,6 +38,7 @@ export const CheckoutDialog = ({
   title,
   search,
   minHeight,
+  keyboardHeight,
   children,
 }: CheckoutDialogProps) => {
   const { styles } = useStyles();
@@ -43,21 +50,14 @@ export const CheckoutDialog = ({
     return (
       <DrawerBase
         minHeight={minHeight}
+        keyboardHeight={keyboardHeight}
         open={open}
         onClose={onClose}
-        title={search ? undefined : title}
-        header={
-          search ? (
-            // A bottom sheet closes by dragging it down: no close button.
-            <DrawerBase.Header vertical gap={8}>
-              <Flex style={{ width: '100%' }}>
-                <DrawerBase.Title>{title}</DrawerBase.Title>
-              </Flex>
-              {search}
-            </DrawerBase.Header>
-          ) : undefined
-        }
+        title={title}
       >
+        {/* The search in the body's scroll, stuck at its top: with the caret in a field out
+            of the scroll, iOS pans the page with a drag on the list instead of scrolling it. */}
+        {search ? <div className={styles.sheetSearch}>{search}</div> : null}
         {children}
       </DrawerBase>
     );
@@ -91,6 +91,15 @@ export const CheckoutDialog = ({
 };
 
 const useStyles = createStyles(({ css, token, prefixCls }) => ({
+  // Stuck at the top of the sheet's body over the list scrolling under it.
+  sheetSearch: css`
+    position: sticky;
+    top: -${token.paddingXS}px;
+    z-index: 1;
+    margin: -${token.paddingXS}px 0 0;
+    padding: ${token.paddingXS}px 0 ${token.paddingXS}px;
+    background: ${token.colorBgElevated};
+  `,
   /**
    * As tall as its content up to the window; the header stays in view and the body scrolls
    * under it.

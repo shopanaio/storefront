@@ -656,6 +656,9 @@ const specialFields = (store) => ({
       : null,
   'ProductVariant.promotions': (variant) =>
     promotionPresentation(store, { variant }),
+  // A fixture without places is shown everywhere, like a discount the merchant left as is.
+  'StorefrontPromotion.placements': (promotion) =>
+    promotion.placements ?? ['PRODUCT', 'CART', 'PROMOTION_LIST'],
 
   'Product.primaryCategory': (product) => store.get(product.primaryCategoryId),
   'Product.comparison': (product, _args, context) =>

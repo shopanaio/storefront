@@ -1,8 +1,7 @@
 'use client';
 
-import { ConfigProvider, Modal, theme, Typography } from 'antd';
+import { ConfigProvider, Modal, theme } from 'antd';
 import type { ModalProps } from 'antd';
-import { createStyles } from 'antd-style';
 import {
   useCallback,
   useContext,
@@ -17,7 +16,7 @@ import { applyDomAttributes, type DomAttributes } from '../dom';
 import { useBreakpointDown } from '../useMediaQuery';
 import { DrawerLayerContext, useDrawerLayer, type DrawerLayer } from './layer';
 import { useStorefrontUI } from '../StorefrontUIProvider';
-import { Sheet } from './Sheet';
+import { DrawerBase } from './DrawerBase';
 
 /** Parts of the dialog, the same in the modal and in the sheet. `root` is the panel. */
 export type ResponsiveDialogPart =
@@ -41,7 +40,7 @@ export interface ResponsiveDialogProps extends DomAttributes {
   children: ReactNode;
   /** Width of the modal; 440px by default. */
   width?: number;
-  /** Shows the close button of the modal; a sheet closes by dragging it down. */
+  /** Shows the close button, of the modal and of the sheet (which drags down too). */
   closable?: boolean;
   /** Below it the dialog is a bottom sheet; `md` by default. */
   breakpoint?: Breakpoint;
@@ -57,8 +56,9 @@ export interface ResponsiveDialogProps extends DomAttributes {
 }
 
 /**
- * A dialog that fits the screen: an antd `Modal` from `breakpoint` up and a vaul bottom sheet
- * below it, with the same title, content and footer in both.
+ * A dialog that fits the screen: an antd `Modal` from `breakpoint` up and a bottom sheet of
+ * `DrawerBase` below it (its header, close button and footer), with the same title, content
+ * and footer in both.
  */
 export const ResponsiveDialog = ({
   ref,
@@ -78,7 +78,6 @@ export const ResponsiveDialog = ({
   styles: partStyles,
   ...attributes
 }: ResponsiveDialogProps) => {
-  const { styles, cx } = useStyles();
   const { token } = theme.useToken();
   const isSheet = useBreakpointDown(breakpoint);
   const parent = useDrawerLayer();
@@ -88,8 +87,6 @@ export const ResponsiveDialog = ({
   const zIndex =
     zIndexProp ?? (parent ? parent.zIndex + 1 : token.zIndexPopupBase);
   const [panel, setPanel] = useState<HTMLDivElement | null>(null);
-  const labelledBy =
-    attributes['aria-labelledby'] ?? (title ? titleId : undefined);
 
   const setPanelRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -117,57 +114,34 @@ export const ResponsiveDialog = ({
 
   if (isSheet) {
     return (
-      <Sheet
+      <DrawerBase
         {...attributes}
         ref={setPanelRef}
-        aria-labelledby={labelledBy}
         open={open}
         onClose={onClose}
         onExited={onExited}
-        direction="bottom"
-        className={cx(classNames?.root, className)}
-        style={{ ...partStyles?.root, ...style }}
+        title={title}
+        footer={footer}
+        showCloseButton={closable}
+        placement="bottom"
+        breakpoint={breakpoint}
+        classNames={{
+          sheet: [classNames?.root, className].filter(Boolean).join(' '),
+          header: classNames?.header,
+          title: classNames?.title,
+          body: classNames?.body,
+          footer: classNames?.footer,
+        }}
+        styles={{
+          sheet: { ...partStyles?.root, ...style },
+          header: partStyles?.header,
+          title: partStyles?.title,
+          body: partStyles?.body,
+          footer: partStyles?.footer,
+        }}
       >
-        <div className={styles.sheet}>
-          {title ? (
-            <div
-              className={cx(styles.sheetHeader, classNames?.header)}
-              style={partStyles?.header}
-            >
-              <Typography.Text
-                id={titleId}
-                strong
-                className={cx(styles.sheetTitle, classNames?.title)}
-                style={partStyles?.title}
-              >
-                {title}
-              </Typography.Text>
-            </div>
-          ) : null}
-          <div
-            className={cx(
-              styles.sheetBody,
-              !footer && styles.sheetEnd,
-              classNames?.body
-            )}
-            style={partStyles?.body}
-          >
-            {children}
-          </div>
-          {footer ? (
-            <div
-              className={cx(
-                styles.sheetFooter,
-                styles.sheetEnd,
-                classNames?.footer
-              )}
-              style={partStyles?.footer}
-            >
-              {footer}
-            </div>
-          ) : null}
-        </div>
-      </Sheet>
+        {children}
+      </DrawerBase>
     );
   }
 
@@ -212,33 +186,3 @@ export const ResponsiveDialog = ({
     </Modal>
   );
 };
-
-const useStyles = createStyles(({ css, token }) => ({
-  sheet: css`
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-  `,
-  sheetHeader: css`
-    flex-shrink: 0;
-    padding: ${token.paddingSM}px ${token.padding}px 0;
-  `,
-  sheetTitle: css`
-    font-size: ${token.fontSizeLG}px;
-  `,
-  sheetBody: css`
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    padding: ${token.paddingSM}px ${token.padding}px;
-  `,
-  sheetFooter: css`
-    flex-shrink: 0;
-    padding: 0 ${token.padding}px;
-  `,
-  // The last part keeps clear of the bottom edge and the home indicator.
-  sheetEnd: css`
-    padding-bottom: calc(${token.paddingLG}px + var(--safe-area-bottom, 0px));
-  `,
-}));

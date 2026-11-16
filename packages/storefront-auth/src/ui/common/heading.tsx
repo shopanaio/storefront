@@ -102,11 +102,12 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   // As the title of the other drawers of the page.
+  // The header's title: its size and weight are the header's (a drawer's title, 17px on iOS).
   inHeader: css`
     && {
-      font-size: ${token.fontSizeXL}px;
+      font-size: inherit;
       line-height: ${token.lineHeightLG};
-      font-weight: 600;
+      font-weight: inherit;
     }
   `,
   subtitle: css`

@@ -1279,15 +1279,11 @@ type Product implements Node @join__type(
   key: "id"
   resolvable: false
   extension: true
-) @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT, key: "id", extension: true)  @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: CUSTOMERS_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: APPS_ONLINE_STORE_STOREFRONT, interface: "Node")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+) @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: CUSTOMERS_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: APPS_ONLINE_STORE_STOREFRONT, interface: "Node")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
   """
   Globally unique Product ID.
   """
   id: ID!
-  """
-  Verified fact card of the product. Null: no card, or the Pet Assistant App is not active.
-  """
-  petFacts: PetProductFacts @join__field(graph: APPS_PET_ASSISTANT_STOREFRONT)
   handle: String! @join__field(graph: CATALOG_STOREFRONT)
   title: String! @join__field(graph: CATALOG_STOREFRONT)
   description: RichText @join__field(graph: CATALOG_STOREFRONT)
@@ -1486,6 +1482,32 @@ type Collection implements Node @join__type(
 }
 
 """
+Verified facts of a category, read by the assistant only.
+"""
+type PetCategoryFacts @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
+  schemaVersion: Int!
+  """
+  Default product kind for the card editor.
+  """
+  defaultProductKind: PetProductKind
+  """
+  How to choose products of this category.
+  """
+  summary: String
+  selectionCriteria: [String!]!
+  commonMistakes: [String!]!
+  """
+  When the buyer should be advised to see a veterinarian.
+  """
+  veterinarianWhen: [String!]!
+  """
+  Handles of facets that always become rules in this category, e.g. food type.
+  """
+  frozenFacets: [String!]!
+  verifiedAt: DateTime!
+}
+
+"""
 A pet profile on the customer's account.
 """
 type Pet implements Node @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  @join__implements(graph: APPS_PET_ASSISTANT_STOREFRONT, interface: "Node")  {
@@ -1638,106 +1660,6 @@ type PetUploadField @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
 type PetAvatarUploadPayload @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
   upload: PetAvatarUpload
   userErrors: [PetUserError!]!
-}
-
-"""
-Merchant-verified facts of a product. Not secret: everything here is public. Texts are plain
-text without HTML, in the request locale or the store default locale.
-"""
-type PetProductFacts @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  schemaVersion: Int!
-  kind: PetProductKind!
-  """
-  Shown to the buyer on the product page.
-  """
-  nutrition: PetProductNutrition
-  """
-  Shown to the buyer on the product page.
-  """
-  instructions: PetProductInstructions
-  """
-  Read by the assistant only; themes do not show it.
-  """
-  agent: PetProductAgentFacts
-  source: PetFactsSource!
-  verifiedAt: DateTime!
-}
-
-type PetProductNutrition @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  """
-  Composition verbatim from the label.
-  """
-  composition: String
-  analyticalConstituents: [PetNutrient!]!
-  """
-  Manufacturer advice: switching food, combinations, feeding frequency.
-  """
-  manufacturerFeedingAdvice: String
-  feedingGuide: [PetFeedingRow!]!
-}
-
-type PetNutrient @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  name: String!
-  value: Decimal!
-  unit: PetNutrientUnit!
-}
-
-type PetFeedingRow @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  species: PetSpecies
-  ageMinMonths: Int
-  ageMaxMonths: Int
-  weightMinKg: Decimal
-  weightMaxKg: Decimal
-  gramsPerDayMin: Int
-  gramsPerDayMax: Int
-  note: String
-}
-
-type PetProductInstructions @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  """
-  Manufacturer instructions for use.
-  """
-  usage: String
-  """
-  Empty: none listed by the manufacturer, or not filled in.
-  """
-  contraindications: [String!]!
-  storage: String
-}
-
-type PetProductAgentFacts @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  """
-  One or two neutral sentences about what the product is for.
-  """
-  summary: String
-  keyPoints: [String!]!
-  notSuitableFor: [String!]!
-}
-
-"""
-Verified facts of a category, read by the assistant only.
-"""
-type PetCategoryFacts @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  schemaVersion: Int!
-  """
-  Default product kind for the card editor.
-  """
-  defaultProductKind: PetProductKind
-  """
-  How to choose products of this category.
-  """
-  summary: String
-  selectionCriteria: [String!]!
-  commonMistakes: [String!]!
-  """
-  When the buyer should be advised to see a veterinarian.
-  """
-  veterinarianWhen: [String!]!
-  """
-  Handles of facets that always become rules in this category, e.g. food type.
-  """
-  frozenFacets: [String!]!
-  verifiedAt: DateTime!
 }
 
 """
@@ -1897,69 +1819,6 @@ type Customer @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT, key: "id", exten
     sort: ProductQuestionSort = NEWEST
   ): ProductQuestionConnection! @join__field(graph: REVIEWS_STOREFRONT)
   reviewRequests(first: Int, after: Cursor, last: Int, before: Cursor) : ReviewRequestConnection! @join__field(graph: REVIEWS_STOREFRONT)
-}
-
-"""
-A purchasable combination of product option values.
-"""
-type ProductVariant implements Node @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT, key: "id", extension: true)  @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: CHECKOUT_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: PRICING_STOREFRONT, key: "id", extension: true)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
-  id: ID!
-  product: Product! @join__field(graph: APPS_PET_ASSISTANT_STOREFRONT, external: true)  @join__field(graph: CATALOG_STOREFRONT)
-  """
-  Own verified card of the variant, otherwise the card of its product. It replaces, not merges.
-  """
-  petFacts: PetProductFacts @join__field(graph: APPS_PET_ASSISTANT_STOREFRONT, requires: "product{id}")
-  handle: String! @join__field(graph: CATALOG_STOREFRONT)
-  title: String! @join__field(graph: CATALOG_STOREFRONT)
-  sku: String @join__field(graph: CATALOG_STOREFRONT)
-  isDefault: Boolean! @join__field(graph: CATALOG_STOREFRONT)
-  selectedOptions: [SelectedOption!]! @join__field(graph: CATALOG_STOREFRONT)
-  price: Money @join__field(graph: CATALOG_STOREFRONT)
-  compareAtPrice: Money @join__field(graph: CATALOG_STOREFRONT)
-  availableForSale: Boolean! @join__field(graph: CATALOG_STOREFRONT)
-  currentlyNotInStock: Boolean! @join__field(graph: CATALOG_STOREFRONT)
-  quantityAvailable: Int @join__field(graph: CATALOG_STOREFRONT)
-  inventoryItem: InventoryItem @join__field(graph: CATALOG_STOREFRONT)
-  requiresShipping: Boolean! @join__field(graph: CATALOG_STOREFRONT)
-  weight: Weight @join__field(graph: CATALOG_STOREFRONT)
-  dimensions: Dimensions @join__field(graph: CATALOG_STOREFRONT)
-  media(first: Int, after: Cursor, last: Int, before: Cursor) : ProductVariantMediaConnection! @join__field(graph: CATALOG_STOREFRONT)
-  featuredMedia: Media @join__field(graph: CATALOG_STOREFRONT)
-  componentConfiguration(
-    """
-    Complete current component selection.
-
-    When omitted, merchant-defined default selections are applied. An explicit
-    empty list means that no items are selected. Catalog evaluates dependency
-    rules and returns a presentation-ready configuration for this state.
-    """
-    selections: [ProductComponentSelectionInput!]
-  ): ProductComponentConfiguration @join__field(graph: CATALOG_STOREFRONT)
-  createdAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
-  updatedAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
-  """
-  Loyalty values ready for rendering for this variant at quantity one. Null
-  means that the store has no active customer-visible loyalty presentation.
-  """
-  loyalty: ProductLoyaltyPresentation @join__field(graph: LOYALTY_STOREFRONT)
-  """
-  Published promotions related to the variant; empty when there are none.
-  """
-  promotions: StorefrontPromotionPresentation! @join__field(graph: PRICING_STOREFRONT)
-  reviews(
-    first: Int
-    after: Cursor
-    last: Int
-    before: Cursor
-    sort: ReviewSort = NEWEST
-  ): ReviewConnection! @join__field(graph: REVIEWS_STOREFRONT)
-  questions(
-    first: Int
-    after: Cursor
-    last: Int
-    before: Cursor
-    sort: ProductQuestionSort = NEWEST
-  ): ProductQuestionConnection! @join__field(graph: REVIEWS_STOREFRONT)
 }
 
 type CollectionMediaConnection implements Connection @join__type(graph: CATALOG_STOREFRONT)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Connection")  {
@@ -2465,6 +2324,65 @@ type ProductComponentItem @join__type(graph: CATALOG_STOREFRONT)  {
   Final unitPrice multiplied by quantity.
   """
   totalPrice: Money!
+}
+
+"""
+A purchasable combination of product option values.
+"""
+type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: CHECKOUT_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: PRICING_STOREFRONT, key: "id", extension: true)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+  id: ID!
+  product: Product! @join__field(graph: CATALOG_STOREFRONT)
+  handle: String! @join__field(graph: CATALOG_STOREFRONT)
+  title: String! @join__field(graph: CATALOG_STOREFRONT)
+  sku: String @join__field(graph: CATALOG_STOREFRONT)
+  isDefault: Boolean! @join__field(graph: CATALOG_STOREFRONT)
+  selectedOptions: [SelectedOption!]! @join__field(graph: CATALOG_STOREFRONT)
+  price: Money @join__field(graph: CATALOG_STOREFRONT)
+  compareAtPrice: Money @join__field(graph: CATALOG_STOREFRONT)
+  availableForSale: Boolean! @join__field(graph: CATALOG_STOREFRONT)
+  currentlyNotInStock: Boolean! @join__field(graph: CATALOG_STOREFRONT)
+  quantityAvailable: Int @join__field(graph: CATALOG_STOREFRONT)
+  inventoryItem: InventoryItem @join__field(graph: CATALOG_STOREFRONT)
+  requiresShipping: Boolean! @join__field(graph: CATALOG_STOREFRONT)
+  weight: Weight @join__field(graph: CATALOG_STOREFRONT)
+  dimensions: Dimensions @join__field(graph: CATALOG_STOREFRONT)
+  media(first: Int, after: Cursor, last: Int, before: Cursor) : ProductVariantMediaConnection! @join__field(graph: CATALOG_STOREFRONT)
+  featuredMedia: Media @join__field(graph: CATALOG_STOREFRONT)
+  componentConfiguration(
+    """
+    Complete current component selection.
+
+    When omitted, merchant-defined default selections are applied. An explicit
+    empty list means that no items are selected. Catalog evaluates dependency
+    rules and returns a presentation-ready configuration for this state.
+    """
+    selections: [ProductComponentSelectionInput!]
+  ): ProductComponentConfiguration @join__field(graph: CATALOG_STOREFRONT)
+  createdAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
+  updatedAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
+  """
+  Loyalty values ready for rendering for this variant at quantity one. Null
+  means that the store has no active customer-visible loyalty presentation.
+  """
+  loyalty: ProductLoyaltyPresentation @join__field(graph: LOYALTY_STOREFRONT)
+  """
+  Published promotions related to the variant; empty when there are none.
+  """
+  promotions: StorefrontPromotionPresentation! @join__field(graph: PRICING_STOREFRONT)
+  reviews(
+    first: Int
+    after: Cursor
+    last: Int
+    before: Cursor
+    sort: ReviewSort = NEWEST
+  ): ReviewConnection! @join__field(graph: REVIEWS_STOREFRONT)
+  questions(
+    first: Int
+    after: Cursor
+    last: Int
+    before: Cursor
+    sort: ProductQuestionSort = NEWEST
+  ): ProductQuestionConnection! @join__field(graph: REVIEWS_STOREFRONT)
 }
 
 """
@@ -3670,6 +3588,10 @@ type StorefrontPromotion @join__type(graph: CHECKOUT_STOREFRONT, key: "key", res
   appliesOnSubscription: Boolean! @join__field(graph: PRICING_STOREFRONT)
   startsAt: DateTime! @join__field(graph: PRICING_STOREFRONT)
   endsAt: DateTime @join__field(graph: PRICING_STOREFRONT)
+  """
+  Storefront places the merchant chose for the promotion, in the enum order; at least one.
+  """
+  placements: [StorefrontPromotionPlacement!]! @join__field(graph: PRICING_STOREFRONT)
 }
 
 """
@@ -8058,6 +7980,16 @@ enum OnlineStoreNavigationTargetType @join__type(graph: APPS_ONLINE_STORE_STOREF
   COLLECTION @join__enumValue(graph: APPS_ONLINE_STORE_STOREFRONT)
 }
 
+enum PetProductKind @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
+  FOOD @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+  TREAT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+  SUPPLEMENT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+  MEDICINE @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+  CARE @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+  ACCESSORY @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+  OTHER @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
+}
+
 enum PetSpecies @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
   CAT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
   DOG @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
@@ -8148,30 +8080,6 @@ enum PetErrorCode @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
   The store does not offer pet profiles.
   """
   UNAVAILABLE @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-}
-
-enum PetProductKind @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  FOOD @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  TREAT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  SUPPLEMENT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  MEDICINE @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  CARE @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  ACCESSORY @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  OTHER @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-}
-
-enum PetFactsSource @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  LABEL @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  MANUFACTURER_SITE @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  SUPPLIER_DOCUMENT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  MERCHANT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-}
-
-enum PetNutrientUnit @join__type(graph: APPS_PET_ASSISTANT_STOREFRONT)  {
-  PERCENT @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  MG_PER_KG @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  IU_PER_KG @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
-  KCAL_PER_KG @join__enumValue(graph: APPS_PET_ASSISTANT_STOREFRONT)
 }
 
 enum CollectionType @join__type(graph: CATALOG_STOREFRONT)  {
@@ -9308,6 +9216,24 @@ enum StorefrontPromotionKind @join__type(graph: PRICING_STOREFRONT)  {
   ORDER_DISCOUNT @join__enumValue(graph: PRICING_STOREFRONT)
   BUY_X_GET_Y @join__enumValue(graph: PRICING_STOREFRONT)
   FREE_SHIPPING @join__enumValue(graph: PRICING_STOREFRONT)
+}
+
+"""
+A storefront place where a promotion is shown.
+"""
+enum StorefrontPromotionPlacement @join__type(graph: PRICING_STOREFRONT)  {
+  """
+  Product page and product cards of the variants the promotion relates to.
+  """
+  PRODUCT @join__enumValue(graph: PRICING_STOREFRONT)
+  """
+  Cart hints on how much is left to the minimum requirement of the promotion.
+  """
+  CART @join__enumValue(graph: PRICING_STOREFRONT)
+  """
+  The list of the store promotions.
+  """
+  PROMOTION_LIST @join__enumValue(graph: PRICING_STOREFRONT)
 }
 
 enum StorefrontPromotionValueType @join__type(graph: PRICING_STOREFRONT)  {

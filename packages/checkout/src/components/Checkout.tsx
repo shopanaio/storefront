@@ -94,13 +94,9 @@ const CheckoutBody = ({
       />
     );
   }
-  if (phase.name === 'awaiting-payment' || phase.name === 'redirecting') {
-    return (
-      <PaymentPendingScreen
-        redirecting={phase.name === 'redirecting'}
-        brand={brand}
-      />
-    );
+  // Leaving for the provider keeps the checkout under the placing overlay until the page goes.
+  if (phase.name === 'awaiting-payment') {
+    return <PaymentPendingScreen brand={brand} />;
   }
 
   if (

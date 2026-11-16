@@ -18,12 +18,21 @@ import type {
 } from 'react';
 import { Content, Drawer, NestedRoot, Overlay, Portal, Root } from 'vaul';
 import AnimateHeight, { type Height } from 'react-animate-height';
+import { flushSync } from 'react-dom';
 import { useStorefrontUI } from '../StorefrontUIProvider';
 import { VisuallyHidden } from '../VisuallyHidden';
+import {
+  focusFieldsWithoutPan,
+  isKeyboardField,
+  retainViewportBox,
+} from '../visualViewport';
 import { DrawerLayerContext, useDrawerLayer, type DrawerLayer } from './layer';
-import { useStyles } from './styles';
+import { SHEET_RESIZE_MS, useStyles } from './styles';
 
 export type DrawerDirection = 'top' | 'bottom' | 'left' | 'right';
+
+/** How tall a bottom sheet is over the keyboard (SheetProps.keyboardHeight). */
+export type SheetKeyboardHeight = 'full' | 'content';
 
 /** Parts of a sheet: the content panel, the overlay under it, the drag handle, the body. */
 export type SheetPart = 'root' | 'overlay' | 'handle' | 'body';
@@ -44,6 +53,13 @@ export interface SheetProps extends Omit<
   direction?: DrawerDirection;
   /** A side panel over the whole screen, without its offset and radius. */
   fullscreen?: boolean;
+  /**
+   * A bottom sheet with a field taking the caret: `full` stands up to the whole screen over
+   * the keyboard (a picker's list, a search); `content` rises over the keyboard as tall as
+   * its content (a short form), its body scrolling when that is more than the room. `full`
+   * by default.
+   */
+  keyboardHeight?: SheetKeyboardHeight;
   /** Width of a side panel; `--components-drawer-width` or 500px by default. */
   width?: string | number;
   /**
@@ -90,7 +106,9 @@ function holdBodyHeight(): () => void {
  * The vaul drawer of the storefront: a bottom sheet that follows the height of its content, or
  * a side panel. Opened from another sheet, it nests in it (the parent steps back while it is
  * open). It stands over the page at antd's `zIndexPopupBase`; popups opened from it read
- * `useDrawerLayer` to stand over it in turn.
+ * `useDrawerLayer` to stand over it in turn. As a field of a bottom sheet takes the caret,
+ * the sheet stands up to the whole screen over the keyboard (iOS's large detent, Android's
+ * expanded sheet) until it closes, and iOS does not pan the page to the field.
  */
 export const Sheet = ({
   ref,
@@ -101,6 +119,7 @@ export const Sheet = ({
   children,
   direction = 'bottom',
   fullscreen,
+  keyboardHeight = 'full',
   width,
   title,
   container,
@@ -122,6 +141,10 @@ export const Sheet = ({
   const opener = useRef<HTMLElement | null>(null);
   const releaseBody = useRef<(() => void) | null>(null);
   const [contentNode, setContentNode] = useState<HTMLDivElement | null>(null);
+  // A field of the bottom sheet has taken the caret (or a tap is giving it): the whole screen.
+  const [expanded, setExpanded] = useState(false);
+  // Stood up: the panel has reached the whole screen, its one transition is over.
+  const [stood, setStood] = useState(false);
 
   const isLeft = direction === 'left';
   const isRight = direction === 'right';
@@ -146,20 +169,87 @@ export const Sheet = ({
     []
   );
 
+  // An open bottom sheet follows the visual viewport, the keyboard's height and state; one
+  // stood up to the whole screen keeps following it until it has gone, so its height does not
+  // fall back to the screen's as it slides away.
+  const followsViewport = isVertical && (open || expanded);
+  // Over the keyboard the sheet stands up to the whole screen, or stays its content's height.
+  const stretches = keyboardHeight === 'full';
+  useEffect(
+    () => (followsViewport ? retainViewportBox() : undefined),
+    [followsViewport]
+  );
+
+  // A field takes the caret, or a tap gives it to one: the sheet stands up to the whole screen.
+  useEffect(() => {
+    if (!open || !isVertical || !contentNode) return;
+    const expand = () => setExpanded(true);
+    const onFocusIn = (event: FocusEvent) => {
+      if (isKeyboardField(event.target)) expand();
+    };
+    contentNode.addEventListener('focusin', onFocusIn);
+    // A tap stands the sheet up at once, before the stand-in takes the caret: the stand-in is
+    // placed at the top of the screen in the sheet as it is then, stood up, so that it stays
+    // there, where iOS does not pan to it.
+    const stopTaps = focusFieldsWithoutPan(contentNode, () =>
+      flushSync(expand)
+    );
+    return () => {
+      contentNode.removeEventListener('focusin', onFocusIn);
+      stopTaps();
+    };
+  }, [open, isVertical, contentNode]);
+
   useEffect(() => {
     if (!isVertical || !measured) return;
+    // Closing, it keeps its height: the keyboard going down does not lift it as it slides away.
+    // Stood up, its height is the screen's alone, not its content's.
+    if (!open || (expanded && stretches)) return;
     const resizeObserver = new ResizeObserver(([entry]) => {
       setHeight(entry.contentRect.height);
     });
     resizeObserver.observe(measured);
     return () => resizeObserver.disconnect();
-  }, [measured, isVertical]);
+  }, [measured, isVertical, open, expanded]);
+
+  // Stood up, the panel takes the screen's height from CSS alone (panelStanding), at once as
+  // the keyboard moves; only standing up is animated, once (panelStandingUp).
+  const standing = stretches && expanded;
+
+  // The panel's height as the sheet is open; closing, the height animation is left as it
+  // is (a change of it would hold the slide away back until it ends).
+  const panelHeight = standing ? 'auto' : height;
+  const openPanelHeight = useRef<Height>(panelHeight);
+  if (open) openPanelHeight.current = panelHeight;
+
+  // Closing stood up, the panel keeps the height it has, on its element: the keyboard going
+  // down does not lift it as it slides away, and no prop of the height animation changes.
+  useLayoutEffect(() => {
+    if (open || !expanded) return;
+    const panel = contentNode?.querySelector<HTMLElement>('[data-sheet-panel]');
+    if (!panel) return;
+    panel.style.setProperty('height', `${panel.offsetHeight}px`, 'important');
+    panel.style.setProperty('transition', 'none', 'important');
+    return () => {
+      panel.style.removeProperty('height');
+      panel.style.removeProperty('transition');
+    };
+  }, [open, expanded, contentNode]);
+  // The transition of standing up is over, its end heard or not (a height that did not
+  // change has none): the panel follows the box at once from then on.
+  useEffect(() => {
+    if (!standing || stood) return;
+    const timer = window.setTimeout(() => setStood(true), SHEET_RESIZE_MS + 50);
+    return () => window.clearTimeout(timer);
+  }, [standing, stood]);
 
   const handleTeardown = useCallback(() => {
     if (open) return;
     releaseBody.current?.();
     releaseBody.current = null;
     if (isVertical) setHeight(0);
+    setExpanded(false);
+    setStood(false);
     onExited?.();
   }, [open, isVertical, onExited]);
 
@@ -217,6 +307,7 @@ export const Sheet = ({
       direction={direction}
       onAnimationEnd={handleTeardown}
       disablePreventScroll={false}
+      repositionInputs={false}
       container={portalContainer}
     >
       <Portal container={portalContainer}>
@@ -237,6 +328,17 @@ export const Sheet = ({
             opener.current?.focus();
           }}
           onAnimationEnd={handleContentAnimationEnd}
+          // Stood up, the sheet is the screen's box: a press on its clear top, over the
+          // overlay, closes it as a press on the overlay does.
+          onClick={(event) => {
+            rest.onClick?.(event);
+            if (
+              expanded &&
+              dismissible &&
+              event.target === event.currentTarget
+            )
+              onClose();
+          }}
           style={{
             ...(isHorizontal ? { width } : undefined),
             ...partStyles?.root,
@@ -245,6 +347,7 @@ export const Sheet = ({
           className={cx(
             styles.content,
             isVertical && styles.contentVertical,
+            isVertical && expanded && styles.contentExpanded,
             isHorizontal && styles.contentHorizontal,
             isLeft && styles.contentLeft,
             isRight && styles.contentRight,
@@ -261,8 +364,36 @@ export const Sheet = ({
             </VisuallyHidden>
           </Drawer.Title>
           {isVertical ? (
-            <AnimateHeight duration={300} height={height} disableDisplayNone>
-              <div ref={setMeasured} className={styles.frame}>
+            <AnimateHeight
+              // Stood up, its height is CSS's (panelStanding); over the keyboard as tall as its
+              // content, its content's; closing, as it was.
+              duration={expanded && stretches ? 0 : SHEET_RESIZE_MS}
+              easing="ease"
+              height={open ? panelHeight : openPanelHeight.current}
+              disableDisplayNone
+              data-sheet-panel=""
+              className={cx(
+                expanded && styles.panelExpanded,
+                standing && styles.panelStanding,
+                standing && !stood && styles.panelStandingUp
+              )}
+              onTransitionEnd={(event) => {
+                if (
+                  standing &&
+                  event.target === event.currentTarget &&
+                  event.propertyName === 'height'
+                )
+                  setStood(true);
+              }}
+            >
+              <div
+                ref={setMeasured}
+                className={cx(
+                  styles.frame,
+                  expanded &&
+                    (stretches ? styles.frameExpanded : styles.frameFitted)
+                )}
+              >
                 <div
                   className={cx(styles.handle, classNames?.handle)}
                   style={partStyles?.handle}

@@ -9,6 +9,8 @@ import { DirectoryNotice } from '../DirectoryNotice';
 import { SelectButton } from '#checkout/components/common/SelectButton';
 import { FloatingLabelInput } from '@shopana/storefront-ui';
 import { CheckoutDialog } from '#checkout/ui/CheckoutDialog';
+import { useMissingAfterSubmit } from '#checkout/hooks/useMissingAfterSubmit';
+import { SectionId } from '#checkout/state/interface';
 
 interface Props {
   /** Branches or postomats: the list shows only points of this kind. */
@@ -30,6 +32,9 @@ export const WarehouseModal = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
+  // No city yet: the city says what to fill in first.
+  const missing =
+    useMissingAfterSubmit(SectionId.Delivery) && !point && !!settlementRef;
   const list = useWarehouseList(settlementRef, searchValue, open, kind);
   const { items } = list;
 
@@ -58,6 +63,7 @@ export const WarehouseModal = ({
         placeholder={t(`form.${kind}`)}
         onClick={() => setOpen(true)}
         disabled={!settlementRef}
+        error={missing ? t(`form.select_${kind}`) : undefined}
       />
       <CheckoutDialog
         // The list comes as the buyer types: the dialog keeps its height meanwhile.
