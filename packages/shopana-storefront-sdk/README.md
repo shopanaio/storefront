@@ -355,8 +355,8 @@ Every mutation generates its own idempotency key.
 ## Code generation
 
 SDK GraphQL documents live only under `packages/shopana-storefront-sdk/src`.
-The workspace `codegen` command acquires one root `schema.shopana.graphql`
-artifact, then generates SDK and active-theme operations independently from
+The workspace `codegen` command reads the root `schema.shopana.graphql` (a copy of the
+backend schema) and generates SDK and active-theme operations independently from
 that same artifact. Generated files are never edited manually.
 
 ## Current Storefront schema API

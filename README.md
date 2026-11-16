@@ -91,7 +91,7 @@ yarn format:check   # Prettier
 yarn typecheck      # builds the packages, then type-checks every workspace
 yarn test           # unit tests of the packages
 yarn storybook      # Storybook of the packages
-yarn codegen        # regenerates GraphQL and OpenAPI types (needs SHOPANA_GRAPHQL_URL)
+yarn codegen        # regenerates GraphQL and OpenAPI types from schema.shopana.graphql
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
