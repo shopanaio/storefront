@@ -24,6 +24,7 @@ import { VisuallyHidden } from '../VisuallyHidden';
 import {
   focusFieldsWithoutPan,
   isKeyboardField,
+  isKeyboardUp,
   retainViewportBox,
 } from '../visualViewport';
 import { DrawerLayerContext, useDrawerLayer, type DrawerLayer } from './layer';
@@ -212,6 +213,34 @@ export const Sheet = ({
     return () => resizeObserver.disconnect();
   }, [measured, isVertical, open, expanded]);
 
+  // Over the keyboard as tall as its content, the sheet keeps the place it rose to as the
+  // keyboard goes down, as one stood up to the whole screen keeps its: the highest top its
+  // panel reached over the keyboard, from the top of its box (--sheet-detent-top), down to the
+  // bottom of the screen (panelFitted).
+  useEffect(() => {
+    if (!expanded || stretches || !contentNode) return;
+    const panel = contentNode.querySelector<HTMLElement>('[data-sheet-panel]');
+    if (!panel) return;
+    let detent = Infinity;
+    const measure = () => {
+      if (!isKeyboardUp()) return;
+      const top =
+        panel.getBoundingClientRect().top -
+        contentNode.getBoundingClientRect().top;
+      if (top >= detent) return;
+      detent = top;
+      contentNode.style.setProperty('--sheet-detent-top', `${Math.round(top)}px`);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(panel);
+    observer.observe(contentNode);
+    measure();
+    return () => {
+      observer.disconnect();
+      contentNode.style.removeProperty('--sheet-detent-top');
+    };
+  }, [expanded, stretches, contentNode]);
+
   // Stood up, the panel takes the screen's height from CSS alone (panelStanding), at once as
   // the keyboard moves; only standing up is animated, once (panelStandingUp).
   const standing = stretches && expanded;
@@ -228,10 +257,13 @@ export const Sheet = ({
     if (open || !expanded) return;
     const panel = contentNode?.querySelector<HTMLElement>('[data-sheet-panel]');
     if (!panel) return;
-    panel.style.setProperty('height', `${panel.offsetHeight}px`, 'important');
+    const frozen = `${panel.offsetHeight}px`;
+    panel.style.setProperty('height', frozen, 'important');
+    panel.style.setProperty('min-height', frozen, 'important');
     panel.style.setProperty('transition', 'none', 'important');
     return () => {
       panel.style.removeProperty('height');
+      panel.style.removeProperty('min-height');
       panel.style.removeProperty('transition');
     };
   }, [open, expanded, contentNode]);
@@ -374,6 +406,7 @@ export const Sheet = ({
               data-sheet-panel=""
               className={cx(
                 expanded && styles.panelExpanded,
+                expanded && !stretches && styles.panelFitted,
                 standing && styles.panelStanding,
                 standing && !stood && styles.panelStandingUp
               )}

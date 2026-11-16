@@ -5,6 +5,7 @@ import type { InputProps, InputRef } from 'antd';
 import { createStyles } from 'antd-style';
 import { useId, useState } from 'react';
 import type { CSSProperties, ReactNode, Ref } from 'react';
+import { FOCUS_PENDING_ATTR } from './visualViewport';
 
 /**
  * Height of the floating-label fields: room for the label over one line of text. `PhoneInput`
@@ -217,6 +218,20 @@ const useStyles = createStyles(({ css, cx, token, prefixCls }) => {
       }
       &:has(input:autofill) ${labelSelector} {
         ${floatingRules}
+      }
+
+      /* The caret on its way from the tap on (on iOS a stand-in holds it while the keyboard
+         comes up, focusFieldsWithoutPan): the field looks focused already. */
+      &:has(input[${FOCUS_PENDING_ATTR}]) ${labelSelector} {
+        ${floatingRules}
+      }
+      &:has(input[${FOCUS_PENDING_ATTR}]):not(:has(.${prefixCls}-input-affix-wrapper-status-error))
+        ${labelSelector} {
+        color: ${token.colorPrimary};
+      }
+      && .${prefixCls}-input-affix-wrapper:not(.${prefixCls}-input-affix-wrapper-status-error):has(input[${FOCUS_PENDING_ATTR}]) {
+        border-color: ${token.colorPrimary};
+        box-shadow: 0 0 0 ${token.controlOutlineWidth}px ${token.controlOutline};
       }
     `,
     prefix: css`

@@ -180,6 +180,11 @@ export const useStyles = createStyles(
         min-height: 0 !important;
       }
     `,
+    // Over the keyboard as tall as its content: down to the bottom of its box from the top it
+    // rose to (Sheet's --sheet-detent-top), so it stays there as the keyboard goes down.
+    panelFitted: css`
+      min-height: calc(100% - var(--sheet-detent-top, 100%));
+    `,
     // Standing up, once: from the height it had to the whole screen.
     panelStandingUp: css`
       &&& {
