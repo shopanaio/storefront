@@ -3630,6 +3630,7 @@ export type ListingFilterGroup =
   | 'CATEGORY'
   | 'FACET'
   | 'PRICE'
+  | 'RATING'
   | 'VENDOR';
 
 /**
@@ -3650,6 +3651,11 @@ export type ListingFilterInput = {
   readonly categoryId?: InputMaybe<Scalars['ID']['input']>;
   readonly facet?: InputMaybe<FacetFilterInput>;
   readonly price?: InputMaybe<PriceRangeFilterInput>;
+  /**
+   * Products whose shown average review rating is at least min. One rating
+   * filter per request.
+   */
+  readonly rating?: InputMaybe<RatingFilterInput>;
   /**
    * The vendor of vendorId given by its storefront handle. An unknown handle is
    * ignored, as an unknown vendor.
@@ -3696,6 +3702,12 @@ export type ListingSort =
   | 'PRICE_ASC'
   /** Storefront price descending. Available in global, category, and query contexts. */
   | 'PRICE_DESC'
+  /**
+   * Review score descending: a Bayesian average of published ratings weighted by
+   * review count. Products without reviews come last. Available in every listing
+   * context.
+   */
+  | 'RATING'
   /** Search relevance. Available when a query is active in any scope. */
   | 'RELEVANCE'
   /** Localized title ascending. Available in global, category, and query contexts. */
@@ -8057,6 +8069,15 @@ export type QueryVendorsArgs = {
   before?: InputMaybe<Scalars['Cursor']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/**
+ * Minimum average review rating, from 1 to 4 inclusive. The average is compared
+ * as the storefront shows it: rounded to three decimals, then half up to one
+ * decimal. Products without published reviews never match.
+ */
+export type RatingFilterInput = {
+  readonly min: Scalars['Int']['input'];
 };
 
 export type Review = Node &

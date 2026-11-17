@@ -8690,6 +8690,12 @@ enum ListingSort @join__type(graph: LISTING_STOREFRONT)  {
   Storefront price descending. Available in global, category, and query contexts.
   """
   PRICE_DESC @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  Review score descending: a Bayesian average of published ratings weighted by
+  review count. Products without reviews come last. Available in every listing
+  context.
+  """
+  RATING @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 """
@@ -8770,6 +8776,7 @@ enum ListingFilterGroup @join__type(graph: LISTING_STOREFRONT)  {
   VENDOR @join__enumValue(graph: LISTING_STOREFRONT)
   PRICE @join__enumValue(graph: LISTING_STOREFRONT)
   AVAILABILITY @join__enumValue(graph: LISTING_STOREFRONT)
+  RATING @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 """
@@ -10727,6 +10734,20 @@ input ListingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
   vendorHandle: String
   price: PriceRangeFilterInput
   availability: Availability
+  """
+  Products whose shown average review rating is at least min. One rating
+  filter per request.
+  """
+  rating: RatingFilterInput
+}
+
+"""
+Minimum average review rating, from 1 to 4 inclusive. The average is compared
+as the storefront shows it: rounded to three decimals, then half up to one
+decimal. Products without published reviews never match.
+"""
+input RatingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
+  min: Int!
 }
 
 input FacetFilterInput @join__type(graph: LISTING_STOREFRONT)  {
