@@ -3290,7 +3290,8 @@ export type DynamicCollectionRule = {
   readonly operator: DynamicCollectionRuleOperator;
   /**
    * Values of CATEGORY, TAG, VENDOR, FEATURE and OPTION rules. Empty for PRICE,
-   * OFFER_PRICE, IN_STOCK, ON_SALE and CREATED_AT, which are described by label alone.
+   * OFFER_PRICE, IN_STOCK, ON_SALE, RATING and CREATED_AT, which are described by label
+   * alone.
    */
   readonly values: ReadonlyArray<DynamicCollectionRuleValue>;
 };
@@ -3307,6 +3308,8 @@ export type DynamicCollectionRuleField =
   | 'OPTION'
   /** Catalog price. */
   | 'PRICE'
+  /** Shown average review rating of a product; canonicalized to GTE. */
+  | 'RATING'
   | 'TAG'
   | 'VENDOR';
 
@@ -3340,6 +3343,11 @@ export type DynamicCollectionRuleInput = {
   readonly priceComparison?: InputMaybe<DynamicCollectionPriceComparisonInput>;
   /** Inclusive price range with at least one bound; a single bound acts as GTE or LTE. */
   readonly priceRange?: InputMaybe<PriceRangeFilterInput>;
+  /**
+   * Keeps products whose shown average review rating is at least min, the same
+   * thresholds as the rating filter. min outside 1..4 is rejected.
+   */
+  readonly rating?: InputMaybe<RatingFilterInput>;
   /** IN, ALL or NOT_IN over tags. */
   readonly tag?: InputMaybe<DynamicCollectionIdRuleInput>;
   /** IN or NOT_IN over vendors. */
@@ -3447,6 +3455,8 @@ export type FacetType =
   | 'ON_SALE'
   | 'OPTION'
   | 'PRICE'
+  /** Products by average review rating; the facet has no values and is shown as "N stars and up" thresholds. */
+  | 'RATING'
   | 'TAG'
   | 'VENDOR';
 
@@ -3489,7 +3499,7 @@ export type Filter = {
   readonly __typename: 'Filter';
   /**
    * The configured canonical facet represented by this filter.
-   * Null for category, availability and price filters.
+   * Null only for category navigation.
    */
   readonly facet?: Maybe<Facet>;
   /** Stable public identifier within the storefront listing contract. */
@@ -3499,10 +3509,7 @@ export type Filter = {
   readonly presentation?: Maybe<FilterPresentation>;
   /** Typed bounds and active selection for a PRICE_RANGE filter. */
   readonly priceRange?: Maybe<FilterPriceRange>;
-  /**
-   * The selection behavior configured on facet. Null for availability and price
-   * filters, whose behavior is determined by Filter.type.
-   */
+  /** The selection behavior configured on facet; category navigation is single selection. */
   readonly selectionMode?: Maybe<FacetSelectionMode>;
   readonly type: FilterType;
   /** Selectable values and reusable inputs for this filter. */
@@ -3659,6 +3666,7 @@ export type ListingFilterGroup =
   /** The on-sale group of the store's ON_SALE facet. */
   | 'ON_SALE'
   | 'PRICE'
+  /** The rating group of the store's RATING facet. */
   | 'RATING'
   | 'VENDOR';
 
@@ -3670,6 +3678,7 @@ export type ListingFilterGroup =
  * price, and availability are evaluated against the same variant.
  */
 export type ListingFilterInput = {
+  /** Availability filter; OUTSIDE_SCOPE unless an IN_STOCK facet is enabled, PINNED when fixed by the scope. */
   readonly availability?: InputMaybe<Availability>;
   /**
    * The category of categoryId given by its storefront handle. An unknown handle
@@ -3686,10 +3695,12 @@ export type ListingFilterInput = {
    * store's ON_SALE facet is outside the facet set of the scope.
    */
   readonly onSale?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Price filter; OUTSIDE_SCOPE unless a PRICE facet is enabled for this scope. */
   readonly price?: InputMaybe<PriceRangeFilterInput>;
   /**
    * Products whose shown average review rating is at least min. One rating
-   * filter per request.
+   * filter per request. Not applied (OUTSIDE_SCOPE) when the store's RATING facet is
+   * outside the facet set of the scope.
    */
   readonly rating?: InputMaybe<RatingFilterInput>;
   /**
@@ -6898,8 +6909,6 @@ export type ProductComparisonColumn = {
   readonly __typename: 'ProductComparisonColumn';
   /** Whether the concrete variant can currently be purchased. */
   readonly availableForSale: Scalars['Boolean']['output'];
-  /** Current compare-at price of the concrete variant, when applicable. */
-  readonly compareAtPrice?: Maybe<Money>;
   /**
    * Media selected by Catalog for the comparison header.
    *
@@ -6910,8 +6919,6 @@ export type ProductComparisonColumn = {
   readonly key: Scalars['String']['output'];
   /** Zero-based position in the complete comparison. */
   readonly position: Scalars['Int']['output'];
-  /** Current price of the concrete variant in the storefront currency. */
-  readonly price?: Maybe<Money>;
   readonly product: Product;
   /**
    * Whether this exact variant is persisted in the authenticated customer's
@@ -7113,11 +7120,9 @@ export type ProductConnection = Connection & {
    * With omitted or null groups, returns FACET, VENDOR, ON_SALE, AVAILABILITY, PRICE
    * and RATING.
    * An empty list returns no groups. CATEGORY is opt-in and appears first.
-   * Remaining order: configured facets by their configured order, the VENDOR facet among
-   * them (absent on a vendor page, when no VENDOR facet is enabled for the scope,
-   * and when no vendor has matching products), then the on-sale group of the
-   * store's ON_SALE facet (absent when no ON_SALE facet is enabled for the scope),
-   * `availability` and `price`.
+   * All remaining groups follow the exact configured facet order (lexo_rank, id), including
+   * vendor, price, availability, rating and on-sale. Only explicitly configured facets eligible
+   * for the scope are returned. Groups fixed by the scope are omitted.
    * Vendor values are ordered by localized vendor name, then id.
    *
    * The CATEGORY group lists published categories under one parent: the category
@@ -9145,13 +9150,18 @@ export type StorefrontPromotion = {
   readonly value?: Maybe<StorefrontPromotionValue>;
 };
 
-/** Localized texts; headline and badge are generated from the rule when the merchant left them empty. */
+/**
+ * Localized texts; an empty headline is generated from the rule and an empty badge is the standard
+ * promotion word.
+ */
 export type StorefrontPromotionCopy = {
   readonly __typename: 'StorefrontPromotionCopy';
   readonly accessibilityLabel: Scalars['String']['output'];
   readonly badge: Scalars['String']['output'];
   readonly description?: Maybe<RichText>;
   readonly headline: Scalars['String']['output'];
+  /** Up to 12 characters for the product card, written by the merchant; null when empty. */
+  readonly shortBadge?: Maybe<Scalars['String']['output']>;
   readonly terms?: Maybe<Scalars['String']['output']>;
 };
 
