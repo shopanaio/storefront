@@ -1,5 +1,9 @@
 import { loyaltyAccount } from './loyalty.js';
-import { promotionPresentation } from './promotions.js';
+import {
+  listingOffer,
+  listingPriceRange,
+  promotionPresentation,
+} from './promotions.js';
 import {
   GraphQLError,
   getNamedType,
@@ -656,6 +660,15 @@ const specialFields = (store) => ({
       : null,
   'ProductVariant.promotions': (variant) =>
     promotionPresentation(store, { variant }),
+  // The storefront price fields of Listing; the fixture keeps the catalog prices.
+  'ProductVariant.price': (variant) => listingOffer(store, variant).price,
+  'ProductVariant.compareAtPrice': (variant) =>
+    listingOffer(store, variant).compareAtPrice,
+  'ProductVariant.appliedDiscountIds': (variant) =>
+    listingOffer(store, variant).appliedDiscountIds,
+  'ProductVariant.cartOnlyDiscountIds': (variant) =>
+    listingOffer(store, variant).cartOnlyDiscountIds,
+  'Product.priceRange': (product) => listingPriceRange(store, product),
   // A fixture without places is shown everywhere, like a discount the merchant left as is.
   'StorefrontPromotion.placements': (promotion) =>
     promotion.placements ?? ['PRODUCT', 'CART', 'PROMOTION_LIST'],

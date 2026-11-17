@@ -25,15 +25,15 @@ query SdkCustomerProductComparisonsQuery($imageTransform: ImageTransformInput) {
               id
               handle
               title
+              price {
+                ...SdkCustomerMoneyFragment
+              }
+              compareAtPrice {
+                ...SdkCustomerMoneyFragment
+              }
             }
             featuredMedia {
               ...SdkCustomerMediaFragment
-            }
-            price {
-              ...SdkCustomerMoneyFragment
-            }
-            compareAtPrice {
-              ...SdkCustomerMoneyFragment
             }
             availableForSale
             savedForComparison

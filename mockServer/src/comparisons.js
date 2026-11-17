@@ -1,4 +1,5 @@
 import { connection } from './helpers.js';
+import { listingOffer } from './promotions.js';
 
 const tail = (id) => String(id).split('/').at(-1);
 
@@ -177,8 +178,9 @@ export const comparisonColumns = (store, comparison, args) => {
         featuredMedia: store.get(
           variant.featuredMediaId ?? product.featuredMediaId
         ),
-        price: variant.price,
-        compareAtPrice: variant.compareAtPrice,
+        // The storefront price of the variant, as `column.variant.price`.
+        price: listingOffer(store, variant).price,
+        compareAtPrice: listingOffer(store, variant).compareAtPrice,
         availableForSale: variant.availableForSale,
         savedForComparison: savedVariantIds.has(variant.id),
       };

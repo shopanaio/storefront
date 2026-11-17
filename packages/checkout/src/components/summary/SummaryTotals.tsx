@@ -9,8 +9,6 @@ import { LoyaltyIcon } from '#checkout/sections/loyalty/components/LoyaltyIcon';
 import { useShippingQuote } from '#checkout/sections/delivery/useShippingQuote';
 import {
   ShippingPriceValue,
-  useEstimateLabel,
-  useFreeShippingReason,
 } from '#checkout/sections/delivery/components/ShipmentQuote';
 
 const { Text } = Typography;
@@ -22,7 +20,7 @@ interface SummaryTotalsProps {
 /**
  * A component for displaying checkout cost summary including subtotal, shipping, discounts, taxes and total.
  * Shipping is shown after free shipping and shipping discounts, with the price before them struck
- * through and why it is free; the discount holds what promotions and rewards took off the goods.
+ * through; the discount holds what promotions and rewards took off the goods.
  * What is paid with points or store credit is its own line, and what the order earns is a quiet
  * line under the total.
  */
@@ -31,18 +29,12 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
   const locale = useLocale();
   const { styles } = useStyles();
 
-  const estimateLabel = useEstimateLabel();
-  const reasonLabel = useFreeShippingReason();
   /**
    * Shipping of the selected options of every shipment (R9), as the server settled it: the
    * amount charged, "free" or the carrier's rates. Unknown until every shipment has its
    * option and its input is saved, as in the delivery section.
    */
   const quote = useShippingQuote(checkout);
-  const arrivesBy = quote
-    ? estimateLabel(null, quote.estimatedMaxDeliveryAt)
-    : null;
-  const freeReason = quote ? reasonLabel(quote.freeShipping) : null;
   /**
    * Before delivery is chosen, free shipping the cart reached: free for any delivery without a
    * price limit, otherwise only for delivery up to the limit (BR-fz10).
@@ -86,16 +78,6 @@ export const SummaryTotals = ({ checkout }: SummaryTotalsProps) => {
           {t('shipping-free-up-to', {
             amount: formatMoney(locale, freeUpTo),
           })}
-        </Text>
-      )}
-      {freeReason && (
-        <Text type="success" className={styles.note}>
-          {freeReason}
-        </Text>
-      )}
-      {arrivesBy && (
-        <Text type="secondary" className={styles.note}>
-          {t('delivery-arrives-by', { date: arrivesBy })}
         </Text>
       )}
       {discount.amount > 0 && (

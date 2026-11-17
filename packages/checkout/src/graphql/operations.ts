@@ -3254,6 +3254,18 @@ export type DynamicCollectionIdRuleInput = {
   readonly operator: DynamicCollectionSetOperator;
 };
 
+/** Kind of sale of an on-sale rule. */
+export type DynamicCollectionOnSaleKind =
+  /** The struck-through price is above the buyer price, or the variant is a target of a promotion. */
+  | 'ANY'
+  /** The catalog compare-at price is above the catalog price and no discount is in the price. */
+  | 'MARKDOWN'
+  /**
+   * A discount is included in the buyer price, or the variant is a target of a storefront
+   * promotion, conditional ones included.
+   */
+  | 'PROMOTION';
+
 export type DynamicCollectionPriceComparisonInput = {
   /** Decimal major units in the storefront context currency. */
   readonly amount: Scalars['Decimal']['input'];
@@ -3278,7 +3290,7 @@ export type DynamicCollectionRule = {
   readonly operator: DynamicCollectionRuleOperator;
   /**
    * Values of CATEGORY, TAG, VENDOR, FEATURE and OPTION rules. Empty for PRICE,
-   * IN_STOCK and CREATED_AT, which are described by label alone.
+   * OFFER_PRICE, IN_STOCK, ON_SALE and CREATED_AT, which are described by label alone.
    */
   readonly values: ReadonlyArray<DynamicCollectionRuleValue>;
 };
@@ -3289,7 +3301,11 @@ export type DynamicCollectionRuleField =
   | 'CREATED_AT'
   | 'FEATURE'
   | 'IN_STOCK'
+  /** Buyer price: the storefront price after discounts shown in the price. */
+  | 'OFFER_PRICE'
+  | 'ON_SALE'
   | 'OPTION'
+  /** Catalog price. */
   | 'PRICE'
   | 'TAG'
   | 'VENDOR';
@@ -3310,6 +3326,15 @@ export type DynamicCollectionRuleInput = {
   readonly feature?: InputMaybe<DynamicCollectionValueRuleInput>;
   /** True keeps available variants, false unavailable ones. */
   readonly inStock?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Compares the buyer price: the storefront price after discounts shown in the price. */
+  readonly offerPriceComparison?: InputMaybe<DynamicCollectionPriceComparisonInput>;
+  /**
+   * Inclusive range of the buyer price with at least one bound; a single bound acts
+   * as GTE or LTE.
+   */
+  readonly offerPriceRange?: InputMaybe<PriceRangeFilterInput>;
+  /** Keeps variants on sale of the given kind. */
+  readonly onSale?: InputMaybe<DynamicCollectionOnSaleKind>;
   /** IN, ALL or NOT_IN over variant option values. NOT_IN removes only matching variants. */
   readonly option?: InputMaybe<DynamicCollectionValueRuleInput>;
   readonly priceComparison?: InputMaybe<DynamicCollectionPriceComparisonInput>;
@@ -3418,6 +3443,8 @@ export type FacetSwatch = Node & {
 export type FacetType =
   | 'FEATURE'
   | 'IN_STOCK'
+  /** Products on sale; the facet has no values and is shown as one BOOLEAN value. */
+  | 'ON_SALE'
   | 'OPTION'
   | 'PRICE'
   | 'TAG'
@@ -3629,6 +3656,8 @@ export type ListingFilterGroup =
   | 'AVAILABILITY'
   | 'CATEGORY'
   | 'FACET'
+  /** The on-sale group of the store's ON_SALE facet. */
+  | 'ON_SALE'
   | 'PRICE'
   | 'RATING'
   | 'VENDOR';
@@ -3650,6 +3679,13 @@ export type ListingFilterInput = {
   /** A single published category. Intersects its subtree with the original listing. */
   readonly categoryId?: InputMaybe<Scalars['ID']['input']>;
   readonly facet?: InputMaybe<FacetFilterInput>;
+  /**
+   * Only true: products with a variant on sale, whose struck-through price is above
+   * the price or which is a target of a storefront promotion. Evaluated against the
+   * same variant as price and availability. Not applied (OUTSIDE_SCOPE) when the
+   * store's ON_SALE facet is outside the facet set of the scope.
+   */
+  readonly onSale?: InputMaybe<Scalars['Boolean']['input']>;
   readonly price?: InputMaybe<PriceRangeFilterInput>;
   /**
    * Products whose shown average review rating is at least min. One rating
@@ -3694,6 +3730,11 @@ export type ListingQueryMode =
 export type ListingSort =
   /** Creation date descending. Available in global, category, and query contexts. */
   | 'CREATED_AT'
+  /**
+   * Biggest discount first, then the lower storefront price. Products without a
+   * discount come last. Available in global, category, and query contexts.
+   */
+  | 'DISCOUNT_DESC'
   /** Merchant-defined order. Available only in category scope. */
   | 'MANUAL'
   /** Published date descending. Available in global, category, and query contexts. */
@@ -6677,6 +6718,8 @@ export type Product = Node & {
   readonly loyalty?: Maybe<ProductLoyaltyPresentation>;
   readonly media: ProductMediaConnection;
   readonly options: ReadonlyArray<ProductOption>;
+  /** Lowest and highest unit price among the product's priced variants in the request currency. */
+  readonly priceRange?: Maybe<ProductPriceRange>;
   readonly primaryCategory?: Maybe<Category>;
   readonly publishedAt: Scalars['DateTime']['output'];
   /** Published question and answer aggregates for this product. */
@@ -7067,11 +7110,14 @@ export type ProductConnection = Connection & {
    * Each count uses target-filter isolation: selections from the filter being
    * counted are excluded while every other filter remains active.
    *
-   * With omitted or null groups, returns FACET, VENDOR, AVAILABILITY and PRICE.
+   * With omitted or null groups, returns FACET, VENDOR, ON_SALE, AVAILABILITY, PRICE
+   * and RATING.
    * An empty list returns no groups. CATEGORY is opt-in and appears first.
    * Remaining order: configured facets by their configured order, the VENDOR facet among
    * them (absent on a vendor page, when no VENDOR facet is enabled for the scope,
-   * and when no vendor has matching products), then `availability` and `price`.
+   * and when no vendor has matching products), then the on-sale group of the
+   * store's ON_SALE facet (absent when no ON_SALE facet is enabled for the scope),
+   * `availability` and `price`.
    * Vendor values are ordered by localized vendor name, then id.
    *
    * The CATEGORY group lists published categories under one parent: the category
@@ -7123,11 +7169,11 @@ export type ProductEdge = {
   readonly cursor: Scalars['Cursor']['output'];
   /**
    * The product variant that satisfies the variant conditions of this listing:
-   * collection rules, option, price and availability filters. Available variants
-   * come first, then the lower price in the context currency, then the index
-   * order. With a price sort it is the variant whose price ordered the product.
-   * Null when the listing has no variant conditions; clients then fall back to
-   * their default variant selection.
+   * collection rules, option, price, on-sale and availability filters. Available
+   * variants come first, then the lower price in the context currency, then the
+   * index order. With a price or discount sort it is always the variant that
+   * ordered the product. Null with other sorts when the listing has no variant
+   * conditions; clients then fall back to their default variant selection.
    */
   readonly matchedVariant?: Maybe<ProductVariant>;
   /** The product at the end of the edge. */
@@ -7264,6 +7310,13 @@ export type ProductOptionValueSwatch = {
   readonly metadata?: Maybe<Scalars['JSON']['output']>;
   readonly secondaryColor?: Maybe<Scalars['Color']['output']>;
   readonly type: ProductOptionSwatchType;
+};
+
+/** Lowest and highest unit price of a product's variants. */
+export type ProductPriceRange = {
+  readonly __typename: 'ProductPriceRange';
+  readonly maxPrice: Money;
+  readonly minPrice: Money;
 };
 
 export type ProductQuestion = Node &
@@ -7566,7 +7619,21 @@ export type ProductReviewSummary = {
 /** A purchasable combination of product option values. */
 export type ProductVariant = Node & {
   readonly __typename: 'ProductVariant';
+  /**
+   * Discounts already included in price, as StorefrontPromotion.key values. Only promotions
+   * published to the storefront are listed; a hidden discount lowers price without appearing here.
+   */
+  readonly appliedDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
   readonly availableForSale: Scalars['Boolean']['output'];
+  /**
+   * Discounts not included in price that the cart applies to one unit, as StorefrontPromotion.key
+   * values. Only promotions published to the storefront are listed.
+   */
+  readonly cartOnlyDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
+  /**
+   * Struck-through price: the catalog price when a discount is included in price; otherwise the
+   * catalog compare-at price when it is higher than the catalog price; otherwise null.
+   */
   readonly compareAtPrice?: Maybe<Money>;
   readonly componentConfiguration?: Maybe<ProductComponentConfiguration>;
   readonly createdAt: Scalars['DateTime']['output'];
@@ -7583,6 +7650,10 @@ export type ProductVariant = Node & {
    */
   readonly loyalty?: Maybe<ProductLoyaltyPresentation>;
   readonly media: ProductVariantMediaConnection;
+  /**
+   * Price of one unit after unconditional automatic discounts shown in the product price; what the
+   * buyer pays for one unit.
+   */
   readonly price?: Maybe<Money>;
   readonly product: Product;
   /** Published promotions related to the variant; empty when there are none. */

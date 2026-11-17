@@ -144,6 +144,93 @@ const discountOf = (promotion, base) => {
   return round2(Math.min(amount, base));
 };
 
+const oneUnitMeetsMinimum = (promotion, unitPrice) =>
+  (!promotion.minimumSubtotal ||
+    Number(promotion.minimumSubtotal.amount) <= unitPrice) &&
+  (promotion.minimumQuantity ?? 0) <= 1;
+
+/**
+ * A discount the offer price includes: unconditional, shown in the product price
+ * (`priceDisplay`, absent means PRODUCT_PRICE), and a percentage without a cap. The mock cart
+ * spreads a fixed amount over the matching lines once (ACROSS), so a fixed amount stays in the
+ * cart, as a capped discount does.
+ */
+const inOfferPrice = (promotion) =>
+  !hasMinimum(promotion) &&
+  promotion.priceDisplay !== 'CART_ONLY' &&
+  promotion.value?.type === 'PERCENTAGE' &&
+  !promotion.value.maximumDiscount;
+
+/**
+ * The storefront price of a variant by the rules of Listing (plan §1): `price` is one unit after
+ * the discounts in the offer price; `compareAtPrice` is the catalog price when one of them
+ * applies, else the catalog compare-at price above the price, else null. The discount lists carry
+ * the keys of published promotions only: those in the price and those the cart applies to one
+ * unit on top of it. The fixture variant keeps its catalog prices for the cart.
+ */
+export const listingOffer = (store, variant) => {
+  if (!variant.price) {
+    return {
+      price: null,
+      compareAtPrice: null,
+      appliedDiscountIds: [],
+      cartOnlyDiscountIds: [],
+    };
+  }
+  const catalogPrice = Number(variant.price.amount);
+  const { currencyCode } = variant.price;
+  const applying = activePromotions(store).filter(
+    (promotion) =>
+      promotion.kind === 'PRODUCT_DISCOUNT' &&
+      promotion.appliesOnOneTimePurchase &&
+      matchesVariant(store, promotion, variant) &&
+      oneUnitMeetsMinimum(promotion, catalogPrice) &&
+      discountOf(promotion, catalogPrice) > 0
+  );
+  const inPrice = applying.filter(inOfferPrice);
+  const offerPrice = round2(
+    Math.max(
+      0,
+      catalogPrice -
+        inPrice.reduce(
+          (sum, promotion) => sum + discountOf(promotion, catalogPrice),
+          0
+        )
+    )
+  );
+  const catalogCompareAt = Number(variant.compareAtPrice?.amount);
+  const compareAt = inPrice.length
+    ? catalogPrice
+    : catalogCompareAt > catalogPrice
+      ? catalogCompareAt
+      : null;
+  const publishedKeys = (promotions) =>
+    promotions.filter(isVisible).map(({ key }) => key);
+  return {
+    price: money(offerPrice, currencyCode),
+    compareAtPrice: compareAt === null ? null : money(compareAt, currencyCode),
+    appliedDiscountIds: publishedKeys(inPrice),
+    cartOnlyDiscountIds: publishedKeys(
+      applying.filter((promotion) => !inPrice.includes(promotion))
+    ),
+  };
+};
+
+/** Lowest and highest offer price of the product's priced variants; null without one. */
+export const listingPriceRange = (store, product) => {
+  const prices = (product.variantIds ?? [])
+    .map((id) => store.get(id))
+    .filter((variant) => variant?.price)
+    .map((variant) => listingOffer(store, variant).price);
+  if (!prices.length) return null;
+  const amounts = prices.map(({ amount }) => Number(amount));
+  const { currencyCode } = prices[0];
+  return {
+    minPrice: money(Math.min(...amounts), currencyCode),
+    maxPrice: money(Math.max(...amounts), currencyCode),
+  };
+};
+
 /**
  * Evaluates the automatic promotions of a checkout before shipping is priced. The thresholds use
  * line subtotals before any discount (BR-pg02); a product discount counts only its target lines.

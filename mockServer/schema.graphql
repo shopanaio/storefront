@@ -1315,6 +1315,10 @@ type Product implements Node @join__type(
   createdAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
   updatedAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
   """
+  Lowest and highest unit price among the product's priced variants in the request currency.
+  """
+  priceRange: ProductPriceRange @join__field(graph: LISTING_STOREFRONT)
+  """
   Merchant-curated and automatically ranked products related to this product.
 
   Results come from the currently published PRODUCT_RELATED ranking snapshot.
@@ -2337,8 +2341,16 @@ type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: 
   sku: String @join__field(graph: CATALOG_STOREFRONT)
   isDefault: Boolean! @join__field(graph: CATALOG_STOREFRONT)
   selectedOptions: [SelectedOption!]! @join__field(graph: CATALOG_STOREFRONT)
-  price: Money @join__field(graph: CATALOG_STOREFRONT)
-  compareAtPrice: Money @join__field(graph: CATALOG_STOREFRONT)
+  """
+  Price of one unit after unconditional automatic discounts shown in the product price; what the
+  buyer pays for one unit.
+  """
+  price: Money @join__field(graph: LISTING_STOREFRONT, override: "catalog-storefront")
+  """
+  Struck-through price: the catalog price when a discount is included in price; otherwise the
+  catalog compare-at price when it is higher than the catalog price; otherwise null.
+  """
+  compareAtPrice: Money @join__field(graph: LISTING_STOREFRONT, override: "catalog-storefront")
   availableForSale: Boolean! @join__field(graph: CATALOG_STOREFRONT)
   currentlyNotInStock: Boolean! @join__field(graph: CATALOG_STOREFRONT)
   quantityAvailable: Int @join__field(graph: CATALOG_STOREFRONT)
@@ -2360,6 +2372,16 @@ type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: 
   ): ProductComponentConfiguration @join__field(graph: CATALOG_STOREFRONT)
   createdAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
   updatedAt: DateTime! @join__field(graph: CATALOG_STOREFRONT)
+  """
+  Discounts already included in price, as StorefrontPromotion.key values. Only promotions
+  published to the storefront are listed; a hidden discount lowers price without appearing here.
+  """
+  appliedDiscountIds: [ID!]! @join__field(graph: LISTING_STOREFRONT)
+  """
+  Discounts not included in price that the cart applies to one unit, as StorefrontPromotion.key
+  values. Only promotions published to the storefront are listed.
+  """
+  cartOnlyDiscountIds: [ID!]! @join__field(graph: LISTING_STOREFRONT)
   """
   Loyalty values ready for rendering for this variant at quantity one. Null
   means that the store has no active customer-visible loyalty presentation.
@@ -4209,7 +4231,7 @@ type DynamicCollectionRule @join__type(graph: LISTING_STOREFRONT)  {
   groupLabel: String
   """
   Values of CATEGORY, TAG, VENDOR, FEATURE and OPTION rules. Empty for PRICE,
-  IN_STOCK and CREATED_AT, which are described by label alone.
+  OFFER_PRICE, IN_STOCK, ON_SALE and CREATED_AT, which are described by label alone.
   """
   values: [DynamicCollectionRuleValue!]!
   """
@@ -4234,6 +4256,14 @@ type DynamicCollectionRuleValue @join__type(graph: LISTING_STOREFRONT)  {
   Localized label. Null when the value is unknown or not visible on the storefront.
   """
   label: String
+}
+
+"""
+Lowest and highest unit price of a product's variants.
+"""
+type ProductPriceRange @join__type(graph: LISTING_STOREFRONT)  {
+  minPrice: Money!
+  maxPrice: Money!
 }
 
 """
@@ -4279,11 +4309,14 @@ type ProductConnection implements Connection @join__type(graph: LISTING_STOREFRO
   Each count uses target-filter isolation: selections from the filter being
   counted are excluded while every other filter remains active.
 
-  With omitted or null groups, returns FACET, VENDOR, AVAILABILITY and PRICE.
+  With omitted or null groups, returns FACET, VENDOR, ON_SALE, AVAILABILITY, PRICE
+  and RATING.
   An empty list returns no groups. CATEGORY is opt-in and appears first.
   Remaining order: configured facets by their configured order, the VENDOR facet among
   them (absent on a vendor page, when no VENDOR facet is enabled for the scope,
-  and when no vendor has matching products), then `availability` and `price`.
+  and when no vendor has matching products), then the on-sale group of the
+  store's ON_SALE facet (absent when no ON_SALE facet is enabled for the scope),
+  `availability` and `price`.
   Vendor values are ordered by localized vendor name, then id.
 
   The CATEGORY group lists published categories under one parent: the category
@@ -4328,11 +4361,11 @@ type ProductEdge @join__type(graph: LISTING_STOREFRONT)  {
   node: Product!
   """
   The product variant that satisfies the variant conditions of this listing:
-  collection rules, option, price and availability filters. Available variants
-  come first, then the lower price in the context currency, then the index
-  order. With a price sort it is the variant whose price ordered the product.
-  Null when the listing has no variant conditions; clients then fall back to
-  their default variant selection.
+  collection rules, option, price, on-sale and availability filters. Available
+  variants come first, then the lower price in the context currency, then the
+  index order. With a price or discount sort it is always the variant that
+  ordered the product. Null with other sorts when the listing has no variant
+  conditions; clients then fall back to their default variant selection.
   """
   matchedVariant: ProductVariant
 }
@@ -8691,6 +8724,11 @@ enum ListingSort @join__type(graph: LISTING_STOREFRONT)  {
   """
   PRICE_DESC @join__enumValue(graph: LISTING_STOREFRONT)
   """
+  Biggest discount first, then the lower storefront price. Products without a
+  discount come last. Available in global, category, and query contexts.
+  """
+  DISCOUNT_DESC @join__enumValue(graph: LISTING_STOREFRONT)
+  """
   Review score descending: a Bayesian average of published ratings weighted by
   review count. Products without reviews come last. Available in every listing
   context.
@@ -8715,6 +8753,25 @@ enum ListingQueryMode @join__type(graph: LISTING_STOREFRONT)  {
   other products the same way. Other sorts keep their order.
   """
   RANK @join__enumValue(graph: LISTING_STOREFRONT)
+}
+
+"""
+Kind of sale of an on-sale rule.
+"""
+enum DynamicCollectionOnSaleKind @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  The struck-through price is above the buyer price, or the variant is a target of a promotion.
+  """
+  ANY @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  A discount is included in the buyer price, or the variant is a target of a storefront
+  promotion, conditional ones included.
+  """
+  PROMOTION @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  The catalog compare-at price is above the catalog price and no discount is in the price.
+  """
+  MARKDOWN @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 enum DynamicCollectionSetOperator @join__type(graph: LISTING_STOREFRONT)  {
@@ -8749,8 +8806,16 @@ enum DynamicCollectionRuleField @join__type(graph: LISTING_STOREFRONT)  {
   VENDOR @join__enumValue(graph: LISTING_STOREFRONT)
   FEATURE @join__enumValue(graph: LISTING_STOREFRONT)
   OPTION @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  Catalog price.
+  """
   PRICE @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  Buyer price: the storefront price after discounts shown in the price.
+  """
+  OFFER_PRICE @join__enumValue(graph: LISTING_STOREFRONT)
   IN_STOCK @join__enumValue(graph: LISTING_STOREFRONT)
+  ON_SALE @join__enumValue(graph: LISTING_STOREFRONT)
   CREATED_AT @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
@@ -8776,6 +8841,10 @@ enum ListingFilterGroup @join__type(graph: LISTING_STOREFRONT)  {
   VENDOR @join__enumValue(graph: LISTING_STOREFRONT)
   PRICE @join__enumValue(graph: LISTING_STOREFRONT)
   AVAILABILITY @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  The on-sale group of the store's ON_SALE facet.
+  """
+  ON_SALE @join__enumValue(graph: LISTING_STOREFRONT)
   RATING @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
@@ -8855,6 +8924,10 @@ enum FacetType @join__type(graph: LISTING_STOREFRONT)  {
   OPTION @join__enumValue(graph: LISTING_STOREFRONT)
   IN_STOCK @join__enumValue(graph: LISTING_STOREFRONT)
   VENDOR @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  Products on sale; the facet has no values and is shown as one BOOLEAN value.
+  """
+  ON_SALE @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 enum FacetUIType @join__type(graph: LISTING_STOREFRONT)  {
@@ -10637,6 +10710,19 @@ input DynamicCollectionRuleInput @join__type(graph: LISTING_STOREFRONT)  {
   True keeps available variants, false unavailable ones.
   """
   inStock: Boolean
+  """
+  Compares the buyer price: the storefront price after discounts shown in the price.
+  """
+  offerPriceComparison: DynamicCollectionPriceComparisonInput
+  """
+  Inclusive range of the buyer price with at least one bound; a single bound acts
+  as GTE or LTE.
+  """
+  offerPriceRange: PriceRangeFilterInput
+  """
+  Keeps variants on sale of the given kind.
+  """
+  onSale: DynamicCollectionOnSaleKind
   createdAtComparison: DynamicCollectionDateComparisonInput
   createdAtRange: DynamicCollectionDateRangeInput
 }
@@ -10734,6 +10820,13 @@ input ListingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
   vendorHandle: String
   price: PriceRangeFilterInput
   availability: Availability
+  """
+  Only true: products with a variant on sale, whose struck-through price is above
+  the price or which is a target of a storefront promotion. Evaluated against the
+  same variant as price and availability. Not applied (OUTSIDE_SCOPE) when the
+  store's ON_SALE facet is outside the facet set of the scope.
+  """
+  onSale: Boolean
   """
   Products whose shown average review rating is at least min. One rating
   filter per request.

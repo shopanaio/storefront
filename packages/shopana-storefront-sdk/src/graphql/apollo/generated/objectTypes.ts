@@ -242,6 +242,7 @@ export const objectTypes: readonly string[] = [
   'ProductOptionType',
   'ProductOptionValue',
   'ProductOptionValueSwatch',
+  'ProductPriceRange',
   'ProductQuestion',
   'ProductQuestionAnswer',
   'ProductQuestionAnswerConnection',

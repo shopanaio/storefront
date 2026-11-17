@@ -18,6 +18,19 @@ const KEYBOARD_MIN_HEIGHT = 120;
  */
 const KEYBOARD_DOWN_TIME = 800;
 
+/**
+ * How long after a field takes the caret back, as the keyboard goes down, the viewport is
+ * read even with no report of it (the keyboard stayed up), ms: the keyboard's move and a frame.
+ */
+const KEYBOARD_REFOCUS_TIME = 300;
+
+/**
+ * Whether the keyboard takes the bottom safe area: on iOS its bars stand there, on Android the
+ * safe area stays under what stands over the keyboard.
+ */
+const keyboardTakesSafeArea = () =>
+  typeof CSS !== 'undefined' && CSS.supports('-webkit-touch-callout', 'none');
+
 /** The keyboard's state as the box follows it; up or down only once the box has measured. */
 let keyboardUp = false;
 const keyboardListeners = new Set<(up: boolean) => void>();
@@ -71,7 +84,8 @@ function track(viewport: VisualViewport): () => void {
       up ? KEYBOARD_UP_TRANSITION : KEYBOARD_DOWN_TRANSITION
     );
     if (up) {
-      root.style.setProperty(VISUAL_VIEWPORT_SAFE_BOTTOM_VAR, '0px');
+      if (keyboardTakesSafeArea())
+        root.style.setProperty(VISUAL_VIEWPORT_SAFE_BOTTOM_VAR, '0px');
       root.setAttribute(KEYBOARD_OPEN_ATTR, '');
     } else {
       root.style.removeProperty(VISUAL_VIEWPORT_SAFE_BOTTOM_VAR);
@@ -102,11 +116,17 @@ function track(viewport: VisualViewport): () => void {
     setKeyboard(false);
     setHeight(wholeHeight ?? root.clientHeight);
   };
-  // A field takes the caret back while the keyboard goes down: the viewport leads again.
+  // A field takes the caret back while the keyboard goes down: the viewport leads again, from
+  // its next report. What it holds now is no place of the keyboard: a size on its way down, or
+  // one of it up that Chrome has not reported again yet (it reports at the end of the move);
+  // the box sized to it would be off the keyboard as it comes back up. With no report on the
+  // way (the keyboard stayed up), it is read once the keyboard has had its time.
+  let refocusTimer = 0;
   const onFocusIn = (event: FocusEvent) => {
     if (!downUntil || !isKeyboardField(event.target)) return;
     downUntil = 0;
-    apply();
+    window.clearTimeout(refocusTimer);
+    refocusTimer = window.setTimeout(apply, KEYBOARD_REFOCUS_TIME);
   };
 
   apply();
@@ -117,6 +137,7 @@ function track(viewport: VisualViewport): () => void {
   document.addEventListener('focusout', onFocusOut);
   document.addEventListener('focusin', onFocusIn);
   return () => {
+    window.clearTimeout(refocusTimer);
     viewport.removeEventListener('resize', apply);
     viewport.removeEventListener('scroll', apply);
     document.removeEventListener('focusout', onFocusOut);

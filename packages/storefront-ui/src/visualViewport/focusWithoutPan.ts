@@ -38,7 +38,9 @@ const FIT_SLOP = 2;
  * the screen has stopped moving (its own transition included). A screen under which the
  * keyboard covers its bottom has no edge at the keyboard to wait for, yet its field stands
  * above the keyboard: null while it does not. A transition gives its first value twice, so
- * the screen has not stopped before it has even begun to move.
+ * the screen has not stopped before it has even begun to move. The viewport is in the place
+ * too: still with it, the keyboard has stopped as well (taken back up on its way down, it
+ * moves again), and the field taking the caret is not panned to as it does.
  */
 const placeOf = (container: HTMLElement, field: HTMLElement) => {
   const box = container.getBoundingClientRect();
@@ -46,7 +48,10 @@ const placeOf = (container: HTMLElement, field: HTMLElement) => {
   const viewport = window.visualViewport;
   if (viewport && rect.bottom > viewport.offsetTop + viewport.height + FIT_SLOP)
     return null;
-  return `${Math.round(box.top)} ${Math.round(box.height)} ${Math.round(rect.top)}`;
+  const view = viewport
+    ? ` ${Math.round(viewport.offsetTop)} ${Math.round(viewport.height)}`
+    : '';
+  return `${Math.round(box.top)} ${Math.round(box.height)} ${Math.round(rect.top)}${view}`;
 };
 
 /**
@@ -204,7 +209,9 @@ const fieldOf = (target: EventTarget | null): KeyboardField | null => {
  * keyboard coming up, and gives it back only once the keyboard is in: the screen flies up
  * and drops back. With the keyboard down the field takes the caret through a stand-in at the
  * top of the screen (focusThroughStandIn); with it up the screen already stands above it.
- * A tap in the field that has the caret is left to the browser (it places the caret).
+ * A tap in the field that has the caret is left to the browser (it places the caret) while
+ * the keyboard is up; with the keyboard put away and the caret kept, the browser would bring
+ * it back and pan, so the field takes the caret again through the stand-in.
  * `onTap` hears of the field a tap begins to focus, before the keyboard comes up (a sheet
  * stands up to the keyboard's height at once). Returns the cleanup.
  */
@@ -235,7 +242,7 @@ export function focusFieldsWithoutPan(
     const field = fieldOf(event.target);
     if (
       !field ||
-      field === document.activeElement ||
+      (field === document.activeElement && isKeyboardUp()) ||
       field.disabled ||
       field.readOnly
     )

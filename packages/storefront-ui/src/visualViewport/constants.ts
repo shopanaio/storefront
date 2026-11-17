@@ -3,8 +3,9 @@ export const VISUAL_VIEWPORT_TOP_VAR = '--visual-viewport-top';
 /** The visual viewport's height, px, on the root element. */
 export const VISUAL_VIEWPORT_HEIGHT_VAR = '--visual-viewport-height';
 /**
- * The bottom safe area of the visual viewport: 0px while the keyboard covers the screen's
- * bottom edge, unset otherwise.
+ * The bottom safe area of the visual viewport: 0px on iOS while the keyboard covers the
+ * screen's bottom edge (its bars stand there), unset otherwise. On Android it stays: the room
+ * under what stands over the keyboard does not shrink at once as the keyboard comes up.
  */
 export const VISUAL_VIEWPORT_SAFE_BOTTOM_VAR = '--visual-viewport-safe-bottom';
 /**
@@ -40,7 +41,7 @@ export const VISUAL_VIEWPORT_TOP = `var(${VISUAL_VIEWPORT_TOP_VAR}, 0px)`;
 /** The height of the visual viewport, the screen's before it is known. */
 export const VISUAL_VIEWPORT_HEIGHT = `var(${VISUAL_VIEWPORT_HEIGHT_VAR}, 100dvh)`;
 
-/** The bottom safe area, none while the keyboard covers the screen's bottom edge. */
+/** The bottom safe area, none on iOS while the keyboard covers the screen's bottom edge. */
 export const VISUAL_VIEWPORT_SAFE_BOTTOM = `var(${VISUAL_VIEWPORT_SAFE_BOTTOM_VAR}, env(safe-area-inset-bottom))`;
 
 /**
