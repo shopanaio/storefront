@@ -9,6 +9,18 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": [
+        "--cwd",
+        "themes/brand-bite-crunch",
+        "run",
+        "storybook",
+        "--no-open"
+      ],
+      "port": 6006
     }
   ]
 }

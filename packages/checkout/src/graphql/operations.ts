@@ -3451,10 +3451,18 @@ export type FacetSwatch = Node & {
 export type FacetType =
   | 'FEATURE'
   | 'IN_STOCK'
-  /** Products on sale; the facet has no values and is shown as one BOOLEAN value. */
+  /**
+   * Products on sale; the facet has two built-in values, ListingSaleFilter ON_SALE and
+   * MARKDOWN, and is shown as the SALE filter group.
+   */
   | 'ON_SALE'
   | 'OPTION'
   | 'PRICE'
+  /**
+   * Products by storefront promotion; the facet has no configured values: its values are the
+   * promotions targeting the products of the result, shown as the PROMOTION filter group.
+   */
+  | 'PROMOTION'
   /** Products by average review rating; the facet has no values and is shown as "N stars and up" thresholds. */
   | 'RATING'
   | 'TAG'
@@ -3548,6 +3556,11 @@ export type FilterValue = {
   /** A JSON object matching ListingFilterInput that can be reused in filters. */
   readonly input: Scalars['JSON']['output'];
   readonly label: Scalars['String']['output'];
+  /**
+   * Storefront promotion represented by this value; the label is the promotion headline.
+   * Null for every value outside the PROMOTION group.
+   */
+  readonly promotion?: Maybe<StorefrontPromotion>;
   readonly selected: Scalars['Boolean']['output'];
   /** Canonical swatch associated with facetValue, when configured. */
   readonly swatch?: Maybe<FacetSwatch>;
@@ -3663,11 +3676,21 @@ export type ListingFilterGroup =
   | 'AVAILABILITY'
   | 'CATEGORY'
   | 'FACET'
-  /** The on-sale group of the store's ON_SALE facet. */
-  | 'ON_SALE'
   | 'PRICE'
+  /**
+   * The promotion group of the store's PROMOTION facet: one LIST filter whose values are
+   * the storefront promotions of the result, conditional ones included, each with the
+   * products it targets. Values without products are omitted unless selected.
+   */
+  | 'PROMOTION'
   /** The rating group of the store's RATING facet. */
   | 'RATING'
+  /**
+   * The sale group of the store's ON_SALE facet: one LIST filter with its enabled values,
+   * ON_SALE and MARKDOWN (ListingSaleFilter), in the configured order. Values without
+   * products are omitted unless selected.
+   */
+  | 'SALE'
   | 'VENDOR';
 
 /**
@@ -3688,21 +3711,29 @@ export type ListingFilterInput = {
   /** A single published category. Intersects its subtree with the original listing. */
   readonly categoryId?: InputMaybe<Scalars['ID']['input']>;
   readonly facet?: InputMaybe<FacetFilterInput>;
-  /**
-   * Only true: products with a variant on sale, whose struck-through price is above
-   * the price or which is a target of a storefront promotion. Evaluated against the
-   * same variant as price and availability. Not applied (OUTSIDE_SCOPE) when the
-   * store's ON_SALE facet is outside the facet set of the scope.
-   */
-  readonly onSale?: InputMaybe<Scalars['Boolean']['input']>;
   /** Price filter; OUTSIDE_SCOPE unless a PRICE facet is enabled for this scope. */
   readonly price?: InputMaybe<PriceRangeFilterInput>;
+  /**
+   * Products with a variant that is a target of the storefront promotion, by
+   * StorefrontPromotion.key. Repeated promotion filters are combined with OR. Evaluated
+   * against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
+   * the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
+   * not published to the storefront matches no product.
+   */
+  readonly promotionId?: InputMaybe<Scalars['ID']['input']>;
   /**
    * Products whose shown average review rating is at least min. One rating
    * filter per request. Not applied (OUTSIDE_SCOPE) when the store's RATING facet is
    * outside the facet set of the scope.
    */
   readonly rating?: InputMaybe<RatingFilterInput>;
+  /**
+   * A value of the store's ON_SALE facet. Repeated sale filters are combined with OR.
+   * Evaluated against the same variant as price and availability. Not applied
+   * (OUTSIDE_SCOPE) when the store's ON_SALE facet is outside the facet set of the
+   * scope, nor (UNKNOWN_VALUE) when the value is disabled.
+   */
+  readonly sale?: InputMaybe<ListingSaleFilter>;
   /**
    * The vendor of vendorId given by its storefront handle. An unknown handle is
    * ignored, as an unknown vendor.
@@ -3731,6 +3762,20 @@ export type ListingQueryMode =
    * other products the same way. Other sorts keep their order.
    */
   | 'RANK';
+
+/** Built-in value of the store's ON_SALE facet. */
+export type ListingSaleFilter =
+  /**
+   * Discounted: the struck-through price is above the price, as the DISCOUNT_DESC sort
+   * counts a discount. A conditional promotion without a struck-through price does not
+   * count.
+   */
+  | 'MARKDOWN'
+  /**
+   * On promotion: the struck-through price is above the price, or the variant is a
+   * target of a storefront promotion, conditional ones included.
+   */
+  | 'ON_SALE';
 
 /**
  * Deterministic storefront product sorting.
@@ -7117,13 +7162,14 @@ export type ProductConnection = Connection & {
    * Each count uses target-filter isolation: selections from the filter being
    * counted are excluded while every other filter remains active.
    *
-   * With omitted or null groups, returns FACET, VENDOR, ON_SALE, AVAILABILITY, PRICE
-   * and RATING.
+   * With omitted or null groups, returns FACET, VENDOR, SALE, PROMOTION, AVAILABILITY,
+   * PRICE and RATING.
    * An empty list returns no groups. CATEGORY is opt-in and appears first.
    * All remaining groups follow the exact configured facet order (lexo_rank, id), including
-   * vendor, price, availability, rating and on-sale. Only explicitly configured facets eligible
+   * vendor, price, availability, rating, sale and promotion. Only explicitly configured facets eligible
    * for the scope are returned. Groups fixed by the scope are omitted.
-   * Vendor values are ordered by localized vendor name, then id.
+   * Vendor values are ordered by localized vendor name, then id. Promotion values are
+   * ordered by promotion headline, then key.
    *
    * The CATEGORY group lists published categories under one parent: the category
    * of the active categoryId filter, else the single category rule of a dynamic
@@ -7174,7 +7220,7 @@ export type ProductEdge = {
   readonly cursor: Scalars['Cursor']['output'];
   /**
    * The product variant that satisfies the variant conditions of this listing:
-   * collection rules, option, price, on-sale and availability filters. Available
+   * collection rules, option, price, sale, promotion and availability filters. Available
    * variants come first, then the lower price in the context currency, then the
    * index order. With a price or discount sort it is always the variant that
    * ordered the product. Null with other sorts when the listing has no variant
