@@ -4,7 +4,10 @@ import type {
   SdkCartLineFragment_FieldsFragment,
   SdkCartLineFragment_LineFragment,
 } from '../../../../graphql/apollo/generated/operations';
-import { mapStorefrontPromotion } from '../../../promotions/core/mapStorefrontPromotion';
+import {
+  mapPromotionBenefitItems,
+  mapStorefrontPromotion,
+} from '../../../promotions/core/mapStorefrontPromotion';
 export type DenormalizedShopanaCart = Omit<
   SdkCartFragment_CartFragment,
   'lines'
@@ -263,10 +266,12 @@ export function mapShopanaCheckoutToEntityCart(
       ? {
           state: checkout.loyaltyEarning.state,
           points: checkout.loyaltyEarning.points,
+          pointsValue: checkout.loyaltyEarning.pointsValue
+            ? toMoney(checkout.loyaltyEarning.pointsValue)
+            : null,
           amount: checkout.loyaltyEarning.amount
             ? toMoney(checkout.loyaltyEarning.amount)
             : null,
-          headline: checkout.loyaltyEarning.presentation.headline,
           description: checkout.loyaltyEarning.presentation.description ?? null,
         }
       : null,
@@ -276,6 +281,13 @@ export function mapShopanaCheckoutToEntityCart(
         : null,
       status: progress.status,
       requirement: mapRequirement(progress.requirement),
+      qualifierLineIds: progress.qualifierLineIds,
+      benefitLineIds: progress.benefitLineIds,
+      timesApplied: progress.timesApplied,
+      missingBenefitQuantity: progress.missingBenefitQuantity,
+      benefitOffers: progress.promotion
+        ? mapPromotionBenefitItems(progress.promotion)
+        : null,
     })),
     freeShippingProgress: checkout.freeShippingProgress
       ? mapFreeShippingProgress(checkout.freeShippingProgress)

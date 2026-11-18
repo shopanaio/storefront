@@ -425,6 +425,11 @@ export const estimateLoyaltyEarning = (store, checkout, payable) => {
   return {
     state: customerId ? 'AVAILABLE' : 'AUTHENTICATION_REQUIRED',
     points: String(points),
+    // The points at the redemption rate, as the API prices them.
+    pointsValue: money(
+      round2(points * (value.pointValue ?? 0.1)),
+      checkout.currencyCode
+    ),
     amount: null,
     presentation: {
       headline: customerId

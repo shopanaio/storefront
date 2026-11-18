@@ -4,6 +4,7 @@ fragment SdkStorefrontPromotion on StorefrontPromotion {
   presentation {
     headline
     badge
+    shortBadge
     description {
       text
       html
@@ -39,6 +40,53 @@ fragment SdkStorefrontPromotion on StorefrontPromotion {
   startsAt
   endsAt
   placements
+  benefitScope
+}
+
+# An item a promotion gives its benefit to, as the cart shows it on the promotion banner.
+fragment SdkPromotionBenefitVariant on ProductVariant {
+  id
+  handle
+  title
+  product {
+    id
+    handle
+    title
+    vendor {
+      name
+    }
+  }
+  cover: featuredMedia {
+    id
+    ... on MediaImage {
+      image {
+        url
+      }
+    }
+  }
+  price {
+    amount
+    currencyCode
+  }
+  compareAtPrice {
+    amount
+    currencyCode
+  }
+  availableForSale
+}
+
+# The items the merchant chose for the benefit of a buy X get Y promotion: the variants, or the
+# products whose first available variant the cart offers.
+fragment SdkPromotionBenefitItems on StorefrontPromotion {
+  benefitVariants {
+    ...SdkPromotionBenefitVariant
+  }
+  benefitProducts {
+    id
+    selectedOrFirstAvailableVariant {
+      ...SdkPromotionBenefitVariant
+    }
+  }
 }
 
 query SdkStorefrontPromotions($kinds: [StorefrontPromotionKind!]) {
@@ -49,5 +97,24 @@ query SdkStorefrontPromotions($kinds: [StorefrontPromotionKind!]) {
     evaluatedAt
     validUntil
     revision
+  }
+}
+
+# The products a buy X get Y promotion lowers, each with the price of one unit as its benefit.
+query SdkPromotionBenefitProducts($promotionKey: ID!, $first: Int!) {
+  products(
+    first: $first
+    filters: [{ promotionId: $promotionKey, promotionRole: BENEFIT }]
+  ) {
+    nodes {
+      id
+      selectedOrFirstAvailableVariant {
+        ...SdkPromotionBenefitVariant
+        benefitPrice(promotionKey: $promotionKey) {
+          amount
+          currencyCode
+        }
+      }
+    }
   }
 }

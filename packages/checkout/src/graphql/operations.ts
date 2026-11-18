@@ -61,7 +61,8 @@ export type AppliedFilter = {
   readonly __typename: 'AppliedFilter';
   /**
    * Products with this value under the other applied filters, as FilterValue.count.
-   * A price filter reports totalCount. Zero for a filter that was not applied.
+   * A price filter and a promotion role filter report totalCount. Zero for a filter that was
+   * not applied.
    */
   readonly count: Scalars['Int']['output'];
   /** The filter from the filters argument, unchanged; reusable as ListingFilterInput. */
@@ -322,8 +323,8 @@ export type Checkout = Node & {
    */
   readonly promoCodes: ReadonlyArray<CheckoutPromoCode>;
   /**
-   * Progress toward published automatic promotions with a minimum order requirement, for the
-   * current cart.
+   * Progress toward published automatic promotions with a minimum order requirement or a buy X get Y
+   * rule, for the current cart.
    */
   readonly promotionProgress: ReadonlyArray<CheckoutPromotionProgress>;
   /** Revision of the last complete checkout pipeline result. */
@@ -1162,6 +1163,11 @@ export type CheckoutLoyaltyEarning = {
   readonly amount?: Maybe<Money>;
   /** Purchase points plus rule awards in points. */
   readonly points: Scalars['BigInt']['output'];
+  /**
+   * `points` in money at the program redemption rate, rounded down; null without points or when the
+   * program does not let points pay for orders.
+   */
+  readonly pointsValue?: Maybe<Money>;
   readonly presentation: CheckoutLoyaltyEarningPresentation;
   readonly state: CheckoutLoyaltyEarningState;
 };
@@ -1387,12 +1393,27 @@ export type CheckoutPromoCodeStatus =
   /** The code is not applied; reason says why. */
   | 'REJECTED';
 
+/**
+ * Progress toward a promotion. For a buy X get Y promotion the status and the requirement describe
+ * its next use: the use after timesApplied, or the last one once the per-order limit is reached.
+ */
 export type CheckoutPromotionProgress = {
   readonly __typename: 'CheckoutPromotionProgress';
+  /** Checkout lines the applied discount lowered. */
+  readonly benefitLineIds: ReadonlyArray<Scalars['ID']['output']>;
+  /** Benefit units a buy X get Y promotion still lacks once the requirement is met; zero otherwise. */
+  readonly missingBenefitQuantity: Scalars['Int']['output'];
   /** Buyer-facing view of the discount; null once the discount is deleted. */
   readonly promotion?: Maybe<StorefrontPromotion>;
+  /**
+   * Checkout lines the requirement counts: the qualifier lines of buy X get Y and the target lines of
+   * a product discount; empty for order and shipping discounts.
+   */
+  readonly qualifierLineIds: ReadonlyArray<Scalars['ID']['output']>;
   readonly requirement: CheckoutPromotionRequirement;
   readonly status: CheckoutPromotionProgressStatus;
+  /** Uses of the applied promotion: buy X get Y counts its uses, any other promotion at most one. */
+  readonly timesApplied: Scalars['Int']['output'];
 };
 
 export type CheckoutPromotionProgressStatus =
@@ -3719,8 +3740,18 @@ export type ListingFilterInput = {
    * against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
    * the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
    * not published to the storefront matches no product.
+   *
+   * With promotionRole the filter is a link from the promotion instead: products with a
+   * variant in that role, for promotions of any placement, the cart-only ones included.
+   * Always applied: the PROMOTION facet does not need to be in the facet set of the scope.
    */
   readonly promotionId?: InputMaybe<Scalars['ID']['input']>;
+  /**
+   * Role of the variant in the promotion of promotionId; allowed only next to promotionId.
+   * Repeated filters of one role are combined with OR; filters of different roles with AND.
+   * Without it promotionId is a value of the PROMOTION facet.
+   */
+  readonly promotionRole?: InputMaybe<ListingPromotionRole>;
   /**
    * Products whose shown average review rating is at least min. One rating
    * filter per request. Not applied (OUTSIDE_SCOPE) when the store's RATING facet is
@@ -3746,6 +3777,19 @@ export type ListingFilterInput = {
    */
   readonly vendorId?: InputMaybe<Scalars['ID']['input']>;
 };
+
+/** Role of a variant in a storefront promotion. */
+export type ListingPromotionRole =
+  /**
+   * The promotion lowers the variant: the products a Buy X Get Y promotion gives at a lower price
+   * or free, the discounted products for a product discount.
+   */
+  | 'BENEFIT'
+  /**
+   * The requirement of the promotion counts the variant, as checkout counts it: the products to
+   * buy for a Buy X Get Y promotion, the discounted products for a product discount.
+   */
+  | 'QUALIFIER';
 
 /** How a text query acts on a dynamic collection. */
 export type ListingQueryMode =
@@ -4344,6 +4388,11 @@ export type LoyaltyPointsRewardPresentation = LoyaltyRewardPresentation & {
   readonly copy: LoyaltyOpportunityCopy;
   readonly kind: LoyaltyRewardKind;
   readonly points: LoyaltyUnsignedRange;
+  /**
+   * The points in money at the program redemption rate, rounded down, in the program currency.
+   * Null when the program does not let points pay for orders.
+   */
+  readonly value?: Maybe<LoyaltyMoneyRange>;
 };
 
 export type LoyaltyRedemptionBound = {
@@ -7677,6 +7726,15 @@ export type ProductVariant = Node & {
   readonly appliedDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
   readonly availableForSale: Scalars['Boolean']['output'];
   /**
+   * Price of one unit of the variant once the Buy X Get Y promotion gives it as the benefit, by
+   * StorefrontPromotion.key: zero for a free item, the catalog price less the percentage or the
+   * fixed amount otherwise. A unit gets one product discount: when a discount shown in the price
+   * comes first at checkout, the unit costs price. Compare with compareAtPrice or price for the
+   * struck-through price. Null when the variant is not a benefit of the promotion, the promotion is
+   * not a published Buy X Get Y one, or the variant has no price.
+   */
+  readonly benefitPrice?: Maybe<Money>;
+  /**
    * Discounts not included in price that the cart applies to one unit, as StorefrontPromotion.key
    * values. Only promotions published to the storefront are listed.
    */
@@ -7718,6 +7776,11 @@ export type ProductVariant = Node & {
   readonly title: Scalars['String']['output'];
   readonly updatedAt: Scalars['DateTime']['output'];
   readonly weight?: Maybe<Weight>;
+};
+
+/** A purchasable combination of product option values. */
+export type ProductVariantBenefitPriceArgs = {
+  promotionKey: Scalars['ID']['input'];
 };
 
 /** A purchasable combination of product option values. */
@@ -9182,6 +9245,20 @@ export type StorefrontPromotion = {
   readonly __typename: 'StorefrontPromotion';
   readonly appliesOnOneTimePurchase: Scalars['Boolean']['output'];
   readonly appliesOnSubscription: Scalars['Boolean']['output'];
+  /**
+   * Products a buy X get Y promotion gives its benefit to when the merchant chose products; an item is
+   * null for a product the storefront does not show. Null when the benefit is chosen otherwise or for
+   * any other kind.
+   */
+  readonly benefitProducts?: Maybe<ReadonlyArray<Maybe<Product>>>;
+  /** What a buy X get Y promotion gives its benefit to; null for any other kind. */
+  readonly benefitScope?: Maybe<StorefrontPromotionBenefitScope>;
+  /**
+   * Variants a buy X get Y promotion gives its benefit to when the merchant chose variants, such as
+   * the gifts to choose from; only variants the storefront shows and the promotion does not exclude.
+   * Null when the benefit is chosen otherwise or for any other kind.
+   */
+  readonly benefitVariants?: Maybe<ReadonlyArray<ProductVariant>>;
   readonly endsAt?: Maybe<Scalars['DateTime']['output']>;
   /** Stable opaque key of the promotion. */
   readonly key: Scalars['ID']['output'];
@@ -9195,6 +9272,13 @@ export type StorefrontPromotion = {
   /** Rule value; null for a discount computed by a function. */
   readonly value?: Maybe<StorefrontPromotionValue>;
 };
+
+/** What a buy X get Y promotion gives its benefit to. */
+export type StorefrontPromotionBenefitScope =
+  /** Other items, such as a gift or a bowl at half price with food. */
+  | 'OTHER'
+  /** The items of the requirement themselves, such as the third item for the price of two. */
+  | 'SAME_AS_QUALIFIER';
 
 /**
  * Localized texts; an empty headline is generated from the rule and an empty badge is the standard

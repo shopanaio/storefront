@@ -132,8 +132,10 @@ export interface CartPromoCode {
 export interface CartLoyaltyEarning {
   state: import('../../graphql/apollo/generated/operations').CheckoutLoyaltyEarningState;
   points: number;
+  /** `points` in money at the program redemption rate; null when the program does not price them. */
+  pointsValue: Money | null;
+  /** Cashback credited to the store credit balance. */
   amount: Money | null;
-  headline: string;
   description: string | null;
 }
 
@@ -146,6 +148,8 @@ export interface StorefrontPromotion {
   kind: import('../../graphql/apollo/generated/operations').StorefrontPromotionKind;
   headline: string;
   badge: string;
+  /** Up to 12 characters for the product card; null when the merchant left it empty. */
+  shortBadge: string | null;
   description: { text: string; html: string } | null;
   accessibilityLabel: string;
   terms: string | null;
@@ -167,6 +171,30 @@ export interface StorefrontPromotion {
   endsAt: Date | null;
   /** Storefront places the merchant chose for the promotion; at least one. */
   placements: readonly import('../../graphql/apollo/generated/operations').StorefrontPromotionPlacement[];
+  /** What a buy X get Y promotion gives its benefit to; null for any other kind. */
+  benefitScope:
+    | import('../../graphql/apollo/generated/operations').StorefrontPromotionBenefitScope
+    | null;
+}
+
+/** A variant a buy X get Y promotion gives its benefit to, as a promotion banner shows it. */
+export interface PromotionBenefitOffer {
+  variantId: string;
+  variantHandle: string;
+  /** Option values of the variant, e.g. "400 ml"; empty for the only variant. */
+  variantTitle: string;
+  product: {
+    id: string;
+    handle: string;
+    title: string;
+    vendorName: string | null;
+  };
+  imageUrl: string | null;
+  price: Money | null;
+  compareAtPrice: Money | null;
+  /** One unit as the benefit: zero for a gift; null when not asked for or unknown. */
+  benefitPrice: Money | null;
+  availableForSale: boolean;
 }
 
 /** Minimum order requirement on the subtotal before discounts or on the item quantity. */
@@ -182,12 +210,32 @@ export interface CartPromotionRequirement {
   ratio: number;
 }
 
-/** Progress toward an automatic promotion with a minimum order requirement. */
+/**
+ * Progress toward an automatic promotion with a minimum order requirement. For buy X get Y the
+ * status and the requirement describe its next use.
+ */
 export interface CartPromotionProgress {
   /** Null once the discount is deleted. */
   promotion: StorefrontPromotion | null;
   status: import('../../graphql/apollo/generated/operations').CheckoutPromotionProgressStatus;
   requirement: CartPromotionRequirement;
+  /**
+   * Lines the requirement counts: the qualifier lines of buy X get Y and the target lines of a
+   * product discount; empty for order and shipping discounts.
+   */
+  qualifierLineIds: readonly string[];
+  /** Lines the applied discount lowered. */
+  benefitLineIds: readonly string[];
+  /** Uses of the applied promotion: buy X get Y counts its uses, any other at most one. */
+  timesApplied: number;
+  /** Benefit units buy X get Y still lacks once the requirement is met; zero otherwise. */
+  missingBenefitQuantity: number;
+  /**
+   * The variants the merchant chose for the benefit of buy X get Y, such as the gifts to choose
+   * from (a chosen product counts with its first available variant); null when the benefit is
+   * chosen otherwise or for any other kind.
+   */
+  benefitOffers: readonly PromotionBenefitOffer[] | null;
 }
 
 /** Free shipping summary for a progress bar: promotions and loyalty free shipping. */

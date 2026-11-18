@@ -1,5 +1,10 @@
 import { loyaltyAccount } from './loyalty.js';
 import {
+  benefitPrice,
+  benefitProductsOf,
+  benefitScopeOf,
+  benefitVariantsOf,
+  filterByPromotionRole,
   listingOffer,
   listingPriceRange,
   promotionPresentation,
@@ -505,7 +510,11 @@ const productConnection = (store, source, args = {}, options = {}) => {
   if (options.query)
     ({ products, relevance } = searchProducts(products, options.query));
   const scopeProducts = products;
-  products = filterProducts(products, inputFilters, variantsById);
+  products = filterByPromotionRole(
+    store,
+    filterProducts(products, inputFilters, variantsById),
+    inputFilters
+  );
   const sort = args.sort ?? (options.query ? 'RELEVANCE' : 'NEWEST');
   products = sortProducts(products, sort, variantsById, relevance);
   const availableSorts = [
@@ -668,10 +677,17 @@ const specialFields = (store) => ({
     listingOffer(store, variant).appliedDiscountIds,
   'ProductVariant.cartOnlyDiscountIds': (variant) =>
     listingOffer(store, variant).cartOnlyDiscountIds,
+  'ProductVariant.benefitPrice': (variant, { promotionKey }) =>
+    benefitPrice(store, variant, promotionKey),
   'Product.priceRange': (product) => listingPriceRange(store, product),
   // A fixture without places is shown everywhere, like a discount the merchant left as is.
   'StorefrontPromotion.placements': (promotion) =>
     promotion.placements ?? ['PRODUCT', 'CART', 'PROMOTION_LIST'],
+  'StorefrontPromotion.benefitScope': (promotion) => benefitScopeOf(promotion),
+  'StorefrontPromotion.benefitVariants': (promotion) =>
+    benefitVariantsOf(store, promotion),
+  'StorefrontPromotion.benefitProducts': (promotion) =>
+    benefitProductsOf(store, promotion),
 
   'Product.primaryCategory': (product) => store.get(product.primaryCategoryId),
   'Product.comparison': (product, _args, context) =>

@@ -110,12 +110,15 @@ fragment SdkCartFragment_cart on Checkout {
   loyaltyEarning {
     state
     points
+    pointsValue {
+      currencyCode
+      amount
+    }
     amount {
       currencyCode
       amount
     }
     presentation {
-      headline
       description
     }
   }
@@ -133,11 +136,16 @@ fragment SdkCartFragment_cart on Checkout {
   promotionProgress {
     promotion {
       ...SdkStorefrontPromotion
+      ...SdkPromotionBenefitItems
     }
     status
     requirement {
       ...SdkCartPromotionRequirement
     }
+    qualifierLineIds
+    benefitLineIds
+    timesApplied
+    missingBenefitQuantity
   }
   freeShippingProgress {
     status

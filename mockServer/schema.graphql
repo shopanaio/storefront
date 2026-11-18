@@ -1279,7 +1279,7 @@ type Product implements Node @join__type(
   key: "id"
   resolvable: false
   extension: true
-) @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: CUSTOMERS_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: APPS_ONLINE_STORE_STOREFRONT, interface: "Node")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+) @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: CUSTOMERS_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__type(graph: LOYALTY_STOREFRONT, key: "id", extension: true)  @join__type(graph: PRICING_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: REVIEWS_STOREFRONT, key: "id", extension: true)  @join__implements(graph: APPS_ONLINE_STORE_STOREFRONT, interface: "Node")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
   """
   Globally unique Product ID.
   """
@@ -2375,6 +2375,15 @@ type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: 
   """
   cartOnlyDiscountIds: [ID!]! @join__field(graph: LISTING_STOREFRONT)
   """
+  Price of one unit of the variant once the Buy X Get Y promotion gives it as the benefit, by
+  StorefrontPromotion.key: zero for a free item, the catalog price less the percentage or the
+  fixed amount otherwise. A unit gets one product discount: when a discount shown in the price
+  comes first at checkout, the unit costs price. Compare with compareAtPrice or price for the
+  struck-through price. Null when the variant is not a benefit of the promotion, the promotion is
+  not a published Buy X Get Y one, or the variant has no price.
+  """
+  benefitPrice(promotionKey: ID!) : Money @join__field(graph: LISTING_STOREFRONT)
+  """
   Loyalty values ready for rendering for this variant at quantity one. Null
   means that the store has no active customer-visible loyalty presentation.
   """
@@ -2659,8 +2668,8 @@ type Checkout implements Node @join__type(graph: CHECKOUT_STOREFRONT, key: "id")
   """
   promoCodes: [CheckoutPromoCode!]!
   """
-  Progress toward published automatic promotions with a minimum order requirement, for the
-  current cart.
+  Progress toward published automatic promotions with a minimum order requirement or a buy X get Y
+  rule, for the current cart.
   """
   promotionProgress: [CheckoutPromotionProgress!]!
   """
@@ -2765,6 +2774,11 @@ type CheckoutLoyaltyEarning @join__type(graph: CHECKOUT_STOREFRONT)  {
   Purchase points plus rule awards in points.
   """
   points: BigInt!
+  """
+  `points` in money at the program redemption rate, rounded down; null without points or when the
+  program does not let points pay for orders.
+  """
+  pointsValue: Money
   """
   Cashback credited to the store credit balance; null without a monetary award.
   """
@@ -3531,6 +3545,10 @@ type CheckoutPromotionRequirement @join__type(graph: CHECKOUT_STOREFRONT)  {
   ratio: Decimal!
 }
 
+"""
+Progress toward a promotion. For a buy X get Y promotion the status and the requirement describe
+its next use: the use after timesApplied, or the last one once the per-order limit is reached.
+"""
 type CheckoutPromotionProgress @join__type(graph: CHECKOUT_STOREFRONT)  {
   """
   Buyer-facing view of the discount; null once the discount is deleted.
@@ -3538,6 +3556,23 @@ type CheckoutPromotionProgress @join__type(graph: CHECKOUT_STOREFRONT)  {
   promotion: StorefrontPromotion
   status: CheckoutPromotionProgressStatus!
   requirement: CheckoutPromotionRequirement!
+  """
+  Checkout lines the requirement counts: the qualifier lines of buy X get Y and the target lines of
+  a product discount; empty for order and shipping discounts.
+  """
+  qualifierLineIds: [ID!]!
+  """
+  Checkout lines the applied discount lowered.
+  """
+  benefitLineIds: [ID!]!
+  """
+  Uses of the applied promotion: buy X get Y counts its uses, any other promotion at most one.
+  """
+  timesApplied: Int!
+  """
+  Benefit units a buy X get Y promotion still lacks once the requirement is met; zero otherwise.
+  """
+  missingBenefitQuantity: Int!
 }
 
 type CheckoutFreeShippingProgress @join__type(graph: CHECKOUT_STOREFRONT)  {
@@ -3648,6 +3683,22 @@ type StorefrontPromotion @join__type(graph: CHECKOUT_STOREFRONT, key: "key", res
   Storefront places the merchant chose for the promotion, in the enum order; at least one.
   """
   placements: [StorefrontPromotionPlacement!]! @join__field(graph: PRICING_STOREFRONT)
+  """
+  What a buy X get Y promotion gives its benefit to; null for any other kind.
+  """
+  benefitScope: StorefrontPromotionBenefitScope @join__field(graph: PRICING_STOREFRONT)
+  """
+  Variants a buy X get Y promotion gives its benefit to when the merchant chose variants, such as
+  the gifts to choose from; only variants the storefront shows and the promotion does not exclude.
+  Null when the benefit is chosen otherwise or for any other kind.
+  """
+  benefitVariants: [ProductVariant!] @join__field(graph: PRICING_STOREFRONT)
+  """
+  Products a buy X get Y promotion gives its benefit to when the merchant chose products; an item is
+  null for a product the storefront does not show. Null when the benefit is chosen otherwise or for
+  any other kind.
+  """
+  benefitProducts: [Product] @join__field(graph: PRICING_STOREFRONT)
 }
 
 """
@@ -4373,7 +4424,8 @@ type AppliedFilter @join__type(graph: LISTING_STOREFRONT)  {
   status: AppliedFilterStatus!
   """
   Products with this value under the other applied filters, as FilterValue.count.
-  A price filter reports totalCount. Zero for a filter that was not applied.
+  A price filter and a promotion role filter report totalCount. Zero for a filter that was
+  not applied.
   """
   count: Int!
 }
@@ -4918,6 +4970,11 @@ type LoyaltyPointsRewardPresentation implements LoyaltyRewardPresentation @join_
   kind: LoyaltyRewardKind!
   copy: LoyaltyOpportunityCopy!
   points: LoyaltyUnsignedRange!
+  """
+  The points in money at the program redemption rate, rounded down, in the program currency.
+  Null when the program does not let points pay for orders.
+  """
+  value: LoyaltyMoneyRange
   accuracy: LoyaltyValueAccuracy!
 }
 
@@ -8913,6 +8970,22 @@ enum ListingSaleFilter @join__type(graph: LISTING_STOREFRONT)  {
   MARKDOWN @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
+"""
+Role of a variant in a storefront promotion.
+"""
+enum ListingPromotionRole @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  The requirement of the promotion counts the variant, as checkout counts it: the products to
+  buy for a Buy X Get Y promotion, the discounted products for a product discount.
+  """
+  QUALIFIER @join__enumValue(graph: LISTING_STOREFRONT)
+  """
+  The promotion lowers the variant: the products a Buy X Get Y promotion gives at a lower price
+  or free, the discounted products for a product discount.
+  """
+  BENEFIT @join__enumValue(graph: LISTING_STOREFRONT)
+}
+
 enum AppliedFilterStatus @join__type(graph: LISTING_STOREFRONT)  {
   """
   The filter narrows the result.
@@ -9404,6 +9477,20 @@ enum StorefrontPromotionPlacement @join__type(graph: PRICING_STOREFRONT)  {
   The list of the store promotions.
   """
   PROMOTION_LIST @join__enumValue(graph: PRICING_STOREFRONT)
+}
+
+"""
+What a buy X get Y promotion gives its benefit to.
+"""
+enum StorefrontPromotionBenefitScope @join__type(graph: PRICING_STOREFRONT)  {
+  """
+  The items of the requirement themselves, such as the third item for the price of two.
+  """
+  SAME_AS_QUALIFIER @join__enumValue(graph: PRICING_STOREFRONT)
+  """
+  Other items, such as a gift or a bowl at half price with food.
+  """
+  OTHER @join__enumValue(graph: PRICING_STOREFRONT)
 }
 
 enum StorefrontPromotionValueType @join__type(graph: PRICING_STOREFRONT)  {
@@ -10887,8 +10974,18 @@ input ListingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
   against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
   the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
   not published to the storefront matches no product.
+
+  With promotionRole the filter is a link from the promotion instead: products with a
+  variant in that role, for promotions of any placement, the cart-only ones included.
+  Always applied: the PROMOTION facet does not need to be in the facet set of the scope.
   """
   promotionId: ID
+  """
+  Role of the variant in the promotion of promotionId; allowed only next to promotionId.
+  Repeated filters of one role are combined with OR; filters of different roles with AND.
+  Without it promotionId is a value of the PROMOTION facet.
+  """
+  promotionRole: ListingPromotionRole
   """
   Products whose shown average review rating is at least min. One rating
   filter per request. Not applied (OUTSIDE_SCOPE) when the store's RATING facet is

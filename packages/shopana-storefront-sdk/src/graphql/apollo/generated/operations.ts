@@ -61,7 +61,8 @@ export type AppliedFilter = {
   readonly __typename: 'AppliedFilter';
   /**
    * Products with this value under the other applied filters, as FilterValue.count.
-   * A price filter reports totalCount. Zero for a filter that was not applied.
+   * A price filter and a promotion role filter report totalCount. Zero for a filter that was
+   * not applied.
    */
   readonly count: Scalars['Int']['output'];
   /** The filter from the filters argument, unchanged; reusable as ListingFilterInput. */
@@ -322,8 +323,8 @@ export type Checkout = Node & {
    */
   readonly promoCodes: ReadonlyArray<CheckoutPromoCode>;
   /**
-   * Progress toward published automatic promotions with a minimum order requirement, for the
-   * current cart.
+   * Progress toward published automatic promotions with a minimum order requirement or a buy X get Y
+   * rule, for the current cart.
    */
   readonly promotionProgress: ReadonlyArray<CheckoutPromotionProgress>;
   /** Revision of the last complete checkout pipeline result. */
@@ -1162,6 +1163,11 @@ export type CheckoutLoyaltyEarning = {
   readonly amount?: Maybe<Money>;
   /** Purchase points plus rule awards in points. */
   readonly points: Scalars['BigInt']['output'];
+  /**
+   * `points` in money at the program redemption rate, rounded down; null without points or when the
+   * program does not let points pay for orders.
+   */
+  readonly pointsValue?: Maybe<Money>;
   readonly presentation: CheckoutLoyaltyEarningPresentation;
   readonly state: CheckoutLoyaltyEarningState;
 };
@@ -1387,12 +1393,27 @@ export type CheckoutPromoCodeStatus =
   /** The code is not applied; reason says why. */
   | 'REJECTED';
 
+/**
+ * Progress toward a promotion. For a buy X get Y promotion the status and the requirement describe
+ * its next use: the use after timesApplied, or the last one once the per-order limit is reached.
+ */
 export type CheckoutPromotionProgress = {
   readonly __typename: 'CheckoutPromotionProgress';
+  /** Checkout lines the applied discount lowered. */
+  readonly benefitLineIds: ReadonlyArray<Scalars['ID']['output']>;
+  /** Benefit units a buy X get Y promotion still lacks once the requirement is met; zero otherwise. */
+  readonly missingBenefitQuantity: Scalars['Int']['output'];
   /** Buyer-facing view of the discount; null once the discount is deleted. */
   readonly promotion?: Maybe<StorefrontPromotion>;
+  /**
+   * Checkout lines the requirement counts: the qualifier lines of buy X get Y and the target lines of
+   * a product discount; empty for order and shipping discounts.
+   */
+  readonly qualifierLineIds: ReadonlyArray<Scalars['ID']['output']>;
   readonly requirement: CheckoutPromotionRequirement;
   readonly status: CheckoutPromotionProgressStatus;
+  /** Uses of the applied promotion: buy X get Y counts its uses, any other promotion at most one. */
+  readonly timesApplied: Scalars['Int']['output'];
 };
 
 export type CheckoutPromotionProgressStatus =
@@ -3719,8 +3740,18 @@ export type ListingFilterInput = {
    * against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
    * the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
    * not published to the storefront matches no product.
+   *
+   * With promotionRole the filter is a link from the promotion instead: products with a
+   * variant in that role, for promotions of any placement, the cart-only ones included.
+   * Always applied: the PROMOTION facet does not need to be in the facet set of the scope.
    */
   readonly promotionId?: InputMaybe<Scalars['ID']['input']>;
+  /**
+   * Role of the variant in the promotion of promotionId; allowed only next to promotionId.
+   * Repeated filters of one role are combined with OR; filters of different roles with AND.
+   * Without it promotionId is a value of the PROMOTION facet.
+   */
+  readonly promotionRole?: InputMaybe<ListingPromotionRole>;
   /**
    * Products whose shown average review rating is at least min. One rating
    * filter per request. Not applied (OUTSIDE_SCOPE) when the store's RATING facet is
@@ -3746,6 +3777,19 @@ export type ListingFilterInput = {
    */
   readonly vendorId?: InputMaybe<Scalars['ID']['input']>;
 };
+
+/** Role of a variant in a storefront promotion. */
+export type ListingPromotionRole =
+  /**
+   * The promotion lowers the variant: the products a Buy X Get Y promotion gives at a lower price
+   * or free, the discounted products for a product discount.
+   */
+  | 'BENEFIT'
+  /**
+   * The requirement of the promotion counts the variant, as checkout counts it: the products to
+   * buy for a Buy X Get Y promotion, the discounted products for a product discount.
+   */
+  | 'QUALIFIER';
 
 /** How a text query acts on a dynamic collection. */
 export type ListingQueryMode =
@@ -4344,6 +4388,11 @@ export type LoyaltyPointsRewardPresentation = LoyaltyRewardPresentation & {
   readonly copy: LoyaltyOpportunityCopy;
   readonly kind: LoyaltyRewardKind;
   readonly points: LoyaltyUnsignedRange;
+  /**
+   * The points in money at the program redemption rate, rounded down, in the program currency.
+   * Null when the program does not let points pay for orders.
+   */
+  readonly value?: Maybe<LoyaltyMoneyRange>;
 };
 
 export type LoyaltyRedemptionBound = {
@@ -7677,6 +7726,15 @@ export type ProductVariant = Node & {
   readonly appliedDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
   readonly availableForSale: Scalars['Boolean']['output'];
   /**
+   * Price of one unit of the variant once the Buy X Get Y promotion gives it as the benefit, by
+   * StorefrontPromotion.key: zero for a free item, the catalog price less the percentage or the
+   * fixed amount otherwise. A unit gets one product discount: when a discount shown in the price
+   * comes first at checkout, the unit costs price. Compare with compareAtPrice or price for the
+   * struck-through price. Null when the variant is not a benefit of the promotion, the promotion is
+   * not a published Buy X Get Y one, or the variant has no price.
+   */
+  readonly benefitPrice?: Maybe<Money>;
+  /**
    * Discounts not included in price that the cart applies to one unit, as StorefrontPromotion.key
    * values. Only promotions published to the storefront are listed.
    */
@@ -7718,6 +7776,11 @@ export type ProductVariant = Node & {
   readonly title: Scalars['String']['output'];
   readonly updatedAt: Scalars['DateTime']['output'];
   readonly weight?: Maybe<Weight>;
+};
+
+/** A purchasable combination of product option values. */
+export type ProductVariantBenefitPriceArgs = {
+  promotionKey: Scalars['ID']['input'];
 };
 
 /** A purchasable combination of product option values. */
@@ -9182,6 +9245,20 @@ export type StorefrontPromotion = {
   readonly __typename: 'StorefrontPromotion';
   readonly appliesOnOneTimePurchase: Scalars['Boolean']['output'];
   readonly appliesOnSubscription: Scalars['Boolean']['output'];
+  /**
+   * Products a buy X get Y promotion gives its benefit to when the merchant chose products; an item is
+   * null for a product the storefront does not show. Null when the benefit is chosen otherwise or for
+   * any other kind.
+   */
+  readonly benefitProducts?: Maybe<ReadonlyArray<Maybe<Product>>>;
+  /** What a buy X get Y promotion gives its benefit to; null for any other kind. */
+  readonly benefitScope?: Maybe<StorefrontPromotionBenefitScope>;
+  /**
+   * Variants a buy X get Y promotion gives its benefit to when the merchant chose variants, such as
+   * the gifts to choose from; only variants the storefront shows and the promotion does not exclude.
+   * Null when the benefit is chosen otherwise or for any other kind.
+   */
+  readonly benefitVariants?: Maybe<ReadonlyArray<ProductVariant>>;
   readonly endsAt?: Maybe<Scalars['DateTime']['output']>;
   /** Stable opaque key of the promotion. */
   readonly key: Scalars['ID']['output'];
@@ -9195,6 +9272,13 @@ export type StorefrontPromotion = {
   /** Rule value; null for a discount computed by a function. */
   readonly value?: Maybe<StorefrontPromotionValue>;
 };
+
+/** What a buy X get Y promotion gives its benefit to. */
+export type StorefrontPromotionBenefitScope =
+  /** Other items, such as a gift or a bowl at half price with food. */
+  | 'OTHER'
+  /** The items of the requirement themselves, such as the third item for the price of two. */
+  | 'SAME_AS_QUALIFIER';
 
 /**
  * Localized texts; an empty headline is generated from the rule and an empty badge is the standard
@@ -9660,6 +9744,11 @@ export type SdkCartFragment_CartFragment = {
     readonly __typename: 'CheckoutLoyaltyEarning';
     readonly state: CheckoutLoyaltyEarningState;
     readonly points: number;
+    readonly pointsValue?: {
+      readonly __typename: 'Money';
+      readonly currencyCode: CurrencyCode;
+      readonly amount: any;
+    } | null;
     readonly amount?: {
       readonly __typename: 'Money';
       readonly currencyCode: CurrencyCode;
@@ -9667,7 +9756,6 @@ export type SdkCartFragment_CartFragment = {
     } | null;
     readonly presentation: {
       readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-      readonly headline: string;
       readonly description?: string | null;
     };
   } | null;
@@ -9686,6 +9774,10 @@ export type SdkCartFragment_CartFragment = {
   readonly promotionProgress: ReadonlyArray<{
     readonly __typename: 'CheckoutPromotionProgress';
     readonly status: CheckoutPromotionProgressStatus;
+    readonly qualifierLineIds: ReadonlyArray<string>;
+    readonly benefitLineIds: ReadonlyArray<string>;
+    readonly timesApplied: number;
+    readonly missingBenefitQuantity: number;
     readonly promotion?: {
       readonly __typename: 'StorefrontPromotion';
       readonly key: string;
@@ -9696,10 +9788,12 @@ export type SdkCartFragment_CartFragment = {
       readonly startsAt: string;
       readonly endsAt?: string | null;
       readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+      readonly benefitScope?: StorefrontPromotionBenefitScope | null;
       readonly presentation: {
         readonly __typename: 'StorefrontPromotionCopy';
         readonly headline: string;
         readonly badge: string;
+        readonly shortBadge?: string | null;
         readonly accessibilityLabel: string;
         readonly terms?: string | null;
         readonly description?: {
@@ -9735,6 +9829,90 @@ export type SdkCartFragment_CartFragment = {
         readonly amount: any;
         readonly currencyCode: CurrencyCode;
       } | null;
+      readonly benefitVariants?: ReadonlyArray<{
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly handle: string;
+        readonly title: string;
+        readonly availableForSale: boolean;
+        readonly product: {
+          readonly __typename: 'Product';
+          readonly id: string;
+          readonly handle: string;
+          readonly title: string;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
+          } | null;
+        };
+        readonly cover?:
+          | { readonly __typename: 'ExternalVideo'; readonly id: string }
+          | {
+              readonly __typename: 'MediaImage';
+              readonly id: string;
+              readonly image: {
+                readonly __typename: 'Image';
+                readonly url: any;
+              };
+            }
+          | { readonly __typename: 'Model3d'; readonly id: string }
+          | { readonly __typename: 'Video'; readonly id: string }
+          | null;
+        readonly price?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly compareAtPrice?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+      }> | null;
+      readonly benefitProducts?: ReadonlyArray<{
+        readonly __typename: 'Product';
+        readonly id: string;
+        readonly selectedOrFirstAvailableVariant?: {
+          readonly __typename: 'ProductVariant';
+          readonly id: string;
+          readonly handle: string;
+          readonly title: string;
+          readonly availableForSale: boolean;
+          readonly product: {
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
+          };
+          readonly cover?:
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | {
+                readonly __typename: 'MediaImage';
+                readonly id: string;
+                readonly image: {
+                  readonly __typename: 'Image';
+                  readonly url: any;
+                };
+              }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+          readonly price?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly compareAtPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        } | null;
+      } | null> | null;
     } | null;
     readonly requirement: {
       readonly __typename: 'CheckoutPromotionRequirement';
@@ -9776,10 +9954,12 @@ export type SdkCartFragment_CartFragment = {
       readonly startsAt: string;
       readonly endsAt?: string | null;
       readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+      readonly benefitScope?: StorefrontPromotionBenefitScope | null;
       readonly presentation: {
         readonly __typename: 'StorefrontPromotionCopy';
         readonly headline: string;
         readonly badge: string;
+        readonly shortBadge?: string | null;
         readonly accessibilityLabel: string;
         readonly terms?: string | null;
         readonly description?: {
@@ -9887,10 +10067,12 @@ export type SdkCartFragment_CartFragment = {
       readonly startsAt: string;
       readonly endsAt?: string | null;
       readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+      readonly benefitScope?: StorefrontPromotionBenefitScope | null;
       readonly presentation: {
         readonly __typename: 'StorefrontPromotionCopy';
         readonly headline: string;
         readonly badge: string;
+        readonly shortBadge?: string | null;
         readonly accessibilityLabel: string;
         readonly terms?: string | null;
         readonly description?: {
@@ -9999,10 +10181,12 @@ export type SdkCartFragment_CartFragment = {
             readonly startsAt: string;
             readonly endsAt?: string | null;
             readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+            readonly benefitScope?: StorefrontPromotionBenefitScope | null;
             readonly presentation: {
               readonly __typename: 'StorefrontPromotionCopy';
               readonly headline: string;
               readonly badge: string;
+              readonly shortBadge?: string | null;
               readonly accessibilityLabel: string;
               readonly terms?: string | null;
               readonly description?: {
@@ -10183,10 +10367,12 @@ export type SdkCartFragment_CartFragment = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -10375,10 +10561,12 @@ export type SdkCartLineFragment_FieldsFragment = {
         readonly startsAt: string;
         readonly endsAt?: string | null;
         readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly benefitScope?: StorefrontPromotionBenefitScope | null;
         readonly presentation: {
           readonly __typename: 'StorefrontPromotionCopy';
           readonly headline: string;
           readonly badge: string;
+          readonly shortBadge?: string | null;
           readonly accessibilityLabel: string;
           readonly terms?: string | null;
           readonly description?: {
@@ -10575,10 +10763,12 @@ export type SdkCartLineFragment_LineFragment = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -10756,10 +10946,12 @@ export type SdkCartLineFragment_LineFragment = {
         readonly startsAt: string;
         readonly endsAt?: string | null;
         readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly benefitScope?: StorefrontPromotionBenefitScope | null;
         readonly presentation: {
           readonly __typename: 'StorefrontPromotionCopy';
           readonly headline: string;
           readonly badge: string;
+          readonly shortBadge?: string | null;
           readonly accessibilityLabel: string;
           readonly terms?: string | null;
           readonly description?: {
@@ -11002,6 +11194,11 @@ export type SdkAddPromoCodeMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -11009,7 +11206,6 @@ export type SdkAddPromoCodeMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -11028,6 +11224,10 @@ export type SdkAddPromoCodeMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -11038,10 +11238,12 @@ export type SdkAddPromoCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -11077,6 +11279,90 @@ export type SdkAddPromoCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -11118,10 +11404,12 @@ export type SdkAddPromoCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -11229,10 +11517,12 @@ export type SdkAddPromoCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -11341,10 +11631,12 @@ export type SdkAddPromoCodeMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -11525,10 +11817,12 @@ export type SdkAddPromoCodeMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -11784,6 +12078,11 @@ export type SdkAddToCartMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -11791,7 +12090,6 @@ export type SdkAddToCartMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -11810,6 +12108,10 @@ export type SdkAddToCartMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -11820,10 +12122,12 @@ export type SdkAddToCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -11859,6 +12163,90 @@ export type SdkAddToCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -11900,10 +12288,12 @@ export type SdkAddToCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -12011,10 +12401,12 @@ export type SdkAddToCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -12123,10 +12515,12 @@ export type SdkAddToCartMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -12307,10 +12701,12 @@ export type SdkAddToCartMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -12567,6 +12963,11 @@ export type SdkClaimCartMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -12574,7 +12975,6 @@ export type SdkClaimCartMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -12593,6 +12993,10 @@ export type SdkClaimCartMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -12603,10 +13007,12 @@ export type SdkClaimCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -12642,6 +13048,90 @@ export type SdkClaimCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -12683,10 +13173,12 @@ export type SdkClaimCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -12794,10 +13286,12 @@ export type SdkClaimCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -12906,10 +13400,12 @@ export type SdkClaimCartMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -13090,10 +13586,12 @@ export type SdkClaimCartMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -13349,6 +13847,11 @@ export type SdkClearCartMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -13356,7 +13859,6 @@ export type SdkClearCartMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -13375,6 +13877,10 @@ export type SdkClearCartMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -13385,10 +13891,12 @@ export type SdkClearCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -13424,6 +13932,90 @@ export type SdkClearCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -13465,10 +14057,12 @@ export type SdkClearCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -13576,10 +14170,12 @@ export type SdkClearCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -13688,10 +14284,12 @@ export type SdkClearCartMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -13872,10 +14470,12 @@ export type SdkClearCartMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -14131,6 +14731,11 @@ export type SdkCreateCartMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -14138,7 +14743,6 @@ export type SdkCreateCartMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -14157,6 +14761,10 @@ export type SdkCreateCartMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -14167,10 +14775,12 @@ export type SdkCreateCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -14206,6 +14816,90 @@ export type SdkCreateCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -14247,10 +14941,12 @@ export type SdkCreateCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -14358,10 +15054,12 @@ export type SdkCreateCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -14470,10 +15168,12 @@ export type SdkCreateCartMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -14654,10 +15354,12 @@ export type SdkCreateCartMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -14913,6 +15615,11 @@ export type SdkRemoveFromCartMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -14920,7 +15627,6 @@ export type SdkRemoveFromCartMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -14939,6 +15645,10 @@ export type SdkRemoveFromCartMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -14949,10 +15659,12 @@ export type SdkRemoveFromCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -14988,6 +15700,90 @@ export type SdkRemoveFromCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -15029,10 +15825,12 @@ export type SdkRemoveFromCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -15140,10 +15938,12 @@ export type SdkRemoveFromCartMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -15252,10 +16052,12 @@ export type SdkRemoveFromCartMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -15436,10 +16238,12 @@ export type SdkRemoveFromCartMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -15695,6 +16499,11 @@ export type SdkRemovePromoCodeMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -15702,7 +16511,6 @@ export type SdkRemovePromoCodeMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -15721,6 +16529,10 @@ export type SdkRemovePromoCodeMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -15731,10 +16543,12 @@ export type SdkRemovePromoCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -15770,6 +16584,90 @@ export type SdkRemovePromoCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -15811,10 +16709,12 @@ export type SdkRemovePromoCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -15922,10 +16822,12 @@ export type SdkRemovePromoCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -16034,10 +16936,12 @@ export type SdkRemovePromoCodeMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -16218,10 +17122,12 @@ export type SdkRemovePromoCodeMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -16477,6 +17383,11 @@ export type SdkReplaceCartItemMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -16484,7 +17395,6 @@ export type SdkReplaceCartItemMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -16503,6 +17413,10 @@ export type SdkReplaceCartItemMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -16513,10 +17427,12 @@ export type SdkReplaceCartItemMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -16552,6 +17468,90 @@ export type SdkReplaceCartItemMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -16593,10 +17593,12 @@ export type SdkReplaceCartItemMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -16704,10 +17706,12 @@ export type SdkReplaceCartItemMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -16816,10 +17820,12 @@ export type SdkReplaceCartItemMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -17000,10 +18006,12 @@ export type SdkReplaceCartItemMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -17259,6 +18267,11 @@ export type SdkUpdateCartCurrencyCodeMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -17266,7 +18279,6 @@ export type SdkUpdateCartCurrencyCodeMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -17285,6 +18297,10 @@ export type SdkUpdateCartCurrencyCodeMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -17295,10 +18311,12 @@ export type SdkUpdateCartCurrencyCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -17334,6 +18352,90 @@ export type SdkUpdateCartCurrencyCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -17375,10 +18477,12 @@ export type SdkUpdateCartCurrencyCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -17486,10 +18590,12 @@ export type SdkUpdateCartCurrencyCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -17598,10 +18704,12 @@ export type SdkUpdateCartCurrencyCodeMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -17782,10 +18890,12 @@ export type SdkUpdateCartCurrencyCodeMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -18041,6 +19151,11 @@ export type SdkUpdateCartLanguageCodeMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -18048,7 +19163,6 @@ export type SdkUpdateCartLanguageCodeMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -18067,6 +19181,10 @@ export type SdkUpdateCartLanguageCodeMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -18077,10 +19195,12 @@ export type SdkUpdateCartLanguageCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -18116,6 +19236,90 @@ export type SdkUpdateCartLanguageCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -18157,10 +19361,12 @@ export type SdkUpdateCartLanguageCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -18268,10 +19474,12 @@ export type SdkUpdateCartLanguageCodeMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -18380,10 +19588,12 @@ export type SdkUpdateCartLanguageCodeMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -18564,10 +19774,12 @@ export type SdkUpdateCartLanguageCodeMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -18823,6 +20035,11 @@ export type SdkUpdateCartLineQuantityMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -18830,7 +20047,6 @@ export type SdkUpdateCartLineQuantityMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -18849,6 +20065,10 @@ export type SdkUpdateCartLineQuantityMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -18859,10 +20079,12 @@ export type SdkUpdateCartLineQuantityMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -18898,6 +20120,90 @@ export type SdkUpdateCartLineQuantityMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -18939,10 +20245,12 @@ export type SdkUpdateCartLineQuantityMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -19050,10 +20358,12 @@ export type SdkUpdateCartLineQuantityMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -19162,10 +20472,12 @@ export type SdkUpdateCartLineQuantityMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -19346,10 +20658,12 @@ export type SdkUpdateCartLineQuantityMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -19604,6 +20918,11 @@ export type SdkLoadAccountCartQuery = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -19611,7 +20930,6 @@ export type SdkLoadAccountCartQuery = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -19630,6 +20948,10 @@ export type SdkLoadAccountCartQuery = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -19640,10 +20962,12 @@ export type SdkLoadAccountCartQuery = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -19679,6 +21003,90 @@ export type SdkLoadAccountCartQuery = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -19720,10 +21128,12 @@ export type SdkLoadAccountCartQuery = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -19831,10 +21241,12 @@ export type SdkLoadAccountCartQuery = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -19943,10 +21355,12 @@ export type SdkLoadAccountCartQuery = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -20127,10 +21541,12 @@ export type SdkLoadAccountCartQuery = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -20377,6 +21793,11 @@ export type SdkLoadCartQuery = {
       readonly __typename: 'CheckoutLoyaltyEarning';
       readonly state: CheckoutLoyaltyEarningState;
       readonly points: number;
+      readonly pointsValue?: {
+        readonly __typename: 'Money';
+        readonly currencyCode: CurrencyCode;
+        readonly amount: any;
+      } | null;
       readonly amount?: {
         readonly __typename: 'Money';
         readonly currencyCode: CurrencyCode;
@@ -20384,7 +21805,6 @@ export type SdkLoadCartQuery = {
       } | null;
       readonly presentation: {
         readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-        readonly headline: string;
         readonly description?: string | null;
       };
     } | null;
@@ -20403,6 +21823,10 @@ export type SdkLoadCartQuery = {
     readonly promotionProgress: ReadonlyArray<{
       readonly __typename: 'CheckoutPromotionProgress';
       readonly status: CheckoutPromotionProgressStatus;
+      readonly qualifierLineIds: ReadonlyArray<string>;
+      readonly benefitLineIds: ReadonlyArray<string>;
+      readonly timesApplied: number;
+      readonly missingBenefitQuantity: number;
       readonly promotion?: {
         readonly __typename: 'StorefrontPromotion';
         readonly key: string;
@@ -20413,10 +21837,12 @@ export type SdkLoadCartQuery = {
         readonly startsAt: string;
         readonly endsAt?: string | null;
         readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly benefitScope?: StorefrontPromotionBenefitScope | null;
         readonly presentation: {
           readonly __typename: 'StorefrontPromotionCopy';
           readonly headline: string;
           readonly badge: string;
+          readonly shortBadge?: string | null;
           readonly accessibilityLabel: string;
           readonly terms?: string | null;
           readonly description?: {
@@ -20452,6 +21878,90 @@ export type SdkLoadCartQuery = {
           readonly amount: any;
           readonly currencyCode: CurrencyCode;
         } | null;
+        readonly benefitVariants?: ReadonlyArray<{
+          readonly __typename: 'ProductVariant';
+          readonly id: string;
+          readonly handle: string;
+          readonly title: string;
+          readonly availableForSale: boolean;
+          readonly product: {
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
+            } | null;
+          };
+          readonly cover?:
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | {
+                readonly __typename: 'MediaImage';
+                readonly id: string;
+                readonly image: {
+                  readonly __typename: 'Image';
+                  readonly url: any;
+                };
+              }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+          readonly price?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly compareAtPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        }> | null;
+        readonly benefitProducts?: ReadonlyArray<{
+          readonly __typename: 'Product';
+          readonly id: string;
+          readonly selectedOrFirstAvailableVariant?: {
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          } | null;
+        } | null> | null;
       } | null;
       readonly requirement: {
         readonly __typename: 'CheckoutPromotionRequirement';
@@ -20493,10 +22003,12 @@ export type SdkLoadCartQuery = {
         readonly startsAt: string;
         readonly endsAt?: string | null;
         readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly benefitScope?: StorefrontPromotionBenefitScope | null;
         readonly presentation: {
           readonly __typename: 'StorefrontPromotionCopy';
           readonly headline: string;
           readonly badge: string;
+          readonly shortBadge?: string | null;
           readonly accessibilityLabel: string;
           readonly terms?: string | null;
           readonly description?: {
@@ -20604,10 +22116,12 @@ export type SdkLoadCartQuery = {
         readonly startsAt: string;
         readonly endsAt?: string | null;
         readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+        readonly benefitScope?: StorefrontPromotionBenefitScope | null;
         readonly presentation: {
           readonly __typename: 'StorefrontPromotionCopy';
           readonly headline: string;
           readonly badge: string;
+          readonly shortBadge?: string | null;
           readonly accessibilityLabel: string;
           readonly terms?: string | null;
           readonly description?: {
@@ -20716,10 +22230,12 @@ export type SdkLoadCartQuery = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -20900,10 +22416,12 @@ export type SdkLoadCartQuery = {
             readonly startsAt: string;
             readonly endsAt?: string | null;
             readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+            readonly benefitScope?: StorefrontPromotionBenefitScope | null;
             readonly presentation: {
               readonly __typename: 'StorefrontPromotionCopy';
               readonly headline: string;
               readonly badge: string;
+              readonly shortBadge?: string | null;
               readonly accessibilityLabel: string;
               readonly terms?: string | null;
               readonly description?: {
@@ -24289,10 +25807,12 @@ export type SdkStorefrontPromotionFragment = {
   readonly startsAt: string;
   readonly endsAt?: string | null;
   readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+  readonly benefitScope?: StorefrontPromotionBenefitScope | null;
   readonly presentation: {
     readonly __typename: 'StorefrontPromotionCopy';
     readonly headline: string;
     readonly badge: string;
+    readonly shortBadge?: string | null;
     readonly accessibilityLabel: string;
     readonly terms?: string | null;
     readonly description?: {
@@ -24330,6 +25850,126 @@ export type SdkStorefrontPromotionFragment = {
   } | null;
 };
 
+export type SdkPromotionBenefitVariantFragment = {
+  readonly __typename: 'ProductVariant';
+  readonly id: string;
+  readonly handle: string;
+  readonly title: string;
+  readonly availableForSale: boolean;
+  readonly product: {
+    readonly __typename: 'Product';
+    readonly id: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly vendor?: {
+      readonly __typename: 'Vendor';
+      readonly name: string;
+    } | null;
+  };
+  readonly cover?:
+    | { readonly __typename: 'ExternalVideo'; readonly id: string }
+    | {
+        readonly __typename: 'MediaImage';
+        readonly id: string;
+        readonly image: { readonly __typename: 'Image'; readonly url: any };
+      }
+    | { readonly __typename: 'Model3d'; readonly id: string }
+    | { readonly __typename: 'Video'; readonly id: string }
+    | null;
+  readonly price?: {
+    readonly __typename: 'Money';
+    readonly amount: any;
+    readonly currencyCode: CurrencyCode;
+  } | null;
+  readonly compareAtPrice?: {
+    readonly __typename: 'Money';
+    readonly amount: any;
+    readonly currencyCode: CurrencyCode;
+  } | null;
+};
+
+export type SdkPromotionBenefitItemsFragment = {
+  readonly __typename: 'StorefrontPromotion';
+  readonly benefitVariants?: ReadonlyArray<{
+    readonly __typename: 'ProductVariant';
+    readonly id: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly availableForSale: boolean;
+    readonly product: {
+      readonly __typename: 'Product';
+      readonly id: string;
+      readonly handle: string;
+      readonly title: string;
+      readonly vendor?: {
+        readonly __typename: 'Vendor';
+        readonly name: string;
+      } | null;
+    };
+    readonly cover?:
+      | { readonly __typename: 'ExternalVideo'; readonly id: string }
+      | {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly image: { readonly __typename: 'Image'; readonly url: any };
+        }
+      | { readonly __typename: 'Model3d'; readonly id: string }
+      | { readonly __typename: 'Video'; readonly id: string }
+      | null;
+    readonly price?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+    readonly compareAtPrice?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+  }> | null;
+  readonly benefitProducts?: ReadonlyArray<{
+    readonly __typename: 'Product';
+    readonly id: string;
+    readonly selectedOrFirstAvailableVariant?: {
+      readonly __typename: 'ProductVariant';
+      readonly id: string;
+      readonly handle: string;
+      readonly title: string;
+      readonly availableForSale: boolean;
+      readonly product: {
+        readonly __typename: 'Product';
+        readonly id: string;
+        readonly handle: string;
+        readonly title: string;
+        readonly vendor?: {
+          readonly __typename: 'Vendor';
+          readonly name: string;
+        } | null;
+      };
+      readonly cover?:
+        | { readonly __typename: 'ExternalVideo'; readonly id: string }
+        | {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: { readonly __typename: 'Image'; readonly url: any };
+          }
+        | { readonly __typename: 'Model3d'; readonly id: string }
+        | { readonly __typename: 'Video'; readonly id: string }
+        | null;
+      readonly price?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+      readonly compareAtPrice?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+    } | null;
+  } | null> | null;
+};
+
 export type SdkStorefrontPromotionsQueryVariables = Exact<{
   kinds?: InputMaybe<ReadonlyArray<StorefrontPromotionKind>>;
 }>;
@@ -24351,10 +25991,12 @@ export type SdkStorefrontPromotionsQuery = {
       readonly startsAt: string;
       readonly endsAt?: string | null;
       readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+      readonly benefitScope?: StorefrontPromotionBenefitScope | null;
       readonly presentation: {
         readonly __typename: 'StorefrontPromotionCopy';
         readonly headline: string;
         readonly badge: string;
+        readonly shortBadge?: string | null;
         readonly accessibilityLabel: string;
         readonly terms?: string | null;
         readonly description?: {
@@ -24389,6 +26031,67 @@ export type SdkStorefrontPromotionsQuery = {
         readonly __typename: 'Money';
         readonly amount: any;
         readonly currencyCode: CurrencyCode;
+      } | null;
+    }>;
+  };
+};
+
+export type SdkPromotionBenefitProductsQueryVariables = Exact<{
+  promotionKey: Scalars['ID']['input'];
+  first: Scalars['Int']['input'];
+}>;
+
+export type SdkPromotionBenefitProductsQuery = {
+  readonly __typename: 'Query';
+  readonly products: {
+    readonly __typename: 'ProductConnection';
+    readonly nodes: ReadonlyArray<{
+      readonly __typename: 'Product';
+      readonly id: string;
+      readonly selectedOrFirstAvailableVariant?: {
+        readonly __typename: 'ProductVariant';
+        readonly id: string;
+        readonly handle: string;
+        readonly title: string;
+        readonly availableForSale: boolean;
+        readonly benefitPrice?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly product: {
+          readonly __typename: 'Product';
+          readonly id: string;
+          readonly handle: string;
+          readonly title: string;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
+          } | null;
+        };
+        readonly cover?:
+          | { readonly __typename: 'ExternalVideo'; readonly id: string }
+          | {
+              readonly __typename: 'MediaImage';
+              readonly id: string;
+              readonly image: {
+                readonly __typename: 'Image';
+                readonly url: any;
+              };
+            }
+          | { readonly __typename: 'Model3d'; readonly id: string }
+          | { readonly __typename: 'Video'; readonly id: string }
+          | null;
+        readonly price?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
+        readonly compareAtPrice?: {
+          readonly __typename: 'Money';
+          readonly amount: any;
+          readonly currencyCode: CurrencyCode;
+        } | null;
       } | null;
     }>;
   };
@@ -24860,6 +26563,11 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -24867,7 +26575,6 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -24886,6 +26593,10 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -24896,10 +26607,12 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -24935,6 +26648,90 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -24976,10 +26773,12 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -25087,10 +26886,12 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -25199,10 +27000,12 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -25383,10 +27186,12 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -25642,6 +27447,11 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
         readonly __typename: 'CheckoutLoyaltyEarning';
         readonly state: CheckoutLoyaltyEarningState;
         readonly points: number;
+        readonly pointsValue?: {
+          readonly __typename: 'Money';
+          readonly currencyCode: CurrencyCode;
+          readonly amount: any;
+        } | null;
         readonly amount?: {
           readonly __typename: 'Money';
           readonly currencyCode: CurrencyCode;
@@ -25649,7 +27459,6 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
         } | null;
         readonly presentation: {
           readonly __typename: 'CheckoutLoyaltyEarningPresentation';
-          readonly headline: string;
           readonly description?: string | null;
         };
       } | null;
@@ -25668,6 +27477,10 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
       readonly promotionProgress: ReadonlyArray<{
         readonly __typename: 'CheckoutPromotionProgress';
         readonly status: CheckoutPromotionProgressStatus;
+        readonly qualifierLineIds: ReadonlyArray<string>;
+        readonly benefitLineIds: ReadonlyArray<string>;
+        readonly timesApplied: number;
+        readonly missingBenefitQuantity: number;
         readonly promotion?: {
           readonly __typename: 'StorefrontPromotion';
           readonly key: string;
@@ -25678,10 +27491,12 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -25717,6 +27532,90 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+          readonly benefitVariants?: ReadonlyArray<{
+            readonly __typename: 'ProductVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly product: {
+              readonly __typename: 'Product';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+            };
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          }> | null;
+          readonly benefitProducts?: ReadonlyArray<{
+            readonly __typename: 'Product';
+            readonly id: string;
+            readonly selectedOrFirstAvailableVariant?: {
+              readonly __typename: 'ProductVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly product: {
+                readonly __typename: 'Product';
+                readonly id: string;
+                readonly handle: string;
+                readonly title: string;
+                readonly vendor?: {
+                  readonly __typename: 'Vendor';
+                  readonly name: string;
+                } | null;
+              };
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            } | null;
+          } | null> | null;
         } | null;
         readonly requirement: {
           readonly __typename: 'CheckoutPromotionRequirement';
@@ -25758,10 +27657,12 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -25869,10 +27770,12 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
           readonly startsAt: string;
           readonly endsAt?: string | null;
           readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+          readonly benefitScope?: StorefrontPromotionBenefitScope | null;
           readonly presentation: {
             readonly __typename: 'StorefrontPromotionCopy';
             readonly headline: string;
             readonly badge: string;
+            readonly shortBadge?: string | null;
             readonly accessibilityLabel: string;
             readonly terms?: string | null;
             readonly description?: {
@@ -25981,10 +27884,12 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
                 readonly startsAt: string;
                 readonly endsAt?: string | null;
                 readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+                readonly benefitScope?: StorefrontPromotionBenefitScope | null;
                 readonly presentation: {
                   readonly __typename: 'StorefrontPromotionCopy';
                   readonly headline: string;
                   readonly badge: string;
+                  readonly shortBadge?: string | null;
                   readonly accessibilityLabel: string;
                   readonly terms?: string | null;
                   readonly description?: {
@@ -26165,10 +28070,12 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
               readonly startsAt: string;
               readonly endsAt?: string | null;
               readonly placements: ReadonlyArray<StorefrontPromotionPlacement>;
+              readonly benefitScope?: StorefrontPromotionBenefitScope | null;
               readonly presentation: {
                 readonly __typename: 'StorefrontPromotionCopy';
                 readonly headline: string;
                 readonly badge: string;
+                readonly shortBadge?: string | null;
                 readonly accessibilityLabel: string;
                 readonly terms?: string | null;
                 readonly description?: {
@@ -27106,6 +29013,7 @@ export const SdkStorefrontPromotionFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -27215,11 +29123,283 @@ export const SdkStorefrontPromotionFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
         ],
       },
     },
   ],
 } as unknown as DocumentNode<SdkStorefrontPromotionFragment, unknown>;
+export const SdkPromotionBenefitVariantFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkPromotionBenefitVariantFragment, unknown>;
+export const SdkPromotionBenefitItemsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SdkPromotionBenefitItemsFragment, unknown>;
 export const SdkCartPromotionRequirementFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -27769,6 +29949,7 @@ export const SdkCartLineFragment_FieldsFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -27878,6 +30059,7 @@ export const SdkCartLineFragment_FieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
         ],
       },
     },
@@ -27936,6 +30118,7 @@ export const SdkCartLineFragment_LineFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -28045,6 +30228,7 @@ export const SdkCartLineFragment_LineFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
         ],
       },
     },
@@ -28805,6 +30989,23 @@ export const SdkCartFragment_CartFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -28826,10 +31027,6 @@ export const SdkCartFragment_CartFragmentDoc = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -28881,6 +31078,13 @@ export const SdkCartFragment_CartFragmentDoc = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -28900,6 +31104,22 @@ export const SdkCartFragment_CartFragmentDoc = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -29044,6 +31264,109 @@ export const SdkCartFragment_CartFragmentDoc = {
     },
     {
       kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
       typeCondition: {
         kind: 'NamedType',
@@ -29062,6 +31385,7 @@ export const SdkCartFragment_CartFragmentDoc = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -29171,6 +31495,7 @@ export const SdkCartFragment_CartFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
         ],
       },
     },
@@ -29629,6 +31954,61 @@ export const SdkCartFragment_CartFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'unique' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -32517,6 +34897,7 @@ export const SdkAddPromoCodeMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -32626,6 +35007,165 @@ export const SdkAddPromoCodeMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -33471,6 +36011,23 @@ export const SdkAddPromoCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -33492,10 +36049,6 @@ export const SdkAddPromoCodeMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -33547,6 +36100,13 @@ export const SdkAddPromoCodeMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -33566,6 +36126,22 @@ export const SdkAddPromoCodeMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -33814,6 +36390,7 @@ export const SdkAddToCartMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -33923,6 +36500,165 @@ export const SdkAddToCartMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -34768,6 +37504,23 @@ export const SdkAddToCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -34789,10 +37542,6 @@ export const SdkAddToCartMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -34844,6 +37593,13 @@ export const SdkAddToCartMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -34863,6 +37619,22 @@ export const SdkAddToCartMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -35116,6 +37888,7 @@ export const SdkClaimCartMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -35225,6 +37998,165 @@ export const SdkClaimCartMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -36070,6 +39002,23 @@ export const SdkClaimCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -36091,10 +39040,6 @@ export const SdkClaimCartMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -36146,6 +39091,13 @@ export const SdkClaimCartMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -36165,6 +39117,22 @@ export const SdkClaimCartMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -36413,6 +39381,7 @@ export const SdkClearCartMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -36522,6 +39491,165 @@ export const SdkClearCartMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -37367,6 +40495,23 @@ export const SdkClearCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -37388,10 +40533,6 @@ export const SdkClearCartMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -37443,6 +40584,13 @@ export const SdkClearCartMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -37462,6 +40610,22 @@ export const SdkClearCartMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -37711,6 +40875,7 @@ export const SdkCreateCartMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -37820,6 +40985,165 @@ export const SdkCreateCartMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -38665,6 +41989,23 @@ export const SdkCreateCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -38686,10 +42027,6 @@ export const SdkCreateCartMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -38741,6 +42078,13 @@ export const SdkCreateCartMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -38760,6 +42104,22 @@ export const SdkCreateCartMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -39008,6 +42368,7 @@ export const SdkRemoveFromCartMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -39117,6 +42478,165 @@ export const SdkRemoveFromCartMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -39962,6 +43482,23 @@ export const SdkRemoveFromCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -39983,10 +43520,6 @@ export const SdkRemoveFromCartMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -40038,6 +43571,13 @@ export const SdkRemoveFromCartMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -40057,6 +43597,22 @@ export const SdkRemoveFromCartMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -40304,6 +43860,7 @@ export const SdkRemovePromoCodeMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -40413,6 +43970,165 @@ export const SdkRemovePromoCodeMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -41258,6 +44974,23 @@ export const SdkRemovePromoCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -41279,10 +45012,6 @@ export const SdkRemovePromoCodeMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -41334,6 +45063,13 @@ export const SdkRemovePromoCodeMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -41353,6 +45089,22 @@ export const SdkRemovePromoCodeMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -41601,6 +45353,7 @@ export const SdkReplaceCartItemMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -41710,6 +45463,165 @@ export const SdkReplaceCartItemMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -42555,6 +46467,23 @@ export const SdkReplaceCartItemMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -42576,10 +46505,6 @@ export const SdkReplaceCartItemMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -42631,6 +46556,13 @@ export const SdkReplaceCartItemMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -42650,6 +46582,22 @@ export const SdkReplaceCartItemMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -42898,6 +46846,7 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -43007,6 +46956,165 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -43852,6 +47960,23 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -43873,10 +47998,6 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -43928,6 +48049,13 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -43947,6 +48075,22 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -44195,6 +48339,7 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -44304,6 +48449,165 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -45149,6 +49453,23 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -45170,10 +49491,6 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -45225,6 +49542,13 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -45244,6 +49568,22 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -45492,6 +49832,7 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -45601,6 +49942,165 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -46446,6 +50946,23 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -46467,10 +50984,6 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -46522,6 +51035,13 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -46541,6 +51061,22 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -46745,6 +51281,7 @@ export const SdkLoadAccountCartQueryDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -46854,6 +51391,165 @@ export const SdkLoadAccountCartQueryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -47699,6 +52395,23 @@ export const SdkLoadAccountCartQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -47720,10 +52433,6 @@ export const SdkLoadAccountCartQueryDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -47775,6 +52484,13 @@ export const SdkLoadAccountCartQueryDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -47794,6 +52510,22 @@ export const SdkLoadAccountCartQueryDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -48010,6 +52742,7 @@ export const SdkLoadCartQueryDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -48119,6 +52852,165 @@ export const SdkLoadCartQueryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -48964,6 +53856,23 @@ export const SdkLoadCartQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -48985,10 +53894,6 @@ export const SdkLoadCartQueryDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -49040,6 +53945,13 @@ export const SdkLoadCartQueryDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -49059,6 +53971,22 @@ export const SdkLoadCartQueryDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -54816,6 +59744,7 @@ export const SdkStorefrontPromotionsDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -54925,6 +59854,7 @@ export const SdkStorefrontPromotionsDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
         ],
       },
     },
@@ -54932,6 +59862,259 @@ export const SdkStorefrontPromotionsDocument = {
 } as unknown as DocumentNode<
   SdkStorefrontPromotionsQuery,
   SdkStorefrontPromotionsQueryVariables
+>;
+export const SdkPromotionBenefitProductsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitProducts' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'promotionKey' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'first' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'products' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'first' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filters' },
+                value: {
+                  kind: 'ListValue',
+                  values: [
+                    {
+                      kind: 'ObjectValue',
+                      fields: [
+                        {
+                          kind: 'ObjectField',
+                          name: { kind: 'Name', value: 'promotionId' },
+                          value: {
+                            kind: 'Variable',
+                            name: { kind: 'Name', value: 'promotionKey' },
+                          },
+                        },
+                        {
+                          kind: 'ObjectField',
+                          name: { kind: 'Name', value: 'promotionRole' },
+                          value: { kind: 'EnumValue', value: 'BENEFIT' },
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'Field',
+                        name: {
+                          kind: 'Name',
+                          value: 'selectedOrFirstAvailableVariant',
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: {
+                                kind: 'Name',
+                                value: 'SdkPromotionBenefitVariant',
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'benefitPrice' },
+                              arguments: [
+                                {
+                                  kind: 'Argument',
+                                  name: { kind: 'Name', value: 'promotionKey' },
+                                  value: {
+                                    kind: 'Variable',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'promotionKey',
+                                    },
+                                  },
+                                },
+                              ],
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'amount' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: {
+                                      kind: 'Name',
+                                      value: 'currencyCode',
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SdkPromotionBenefitProductsQuery,
+  SdkPromotionBenefitProductsQueryVariables
 >;
 export const SdkStorefrontContextDocument = {
   kind: 'Document',
@@ -55538,6 +60721,7 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -55647,6 +60831,165 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -56492,6 +61835,23 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -56513,10 +61873,6 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -56568,6 +61924,13 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -56587,6 +61950,22 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },
@@ -56837,6 +62216,7 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'headline' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'shortBadge' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'description' },
@@ -56946,6 +62326,165 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'startsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endsAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'placements' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'benefitScope' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductVariant' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'product' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'vendor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'cover' },
+            name: { kind: 'Name', value: 'featuredMedia' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'MediaImage' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'image' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'url' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'price' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'compareAtPrice' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currencyCode' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkPromotionBenefitItems' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'StorefrontPromotion' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitVariants' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'benefitProducts' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: {
+                    kind: 'Name',
+                    value: 'selectedOrFirstAvailableVariant',
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitVariant',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -57791,6 +63330,23 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'points' } },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'pointsValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'amount' },
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -57812,10 +63368,6 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'headline' },
-                      },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'description' },
@@ -57867,6 +63419,13 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                         kind: 'FragmentSpread',
                         name: { kind: 'Name', value: 'SdkStorefrontPromotion' },
                       },
+                      {
+                        kind: 'FragmentSpread',
+                        name: {
+                          kind: 'Name',
+                          value: 'SdkPromotionBenefitItems',
+                        },
+                      },
                     ],
                   },
                 },
@@ -57886,6 +63445,22 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                       },
                     ],
                   },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'qualifierLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'benefitLineIds' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'timesApplied' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'missingBenefitQuantity' },
                 },
               ],
             },

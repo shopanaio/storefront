@@ -1,5 +1,9 @@
 import type { model } from '../../../model/namespace';
-import type { SdkStorefrontPromotionFragment } from '../../../graphql/apollo/generated/operations';
+import type {
+  SdkPromotionBenefitItemsFragment,
+  SdkPromotionBenefitVariantFragment,
+  SdkStorefrontPromotionFragment,
+} from '../../../graphql/apollo/generated/operations';
 
 type ApiMoney = { readonly amount: unknown; readonly currencyCode: string };
 
@@ -29,6 +33,7 @@ export function mapStorefrontPromotion(
     kind: promotion.kind,
     headline: presentation.headline,
     badge: presentation.badge,
+    shortBadge: presentation.shortBadge ?? null,
     description: presentation.description
       ? {
           text: presentation.description.text,
@@ -56,5 +61,52 @@ export function mapStorefrontPromotion(
     startsAt: toDate(promotion.startsAt) ?? new Date(0),
     endsAt: toDate(promotion.endsAt),
     placements: promotion.placements,
+    benefitScope: promotion.benefitScope ?? null,
   };
+}
+
+/** Maps the `SdkPromotionBenefitVariant` fragment, with its benefit price when asked for. */
+export function mapPromotionBenefitOffer(
+  variant: Omit<SdkPromotionBenefitVariantFragment, '__typename'> & {
+    readonly benefitPrice?: ApiMoney | null;
+  }
+): model.PromotionBenefitOffer {
+  const cover =
+    variant.cover?.__typename === 'MediaImage' ? variant.cover : null;
+  return {
+    variantId: variant.id,
+    variantHandle: variant.handle,
+    variantTitle: variant.title === variant.product.title ? '' : variant.title,
+    product: {
+      id: variant.product.id,
+      handle: variant.product.handle,
+      title: variant.product.title,
+      vendorName: variant.product.vendor?.name ?? null,
+    },
+    imageUrl: cover?.image?.url ? String(cover.image.url) : null,
+    price: toMoney(variant.price),
+    compareAtPrice: toMoney(variant.compareAtPrice),
+    benefitPrice: toMoney(variant.benefitPrice),
+    availableForSale: variant.availableForSale,
+  };
+}
+
+/**
+ * The benefit items the merchant chose for buy X get Y: its variants, or the first available
+ * variant of each of its products the storefront shows. Null when it chose neither.
+ */
+export function mapPromotionBenefitItems(
+  promotion: Omit<SdkPromotionBenefitItemsFragment, '__typename'>
+): model.PromotionBenefitOffer[] | null {
+  if (promotion.benefitVariants) {
+    return promotion.benefitVariants.map(mapPromotionBenefitOffer);
+  }
+  if (promotion.benefitProducts) {
+    return promotion.benefitProducts.flatMap((product) =>
+      product?.selectedOrFirstAvailableVariant
+        ? [mapPromotionBenefitOffer(product.selectedOrFirstAvailableVariant)]
+        : []
+    );
+  }
+  return null;
 }

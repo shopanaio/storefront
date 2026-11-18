@@ -112,6 +112,7 @@ export namespace model {
   export type CartPromoCode = CartTypes.CartPromoCode;
   export type CartLoyaltyEarning = CartTypes.CartLoyaltyEarning;
   export type StorefrontPromotion = CartTypes.StorefrontPromotion;
+  export type PromotionBenefitOffer = CartTypes.PromotionBenefitOffer;
   export type CartPromotionRequirement = CartTypes.CartPromotionRequirement;
   export type CartPromotionProgress = CartTypes.CartPromotionProgress;
   export type CartFreeShippingProgress = CartTypes.CartFreeShippingProgress;
