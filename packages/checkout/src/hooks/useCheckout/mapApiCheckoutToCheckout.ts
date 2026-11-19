@@ -130,6 +130,13 @@ const mapLine = (line: ApiLine): Checkout.Line => {
     sku: line.sku ?? null,
     cost: mapLineCost(line.cost),
     originalPrice: mapMoney(line.originalPrice),
+    freeQuantity: Math.min(
+      line.quantity,
+      line.discountAllocations.reduce(
+        (sum, allocation) => sum + allocation.freeQuantity,
+        0
+      )
+    ),
     priceConfig: line.priceConfig
       ? {
           type: line.priceConfig.type,

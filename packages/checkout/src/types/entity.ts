@@ -256,6 +256,8 @@ export namespace Checkout {
     cost: LineCost;
     /** Price of the purchasable before bundle price adjustments. */
     originalPrice: model.Money;
+    /** Units of the line promotions made free, at most its quantity. */
+    freeQuantity: number;
     /** Price adjustment of a bundle component. */
     priceConfig: LinePriceConfig | null;
     /** Image URL of the purchasable. */

@@ -31,10 +31,12 @@ export const CheckoutActions = () => {
 };
 
 /**
- * Room under the stuck panel: 20px, or the safe area (the home indicator, the browser's bar)
- * where that is more, not both.
+ * Room under the stuck panel: the safe area (the home indicator, the browser's bar), from
+ * 20px up to 24px. The room is 24px and the panel moves down by what it lacks of it, so the
+ * browser's bars coming and going slide the panel rather than move its sticky edge.
  */
-const BOTTOM = 'max(20px, env(safe-area-inset-bottom))';
+const BOTTOM = '24px';
+const SHIFT = 'calc(24px - clamp(20px, env(safe-area-inset-bottom), 24px))';
 
 const useStyles = createStyles(({ css, token }) => {
   /*
@@ -65,6 +67,9 @@ const useStyles = createStyles(({ css, token }) => {
        */
       padding: 12px ${token.padding}px 0;
       ${backing(token.colorBgLayout)}
+      translate: 0 ${SHIFT};
+      transition: translate ${token.motionDurationSlow} ${token.motionEaseOut}
+        ${token.motionDurationMid};
 
       ${mq.lg} {
         margin-top: -12px;

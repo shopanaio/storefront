@@ -9823,6 +9823,10 @@ export type StorefrontAddDeliveryAddressesMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -9899,6 +9903,10 @@ export type StorefrontAddDeliveryAddressesMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -9972,6 +9980,10 @@ export type StorefrontAddDeliveryAddressesMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -10419,6 +10431,10 @@ export type StorefrontAddDeliveryRecipientsMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -10495,6 +10511,10 @@ export type StorefrontAddDeliveryRecipientsMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -10568,6 +10588,10 @@ export type StorefrontAddDeliveryRecipientsMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -11015,6 +11039,10 @@ export type StorefrontAddPromoCodeMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -11091,6 +11119,10 @@ export type StorefrontAddPromoCodeMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -11164,6 +11196,10 @@ export type StorefrontAddPromoCodeMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -11611,6 +11647,10 @@ export type StorefrontRemoveDeliveryAddressesMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -11687,6 +11727,10 @@ export type StorefrontRemoveDeliveryAddressesMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -11760,6 +11804,10 @@ export type StorefrontRemoveDeliveryAddressesMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -12207,6 +12255,10 @@ export type StorefrontRemoveDeliveryRecipientsMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -12283,6 +12335,10 @@ export type StorefrontRemoveDeliveryRecipientsMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -12356,6 +12412,10 @@ export type StorefrontRemoveDeliveryRecipientsMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -12803,6 +12863,10 @@ export type StorefrontRemoveLoyaltyRedemptionMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -12879,6 +12943,10 @@ export type StorefrontRemoveLoyaltyRedemptionMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -12952,6 +13020,10 @@ export type StorefrontRemoveLoyaltyRedemptionMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -13399,6 +13471,10 @@ export type StorefrontRemovePromoCodeMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -13475,6 +13551,10 @@ export type StorefrontRemovePromoCodeMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -13548,6 +13628,10 @@ export type StorefrontRemovePromoCodeMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -13995,6 +14079,10 @@ export type StorefrontSelectDeliveryMethodMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -14071,6 +14159,10 @@ export type StorefrontSelectDeliveryMethodMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -14144,6 +14236,10 @@ export type StorefrontSelectDeliveryMethodMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -14591,6 +14687,10 @@ export type StorefrontSelectPaymentMethodMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -14667,6 +14767,10 @@ export type StorefrontSelectPaymentMethodMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -14740,6 +14844,10 @@ export type StorefrontSelectPaymentMethodMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -15236,6 +15344,10 @@ export type StorefrontUpdateCustomerIdentityMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -15312,6 +15424,10 @@ export type StorefrontUpdateCustomerIdentityMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -15385,6 +15501,10 @@ export type StorefrontUpdateCustomerIdentityMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -15832,6 +15952,10 @@ export type StorefrontUpdateCustomerNoteMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -15908,6 +16032,10 @@ export type StorefrontUpdateCustomerNoteMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -15981,6 +16109,10 @@ export type StorefrontUpdateCustomerNoteMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -16428,6 +16560,10 @@ export type StorefrontUpdateDeliveryAddressesMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -16504,6 +16640,10 @@ export type StorefrontUpdateDeliveryAddressesMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -16577,6 +16717,10 @@ export type StorefrontUpdateDeliveryAddressesMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -17024,6 +17168,10 @@ export type StorefrontUpdateDeliveryRecipientsMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -17100,6 +17248,10 @@ export type StorefrontUpdateDeliveryRecipientsMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -17173,6 +17325,10 @@ export type StorefrontUpdateDeliveryRecipientsMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -17620,6 +17776,10 @@ export type StorefrontUpdateLoyaltyRedemptionMutation = {
               readonly amount: string;
               readonly currencyCode: CurrencyCode;
             };
+            readonly discountAllocations: ReadonlyArray<{
+              readonly __typename: 'CheckoutDiscountAllocation';
+              readonly freeQuantity: number;
+            }>;
             readonly priceConfig?: {
               readonly __typename: 'CheckoutLinePriceConfig';
               readonly type: ChildPriceType;
@@ -17696,6 +17856,10 @@ export type StorefrontUpdateLoyaltyRedemptionMutation = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -17769,6 +17933,10 @@ export type StorefrontUpdateLoyaltyRedemptionMutation = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -18291,6 +18459,10 @@ export type StorefrontLoadCheckoutQuery = {
             readonly amount: string;
             readonly currencyCode: CurrencyCode;
           };
+          readonly discountAllocations: ReadonlyArray<{
+            readonly __typename: 'CheckoutDiscountAllocation';
+            readonly freeQuantity: number;
+          }>;
           readonly priceConfig?: {
             readonly __typename: 'CheckoutLinePriceConfig';
             readonly type: ChildPriceType;
@@ -18364,6 +18536,10 @@ export type StorefrontLoadCheckoutQuery = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -18437,6 +18613,10 @@ export type StorefrontLoadCheckoutQuery = {
         readonly amount: string;
         readonly currencyCode: CurrencyCode;
       };
+      readonly discountAllocations: ReadonlyArray<{
+        readonly __typename: 'CheckoutDiscountAllocation';
+        readonly freeQuantity: number;
+      }>;
       readonly priceConfig?: {
         readonly __typename: 'CheckoutLinePriceConfig';
         readonly type: ChildPriceType;
@@ -18750,6 +18930,10 @@ export type StorefrontCheckoutLineFieldsFragment = {
     readonly amount: string;
     readonly currencyCode: CurrencyCode;
   };
+  readonly discountAllocations: ReadonlyArray<{
+    readonly __typename: 'CheckoutDiscountAllocation';
+    readonly freeQuantity: number;
+  }>;
   readonly priceConfig?: {
     readonly __typename: 'CheckoutLinePriceConfig';
     readonly type: ChildPriceType;
@@ -19029,6 +19213,10 @@ export type StorefrontUseCheckoutFragment = {
           readonly amount: string;
           readonly currencyCode: CurrencyCode;
         };
+        readonly discountAllocations: ReadonlyArray<{
+          readonly __typename: 'CheckoutDiscountAllocation';
+          readonly freeQuantity: number;
+        }>;
         readonly priceConfig?: {
           readonly __typename: 'CheckoutLinePriceConfig';
           readonly type: ChildPriceType;
@@ -19102,6 +19290,10 @@ export type StorefrontUseCheckoutFragment = {
         readonly amount: string;
         readonly currencyCode: CurrencyCode;
       };
+      readonly discountAllocations: ReadonlyArray<{
+        readonly __typename: 'CheckoutDiscountAllocation';
+        readonly freeQuantity: number;
+      }>;
       readonly priceConfig?: {
         readonly __typename: 'CheckoutLinePriceConfig';
         readonly type: ChildPriceType;
@@ -19175,6 +19367,10 @@ export type StorefrontUseCheckoutFragment = {
       readonly amount: string;
       readonly currencyCode: CurrencyCode;
     };
+    readonly discountAllocations: ReadonlyArray<{
+      readonly __typename: 'CheckoutDiscountAllocation';
+      readonly freeQuantity: number;
+    }>;
     readonly priceConfig?: {
       readonly __typename: 'CheckoutLinePriceConfig';
       readonly type: ChildPriceType;
@@ -19637,6 +19833,19 @@ export const StorefrontCheckoutLineFieldsFragmentDoc = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -20910,6 +21119,19 @@ export const StorefrontUseCheckoutFragmentDoc = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -21345,6 +21567,19 @@ export const StorefrontAddDeliveryAddressesMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -22657,6 +22892,19 @@ export const StorefrontAddDeliveryRecipientsMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -23954,6 +24202,19 @@ export const StorefrontAddPromoCodeMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -25269,6 +25530,19 @@ export const StorefrontRemoveDeliveryAddressesMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -26572,6 +26846,19 @@ export const StorefrontRemoveDeliveryRecipientsMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -27887,6 +28174,19 @@ export const StorefrontRemoveLoyaltyRedemptionMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -29184,6 +29484,19 @@ export const StorefrontRemovePromoCodeMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -30496,6 +30809,19 @@ export const StorefrontSelectDeliveryMethodMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -31793,6 +32119,19 @@ export const StorefrontSelectPaymentMethodMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -33246,6 +33585,19 @@ export const StorefrontUpdateCustomerIdentityMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -34543,6 +34895,19 @@ export const StorefrontUpdateCustomerNoteMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -35858,6 +36223,19 @@ export const StorefrontUpdateDeliveryAddressesMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -37167,6 +37545,19 @@ export const StorefrontUpdateDeliveryRecipientsMutationDocument = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'priceConfig' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -38470,6 +38861,19 @@ export const StorefrontUpdateLoyaltyRedemptionMutationDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },
@@ -39991,6 +40395,19 @@ export const StorefrontLoadCheckoutQueryDocument = {
                 {
                   kind: 'FragmentSpread',
                   name: { kind: 'Name', value: 'StorefrontCheckoutMoney' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'discountAllocations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeQuantity' },
                 },
               ],
             },

@@ -35,6 +35,7 @@ export function makeLine({
       unitPrice: uah(unitPrice),
     },
     originalPrice: uah(unitPrice),
+    freeQuantity: 0,
     priceConfig: null,
     imageSrc,
     // Only what the summary reads of the variant.

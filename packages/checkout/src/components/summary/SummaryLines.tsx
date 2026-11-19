@@ -42,6 +42,16 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
   const toggle = () => setExpanded((value) => !value);
 
   const lines = checkout.lines;
+  // Gifts (every unit free) stand apart, under the lines that are paid for.
+  const isGift = (line: Checkout.Line) =>
+    line.quantity > 0 && line.freeQuantity >= line.quantity;
+  const paidLines = lines.filter((line) => !isGift(line));
+  const giftLines = lines.filter(isGift);
+  const giftsTitle = (
+    <Text type="secondary" className={styles.giftsTitle}>
+      {t('summary-gifts')}
+    </Text>
+  );
   const { totalAmount, totalDiscountAmount, loyaltyAmount } = checkout.cost;
   // What the order would cost without its promotions and what is paid with points or store
   // credit, struck through over the total; nothing when nothing was taken off.
@@ -72,14 +82,14 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
   );
 
   if (!stacked) {
-    const hasHidden = lines.length > VISIBLE_LINES;
+    const hasHidden = paidLines.length > VISIBLE_LINES;
     return (
       // The title row and its gap as those of the contact section beside it (its "Log in" is
       // a control tall), so the title and the first card line up with the form's.
       <Flex id={LINES_ANCHOR} vertical gap={6}>
         <div className={styles.titleRow}>{title}</div>
         <Flex vertical gap={8}>
-          {items(showAll ? lines : lines.slice(0, VISIBLE_LINES))}
+          {items(showAll ? paidLines : paidLines.slice(0, VISIBLE_LINES))}
           {hasHidden ? (
             <div>
               <Button
@@ -92,6 +102,12 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
               </Button>
             </div>
           ) : null}
+          {giftLines.length > 0 && (
+            <Flex vertical gap={8}>
+              {giftsTitle}
+              {items(giftLines)}
+            </Flex>
+          )}
         </Flex>
       </Flex>
     );
@@ -117,10 +133,7 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
           <Fold open={!expanded}>
             <Flex align="center" gap={8} className={styles.folded}>
               {/* The front picture stands where a thumbnail of the list does. */}
-              <ImageFan
-                images={linesToFanImages(lines)}
-                bleed
-              />
+              <ImageFan images={linesToFanImages(lines)} bleed />
               <Flex vertical className={styles.caption}>
                 <Text className={styles.label}>{t('total')}</Text>
                 <Text type="secondary" className={styles.count}>
@@ -151,7 +164,16 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
           </Fold>
           <Fold id={listId} open={expanded}>
             {/* Under the form the lines are divided, not framed, as the lines of a shipment. */}
-            <ShipmentLines lines={lines} undeliverable={undeliverable} />
+            <ShipmentLines lines={paidLines} undeliverable={undeliverable} />
+            {giftLines.length > 0 && (
+              <div className={styles.gifts}>
+                {giftsTitle}
+                <ShipmentLines
+                  lines={giftLines}
+                  undeliverable={undeliverable}
+                />
+              </div>
+            )}
           </Fold>
         </div>
       </OptionWave>
@@ -162,6 +184,15 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
 const useStyles = createStyles(({ css, token }) => ({
   // On a phone the pictures and the lines are a white card, framed as the other cards of the
   // checkout; the rows inside keep the space above and under them.
+  // The heading of the gifts, as the small captions of the summary.
+  giftsTitle: css`
+    font-size: ${token.fontSizeSM}px;
+  `,
+  // Under the paid lines of the card, apart from them as the next line is.
+  gifts: css`
+    padding-top: ${token.paddingSM}px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+  `,
   card: css`
     border: 1px solid ${token.colorBorder};
     border-radius: ${token.borderRadius}px;

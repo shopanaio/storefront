@@ -6,6 +6,7 @@ import type { Checkout } from '#checkout/types/entity';
 import { Money } from '#checkout/ui/Money';
 import { composeProductTitle } from '#checkout/ui/composeProductTitle';
 import { useTranslations } from 'next-intl';
+import { LuGift } from 'react-icons/lu';
 
 const { Text } = Typography;
 
@@ -73,12 +74,17 @@ export const SummaryItem = ({
         </Flex>
       </Flex>
       {priced && (
-        <Money
-          strong
-          as={Text}
-          money={line.cost.totalAmount}
-          className={styles.price}
-        />
+        <Flex align="center" gap={8} className={styles.price}>
+          {line.freeQuantity > 0 && (
+            <span className={styles.gift}>
+              <LuGift size={14} aria-hidden="true" />
+              {line.freeQuantity >= line.quantity
+                ? t('line-gift')
+                : t('line-gift-units', { count: line.freeQuantity })}
+            </span>
+          )}
+          <Money strong as={Text} money={line.cost.totalAmount} />
+        </Flex>
       )}
     </Flex>
   );
@@ -116,6 +122,19 @@ const useStyles = createStyles(({ token, css }) => ({
   price: css`
     flex: none;
     white-space: nowrap;
+  `,
+  // The gift badge of the cart line: the teal of buy X get Y.
+  gift: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 0 ${token.paddingXS}px;
+    border-radius: 10px;
+    color: #00808b;
+    background-color: color-mix(in srgb, #00b0bf 12%, #ffffff);
+    font-size: ${token.fontSizeSM}px;
+    line-height: 20px;
   `,
   note: css`
     font-size: ${token.fontSizeSM}px;
