@@ -9,9 +9,9 @@ export function createRuntimePageServices(
   environmentConfig: ApolloEnvironmentConfig
 ): RuntimePageServices {
   return {
-    async loadQuery(document, variables) {
+    async loadQuery(document, variables, options) {
       const client = await getApolloRequestClient(environmentConfig);
-      return loadSerializableQuery(client, document, variables);
+      return loadSerializableQuery(client, document, variables, options);
     },
 
     async extractCacheState() {

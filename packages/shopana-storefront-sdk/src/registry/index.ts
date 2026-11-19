@@ -1,7 +1,10 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { NormalizedCacheObject, OperationVariables } from '@apollo/client';
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
-import type { SerializableApolloQuery } from '../graphql/apollo/loadSerializableQuery';
+import type {
+  LoadSerializableQueryOptions,
+  SerializableApolloQuery,
+} from '../graphql/apollo/loadSerializableQuery';
 import { match, type MatchFunction, type ParamData } from 'path-to-regexp';
 
 // Re-export ParamData for module authors
@@ -95,7 +98,8 @@ const HOME_PATHNAME = '/';
 export interface ModulePageServices {
   loadQuery<TData, TVariables extends OperationVariables>(
     document: TypedDocumentNode<TData, TVariables>,
-    variables: TVariables
+    variables: TVariables,
+    options?: LoadSerializableQueryOptions
   ): Promise<SerializableApolloQuery<TData, TVariables>>;
   extractCacheState(): Promise<NormalizedCacheObject>;
 }

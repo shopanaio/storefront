@@ -77,8 +77,11 @@ export type RuntimeJsonLd = { '@context'?: string; '@type'?: string } & {
  * Twitter card from the page's own title, description and images (see `withSiteMetadata`).
  */
 export interface RuntimeMetadata {
-  /** The page's title; the app's title template puts the store in it. */
-  title?: string | null;
+  /**
+   * The page's title; the app's title template puts the store in it. `{ absolute }` is the
+   * whole title as it is, outside the template (a home page whose title names the store).
+   */
+  title?: string | { absolute: string } | null;
   description?: string | null;
   keywords?: string | string[] | null;
   robots?: string | { index?: boolean; follow?: boolean } | null;
@@ -86,13 +89,30 @@ export interface RuntimeMetadata {
     canonical?: string | null;
     /** Address of the page in each language, by BCP 47 tag (`x-default` included). */
     languages?: Record<string, string>;
+    /**
+     * Codes of the store languages the page has content in (`StorefrontLocale.code`): only
+     * they get a language alternate and an `og:locale:alternate`. Every store language when
+     * left out.
+     */
+    locales?: readonly string[] | null;
   } | null;
+  /**
+   * The neighbouring pages of a paginated list (`/categories/food?page=3`), storefront paths
+   * or absolute addresses: `<link rel="prev">` and `<link rel="next">`.
+   */
+  pagination?: { previous?: string | null; next?: string | null };
   openGraph?: RuntimeOpenGraph | null;
   twitter?: RuntimeTwitter | null;
   /** schema.org documents of the page (a Product, a BreadcrumbList), for search engines. */
   jsonLd?: RuntimeJsonLd | RuntimeJsonLd[] | null;
   /** Further `<meta name content>` tags. */
   other?: Record<string, string | number | Array<string | number>>;
+}
+
+/** The title as text: the page's own, or the whole title of `{ absolute }`. */
+export function titleText(title: RuntimeMetadata['title']): string | null {
+  if (!title) return null;
+  return typeof title === 'string' ? title : title.absolute || null;
 }
 
 /** Whether the robots directive lets search engines index the page. */

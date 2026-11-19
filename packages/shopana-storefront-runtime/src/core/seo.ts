@@ -3,8 +3,15 @@
  * (`sitemap.xml`, an index of the files under `/sitemaps/`). The theme defines them
  * (`src/runtime/seo.ts`); the same under both runtimes, each serves them from its routes.
  */
+import { isSiteNoindex } from './indexing';
 import type { RuntimePageServices } from './page-definition';
-import { siteUrl, siteAssetUrl, type RuntimeSite } from './site';
+import {
+  defaultPageLocale,
+  pageLocales,
+  siteUrl,
+  siteAssetUrl,
+  type RuntimeSite,
+} from './site';
 
 export const ROBOTS_PATH = '/robots.txt';
 export const SITEMAP_PATH = '/sitemap.xml';
@@ -24,10 +31,15 @@ export interface RuntimeRobotsRule {
   disallow?: string[];
 }
 
-/** An address of a sitemap: a page in every store language, with its alternates. */
+/** An address of a sitemap: a page in each language it has, with its alternates. */
 export interface RuntimeSitemapEntry {
   /** Storefront path without the locale segment (`/products/socks`). */
   path: string;
+  /**
+   * Codes of the store languages the page has content in (`StorefrontLocale.code`): the
+   * sitemap lists the page in them only. Every store language when left out.
+   */
+  locales?: readonly string[] | null;
   /** Last change of the page's content. */
   lastModified?: string | Date | null;
   /** Images of the page (absolute or site URLs), for image search. */
@@ -85,7 +97,10 @@ function localizedRules(site: RuntimeSite, paths: readonly string[] = []) {
   ];
 }
 
-/** `robots.txt`: the theme's rules in every store language and the sitemap index. */
+/**
+ * `robots.txt`: the theme's rules in every store language and the sitemap index (none on a
+ * site kept off search engines, see `isSiteNoindex`).
+ */
 export function buildRobotsTxt(
   seo: RuntimeSeoDefinition,
   site: RuntimeSite
@@ -103,9 +118,10 @@ export function buildRobotsTxt(
         : ['Disallow:']),
     ].join('\n');
   });
-  const sitemap = sourceNames(seo).length
-    ? [`Sitemap: ${site.origin}${SITEMAP_PATH}`]
-    : [];
+  const sitemap =
+    sourceNames(seo).length && !isSiteNoindex()
+      ? [`Sitemap: ${site.origin}${SITEMAP_PATH}`]
+      : [];
   return `${[...groups, ...sitemap].join('\n\n')}\n`;
 }
 
@@ -143,7 +159,10 @@ interface CachedSource {
   entries: Promise<readonly RuntimeSitemapEntry[]>;
 }
 
-const sourceCache = new WeakMap<RuntimeSeoDefinition, Map<string, CachedSource>>();
+const sourceCache = new WeakMap<
+  RuntimeSeoDefinition,
+  Map<string, CachedSource>
+>();
 
 /** The pages of a source, loaded at most once per `SITEMAP_SOURCE_TTL_MS`; a failed load is dropped. */
 function loadSource(
@@ -171,12 +190,16 @@ function loadSource(
   return entries;
 }
 
-/** `sitemap.xml`: the files of every source, each up to the limit of addresses; none of an empty source. */
+/**
+ * `sitemap.xml`: the files of every source, each up to the limit of addresses; none of an
+ * empty source. Null on a site kept off search engines.
+ */
 export async function buildSitemapIndex(
   seo: RuntimeSeoDefinition,
   site: RuntimeSite,
   context: RuntimeSitemapContext
-): Promise<string> {
+): Promise<string | null> {
+  if (isSiteNoindex()) return null;
   const perFile = entriesPerFile(site);
   const files = await Promise.all(
     sourceNames(seo).map(async (name) => {
@@ -210,25 +233,24 @@ export async function buildSitemapIndex(
   ].join('\n');
 }
 
-function urlElement(
-  site: RuntimeSite,
-  entry: RuntimeSitemapEntry,
-  multilingual: boolean
-): string[] {
+function urlElement(site: RuntimeSite, entry: RuntimeSitemapEntry): string[] {
   const lastModified = isoDate(entry.lastModified);
-  const alternates = multilingual
-    ? [
-        ...site.locales.locales.map(
-          (locale) =>
-            `<xhtml:link rel="alternate" hreflang="${escapeXml(locale.tag)}" href="${escapeXml(
-              siteUrl(site, entry.path, locale)
-            )}"/>`
-        ),
-        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(
-          siteUrl(site, entry.path, site.locales.defaultLocale)
-        )}"/>`,
-      ].join('')
-    : '';
+  const locales = pageLocales(site, entry.locales);
+  const xDefault = defaultPageLocale(site, locales);
+  const alternates =
+    locales.length > 1 && xDefault
+      ? [
+          ...locales.map(
+            (locale) =>
+              `<xhtml:link rel="alternate" hreflang="${escapeXml(locale.tag)}" href="${escapeXml(
+                siteUrl(site, entry.path, locale)
+              )}"/>`
+          ),
+          `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(
+            siteUrl(site, entry.path, xDefault)
+          )}"/>`,
+        ].join('')
+      : '';
   const images = (entry.images ?? [])
     .map(
       (image) =>
@@ -237,7 +259,7 @@ function urlElement(
         )}</image:loc></image:image>`
     )
     .join('');
-  return site.locales.locales.map(
+  return locales.map(
     (locale) =>
       `<url><loc>${escapeXml(siteUrl(site, entry.path, locale))}</loc>${
         lastModified ? `<lastmod>${lastModified}</lastmod>` : ''
@@ -246,9 +268,9 @@ function urlElement(
 }
 
 /**
- * A sitemap file (`<source>-<n>.xml`): its part of the source's pages, each in every store
- * language with the addresses of the others. Null for a file that does not exist (past the
- * source's pages, or any file of an empty source).
+ * A sitemap file (`<source>-<n>.xml`): its part of the source's pages, each in every language
+ * it has with the addresses of the others. Null for a file that does not exist (past the
+ * source's pages, or any file of an empty source) and on a site kept off search engines.
  */
 export async function buildSitemapFile(
   seo: RuntimeSeoDefinition,
@@ -256,6 +278,7 @@ export async function buildSitemapFile(
   context: RuntimeSitemapContext,
   file: string
 ): Promise<string | null> {
+  if (isSiteNoindex()) return null;
   const match = /^([a-z0-9-]+)-([1-9]\d*)\.xml$/.exec(file);
   if (!match) return null;
   const [, name, page] = match;
@@ -266,13 +289,12 @@ export async function buildSitemapFile(
   const start = (Number(page) - 1) * perFile;
   if (start >= entries.length) return null;
 
-  const multilingual = site.locales.locales.length > 1;
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
     ...entries
       .slice(start, start + perFile)
-      .flatMap((entry) => urlElement(site, entry, multilingual)),
+      .flatMap((entry) => urlElement(site, entry)),
     '</urlset>',
     '',
   ].join('\n');

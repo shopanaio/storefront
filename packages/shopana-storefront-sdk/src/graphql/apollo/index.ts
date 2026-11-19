@@ -6,6 +6,7 @@ export {
 } from './requestResultCache';
 export {
   loadSerializableQuery,
+  type LoadSerializableQueryOptions,
   type SerializableApolloQuery,
 } from './loadSerializableQuery';
 export type {

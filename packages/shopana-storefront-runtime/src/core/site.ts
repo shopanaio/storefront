@@ -12,6 +12,7 @@ import {
 } from '@shopana/storefront-sdk/routing';
 import {
   isIndexable,
+  titleText,
   type RuntimeMetadata,
   type RuntimeMetadataImage,
   type RuntimeMetadataImages,
@@ -139,49 +140,84 @@ export interface SiteMetadataOptions {
 }
 
 /**
- * A page's metadata with what every page of the site has: the title in the app's template,
- * the canonical address (the page's path without its query unless the page names one) and
- * the page in each store language with `x-default` (indexable pages; the languages only on a
- * site with several), and Open Graph and Twitter tags from the page's own ones. A `noindex`
- * page names no canonical address of its own: search engines read the two as conflicting.
- * Addresses are made absolute on the public origin.
+ * The store languages a page has content in: those `codes` name (`StorefrontLocale.code`), every
+ * store language when left out. Sitemaps and language alternates list only them.
+ */
+export function pageLocales(
+  site: Pick<RuntimeSite, 'locales'>,
+  codes: readonly string[] | null | undefined
+): readonly StorefrontLocale[] {
+  if (!codes) return site.locales.locales;
+  return site.locales.locales.filter((locale) => codes.includes(locale.code));
+}
+
+/**
+ * The language of `x-default`: the store's default one when the page has it, else the first
+ * language the page has.
+ */
+export function defaultPageLocale(
+  site: Pick<RuntimeSite, 'locales'>,
+  locales: readonly StorefrontLocale[]
+): StorefrontLocale | undefined {
+  return (
+    locales.find((locale) => locale.tag === site.locales.defaultLocale.tag) ??
+    locales[0]
+  );
+}
+
+/**
+ * A page's metadata with what every page of the site has: the title in the app's template
+ * (`{ absolute }` outside it), the canonical address (the page's path without its query unless
+ * the page names one) and the page in each language it has (`alternates.locales`, every store
+ * language when left out) with `x-default` (indexable pages; the languages only when the page
+ * has several), the neighbouring pages of a list, and Open Graph and Twitter tags from the
+ * page's own ones. A `noindex` page names no canonical address of its own: search engines read
+ * the two as conflicting. Addresses are made absolute on the public origin.
  */
 export function withSiteMetadata(
   metadata: RuntimeMetadata | null | undefined,
   { site, store, pathname, titleTemplate }: SiteMetadataOptions
 ): RuntimeMetadata {
   const page = metadata ?? {};
-  const title = page.title
-    ? titleTemplate
-      ? titleTemplate(page.title, store)
-      : page.title
-    : page.title;
+  const pageTitle = titleText(page.title);
+  const title =
+    page.title && typeof page.title !== 'string'
+      ? titleTemplate
+        ? pageTitle
+        : page.title
+      : pageTitle && titleTemplate
+        ? titleTemplate(pageTitle, store)
+        : page.title;
 
   const indexable = isIndexable(page.robots);
   const canonicalPath = page.alternates?.canonical ?? pathname;
   const pageUrl = siteUrl(site, canonicalPath);
   const canonical =
     indexable || page.alternates?.canonical ? pageUrl : undefined;
-  const otherLocales = site.locales.locales.filter(
+  const locales = pageLocales(site, page.alternates?.locales);
+  const otherLocales = locales.filter(
     (locale) => locale.tag !== site.locale.tag
   );
+  const xDefault = defaultPageLocale(site, locales);
   const languages =
     page.alternates?.languages ??
-    (indexable && otherLocales.length && !isAbsoluteUrl(canonicalPath)
+    (indexable &&
+    otherLocales.length &&
+    xDefault &&
+    !isAbsoluteUrl(canonicalPath)
       ? Object.fromEntries([
-          ...site.locales.locales.map((locale) => [
+          ...locales.map((locale) => [
             locale.tag,
             siteUrl(site, canonicalPath, locale),
           ]),
-          [
-            'x-default',
-            siteUrl(site, canonicalPath, site.locales.defaultLocale),
-          ],
+          ['x-default', siteUrl(site, canonicalPath, xDefault)],
         ])
       : undefined);
+  const previous = page.pagination?.previous;
+  const next = page.pagination?.next;
 
   const openGraph = page.openGraph ?? {};
-  const ogTitle = openGraph.title ?? page.title ?? store.name;
+  const ogTitle = openGraph.title ?? pageTitle ?? store.name;
   const ogDescription = openGraph.description ?? page.description ?? undefined;
   const ogImages = absoluteImages(site, openGraph.images);
   const twitter = page.twitter ?? {};
@@ -193,6 +229,13 @@ export function withSiteMetadata(
       ...(canonical ? { canonical } : {}),
       ...(languages ? { languages } : {}),
     },
+    pagination:
+      previous || next
+        ? {
+            ...(previous ? { previous: siteUrl(site, previous) } : {}),
+            ...(next ? { next: siteUrl(site, next) } : {}),
+          }
+        : undefined,
     openGraph: {
       ...openGraph,
       type: openGraph.type ?? 'website',

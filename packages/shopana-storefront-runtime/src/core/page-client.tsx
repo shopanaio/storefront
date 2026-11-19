@@ -16,6 +16,7 @@ import type { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import { useApolloClient } from '@apollo/client/react';
 import { use, type ReactNode } from 'react';
 import { Builder } from '@shopana/storefront-sdk/core/Builder';
+import { loadSerializableQuery } from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
 import { useLocalization } from '@shopana/storefront-sdk/modules/localization/react';
 import type {
   PageTemplate,
@@ -141,14 +142,8 @@ export function createClientPageServices(
   client: ApolloClient
 ): RuntimePageServices {
   return {
-    async loadQuery(document, variables) {
-      const result = await client.query({ query: document, variables });
-      return {
-        data: result.data as never,
-        variables,
-        cacheState: {} as NormalizedCacheObject,
-      };
-    },
+    loadQuery: (document, variables, options) =>
+      loadSerializableQuery(client, document, variables, options),
     async extractCacheState() {
       return {} as NormalizedCacheObject;
     },

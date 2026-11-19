@@ -46,6 +46,8 @@ import type { RuntimeAppDefinition } from './app';
 import { getRequestContext } from './headers';
 import { isNotFoundSignal } from './not-found-response';
 import { isLocalizedPath, localePrefixRedirect } from './locale-routing';
+import { takePageJsonLd } from './page-json-ld';
+import { httpsRedirect, withSitePolicyHeaders } from './response-policy';
 import {
   loadModuleLayout,
   loadModulePage,
@@ -76,15 +78,21 @@ export interface RuntimeRequestLocale {
 export const runtimeRequestLocale = createContext<RuntimeRequestLocale>();
 
 /**
- * The root middleware of a storefront: matches the locale segment against the store languages
- * (cached for a minute), redirects an address to its locale prefix form, and runs the rest of
- * the request (loaders, actions, the server render) in a request scope with the storefront
- * locale header, which the SDK server modules read.
+ * The root middleware of a storefront: moves a request that came over plain HTTP to HTTPS on
+ * the public origin, matches the locale segment against the store languages (cached for a
+ * minute), redirects an address to its locale prefix form, and runs the rest of the request
+ * (loaders, actions, the server render) in a request scope with the storefront locale header,
+ * which the SDK server modules read. Every response it lets through gets the site's policy
+ * headers (HSTS, `X-Robots-Tag` of a site kept off search engines).
  */
 export function createRuntimeMiddleware(
   app: RuntimeAppDefinition
 ): MiddlewareFunction<Response> {
   return async ({ request, url, context }, next) => {
+    const origin = publicOrigin(request.url);
+    const https = httpsRedirect(request, url, origin);
+    if (https) throw redirect(https.location, https.status);
+
     const locales = await loadStorefrontLocales(app.environmentConfig);
     const { locale: segment } = splitLocaleFromPathname(
       url.pathname,
@@ -101,7 +109,11 @@ export function createRuntimeMiddleware(
     headers.set(STOREFRONT_LOCALE_HEADER, locale.tag);
     context.set(runtimeRequestLocale, { locales, locale, segment });
 
-    return storage.run(createServerRequestScope(url, headers), next);
+    const response = await storage.run(
+      createServerRequestScope(url, headers),
+      next
+    );
+    return withSitePolicyHeaders(response, origin);
   };
 }
 
@@ -179,8 +191,9 @@ export function createRuntimePageLoader(
       kind: 'page',
       pageType,
       data: result.data,
-      metadata:
-        (await definition.generateMetadata?.(context, result.data)) ?? {},
+      metadata: takePageJsonLd(
+        (await definition.generateMetadata?.(context, result.data)) ?? {}
+      ),
     } satisfies RuntimePageData;
   }
 
@@ -233,9 +246,11 @@ export function createRuntimePageLoader(
           pathname: resolution.pathname,
           props,
           closedPageRedirect: closedPage?.redirectTo ?? null,
-          metadata: generate
-            ? await generate({ ...props, services })
-            : buildModuleMetadata(match.record.slug),
+          metadata: takePageJsonLd(
+            generate
+              ? await generate({ ...props, services })
+              : buildModuleMetadata(match.record.slug)
+          ),
         } satisfies RuntimePageData;
       }
 

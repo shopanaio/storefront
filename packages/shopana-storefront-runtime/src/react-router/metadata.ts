@@ -1,8 +1,8 @@
 import type { MetaDescriptor } from 'react-router';
 import { splitLocaleFromPathname } from '@shopana/storefront-sdk/routing';
 import {
-  jsonLdList,
   openGraphProductProperties,
+  titleText,
   type RuntimeMetadata,
   type RuntimeMetadataImage,
   type RuntimeMetadataImages,
@@ -26,7 +26,11 @@ function robotsContent(robots: NonNullable<RuntimeMetadata['robots']>) {
   ].join(', ');
 }
 
-/** The `meta` descriptors of React Router for page metadata, in document order. */
+/**
+ * The `meta` descriptors of React Router for page metadata, in document order. Its schema.org
+ * documents are not among them: the server puts them in the document itself (see
+ * `page-json-ld`), and the page data the browser hydrates from goes without them.
+ */
 export function toMetaDescriptors(
   metadata: RuntimeMetadata | null | undefined
 ): MetaDescriptor[] {
@@ -43,7 +47,8 @@ export function toMetaDescriptors(
     }
   };
 
-  if (metadata.title) tags.push({ title: metadata.title });
+  const title = titleText(metadata.title);
+  if (title) tags.push({ title });
   named('description', metadata.description);
   named(
     'keywords',
@@ -63,6 +68,16 @@ export function toMetaDescriptors(
   }
   for (const [hrefLang, href] of Object.entries(alternates?.languages ?? {})) {
     tags.push({ tagName: 'link', rel: 'alternate', hrefLang, href });
+  }
+  if (metadata.pagination?.previous) {
+    tags.push({
+      tagName: 'link',
+      rel: 'prev',
+      href: metadata.pagination.previous,
+    });
+  }
+  if (metadata.pagination?.next) {
+    tags.push({ tagName: 'link', rel: 'next', href: metadata.pagination.next });
   }
 
   if (openGraph) {
@@ -117,10 +132,6 @@ export function toMetaDescriptors(
     }
   }
 
-  for (const document of jsonLdList(metadata.jsonLd)) {
-    tags.push({ 'script:ld+json': document } as MetaDescriptor);
-  }
-
   return tags;
 }
 
@@ -135,8 +146,8 @@ const REPEATED_PROPERTIES = [
 /**
  * The identity of a descriptor: the page's descriptors replace the root's with the same one.
  * Repeated tags share one identity, so the page's set replaces the root's whole set: its
- * images (`og:image*`, `twitter:image*`), Open Graph locales, authors and tags, and its
- * schema.org documents; language alternates are one per language.
+ * images (`og:image*`, `twitter:image*`), Open Graph locales, authors and tags; language
+ * alternates are one per language.
  */
 function descriptorKey(descriptor: MetaDescriptor): string | null {
   const record = descriptor as Record<string, unknown>;
@@ -152,8 +163,8 @@ function descriptorKey(descriptor: MetaDescriptor): string | null {
     );
     return `property:${repeated ?? record.property}`;
   }
-  if ('script:ld+json' in record) return 'script:ld+json';
   if (record.rel === 'canonical') return 'canonical';
+  if (record.rel === 'prev' || record.rel === 'next') return record.rel;
   if (record.rel === 'alternate' && typeof record.hrefLang === 'string') {
     return `alternate:${record.hrefLang.toLowerCase()}`;
   }
@@ -162,7 +173,7 @@ function descriptorKey(descriptor: MetaDescriptor): string | null {
 
 /**
  * The root's descriptors under the page's: the page wins for a title, a name, a property, the
- * canonical address, a language alternate and the images.
+ * canonical address, a language alternate, the neighbouring pages and the images.
  */
 export function mergeMetaDescriptors(
   parent: readonly MetaDescriptor[],

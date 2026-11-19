@@ -21,6 +21,7 @@ import { apolloStateScript } from './apollo-ssr-state';
 import { hydratedPageOf, hydratedPageScript } from './hydration';
 import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import { isNotFoundSignal } from './not-found-response';
+import { pageJsonLdScripts } from './page-json-ld';
 import { serverInsertedHTMLCallbacks } from './server-inserted-html';
 import { publicEnvironmentScript } from './public-env';
 import {
@@ -150,7 +151,7 @@ export default function handleRequest(
           let queued: Buffer[] = [];
           let batch: ReturnType<typeof setImmediate> | undefined;
           let headSent = false;
-          let headHTML = publicEnvironmentScript();
+          let headHTML = publicEnvironmentScript() + pageJsonLdScripts();
           const send = (stream: Transform, chunk: Buffer) => {
             // More document after `</body>`: the state goes at its very end instead.
             if (closing) {
@@ -233,14 +234,16 @@ export default function handleRequest(
           reject(error);
         },
         onError(error: unknown) {
-          // An error in content rendered before the response (all of it for crawlers and HEAD)
-          // sets its status; after that the status is sent, and the browser renders the error.
-          if (!responded) {
-            status = isNotFoundSignal(error) ? 404 : 500;
-          } else if (!isNotFoundSignal(error)) {
-            // Errors of the shell reject above and are logged by React Router.
-            console.error(error);
+          // A page a section found missing before the response (all of it for crawlers and
+          // HEAD) answers 404. Any other error of a section, or content cut off by the stream
+          // timeout, leaves the page's status: the document carries the section's fallback,
+          // and the browser renders the section again. Errors of the shell reject above, and
+          // React Router answers them with its error page and status.
+          if (isNotFoundSignal(error)) {
+            if (!responded) status = 404;
+            return;
           }
+          if (!request.signal.aborted) console.error(error);
         },
       }
     );

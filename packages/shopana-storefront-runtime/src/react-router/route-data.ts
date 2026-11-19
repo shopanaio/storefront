@@ -12,7 +12,7 @@ export type RuntimeAppProps = ServerAppData;
 /** What the root loader returns. */
 export interface RuntimeRootData {
   app: RuntimeAppProps;
-  /** Public origin of the site (`STOREFRONT_PUBLIC_URL`, else the request's). */
+  /** Public origin of the site (`NEXT_PUBLIC_APP_URL`, else the request's). */
   origin: string;
 }
 

@@ -5,7 +5,10 @@ import type {
   PageTemplate,
   PageType,
 } from '@shopana/storefront-sdk/core/types';
-import type { SerializableApolloQuery } from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
+import type {
+  LoadSerializableQueryOptions,
+  SerializableApolloQuery,
+} from '@shopana/storefront-sdk/graphql/apollo/loadSerializableQuery';
 import type { RuntimeMetadata } from './metadata';
 import type { SDKRequestContext } from './request-context';
 import type { RuntimeSiteContext } from './site';
@@ -29,7 +32,8 @@ export type RuntimeRenderablePageType = Exclude<PageType, '404'>;
 export interface RuntimePageServices {
   loadQuery<TData, TVariables extends OperationVariables>(
     document: TypedDocumentNode<TData, TVariables>,
-    variables: TVariables
+    variables: TVariables,
+    options?: LoadSerializableQueryOptions
   ): Promise<SerializableApolloQuery<TData, TVariables>>;
 
   extractCacheState(): Promise<NormalizedCacheObject>;

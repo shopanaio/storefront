@@ -326,6 +326,8 @@ gh workflow run build-theme.yml --repo shopanaio/storefront-brand-bite-and-crunc
 OAuth client secret и случайный session secret длиной минимум 32 символа.
 Runtime URL должны совпадать с Terraform outputs. Отключая IAM/ассистент, очистите их
 публичные переменные и удалите ненужные OAuth keys из JSON.
+`STOREFRONT_NOINDEX: "true"` закрывает окружение от поисковиков (stage): каждый ответ получает
+`X-Robots-Tag: noindex, nofollow`, `robots.txt` не называет sitemap, sitemap отвечают 404.
 
 Зарегистрируйте в IAM origin `https://<hostname>`, callback
 `https://<hostname>/auth/callback` и post-logout URI `https://<hostname>/`.

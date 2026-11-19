@@ -97,23 +97,30 @@ Every page gets from the runtime what the site gives it, filled only where the p
 - the canonical address: the page's path without its query (`?sort=`, filters, `?variant=`),
   or the storefront path the page names in `alternates.canonical`; a `noindex` page has none
   unless it names one;
-- the address of the page in each store language and `x-default` (indexable pages of a store
-  with several languages);
+- the address of the page in each language it has and `x-default` (indexable pages with
+  several languages): every store language, or those whose codes the page names in
+  `alternates.locales`;
 - `og:url`, `og:site_name`, `og:locale` and `og:locale:alternate`, `og:type` (`website`),
   `og:title` and `og:description` from the page's own, and the Twitter card from them (a page
   without an image of its own keeps the root's card under React Router);
 - the title in the app's template (`titleTemplate` of `src/runtime/app.ts` under React Router,
-  `title.template` of the root layout under Next.js).
+  `title.template` of the root layout under Next.js); `title: { absolute }` stays outside it;
+- `<link rel="prev">` and `<link rel="next">` from `pagination.previous` and `pagination.next`
+  (the neighbouring pages of a paginated list).
 
-Addresses are absolute on the public origin: `STOREFRONT_PUBLIC_URL` (server environment, e.g.
+Addresses are absolute on the public origin: `NEXT_PUBLIC_APP_URL` (server environment, e.g.
 `https://shop.example`), else the origin of the request. Set it in production: the request's
-origin comes from its `Host` header, and a production server without it warns once. A page definition builds its own with
-`context.site.url(path)` (a storefront path in the page's language) and `context.site.asset()`.
+origin comes from its `Host` header, and a production server without it warns once. On an
+`https` origin the React Router middleware moves a request the proxy marks as plain HTTP
+(`X-Forwarded-Proto`, `CF-Visitor`) there with 301 and answers with `Strict-Transport-Security`.
+A page definition builds its own with `context.site.url(path)` (a storefront path in the
+page's language) and `context.site.asset()`.
 `openGraph.type` is `website`, `article` (with `openGraph.article`) or `product` (with
 `openGraph.product`: price, availability, brand; Next.js gets them from the page as
 `<meta property>` tags, outside its `Metadata`). `jsonLd` holds the page's schema.org documents
 (a Product, a BreadcrumbList), rendered as `<script type="application/ld+json">` in the server's
-page. A missing page answers `noindex`.
+page; under React Router the page data the browser hydrates from goes without them. A missing
+page answers `noindex`.
 
 The theme's `src/runtime/seo.ts` defines `robots.txt` and the sitemaps; without it everything
 is allowed and there is no sitemap:
@@ -135,11 +142,13 @@ export default defineRuntimeSeo({
 ```
 
 The runtime serves `robots.txt` (with the `Sitemap:` line), `sitemap.xml` (an index) and
-`sitemaps/<source>-<n>.xml`, each with up to 50 000 addresses: every entry in each store
-language with the others as `xhtml:link` alternates, its images for image search; an empty
-source has no file. The sources run in the store's default language, and the server keeps the
-pages of each for ten minutes, which the index and the source's files share (crawlers read
-them again after an hour).
+`sitemaps/<source>-<n>.xml`, each with up to 50 000 addresses: every entry in each language it
+has (every store language, or those whose codes it names in `locales`) with the others as
+`xhtml:link` alternates, its images for image search; an empty source has no file. With
+`STOREFRONT_NOINDEX=true` (a stage) every response says `X-Robots-Tag: noindex, nofollow`,
+`robots.txt` names no sitemap and the sitemaps answer 404. The sources run in the store's
+default language, and the server keeps the pages of each for ten minutes, which the index and
+the source's files share (crawlers read them again after an hour).
 A file of the theme's `public` at one of these addresses fails generation.
 
 ## Next.js
