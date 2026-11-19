@@ -2,20 +2,31 @@ import type { ApolloEnvironmentConfig } from '@shopana/storefront-sdk/graphql/ap
 import type { CartConfig } from '@shopana/storefront-sdk/modules/cart/core/config';
 import type { StorefrontRoutingConfig } from '@shopana/storefront-sdk/routing';
 import type { AppPreloadConfig } from '@shopana/storefront-sdk/server/app';
+import type { ServerRequestScope } from '@shopana/storefront-sdk/server/requestScope';
 import type { RuntimeTitleTemplate } from '../core/site';
+import type { HydratedPage } from './hydration';
+
+type PrepareDocumentShell = (html: string, page: HydratedPage) => string;
+
+export const documentShellPreparers = new WeakMap<
+  ServerRequestScope,
+  PrepareDocumentShell
+>();
 
 /**
  * The storefront app of a React Router theme (`src/runtime/app.ts`): what the Next.js runtime
  * reads from the middleware and `AppProvider` props. The middleware matches the locale segment
  * against the store languages and applies `routing`; the root loader loads the store, cart,
  * session and `preload` queries; the root providers use the environment and cart config.
- * Everything here reaches the browser.
+ * The document preparation hook is used only on the server.
  */
 export interface RuntimeAppDefinition {
   environmentConfig: ApolloEnvironmentConfig;
   routing: StorefrontRoutingConfig;
   cartConfig: CartConfig;
   preload?: AppPreloadConfig;
+  /** Changes the initial React flush before it goes to the browser. */
+  prepareDocumentShell?: PrepareDocumentShell;
   /**
    * The title of a page with the store in it ("Socks — Shop" for "Socks"). A page without a
    * title has the title of the theme layout's `meta`.

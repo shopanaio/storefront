@@ -23,6 +23,7 @@ import {
 import { loadAppData } from '@shopana/storefront-sdk/server/app';
 import {
   createServerRequestScope,
+  getServerRequestScope,
   provideServerRequestStorage,
   type ServerRequestScope,
 } from '@shopana/storefront-sdk/server/requestScope';
@@ -42,7 +43,7 @@ import { publicOrigin } from '../core/public-origin';
 import { createSiteContext } from '../core/site';
 import type { SDKRequestContext } from '../core/request-context';
 import { resolveRuntimeRoute } from '../core/route';
-import type { RuntimeAppDefinition } from './app';
+import { documentShellPreparers, type RuntimeAppDefinition } from './app';
 import { getRequestContext } from './headers';
 import { isNotFoundSignal } from './not-found-response';
 import { isLocalizedPath, localePrefixRedirect } from './locale-routing';
@@ -64,6 +65,17 @@ export type RuntimeMiddleware = MiddlewareFunction<Response>;
 
 const storage = new AsyncLocalStorage<ServerRequestScope>();
 provideServerRequestStorage(storage);
+const requestTimings = new WeakMap<ServerRequestScope, Map<string, number>>();
+
+async function timed<T>(name: string, run: () => Promise<T>): Promise<T> {
+  const scope = getServerRequestScope();
+  const start = performance.now();
+  try {
+    return await run();
+  } finally {
+    if (scope) requestTimings.get(scope)?.set(name, performance.now() - start);
+  }
+}
 
 /** The locale of the request, as the runtime middleware matched it. */
 export interface RuntimeRequestLocale {
@@ -89,11 +101,13 @@ export function createRuntimeMiddleware(
   app: RuntimeAppDefinition
 ): MiddlewareFunction<Response> {
   return async ({ request, url, context }, next) => {
+    const start = performance.now();
     const origin = publicOrigin(request.url);
     const https = httpsRedirect(request, url, origin);
     if (https) throw redirect(https.location, https.status);
 
     const locales = await loadStorefrontLocales(app.environmentConfig);
+    const localesDuration = performance.now() - start;
     const { locale: segment } = splitLocaleFromPathname(
       url.pathname,
       locales.locales.map((locale) => locale.segment)
@@ -109,11 +123,31 @@ export function createRuntimeMiddleware(
     headers.set(STOREFRONT_LOCALE_HEADER, locale.tag);
     context.set(runtimeRequestLocale, { locales, locale, segment });
 
-    const response = await storage.run(
-      createServerRequestScope(url, headers),
-      next
+    const scope = createServerRequestScope(url, headers);
+    if (app.prepareDocumentShell) {
+      documentShellPreparers.set(scope, app.prepareDocumentShell);
+    }
+    const timings = new Map([['locales', localesDuration]]);
+    requestTimings.set(scope, timings);
+    const response = withSitePolicyHeaders(
+      await storage.run(scope, next),
+      origin
     );
-    return withSitePolicyHeaders(response, origin);
+    if (response.headers.get('content-type')?.includes('text/html')) {
+      timings.set('document', performance.now() - start);
+      const serverTiming = Array.from(
+        timings,
+        ([name, duration]) => `${name};dur=${duration.toFixed(1)}`
+      ).join(', ');
+      const headers = new Headers(response.headers);
+      headers.append('Server-Timing', serverTiming);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    }
+    return response;
   };
 }
 
@@ -127,12 +161,14 @@ export async function loadRuntimeRoot(
   { request }: Pick<LoaderFunctionArgs, 'request'>
 ): Promise<RuntimeRootData> {
   return {
-    app: await loadAppData({
-      environmentConfig: app.environmentConfig,
-      routing: app.routing,
-      cartConfig: app.cartConfig,
-      preload: app.preload,
-    }),
+    app: await timed('root', () =>
+      loadAppData({
+        environmentConfig: app.environmentConfig,
+        routing: app.routing,
+        cartConfig: app.cartConfig,
+        preload: app.preload,
+      })
+    ),
     origin: publicOrigin(request.url),
   };
 }
@@ -192,7 +228,9 @@ export function createRuntimePageLoader(
       pageType,
       data: result.data,
       metadata: takePageJsonLd(
-        (await definition.generateMetadata?.(context, result.data)) ?? {}
+        (await timed('metadata', async () =>
+          definition.generateMetadata?.(context, result.data)
+        )) ?? {}
       ),
     } satisfies RuntimePageData;
   }

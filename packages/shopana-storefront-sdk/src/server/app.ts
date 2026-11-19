@@ -8,13 +8,17 @@ import { setEnvironmentConfig } from '../config';
 import { mergeApolloCacheStates } from '../graphql/apollo/cache';
 import type { StorefrontRoutingConfig } from '../modules/localization/core/types';
 import { getStorefrontRequestContext } from '../modules/store/server/getStorefrontRequestContext';
-import { preloadNavigationMenus } from '../modules/content/server';
+import {
+  preloadNavigationMenus,
+  preloadNavigationMenuSummaries,
+} from '../modules/content/server';
 import { getApolloRequestClient } from './apollo';
 import { readServerRequestHeaders } from './requestScope';
 
 export interface AppPreloadConfig {
   /** Navigation menu handles the layout renders; they are part of the server HTML. */
   navigationMenus?: readonly string[];
+  navigationMenuSummaries?: readonly string[];
 }
 
 export interface LoadAppPropsOptions {
@@ -66,6 +70,10 @@ export async function loadAppData({
       }),
       loadSessionServerQuery({ serverCookies }),
       preloadNavigationMenus(client, preload?.navigationMenus ?? []),
+      preloadNavigationMenuSummaries(
+        client,
+        preload?.navigationMenuSummaries ?? []
+      ),
     ]);
 
   return {

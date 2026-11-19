@@ -18,6 +18,7 @@ import {
   type ServerRequestScope,
 } from '@shopana/storefront-sdk/server/requestScope';
 import { apolloStateScript } from './apollo-ssr-state';
+import { documentShellPreparers } from './app';
 import { hydratedPageOf, hydratedPageScript } from './hydration';
 import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerRequestScope';
 import { isNotFoundSignal } from './not-found-response';
@@ -53,6 +54,18 @@ const BODY_END = Buffer.from('</body>');
 /** Where the head ends: HTML the render asks for with the shell goes in before it. */
 const HEAD_END = Buffer.from('</head>');
 
+/** Prioritize CSS and media, and let module scripts discover dependencies on narrow screens. */
+function documentHead(data: Buffer): Buffer {
+  return Buffer.from(
+    data
+      .toString()
+      .replaceAll(
+        '<link rel="modulepreload"',
+        '<link rel="modulepreload" fetchpriority="low" media="(min-width: 768px)"'
+      )
+  );
+}
+
 /** The HTML the render's `useServerInsertedHTML` callbacks return now. */
 function insertedHTML(scope: ServerRequestScope): string {
   const callbacks = serverInsertedHTMLCallbacks(scope);
@@ -86,8 +99,12 @@ export default function handleRequest(
 ): Promise<Response> {
   // A HEAD request renders too, without a body: its status and redirect are those of GET.
   const head = request.method.toUpperCase() === 'HEAD';
+  const renderStart = performance.now();
   // The request's scope, kept for the end of the stream: its Apollo cache goes to the browser.
   const scope = getServerRequestScope();
+  const prepareShell = scope && documentShellPreparers.get(scope);
+  const { loaderData, errors } = routerContext.staticHandlerContext;
+  const hydratedPage = hydratedPageOf(loaderData, errors);
 
   return new Promise((resolve, reject) => {
     let responded = false;
@@ -130,6 +147,10 @@ export default function handleRequest(
           if (redirect) responseHeaders.set('Location', redirect.location);
           // A page a section found missing answers 404, as the not-found page it shows.
           status = redirect?.status ?? readRenderStatus() ?? status;
+          responseHeaders.append(
+            'Server-Timing',
+            `render;dur=${(performance.now() - renderStart).toFixed(1)}`
+          );
 
           if (redirect || head) {
             stopTimeout();
@@ -186,11 +207,14 @@ export default function handleRequest(
               if (headEnd !== -1) {
                 headSent = true;
                 data = Buffer.concat([
-                  data.subarray(0, headEnd),
+                  documentHead(data.subarray(0, headEnd)),
                   Buffer.from(headHTML),
                   data.subarray(headEnd),
                 ]);
                 headHTML = '';
+                if (prepareShell && hydratedPage && status === 200) {
+                  data = Buffer.from(prepareShell(data.toString(), hydratedPage));
+                }
               }
             }
             send(stream, data);
@@ -205,10 +229,9 @@ export default function handleRequest(
               stopTimeout();
               if (batch) clearImmediate(batch);
               sendBatch(this);
-              const { loaderData, errors } = routerContext.staticHandlerContext;
               const state =
                 (scope ? apolloStateScript(scope) : '') +
-                hydratedPageScript(hydratedPageOf(loaderData, errors));
+                hydratedPageScript(hydratedPage);
               if (closing) {
                 if (state) this.push(state);
                 callback(null, closing);

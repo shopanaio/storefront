@@ -1,6 +1,7 @@
 import type { ApolloClient } from '@apollo/client';
 import {
   SdkNavigationMenuByHandleDocument,
+  SdkNavigationMenuSummaryByHandleDocument,
   SdkStorePolicyByHandleDocument,
 } from '../../../graphql/apollo/generated/operations';
 
@@ -13,6 +14,20 @@ export async function preloadNavigationMenus(
     [...new Set(handles.filter(Boolean))].map((handle) =>
       client.query({
         query: SdkNavigationMenuByHandleDocument,
+        variables: { handle },
+      })
+    )
+  );
+}
+
+export async function preloadNavigationMenuSummaries(
+  client: ApolloClient,
+  handles: readonly string[]
+): Promise<void> {
+  await Promise.all(
+    [...new Set(handles.filter(Boolean))].map((handle) =>
+      client.query({
+        query: SdkNavigationMenuSummaryByHandleDocument,
         variables: { handle },
       })
     )
