@@ -15,7 +15,7 @@ const meta = {
   argTypes: {
     tone: {
       control: 'inline-radio',
-      options: ['critical', 'warning', 'action', 'success'],
+      options: ['critical', 'warning', 'action', 'info', 'success'],
     },
   },
 } satisfies Meta<typeof Banner>;
@@ -28,6 +28,15 @@ export const Action: Story = {
     action: { label: 'Choose', onClick: fn() },
     onDismiss: fn(),
     dismissLabel: 'Close',
+  },
+};
+
+export const Info: Story = {
+  args: {
+    tone: 'info',
+    title: 'Payment methods appear once delivery is chosen',
+    description:
+      'Choose the address and the delivery method, and the available payment methods will show up here.',
   },
 };
 

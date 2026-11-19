@@ -75,6 +75,8 @@
     "error-no-shipping-method": "Будь ласка, оберіть метод доставки",
     "error-no-payment-method": "Будь ласка, оберіть метод оплати",
     "payment-selection-reset": "Будь ласка, оберіть спосіб оплати ще раз.",
+    "payment-after-delivery-title": "Способи оплати з’являться після вибору доставки",
+    "payment-after-delivery-description": "Оберіть адресу та спосіб доставки, і тут з’являться доступні способи оплати.",
     "delivery-selection-reset": "Будь ласка, оберіть спосіб доставки ще раз.",
     "delivery-selection-reset-fix": "Оберіть інше відділення або змініть дані доставки.",
     "delivery-input-rejected": "Змініть дані доставки або збережіть їх ще раз.",

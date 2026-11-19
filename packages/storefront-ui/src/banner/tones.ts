@@ -5,9 +5,10 @@ import type { GlobalToken } from 'antd';
  * - `critical`: something failed and the task cannot go on until it is solved;
  * - `warning`: something changed on its own and is worth a look;
  * - `action`: the reader has to choose or fill something in;
+ * - `info`: a calm note about how the page works, nothing to do yet;
  * - `success`: something the reader did worked.
  */
-export type BannerTone = 'critical' | 'warning' | 'action' | 'success';
+export type BannerTone = 'critical' | 'warning' | 'action' | 'info' | 'success';
 
 export interface BannerToneColors {
   /** Background of the banner. */
@@ -20,8 +21,8 @@ export interface BannerToneColors {
 }
 
 /**
- * Colors of a tone from the antd status tokens (error, warning, info, success), so they follow
- * the theme and its dark algorithm.
+ * Colors of a tone from the antd status tokens (error, warning, info, success) and, for `info`,
+ * the neutral fill and text tokens, so they follow the theme and its dark algorithm.
  */
 export function toneColors(
   token: GlobalToken,
@@ -48,6 +49,13 @@ export function toneColors(
         border: token.colorInfoBorder,
         text: token.colorInfoTextActive,
         accent: token.colorInfoText,
+      };
+    case 'info':
+      return {
+        background: token.colorFillAlter,
+        border: token.colorBorderSecondary,
+        text: token.colorText,
+        accent: token.colorTextSecondary,
       };
     case 'success':
       return {

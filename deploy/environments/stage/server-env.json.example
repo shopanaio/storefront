@@ -14,6 +14,5 @@
   "IAM_OAUTH_CLIENT_ID": "REPLACE_WITH_CLIENT_ID",
   "IAM_OAUTH_CLIENT_SECRET": "REPLACE_WITH_CLIENT_SECRET",
   "IAM_OAUTH_RESOURCE": "REPLACE_WITH_RESOURCE",
-  "IAM_OAUTH_REDIRECT_URI": "https://pet.shopana.dev/auth/callback",
-  "IAM_OAUTH_POST_LOGOUT_REDIRECT_URI": "https://pet.shopana.dev/"
+  "IAM_OAUTH_REDIRECT_URI": "https://pet.shopana.dev/auth/callback"
 }

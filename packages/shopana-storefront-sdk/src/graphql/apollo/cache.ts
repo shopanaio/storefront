@@ -229,6 +229,14 @@ export function createApolloCache(
     Vendor: {
       keyFields: handleKeyFields(handles),
     },
+    // A filter and its values are ids within one listing, with that listing's counts: stored
+    // inside it, or another listing would overwrite the filters every page reads.
+    Filter: {
+      keyFields: false,
+    },
+    FilterValue: {
+      keyFields: false,
+    },
     // No id: the collection stays under `Query.dynamicCollection`, keyed by its rules. Merged,
     // not replaced: the rules labels and the products of one set of rules come in separate
     // queries, and each would drop the other's fields (and refetch them) on every write.

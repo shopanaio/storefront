@@ -120,12 +120,10 @@ export class StorefrontSessionClient {
   }
 
   /**
-   * Ends the session on the server: the tokens are revoked and the session and cart cookies
-   * cleared. Returns the IAM end-session URL to leave for, when IAM sign-out is configured.
+   * Ends the session on the server: the IAM session is ended and the session and cart cookies
+   * cleared.
    */
-  async signOut(
-    options: { cartCookieName?: string } = {}
-  ): Promise<string | null> {
+  async signOut(options: { cartCookieName?: string } = {}): Promise<void> {
     const response = await fetch(`${this.basePath}/logout`, {
       method: 'POST',
       credentials: 'same-origin',
@@ -141,9 +139,7 @@ export class StorefrontSessionClient {
         response.status
       );
     }
-    const body = (await response.json()) as { redirectUrl?: string | null };
     this.setSession(null, 'signed-out');
-    return body.redirectUrl ?? null;
   }
 
   private async call(

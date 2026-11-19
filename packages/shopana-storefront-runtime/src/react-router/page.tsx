@@ -588,7 +588,7 @@ function takeStartedDataLoad(
 
 /**
  * The page of an address at once, when nothing has to be waited for: its modules are loaded
- * (`preloadRuntimePages`) and its `loadData` answers without a promise (it reads the address).
+ * (`preloadRuntimePage`) and its `loadData` answers without a promise (it reads the address).
  * Null otherwise: a missing page, modules still loading, data that needs the network. The
  * page route's client loader resolves the same page for the router.
  */

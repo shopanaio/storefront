@@ -42,11 +42,36 @@ export const SummaryLines = ({ checkout }: SummaryLinesProps) => {
   const toggle = () => setExpanded((value) => !value);
 
   const lines = checkout.lines;
-  // Gifts (every unit free) stand apart, under the lines that are paid for.
-  const isGift = (line: Checkout.Line) =>
-    line.quantity > 0 && line.freeQuantity >= line.quantity;
-  const paidLines = lines.filter((line) => !isGift(line));
-  const giftLines = lines.filter(isGift);
+  // Every gift stands apart, under the lines paid for: a line with free units shows its paid
+  // units among the lines and its free ones among the gifts.
+  const paidLines = lines.flatMap((line) =>
+    line.freeQuantity < line.quantity
+      ? [
+          {
+            ...line,
+            quantity: line.quantity - line.freeQuantity,
+            freeQuantity: 0,
+          },
+        ]
+      : []
+  );
+  const giftLines = lines.flatMap((line) =>
+    line.freeQuantity > 0
+      ? [
+          {
+            ...line,
+            quantity: line.freeQuantity,
+            cost: {
+              ...line.cost,
+              totalAmount: {
+                amount: 0,
+                currencyCode: line.cost.totalAmount.currencyCode,
+              },
+            },
+          },
+        ]
+      : []
+  );
   const giftsTitle = (
     <Text type="secondary" className={styles.giftsTitle}>
       {t('summary-gifts')}

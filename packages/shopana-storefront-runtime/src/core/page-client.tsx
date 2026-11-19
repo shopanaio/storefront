@@ -8,7 +8,7 @@
  * ready once its data and template are, and its sections load their queries themselves,
  * rendering what the Apollo cache already has.
  *
- * Page definitions and templates are code-split; `preloadRuntimePages` loads them ahead of
+ * Page definitions and templates are code-split; `preloadRuntimePage` loads a page's ahead of
  * time. With both loaded and a `loadData` that answers at once (it reads only the address),
  * a page renders in the same render that asks for it, without suspending.
  */
@@ -123,15 +123,16 @@ export function loadPageModules(
 }
 
 /**
- * Loads the definitions and templates of the site pages, so later client page loads find
- * them ready. Call it once the app is idle after it starts; failures are left to the page
- * load that needs the module.
+ * Loads the definition and template of one page type, so a later client page load of it finds
+ * them ready. Call it when a move to such a page is likely (a link under the pointer); failures
+ * are left to the page load that needs the module.
  */
-export function preloadRuntimePages(pages: RuntimePageModuleMap): void {
-  for (const pageType of Object.keys(pages) as PageType[]) {
-    if (pageType === '404') continue;
-    loadPageModules(pages, pageType).catch(() => {});
-  }
+export function preloadRuntimePage(
+  pages: RuntimePageModuleMap,
+  pageType: PageType
+): void {
+  if (pageType === '404' || !(pageType in pages)) return;
+  loadPageModules(pages, pageType).catch(() => {});
 }
 
 /**
@@ -265,7 +266,7 @@ function cachedPageContent(
 
 /**
  * The page at `href`, rendered at once when its modules are loaded (see
- * `preloadRuntimePages`) and its data needs no network; otherwise it suspends until they
+ * `preloadRuntimePage`) and its data needs no network; otherwise it suspends until they
  * are. Wrap the caller in Suspense (loading) and an error boundary (failed loads). A page
  * stays cached by `href`, so going back to it renders at once.
  */

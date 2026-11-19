@@ -43,6 +43,7 @@ export function ProductImage({ src, alt = '', className }: ProductImageProps) {
       src={src}
       alt={alt}
       className={className}
+      loading="lazy"
       onError={() => setFailed(src)}
     />
   );

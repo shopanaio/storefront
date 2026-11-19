@@ -72,8 +72,7 @@ The SSR server sends public settings in the HTML before browser modules execute;
 Changing a key or URL requires restarting/updating the container, never rebuilding the image.
 
 For customer login also provide `IAM_OAUTH_CLIENT_ID`, `IAM_OAUTH_CLIENT_SECRET`,
-`IAM_OAUTH_RESOURCE`, `IAM_OAUTH_REDIRECT_URI`, `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI`
-and a `STOREFRONT_SESSION_SECRET` of at least 32 characters. Keep runtime.env outside the
+`IAM_OAUTH_RESOURCE`, `IAM_OAUTH_REDIRECT_URI` and a `STOREFRONT_SESSION_SECRET` of at least 32 characters. Keep runtime.env outside the
 build context. Local `.env` files are excluded from the image.
 
 The build uses a 4 GiB Node.js heap; override it with `--build-arg BUILD_NODE_OPTIONS=...`

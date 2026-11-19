@@ -117,13 +117,6 @@ export function validateRuntime(values, outputs) {
       callback.pathname !== '/auth/callback'
     )
       fail('IAM_OAUTH_REDIRECT_URI must be an absolute HTTPS callback.');
-    if (
-      values.IAM_OAUTH_POST_LOGOUT_REDIRECT_URI &&
-      values.IAM_OAUTH_POST_LOGOUT_REDIRECT_URI !== `${outputs.app_url}/`
-    )
-      fail(
-        'IAM_OAUTH_POST_LOGOUT_REDIRECT_URI must use the theme origin or be empty for local sign-out.'
-      );
   }
 }
 

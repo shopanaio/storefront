@@ -21,11 +21,6 @@ export interface StorefrontAuthServerConfig {
   resource: string;
   /** Registered `{origin}/auth/callback`. */
   redirectUri: string;
-  /**
-   * Registered post-logout URI. When set, sign-out ends the IAM session through
-   * `/oauth2/end-session`; otherwise it only revokes the tokens of this storefront.
-   */
-  postLogoutRedirectUri?: string;
   scopes: readonly ApplicationAuthScope[];
   /** Key material for the session cookies, at least 32 characters. */
   sessionSecret: string;
@@ -59,7 +54,6 @@ const ENV = {
   clientSecret: 'IAM_OAUTH_CLIENT_SECRET',
   resource: 'IAM_OAUTH_RESOURCE',
   redirectUri: 'IAM_OAUTH_REDIRECT_URI',
-  postLogoutRedirectUri: 'IAM_OAUTH_POST_LOGOUT_REDIRECT_URI',
   sessionSecret: 'STOREFRONT_SESSION_SECRET',
   trustedProxyHops: 'STOREFRONT_TRUSTED_PROXY_HOPS',
   cookiePolicy: 'STOREFRONT_COOKIE_POLICY',
@@ -120,7 +114,6 @@ export function readStorefrontAuthServerConfig(
     clientSecret: value('clientSecret')!,
     resource: value('resource')!,
     redirectUri: value('redirectUri')!,
-    postLogoutRedirectUri: value('postLogoutRedirectUri'),
     scopes: DEFAULT_SCOPES,
     sessionSecret,
     trustedProxyHops,

@@ -75,6 +75,8 @@
     "error-no-shipping-method": "Please select a shipping method",
     "error-no-payment-method": "Please select a payment method",
     "payment-selection-reset": "Please choose a payment method again.",
+    "payment-after-delivery-title": "Payment methods appear once delivery is chosen",
+    "payment-after-delivery-description": "Choose the address and the delivery method, and the available payment methods will show up here.",
     "delivery-selection-reset": "Please choose a delivery method again.",
     "delivery-selection-reset-fix": "Choose another branch or change the delivery details.",
     "delivery-input-rejected": "Change the delivery details or save them again.",

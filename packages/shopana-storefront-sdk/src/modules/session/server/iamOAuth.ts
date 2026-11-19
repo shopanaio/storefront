@@ -49,16 +49,6 @@ export class IamOAuthServerClient {
     return `${this.applicationBaseUrl}/oauth2/authorize?${query}`;
   }
 
-  endSessionUrl(idToken: string): string | null {
-    if (!this.config.postLogoutRedirectUri) return null;
-    const query = new URLSearchParams({
-      id_token_hint: idToken,
-      client_id: this.config.clientId,
-      post_logout_redirect_uri: this.config.postLogoutRedirectUri,
-    });
-    return `${this.applicationBaseUrl}/oauth2/end-session?${query}`;
-  }
-
   exchangeCode(
     code: string,
     codeVerifier: string,
@@ -98,6 +88,26 @@ export class IamOAuthServerClient {
       method: 'POST',
       headers: this.clientHeaders(),
       body: new URLSearchParams({ token, token_type_hint: hint }),
+    });
+  }
+
+  /** Ends the buyer's IAM session issued to this client, server to server (headless logout). */
+  async logout(
+    input: { refreshToken: string; idToken?: string },
+    endUserIp: string
+  ): Promise<void> {
+    await this.request('/headless/v1/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: clientBasicAuthorization(this.config),
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        [END_USER_IP_HEADER]: endUserIp,
+      },
+      body: JSON.stringify({
+        refresh_token: input.refreshToken,
+        ...(input.idToken ? { id_token_hint: input.idToken } : {}),
+      }),
     });
   }
 

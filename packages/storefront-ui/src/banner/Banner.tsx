@@ -95,6 +95,9 @@ const WarningIcon: BannerIcon = (props) => (
 const ActionIcon: BannerIcon = (props) => (
   <LuInfo {...props} strokeWidth={1.75} />
 );
+const InfoIcon: BannerIcon = (props) => (
+  <LuInfo {...props} strokeWidth={1.75} />
+);
 const SuccessIcon: BannerIcon = (props) => (
   <LuCircleCheck {...props} strokeWidth={1.75} />
 );
@@ -103,6 +106,7 @@ const ICONS: Record<BannerTone, BannerIcon> = {
   critical: CriticalIcon,
   warning: WarningIcon,
   action: ActionIcon,
+  info: InfoIcon,
   success: SuccessIcon,
 };
 

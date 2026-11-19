@@ -104,7 +104,7 @@ Docker context требуется явно: скрипт не переключа
 `customersQuery.storefrontAuthClient`. Headless OTP допускает callback другого origin: он
 используется при серверном обмене кода, а origin cookies задаёт `NEXT_PUBLIC_APP_URL`.
 Preflight проверяет OAuth credentials через canonical IAM и запрещает такой режим при включённых
-social providers. Пустой `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI` оставляет выход локальным для темы.
+social providers. Выход завершает сессию IAM через headless logout, без hosted-страницы IAM.
 Социальному входу нужен доступный callback на origin самой темы.
 
 Скрипт ждёт обе пары реплик `2/2`, завершения обновления и 90 секунд работы задач,

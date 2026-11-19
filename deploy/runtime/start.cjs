@@ -21,7 +21,6 @@ const allowed = new Set([
   'IAM_OAUTH_CLIENT_SECRET',
   'IAM_OAUTH_RESOURCE',
   'IAM_OAUTH_REDIRECT_URI',
-  'IAM_OAUTH_POST_LOGOUT_REDIRECT_URI',
 ]);
 for (const [key, value] of Object.entries(values)) {
   if (!allowed.has(key) || typeof value !== 'string') {

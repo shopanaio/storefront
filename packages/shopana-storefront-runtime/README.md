@@ -327,7 +327,6 @@ cookies. The handlers read the server environment:
 - `NEXT_PUBLIC_IAM_URL`, `NEXT_PUBLIC_IAM_APPLICATION_ID` (also used by the browser);
 - `IAM_OAUTH_CLIENT_ID`, `IAM_OAUTH_CLIENT_SECRET`, `IAM_OAUTH_RESOURCE`;
 - `IAM_OAUTH_REDIRECT_URI`, the registered `{origin}/auth/callback`;
-- `IAM_OAUTH_POST_LOGOUT_REDIRECT_URI` (optional; sign-out then ends the IAM session);
 - `STOREFRONT_SESSION_SECRET`, at least 32 characters, the cookie encryption key;
 - `STOREFRONT_COOKIE_POLICY` (optional, `first-party` by default): `embedded` for a storefront
   shown in a third-party iframe, the same value as `environmentConfig.cookiePolicy`;

@@ -33,7 +33,8 @@ import {
  * - `GET  /auth/callback` exchanges the code with the client secret and sets the cookies;
  * - `GET  /auth/token` returns the current access token, refreshing it when needed;
  * - `POST /auth/refresh` refreshes the access token now;
- * - `POST /auth/logout` revokes the tokens, clears the session and the cart cookie.
+ * - `POST /auth/logout` ends the IAM session (headless logout), clears the session and the cart
+ *   cookie.
  */
 
 const TRANSACTION_LIFETIME_SECONDS = 10 * 60;
@@ -245,13 +246,12 @@ async function logout(
     readAccessCookie(server.config, cookies),
     server.readRefreshCookie(cookies),
   ]);
+  const ip = endUserIp(request, server.config.trustedProxyHops);
   await Promise.all([
     access
       ? server.iam.revoke(access.t, 'access_token').catch(() => undefined)
       : undefined,
-    refresh
-      ? server.iam.revoke(refresh.r, 'refresh_token').catch(() => undefined)
-      : undefined,
+    refresh ? endIamSession(server, refresh, ip) : undefined,
   ]);
 
   const body = (await request.json().catch(() => ({}))) as {
@@ -263,8 +263,7 @@ async function logout(
     CART_COOKIE_PATTERN.test(body.cartCookieName)
       ? body.cartCookieName
       : 'cartId';
-  const redirectUrl = refresh?.i ? server.iam.endSessionUrl(refresh.i) : null;
-  return json(200, { redirectUrl }, [
+  return json(200, {}, [
     ...server.clearSessionCookies(),
     serializeCookie(cartCookieName, '', {
       maxAge: 0,
@@ -272,6 +271,25 @@ async function logout(
       ...server.cookieAttributes,
     }),
   ]);
+}
+
+/**
+ * Ends the IAM session through headless logout, without the IAM-hosted end-session page. Without
+ * the buyer address, or when IAM fails, only the refresh token of this storefront is revoked.
+ */
+async function endIamSession(
+  server: StorefrontSessionServer,
+  refresh: { r: string; i?: string },
+  ip: string | undefined
+): Promise<void> {
+  if (ip) {
+    const ended = await server.iam
+      .logout({ refreshToken: refresh.r, idToken: refresh.i }, ip)
+      .then(() => true)
+      .catch(() => false);
+    if (ended) return;
+  }
+  await server.iam.revoke(refresh.r, 'refresh_token').catch(() => undefined);
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { createStyles } from 'antd-style';
 import { useTranslations } from 'next-intl';
-import { mq } from '@shopana/storefront-ui';
+import { Banner, mq } from '@shopana/storefront-ui';
 import { useDeliveryReady } from '#checkout/hooks/useDeliveryReady';
 import { SectionRenderer } from '#checkout/infra/SectionRenderer';
 import { CheckoutSection } from '#checkout/components/common/CheckoutSection';
@@ -24,9 +24,9 @@ export interface CheckoutFormSectionsProps {
  * The form of the checkout in the left column: contact with the recipient
  * (`theme.recipientEnabled`), delivery, payment, the order comment beside the summary and, on
  * desktop, the actions. With customer accounts
- * (`theme.customerAccountsEnabled`) "Log in" is next to the contact title. The payment is
- * shown once the server answered with a valid delivery, with the skeletons of its methods
- * until they load.
+ * (`theme.customerAccountsEnabled`) "Log in" is next to the contact title. The payment block is
+ * always shown: its methods come once the server answered with a valid delivery, with their
+ * skeletons until they load, and a banner says so before that.
  */
 export const CheckoutFormSections = ({
   onSubmit,
@@ -76,15 +76,23 @@ export const CheckoutFormSections = ({
         <SectionIssues sections={[SectionId.Address, SectionId.Delivery]} />
       </CheckoutSection>
 
-      {deliveryReady ? (
-        <CheckoutSection
-          id={sectionAnchor(SectionId.Payment)}
-          title={t('payment')}
-        >
-          <SectionRenderer slug={SectionId.Payment} />
-          <SectionIssues sections={[SectionId.Payment]} />
-        </CheckoutSection>
-      ) : null}
+      <CheckoutSection
+        id={sectionAnchor(SectionId.Payment)}
+        title={t('payment')}
+      >
+        {deliveryReady ? (
+          <>
+            <SectionRenderer slug={SectionId.Payment} />
+            <SectionIssues sections={[SectionId.Payment]} />
+          </>
+        ) : (
+          <Banner
+            tone="info"
+            title={t('payment-after-delivery-title')}
+            description={t('payment-after-delivery-description')}
+          />
+        )}
+      </CheckoutSection>
 
       {stacked ? null : <CommentSection />}
 

@@ -36,7 +36,7 @@ export interface AccessCookie extends SealedPayload {
 interface RefreshCookie extends SealedPayload {
   /** Refresh token. */
   r: string;
-  /** ID token, the hint for IAM end-session. */
+  /** ID token, the hint for IAM headless logout. */
   i?: string;
   /** Identifier of a headless sign-in, kept for the whole session. */
   m?: LoginMethod;
