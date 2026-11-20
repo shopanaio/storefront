@@ -10,6 +10,7 @@ services:
       # TTL (seconds). Empty: the static site of the image (build/static), when it has one.
       STOREFRONT_STATIC_STORE: ${STATIC_STORE:-}
       STOREFRONT_STATIC_S3_ENDPOINT: ${STATIC_ENDPOINT:-}
+      STOREFRONT_STATIC_S3_REGION: ${STATIC_REGION:-auto}
       STOREFRONT_STATIC_CACHE_TTL: '10'
       # Hits and misses of the static site go to the coordinator (its internal token is in the
       # server env secret); empty without one.
@@ -74,6 +75,7 @@ services:
       # The pages and the snapshots of the index (under __builder/) go to the bucket of the site.
       STOREFRONT_STATIC_STORE: ${STATIC_STORE:-}
       STOREFRONT_STATIC_S3_ENDPOINT: ${STATIC_ENDPOINT:-}
+      STOREFRONT_STATIC_S3_REGION: ${STATIC_REGION:-auto}
       STATIC_RENDER_CONCURRENCY: ${STATIC_RENDER_CONCURRENCY:-2}
       # Step B: the zone whose CDN tags are purged (the token is in the static env secret).
       CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}

@@ -253,6 +253,7 @@ describe('the hybrid server', () => {
       await get('/uk/products/made-up');
       await get(`/uk/products/${'x'.repeat(300)}`);
       await get('/cart');
+      await get('/uk/blogs/tips/cat');
       expect(fetchCoordinator).not.toHaveBeenCalled();
       vi.advanceTimersByTime(30_000);
       expect(fetchCoordinator).toHaveBeenCalledTimes(1);
@@ -266,7 +267,7 @@ describe('the hybrid server', () => {
       );
       expect(JSON.parse(String(init.body))).toEqual({
         hits: { 'uk/products/x/index.html': 2 },
-        misses: ['uk/products/new/index.html'],
+        misses: ['uk/products/new/index.html', 'uk/blogs/tips/cat/index.html'],
       });
       vi.advanceTimersByTime(30_000);
       expect(fetchCoordinator).toHaveBeenCalledTimes(1);

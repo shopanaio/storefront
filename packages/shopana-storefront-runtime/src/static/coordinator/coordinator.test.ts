@@ -88,10 +88,11 @@ describe('hits and misses', () => {
       { 'vendors/v/index.html': 1, 'index.html': 3 },
       ['products/unknown/index.html', 'products/a/index.html']
     );
-    expect(counted).toEqual({ counted: 2, queued: 1 });
-    // A hit queues nothing; a miss of a page the site has queues nothing either.
+    expect(counted).toEqual({ counted: 2, queued: 2 });
+    // A confirmed object miss also repairs a page already present in the index.
     expect(jobs().map((job) => [job.target, job.priority])).toEqual([
       ['path:/products/unknown', PRIORITY.timer],
+      ['path:/products/a', PRIORITY.timer],
     ]);
     state.recomputeHits();
     expect(state.pageByPath('/')?.hits_7d).toBe(3);

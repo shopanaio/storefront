@@ -363,7 +363,6 @@ export class CoordinatorState {
         const path = pathOfStaticKey(key);
         if (!path) continue;
         const page = this.pageByPath(path);
-        if (page && page.status === 'published') continue;
         this.enqueue({
           locale: page?.locale ?? localeOf(path),
           target: `path:${path}`,

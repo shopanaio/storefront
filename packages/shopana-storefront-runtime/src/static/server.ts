@@ -57,15 +57,9 @@ export const STATIC_RESPONSE_HEADER = 'x-shopana-static';
 /** How a static page is cached by browsers: kept, but asked again with its ETag every time. */
 const STATIC_CACHE_CONTROL = 'public, max-age=0, must-revalidate';
 
-/** Families whose pages the builder renders: a miss there is a page the builder should add. */
-const GENERATED_FAMILIES = new Set([
-  'products',
-  'p',
-  'categories',
-  'collections',
-  'c',
-  'vendors',
-  'pages',
+/** Personal, operational and query-only routes never become public static pages. */
+const DYNAMIC_FAMILIES = new Set([
+  'auth', 'account', 'cart', 'checkout', 'api', 'graphql', 'apps', 'newsletter', 'search',
 ]);
 
 /** How often the coordinator hears of the pages served and missed. */
@@ -329,6 +323,7 @@ export async function createStorefrontServer(
     }
 
     let index: StaticServerIndex | null = null;
+    let confirmedMissing = false;
     try {
       index = await readIndex!();
       // 3–4. The file of the address.
@@ -350,6 +345,7 @@ export async function createStorefrontServer(
         response.end();
         return;
       }
+      confirmedMissing = read.status === 'missing';
     } catch (error) {
       // 6. A store that fails is a miss.
       logger.warn(
@@ -363,7 +359,7 @@ export async function createStorefrontServer(
       await sendFallback(request, response);
       return;
     }
-    if (report && isGeneratedPage(pathname, index?.locales ?? [])) {
+    if (report && confirmedMissing && isGeneratedPage(pathname, index?.locales ?? [])) {
       // A page the builder should add is one the server rendered: an address made up by a
       // visitor is its 404, never reported.
       response.once('finish', () => {
@@ -398,9 +394,8 @@ function isGeneratedPage(
     ? segments.slice(1)
     : segments;
   return (
-    unlocalized.length === 2 &&
-    GENERATED_FAMILIES.has(unlocalized[0]) &&
-    unlocalized[1].length <= MAX_HANDLE_LENGTH
+    !DYNAMIC_FAMILIES.has(unlocalized[0] ?? '') &&
+    unlocalized.every((segment) => segment.length <= MAX_HANDLE_LENGTH)
   );
 }
 

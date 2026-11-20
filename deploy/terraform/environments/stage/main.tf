@@ -4,6 +4,7 @@ module "edge" {
   account_id                 = var.cloudflare_account_id
   zone_id                    = var.cloudflare_zone_id
   hostname                   = var.hostname
+  theme_origin               = "http://shopana-stage-platform_traefik:8080"
   storefront_api_origin      = var.storefront_api_origin
   iam_public_url             = var.iam_public_url
   pet_assistant_origin       = var.pet_assistant_origin

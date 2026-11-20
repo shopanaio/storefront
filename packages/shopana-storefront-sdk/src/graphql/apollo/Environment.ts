@@ -133,8 +133,14 @@ export function createApolloClient(
     const headers = {
       ...(previousContext.headers as Record<string, string> | undefined),
       ...(IS_SERVER ? options.gatewayHeaders : undefined),
-      [config.apiKeyHeader]: config.apiKey,
     };
+    // A trusted server (the static renderer) sends one private credential. The gateway
+    // rejects a request carrying both the public and the private storefront token.
+    if (IS_SERVER && headers['shopana-storefront-private-token']) {
+      delete headers[config.apiKeyHeader];
+    } else {
+      headers[config.apiKeyHeader] = config.apiKey;
+    }
 
     const accessToken = IS_SERVER
       ? (options.accessToken ?? null)

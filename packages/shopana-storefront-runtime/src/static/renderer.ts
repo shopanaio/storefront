@@ -12,7 +12,7 @@ import {
   staticRenderHeaders,
   type StaticRenderMode,
 } from '../react-router/static-render';
-import { assertNoPrivateValues, pruneEmotionStyles } from './postprocess';
+import { assertNoPrivateValues } from './postprocess';
 
 export interface StaticRenderRequest {
   /** The address as served: with its locale segment (`/uk/products/x`). */
@@ -26,7 +26,7 @@ export interface StaticRenderResult extends StaticPageIndex {
   status: number;
   /** Where a redirect goes. */
   location: string | null;
-  /** The document, its unused styles out; empty for a redirect. */
+  /** The unmodified rendered document; empty for a redirect. */
   html: string;
   /** When the render ran. */
   renderedAt: string;
@@ -85,7 +85,9 @@ export function createStaticRenderer(
         response.status >= 300 && response.status < 400
           ? ''
           : await response.text();
-      const html = body ? pruneEmotionStyles(body) : '';
+      // Emotion's complete SSR ids participate in browser hydration. Removing rules or
+      // ids after rendering changes its cache and the first client tree. Preserve HTML.
+      const html = body;
       if (html) assertNoPrivateValues(html, env);
       const state = apolloStateOf(html);
       const parsed: unknown = state ? JSON.parse(state) : null;

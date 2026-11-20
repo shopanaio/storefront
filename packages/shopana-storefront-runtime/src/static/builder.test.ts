@@ -192,8 +192,8 @@ describe('the static site builder', () => {
 
     const page = await read('uk/products/socks/index.html');
     expect(page).toContain('Socks /uk/products/socks');
-    // The unused emotion rule is gone; the HTML is the render's, the Apollo state inline.
-    expect(page).toContain('<style data-emotion="acss a">.acss-a{x:y}</style>');
+    // Preserve Emotion's SSR ids and rules: its browser cache needs them for hydration.
+    expect(page).toContain('<style data-emotion="acss a b">.acss-a{x:y}.acss-b{x:y}</style>');
     expect(page).not.toContain('__shopanaStatic');
     expect(page).toContain('<script>window.__shopanaApolloState=');
     await expect(read('cart/index.html')).rejects.toThrow();

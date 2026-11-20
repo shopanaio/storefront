@@ -131,7 +131,7 @@ Tunnel сохраняет публичный адрес `pet.shopana.dev`, но 
 Параметры origin и Host заданы явно в Terraform.
 
 Для gateway сохраняется `STOREFRONT_TRUSTED_PROXY_HOPS=2` (Cloudflare → Traefik),
-для самой темы — `1` (Cloudflare → theme). Traefik уже доверяет forwarded headers из
+для самой темы — `2` (Cloudflare → Traefik → theme). Traefik уже доверяет forwarded headers из
 edge-сети `10.81.0.0/16`. `check` проверяет gateway hops, подключение Traefik/backend
 к edge-сети и совпадение IAM public URL.
 
@@ -352,6 +352,54 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 - `deploy-theme.mjs smoke` проверяет главную (`hit`, `ETag` и `304`, когда координатор её уже
   отрендерил; при первом деплое она живая), `miss` и `no-store` неизвестного товара, публичные
   настройки и отсутствие секретов в HTML и `/__builder/api/health` координатора.
+
+### Stage: публичный Neon S3 и Traefik
+
+Фактический порядок выполненного выката, состав файлов, проверки и оставшиеся ручные шаги:
+[выкат static + SSR от 20 ноября 2026](stage-static-ssr-2026-11-20.ru.md).
+
+На stage HTML хранится в бакете Neon `theme-static`, префикс `site`. Для подписи запросов
+координатора используется регион из `STATIC_REGION`; Cloudflare R2 и CDN Worker не нужны.
+Traefik загружает локальный middleware `deploy/traefik/static-first` как
+`experimental.localplugins.shopanastatic.modulename=github.com/shopanaio/staticfirst`.
+Каталог плагина монтируется в `/plugins-local/src/github.com/shopanaio/staticfirst` на всех
+нодах Traefik. Конфигурация middleware содержит публичный `origin` бакета и языки магазина,
+но не содержит ключей S3. Пример динамической конфигурации:
+
+```yaml
+http:
+  routers:
+    pet-static-first:
+      rule: Host(`pet.shopana.dev`)
+      entryPoints: [web]
+      service: pet-ssr
+      middlewares: [pet-stage-headers, pet-static-first]
+  middlewares:
+    pet-stage-headers:
+      headers:
+        customResponseHeaders:
+          X-Robots-Tag: noindex, nofollow
+    pet-static-first:
+      plugin:
+        shopanastatic:
+          origin: https://NEON_S3_ENDPOINT/theme-static/site
+          locales: [uk, en]
+  services:
+    pet-ssr:
+      loadBalancer:
+        servers:
+          - url: http://shopana-theme-stage_theme:3000
+```
+
+Публичный запрос страницы сначала читает объект `<путь>/index.html` из S3; `/` читает
+`index.html`. Найденный объект отдаётся без Node с `x-shopana-static-server: traefik`.
+Промах или недоступность S3 передаёт исходный запрос сервису SSR, реплики которого
+балансируются Swarm. Авторизация, личные страницы, мутации и параметры, меняющие страницу,
+обходят S3. SSR сообщает координатору только о подтверждённом отсутствии объекта после
+успешного ответа 200: новые страницы и удалённые опубликованные объекты ставятся в очередь.
+Изначальная полная генерация по `static.config.ts` и генерация по промахам независимы.
+Маршрут Tunnel для сайта ведёт на существующий Traefik; `/__builder/*` — на координатор.
+Для цепочки Tunnel → Traefik → Node у темы `STOREFRONT_TRUSTED_PROXY_HOPS=2`.
 
 ### Координатор `theme-static`
 

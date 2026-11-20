@@ -1,0 +1,7 @@
+displayName: Shopana static first
+type: middleware
+import: github.com/shopanaio/staticfirst
+summary: Public S3 objects first, storefront SSR on a miss.
+testData:
+  origin: https://example.com/theme-static/site
+  locales: [uk, en]
